@@ -11,7 +11,7 @@ namespace pxt.tutorial {
 
         // collect code and infer editor
         let editor: string = undefined;
-        const regex = /```(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template)?\s*\n([\s\S]*?)\n```/gmi;
+        const regex = /```(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python)?\s*\n([\s\S]*?)\n```/gmi;
         let code = '';
         let templateCode: string;
         // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
@@ -26,8 +26,11 @@ namespace pxt.tutorial {
                             return undefined;
                         break;
                     case "spy":
+                    case "python":
                         if (!checkTutorialEditor(pxt.PYTHON_PROJECT_NAME))
                             return undefined;
+                        if (m1 == "python")
+                            return undefined; // TODO: support for those?
                         break;
                     case "typescript":
                     case "ts":
@@ -189,7 +192,7 @@ namespace pxt.tutorial {
         return { metadata: (m as TutorialMetadata), body};
     }
 
-    export function highlight(pre: HTMLPreElement): void {
+    export function highlight(pre: HTMLElement): void {
         let text = pre.textContent;
         if (!/@highlight/.test(text)) // shortcut, nothing to do
             return;
@@ -202,6 +205,8 @@ namespace pxt.tutorial {
         pre.textContent = ""; // clear up and rebuild
         const lines = text.split('\n');
         for (let i = 0; i < lines.length; ++i) {
+            if (i > 0 && i < lines.length)
+                pre.appendChild(document.createTextNode("\n"))
             let line = lines[i];
             if (/@highlight/.test(line)) {
                 // highlight next line
@@ -213,8 +218,34 @@ namespace pxt.tutorial {
                     pre.appendChild(span);
                 }
             } else {
-                pre.appendChild(document.createTextNode(line + '\n'));
+                pre.appendChild(document.createTextNode(line));
             }
         }
     }
+
+    export function getTutorialOptions(md: string, tutorialId: string, filename: string, reportId: string, recipe: boolean): { options: pxt.tutorial.TutorialOptions, editor: string } {
+        const tutorialInfo = pxt.tutorial.parseTutorial(md);
+        if (!tutorialInfo)
+            throw new Error(lf("Invalid tutorial format"));
+
+        const tutorialOptions: pxt.tutorial.TutorialOptions = {
+            tutorial: tutorialId,
+            tutorialName: tutorialInfo.title || filename,
+            tutorialReportId: reportId,
+            tutorialStep: 0,
+            tutorialReady: true,
+            tutorialHintCounter: 0,
+            tutorialStepInfo: tutorialInfo.steps,
+            tutorialActivityInfo: tutorialInfo.activities,
+            tutorialMd: md,
+            tutorialCode: tutorialInfo.code,
+            tutorialRecipe: !!recipe,
+            templateCode: tutorialInfo.templateCode,
+            autoexpandStep: true,
+            metadata: tutorialInfo.metadata
+        };
+
+        return { options: tutorialOptions, editor: tutorialInfo.editor };
+    }
+
 }
