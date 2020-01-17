@@ -26,6 +26,7 @@ namespace pxt.tutorial {
                             return undefined;
                         break;
                     case "spy":
+                    case "python":
                         if (!checkTutorialEditor(pxt.PYTHON_PROJECT_NAME))
                             return undefined;
                         break;
