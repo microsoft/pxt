@@ -934,7 +934,9 @@ namespace ts.pxtc.service {
                     si.attributes.hidden ||
                     si.attributes.deprecated ||
                     // don't members with an alias
-                    si.attributes.alias
+                    si.attributes.alias ||
+                    // ignore TD_ID helpers
+                    si.attributes.shim == "TD_ID"
                 ) continue; // ignore
                 entries[si.qName] = si
                 const n = lastApiInfo.decls[si.qName];
