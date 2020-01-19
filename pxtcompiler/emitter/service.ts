@@ -933,7 +933,7 @@ namespace ts.pxtc.service {
                     /^__/.test(si.namespace) || // ignore namespaces starting with _-
                     si.attributes.hidden ||
                     si.attributes.deprecated ||
-                    // don't members with an alias
+                    // don't emit members with an alias
                     si.attributes.alias ||
                     // ignore TD_ID helpers
                     si.attributes.shim == "TD_ID"
