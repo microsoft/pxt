@@ -260,6 +260,16 @@ declare interface String {
     replace(toReplace: string, replacer: string | ((sub: string) => string)): string;
 
     /**
+     * Return the current string with each occurence of toReplace
+     * replaced with the replacer
+     * @param toReplace the substring to replace in the current string
+     * @param replacer either the string that replaces toReplace in the current string,
+     *                or a function that accepts the substring and returns the replacement string.
+     */
+    //% helper=stringReplaceAll
+    replaceAll(toReplace: string, replacer: string | ((sub: string) => string)): string;
+
+    /**
      * Return a substring of the current string.
      * @param start first character index; can be negative from counting from the end, eg:0
      * @param end one-past-last character index

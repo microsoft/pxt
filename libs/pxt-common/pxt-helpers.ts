@@ -279,6 +279,21 @@ namespace helpers {
         }
     }
 
+    export function stringReplaceAll(s: string, toReplace: string, replacer: string | ((sub: string) => string)) {
+        const split = s.split(toReplace);
+        let output = split[0];
+
+        for (let i = 1; i < split.length; ++i) {
+            if (typeof replacer == "string") {
+                output += replacer + split[i];
+            } else {
+                output += replacer(toReplace) + split[i];
+            }
+        }
+
+        return output;
+    }
+
     export function stringSlice(s: string, start: number, end?: number): string {
         const len = s.length;
 
