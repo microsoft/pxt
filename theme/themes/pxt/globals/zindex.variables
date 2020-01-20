@@ -45,6 +45,7 @@
 @monacoFlyoutZIndex: @blocklyFlyoutZIndex; /* Same as blockly Flyout */
 @monacoInnerZIndex: @menuBarZIndex+1; /* Above menu bar */
 @monacoHintsZIndex: @monacoInnerZIndex; /* parameter hints */
+@monacoSuggestZIndex: @monacoHintsZIndex + 1; /* above hints */
 
 /* Editor toolbar */
 @editorToolsZIndex: @blocklyToolboxZIndex+1; /* Above the blockly toolbox but under the drag surface */

@@ -153,9 +153,11 @@ namespace ts.pxtc {
                 let nm = t.typeName && t.typeName.getText ? t.typeName.getText() : t.typeName;
                 return `${nm}`
             }
+            case ts.SyntaxKind.AnyKeyword:
+                return "any"
             default:
                 pxt.tickEvent("depython.todo", { kind: s.kind })
-                return `(TODO: Unknown TypeNode kind: ${s.kind})`
+                return ``
         }
         // // TODO translate type
         // return s.getText()
@@ -931,8 +933,10 @@ namespace ts.pxtc.service {
                     /^__/.test(si.namespace) || // ignore namespaces starting with _-
                     si.attributes.hidden ||
                     si.attributes.deprecated ||
-                    // don't members with an alias
-                    si.attributes.alias
+                    // don't emit members with an alias
+                    si.attributes.alias ||
+                    // ignore TD_ID helpers
+                    si.attributes.shim == "TD_ID"
                 ) continue; // ignore
                 entries[si.qName] = si
                 const n = lastApiInfo.decls[si.qName];
