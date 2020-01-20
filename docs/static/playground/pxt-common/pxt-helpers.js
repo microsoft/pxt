@@ -264,6 +264,21 @@ namespace helpers {
         return res;
     }
 
+    export function stringReplace(s: string, toReplace: string, replacer: string | ((sub: string) => string)) {
+        const ind = s.indexOf(toReplace);
+        if (ind == -1)
+            return s;
+
+        const begin = s.slice(0, ind);
+        const end = s.slice(ind + toReplace.length);
+
+        if (typeof replacer == "string") {
+            return begin + replacer + end;
+        } else {
+            return begin + replacer(toReplace) + end;
+        }
+    }
+
     export function stringSlice(s: string, start: number, end?: number): string {
         const len = s.length;
 
@@ -562,7 +577,7 @@ namespace __internal {
     //% blockId=protractorPicker block="%angle"
     //% shim=TD_ID
     //% angle.fieldEditor=protractor
-    //% angle.fieldOptions.decompileLiterals=1    
+    //% angle.fieldOptions.decompileLiterals=1
     //% colorSecondary="#FFFFFF"
     //% blockHidden=1
     export function __protractor(angle: number) {
