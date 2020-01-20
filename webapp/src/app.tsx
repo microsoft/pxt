@@ -3086,7 +3086,7 @@ export class ProjectView
         this.startTutorialAsync(tutorialId, tutorialTitle, recipe, editor);
     }
 
-    startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorHint?: string): Promise<void> {
+    startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorProjectName?: string): Promise<void> {
         core.hideDialog();
         core.showLoading("tutorial", lf("starting tutorial..."));
         sounds.initTutorial(); // pre load sounds
@@ -3178,7 +3178,7 @@ export class ProjectView
             const { options, editor: parsedEditor } = pxt.tutorial.getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
 
             // pick tutorial editor
-            const editor = editorHint || parsedEditor;
+            const editor = editorProjectName || parsedEditor;
 
             // start a tutorial within the context of an existing program
             if (recipe) {
@@ -3203,10 +3203,10 @@ export class ProjectView
         function processMarkdown(md: string) {
             if (!md) return md;
 
-            if (editorHint == "js") { // spy => typescript
-                md = md.replace(/^```spy\b/gm, "```typescript");
-            } else if (editorHint == "py") { // typescript => spy
-                md = md.replace(/^```typescript\b/gm, "```spy");
+            if (editorProjectName == pxt.JAVASCRIPT_PROJECT_NAME) { // spy => typescript
+                md = md.replace(/^```(blocks|block|spy)\b/gm, "```typescript");
+            } else if (editorProjectName == pxt.PYTHON_PROJECT_NAME) { // typescript => spy
+                md = md.replace(/^```(blocks|block|typescript)\b/gm, "```spy");
             }
 
             pxt.Util.jsonMergeFrom(dependencies, pxt.gallery.parsePackagesFromMarkdown(md));
