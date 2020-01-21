@@ -2038,7 +2038,7 @@ export class ProjectView
                 const opts: pxt.editor.ProjectCreationOptions = example;
                 if (prj) opts.prj = prj;
                 features = example.features;
-                if (loadBlocks && preferredEditor == "blocksprj") {
+                if (loadBlocks && preferredEditor == pxt.BLOCKS_PROJECT_NAME) {
                     return this.createProjectAsync(opts)
                         .then(() => {
                             return this.loadBlocklyAsync()
