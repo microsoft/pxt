@@ -111,7 +111,6 @@ namespace pxt.editor {
     export enum LanguageOption {
         Standard,
         PythonOnly,
-        BlocksOnly,
         JavaScriptOnly
     }
 
