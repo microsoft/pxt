@@ -56,11 +56,12 @@ namespace pxt.runner {
         writeFile(module: pxt.Package, filename: string, contents: string): void {
             if (filename == pxt.CONFIG_NAME)
                 return; // ignore config writes
-            throw Util.oops("trying to write " + module + " / " + filename)
+            const epkg = getEditorPkg(module);
+            epkg.files[filename] = contents;
         }
 
         getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
-            return pxt.hex.getHexInfoAsync(this, extInfo)
+            return pxt.hexloader.getHexInfoAsync(this, extInfo)
         }
 
         cacheStoreAsync(id: string, val: string): Promise<void> {
@@ -119,7 +120,7 @@ namespace pxt.runner {
                             dependencies.forEach((d: string) => {
                                 addPackageToConfig(cfg, d);
                             });
-                            files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
+                            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
                         }
                         return Promise.resolve()
                     } else if (proto == "docs") {
@@ -134,7 +135,7 @@ namespace pxt.runner {
 
                         if (!cfg.yotta) cfg.yotta = {};
                         cfg.yotta.ignoreConflicts = true;
-                        files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
+                        files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
                         epkg.setFiles(files);
                         return Promise.resolve();
                     } else if (proto == "invalid") {
@@ -176,7 +177,7 @@ namespace pxt.runner {
     function emptyPrjFiles() {
         let p = appTarget.tsprj
         let files = U.clone(p.files)
-        files[pxt.CONFIG_NAME] = JSON.stringify(p.config, null, 4) + "\n"
+        files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(p.config);
         files["main.blocks"] = "";
         return files
     }
@@ -277,7 +278,7 @@ namespace pxt.runner {
                         //set the custom doc name from the URL.
                         let cfg = JSON.parse(epkg.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
                         cfg.name = window.location.href.split('/').pop().split(/[?#]/)[0];;
-                        epkg.files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
+                        epkg.files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
 
                         //Propgate the change to main package
                         mainPkg.config.name = cfg.name;
@@ -384,21 +385,28 @@ namespace pxt.runner {
     }
 
     export let editorLanguageMode = LanguageMode.Blocks;
-    export let editorLocale = "en";
 
-    export function setEditorContextAsync(mode: LanguageMode, locale: string) {
+    export function setEditorContextAsync(mode: LanguageMode, localeInfo: string) {
         editorLanguageMode = mode;
-        if (locale != editorLocale) {
+        if (localeInfo != pxt.Util.localeInfo()) {
             const localeLiveRx = /^live-/;
-            editorLocale = locale;
             return pxt.Util.updateLocalizationAsync(
                 pxt.appTarget.id,
                 pxt.webConfig.commitCdnUrl,
-                editorLocale.replace(localeLiveRx, ''),
+                localeInfo.replace(localeLiveRx, ''),
                 pxt.appTarget.versions.pxtCrowdinBranch,
                 pxt.appTarget.versions.targetCrowdinBranch,
-                localeLiveRx.test(editorLocale)
+                localeLiveRx.test(localeInfo)
             );
+        }
+        if (editorLanguageMode == LanguageMode.Blocks) {
+            document.body.classList.remove("editorlang-text");
+            $('link[title="light"]').prop('disabled', false);
+            $('link[title="dark"]').prop('disabled', true);
+        } else {
+            document.body.classList.add("editorlang-text");
+            $('link[title="light"]').prop('disabled', true);
+            $('link[title="dark"]').prop('disabled', false);
         }
 
         return Promise.resolve();
@@ -453,7 +461,7 @@ namespace pxt.runner {
             options.splitSvg = false; // don't split when requesting rendered images
             pxt.tickEvent("renderer.job")
             jobPromise = pxt.BrowserUtils.loadBlocklyAsync()
-                .then(() => runner.decompileToBlocksAsync(msg.code, msg.options))
+                .then(() => runner.decompileSnippetAsync(msg.code, msg.options))
                 .then(result => {
                     const blocksSvg = result.blocksSvg as SVGSVGElement;
                     return blocksSvg ? pxt.blocks.layout.blocklyToSvgAsync(blocksSvg, 0, 0, blocksSvg.viewBox.baseVal.width, blocksSvg.viewBox.baseVal.height) : undefined;
@@ -699,7 +707,7 @@ ${linkString}
 
     function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
         docid = docid.replace(/^\//, "");
-        return pxt.Cloud.markdownAsync(docid, editorLocale, pxt.Util.localizeLive)
+        return pxt.Cloud.markdownAsync(docid)
             .then(md => renderMarkdownAsync(content, md, { path: docid }))
     }
 
@@ -715,7 +723,7 @@ ${linkString}
         // start the work
         let toc: TOCMenuEntry[];
         return Promise.delay(100)
-            .then(() => pxt.Cloud.markdownAsync(summaryid, editorLocale, pxt.Util.localizeLive))
+            .then(() => pxt.Cloud.markdownAsync(summaryid))
             .then(summary => {
                 toc = pxt.docs.buildTOC(summary);
                 pxt.log(`TOC: ${JSON.stringify(toc, null, 2)}`)
@@ -723,7 +731,7 @@ ${linkString}
                 pxt.docs.visitTOC(toc, entry => {
                     if (!/^\//.test(entry.path) || /^\/pkg\//.test(entry.path)) return;
                     tocsp.push(
-                        pxt.Cloud.markdownAsync(entry.path, editorLocale, pxt.Util.localizeLive)
+                        pxt.Cloud.markdownAsync(entry.path)
                             .then(md => {
                                 entry.markdown = md;
                             }, e => {
@@ -881,14 +889,15 @@ ${linkString}
         compileProgram?: ts.Program;
         compileJS?: pxtc.CompileResult;
         compileBlocks?: pxtc.CompileResult;
-        compilePython?: pxtc.CompileResult;
+        compilePython?: pxtc.transpile.TranspileResult;
         apiInfo?: pxtc.ApisInfo;
         blocksSvg?: Element;
     }
 
     let programCache: ts.Program;
+    let apiCache: pxt.Map<pxtc.ApisInfo>;
 
-    export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
+    export function decompileSnippetAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
         // code may be undefined or empty!!!
         const packageid = options && options.packageId ? "pub:" + options.packageId :
             options && options.package ? "docs:" + options.package
@@ -911,12 +920,14 @@ ${linkString}
                 }
                 programCache = program;
 
-                let compilePython: pxtc.CompileResult = undefined;
-                if (pxt.appTarget.appTheme.python)
-                    compilePython = (pxt as any).py.decompileToPython(program, "main.ts");
+                // decompile to python
+                let compilePython: pxtc.transpile.TranspileResult = undefined;
+                if (pxt.appTarget.appTheme.python) {
+                    compilePython = ts.pxtc.transpile.tsToPy(program, "main.ts");
+                }
 
                 // decompile to blocks
-                let apis = pxtc.getApiInfo(program, opts.jres);
+                let apis = getApiInfo(program, opts);
                 return ts.pxtc.localizeApisAsync(apis, mainPkg)
                     .then(() => {
                         let blocksInfo = pxtc.getBlocksInfo(apis);
@@ -950,6 +961,16 @@ ${linkString}
             });
     }
 
+    function getApiInfo(program: ts.Program, opts: pxtc.CompileOptions) {
+        if (!apiCache) apiCache = {};
+
+        const key = Object.keys(opts.fileSystem).sort().join(";");
+
+        if (!apiCache[key]) apiCache[key] = pxtc.getApiInfo(program, opts.jres);
+
+        return apiCache[key];
+    }
+
     export function compileBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
         const packageid = options && options.packageId ? "pub:" + options.packageId :
             options && options.package ? "docs:" + options.package
@@ -959,7 +980,7 @@ ${linkString}
             .then(opts => {
                 opts.ast = true
                 const resp = pxtc.compile(opts)
-                const apis = pxtc.getApiInfo(resp.ast, opts.jres);
+                const apis = getApiInfo(resp.ast, opts);
                 return ts.pxtc.localizeApisAsync(apis, mainPkg)
                     .then(() => {
                         const blocksInfo = pxtc.getBlocksInfo(apis);

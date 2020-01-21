@@ -92,6 +92,12 @@
     span.docs, text.blocklyText {
         -webkit-font-smoothing: auto !important;
     }
+    /* Language Picker */
+    #langpicker > i {
+        color: @docsLinkColor;
+        text-decoration: none;
+        margin-right: 4px;
+    }
     /* Code segments */
     .mainbody .ui.segment, pre {
         background: @docsSegmentBackgroundColor !important;
@@ -357,6 +363,27 @@
             span.item {
                 color: rgba(255, 255, 255, .6);
             }
+        }
+    }
+
+    /** youtube / video embed: don't give negative margin**/
+    .ui.grid {
+        margin: 0;
+    }
+
+    /* sidedocs tutorials (text-based) */
+    &.editorlang-text {
+        pre {
+            overflow-x: scroll;
+            font-size: 0.875em;
+        }
+
+        pre > code {
+            white-space: pre;
+        }
+
+        .mainbody .ui.segment {
+            padding: 0;
         }
     }
 }

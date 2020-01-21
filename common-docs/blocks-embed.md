@@ -16,12 +16,29 @@ A quick solution is take screenshots of the snippets but that approach can quick
 
 The MakeCode approach to solving this issue is to render the **JavaScript** code snippets on the client using the same block rendering engine as the editor. Under the hood, an ``iframe`` from the MakeCode editor will render the blocks for you.
 
-## Plugins
+## GitHub pages #githubpages
+
+You can use [GitHub pages](https://help.github.com/en/github/working-with-github-pages) to render your README.md file as a web site.
+
+* enable [GitHub pages](https://help.github.com/en/github/working-with-github-pages/creating-a-github-pages-site#creating-your-site) on your repository
+* add the following entry in the ``_config.yml``
+
+```
+  makecode:
+    home_url: @homeurl@
+```
+
+* copy the following text at the bottom of your ``README.md`` file
+```
+<script src="https://makecode.com/gh-pages-embed.js"></script><script>makeCodeRender("{{ site.makecode.home_url }}", "{{ site.github.owner_name }}/{{ site.github.repository_name }}");</script>
+```
+
+## Other Plugins
 
 Here is an integration sample:
 
 * [React component](https://github.com/microsoft/pxt-react-extension-template/blob/master/src/components/snippet.tsx)
-* [HTML only](https://jsfiddle.net/ndyz1d57/80/)
+* [HTML only](https://jsfiddle.net/L8msdjpu/2/)
 * [MkDocs plugin](https://microsoft.github.io/pxt-mkdocs-sample/)
 
 ## Custom rendering
@@ -30,7 +47,7 @@ To render blocks in your own HTML documents or to make plugins for a document pl
 
 ### ~ hint
 
-Try this [fiddle](https://jsfiddle.net/ndyz1d57/80/) to see an embedded blocks rendering example.
+Try this [fiddle](https://jsfiddle.net/nq0hyz97/) to see an embedded blocks rendering example.
 
 ### ~
 
@@ -64,6 +81,7 @@ export interface RenderBlocksRequestMessage extends SimulatorMessage {
     code: string;
     options?: {
         package?: string;
+        packageId?: string;
         snippetMode?: boolean;
     }
 }
@@ -71,6 +89,7 @@ export interface RenderBlocksRequestMessage extends SimulatorMessage {
 
 * ``id``: The identifer of the snippet element. This is used to match the document element of the snippet with the rendered blocks returned later.
 * ``code``: The text of the code snippet to send, compile, and render.
+* ``packageId``: the identifier of a project shared in the editor (without the ``https://makecode.com/`` prefix)
 
 #### Render Blocks Response message
 
@@ -196,7 +215,7 @@ Once this ``iframe`` loads, it sends the ``renderready`` message to the register
 
 This HTML document example contains three ``pre`` elements with code snippets. Only two are sent to the renderer since they're filtered on their class as ``blocks``. Each element sent is given an identifier to match up with the rendered block that is returned. JQuery is used in this example but another framework or standard DOM methods could be used too.
 
-```
+```html
 <html lang="en">
 <head>
     <title>Blocks Embedding Test Page</title>
@@ -321,6 +340,32 @@ $(function () {
 </html>
 ```
 
-## Laziness
+## Rendering shared projects
 
-You can detect whether you have any snippet on your page before loading the rendering iFrame.
+Rendering a shared project is accomplished in almost the same manner as the embedded blocks method. In this case though,
+leave the ``code`` attribute empty and pass the shared project id in a ``options.packageId`` data field.
+
+In the HTML, you can store the shared project id in a ``pre`` element as a data attribute.
+
+```
+<pre data-packageid="_HjWJo9eHjXwP"></pre>
+```
+
+Then, read the ``data-packageid`` attribute and pass it along as the ``packageId`` field in the ``options`` of the ``renderblocks`` message.
+
+```
+f.contentWindow.postMessage({
+    type: "renderblocks",
+    id: pre.id,
+    code: "",
+    options: {
+    	packageId: pre.getAttribute("data-packageid")
+    }
+}, "@homeurl@");
+```
+
+* [HTML only](https://jsfiddle.net/L8msdjpu/3/)
+
+## Lazy loading
+
+You can detect whether you have any snippet on your page before loading the rendering ``iframe``.

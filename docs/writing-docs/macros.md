@@ -206,9 +206,15 @@ To avoid changing screenshots, PXT automatically renders code snippets to blocks
 You need declare the packages required to load your snippet, unless they are part of the default empty template.
 Simple provide a list of package name using the ``package`` macro.
 
+The package listed last in the snippet is one that is hosted in a separate GitHub repository.
+You can find this in the ``Project Settings`` / ``pxt.json`` file, listed under ``dependencies``.
+Notice that it lists the exact version to use; this isn't required (that is, you can leave off the `#v0.6.12`),
+but it is highly recommended so that future changes to the extension don't break your tutorial.
+
     ```package
-    microbit-devices
-    microbit-bluetooth
+    devices
+    bluetooth
+    neopixel=github:microsoft/pxt-neopixel#v0.6.12
     ```
 
 ### features

@@ -122,7 +122,7 @@ function unsubscribe(component: AnyComponent) {
 
 function expired(ce: CacheEntry) {
     if (!ce.api.expirationTime)
-        return ce.data != null;
+        return !ce.lastRefresh; // needs to be refreshed at least once
     return ce.data == null || (Date.now() - ce.lastRefresh) > ce.api.expirationTime(ce.path)
 }
 
@@ -187,7 +187,7 @@ function queue(ce: CacheEntry) {
 
     let final = (res: any) => {
         ce.data = res
-        ce.lastRefresh = Date.now()
+        ce.lastRefresh = pxt.Util.now()
         ce.queued = false
         notify(ce)
     }
@@ -221,6 +221,7 @@ function getCached(component: AnyComponent, path: string): DataFetchResult<any> 
             status: FetchStatus.Complete
         }
 
+    // cache async values
     let fetchRes: DataFetchResult<any> = {
         data: r.data,
         status: FetchStatus.Complete
@@ -279,6 +280,11 @@ export function invalidate(prefix: string) {
     })
 }
 
+export function invalidateHeader(prefix: string, hd: pxt.workspace.Header) {
+    if (hd)
+        invalidate(prefix + ':' + hd.id);
+}
+
 export function getAsync(path: string) {
     let ce = lookup(path)
 
@@ -317,6 +323,18 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
         if (!this.renderCoreOk)
             Util.oops("Override renderCore() not render()")
         return getCached(this, path)
+    }
+
+    hasCloud(): boolean {
+        return !!this.getData("sync:hascloud");
+    }
+
+    hasSync(): boolean {
+        return !!this.getData("sync:hassync")
+    }
+
+    getUser(): pxt.editor.UserInfo {
+        return this.getData("sync:user");
     }
 
     componentWillUnmount(): void {

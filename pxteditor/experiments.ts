@@ -85,6 +85,12 @@ namespace pxt.editor.experiments {
                 feedbackUrl: "https://github.com/microsoft/pxt/issues/5390"
             },
             {
+                id: "pythonToolbox",
+                name: lf("Toolbox for Static Python"),
+                description: lf("Use the code toolbox in Static Python"),
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/6291"
+            },
+            {
                 id: "simGif",
                 name: lf("Simulator Gifs"),
                 description: lf("Download gifs of the simulator"),
@@ -134,14 +140,15 @@ namespace pxt.editor.experiments {
                 description: lf("When compiling, use WebUSB to detect hardware configuration.")
             },
             {
-                id: "alwaysGithubItem",
-                name: lf("Always GitHub"),
-                description: lf("Always show GitHub item in Explorer view, even if token is not available.")
+                id: "githubEditor",
+                name: lf("GitHub editor"),
+                description: lf("Review, commit and push to GitHub."),
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/6419"
             },
             {
-                id: "alwaysGithubItemBlocks",
-                name: lf("Always GitHub Blocks"),
-                description: lf("Always show GitHub item in Explorer view for blocks, even if token is not available.")
+                id: "githubCompiledJs",
+                name: lf("GitHub Pages JavaScript"),
+                description: lf("Commit compiled javascript when creating a release")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }

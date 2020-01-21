@@ -285,3 +285,40 @@ function isRightClick(ev: MouseEvent | PointerEvent | TouchEvent) {
 }
 
 export interface Color { r: number, g: number, b: number, a?: number }
+
+
+export function imageStateToBitmap(state: pxt.sprite.ImageState) {
+    const base = pxt.sprite.Bitmap.fromData(state.bitmap);
+    if (state.floating && state.floating.bitmap) {
+        const floating = pxt.sprite.Bitmap.fromData(state.floating.bitmap);
+        floating.x0 = state.layerOffsetX || 0;
+        floating.y0 = state.layerOffsetY || 0;
+
+        base.apply(floating, true);
+    }
+
+    return base;
+}
+
+export function imageStateToTilemap(state: pxt.sprite.ImageState) {
+    const base = pxt.sprite.Tilemap.fromData(state.bitmap);
+    if (state.floating && state.floating.bitmap) {
+        const floating = pxt.sprite.Tilemap.fromData(state.floating.bitmap);
+        floating.x0 = state.layerOffsetX || 0;
+        floating.y0 = state.layerOffsetY || 0;
+
+        base.apply(floating, true);
+    }
+
+    return base;
+}
+
+export function applyBitmapData(bitmap: pxt.sprite.BitmapData, data: pxt.sprite.BitmapData, x0: number = 0, y0: number = 0): pxt.sprite.BitmapData {
+    if (!bitmap || !data) return bitmap;
+    const base = pxt.sprite.Bitmap.fromData(bitmap);
+    const layer = pxt.sprite.Bitmap.fromData(data);
+    layer.x0 = x0;
+    layer.y0 = y0;
+    base.apply(layer, true);
+    return base.data();
+}

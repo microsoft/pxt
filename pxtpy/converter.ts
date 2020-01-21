@@ -4,8 +4,8 @@ namespace pxt.py {
 
     interface Ctx {
         currModule: py.Module;
-        currClass: py.ClassDef;
-        currFun: py.FunctionDef;
+        currClass?: py.ClassDef;
+        currFun?: py.FunctionDef;
         blockDepth: number;
     }
 
@@ -38,15 +38,23 @@ namespace pxt.py {
     // we run conversion several times, until we have all information possible
     let numUnifies = 0
     let autoImport = true
-    let currErrorCtx = "???"
+    let currErrorCtx: string | undefined = "???"
     let verboseTypes = false
-    let lastAST: AST
+    let lastAST: AST | undefined = undefined
     let lastFile: string
     let diagnostics: pxtc.KsDiagnostic[]
     let compileOptions: pxtc.CompileOptions
-    let syntaxInfo: pxtc.SyntaxInfo
-    let infoNode: AST
+    let syntaxInfo: pxtc.SyntaxInfo | undefined
+    let infoNode: AST | undefined = undefined
     let infoScope: ScopeDef
+
+    // TODO: move to utils
+    function isFalsy<T>(t: T | null | undefined): t is null | undefined {
+        return t === null || t === undefined
+    }
+    function isTruthy<T>(t: T | null | undefined): t is T {
+        return t !== null && t !== undefined
+    }
 
     function stmtTODO(v: py.Stmt) {
         pxt.tickEvent("python.todo", { kind: v.kind })
@@ -81,7 +89,7 @@ namespace pxt.py {
     const tpBoolean = mkType({ primType: "boolean" })
     const tpVoid = mkType({ primType: "void" })
     const tpAny = mkType({ primType: "any" })
-    let tpBuffer: Type
+    let tpBuffer: Type | undefined = undefined
 
 
     const builtInTypes: Map<Type> = {
@@ -104,8 +112,10 @@ namespace pxt.py {
                 return tpVoid
             case ts.SyntaxKind.AnyKeyword:
                 return tpAny
-            default:
-                return tpBuffer
+            default: {
+                // TODO: this could be null
+                return tpBuffer!
+            }
         }
     }
 
@@ -127,10 +137,15 @@ namespace pxt.py {
     }
 
     function mapTsType(tp: string): Type {
+        // TODO handle specifc generic types like: SparseArray<number[]>
+        // TODO handle union types like: Sprite | particles.ParticleAnchor
+
+        // wrapped in (...)
         if (tp[0] == "(" && U.endsWith(tp, ")")) {
             return mapTsType(tp.slice(1, -1))
         }
 
+        // lambda (...) => ...
         const arrowIdx = tp.indexOf(" => ")
         if (arrowIdx > 0) {
             const retTypeStr = tp.slice(arrowIdx + 4)
@@ -143,6 +158,7 @@ namespace pxt.py {
             }
         }
 
+        // array ...[]
         if (U.endsWith(tp, "[]")) {
             return mkArrayType(mapTsType(tp.slice(0, -2)))
         }
@@ -150,12 +166,22 @@ namespace pxt.py {
             return mkArrayType(tpAny);
         }
 
+        // builtin
         const t = U.lookup(builtInTypes, tp)
         if (t) return t
 
+        // handle number litterals like "-20" (b/c TS loves to give specific types to const's)
+        let isNum = !!tp && !isNaN(tp as any as number) // https://stackoverflow.com/questions/175739
+        if (isNum)
+            return tpNumber
+
+        // generic
         if (tp == "T" || tp == "U") // TODO hack!
             return mkType({ primType: "'" + tp })
 
+        // defined by a symbol,
+        //  either in external (non-py) APIs (like default/common packages)
+        //  or in internal (py) APIs (probably main.py)
         let sym = lookupApi(tp + "@type") || lookupApi(tp)
         if (!sym) {
             error(null, 9501, U.lf("unknown type '{0}' near '{1}'", tp, currErrorCtx || "???"))
@@ -181,7 +207,7 @@ namespace pxt.py {
         return sym.attributes.shim && sym.attributes.shim[0] == "@"
     }
 
-    function symbolType(sym: SymbolInfo): Type {
+    function getOrSetSymbolType(sym: SymbolInfo): Type {
         if (!sym.pySymbolType) {
             currErrorCtx = sym.pyQName
 
@@ -215,11 +241,18 @@ namespace pxt.py {
                 }
             }
 
-            if (prevRetType)
+            if (prevRetType) {
                 unify(sym.pyAST, prevRetType, sym.pyRetType)
+            }
 
-            if (sym.kind == SK.Function || sym.kind == SK.Method)
-                sym.pySymbolType = mkFunType(sym.pyRetType, sym.parameters.map(p => p.pyType))
+            if (sym.kind == SK.Function || sym.kind == SK.Method) {
+                let paramTypes = sym.parameters.map(p => p.pyType)
+                if (paramTypes.some(isFalsy)) {
+                    error(null, 9526, U.lf("function symbol is missing parameter types near '{1}'", currErrorCtx || "???"))
+                    return mkType({})
+                }
+                sym.pySymbolType = mkFunType(sym.pyRetType, paramTypes.filter(isTruthy))
+            }
             else
                 sym.pySymbolType = sym.pyRetType
 
@@ -227,24 +260,21 @@ namespace pxt.py {
                 sym.pyInstanceType = mkType({ classType: sym })
             }
 
-            currErrorCtx = null
+            currErrorCtx = undefined
         }
         return sym.pySymbolType
-    }
-
-    function fillTypes(sym: SymbolInfo) {
-        if (sym)
-            symbolType(sym)
-        return sym
     }
 
     function lookupApi(name: string) {
         return U.lookup(internalApis, name) || U.lookup(externalApis, name)
     }
 
-    function lookupGlobalSymbol(name: string): SymbolInfo {
-        if (!name) return null
-        return fillTypes(lookupApi(name))
+    function lookupGlobalSymbol(name: string): SymbolInfo | undefined {
+        if (!name) return undefined
+        let sym = lookupApi(name)
+        if (sym)
+            getOrSetSymbolType(sym)
+        return sym
     }
 
     function initApis(apisInfo: pxtc.ApisInfo, tsShadowFiles: string[]) {
@@ -253,7 +283,6 @@ namespace pxt.py {
 
         let tsShadowFilesSet = U.toDictionary(tsShadowFiles, t => t)
         for (let sym of U.values(apisInfo.byQName)) {
-            // if the symbol comes from a .ts file that matches one of the .py files we're compiling - skip these
             if (tsShadowFilesSet.hasOwnProperty(sym.fileName)) {
                 continue
             }
@@ -263,14 +292,18 @@ namespace pxt.py {
             if (sym2.extendsTypes)
                 sym2.extendsTypes = sym2.extendsTypes.filter(e => e != sym2.qName)
 
-            externalApis[sym2.pyQName] = sym2
-            externalApis[sym2.qName] = sym2
+            if (!sym2.pyQName || !sym2.qName) {
+                error(null, 9526, U.lf("Symbol '{0}' is missing qName for '{1}'", sym2.name, !sym2.pyQName ? "py" : "ts"))
+            }
+            externalApis[sym2.pyQName!] = sym2
+            externalApis[sym2.qName!] = sym2
         }
 
         // TODO this is for testing mostly; we can do this lazily
-        for (let sym of U.values(externalApis)) {
-            fillTypes(sym)
-        }
+        // for (let sym of U.values(externalApis)) {
+        //     if (sym)
+        //         getOrSetSymbolType(sym)
+        // }
 
         tpBuffer = mapTsType("Buffer")
     }
@@ -289,9 +322,11 @@ namespace pxt.py {
         return mkType({ primType: "@fn" + argTypes.length, typeArgs: [retTp].concat(argTypes) })
     }
 
-    function instanceType(sym: SymbolInfo) {
-        symbolType(sym)
-        return sym.pyInstanceType
+    function instanceType(sym: SymbolInfo): Type {
+        getOrSetSymbolType(sym)
+        if (!sym.pyInstanceType)
+            error(null, 9527, U.lf("Instance type symbol '{0}' is missing pyInstanceType", sym))
+        return sym.pyInstanceType!
     }
 
     function currentScope(): py.ScopeDef {
@@ -312,11 +347,11 @@ namespace pxt.py {
         return ctx.currModule.name == "main" && !ctx.currFun && !ctx.currClass
     }
 
-    function addImport(a: AST, name: string, scope?: ScopeDef) {
+    function addImport(a: AST, name: string, scope?: ScopeDef): SymbolInfo {
         const sym = lookupGlobalSymbol(name)
         if (!sym)
             error(a, 9503, U.lf("No module named '{0}'", name))
-        return sym
+        return sym!
     }
 
     function defvar(n: string, opts: py.VarDescOptions, scope?: ScopeDef) {
@@ -339,7 +374,7 @@ namespace pxt.py {
         return v
     }
 
-    function find(t: Type) {
+    function find(t: Type): Type {
         if (t.union) {
             t.union = find(t.union)
             return t.union
@@ -363,15 +398,19 @@ namespace pxt.py {
         else return pref + "?" + n.kind
     }
 
-    function applyTypeMap(s: string) {
+    function applyTypeMap(s: string): string {
         let over = U.lookup(typeMap, s)
         if (over) return over
         for (let v of U.values(ctx.currModule.vars)) {
             if (!v.isImport)
                 continue
-            if (v.expandsTo == s) return v.pyName
-            if (v.isImport && U.startsWith(s, v.expandsTo + ".")) {
-                return v.pyName + s.slice(v.expandsTo.length)
+            if (v.expandsTo == s) {
+                if (!v.pyName)
+                    error(null, 9553, lf("missing pyName"));
+                return v.pyName!
+            }
+            if (v.isImport && U.startsWith(s, (v.expandsTo || "") + ".")) {
+                return v.pyName + s.slice(v.expandsTo!.length)
             }
         }
         return s
@@ -381,25 +420,27 @@ namespace pxt.py {
         t = find(t)
         const suff = (s: string) => verboseTypes ? s : ""
         if (t.primType) {
-            if (t.primType == "@array")
+            if (t.typeArgs && t.primType == "@array") {
                 return t2s(t.typeArgs[0]) + "[]"
+            }
 
-            if (U.startsWith(t.primType, "@fn"))
+            if (U.startsWith(t.primType, "@fn") && t.typeArgs)
                 return "(" + t.typeArgs.slice(1).map(t => "_: " + t2s(t)).join(", ") + ") => " + t2s(t.typeArgs[0])
 
             return t.primType + suff("/P")
         }
 
-        if (t.classType)
+        if (t.classType && t.classType.pyQName)
             return applyTypeMap(t.classType.pyQName) + suff("/C")
-        else if (t.moduleType)
+        else if (t.moduleType && t.moduleType.pyQName)
             return applyTypeMap(t.moduleType.pyQName) + suff("/M")
         else
             return "?" + t.tid
     }
 
-    function mkDiag(astNode: py.AST, category: pxtc.DiagnosticCategory, code: number, messageText: string): pxtc.KsDiagnostic {
-        if (!astNode) astNode = lastAST
+    function mkDiag(astNode: py.AST | undefined | null, category: pxtc.DiagnosticCategory, code: number, messageText: string): pxtc.KsDiagnostic {
+        if (!astNode)
+            astNode = lastAST
         if (!astNode || !ctx || !ctx.currModule) {
             return {
                 fileName: lastFile,
@@ -425,14 +466,14 @@ namespace pxt.py {
         }
     }
 
-    // next free error 9525; 9550-9599 reserved for parser
-    function error(astNode: py.AST, code: number, msg: string) {
+    // next free error 9572; 9550-9599 reserved for parser
+    function error(astNode: py.AST | null | undefined, code: number, msg: string) {
         diagnostics.push(mkDiag(astNode, pxtc.DiagnosticCategory.Error, code, msg))
         //const pos = position(astNode ? astNode.startPos || 0 : 0, mod.source)
         //currErrs += U.lf("{0} near {1}{2}", msg, mod.tsFilename.replace(/\.ts/, ".py"), pos) + "\n"
     }
 
-    function typeError(a: py.AST, t0: Type, t1: Type) {
+    function typeError(a: py.AST | undefined, t0: Type, t1: Type) {
         error(a, 9500, U.lf("types not compatible: {0} and {1}", t2s(t0), t2s(t1)))
     }
 
@@ -490,7 +531,7 @@ namespace pxt.py {
         unify(e, typeOf(e), t1)
     }
 
-    function unify(a: AST, t0: Type, t1: Type): void {
+    function unify(a: AST | undefined, t0: Type, t1: Type): void {
         if (t0 === t1)
             return
 
@@ -553,15 +594,19 @@ namespace pxt.py {
             return sym
         }
         sym = mkSymbol(kind, qname)
-        internalApis[sym.pyQName] = sym
+        if (!sym.pyQName)
+            error(null, 9527, U.lf("Symbol '{0}' is missing pyQName", qname))
+
+        internalApis[sym.pyQName!] = sym
         return sym
     }
 
     function isLocalScope(scope: ScopeDef) {
-        while (scope) {
-            if (scope.kind == "FunctionDef")
+        let s: ScopeDef | undefined = scope
+        while (s) {
+            if (s.kind == "FunctionDef")
                 return true
-            scope = scope.parent
+            s = s.parent
         }
         return false
     }
@@ -578,7 +623,9 @@ namespace pxt.py {
                 n.symInfo = addSymbol(k, qn)
             const sym = n.symInfo
             sym.pyAST = n
-            scope.vars[sym.pyName] = sym
+            if (!sym.pyName)
+                error(null, 9528, U.lf("Symbol '{0}' is missing pyName", sym.qName || sym.name))
+            scope.vars[sym.pyName!] = sym
         }
         return n.symInfo
     }
@@ -589,7 +636,7 @@ namespace pxt.py {
         return U.values(internalApis).filter(e => e.namespace == qn && e.kind == SK.Property)
     }
 
-    function getClassField(ct: SymbolInfo, n: string, checkOnly = false, skipBases = false) {
+    function getClassField(ct: SymbolInfo, n: string, checkOnly = false, skipBases = false): SymbolInfo | null {
         let qid = ct.pyQName + "." + n
         let f = lookupGlobalSymbol(qid)
         if (f)
@@ -601,8 +648,9 @@ namespace pxt.py {
                 if (sym) {
                     if (sym == ct)
                         U.userError("field lookup loop on: " + sym.qName + " / " + n)
-                    f = getClassField(sym, n, true)
-                    if (f) return f
+                    let classF = getClassField(sym, n, true)
+                    if (classF)
+                        return classF
                 }
             }
         }
@@ -615,48 +663,55 @@ namespace pxt.py {
         return null
     }
 
+    function getTypesForFieldLookup(recvType: Type): SymbolInfo[] {
+        let t = find(recvType)
+        return [
+            t.classType,
+            ...resolvePrimTypes(t.primType),
+            t.moduleType
+        ].filter(isTruthy)
+    }
+
     function getTypeField(recv: Expr, n: string, checkOnly = false) {
-        let t = find(typeOf(recv))
+        const recvType = typeOf(recv)
+        const constructorTypes = getTypesForFieldLookup(recvType)
 
-        let ct = t.classType
-
-        if (!ct) {
-            ct = resolvePrimType(t.primType);
-        }
-
-        if (ct) {
+        for (let ct of constructorTypes) {
             let f = getClassField(ct, n, checkOnly)
-
             if (f) {
-                if (!f.isInstance)
-                    error(null, 9504, U.lf("the field '{0}' of '{1}' is static", n, ct.pyQName))
-                if (isSuper(recv) ||
-                    (isThis(recv) && f.namespace != ctx.currClass.symInfo.qName)) {
-                    f.isProtected = true
+                let isModule = !!ct.moduleTypeMarker
+                if (isModule) {
+                    if (f.isInstance)
+                        error(null, 9505, U.lf("the field '{0}' of '{1}' is not static", n, ct.pyQName))
+                } else {
+                    if (!f.isInstance)
+                        error(null, 9504, U.lf("the field '{0}' of '{1}' is static", n, ct.pyQName))
+                    if (isSuper(recv))
+                        f.isProtected = true
+                    else if (isThis(recv)) {
+                        if (!ctx.currClass)
+                            error(null, 9529, U.lf("no class context found for {0}", f.pyQName))
+                        if (f.namespace != ctx.currClass!.symInfo.qName) {
+                            f.isProtected = true
+                        }
+                    }
                 }
+                return f
             }
-
-            return f
         }
-
-        ct = t.moduleType
-        if (ct) {
-            let f = getClassField(ct, n, checkOnly)
-            if (f && f.isInstance)
-                error(null, 9505, U.lf("the field '{0}' of '{1}' is not static", n, ct.pyQName))
-            return f
-        }
-
         return null
     }
 
-    function resolvePrimType(primType: string) {
+    function resolvePrimTypes(primType: string | undefined): SymbolInfo[] {
+        let res: SymbolInfo[] = []
         if (primType == "@array") {
-            return lookupApi("_py.Array")
+            res = [lookupApi("_py.Array"), lookupApi("Array")]
         } else if (primType == "string") {
-            return lookupApi("_py.String")
+            // we need to check both the special "_py" namespace and the typescript "String"
+            // class because for example ".length" is only defined in the latter
+            res = [lookupApi("_py.String"), lookupApi("String")]
         }
-        return undefined
+        return res.filter(a => !!a)
     }
 
     function lookupVar(n: string) {
@@ -722,15 +777,15 @@ namespace pxt.py {
 
     function resetCtx(m: py.Module) {
         ctx = {
-            currClass: null,
-            currFun: null,
+            currClass: undefined,
+            currFun: undefined,
             currModule: m,
             blockDepth: 0
         }
         lastFile = m.tsFilename.replace(/\.ts$/, ".py")
     }
 
-    function isModule(s: SymbolInfo) {
+    function isModule(s: SymbolInfo | undefined) {
         if (!s) return false
         switch (s.kind) {
             case SK.Module:
@@ -781,13 +836,16 @@ namespace pxt.py {
         if (tpName) {
             let sym = lookupApi(tpName + "@type") || lookupApi(tpName)
             if (sym) {
-                symbolType(sym)
+                getOrSetSymbolType(sym)
                 if (sym.kind == SK.Enum)
                     return tpNumber
 
                 if (sym.pyInstanceType)
                     return sym.pyInstanceType
             }
+            else if (builtInTypes[tpName])
+                return builtInTypes[tpName]
+
             error(e, 9506, U.lf("cannot find type '{0}'", tpName))
         }
 
@@ -811,7 +869,9 @@ namespace pxt.py {
         if (!n.symInfo.parameters) {
             let didx = args.defaults.length - nargs.length
             n.symInfo.parameters = nargs.map(a => {
-                let tp = compileType(a.annotation)
+                if (!a.annotation)
+                    error(n, 9519, U.lf("Arg '{0}' missing annotation", a.arg))
+                let tp = compileType(a.annotation!)
                 let defl = ""
                 if (didx >= 0) {
                     defl = B.flattenNode([expr(args.defaults[didx])]).output
@@ -832,8 +892,10 @@ namespace pxt.py {
 
         let lst = n.symInfo.parameters.map(p => {
             let v = defvar(p.name, { isParam: true })
-            unify(n, symbolType(v), p.pyType)
-            let res = [quote(p.name), typeAnnot(p.pyType)]
+            if (!p.pyType)
+                error(n, 9530, U.lf("parameter '{0}' missing pyType", p.name))
+            unify(n, getOrSetSymbolType(v), p.pyType!)
+            let res = [quote(p.name), typeAnnot(p.pyType!, true)]
             if (p.default) {
                 res.push(B.mkText(" = " + p.default))
             }
@@ -849,7 +911,7 @@ namespace pxt.py {
     }
 
     function accessAnnot(f: SymbolInfo) {
-        if (f.pyName[0] != "_")
+        if (!f.pyName || f.pyName[0] != "_")
             return B.mkText("")
         return f.isProtected ? B.mkText("protected ") : B.mkText("private ")
     }
@@ -929,7 +991,7 @@ namespace pxt.py {
         }
     }
 
-    function typeAnnot(t: Type) {
+    function typeAnnot(t: Type, defaultToAny = false) {
         let s = t2s(t)
         if (s[0] == "?") {
             // TODO:
@@ -940,7 +1002,7 @@ namespace pxt.py {
             // work around using any:
             // return B.mkText(": any /** TODO: type **/")
             // but for now we can just omit the type and most of the type it'll be inferable
-            return B.mkText("")
+            return defaultToAny ? B.mkText(": any") : B.mkText("")
         }
         return B.mkText(": " + t2s(t))
     }
@@ -955,7 +1017,7 @@ namespace pxt.py {
         }
     }
 
-    function shouldInlineFunction(si: SymbolInfo) {
+    function shouldInlineFunction(si: SymbolInfo | undefined) {
         if (!si || !si.pyAST)
             return false
         if (si.pyAST.kind != "FunctionDef")
@@ -1014,16 +1076,20 @@ namespace pxt.py {
             if (n.body.length >= 1 && n.body[0].kind == "Raise")
                 n.alwaysThrows = true
             if (isMethod) {
+                if (!ctx.currClass)
+                    error(n, 9531, lf("method '{0}' is missing current class context", sym.pyQName));
+                if (!sym.pyRetType)
+                    error(n, 9532, lf("method '{0}' is missing a return type", sym.pyQName));
                 if (n.name == "__init__") {
                     nodes.push(B.mkText("constructor"))
-                    unifyClass(n, sym.pyRetType, ctx.currClass.symInfo)
+                    unifyClass(n, sym.pyRetType!, ctx.currClass!.symInfo)
                 } else {
                     if (funname == "__get__" || funname == "__set__") {
                         let vv = n.vars["value"]
                         if (funname == "__set__" && vv) {
-                            let cf = getClassField(ctx.currClass.symInfo, "__get__")
-                            if (cf.pyAST && cf.pyAST.kind == "FunctionDef")
-                                unify(n, vv.pyRetType, cf.pyRetType)
+                            let cf = getClassField(ctx.currClass!.symInfo, "__get__")
+                            if (cf && cf.pyAST && cf.pyAST.kind == "FunctionDef")
+                                unify(n, vv.pyRetType!, cf.pyRetType!)
                         }
                         funname = funname.replace(/_/g, "")
                     }
@@ -1044,15 +1110,18 @@ namespace pxt.py {
                 n.returns ? typeAnnot(compileType(n.returns)) : B.mkText(""))
 
             // make sure type is initialized
-            symbolType(sym)
+            getOrSetSymbolType(sym)
 
             let body = n.body.map(stmt)
             if (n.name == "__init__") {
-                for (let f of listClassFields(ctx.currClass)) {
+                if (!ctx.currClass)
+                    error(n, 9533, lf("__init__ method '{0}' is missing current class context", sym.pyQName));
+
+                for (let f of listClassFields(ctx.currClass!)) {
                     let p = f.pyAST as Assign
                     if (p && p.value) {
                         body.push(
-                            B.mkStmt(B.mkText(`this.${quoteStr(f.pyName)} = `), expr(p.value))
+                            B.mkStmt(B.mkText(`this.${quoteStr(f.pyName!)} = `), expr(p.value))
                         )
                     }
                 }
@@ -1102,7 +1171,7 @@ namespace pxt.py {
                     let b = getClassDef(n.bases[0])
                     if (b) {
                         n.baseClass = b
-                        sym.extendsTypes = [b.symInfo.pyQName]
+                        sym.extendsTypes = [b.symInfo.pyQName!]
                     }
                 }
             }
@@ -1111,7 +1180,12 @@ namespace pxt.py {
 
             let fieldDefs = listClassFields(n)
                 .filter(f => f.kind == SK.Property && f.isInstance)
-                .map((f) => B.mkStmt(accessAnnot(f), quote(f.pyName), typeAnnot(f.pyRetType)))
+                .map(f => {
+                    if (!f.pyName || !f.pyRetType)
+                        error(n, 9535, lf("field definition missing py name or ret type", f.qName));
+                    return f
+                })
+                .map((f) => B.mkStmt(accessAnnot(f), quote(f.pyName!), typeAnnot(f.pyRetType!)))
             body.children = fieldDefs.concat(body.children)
 
             return B.mkStmt(B.mkGroup(nodes))
@@ -1120,7 +1194,11 @@ namespace pxt.py {
         Return: (n: py.Return) => {
             if (n.value) {
                 let f = ctx.currFun
-                if (f) unifyTypeOf(n.value, f.symInfo.pyRetType)
+                if (f) {
+                    if (!f.symInfo.pyRetType)
+                        error(n, 9536, lf("function '{0}' missing return type", f.symInfo.pyQName));
+                    unifyTypeOf(n.value, f.symInfo.pyRetType!)
+                }
                 return B.mkStmt(B.mkText("return "), expr(n.value))
             } else {
                 return B.mkStmt(B.mkText("return"))
@@ -1150,6 +1228,7 @@ namespace pxt.py {
         },
         For: (n: py.For) => {
             U.assert(n.orelse.length == 0)
+            n.target.forTargetEndPos = n.endPos
             if (isCallTo(n.iter, "range")) {
                 let r = n.iter as py.Call
                 let def = expr(n.target)
@@ -1169,14 +1248,27 @@ namespace pxt.py {
                     B.mkText(")"),
                     stmts(n.body))
             }
-            unifyTypeOf(n.iter, mkArrayType(typeOf(n.target)))
+
+            if (currIteration > 1) {
+                const typeOfTarget = typeOf(n.target);
+                /**
+                 * The type the variable to iterate over must be `string | Iterable<typeof Target>`,
+                 * but we can't model that with the current state of the python type checker.
+                 * If we can identify the type of the value we're iterating over to be a string elsewhere,
+                 * try and allow this by unifying with just the target type;
+                 * otherwise, it is assumed to be an array.
+                 */
+                unifyTypeOf(n.iter, typeOf(n.iter) == tpString ? typeOfTarget : mkArrayType(typeOfTarget));
+            }
+
             return B.mkStmt(
                 B.mkText("for ("),
                 expr(n.target),
                 B.mkText(" of "),
                 expr(n.iter),
                 B.mkText(")"),
-                stmts(n.body))
+                stmts(n.body)
+            );
         },
         While: (n: py.While) => {
             U.assert(n.orelse.length == 0)
@@ -1211,15 +1303,19 @@ namespace pxt.py {
         With: (n: py.With) => {
             if (n.items.length == 1 && isOfType(n.items[0].context_expr, "pins.I2CDevice")) {
                 let it = n.items[0]
-                let id = getName(it.optional_vars)
                 let res: B.JsNode[] = []
                 let devRef = expr(it.context_expr)
-                if (id) {
-                    let v = defvar(id, { isLocal: true })
-                    id = quoteStr(id)
-                    res.push(B.mkStmt(B.mkText("const " + id + " = "), devRef))
-                    unifyTypeOf(it.context_expr, v.pyRetType)
-                    devRef = B.mkText(id)
+                if (it.optional_vars) {
+                    let id = getName(it.optional_vars)
+                    if (id) {
+                        let v = defvar(id, { isLocal: true })
+                        id = quoteStr(id)
+                        res.push(B.mkStmt(B.mkText("const " + id + " = "), devRef))
+                        if (!v.pyRetType)
+                            error(n, 9537, lf("function '{0}' missing return type", v.pyQName));
+                        unifyTypeOf(it.context_expr, v.pyRetType!)
+                        devRef = B.mkText(id)
+                    }
                 }
                 res.push(B.mkStmt(B.mkInfix(devRef, ".", B.mkText("begin()"))))
                 U.pushRange(res, n.body.map(stmt))
@@ -1248,7 +1344,7 @@ namespace pxt.py {
             let ex = n.exc || n.cause
             if (!ex)
                 return B.mkStmt(B.mkText("throw"))
-            let msg: B.JsNode
+            let msg: B.JsNode | undefined = undefined
             if (ex && ex.kind == "Call") {
                 let cex = ex as py.Call
                 if (cex.args.length == 1) {
@@ -1260,7 +1356,11 @@ namespace pxt.py {
                 msg = B.mkGroup([B.mkText("`"), expr(ex), B.mkText("`")])
             return B.mkStmt(B.H.mkCall("control.fail", [msg]))
         },
-        Assert: (n: py.Assert) => B.mkStmt(B.H.mkCall("control.assert", exprs0([n.test, n.msg]))),
+        Assert: (n: py.Assert) => {
+            if (!n.msg)
+                error(n, 9537, lf("assert missing message"));
+            return B.mkStmt(B.H.mkCall("control.assert", exprs0([n.test, n.msg!])))
+        },
         Import: (n: py.Import) => {
             for (let nm of n.names) {
                 if (nm.asname)
@@ -1274,10 +1374,13 @@ namespace pxt.py {
         ImportFrom: (n: py.ImportFrom) => {
             let res: B.JsNode[] = []
             for (let nn of n.names) {
-                if (nn.name == "*")
-                    defvar(n.module, {
+                if (nn.name == "*") {
+                    if (!n.module)
+                        error(n, 9538, lf("import missing module name"));
+                    defvar(n.module!, {
                         isImportStar: true
                     })
+                }
                 else {
                     let fullname = n.module + "." + nn.name
                     let sym = lookupGlobalSymbol(fullname)
@@ -1303,9 +1406,12 @@ namespace pxt.py {
                 B.mkStmt(expr(n.value)),
         Pass: (n: py.Pass) => B.mkStmt(B.mkText("")),
         Break: (n: py.Break) => B.mkStmt(B.mkText("break")),
-        Continue: (n: py.Continue) => B.mkStmt(B.mkText("break")),
+        Continue: (n: py.Continue) => B.mkStmt(B.mkText("continue")),
 
-        Delete: (n: py.Delete) => stmtTODO(n),
+        Delete: (n: py.Delete) => {
+            error(n, 9550, U.lf("delete statements are unsupported"));
+            return stmtTODO(n)
+        },
         Try: (n: py.Try) => {
             let r = [
                 B.mkText("try"),
@@ -1322,9 +1428,18 @@ namespace pxt.py {
                 r.push(B.mkText("finally"), stmts(n.finalbody))
             return B.mkStmt(B.mkGroup(r))
         },
-        AsyncFunctionDef: (n: py.AsyncFunctionDef) => stmtTODO(n),
-        AsyncFor: (n: py.AsyncFor) => stmtTODO(n),
-        AsyncWith: (n: py.AsyncWith) => stmtTODO(n),
+        AsyncFunctionDef: (n: py.AsyncFunctionDef) => {
+            error(n, 9551, U.lf("async function definitions are unsupported"));
+            return stmtTODO(n)
+        },
+        AsyncFor: (n: py.AsyncFor) => {
+            error(n, 9552, U.lf("async for statements are unsupported"));
+            return stmtTODO(n)
+        },
+        AsyncWith: (n: py.AsyncWith) => {
+            error(n, 9553, U.lf("async with statements are unsupported"));
+            return stmtTODO(n)
+        },
         Global: (n: py.Global) => {
             const globalScope = topScope();
             const current = currentScope();
@@ -1338,7 +1453,7 @@ namespace pxt.py {
 
                 const sym = defvar(name, { modifier: VarModifier.Global });
 
-                if (sym.firstRefPos < n.startPos) {
+                if (sym.firstRefPos! < n.startPos) {
                     error(n, 9522, U.lf("Variable referenced before global declaration"))
                 }
             }
@@ -1358,7 +1473,7 @@ namespace pxt.py {
 
                 const sym = defvar(name, { modifier: VarModifier.NonLocal });
 
-                if (sym.firstRefPos < n.startPos) {
+                if (sym.firstRefPos! < n.startPos) {
                     error(n, 9524, U.lf("Variable referenced before nonlocal declaration"))
                 }
             }
@@ -1367,13 +1482,15 @@ namespace pxt.py {
     }
 
     function convertAssign(n: py.AnnAssign | py.Assign): B.JsNode {
-        let annotation: Expr;
-        let value: Expr;
+        let annotation: Expr | null;
+        let value: Expr | null;
         let target: Expr;
         // TODO handle more than 1 target
         if (n.kind === "Assign") {
-            if (n.targets.length != 1)
+            if (n.targets.length != 1) {
+                error(n, 9553, U.lf("multi-target assignment statements are unsupported"));
                 return stmtTODO(n)
+            }
             target = n.targets[0]
             value = n.value
             annotation = null
@@ -1393,8 +1510,10 @@ namespace pxt.py {
         if (nm && ctx.currClass && !ctx.currFun) {
             // class fields can't be const
             // hack: value in @namespace should always be const
-            isConstCall = value && ctx.currClass.isNamespace;
+            isConstCall = !!(value && ctx.currClass.isNamespace);
             let fd = getClassField(ctx.currClass.symInfo, nm)
+            if (!fd)
+                error(n, 9544, lf("cannot get class field"));
             // TODO: use or remove this code
             /*
             let src = expr(value)
@@ -1430,12 +1549,18 @@ namespace pxt.py {
             if (currIteration == 0) {
                 return B.mkText("/* skip for now */")
             }
-            unifyTypeOf(target, fd.pyRetType)
-            fd.isInstance = false
+            if (!fd!.pyRetType)
+                error(n, 9539, lf("function '{0}' missing return type", fd!.pyQName));
+            unifyTypeOf(target, fd!.pyRetType!)
+            fd!.isInstance = false
             pref = ctx.currClass.isNamespace ? `export ${isConstCall ? "const" : "let"} ` : "static "
         }
         if (value)
             unifyTypeOf(target, typeOf(value))
+        else {
+            error(n, 9555, U.lf("unable to determine value of assignment"));
+            return stmtTODO(n)
+        }
         if (isConstCall) {
             // first run would have "let" in it
             defvar(getName(target), {})
@@ -1447,8 +1572,10 @@ namespace pxt.py {
             let tup = target as py.Tuple
             let targs = [B.mkText("let "), B.mkText("[")]
             let nonNames = tup.elts.filter(e => e.kind !== "Name")
-            if (nonNames.length)
+            if (nonNames.length) {
+                error(n, 9556, U.lf("non-trivial tuple assignment unsupported"));
                 return stmtTODO(n)
+            }
             let tupNames = tup.elts
                 .map(e => e as py.Name)
                 .map(convertName)
@@ -1497,10 +1624,14 @@ namespace pxt.py {
                 n.isdef = false
             }
             n.symbolInfo = curr
-            unify(n, n.tsType, curr.pyRetType)
+            if (!n.tsType)
+                error(n, 9540, lf("definition missing ts type"));
+            if (!curr.pyRetType)
+                error(n, 9568, lf("missing py return type"));
+            unify(n, n.tsType!, curr.pyRetType!)
         }
 
-        if (n.isdef && shouldHoist(curr, currentScope())) {
+        if (n.isdef && shouldHoist(curr!, currentScope())) {
             n.isdef = false;
         }
 
@@ -1524,8 +1655,6 @@ namespace pxt.py {
     }
 
     function getName(e: py.Expr): string {
-        if (e == null)
-            return null
         if (e.kind == "Name") {
             let s = (e as py.Name).id
             let v = lookupVar(s)
@@ -1537,7 +1666,8 @@ namespace pxt.py {
             if (pref)
                 return pref + "." + (e as py.Attribute).attr
         }
-        return null
+        error(null, 9542, lf("Cannot get name of unknown expression kind '{0}'", e.kind));
+        return undefined!
     }
 
     function quote(id: py.identifier) {
@@ -1550,7 +1680,7 @@ namespace pxt.py {
         if (n.kind != "Call")
             return false
         let c = n as py.Call
-        return getName(c.func) == fn
+        return getName(c.func) === fn
     }
 
     function binop(left: B.JsNode, pyName: string, right: B.JsNode) {
@@ -1563,7 +1693,7 @@ namespace pxt.py {
     }
 
     interface FunOverride extends pxtc.FunOverride {
-        t: Type;
+        t: Type | undefined;
     }
 
     const funMapExtension: Map<FunOverride> = {
@@ -1572,7 +1702,7 @@ namespace pxt.py {
         "micropython.const": { n: "", t: tpNumber }
     }
 
-    function getFunMap(): Map<FunOverride> {
+    function getPy2TsFunMap(): Map<FunOverride> {
         let funMap: Map<FunOverride> = {};
         Object.keys(pxtc.ts2PyFunNameMap).forEach(k => {
             let tsOverride = pxtc.ts2PyFunNameMap[k];
@@ -1594,7 +1724,7 @@ namespace pxt.py {
         return funMap
     }
 
-    const funMap: Map<FunOverride> = getFunMap();
+    const py2TsFunMap: Map<FunOverride> = getPy2TsFunMap();
 
     function isSuper(v: py.Expr) {
         return isCallTo(v, "super") && (v as py.Call).args.length == 0
@@ -1670,23 +1800,47 @@ namespace pxt.py {
         BinOp: (n: py.BinOp) => {
             let r = handleFmt(n)
             if (r) return r
-            r = binop(expr(n.left), n.op, expr(n.right))
+
+            const left = expr(n.left);
+            const right = expr(n.right);
+
+            if (isArrayType(n.left) && isArrayType(n.right)) {
+                if (n.op === "Add") {
+                    return B.H.extensionCall("concat", [left, right], false);
+                }
+            }
+
+            r = binop(left, n.op, right)
+
             if (numOps[n.op]) {
                 unifyTypeOf(n.left, tpNumber)
                 unifyTypeOf(n.right, tpNumber)
-                unify(n, n.tsType, tpNumber)
+                if (!n.tsType)
+                    error(n, 9570, lf("binary op missing ts type"));
+                unify(n, n.tsType!, tpNumber)
             }
             return r
         },
         UnaryOp: (n: py.UnaryOp) => {
             let op = prefixOps[n.op]
             U.assert(!!op)
-            return B.mkInfix(null, op, expr(n.operand))
+            return B.mkInfix(null!, op, expr(n.operand))
         },
         Lambda: (n: py.Lambda) => exprTODO(n),
         IfExp: (n: py.IfExp) =>
             B.mkInfix(B.mkInfix(expr(n.test), "?", expr(n.body)), ":", expr(n.orelse)),
-        Dict: (n: py.Dict) => exprTODO(n),
+        Dict: (n: py.Dict) => {
+            ctx.blockDepth++;
+            const elts = n.keys.map((k, i) => {
+                const v = n.values[i]
+                if (k === undefined)
+                    return exprTODO(n)
+                return B.mkStmt(B.mkInfix(expr(k), ":", expr(v)), B.mkText(","))
+            })
+            const res = B.mkBlock(elts);
+            ctx.blockDepth--;
+            return res
+        },
         Set: (n: py.Set) => exprTODO(n),
         ListComp: (n: py.ListComp) => exprTODO(n),
         SetComp: (n: py.SetComp) => exprTODO(n),
@@ -1723,6 +1877,7 @@ namespace pxt.py {
             return r
         },
         Call: (n: py.Call) => {
+            // TODO(dz): move body out; needs seperate PR that doesn't touch content
             n.func.inCalledPosition = true
 
             let nm = getName(n.func)
@@ -1732,11 +1887,11 @@ namespace pxt.py {
             let fun = namedSymbol
 
             let recvTp: Type
-            let recv: py.Expr
-            let methName: string
+            let recv: py.Expr | undefined = undefined
+            let methName: string = ""
 
             if (isClass) {
-                fun = lookupSymbol(namedSymbol.pyQName + ".__constructor")
+                fun = lookupSymbol(namedSymbol!.pyQName + ".__constructor")
             } else {
                 if (n.func.kind == "Attribute") {
                     let attr = n.func as py.Attribute
@@ -1750,25 +1905,28 @@ namespace pxt.py {
                 }
             }
 
-            let orderedArgs = n.args.slice()
+            let orderedArgs: (Expr | null)[] = n.args.slice()
 
             if (nm == "super" && orderedArgs.length == 0) {
-                if (ctx.currClass && ctx.currClass.baseClass)
-                    unifyClass(n, n.tsType, ctx.currClass.baseClass.symInfo)
+                if (ctx.currClass && ctx.currClass.baseClass) {
+                    if (!n.tsType)
+                        error(n, 9543, lf("call expr missing ts type"));
+                    unifyClass(n, n.tsType!, ctx.currClass.baseClass.symInfo)
+                }
                 return B.mkText("super")
             }
 
             if (!fun) {
-                let over = U.lookup(funMap, nm)
+                let over = U.lookup(py2TsFunMap, nm)
                 if (over)
                     methName = ""
 
                 if (methName) {
-                    nm = t2s(recvTp) + "." + methName
-                    over = U.lookup(funMap, nm)
-                    if (!over && typeCtor(find(recvTp)) == "@array") {
+                    nm = t2s(recvTp!) + "." + methName
+                    over = U.lookup(py2TsFunMap, nm)
+                    if (!over && typeCtor(find(recvTp!)) == "@array") {
                         nm = "Array." + methName
-                        over = U.lookup(funMap, nm)
+                        over = U.lookup(py2TsFunMap, nm)
                     }
                 }
 
@@ -1776,7 +1934,7 @@ namespace pxt.py {
 
                 if (over) {
                     if (over.n[0] == "." && orderedArgs.length) {
-                        recv = orderedArgs.shift()
+                        recv = orderedArgs.shift()!
                         recvTp = typeOf(recv)
                         methName = over.n.slice(1)
                         fun = getTypeField(recv, methName)
@@ -1793,8 +1951,9 @@ namespace pxt.py {
                 return B.mkInfix(B.mkText(`""`), "+", expr(n.args[0]))
             }
 
-            if (!fun)
-                error(n, 9508, U.lf("can't find called function"))
+            if (!fun) {
+                error(n, 9508, U.lf(`can't find called function "${nm}"`))
+            }
 
             let formals = fun ? fun.parameters : null
             let allargs: B.JsNode[] = []
@@ -1805,7 +1964,7 @@ namespace pxt.py {
                 allargs = orderedArgs.map(expr)
             } else {
                 if (orderedArgs.length > formals.length)
-                    error(n, 9510, U.lf("too many arguments in call to '{0}'", fun.pyQName))
+                    error(n, 9510, U.lf("too many arguments in call to '{0}'", fun!.pyQName))
 
                 while (orderedArgs.length < formals.length)
                     orderedArgs.push(null)
@@ -1814,9 +1973,9 @@ namespace pxt.py {
                 for (let kw of n.keywords) {
                     let idx = formals.findIndex(f => f.name == kw.arg)
                     if (idx < 0)
-                        error(kw, 9511, U.lf("'{0}' doesn't have argument named '{1}'", fun.pyQName, kw.arg))
+                        error(kw, 9511, U.lf("'{0}' doesn't have argument named '{1}'", fun!.pyQName, kw.arg))
                     else if (orderedArgs[idx] != null)
-                        error(kw, 9512, U.lf("argument '{0} already specified in call to '{1}'", kw.arg, fun.pyQName))
+                        error(kw, 9512, U.lf("argument '{0} already specified in call to '{1}'", kw.arg, fun!.pyQName))
                     else
                         orderedArgs[idx] = kw.value
                 }
@@ -1832,19 +1991,23 @@ namespace pxt.py {
                 for (let i = 0; i < orderedArgs.length; ++i) {
                     let arg = orderedArgs[i]
                     if (arg == null && !formals[i].initializer) {
-                        error(n, 9513, U.lf("missing argument '{0}' in call to '{1}'", formals[i].name, fun.pyQName))
+                        error(n, 9513, U.lf("missing argument '{0}' in call to '{1}'", formals[i].name, fun!.pyQName))
                         allargs.push(B.mkText("null"))
                     } else if (arg) {
-                        if (formals[i].pyType.primType !== "any") {
-                            unifyTypeOf(arg, formals[i].pyType)
+                        if (!formals[i].pyType)
+                            error(n, 9545, lf("formal arg missing py type"));
+                        if (formals[i].pyType!.primType !== "any") {
+                            unifyTypeOf(arg, formals[i].pyType!)
                         }
                         if (arg.kind == "Name" && shouldInlineFunction(arg.symbolInfo)) {
-                            allargs.push(emitFunctionDef(arg.symbolInfo.pyAST as FunctionDef, true))
+                            allargs.push(emitFunctionDef(arg.symbolInfo!.pyAST as FunctionDef, true))
                         } else {
                             allargs.push(expr(arg))
                         }
                     } else {
-                        allargs.push(B.mkText(formals[i].initializer))
+                        if (!formals[i].initializer)
+                            error(n, 9547, lf("formal arg missing initializer"));
+                        allargs.push(B.mkText(formals[i].initializer!))
                     }
                 }
             }
@@ -1869,13 +2032,21 @@ namespace pxt.py {
             }
 
             if (fun) {
-                unifyTypeOf(n, fun.pyRetType)
+                if (!fun.pyRetType)
+                    error(n, 9549, lf("function missing pyRetType"));
+                unifyTypeOf(n, fun.pyRetType!)
                 n.symbolInfo = fun
 
                 if (fun.attributes.py2tsOverride) {
                     const override = parseTypeScriptOverride(fun.attributes.py2tsOverride);
                     if (override) {
-                        return buildOverride(override, allargs, methName ? expr(recv) : null);
+                        if (methName && !recv)
+                            error(n, 9550, lf("missing recv"));
+
+                        let res = buildOverride(override, allargs, methName ? expr(recv!) : undefined);
+                        if (!res)
+                            error(n, 9555, lf("buildOverride failed unexpectedly"));
+                        return res!
                     }
                 }
                 else if (fun.attributes.pyHelper) {
@@ -1888,7 +2059,7 @@ namespace pxt.py {
                 }
             }
 
-            let fn = methName ? B.mkInfix(expr(recv), ".", B.mkText(methName)) : expr(n.func)
+            let fn = methName ? B.mkInfix(expr(recv!), ".", B.mkText(methName)) : expr(n.func)
 
             let nodes = [
                 fn,
@@ -1901,18 +2072,24 @@ namespace pxt.py {
                 nodes = [fn, forceBackticks(allargs[0])]
 
             if (isClass) {
-                nodes[0] = B.mkText(applyTypeMap(namedSymbol.pyQName))
+                if (!namedSymbol || !namedSymbol.pyQName)
+                    error(n, 9551, lf("missing namedSymbol or pyQName"));
+                nodes[0] = B.mkText(applyTypeMap(namedSymbol!.pyQName!))
                 nodes.unshift(B.mkText("new "))
             }
 
             return B.mkGroup(nodes)
         },
         Num: (n: py.Num) => {
-            unify(n, n.tsType, tpNumber)
+            if (!n.tsType)
+                error(n, 9556, lf("tsType missing"));
+            unify(n, n.tsType!, tpNumber)
             return B.mkText(n.ns)
         },
         Str: (n: py.Str) => {
-            unify(n, n.tsType, tpString)
+            if (!n.tsType)
+                error(n, 9557, lf("tsType missing"));
+            unify(n, n.tsType!, tpString)
             return B.mkText(B.stringLit(n.s))
         },
         FormattedValue: (n: py.FormattedValue) => exprTODO(n),
@@ -1921,8 +2098,11 @@ namespace pxt.py {
             return B.mkText(`hex\`${U.toHex(new Uint8Array(n.s))}\``)
         },
         NameConstant: (n: py.NameConstant) => {
-            if (n.value != null)
-                unify(n, n.tsType, tpBoolean)
+            if (n.value != null) {
+                if (!n.tsType)
+                    error(n, 9558, lf("tsType missing"));
+                unify(n, n.tsType!, tpBoolean)
+            }
             return B.mkText(JSON.stringify(n.value))
         },
         Ellipsis: (n: py.Ellipsis) => exprTODO(n),
@@ -1936,14 +2116,16 @@ namespace pxt.py {
             if (fd) {
                 n.symbolInfo = fd
                 addCaller(n, fd)
-                unify(n, n.tsType, fd.pyRetType)
+                if (!n.tsType || !fd.pyRetType)
+                    error(n, 9559, lf("tsType or pyRetType missing"));
+                unify(n, n.tsType!, fd.pyRetType!)
                 nm = fd.name
             } else if (part.moduleType) {
                 let sym = lookupGlobalSymbol(part.moduleType.pyQName + "." + n.attr)
                 if (sym) {
                     n.symbolInfo = sym
                     addCaller(n, sym)
-                    unifyTypeOf(n, symbolType(sym))
+                    unifyTypeOf(n, getOrSetSymbolType(sym))
                     nm = sym.name
                 } else
                     error(n, 9514, U.lf("module '{0}' has no attribute '{1}'", part.moduleType.pyQName, n.attr))
@@ -1969,7 +2151,7 @@ namespace pxt.py {
                 let s = n.slice as py.Slice
                 return B.mkInfix(expr(n.value), ".",
                     B.H.mkCall("slice", [s.lower ? expr(s.lower) : B.mkText("0"),
-                    s.upper ? expr(s.upper) : null].filter(x => !!x)))
+                    s.upper ? expr(s.upper) : null].filter(isTruthy)))
             }
             else {
                 return exprTODO(n)
@@ -1981,7 +2163,9 @@ namespace pxt.py {
 
             // shortcut, but should work
             if (n.id == "self" && ctx.currClass) {
-                unifyClass(n, n.tsType, ctx.currClass.symInfo)
+                if (!n.tsType)
+                    error(n, 9560, lf("missing tsType"));
+                unifyClass(n, n.tsType!, ctx.currClass.symInfo)
                 return B.mkText("this")
             }
 
@@ -1993,7 +2177,9 @@ namespace pxt.py {
             markUsage(v, n);
 
             if (n.ctx.indexOf("Load") >= 0) {
-                return quote(v ? v.qName : getName(n))
+                if (v && !v.qName)
+                    error(n, 9561, lf("missing qName"));
+                return quote(v ? v.qName! : getName(n))
             } else
                 return possibleDef(n)
         },
@@ -2005,24 +2191,33 @@ namespace pxt.py {
         let v = lookupSymbol(n.id)
         if (!v) {
             // check if the symbol has an override py<->ts mapping
-            let over = U.lookup(funMap, n.id)
+            let over = U.lookup(py2TsFunMap, n.id)
             if (over) {
                 v = lookupSymbol(over.n)
             }
         }
         if (v) {
             n.symbolInfo = v
-            unify(n, n.tsType, symbolType(v))
+            if (!n.tsType)
+                error(n, 9562, lf("missing tsType"));
+            unify(n, n.tsType!, getOrSetSymbolType(v))
             if (v.isImport)
                 return v
             addCaller(n, v)
+            if (n.forTargetEndPos && v.forVariableEndPos !== n.forTargetEndPos) {
+                if (v.forVariableEndPos)
+                    // defined in more than one 'for'; make sure it's hoisted
+                    v.lastRefPos = v.forVariableEndPos + 1
+                else
+                    v.forVariableEndPos = n.forTargetEndPos
+            }
         } else if (currIteration > 0) {
             error(n, 9516, U.lf("name '{0}' is not defined", n.id))
         }
-        return v
+        return v!
     }
 
-    function markUsage(s: SymbolInfo, location: py.AST) {
+    function markUsage(s: SymbolInfo | null | undefined, location: py.AST) {
         if (s) {
             if (s.modifier === VarModifier.Global) {
                 const declaringScope = topScope();
@@ -2042,11 +2237,16 @@ namespace pxt.py {
             if (s.firstRefPos === undefined || s.firstRefPos > location.startPos) {
                 s.firstRefPos = location.startPos;
             }
+            if (s.lastRefPos === undefined || s.lastRefPos < location.startPos) {
+                s.lastRefPos = location.startPos;
+            }
         }
     }
 
     function mkArrayExpr(n: py.List | py.Tuple) {
-        unify(n, n.tsType, mkArrayType(n.elts[0] ? typeOf(n.elts[0]) : mkType()))
+        if (!n.tsType)
+            error(n, 9563, lf("missing tsType"));
+        unify(n, n.tsType!, mkArrayType(n.elts[0] ? typeOf(n.elts[0]) : mkType()))
         return B.mkGroup([
             B.mkText("["),
             B.mkCommaSep(n.elts.map(expr)),
@@ -2091,13 +2291,14 @@ namespace pxt.py {
 
     function declareVariable(s: SymbolInfo) {
         const name = quote(s.name);
-        const type = t2s(symbolType(s));
+        const type = t2s(getOrSetSymbolType(s));
 
         return B.mkStmt(B.mkGroup([B.mkText("let "), name, B.mkText(": " + type + ";")]));
     }
 
-    function findNonlocalDeclaration(name: string, scope: py.ScopeDef): py.ScopeDef {
-        if (!scope) return null;
+    function findNonlocalDeclaration(name: string, scope: py.ScopeDef | undefined): py.ScopeDef | undefined {
+        if (!scope)
+            return undefined
 
         const symbolInfo = scope.vars && scope.vars[name];
 
@@ -2122,22 +2323,29 @@ namespace pxt.py {
         return hoisted;
     }
 
-    function shouldHoist(sym: SymbolInfo, scope: py.ScopeDef) {
-        return sym.kind === SK.Variable && sym.modifier === undefined && (sym.firstRefPos < sym.firstAssignPos || sym.firstAssignDepth > scope.blockDepth);
+    function shouldHoist(sym: SymbolInfo, scope: py.ScopeDef): boolean {
+        let result =
+            sym.kind === SK.Variable
+            && !sym.isParam
+            && sym.modifier === undefined
+            && (sym.lastRefPos! > sym.forVariableEndPos!
+                || sym.firstRefPos! < sym.firstAssignPos!
+                || sym.firstAssignDepth! > scope.blockDepth!);
+        return !!result
     }
 
     // TODO look at scopes of let
 
-    function toTS(mod: py.Module): B.JsNode[] {
+    function toTS(mod: py.Module): B.JsNode[] | undefined {
         U.assert(mod.kind == "Module")
         if (mod.tsBody)
-            return null
+            return undefined
         resetCtx(mod)
         if (!mod.vars) mod.vars = {}
 
         const hoisted = collectHoistedDeclarations(mod);
         let res = hoisted.concat(mod.body.map(stmt))
-        if (res.every(isEmpty)) return null
+        if (res.every(isEmpty)) return undefined
         else if (mod.name == "main") return res
         return [
             B.mkText("namespace " + mod.name + " "),
@@ -2161,34 +2369,40 @@ namespace pxt.py {
         currIteration = iter
         diagnostics = []
         numUnifies = 0
-        lastAST = null
+        lastAST = undefined
     }
 
     export interface Py2TsRes {
-        generated: Map<string>,
-        diagnostics: pxtc.KsDiagnostic[]
+        diagnostics: pxtc.KsDiagnostic[],
+        success: boolean,
+        outfiles: { [key: string]: string },
+        syntaxInfo?: pxtc.SyntaxInfo
     }
     export function py2ts(opts: pxtc.CompileOptions): Py2TsRes {
         let modules: py.Module[] = []
-        const generated: Map<string> = {}
+        const outfiles: Map<string> = {}
         diagnostics = []
 
+        U.assert(!!opts.sourceFiles, "missing sourceFiles! Cannot convert py to ts")
+
         // find .ts files that are copies of / shadowed by the .py files
-        let pyFiles = opts.sourceFiles.filter(fn => U.endsWith(fn, ".py"))
+        let pyFiles = opts.sourceFiles!.filter(fn => U.endsWith(fn, ".py"))
         if (pyFiles.length == 0)
-            return { generated, diagnostics }
+            return { outfiles, diagnostics, success: diagnostics.length === 0 }
         let removeEnd = (file: string, ext: string) => file.substr(0, file.length - ext.length)
         let pyFilesSet = U.toDictionary(pyFiles, p => removeEnd(p, ".py"))
-        let tsFiles = opts.sourceFiles
+        let tsFiles = opts.sourceFiles!
             .filter(fn => U.endsWith(fn, ".ts"))
         let tsShadowFiles = tsFiles
             .filter(fn => removeEnd(fn, ".ts") in pyFilesSet)
 
+        U.assert(!!opts.apisInfo, "missing apisInfo! Cannot convert py to ts")
+
         lastFile = pyFiles[0] // make sure there's some location info for errors from API init
-        initApis(opts.apisInfo, tsShadowFiles)
+        initApis(opts.apisInfo!, tsShadowFiles)
 
         compileOptions = opts
-        syntaxInfo = null
+        syntaxInfo = undefined
 
         if (!opts.generatedFiles)
             opts.generatedFiles = []
@@ -2238,17 +2452,17 @@ namespace pxt.py {
         }
 
         resetPass(1000)
-        infoNode = null
+        infoNode = undefined
         syntaxInfo = opts.syntaxInfo
         for (let m of modules) {
             try {
                 let nodes = toTS(m)
                 if (!nodes) continue
                 let res = B.flattenNode(nodes)
-                opts.sourceFiles.push(m.tsFilename)
+                opts.sourceFiles!.push(m.tsFilename)
                 opts.generatedFiles.push(m.tsFilename)
                 opts.fileSystem[m.tsFilename] = res.output
-                generated[m.tsFilename] = res.output
+                outfiles[m.tsFilename] = res.output
             } catch (e) {
                 console.log("Conv error", e);
             }
@@ -2274,11 +2488,36 @@ namespace pxt.py {
 
         if (syntaxInfo) syntaxInfo.symbols = []
 
+        if (infoNode)
+            error(null, 9569, lf("type annotation error; this should be unreachable"));
         if (syntaxInfo && infoNode) {
+            // TODO: unreachable since infoNode is always undefined here
+            infoNode = infoNode as AST
+
             const apis = U.values(externalApis).concat(U.values(internalApis))
 
             syntaxInfo.beginPos = infoNode.startPos
             syntaxInfo.endPos = infoNode.endPos
+
+            if (!syntaxInfo.symbols)
+                syntaxInfo.symbols = []
+
+            // always return global symbols because we might need to check for
+            // name collisions downstream
+            syntaxInfo.globalNames = syntaxInfo.globalNames || {}
+            let existing: SymbolInfo[] = []
+            const addSym = (v: SymbolInfo) => {
+                if (isGlobalSymbol(v) && existing.indexOf(v) < 0) {
+                    let s = cleanSymbol(v)
+                    syntaxInfo!.globalNames![s.qName || s.name] = s
+                }
+            }
+            existing = syntaxInfo.symbols.slice()
+            for (let s: ScopeDef | undefined = infoScope; !!s; s = s.parent) {
+                if (s && s.vars)
+                    U.values(s.vars).forEach(addSym)
+            }
+            apis.forEach(addSym)
 
             if (syntaxInfo.type == "memberCompletion" && infoNode.kind == "Attribute") {
                 const attr = infoNode as Attribute
@@ -2290,10 +2529,13 @@ namespace pxt.py {
                         }
                     }
                 } else if (tp.classType || tp.primType) {
-                    const ct = tp.classType || resolvePrimType(tp.primType);
+                    const ct = tp.classType
+                        || resolvePrimTypes(tp.primType).reduce((p, n) => p || n, null);
 
                     if (ct) {
-                        let types = ct.extendsTypes.concat(ct.qName)
+                        if (!ct.extendsTypes || !ct.qName)
+                            error(null, 9567, lf("missing extendsTypes or qName"));
+                        let types = ct.extendsTypes!.concat(ct.qName!)
                         for (let v of apis) {
                             if (v.isInstance && types.indexOf(v.namespace) >= 0) {
                                 syntaxInfo.symbols.push(v)
@@ -2303,17 +2545,7 @@ namespace pxt.py {
                 }
 
             } else if (syntaxInfo.type == "identifierCompletion") {
-                let existing: SymbolInfo[] = []
-                const addSym = (v: SymbolInfo) => {
-                    if (isGlobalSymbol(v) && existing.indexOf(v) < 0)
-                        syntaxInfo.symbols.push(v)
-                }
-                existing = syntaxInfo.symbols.slice()
-                for (let s = infoScope; s; s = s.parent) {
-                    if (s.vars)
-                        U.values(s.vars).forEach(addSym)
-                }
-                apis.forEach(addSym)
+                syntaxInfo.symbols = pxt.U.values(syntaxInfo.globalNames)
             } else {
                 let sym = (infoNode as Expr).symbolInfo
                 if (sym)
@@ -2323,9 +2555,12 @@ namespace pxt.py {
             syntaxInfo.symbols = syntaxInfo.symbols.map(cleanSymbol)
         }
 
+        let outDiag = patchedDiags()
         return {
-            generated,
-            diagnostics: patchedDiags()
+            outfiles: outfiles,
+            success: outDiag.length === 0,
+            diagnostics: outDiag,
+            syntaxInfo
         }
 
         function patchedDiags() {
@@ -2335,16 +2570,6 @@ namespace pxt.py {
             return diagnostics
         }
     }
-
-    export function convert(opts: pxtc.CompileOptions) {
-        if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
-            const r = py2ts(opts)
-            return r.diagnostics
-        }
-        return []
-    }
-
-    pxt.conversionPasses.push(convert)
 
     /**
      * Override example syntax:
@@ -2401,6 +2626,12 @@ namespace pxt.py {
         };
     }
 
+    function isArrayType(expr: py.Expr) {
+        const t = find(typeOf(expr));
+
+        return t && t.primType === "@array";
+    }
+
     function buildOverride(override: TypeScriptOverride, args: B.JsNode[], recv?: B.JsNode) {
         const result: B.JsNode[] = [];
 
@@ -2415,7 +2646,7 @@ namespace pxt.py {
                     result.push(args[part.index]);
                 }
                 else {
-                    result.push(B.mkText(part.default))
+                    result.push(B.mkText(part.default!))
                 }
             }
             else if (part.isOptional) {

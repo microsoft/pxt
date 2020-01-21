@@ -31,7 +31,12 @@ namespace pxtblockly {
             else if (pxt.appTarget.runtime && pxt.appTarget.runtime.palette) {
                 let p = pxt.Util.clone(pxt.appTarget.runtime.palette);
                 p[0] = "#dedede";
-                this.setColours(p);
+                let t;
+                if (pxt.appTarget.runtime.paletteNames) {
+                    t = pxt.Util.clone(pxt.appTarget.runtime.paletteNames);
+                    t[0] = lf("transparent");
+                }
+                this.setColours(p, t);
             }
 
             if (params.columns) this.setColumns(parseInt(params.columns));

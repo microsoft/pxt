@@ -7,7 +7,8 @@
 
 @import (reference) "semantic.less";
 @carouselArrowSize: 60px;
-@carouselArrowSizeMobile: 40px;
+@carouselArrowSizeTablet: 40px;
+@carouselArrowSizeMobile: 20px;
 
 @homeCarouselArrowZIndex: @homeScreenZIndex+1; /* Show the carousel above the home screen */
 @homeDetailViewZIndex: @homeCarouselArrowZIndex+1; /* Show the detail view above the carousel arrows */
@@ -168,12 +169,11 @@
         transition: height 0.5s;
         z-index: @homeDetailViewZIndex;
         position: relative;
-        box-shadow: rgba(0, 0, 0, 0.75) 0px 0px 50px 0px;
         .ui.grid {
             background: @homeDetailViewBackground;
         }
         .column {
-            height: 400px;
+            height: 15rem;
         }
         .segment {
             margin: 0;
@@ -185,8 +185,13 @@
             top: 0; right: 0;
             left: 30%; bottom: 0;
             padding: 0;
+            overflow:hidden;
             .image {
                 height: 400px;
+                background-size: cover;
+            }
+            .video {
+                width: 100%;
                 background-size: cover;
             }
         }
@@ -206,9 +211,98 @@
             color: @homeDetailViewColor;
         }
         .actions {
-            padding: 2rem;
+            padding: 2rem 0;
             position: absolute;
             bottom: 0;
+            text-align: right;
+
+            .segment {
+                white-space: nowrap;
+                padding: 0;
+            }
+
+            .card-action {
+                display: inline-block;
+                position: relative;
+                margin: 0 0 0 1rem;
+                text-align: center;
+                border: 5px solid transparent;
+                border-radius: 0.75rem!important;
+                overflow: hidden;
+                transition-duration: 0.1s;
+
+                > .item, > .icon {
+                    background: @homeDetailCardActionBackground;
+                    height: 8rem;
+                }
+
+                .button.attached i {
+                    display: block;
+                    margin: auto!important;
+                    font-size: 5rem;
+                    line-height: 8rem;
+                    opacity: 0.1;
+                    color: @homeCardHeaderColor;
+                }
+
+                .button.approve {
+                    color: @homeCardHeaderColor;
+                    background-color: @orange;
+                    transition-duration: 0s;
+                }
+                &:first-child .button.approve {
+                    background-color: @green;
+                }
+                &:last-child {
+                    margin-right: 6rem;
+                }
+            }
+            .card-action-title {
+                position: absolute;
+                top: 40%;
+                left: 50%;
+                font-size: 1.43rem;
+                font-weight: 700;
+                color: @homeCardHeaderColor;
+                transform: translateX(-50%) translateY(-50%);
+                pointer-events: none;
+            }
+            .card-action:hover {
+                cursor: pointer;
+                border-color: @white;
+                transform: scale(1.1);
+                .card-action-title, .approve {
+                    color: @white;
+                }
+                .ui.button:first-child:hover {
+                    z-index: auto;
+                }
+            }
+            /* custom icons (override font to avoid mac/windows alignment issue) */
+            .card-action .xicon:before {
+                visibility: hidden;
+            }
+            .card-action i.xicon {
+                background: transparent @blocksIcon no-repeat center center;
+                background-size: 70%;
+                background-blend-mode: color-burn;
+                font-size: 6.5rem!important;
+            }
+            .card-action .xicon.python { background-image: @pyIcon; }
+            .card-action .xicon.js { background-image: @jsIcon; }
+
+            /* unset semantic properties */
+            .card-action > a:first-child {
+                padding: 0;
+                display: inline-block;
+                width: 100%;
+            }
+            .card-action .button {
+                border: none!important;
+                outline: none!important;
+                box-shadow: none!important;
+                margin: 0;
+            }
         }
         > .closeIcon {
             margin: 1.5rem;
@@ -332,7 +426,7 @@
         .getting-started-segment {
             height: 250px;
             .getting-started {
-                padding: @carouselArrowSizeMobile;
+                padding: @carouselArrowSizeTablet;
                 margin-top: 40px;
             }
             .getting-started-header {
@@ -347,26 +441,30 @@
                 padding: 0 !important;
             }
             .column.right.aligned {
-                padding-right: @carouselArrowSizeMobile !important;
+                padding-right: @carouselArrowSizeTablet !important;
             }
             .ui.header {
-                padding-left: @carouselArrowSizeMobile;
+                padding-left: @carouselArrowSizeTablet;
+            }
+        }
+        .detailview {
+            .actions .card-action > .item,
+            .actions .card-action > .icon {
+                height: 6rem;
+            }
+            .ui.button.approve {
+                font-size: 1rem!important;
             }
         }
     }
     .carouselcontainer {
-        padding: 2rem @carouselArrowSizeMobile !important;
+        padding: 2rem @carouselArrowSizeTablet !important;
     }
     .carouselarrow {
-        width: @carouselArrowSizeMobile;
-        font-size: @carouselArrowSizeMobile / 1.18 !important;
+        width: @carouselArrowSizeTablet;
+        font-size: @carouselArrowSizeTablet / 1.18 !important;
     }
-}
 
-
-/* <= Tablet (Mobile + Tablet) */
-
-@media only screen and (max-width: @largestTabletScreen) {
     .projectsdialog {
         .ui.card, .ui.cards>.card {
             width: 200px;
@@ -386,6 +484,33 @@
 /* Mobile only */
 
 @media only screen and (max-width: @largestMobileScreen) {
+    /* Carousel */
+    .projectsdialog {
+        .getting-started-segment {
+            .getting-started {
+                padding: @carouselArrowSizeMobile;
+            }
+        }
+        .ui.segment.tabsegment {
+            padding-top: calc(@mobileMenuHeight + 2rem) !important;
+        }
+        .gallerysegment {
+            .column.right.aligned {
+                padding-right: @carouselArrowSizeMobile !important;
+            }
+            .ui.header {
+                padding-left: @carouselArrowSizeMobile;
+            }
+        }
+    }
+    .carouselcontainer {
+        padding: 2rem @carouselArrowSizeMobile !important;
+    }
+    .carouselarrow {
+        width: @carouselArrowSizeMobile;
+        font-size: @carouselArrowSizeMobile / 1.18 !important;
+    }
+
     .projectsdialog {
         .ui.card, .ui.cards>.card {
             width: 9rem;
@@ -421,15 +546,12 @@
             .content .header {
                 font-size: 1rem;
             }
-            .ui.image {
-                display: none;
-            }
             .content {
                 margin-left: 0;
             }
             .meta {
                 font-size: 0.7rem;
-                padding: 0;
+                padding: 0.5rem;
             }
         }
         .getting-started-segment {
@@ -450,6 +572,46 @@
         }
         .carouselcontainer {
             padding: 1.5rem @carouselArrowSizeMobile !important;
+        }
+
+        .detailview {
+            .column:first-child {
+                height: 8rem;
+                overflow: hidden;
+            }
+            .actions {
+                height: 9rem;
+                .card-action {
+                    > .item, > .icon {
+                        height: 2rem;
+                    }
+                    .xicon {
+                        background-image: none;
+                    }
+                    .button.approve {
+                        padding: .35em 1em .5em;
+                    }
+                    &:first-child {
+                        margin-left: 0;
+                    }
+                    &:last-child {
+                        margin-right: 0;
+                    }
+                }
+
+                .card-action-title {
+                    top: 25%;
+                    font-size: 1rem;
+                }
+
+                .segment {
+                    position: absolute;
+                    bottom: 0;
+                    right: 0;
+                    margin: 0 1rem 0.5rem;
+                    white-space: normal;
+                }
+            }
         }
     }
 }
@@ -493,14 +655,17 @@
             .content .header {
                 font-size: 1rem;
             }
-            .ui.image {
-                display: none;
-            }
             .content {
                 margin-left: 0;
             }
             .meta {
                 padding: 0.5rem;
+            }
+            .fileimage {
+                top: 2rem;
+                left: 1rem;
+                width: 2rem;
+                height: 1.5rem;                
             }
         }        
         .detailview.visible {

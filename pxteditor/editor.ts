@@ -52,6 +52,7 @@ namespace pxt.editor {
 
         tutorialOptions?: pxt.tutorial.TutorialOptions;
         lightbox?: boolean;
+        keymap?: boolean;
 
         simState?: SimState;
         autoRun?: boolean;
@@ -103,6 +104,7 @@ namespace pxt.editor {
         dependencies?: pxt.Map<string>;
         tsOnly?: boolean;
         preferredEditor?: string; // preferred editor to open, pxt.BLOCKS_PROJECT_NAME, ...
+        extensionUnderTest?: string; // workspace id of the extension under test
     }
 
     export interface ExampleImportOptions {
@@ -110,6 +112,7 @@ namespace pxt.editor {
         path: string;
         loadBlocks?: boolean;
         prj?: ProjectTemplate;
+        preferredEditor?: string;
     }
 
     export interface ProjectFilters {
@@ -151,6 +154,16 @@ namespace pxt.editor {
         openHomeIfFailed?: boolean;
     }
 
+    export interface UserInfo {
+        id: string;
+        userName?: string;
+        name: string;
+        profile?: string;
+        loginHint?: string;
+        initials?: string;
+        photo?: string;
+    }
+
     export interface IProjectView {
         state: IAppState;
         setState(st: IAppState): void;
@@ -180,12 +193,15 @@ namespace pxt.editor {
 
         exportAsync(): Promise<string>;
 
-        newEmptyProject(name?: string, documentation?: string): void;
+        newEmptyProject(name?: string, documentation?: string, preferredEditor?: string): void;
         newProject(options?: ProjectCreationOptions): void;
         createProjectAsync(options: ProjectCreationOptions): Promise<void>;
         importExampleAsync(options: ExampleImportOptions): Promise<void>;
         showScriptManager(): void;
         importProjectDialog(): void;
+        cloudSync(): boolean;
+        cloudSignInDialog(): void;
+        cloudSignOut(): void;
         removeProject(): void;
         editText(): void;
 
@@ -253,6 +269,7 @@ namespace pxt.editor {
         loadBlocklyAsync(): Promise<void>;
         isBlocksEditor(): boolean;
         isTextEditor(): boolean;
+        blocksScreenshotAsync(pixelDensity?: number): Promise<string>;
         renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<EditorMessageRenderBlocksResponse>;
         renderPythonAsync(req: EditorMessageRenderPythonRequest): Promise<EditorMessageRenderPythonResponse>;
 
@@ -270,9 +287,11 @@ namespace pxt.editor {
 
         editor: IEditor;
 
-        startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean): void;
+        startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editor?: string): void;
         showLightbox(): void;
         hideLightbox(): void;
+        showKeymap(show: boolean): void;
+        toggleKeymap(): void;
 
         showReportAbuse(): void;
         showLanguagePicker(): void;
@@ -285,12 +304,14 @@ namespace pxt.editor {
 
         showResetDialog(): void;
         showExitAndSaveDialog(): void;
-        showChooseHwDialog(): void;
+        showChooseHwDialog(skipDownload?: boolean): void;
         showExperimentsDialog(): void;
         showRecipesDialog(): void;
 
         showPackageDialog(): void;
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
+        checkForHwVariant(): boolean;
+        pair(): Promise<void>;
 
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
 

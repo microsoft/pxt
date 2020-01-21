@@ -1,4 +1,8 @@
 /// <reference path="../../localtypings/pxtarget.d.ts"/>
+// TODO: enable reference so we don't need to use: (pxt as any).py
+//      the issue is that this creates a circular dependency. This
+//      is easily handled if we used proper TS modules.
+//// <reference path="../../built/pxtpy.d.ts"/>
 
 // Enforce order:
 /// <reference path="thumb.ts"/>
@@ -84,12 +88,12 @@ namespace ts.pxtc {
         })
     }
 
-    export function runConversions(opts: CompileOptions) {
-        let diags: KsDiagnostic[] = []
-        for (let pass of pxt.conversionPasses) {
-            U.pushRange(diags, pass(opts))
+    export function py2tsIfNecessary(opts: CompileOptions): pxtc.KsDiagnostic[] {
+        if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
+            let res = pxtc.transpile.pyToTs(opts)
+            return res.diagnostics
         }
-        return diags
+        return []
     }
 
     function mkCompileResult(): CompileResult {
@@ -110,7 +114,7 @@ namespace ts.pxtc {
     export function runConversionsAndStoreResults(opts: CompileOptions, res?: CompileResult) {
         const startTime = U.cpuUs()
         if (!res) res = mkCompileResult()
-        const convDiag = runConversions(opts)
+        const convDiag = py2tsIfNecessary(opts)
         storeGeneratedFiles(opts, res)
         res.diagnostics = convDiag
 
@@ -193,7 +197,27 @@ namespace ts.pxtc {
         return U.startsWith(filename, "pxt_modules/")
     }
 
+    export interface CompilerHooks {
+        init?(opts: CompileOptions, service?: LanguageService): void;
+        preBinary?(program: Program, opts: CompileOptions, res: CompileResult): void;
+        postBinary?(program: Program, opts: CompileOptions, res: CompileResult): void;
+    }
+    export let compilerHooks: CompilerHooks
+
     export function compile(opts: CompileOptions, service?: LanguageService) {
+        if (!compilerHooks) {
+            // run the extension at most once
+            compilerHooks = {}
+
+            // The extension JavaScript code comes from target.json. It is generated from compiler/*.ts in target by 'pxt buildtarget'
+            if (opts.target.compilerExtension)
+                // tslint:disable-next-line
+                eval(opts.target.compilerExtension)
+        }
+
+        if (compilerHooks.init)
+            compilerHooks.init(opts, service)
+
         let startTime = U.cpuUs()
         let res = mkCompileResult()
 

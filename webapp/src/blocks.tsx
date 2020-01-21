@@ -122,6 +122,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.delayLoadXml) {
             if (this.loadingXml) return
             pxt.debug(`loading blockly`)
+            pxt.perf.measureStart("domUpdate loadBlockly")
             this.loadingXml = true
 
             const loadingDimmer = document.createElement("div");
@@ -158,6 +159,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         // It's possible Blockly reloads and the loading dimmer is no longer a child of the editorDiv
                         editorDiv.removeChild(loadingDimmer);
                     } catch { }
+                    pxt.perf.measureEnd("domUpdate loadBlockly")
                 });
 
             this.loadingXmlPromise.done();
@@ -191,7 +193,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private serializeBlocks(normalize?: boolean): string {
         // store ids when using github
-        let xml = pxt.blocks.saveWorkspaceXml(this.editor, !normalize && !!this.parent.state.header.githubId);
+        let xml = pxt.blocks.saveWorkspaceXml(this.editor,
+            !normalize && this.parent.state
+            && this.parent.state.header
+            && !!this.parent.state.header.githubId);
         // strip out id, x, y attributes
         if (normalize) xml = xml.replace(/(x|y|id)="[^"]*"/g, '')
         pxt.debug(xml)
@@ -215,6 +220,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.initLayout();
             this.editor.clearUndo();
             this.reportDeprecatedBlocks();
+            this.updateGrayBlocks();
 
             this.typeScriptSaveable = true;
         } catch (e) {
@@ -269,7 +275,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // Otherwise translate the blocks so that they are positioned on the top left
             this.editor.getTopComments(false).forEach(c => c.moveBy(-minX, -minY));
             this.editor.getTopBlocks(false).forEach(b => b.moveBy(-minX, -minY));
-            this.editor.scrollX = flyoutOnly ? (this.editor as any).flyout_.width_ + 10 : 10;
+            this.editor.scrollX = 10;
             this.editor.scrollY = 10;
 
             // Forces scroll to take effect
@@ -338,7 +344,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 header: message,
                 initialValue: defaultValue,
                 agreeLbl: lf("Ok"),
-                disagreeLbl: lf("Cancel"),
+                hideCancel: true,
+                hasCloseIcon: true,
                 size: "tiny"
             }).then(value => {
                 callback(value);
@@ -427,6 +434,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private prepareBlockly(forceHasCategories?: boolean) {
+        pxt.perf.measureStart("prepareBlockly")
         let blocklyDiv = document.getElementById('blocksEditor');
         pxsim.U.clear(blocklyDiv);
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
@@ -450,10 +458,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     // Need to bump suffix in flyout
                     this.clearFlyoutCaches();
                 }
+                if (blockId === pxtc.TS_STATEMENT_TYPE || blockId === pxtc.TS_OUTPUT_TYPE) {
+                    this.updateGrayBlocks();
+                }
                 pxt.tickEvent("blocks.create", { "block": blockId });
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
-                this.parent.setState({ hideEditorFloats: false });
+                if (!this.parent.state.tutorialOptions || !this.parent.state.tutorialOptions.metadata || !this.parent.state.tutorialOptions.metadata.flyoutOnly)
+                    this.parent.setState({ hideEditorFloats: false });
                 workspace.fireEvent({ type: 'create', editor: 'blocks', blockId } as pxt.editor.events.CreateEvent);
             }
             else if (ev.type == "var_create" || ev.type == "var_rename" || ev.type == "delete") {
@@ -507,6 +519,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.initBlocklyToolbox();
         this.initWorkspaceSounds();
         this.resize();
+        pxt.perf.measureEnd("prepareBlockly")
     }
 
     resize(e?: Event) {
@@ -537,25 +550,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     protected resizeFieldEditorView() {
-        const blocklyDiv = this.getBlocksEditorDiv();
-        if (!blocklyDiv) return;
-
-        const blocklyToolboxDiv = this.getBlocklyToolboxDiv();
-        if (!blocklyToolboxDiv) return;
-
-        const workspaceRect = blocklyDiv.getBoundingClientRect();
-        const toolboxRect = blocklyToolboxDiv.getBoundingClientRect();
-
+        if (!window) return;
+        // Full-screen editor
         blocklyFieldView.setEditorBounds({
-            top: workspaceRect.top,
-            left: toolboxRect.right,
-            width: workspaceRect.width - toolboxRect.width,
-            height: workspaceRect.height
+            top: 0,
+            left: 0,
+            width: window.innerWidth,
+            height: window.innerHeight
         });
     }
 
     hasUndo() {
-        return this.editor ? this.editor.undoStack_.length != 0 : false;
+        // undo is true if undoStack has items, or if both undo and redo are empty (first project load)
+        return this.editor ? this.editor.undoStack_.length != 0
+            || (this.editor.undoStack_.length == 0 && this.editor.redoStack_.length == 0) : false;
     }
 
     undo() {
@@ -604,10 +612,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     display(): JSX.Element {
+        let flyoutOnly = this.parent.state.editorState && this.parent.state.editorState.hasCategories === false;
         return (
             <div>
                 <div id="blocksEditor"></div>
-                <toolbox.ToolboxTrashIcon />
+                <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
             </div>
         )
     }
@@ -651,6 +660,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const container = document.getElementById('debuggerToolbox');
         if (!container) return;
 
+        pxt.perf.measureStart("updateToolbox")
         const debugging = !!this.parent.state.debugging;
         let debuggerToolbox = debugging ? <DebuggerToolbox ref={this.handleDebuggerToolboxRef} parent={this.parent} apis={this.blockInfo.apis.byQName} /> : <div />;
 
@@ -661,6 +671,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.toolbox.show();
         }
         ReactDOM.render(debuggerToolbox, container);
+        pxt.perf.measureEnd("updateToolbox")
     }
 
     showPackageDialog() {
@@ -714,7 +725,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private _loadBlocklyPromise: Promise<void>;
     loadBlocklyAsync() {
-        if (!this._loadBlocklyPromise)
+        if (!this._loadBlocklyPromise) {
+            pxt.perf.measureStart("loadBlockly")
             this._loadBlocklyPromise = pxt.BrowserUtils.loadBlocklyAsync()
                 .then(() => {
                     // Initialize the "Make a function" button
@@ -748,6 +760,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     this.prepareBlockly();
                 })
                 .then(() => pxt.editor.initEditorExtensionsAsync())
+                .then(() => pxt.perf.measureEnd("loadBlockly"))
+        }
         return this._loadBlocklyPromise;
     }
 
@@ -782,10 +796,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
                 // Get extension packages
                 this.extensions = pkg.allEditorPkgs()
-                    .map(ep => ep.getKsPkg()).map(p => !!p && p.config)
+                    .map(ep => ep.getKsPkg())
                     // Make sure the package has extensions enabled, and is a github package.
                     // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
-                    .filter(config => !!config && !!config.extension && /^(file:|github:)/.test(config.installedVersion));
+                    .filter(p => !!p && p.config && !!p.config.extension && /^(file:|github:)/.test(p.installedVersion));
             })
     }
 
@@ -964,6 +978,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private refreshToolbox() {
         if (!this.blockInfo) return;
+        pxt.perf.measureStart("refreshToolbox")
         // no toolbox when readonly
         if (pxt.shell.isReadOnly()) return;
 
@@ -1008,6 +1023,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.renderToolbox(true);
             }
         }
+        pxt.perf.measureEnd("refreshToolbox")
     }
 
     filterToolbox(showCategories?: boolean) {
@@ -1016,19 +1032,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private openExtension(extensionName: string) {
-        const extension = this.extensions.filter(c => c.name == extensionName)[0];
+        const extension = this.extensions.filter(c => c.config.name == extensionName)[0];
         const parsedRepo = pxt.github.parseRepoId(extension.installedVersion);
         pxt.packagesConfigAsync()
-            .then((config) => {
-                const repoStatus = pxt.github.repoStatus(parsedRepo, config);
+            .then((packagesConfig) => {
+                const extensionConfig = extension.config;
+                const repoStatus = pxt.github.repoStatus(parsedRepo, packagesConfig);
                 const repoName = parsedRepo.fullName.substr(parsedRepo.fullName.indexOf(`/`) + 1);
-                const localDebug = pxt.BrowserUtils.isLocalHost() && /^file:/.test(extension.installedVersion) && extension.extension.localUrl;
+                const localDebug = pxt.BrowserUtils.isLocalHost() && /^file:/.test(extension.installedVersion) && extensionConfig.extension.localUrl;
                 const debug = pxt.BrowserUtils.isLocalHost() && /debugExtensions/i.test(window.location.href);
                 /* tslint:disable:no-http-string */
                 const url = debug ? "http://localhost:3232/extension.html"
-                    : localDebug ? extension.extension.localUrl : `https://${parsedRepo.owner}.github.io/${repoName}/`;
+                    : localDebug ? extensionConfig.extension.localUrl : `https://${parsedRepo.owner}.github.io/${repoName}/`;
                 /* tslint:enable:no-http-string */
-                this.parent.openExtension(extension.name, url, repoStatus == 0); // repoStatus can only be APPROVED or UNKNOWN at this point
+                this.parent.openExtension(extensionConfig.name, url, repoStatus == 0); // repoStatus can only be APPROVED or UNKNOWN at this point
             });
     }
 
@@ -1204,7 +1221,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
         // Add extension buttons
         if (!subns) {
-            this.extensions.forEach(config => {
+            this.extensions.forEach(extension => {
+                const config = extension.config;
                 const name = config.name;
                 const namespace = config.extension.namespace || name;
                 if (ns == namespace) {
@@ -1318,7 +1336,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         })
 
         if (this.flyoutXmlList.length == 0) {
-            let label = goog.dom.createDom('label');
+            let label = Blockly.utils.xml.createElement('label');
             label.setAttribute('text', lf("No search results..."));
             this.flyoutXmlList.push(label);
         }
@@ -1329,7 +1347,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.flyoutXmlList = [];
         const topBlocks = this.getTopBlocks();
         if (topBlocks.length == 0) {
-            let label = goog.dom.createDom('label');
+            let label = Blockly.utils.xml.createElement('label');
             label.setAttribute('text', lf("No basic blocks..."));
             this.flyoutXmlList.push(label);
         } else {
@@ -1431,7 +1449,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    // For editors that have no toolb
+    // For editors that have no toolbox
     showFlyoutOnlyToolbox() {
         // Show a Flyout only with all the blocks
         const allCategories = this.getAllCategories();
@@ -1445,12 +1463,28 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             })
         });
 
+        let container = document.createElement("div");
+        ReactDOM.render(<toolbox.ToolboxStyle categories={allCategories} />, container);
+        document.getElementById('editorcontent').appendChild(container);
+
         let xmlList: Element[] = [];
         allBlocks.forEach((block) => {
             const blockXmlList = this.getBlockXml(block);
             if (blockXmlList) xmlList = xmlList.concat(blockXmlList);
         })
         this.showFlyoutInternal_(xmlList);
+        this.parent.forceUpdate();
+    }
+
+    protected updateGrayBlocks() {
+        if (this.editor) {
+            const pythonEnabled = pxt.Util.isPyLangPref();
+            this.editor.getAllBlocks(false).forEach(b => {
+                if (b.type === pxtc.TS_STATEMENT_TYPE || b.type === pxtc.TS_OUTPUT_TYPE) {
+                    (b as pxt.blocks.GrayBlock).setPythonEnabled(pythonEnabled);
+                }
+            })
+        }
     }
 
     ///////////////////////////////////////////////////////////

@@ -24,13 +24,19 @@ declare namespace pxt {
         height: number;
     }
 
+    interface CodeCardAction {
+        url: string,
+        editor?: CodeCardEditorType;
+        cardType?: CodeCardType;
+    }
+
     /**
      * The schema for the pxt.json package files
      */
     interface PackageConfig {
         name: string;
         version?: string;
-        installedVersion?: string;
+        // installedVersion?: string; moved to Package class
         // url to icon -- support for built-in packages only
         icon?: string;
         // semver description for support target version
@@ -47,10 +53,12 @@ declare namespace pxt {
         testDependencies?: pxt.Map<string>;
         cppDependencies?: pxt.Map<string>;
         public?: boolean;
+        partial?: boolean; // true if project is not compileable on its own (eg base)
         binaryonly?: boolean;
         platformio?: PlatformIOConfig;
         compileServiceVariant?: string;
         palette?: string[];
+        paletteNames?: string[];
         screenSize?: Size;
         yotta?: YottaConfig;
         npmDependencies?: Map<string>;
@@ -73,6 +81,7 @@ declare namespace pxt {
         snippetBuilders?: SnippetConfig[];
         experimentalHw?: boolean;
         requiredCategories?: string[]; // ensure that those block categories are visible
+        supportedTargets?: string[]; // a hint about targets in which this extension is supported
     }
 
     interface PackageExtension {
@@ -125,7 +134,9 @@ declare namespace pxt {
         typeScript?: string;
         imageUrl?: string;
         largeImageUrl?: string;
+        videoUrl?: string;
         youTubeId?: string;
+        buttonLabel?: string;
         time?: number;
         url?: string;
         learnMoreUrl?: string;
@@ -134,6 +145,7 @@ declare namespace pxt {
         responsive?: boolean;
         cardType?: CodeCardType;
         editor?: CodeCardEditorType;
+        otherActions?: CodeCardAction[];
 
         header?: string;
         any?: number;
@@ -179,7 +191,7 @@ declare namespace pxt {
         questions: SnippetQuestions[];
     }
 
-    type SnippetAnswerTypes = 'number' | 'text' | 'dropdown' | 'spriteEditor' | string; // TODO(jb) Should include custom answer types for number, enums, string, image
+    type SnippetAnswerTypes = 'number' | 'text' | 'variableName' | 'dropdown' | 'spriteEditor' | 'yesno' | string; // TODO(jb) Should include custom answer types for number, enums, string, image
 
     interface SnippetGoToOptions {
         question?: number;
@@ -223,9 +235,13 @@ declare namespace pxt {
         options: pxt.Map<string>;
     }
 
+    interface SnippetInputYesNoType {
+        type: "yesno";
+    }
+
     type SnippetQuestionInput = { label?: string; }
         & (SnippetInputAnswerSingular | SnippetInputAnswerPlural)
-        & (SnippetInputOtherType | SnippetInputNumberType | SnippetInputDropdownType)
+        & (SnippetInputOtherType | SnippetInputNumberType | SnippetInputDropdownType | SnippetInputYesNoType)
 
     interface SnippetValidateRegex {
         token: string;
@@ -241,6 +257,7 @@ declare namespace pxt {
     interface SnippetQuestions {
         title: string;
         output?: string;
+        outputConditionalOnAnswer?: string;
         errorMessage?: string;
         goto?: SnippetGoToOptions;
         inputs: SnippetQuestionInput[];

@@ -1,6 +1,6 @@
 # Translations in Context
 
-Posted on October 8, 2018 by [pelikhan](https://github.com/pelikhan)
+Posted on October 17, 2019 by [pelikhan](https://github.com/pelikhan)
 
 Last week, we had the good fortune of meeting plenty of MakeCode users at [micro:bit live](https://www.microbit.org/en/2019-04-12-microbit-live/). 
 With many of the participants coming from a non-English speaking background, it reminded me again of how important it is to localize the editors. 
@@ -41,11 +41,13 @@ You will be prompted with a dialog that contains the block translatable string.
 
 The in context translations are available in the beta editions of these editors.
 
+* `/beta` version of [micro:bit](https://makecode.microbit.org/beta)
 * `/beta` version of [MakeCode Arcade](https://arcade.makecode.com/beta)
 * `/beta` version of [Adafruit Circuit Playground Express](https://makecode.adafruit.com/beta)
 * `/beta` version of [LEGO - EV3](https://makecode.mindstorms.com/beta)
+* `/beta` version of [MakeCode for Minecraft](https://minecraft.makecode.com/beta)
 * The [Maker Editor](https://maker.makecode.com)
 
 ## Feedback?
 
-Drop us a note in the MakeCode forums at https://forum.makecode.com with any comments.
+Drop us a note in the MakeCode forums at https://forum.makecode.com/t/translations-in-context-blog/643 with any comments.

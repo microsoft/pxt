@@ -6,9 +6,7 @@ namespace pxsim {
     export namespace U {
         // Keep these helpers unified with pxtlib/browserutils.ts
         export function containsClass(el: SVGElement | HTMLElement, classes: string) {
-            return classes
-                .split(/\s+/)
-                .every(cls => containsSingleClass(el, cls));
+            return splitClasses(classes).every(cls => containsSingleClass(el, cls));
 
             function containsSingleClass(el: SVGElement | HTMLElement, cls: string) {
                 if (el.classList) {
@@ -21,9 +19,7 @@ namespace pxsim {
         }
 
         export function addClass(el: SVGElement | HTMLElement, classes: string) {
-            classes
-                .split(/\s+/)
-                .forEach(cls => addSingleClass(el, cls));
+            splitClasses(classes).forEach(cls => addSingleClass(el, cls));
 
             function addSingleClass(el: SVGElement | HTMLElement, cls: string) {
                 if (el.classList) {
@@ -38,9 +34,7 @@ namespace pxsim {
         }
 
         export function removeClass(el: SVGElement | HTMLElement, classes: string) {
-            classes
-                .split(/\s+/)
-                .forEach(cls => removeSingleClass(el, cls));
+            splitClasses(classes).forEach(cls => removeSingleClass(el, cls));
 
             function removeSingleClass(el: SVGElement | HTMLElement, cls: string) {
                 if (el.classList) {
@@ -52,6 +46,10 @@ namespace pxsim {
                         .join(" ");
                 }
             }
+        }
+
+        function splitClasses(classes: string) {
+            return classes.split(/\s+/).filter(s => !!s);
         }
 
         export function remove(element: Element) {
@@ -188,6 +186,8 @@ namespace pxsim {
         lambdaArgs?: any[];
         caps?: any[];
         lastBrkId?: number;
+        arg0?: any;
+        stage2Call?: boolean;
 
         tryFrame?: TryFrame;
         thrownValue?: any;
@@ -383,6 +383,10 @@ namespace pxsim {
         }
     }
 
+    export interface EventBusBoard {
+        bus: EventBus;
+    }
+
     class BareBoard extends BaseBoard {
     }
 
@@ -521,6 +525,21 @@ namespace pxsim {
     export let initCurrentRuntime: (msg: SimulatorRunMessage) => void = undefined;
     export let handleCustomMessage: (message: pxsim.SimulatorCustomMessage) => void = undefined;
 
+    // binds this pointer (in s.arg0) to method implementation (in s.fn)
+    function bind(s: StackFrame): LabelFn {
+        const thisPtr = s.arg0
+        const f = s.fn
+        return (s2: StackFrame) => {
+            let numArgs = 0
+            while (s2.hasOwnProperty("arg" + numArgs))
+                numArgs++
+            const sa = s2 as any
+            for (let i = numArgs; i > 0; i--)
+                sa["arg" + i] = sa["arg" + (i - 1)]
+            s2.arg0 = thisPtr
+            return f(s2)
+        }
+    }
 
     function _leave(s: StackFrame, v: any): StackFrame {
         s.parent.retval = v;
@@ -1016,6 +1035,8 @@ namespace pxsim {
                 failedCast,
                 buildResume,
                 mkVTable,
+                bind,
+                leaveAccessor,
             }
 
             function oops(msg: string) {
@@ -1136,6 +1157,7 @@ namespace pxsim {
                     }
                     U.assert(__this.loopLock == lock)
                     __this.loopLock = null;
+                    __this.otherFrames.push(s);
                     loop(s);
                     flushLoopLock();
                 }
@@ -1308,12 +1330,40 @@ namespace pxsim {
                 currResume = buildResume(s, retPC)
             }
 
-            function setupLambda(s: StackFrame, a: RefAction | LabelFn) {
+            function leaveAccessor(s: StackFrame, v: any): StackFrame {
+                if (s.stage2Call) {
+                    const s2: StackFrame = {
+                        pc: 0,
+                        fn: null,
+                        depth: s.depth,
+                        parent: s.parent,
+                    }
+                    let num = 1
+                    while (s.hasOwnProperty("arg" + num)) {
+                        (s2 as any)["arg" + (num - 1)] = (s as any)["arg" + num]
+                        num++
+                    }
+                    setupLambda(s2, v)
+                    return s2
+                }
+                s.parent.retval = v
+                return s.parent
+            }
+
+            function setupLambda(s: StackFrame, a: RefAction | LabelFn, numShift?: number) {
+                if (numShift) {
+                    const sa = s as any
+                    for (let i = 1; i < numShift; ++i)
+                        sa["arg" + (i - 1)] = sa["arg" + i]
+                    delete sa["arg" + (numShift - 1)]
+                }
                 if (a instanceof RefAction) {
                     s.fn = a.func
                     s.caps = a.fields
-                } else {
+                } else if (typeof a == "function") {
                     s.fn = a
+                } else {
+                    oops("calling non-function")
                 }
             }
 

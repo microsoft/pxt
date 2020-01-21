@@ -9,6 +9,9 @@ namespace pxt.github {
         }
     }
 
+    /**
+     * Commit user info
+     */
     export interface UserInfo {
         date: string; // "2014-11-07T22:01:45Z",
         name: string; // "Scott Chacon",
@@ -55,6 +58,14 @@ namespace pxt.github {
         size: number;
         sha: string;
         download_url: string;
+    }
+
+    interface CommitComment {
+        id: number;
+        body: string;
+        path?: string;
+        position?: number;
+        user: User;
     }
 
     export let forceProxy = false;
@@ -106,6 +117,10 @@ namespace pxt.github {
         return ghRequestAsync({ url }).then(resp => resp.text)
     }
 
+    function ghProxyJsonAsync(path: string) {
+        return Cloud.apiRequestWithCdnAsync({ url: "gh/" + path }).then(r => r.json)
+    }
+
     export class MemoryGithubDb implements IGithubDb {
         private configs: pxt.Map<pxt.PackageConfig> = {};
         private packages: pxt.Map<CachedPackage> = {};
@@ -120,7 +135,7 @@ namespace pxt.github {
             }
 
             // load and cache
-            return U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${repopath}/${tag}/text`)
+            return ghProxyJsonAsync(`${repopath}/${tag}/text`)
                 .then(v => this.packages[key] = { files: v });
         }
 
@@ -225,6 +240,10 @@ namespace pxt.github {
     // overriden by client
     export let db: IGithubDb = new MemoryGithubDb();
 
+    export function authenticatedUserAsync(): Promise<User> {
+        return ghGetJsonAsync("https://api.github.com/user");
+    }
+
     export function getCommitAsync(repopath: string, sha: string) {
         return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/commits/" + sha)
             .then((commit: Commit) => ghGetJsonAsync(commit.tree.url + "?recursive=1")
@@ -253,10 +272,11 @@ namespace pxt.github {
         tree: string; // sha		
     }
 
-    function ghPostAsync(path: string, data: any) {
+    function ghPostAsync(path: string, data: any, headers?: any, method?: string) {
         return ghRequestAsync({
             url: /^https:/.test(path) ? path : "https://api.github.com/repos/" + path,
-            method: "POST",
+            headers,
+            method: method || "POST",
             allowHttpErrors: true,
             data: data
         }).then(resp => {
@@ -278,6 +298,12 @@ namespace pxt.github {
             .then((resp: SHAObject) => resp.sha)
     }
 
+    export function postCommitComment(repopath: string, commitSha: string, body: string, path?: string, position?: number) {
+        return ghPostAsync(`${repopath}/commits/${commitSha}/comments`, {
+            body, path, position
+        })
+            .then((resp: CommitComment) => resp.id);
+    }
 
     export async function fastForwardAsync(repopath: string, branch: string, commitid: string) {
         let resp = await ghRequestAsync({
@@ -315,10 +341,10 @@ namespace pxt.github {
     }
 
     export async function createPRFromBranchAsync(repopath: string, baseBranch: string,
-        headBranch: string, msg: string) {
+        headBranch: string, title: string, msg?: string) {
         const res = await ghPostAsync(repopath + "/pulls", {
-            title: msg,
-            body: lf("Automatically created from MakeCode."),
+            title: title,
+            body: msg || lf("Automatically created from MakeCode."),
             head: headBranch,
             base: baseBranch,
             maintainer_can_modify: true
@@ -347,8 +373,13 @@ namespace pxt.github {
     }
 
     export function getRefAsync(repopath: string, branch: string) {
+        branch = branch || "master";
         return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/heads/" + branch)
             .then(resolveRefAsync)
+            .catch(err => {
+                if (err.statusCode == 404) return undefined;
+                else Promise.reject(err);
+            })
     }
 
     function generateNextRefName(res: RefsResult, pref: string): string {
@@ -401,6 +432,7 @@ namespace pxt.github {
         let head: string = null
         const fetch = !useProxy() ?
             ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/" + namespace + "/?per_page=100") :
+            // no CDN caching here
             U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${repopath}/refs`)
                 .then(r => {
                     let res = Object.keys(r.refs)
@@ -453,7 +485,7 @@ namespace pxt.github {
     export function downloadPackageAsync(repoWithTag: string, config: pxt.PackagesConfig): Promise<CachedPackage> {
         let p = parseRepoId(repoWithTag)
         if (!p) {
-            pxt.log('Unknown github syntax');
+            pxt.log('Unknown GitHub syntax');
             return Promise.resolve<CachedPackage>(undefined);
         }
 
@@ -466,18 +498,22 @@ namespace pxt.github {
         return db.loadPackageAsync(p.fullName, p.tag);
     }
 
+    export interface User {
+        login: string; // "Microsoft",
+        id: number; // 6154722,
+        avatar_url: string; // "https://avatars.githubusercontent.com/u/6154722?v=3",
+        gravatar_id: string; // "",
+        html_url: string; // "https://github.com/microsoft",
+        type: string; // "Organization"
+        name: string;
+        company: string;
+    }
+
     interface Repo {
         id: number;
         name: string; // "pxt-microbit-cppsample",
         full_name: string; // "Microsoft/pxt-microbit-cppsample",
-        owner: {
-            login: string; // "Microsoft",
-            id: number; // 6154722,
-            avatar_url: string; // "https://avatars.githubusercontent.com/u/6154722?v=3",
-            gravatar_id: string; // "",
-            html_url: string; // "https://github.com/microsoft",
-            type: string; // "Organization"
-        },
+        owner: User;
         private: boolean;
         html_url: string; // "https://github.com/microsoft/pxt-microbit-cppsample",
         description: string; // "Sample C++ extension for PXT/microbit",
@@ -544,7 +580,27 @@ namespace pxt.github {
             has_issues: true, // default
             has_projects: false,
             has_wiki: false,
+            allow_rebase_merge: false
         }).then(v => mkRepo(v, null))
+    }
+
+    export function enablePagesAsync(repo: string) {
+        // https://developer.github.com/v3/repos/pages/#enable-a-pages-site
+        return ghPostAsync(`https://api.github.com/repos/${repo}/pages`, {
+            source: {
+                branch: "master",
+                path: ""
+          }
+        }, {
+            "Accept": "application/vnd.github.switcheroo-preview+json"
+        }).then(r => {
+            const url = r.html_url;
+            // update repo home page
+            return ghPostAsync(`https://api.github.com/repos/${repo}`,
+            {
+                "homepage": url
+            }, undefined, "PATCH");
+        });
     }
 
     export function repoIconUrl(repo: GitRepo): string {
@@ -554,7 +610,7 @@ namespace pxt.github {
     }
 
     export function mkRepoIconUrl(repo: ParsedRepo): string {
-        return Cloud.apiRoot + `gh/${repo.fullName}/icon`;
+        return Cloud.cdnApiUrl(`gh/${repo.fullName}/icon`)
     }
 
     function mkRepo(r: Repo, config: pxt.PackagesConfig, tag?: string): GitRepo {
@@ -632,7 +688,7 @@ namespace pxt.github {
                 .then((r: Repo) => mkRepo(r, config, rid.tag));
 
         // always use proxy
-        return Util.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${rid.fullName}`)
+        return ghProxyJsonAsync(`${rid.fullName}`)
             .then(meta => {
                 if (!meta) return undefined;
                 return {
@@ -739,7 +795,7 @@ namespace pxt.github {
         return p ? "github:" + p.fullName.toLowerCase() + "#" + (p.tag || "master") : undefined;
     }
 
-    export function noramlizeRepoId(id: string) {
+    export function normalizeRepoId(id: string) {
         const gid = parseRepoId(id);
         gid.tag = gid.tag || "master";
         return stringifyRepo(gid);
@@ -789,7 +845,6 @@ namespace pxt.github {
 
     export interface GitJson {
         repo: string;
-        prUrl?: string; // if any
         commit: pxt.github.Commit;
         isFork?: boolean;
     }
@@ -838,6 +893,8 @@ namespace pxt.github {
         const b = toLines(fileB)
 
         const MAX = Math.min(options.maxDiffSize || 1024, a.length + b.length)
+        if (MAX == 0) // nothing to diff
+            return [];
         const ctor = a.length > 0xfff0 ? Uint32Array : Uint16Array
 
         const idxmap: pxt.Map<number> = {}
@@ -849,7 +906,7 @@ namespace pxt.github {
             let i = 0
             for (let e of strings) {
                 if (options.ignoreWhitespace)
-                    e = e.replace(/\s+/g, "")
+                    e = e.replace(/\s+$/g, "").replace(/^\s+/g, ''); // only ignore start/end of lines
                 if (idxmap.hasOwnProperty(e))
                     idxarr[i] = idxmap[e]
                 else {
@@ -987,15 +1044,13 @@ namespace pxt.github {
 
     // based on "A Formal Investigation of Diff3" by Sanjeev Khanna, Keshav Kunal, and Benjamin C. Pierce
     export function diff3(fileA: string, fileO: string, fileB: string,
-        lblA?: string, lblB?: string) {
-        // we're not showing these to users (yet anyways)
-        if (!lblA)
-            lblA = lf("Yours") // ours/HEAD
-        if (!lblB)
-            lblB = lf("Incoming") // theirs/upstream/origin
-
+        lblA: string, lblB: string) {
         const ma = computeMatch(fileA)
         const mb = computeMatch(fileB)
+
+        if (!ma || !mb) // diff failed, can't merge
+            return undefined;
+
         const fa = toLines(fileA)
         const fb = toLines(fileB)
         let numConflicts = 0
@@ -1052,6 +1107,8 @@ namespace pxt.github {
 
         function computeMatch(fileA: string) {
             const da = pxt.github.diff(fileO, fileA, { context: Infinity })
+            if (!da)
+                return undefined;
             const ma: number[] = []
 
             let aidx = 0
@@ -1077,5 +1134,317 @@ namespace pxt.github {
 
             return ma
         }
+    }
+
+    export function resolveMergeConflictMarker(content: string, startMarkerLine: number, local: boolean, remote: boolean): string {
+        let lines = toLines(content);
+        let startLine = startMarkerLine;
+        while (startLine < lines.length) {
+            if (/^<<<<<<<[^<]/.test(lines[startLine])) {
+                break;
+            }
+            startLine++;
+        }
+        let middleLine = startLine + 1;
+        while (middleLine < lines.length) {
+            if (/^=======$/.test(lines[middleLine]))
+                break;
+            middleLine++;
+        }
+        let endLine = middleLine + 1;
+        while (endLine < lines.length) {
+            if (/^>>>>>>>[^>]/.test(lines[endLine])) {
+                break;
+            }
+            endLine++;
+        }
+        if (endLine >= lines.length) {
+            // no match?
+            pxt.debug(`diff marker mistmatch: ${lines.length} -> ${startLine} ${middleLine} ${endLine}`)
+            return content;
+        }
+
+        // remove locals
+        lines[startLine] = undefined;
+        lines[middleLine] = undefined;
+        lines[endLine] = undefined;
+        if (!local)
+            for (let i = startLine; i <= middleLine; ++i)
+                lines[i] = undefined;
+        if (!remote)
+            for (let i = middleLine; i <= endLine; ++i)
+                lines[i] = undefined;
+
+        return lines.filter(line => line !== undefined).join("\n");
+    }
+
+    /**
+     * A naive 3way merge for pxt.json files. It can mostly handle conflicts when adding/removing files concurrently.
+     * - highest version number if kept
+     * - current preferred editor is kept
+     * - conjection of public flag
+     * - files list is merged so that added files are kept and deleted files are removed
+     * @param configA 
+     * @param configO 
+     * @param configB 
+     */
+    export function mergeDiff3Config(configA: string, configO: string, configB: string): string {
+        let jsonA: any = pxt.Util.jsonTryParse(configA); //  as pxt.PackageConfig
+        let jsonO: any = pxt.Util.jsonTryParse(configO);
+        let jsonB: any = pxt.Util.jsonTryParse(configB);
+        // A is good, B destroyed
+        if (jsonA && !jsonB)
+            return configA; // keep A
+
+        // A destroyed, B good, use B or O
+        if (!jsonA)
+            return configB || configO;
+
+        // O is destroyed, B isnt, use B as O
+        if (!jsonO && jsonB)
+            jsonO = jsonB;
+
+        // final check
+        if (!jsonA || !jsonO || !jsonB)
+            return undefined;
+
+        delete jsonA.installedVersion;
+        delete jsonO.installedVersion;
+        delete jsonB.installedVersion;
+
+        const r: any = {} as pxt.PackageConfig;
+
+        const keys = pxt.U.unique(Object.keys(jsonO).concat(Object.keys(jsonA)).concat(Object.keys(jsonB)), l => l);
+        for (const key of keys) {
+            const vA = jsonA[key];
+            const vO = jsonO[key];
+            const vB = jsonB[key];
+            const svA = JSON.stringify(vA);
+            const svB = JSON.stringify(vB);
+            if (svA == svB) { // same serialized keys
+                if (vA !== undefined)
+                    r[key] = vA;
+            } else {
+                switch (key) {
+                    case "name":
+                        r[key] = mergeName(vA, vO, vB);
+                        break;
+                    case "version": // pick highest version
+                        r[key] = pxt.semver.strcmp(vA, vB) > 0 ? vA : vB;
+                        break;
+                    case "preferredEditor":
+                        r[key] = vA; // keep current one
+                        break;
+                    case "public":
+                        r[key] = vA && vB;
+                        break;
+                    case "files":
+                    case "testFiles": {// merge file arrays
+                        const m = mergeFiles(vA || [], vO || [], vB || []);
+                        if (!m)
+                            return undefined;
+                        r[key] = m.length ? m : undefined;
+                        break;
+                    }
+                    case "dependencies":
+                    case "testDependencies": {
+                        const m = mergeDependencies(vA || {}, vO || {}, vB || {});
+                        if (Object.keys(m).length)
+                            return undefined;
+                        r[key] = m;
+                        break;
+                    }
+                    case "description":
+                        if (vA && !vB) r[key] = vA; // new description
+                        else if (!vA && vB) r[key] = vB;
+                        else return undefined;
+                        break;
+                    default:
+                        return undefined;
+                }
+            }
+        }
+        return pxt.Package.stringifyConfig(r);
+
+        function mergeName(fA: string, fO: string, fB: string): string {
+            if (fA == fO) return fB;
+            if (fB == fO) return fA;
+            if (fA == lf("Untitled")) return fB;
+            return fA;
+        }
+
+        function mergeFiles(fA: string[], fO: string[], fB: string[]): string[] {
+            const r: string[] = [];
+            const fkeys = pxt.U.unique(fO.concat(fA).concat(fB), l => l);
+            for (const fkey of fkeys) {
+                const mA = fA.indexOf(fkey) > -1;
+                const mB = fB.indexOf(fkey) > -1;
+                const mO = fO.indexOf(fkey) > -1;
+                if (mA == mB) { // both have or have nots
+                    if (mA) // key is in set
+                        r.push(fkey);
+                } else { // conflict
+                    if (mB == mO) { // mB not changed, false conflict
+                        if (mA) // item added
+                            r.push(fkey);
+                    } else { // mA == mO, conflict
+                        if (mB) // not deleted by A
+                            r.push(fkey);
+                    }
+                }
+            }
+            return r;
+        }
+
+        function mergeDependencies(fA: pxt.Map<string>, fO: pxt.Map<string>, fB: pxt.Map<string>): pxt.Map<string> {
+            const r: pxt.Map<string> = {};
+            const fkeys = pxt.U.unique(Object.keys(fO).concat(Object.keys(fA)).concat(Object.keys(fB)), l => l);
+            for (const fkey of fkeys) {
+                const mA = fA[fkey];
+                const mB = fB[fkey];
+                const mO = fO[fkey]
+                if (mA == mB) { // both have or have nots
+                    if (mA) // key is in set
+                        r[fkey] = mA;
+                } else { // conflict
+                    // check if it is a version change in github reference
+                    const ghA = parseRepoId(mA)
+                    const ghB = parseRepoId(mB)
+                    if (ghA && ghB
+                        && pxt.semver.tryParse(ghA.tag)
+                        && pxt.semver.tryParse(ghB.tag)
+                        && ghA.owner && ghA.project
+                        && ghA.owner == ghB.owner
+                        && ghA.project == ghB.project) {
+                        const newtag = pxt.semver.strcmp(ghA.tag, ghB.tag) > 0
+                            ? ghA.tag : ghB.tag;
+                        r[fkey] = `github:${ghA.owner}/${ghA.project}#${newtag}`
+                    } else if (mB == mO) { // mB not changed, false conflict
+                        if (mA) // item added
+                            r[fkey] = mA;
+                    } else { // mA == mO, conflict
+                        if (mB) // not deleted by A
+                            r[fkey] = mB;
+                    }
+                }
+            }
+            return r;
+        }
+    }
+
+    export function hasMergeConflictMarker(content: string) {
+        return content && /^(<<<<<<<[^<]|>>>>>>>[^>])/m.test(content);
+    }
+
+    export function lookupFile(commit: pxt.github.Commit, path: string) {
+        if (!commit)
+            return null
+        return commit.tree.tree.find(e => e.path == path)
+    }
+
+    export function reconstructConfig(files: pxt.Map<string>, commit: pxt.github.Commit, tp: pxt.ProjectTemplate) {
+        let dependencies: pxt.Map<string> = {};
+        // grab files from commit
+        let commitFiles = commit.tree.tree.map(f => f.path)
+            .filter(f => /\.(ts|blocks|md|jres|asm|json)$/.test(f))
+            .filter(f => f != pxt.CONFIG_NAME);
+        // if no available files, include the files from the template
+        if (!commitFiles.find(f => /\.ts$/.test(f))) {
+            tp.config.files.filter(f => commitFiles.indexOf(f) < 0)
+                .forEach(f => {
+                    commitFiles.push(f);
+                    files[f] = tp.files[f];
+                })
+            pxt.Util.jsonCopyFrom(dependencies, tp.config.dependencies);
+        }
+
+        // include corepkg if no dependencies
+        if (!Object.keys(dependencies).length)
+            dependencies[pxt.appTarget.corepkg] = "*";
+
+        // yay, we have a new cfg
+        const cfg: pxt.PackageConfig = {
+            name: "",
+            files: commitFiles,
+            dependencies,
+            preferredEditor: commitFiles.find(f => /.blocks$/.test(f)) ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME
+        };
+        return cfg;
+    }
+
+    /**
+     * Executes a GraphQL query against GitHub v4 api
+     * @param query 
+     */
+    export function ghGraphQLQueryAsync(query: string): Promise<any> {
+        const payload = JSON.stringify({
+            query
+        })
+        return ghPostAsync("https://api.github.com/graphql", payload);
+    }
+
+    export interface PullRequest {
+        number: number;
+        state?: "OPEN" | "CLOSED" | "MERGED";
+        mergeable?: "MERGEABLE" | "CONFLICTING" | "UNKNOWN";
+    }
+
+    /**
+     * Finds the first PR associated with a branch
+     * @param reponame 
+     * @param headName 
+     */
+    export function findPRNumberforBranchAsync(reponame: string, headName: string): Promise<PullRequest> {
+        const repoId = parseRepoId(reponame);
+        const query =
+            `
+{
+    repository(owner: ${JSON.stringify(repoId.owner)}, name: ${JSON.stringify(repoId.project)}) {
+        pullRequests(last: 1, states: [OPEN, MERGED], headRefName: ${JSON.stringify(headName)}) {
+            edges {
+                node {
+                    number
+                    state
+                    mergeable
+                }
+            }
+        }
+    }
+}
+`
+
+        /*
+        {
+          "data": {
+            "repository": {
+              "pullRequests": {
+                "edges": [
+                  {
+                    "node": {
+                      "title": "use close icon instead of cancel",
+                      "number": 6324
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }*/
+
+        return ghGraphQLQueryAsync(query)
+            .then<pxt.github.PullRequest>(resp => {
+                const edge = resp.data.repository.pullRequests.edges[0]
+                if (edge && edge.node) {
+                    const node = edge.node;
+                    return {
+                        number: node.number,
+                        mergeable: node.mergeable,
+                        state: node.state
+                    }
+                }
+                return {
+                    number: -1
+                }
+            })
     }
 }

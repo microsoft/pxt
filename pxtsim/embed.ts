@@ -47,6 +47,7 @@ namespace pxsim {
     export interface SimulatorFileLoadedMessage extends SimulatorMessage {
         type: "fileloaded";
         name: string;
+        // localeInfo NOT userLanguage
         locale: string;
         content?: string;
     }

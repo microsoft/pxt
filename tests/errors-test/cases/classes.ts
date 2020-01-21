@@ -15,3 +15,13 @@ class S {
 }
 S.x = 42
 S.m()
+
+class G0 {
+    set y(v: number) { }
+}
+new G0().y = 1 // TS9281 - no getter
+
+class G1 {
+    set y(v: number) { }
+}
+let qq = new G1().y // TS9281 - no getter

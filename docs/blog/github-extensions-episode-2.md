@@ -2,6 +2,13 @@
 
 **Posted on September 25, 2019 by [pelikhan](https://github.com/pelikhan)**
 
+## ~ hint
+
+**Update**: Read part 3 at [MakeCode with GitHub](/blog/makecode-with-github).
+
+## ~
+
+
 In the [previous "episode"](/blog/github-packages) of the GitHub authoring series, we introduced a simple way to host your MakeCode projects on GitHub. In our latest round of updates, we've integrated more GitHub features into MakeCode which let you stay right where you are without having to jump between both web sites. Let's a look at these improvements:
 
 ## Create a GitHub repository from any project

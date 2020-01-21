@@ -199,7 +199,7 @@ Instructions for step 1 of activity 2 here...
 
 ### Steps
 
-A step is where the user views and interacts with the instructions and hints for a tutorial action. The runner builds interactions from each _step_ section. 
+A step is where the user views and interacts with the instructions and hints for a tutorial action. The runner builds interactions from each _step_ section.
 
 #### Default Syntax
 
@@ -266,6 +266,43 @@ During an interaction, the step description (all text before the first code bloc
 
 ### ~
 
+### Images
+
+Using images in steps is a simple and powerful way to reinforce concepts and convey ideas. Images can be included as part of step descriptions. You specify an image using the standard markdown format.
+
+```markdown
+![Agent building a tower](/static/tutorials/agent-tower.png)
+```
+
+A step with and image might have text like this:
+
+```markdown
+## Introduction @unplugged
+
+Have the agent build a tower! Make a command to tell it how many levels to build.
+
+![Agent building a tower](/static/tutorials/agent-tower.png)
+```
+
+Images appear in steps that have either the [fullscreen](#fullscreen) or [unplugged](#unplugged) modifiers present, or when a step hint is viewed.
+
+Images should be hosted under the ``./docs/static/`` folder path of the editor project's repository files. The relative URL in markdown begins with just ``/static/`` though.
+
+Image formats typically used are PNG, JPEG, and GIF.
+
+### ~ alert
+
+#### Image size considerations
+
+It's important to consider that image size can affect the load time and therefore
+impact the experience of the user during a tutorial. Also, images that are too large can consume the viewing area where the tutorial is displayed. Try to economize tutorial images both in file size and dimensionally.
+Recommendations for images are:
+
+* **File size**: 1 MB or less
+* **Dimensions**: 800 pixels wide or less
+
+### ~
+
 ## Step modifiers
 
 To add a special behavior to a step, use a step modifier:
@@ -312,6 +349,7 @@ To signify that this step in the tutorial is the "last step", even if more steps
 ## This is a bonus activity that comes after the last step
 
 ```
+
 ## Using blocks
 
 ### Hint blocks
@@ -322,7 +360,7 @@ The blocks are specified the same as in any other markdown document. During the 
 ````
 ## Step 3 - Show the temperature
 
-Get a ``||input:temperature|| block and place it in the value slot of ``||basic:show number||``.
+Get a ``||input:temperature||`` block and place it in the value slot of ``||basic:show number||``.
 
 ```blocks
 forever(function() {
@@ -362,6 +400,72 @@ player.onChat("blockleft", function () {
     agent.turn(TurnDirection.Right)
     agent.place(SixDirection.Back)
 })
+```
+````
+
+## Using Python
+
+If the target supports Python, snippets can be written in JavaScript or Python directly.
+
+## Python snippets
+
+Using ``python`` after the triple tick like this:
+````
+```python
+for i in range(100):
+    mobs.spawn(AnimalMob.CHICKEN, positions.create(0, 10, 0))
+```
+````
+
+## Spy snippets (JavaScript to Python)
+
+Snippets can also be written in JavaScript and automatically converted to Python
+at display time. Use the ``spy`` section:
+
+````
+```spy
+basic.showString("Hello!")
+```
+````
+
+## Other languages
+
+Note that if the target supports python then snippets written in the usual way like:
+````
+```typescript
+basic.showString("Hello!")
+```
+or
+```blocks
+basic.showString("Hello!")
+```
+````
+users will have the option of clicking the Python icon to see the snippet in Python just like they can with Blocks and Javascript/Typescript.
+
+## JavaScript and Python tutorial ("Spy tutorials")
+
+If you author tutorials using ``JavaScript`` or ``spy``, MakeCode is able to automatically
+render them in JavaScript or Python. Overriding the default language is done in the
+``tutorials.md`` page, in the cards section by specifying the ``editor`` field.
+
+If you are able to author your tutorial in a language agnostic way, 
+you will be able to have a single source for both JavaScript and Python.
+
+````
+```codecard
+[{
+    "name": "Chicken Rain",
+    ...
+    "otherActions": [{
+        "url": "/tutorials/spy/chicken-rain",
+        "editor": "py",
+        "cardType": "tutorial"
+    }, {
+        "url": "/tutorials/spy/chicken-rain",
+        "editor": "js",
+        "cardType": "tutorial"
+    }]
+}]
 ```
 ````
 
@@ -405,3 +509,7 @@ Click ``|Download|`` to transfer your code in your @boardname@!
 ## Translations
 
 Tutorials are translated via [Crowdin](/translate) like any other documentation page.
+
+## Dependencies
+
+If your tutorial requires the use of an extension, you can add them using the [package macro](https://makecode.com/writing-docs/macros#dependencies).

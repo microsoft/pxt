@@ -21,6 +21,7 @@ namespace pxtblockly {
         private static TAB = "        ";
 
         public isFieldCustom_ = true;
+        public SERIALIZABLE = true;
 
         private params: any;
         private onColor = "#FFFFFF";
@@ -78,48 +79,50 @@ namespace pxtblockly {
         }
 
         private initMatrix() {
-            this.elt = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" id="field-matrix" />`);
+            if (!this.sourceBlock_.isInsertionMarker()) {
+                this.elt = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" id="field-matrix" />`);
 
-            // Initialize the matrix that holds the state
-            for (let i = 0; i < this.matrixWidth; i++) {
-                this.cellState.push([])
-                this.cells.push([]);
-                for (let j = 0; j < this.matrixHeight; j++) {
-                    this.cellState[i].push(false);
-                }
-            }
-
-            this.restoreStateFromString();
-
-            // Create the cells of the matrix that is displayed
-            for (let i = 0; i < this.matrixWidth; i++) {
-                for (let j = 0; j < this.matrixHeight; j++) {
-                    this.createCell(i, j);
-                }
-            }
-
-            this.updateValue();
-
-            if (this.xAxisLabel !== LabelMode.None) {
-                const y = this.matrixHeight * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_VERTICAL_MARGIN * 2 + FieldMatrix.BOTTOM_MARGIN
-                const xAxis = pxsim.svg.child(this.elt, "g", { transform: `translate(${0} ${y})` });
+                // Initialize the matrix that holds the state
                 for (let i = 0; i < this.matrixWidth; i++) {
-                    const x = this.getYAxisWidth() + i * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_HORIZONTAL_MARGIN) + FieldMatrix.CELL_WIDTH / 2 + FieldMatrix.CELL_HORIZONTAL_MARGIN / 2;
-                    const lbl = pxsim.svg.child(xAxis, "text", { x, class: "blocklyText" })
-                    lbl.textContent = this.getLabel(i, this.xAxisLabel);
+                    this.cellState.push([])
+                    this.cells.push([]);
+                    for (let j = 0; j < this.matrixHeight; j++) {
+                        this.cellState[i].push(false);
+                    }
                 }
-            }
 
-            if (this.yAxisLabel !== LabelMode.None) {
-                const yAxis = pxsim.svg.child(this.elt, "g", {});
-                for (let i = 0; i < this.matrixHeight; i++) {
-                    const y = i * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_WIDTH / 2 + FieldMatrix.CELL_VERTICAL_MARGIN * 2;
-                    const lbl = pxsim.svg.child(yAxis, "text", { x: 0, y, class: "blocklyText" })
-                    lbl.textContent = this.getLabel(i, this.yAxisLabel);
+                this.restoreStateFromString();
+
+                // Create the cells of the matrix that is displayed
+                for (let i = 0; i < this.matrixWidth; i++) {
+                    for (let j = 0; j < this.matrixHeight; j++) {
+                        this.createCell(i, j);
+                    }
                 }
-            }
 
-            this.fieldGroup_.appendChild(this.elt);
+                this.updateValue();
+
+                if (this.xAxisLabel !== LabelMode.None) {
+                    const y = this.matrixHeight * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_VERTICAL_MARGIN * 2 + FieldMatrix.BOTTOM_MARGIN
+                    const xAxis = pxsim.svg.child(this.elt, "g", { transform: `translate(${0} ${y})` });
+                    for (let i = 0; i < this.matrixWidth; i++) {
+                        const x = this.getYAxisWidth() + i * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_HORIZONTAL_MARGIN) + FieldMatrix.CELL_WIDTH / 2 + FieldMatrix.CELL_HORIZONTAL_MARGIN / 2;
+                        const lbl = pxsim.svg.child(xAxis, "text", { x, class: "blocklyText" })
+                        lbl.textContent = this.getLabel(i, this.xAxisLabel);
+                    }
+                }
+
+                if (this.yAxisLabel !== LabelMode.None) {
+                    const yAxis = pxsim.svg.child(this.elt, "g", {});
+                    for (let i = 0; i < this.matrixHeight; i++) {
+                        const y = i * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_WIDTH / 2 + FieldMatrix.CELL_VERTICAL_MARGIN * 2;
+                        const lbl = pxsim.svg.child(yAxis, "text", { x: 0, y, class: "blocklyText" })
+                        lbl.textContent = this.getLabel(i, this.yAxisLabel);
+                    }
+                }
+
+                this.fieldGroup_.appendChild(this.elt);
+            }
         }
 
         private getLabel(index: number, mode: LabelMode) {

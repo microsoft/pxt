@@ -10,29 +10,28 @@ interface CrowdinCredentials { prj: string; key: string; branch: string; }
 
 function crowdinCredentialsAsync(): Promise<CrowdinCredentials> {
     const prj = pxt.appTarget.appTheme.crowdinProject;
+    const branch = pxt.appTarget.appTheme.crowdinBranch;
     if (!prj) {
         pxt.log(`crowdin upload skipped, Crowdin project missing in target theme`);
         return Promise.resolve(undefined);
     }
 
-    return Promise.resolve()
-        .then(() => {
-            // Env var overrides credentials manager
-            const envKey = process.env[pxt.crowdin.KEY_VARIABLE];
-            return Promise.resolve(envKey);
-        })
-        .then(key => {
-            if (!key) {
-                pxt.log(`Crowdin operation skipped: '${pxt.crowdin.KEY_VARIABLE}' variable is missing`);
-                return undefined;
-            }
-            const branch = pxt.appTarget.appTheme.crowdinBranch;
-            return { prj, key, branch };
-        });
+    let key: string;
+    if (pxt.crowdin.testMode)
+        key = pxt.crowdin.TEST_KEY;
+    else
+        key = process.env[pxt.crowdin.KEY_VARIABLE];
+    if (!key) {
+        pxt.log(`Crowdin operation skipped: '${pxt.crowdin.KEY_VARIABLE}' variable is missing`);
+        return Promise.resolve(undefined);
+    }
+    return Promise.resolve({ prj, key, branch });
 }
 
 export function uploadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
     const uploadDocs = parsed && !!parsed.flags["docs"];
+    if (parsed && !!parsed.flags["test"])
+        pxt.crowdin.setTestMode();
     return internalUploadTargetTranslationsAsync(uploadDocs);
 }
 
@@ -139,7 +138,6 @@ function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj:
 export function downloadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
     const name = (parsed && parsed.args[0]) || "";
     const crowdinDir = pxt.appTarget.id;
-
     return crowdinCredentialsAsync()
         .then(cred => {
             if (!cred) return Promise.resolve();
@@ -292,16 +290,18 @@ function cleanCrowdinAsync(prj: string, key: string, dir: string): Promise<void>
 
 function statsCrowdinAsync(prj: string, key: string, preferredLang?: string): Promise<void> {
     pxt.log(`collecting crowdin stats for ${prj} ${preferredLang ? `for language ${preferredLang}` : `all languages`}`);
+    console.log(`context\t language\t translated%\t approved%\t phrases\t translated\t approved`)
 
     const fn = `crowdinstats.csv`;
     let headers = 'sep=\t\r\n';
-    headers += `id\tfile\t language\t completion\t phrases\t translated\t approved\r\n`;
+    headers += `id\t file\t language\t phrases\t translated\t approved\r\n`;
     nodeutil.writeFileSync(fn, headers, { encoding: "utf8" });
-    console.log(`id\tfile\t language\t completion\t phrases\t translated\t approved`)
     return pxt.crowdin.projectInfoAsync(prj, key)
         .then(info => {
             if (!info) throw new Error("info failed")
             let languages = info.languages;
+            // remove in-context language
+            languages = languages.filter(l => l.code != ts.pxtc.Util.TRANSLATION_LOCALE);
             if (preferredLang)
                 languages = languages.filter(lang => lang.code.toLowerCase() == preferredLang.toLowerCase());
             return Promise.all(languages.map(lang => langStatsCrowdinAsync(prj, key, lang.code)))
@@ -312,15 +312,37 @@ function statsCrowdinAsync(prj: string, key: string, preferredLang?: string): Pr
     function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<void> {
         return pxt.crowdin.languageStatsAsync(prj, key, lang)
             .then(stats => {
+                let uiphrases = 0;
+                let uitranslated = 0;
+                let uiapproved = 0;
+                let corephrases = 0;
+                let coretranslated = 0;
+                let coreapproved = 0;
+                let phrases = 0;
+                let translated = 0;
+                let approved = 0;
                 let r = '';
                 stats.forEach(stat => {
                     const cfn = `${stat.branch ? stat.branch + "/" : ""}${stat.fullName}`;
-                    r += `${stat.id}\t${cfn}\t${lang}\t ${stat.phrases}\t ${stat.translated}\t ${stat.approved}\r\n`;
-                    if (stat.fullName == "strings.json" || /core-strings\.json$/.test(stat.fullName)) {
-                        console.log(`${stat.id}\t${cfn}\t${lang}\t ${(stat.approved / stat.phrases * 100) >> 0}%\t ${stat.phrases}\t ${stat.translated}\t${stat.approved}`)
+                    r += `${stat.id}\t ${cfn}\t ${lang}\t ${stat.phrases}\t ${stat.translated}\t ${stat.approved}\r\n`;
+                    if (stat.fullName == "strings.json") {
+                        uiapproved += Number(stat.approved);
+                        uitranslated += Number(stat.translated);
+                        uiphrases += Number(stat.phrases);
+                    } else if (/core-strings\.json$/.test(stat.fullName)) {
+                        coreapproved += Number(stat.approved);
+                        coretranslated += Number(stat.translated);
+                        corephrases += Number(stat.phrases);
+                    } else if (/-strings\.json$/.test(stat.fullName)) {
+                        approved += Number(stat.approved);
+                        translated += Number(stat.translated);
+                        phrases += Number(stat.phrases);
                     }
                 })
                 fs.appendFileSync(fn, r, { encoding: "utf8" });
+                console.log(`ui\t ${lang}\t ${(uitranslated / uiphrases * 100) >> 0}%\t ${(uiapproved / uiphrases * 100) >> 0}%\t ${uiphrases}\t ${uitranslated}\t ${uiapproved}`)
+                console.log(`core\t ${lang}\t ${(coretranslated / corephrases * 100) >> 0}%\t ${(coreapproved / corephrases * 100) >> 0}%\t ${corephrases}\t ${coretranslated}\t ${coreapproved}`)
+                console.log(`blocks\t ${lang}\t ${(translated / phrases * 100) >> 0}%\t ${(approved / phrases * 100) >> 0}%\t ${phrases}\t ${translated}\t ${approved}`)
             })
     }
 

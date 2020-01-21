@@ -19,8 +19,6 @@
         @BODY@
     </aside>
 
-
-
     <div class="ui main container mainbody">
 
         @breadcrumb@
@@ -30,7 +28,7 @@
         <!-- @endif -->
 
         <!-- @ifdef official -->
-        <div class="ui icon green message" style='margin: 3em 0'>
+        <div class="ui icon green tiny message" style='margin: 1rem 0'>
             <i class="check icon"></i>
             <div class="content">
                 <h3 class="header">
@@ -43,24 +41,26 @@
         </div>
         <!-- @endif -->
 
-        <h1 class="ui header">
+        <h1 id="templateh1" class="ui header">
             <div class="ui content">
-                @title@ @version@ (@slug@)
-                <a href="https://github.com/@slug@" class="ui primary button">Fork me</a>
+                @slug@ @version@
+                <a href="https://github.com/@slug@" class="ui button" title="Open @slug@ in GitHub" aria-label="Open in GitHub">
+                    <i class="github icon"></i>
+                    GitHub
+                </a>
             </div>
         </h1>
-        <p class="ui content description">
-            @description@
-        </p>
-
         @body@
-
     </div>
 
 
     <script>
         const pkgJson = @JSON@;
 // do something with it
+        // remove h1 from markdown
+        $(function() {
+            $('h1:contains(@title@)').not('#templateh1').remove();
+        })
     </script>
 
     <!-- @include footer.html -->

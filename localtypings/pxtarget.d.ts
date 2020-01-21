@@ -5,10 +5,14 @@
 
 declare namespace pxt {
     // targetconfig.json
+    interface GalleryProps {
+        url: string,
+        experimentName?: string
+    }
     interface TargetConfig {
         packages?: PackagesConfig;
         // common galleries
-        galleries?: pxt.Map<string>;
+        galleries?: pxt.Map<string | GalleryProps>;
         // localized galleries
         localizedGalleries?: pxt.Map<pxt.Map<string>>;
         windowsStoreLink?: string;
@@ -47,7 +51,9 @@ declare namespace pxt {
         appTheme: AppTheme;
         compileService?: TargetCompileService;
         ignoreDocsErrors?: boolean;
+        uploadDocs?: boolean; // enable uploading to crowdin on master or v* builds
         variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
+        multiVariants?: string[];
         queryVariants?: Map<AppTarget>; // patches on top of the current AppTarget using query url regex
         unsupportedBrowsers?: BrowserOptions[]; // list of unsupported browsers for a specific target (eg IE11 in arcade). check browserutils.js browser() function for strings
         checkdocsdirs?: string[]; // list of folders for checkdocs, irrespective of SUMMARY.md
@@ -108,6 +114,8 @@ declare namespace pxt {
         extraBlocks?: BlockToolboxDefinition[];  // deprecated
         assetExtensions?: string[];
         palette?: string[];
+        paletteNames?: string[]; // human readable names for palette colors
+        tilesetFieldEditorIdentity?: string; // The qualified name of the API used with the field_tileset field editor. Currently, only for pxt-arcade
         screenSize?: Size;
         bannedCategories?: string[]; // a list of categories to exclude blocks from
     }
@@ -141,7 +149,14 @@ declare namespace pxt {
         embedding?: boolean;
         githubPackages?: boolean; // allow searching github for packages
         noGithubProxy?: boolean;
-        cloudProviders?: pxt.Map<{}>;
+        maxFileSize?: number; // maximum file size in bytes
+        warnFileSize?: number; // warn aboutfile size in bytes
+        cloudProviders?: pxt.Map<AppCloudProvider>;
+    }
+
+    interface AppCloudProvider {
+        client_id: string;
+        redirect?: boolean; // Whether or not to popup or redirect the oauth. Default to popup
     }
 
     interface AppSimulator {
@@ -167,6 +182,7 @@ declare namespace pxt {
         trustedUrls?: string[]; // URLs that are allowed in simulator modal messages
         invalidatedClass?: string; // CSS class to be applied to the sim iFrame when it needs to be updated (defaults to sepia filter)
         stoppedClass?: string; // CSS class to be applied to the sim iFrame when it isn't running (defaults to grayscale filter)
+        keymap?: boolean; // when non-empty and autoRun is disabled, this code is run upon simulator first start
     }
 
     interface TargetCompileService {
@@ -174,6 +190,7 @@ declare namespace pxt {
         yottaBinary?: string; // defaults to "pxt-microbit-app-combined.hex"
         yottaCorePackage?: string; // pxt-microbit-core
         yottaConfig?: any; // additional config
+        yottaConfigCompatibility?: boolean; // enforce emitting backward compatible yotta config entries (YOTTA_CFG_)
 
         platformioIni?: string[];
 
@@ -213,6 +230,7 @@ declare namespace pxt {
         highContrastPortraitLogo?: string;
         rightLogo?: string;
         docsLogo?: string;
+        docsHeader?: string;
         organization?: string;
         organizationUrl?: string;
         organizationLogo?: string;
@@ -318,6 +336,7 @@ declare namespace pxt {
         baseTheme?: string; // Use this to determine whether to show a light or dark theme, default is 'light', options are 'light', 'dark', or 'hc'
         scriptManager?: boolean; // Whether or not to enable the script manager. default: false
         monacoFieldEditors?: string[]; // A list of field editors to show in monaco. Currently only "image-editor" is supported
+        disableAPICache?: boolean; // Disables the api cache in target.js
         /**
          * Internal and temporary flags:
          * These flags may be removed without notice, please don't take a dependency on them
@@ -331,7 +350,7 @@ declare namespace pxt {
         simScreenshotKey?: string; // keyboard key name
         simScreenshotMaxUriLength?: number; // maximum base64 encoded length to be uploaded
         simGif?: boolean; // record gif of the simulator
-        simGifKey?: boolean; // shortcut to start stop
+        simGifKey?: string; // shortcut to start stop
         simGifTransparent?: string; // specify the gif transparency color
         simGifQuality?: number; // generated gif quality (pixel sampling size) - 30 (poor) - 1 (best), default 16
         simGifMaxFrames?: number; // maximum number of frames, default 64
@@ -347,8 +366,9 @@ declare namespace pxt {
         shareFinishedTutorials?: boolean; // always pop a share dialog once the tutorial is finished
         leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
         nameProjectFirst?: boolean;
-        alwaysGithubItemBlocks?: boolean; // show Github item in blocks; even when token is not available
-        alwaysGithubItem?: boolean; // show Github item; even when token is not available
+        pythonToolbox?: boolean; // Code toolbox for Python
+        githubEditor?: boolean; // allow editing github repositories from the editor
+        githubCompiledJs?: boolean; // commit binary.js in commit when creating a github release
     }
 
     interface SocialOptions {
@@ -381,6 +401,12 @@ declare namespace pxt {
         bundledpkgs: Map<Map<string>>;   // @internal use only (cache)
         bundleddirs: string[];
         versions: TargetVersions;        // @derived
+        apiInfo?: Map<PackageApiInfo>;
+    }
+
+    interface PackageApiInfo {
+        sha: string;
+        apis: ts.pxtc.ApisInfo;
     }
 }
 
@@ -422,6 +448,7 @@ declare namespace ts.pxtc {
         noPeepHole?: boolean;
         time?: boolean;
         noIncr?: boolean;
+        rawELF?: boolean;
     }
 
     interface CompileTarget {
@@ -440,7 +467,6 @@ declare namespace ts.pxtc {
         hexMimeType?: string;
         driveName?: string;
         jsRefCounting?: boolean;
-        gc?: boolean;
         utf8?: boolean;
         switches: CompileSwitches;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
@@ -459,11 +485,11 @@ declare namespace ts.pxtc {
         hidSelectors?: HidSelector[];
         emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
         vmOpCodes?: pxt.Map<number>;
-        vtableShift?: number; // defaults to 2, i.e., (1<<2) == 4 byte alignment of vtables, and thus 256k max program size; increase for chips with more flash!
         postProcessSymbols?: boolean;
         imageRefTag?: number;
         keepCppFiles?: boolean;
         debugMode?: boolean; // set dynamically, not in config
+        compilerExtension?: string; // JavaScript code to load in compiler
     }
 
     type BlockContentPart = BlockLabel | BlockParameter | BlockImage;
@@ -542,12 +568,16 @@ declare namespace ts.pxtc {
         jresURL?: string;
         iconURL?: string;
         imageLiteral?: number;
+        imageLiteralColumns?: number; // optional number of columns
+        imageLiteralRows?: number; // optional number of rows
         weight?: number;
         parts?: string;
         trackArgs?: number[];
         advanced?: boolean;
         deprecated?: boolean;
         useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
+        emitAsConstant?: boolean; // used by the blocklycompiler to indicate that an enum should be compiled to a constant with the enumIdentity attribute set
+        enumIdentity?: string; // used by the decompiler to map constants to enum dropdown values
         callInDebugger?: boolean; // for getters, they will be invoked by the debugger.
         py2tsOverride?: string; // used to map functions in python that have an equivalent (but differently named) ts function
         pyHelper?: string; // used to specify functions on the _py namespace that provide implementations. Should be of the form py_class_methname
@@ -635,6 +665,9 @@ declare namespace ts.pxtc {
         paramFieldEditorOptions?: pxt.Map<pxt.Map<string>>; //.fieldOptions.
 
         duplicateShadowOnDrag?: boolean; // if true, duplicate the block when its shadow is dragged out (like function arguments)
+
+        alias?: string; // another symbol alias for this member
+        pyAlias?: string; // optional python version of the alias
     }
 
     interface ParameterDesc {
@@ -709,6 +742,7 @@ declare namespace ts.pxtc {
         position: number;
 
         symbols?: SymbolInfo[];
+        globalNames?: pxt.Map<SymbolInfo>;
         beginPos?: number;
         endPos?: number;
         auxResult?: any;
@@ -721,7 +755,6 @@ declare namespace ts.pxtc {
         sourceFiles?: string[];
         generatedFiles?: string[];
         jres?: pxt.Map<pxt.JRes>;
-        hexinfo: HexInfo;
         extinfo?: ExtensionInfo;
         noEmit?: boolean;
         forceEmit?: boolean;
@@ -774,6 +807,10 @@ declare namespace ts.pxtc {
         onlyPublic: boolean;
         commBase?: number;
         skipCloudBuild?: boolean;
+        hexinfo?: HexInfo;
+        otherMultiVariants?: ExtensionInfo[];
+        appVariant?: string;
+        outputPrefix?: string;
     }
 
     interface HexInfo {

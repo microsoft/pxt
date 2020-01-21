@@ -357,8 +357,10 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
             if (parameters) {
                 for (const parameter of parameters) {
                     const { answer, token } = parameter;
-                    if (answer === answers[token] || (!answers[token] && answer === defaults[token])) {
-                        return parameter.question;
+                    if (!!answer && !!token) {
+                        if (answer === answers[token] || (!answers[token] && answer === defaults[token])) {
+                            return parameter.question;
+                        }
                     }
                 }
             }
@@ -388,15 +390,6 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         return true;
     }
 
-    updateOutput(question: pxt.SnippetQuestions) {
-        const { tsOutput } = this.state;
-
-        if (question.output && tsOutput.indexOf(question.output) === -1) {
-            const newOutput = pxt.Util.concat([tsOutput, [question.output]]);
-            this.setState({ tsOutput: newOutput }, this.generateOutputMarkdown);
-        }
-    }
-
     /**
      * Changes page by 1 if next question exists.
      * Looks for output and appends the next questions output if it exists and
@@ -404,7 +397,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
      */
     nextPage() {
         const { config, history } = this.state;
-        const currentQuestion = this.getCurrentQuestion();
+        const currentQuestion: pxt.SnippetQuestions = this.getCurrentQuestion();
         const goto = currentQuestion.goto;
 
         if (this.isLastQuestion()) {
@@ -412,10 +405,10 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         } else if (goto) {
             // Look ahead and update markdown
             const nextQuestion = this.getNextQuestion();
-            this.updateOutput(nextQuestion);
+            let newTsOutput = this.updateOutput(nextQuestion, this.state.answers, this.state.tsOutput)
             const nextQuestionNumber = this.getNextQuestionNumber();
 
-            this.setState({ history: [...history, nextQuestionNumber] }, this.toggleActionButton)
+            this.setState({ history: [...history, nextQuestionNumber], tsOutput: newTsOutput }, this.toggleActionButton)
             pxt.tickEvent('snippet.builder.next.page', { snippet: config.name, page: nextQuestionNumber }, { interactiveConsent: true });
             // Force generates output markdown for updated highlighting
             this.generateOutputMarkdown();
@@ -448,12 +441,43 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     }
 
     onChange = (answerToken: string) => (v: string) => {
-        this.setState((prevState: SnippetBuilderState) => ({
-            answers: {
+        let question = this.getCurrentQuestion();
+        this.setState((prevState: SnippetBuilderState) => {
+            let newAnswers = {
                 ...prevState.answers,
                 [answerToken]: v,
+            };
+            return {
+                answers: newAnswers,
+                tsOutput: this.updateOutput(question, newAnswers, prevState.tsOutput)
             }
-        }), this.generateOutputMarkdown);
+        }, this.generateOutputMarkdown);
+    }
+
+    updateOutput(question: pxt.SnippetQuestions, answers: AnswersMap, oldTsOutput: string[]): string[] {
+        let skipOutput = false
+        if (!!question.outputConditionalOnAnswer) {
+            let cond = question.outputConditionalOnAnswer;
+            let qas = question.inputs
+                .map(i => isSnippetInputAnswerSingular(i) ? [i.answerToken] : i.answerTokens)
+                .reduce((p, n) => [...p, ...n], [])
+            // we intentionally allow type coercion since sometimes answers are boolean, sometimes string
+            if (qas.every(a => answers[a] != cond))
+                skipOutput = true
+        }
+
+        let hasOutput = !!question.output
+        let outputAlreadyIncluded = hasOutput && oldTsOutput.indexOf(question.output) !== -1
+
+        let newOutput = oldTsOutput
+        if (!skipOutput && !outputAlreadyIncluded && hasOutput) {
+            newOutput = pxt.Util.concat([oldTsOutput, [question.output]]);
+        } else if (skipOutput && outputAlreadyIncluded) {
+            newOutput = oldTsOutput
+                .filter(o => o !== question.output)
+        }
+
+        return newOutput;
     }
 
     renderCore() {
@@ -462,15 +486,18 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
 
         const currentQuestion = this.getCurrentQuestion();
 
+        let isFirstPage = this.getCurrentPage() === 0;
+
         return (
-            <sui.Modal isOpen={visible} className={'snippet-builder full-screen-no-bg'} overlayClassName={'snippet-builder-modal-overlay'}
+            <sui.Modal isOpen={visible} className={'snippet-builder full-screen-no-bg ' + (isFirstPage ? 'no-back-btn' : '')}
+                overlayClassName={'snippet-builder-modal-overlay'}
                 closeOnEscape={true} closeIcon={true} closeOnDimmerClick={false} closeOnDocumentClick={false}
                 dimmer={true} buttons={actions} header={config.name} onClose={this.cancel}
                 onKeyDown={this.handleModalKeyDown}
             >
-                <div className="ui equal width grid">
+                <div className="snippet-builder-inner">
                     {currentQuestion &&
-                        <div className='column snippet-question'>
+                        <div className='snippet-question'>
                             <div className='ui segment raised'>
                                 <h3>{pxt.Util.rlf(currentQuestion.title)}</h3>
                                 <div className='ui equal width grid'>
@@ -489,10 +516,14 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                                 {currentQuestion.errorMessage && <p className='snippet-error'>{currentQuestion.errorMessage}</p>}
                             </div>
                             {currentQuestion.hint &&
-                                <div className='snippet hint ui segment'>{pxt.Util.rlf(currentQuestion.hint)}</div>}
+                                <div className='snippet hint ui segment'>{
+                                    pxt.Util.rlf(currentQuestion.hint)
+                                        // replace new lines with <br> elements
+                                        .split("\n")
+                                        .reduce((p: (JSX.Element | string)[], n) => [...p, p.length ? (<br></br>) : "", n], [])}</div>}
                         </div>
                     }
-                    <div className='snippet output-section column'>
+                    <div className='snippet output-section'>
                         {mdOutput && <md.MarkedContent className='snippet-markdown-content' markdown={mdOutput} parent={parent} />}
                     </div>
                 </div>
@@ -520,7 +551,6 @@ function getSnippetExtensions(): pxt.SnippetConfig[] {
                 pxt.reportError("snippetbuilder", `invalid external .ts file path: ${externalFileName}`);
                 return null
             }
-            c.initialOutput = externalTs[0].content;
         }
         return c
     }).filter(c => !!c))
@@ -566,14 +596,19 @@ export function isSnippetInputAnswerSingular(input: pxt.SnippetInputAnswerSingul
     return (input as pxt.SnippetInputAnswerSingular).answerToken !== undefined;
 }
 
-export function isSnippetInputAnswerTypeOther(input: pxt.SnippetInputOtherType | pxt.SnippetInputNumberType | pxt.SnippetInputDropdownType): input is pxt.SnippetInputOtherType {
+type SnippetInputType = pxt.SnippetInputOtherType | pxt.SnippetInputNumberType | pxt.SnippetInputDropdownType | pxt.SnippetInputYesNoType
+export function isSnippetInputAnswerTypeOther(input: SnippetInputType): input is pxt.SnippetInputOtherType {
     return (input as pxt.SnippetInputOtherType).type !== ('number' || 'dropdown');
 }
 
-export function isSnippetInputAnswerTypeNumber(input: pxt.SnippetInputOtherType | pxt.SnippetInputNumberType | pxt.SnippetInputDropdownType): input is pxt.SnippetInputNumberType {
+export function isSnippetInputAnswerTypeNumber(input: SnippetInputType): input is pxt.SnippetInputNumberType {
     return (input as pxt.SnippetInputNumberType).max !== undefined;
 }
 
-export function isSnippetInputAnswerTypeDropdown(input: pxt.SnippetInputOtherType | pxt.SnippetInputNumberType | pxt.SnippetInputDropdownType): input is pxt.SnippetInputDropdownType {
+export function isSnippetInputAnswerTypeYesNo(input: SnippetInputType): input is pxt.SnippetInputNumberType {
+    return input.type === "yesno";
+}
+
+export function isSnippetInputAnswerTypeDropdown(input: SnippetInputType): input is pxt.SnippetInputDropdownType {
     return (input as pxt.SnippetInputDropdownType).options !== undefined;
 }

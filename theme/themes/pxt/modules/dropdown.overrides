@@ -1,3 +1,53 @@
 /*******************************
         User Overrides
 *******************************/
+
+.ui.dropdown > .avatar > img, 
+.ui.dropdown > .avatar > .initials {
+    height: 2.5rem;
+    width: 2.5rem;
+    border-radius: 100%;
+}
+
+.ui.dropdown > .avatar > .initials {
+    background-color: @secondaryColor;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.ui.dropdown .ui.item > .avatar {
+    margin-right: 0.5rem;
+    vertical-align: middle;
+    display: inline-block;
+    > img {
+        height: 1.5rem;
+        width: 1.5rem;
+        border-radius: 100%;
+    }
+}
+
+.ui.dropdown.menuAbove > .menu {
+    top: 0%;
+    transform: translateY(-100%);
+}
+
+.ui.buttons > .ui.dropdown.menuRight:last-child .menu {
+    right: auto;
+    left: 0;
+}
+
+.ui.dropdown.active::before,
+.ui.dropdown.active::after {
+    display: none;
+}
+
+
+/* Small + Large Monitor */
+@media only screen and (min-width: @computerBreakpoint) {
+    .ui.dropdown > .avatar {
+        margin-left: -0.5rem;
+        margin-right: -0.5rem;
+    }
+}

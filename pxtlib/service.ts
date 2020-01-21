@@ -16,6 +16,8 @@ namespace ts.pxtc {
     export const TS_OUTPUT_TYPE = "typescript_expression";
     export const PAUSE_UNTIL_TYPE = "pxt_pause_until";
     export const COLLAPSED_BLOCK = "pxt_collapsed_block"
+    export const FUNCTION_DEFINITION_TYPE = "function_definition";
+
     export const BINARY_JS = "binary.js";
     export const BINARY_ASM = "binary.asm";
     export const BINARY_HEX = "binary.hex";
@@ -73,8 +75,8 @@ namespace ts.pxtc {
         length: number;
 
         //derived
-        line: number;
-        column: number;
+        line?: number;
+        column?: number;
         endLine?: number;
         endColumn?: number;
     }
@@ -316,9 +318,9 @@ namespace ts.pxtc {
                     combinedProperties: []
                 }
                 ex.attributes.block =
-                    isGet ? `%${paramName} %property` :
-                        isSet ? `set %${paramName} %property to %${paramValue}` :
-                            `change %${paramName} %property by %${paramValue}`
+                    isGet ? U.lf("%{0} %property", paramName) :
+                        isSet ? U.lf("set %{0} %property to %{1}", paramName, paramValue) :
+                            U.lf("change %{0} %property by %{1}", paramName, paramValue)
                 updateBlockDef(ex.attributes)
                 blocks.push(ex)
             }
@@ -467,14 +469,14 @@ namespace ts.pxtc {
 
     export function localizeApisAsync(apis: pxtc.ApisInfo, mainPkg: pxt.MainPackage): Promise<pxtc.ApisInfo> {
         const lang = pxtc.Util.userLanguage();
-        if (pxtc.Util.userLanguage() == "en") return Promise.resolve(apis);
+        if (pxtc.Util.userLanguage() == "en") return Promise.resolve(cleanLocalizations(apis));
 
         const errors: pxt.Map<number> = {};
         const langLower = lang.toLowerCase();
         const attrJsLocsKey = langLower + "|jsdoc";
         const attrBlockLocsKey = langLower + "|block";
         return mainPkg.localizationStringsAsync(lang)
-            .then(loc => Util.values(apis.byQName).forEach(fn => {
+            .then(loc => Promise.all(Util.values(apis.byQName).map(fn => {
                 if (apiLocalizationStrings)
                     Util.jsonMergeFrom(loc, apiLocalizationStrings);
                 const attrLocs = fn.attributes.locs || {};
@@ -532,12 +534,19 @@ namespace ts.pxtc {
                     }
                     updateBlockDef(fn.attributes);
                 })
-            }))
-            .then(() => apis)
+            })))
+            .then(() => cleanLocalizations(apis))
             .finally(() => {
                 if (Object.keys(errors).length)
                     pxt.reportError(`loc.errors`, `invalid translation`, errors);
             })
+    }
+
+    function cleanLocalizations(apis: ApisInfo) {
+        Util.values(apis.byQName)
+        .filter(fb => fb.attributes.block && /^{[^:]+:[^}]+}/.test(fb.attributes.block))
+        .forEach(fn => { fn.attributes.block = fn.attributes.block.replace(/^{[^:]+:[^}]+}/, ''); });
+        return apis;
     }
 
     export function emptyExtInfo(): ExtensionInfo {
@@ -1008,66 +1017,56 @@ namespace ts.pxtc {
         return !!((p as BlockPart).kind);
     }
 
-    // TODO should be internal
-    export namespace hex {
-        export function isSetupFor(extInfo: ExtensionInfo) {
-            return currentSetup == extInfo.sha
-        }
-
-        export let currentSetup: string = null;
-        export let currentHexInfo: pxtc.HexInfo;
-
-        export interface ChecksumBlock {
-            magic: number;
-            endMarkerPos: number;
-            endMarker: number;
-            regions: { start: number; length: number; checksum: number; }[];
-        }
-
-        export function parseChecksumBlock(buf: ArrayLike<number>, pos = 0): ChecksumBlock {
-            let magic = pxt.HF2.read32(buf, pos)
-            if ((magic & 0x7fffffff) != 0x07eeb07c) {
-                pxt.log("no checksum block magic")
-                return null
-            }
-            let endMarkerPos = pxt.HF2.read32(buf, pos + 4)
-            let endMarker = pxt.HF2.read32(buf, pos + 8)
-            if (endMarkerPos & 3) {
-                pxt.log("invalid end marker position")
-                return null
-            }
-            let pageSize = 1 << (endMarker & 0xff)
-            if (pageSize != pxt.appTarget.compile.flashCodeAlign) {
-                pxt.log("invalid page size: " + pageSize)
-                return null
-            }
-
-            let blk: ChecksumBlock = {
-                magic,
-                endMarkerPos,
-                endMarker,
-                regions: []
-            }
-
-            for (let i = pos + 12; i < buf.length - 7; i += 8) {
-                let r = {
-                    start: pageSize * pxt.HF2.read16(buf, i),
-                    length: pageSize * pxt.HF2.read16(buf, i + 2),
-                    checksum: pxt.HF2.read32(buf, i + 4)
-                }
-                if (r.length && r.checksum) {
-                    blk.regions.push(r)
-                } else {
-                    break
-                }
-            }
-
-            //console.log(hexDump(buf), blk)
-
-            return blk
-        }
-
+    export interface ChecksumBlock {
+        magic: number;
+        endMarkerPos: number;
+        endMarker: number;
+        regions: { start: number; length: number; checksum: number; }[];
     }
+
+    export function parseChecksumBlock(buf: ArrayLike<number>, pos = 0): ChecksumBlock {
+        let magic = pxt.HF2.read32(buf, pos)
+        if ((magic & 0x7fffffff) != 0x07eeb07c) {
+            pxt.log("no checksum block magic")
+            return null
+        }
+        let endMarkerPos = pxt.HF2.read32(buf, pos + 4)
+        let endMarker = pxt.HF2.read32(buf, pos + 8)
+        if (endMarkerPos & 3) {
+            pxt.log("invalid end marker position")
+            return null
+        }
+        let pageSize = 1 << (endMarker & 0xff)
+        if (pageSize != pxt.appTarget.compile.flashCodeAlign) {
+            pxt.log("invalid page size: " + pageSize)
+            return null
+        }
+
+        let blk: ChecksumBlock = {
+            magic,
+            endMarkerPos,
+            endMarker,
+            regions: []
+        }
+
+        for (let i = pos + 12; i < buf.length - 7; i += 8) {
+            let r = {
+                start: pageSize * pxt.HF2.read16(buf, i),
+                length: pageSize * pxt.HF2.read16(buf, i + 2),
+                checksum: pxt.HF2.read32(buf, i + 4)
+            }
+            if (r.length && r.checksum) {
+                blk.regions.push(r)
+            } else {
+                break
+            }
+        }
+
+        //console.log(hexDump(buf), blk)
+
+        return blk
+    }
+
 
     export namespace UF2 {
         export const UF2_MAGIC_START0 = 0x0A324655; // "UF2\n"

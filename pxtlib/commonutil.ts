@@ -32,6 +32,11 @@ namespace ts.pxtc.Util {
         return _input.replace(/([^\w .!?\-$])/g, c => "&#" + c.charCodeAt(0) + ";");
     }
 
+    export function htmlUnescape(_input: string) {
+        if (!_input) return _input; // null, undefined, empty string test
+        return _input.replace(/(&#\d+;)/g, c => String.fromCharCode(Number(c.substr(2, c.length - 3))));
+    }
+
     export function jsStringQuote(s: string) {
         return s.replace(/[^\w .!?\-$]/g,
             (c) => {
@@ -224,6 +229,7 @@ namespace ts.pxtc.Util {
     }
 
     export function setEditorLanguagePref(lang: string): void {
+        if (lang.match(/prj$/)) lang = lang.replace(/prj$/, "")
         localStorage.setItem("editorlangpref", lang);
     }
 

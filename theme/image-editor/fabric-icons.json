@@ -1,0 +1,143 @@
+{
+  "fontName": "fabric-icons",
+  "fontFamilyName": "FabricMDL2Icons",
+  "excludeGlyphs": false,
+  "excludeThirdPartyIcons": false,
+  "chunkSubsets": false,
+  "hashFontFileName": true,
+  "subsetChunkSettings": {},
+  "glyphs": [
+    {
+      "name": "ChevronDown",
+      "unicode": "E70D"
+    },
+    {
+      "name": "Edit",
+      "unicode": "E70F"
+    },
+    {
+      "name": "Add",
+      "unicode": "E710"
+    },
+    {
+      "name": "Cancel",
+      "unicode": "E711"
+    },
+    {
+      "name": "Stop",
+      "unicode": "E71A"
+    },
+    {
+      "name": "ZoomOut",
+      "unicode": "E71F"
+    },
+    {
+      "name": "Lock",
+      "unicode": "E72E"
+    },
+    {
+      "name": "Delete",
+      "unicode": "E74D"
+    },
+    {
+      "name": "ReturnKey",
+      "unicode": "E751"
+    },
+    {
+      "name": "EraseTool",
+      "unicode": "E75C"
+    },
+    {
+      "name": "Play",
+      "unicode": "E768"
+    },
+    {
+      "name": "Pause",
+      "unicode": "E769"
+    },
+    {
+      "name": "Unlock",
+      "unicode": "E785"
+    },
+    {
+      "name": "Redo",
+      "unicode": "E7A6"
+    },
+    {
+      "name": "Undo",
+      "unicode": "E7A7"
+    },
+    {
+      "name": "Crop",
+      "unicode": "E7A8"
+    },
+    {
+      "name": "Warning",
+      "unicode": "E7BA"
+    },
+    {
+      "name": "Move",
+      "unicode": "E7C2"
+    },
+    {
+      "name": "MapLayers",
+      "unicode": "E81E"
+    },
+    {
+      "name": "ZoomIn",
+      "unicode": "E8A3"
+    },
+    {
+      "name": "SelectAll",
+      "unicode": "E8B3"
+    },
+    {
+      "name": "Cut",
+      "unicode": "E8C6"
+    },
+    {
+      "name": "Copy",
+      "unicode": "E8C8"
+    },
+    {
+      "name": "Clock",
+      "unicode": "E917"
+    },
+    {
+      "name": "CircleRing",
+      "unicode": "EA3A"
+    },
+    {
+      "name": "HandsFree",
+      "unicode": "EAD0"
+    },
+    {
+      "name": "Eyedropper",
+      "unicode": "EF3C"
+    },
+    {
+      "name": "RectangleShape",
+      "unicode": "F1A9"
+    },
+    {
+      "name": "BucketColor",
+      "unicode": "F1B6"
+    },
+    {
+      "name": "Stack",
+      "unicode": "F26F"
+    },
+    {
+      "name": "SingleColumnEdit",
+      "unicode": "F321"
+    },
+    {
+      "name": "Line",
+      "unicode": "F4FC"
+    },
+    {
+      "name": "BorderDash",
+      "unicode": "F50A"
+    }
+  ]
+}

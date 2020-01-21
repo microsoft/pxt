@@ -2,7 +2,19 @@
 /// <reference path="../built/pxtlib.d.ts" />
 
 namespace pxt.blocks {
-    export let promptTranslateBlock: (blockId: string, blockTranslationId: string) => void;
+    export let promptTranslateBlock: (blockId: string, blockTranslationIds: string[]) => void;
+
+    export interface GrayBlock extends Blockly.Block {
+        setPythonEnabled(enabled: boolean): void;
+    }
+
+    export interface GrayBlockStatement extends GrayBlock {
+        domToMutation(xmlElement: Element): void;
+        mutationToDom(): Element;
+
+        getLines: () => string[];
+        declaredVariables: string;
+    }
 
     const typeDefaults: Map<{ field: string, block: string, defaultValue: string }> = {
         "string": {
@@ -129,6 +141,7 @@ namespace pxt.blocks {
         }
 
         const isVariable = shadowId == "variables_get";
+        const isText = shadowId == "text";
 
         const value = document.createElement("value");
         value.setAttribute("name", p.definitionName);
@@ -200,6 +213,10 @@ namespace pxt.blocks {
 
             if (isVariable) {
                 field.setAttribute("name", "VAR");
+                shadow.appendChild(field);
+            }
+            else if (isText) {
+                field.setAttribute("name", "TEXT");
                 shadow.appendChild(field);
             }
             else if (shadowId) {
@@ -278,14 +295,14 @@ namespace pxt.blocks {
         if (labelLineWidth) groupLabel.setAttribute('web-line-width', labelLineWidth);
         if (helpCallback) {
             groupLabel.setAttribute('web-help-button', 'true');
-            groupLabel.setAttribute('callbackkey', helpCallback);
+            groupLabel.setAttribute('callbackKey', helpCallback);
         }
         return groupLabel;
     }
 
     function createFlyoutLabel(name: string, color?: string, icon?: string, iconClass?: string): HTMLElement {
         // Add the Heading label
-        let headingLabel = goog.dom.createDom('label') as HTMLElement;
+        let headingLabel = Blockly.utils.xml.createElement('label') as HTMLElement;
         headingLabel.setAttribute('text', name);
         if (color) {
             headingLabel.setAttribute('web-icon-color', pxt.toolbox.convertColor(color));
@@ -302,10 +319,10 @@ namespace pxt.blocks {
         return headingLabel;
     }
 
-    export function createFlyoutButton(callbackkey: string, label: string) {
-        let button = goog.dom.createDom('button') as Element;
+    export function createFlyoutButton(callbackKey: string, label: string) {
+        let button = Blockly.utils.xml.createElement('button') as Element;
         button.setAttribute('text', label);
-        button.setAttribute('callbackkey', callbackkey);
+        button.setAttribute('callbackKey', callbackKey);
         return button;
     }
 
@@ -441,7 +458,7 @@ namespace pxt.blocks {
                         enabled: true,
                         text: lf("Translate this block"),
                         callback: function () {
-                            pxt.blocks.promptTranslateBlock(id, fn.attributes.translationId);
+                            pxt.blocks.promptTranslateBlock(id, [fn.attributes.translationId]);
                         }
                     })
                 }
@@ -600,8 +617,10 @@ namespace pxt.blocks {
             }
         });
         if (fn.attributes.imageLiteral) {
+            const columns = (fn.attributes.imageLiteralColumns || 5) * fn.attributes.imageLiteral;
+            const rows = fn.attributes.imageLiteralRows || 5;
             let ri = block.appendDummyInput();
-            ri.appendField(new pxtblockly.FieldMatrix("", { columns: fn.attributes.imageLiteral * 5 }), "LEDS");
+            ri.appendField(new pxtblockly.FieldMatrix("", { columns, rows }), "LEDS");
         }
 
         if (fn.attributes.inlineInputMode === "external") {
@@ -677,7 +696,7 @@ namespace pxt.blocks {
 
                         firstParam = false;
                         if (!pr) {
-                            console.error("block " + fn.attributes.blockId + ": unkown parameter " + part.name + (part.ref ? ` (${part.ref})` : ""));
+                            console.error("block " + fn.attributes.blockId + ": unknown parameter " + part.name + (part.ref ? ` (${part.ref})` : ""));
                             return;
                         }
 
@@ -1008,12 +1027,12 @@ namespace pxt.blocks {
             && pxt.blocks.promptTranslateBlock) {
             block.customContextMenu = (options: any[]) => {
                 const blockd = pxt.blocks.getBlockDefinition(block.type);
-                if (blockd && blockd.translationId) {
+                if (blockd && blockd.translationIds) {
                     options.push({
                         enabled: true,
                         text: lf("Translate this block"),
                         callback: function () {
-                            pxt.blocks.promptTranslateBlock(id, blockd.translationId);
+                            pxt.blocks.promptTranslateBlock(id, blockd.translationIds);
                         }
                     })
                 }
@@ -1591,42 +1610,72 @@ namespace pxt.blocks {
 
         Blockly.Blocks[pxtc.TS_STATEMENT_TYPE] = {
             init: function () {
-                let that: Blockly.Block = this;
+                let that: GrayBlockStatement = this;
                 that.setColour("#717171")
                 that.setPreviousStatement(true);
                 that.setNextStatement(true);
                 that.setInputsInline(false);
 
-                this.domToMutation = (element: Element) => {
+                let pythonMode: boolean;
+                let lines: string[];
+
+                that.domToMutation = (element: Element) => {
                     const n = parseInt(element.getAttribute("numlines"));
-                    this.declaredVariables = element.getAttribute("declaredvars");
+                    that.declaredVariables = element.getAttribute("declaredvars");
+
+                    lines = [];
                     for (let i = 0; i < n; i++) {
                         const line = element.getAttribute("line" + i);
-                        that.appendDummyInput().appendField(line, "LINE" + i);
+                        lines.push(line);
                     }
+
+                    // Add the initial TS inputs
+                    that.setPythonEnabled(false);
                 };
 
-                this.mutationToDom = () => {
+                that.mutationToDom = () => {
                     let mutation = document.createElement("mutation");
-                    let i = 0;
 
-                    while (true) {
-                        const val = that.getFieldValue("LINE" + i);
-                        if (val === null) {
-                            break;
-                        }
-
-                        mutation.setAttribute("line" + i, val);
-                        i++;
+                    if (lines) {
+                        lines.forEach((line, index) => mutation.setAttribute("line" + index, line));
+                        mutation.setAttribute("numlines", lines.length.toString());
                     }
 
-                    mutation.setAttribute("numlines", i.toString());
-                    if (this.declaredVariables) {
+                    if (that.declaredVariables) {
                         mutation.setAttribute("declaredvars", this.declaredVariables);
                     }
 
                     return mutation;
                 };
+
+                // Consumed by the webapp
+                that.setPythonEnabled = (enabled: boolean) => {
+                    if (pythonMode === enabled) return;
+
+                    // Remove all inputs
+                    while (that.inputList.length) {
+                        that.removeInput(that.inputList[0].name);
+                    }
+
+                    pythonMode = enabled;
+                    if (enabled) {
+                        // This field must be named LINE0 because otherwise Blockly will crash
+                        // when trying to make an insertion marker. All insertion marker blocks
+                        // need to have the same fields as the real block, and this field will
+                        // always be created by domToMutation regardless of TS or Python mode
+                        that.appendDummyInput().appendField(Util.lf("<python code>"), "LINE0")
+                        that.setTooltip(lf("A Python statement that could not be converted to blocks"));
+                    }
+                    else {
+                        lines.forEach((line, index) => {
+                            that.appendDummyInput().appendField(line, "LINE" + index);
+                        });
+                        that.setTooltip(lf("A JavaScript statement that could not be converted to blocks"));
+                    }
+                }
+
+                // Consumed by BlocklyCompiler
+                that.getLines = () => lines;
 
                 that.setEditable(false);
 
@@ -1642,13 +1691,24 @@ namespace pxt.blocks {
 
         Blockly.Blocks[pxtc.TS_OUTPUT_TYPE] = {
             init: function () {
-                let that: Blockly.Block = this;
+                let that: GrayBlock = this;
                 that.setColour("#717171")
                 that.setPreviousStatement(false);
                 that.setNextStatement(false);
                 that.setOutput(true);
                 that.setEditable(false);
                 that.appendDummyInput().appendField(new pxtblockly.FieldTsExpression(""), "EXPRESSION");
+
+                that.setPythonEnabled = (enabled: boolean) => {
+                    (that.getField("EXPRESSION") as pxtblockly.FieldTsExpression).setPythonEnabled(enabled);
+
+                    if (enabled) {
+                        that.setTooltip(lf("A Python expression that could not be converted to blocks"));
+                    }
+                    else {
+                        that.setTooltip(lf("A JavaScript expression that could not be converted to blocks"));
+                    }
+                }
 
                 setHelpResources(that,
                     pxtc.TS_OUTPUT_TYPE,
@@ -1713,7 +1773,7 @@ namespace pxt.blocks {
                         {
                             "type": "input_value",
                             "name": "LIST",
-                            "check": "Array"
+                            "check": ["Array", "String"]
                         }
                     ],
                     "previousStatement": null,
@@ -1986,9 +2046,9 @@ namespace pxt.blocks {
                 xmlList.push(headingLabel);
             }
 
-            let button = goog.dom.createDom('button') as HTMLElement;
+            let button = document.createElement('button') as HTMLElement;
             button.setAttribute('text', lf("Make a Variable..."));
-            button.setAttribute('callbackkey', 'CREATE_VARIABLE');
+            button.setAttribute('callbackKey', 'CREATE_VARIABLE');
 
             workspace.registerButtonCallback('CREATE_VARIABLE', function (button) {
                 Blockly.Variables.createVariable(button.getTargetWorkspace());
@@ -2248,15 +2308,15 @@ namespace pxt.blocks {
                          *   </block>
                          * </xml>
                          */
-                        let xml = goog.dom.createDom('xml');
-                        let block = goog.dom.createDom('block');
+                        let xml = Blockly.utils.xml.createElement('xml');
+                        let block = Blockly.utils.xml.createElement('block');
                         block.setAttribute('type', this.defType_);
                         let xy = this.getRelativeToSurfaceXY();
                         let x = xy.x + (Blockly as any).SNAP_RADIUS * (this.RTL ? -1 : 1);
                         let y = xy.y + (Blockly as any).SNAP_RADIUS * 2;
                         block.setAttribute('x', x);
                         block.setAttribute('y', y);
-                        let field = goog.dom.createDom('field');
+                        let field = Blockly.utils.xml.createElement('field');
                         field.setAttribute('name', 'NAME');
                         field.appendChild(document.createTextNode(this.getProcedureCall()));
                         block.appendChild(field);
@@ -2336,9 +2396,9 @@ namespace pxt.blocks {
             const newFunctionTitle = lf("New function name:");
 
             // Add the "Make a function" button
-            let button = goog.dom.createDom('button');
+            let button = Blockly.utils.xml.createElement('button');
             button.setAttribute('text', newFunction);
-            button.setAttribute('callbackkey', 'CREATE_FUNCTION');
+            button.setAttribute('callbackKey', 'CREATE_FUNCTION');
 
             let createFunction = (name: string) => {
                 /**
@@ -2356,12 +2416,12 @@ namespace pxt.blocks {
                     x = xy.x + (Blockly as any).SNAP_RADIUS * (topBlock.RTL ? -1 : 1);
                     y = xy.y + (Blockly as any).SNAP_RADIUS * 2;
                 }
-                let xml = goog.dom.createDom('xml');
-                let block = goog.dom.createDom('block');
+                let xml = Blockly.utils.xml.createElement('xml');
+                let block = Blockly.utils.xml.createElement('block');
                 block.setAttribute('type', 'procedures_defnoreturn');
                 block.setAttribute('x', String(x));
                 block.setAttribute('y', String(y));
-                let field = goog.dom.createDom('field');
+                let field = Blockly.utils.xml.createElement('field');
                 field.setAttribute('name', 'NAME');
                 field.appendChild(document.createTextNode(name));
                 block.appendChild(field);
@@ -2420,7 +2480,7 @@ namespace pxt.blocks {
                     // <block type="procedures_callnoreturn" gap="16">
                     //   <field name="NAME">name</field>
                     // </block>
-                    let block = goog.dom.createDom('block');
+                    let block = Blockly.utils.xml.createElement('block');
                     block.setAttribute('type', templateName);
                     block.setAttribute('gap', '16');
                     block.setAttribute('colour', pxt.toolbox.getNamespaceColor('functions'));

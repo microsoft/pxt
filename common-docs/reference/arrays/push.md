@@ -27,6 +27,6 @@ let pets = ["cat", "dog", "parrot", "goldfish"];
 pets.push("guinea pig");
 ```
 
-## Sea also
+## See also
 
 [pop](/reference/arrays/pop), [unshift](/reference/arrays/unshift)

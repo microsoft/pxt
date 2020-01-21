@@ -31,6 +31,7 @@ import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
 import * as projects from "./projects";
 import * as scriptmanager from "./scriptmanager";
+import * as cloud from "./cloud";
 import * as extensions from "./extensions";
 import * as sounds from "./sounds";
 import * as make from "./make";
@@ -39,6 +40,7 @@ import * as monacoToolbox from "./monacoSnippets";
 import * as greenscreen from "./greenscreen";
 import * as socketbridge from "./socketbridge";
 import * as webusb from "./webusb";
+import * as keymap from "./keymap";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -106,6 +108,7 @@ export class ProjectView
     languagePicker: lang.LanguagePicker;
     scriptManagerDialog: scriptmanager.ScriptManagerDialog;
     importDialog: projects.ImportDialog;
+    signInDialog: cloud.SignInDialog;
     exitAndSaveDialog: projects.ExitAndSaveDialog;
     newProjectNameDialog: projects.NewProjectNameDialog;
     chooseHwDialog: projects.ChooseHwDialog;
@@ -154,7 +157,10 @@ export class ProjectView
         this.openDeviceSerial = this.openDeviceSerial.bind(this);
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
+        this.cloudSignInComplete = this.cloudSignInComplete.bind(this);
         this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
+        this.showKeymap = this.showKeymap.bind(this);
+        this.toggleKeymap = this.toggleKeymap.bind(this);
         this.initScreenshots();
 
         // add user hint IDs and callback to hint manager
@@ -217,6 +223,8 @@ export class ProjectView
         let active = document.visibilityState == 'visible';
         pxt.debug(`page visibility: ${active}`)
         this.setState({ active: active });
+        data.invalidate('pkg-git-pull-status');
+        data.invalidate('pkg-git-pr');
 
         if (!active && this.state.autoRun) {
             if (simulator.driver.state == pxsim.SimulatorState.Running) {
@@ -445,9 +453,12 @@ export class ProjectView
             if (this.state.embedSimView) this.setState({ embedSimView: false });
             return;
         }
-        if (this.isJavaScriptActive() || (this.shouldTryDecompile && !this.state.embedSimView)) this.textEditor.openBlocks();
-        // any other editeable .ts or pxt.json
-        else if (this.isAnyEditeableJavaScriptOrPackageActive()) {
+
+        const mainBlocks = pkg.mainEditorPkg().files["main.blocks"];
+        if (this.isJavaScriptActive() || (this.shouldTryDecompile && !this.state.embedSimView))
+            this.textEditor.openBlocks();
+        // any other editeable .ts or pxt.json; or empty mainblocks
+        else if (this.isAnyEditeableJavaScriptOrPackageActive() || !mainBlocks.content) {
             this.saveFileAsync().then(() => this.textEditor.openBlocks());
         } else {
             const header = this.state.header;
@@ -457,7 +468,7 @@ export class ProjectView
                 this.textEditor.openBlocks();
             }
             else {
-                this.setFile(pkg.mainEditorPkg().files["main.blocks"])
+                this.setFile(mainBlocks)
             }
         }
 
@@ -526,18 +537,23 @@ export class ProjectView
     }
 
     openPythonAsync(): Promise<void> {
-        // convert python to typescript, if same as current source, skip decompilation
-        const tssrc = pkg.mainEditorPkg().files["main.ts"].content;
-        return this.textEditor.convertPythonToTypeScriptAsync()
-            .then(pysrc => {
-                if (pysrc == tssrc) {
-                    // decompiled python is same current typescript, go back to python without ts->py conversion
-                    pxt.debug(`ts -> py shortcut`)
-                    this.setFile(pkg.mainEditorPkg().files["main.py"]);
-                    return Promise.resolve();
-                }
-                else return this.convertTypeScriptToPythonAsync();
-            });
+        const pySrcFile = pkg.mainEditorPkg().files["main.py"];
+        if (pySrcFile) { // do we have any python yet?
+            // convert python to typescript, if same as current source, skip decompilation
+            const tsSrc = pkg.mainEditorPkg().files["main.ts"].content;
+            return this.textEditor.convertPythonToTypeScriptAsync()
+                .then(pyAsTsSrc => {
+                    if (pyAsTsSrc == tsSrc) {
+                        // decompiled python is same current typescript, go back to python without ts->py conversion
+                        pxt.debug(`ts -> py shortcut`)
+                        this.setFile(pySrcFile);
+                        return Promise.resolve();
+                    }
+                    else return this.convertTypeScriptToPythonAsync();
+                });
+        } else {
+            return this.convertTypeScriptToPythonAsync();
+        }
     }
 
     private convertTypeScriptToPythonAsync() {
@@ -583,6 +599,7 @@ export class ProjectView
     }
 
     private maybeShowPackageErrors(force = false) {
+        pxt.perf.measureStart("maybeShowPackageErrors")
         // Only show in blocks or main.ts
         if (this.state.currFile) {
             const fn = this.state.currFile;
@@ -614,9 +631,11 @@ export class ProjectView
                             this.openHome();
                         }
                     });
+                pxt.perf.measureEnd("maybeShowPackageErrors")
                 return true;
             }
         }
+        pxt.perf.measureEnd("maybeShowPackageErrors")
         return false;
     }
 
@@ -632,6 +651,10 @@ export class ProjectView
             }
             if (this.blocksEditor && this.blocksEditor.isDropdownDivVisible()) {
                 pxt.debug(`sim: skip blocks auto, field editor is open`);
+                return;
+            }
+            if (this.editor === this.serialEditor) {
+                pxt.debug(`sim: don't restart when entering console view`)
                 return;
             }
             this.runSimulator({ debug: !!this.state.debugging, background: true });
@@ -754,12 +777,17 @@ export class ProjectView
                         break;
                 }
             },
+            onSimulatorReady: () => {
+            },
             setState: (k, v) => {
                 pkg.mainEditorPkg().setSimState(k, v)
             },
             editor: this.state.header ? this.state.header.editor : ''
         })
         this.forceUpdate(); // we now have editors prepared
+
+        // start blockly load
+        this.loadBlocklyAsync();
     }
 
     // Add an error guard for the entire application
@@ -769,7 +797,7 @@ export class ProjectView
             pxsim.U.remove(document.getElementById('loading'));
             this.setState({ hasError: true });
             // Log critical error
-            pxt.tickEvent('pxt.criticalerror', { error, info });
+            pxt.tickEvent('pxt.criticalerror', { error: error || '', info: info || '' });
             // Reload the page in 2 seconds
             const lastCriticalError = pxt.storage.getLocal("lastcriticalerror") ?
                 Date.parse(pxt.storage.getLocal("lastcriticalerror")) : Date.now();
@@ -1147,6 +1175,8 @@ export class ProjectView
             if (editorState.searchBar === undefined) editorState.searchBar = oldEditorState.searchBar;
         }
 
+        if (!h.cloudSync && this.cloudSync()) h.cloudSync = true;
+
         return (h.backupRef ? workspace.restoreFromBackupAsync(h) : Promise.resolve())
             .then(() => pkg.loadPkgAsync(h.id))
             .then(() => {
@@ -1168,7 +1198,7 @@ export class ProjectView
                     file = main.lookupFile(e.name) || file
 
                 // no history entry, and there is a virtual file for the current file in the language recorded in the header
-                if ((!e && file.getVirtualFileName(h.editor)))
+                if ((!e && h.editor && file.getVirtualFileName(h.editor)))
                     file = main.lookupFile("this/" + file.getVirtualFileName(h.editor)) || file;
 
                 if (pxt.editor.isBlocks(file) && !file.content) {
@@ -1247,6 +1277,8 @@ export class ProjectView
         if (!header || !header.tutorial || !header.tutorial.tutorialMd)
             return Promise.resolve();
 
+        pxt.perf.measureStart("loadTutorial loadBlockly")
+
         const t = header.tutorial;
         return this.loadBlocklyAsync()
             .then(() => tutorial.getUsedBlocksAsync(t.tutorialCode))
@@ -1264,7 +1296,7 @@ export class ProjectView
                 this.setState({ editorState: editorState });
                 this.editor.filterToolbox(true);
                 const stepInfo = t.tutorialStepInfo;
-                const fullscreen = stepInfo[0].fullscreen;
+                const fullscreen = stepInfo[header.tutorial.tutorialStep].fullscreen;
                 if (fullscreen) this.showTutorialHint();
                 //else this.showLightbox();
             })
@@ -1274,6 +1306,9 @@ export class ProjectView
                 core.errorNotification(lf("Oops, an error occured as we were loading the tutorial."));
                 // Reset state (delete the current project and exit the tutorial)
                 this.exitTutorial(true);
+            })
+            .finally(() => {
+                pxt.perf.measureEnd("loadTutorial loadBlockly")
             });
     }
 
@@ -1553,7 +1588,7 @@ export class ProjectView
 
     importTutorialAsync(md: string) {
         try {
-            const { options, editor } = getTutorialOptions(md, "untitled", "untitled", "", false);
+            const { options, editor } = pxt.tutorial.getTutorialOptions(md, "untitled", "untitled", "", false);
             const dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
 
             return this.createProjectAsync({
@@ -1754,6 +1789,61 @@ export class ProjectView
     }
 
     ///////////////////////////////////////////////////////////
+    ////////////             Cloud                 ////////////
+    ///////////////////////////////////////////////////////////
+
+    cloudSync() {
+        return this.hasSync();
+    }
+
+    cloudSignInDialog() {
+        const providers = cloudsync.providers();
+        if (providers.length == 0)
+            return;
+        if (providers.length == 1)
+            providers[0].loginAsync().then(() => {
+                this.cloudSignInComplete();
+            })
+        else {
+            this.signInDialog.show();
+        }
+    }
+
+    cloudSignOut() {
+        core.confirmAsync({
+            header: lf("Sign out"),
+            body: lf("You are signing out. Make sure that you commited all your changes, local projects will be deleted."),
+            agreeClass: "red",
+            agreeIcon: "sign out",
+            agreeLbl: lf("Sign out"),
+        }).then(r => {
+            if (r) {
+                const inEditor = !!this.state.header;
+                // Reset the cloud workspace
+                return workspace.resetCloudAsync()
+                    .then(() => {
+                        if (inEditor) {
+                            this.openHome();
+                        }
+                        if (this.home) {
+                            this.home.forceUpdate();
+                        }
+                    })
+            }
+            return Promise.resolve();
+        });
+    }
+
+    cloudSignInComplete() {
+        pxt.log('cloud sign in complete');
+        initLogin();
+        cloudsync.syncAsync()
+            .then(() => {
+                this.forceUpdate();
+            }).done();
+    }
+
+    ///////////////////////////////////////////////////////////
     ////////////             Home                 /////////////
     ///////////////////////////////////////////////////////////
 
@@ -1762,6 +1852,7 @@ export class ProjectView
         if (!hasHome) return;
 
         this.stopSimulator(true); // don't keep simulator around
+        this.showKeymap(false); // close keymap if open
         if (this.editor) this.editor.unloadFileAsync();
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
@@ -1797,7 +1888,7 @@ export class ProjectView
             // Prevent us from stripping out the hash before the reload is complete
             clearHashChange();
             // On embedded pages, preserve the loaded project
-            if (hash && pxt.BrowserUtils.isIFrame() && (hash.cmd === "pub" || hash.cmd === "sandbox")) {
+            if (hash && ((pxt.BrowserUtils.isIFrame() && (hash.cmd === "pub" || hash.cmd === "sandbox")) || hash.cmd == "tutorial")) {
                 location.hash = `#${hash.cmd}:${hash.arg}`;
             }
             else if (this.state && this.state.home) {
@@ -1848,24 +1939,26 @@ export class ProjectView
     ////////////           Workspace              /////////////
     ///////////////////////////////////////////////////////////
 
-    newEmptyProject(name?: string, documentation?: string) {
+    newEmptyProject(name?: string, documentation?: string, preferredEditor?: string) {
         this.newProject({
             filesOverride: { "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>` },
             name,
-            documentation
+            documentation,
+            preferredEditor
         })
     }
 
     newProject(options: ProjectCreationOptions = {}) {
         pxt.tickEvent("app.newproject");
         core.showLoading("newproject", lf("creating new project..."));
-        this.createProjectAsync(options)
+        return this.createProjectAsync(options)
             .then(() => this.autoChooseBoardAsync())
             .then(() => Promise.delay(500))
             .finally(() => core.hideLoading("newproject"));
     }
 
     createProjectAsync(options: ProjectCreationOptions): Promise<void> {
+        pxt.perf.measureStart("createProjectAsync")
         this.setSideDoc(undefined);
         if (!options.prj) options.prj = pxt.appTarget.blocksprj;
         let cfg = pxt.U.clone(options.prj.config);
@@ -1876,6 +1969,12 @@ export class ProjectView
             Util.jsonCopyFrom(files, options.filesOverride)
         if (options.dependencies)
             Util.jsonMergeFrom(cfg.dependencies, options.dependencies)
+        if (options.extensionUnderTest) {
+            const ext = workspace.getHeader(options.extensionUnderTest);
+            if (ext) {
+                cfg.dependencies[ext.name] = `workspace:${ext.id}`;
+            }
+        }
         if (options.tsOnly) {
             cfg.files = cfg.files.filter(f => f != "main.blocks")
             delete files["main.blocks"]
@@ -1886,7 +1985,7 @@ export class ProjectView
         if (cfg.preferredEditor == pxt.PYTHON_PROJECT_NAME
             && cfg.files.indexOf("main.py") < 0) {
             cfg.files.push("main.py");
-            files["main.py"] = "\n";
+            if (!files["main.py"]) files["main.py"] = "\n";
         }
         if (options.tutorial && options.tutorial.metadata) {
             if (options.tutorial.metadata.codeStart) {
@@ -1900,7 +1999,7 @@ export class ProjectView
                 cfg.files.push(codeStop);
             }
         }
-        files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n";
+        files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
         return workspace.installAsync({
             name: cfg.name,
             meta: {},
@@ -1909,10 +2008,13 @@ export class ProjectView
             pubCurrent: false,
             target: pxt.appTarget.id,
             targetVersion: pxt.appTarget.versions.target,
+            cloudSync: this.cloudSync(),
             temporary: options.temporary,
-            tutorial: options.tutorial
+            tutorial: options.tutorial,
+            extensionUnderTest: options.extensionUnderTest
         }, files)
-            .then(hd => this.loadHeaderAsync(hd, { filters: options.filters }));
+            .then(hd => this.loadHeaderAsync(hd, { filters: options.filters }))
+            .then(() => pxt.perf.measureEnd("createProjectAsync"))
     }
 
     // in multiboard targets, allow use to pick a different board
@@ -1927,7 +2029,7 @@ export class ProjectView
     }
 
     importExampleAsync(options: pxt.editor.ExampleImportOptions): Promise<void> {
-        const { name, path, loadBlocks, prj } = options;
+        const { name, path, loadBlocks, prj, preferredEditor } = options;
         core.showLoading("changingcode", lf("loading..."));
         let features: string[];
         return pxt.gallery.loadExampleAsync(name.toLowerCase(), path)
@@ -1936,7 +2038,7 @@ export class ProjectView
                 const opts: pxt.editor.ProjectCreationOptions = example;
                 if (prj) opts.prj = prj;
                 features = example.features;
-                if (loadBlocks) {
+                if (loadBlocks && preferredEditor == "blocksprj") {
                     return this.createProjectAsync(opts)
                         .then(() => {
                             return this.loadBlocklyAsync()
@@ -1950,7 +2052,8 @@ export class ProjectView
                                 })
                         });
                 } else {
-                    opts.tsOnly = true
+                    opts.tsOnly = !loadBlocks;
+                    opts.preferredEditor = preferredEditor;
                     return this.createProjectAsync(opts)
                         .then(() => Promise.delay(500));
                 }
@@ -1995,14 +2098,18 @@ export class ProjectView
                 if (src === undefined && open) { // failed to convert
                     return core.confirmAsync({
                         header: lf("Oops, there is a problem converting your code."),
-                        body: lf("We are unable to convert your code back to JavaScript."),
+                        body: lf("We are unable to convert your code to JavaScript."),
                         agreeLbl: lf("Done"),
                         agreeClass: "cancel",
                         agreeIcon: "cancel",
-                    }).then(b => { })
+                    }).then(b => {
+                        if (this.isPythonActive()) {
+                            pxt.Util.setEditorLanguagePref("py"); // stay in python, else go to blocks
+                        }
+                    })
                 }
                 if (src === undefined
-                    || this.editorFile.name == this.editorFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME))
+                    || (this.editorFile && this.editorFile.name == this.editorFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)))
                     return Promise.resolve();
                 return this.saveVirtualFileAsync(pxt.JAVASCRIPT_PROJECT_NAME, src, open);
             });
@@ -2105,6 +2212,10 @@ export class ProjectView
                             }
                             if (parseInt(compile.uf2Family) === wr.familyID) {
                                 pxt.setHwVariant(v.name)
+                                pxt.tickEvent("projects.choosehwvariant", {
+                                    hwid: pxt.hwVariant,
+                                    card: "HID-" + pxt.hwVariant
+                                });
                                 this.reloadHeaderAsync()
                                     .then(() => this.compile())
                                 return
@@ -2114,6 +2225,9 @@ export class ProjectView
                     this.checkWebUSBVariant = false
                     this.checkForHwVariant()
                 }, pairAsync)
+                .then(() => {
+                    pxt.perf.recordMilestone("HID bridge init finished")
+                })
             return true
         }
         this.showChooseHwDialog()
@@ -2292,7 +2406,7 @@ export class ProjectView
             default:
                 this.maybeShowPackageErrors(true);
                 this.startSimulator(opts);
-                simulator.driver.focus()
+                if (opts && opts.clickTrigger) simulator.driver.focus();
                 break;
         }
     }
@@ -2368,6 +2482,7 @@ export class ProjectView
     toggleSimulatorFullscreen() {
         if (!this.state.fullscreen) {
             document.addEventListener('keydown', this.closeOnEscape);
+            simulator.driver.focus();
         } else {
             document.removeEventListener('keydown', this.closeOnEscape);
         }
@@ -2484,6 +2599,7 @@ export class ProjectView
     }
 
     stopSimulator(unload?: boolean, opts?: pxt.editor.SimulatorStartOptions) {
+        pxt.perf.measureStart("stopSimulator")
         pxt.tickEvent('simulator.stop')
         const clickTrigger = opts && opts.clickTrigger;
         pxt.debug(`sim: stop (autorun ${this.state.autoRun})`)
@@ -2494,6 +2610,7 @@ export class ProjectView
         simulator.stop(unload);
         const autoRun = this.state.autoRun && !clickTrigger; // if user pressed stop, don't restart
         this.setState({ simState: pxt.editor.SimState.Stopped, autoRun: autoRun });
+        pxt.perf.measureEnd("stopSimulator")
     }
 
     suspendSimulator() {
@@ -2539,7 +2656,9 @@ export class ProjectView
             this.syncPreferredEditor()
 
             simulator.stop(false, true);
-            const autoRun = (this.state.autoRun || !!opts.clickTrigger) && this.isBlocksEditor();
+
+            const autoRun = this.autoRunOnStart() && this.isBlocksEditor() && (this.state.autoRun || !!opts.clickTrigger);
+
             const state = this.editor.snapshotState()
             return this.setStateAsync({ simState: pxt.editor.SimState.Starting, autoRun: autoRun })
                 .then(() => (emptyRun ? Promise.resolve(compiler.emptyCompileResult()) : compiler.compileAsync(opts)))
@@ -2667,6 +2786,13 @@ export class ProjectView
             });
     }
 
+    blocksScreenshotAsync(pixelDensity?: number): Promise<string> {
+        if (pxt.blocks.layout.screenshotEnabled()
+            && this.blocksEditor && this.blocksEditor.isReady && this.blocksEditor.editor)
+            return pxt.blocks.layout.screenshotAsync(this.blocksEditor.editor, pixelDensity)
+        return Promise.resolve(undefined);
+    }
+
     renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<pxt.editor.EditorMessageRenderBlocksResponse> {
         return compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileBlocksSnippetAsync(req.ts, blocksInfo))
@@ -2774,12 +2900,15 @@ export class ProjectView
         let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
         let config = JSON.parse(f.content) as pxt.PackageConfig;
         config.name = name;
-        return f.setContentAsync(JSON.stringify(config, null, 4) + "\n")
+        return f.setContentAsync(pxt.Package.stringifyConfig(config))
             .then(() => {
                 if (this.state.header)
                     this.setState({
                         projectName: name
                     })
+            })
+            .then(() => {
+                return workspace.renameAsync(this.state.header, name);
             });
     }
 
@@ -2915,9 +3044,9 @@ export class ProjectView
         this.scriptSearch.showExperiments();
     }
 
-    showChooseHwDialog() {
+    showChooseHwDialog(skipDownload?: boolean) {
         if (this.chooseHwDialog)
-            this.chooseHwDialog.show()
+            this.chooseHwDialog.show(skipDownload)
     }
 
     showRecipesDialog() {
@@ -2926,7 +3055,9 @@ export class ProjectView
     }
 
     showRenameProjectDialogAsync(): Promise<boolean> {
-        if (!this.state.header) return Promise.resolve(false);
+        // don't show rename project prompt on github projects
+        if (!this.state.header || this.state.header.githubId)
+            return Promise.resolve(false);
 
         const opts: core.PromptOptions = {
             header: lf("Rename your project"),
@@ -2950,12 +3081,12 @@ export class ProjectView
 
     private hintManager: HintManager = new HintManager();
 
-    startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean) {
-        pxt.tickEvent("tutorial.start");
-        this.startTutorialAsync(tutorialId, tutorialTitle, recipe);
+    startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editor?: string) {
+        pxt.tickEvent("tutorial.start", { editor });
+        this.startTutorialAsync(tutorialId, tutorialTitle, recipe, editor);
     }
 
-    startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean): Promise<void> {
+    startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorProjectName?: string): Promise<void> {
         core.hideDialog();
         core.showLoading("tutorial", lf("starting tutorial..."));
         sounds.initTutorial(); // pre load sounds
@@ -2974,14 +3105,10 @@ export class ProjectView
 
         if (/^\//.test(tutorialId)) {
             filename = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
-            p = pxt.Cloud.markdownAsync(tutorialId, pxt.Util.userLanguage(), pxt.Util.localizeLive)
+            p = pxt.Cloud.markdownAsync(tutorialId)
                 .then(md => {
-                    if (md) {
-                        dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
-                        features = pxt.gallery.parseFeaturesFromMarkdown(md);
-                        autoChooseBoard = true;
-                    }
-                    return md;
+                    autoChooseBoard = true;
+                    return processMarkdown(md);
                 }).catch((e) => {
                     core.errorNotification(tutorialErrorMessage);
                     core.handleNetworkError(e);
@@ -2990,17 +3117,13 @@ export class ProjectView
             pxt.tickEvent("tutorial.shared");
             p = workspace.downloadFilesByIdAsync(scriptId)
                 .then(files => {
-                    const pxtJson = JSON.parse(files["pxt.json"]) as pxt.PackageConfig;
-                    dependencies = pxtJson.dependencies || {};
+                    const pxtJson = pxt.Package.parseAndValidConfig(files["pxt.json"]);
+                    pxt.Util.jsonMergeFrom(dependencies, pxtJson.dependencies);
                     filename = pxtJson.name || lf("Untitled");
                     autoChooseBoard = false;
                     reportId = scriptId;
                     const md = files["README.md"];
-                    if (md) {
-                        pxt.Util.jsonMergeFrom(dependencies, pxt.gallery.parsePackagesFromMarkdown(md));
-                        features = pxt.gallery.parseFeaturesFromMarkdown(md);
-                    }
-                    return md;
+                    return processMarkdown(md);
                 }).catch((e) => {
                     core.errorNotification(tutorialErrorMessage);
                     core.handleNetworkError(e);
@@ -3020,7 +3143,7 @@ export class ProjectView
                     return pxt.github.downloadPackageAsync(ghid.fullName, config);
                 })
                 .then(gh => {
-                    const pxtJson = JSON.parse(gh.files["pxt.json"]) as pxt.PackageConfig;
+                    const pxtJson = pxt.Package.parseAndValidConfig(gh.files["pxt.json"]);
                     // if there is any .ts file in the tutorial repo,
                     // add as a dependency itself
                     if (pxtJson.files.find(f => /\.ts/.test(f))) {
@@ -3028,7 +3151,7 @@ export class ProjectView
                         dependencies[ghid.project] = pxt.github.toGithubDependencyPath(ghid);
                     }
                     else {// just use dependencies from the tutorial
-                        dependencies = pxtJson.dependencies || {};
+                        pxt.Util.jsonMergeFrom(dependencies, pxtJson.dependencies);
                     }
                     filename = pxtJson.name || lf("Untitled");
                     autoChooseBoard = false;
@@ -3039,11 +3162,7 @@ export class ProjectView
                         (lang && lang[1] && gh.files[`_locales/${lang[0]}-${lang[1]}/${mfn}`])
                         || (lang && lang[0] && gh.files[`_locales/${lang[0]}/${mfn}`])
                         || gh.files[mfn];
-                    if (md) {
-                        pxt.Util.jsonMergeFrom(dependencies, pxt.gallery.parsePackagesFromMarkdown(md));
-                        features = pxt.gallery.parseFeaturesFromMarkdown(md);
-                    }
-                    return md;
+                    return processMarkdown(md);
                 }).catch((e) => {
                     core.errorNotification(tutorialErrorMessage);
                     core.handleNetworkError(e);
@@ -3056,7 +3175,10 @@ export class ProjectView
             if (!md)
                 throw new Error(lf("Tutorial not found"));
 
-            const { options, editor } = getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
+            const { options, editor: parsedEditor } = pxt.tutorial.getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
+
+            // pick tutorial editor
+            const editor = editorProjectName || parsedEditor;
 
             // start a tutorial within the context of an existing program
             if (recipe) {
@@ -3077,6 +3199,20 @@ export class ProjectView
             core.errorNotification(tutorialErrorMessage);
             core.handleNetworkError(e);
         }).finally(() => core.hideLoading("tutorial"));
+
+        function processMarkdown(md: string) {
+            if (!md) return md;
+
+            if (editorProjectName == pxt.JAVASCRIPT_PROJECT_NAME) { // spy => typescript
+                md = md.replace(/^```(blocks|block|spy)\b/gm, "```typescript");
+            } else if (editorProjectName == pxt.PYTHON_PROJECT_NAME) { // typescript => spy
+                md = md.replace(/^```(blocks|block|typescript)\b/gm, "```spy");
+            }
+
+            pxt.Util.jsonMergeFrom(dependencies, pxt.gallery.parsePackagesFromMarkdown(md));
+            features = pxt.gallery.parseFeaturesFromMarkdown(md);
+            return md;
+        }
     }
 
     completeTutorialAsync(): Promise<void> {
@@ -3157,9 +3293,13 @@ export class ProjectView
         if (tc) tc.showHint(true, showFullText);
     }
 
-    getExpandedCardStyle(): any {
+    getExpandedCardStyle(flyoutOnly?: boolean): any {
         let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
-        return tc ? tc.getExpandedCardStyle('top') : null;
+        let margin = 2;
+        if (flyoutOnly) {
+            margin += 2;
+        }
+        return tc ? { 'top': "calc(" + tc.getCardHeight() + "px + " + margin + "em)" } : null;
     }
 
     ///////////////////////////////////////////////////////////
@@ -3230,12 +3370,30 @@ export class ProjectView
     }
 
     ///////////////////////////////////////////////////////////
+    ////////////             Key map              /////////////
+    ///////////////////////////////////////////////////////////
+
+    showKeymap(show: boolean) {
+        this.setState({ keymap: show });
+    }
+
+    toggleKeymap() {
+        if (this.state.keymap) {
+            this.showKeymap(false);
+        } else {
+            this.showKeymap(true);
+        }
+    }
+
+    ///////////////////////////////////////////////////////////
     ////////////         Script Manager           /////////////
     ///////////////////////////////////////////////////////////
 
     private handleScriptManagerDialogClose = () => {
         // When the script manager dialog closes, we want to refresh our projects list in case anything has changed
         this.home.forceUpdate();
+        // Sync the workspace
+        workspace.syncAsync().done();
     }
 
     ///////////////////////////////////////////////////////////
@@ -3282,6 +3440,10 @@ export class ProjectView
         this.chooseHwDialog = c;
     }
 
+    private handleSignInDialogRef = (c: cloud.SignInDialog) => {
+        this.signInDialog = c;
+    }
+
     private handleChooseRecipeDialogRef = (c: tutorial.ChooseRecipeDialog) => {
         this.chooseRecipeDialog = c;
     }
@@ -3308,8 +3470,7 @@ export class ProjectView
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
         const { lightbox, greenScreen } = this.state;
-        const simDebug = !!targetTheme.debugger || inDebugMode;
-        const flyoutOnly = this.state.editorState && !this.state.editorState.hasCategories;
+        const flyoutOnly = this.state.editorState && this.state.editorState.hasCategories === false;
 
         const { hideEditorToolbar, transparentEditorToolbar } = targetTheme;
         const hideMenuBar = targetTheme.hideMenuBar || hideTutorialIteration;
@@ -3319,13 +3480,14 @@ export class ProjectView
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
 
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
-        const showCollapseButton = !inHome && !inTutorial && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode);
+        const showCollapseButton = showEditorToolbar && !inHome && !inTutorial && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode);
         const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
         const logoWide = !!targetTheme.logoWide;
         const hwDialog = !sandbox && pxt.hasHwVariants();
         const recipes = !!targetTheme.recipes;
-        const expandedStyle = inTutorialExpanded ? this.getExpandedCardStyle() : null;
+        const expandedStyle = inTutorialExpanded ? this.getExpandedCardStyle(flyoutOnly) : null;
+        const invertedTheme = targetTheme.invertedMenu && targetTheme.invertedMonaco;
 
         const collapseIconTooltip = this.state.collapseEditorTools ? lf("Show the simulator") : lf("Hide the simulator");
 
@@ -3337,6 +3499,7 @@ export class ProjectView
             shouldHideEditorFloats ? "hideEditorFloats" : '',
             shouldCollapseEditorTools ? "collapsedEditorTools" : '',
             transparentEditorToolbar ? "transparentEditorTools" : '',
+            invertedTheme ? 'inverted-theme' : '',
             this.state.fullscreen ? 'fullscreensim' : '',
             this.state.highContrast ? 'hc' : '',
             showSideDoc ? 'sideDocs' : '',
@@ -3358,6 +3521,7 @@ export class ProjectView
             isHeadless ? "headless" : "",
             flyoutOnly ? "flyoutOnly" : "",
             hideTutorialIteration ? "hideIteration" : "",
+            this.editor != this.blocksEditor ? "editorlang-text" : "",
             'full-abs'
         ];
         const rootClasses = sui.cx(rootClassList);
@@ -3376,8 +3540,7 @@ export class ProjectView
         const showFileList = !sandbox
             && !(isBlocks
                 || (pkg.mainPkg && pkg.mainPkg.config && (pkg.mainPkg.config.preferredEditor == pxt.BLOCKS_PROJECT_NAME)));
-        // show github if token or if always vis
-        const showGithub = !!pxt.github.token || (isBlocks && targetTheme.alwaysGithubItemBlocks) || (!isBlocks && targetTheme.alwaysGithubItem);
+        const hasCloud = this.hasCloud();
         return (
             <div id='root' className={rootClasses}>
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
@@ -3387,14 +3550,16 @@ export class ProjectView
                         <notification.NotificationBanner parent={this} />
                         <container.MainMenu parent={this} />
                     </header>}
-                {inTutorial ? <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
+                {inTutorial && <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     <tutorial.TutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />
-                </div> : undefined}
+                    {flyoutOnly && <tutorial.WorkspaceHeader />}
+                </div>}
                 <div id="simulator" className="simulator">
                     <div id="filelist" className="ui items">
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0}>
                         </div>
                         <simtoolbar.SimulatorToolbar parent={this} />
+                        {this.state.keymap && simOpts.keymap && <keymap.Keymap parent={this} />}
                         <div className="ui item portrait hide hidefullscreen">
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' className='teal' icon="xicon chip" text={"Dev Debug"} onClick={this.hwDebug} /> : ''}
                         </div>
@@ -3403,7 +3568,6 @@ export class ProjectView
                                 <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.openSimSerial} />
                                 <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.openDeviceSerial} />
                             </div> : undefined}
-                        {showGithub ? <filelist.GithubTreeItem parent={this} /> : undefined}
                         {showFileList ? <filelist.FileList parent={this} /> : undefined}
                         {!isHeadless && <div id="filelistOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.toggleSimulatorFullscreen}></div>}
                     </div>
@@ -3429,6 +3593,7 @@ export class ProjectView
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={this.handleScriptSearchRef} />}
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={this.handleExtensionRef} />}
                 {inHome ? <projects.ImportDialog parent={this} ref={this.handleImportDialogRef} /> : undefined}
+                {hasCloud ? <cloud.SignInDialog parent={this} ref={this.handleSignInDialogRef} onComplete={this.cloudSignInComplete} /> : undefined}
                 {inHome && targetTheme.scriptManager ? <scriptmanager.ScriptManagerDialog parent={this} ref={this.handleScriptManagerDialogRef} onClose={this.handleScriptManagerDialogClose} /> : undefined}
                 {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={this.handleExitAndSaveDialogRef} />}
                 {sandbox ? undefined : <projects.NewProjectNameDialog parent={this} ref={this.handleNewProjectNameDialogRef} />}
@@ -3453,33 +3618,18 @@ function getEditor() {
     return theEditor
 }
 
+function parseLocalToken() {
+    const qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%local_token/, "local_token"))
+    if (qs["local_token"]) {
+        pxt.storage.setLocal("local_token", qs["local_token"])
+        location.hash = location.hash.replace(/(%23)?[\#\&\?]*local_token.*/, "")
+    }
+    Cloud.localToken = pxt.storage.getLocal("local_token") || "";
+}
+
 function initLogin() {
     cloudsync.loginCheck()
-
-    {
-        let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))
-        if (qs["access_token"]) {
-            let ex = pxt.storage.getLocal("oauthState")
-            let tp = pxt.storage.getLocal("oauthType")
-            if (ex && ex == qs["state"]) {
-                pxt.storage.removeLocal("oauthState")
-                pxt.storage.removeLocal("oauthType")
-                if (tp == "github")
-                    pxt.storage.setLocal("githubtoken", qs["access_token"])
-            }
-            location.hash = location.hash.replace(/(%23)?[\#\&\?]*access_token.*/, "")
-        }
-        Cloud.accessToken = pxt.storage.getLocal("access_token") || "";
-    }
-
-    {
-        let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%local_token/, "local_token"))
-        if (qs["local_token"]) {
-            pxt.storage.setLocal("local_token", qs["local_token"])
-            location.hash = location.hash.replace(/(%23)?[\#\&\?]*local_token.*/, "")
-        }
-        Cloud.localToken = pxt.storage.getLocal("local_token") || "";
-    }
+    parseLocalToken();
 }
 
 function initSerial() {
@@ -3623,6 +3773,25 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             });
             pxt.BrowserUtils.changeHash("");
             return true;
+        case "testproject": {// create new project that references the given extension
+            pxt.tickEvent("hash.testproject");
+            const hid = hash.arg;
+            const header = workspace.getHeader(hid);
+            if (header) {
+                const existing = workspace.getHeaders().filter(hd => hd.extensionUnderTest == header.id)[0];
+                if (existing)
+                    editor.loadHeaderAsync(existing);
+                else {
+                    editor.newProject({
+                        prj: pxt.appTarget.blocksprj,
+                        name: lf("test {0}", header.name),
+                        extensionUnderTest: hid
+                    });
+                }
+            }
+            pxt.BrowserUtils.changeHash("");
+            return true;
+        }
         case "gettingstarted":
             pxt.tickEvent("hash.gettingstarted");
             editor.newProject();
@@ -3631,12 +3800,12 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         case "tutorial": // shortcut to a tutorial. eg: #tutorial:tutorials/getting-started
             pxt.tickEvent("hash.tutorial")
             editor.startTutorial(hash.arg);
-            pxt.BrowserUtils.changeHash("");
+            pxt.BrowserUtils.changeHash("editor");
             return true;
-        case "recipe": // shortcut to a tutorial. eg: #tutorial:tutorials/getting-started
+        case "recipe": // shortcut to a recipe. eg: #recipe:recipes/getting-started
             pxt.tickEvent("hash.recipe")
             editor.startTutorial(hash.arg, undefined, true);
-            pxt.BrowserUtils.changeHash("");
+            pxt.BrowserUtils.changeHash("editor");
             return true;
         case "home": // shortcut to home
             pxt.tickEvent("hash.home");
@@ -3665,6 +3834,28 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         case "reload": // need to reload last project - handled later in the load process
             if (loading) pxt.BrowserUtils.changeHash("");
             return false;
+        case "github": {
+            // #github:owner/user --> import
+            // #github:create-repository:headerid --> create repo
+            const repoid = pxt.github.parseRepoId(hash.arg);
+            const [ghCmd, ghArg] = hash.arg.split(':', 2);
+            if (ghCmd == "create-repository") {
+                // #github:create-repository:HEADERID
+                pxt.BrowserUtils.changeHash("");
+                const hd = workspace.getHeader(ghArg);
+                if (hd) {
+                    theEditor.loadHeaderAsync(hd)
+                        .then(() => cloudsync.githubProvider().createRepositoryAsync(hd.name, hd))
+                        .done(r => r && theEditor.reloadHeaderAsync())
+                    return true;
+                }
+            } else if (repoid) {
+                pxt.BrowserUtils.changeHash("");
+                importGithubProject(hash.arg, true);
+                return true;
+            }
+            break;
+        }
     }
 
     return false;
@@ -3679,6 +3870,7 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
         case "follow":
         case "newproject":
         case "newjavascript":
+        case "testproject":
         // case "gettingstarted": // This should be true, #gettingstarted hash handling is not yet implemented
         case "tutorial":
         case "recipe":
@@ -3688,36 +3880,39 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
         case "edit":
         case "sandboxproject":
         case "project":
+        case "github":
             return true;
         default:
             return false;
     }
 }
 
-async function importGithubProject(id: string) {
-    core.showLoading("loadingheader", lf("importing github project..."));
+async function importGithubProject(repoid: string, requireSignin?: boolean) {
+    core.showLoading("loadingheader", lf("importing GitHub project..."));
     try {
+        // normalize for precise matching
+        repoid = pxt.github.normalizeRepoId(repoid);
         // try to find project with same id
-        let hd = workspace.getHeaders().find(h => h.githubId == id);
-        if (!hd)
-            hd = await workspace.importGithubAsync(id)
-        let text = await workspace.getTextAsync(hd.id)
-        if ((text[pxt.CONFIG_NAME] || "{}").length < 20) {
-            let ok = await core.confirmAsync({
-                header: lf("Initialize MakeCode extension?"),
-                body: lf("We didn't find a valid pxt.json file in the repository. Would you like to create it and supporting files?"),
-                agreeLbl: lf("Initialize!")
-            })
-            if (!ok) {
-                hd.isDeleted = true
-                await workspace.saveAsync(hd)
-                return
+        let hd = workspace.getHeaders().find(h => h.githubId &&
+            pxt.github.normalizeRepoId(h.githubId) == repoid
+        );
+        if (!hd) {
+            if (requireSignin) {
+                const token = await cloudsync.githubProvider().routedLoginAsync(repoid);
+                if (!token.accessToken) { // did not sign in, give up
+                    theEditor.openHome();
+                    return;
+                }
             }
-            await workspace.initializeGithubRepoAsync(hd, id, true)
+            hd = await workspace.importGithubAsync(repoid);
         }
-        await theEditor.loadHeaderAsync(hd, null)
+        if (hd)
+            await theEditor.loadHeaderAsync(hd, null)
+        else
+            theEditor.openHome();
     } catch (e) {
         core.handleNetworkError(e)
+        theEditor.openHome();
     } finally {
         core.hideLoading("loadingheader")
     }
@@ -3823,6 +4018,7 @@ function initExtensionsAsync(): Promise<void> {
 
 pxt.winrt.captureInitialActivation();
 document.addEventListener("DOMContentLoaded", () => {
+    pxt.perf.recordMilestone(`DOM loaded`)
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
     pxt.options.debug = /dbg=1/i.test(window.location.href);
@@ -3837,7 +4033,8 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
         pxt.options.wsPort = 3233;
     }
-    pkg.setupAppTarget((window as any).pxtTargetBundle)
+    pkg.setupAppTarget((window as any).pxtTargetBundle);
+    pxt.setBundledApiInfo((window as any).pxtTargetBundle.apiInfo);
 
     enableAnalytics()
 
@@ -3853,8 +4050,8 @@ document.addEventListener("DOMContentLoaded", () => {
     appcache.init(() => theEditor.reloadEditor());
     blocklyFieldView.init();
 
-    pxt.hex.showLoading = (msg) => core.showLoading("hexcloudcompiler", msg);
-    pxt.hex.hideLoading = () => core.hideLoading("hexcloudcompiler");
+    pxt.hexloader.showLoading = (msg) => core.showLoading("hexcloudcompiler", msg);
+    pxt.hexloader.hideLoading = () => core.hideLoading("hexcloudcompiler");
     pxt.docs.requireMarked = () => require("marked");
     const importHex = (hex: pxt.cpp.HexFile, options?: pxt.editor.ImportFileOptions) => theEditor.importHex(hex, options);
 
@@ -3863,12 +4060,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const query = core.parseQueryString(window.location.href)
 
-    if (query["hw"])
+    if (query["hw"]) {
         pxt.setHwVariant(query["hw"])
+        pxt.tickEvent("projects.choosehwvariant", {
+            hwid: pxt.hwVariant,
+            card: "QUERY-" + pxt.hwVariant
+        });
+    }
 
     pxt.setCompileSwitches(query["compiler"] || query["compile"])
 
-    pxt.github.token = pxt.storage.getLocal("githubtoken");
+    // github token set in cloud provider
 
     const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
     const isController = pxt.shell.isControllerMode();
@@ -3894,7 +4096,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
                     pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
                 }
-                useLang = mlang ? mlang[3] : (lang.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
+                useLang = mlang ? mlang[3] : (pxt.BrowserUtils.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
                 const locstatic = /staticlang=1/i.test(window.location.href);
                 live = !(locstatic || pxt.BrowserUtils.isPxtElectron() || theme.disableLiveTranslations) || (mlang && !!mlang[1]);
                 force = !!mlang && !!mlang[2];
@@ -3913,7 +4115,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 force)
                 .then(() => {
                     if (pxt.Util.isLocaleEnabled(useLang)) {
-                        lang.setCookieLang(useLang);
+                        pxt.BrowserUtils.setCookieLang(useLang);
                         lang.setInitialLang(useLang);
                     } else {
                         pxt.tickEvent("unavailablelocale", { lang: useLang, force: (force ? "true" : "false") });
@@ -3954,10 +4156,6 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .then(() => pxt.winrt.hasActivationProjectAsync())
         .then((hasWinRTProject) => {
-            const ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0];
-            let hd = workspace.getHeaders()[0];
-            if (ent) hd = workspace.getHeader(ent.id);
-
             if (theEditor.shouldShowHomeScreen() && !hasWinRTProject) {
                 return Promise.resolve();
             } else {
@@ -3972,6 +4170,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             // default handlers
+            const ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0];
+            let hd = workspace.getHeaders()[0];
+            if (ent) hd = workspace.getHeader(ent.id);
             if (hd) return theEditor.loadHeaderAsync(hd, theEditor.state.editorState)
             else theEditor.newProject();
             return Promise.resolve();
@@ -4051,29 +4252,3 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }, false);
 })
-
-
-function getTutorialOptions(md: string, tutorialId: string, filename: string, reportId: string, recipe: boolean): { options: pxt.tutorial.TutorialOptions, editor: string } {
-    const tutorialInfo = pxt.tutorial.parseTutorial(md);
-    if (!tutorialInfo)
-        throw new Error(lf("Invalid tutorial format"));
-
-    const tutorialOptions: pxt.tutorial.TutorialOptions = {
-        tutorial: tutorialId,
-        tutorialName: tutorialInfo.title || filename,
-        tutorialReportId: reportId,
-        tutorialStep: 0,
-        tutorialReady: true,
-        tutorialHintCounter: 0,
-        tutorialStepInfo: tutorialInfo.steps,
-        tutorialActivityInfo: tutorialInfo.activities,
-        tutorialMd: md,
-        tutorialCode: tutorialInfo.code,
-        tutorialRecipe: !!recipe,
-        templateCode: tutorialInfo.templateCode,
-        autoexpandStep: true,
-        metadata: tutorialInfo.metadata
-    };
-
-    return { options: tutorialOptions, editor: tutorialInfo.editor };
-}

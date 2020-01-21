@@ -11,6 +11,7 @@ interface SimulatorConfig {
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean;
     restartSimulator(): void;
     onStateChanged(state: pxsim.SimulatorState): void;
+    onSimulatorReady(): void;
     setState(key: string, value: any): void;
     editor: string;
 }
@@ -160,6 +161,12 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                 this.onDebuggerResume();
             }
             cfg.onStateChanged(state);
+        },
+        onSimulatorReady: function () {
+            pxt.perf.recordMilestone("simulator ready")
+            if (!pxt.perf.perfReportLogged) {
+                pxt.perf.report()
+            }
         },
         onSimulatorCommand: (msg: pxsim.SimulatorCommandMessage): void => {
             switch (msg.command) {

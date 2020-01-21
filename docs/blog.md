@@ -1,12 +1,41 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode Arcade Released for General Availability!](/blog/arcade/general-release)
+
+January 6th, 2019 by [Jaqster](https://github.com/jaqster)
+
+Ringing in the New Year with a New Release! The MakeCode team is very happy and proud to announce that MakeCode Arcade has been officially released for general availability today!
+**[Continue reading this blog post](/blog/arcade/general-release)**
+
+## [MakeCode with GitHub](/blog/makecode-with-github)
+
+December 19th, 2019 by [Pelikhan](https://github.com/pelikhan)
+
+The latest episode of our GitHub intergration - streamlining the hosting of code
+in GitHub inside of MakeCode!
+**[Continue reading this blog post](/blog/makecode-with-github)**
+
+## [Minecraft Hour of Code](/blog/minecraft/hour-of-code-2019)
+
+December 2nd, 2019 by [Jaqster](https://github.com/jaqster)
+
+If you’ve ever thought about using Minecraft for teaching and learning, but haven’t taken
+the plunge yet, this is a great time to try it out!
+**[Continue reading this blog post](/blog/minecraft/hour-of-code-2019)**
+
+## [Translations in Context](/blog/translations-in-context)
+
+October 17th, 2019 by [pelikhan](https://github.com/pelikhan)
+
+Translate your favorite MakeCode editor... from the editor itself!
+**[Continue reading this blog post](/blog/translations-in-context)**
+
 ## [GitHub Extensions - Episode 2](/blog/github-extensions-episode-2)
 
 September 25th, 2019 by [pelikhan](https://github.com/pelikhan)
 
 We've made a number of improvements to our GitHub authoring support. Let's take a tour...
 **[Continue reading this blog post](/blog/github-extensions-episode-2)**
-
 
 ## [MakeCode Tutorials and Projects for CS Ed Week](/blog/csed-week/csed-week-2019)
 

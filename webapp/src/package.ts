@@ -120,6 +120,16 @@ export class File implements pxt.editor.IFile {
     setForceChangeCallback(callback: (from: string, to: string) => void) {
         this.forceChangeCallback = callback;
     }
+
+    /**
+     * Content prepared for github publishing
+     */
+    publishedContent(): string {
+        let c = this.content;
+        if (this.name == pxt.CONFIG_NAME)
+            c = workspace.prepareConfigForGithub(c);
+        return c;
+    }
 }
 
 export class EditorPackage {
@@ -251,7 +261,7 @@ export class EditorPackage {
             try {
                 let cfg = <pxt.PackageConfig>JSON.parse(cfgFile.content)
                 update(cfg);
-                return cfgFile.setContentAsync(JSON.stringify(cfg, null, 4) + "\n")
+                return cfgFile.setContentAsync(pxt.Package.stringifyConfig(cfg))
                     .then(() => this.ksPkg.loadConfig())
             } catch (e) { }
         }
@@ -455,7 +465,7 @@ class Host
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
-        return pxt.hex.getHexInfoAsync(this, extInfo).catch(core.handleNetworkError);
+        return pxt.hexloader.getHexInfoAsync(this, extInfo).catch(core.handleNetworkError);
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {
@@ -480,7 +490,11 @@ class Host
         let fromWorkspaceAsync = (arg: string) =>
             workspace.getTextAsync(arg)
                 .then(scr => {
-                    if (!scr)
+                    if (!epkg.isTopLevel() && !scr) {
+                        pkg.configureAsInvalidPackage(`cannot find '${arg}' in the workspace.`);
+                        return Promise.resolve();
+                    }
+                    if (!scr) // this should not happen;
                         return Promise.reject(new Error(`Cannot find text for package '${arg}' in the workspace.`));
                     if (epkg.isTopLevel() && epkg.header)
                         return workspace.recomputeHeaderFlagsAsync(epkg.header, scr)
@@ -619,7 +633,7 @@ data.mountVirtualApi("open-meta", {
             isReadonly: f.isReadonly(),
             isSaved: f.inSyncWithEditor && f.inSyncWithDisk,
             numErrors: f.numDiagnosticsOverride,
-            isGitModified: hasGit && f.baseGitContent != f.content
+            isGitModified: hasGit && f.baseGitContent != f.publishedContent()
         }
 
         if (fs.numErrors == null) {
@@ -634,7 +648,6 @@ data.mountVirtualApi("open-meta", {
 export interface PackageMeta {
     numErrors: number;
     diagnostics?: pxtc.KsDiagnostic[];
-    numFilesGitModified?: number;
 }
 
 /*
@@ -643,7 +656,7 @@ export interface PackageMeta {
 data.mountVirtualApi("open-pkg-meta", {
     getSync: p => {
         p = data.stripProtocol(p)
-        let f = allEditorPkgs().filter(pkg => pkg.getPkgId() == p)[0];
+        const f = allEditorPkgs().filter(pkg => pkg.getPkgId() == p)[0];
         if (!f || f.getPkgId() == "built")
             return {}
 
@@ -661,21 +674,76 @@ data.mountVirtualApi("open-pkg-meta", {
             r.diagnostics = [];
             files.filter(f => !!f.diagnostics).forEach(f => r.diagnostics.concat(f.diagnostics));
         }
-        const hasGit = f.getPkgId() == "this" && !!(f.header && f.header.githubId)
-        if (hasGit)
-            r.numFilesGitModified = files.filter(f => f.baseGitContent != f.content).length;
         return r;
     }
 })
+
+export interface PackageGitStatus {
+    id?: string;
+    modified?: boolean;
+}
+
+/*
+    pkg-git-status:<guid>
+*/
+data.mountVirtualApi("pkg-git-status", {
+    getSync: p => {
+        p = data.stripProtocol(p)
+        const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
+        const r: PackageGitStatus = {};
+        if (f) {
+            r.id = f.getPkgId() == "this" && f.header && f.header.githubId;
+            if (r.id) {
+                const files = f.sortedFiles();
+                r.modified = !!files.find(f => f.baseGitContent != f.publishedContent());
+            }
+        }
+        return r;
+    }
+})
+
+export function invalidatePullStatus(hd: pxt.workspace.Header) {
+    data.invalidateHeader("pkg-git-pull-status", hd)
+}
+
+data.mountVirtualApi("pkg-git-pull-status", {
+    getAsync: p => {
+        p = data.stripProtocol(p)
+        const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
+        const ghid = f.getPkgId() == "this" && f.header && f.header.githubId;
+        if (!ghid) return Promise.resolve(workspace.PullStatus.NoSourceControl)
+        return workspace.pullAsync(f.header, true)
+            .catch(e => workspace.PullStatus.NoSourceControl);
+    },
+    expirationTime: p => 3600 * 1000
+})
+
+data.mountVirtualApi("pkg-git-pr", {
+    getAsync: p => {
+        const missing = <pxt.github.PullRequest>{
+            number: -1
+        };
+        p = data.stripProtocol(p)
+        const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
+        const header = f.header;
+        const ghid = f.getPkgId() == "this" && header && header.githubId;
+        if (!ghid) return Promise.resolve(missing);
+        const parsed = pxt.github.parseRepoId(ghid);
+        if (!parsed || !parsed.tag || parsed.tag == "master") return Promise.resolve(missing);
+        return pxt.github.findPRNumberforBranchAsync(parsed.fullName, parsed.tag)
+            .catch(e => missing);
+    },
+    expirationTime: p => 3600 * 1000
+})
+
 
 // pkg-status:<guid>
 data.mountVirtualApi("pkg-status", {
     getSync: p => {
         p = data.stripProtocol(p)
-        let ep = allEditorPkgs().filter(pkg => pkg.header && pkg.header.id == p)[0]
+        const ep = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p)
         if (ep)
             return ep.savingNow ? "saving" : ""
         return ""
     },
 })
-

@@ -123,10 +123,11 @@ pre {
 }
 
 .hideEditorToolbar #blocksArea,
-    .hideEditorToolbar #monacoEditor,
-    .hideEditorToolbar #pxtJsonEditor,
-    .hideEditorToolbar #serialEditor,
-    .hideEditorToolbar #filelist {
+.hideEditorToolbar #monacoEditor,
+.hideEditorToolbar #pxtJsonEditor,
+.hideEditorToolbar #serialEditor,
+.hideEditorToolbar #githubEditor,
+.hideEditorToolbar #filelist {
     bottom: 0rem !important;
 }
 
@@ -174,6 +175,10 @@ pre {
     margin-top: 0 !important;
     padding-top: 0.55rem;
     background-color: @simulatorBackground;
+}
+
+#editortools .download-button.icon-and-text {
+    text-align: center;
 }
 
 .transparentEditorTools #downloadArea {
@@ -312,20 +317,23 @@ div.simframe > iframe {
     border-top-left-radius: 0px!important;
     border-bottom-left-radius: 0px!important;
 }
-#editordropdown.active, #mainmenu #editordropdown.active:focus {
-    background-color: @editorToggleColor!important;
-}
 #editordropdown .menu > .item {
     width: 184px;
     opacity: 1;
 }
-#editordropdown .menu > .item.selected {
-    background: none;
-    color: @mainMenuInvertedBackground !important;
-}
 #editordropdown .menu > .item.selected:after {
     content: '✔';
     float: right;
+}
+
+#root:not(.hc) #editordropdown {
+    .menu > .item.selected {
+        background: none;
+        color: @mainMenuInvertedBackground !important;
+    }
+    &.active, #mainmenu #editordropdown.active:focus {
+        background-color: @editorToggleColor!important;
+    }
 }
 
 /* Help card */
@@ -355,9 +363,9 @@ div.simframe > iframe {
 }
 
 .ui.item.logo img {
-    max-height: 1.6rem;
     margin-left: 1rem;
     margin-right: 1rem;
+    height: 1.6rem;
 }
 
 /* Powered by Microsoft logo*/
@@ -434,6 +442,13 @@ div.simframe > iframe {
     position: relative;
 }
 
+.ui.button.big-play-button,
+.ui.button.hw-button,
+.ui.button.hw-button > .icon.caret {
+    /* Fixes an error in some webkit browsers where icons get repositioned on hover */
+    position: relative;
+}
+
 /* Icon and text */
 .ui.item.link.dbg-btn > .icon-and-text.icon ~ .ui.text,
 .ui.item.link > .icon-and-text.icon ~ .ui.text.exit-debugmode-btn,
@@ -456,7 +471,6 @@ div.simframe > iframe {
     border-bottom-left-radius: 100px;
     top: 40%;
     height: 20%;
-    z-index: @sidedocZIndex;
     padding: 0;
     margin: 0;
     background: @grey;
@@ -468,6 +482,13 @@ div.simframe > iframe {
     &:focus {
       opacity: 1;
     }
+}
+#computertogglesim,
+#sidedocstoggle {
+    z-index: @sidedocZIndex;
+}
+#mobiletogglesim {
+    z-index: @blocklyToolboxZIndex;
 }
 
 // Factor in 4rem height of top bar
@@ -750,25 +771,23 @@ p.ui.font.small {
 
 /* Mobile + Tablet */
 @media only screen and (max-width: @largestTabletScreen) {
-    #root.sandbox .active.item.sim-menuitem ~ .toggle {
-        margin-left: 0 !important;
-        box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
-    }
-    #root.sandbox .active.item.blocks-menuitem ~ .toggle {
-        margin-left: 40px !important;
-        box-shadow: 2px 0px 0px rgba(0,0,0,0.1), -2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
-    }
-    #root.sandbox .active.item.javascript-menuitem ~ .toggle {
-        margin-left: 80px !important;
-        box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
-    }
-    #root.sandbox .active.item.python-menuitem ~ .toggle {
-        margin-left: 120px !important;
-        box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
+    #root.sandbox:not(.headless) {
+        .active.item.sim-menuitem ~ .toggle {
+            margin-left: 0 !important;
+            box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
+            background: @editorToggleColor !important;
+        }
+        .active.item.blocks-menuitem ~ .toggle {
+            margin-left: 40px !important;
+            box-shadow: 2px 0px 0px rgba(0,0,0,0.1), -2px 0px 0px rgba(0,0,0,0.1) !important;
+            background: @editorToggleColor !important;
+        }
+        .active.item.javascript-menuitem ~ .toggle,
+        .active.item.python-menuitem ~ .toggle {
+            margin-left: 80px !important;
+            box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
+            background: @editorToggleColor !important;
+        }
     }
 
     .simView #boardview {
@@ -784,12 +803,19 @@ p.ui.font.small {
     .collapse-button.ui.computer.only {
         display:none !important; // hide desktop simulator toggle
     }
+
+    .hideEditorToolbar #filelist {
+        display:none !important;
+    }
 }
 
 /* Mobile only */
 @media only screen and (max-width: @largestMobileScreen) {
     .ui.mobile.only {
         display:unset !important;
+    }
+    .ui.mobile.only.inherit {
+        display:inherit !important;
     }
     .ui.mobile.hide {
         display:none !important;
@@ -963,6 +989,10 @@ p.ui.font.small {
     }
 }
 
+#projectNameArea input {
+    font-size: 0.95rem;
+}
+
 /*******************************
         Media Adjustments
 *******************************/
@@ -994,6 +1024,19 @@ p.ui.font.small {
         .includePoweredByLogos(); // set the @poweredBySmall variable
         background-image: @poweredBySmall;
     }
+    #root.headless.transparentEditorTools {
+        #editortools {
+            margin-bottom: 1.5rem;
+        }
+    }
+    .ui.button.hw-button > .icon.ellipsis {
+        left: -1px;
+        position: relative;
+    }
+    .collapsedEditorTools .hw-button:hover:after {
+        transform: translateX(0%)!important;
+        left: -2rem;
+    }
 }
 
 /* Mobile */
@@ -1006,6 +1049,14 @@ p.ui.font.small {
         bottom: 3px;
         .includePoweredByLogos(); // set the @poweredBySmall variable
         background-image: @poweredBySmall;
+    }
+    .hw-button:hover:after {
+        transform: translateX(-100%)!important;
+        left: 3rem;
+    }
+    .collapsedEditorTools .hw-button:hover:after {
+        transform: translateX(0%)!important;
+        left: -2rem;
     }
 }
 
@@ -1031,6 +1082,16 @@ p.ui.font.small {
 
     .collapsedEditorTools.headless #maineditor {
         left: 0;
+    }
+
+    #editortools {
+        z-index: @simulatorZIndex + 1;
+    }
+
+    .ui.button.hw-button > .icon.ellipsis {
+        left: -1px;
+        top: 4px;
+        position: relative;
     }
 }
 
@@ -1152,10 +1213,10 @@ p.ui.font.small {
     .hideEditorFloats #editortools {
         height: @editorToolsCollapsedHeight;
     }
-    .hideEditorFloats #editortools > div > div > .ui.grid {
+    .hideEditorFloats.transparentEditorTools #editortools > div > div > .ui.grid {
         margin: auto;
     }
-    .hideEditorFloats #editorToolbarArea {
+    .hideEditorFloats.transparentEditorTools #editorToolbarArea {
         padding-top: 0;
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor, .hideEditorFloats #msg {
@@ -1212,11 +1273,9 @@ p.ui.font.small {
         width: 40px;
         height: 38px;
     }
-    .active.item.javascript-menuitem ~ .toggle {
-        margin-left: 40px !important;
-    }
+    .active.item.javascript-menuitem ~ .toggle,
     .active.item.python-menuitem ~ .toggle {
-        margin-left: 80px !important;
+        margin-left: 40px !important;
     }
     /* Top Menu */
     #maineditor {
@@ -1237,6 +1296,18 @@ p.ui.font.small {
     }
     .ui.mini.image {
         display: block !important;
+    }
+
+    /* Python/JS dropdown */
+    #editordropdown .menu > .item.selected:after {
+        position: absolute;
+        left: 1em;
+    }
+    #root #editordropdown .menu .item {
+        width: auto;
+    }
+    #root #editordropdown .menu .item .text {
+        display: inline-block!important;
     }
 }
 
@@ -1280,6 +1351,11 @@ p.ui.font.small {
     }
     .collapsedEditorTools #mobiletogglesim {
         bottom: 3.4rem;
+    }
+
+    #editortools .hw-button:before,
+    #editortools .hw-button:after {
+        display: none
     }
 }
 
@@ -1430,23 +1506,19 @@ div.simframe.ui.embed {
         bottom: 1.5rem !important;
     }
 
-    .active.item.sim-menuitem ~ .toggle {
+    &:not(.headless) .active.item.sim-menuitem ~ .toggle {
         margin-left: 0 !important;
         box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
         background: @editorToggleColor !important;
     }
-    .active.item.blocks-menuitem ~ .toggle {
+    &:not(.headless) .active.item.blocks-menuitem ~ .toggle {
         margin-left: 140px !important;
         box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
         background: @editorToggleColor !important;
     }
-    .active.item.javascript-menuitem ~ .toggle {
+    &:not(.headless) .active.item.javascript-menuitem ~ .toggle,
+    &:not(.headless) .active.item.python-menuitem ~ .toggle {
         margin-left: 280px !important;
-        box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
-    }
-    .active.item.python-menuitem ~ .toggle {
-        margin-left: 420px !important;
         box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
         background: @editorToggleColor !important;
     }
@@ -1483,4 +1555,45 @@ img.pixelart {
     image-rendering: auto;
     image-rendering: crisp-edges;
     image-rendering: pixelated;
+}
+
+
+/** language modal **/
+#langmodal {
+    #availablelocales .langoption .header {
+        color: #4c4ca6;
+    }
+
+    #langmodalfooter {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 2em;
+    }
+}
+
+#blocks-editor-field-div {
+    position: absolute;
+    z-index: @blocklyDropdownDivZIndex;
+}
+
+.blocks-editor-field-overlay {
+    position: absolute;
+    z-index: @blocklyWidgetDivZIndex;
+    background-color: rgba(0, 0, 0, 0.4)
+}
+
+a.ui.link {
+    cursor: pointer;
+}
+
+p > a.ui.link {
+    margin-left: 0.5rem;
+}
+
+p.ui.tiny {
+    font-size: 80%;
+}
+p.ui.small {
+    font-size: 90%;
 }

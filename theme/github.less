@@ -5,13 +5,25 @@
 /* Reference import */
 @import (reference) "semantic.less";
 
+.ui.button.editortools-btn.editortools-github-btn {
+    margin-left: 0.25rem;
+}
+
+/* Mobile only */
+@media only screen and (max-width: @largestMobileScreen) {
+    .ui.button.editortools-btn.editortools-github-btn {
+        margin-left: 0;
+    }
+}
+
 /*-------------------
    Github view and diffs
 --------------------*/
 
-.diffview {
+table.diffview {
     border: 0px;
     border-spacing: 0px;
+    border-collapse: collapse;
     width: 100%;
 
     .change code {
@@ -43,11 +55,32 @@
         padding-left: 1em;
     }
 
+    tr.conflict {
+        border-left: 2px solid @conflictBorderColor;
+        border-right: 2px solid @conflictBorderColor;
+    }
+    tr.conflict.header {
+        border-top: 2px solid @conflictBorderColor;
+        border-bottom: 2px solid @conflictBorderColor;
+        background-color: @conflictHeaderBackgroundColor;
+    }
+    tr.conflict.header td {
+        color: @conflictHeaderColor;
+    }
+    tr.conflict td.ui {
+        padding-left: 0.5rem;
+        padding-top: 0.5rem;
+    }
+
+    tr.conflict.footer {
+        border-bottom: 2px solid @conflictBorderColor;
+    }
+
     .line-a,
     .line-b {
         width: 3em;
         text-align: right;
-        color: rgba(27, 31, 35, .3);
+        color: @diffLineNumberColor;
     }
 
     .marker {
@@ -73,82 +106,132 @@
 
 #githubEditor {
     background-color: @githubBackgroundColor;
+    color: @githubTextColor;
     overflow-x: hidden;
     overflow-y: auto;
+    #githubArea {
+        height: 90%;
+        padding: 1rem;
+
+        .ui.link {
+            cursor: pointer;
+        }
+
+        .ui.message span.ui.link {
+            margin-left: 0.25rem;
+            text-decoration: underline;
+        }
+
+        .inline-help {
+            margin-left: 2rem;
+        }
+
+        .ui.divider {
+            margin-bottom: 5px;
+        }
+
+        .ui.segment.diff {
+            padding: 0;
+        }
+
+        .ui.segments {
+            margin: 1rem 0;
+        }
+
+        .diffheader>span {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .diffheader .ui.button {
+            float: right;
+            margin-top: -0.5em;
+        }
+
+        .ui.segment.diff svg {
+            margin: 1rem;
+            max-width: calc(100% - 2rem);
+        }
+
+        .ui.segments.filediff {
+            background: @diffSegmentBackgroundColor;        
+        }
+
+        .legend > span:not(:first-child) {
+            margin-left: 1.5rem;
+        }
+
+        .legend span.icon {
+            width: 0.8rem;
+            height: 0.8rem;
+            display: inline-block;
+            border-radius: 2px;
+            margin-right: 0.25rem;
+        }
+
+        .legend span.added.icon {
+            background: linear-gradient(45deg, orange , yellow, green, cyan, blue, violet);
+        }
+
+        .legend span.deleted.icon {
+            background-color: #d0d04e;
+            background-image: linear-gradient(45deg, #bbbbbb 25%, transparent 25%, transparent 75%, #bbbbbb 75%, #bbbbbb),
+            linear-gradient(-45deg, #bbbbbb 25%, transparent 25%, transparent 75%, #bbbbbb 75%, #bbbbbb);
+            background-size: 4px 4px;
+        }
+
+        .legend span.notchanged.icon {
+            background: #d0d0d0;
+        }
+
+        .repo-branch {
+            opacity: 0.4;
+            cursor: pointer;
+        }
+
+        .join {
+            text-align: center;
+        }
+
+        .create-pr {
+            float: right;
+        }
+    }
 }
 
-#githubArea {
-    height: 90%;
-    padding: 1rem;
+// inverted style
+.inverted-theme {
+    #githubEditor {
+        color: @githubInvertedTextColor;
 
-    .ui.divider {
-        margin-bottom: 5px;
-    }
+        .diffview .change code {
+            color: @githubInvertedTextColor;
+        }
 
-    .ui.segment.diff {
-        padding: 0;
-    }
+        .diff-added {
+            background: @diffInvertedAddedBackground;
+    
+            .ch-added {
+                background: @diffInvertedAddedTokenBackground;
+            }
+        }
+    
+        .diff-removed {
+            background: @diffInvertedRemovedBackground;
+    
+            .ch-removed {
+                background: @diffInvertedRemovedTokenBackground;
+            }
+        }
+    
+        .line-a,
+        .line-b {
+            color: @diffInvertedLineNumberColor;
+        } 
 
-    .ui.segments {
-        margin: 1rem 0;
-    }
-
-    .diffheader>span {
-        font-weight: bold;
-        font-size: 1.2em;
-    }
-
-    .diffheader .ui.button {
-        float: right;
-        margin-top: -0.5em;
-    }
-
-    .ui.segment.diff svg {
-        margin: 1rem;
-        max-width: calc(100% - 2rem);
-    }
-
-    .ui.segments.filediff {
-        background: @diffSegmentBackgroundColor;        
-    }
-
-    .legend > span:not(:first-child) {
-        margin-left: 0.5rem;
-    }
-
-    .legend span.icon {
-        width: 0.8rem;
-        height: 0.8rem;
-        display: inline-block;
-        border-radius: 2px;
-        margin-right: 0.25rem;
-    }
-
-    .legend span.added.icon {
-        background: linear-gradient(45deg, orange , yellow, green, cyan, blue, violet);
-    }
-
-    .legend span.deleted.icon {
-        background-color: #d0d04e;
-        background-image: linear-gradient(45deg, #bbbbbb 25%, transparent 25%, transparent 75%, #bbbbbb 75%, #bbbbbb),
-        linear-gradient(-45deg, #bbbbbb 25%, transparent 25%, transparent 75%, #bbbbbb 75%, #bbbbbb);
-        background-size: 4px 4px;
-    }
-
-    .legend span.notchanged.icon {
-        background: #d0d0d0;
-    }
-
-    .repo-branch {
-        opacity: 0.4;
-        cursor: pointer;
-    }
-
-    .join {
-        text-align: center;
-    }
-
-    .create-pr {
-        float: right;
+        .diff-marker {
+            background: @diffInvertedMarkerBackground;
+            color: @diffInvertedMarkerColor
+        }
     }
 }

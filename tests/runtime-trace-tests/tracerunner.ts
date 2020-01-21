@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'child_process';
 
+// tslint:disable:no-import-side-effect mocha-no-side-effect-code
 import "mocha";
 import * as chai from "chai";
 
@@ -13,7 +14,7 @@ import * as util from "../common/testUtils";
 import { resolve } from 'url';
 import { promisify } from 'util';
 
-// TODO: Split this file up. I (dazuniga) spent ~1hr trying to split this file into two pieces but I cannot figure out 
+// TODO: Split this file up. I (dazuniga) spent ~1hr trying to split this file into two pieces but I cannot figure out
 // how to make that work with the way we're using jake & namespaces / modules
 
 // setup
@@ -66,6 +67,12 @@ describe("convert between ts<->py ", () => {
     });
 });
 
+// we use this simple wrapper to enfore content type of "string". writeFileSync
+// accepts "any" and we've had bugs where objects get inadvertently written
+function writeFileStringSync(filePath: string, content: string) {
+    fs.writeFileSync(filePath, content)
+}
+
 async function testTsOrPy(tsOrPyFile: string): Promise<void> {
     let ext = path.extname(tsOrPyFile)
     let isPy = ext === ".py"
@@ -78,7 +85,7 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
     let recordBaseline = (bl: string) => {
         baseline = bl
         baselineFile = tsOrPyFile + ".baseline"
-        fs.writeFileSync(baselineFile, baseline)
+        writeFileStringSync(baselineFile, baseline)
     }
     if (isPy) {
         let pyFile = tsOrPyFile
@@ -120,13 +127,13 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
         let errFile = inFile + `.${fnName}_error`;
         return convert(inFile)
             .error(r => {
-                fs.writeFileSync(errFile, JSON.stringify(r))
+                writeFileStringSync(errFile, JSON.stringify(r))
                 return `${fnName} failed to convert '${inFile}'. Error saved at:\n${errFile}\nError is:\n${r}\n`
             })
             .then(async outFile => {
                 let outTrace = await runConverted(outFile)
                 if (!util.compareBaselines(outTrace, baseline)) {
-                    fs.writeFileSync(errFile, outTrace)
+                    writeFileStringSync(errFile, outTrace)
                     return Promise.reject(new Error(
                         `${fnName} incorrectly converted:\n` +
                         `${inFile}\n${fs.readFileSync(inFile, "utf8")}\nto:\n${outFile}\n${fs.readFileSync(outFile, "utf8")}\n` +
@@ -142,12 +149,12 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
         return STS(tsFile)
             .catch(error => {
                 let errStr = `${error}`
-                fs.writeFileSync(errFile, errStr)
+                writeFileStringSync(errFile, errStr)
                 return Promise.reject(new Error(`Static Typescript failed to run on:\n${tsFile}\nError saved at:\n${errFile}\nError is:\n${errStr}\n`))
             })
             .then(outTrace => {
                 if (!util.compareBaselines(outTrace, baseline)) {
-                    fs.writeFileSync(errFile, outTrace)
+                    writeFileStringSync(errFile, outTrace)
                     return Promise.reject(new Error(
                         `Static Typescript produced a different trace than node.js when run on:\n${tsFile}\n` +
                         `Baseline:\n${baseline}\nIncorrect trace:\n${outTrace}\n` +
@@ -230,21 +237,21 @@ function runNodeJsAsync(nodeArgs: string): Promise<string> {
 async function convertTs2Py(tsFile: string): Promise<string> {
     let pyCode = await util.ts2pyAsync(tsFile)
     const pyFile = path.join(util.replaceFileExtension(tsFile, ".ts.py"));
-    fs.writeFileSync(pyFile, pyCode)
+    writeFileStringSync(pyFile, pyCode)
     return pyFile
 }
 
 async function convertPy2Ts(pyFile: string): Promise<string> {
     let tsCode = await util.py2tsAsync(pyFile)
     const tsFile = path.join(util.replaceFileExtension(pyFile, ".py.ts"));
-    fs.writeFileSync(tsFile, tsCode)
+    writeFileStringSync(tsFile, tsCode.ts)
     return tsFile
 }
 
 function emitJsFiles(prog: ts.Program, file?: ts.SourceFile): string[] {
     let jsFiles: string[] = []
     prog.emit(file, (f, data) => {
-        fs.writeFileSync(f, data)
+        writeFileStringSync(f, data)
         jsFiles.push(f)
     });
     return jsFiles
@@ -257,9 +264,16 @@ function compileTsToJs(filename: string): ts.Program {
         target: ts.ScriptTarget.ES5,
         module: ts.ModuleKind.ES2015,
         // noLib: true,
-        // skipLibCheck: true
+        skipLibCheck: true
     }
-    return ts.pxtc.plainTscCompileFiles([filename], cOpts)
+    // TODO: it'd be great to include the python helper fns so we can cover
+    // more scenarios however this doesn't work easily since we use custom methods
+    // like Array.removeAt which don't exist in vanilla JS. We'd need to provide
+    // an implementation for these tests
+    // const pyHelpers = ["pxt-python-helpers.ts"]
+    //     .map(f => path.resolve("libs", "pxt-python", f), 'utf8')
+    let files = [filename /*, ...pyHelpers*/]
+    return ts.pxtc.plainTscCompileFiles(files, cOpts)
 }
 async function compileAndRunTs(filename: string): Promise<string> {
     let prog = compileTsToJs(filename)

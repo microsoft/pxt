@@ -70,6 +70,12 @@ export interface DropdownProps extends UiProps {
     title?: string;
     id?: string;
     onChange?: (v: string) => void;
+
+    avatarImage?: string;
+    avatarInitials?: string;
+    displayAbove?: boolean;
+    displayRight?: boolean;
+    dataTooltip?: string;
 }
 
 export interface DropdownState {
@@ -282,7 +288,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
 
     private handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
         if (this.isMouseDown) return;
-        // Use timeout to delay examination of activeElement until after blur/focus 
+        // Use timeout to delay examination of activeElement until after blur/focus
         // events have been processed.
         setTimeout(() => {
             let open = this.isChildFocused();
@@ -304,7 +310,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 
     renderCore() {
-        const { disabled, title, role, icon, className, children } = this.props;
+        const { disabled, title, role, icon, className, avatarImage, avatarInitials, children, displayAbove, displayRight, dataTooltip } = this.props;
         const { open } = this.state;
 
         const aria = {
@@ -324,15 +330,25 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             'dropdown',
             icon ? 'icon' : '',
             className || '',
+            displayAbove ? 'menuAbove' : '',
+            displayRight ? 'menuRight' : ''
         ]);
         const menuClasses = cx([
             'menu',
             open ? 'visible transition' : ''
         ])
+
+        const avatar = avatarImage || avatarInitials ?
+            <div className="avatar">
+                {avatarImage ? <img className="ui circular image" src={avatarImage} alt={title} /> :
+                    <div className="initials">{avatarInitials}</div>}
+            </div>
+            : undefined;
         return (
             <div role="listbox" ref="dropdown" title={title} {...aria}
                 id={this.props.id}
                 className={classes}
+                data-tooltip={dataTooltip}
                 onMouseDown={this.handleMouseDown}
                 onClick={this.handleClick}
                 onKeyDown={this.handleKeyDown}
@@ -340,7 +356,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
                 onBlur={this.handleBlur}
                 tabIndex={0}
             >
-                {genericContent(this.props)}
+                {avatar ? avatar : genericContent(this.props)}
                 <div ref="menu" {...menuAria} className={menuClasses}
                     role="menu">
                     {children}
@@ -478,6 +494,7 @@ export interface LinkProps extends ButtonProps {
     download?: string;
     target?: string;
     rel?: string;
+    refCallback?: React.Ref<HTMLAnchorElement>
 }
 
 export class Link extends StatelessUIElement<LinkProps> {
@@ -489,6 +506,7 @@ export class Link extends StatelessUIElement<LinkProps> {
                 target={this.props.target}
                 rel={this.props.rel || (this.props.target ? "noopener noreferrer" : "")}
                 download={this.props.download}
+                ref={this.props.refCallback}
                 role={this.props.role}
                 title={this.props.title}
                 tabIndex={this.props.tabIndex || 0}
@@ -505,7 +523,7 @@ export class Link extends StatelessUIElement<LinkProps> {
 }
 
 export function helpIconLink(url: string, title: string) {
-    return <Link href={url} icon="help circle" target="_blank" role="button" title={title} />
+    return <Link className="help-link" href={url} icon="help circle" target="_blank" role="button" title={title} />
 }
 
 ///////////////////////////////////////////////////////////
@@ -828,7 +846,7 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
                 role="tab"
                 aria-controls={ariaControls}
                 aria-selected={active}
-                aria-label={content || name}
+                aria-label={`${content || name}`}
             >
                 {icon ? <Icon icon={icon} /> : undefined}
                 {content || name}

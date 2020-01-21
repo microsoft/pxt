@@ -26,15 +26,17 @@ More info:
 Examples of Editors built with PXT:
 
 * https://makecode.microbit.org
+* https://arcade.makecode.com
 * https://makecode.adafruit.com
-* https://makecode.chibitronics.com
 * https://minecraft.makecode.com
+* https://makecode.mindstorms.com
+* https://makecode.chibitronics.com
 * More editors at https://makecode.com/labs
 
 ## Branches
 
 * ``master`` is the active development branch, currently ``v3.*`` builds
-* ``v0`` is the servicing branch for ``v0.*`` builds
+* ``v*`` is the servicing branch for ``v*.*`` builds
 
 ## Running a target from localhost
 
@@ -45,7 +47,7 @@ Please follow the [instructions here](https://makecode.com/cli).
 If you are modifying your own instance of PXT and want a target (such as pxt-microbit) to use your local version, cd to the directory of the target (pxt-microbit, in our example, which should be a directory sibling of pxt) and perform
 
 ```
-npm link ../pxt
+pxt link ../pxt
 ```
 
 If you have multiple checkouts of pxt, you can do the following:

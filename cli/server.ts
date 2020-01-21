@@ -39,7 +39,8 @@ function setupRootDir() {
         path.join(nodeutil.targetDir, "sim/public"),
         path.join(nodeutil.targetDir, "node_modules", `pxt-${pxt.appTarget.id}-sim`, "public"),
         path.join(nodeutil.pxtCoreDir, "built/web"),
-        path.join(nodeutil.pxtCoreDir, "webapp/public")
+        path.join(nodeutil.pxtCoreDir, "webapp/public"),
+        path.join(nodeutil.pxtCoreDir, "common-docs")
     ]
     docsDir = path.join(root, "docs")
     packagedDir = path.join(root, "built/packaged")
@@ -194,18 +195,20 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
             .then(buf => {
                 if (f.name == pxt.CONFIG_NAME) {
                     try {
-                        let cfg: pxt.PackageConfig = JSON.parse(f.content)
-                        if (!cfg.name) {
-                            console.log("Trying to save invalid JSON config")
+                        if (!pxt.Package.parseAndValidConfig(f.content)) {
+                            pxt.log("Trying to save invalid JSON config")
+                            pxt.debug(f.content);
                             throwError(410)
                         }
                     } catch (e) {
-                        console.log("Trying to save invalid format JSON config")
+                        pxt.log("Trying to save invalid format JSON config")
+                        pxt.log(e)
+                        pxt.debug(f.content);
                         throwError(410)
                     }
                 }
                 if (buf.toString("utf8") !== f.prevContent) {
-                    console.log(`merge error for ${f.name}: previous content changed...`);
+                    pxt.log(`merge error for ${f.name}: previous content changed...`);
                     throwError(409)
                 }
             }, err => { }))
@@ -839,7 +842,7 @@ function readMdAsync(pathname: string, lang: string): Promise<string> {
     } else {
         // ask makecode cloud for translations
         const mdpath = pathname.replace(/^\//, '');
-        return pxt.Cloud.markdownAsync(mdpath, lang, true);
+        return pxt.Cloud.markdownAsync(mdpath, lang);
     }
 }
 
@@ -937,6 +940,12 @@ export function serveAsync(options: ServeOptions) {
 
         if (pathname == "/") {
             res.writeHead(301, { location: '/index.html' })
+            res.end()
+            return
+        }
+
+        if (pathname == "/oauth-redirect") {
+            res.writeHead(301, { location: '/oauth-redirect.html' })
             res.end()
             return
         }

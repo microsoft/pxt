@@ -144,7 +144,7 @@ class BlocklyCompilerTestHost implements pxt.Host {
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
-        return pxt.hex.getHexInfoAsync(this, extInfo)
+        return pxt.hexloader.getHexInfoAsync(this, extInfo)
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {
@@ -280,12 +280,24 @@ describe("blockly compiler", function () {
             blockTestAsync("lists_length_with_for_of").then(done, done);
         });
 
+        it("should not declare strings as stris when using for each string block", (done: () => void) => {
+            blockTestAsync("for_each_string").then(done, done);
+        });
+
         it("should handle empty array blocks", (done: () => void) => {
             blockTestAsync("lists_empty_arrays").then(done, done);
         });
 
         it("should handle functions with list return types", (done: () => void) => {
             blockTestAsync("array_return_type").then(done, done);
+        });
+
+        it("should correctly infer types for arrays initialized to empty", (done: () => void) => {
+            blockTestAsync("empty_array_inference").then(done, done);
+        });
+
+        it("should give variables that are only assigned the empty array a type of number[]", (done: () => void) => {
+            blockTestAsync("just_empty_array").then(done, done);
         });
     });
 
@@ -428,6 +440,10 @@ describe("blockly compiler", function () {
 
         it("should set the right check for primitive draggable parameters in blockly loader", done => {
             blockTestAsync("draggable_primitive_reporter").then(done, done);
+        });
+
+        it("should convert enums to constants when emitAsConstant is set", done => {
+            blockTestAsync("enum_constants").then(done, done);
         });
     });
 

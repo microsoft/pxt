@@ -4,6 +4,7 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,
+        "strictNullChecks": true,
         "declaration": true,
         "out": "../built/pxtpy.js",
         "newLine": "LF",

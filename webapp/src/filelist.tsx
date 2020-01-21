@@ -5,8 +5,6 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as pkg from "./package";
 import * as core from "./core";
-import * as dialogs from "./dialogs";
-import * as workspace from "./workspace";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -86,7 +84,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     private filesOf(pkg: pkg.EditorPackage): JSX.Element[] {
         const { currentFile } = this.state;
-        const deleteFiles = pkg.getPkgId() == "this";
+        const deleteFiles = !pxt.shell.isReadOnly() && pkg.getPkgId() == "this";
         return pkg.sortedFiles().map(file => {
             const meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
             // we keep this disabled, until implemented for cloud syncing
@@ -263,7 +261,7 @@ namespace custom {
         const showFiles = !!this.props.parent.state.showFiles;
         const targetTheme = pxt.appTarget.appTheme;
         const mainPkg = pkg.mainEditorPkg()
-        const plus = showFiles && !mainPkg.files[customFile]
+        const plus = showFiles && !pxt.shell.isReadOnly() && !mainPkg.files[customFile]
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + mainPkg.getPkgId());
         return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only hidefullscreen`}>
             <div role="treeitem" aria-selected={showFiles} aria-expanded={showFiles} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
@@ -273,84 +271,6 @@ namespace custom {
                 {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
             </div>
             {showFiles ? pxt.Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined}
-        </div>;
-    }
-}
-
-interface GithubTreeItemState {
-    pushPulling?: boolean;
-}
-
-export class GithubTreeItem extends sui.UIElement<ISettingsProps, GithubTreeItemState> {
-    constructor(props: ISettingsProps) {
-        super(props);
-        this.state = {};
-        this.handleClick = this.handleClick.bind(this);
-        this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
-    }
-
-    private handleButtonKeydown(e: React.KeyboardEvent<HTMLElement>) {
-        e.stopPropagation();
-    }
-
-    private handleClick(e: React.MouseEvent<HTMLElement>) {
-        const { githubId } = this.props.parent.state.header;
-        if (!githubId) {
-            pxt.tickEvent("github.filelist.create")
-            this.createRepositoryAsync().done();
-        } else {
-            pxt.tickEvent("github.filelist.nav")
-            const gitf = pkg.mainEditorPkg().lookupFile("this/" + pxt.github.GIT_JSON);
-            this.props.parent.setSideFile(gitf);
-        }
-        e.stopPropagation();
-    }
-
-    private async createRepositoryAsync() {
-        pxt.tickEvent("github.filelist.create.start");
-        if (!pxt.github.token) await dialogs.showGithubLoginAsync();
-        if (!pxt.github.token) {
-            pxt.tickEvent("github.filelist.create.notoken");
-            return;
-        }
-
-        const repoid = await dialogs.showCreateGithubRepoDialogAsync(this.props.parent.state.projectName);
-        if (!repoid) return;
-
-        pxt.tickEvent("github.filelist.create.export");
-        core.showLoading("creategithub", lf("creating {0} repository...", pxt.github.parseRepoId(repoid).fullName))
-        try {
-            await workspace.exportToGithubAsync(this.props.parent.state.header, repoid);
-        } finally {
-            core.hideLoading("creategithub");
-        }
-        await this.props.parent.reloadHeaderAsync();
-    }
-
-    renderCore() {
-        const targetTheme = pxt.appTarget.appTheme;
-        const showGithub = !!pxt.github.token || targetTheme.alwaysGithubItem;
-        const header = this.props.parent.state.header;
-        if (!showGithub || !header) return <div />;
-
-
-        const { githubId } = header;
-        const ghid = pxt.github.parseRepoId(githubId);
-        const mainPkg = pkg.mainEditorPkg()
-        const meta: pkg.PackageMeta = ghid ? this.getData("open-pkg-meta:" + mainPkg.getPkgId()) : undefined;
-
-        return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only hidefullscreen`}>
-            <div
-                key="github-status"
-                className="item link"
-                onClick={this.handleClick}
-                tabIndex={0}
-                role="button"
-                onKeyDown={sui.fireClickOnEnter}>
-                {ghid ? (ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName) : lf("create GitHub repository")}
-                <i className="github icon" />
-                {ghid && meta && meta.numFilesGitModified ? <i className="up arrow icon" /> : undefined}
-            </div>
         </div>;
     }
 }

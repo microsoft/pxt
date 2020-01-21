@@ -2,6 +2,7 @@
 /// <reference path="../../built/pxteditor.d.ts" />
 
 import * as compiler from "./compiler";
+import * as blocklyFieldView from "./blocklyFieldView";
 
 interface OwnedRange {
     line: number;
@@ -114,6 +115,38 @@ export class ViewZoneEditorHost implements pxt.editor.MonacoFieldEditorHost, mon
         this.editor.changeViewZones(accessor => {
             accessor.removeZone(this.id);
         });
+    }
+}
+
+export class ModalEditorHost implements pxt.editor.MonacoFieldEditorHost {
+    protected blocks: pxtc.BlocksInfo;
+
+    constructor(protected fe: pxt.editor.MonacoFieldEditor, protected range: monaco.Range, protected model: monaco.editor.IModel) {
+    }
+
+    contentDiv(): HTMLDivElement {
+        return null;
+    }
+
+    getText(range: monaco.Range): string {
+        return this.model.getValueInRange(range);
+    }
+
+    blocksInfo(): pxtc.BlocksInfo {
+        return this.blocks;
+    }
+
+    showAsync(fileType: pxt.editor.FileType, editor: monaco.editor.IStandaloneCodeEditor): Promise<pxt.editor.TextEdit> {
+        return compiler.getBlocksAsync()
+            .then(bi => {
+                this.blocks = bi;
+                return this.fe.showEditorAsync(fileType, this.range, this);
+            });
+    }
+
+    close(): void {
+        this.fe.onClosed();
+        this.fe.dispose();
     }
 }
 

@@ -68,6 +68,17 @@ namespace ObjLit {
 
         delete o["XaX".slice(1, 2)]
         assert(str(o) == "c:3")
+
+        o[1] = 7
+        assert(str(o) == "c:3,1:7")
+        delete o[1]
+        assert(str(o) == "c:3")
+
+        const u: string = undefined
+        o[u] = 12
+        assert(str(o) == "c:3,undefined:12")
+        delete o[u]
+        assert(str(o) == "c:3")
     }
 
     export function run() {

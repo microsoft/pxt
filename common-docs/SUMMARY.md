@@ -3,6 +3,7 @@
 * [About](/about)
 * [FAQ](/faq)
 * [Projects](/projects)
+* [GitHub](/github)
 
 ## #support
 

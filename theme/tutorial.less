@@ -6,23 +6,30 @@
 @import (reference) "semantic.less";
 
 @inlineBlockColor: #D83B01;
-@highlightLineColor: #fcfc90;
+@highlightLineBackground: #fcfc90;
+@highlightLineColor: #000;
+@highlightLineStringColor: #bf0000;
+@highlightLineNumberColor: #007f00;
+@highlightLineClassColor: #007f00;
+@highlightLineKeywordColor: #0000ff;
 @tutorialCardHeight: 8rem;
 @seeMoreButtonHeight: 4rem;
 @avatarSize: 4.5rem;
 @avatarMargin: @avatarSize + 0.5rem;
 @mobileAvatarMargin: 2rem;
+@workspaceHeaderHeight: 2rem;
 
 /*******************************
       Tutorial mode
 *******************************/
-.tutorial #maineditor .full-abs {
+.tutorial #maineditor > .full-abs {
     top: @tutorialCardHeight;
 }
 
-.tutorial #maineditor #monacoEditor {
-    top: 0rem;
+.tutorial.flyoutOnly #maineditor > .full-abs {
+    top: calc(@tutorialCardHeight + @workspaceHeaderHeight);
 }
+
 /* Tutorial Mode */
 .menubar .ui.menu .item.tutorial-menuitem {
     background: rgba(27, 28, 29, 0.3) !important;
@@ -244,14 +251,6 @@ code.lang-filterblocks {
     display: none;
 }
 
-span.highlight-line {
-    font-weight: bold;
-    white-space: pre-wrap;
-    background: @highlightLineColor;
-    display: block;
-    padding: 0.5rem;
-}
-
 #tutorialcard .prevbutton,
 #tutorialcard .nextbutton {
     background: @tutorialSegmentBackground;
@@ -260,14 +259,14 @@ span.highlight-line {
     > i, > span {
         display: block;
         margin: 0 auto 0.5em !important;
-        color: @mainMenuTutorialBackground;
+        color: @mainMenuTutorialButtons;
     }
 
     &:hover, &:focus {
         background-color: @lightGrey;
 
         > i, > span, > i.orange {
-            color: @black!important;
+            color: @black !important;
         }
     }
 }
@@ -295,6 +294,14 @@ span.highlight-line {
     .ui.segment {
         display: flex;
         min-height: 100px;
+    }
+}
+
+.ui.modal.hintdialog,
+.tutorialsegment .tutorialmessage {
+    img {
+        margin-left: auto;
+        margin-right: auto;
     }
 }
 
@@ -346,6 +353,14 @@ span.highlight-line {
     animation: shake 1.5s ease-in-out;
 }
 
+.tutorial .mask {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+}
+
 /*******************************
      Tutorial Tooltip
 *******************************/
@@ -387,7 +402,7 @@ span.highlight-line {
 #tutorialcard.seemore {
     .tutorialsegment > button {
         position: relative;
-        top: -1rem;
+        top: -0.75rem;
         width: auto;
         margin: auto;
         padding: 0.5rem 0.8rem;
@@ -430,6 +445,34 @@ span.highlight-line {
     stroke-linecap: round;
 }
 
+/*******************************
+        Workspace headers
+*******************************/
+#headers {
+    display: flex;
+    position: relative;
+    height: @workspaceHeaderHeight;
+    color: @white;
+    z-index: @simulatorZIndex;
+
+    #workspaceHeader {
+        flex: 1;
+    }
+
+    #flyoutHeader {
+        box-sizing: content-box;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    div {
+        display: inline-block;
+        text-align: center;
+        line-height: 2rem;
+        font-weight: 800;
+    }
+}
 
 /*******************************
         Media Adjustments
@@ -521,12 +564,12 @@ span.highlight-line {
 @media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
     .tutorial #tutorialcard {
         padding-left: 0.5rem;
-        padding-right: 0.5rem;        
+        padding-right: 0.5rem;
     }
     .tutorial #tutorialcard .content {
         font-size: 10pt;
     }
-    
+
     .modal.hintdialog img.ui.centered.image {
         max-height:12rem;
     }

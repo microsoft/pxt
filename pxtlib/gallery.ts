@@ -39,7 +39,7 @@ namespace pxt.gallery {
     export function parseExampleMarkdown(name: string, md: string): GalleryProject {
         if (!md) return undefined;
 
-        const m = /```(blocks?|typescript)\s+((.|\s)+?)\s*```/i.exec(md);
+        const m = /```(blocks?|typescript|python)\s+((.|\s)+?)\s*```/i.exec(md);
         if (!m) return undefined;
 
         const dependencies = parsePackagesFromMarkdown(md);
@@ -49,7 +49,7 @@ namespace pxt.gallery {
             name,
             filesOverride: {
                 "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`,
-                "main.ts": src
+                [m[1] === "python" ? "main.py" : "main.ts"]: src
             },
             dependencies,
             features
@@ -92,12 +92,12 @@ namespace pxt.gallery {
     }
 
     export function loadGalleryAsync(name: string): Promise<Gallery[]> {
-        return pxt.Cloud.markdownAsync(name, pxt.Util.userLanguage(), pxt.Util.localizeLive)
+        return pxt.Cloud.markdownAsync(name)
             .then(md => parseGalleryMardown(md))
     }
 
     export function loadExampleAsync(name: string, path: string): Promise<GalleryProject> {
-        return pxt.Cloud.markdownAsync(path, pxt.Util.userLanguage(), pxt.Util.localizeLive)
+        return pxt.Cloud.markdownAsync(path)
             .then(md => parseExampleMarkdown(name, md))
     }
 }

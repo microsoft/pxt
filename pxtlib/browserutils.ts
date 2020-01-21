@@ -662,16 +662,16 @@ namespace pxt.BrowserUtils {
         getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry> {
             return Promise.resolve(this.get(lang, filename, branch));
         }
-        set(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string) {
+        set(lang: string, filename: string, branch: string, etag: string, time: number, strings?: pxt.Map<string>, md?: string) {
             this.translations[this.key(lang, filename, branch)] = {
                 etag,
-                time: Date.now() + 24 * 60 * 60 * 1000, // in-memory expiration is 24h
+                time,
                 strings,
                 md
             }
         }
         setAsync(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void> {
-            this.set(lang, filename, branch, etag, strings);
+            this.set(lang, filename, branch, etag, Util.now(), strings);
             return Promise.resolve();
         }
         clearAsync() {
@@ -846,7 +846,7 @@ namespace pxt.BrowserUtils {
                 .then((res) => {
                     if (res) {
                         // store in-memory so that we don't try to download again
-                        this.mem.set(lang, filename, branch, res.etag, res.strings);
+                        this.mem.set(lang, filename, branch, res.etag, res.time, res.strings);
                         return Promise.resolve(res);
                     }
                     return Promise.resolve(undefined);
@@ -858,14 +858,17 @@ namespace pxt.BrowserUtils {
         setAsync(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void> {
             lang = (lang || "en-US").toLowerCase(); // normalize locale
             const id = this.mem.key(lang, filename, branch);
-            this.mem.set(lang, filename, branch, etag, strings, md);
+            let time = Util.now();
+            this.mem.set(lang, filename, branch, etag, time, strings, md);
 
-            if (strings)
+            if (strings) {
                 Object.keys(strings).filter(k => !strings[k]).forEach(k => delete strings[k]);
+            }
+
             const entry: ITranslationDbEntry = {
                 id,
                 etag,
-                time: Date.now(),
+                time,
                 strings,
                 md
             }
@@ -978,9 +981,7 @@ namespace pxt.BrowserUtils {
 
     // Keep these helpers unified with pxtsim/runtime.ts
     export function containsClass(el: SVGElement | HTMLElement, classes: string) {
-        return classes
-            .split(/\s+/)
-            .every(cls => containsSingleClass(el, cls));
+        return splitClasses(classes).every(cls => containsSingleClass(el, cls));
 
         function containsSingleClass(el: SVGElement | HTMLElement, cls: string) {
             if (el.classList) {
@@ -993,9 +994,7 @@ namespace pxt.BrowserUtils {
     }
 
     export function addClass(el: SVGElement | HTMLElement, classes: string) {
-        classes
-            .split(/\s+/)
-            .forEach(cls => addSingleClass(el, cls));
+        splitClasses(classes).forEach(cls => addSingleClass(el, cls));
 
         function addSingleClass(el: SVGElement | HTMLElement, cls: string) {
             if (el.classList) {
@@ -1010,9 +1009,7 @@ namespace pxt.BrowserUtils {
     }
 
     export function removeClass(el: SVGElement | HTMLElement, classes: string) {
-        classes
-            .split(/\s+/)
-            .forEach(cls => removeSingleClass(el, cls));
+        splitClasses(classes).forEach(cls => removeSingleClass(el, cls));
 
         function removeSingleClass(el: SVGElement | HTMLElement, cls: string) {
             if (el.classList) {
@@ -1023,6 +1020,29 @@ namespace pxt.BrowserUtils {
                     .filter(c => c != cls)
                     .join(" ");
             }
+        }
+    }
+
+    function splitClasses(classes: string) {
+        return classes.split(/\s+/).filter(s => !!s);
+    }
+
+    export function getCookieLang() {
+        const cookiePropRegex = new RegExp(`${pxt.Util.escapeForRegex(pxt.Util.pxtLangCookieId)}=(.*?)(?:;|$)`)
+        const cookieValue = cookiePropRegex.exec(document.cookie);
+        return cookieValue && cookieValue[1] || null;
+    }
+
+    export function setCookieLang(langId: string, docs = false) {
+        if (!pxt.Util.allLanguages[langId]) {
+            return;
+        }
+
+        if (langId !== getCookieLang()) {
+            pxt.tickEvent(`menu.lang.setcookielang`, { lang: langId, docs: `${docs}` });
+            const expiration = new Date();
+            expiration.setTime(expiration.getTime() + (pxt.Util.langCookieExpirationDays * 24 * 60 * 60 * 1000));
+            document.cookie = `${pxt.Util.pxtLangCookieId}=${langId}; expires=${expiration.toUTCString()}; path=/`;
         }
     }
 }

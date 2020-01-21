@@ -192,7 +192,33 @@ function testNaN() {
     assert(1 / inf == 0)
 }
 
-testComma();
+function testUnaryPlus() {
+    function testOne(v: any) {
+        assert(+v + 1 == 2, "t1")
+    }
+    function testZero(v: any) {
+        msg("v:" + v)
+        assert(+v + 1 == 1, "t0")
+    }
+    function test35(v: any) {
+        assert(+v + 1 == 4.5, "t35")
+    }
+    testOne(1)
+    testOne("1")
+    testOne(" 1 ")
+    testOne(true)
+    testZero(0)
+    testZero(" 0")
+    testZero("0")
+    testZero(null)
+    testZero(false)
+    test35(3.5)
+    test35("3.5")
+    let qq: any = undefined
+    assert(isNaN(+qq))
+}
 
+testComma();
 testNums();
 testNaN();
+testUnaryPlus();

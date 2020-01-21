@@ -19,6 +19,11 @@ Basically, the rules of **semver** are, for a particular version ``MAJOR.MINOR.P
 * ``MINOR`` version when you add functionality in a backwards compatible manner.
 * ``PATCH`` version when you make backwards compatible bug fixes.
 
+## Pre-compiled javascript
+
+Releases also upload a pre-compiled version of your application so that the GitHub pages web site can be using it.
+You will find the file at ``assets/js/binary.js``.
+
 ## License #license
 
 You can include an open source license in your repository to make it easier for other people to contribute.

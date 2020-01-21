@@ -1,0 +1,2 @@
+namespaceWithAlias.argsWithAlias(FOO)
+BAR()
