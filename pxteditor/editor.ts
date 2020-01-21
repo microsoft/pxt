@@ -287,7 +287,7 @@ namespace pxt.editor {
 
         editor: IEditor;
 
-        startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean): void;
+        startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editor?: string): void;
         showLightbox(): void;
         hideLightbox(): void;
         showKeymap(show: boolean): void;

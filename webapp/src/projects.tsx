@@ -100,10 +100,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     }
 
     chgGallery(scr: pxt.CodeCard, action?: pxt.CodeCardAction) {
-        pxt.tickEvent("projects.gallery", { name: scr.name });
-        let url = action ? action.url : scr.url;
-        let editor = action ? action.editor : "blocks";
-        let editorPref = editor + "prj";
+        let editor: string = (action && action.editor) || "blocks";
+        if (editor == "js") editor = "ts";
+        pxt.tickEvent("projects.gallery", { name: scr.name, cardType: scr.cardType, editor });
+        const url = action ? action.url : scr.url;
+        const editorPref = editor + "prj";
         switch (scr.cardType) {
             case "template":
                 const prj = pxt.Util.clone(pxt.appTarget.blocksprj);
@@ -115,7 +116,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 this.props.parent.newEmptyProject(scr.name, url);
                 break;
             case "tutorial":
-                this.props.parent.startTutorial(url, scr.name);
+                this.props.parent.startTutorial(url, scr.name, false, editorPref);
                 break;
             default:
                 const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(url); // Tutorial

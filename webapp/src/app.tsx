@@ -3081,12 +3081,12 @@ export class ProjectView
 
     private hintManager: HintManager = new HintManager();
 
-    startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean) {
-        pxt.tickEvent("tutorial.start");
-        this.startTutorialAsync(tutorialId, tutorialTitle, recipe);
+    startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editor?: string) {
+        pxt.tickEvent("tutorial.start", { editor });
+        this.startTutorialAsync(tutorialId, tutorialTitle, recipe, editor);
     }
 
-    startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean): Promise<void> {
+    startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorProjectName?: string): Promise<void> {
         core.hideDialog();
         core.showLoading("tutorial", lf("starting tutorial..."));
         sounds.initTutorial(); // pre load sounds
@@ -3107,12 +3107,8 @@ export class ProjectView
             filename = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
             p = pxt.Cloud.markdownAsync(tutorialId)
                 .then(md => {
-                    if (md) {
-                        dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
-                        features = pxt.gallery.parseFeaturesFromMarkdown(md);
-                        autoChooseBoard = true;
-                    }
-                    return md;
+                    autoChooseBoard = true;
+                    return processMarkdown(md);
                 }).catch((e) => {
                     core.errorNotification(tutorialErrorMessage);
                     core.handleNetworkError(e);
@@ -3121,17 +3117,13 @@ export class ProjectView
             pxt.tickEvent("tutorial.shared");
             p = workspace.downloadFilesByIdAsync(scriptId)
                 .then(files => {
-                    const pxtJson = JSON.parse(files["pxt.json"]) as pxt.PackageConfig;
-                    dependencies = pxtJson.dependencies || {};
+                    const pxtJson = pxt.Package.parseAndValidConfig(files["pxt.json"]);
+                    pxt.Util.jsonMergeFrom(dependencies, pxtJson.dependencies);
                     filename = pxtJson.name || lf("Untitled");
                     autoChooseBoard = false;
                     reportId = scriptId;
                     const md = files["README.md"];
-                    if (md) {
-                        pxt.Util.jsonMergeFrom(dependencies, pxt.gallery.parsePackagesFromMarkdown(md));
-                        features = pxt.gallery.parseFeaturesFromMarkdown(md);
-                    }
-                    return md;
+                    return processMarkdown(md);
                 }).catch((e) => {
                     core.errorNotification(tutorialErrorMessage);
                     core.handleNetworkError(e);
@@ -3151,7 +3143,7 @@ export class ProjectView
                     return pxt.github.downloadPackageAsync(ghid.fullName, config);
                 })
                 .then(gh => {
-                    const pxtJson = JSON.parse(gh.files["pxt.json"]) as pxt.PackageConfig;
+                    const pxtJson = pxt.Package.parseAndValidConfig(gh.files["pxt.json"]);
                     // if there is any .ts file in the tutorial repo,
                     // add as a dependency itself
                     if (pxtJson.files.find(f => /\.ts/.test(f))) {
@@ -3159,7 +3151,7 @@ export class ProjectView
                         dependencies[ghid.project] = pxt.github.toGithubDependencyPath(ghid);
                     }
                     else {// just use dependencies from the tutorial
-                        dependencies = pxtJson.dependencies || {};
+                        pxt.Util.jsonMergeFrom(dependencies, pxtJson.dependencies);
                     }
                     filename = pxtJson.name || lf("Untitled");
                     autoChooseBoard = false;
@@ -3170,11 +3162,7 @@ export class ProjectView
                         (lang && lang[1] && gh.files[`_locales/${lang[0]}-${lang[1]}/${mfn}`])
                         || (lang && lang[0] && gh.files[`_locales/${lang[0]}/${mfn}`])
                         || gh.files[mfn];
-                    if (md) {
-                        pxt.Util.jsonMergeFrom(dependencies, pxt.gallery.parsePackagesFromMarkdown(md));
-                        features = pxt.gallery.parseFeaturesFromMarkdown(md);
-                    }
-                    return md;
+                    return processMarkdown(md);
                 }).catch((e) => {
                     core.errorNotification(tutorialErrorMessage);
                     core.handleNetworkError(e);
@@ -3187,7 +3175,10 @@ export class ProjectView
             if (!md)
                 throw new Error(lf("Tutorial not found"));
 
-            const { options, editor } = pxt.tutorial.getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
+            const { options, editor: parsedEditor } = pxt.tutorial.getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
+
+            // pick tutorial editor
+            const editor = editorProjectName || parsedEditor;
 
             // start a tutorial within the context of an existing program
             if (recipe) {
@@ -3208,6 +3199,20 @@ export class ProjectView
             core.errorNotification(tutorialErrorMessage);
             core.handleNetworkError(e);
         }).finally(() => core.hideLoading("tutorial"));
+
+        function processMarkdown(md: string) {
+            if (!md) return md;
+
+            if (editorProjectName == pxt.JAVASCRIPT_PROJECT_NAME) { // spy => typescript
+                md = md.replace(/^```(blocks|block|spy)\b/gm, "```typescript");
+            } else if (editorProjectName == pxt.PYTHON_PROJECT_NAME) { // typescript => spy
+                md = md.replace(/^```(blocks|block|typescript)\b/gm, "```spy");
+            }
+
+            pxt.Util.jsonMergeFrom(dependencies, pxt.gallery.parsePackagesFromMarkdown(md));
+            features = pxt.gallery.parseFeaturesFromMarkdown(md);
+            return md;
+        }
     }
 
     completeTutorialAsync(): Promise<void> {
