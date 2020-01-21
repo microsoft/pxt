@@ -34,11 +34,9 @@ export class File implements pxt.editor.IFile {
     isReadonly() {
         if (!this.epkg.header)
             return true;
-        const pkg = this.epkg.getKsPkg();
-        const cfg = pkg && pkg.config;
-        const ext = this.getExtension();
 
-        switch (cfg && cfg.languageRestriction) {
+        const ext = this.getExtension();
+        switch (this.epkg.getLanguageRestrictions()) {
             case pxt.editor.LanguageRestriction.JavaScriptOnly:
                 return ext != "ts";
             case pxt.editor.LanguageRestriction.PythonOnly:
@@ -201,6 +199,12 @@ export class EditorPackage {
 
     getTopHeader() {
         return this.topPkg.header;
+    }
+
+    getLanguageRestrictions() {
+        const ksPkg = this.topPkg.ksPkg;
+        const cfg = ksPkg && ksPkg.config;
+        return cfg && cfg.languageRestriction;
     }
 
     afterMainLoadAsync() {
