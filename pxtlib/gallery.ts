@@ -93,7 +93,7 @@ namespace pxt.gallery {
             if (card.cardType == "tutorial" && card.otherActions && !card.otherActions.length) {
                 const editors = ["js"];
                 if (pxt.appTarget.appTheme.python) editors.unshift("py");
-                card.otherActions = ["py", "js"].map((editor: CodeCardEditorType) => ({
+                card.otherActions = editors.map((editor: CodeCardEditorType) => (<CodeCardAction>{
                     url: card.url,
                     cardType: "tutorial",
                     editor
