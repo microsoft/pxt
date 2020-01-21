@@ -450,8 +450,8 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         if (pxt.appTarget.appTheme.nameProjectFirst) {
             this.props.parent.askForProjectSettingsAsync()
                 .then(projectSettings => {
-                    const { name, languages } = projectSettings
-                    this.props.parent.newProject({ name, languages });
+                    const { name, languageRestriction: languages } = projectSettings
+                    this.props.parent.newProject({ name, languageRestriction: languages });
                 })
         } else {
             this.props.parent.newProject({ name });
@@ -1206,7 +1206,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
         if (this.createProjectCb) {
             this.createProjectCb({
                 name: newName,
-                languages: language
+                languageRestriction: language
             });
         }
         this.createProjectCb = null;

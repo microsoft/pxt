@@ -103,7 +103,7 @@ namespace pxt.editor {
         tutorial?: pxt.tutorial.TutorialOptions;
         dependencies?: pxt.Map<string>;
         tsOnly?: boolean; // TODO jwunderl: remove this and pass as languages LanguageRestriction?
-        languages?: LanguageRestriction;
+        languageRestriction?: LanguageRestriction;
         preferredEditor?: string; // preferred editor to open, pxt.BLOCKS_PROJECT_NAME, ...
         extensionUnderTest?: string; // workspace id of the extension under test
     }

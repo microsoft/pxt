@@ -1982,12 +1982,17 @@ export class ProjectView
         if (options.preferredEditor)
             cfg.preferredEditor = options.preferredEditor;
 
-        if (options.languages == pxt.editor.LanguageRestriction.JavaScriptOnly) {
-            cfg.files =  cfg.files.filter(f => !/.(py|blocks)$/.test(f));
-            cfg.preferredEditor = 'tsprj';
-        } else if (options.languages == pxt.editor.LanguageRestriction.PythonOnly) {
-            cfg.files =  cfg.files.filter(f => !/.blocks$/.test(f));
-            cfg.preferredEditor = 'pyprj';
+        if (options.languageRestriction) {
+            cfg.languageRestriction = options.languageRestriction;
+            if (options.languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly) {
+                cfg.files = cfg.files.filter(f => !/\.(py|blocks)$/.test(f));
+                cfg.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME;
+                delete files["main.blocks"];
+            } else if (options.languageRestriction === pxt.editor.LanguageRestriction.PythonOnly) {
+                cfg.files = cfg.files.filter(f => !/\.blocks$/.test(f));
+                cfg.preferredEditor = pxt.PYTHON_PROJECT_NAME;
+                delete files["main.blocks"];
+            }
         }
 
         // ensure a main.py is ready if this is the desired project
