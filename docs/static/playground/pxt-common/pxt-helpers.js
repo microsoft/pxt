@@ -265,6 +265,7 @@ namespace helpers {
     }
 
     export function stringReplace(s: string, toReplace: string, replacer: string | ((sub: string) => string)) {
+        toReplace = toReplace + "";
         const ind = s.indexOf(toReplace);
         if (ind == -1)
             return s;
@@ -272,7 +273,7 @@ namespace helpers {
         const begin = s.slice(0, ind);
         const end = s.slice(ind + toReplace.length);
 
-        if (typeof replacer == "string") {
+        if (typeof replacer == "string" || !replacer) {
             return begin + replacer + end;
         } else {
             return begin + replacer(toReplace) + end;
@@ -280,6 +281,7 @@ namespace helpers {
     }
 
     export function stringReplaceAll(s: string, toReplace: string, replacer: string | ((sub: string) => string)) {
+        toReplace = toReplace + "";
         const split = s.split(toReplace);
         const empty = toReplace.isEmpty();
 
@@ -296,8 +298,8 @@ namespace helpers {
         return output;
 
         function applyReplace(r: string, replacer: string | ((sub: string) => string)) {
-            if (typeof replacer == "string") {
-                return r;
+            if (typeof replacer == "string" || !replacer) {
+                return replacer;
             } else {
                 return replacer(r);
             }
