@@ -21,7 +21,7 @@ export class ViewZoneEditorHost implements pxt.editor.MonacoFieldEditorHost, mon
     private fileType: pxt.editor.FileType;
     protected editor: monaco.editor.IStandaloneCodeEditor;
     protected blocks: pxtc.BlocksInfo;
-    protected id: number;
+    protected id: string;
     protected _deferredShow: () => void;
 
     suppressMouseDown = false;

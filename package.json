@@ -78,7 +78,7 @@
     "webusb": "^1.1.1"
   },
   "devDependencies": {
-    "monaco-editor": "0.10.0",
+    "monaco-editor": "0.19.3",
     "pxt-monaco-typescript": "2.3.6",
     "pxt-blockly": "2.1.14",
     "react": "16.8.3",
@@ -88,7 +88,7 @@
     "react-tooltip": "3.9.0",
     "redux": "3.7.2",
     "pouchdb": "5.4.5",
-    "typescript": "3.6.3",
+    "typescript": "3.7.5",
     "jquery": "3.4.1",
     "fuse.js": "3.2.0",
     "highlight.js": "9.12.0",

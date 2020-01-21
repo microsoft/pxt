@@ -417,28 +417,38 @@ file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/
     let monacotypescriptcontribution = fs.readFileSync("node_modules/pxt-monaco-typescript/release/src/monaco.contribution.js", "utf8")
     monacotypescriptcontribution = monacotypescriptcontribution.replace(/\[\"require\"\,\s*\"exports\"\]/, '["require","exports","vs/editor/edcore.main"]')
 
-    let monacoeditor = fs.readFileSync("node_modules/monaco-editor/dev/vs/editor/editor.main.js", "utf8")
-    // Remove certain actions from the context menu
-    monacoeditor = monacoeditor.replace(/((GoToDefinitionAction|'editor.action.(changeAll|quickOutline|previewDeclaration|referenceSearch.trigger)')[.\s\S]*?)(menuOpts:[.\s\S]*?})/gi, '$1')
-    monacoeditor = monacoeditor.replace(/.*define\(\"vs\/language\/typescript\/src\/monaco.contribution\",.*/gi, `${monacotypescriptcontribution}`)
-    // Fix for android keyboard issues:
-    // Issue 1: getClientRects issue on Android 5.1 (Chrome 40), monaco-editor/#562
-    monacoeditor = monacoeditor.replace(/FloatHorizontalRange\(Math\.max\(0, clientRect\.left - clientRectDeltaLeft\), clientRect\.width\)/gi,
-        `FloatHorizontalRange(Math.max(0, clientRect.right - clientRectDeltaLeft), clientRect.width)`)
-    // Issue 2: Delete key is a composition input on Android 6+, monaco-editor/#563
-    monacoeditor = monacoeditor.replace(/if \(typeInput\.text !== ''\)/gi,
-        `if (typeInput.text !== '' || (typeInput.text === '' && typeInput.replaceCharCnt == 1))`)
-    // Issue 3: Gboard on Android ignores the autocomplete field, and so I'm disabling composition updates on keyboards that support it.
-    monacoeditor = monacoeditor.replace(/exports\.isChromev56 = \(userAgent\.indexOf\('Chrome\/56\.'\) >= 0/gi,
-        `exports.isAndroid = (userAgent.indexOf('Android') >= 0);\n    exports.isChromev56 = (userAgent.indexOf('Chrome/56.') >= 0`)
-    monacoeditor = monacoeditor.replace(/var newState = _this\._textAreaState\.readFromTextArea\(_this\._textArea\);/gi,
-        `var newState = _this._textAreaState.readFromTextArea(_this._textArea);\n                if (browser.isAndroid) newState.selectionStart = newState.selectionEnd;`)
-    monacoeditor = monacoeditor.replace(/_this\._register\(dom\.addDisposableListener\(textArea\.domNode, 'compositionstart', function \(e\) {/gi,
-        `_this._register(dom.addDisposableListener(textArea.domNode, 'compositionstart', function (e) {\n                if (browser.isAndroid) return;`)
-    monacoeditor = monacoeditor.replace(/_this\._register\(dom\.addDisposableListener\(textArea\.domNode, 'compositionupdate', function \(e\) {/gi,
-        `_this._register(dom.addDisposableListener(textArea.domNode, 'compositionupdate', function (e) {\n                if (browser.isAndroid) return;`)
-    monacoeditor = monacoeditor.replace(/_this\._register\(dom\.addDisposableListener\(textArea\.domNode, 'compositionend', function \(e\) {/gi,
-        `_this._register(dom.addDisposableListener(textArea.domNode, 'compositionend', function (e) {\n                if (browser.isAndroid) return;`)
+    let monacoeditor = fs.readFileSync("node_modules/monaco-editor/min/vs/editor/editor.main.js", "utf8")
+    // // Remove certain actions from the context menu
+    // monacoeditor = monacoeditor.replace(/((GoToDefinitionAction|'editor.action.(changeAll|quickOutline|previewDeclaration|referenceSearch.trigger)')[.\s\S]*?)(menuOpts:[.\s\S]*?})/gi, '$1')
+    // monacoeditor = monacoeditor.replace(/.*define\(\"vs\/language\/typescript\/src\/monaco.contribution\",.*/gi, `${monacotypescriptcontribution}`)
+    // // Fix for android keyboard issues:
+    // // Issue 1: getClientRects issue on Android 5.1 (Chrome 40), monaco-editor/#562
+    // monacoeditor = monacoeditor.replace(/FloatHorizontalRange\(Math\.max\(0, clientRect\.left - clientRectDeltaLeft\), clientRect\.width\)/gi,
+    //     `FloatHorizontalRange(Math.max(0, clientRect.right - clientRectDeltaLeft), clientRect.width)`)
+    // // Issue 2: Delete key is a composition input on Android 6+, monaco-editor/#563
+    // monacoeditor = monacoeditor.replace(/if \(typeInput\.text !== ''\)/gi,
+    //     `if (typeInput.text !== '' || (typeInput.text === '' && typeInput.replaceCharCnt == 1))`)
+    // // Issue 3: Gboard on Android ignores the autocomplete field, and so I'm disabling composition updates on keyboards that support it.
+    // monacoeditor = monacoeditor.replace(/exports\.isChromev56 = \(userAgent\.indexOf\('Chrome\/56\.'\) >= 0/gi,
+    //     `exports.isAndroid = (userAgent.indexOf('Android') >= 0);\n    exports.isChromev56 = (userAgent.indexOf('Chrome/56.') >= 0`)
+    // monacoeditor = monacoeditor.replace(/var newState = _this\._textAreaState\.readFromTextArea\(_this\._textArea\);/gi,
+    //     `var newState = _this._textAreaState.readFromTextArea(_this._textArea);\n                if (browser.isAndroid) newState.selectionStart = newState.selectionEnd;`)
+    // monacoeditor = monacoeditor.replace(/_this\._register\(dom\.addDisposableListener\(textArea\.domNode, 'compositionstart', function \(e\) {/gi,
+    //     `_this._register(dom.addDisposableListener(textArea.domNode, 'compositionstart', function (e) {\n                if (browser.isAndroid) return;`)
+    // monacoeditor = monacoeditor.replace(/_this\._register\(dom\.addDisposableListener\(textArea\.domNode, 'compositionupdate', function \(e\) {/gi,
+    //     `_this._register(dom.addDisposableListener(textArea.domNode, 'compositionupdate', function (e) {\n                if (browser.isAndroid) return;`)
+    // monacoeditor = monacoeditor.replace(/_this\._register\(dom\.addDisposableListener\(textArea\.domNode, 'compositionend', function \(e\) {/gi,
+    //     `_this._register(dom.addDisposableListener(textArea.domNode, 'compositionend', function (e) {\n                if (browser.isAndroid) return;`)
+
+    // Filter out all language contributions that we don't use
+    const languages = ["bat", "cpp", "typescript", "json", "markdown", "python"]
+    monacoeditor = monacoeditor.replace(/"\.\/([\w-]+)\/\1\.contribution"(?:,)?\s*/gi, (match, lang) => {
+        if (languages.indexOf(lang) === -1) {
+            return ""
+        }
+        return match;
+    });
+
     fs.writeFileSync("built/web/vs/editor/editor.main.js", monacoeditor)
 
     jake.mkdirP("webapp/public/vs")
@@ -448,10 +458,14 @@ file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/
 
     jake.cpR("node_modules/monaco-editor/min/vs/loader.js", "webapp/public/vs/")
     jake.mkdirP("webapp/public/vs/basic-languages/src")
-    jake.cpR("node_modules/monaco-editor/min/vs/basic-languages/src/bat.js", "webapp/public/vs/basic-languages/src/")
-    jake.cpR("node_modules/monaco-editor/min/vs/basic-languages/src/cpp.js", "webapp/public/vs/basic-languages/src/")
-    jake.cpR("node_modules/monaco-editor/min/vs/basic-languages/src/markdown.js", "webapp/public/vs/basic-languages/src/")
-    jake.cpR("node_modules/monaco-editor/min/vs/basic-languages/src/python.js", "webapp/public/vs/basic-languages/src/")
+
+
+    const basicLanguages = ["bat", "cpp", "markdown", "python"];
+    basicLanguages.forEach(lang => {
+        jake.cpR(`node_modules/monaco-editor/min/vs/basic-languages/${lang}/${lang}.js`, `webapp/public/vs/basic-languages/${lang}/`)
+        // jake.cpR(`node_modules/monaco-editor/min/vs/basic-languages/${lang}/${lang}.contribution.js`, `webapp/public/vs/basic-languages/${lang}/`)
+    });
+
     jake.mkdirP("webapp/public/vs/language/json")
     jake.cpR("node_modules/monaco-editor/min/vs/language/json/", "webapp/public/vs/language/")
 

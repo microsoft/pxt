@@ -920,7 +920,7 @@ namespace pxt.runner {
             run: !!options.simulator
         }
 
-        function render(e: Node, ignored: boolean) {
+        function render(e: HTMLElement, ignored: boolean) {
             if (typeof hljs !== "undefined") {
                 $(e).text($(e).text().replace(/^\s*\r?\n/, ''))
                 hljs.highlightBlock(e)
