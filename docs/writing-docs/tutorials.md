@@ -455,6 +455,8 @@ you will be able to have a single source for both JavaScript and Python.
 ```codecard
 [{
     "name": "Chicken Rain",
+    "cardType": "tutorial",
+    "url": "/tutorials/spy/chicken-rain",
     ...
     "otherActions": [{
         "url": "/tutorials/spy/chicken-rain",
@@ -468,6 +470,21 @@ you will be able to have a single source for both JavaScript and Python.
 }]
 ```
 ````
+
+Leave ``otherActions`` empty, to automatically populate it.
+
+````
+```codecard
+[{
+    "name": "Chicken Rain",
+    "cardType": "tutorial",
+    "url": "/tutorials/spy/chicken-rain",
+    ...
+    "otherActions": []
+}]
+```
+````
+
 
 ## Testing
 

@@ -88,6 +88,20 @@ namespace pxt.gallery {
             } else if (incard)
                 cards += line + '\n';
         })
+        // apply transformations
+        galleries.forEach(gallery => gallery.cards.forEach(card => {
+            if (card.otherActions && !card.otherActions.length
+                && (card.cardType == "tutorial" || card.cardType == "example")) {
+                const editors = ["js"];
+                if (pxt.appTarget.appTheme.python) editors.unshift("py");
+                card.otherActions = editors.map((editor: CodeCardEditorType) => (<CodeCardAction>{
+                    url: card.url,
+                    cardType: card.cardType,
+                    editor
+                }));
+            }
+        }))
+
         return galleries;
     }
 
