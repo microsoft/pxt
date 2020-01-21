@@ -457,12 +457,12 @@ file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/
     fs.unlinkSync("webapp/public/vs/editor/editor.main.js")
 
     jake.cpR("node_modules/monaco-editor/min/vs/loader.js", "webapp/public/vs/")
-    jake.mkdirP("webapp/public/vs/basic-languages/src")
 
 
     const basicLanguages = ["bat", "cpp", "markdown", "python"];
     basicLanguages.forEach(lang => {
-        jake.cpR(`node_modules/monaco-editor/min/vs/basic-languages/${lang}/${lang}.js`, `webapp/public/vs/basic-languages/${lang}/`)
+        jake.mkdirP("webapp/public/vs/basic-languages/" + lang)
+        jake.cpR(`node_modules/monaco-editor/min/vs/basic-languages/${lang}/${lang}.js`, `webapp/public/vs/basic-languages/${lang}/${lang}.js`)
         // jake.cpR(`node_modules/monaco-editor/min/vs/basic-languages/${lang}/${lang}.contribution.js`, `webapp/public/vs/basic-languages/${lang}/`)
     });
 

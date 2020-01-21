@@ -115,7 +115,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                     const word = model.getWordAtPosition(position);
                     const range: monaco.IRange = {
                         startLineNumber: position.lineNumber,
-                        startColumn: word.startColumn,
+                        startColumn: word ? word.startColumn : position.column,
                         endColumn: position.column,
                         endLineNumber: position.lineNumber
                     }
@@ -622,8 +622,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (monacoArea && this.editor) {
             const toolboxWidth = monacoToolboxDiv && monacoToolboxDiv.offsetWidth || 0;
 
-            const rgba = (this.editor as any)._themeService._theme.colors['editor.background'].rgba;
-            const logoHeight = (this.parent.isJavaScriptActive()) ? this.parent.updateEditorLogo(toolboxWidth, `rgba(${rgba.r},${rgba.g},${rgba.b},${rgba.a})`) : 0;
+            const logoHeight = (this.parent.isJavaScriptActive()) ? this.parent.updateEditorLogo(toolboxWidth, this.getEditorColor()) : 0;
 
             this.editor.layout({ width: monacoArea.offsetWidth - toolboxWidth, height: monacoArea.offsetHeight - logoHeight });
 
@@ -2093,6 +2092,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (ref) {
             this.debuggerToolbox = ref;
             if (this.isDebugging()) this.updateToolbox();
+        }
+    }
+
+    protected getEditorColor() {
+        if (pxt.appTarget.appTheme.monacoColors && pxt.appTarget.appTheme.monacoColors["editor.background"]) {
+            return pxt.appTarget.appTheme.monacoColors["editor.background"]
+        }
+        else if (pxt.appTarget.appTheme.invertedMonaco) {
+            return "#1e1e1e"
+        }
+        else {
+            return "#ffffff"
         }
     }
 }

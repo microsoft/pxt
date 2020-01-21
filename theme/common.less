@@ -247,6 +247,12 @@ div.simframe > iframe {
 }
 
 /* Menu */
+// The classname .menubar is also used by monaco. This rule just negates the clashing
+// values
+#root > .menubar {
+    height: unset;
+    overflow: unset;
+}
 .menubar .ui.menu .item.editor-menuitem {
     padding: 0;
 }
