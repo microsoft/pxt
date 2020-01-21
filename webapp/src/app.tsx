@@ -1981,6 +1981,15 @@ export class ProjectView
         }
         if (options.preferredEditor)
             cfg.preferredEditor = options.preferredEditor;
+
+        if (options.languages == pxt.editor.LanguageOption.JavaScriptOnly) {
+            cfg.files =  cfg.files.filter(f => !/.(py|blocks)$/.test(f));
+            cfg.preferredEditor = 'tsprj';
+        } else if (options.languages == pxt.editor.LanguageOption.PythonOnly) {
+            cfg.files =  cfg.files.filter(f => !/.blocks$/.test(f));
+            cfg.preferredEditor = 'pyprj';
+        }
+
         // ensure a main.py is ready if this is the desired project
         if (cfg.preferredEditor == pxt.PYTHON_PROJECT_NAME
             && cfg.files.indexOf("main.py") < 0) {
@@ -3019,7 +3028,7 @@ export class ProjectView
     }
 
     askForProjectSettingsAsync() {
-        return this.newProjectDialog.askNameAsync()
+        return this.newProjectDialog.promptUserAsync();
     }
 
     showPackageDialog() {

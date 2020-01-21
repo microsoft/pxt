@@ -1155,8 +1155,11 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
     }
 
     show() {
-        pxt.tickEvent('exitandsave.show', undefined, { interactiveConsent: false });
-        this.setState({ visible: true });
+        pxt.tickEvent('newprojectdialog.show', undefined, { interactiveConsent: false });
+        this.setState({
+            projectName: "",
+            visible: true
+        });
     }
 
     modalDidOpen(ref: HTMLElement) {
@@ -1184,8 +1187,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
         this.setState({ language: lang });
     }
 
-    askNameAsync() {
-        this.setState({ projectName: "" })
+    promptUserAsync() {
         this.show();
         return new Promise<pxt.editor.ProjectCreationOptions>(resolve => {
             this.createProjectCb = resolve;
@@ -1220,8 +1222,9 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
         }];
 
         const LO = pxt.editor.LanguageOption;
+        const pythonEnabled = pxt.appTarget.appTheme.python;
 
-        return <sui.Modal isOpen={visible} className="exitandsave" size="tiny"
+        return <sui.Modal isOpen={visible} className="newproject" size="tiny"
             onClose={this.hide} dimmer={true} buttons={actions}
             closeIcon={true} header={lf("Create a Project")}
             closeOnDimmerClick closeOnDocumentClick closeOnEscape
@@ -1235,9 +1238,10 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
                         value={projectName || ''} onChange={this.handleTextChange} />
                 </div>
             </div>
+            <br />
             <select className="ui dropdown" onChange={this.handleLanguageChange} aria-label={lf("Selected Language")}>
                 <option aria-selected={language === LO.Standard} value={LO.Standard}>{lf("Standard")}</option>
-                <option aria-selected={language === LO.PythonOnly} value={LO.PythonOnly}>{lf("{0} Only", "Python")}</option>
+                {pythonEnabled && <option aria-selected={language === LO.PythonOnly} value={LO.PythonOnly}>{lf("{0} Only", "Python")}</option>}
                 <option aria-selected={language === LO.JavaScriptOnly} value={LO.JavaScriptOnly}>{lf("{0} Only", "JavaScript")}</option>
             </select>
         </sui.Modal>
