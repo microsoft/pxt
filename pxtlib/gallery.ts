@@ -90,12 +90,13 @@ namespace pxt.gallery {
         })
         // apply transformations
         galleries.forEach(gallery => gallery.cards.forEach(card => {
-            if (card.cardType == "tutorial" && card.otherActions && !card.otherActions.length) {
+            if (card.otherActions && !card.otherActions.length
+                && (card.cardType == "tutorial" || card.cardType == "example")) {
                 const editors = ["js"];
                 if (pxt.appTarget.appTheme.python) editors.unshift("py");
                 card.otherActions = editors.map((editor: CodeCardEditorType) => (<CodeCardAction>{
                     url: card.url,
-                    cardType: "tutorial",
+                    cardType: card.cardType,
                     editor
                 }));
             }
