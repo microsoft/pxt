@@ -285,21 +285,25 @@ namespace helpers {
         const split = s.split(toReplace);
         const empty = toReplace.isEmpty();
 
-        let output = (empty ? applyReplace(toReplace, replacer) : "") + split[0];
+        let output = (empty ? applyReplace(toReplace, replacer) : "");
+
+        if (split.length) {
+            output += split[0];
+        }
 
         for (let i = 1; i < split.length; ++i) {
             output += applyReplace(toReplace, replacer) + split[i];
         }
 
-        if (empty) {
+        if (!s.isEmpty() && empty) {
             output += applyReplace(toReplace, replacer);
         }
 
         return output;
 
-        function applyReplace(r: string, replacer: string | ((sub: string) => string)) {
+        function applyReplace(r: string, replacer: string | ((sub: string) => string)): string {
             if (typeof replacer == "string" || !replacer) {
-                return replacer;
+                return replacer as string;
             } else {
                 return replacer(r);
             }
