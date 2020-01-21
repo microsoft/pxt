@@ -94,9 +94,9 @@ namespace pxt.gallery {
                 const editors = ["js"];
                 if (pxt.appTarget.appTheme.python) editors.unshift("py");
                 card.otherActions = ["py", "js"].map((editor: CodeCardEditorType) => ({
-                        url: card.url,
-                        cardType: "tutorial",
-                        editor
+                    url: card.url,
+                    cardType: "tutorial",
+                    editor
                 }));
             }
         }))
