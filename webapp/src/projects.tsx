@@ -1124,7 +1124,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
 
 export interface NewProjectDialogState {
     projectName?: string;
-    language?: pxt.editor.LanguageOption;
+    language?: pxt.editor.LanguageRestriction;
     visible?: boolean;
 }
 
@@ -1135,7 +1135,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
         super(props);
         this.state = {
             visible: false,
-            language: pxt.editor.LanguageOption.Standard
+            language: pxt.editor.LanguageRestriction.Standard
         }
 
         this.hide = this.hide.bind(this);
@@ -1158,7 +1158,8 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
         pxt.tickEvent('newprojectdialog.show', undefined, { interactiveConsent: false });
         this.setState({
             projectName: "",
-            visible: true
+            visible: true,
+            language: pxt.editor.LanguageRestriction.Standard
         });
     }
 
@@ -1221,7 +1222,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             className: 'approve positive'
         }];
 
-        const LO = pxt.editor.LanguageOption;
+        const LR = pxt.editor.LanguageRestriction;
         const pythonEnabled = pxt.appTarget.appTheme.python;
 
         return <sui.Modal isOpen={visible} className="newproject" size="tiny"
@@ -1240,9 +1241,9 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             </div>
             <br />
             <select className="ui dropdown" onChange={this.handleLanguageChange} aria-label={lf("Selected Language")}>
-                <option aria-selected={language === LO.Standard} value={LO.Standard}>{lf("Standard")}</option>
-                {pythonEnabled && <option aria-selected={language === LO.PythonOnly} value={LO.PythonOnly}>{lf("{0} Only", "Python")}</option>}
-                <option aria-selected={language === LO.JavaScriptOnly} value={LO.JavaScriptOnly}>{lf("{0} Only", "JavaScript")}</option>
+                <option aria-selected={language === LR.Standard} value={LR.Standard}>{lf("Standard")}</option>
+                {pythonEnabled && <option aria-selected={language === LR.PythonOnly} value={LR.PythonOnly}>{lf("{0} Only", "Python")}</option>}
+                <option aria-selected={language === LR.JavaScriptOnly} value={LR.JavaScriptOnly}>{lf("{0} Only", "JavaScript")}</option>
             </select>
         </sui.Modal>
     }

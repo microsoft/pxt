@@ -1982,10 +1982,10 @@ export class ProjectView
         if (options.preferredEditor)
             cfg.preferredEditor = options.preferredEditor;
 
-        if (options.languages == pxt.editor.LanguageOption.JavaScriptOnly) {
+        if (options.languages == pxt.editor.LanguageRestriction.JavaScriptOnly) {
             cfg.files =  cfg.files.filter(f => !/.(py|blocks)$/.test(f));
             cfg.preferredEditor = 'tsprj';
-        } else if (options.languages == pxt.editor.LanguageOption.PythonOnly) {
+        } else if (options.languages == pxt.editor.LanguageRestriction.PythonOnly) {
             cfg.files =  cfg.files.filter(f => !/.blocks$/.test(f));
             cfg.preferredEditor = 'pyprj';
         }
