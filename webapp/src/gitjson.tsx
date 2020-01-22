@@ -1029,13 +1029,19 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
                 .finally(() => pkg.invalidatePagesStatus(header))
     }
 
+    private scheduleRefreshPageStatus = pxtc.Util.debounce(() => {
+        const header = this.props.parent.props.parent.state.header;
+        pkg.invalidatePagesStatus(header);
+        this.pagesStatus();
+    }, 10000, false);
+
     private pagesStatus() {
         const header = this.props.parent.props.parent.state.header;
         const pages = this.props.parent.getData("pkg-git-pages:" + header.id) as pxt.github.GitHubPagesStatus;
 
         // schedule a refresh
         if (pages && pages.status == "building")
-            Promise.delay(4000).then(() => this.pagesStatus());
+            this.scheduleRefreshPageStatus();
 
         return pages;
     }
@@ -1075,7 +1081,9 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
                         loading={pagesBuilding}
                         text={lf("Open Pages")} />
                     <span className="inline-help">
-                        {compiledJs ? lf("Commit & create release to update Pages.") : lf("Commit to update Pages.")}
+                        {pagesBuilding ? lf("Pages building, it may take a few minutes to complete.")
+                            : compiledJs ? lf("Commit & create release to update Pages.")
+                                : lf("Commit to update Pages.")}
                         {sui.helpIconLink("/github/pages", lf("Learn about GitHub Pages."))}
                     </span>
                 </div>}
