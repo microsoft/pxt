@@ -451,8 +451,12 @@ file('built/web/vs/editor/editor.main.js', [], function () {
 
     fs.writeFileSync("built/web/vs/editor/editor.main.js", monacoeditor)
 
-    jake.mkdirP("webapp/public/vs")
-    jake.cpR("node_modules/monaco-editor/min/vs/base", "webapp/public/vs/")
+    jake.mkdirP("webapp/public/vs/base")
+
+    // For whatever reason the codicon.ttf font that comes with the node_module is invalid.
+    // A working version of the font can be found here: https://github.com/microsoft/vscode-codicons/blob/master/dist/codicon.ttf
+    // That's why we only copy over /base/worker and not /base/browser
+    jake.cpR("node_modules/monaco-editor/min/vs/base/worker", "webapp/public/vs/base/")
     jake.cpR("node_modules/monaco-editor/min/vs/editor", "webapp/public/vs/")
     fs.unlinkSync("webapp/public/vs/editor/editor.main.js")
 
