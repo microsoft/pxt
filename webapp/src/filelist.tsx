@@ -188,14 +188,24 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 name = str;
             }
 
+            const pkgCfg = pkg.mainPkg && pkg.mainPkg.config
+            const languageRestriction = pkgCfg && pkg.mainPkg.config.languageRestriction;
             let ext = 'ts';
             let comment = "//";
+
+            if (languageRestriction === pxt.editor.LanguageRestriction.PythonOnly) {
+                ext = "py";
+                comment = "#";
+            }
+
             switch (givenExt) {
                 case "js": case "ts":
                     break;
                 case "py":
-                    ext = "py";
-                    comment = "#";
+                    if (languageRestriction !== pxt.editor.LanguageRestriction.JavaScriptOnly) {
+                        ext = "py";
+                        comment = "#";
+                    }
                     break;
                 case "md":
                     ext = "md";
