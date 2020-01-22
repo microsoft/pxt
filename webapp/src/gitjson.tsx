@@ -418,6 +418,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             await workspace.pullAsync(header)
             // skip bump in this case - we don't know if it was merged
         } else {
+            pkg.invalidatePagesStatus(header);
             // maybe needs a reload
             await this.maybeReloadAsync();
         }
@@ -1006,6 +1007,7 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
         pxt.tickEvent("github.releasezone.bump", undefined, { interactiveConsent: true });
         e.stopPropagation();
         const { needsCommit, master } = this.props;
+        const header = this.props.parent.props.parent.state.header;
         if (needsCommit)
             core.confirmAsync({
                 header: lf("Commit your changes..."),
@@ -1023,18 +1025,38 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
         else
             cloudsync.githubProvider()
                 .loginAsync()
-                .then(() => pxt.github.token && this.props.parent.bumpAsync());
+                .then(() => pxt.github.token && this.props.parent.bumpAsync())
+                .finally(() => pkg.invalidatePagesStatus(header))
+    }
+
+    private scheduleRefreshPageStatus = pxtc.Util.debounce(() => {
+        const header = this.props.parent.props.parent.state.header;
+        pkg.invalidatePagesStatus(header);
+        this.pagesStatus();
+    }, 10000, false);
+
+    private pagesStatus() {
+        const header = this.props.parent.props.parent.state.header;
+        const pages = this.props.parent.getData("pkg-git-pages:" + header.id) as pxt.github.GitHubPagesStatus;
+
+        // schedule a refresh
+        if (pages && pages.status == "building")
+            this.scheduleRefreshPageStatus();
+
+        return pages;
     }
 
     renderCore() {
-        const { gs, githubId, needsCommit } = this.props;
+        const { gs, needsCommit } = this.props;
         const tag = gs.commit && gs.commit.tag;
         const compiledJs = !!pxt.appTarget.appTheme.githubCompiledJs;
-        const ghpages = compiledJs && `https://${githubId.owner}.github.io/${githubId.project}`;
 
         if (needsCommit && !compiledJs) // nothing to show here
             return <div></div>
 
+        const pages = this.pagesStatus();
+        const hasPages = pages && !!pages.html_url;
+        const pagesBuilding = pages && pages.status == "building";
         return <div className="ui transparent segment">
             <div className="ui header">{lf("Release zone")}</div>
             {!needsCommit && !tag && <div className="ui field">
@@ -1052,12 +1074,17 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
                         {sui.helpIconLink("/github/release", lf("Learn about releases."))}
                     </p>
                 </div>}
-            {compiledJs &&
+            {hasPages &&
                 <div className="ui field">
-                    <a className="ui basic button" href={ghpages} target="_blank" rel="noopener noreferrer">{lf("Open Project")}</a>
+                    <sui.Link className="basic button"
+                        href={pages.html_url}
+                        loading={pagesBuilding}
+                        text={lf("Open Pages")} />
                     <span className="inline-help">
-                        {lf("Commit & create release to update.")}
-                        {sui.helpIconLink("/github/pages", lf("Learn about publishing projects."))}
+                        {pagesBuilding ? lf("Pages building, it may take a few minutes.")
+                            : compiledJs ? lf("Commit & create release to update Pages.")
+                                : lf("Commit to update Pages.")}
+                        {sui.helpIconLink("/github/pages", lf("Learn about GitHub Pages."))}
                     </span>
                 </div>}
         </div>

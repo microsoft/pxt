@@ -1447,4 +1447,20 @@ namespace pxt.github {
                 }
             })
     }
+
+    export interface GitHubPagesStatus {
+        status: null | "queued" | "building" | "built" | "errored"
+        html_url?: string;
+        source?: {
+            branch: string;
+            directory: string;
+        }
+    }
+
+    export function getPagesStatusAsync(repoPath: string): Promise<GitHubPagesStatus> {
+        return ghGetJsonAsync(`https://api.github.com/repos/${repoPath}/pages`)
+            .catch(e => ({
+                status: null
+            }))
+    }
 }
