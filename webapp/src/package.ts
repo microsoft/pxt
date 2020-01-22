@@ -35,12 +35,12 @@ export class File implements pxt.editor.IFile {
         if (!this.epkg.header)
             return true;
 
-        const ext = this.getExtension();
+        const ext = this.getExtension()
         switch (this.epkg.getLanguageRestrictions()) {
             case pxt.editor.LanguageRestriction.JavaScriptOnly:
-                return ext != "ts";
+                return ext === "py";
             case pxt.editor.LanguageRestriction.PythonOnly:
-                return ext != "py"
+                return ext === "ts"
             default:
                 return false;
         }
