@@ -367,7 +367,6 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
 
 interface ExpandableMenuProps {
     title?: string;
-    divider?: boolean;
 }
 
 interface ExpandableMenuState {
@@ -382,7 +381,7 @@ export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMen
     }
 
     renderCore() {
-        const { title, children, divider } = this.props;
+        const { title, children } = this.props;
         const { expanded } = this.state
 
         return (<div className="expandable-menu">
@@ -392,7 +391,6 @@ export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMen
                 text={title}
                 ariaExpanded={expanded}
                 onClick={this.toggleExpanded} />
-            {divider && <div className="ui divider" />}
             {expanded && <div className="expanded-items">
                 {children}
             </div> }
