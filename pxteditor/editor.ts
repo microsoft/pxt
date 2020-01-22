@@ -102,7 +102,6 @@ namespace pxt.editor {
         temporary?: boolean;
         tutorial?: pxt.tutorial.TutorialOptions;
         dependencies?: pxt.Map<string>;
-        tsOnly?: boolean; // TODO jwunderl: remove this and pass as languages LanguageRestriction?
         languageRestriction?: LanguageRestriction;
         preferredEditor?: string; // preferred editor to open, pxt.BLOCKS_PROJECT_NAME, ...
         extensionUnderTest?: string; // workspace id of the extension under test
@@ -111,7 +110,8 @@ namespace pxt.editor {
     export enum LanguageRestriction {
         Standard = "",
         PythonOnly = "python-only",
-        JavaScriptOnly = "javascript-only"
+        JavaScriptOnly = "javascript-only",
+        NoBlocks = "no-blocks"
     }
 
     export interface ExampleImportOptions {

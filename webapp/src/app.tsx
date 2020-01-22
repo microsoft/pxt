@@ -1975,24 +1975,22 @@ export class ProjectView
                 cfg.dependencies[ext.name] = `workspace:${ext.id}`;
             }
         }
-        if (options.tsOnly) {
-            cfg.files = cfg.files.filter(f => f != "main.blocks")
-            delete files["main.blocks"]
-        }
         if (options.preferredEditor)
             cfg.preferredEditor = options.preferredEditor;
 
         if (options.languageRestriction) {
             cfg.languageRestriction = options.languageRestriction;
+
+            let filesToDrop = /\.(blocks)$/;
             if (options.languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly) {
-                cfg.files = cfg.files.filter(f => !/\.(py|blocks)$/.test(f));
+                filesToDrop = /\.(py|blocks)$/;
                 cfg.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME;
-                delete files["main.blocks"];
             } else if (options.languageRestriction === pxt.editor.LanguageRestriction.PythonOnly) {
-                cfg.files = cfg.files.filter(f => !/\.blocks$/.test(f));
                 cfg.preferredEditor = pxt.PYTHON_PROJECT_NAME;
-                delete files["main.blocks"];
             }
+
+            cfg.files = cfg.files.filter(f => !filesToDrop.test(f));
+            delete files["main.blocks"];
         }
 
         // ensure a main.py is ready if this is the desired project
@@ -2066,7 +2064,9 @@ export class ProjectView
                                 })
                         });
                 } else {
-                    opts.tsOnly = !loadBlocks;
+                    if (!loadBlocks) {
+                        opts.languageRestriction = pxt.editor.LanguageRestriction.NoBlocks;
+                    }
                     opts.preferredEditor = preferredEditor;
                     return this.createProjectAsync(opts)
                         .then(() => Promise.delay(500));
