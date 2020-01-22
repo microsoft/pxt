@@ -1081,7 +1081,7 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
                         loading={pagesBuilding}
                         text={lf("Open Pages")} />
                     <span className="inline-help">
-                        {pagesBuilding ? lf("Pages building, it may take a few minutes to complete.")
+                        {pagesBuilding ? lf("Pages building, it may take a few minutes.")
                             : compiledJs ? lf("Commit & create release to update Pages.")
                                 : lf("Commit to update Pages.")}
                         {sui.helpIconLink("/github/pages", lf("Learn about GitHub Pages."))}
