@@ -8,6 +8,7 @@ import * as container from "./container";
 import * as core from "./core";
 import * as cloud from "./cloud";
 import * as cloudsync from "./cloudsync";
+import * as pkg from "./package";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -509,6 +510,12 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const user = hasCloud ? this.getUser() : undefined;
         const showCloud = !sandbox && !inTutorial && !debugging && !!user;
 
+        const cfg = pkg.mainPkg && pkg.mainPkg.config;
+        const languageRestriction = cfg && cfg.languageRestriction;
+        const tsOnly = languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly && !debugging && !inTutorial;
+        const pyOnly = languageRestriction === pxt.editor.LanguageRestriction.PythonOnly && !debugging && !inTutorial;
+        const showToggle = !inTutorial && !targetTheme.blocksOnly && !debugging && !tsOnly && !pyOnly;
+
         /* tslint:disable:react-a11y-anchors */
         return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
             {!sandbox ? <div className="left menu">
@@ -529,12 +536,13 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                         <img className="ui mini image" src={rightLogo} tabIndex={0} onClick={this.launchFullEditor} onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`} />
                     </span>
                 </div>}
-            {!inTutorial && !targetTheme.blocksOnly && !debugging && <div className="ui item link editor-menuitem">
+            {showToggle && <div className="ui item link editor-menuitem">
                 <container.EditorSelector parent={this.props.parent} sandbox={sandbox} python={targetTheme.python} headless={isHeadless} />
             </div>}
             {inTutorial && activityName && <div className="ui item">{activityName}</div>}
             {inTutorial && !hideIteration && <tutorial.TutorialMenu parent={this.props.parent} />}
             {debugging && !inTutorial ? <sui.MenuItem className="debugger-menu-item centered" icon="large bug" name="Debug Mode" /> : undefined}
+            {(pyOnly || tsOnly) &&  <sui.MenuItem className="debugger-menu-item centered" name={pyOnly ? "Python" : "JavaScript"} />}
             <div className="right menu">
                 {debugging ? <sui.ButtonMenuItem className="exit-debugmode-btn" role="menuitem" icon="external" text={lf("Exit Debug Mode")} textClass="landscape only" onClick={this.toggleDebug} /> : undefined}
                 {docMenu ? <container.DocsMenu parent={this.props.parent} /> : undefined}

@@ -205,8 +205,8 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     if (languageRestriction !== pxt.editor.LanguageRestriction.JavaScriptOnly) {
                         ext = "py";
                         comment = "#";
+                        break;
                     }
-                    break;
                 case "md":
                     ext = "md";
                     comment = ">";
