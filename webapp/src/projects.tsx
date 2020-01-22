@@ -1240,7 +1240,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
                 </div>
             </div>
             <br />
-            <select className="ui dropdown" onChange={this.handleLanguageChange} aria-label={lf("Selected Language")}>
+            <select value={this.state.language} className="ui dropdown" onChange={this.handleLanguageChange} aria-label={lf("Selected Language")}>
                 <option aria-selected={language === LR.Standard} value={LR.Standard}>{lf("Standard")}</option>
                 {pythonEnabled && <option aria-selected={language === LR.PythonOnly} value={LR.PythonOnly}>{lf("{0} Only", "Python")}</option>}
                 <option aria-selected={language === LR.JavaScriptOnly} value={LR.JavaScriptOnly}>{lf("{0} Only", "JavaScript")}</option>
