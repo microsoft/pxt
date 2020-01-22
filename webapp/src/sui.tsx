@@ -365,6 +365,41 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 }
 
+interface ExpandableMenuProps {
+    title?: string;
+    divider?: boolean;
+}
+
+interface ExpandableMenuState {
+    expanded?: boolean;
+}
+
+export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMenuState> {
+    toggleExpanded = () => {
+        this.setState({
+            expanded: !this.state.expanded
+        });
+    }
+
+    renderCore() {
+        const { title, children, divider } = this.props;
+        const { expanded } = this.state
+
+        return (<div className="expandable-menu">
+            <Link
+                className="no-select menu-header"
+                icon={`no-select chevron ${expanded ? "down" : "right"}`}
+                text={title}
+                ariaExpanded={expanded}
+                onClick={this.toggleExpanded} />
+            {divider && <div className="ui divider" />}
+            {expanded && <div className="expanded-items">
+                {children}
+            </div> }
+        </div>);
+    }
+}
+
 ///////////////////////////////////////////////////////////
 ////////////             Items                /////////////
 ///////////////////////////////////////////////////////////

@@ -1126,7 +1126,6 @@ export interface NewProjectDialogState {
     projectName?: string;
     language?: pxt.editor.LanguageRestriction;
     visible?: boolean;
-    advancedMenu?: boolean;
 }
 
 export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectDialogState> {
@@ -1145,7 +1144,6 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
         this.handleLanguageChange = this.handleLanguageChange.bind(this);
         this.save = this.save.bind(this);
         this.skip = this.skip.bind(this);
-        this.toggleAdvancedMenu = this.toggleAdvancedMenu.bind(this)
     }
 
     componentWillReceiveProps(newProps: ISettingsProps) {
@@ -1161,7 +1159,6 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
         this.setState({
             projectName: "",
             visible: true,
-            advancedMenu: false,
             language: pxt.editor.LanguageRestriction.Standard
         });
     }
@@ -1180,10 +1177,6 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
                 }
             }
         }
-    }
-
-    protected toggleAdvancedMenu() {
-        this.setState({ advancedMenu: !this.state.advancedMenu });
     }
 
     handleTextChange(name: string) {
@@ -1221,7 +1214,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
     }
 
     renderCore() {
-        const { visible, projectName, language, advancedMenu } = this.state;
+        const { visible, projectName, language } = this.state;
 
         const actions = [{
             label: lf("Create"),
@@ -1248,9 +1241,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
                 </div>
             </div>
             <br />
-            <sui.Link className="no-select" icon={`no-select chevron ${advancedMenu ? "down" : "right"}`} text={lf("Options")} ariaExpanded={advancedMenu} onClick={this.toggleAdvancedMenu} />
-            {advancedMenu && <div className="ui divider" />}
-            {advancedMenu && <div>
+            <sui.ExpandableMenu title={lf("Options")}>
                 {lf("Project Template:")}
                 {" "}
                 <select value={this.state.language} className="ui dropdown" onChange={this.handleLanguageChange} aria-label={lf("Selected Language")}>
@@ -1258,7 +1249,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
                     {pythonEnabled && <option aria-selected={language === LR.PythonOnly} value={LR.PythonOnly}>{lf("{0} Only", "Python")}</option>}
                     <option aria-selected={language === LR.JavaScriptOnly} value={LR.JavaScriptOnly}>{lf("{0} Only", "JavaScript")}</option>
                 </select>
-            </div>}
+            </sui.ExpandableMenu>
         </sui.Modal>
     }
 }

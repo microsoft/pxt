@@ -1597,3 +1597,18 @@ p.ui.tiny {
 p.ui.small {
     font-size: 90%;
 }
+
+.expandable-menu {
+    > .menu-header {
+        text-decoration: none;
+        cursor: pointer;
+        :hover {
+            text-decoration: none;
+        }
+    }
+
+    > .expanded-items {
+        padding-left: 1.5em;
+        padding-top: 0.5em;
+    }
+}
