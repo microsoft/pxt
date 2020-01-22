@@ -3095,9 +3095,9 @@ export class ProjectView
 
     private hintManager: HintManager = new HintManager();
 
-    startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorProjetName?: string) {
-        pxt.tickEvent("tutorial.start", { editor: editorProjetName });
-        this.startTutorialAsync(tutorialId, tutorialTitle, recipe, editorProjetName);
+    startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorProjectName?: string) {
+        pxt.tickEvent("tutorial.start", { editor: editorProjectName });
+        this.startTutorialAsync(tutorialId, tutorialTitle, recipe, editorProjectName);
     }
 
     startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorProjectName?: string): Promise<void> {
@@ -3816,13 +3816,13 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         case "tutorial":
             pxt.tickEvent("hash.tutorial")
             let tutorialPath = hash.arg;
-            let editorProjetName: string = undefined;
+            let editorProjectName: string = undefined;
             if (/^(js|py):/.test(tutorialPath)) {
-                editorProjetName = /^py:/.test(tutorialPath)
+                editorProjectName = /^py:/.test(tutorialPath)
                     ? pxt.PYTHON_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME;
                 tutorialPath = tutorialPath.substr(tutorialPath.indexOf(':') + 1)
             }
-            editor.startTutorial(tutorialPath, undefined, undefined, editorProjetName);
+            editor.startTutorial(tutorialPath, undefined, undefined, editorProjectName);
             pxt.BrowserUtils.changeHash("editor");
             return true;
         case "recipe": // shortcut to a recipe. eg: #recipe:recipes/getting-started
