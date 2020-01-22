@@ -174,34 +174,57 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             },
             body: lf("Please provide a name for your new file.")
         }).then(str => {
-            str = str || ""
-            str = str.trim()
-            str = str.replace(/\.[tj]s$/, "")
-            str = str.trim()
-            let ext = "ts"
-            let comment = "//"
-            if (pxt.U.endsWith(str, ".py")) {
-                str = str.slice(0, str.length - 3)
-                ext = "py"
-                comment = "#"
-            }
-            if (pxt.U.endsWith(str, ".md")) {
-                str = str.slice(0, str.length - 3)
-                ext = "md"
-                comment = ">"
-            }
             if (!str)
                 return Promise.resolve()
-            if (!validRx.test(str)) {
+            str = str.replace(/\s+/g, "");
+
+            const indLastPeriod = str.lastIndexOf(".");
+            let name: string;
+            let givenExt: string;
+            if (indLastPeriod != -1) {
+                name = str.slice(0, indLastPeriod);
+                givenExt = str.slice(indLastPeriod + 1).toLowerCase();
+            } else {
+                name = str;
+            }
+
+            let ext = 'ts';
+            let comment = "//";
+            switch (givenExt) {
+                case "js": case "ts":
+                    break;
+                case "py":
+                    ext = "py";
+                    comment = "#";
+                    break;
+                case "md":
+                    ext = "md";
+                    comment = ">";
+                    break;
+                default:
+                    // not a valid extension; leave it as it was and append ts
+                    name = str;
+            }
+
+            if (!name)
+                return Promise.resolve()
+
+            if (!validRx.test(name)) {
                 core.warningNotification(lf("Invalid file name"))
                 return Promise.resolve()
             }
-            str += "." + ext
-            if (pkg.mainEditorPkg().sortedFiles().some(f => f.name == str)) {
+
+            const fileName = `${name}.${ext}`;
+            if (pkg.mainEditorPkg().sortedFiles().some(f => f.name == fileName)) {
                 core.warningNotification(lf("File already exists"))
                 return Promise.resolve()
             }
-            return this.props.parent.updateFileAsync(str, comment + " " + pxt.U.lf("Add your code here") + "\n", true)
+            return this.props.parent.updateFileAsync(
+                fileName,
+                `${comment} ${pxt.U.lf("Add your code here")}
+`,
+                true
+            );
         }).done()
     }
 
