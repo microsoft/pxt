@@ -500,7 +500,9 @@ export interface LinkProps extends ButtonProps {
 export class Link extends StatelessUIElement<LinkProps> {
     renderCore() {
         return (
-            <a className={genericClassName("ui", this.props) + " " + (this.props.disabled ? "disabled" : "")}
+            <a className={genericClassName("ui", this.props)
+                + (this.props.loading ? " loading" : "")
+                + (this.props.disabled ? " disabled" : "")}
                 id={this.props.id}
                 href={this.props.href}
                 target={this.props.target}

@@ -225,6 +225,7 @@ export class ProjectView
         this.setState({ active: active });
         data.invalidate('pkg-git-pull-status');
         data.invalidate('pkg-git-pr');
+        data.invalidate('pkg-git-pages')
 
         if (!active && this.state.autoRun) {
             if (simulator.driver.state == pxsim.SimulatorState.Running) {
