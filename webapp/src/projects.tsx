@@ -1184,8 +1184,9 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
     }
 
     handleLanguageChange(ev: React.ChangeEvent<HTMLSelectElement>) {
-        const lang = parseInt(ev.target.value);
-        this.setState({ language: lang });
+        this.setState({
+            language: ev.target.value as pxt.editor.LanguageRestriction
+        });
     }
 
     promptUserAsync() {

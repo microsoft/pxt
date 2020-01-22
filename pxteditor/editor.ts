@@ -109,9 +109,9 @@ namespace pxt.editor {
     }
 
     export enum LanguageRestriction {
-        Standard = 0,  // no additional language restriction makes field falsy
-        PythonOnly,
-        JavaScriptOnly
+        Standard = "",
+        PythonOnly = "python-only",
+        JavaScriptOnly = "javascript-only"
     }
 
     export interface ExampleImportOptions {

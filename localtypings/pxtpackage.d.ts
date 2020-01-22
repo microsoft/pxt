@@ -49,7 +49,7 @@ declare namespace pxt {
         simFiles?: string[];
         testFiles?: string[];
         preferredEditor?: string; // tsprj, blocksprj, pyprj
-        languageRestriction?: number; // pxt.editor.LanguageRestriction
+        languageRestriction?: "" | "python-only" | "javascript-only"; // pxt.editor.LanguageRestriction
         testDependencies?: pxt.Map<string>;
         cppDependencies?: pxt.Map<string>;
         public?: boolean;
