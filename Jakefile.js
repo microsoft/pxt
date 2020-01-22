@@ -376,7 +376,7 @@ file("built/web/pxtlib.js", [
 
 task('monaco-editor', [
     "built/web/vs/editor/editor.main.js",
-    "built/web/vs/language/typescript/src/mode.js"
+    'built/web/vs/language/typescript/tsMode.js'
 ])
 
 
@@ -411,11 +411,11 @@ task('serve', ['default'], { async: true }, function () {
     cmdIn(this, destination, 'node ../pxt/built/pxt.js serve ' + cmdArg)
 })
 
-file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/release/src/monaco.contribution.js'], function () {
+file('built/web/vs/editor/editor.main.js', [], function () {
     console.log(`Updating the monaco editor bits`)
     jake.mkdirP("built/web/vs/editor")
-    let monacotypescriptcontribution = fs.readFileSync("node_modules/pxt-monaco-typescript/release/src/monaco.contribution.js", "utf8")
-    monacotypescriptcontribution = monacotypescriptcontribution.replace(/\[\"require\"\,\s*\"exports\"\]/, '["require","exports","vs/editor/edcore.main"]')
+    // let monacotypescriptcontribution = fs.readFileSync("node_modules/pxt-monaco-typescript/release/src/monaco.contribution.js", "utf8")
+    // monacotypescriptcontribution = monacotypescriptcontribution.replace(/\[\"require\"\,\s*\"exports\"\]/, '["require","exports","vs/editor/edcore.main"]')
 
     let monacoeditor = fs.readFileSync("node_modules/monaco-editor/min/vs/editor/editor.main.js", "utf8")
     // // Remove certain actions from the context menu
@@ -459,7 +459,7 @@ file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/
     jake.cpR("node_modules/monaco-editor/min/vs/loader.js", "webapp/public/vs/")
 
 
-    const basicLanguages = ["bat", "cpp", "markdown", "python"];
+    const basicLanguages = ["bat", "cpp", "typescript", "markdown", "python"];
     basicLanguages.forEach(lang => {
         jake.mkdirP("webapp/public/vs/basic-languages/" + lang)
         jake.cpR(`node_modules/monaco-editor/min/vs/basic-languages/${lang}/${lang}.js`, `webapp/public/vs/basic-languages/${lang}/${lang}.js`)
@@ -473,13 +473,10 @@ file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/
     strpSrcMap(this, "webapp/public/vs/")
 })
 
-file('built/web/vs/language/typescript/src/mode.js', ['node_modules/pxt-monaco-typescript/release/src/mode.js'], function () {
+file('built/web/vs/language/typescript/tsMode.js', ['node_modules/pxt-monaco-typescript/release/dev/tsMode.js'], function () {
     console.log(`Updating the monaco typescript language service`)
-    jake.mkdirP("built/web/vs/language/typescript/src")
-    jake.mkdirP("built/web/vs/language/typescript/lib")
-    jake.cpR("node_modules/pxt-monaco-typescript/release/lib/typescriptServices.js", "built/web/vs/language/typescript/lib/")
-    jake.cpR("node_modules/pxt-monaco-typescript/release/src/mode.js", "built/web/vs/language/typescript/src/")
-    jake.cpR("node_modules/pxt-monaco-typescript/release/src/worker.js", "built/web/vs/language/typescript/src/")
+    jake.mkdirP("built/web/vs/language/")
+    jake.cpR("node_modules/pxt-monaco-typescript/release/dev/", "built/web/vs/language/typescript/")
 })
 
 file('built/webapp/src/app.js', expand([
