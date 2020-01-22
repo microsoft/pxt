@@ -542,7 +542,8 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
             {inTutorial && activityName && <div className="ui item">{activityName}</div>}
             {inTutorial && !hideIteration && <tutorial.TutorialMenu parent={this.props.parent} />}
             {debugging && !inTutorial ? <sui.MenuItem className="debugger-menu-item centered" icon="large bug" name="Debug Mode" /> : undefined}
-            {(pyOnly || tsOnly) &&  <sui.MenuItem className="debugger-menu-item centered" name={pyOnly ? "Python" : "JavaScript"} />}
+            {tsOnly && <sui.MenuItem className="debugger-menu-item centered" icon="xicon js" name="JavaScript" />}
+            {pyOnly && <sui.MenuItem className="debugger-menu-item centered" icon="xicon python" name="Python" />}
             <div className="right menu">
                 {debugging ? <sui.ButtonMenuItem className="exit-debugmode-btn" role="menuitem" icon="external" text={lf("Exit Debug Mode")} textClass="landscape only" onClick={this.toggleDebug} /> : undefined}
                 {docMenu ? <container.DocsMenu parent={this.props.parent} /> : undefined}
