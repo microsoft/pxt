@@ -3817,7 +3817,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             pxt.tickEvent("hash.tutorial")
             let tutorialPath = hash.arg;
             let editorProjetName: string = undefined;
-            if (/(js|py):/.test(tutorialPath)) {
+            if (/^(js|py):/.test(tutorialPath)) {
                 editorProjetName = /^py:/.test(tutorialPath) 
                     ? pxt.PYTHON_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME;
                 tutorialPath = tutorialPath.substr(tutorialPath.indexOf(':') + 1)
