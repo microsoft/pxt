@@ -3813,12 +3813,12 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             return true;
         // shortcut to a tutorial. eg: #tutorial:tutorials/getting-started
         // or #tutorial:py:tutorials/getting-started
-        case "tutorial": 
+        case "tutorial":
             pxt.tickEvent("hash.tutorial")
             let tutorialPath = hash.arg;
             let editorProjetName: string = undefined;
             if (/^(js|py):/.test(tutorialPath)) {
-                editorProjetName = /^py:/.test(tutorialPath) 
+                editorProjetName = /^py:/.test(tutorialPath)
                     ? pxt.PYTHON_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME;
                 tutorialPath = tutorialPath.substr(tutorialPath.indexOf(':') + 1)
             }
