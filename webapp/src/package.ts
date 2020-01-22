@@ -32,18 +32,7 @@ export class File implements pxt.editor.IFile {
     constructor(public epkg: EditorPackage, public name: string, public content: string) { }
 
     isReadonly() {
-        if (!this.epkg.header)
-            return true;
-
-        const ext = this.getExtension()
-        switch (this.epkg.getLanguageRestrictions()) {
-            case pxt.editor.LanguageRestriction.JavaScriptOnly:
-                return ext === "py";
-            case pxt.editor.LanguageRestriction.PythonOnly:
-                return ext === "ts"
-            default:
-                return false;
-        }
+        return !this.epkg.header;
     }
 
     getName() {

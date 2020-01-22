@@ -85,7 +85,23 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
     private filesOf(pkg: pkg.EditorPackage): JSX.Element[] {
         const { currentFile } = this.state;
         const deleteFiles = !pxt.shell.isReadOnly() && pkg.getPkgId() == "this";
-        return pkg.sortedFiles().map(file => {
+        const langRestrictions =  pkg.getLanguageRestrictions();
+        let files = pkg.sortedFiles();
+
+        if (pkg.isTopLevel()) {
+            files = files.filter(f => {
+                switch (langRestrictions) {
+                    case pxt.editor.LanguageRestriction.JavaScriptOnly:
+                        return !/\.(blocks|py)$/.test(f.name);
+                    case pxt.editor.LanguageRestriction.PythonOnly:
+                        return !/\.(blocks|ts)$/.test(f.name);
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        return files.map(file => {
             const meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
             // we keep this disabled, until implemented for cloud syncing
             // makse no sense for local saves - the star just blinks for half second after every change
