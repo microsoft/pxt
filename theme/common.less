@@ -1522,6 +1522,13 @@ div.simframe.ui.embed {
         box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
         background: @editorToggleColor !important;
     }
+
+    .one-language {
+        &:not(.headless) .active.item.javascript-menuitem ~ .toggle,
+        &:not(.headless) .active.item.python-menuitem ~ .toggle {
+            margin-left: 140px !important;
+        }
+    }
 }
 
 /* Hardware selection dialog */
