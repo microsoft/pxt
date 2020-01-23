@@ -50,7 +50,7 @@ declare namespace pxt {
         simFiles?: string[];
         testFiles?: string[];
         preferredEditor?: string; // tsprj, blocksprj, pyprj
-        languageRestriction?: "" | "python-only" | "javascript-only" | "no-blocks"; // pxt.editor.LanguageRestriction
+        languageRestriction?: LanguageRestriction; // language restrictions that have been placed on the package
         testDependencies?: pxt.Map<string>;
         cppDependencies?: pxt.Map<string>;
         public?: boolean;
@@ -83,6 +83,14 @@ declare namespace pxt {
         experimentalHw?: boolean;
         requiredCategories?: string[]; // ensure that those block categories are visible
         supportedTargets?: string[]; // a hint about targets in which this extension is supported
+    }
+
+    // this is the same as the enum in pxteditor/editor.ts
+    enum LanguageRestriction {
+        Standard = "",
+        PythonOnly = "python-only",
+        JavaScriptOnly = "javascript-only",
+        NoBlocks = "no-blocks"
     }
 
     interface PackageExtension {

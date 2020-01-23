@@ -541,7 +541,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                     </span>
                 </div>}
             {showToggle && <div className="ui item link editor-menuitem">
-                <container.EditorSelector parent={this.props.parent} sandbox={sandbox} python={targetTheme.python} languageRestriction={languageRestriction as pxt.editor.LanguageRestriction} headless={isHeadless} />
+                <container.EditorSelector parent={this.props.parent} sandbox={sandbox} python={targetTheme.python} languageRestriction={languageRestriction} headless={isHeadless} />
             </div>}
             {inTutorial && activityName && <div className="ui item">{activityName}</div>}
             {inTutorial && !hideIteration && <tutorial.TutorialMenu parent={this.props.parent} />}
