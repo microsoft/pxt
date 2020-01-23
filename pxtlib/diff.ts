@@ -6,7 +6,12 @@ namespace pxt.diff {
         "-": "diff-removed",
     }
 
-    export function render(diffLines: string[]): HTMLElement {
+    export interface RenderOptions {
+        hideMarker?: boolean;
+        hideRemoved?: boolean;
+    }
+
+    export function render(diffLines: string[], options: RenderOptions = {}): HTMLElement {
         if (!diffLines) {
             return pxt.dom.el("div", null, pxtc.Util.lf("Too many differences to render diff."));
         }
@@ -42,18 +47,22 @@ namespace pxt.diff {
                 savedDiffEl = r.b
             }
             lastMark = ln[0];
-            let diffMark = lastMark;
+
+            // check if line is skipped
+            if ((options.hideMarker && lastMark == "@")
+                || (options.hideRemoved && lastMark == "-"))
+                return; 
 
             // add diff
-            const isMarker = diffMark == "@";
-            const className = `${diffClasses[diffMark]}`;
+            const isMarker = lastMark == "@";
+            const className = `${diffClasses[lastMark]}`;
             tbody.appendChild(
                 pxt.dom.el("tr", { "class": className }, [
                     pxt.dom.el("td", { class: "line-a", "data-content": lnA }),
                     pxt.dom.el("td", { class: "line-b", "data-content": lnB }),
                     isMarker
                         ? pxt.dom.el("td", { "colspan": 2, class: "change" }, pxt.dom.el("code", null, ln))
-                        : pxt.dom.el("td", { class: "marker", "data-content": diffMark }),
+                        : pxt.dom.el("td", { class: "marker", "data-content": lastMark }),
                     isMarker && pxt.dom.el("td", { class: "change" }, currDiff)
                 ])
             );
