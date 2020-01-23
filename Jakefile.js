@@ -77,7 +77,7 @@ function runKarma(that, flags) {
     cmdIn(that, "node_modules/.bin", command);
 }
 
-task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'built/target.js', 'wapp', 'monaco-editor', 'built/web/pxtweb.js', 'built/tests/blocksrunner.js', 'uglify'], { parallelLimit: 10 })
+task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'built/target.js', 'wapp', 'monaco-editor', 'built/web/pxtweb.js', 'built/tests/blocksrunner.js', 'codicon', 'uglify'], { parallelLimit: 10 })
 
 task('test', ['default', 'testfmt', 'testerr', 'testdecompiler', 'testpy', 'testlang', 'testtutorials', 'karma'])
 task('testpy', ['testpycomp', 'testpytraces']) // TODO: turn on 'testpydecomp'
@@ -453,9 +453,6 @@ file('built/web/vs/editor/editor.main.js', [], function () {
 
     jake.mkdirP("webapp/public/vs/base")
 
-    // For whatever reason the codicon.ttf font that comes with the node_module is invalid.
-    // A working version of the font can be found here: https://github.com/microsoft/vscode-codicons/blob/master/dist/codicon.ttf
-    // That's why we only copy over /base/worker and not /base/browser
     jake.cpR("node_modules/monaco-editor/min/vs/base/worker", "webapp/public/vs/base/")
     jake.cpR("node_modules/monaco-editor/min/vs/editor", "webapp/public/vs/")
     fs.unlinkSync("webapp/public/vs/editor/editor.main.js")
@@ -475,6 +472,13 @@ file('built/web/vs/editor/editor.main.js', [], function () {
 
     // Strip out the sourceMappingURL= from each of the monaco files (recursively)
     strpSrcMap(this, "webapp/public/vs/")
+})
+
+task("codicon", ["monaco-editor"], () => {
+    // For whatever reason the codicon.ttf font that comes with the monaco-editor is invalid.
+    // Copy over a good version from the source
+    jake.mkdirP("webapp/public/vs/base/browser/ui/codiconLabel/codicon/")
+    jake.cpR("node_modules/vscode-codicons/dist/codicon.ttf", "webapp/public/vs/base/browser/ui/codiconLabel/codicon/")
 })
 
 file('built/web/vs/language/typescript/tsMode.js', ['node_modules/pxt-monaco-typescript/release/dev/tsMode.js'], function () {
@@ -619,7 +623,7 @@ file('docs/playground.html', ['built/web/pxtworker.js', 'built/web/pxtblockly.js
     jake.cpR("libs/pxt-common/pxt-helpers.ts", "docs/static/playground/pxt-common/pxt-helpers.js");
 })
 
-task("uglify", ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'built/target.js', 'wapp', 'monaco-editor', 'built/web/pxtweb.js', 'built/tests/blocksrunner.js'], () => {
+task("uglify", ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'built/target.js', 'wapp', 'monaco-editor', 'built/web/pxtweb.js', 'codicon', 'built/tests/blocksrunner.js'], () => {
     if (process.env.PXT_ENV == 'production') {
         console.log("Minifying built/web...")
 

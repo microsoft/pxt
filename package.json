@@ -114,7 +114,8 @@
     "@types/react-dom": "16.0.3",
     "@types/react-redux": "5.0.0",
     "@types/request": "2.48.2",
-    "@types/web-bluetooth": "0.0.4"
+    "@types/web-bluetooth": "0.0.4",
+    "vscode-codicons": "microsoft/vscode-codicons#f0caa623812a"
   },
   "scripts": {
     "build": "jake",
