@@ -107,14 +107,6 @@ namespace pxt.editor {
         extensionUnderTest?: string; // workspace id of the extension under test
     }
 
-    // this is the same as the enum in localtypings/pxtpackage.d.ts
-    export enum LanguageRestriction {
-        Standard = "",
-        PythonOnly = "python-only",
-        JavaScriptOnly = "javascript-only",
-        NoBlocks = "no-blocks"
-    }
-
     export interface ExampleImportOptions {
         name: string;
         path: string;

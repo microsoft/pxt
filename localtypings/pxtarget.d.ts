@@ -422,6 +422,13 @@ declare namespace pxt.editor {
         XML = "xml",
         Asm = "asm"
     }
+
+    const enum LanguageRestriction {
+        Standard = "",
+        PythonOnly = "python-only",
+        JavaScriptOnly = "javascript-only",
+        NoBlocks = "no-blocks"
+    }
 }
 
 declare namespace ts.pxtc {

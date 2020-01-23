@@ -1219,7 +1219,6 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             className: 'approve positive'
         }];
 
-        const LR = pxt.editor.LanguageRestriction;
         const pythonEnabled = pxt.appTarget.appTheme.python;
 
         return <sui.Modal isOpen={visible} className="newproject" size="tiny"
@@ -1241,9 +1240,9 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
                 {lf("Project Template:")}
                 {" "}
                 <select value={this.state.language} className="ui dropdown" onChange={this.handleLanguageChange} aria-label={lf("Selected Language")}>
-                    <option aria-selected={language === LR.Standard} value={LR.Standard}>{lf("Standard")}</option>
-                    {pythonEnabled && <option aria-selected={language === LR.PythonOnly} value={LR.PythonOnly}>{lf("{0} Only", "Python")}</option>}
-                    <option aria-selected={language === LR.JavaScriptOnly} value={LR.JavaScriptOnly}>{lf("{0} Only", "JavaScript")}</option>
+                    <option aria-selected={language === pxt.editor.LanguageRestriction.Standard} value={pxt.editor.LanguageRestriction.Standard}>{lf("Standard")}</option>
+                    {pythonEnabled && <option aria-selected={language === pxt.editor.LanguageRestriction.PythonOnly} value={pxt.editor.LanguageRestriction.PythonOnly}>{lf("{0} Only", "Python")}</option>}
+                    <option aria-selected={language === pxt.editor.LanguageRestriction.JavaScriptOnly} value={pxt.editor.LanguageRestriction.JavaScriptOnly}>{lf("{0} Only", "JavaScript")}</option>
                 </select>
             </sui.ExpandableMenu>
         </sui.Modal>
