@@ -1031,18 +1031,9 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     }
 
     modalDidOpen(ref: HTMLElement) {
-        // Save on enter typed
         let dialogInput = document.getElementById('projectNameInput') as HTMLInputElement;
-        if (dialogInput) {
-            if (!pxt.BrowserUtils.isMobile()) dialogInput.setSelectionRange(0, 9999);
-            dialogInput.onkeydown = (e: KeyboardEvent) => {
-                const charCode = core.keyCodeFromEvent(e);
-                if (charCode === core.ENTER_KEY) {
-                    e.preventDefault();
-                    const approveButton = ref.getElementsByClassName("approve positive").item(0) as HTMLElement;
-                    if (approveButton) approveButton.click();
-                }
-            }
+        if (dialogInput && !pxt.BrowserUtils.isMobile()) {
+            dialogInput.setSelectionRange(0, 9999);
         }
     }
 
@@ -1110,7 +1101,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                     <div className="ui form">
                         <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
                             ariaLabel={lf("Type a name for your project")} autoComplete={false}
-                            value={projectName || ''} onChange={this.handleChange} />
+                            value={projectName || ''} onChange={this.handleChange} onEnter={this.save} />
                     </div>
                 </div>
             </sui.Modal>
@@ -1139,7 +1130,6 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
         this.handleTextChange = this.handleTextChange.bind(this);
         this.handleLanguageChange = this.handleLanguageChange.bind(this);
         this.save = this.save.bind(this);
-        this.skip = this.skip.bind(this);
     }
 
     componentWillReceiveProps(newProps: ISettingsProps) {
@@ -1160,18 +1150,9 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
     }
 
     modalDidOpen(ref: HTMLElement) {
-        // Save on enter typed
-        let dialogInput = document.getElementById('projectNameInput') as HTMLInputElement;
-        if (dialogInput) {
-            if (!pxt.BrowserUtils.isMobile()) dialogInput.setSelectionRange(0, 9999);
-            dialogInput.onkeydown = (e: KeyboardEvent) => {
-                const charCode = core.keyCodeFromEvent(e);
-                if (charCode === core.ENTER_KEY) {
-                    e.preventDefault();
-                    const approveButton = ref.getElementsByClassName("approve positive").item(0) as HTMLElement;
-                    if (approveButton) approveButton.click();
-                }
-            }
+        let dialogInput = ref.querySelector('#projectNameInput') as HTMLInputElement;
+        if (dialogInput && !pxt.BrowserUtils.isMobile()) {
+            dialogInput.setSelectionRange(0, 9999);
         }
     }
 
@@ -1192,10 +1173,6 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
         });
     }
 
-    skip() {
-        this.hide();
-    }
-
     save() {
         const { projectName: newName, language } = this.state;
 
@@ -1212,7 +1189,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
     renderCore() {
         const { visible, projectName, language } = this.state;
 
-        const actions = [{
+        const actions: sui.ModalButton[] = [{
             label: lf("Create"),
             onclick: this.save,
             icon: 'check',
@@ -1232,7 +1209,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
                 <div className="ui form">
                     <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
                         ariaLabel={lf("Type a name for your project")} autoComplete={false}
-                        value={projectName || ''} onChange={this.handleTextChange} />
+                        value={projectName || ''} onChange={this.handleTextChange} onEnter={this.save} />
                 </div>
             </div>
             <br />

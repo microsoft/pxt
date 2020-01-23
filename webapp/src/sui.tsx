@@ -596,6 +596,7 @@ export interface InputProps {
     placeholder?: string;
     disabled?: boolean;
     onChange?: (v: string) => void;
+    onEnter?: () => void;
     lines?: number;
     readOnly?: boolean;
     copy?: boolean;
@@ -621,6 +622,7 @@ export class Input extends data.Component<InputProps, InputState> {
         this.copy = this.copy.bind(this);
         this.handleClick = this.handleClick.bind(this);
         this.handleChange = this.handleChange.bind(this);
+        this.handleEnterPressed = this.handleEnterPressed.bind(this);
     }
 
     componentDidMount() {
@@ -676,6 +678,17 @@ export class Input extends data.Component<InputProps, InputState> {
         }
     }
 
+    handleEnterPressed(e: React.KeyboardEvent) {
+        const charCode = core.keyCodeFromEvent(e);
+        if (charCode === core.ENTER_KEY) {
+            const { onEnter } = this.props;
+            if (onEnter) {
+                e.preventDefault();
+                onEnter();
+            }
+        }
+    }
+
     renderCore() {
         let p = this.props
         let copyBtn = p.copy && document.queryCommandSupported('copy')
@@ -698,6 +711,7 @@ export class Input extends data.Component<InputProps, InputState> {
                         readOnly={!!p.readOnly}
                         onClick={this.handleClick}
                         onChange={this.handleChange}
+                        onKeyDown={this.handleEnterPressed}
                         autoComplete={p.autoComplete ? "" : "off"}
                         autoCorrect={p.autoComplete ? "" : "off"}
                         autoCapitalize={p.autoComplete ? "" : "off"}
@@ -711,7 +725,8 @@ export class Input extends data.Component<InputProps, InputState> {
                             value={value || ''}
                             readOnly={!!p.readOnly}
                             onClick={this.handleClick}
-                            onChange={this.handleChange}>
+                            onChange={this.handleChange}
+                            onKeyDown={this.handleEnterPressed}>
                         </textarea>}
                     {copyBtn}
                 </div>
