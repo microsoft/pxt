@@ -8,7 +8,6 @@ namespace pxt.diff {
 
     export function render(diffLines: string[]): HTMLElement {
         if (!diffLines) {
-            pxt.tickEvent("github.diff.toobig");
             return pxt.dom.el("div", null, pxtc.Util.lf("Too many differences to render diff."));
         }
 
