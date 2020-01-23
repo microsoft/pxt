@@ -1410,7 +1410,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
 
             // Don't add the block if there exists a block with the same definition
-            if (builtInBlocks[fn.qName]) return;
+            if (builtInBlocks[fn.qName]
+                // ignore blocks artifacts
+                || fn.attributes.shim == "TD_ID")
+                return;
 
             if (!res[ns]) {
                 res[ns] = [];

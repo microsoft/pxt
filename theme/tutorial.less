@@ -22,17 +22,14 @@
 /*******************************
       Tutorial mode
 *******************************/
-.tutorial #maineditor .full-abs {
+.tutorial #maineditor > .full-abs {
     top: @tutorialCardHeight;
 }
 
-.tutorial.flyoutOnly #maineditor .full-abs {
+.tutorial.flyoutOnly #maineditor > .full-abs {
     top: calc(@tutorialCardHeight + @workspaceHeaderHeight);
 }
 
-.tutorial #maineditor #monacoEditor {
-    top: 0rem;
-}
 /* Tutorial Mode */
 .menubar .ui.menu .item.tutorial-menuitem {
     background: rgba(27, 28, 29, 0.3) !important;
@@ -254,29 +251,6 @@ code.lang-filterblocks {
     display: none;
 }
 
-span.highlight-line {
-    font-weight: bold;
-    white-space: pre-wrap;
-    background: @highlightLineBackground;
-    display: inline-block;
-    padding: 0.5rem;
-    margin-left: -0.5rem;
-    color: @highlightLineColor;
-
-    .hljs-string, .hljs-meta-string {
-        color: @highlightLineStringColor;
-    }
-    .hljs-class {
-        color: @highlightLineClassColor;
-    }
-    .hljs-number {
-        color: @highlightLineNumberColor;
-    }
-    .hljs-keyword {
-        color: @highlightLineKeywordColor;
-    }
-}
-
 #tutorialcard .prevbutton,
 #tutorialcard .nextbutton {
     background: @tutorialSegmentBackground;
@@ -432,6 +406,12 @@ span.highlight-line {
         width: auto;
         margin: auto;
         padding: 0.5rem 0.8rem;
+    }
+}
+
+.editorlang-text {
+    #tutorialcard.seemore .tutorialsegment > button {
+        margin-right: 1rem;
     }
 }
 

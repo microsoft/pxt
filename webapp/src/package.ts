@@ -742,6 +742,25 @@ data.mountVirtualApi("pkg-git-pr", {
     expirationTime: p => 3600 * 1000
 })
 
+export function invalidatePagesStatus(hd: pxt.workspace.Header) {
+    data.invalidateHeader("pkg-git-pages", hd)
+}
+
+data.mountVirtualApi("pkg-git-pages", {
+    getAsync: p => {
+        p = data.stripProtocol(p)
+        const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
+        const header = f.header;
+        const ghid = f.getPkgId() == "this" && header && header.githubId;
+        if (!ghid) return Promise.resolve(undefined);
+        const parsed = pxt.github.parseRepoId(ghid);
+        if (!parsed) return Promise.resolve(undefined);
+        return pxt.github.getPagesStatusAsync(parsed.fullName)
+            .catch(e => undefined);
+    },
+    expirationTime: p => 3600 * 1000
+})
+
 
 // pkg-status:<guid>
 data.mountVirtualApi("pkg-status", {

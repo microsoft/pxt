@@ -5138,50 +5138,60 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                     pxt.debug(`card ${card.shortName || card.name}`);
                     switch (card.cardType) {
                         case "tutorial": {
-                            const tutorialMd = nodeutil.resolveMd(docsRoot, card.url);
-                            const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
-                            const pkgs: pxt.Map<string> = { "blocksprj": "*" };
-                            pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
+                            let urls = [card.url]
+                            if (card.otherActions) card.otherActions.forEach( a => { if (a.url) urls.push(a.url) } );
+                            for (let url of urls) {
+                                const tutorialMd = nodeutil.resolveMd(docsRoot, url);
+                                const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
+                                const pkgs: pxt.Map<string> = { "blocksprj": "*" };
+                                pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
 
-                            if (tutorial.code.indexOf("namespace") !== -1) {
-                                // Handles tilemaps and spritekinds
-                                tutorial.steps
-                                    .filter(step => !!step.contentMd)
-                                    .forEach((step, stepIndex) => getCodeSnippets(`${gal.name}-${stepIndex}`, step.contentMd)
-                                        .forEach((snippet, snippetIndex) => {
-                                            snippet.packages = pkgs;
-                                            addSnippet(
-                                                snippet,
-                                                "tutorial" + `${gal.name}-${stepIndex}-${snippetIndex}`,
-                                                cardIndex
-                                            )
-                                        })
-                                    );
-                            }
-                            else {
-                                addSnippet(<CodeSnippet>{
-                                    name: card.name,
-                                    code: tutorial.code,
-                                    type: "blocks",
-                                    ext: "ts",
-                                    packages: pkgs
-                                }, "tutorial" + gal.name, cardIndex);
+                                // Handles tilemaps, spritekinds
+                                if (tutorial.code.indexOf("namespace") !== -1
+                                    // Handles ```python``` code, TODO when tutorial.ts python parsing is added, update !tutorial.code check to verify code is python (not spy)
+                                    || (tutorial.editor == pxt.PYTHON_PROJECT_NAME && !tutorial.code)) {
+                                    tutorial.steps
+                                        .filter(step => !!step.contentMd)
+                                        .forEach((step, stepIndex) => getCodeSnippets(`${gal.name}-${stepIndex}`, step.contentMd)
+                                            .forEach((snippet, snippetIndex) => {
+                                                snippet.packages = pkgs;
+                                                addSnippet(
+                                                    snippet,
+                                                    "tutorial" + `${gal.name}-${stepIndex}-${snippetIndex}`,
+                                                    cardIndex
+                                                )
+                                            })
+                                        );
+                                }
+                                else {
+                                    addSnippet(<CodeSnippet>{
+                                        name: card.name,
+                                        code: tutorial.code,
+                                        type: "blocks",
+                                        ext: "ts",
+                                        packages: pkgs
+                                    }, "tutorial" + gal.name, cardIndex);
+                                }
                             }
 
                             break;
                         }
                         case "example": {
-                            const exMd = nodeutil.resolveMd(docsRoot, card.url);
-                            const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
-                            const pkgs: pxt.Map<string> = { "blocksprj": "*" };
-                            pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
-                            addSnippet(<CodeSnippet>{
-                                name: card.name,
-                                code: prj.filesOverride["main.ts"],
-                                type: "blocks",
-                                ext: "ts",
-                                packages: pkgs
-                            }, "example" + gal.name, cardIndex);
+                            let urls = [card.url]
+                            if (card.otherActions) card.otherActions.forEach( a => { if (a.url) urls.push(a.url) } );
+                            for (let url of urls) {
+                                const exMd = nodeutil.resolveMd(docsRoot, url);
+                                const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
+                                const pkgs: pxt.Map<string> = { "blocksprj": "*" };
+                                pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
+                                addSnippet(<CodeSnippet>{
+                                    name: card.name,
+                                    code: prj.filesOverride["main.ts"],
+                                    type: "blocks",
+                                    ext: "ts",
+                                    packages: pkgs
+                                }, "example" + gal.name, cardIndex);
+                            }
                             break;
                         }
                     }

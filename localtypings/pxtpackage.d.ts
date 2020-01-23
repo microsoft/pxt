@@ -26,7 +26,8 @@ declare namespace pxt {
 
     interface CodeCardAction {
         url: string,
-        editor?: CodeCardEditorType
+        editor?: CodeCardEditorType;
+        cardType?: CodeCardType;
     }
 
     /**

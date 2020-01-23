@@ -120,11 +120,20 @@ namespace pxt.py {
                 'type', 'vars', 'zip']
             return reservedNames;
         }
+        function tryGetSymbol(exp: ts.Node) {
+            if (!exp.getSourceFile())
+                return null
+            let tsExp = exp.getText()
+            return symbols[tsExp] || null;
+        }
         function tryGetPyName(exp: ts.BindingPattern | ts.PropertyName | ts.EntityName | ts.PropertyAccessExpression): string | null {
             if (!exp.getSourceFile())
                 return null
             let tsExp = exp.getText()
             let sym = symbols[tsExp]
+            if (sym && sym.attributes.alias) {
+                return sym.attributes.alias
+            }
             if (sym && sym.pyQName) {
                 return sym.pyQName
             }
@@ -330,7 +339,7 @@ namespace pxt.py {
         function emitWhileStmt(s: ts.WhileStatement): string[] {
             let [cond, condSup] = emitExp(s.expression)
             let body = emitBody(s.statement)
-            let whileStmt = expWrap("while ", cond);
+            let whileStmt = expWrap("while ", cond, ":");
             return condSup.concat(whileStmt).concat(body)
         }
         type RangeItr = {
@@ -1086,6 +1095,13 @@ namespace pxt.py {
                     pxt.tickEvent("depython.todo", { kind: s.kind })
                     return throwError(s, 3010, "TODO: Unsupported call site where caller the arguments outnumber the callee parameters: " + s.getText());
                 }
+            }
+
+            // special case TD_ID function, don't emit them
+            const sym = tryGetSymbol(s.expression);
+            if (s.arguments && sym && sym.attributes.shim == "TD_ID") {
+                // this function is a no-op and should not be emitted
+                return emitExp(s.arguments[0])
             }
 
             // TODO inspect type info to rewrite things like console.log, Math.max, etc.

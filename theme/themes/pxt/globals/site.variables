@@ -311,6 +311,7 @@ default semantic
 @homeDetailCloseColor: white;
 @homeDetailCloseBackground: @grey;
 @homeDetailCardActionBackground: darken(@homeDetailViewBackground, 10%);
+@homeInvertedDetailCardActionBackground: lighten(@homeScreenBackground, 10%);
 
 /*-------------------
    Tutorial

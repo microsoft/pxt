@@ -100,10 +100,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     }
 
     chgGallery(scr: pxt.CodeCard, action?: pxt.CodeCardAction) {
-        pxt.tickEvent("projects.gallery", { name: scr.name });
-        let url = action ? action.url : scr.url;
-        let editor = action ? action.editor : "blocks";
-        let editorPref = editor + "prj";
+        let editor: string = (action && action.editor) || "blocks";
+        if (editor == "js") editor = "ts";
+        pxt.tickEvent("projects.gallery", { name: scr.name, cardType: scr.cardType, editor });
+        const url = action ? action.url : scr.url;
+        const editorPref = editor + "prj";
         switch (scr.cardType) {
             case "template":
                 const prj = pxt.Util.clone(pxt.appTarget.blocksprj);
@@ -115,12 +116,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 this.props.parent.newEmptyProject(scr.name, url);
                 break;
             case "tutorial":
-                if (editor != "blocks") {
-                    pxt.Util.setEditorLanguagePref(editor);
-                    this.props.parent.newEmptyProject(scr.name, url, editorPref);
-                } else {
-                    this.props.parent.startTutorial(url, scr.name);
-                }
+                this.props.parent.startTutorial(url, scr.name, false, editorPref);
                 break;
             default:
                 const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(url); // Tutorial
@@ -787,7 +783,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             case "js":
                 return "JavaScript";
             case "blocks":
-                return "Blocks";
+                return lf("Blocks");
             default:
                 return null;
         }
@@ -889,7 +885,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     {this.getActionCard(clickLabel, cardType, this.handleDetailClick, true)}
                     {otherActions && otherActions.map( (el, i) => {
                         let onClick = this.handleActionClick(el);
-                        return this.getActionCard(clickLabel, cardType, onClick, false, el, `action${i}`);
+                        return this.getActionCard(clickLabel, el.cardType || cardType, onClick, false, el, `action${i}`);
                     })}
                     {cardType === "forumUrl" &&
                         // TODO (shakao) migrate forumurl to otherAction json in md
