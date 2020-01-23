@@ -195,17 +195,16 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             str = str.replace(/\s+/g, "");
 
             const indLastPeriod = str.lastIndexOf(".");
-            let name: string;
+            let name = str;
             let givenExt: string;
             if (indLastPeriod != -1) {
                 name = str.slice(0, indLastPeriod);
                 givenExt = str.slice(indLastPeriod + 1).toLowerCase();
-            } else {
-                name = str;
             }
 
             const pkgCfg = pkg.mainPkg && pkg.mainPkg.config
-            const languageRestriction = pkgCfg && pkg.mainPkg.config.languageRestriction;
+            const languageRestriction = pkgCfg && pkgCfg.languageRestriction;
+
             let ext = 'ts';
             let comment = "//";
 
@@ -214,22 +213,24 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 comment = "#";
             }
 
-            switch (givenExt) {
-                case "js": case "ts":
-                    break;
-                case "py":
-                    if (languageRestriction !== pxt.editor.LanguageRestriction.JavaScriptOnly) {
-                        ext = "py";
-                        comment = "#";
+            if (givenExt) {
+                switch (givenExt) {
+                    case "js": case "ts":
                         break;
-                    }
-                case "md":
-                    ext = "md";
-                    comment = ">";
-                    break;
-                default:
-                    // not a valid extension; leave it as it was and append ts
-                    name = str;
+                    case "py":
+                        if (languageRestriction !== pxt.editor.LanguageRestriction.JavaScriptOnly) {
+                            ext = "py";
+                            comment = "#";
+                        }
+                        break;
+                    case "md":
+                        ext = "md";
+                        comment = ">";
+                        break;
+                    default:
+                        // not a valid extension; leave it as it was and append def extension
+                        name = str;
+                }
             }
 
             if (!name)

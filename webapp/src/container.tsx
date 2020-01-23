@@ -515,9 +515,11 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
 
         const cfg = pkg.mainPkg && pkg.mainPkg.config;
         const languageRestriction = cfg && cfg.languageRestriction;
-        const tsOnly = languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly && !debugging && !inTutorial;
-        const pyOnly = languageRestriction === pxt.editor.LanguageRestriction.PythonOnly && !debugging && !inTutorial;
-        const showToggle = !inTutorial && !targetTheme.blocksOnly && !debugging
+
+        const inAltEditor = debugging || inTutorial;
+        const tsOnly = !inAltEditor && languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly;
+        const pyOnly = !inAltEditor && languageRestriction === pxt.editor.LanguageRestriction.PythonOnly;
+        const showToggle = !inAltEditor && !targetTheme.blocksOnly
                 && (sandbox || !(tsOnly || pyOnly)); // show if sandbox or not single language
 
         /* tslint:disable:react-a11y-anchors */

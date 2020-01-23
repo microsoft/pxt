@@ -1980,8 +1980,6 @@ export class ProjectView
             cfg.preferredEditor = options.preferredEditor;
 
         if (options.languageRestriction) {
-            cfg.languageRestriction = options.languageRestriction;
-
             let filesToDrop = /\.(blocks)$/;
             if (options.languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly) {
                 filesToDrop = /\.(py|blocks)$/;
@@ -1990,6 +1988,7 @@ export class ProjectView
                 cfg.preferredEditor = pxt.PYTHON_PROJECT_NAME;
             }
 
+            cfg.languageRestriction = options.languageRestriction;
             cfg.files = cfg.files.filter(f => !filesToDrop.test(f));
             delete files["main.blocks"];
         }

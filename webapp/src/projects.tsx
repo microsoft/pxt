@@ -1239,7 +1239,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             <sui.ExpandableMenu title={lf("Options")}>
                 {lf("Project Template:")}
                 {" "}
-                <select value={this.state.language} className="ui dropdown" onChange={this.handleLanguageChange} aria-label={lf("Selected Language")}>
+                <select value={language} className="ui dropdown" onChange={this.handleLanguageChange} aria-label={lf("Selected Language")}>
                     <option aria-selected={language === pxt.editor.LanguageRestriction.Standard} value={pxt.editor.LanguageRestriction.Standard}>{lf("Standard")}</option>
                     {pythonEnabled && <option aria-selected={language === pxt.editor.LanguageRestriction.PythonOnly} value={pxt.editor.LanguageRestriction.PythonOnly}>{lf("{0} Only", "Python")}</option>}
                     <option aria-selected={language === pxt.editor.LanguageRestriction.JavaScriptOnly} value={pxt.editor.LanguageRestriction.JavaScriptOnly}>{lf("{0} Only", "JavaScript")}</option>
