@@ -306,7 +306,9 @@ namespace pxt.diff {
         let lnA = 0, lnB = 0
         let lastMark = ""
         const tbody = pxt.dom.el("tbody");
-        const diffEl = pxt.dom.el("table", { "class": `diffview ${options.hideLineNumbers ? 'nonumbers' : ''}` }, tbody);
+        const diffEl = pxt.dom.el("table", { 
+            "class": `diffview ${options.hideLineNumbers ? 'nonumbers' : ''}` 
+        }, tbody);
         let savedDiffEl: HTMLElement = null
         diffLines.forEach((ln: string, idx: number) => {
             const m = /^@@ -(\d+),\d+ \+(\d+),\d+/.exec(ln)
