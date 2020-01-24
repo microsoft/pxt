@@ -1011,7 +1011,6 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         }
 
         this.hide = this.hide.bind(this);
-        this.modalDidOpen = this.modalDidOpen.bind(this);
         this.handleChange = this.handleChange.bind(this);
         this.save = this.save.bind(this);
         this.skip = this.skip.bind(this);
@@ -1028,13 +1027,6 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     show() {
         pxt.tickEvent('exitandsave.show', undefined, { interactiveConsent: false });
         this.setState({ visible: true });
-    }
-
-    modalDidOpen(ref: HTMLElement) {
-        let dialogInput = document.getElementById('projectNameInput') as HTMLInputElement;
-        if (dialogInput && !pxt.BrowserUtils.isMobile()) {
-            dialogInput.setSelectionRange(0, 9999);
-        }
     }
 
     handleChange(name: string) {
@@ -1078,12 +1070,15 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     renderCore() {
         const { visible, projectName } = this.state;
 
-        const actions = [{
+        const mobile = pxt.BrowserUtils.isMobile();
+        const actions = [
+            {
                 label: lf("Save"),
                 onclick: this.save,
                 icon: 'check',
                 className: 'approve positive'
-            }, {
+            },
+            {
                 label: lf("Skip"),
                 onclick: this.skip
             }
@@ -1094,14 +1089,14 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                 onClose={this.hide} dimmer={true} buttons={actions}
                 closeIcon={true} header={lf("Project has no name {0}", this.state.emoji)}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
-                modalDidOpen={this.modalDidOpen}
             >
                 <div>
                     <p>{lf("Give your project a name.")}</p>
                     <div className="ui form">
-                        <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
+                        <sui.Input ref="filenameinput" id={"projectNameInput"}
                             ariaLabel={lf("Type a name for your project")} autoComplete={false}
-                            value={projectName || ''} onChange={this.handleChange} onEnter={this.save} />
+                            value={projectName || ''} onChange={this.handleChange} onEnter={this.save}
+                            selectOnMount={!mobile} autoFocus={!mobile}/>
                     </div>
                 </div>
             </sui.Modal>
@@ -1110,9 +1105,9 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
 }
 
 export interface NewProjectDialogState {
-    projectName?: string;
+    name?: string;
+    languageRestriction?: pxt.editor.LanguageRestriction;
     emoji?: string;
-    language?: pxt.editor.LanguageRestriction;
     visible?: boolean;
 }
 
@@ -1124,45 +1119,32 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
         this.state = {
             visible: false,
             emoji: "",
-            language: pxt.editor.LanguageRestriction.Standard
+            languageRestriction: pxt.editor.LanguageRestriction.Standard
         }
-
-        this.hide = this.hide.bind(this);
-        this.modalDidOpen = this.modalDidOpen.bind(this);
-        this.handleTextChange = this.handleTextChange.bind(this);
-        this.handleLanguageChange = this.handleLanguageChange.bind(this);
-        this.save = this.save.bind(this);
     }
 
     componentWillReceiveProps(newProps: ISettingsProps) {
         this.handleTextChange(newProps.parent.state.projectName);
     }
 
-    hide() {
+    hide = () => {
         this.setState({ visible: false });
     }
 
-    show() {
+    show = () => {
         pxt.tickEvent('newprojectdialog.show', undefined, { interactiveConsent: false });
         this.setState({
-            projectName: "",
+            name: "",
             emoji: "",
             visible: true,
-            language: pxt.editor.LanguageRestriction.Standard
+            languageRestriction: pxt.editor.LanguageRestriction.Standard
         });
     }
 
-    modalDidOpen(ref: HTMLElement) {
-        let dialogInput = ref.querySelector('#projectNameInput') as HTMLInputElement;
-        if (dialogInput && !pxt.BrowserUtils.isMobile()) {
-            dialogInput.setSelectionRange(0, 9999);
-        }
-    }
-
-    handleTextChange(name: string) {
+    handleTextChange = (name: string) => {
         const untitled = lf("Untitled");
-        let emoji = "";
 
+        let emoji = "";
         if (name && !untitled.split("").some((c, i) => untitled.substr(0, i + 1) == name)) {
             const emojis = ["😌", "😄", "😃", "😍"];
             emoji = emojis[Math.min(name.length, emojis.length) - 1];
@@ -1175,14 +1157,14 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
         }
 
         this.setState({
-            projectName: name,
+            name,
             emoji
         });
     }
 
-    handleLanguageChange(lang: string) {
+    handleLanguageChange = (lang: string) => {
         this.setState({
-            language: lang as pxt.editor.LanguageRestriction
+            languageRestriction: lang as pxt.editor.LanguageRestriction
         });
     }
 
@@ -1193,14 +1175,14 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
         });
     }
 
-    save() {
-        const { projectName: newName, language } = this.state;
+    save = () => {
+        const { name, languageRestriction } = this.state;
 
         this.hide();
         if (this.createProjectCb) {
             this.createProjectCb({
-                name: newName,
-                languageRestriction: language
+                name,
+                languageRestriction
             });
         }
 
@@ -1208,15 +1190,18 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
     }
 
     renderCore() {
-        const { visible, projectName, emoji } = this.state;
+        const { visible, name, emoji } = this.state;
 
-        const actions: sui.ModalButton[] = [{
-            label: lf("Create"),
-            onclick: this.save,
-            icon: 'check',
-            className: 'approve positive'
-        }];
+        const actions: sui.ModalButton[] = [
+            {
+                label: lf("Create"),
+                onclick: this.save,
+                icon: 'check',
+                className: 'approve positive'
+            }
+        ];
 
+        const mobile = pxt.BrowserUtils.isMobile();
         const pythonEnabled = pxt.appTarget.appTheme.python;
         const langOpts: sui.SelectItem[] = [
             {
@@ -1237,19 +1222,19 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             onClose={this.hide} dimmer={true} buttons={actions}
             closeIcon={true} header={lf("Create a Project {0}", emoji)}
             closeOnDimmerClick closeOnDocumentClick closeOnEscape
-            modalDidOpen={this.modalDidOpen}
         >
             <div>
                 <p>{lf("Give your project a name.")}</p>
                 <div className="ui form">
-                    <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
+                    <sui.Input ref="filenameinput" id={"projectNameInput"}
                         ariaLabel={lf("Type a name for your project")} autoComplete={false}
-                        value={projectName || ''} onChange={this.handleTextChange} onEnter={this.save} />
+                        value={name || ''} onChange={this.handleTextChange} onEnter={this.save}
+                        selectOnMount={!mobile} autoFocus={!mobile} />
                 </div>
             </div>
             <br />
             <sui.ExpandableMenu title={lf("Options")}>
-                <sui.Select description={lf("Project Template:")} options={langOpts} onChange={this.handleLanguageChange} aria-label={lf("Select Language")} />
+                <sui.Select label={lf("Project Template:")} options={langOpts} onChange={this.handleLanguageChange} aria-label={lf("Select Language")} />
             </sui.ExpandableMenu>
         </sui.Modal>
     }

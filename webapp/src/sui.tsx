@@ -401,7 +401,7 @@ export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMen
 export interface SelectProps {
     options: SelectItem[];
     onChange?: (value: string) => void;
-    description?: string;
+    label?: string;
 }
 
 export interface SelectState {
@@ -434,11 +434,11 @@ export class Select extends UIElement<SelectProps, SelectState> {
     }
 
     render() {
-        const { options, description } = this.props;
+        const { options, label } = this.props;
         const { selected } = this.state;
 
         return (<div>
-            { description && `${description} ` }
+            { label && `${label} ` }
             <select value={selected} className="ui dropdown" onChange={this.handleOnChange}>
                 {options.map(opt =>
                     opt && <option aria-selected={selected === opt.value} value={opt.value}>{opt.display || opt.value}</option>
