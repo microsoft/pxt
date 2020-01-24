@@ -308,7 +308,7 @@ namespace pxt.diff {
         let lastMark = ""
         const tbody = pxt.dom.el("tbody");
         const diffEl = pxt.dom.el("table", { 
-            "class": `diffview ${options.hideLineNumbers ? 'nonumbers' : ''}` 
+            "class": `diffview` 
         }, tbody);
         let savedDiffEl: HTMLElement = null
         diffLines.forEach((ln: string, idx: number) => {
@@ -344,16 +344,15 @@ namespace pxt.diff {
                 return;
 
             // add diff
-            const isMarker = lastMark == "@";
+            const isMarkerLine = lastMark == "@";
             const className = `${diffClasses[lastMark]}`;
             tbody.appendChild(
                 pxt.dom.el("tr", { "class": className }, [
                     !options.hideLineNumbers && pxt.dom.el("td", { class: "line-a", "data-content": lnA }),
                     !options.hideLineNumbers && pxt.dom.el("td", { class: "line-b", "data-content": lnB }),
-                    isMarker
-                        ? pxt.dom.el("td", { "colspan": 2, class: "change" }, pxt.dom.el("code", null, ln))
-                        : pxt.dom.el("td", { class: "marker", "data-content": lastMark }),
-                    !isMarker && pxt.dom.el("td", { class: "change" }, currDiff)
+                    isMarkerLine && pxt.dom.el("td", { "colspan": 2, class: "change" }, pxt.dom.el("code", null, ln)),
+                    !options.hideMarker && !isMarkerLine && pxt.dom.el("td", { class: "marker", "data-content": lastMark }),
+                    !isMarkerLine && pxt.dom.el("td", { class: "change" }, currDiff)
                 ])
             );
         })
