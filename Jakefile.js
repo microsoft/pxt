@@ -476,9 +476,11 @@ file('built/web/vs/editor/editor.main.js', [], function () {
 
 task("codicon", ["monaco-editor"], () => {
     // For whatever reason the codicon.ttf font that comes with the monaco-editor is invalid.
-    // Copy over a good version from the source
-    jake.mkdirP("webapp/public/vs/base/browser/ui/codiconLabel/codicon/")
-    jake.cpR("node_modules/vscode-codicons/dist/codicon.ttf", "webapp/public/vs/base/browser/ui/codiconLabel/codicon/")
+    // We need to inline the font anyways so fetch a good version of the font from the source
+    let font = fs.readFileSync("node_modules/vscode-codicons/dist/codicon.ttf").toString("base64");
+    let monacoCSS = fs.readFileSync("webapp/public/vs/editor/editor.main.css", { encoding: "utf8" });
+    monacoCSS = monacoCSS.replace(`../base/browser/ui/codiconLabel/codicon/codicon.ttf`, `data:application/x-font-ttf;charset=utf-8;base64,${font}`)
+    fs.writeFileSync("webapp/public/vs/editor/editor.main.css", monacoCSS, { encoding: "utf8" });
 })
 
 file('built/web/vs/language/typescript/tsMode.js', ['node_modules/pxt-monaco-typescript/release/dev/tsMode.js'], function () {
