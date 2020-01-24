@@ -33,6 +33,32 @@ namespace pxt.runner {
         split?: boolean; // split in multiple divs if too big
     }
 
+    export function defaultClientRenderOptions() {
+        const renderOptions: ClientRenderOptions = {
+            blocksAspectRatio: window.innerHeight < window.innerWidth ? 1.62 : 1 / 1.62,
+            snippetClass: 'lang-blocks',
+            signatureClass: 'lang-sig',
+            blocksClass: 'lang-block',
+            blocksXmlClass: 'lang-blocksxml',
+            diffBlocksXmlClass: 'lang-diffblocksxml',
+            staticPythonClass: 'lang-spy',
+            simulatorClass: 'lang-sim',
+            linksClass: 'lang-cards',
+            namespacesClass: 'lang-namespaces',
+            codeCardClass: 'lang-codecard',
+            packageClass: 'lang-package',
+            projectClass: 'lang-project',
+            snippetReplaceParent: true,
+            simulator: true,
+            showEdit: true,
+            hex: true,
+            tutorial: false,
+            showJavaScript: false,
+            hexName: pxt.appTarget.id
+        }
+        return renderOptions;        
+    }
+
     export interface WidgetOptions {
         showEdit?: boolean;
         showJs?: boolean;
@@ -1020,7 +1046,7 @@ namespace pxt.runner {
 
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
         pxt.analytics.enable();
-        if (!options) options = {}
+        if (!options) options = defaultClientRenderOptions();
         if (options.pxtUrl) options.pxtUrl = options.pxtUrl.replace(/\/$/, '');
         if (options.showEdit) options.showEdit = !pxt.BrowserUtils.isIFrame();
 
