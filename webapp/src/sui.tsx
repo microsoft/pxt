@@ -365,11 +365,11 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 }
 
-interface ExpandableMenuProps {
+export interface ExpandableMenuProps {
     title?: string;
 }
 
-interface ExpandableMenuState {
+export interface ExpandableMenuState {
     expanded?: boolean;
 }
 
@@ -380,7 +380,7 @@ export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMen
         });
     }
 
-    renderCore() {
+    render() {
         const { title, children } = this.props;
         const { expanded } = this.state
 
@@ -394,6 +394,56 @@ export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMen
             {expanded && <div className="expanded-items">
                 {children}
             </div> }
+        </div>);
+    }
+}
+
+export interface SelectProps {
+    options: SelectItem[];
+    onChange?: (value: string) => void;
+    description?: string;
+}
+
+export interface SelectState {
+    selected?: string;
+}
+
+export interface SelectItem {
+    value: string | number;
+    display?: string;
+}
+
+export class Select extends UIElement<SelectProps, SelectState> {
+    constructor(props: SelectProps) {
+        super(props);
+        const { options } = props;
+        this.setState({
+            selected: options[0] && (options[0].value + "")
+        })
+    }
+
+    handleOnChange = (ev: React.ChangeEvent<HTMLSelectElement>) => {
+        const { onChange } = this.props;
+        this.setState({
+            selected: ev.target.value
+        });
+
+        if (onChange) {
+            onChange(ev.target.value);
+        }
+    }
+
+    render() {
+        const { options, description } = this.props;
+        const { selected } = this.state;
+
+        return (<div>
+            { description && `${description} ` }
+            <select value={selected} className="ui dropdown" onChange={this.handleOnChange}>
+                {options.map(opt =>
+                    opt && <option aria-selected={selected === opt.value} value={opt.value}>{opt.display || opt.value}</option>
+                )}
+            </select>
         </div>);
     }
 }
