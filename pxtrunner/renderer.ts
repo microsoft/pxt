@@ -13,6 +13,7 @@ namespace pxt.runner {
         blocksClass?: string;
         blocksXmlClass?: string;
         diffBlocksXmlClass?: string;
+        diffClass?: string;
         staticPythonClass?: string; // typescript to be converted to static python
         projectClass?: string;
         blocksAspectRatio?: number;
@@ -41,6 +42,7 @@ namespace pxt.runner {
             blocksClass: 'lang-block',
             blocksXmlClass: 'lang-blocksxml',
             diffBlocksXmlClass: 'lang-diffblocksxml',
+            diffClass: 'lang-diff',
             staticPythonClass: 'lang-spy',
             simulatorClass: 'lang-sim',
             linksClass: 'lang-cards',
@@ -56,7 +58,7 @@ namespace pxt.runner {
             showJavaScript: false,
             hexName: pxt.appTarget.id
         }
-        return renderOptions;        
+        return renderOptions;
     }
 
     export interface WidgetOptions {
@@ -560,6 +562,38 @@ namespace pxt.runner {
             const segment = $('<div class="ui segment codewidget"/>').append(s);
             c.replaceWith(segment);
         }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio });
+    }
+
+
+    function renderDiffAsync(opts: ClientRenderOptions): Promise<void> {
+        if (!opts.diffClass) return Promise.resolve();
+        const cls = opts.diffClass;
+        function renderNextDiffAsync(cls: string): Promise<void> {
+            let $el = $("." + cls).first();
+            if (!$el[0]) return Promise.resolve();
+
+            const src = $el.text().split(/-{10,}/);
+            const oldSrc = src[0];
+            const newSrc = src[1];
+
+            $el.removeClass(cls);
+            try {
+                const diffEl = pxt.diff.render(oldSrc, newSrc, {
+                    hideLineNumbers: true,
+                    hideMarker: true,
+                    hideRemoved: true
+                });
+                if (opts.snippetReplaceParent) $el = $el.parent();
+                const segment = $('<div class="ui segment codewidget"/>').append(diffEl);
+                $el.replaceWith(segment);
+            } catch (e) {
+                pxt.reportException(e)
+                $el.append($('<div/>').addClass("ui segment warning").text(e.message));
+            }
+            return Promise.delay(1, renderNextDiffAsync(cls));
+        }
+
+        return renderNextDiffAsync(cls);
     }
 
     function renderNamespaces(options: ClientRenderOptions): Promise<void> {
@@ -1068,6 +1102,7 @@ namespace pxt.runner {
             .then(() => renderBlocksAsync(options))
             .then(() => renderBlocksXmlAsync(options))
             .then(() => renderDiffBlocksXmlAsync(options))
+            .then(() => renderDiffAsync(options))
             .then(() => renderStaticPythonAsync(options))
             .then(() => renderProjectAsync(options))
             .then(() => consumeRenderQueueAsync())

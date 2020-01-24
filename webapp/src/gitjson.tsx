@@ -439,7 +439,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     }
 
     private lineDiff(lineA: string, lineB: string): { a: JSX.Element, b: JSX.Element } {
-        const df = pxt.github.diff(lineA.split("").join("\n"), lineB.split("").join("\n"), {
+        const df = pxt.diff.compute(lineA.split("").join("\n"), lineB.split("").join("\n"), {
             context: Infinity
         })
         if (!df) // diff failed
@@ -593,7 +593,7 @@ ${content}
             "+": "diff-added",
             "-": "diff-removed",
         }
-        const diffLines = pxt.github.diff(baseContent, content, { ignoreWhitespace: !!ignoreWhitespace })
+        const diffLines = pxt.diff.compute(baseContent, content, { ignoreWhitespace: !!ignoreWhitespace })
         if (!diffLines) {
             pxt.tickEvent("github.diff.toobig");
             return {

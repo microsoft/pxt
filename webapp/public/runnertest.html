@@ -115,28 +115,24 @@
             
         ksRunnerReady(function() {
             pxt.docs.requireMarked = function() { return marked; }
-            pxt.runner.renderAsync({
-                snippetClass: 'lang-blocks',
-                signatureClass: 'lang-sig',
-                blocksClass:'lang-block',
-                blocksXmlClass: 'lang-blocksxml',
-                diffBlocksXmlClass: 'lang-diffblocksxml',
-                simulatorClass:'lang-sim',
-                linksClass: 'lang-links',
-                projectClass: 'lang-project',
-                namespacesClass: 'lang-namespaces',
-                codeCardClass: 'lang-codecard',
-                packageClass: 'lang-package',
-                simulator: true,
-                hex: true,
-                hexName: 'test',
-                snippetReplaceParent: true,
-            }).done(function() {
+            pxt.runner.renderAsync(pxt.runner.defaultClientRenderOptions()).done(function() {
                // next()                
             });                        
         })
     </script>
 <pre>
+  <pre>
+    <code id="diff" class="lang-diff">
+a;
+b;
+let x = 0;
+-------------------
+b;
+let y = 0;
+c;
+    </code>
+  </pre>
+<!--       
         <pre>
                 <code id="diffblocks" class='lang-diffblocksxml'>
                     &lt;xml xmlns="http://www.w3.org/1999/xhtml"&gt;
@@ -325,7 +321,6 @@
                 <code>
                 </pre>    
                 
-<!--       
 <code class='lang-project'>
 tqnxfpkndd
 </code>
