@@ -291,6 +291,16 @@ namespace pxt.diff {
         "-": "diff-removed",
     }
 
+    export function split(dualSrc: string): { fileA: string, fileB: string } {
+        const src = dualSrc.split(/-{10,}/, 2);
+        if (src.length < 2)
+            return { fileA: dualSrc, fileB: undefined };
+
+        const fileA = src[0].replace(/\n$/, ''); // intial new line introduced by html
+        const fileB = src[1].replace(/^\n/, ''); // last new line introduct by html
+        return { fileA, fileB };
+    }
+
     export interface RenderOptions extends DiffOptions {
         hideMarkerLine?: boolean;
         hideLineNumbers?: boolean;

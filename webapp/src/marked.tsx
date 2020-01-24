@@ -88,6 +88,24 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 }
             });
 
+        pxt.Util.toArray(content.querySelectorAll(`code.lang-diff`))
+            .forEach((langBlock: HTMLElement) => {
+                const code = langBlock.textContent;
+                const { fileA, fileB } = pxt.diff.split(code);
+                const el = pxt.diff.render(fileA, fileB, {
+                    hideLineNumbers: true,
+                    hideMarkerLine: true,
+                    hideMarker: true,
+                    hideRemoved: true,
+                    update: true
+                });
+                pxsim.U.clear(langBlock);
+                const wrapperDiv = document.createElement('div');
+                wrapperDiv.className = 'ui segment raised loading';
+                langBlock.appendChild(wrapperDiv);
+                wrapperDiv.appendChild(el);
+            });
+
         pxt.Util.toArray(content.querySelectorAll(`code.lang-blocks`))
             .forEach((langBlock: HTMLElement) => {
                 // Can't use innerHTML here because it escapes certain characters (e.g. < and >)

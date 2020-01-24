@@ -572,9 +572,7 @@ namespace pxt.runner {
             let $el = $("." + cls).first();
             if (!$el[0]) return Promise.resolve();
 
-            const src = $el.text().split(/-{10,}/);
-            const oldSrc = src[0].replace(/\n$/, ''); // intial new line introduced by html
-            const newSrc = src[1].replace(/^\n/, ''); // last new line introduct by html
+            const { fileA: oldSrc, fileB: newSrc } = pxt.diff.split($el.text());
 
             try {
                 const diffEl = pxt.diff.render(oldSrc, newSrc, {
