@@ -69,42 +69,139 @@
     z-index: @menuBarZIndex+1 !important;
 }
 
+
+/*******************************
+     Monaco Flyout
+*******************************/
+
 .monacoFlyout {
     font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
     background: @monacoFlyoutColor;
-    overflow-x: visible;
-    overflow-y: auto;
     border-top-right-radius: 8px;
     border-bottom-right-radius: 8px;
     z-index: @monacoFlyoutZIndex;
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+
+    .monacoFlyoutLabel {
+        vertical-align: middle;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        -webkit-user-select: none;
+        user-select: none;
+        color: white;
+        font-size: 15px;
+
+        .monacoFlyoutHeadingIcon {
+            display: inline-block;
+        }
+        .monacoFlyoutLabelText {
+            display: inline-block;
+            font-size: 1.5rem;
+            line-height: 1.5rem;
+            font-family: @pageFont;
+            vertical-align: middle;
+        }
+    }
+    .monacoBlock {
+        border-bottom: 1px solid rgba(255,255,255,0.4);
+        color: #d4d4d4;
+
+        .monacoDraggableBlock {
+            width: 100%;
+            margin-bottom: 0.75rem;
+            border-radius: 0.25rem;
+            color: @white;
+            padding: 0.6rem;
+            cursor: pointer;
+            display: inline-block;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            -webkit-user-select: none;
+            user-select: none;
+            position: relative;
+
+            span {
+                word-wrap: break-word;
+            }
+
+            span.sig {
+                opacity: 0.6;
+                margin-left: 10px;
+            }
+
+            span.sigPrefix {
+                opacity: 0.6;
+            }
+
+            span.docs {
+                display: block; /* enable as needed */
+                color: @white;
+                font-size:70%;
+                max-width: 22rem;
+            }
+        }
+
+        .description {
+            font-family: sans-serif;
+            font-size: 1rem;
+        }
+
+        .separator {
+            border-top: 1px solid;
+            margin: 0.25rem 0;
+        }
+
+        .paramName {
+            font-weight: 800;
+        }
+
+        .detail .params {
+            display: none;
+        }
+        &.expand {
+            color: @white;
+            cursor: grab;
+
+            .blockHandle,
+            .detail .params {
+                display: block;
+            }
+        }
+
+        .blockHandle {
+            display: none;
+            position: absolute;
+            width: 2rem;
+            right: -0.9rem;
+            border-radius: 0 1rem 1rem 0;
+
+            i.bars {
+                display: block;
+                position: relative;
+                top: calc(~'50% - 0.75rem');
+                transform: rotate(90deg);
+                font-size: 1.5rem;
+            }
+        }
+    }
+    .monacoBlock:not(.expand) {
+        background-color: transparent!important;
+    }
 }
 
-.monacoFlyout > div:not(.monacoFlyoutHeading) {
-    margin: 1rem;
-}
-.monacoFlyout > div:not(.monacoFlyoutHeading), .monacoFlyout .monacoDraggableBlock {
-    max-width: 350px;
+#monacoFlyoutWrapper {
+    overflow-x: visible;
+    overflow-y: auto;
+    height: 100%;
+
+    & > div {
+        padding: 1rem;
+        max-width: 350px;
+    }
 }
 
-.monacoFlyoutLabel {
-    vertical-align: middle;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    -webkit-user-select: none;
-    user-select: none;
-    color: white;
-    font-size: 15px;
-}
-
-.monacoFlyoutLabelText {
-    font-family: @pageFont;
-    vertical-align: middle;
-}
-
-.monacoFlyoutHeading {
-    margin: .3rem;
-    padding-left: .8rem;
-}
 .monacoFlyoutHeading .monacoFlyoutHeadingText {
     color: white;
     vertical-align: middle !important;
@@ -120,58 +217,6 @@
     border: none;
     border-top: 1px dotted white;
     height:1px;
-}
-
-.monacoDraggableBlock {
-    color: @white;
-    padding: 0.6rem;
-    border-radius: 8px;
-    border: solid 1px @white;
-    cursor: pointer;
-    display: inline-block;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    -webkit-user-select: none;
-    user-select: none;
-    position: relative;
-}
-
-.monacoDraggableBlock.monacoHexBlock {
-    margin-left: 17px;
-    margin-right: 17px;
-}
-.monacoDraggableBlock.monacoHexBlock:before,
-.monacoDraggableBlock.monacoHexBlock:after {
-    content: '';
-    position:absolute;
-    width: 0;
-    top: 0;
-}
-.monacoDraggableBlock.monacoHexBlock:before {
-    left: -17px;
-}
-.monacoDraggableBlock.monacoHexBlock:after {
-    left: 100%;
-}
-
-.monacoDraggableBlock span {
-    word-wrap: break-word;
-}
-
-.monacoDraggableBlock span.sig {
-    opacity: 0.6;
-    margin-left: 10px;
-}
-
-.monacoDraggableBlock span.sigPrefix {
-    opacity: 0.6;
-}
-
-.monacoDraggableBlock span.docs {
-    display: block; /* enable as needed */
-    color: @white;
-    font-size:70%;
-    max-width: 22rem;
 }
 
 /* Limit color interferences with semantic anchor element */

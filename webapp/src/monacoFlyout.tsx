@@ -1,0 +1,246 @@
+import * as React from "react";
+import * as compiler from "./compiler"
+import * as core from "./core";
+import * as sui from "./sui";
+import * as toolbox from "./toolbox";
+import * as workspace from "./workspace";
+
+export interface MonacoFlyoutProps extends pxt.editor.ISettingsProps {
+    fileType?: pxt.editor.FileType;
+    moveFocusToParent?: () => void;
+    insertSnippet?: (position: monaco.Position, insertText: string, inline?: boolean) => void;
+}
+
+export interface MonacoFlyoutState {
+    name?: string;
+    ns?: string;
+    color?: string;
+    icon?: string;
+    groups?: toolbox.GroupDefinition[];
+    selectedBlock?: string;
+}
+
+export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyoutState> {
+    constructor(props: MonacoFlyoutProps) {
+        super(props);
+        this.state = {};
+    }
+
+    componentDidUpdate() {
+        this.positionDragHandle();
+    }
+
+    protected getBlockClickHandler = (name: string) => {
+        pxt.tickEvent("monaco.toolbox.itemclick", undefined, { interactiveConsent: true });
+        return () => { this.setState({ selectedBlock: name != this.state.selectedBlock ? name : undefined }) };
+    }
+
+    protected getBlockDragStartHandler = (block: toolbox.BlockDefinition, name: string, snippet: string) => {
+        return (e: any) => {
+            pxt.tickEvent("monaco.toolbox.itemdrag", undefined, { interactiveConsent: true });
+
+            let blockElement = e.target.querySelector(".blockName");
+            if (blockElement) {
+                e.dataTransfer.setDragImage(blockElement, blockElement.clientWidth/2, blockElement.clientHeight/2);
+            }
+
+            if (!snippet)
+                e.dataTransfer.setData('text', 'qName:' + block.qName); // IE11 only supports text
+            else
+                e.dataTransfer.setData('text', snippet); // IE11 only supports text
+
+            // Fire a create event
+            workspace.fireEvent({ type: 'create', editor: 'ts', blockId: block.attributes.blockId } as pxt.editor.events.CreateEvent);
+        }
+    }
+
+    protected getKeyDownHandler = (block?: toolbox.BlockDefinition, snippet?: string, isPython?: boolean) => {
+        return (e: any) => {
+            const isRtl = pxt.Util.isUserLanguageRtl();
+            const charCode = core.keyCodeFromEvent(e);
+            const target = e.target as HTMLElement;
+            if (charCode == 40) { //  DOWN
+                // Next item
+                let nextSibling = target.nextElementSibling as HTMLElement;
+                if (target && nextSibling) {
+                    nextSibling.click();
+                    nextSibling.focus();
+                }
+            } else if (charCode == 38) { // UP
+                // Previous item
+                let prevSibling = target.previousElementSibling as HTMLElement;
+                if (target && prevSibling) {
+                    prevSibling.click();
+                    prevSibling.focus();
+                }
+            } else if ((charCode == 37 && !isRtl) || (charCode == 38 && isRtl)) { // (LEFT & LTR) or (RIGHT & RTL)
+                // Focus back to toolbox
+                this.props.moveFocusToParent();
+            } else if (charCode == 27) { // ESCAPE
+                // Focus back to toolbox and close Flyout
+                this.setState( { groups: undefined });
+                this.props.moveFocusToParent();
+            } else if (charCode == 13 && block) { // ENTER
+                let p = snippet ? Promise.resolve(snippet) : compiler.snippetAsync(block.qName, isPython);
+                p.done(snip => {
+                    this.props.insertSnippet(null, snip, block.retType != "void");
+                    // Fire a create event
+                    workspace.fireEvent({ type: 'create', editor: 'ts', blockId: block.attributes.blockId } as pxt.editor.events.CreateEvent);
+                });
+            }
+        }
+    }
+
+    protected getHelpButtonClickHandler = (group?: string) => {
+        return () => {
+            pxt.debug(`${group} help icon clicked.`);
+            workspace.fireEvent({ type: 'ui', editor: 'ts', action: 'groupHelpClicked', data: { group } } as pxt.editor.events.UIEvent);
+        }
+    }
+
+    protected scrollHandler = () => {
+        let handle = document.querySelector(".monacoBlock.expand .blockHandle") as HTMLDivElement;
+        if (handle) {
+            let parent = handle.parentElement;
+            let container = document.getElementById("monacoFlyoutWrapper");
+            handle.style.height = `${parent.clientHeight}px`;
+            handle.style.top = `${parent.offsetTop - container.scrollTop}px`;
+        }
+    }
+    protected wheelHandler = (evt: any) => {
+        evt.stopPropagation();
+    }
+
+    protected getFlyoutStyle = () => {
+        return {
+            display: (this.state && this.state.groups) ? "block" : "none"
+        }
+    }
+
+    protected getIconStyle = (color: string) => {
+        return { color };
+    }
+
+    protected getSelectedStyle = (selected: boolean, color: string) => {
+        return { backgroundColor: selected ? color : undefined };
+    }
+
+    protected getBlockStyle = (color: string) => {
+        return { 
+            backgroundColor: color,
+            fontSize: `${this.props.parent.settings.editorFontSize}px`,
+            lineHeight: `${this.props.parent.settings.editorFontSize + 1}px`
+        };
+    }
+
+    protected getSnippetName(block: toolbox.BlockDefinition): string {
+        const isPython = this.props.fileType == pxt.editor.FileType.Python;
+        return (isPython ? (block.pySnippetName || block.pyName) : undefined) || block.snippetName || block.name;
+    }
+
+    protected positionDragHandle(): void {
+        let handle = document.querySelector(".monacoBlock.expand .blockHandle") as HTMLDivElement;
+        if (handle) {
+            let parent = handle.parentElement;
+            let container = document.getElementById("monacoFlyoutWrapper");
+            handle.style.height = `${parent.clientHeight}px`;
+            handle.style.top = `${parent.offsetTop - container.scrollTop}px`;
+        }
+    }
+
+    protected getMonacoBlock(block: toolbox.BlockDefinition, index: number, color: string): JSX.Element {
+        if (block.snippet === undefined) return undefined;
+
+        // Get block state (Visible, Hidden, Disabled)
+        const { ns } = this.state;
+        const filters = this.props.parent.state.editorState ? this.props.parent.state.editorState.filters : undefined;
+        const categoryState = filters ? (filters.namespaces && filters.namespaces[ns] != undefined ? filters.namespaces[ns] : filters.defaultState) : undefined;
+
+        let fnState = filters ? filters.defaultState : pxt.editor.FilterState.Visible;
+        if (filters && filters.fns && filters.fns[block.name] !== undefined) {
+            fnState = filters.fns[block.name];
+        } else if (filters && filters.blocks && block.attributes.blockId && filters.blocks[block.attributes.blockId] !== undefined) {
+            fnState = filters.blocks[block.attributes.blockId];
+        } else if (categoryState !== undefined) {
+            fnState = categoryState;
+        }
+        if (fnState == pxt.editor.FilterState.Hidden) return undefined;
+
+        // Get block DOM element
+        const disabled = fnState == pxt.editor.FilterState.Disabled;
+        const isPython = this.props.fileType == pxt.editor.FileType.Python;
+        const snippetName = this.getSnippetName(block);
+        const snippet = isPython ? block.pySnippet : block.snippet;
+        const params = block.parameters || [];
+        const selected = snippetName == this.state.selectedBlock;
+        const blockColor = block.attributes.color || color;
+
+        return <div className={`monacoBlock ${disabled ? "monacoDisabledBlock" : ""} ${selected ? "expand" : ""}`}
+                    style={this.getSelectedStyle(selected, blockColor)}
+                    title={block.attributes.jsDoc} draggable={true}
+                    key={`block_${index}`} tabIndex={0}
+                    onClick={this.getBlockClickHandler(snippetName)}
+                    onDragStart={this.getBlockDragStartHandler(block, snippetName, snippet)}
+                    onKeyDown={this.getKeyDownHandler(block, snippet, isPython)}>
+                <div className="blockHandle" style={this.getSelectedStyle(selected, blockColor)}><i className="icon bars" /></div>
+                <div className="monacoDraggableBlock" style={this.getBlockStyle(blockColor)}>
+                    <span className="blockName">{block.qName ? block.qName : (block.snippetOnly ? snippet : snippetName)}</span>
+                    {block.qName && params && <span>{`(${params.map(p => p.name).join(", ")})`}</span>}
+                </div>
+                <div className="detail">
+                    <div className="description">{block.attributes.jsDoc}</div>
+                    {params && <div className="params">
+                        {params.map((p, i) => {
+                            return <div key={i}>
+                                <div className="separator"></div>
+                                <div className="paramName">{p.name}</div>
+                                {p.description && <div className="paramDescription">{p.description}</div>}
+                            </div>
+                        })}
+                    </div>}
+                </div>
+            </div>
+    }
+
+    render() {
+        const { name, ns, color, icon, groups } = this.state;
+        const rgb = pxt.toolbox.convertColor(color || (ns && pxt.toolbox.getNamespaceColor(ns)) || "255");
+        const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : "Default"}`.replace(/\s/g, "");
+        return <div id="monacoFlyoutWidget" className="monacoFlyout" style={this.getFlyoutStyle()}>
+           <div id="monacoFlyoutWrapper" onScroll={this.scrollHandler} onWheel={this.wheelHandler}>
+               <div className="monacoFlyoutLabel monacoFlyoutHeading">
+                    <span className={`monacoFlyoutHeadingIcon blocklyTreeIcon ${iconClass}`} role="presentation" style={this.getIconStyle(rgb)}>
+                        {(icon && icon.length === 1) ? icon : ""}
+                    </span>
+                    <div className="monacoFlyoutLabelText">{name}</div>
+               </div>
+               {groups && groups.map((g, i) => {
+                    let group: JSX.Element[] = [];
+                    // Add group label, for non-default groups
+                    if (g.name != pxt.DEFAULT_GROUP_NAME) {
+                        group.push(
+                            <div className="monacoFlyoutLabel blocklyFlyoutGroup" key={`label_${i}`} tabIndex={0} onKeyDown={this.getKeyDownHandler()}>
+                                {g.icon && <span className={`monacoFlyoutHeadingIcon blocklyTreeIcon ${iconClass}`} role="presentation">{g.icon}</span>}
+                                <div className="monacoFlyoutLabelText">{g.name}</div>
+                                {g.hasHelp && pxt.editor.HELP_IMAGE_URI && <span><img src={pxt.editor.HELP_IMAGE_URI} onClick={this.getHelpButtonClickHandler(g.name)}></img></span>}
+                                <hr className="monacoFlyoutLabelLine" />
+                            </div>)
+                    }
+                    // Add group blocks
+                    if (g.blocks) {
+                        group = group.concat(g.blocks.map((b, j) => {
+                            // Check if the block is built in, ignore it as it's already defined in snippets
+                            if (b.attributes.blockBuiltin) {
+                                pxt.log("ignoring built in block: " + b.attributes.blockId);
+                                return undefined;
+                            } else {
+                                return this.getMonacoBlock(b, j, rgb);
+                            }
+                        }));
+                    }
+                   return group;
+               })}
+           </div>
+        </div>
+    }
+}
