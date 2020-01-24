@@ -576,15 +576,16 @@ namespace pxt.runner {
             const oldSrc = src[0];
             const newSrc = src[1];
 
-            $el.removeClass(cls);
             try {
                 const diffEl = pxt.diff.render(oldSrc, newSrc, {
                     hideLineNumbers: true,
+                    hideMarkerLine: true,
                     hideMarker: true,
                     hideRemoved: true
                 });
                 if (opts.snippetReplaceParent) $el = $el.parent();
                 const segment = $('<div class="ui segment codewidget"/>').append(diffEl);
+                $el.removeClass(cls);
                 $el.replaceWith(segment);
             } catch (e) {
                 pxt.reportException(e)

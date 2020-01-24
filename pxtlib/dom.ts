@@ -9,8 +9,8 @@ namespace pxt.dom {
         return el;
 
         function appendChild(c: string | HTMLElement | (string | HTMLElement)[]) {
-            if (c instanceof String) el.appendChild(document.createTextNode(c as string));
-            else if (Array.isArray(c)) c.forEach(cc => appendChild(cc));
+            if (Array.isArray(c)) c.forEach(cc => appendChild(cc));
+            else if (typeof c === "string") el.appendChild(document.createTextNode(c as string));
             else if (c instanceof HTMLElement) el.appendChild(c as HTMLElement);
         }
     }

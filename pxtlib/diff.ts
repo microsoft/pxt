@@ -292,6 +292,7 @@ namespace pxt.diff {
     }
 
     export interface RenderOptions extends DiffOptions {
+        hideMarkerLine?: boolean;
         hideLineNumbers?: boolean;
         hideMarker?: boolean;
         hideRemoved?: boolean;
@@ -338,7 +339,7 @@ namespace pxt.diff {
             lastMark = ln[0];
 
             // check if line is skipped
-            if ((options.hideMarker && lastMark == "@")
+            if ((options.hideMarkerLine && lastMark == "@")
                 || (options.hideRemoved && lastMark == "-"))
                 return;
 
