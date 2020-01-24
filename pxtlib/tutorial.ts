@@ -90,16 +90,17 @@ namespace pxt.tutorial {
 
         function convertSnippetToDiff(src: string): string {
             if (!src) return src;
-            return src.replace(/\n```(typescript|spy)(.+)```\n/, function (m, code) {
-                const fileA = lastSrc;
-                lastSrc = src;
-                return `
-\`\`\`diff
+            return src.replace(/```(typescript|spy|python)((?:.|[\r\n])+)```/, function (m, type, code) {
+                const fileA = lastSrc;                
+                lastSrc = code;
+                if (!fileA)
+                    return m;
+                else
+                    return `\`\`\`diff
 ${fileA}
 ----------
 ${code}
-\`\`\`
-`
+\`\`\``
             })
         }
     }

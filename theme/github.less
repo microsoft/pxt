@@ -115,5 +115,36 @@
 .inverted-theme {
     #githubEditor {
         color: @githubInvertedTextColor;
+        table.diffview {
+            .change code {
+                color: @githubInvertedTextColor;
+            }
+
+            .diff-added {
+                background: @diffInvertedAddedBackground;
+        
+                .ch-added {
+                    background: @diffInvertedAddedTokenBackground;
+                }
+            }
+        
+            .diff-removed {
+                background: @diffInvertedRemovedBackground;
+        
+                .ch-removed {
+                    background: @diffInvertedRemovedTokenBackground;
+                }
+            }
+        
+            .line-a,
+            .line-b {
+                color: @diffInvertedLineNumberColor;
+            } 
+
+            .diff-marker {
+                background: @diffInvertedMarkerBackground;
+                color: @diffInvertedMarkerColor
+            }
+        }
     }
 }
