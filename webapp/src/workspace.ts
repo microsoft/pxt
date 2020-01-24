@@ -845,6 +845,18 @@ export async function exportToGithubAsync(hd: Header, repoid: string) {
         repo: repoid,
         commit
     })
+
+    // assign ids to blockly blocks
+    const mainBlocks = files["main.blocks"];
+    if (mainBlocks) {
+        const ws = pxt.blocks.loadWorkspaceXml(mainBlocks, true);
+        if (ws) {
+            const mainBlocksWithIds = pxt.blocks.saveWorkspaceXml(ws, true);
+            if (mainBlocksWithIds)
+                files["main.blocks"] = mainBlocksWithIds;
+        }
+    }
+    // save updated files
     await saveAsync(hd, files);
     await initializeGithubRepoAsync(hd, repoid, false, true);
     // race condition, don't pull right away
