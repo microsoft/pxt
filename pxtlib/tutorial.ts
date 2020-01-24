@@ -92,6 +92,10 @@ namespace pxt.tutorial {
             if (!src) return src;
             return src.replace(/```(typescript|spy|python)((?:.|[\r\n])+)```/, function (m, type, code) {
                 const fileA = lastSrc;
+
+                // remove // @highlight or # @highlight lines
+                code = code.replace(/\s*(\/\/|#)\s*@highlight/gm, '');
+
                 lastSrc = code;
                 if (!fileA)
                     return m;
