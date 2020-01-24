@@ -94,7 +94,8 @@ code.lang-cards::before,
 code.lang-namespaces::before,
 code.lang-codecard::before,
 code.lang-shadow::before,
-code.lang-spy::before
+code.lang-spy::before,
+code.lang-diff::before
 {
     content:"...";
     position: absolute;
@@ -111,7 +112,8 @@ code.lang-cards,
 code.lang-namespaces,
 code.lang-codecard,
 code.lang-shadow,
-code.lang-spy
+code.lang-spy,
+code.lang-diff
 {
     background-color: rgba(0,0,0,0.04);
     color:transparent;
