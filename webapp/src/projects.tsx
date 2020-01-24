@@ -1017,7 +1017,11 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     }
 
     componentWillReceiveProps(newProps: ISettingsProps) {
-        this.handleChange(newProps.parent.state.projectName);
+        const newParentName = newProps.parent.state.projectName;
+        // don't replace if it is just resetting to default name
+        if (newParentName !== lf("Untitled")) {
+            this.handleChange(newProps.parent.state.projectName);
+        }
     }
 
     hide() {
