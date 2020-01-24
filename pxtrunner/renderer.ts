@@ -573,15 +573,16 @@ namespace pxt.runner {
             if (!$el[0]) return Promise.resolve();
 
             const src = $el.text().split(/-{10,}/);
-            const oldSrc = src[0];
-            const newSrc = src[1];
+            const oldSrc = src[0].replace(/\n$/, ''); // intial new line introduced by html
+            const newSrc = src[1].replace(/^\n/, ''); // last new line introduct by html
 
             try {
                 const diffEl = pxt.diff.render(oldSrc, newSrc, {
                     hideLineNumbers: true,
                     hideMarkerLine: true,
                     hideMarker: true,
-                    hideRemoved: true
+                    hideRemoved: true,
+                    update: true
                 });
                 if (opts.snippetReplaceParent) $el = $el.parent();
                 const segment = $('<div class="ui segment codewidget"/>').append(diffEl);

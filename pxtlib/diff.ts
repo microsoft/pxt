@@ -296,6 +296,7 @@ namespace pxt.diff {
         hideLineNumbers?: boolean;
         hideMarker?: boolean;
         hideRemoved?: boolean;
+        update?: boolean; // simplified view that only shows update
     }
 
     export function render(fileA: string, fileB: string, options: RenderOptions = {}): HTMLElement {
@@ -308,7 +309,7 @@ namespace pxt.diff {
         let lastMark = ""
         const tbody = pxt.dom.el("tbody");
         const diffEl = pxt.dom.el("table", { 
-            "class": `diffview` 
+            "class": `diffview ${options.update? 'update' : ''}` 
         }, tbody);
         let savedDiffEl: HTMLElement = null
         diffLines.forEach((ln: string, idx: number) => {

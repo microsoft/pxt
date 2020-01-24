@@ -1,20 +1,21 @@
 
-/*-------------------
-   Github view and diffs
---------------------*/
-
 table.diffview {
     border: 0px;
     border-spacing: 0px;
     border-collapse: collapse;
     width: 100%;
 
+    tr td, tr th {
+        border: none !important;
+        padding: 0 !important;
+    }
+
     .change code {
         white-space: pre;
     }
 
     .diff-added {
-        background: @diffAddedBackground;
+        background: @diffAddedBackground !important;
 
         .ch-added {
             background: @diffAddedTokenBackground;
@@ -85,6 +86,26 @@ table.diffview {
 
     .marker:before {
         content: attr(data-content);
+    }
+}
+
+table.diffview.update {
+    .diff-added {
+        background: @diffUpdateAddedBackground !important;
+    
+        .ch-added {
+            background: @diffUpdateAddedTokenBackground;
+            outline: @diffUpdateInlineAddedOutline;
+            font-weight: bold;
+        }
+    }
+}
+
+@media only print {
+    table.diffview.update {
+        .diff-added {
+            outline: 1px solid black;
+        }
     }
 }
 
