@@ -1111,6 +1111,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
 
 export interface NewProjectDialogState {
     projectName?: string;
+    emoji?: string;
     language?: pxt.editor.LanguageRestriction;
     visible?: boolean;
 }
@@ -1122,6 +1123,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
         super(props);
         this.state = {
             visible: false,
+            emoji: "",
             language: pxt.editor.LanguageRestriction.Standard
         }
 
@@ -1144,6 +1146,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
         pxt.tickEvent('newprojectdialog.show', undefined, { interactiveConsent: false });
         this.setState({
             projectName: "",
+            emoji: "",
             visible: true,
             language: pxt.editor.LanguageRestriction.Standard
         });
@@ -1157,7 +1160,24 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
     }
 
     handleTextChange(name: string) {
-        this.setState({ projectName: name });
+        const untitled = lf("Untitled");
+        let emoji = "";
+
+        if (name && !untitled.split("").some((c, i) => untitled.substr(0, i + 1) == name)) {
+            const emojis = ["😌", "😄", "😃", "😍"];
+            emoji = emojis[Math.min(name.length, emojis.length) - 1];
+            const n = name.length >> 1;
+            if (n > emojis.length) {
+                for (let i = 0; i < Math.min(2, n - emojis.length); ++i) {
+                    emoji += emojis[emojis.length - 1];
+                }
+            }
+        }
+
+        this.setState({
+            projectName: name,
+            emoji
+        });
     }
 
     handleLanguageChange(ev: React.ChangeEvent<HTMLSelectElement>) {
@@ -1183,11 +1203,12 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
                 languageRestriction: language
             });
         }
+
         this.createProjectCb = null;
     }
 
     renderCore() {
-        const { visible, projectName, language } = this.state;
+        const { visible, projectName, language, emoji } = this.state;
 
         const actions: sui.ModalButton[] = [{
             label: lf("Create"),
@@ -1200,7 +1221,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
 
         return <sui.Modal isOpen={visible} className="newproject" size="tiny"
             onClose={this.hide} dimmer={true} buttons={actions}
-            closeIcon={true} header={lf("Create a Project")}
+            closeIcon={true} header={lf("Create a Project {0}", emoji)}
             closeOnDimmerClick closeOnDocumentClick closeOnEscape
             modalDidOpen={this.modalDidOpen}
         >
