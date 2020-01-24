@@ -46,6 +46,8 @@ namespace pxt.tutorial {
                 code += "\n { \n " + m2 + "\n } \n";
                 return "";
             });
+        
+        diffify(steps, activities);
 
         return <pxt.tutorial.TutorialInfo>{
             editor: editor || pxt.BLOCKS_PROJECT_NAME,
@@ -65,6 +67,40 @@ namespace pxt.tutorial {
                 editor = expected;
                 return true;
             }
+        }
+    }
+
+    function diffify(steps: TutorialStepInfo[], activities: TutorialActivityInfo[]) {
+        // convert typescript snippets into diff snippets
+        let lastSrc: string = undefined;
+        steps.forEach((step, stepi) => {
+            // reset diff on each activity
+            if (activities && activities.find(activity => activity.step == stepi))
+                lastSrc = undefined;
+            // extract typescript snippet from hint or content
+            let s = convertSnippetToDiff(step.hintContentMd);
+            if (s && s != step.hintContentMd)
+                step.hintContentMd = s;
+            else {
+                s = convertSnippetToDiff(step.contentMd);
+                if (s && s != step.contentMd)
+                    step.contentMd = s;
+            }
+        })
+
+        function convertSnippetToDiff(src: string): string {
+            if (!src) return src;
+            return src.replace(/\n```(typescript|spy)(.+)```\n/, function (m, code) {
+                const fileA = lastSrc;
+                lastSrc = src;
+                return `
+\`\`\`diff
+${fileA}
+----------
+${code}
+\`\`\`
+`
+            })
         }
     }
 
