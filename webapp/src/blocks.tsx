@@ -946,18 +946,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private getDefaultOptions() {
         if (this.blocklyOptionsCache) return this.blocklyOptionsCache;
         const readOnly = pxt.shell.isReadOnly();
+        const theme = pxt.appTarget.appTheme;
         const blocklyOptions: Blockly.WorkspaceOptions = {
             scrollbars: true,
             media: pxt.webConfig.commitCdnUrl + "blockly/media/",
             sound: true,
             trashcan: false,
-            collapse: false,
+            collapse: !!theme.blocksCollapsing,
             comments: true,
             disable: false,
             readOnly: readOnly,
             toolboxOptions: {
-                colour: pxt.appTarget.appTheme.coloredToolbox,
-                inverted: pxt.appTarget.appTheme.invertedToolbox
+                colour: theme.coloredToolbox,
+                inverted: theme.invertedToolbox
             },
             move: {
                 wheel: true
