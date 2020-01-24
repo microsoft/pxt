@@ -1,6 +1,6 @@
 namespace pxt.dom {
-    export function el(name: string, 
-        attributes?: pxt.Map<string | number>, 
+    export function el(name: string,
+        attributes?: pxt.Map<string | number>,
         children?: string | HTMLElement | (string | HTMLElement)[]): HTMLElement {
         const el = document.createElement(name);
         if (attributes)

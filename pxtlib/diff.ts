@@ -318,8 +318,8 @@ namespace pxt.diff {
         let lnA = 0, lnB = 0
         let lastMark = ""
         const tbody = pxt.dom.el("tbody");
-        const diffEl = pxt.dom.el("table", { 
-            "class": `diffview ${options.update? 'update' : ''}` 
+        const diffEl = pxt.dom.el("table", {
+            "class": `diffview ${options.update ? 'update' : ''}`
         }, tbody);
         let savedDiffEl: HTMLElement = null
         diffLines.forEach((ln: string, idx: number) => {
