@@ -441,7 +441,7 @@ file('built/web/vs/editor/editor.main.js', [], function () {
     //     `_this._register(dom.addDisposableListener(textArea.domNode, 'compositionend', function (e) {\n                if (browser.isAndroid) return;`)
 
     // Filter out all language contributions that we don't use
-    const languages = ["bat", "cpp", "typescript", "json", "markdown", "python"]
+    const languages = ["bat", "cpp", "typescript", "json", "javascript", "markdown", "python"]
     monacoeditor = monacoeditor.replace(/"\.\/([\w-]+)\/\1\.contribution"(?:,)?\s*/gi, (match, lang) => {
         if (languages.indexOf(lang) === -1) {
             return ""
@@ -460,7 +460,7 @@ file('built/web/vs/editor/editor.main.js', [], function () {
     jake.cpR("node_modules/monaco-editor/min/vs/loader.js", "webapp/public/vs/")
 
 
-    const basicLanguages = ["bat", "cpp", "typescript", "markdown", "python"];
+    const basicLanguages = ["bat", "cpp", "typescript", "javascript", "markdown", "python"];
     basicLanguages.forEach(lang => {
         jake.mkdirP("webapp/public/vs/basic-languages/" + lang)
         jake.cpR(`node_modules/monaco-editor/min/vs/basic-languages/${lang}/${lang}.js`, `webapp/public/vs/basic-languages/${lang}/${lang}.js`)
