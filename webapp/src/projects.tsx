@@ -1016,39 +1016,37 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         this.skip = this.skip.bind(this);
     }
 
-    componentWillReceiveProps(newProps: ISettingsProps) {
-        const newParentName = newProps.parent.state.projectName;
-        // don't replace if it is just resetting to default name
-        if (newParentName !== lf("Untitled")) {
-            this.handleChange(newProps.parent.state.projectName);
-        }
-    }
-
     hide() {
         this.setState({ visible: false });
     }
 
     show() {
         pxt.tickEvent('exitandsave.show', undefined, { interactiveConsent: false });
-        this.setState({ visible: true });
+        this.setState({
+            projectName: this.props.parent.state.projectName,
+            visible: true
+        });
     }
 
     handleChange(name: string) {
-        this.setState({ projectName: name });
         const untitled = lf("Untitled");
-        name = name || ""; // guard against null/undefined
-        if (!name || pxt.Util.toArray(untitled).some((c, i) => untitled.substr(0, i + 1) == name)) {
-            // the frowny face here seemed a bit pessimistic - the user didn't to anything wrong
-            this.setState({ emoji: "" });
-        } else {
+
+        let emoji = "";
+        if (name && !untitled.split("").some((c, i) => untitled.substr(0, i + 1) == name)) {
             const emojis = ["😌", "😄", "😃", "😍"];
-            let emoji = emojis[Math.min(name.length, emojis.length) - 1];
+            emoji = emojis[Math.min(name.length, emojis.length) - 1];
             const n = name.length >> 1;
-            if (n > emojis.length)
-                for (let i = 0; i < Math.min(2, n - emojis.length); ++i)
+            if (n > emojis.length) {
+                for (let i = 0; i < Math.min(2, n - emojis.length); ++i) {
                     emoji += emojis[emojis.length - 1];
-            this.setState({ emoji })
+                }
+            }
         }
+
+        this.setState({
+            projectName: name,
+            emoji
+        });
     }
 
     skip() {
@@ -1127,10 +1125,6 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
         }
     }
 
-    componentWillReceiveProps(newProps: ISettingsProps) {
-        this.handleTextChange(newProps.parent.state.projectName);
-    }
-
     hide = () => {
         this.setState({ visible: false });
     }
@@ -1190,6 +1184,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             });
         }
 
+        pxt.tickEvent('newprojectdialog.projectcreate', undefined, { interactiveConsent: true });
         this.createProjectCb = null;
     }
 
