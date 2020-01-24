@@ -47,7 +47,8 @@ namespace pxt.tutorial {
                 return "";
             });
 
-        diffify(steps, activities);
+        if (!metadata.noDiffs && editor != pxt.BLOCKS_PROJECT_NAME)
+            diffify(steps, activities);
 
         return <pxt.tutorial.TutorialInfo>{
             editor: editor || pxt.BLOCKS_PROJECT_NAME,
