@@ -1278,7 +1278,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.activeRangeID = null;
                 if (edit) {
                     this.editModelAsync(edit.range, edit.replacement)
-                        .then(newRange => this.indentRangeAsync(newRange));
+                        .then(newRange => this.indentRangeAsync(newRange))
+                        .then(() => this.foldFieldEditorRangesAsync());
                 }
             })
     }
