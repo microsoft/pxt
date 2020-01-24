@@ -1079,7 +1079,7 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
                     <sui.Link className="basic button"
                         href={pages.html_url}
                         loading={pagesBuilding}
-                        text={lf("Open Pages")} 
+                        text={lf("Open Pages")}
                         target="_blank" />
                     <span className="inline-help">
                         {pagesBuilding ? lf("Pages building, it may take a few minutes.")
