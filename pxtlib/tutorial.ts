@@ -46,7 +46,7 @@ namespace pxt.tutorial {
                 code += "\n { \n " + m2 + "\n } \n";
                 return "";
             });
-        
+
         diffify(steps, activities);
 
         return <pxt.tutorial.TutorialInfo>{
@@ -91,7 +91,7 @@ namespace pxt.tutorial {
         function convertSnippetToDiff(src: string): string {
             if (!src) return src;
             return src.replace(/```(typescript|spy|python)((?:.|[\r\n])+)```/, function (m, type, code) {
-                const fileA = lastSrc;                
+                const fileA = lastSrc;
                 lastSrc = code;
                 if (!fileA)
                     return m;
