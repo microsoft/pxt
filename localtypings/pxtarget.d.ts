@@ -857,6 +857,7 @@ declare namespace pxt.tutorial {
         headerContentMd?: string;
         hintContentMd?: string;
         activity?: number;
+        resetDiff?: boolean; // reset diffify algo
     }
 
     interface TutorialActivityInfo {
