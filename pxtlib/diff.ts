@@ -350,7 +350,7 @@ namespace pxt.diff {
                     isMarker
                         ? pxt.dom.el("td", { "colspan": 2, class: "change" }, pxt.dom.el("code", null, ln))
                         : pxt.dom.el("td", { class: "marker", "data-content": lastMark }),
-                    isMarker && pxt.dom.el("td", { class: "change" }, currDiff)
+                    !isMarker && pxt.dom.el("td", { class: "change" }, currDiff)
                 ])
             );
         })
