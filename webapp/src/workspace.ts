@@ -749,7 +749,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
                 // local build wins, does not matter
                 text = files[path];
             } else {
-                const d3 = pxt.github.diff3(files[path], oldEnt.blobContent, treeEnt.blobContent, lf("local changes"), lf("remote changes (pulled from Github)"))
+                const d3 = pxt.diff.diff3(files[path], oldEnt.blobContent, treeEnt.blobContent, lf("local changes"), lf("remote changes (pulled from Github)"))
                 if (!d3) // merge failed?
                     throw mergeError()
                 conflicts += d3.numConflicts

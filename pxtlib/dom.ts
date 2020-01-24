@@ -5,13 +5,12 @@ namespace pxt.dom {
         const el = document.createElement(name);
         if (attributes)
             Object.keys(attributes).forEach(k => el.setAttribute(k, attributes[k] + ""));
-        if (Array.isArray(children))
-            children.forEach(t => appendChild(t));
-        else appendChild(children);
+        appendChild(children);
         return el;
 
-        function appendChild(c: string | HTMLElement) {
+        function appendChild(c: string | HTMLElement | (string | HTMLElement)[]) {
             if (c instanceof String) el.appendChild(document.createTextNode(c as string));
+            else if (Array.isArray(c)) c.forEach(cc => appendChild(cc));
             else if (c instanceof HTMLElement) el.appendChild(c as HTMLElement);
         }
     }
