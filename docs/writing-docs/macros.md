@@ -320,6 +320,13 @@ If you need a rendering of typescript, javascript code, specify the language as 
     let x = 0;
     ```
 
+#### ~ hint
+
+In tutorial, MakeCode automatically renders a diff between each typescrit or spy snippets.
+To reset the diff on a step, use the ``#### @resetDiff`` metadata.
+
+#### ~
+
 ### spy
 
 If your editor supports [Static Python](/js/python), you can specify a TypeScript snippet to be rendered as Static Python
