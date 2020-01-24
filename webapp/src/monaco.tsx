@@ -25,21 +25,6 @@ import { amendmentToInsertSnippet, listenForEditAmendments, createLineReplacemen
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
 
-/**
- * These are internal APIs that will likely need to be changed if the Monaco
- * version changes. Monaco now supports language service based folding, so
- * this should probably be removed in favor of that.
- */
-interface FoldingController extends monaco.editor.IEditorContribution {
-    onModelChanged(): void;
-    unfold(levels: number): void;
-    fold(levels: number, up: boolean): void;
-    foldAll(): void;
-    unfoldAll(): void;
-    foldLevel(foldLevel: number, selectedLineNumbers: number[]): void;
-    foldUnfoldRecursively(isFold: boolean): void;
-}
-
 class CompletionProvider implements monaco.languages.CompletionItemProvider {
     constructor(public editor: Editor, public python: boolean) {
     }
@@ -916,7 +901,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private setupFieldEditors() {
         if (!this.hasFieldEditors || pxt.shell.isReadOnly()) return;
-        if (!this.fieldEditors) this.fieldEditors = new FieldEditorManager();
+        if (!this.fieldEditors) {
+            this.fieldEditors = new FieldEditorManager(this.editor);
+            monaco.languages.registerFoldingRangeProvider("typescript", this.fieldEditors);
+        }
 
         pxt.appTarget.appTheme.monacoFieldEditors.forEach(name => {
             const editor = pxt.editor.getMonacoFieldEditor(name);
@@ -995,10 +983,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         ReactDOM.render(debuggerToolbox, container);
     }
 
-    private getFoldingController(): FoldingController {
-        return this.editor.getContribution("editor.contrib.folding") as FoldingController
-    }
-
     getId() {
         return "monacoEditor"
     }
@@ -1048,7 +1032,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         return this.loadMonacoAsync()
             .then(() => {
-                if (!this.editor) return;
+                if (!this.editor) return Promise.resolve();
 
                 this.foldFieldEditorRanges = true;
                 this.updateFieldEditors();
@@ -1139,6 +1123,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 // using code completion.
                 if (this.fileType === pxt.editor.FileType.Python)
                     this.editAmendmentsListener = listenForEditAmendments(this.editor);
+
+                return this.foldFieldEditorRangesAsync()
             }).finally(() => {
                 editorArea.removeChild(loading);
             });
@@ -1297,64 +1283,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             })
     }
 
-    protected updateFieldEditors = pxt.Util.debounce(() => {
-        if (!this.hasFieldEditors || !this.editor || pxt.shell.isReadOnly() || this.isDebugging()) return;
-        const model = this.editor.getModel();
-        this.fieldEditors.clearRanges(this.editor);
-
-        this.fieldEditors.allFieldEditors().forEach(fe => {
-            const matcher = fe.matcher;
-            const matches = model.findMatches(matcher.searchString,
-                true,
-                matcher.isRegex,
-                matcher.matchCase,
-                matcher.matchWholeWord ? this.editor.getOptions().get(monaco.editor.EditorOption.wordSeparators) : null,
-                false);
-
-
-            const decorations: monaco.editor.IModelDeltaDecoration[] = [];
-            matches.forEach(match => {
-                const line = match.range.startLineNumber;
-
-                decorations.push({
-                    range: new monaco.Range(line, model.getLineMinColumn(line), line, model.getLineMaxColumn(line)),
-                    options: {
-                        glyphMarginClassName: fe.glyphCssClass
-                    }
-                });
-
-                this.fieldEditors.trackRange(fe.id, line, match.range);
-
-            });
-            this.fieldEditors.setDecorations(fe.id, this.editor.deltaDecorations([], decorations));
-        });
-
-        if (this.foldFieldEditorRanges) {
-            this.foldFieldEditorRangesAsync();
+    protected updateFieldEditors() {
+        if (this.fieldEditors) {
+            this.fieldEditors.setFieldEditorsEnabled(this.hasFieldEditors && this.editor && !pxt.shell.isReadOnly() && !this.isDebugging());
         }
-    }, 200)
+    }
 
     protected foldFieldEditorRangesAsync() {
         if (this.foldFieldEditorRanges) {
-            this.foldFieldEditorRanges = false;
-            const selection = this.editor.getSelection();
-            let selections: monaco.Selection[];
-            return Promise.mapSeries(this.fieldEditors.allRanges(), range => this.indentRangeAsync(range.range))
-                .then(ranges => {
-                    if (!ranges || !ranges.length) return;
-                    selections = ranges.map(rangeToSelection);
-
-                    // This is only safe because indentRangeAsync doesn't change the number of lines and
-                    // we only allow one field editor per line. If we ever change that we should revisit folding
-                    this.editor.setSelections(selections);
-                    const folder = this.getFoldingController();
-
-                    // The folding controller has a delay before it updates its model
-                    // so we need to force it
-                    folder.onModelChanged();
-                    folder.foldUnfoldRecursively(true);
-                })
-                .then(() => this.editor.setSelection(selection));
+            return this.editor.getAction("editor.foldAllBlockComments").run()
         }
         return Promise.resolve();
     }
