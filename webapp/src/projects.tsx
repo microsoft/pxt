@@ -1029,23 +1029,9 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     }
 
     handleChange(name: string) {
-        const untitled = lf("Untitled");
-
-        let emoji = "";
-        if (name && !untitled.split("").some((c, i) => untitled.substr(0, i + 1) == name)) {
-            const emojis = ["😌", "😄", "😃", "😍"];
-            emoji = emojis[Math.min(name.length, emojis.length) - 1];
-            const n = name.length >> 1;
-            if (n > emojis.length) {
-                for (let i = 0; i < Math.min(2, n - emojis.length); ++i) {
-                    emoji += emojis[emojis.length - 1];
-                }
-            }
-        }
-
         this.setState({
             projectName: name,
-            emoji
+            emoji: projectNameToEmoji(name)
         });
     }
 
@@ -1140,23 +1126,9 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
     }
 
     handleTextChange = (name: string) => {
-        const untitled = lf("Untitled");
-
-        let emoji = "";
-        if (name && !untitled.split("").some((c, i) => untitled.substr(0, i + 1) == name)) {
-            const emojis = ["😌", "😄", "😃", "😍"];
-            emoji = emojis[Math.min(name.length, emojis.length) - 1];
-            const n = name.length >> 1;
-            if (n > emojis.length) {
-                for (let i = 0; i < Math.min(2, n - emojis.length); ++i) {
-                    emoji += emojis[emojis.length - 1];
-                }
-            }
-        }
-
         this.setState({
             name,
-            emoji
+            emoji: projectNameToEmoji(name)
         });
     }
 
@@ -1237,6 +1209,24 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             </sui.ExpandableMenu>
         </sui.Modal>
     }
+}
+
+function projectNameToEmoji(name: string) {
+    const untitled = lf("Untitled");
+
+    let emoji = "";
+    if (name && untitled.indexOf(name) === -1) {
+        const emojis = ["😌", "😄", "😃", "😍"];
+        emoji = emojis[Math.min(name.length, emojis.length) - 1];
+        const n = name.length >> 1;
+        if (n > emojis.length) {
+            for (let i = 0; i < Math.min(2, n - emojis.length); ++i) {
+                emoji += emojis[emojis.length - 1];
+            }
+        }
+    }
+
+    return emoji;
 }
 
 
