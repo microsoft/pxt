@@ -847,28 +847,10 @@ ${linkString}
             || window.innerHeight < window.innerWidth ? 1.62 : 1 / 1.62;
         $(content).html(html);
         $(content).find('a').attr('target', '_blank');
-        const renderOptions: ClientRenderOptions = {
-            blocksAspectRatio: blocksAspectRatio,
-            snippetClass: 'lang-blocks',
-            signatureClass: 'lang-sig',
-            blocksClass: 'lang-block',
-            blocksXmlClass: 'lang-blocksxml',
-            diffBlocksXmlClass: 'lang-diffblocksxml',
-            staticPythonClass: 'lang-spy',
-            simulatorClass: 'lang-sim',
-            linksClass: 'lang-cards',
-            namespacesClass: 'lang-namespaces',
-            codeCardClass: 'lang-codecard',
-            packageClass: 'lang-package',
-            projectClass: 'lang-project',
-            snippetReplaceParent: true,
-            simulator: true,
-            showEdit: true,
-            hex: true,
-            tutorial: !!options.tutorial,
-            showJavaScript: editorLanguageMode == LanguageMode.TypeScript,
-            hexName: pxt.appTarget.id
-        }
+        const renderOptions = pxt.runner.defaultClientRenderOptions();
+        renderOptions.tutorial = !!options.tutorial;
+        renderOptions.blocksAspectRatio = blocksAspectRatio || renderOptions.blocksAspectRatio;
+        renderOptions.showJavaScript = editorLanguageMode == LanguageMode.TypeScript;
         if (options.print) {
             renderOptions.showEdit = false;
             renderOptions.simulator = false;

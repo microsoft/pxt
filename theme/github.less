@@ -16,94 +16,6 @@
     }
 }
 
-/*-------------------
-   Github view and diffs
---------------------*/
-
-table.diffview {
-    border: 0px;
-    border-spacing: 0px;
-    border-collapse: collapse;
-    width: 100%;
-
-    .change code {
-        white-space: pre;
-    }
-
-    .diff-added {
-        background: @diffAddedBackground;
-
-        .ch-added {
-            background: @diffAddedTokenBackground;
-        }
-    }
-
-    .diff-removed {
-        background: @diffRemovedBackground;
-
-        .ch-removed {
-            background: @diffRemovedTokenBackground;
-        }
-    }
-
-    .diff-marker {
-        background: @diffMarkerBackground;
-        color: @diffMarkerColor
-    }
-
-    .diff-marker td {
-        padding-left: 1em;
-    }
-
-    tr.conflict {
-        border-left: 2px solid @conflictBorderColor;
-        border-right: 2px solid @conflictBorderColor;
-    }
-    tr.conflict.header {
-        border-top: 2px solid @conflictBorderColor;
-        border-bottom: 2px solid @conflictBorderColor;
-        background-color: @conflictHeaderBackgroundColor;
-    }
-    tr.conflict.header td {
-        color: @conflictHeaderColor;
-    }
-    tr.conflict td.ui {
-        padding-left: 0.5rem;
-        padding-top: 0.5rem;
-    }
-
-    tr.conflict.footer {
-        border-bottom: 2px solid @conflictBorderColor;
-    }
-
-    .line-a,
-    .line-b {
-        width: 3em;
-        text-align: right;
-        color: @diffLineNumberColor;
-    }
-
-    .marker {
-        width: 2.5em;
-        text-align: center;
-    }
-
-    .change {
-        text-align: left;
-    }
-
-    .diff-added .line-b:before,
-    .diff-removed .line-a:before,
-    .diff-unchanged .line-a:before,
-    .diff-unchanged .line-b:before {
-        content: attr(data-content);
-    }
-
-    .marker:before {
-        content: attr(data-content);
-    }
-}
-
 #githubEditor {
     background-color: @githubBackgroundColor;
     color: @githubTextColor;
@@ -203,35 +115,36 @@ table.diffview {
 .inverted-theme {
     #githubEditor {
         color: @githubInvertedTextColor;
-
-        .diffview .change code {
-            color: @githubInvertedTextColor;
-        }
-
-        .diff-added {
-            background: @diffInvertedAddedBackground;
-    
-            .ch-added {
-                background: @diffInvertedAddedTokenBackground;
+        table.diffview {
+            .change code {
+                color: @githubInvertedTextColor;
             }
-        }
-    
-        .diff-removed {
-            background: @diffInvertedRemovedBackground;
-    
-            .ch-removed {
-                background: @diffInvertedRemovedTokenBackground;
-            }
-        }
-    
-        .line-a,
-        .line-b {
-            color: @diffInvertedLineNumberColor;
-        } 
 
-        .diff-marker {
-            background: @diffInvertedMarkerBackground;
-            color: @diffInvertedMarkerColor
+            .diff-added {
+                background: @diffInvertedAddedBackground;
+        
+                .ch-added {
+                    background: @diffInvertedAddedTokenBackground;
+                }
+            }
+        
+            .diff-removed {
+                background: @diffInvertedRemovedBackground;
+        
+                .ch-removed {
+                    background: @diffInvertedRemovedTokenBackground;
+                }
+            }
+        
+            .line-a,
+            .line-b {
+                color: @diffInvertedLineNumberColor;
+            } 
+
+            .diff-marker {
+                background: @diffInvertedMarkerBackground;
+                color: @diffInvertedMarkerColor
+            }
         }
     }
 }

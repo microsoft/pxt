@@ -493,7 +493,7 @@ export async function pullAsync(hd: Header, checkOnly = false) {
 
 export async function hasMergeConflictMarkers(hd: Header): Promise<boolean> {
     const files = await getTextAsync(hd.id)
-    return !!Object.keys(files).find(k => pxt.github.hasMergeConflictMarker(files[k]));
+    return !!Object.keys(files).find(k => pxt.diff.hasMergeConflictMarker(files[k]));
 }
 
 export async function prAsync(hd: Header, commitId: string, msg: string) {
@@ -654,7 +654,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         if (!ex || ex.sha != sha) {
             // look for unfinished merges
             if (data.encoding == "utf-8" &&
-                pxt.github.hasMergeConflictMarker(data.content))
+                pxt.diff.hasMergeConflictMarker(data.content))
                 throw mergeConflictMarkerError();
             res = await pxt.github.createObjectAsync(parsed.fullName, "blob", data)
             if (data.encoding == "utf-8")
@@ -736,7 +736,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
             U.userError(lf("Corrupt SHA1 on download of '{0}'.", path))
         if (options.tryDiff3 && hasChanges) {
             if (path == pxt.CONFIG_NAME) {
-                text = pxt.github.mergeDiff3Config(files[path], oldEnt.blobContent, treeEnt.blobContent);
+                text = pxt.diff.mergeDiff3Config(files[path], oldEnt.blobContent, treeEnt.blobContent);
                 if (!text) // merge failed?
                     throw mergeError()
             } else if (/\.blocks$/.test(path)) {
@@ -749,7 +749,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
                 // local build wins, does not matter
                 text = files[path];
             } else {
-                const d3 = pxt.github.diff3(files[path], oldEnt.blobContent, treeEnt.blobContent, lf("local changes"), lf("remote changes (pulled from Github)"))
+                const d3 = pxt.diff.diff3(files[path], oldEnt.blobContent, treeEnt.blobContent, lf("local changes"), lf("remote changes (pulled from Github)"))
                 if (!d3) // merge failed?
                     throw mergeError()
                 conflicts += d3.numConflicts
@@ -772,7 +772,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         if (hd) // not importing
             U.userError(lf("Invalid pxt.json file."));
         pxt.log(`github: reconstructing pxt.json`)
-        cfg = pxt.github.reconstructConfig(files, commit, pxt.appTarget.blocksprj || pxt.appTarget.tsprj);
+        cfg = pxt.diff.reconstructConfig(files, commit, pxt.appTarget.blocksprj || pxt.appTarget.tsprj);
         files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
     // patch the github references back to local workspaces

@@ -844,6 +844,7 @@ declare namespace pxt.tutorial {
         explicitHints?: boolean; // tutorial expects explicit hints in `#### ~ tutorialhint` format
         flyoutOnly?: boolean; // no categories, display all blocks in flyout
         hideIteration?: boolean; // hide step control in tutorial
+        noDiffs?: boolean; // don't automatically generated diffs
         codeStart?: string; // command to run when code starts (MINECRAFT HOC ONLY)
         codeStop?: string; // command to run when code stops (MINECRAFT HOC ONLY)
     }
@@ -858,6 +859,7 @@ declare namespace pxt.tutorial {
         headerContentMd?: string;
         hintContentMd?: string;
         activity?: number;
+        resetDiff?: boolean; // reset diffify algo
     }
 
     interface TutorialActivityInfo {

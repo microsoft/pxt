@@ -47,6 +47,9 @@ namespace pxt.tutorial {
                 return "";
             });
 
+        if (!metadata.noDiffs && editor != pxt.BLOCKS_PROJECT_NAME)
+            diffify(steps, activities);
+
         return <pxt.tutorial.TutorialInfo>{
             editor: editor || pxt.BLOCKS_PROJECT_NAME,
             title: title,
@@ -68,12 +71,54 @@ namespace pxt.tutorial {
         }
     }
 
+    function diffify(steps: TutorialStepInfo[], activities: TutorialActivityInfo[]) {
+        // convert typescript snippets into diff snippets
+        let lastSrc: string = undefined;
+        steps.forEach((step, stepi) => {
+            // reset diff on each activity or when requested
+            if (step.resetDiff
+                || (activities && activities.find(activity => activity.step == stepi)))
+                lastSrc = undefined;
+            // extract typescript snippet from hint or content
+            let s = convertSnippetToDiff(step.hintContentMd);
+            if (s && s != step.hintContentMd)
+                step.hintContentMd = s;
+            else {
+                s = convertSnippetToDiff(step.contentMd);
+                if (s && s != step.contentMd)
+                    step.contentMd = s;
+            }
+        })
+
+        function convertSnippetToDiff(src: string): string {
+            if (!src) return src;
+            return src
+                .replace(/\s*(\/\/|#)\s*@highlight/gm, '')
+                .replace(/```(typescript|spy|python)((?:.|[\r\n])+)```/, function (m, type, code) {
+                const fileA = lastSrc;
+
+                // remove // @highlight or # @highlight lines
+                code = code.replace(/^\n+/, ''); // always trim first empty line
+
+                lastSrc = code;
+                if (!fileA)
+                    return m; // leave unchanged
+                else
+                    return `\`\`\`diff
+${fileA}
+----------
+${code}
+\`\`\``
+            })
+        }
+    }
+
     function parseTutorialTitle(tutorialmd: string): string {
         let title = tutorialmd.match(/^#[^#](.*)$/mi);
         return title && title.length > 1 ? title[1] : null;
     }
 
-    function parseTutorialMarkdown(tutorialmd: string, metadata: TutorialMetadata): {steps: TutorialStepInfo[], activities: TutorialActivityInfo[]} {
+    function parseTutorialMarkdown(tutorialmd: string, metadata: TutorialMetadata): { steps: TutorialStepInfo[], activities: TutorialActivityInfo[] } {
         tutorialmd = stripHiddenSnippets(tutorialmd);
         if (metadata && metadata.activities) {
             // tutorial with "## ACTIVITY", "### STEP" syntax
@@ -85,15 +130,15 @@ namespace pxt.tutorial {
             // old: "### STEP" syntax (no activity header guaranteed)
             if (!steps || steps.length < 1) steps = parseTutorialSteps(tutorialmd, _h3Regex, metadata);
 
-            return {steps: steps, activities: null};
+            return { steps: steps, activities: null };
         }
     }
 
-    function parseTutorialActivities(markdown: string, metadata: TutorialMetadata):  {steps: TutorialStepInfo[], activities: TutorialActivityInfo[]} {
+    function parseTutorialActivities(markdown: string, metadata: TutorialMetadata): { steps: TutorialStepInfo[], activities: TutorialActivityInfo[] } {
         let stepInfo: TutorialStepInfo[] = [];
         let activityInfo: TutorialActivityInfo[] = [];
 
-        markdown.replace(_h2Regex, function(match, name, activity) {
+        markdown.replace(_h2Regex, function (match, name, activity) {
             let i = activityInfo.length;
             activityInfo.push({
                 name: name || lf("Activity {0}", i),
@@ -110,7 +155,7 @@ namespace pxt.tutorial {
             return "";
         })
 
-        return {steps: stepInfo, activities: activityInfo};
+        return { steps: stepInfo, activities: activityInfo };
     }
 
     function parseTutorialSteps(markdown: string, regex?: RegExp, metadata?: TutorialMetadata): TutorialStepInfo[] {
@@ -120,11 +165,12 @@ namespace pxt.tutorial {
         let stepInfo: TutorialStepInfo[] = [];
         markdown.replace(stepRegex, function (match, flags, step) {
             step = step.trim();
-            let {header, hint} = parseTutorialHint(step, metadata && metadata.explicitHints);
+            let { header, hint } = parseTutorialHint(step, metadata && metadata.explicitHints);
             let info: TutorialStepInfo = {
                 fullscreen: /@(fullscreen|unplugged)/.test(flags),
                 unplugged: /@unplugged/.test(flags),
                 tutorialCompleted: /@tutorialCompleted/.test(flags),
+                resetDiff: /@resetDiff/.test(flags),
                 contentMd: step,
                 headerContentMd: header,
                 hintContentMd: hint,
@@ -142,7 +188,7 @@ namespace pxt.tutorial {
         return stepInfo;
     }
 
-    function parseTutorialHint(step: string, explicitHints?: boolean): {header: string, hint: string} {
+    function parseTutorialHint(step: string, explicitHints?: boolean): { header: string, hint: string } {
         let header = step, hint;
         if (explicitHints) {
             // hint is explicitly set with hint syntax "#### ~ tutorialhint" and terminates at the next heading
@@ -161,7 +207,7 @@ namespace pxt.tutorial {
             }
         }
 
-        return {header: header, hint: hint};
+        return { header, hint };
     }
 
     /* Remove hidden snippets from text */
@@ -175,7 +221,7 @@ namespace pxt.tutorial {
         Parses metadata at the beginning of tutorial markown. Metadata is a key-value
         pair in the format: `### @KEY VALUE`
     */
-    function parseTutorialMetadata(tutorialmd: string): {metadata: TutorialMetadata, body: string} {
+    function parseTutorialMetadata(tutorialmd: string): { metadata: TutorialMetadata, body: string } {
         const metadataRegex = /### @(\S+) ([ \S]+)/gi;
         const m: any = {};
 
@@ -189,7 +235,7 @@ namespace pxt.tutorial {
             return "";
         });
 
-        return { metadata: (m as TutorialMetadata), body};
+        return { metadata: (m as TutorialMetadata), body };
     }
 
     export function highlight(pre: HTMLElement): void {

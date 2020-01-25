@@ -270,6 +270,7 @@ function renderSnippets() {
                     codeCardClass: 'lang-codecard',
                     packageClass: 'lang-package',
                     projectClass: 'lang-project',
+                    diffClass: 'lang-diff',
                     snippetReplaceParent: true,
                     simulator: true,
                     showEdit: true,

@@ -250,6 +250,10 @@ default semantic
 @diffAddedTokenBackground: darken(@diffAddedBackground, @diffTokenDarkenRatio);
 @diffInvertedRemovedTokenBackground:darken(@diffInvertedRemovedBackground, @diffTokenDarkenRatio);
 @diffInvertedAddedTokenBackground: darken(@diffInvertedAddedBackground, @diffTokenDarkenRatio);
+@diffUpdateAddedBackground: #fcfc90;
+@diffUpdateAddedTokenBackground: darken(@diffUpdateAddedBackground, @diffTokenDarkenRatio);
+@diffUpdateInlineAddedOutline: 1px solid #ccc;
+
 @conflictBorderColor: orange;
 @conflictHeaderBackgroundColor: lighten(@conflictBorderColor, 30);
 @conflictHeaderColor: black;

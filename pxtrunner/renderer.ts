@@ -13,6 +13,7 @@ namespace pxt.runner {
         blocksClass?: string;
         blocksXmlClass?: string;
         diffBlocksXmlClass?: string;
+        diffClass?: string;
         staticPythonClass?: string; // typescript to be converted to static python
         projectClass?: string;
         blocksAspectRatio?: number;
@@ -31,6 +32,33 @@ namespace pxt.runner {
         showEdit?: boolean;
         showJavaScript?: boolean; // default is to show blocks first
         split?: boolean; // split in multiple divs if too big
+    }
+
+    export function defaultClientRenderOptions() {
+        const renderOptions: ClientRenderOptions = {
+            blocksAspectRatio: window.innerHeight < window.innerWidth ? 1.62 : 1 / 1.62,
+            snippetClass: 'lang-blocks',
+            signatureClass: 'lang-sig',
+            blocksClass: 'lang-block',
+            blocksXmlClass: 'lang-blocksxml',
+            diffBlocksXmlClass: 'lang-diffblocksxml',
+            diffClass: 'lang-diff',
+            staticPythonClass: 'lang-spy',
+            simulatorClass: 'lang-sim',
+            linksClass: 'lang-cards',
+            namespacesClass: 'lang-namespaces',
+            codeCardClass: 'lang-codecard',
+            packageClass: 'lang-package',
+            projectClass: 'lang-project',
+            snippetReplaceParent: true,
+            simulator: true,
+            showEdit: true,
+            hex: true,
+            tutorial: false,
+            showJavaScript: false,
+            hexName: pxt.appTarget.id
+        }
+        return renderOptions;
     }
 
     export interface WidgetOptions {
@@ -536,6 +564,38 @@ namespace pxt.runner {
         }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio });
     }
 
+
+    function renderDiffAsync(opts: ClientRenderOptions): Promise<void> {
+        if (!opts.diffClass) return Promise.resolve();
+        const cls = opts.diffClass;
+        function renderNextDiffAsync(cls: string): Promise<void> {
+            let $el = $("." + cls).first();
+            if (!$el[0]) return Promise.resolve();
+
+            const { fileA: oldSrc, fileB: newSrc } = pxt.diff.split($el.text());
+
+            try {
+                const diffEl = pxt.diff.render(oldSrc, newSrc, {
+                    hideLineNumbers: true,
+                    hideMarkerLine: true,
+                    hideMarker: true,
+                    hideRemoved: true,
+                    update: true
+                });
+                if (opts.snippetReplaceParent) $el = $el.parent();
+                const segment = $('<div class="ui segment codewidget"/>').append(diffEl);
+                $el.removeClass(cls);
+                $el.replaceWith(segment);
+            } catch (e) {
+                pxt.reportException(e)
+                $el.append($('<div/>').addClass("ui segment warning").text(e.message));
+            }
+            return Promise.delay(1, renderNextDiffAsync(cls));
+        }
+
+        return renderNextDiffAsync(cls);
+    }
+
     function renderNamespaces(options: ClientRenderOptions): Promise<void> {
         if (pxt.appTarget.id == "core") return Promise.resolve();
 
@@ -1020,7 +1080,7 @@ namespace pxt.runner {
 
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
         pxt.analytics.enable();
-        if (!options) options = {}
+        if (!options) options = defaultClientRenderOptions();
         if (options.pxtUrl) options.pxtUrl = options.pxtUrl.replace(/\/$/, '');
         if (options.showEdit) options.showEdit = !pxt.BrowserUtils.isIFrame();
 
@@ -1042,6 +1102,7 @@ namespace pxt.runner {
             .then(() => renderBlocksAsync(options))
             .then(() => renderBlocksXmlAsync(options))
             .then(() => renderDiffBlocksXmlAsync(options))
+            .then(() => renderDiffAsync(options))
             .then(() => renderStaticPythonAsync(options))
             .then(() => renderProjectAsync(options))
             .then(() => consumeRenderQueueAsync())

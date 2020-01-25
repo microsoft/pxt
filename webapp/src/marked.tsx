@@ -52,12 +52,15 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         return wrapperDiv;
     }
 
-    private finishRenderLangSnippet(wrapperDiv: HTMLDivElement, code: string) {
-        const codeDiv = document.createElement('code') as HTMLElement
-        codeDiv.className = "hljs"
-        codeDiv.textContent = code;
-        pxt.tutorial.highlight(codeDiv);
-        wrapperDiv.appendChild(codeDiv);
+    private finishRenderLangSnippet(wrapperDiv: HTMLDivElement, code: string | HTMLElement) {
+        if (typeof code === "string") {
+            let codeDiv = document.createElement('code') as HTMLElement
+            codeDiv.className = "hljs"
+            codeDiv.textContent = code;
+            pxt.tutorial.highlight(codeDiv);
+            code = codeDiv;
+        }
+        wrapperDiv.appendChild(code);
         pxsim.U.removeClass(wrapperDiv, 'loading');
     }
 
@@ -86,6 +89,23 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[code]);
                     });
                 }
+            });
+
+        pxt.Util.toArray(content.querySelectorAll(`code.lang-diff`))
+            .forEach((langBlock: HTMLElement) => {
+                const wrapperDiv = this.startRenderLangSnippet(langBlock);
+                const code = langBlock.textContent;
+                Promise.delay(1).then(() => {
+                    const { fileA, fileB } = pxt.diff.split(code);
+                    const el = pxt.diff.render(fileA, fileB, {
+                        hideLineNumbers: true,
+                        hideMarkerLine: true,
+                        hideMarker: true,
+                        hideRemoved: true,
+                        update: true
+                    });
+                    this.finishRenderLangSnippet(wrapperDiv, el)
+                });
             });
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-blocks`))
