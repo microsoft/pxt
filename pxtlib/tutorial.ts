@@ -75,9 +75,9 @@ namespace pxt.tutorial {
         // convert typescript snippets into diff snippets
         let lastSrc: string = undefined;
         steps.forEach((step, stepi) => {
-            // reset diff on each activity
-            if (activities && activities.find(activity => activity.step == stepi) ||
-                step.resetDiff)
+            // reset diff on each activity or when requested
+            if (step.resetDiff
+                || (activities && activities.find(activity => activity.step == stepi)))
                 lastSrc = undefined;
             // extract typescript snippet from hint or content
             let s = convertSnippetToDiff(step.hintContentMd);
