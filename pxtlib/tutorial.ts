@@ -104,7 +104,7 @@ namespace pxt.tutorial {
                 if (!fileA)
                     return m; // leave unchanged
                 else
-                    return `\`\`\`diff
+                    return `\`\`\`diff${type == "spy" ? type : ''}
 ${fileA}
 ----------
 ${code}
