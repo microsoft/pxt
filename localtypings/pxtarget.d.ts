@@ -370,6 +370,7 @@ declare namespace pxt {
         githubEditor?: boolean; // allow editing github repositories from the editor
         githubCompiledJs?: boolean; // commit binary.js in commit when creating a github release,
         blocksCollapsing?: boolean; // collapse/uncollapse functions/event in blocks
+        hideHomeDetailsVideo?: boolean; // hide video/large image from details card
     }
 
     interface SocialOptions {
