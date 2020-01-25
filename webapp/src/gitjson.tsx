@@ -706,7 +706,7 @@ ${content}
     private handleMergeConflictResolution(f: DiffFile, startMarkerLine: number, local: boolean, remote: boolean) {
         pxt.tickEvent("github.conflict.resolve", { "local": local ? 1 : 0, "remote": remote ? 1 : 0 }, { interactiveConsent: true });
 
-        const content = pxt.github.resolveMergeConflictMarker(f.file.content, startMarkerLine, local, remote);
+        const content = pxt.diff.resolveMergeConflictMarker(f.file.content, startMarkerLine, local, remote);
         f.file.setContentAsync(content)
             .then(() => delete this.diffCache[f.name]) // clear cached diff
             .done(() => this.props.parent.forceUpdate());

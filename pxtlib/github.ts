@@ -851,48 +851,6 @@ namespace pxt.github {
 
     export const GIT_JSON = ".git.json"
 
-    export function resolveMergeConflictMarker(content: string, startMarkerLine: number, local: boolean, remote: boolean): string {
-        let lines = pxt.diff.toLines(content);
-        let startLine = startMarkerLine;
-        while (startLine < lines.length) {
-            if (/^<<<<<<<[^<]/.test(lines[startLine])) {
-                break;
-            }
-            startLine++;
-        }
-        let middleLine = startLine + 1;
-        while (middleLine < lines.length) {
-            if (/^=======$/.test(lines[middleLine]))
-                break;
-            middleLine++;
-        }
-        let endLine = middleLine + 1;
-        while (endLine < lines.length) {
-            if (/^>>>>>>>[^>]/.test(lines[endLine])) {
-                break;
-            }
-            endLine++;
-        }
-        if (endLine >= lines.length) {
-            // no match?
-            pxt.debug(`diff marker mistmatch: ${lines.length} -> ${startLine} ${middleLine} ${endLine}`)
-            return content;
-        }
-
-        // remove locals
-        lines[startLine] = undefined;
-        lines[middleLine] = undefined;
-        lines[endLine] = undefined;
-        if (!local)
-            for (let i = startLine; i <= middleLine; ++i)
-                lines[i] = undefined;
-        if (!remote)
-            for (let i = middleLine; i <= endLine; ++i)
-                lines[i] = undefined;
-
-        return lines.filter(line => line !== undefined).join("\n");
-    }
-
     /**
      * A naive 3way merge for pxt.json files. It can mostly handle conflicts when adding/removing files concurrently.
      * - highest version number if kept

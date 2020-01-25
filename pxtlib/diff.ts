@@ -406,4 +406,46 @@ namespace pxt.diff {
             b: pxt.dom.el("div", { "class": "inline-diff" }, jb)
         }
     }
+
+    export function resolveMergeConflictMarker(content: string, startMarkerLine: number, local: boolean, remote: boolean): string {
+        let lines = pxt.diff.toLines(content);
+        let startLine = startMarkerLine;
+        while (startLine < lines.length) {
+            if (/^<<<<<<<[^<]/.test(lines[startLine])) {
+                break;
+            }
+            startLine++;
+        }
+        let middleLine = startLine + 1;
+        while (middleLine < lines.length) {
+            if (/^=======$/.test(lines[middleLine]))
+                break;
+            middleLine++;
+        }
+        let endLine = middleLine + 1;
+        while (endLine < lines.length) {
+            if (/^>>>>>>>[^>]/.test(lines[endLine])) {
+                break;
+            }
+            endLine++;
+        }
+        if (endLine >= lines.length) {
+            // no match?
+            pxt.debug(`diff marker mistmatch: ${lines.length} -> ${startLine} ${middleLine} ${endLine}`)
+            return content;
+        }
+
+        // remove locals
+        lines[startLine] = undefined;
+        lines[middleLine] = undefined;
+        lines[endLine] = undefined;
+        if (!local)
+            for (let i = startLine; i <= middleLine; ++i)
+                lines[i] = undefined;
+        if (!remote)
+            for (let i = middleLine; i <= endLine; ++i)
+                lines[i] = undefined;
+
+        return lines.filter(line => line !== undefined).join("\n");
+    }
 }
