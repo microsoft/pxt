@@ -98,7 +98,7 @@ namespace pxt.tutorial {
                 const fileA = lastSrc;
 
                 const hasHighlight = highlightRx.test(code);
-                code = code.replace(/^\n+/, ''); // always trim first empty line
+                code = code.replace(/^\n+/, '').replace(/\n+$/, ''); // always trim lines
                 if (hasHighlight) code = code.replace(highlightRx, '');
 
                 lastSrc = code;

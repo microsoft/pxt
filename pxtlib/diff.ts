@@ -315,10 +315,10 @@ namespace pxt.diff {
             "-": "diff-removed",
         }
         // check if all lines have been changed and we are hiding removeed files
-        if (options.hideRemoved && !diffLines.some(l => /^  /.test(l))) {
+        if (options.hideRemoved && !diffLines.some(l => /^ {2}/.test(l))) {
             // render added lines as unchanged since everything changed
             diffClasses["+"] = "diff-unchanged";
-        }    
+        }
 
         let lnA = 0, lnB = 0
         let lastMark = ""
