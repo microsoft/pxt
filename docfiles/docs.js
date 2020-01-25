@@ -258,13 +258,25 @@ function renderSnippets() {
     ksRunnerReady(function () {
         setupBlocklyAsync()
             .then(function () {
-                const options = pxt.runner.defaultClientRenderOptions();
-                options.snippetReplaceParent = true;
-                options.simulator = true;
-                options.showEdit = true;
-                options.hex = true;
-                options.hexName = path;
-                return pxt.runner.renderAsync(options);
+                return pxt.runner.renderAsync({
+                    snippetClass: 'lang-blocks',
+                    signatureClass: 'lang-sig',
+                    blocksClass: 'lang-block',
+                    staticPythonClass: 'lang-spy',
+                    shuffleClass: 'lang-shuffle',
+                    simulatorClass: 'lang-sim',
+                    linksClass: 'lang-cards',
+                    namespacesClass: 'lang-namespaces',
+                    codeCardClass: 'lang-codecard',
+                    packageClass: 'lang-package',
+                    projectClass: 'lang-project',
+                    diffClass: 'lang-diff',
+                    snippetReplaceParent: true,
+                    simulator: true,
+                    showEdit: true,
+                    hex: true,
+                    hexName: path
+                });
             }).done();
     });
 }
