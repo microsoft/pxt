@@ -84,8 +84,8 @@ namespace pxt.tutorial {
             if (s && s != step.hintContentMd)
                 step.hintContentMd = s;
             else {
-                s = convertSnippetToDiff(step.contentMd);
-                if (s && s != step.contentMd)
+                s = convertSnippetToDiff(step.headerContentMd);
+                if (s && s != step.headerContentMd)
                     step.contentMd = s;
             }
         })
