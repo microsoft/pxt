@@ -92,15 +92,17 @@ namespace pxt.tutorial {
 
         function convertSnippetToDiff(src: string): string {
             if (!src) return src;
-            return src.replace(/```(typescript|spy|python)((?:.|[\r\n])+)```/, function (m, type, code) {
+            return src
+                .replace(/\s*(\/\/|#)\s*@highlight/gm, '')
+                .replace(/```(typescript|spy|python)((?:.|[\r\n])+)```/, function (m, type, code) {
                 const fileA = lastSrc;
 
                 // remove // @highlight or # @highlight lines
-                code = code.replace(/\s*(\/\/|#)\s*@highlight/gm, '');
+                code = code.replace(/^\n+/, ''); // always trim first empty line
 
                 lastSrc = code;
                 if (!fileA)
-                    return m;
+                    return m; // leave unchanged
                 else
                     return `\`\`\`diff
 ${fileA}
