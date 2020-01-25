@@ -102,11 +102,11 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             .forEach((langBlock: HTMLElement) => {
                 this.cachedRenderLangSnippet(langBlock, code => {
                     const { fileA, fileB } = pxt.diff.split(code);
-                    return Promise.mapSeries([fileA, fileB], 
+                    return Promise.mapSeries([fileA, fileB],
                         src => parent.renderPythonAsync({
-                        type: "pxteditor",
-                        action: "renderpython", ts: src
-                    }).then(resp => resp.python))
+                            type: "pxteditor",
+                            action: "renderpython", ts: src
+                        }).then(resp => resp.python))
                         .then(parts => {
                             const el = pxt.diff.render(parts[0], parts[1], {
                                 hideLineNumbers: true,
@@ -117,7 +117,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                             });
                             return el;
                         });
-                    });
+                });
             });
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-diff`))
