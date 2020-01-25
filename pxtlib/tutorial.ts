@@ -84,27 +84,28 @@ namespace pxt.tutorial {
             if (s && s != step.hintContentMd)
                 step.hintContentMd = s;
             else {
-                s = convertSnippetToDiff(step.contentMd);
-                if (s && s != step.contentMd)
-                    step.contentMd = s;
+                s = convertSnippetToDiff(step.headerContentMd);
+                if (s && s != step.headerContentMd)
+                    step.headerContentMd = s;
             }
         })
 
         function convertSnippetToDiff(src: string): string {
+            const highlightRx = /\s*(\/\/|#)\s*@highlight/gm;
             if (!src) return src;
             return src
-                .replace(/\s*(\/\/|#)\s*@highlight/gm, '')
                 .replace(/```(typescript|spy|python)((?:.|[\r\n])+)```/, function (m, type, code) {
                 const fileA = lastSrc;
 
-                // remove // @highlight or # @highlight lines
-                code = code.replace(/^\n+/, ''); // always trim first empty line
+                const hasHighlight = highlightRx.test(code);
+                code = code.replace(/^\n+/, '').replace(/\n+$/, ''); // always trim lines
+                if (hasHighlight) code = code.replace(highlightRx, '');
 
                 lastSrc = code;
-                if (!fileA)
-                    return m; // leave unchanged
+                if (!fileA || hasHighlight)
+                    return m; // leave unchanged or reuse highlight info
                 else
-                    return `\`\`\`diff
+                    return `\`\`\`diff${type == "spy" ? type : ''}
 ${fileA}
 ----------
 ${code}

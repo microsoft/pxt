@@ -284,13 +284,6 @@ namespace pxt.diff {
         }
     }
 
-    const diffClasses: pxt.Map<string> = {
-        "@": "diff-marker",
-        " ": "diff-unchanged",
-        "+": "diff-added",
-        "-": "diff-removed",
-    }
-
     export function split(dualSrc: string): { fileA: string, fileB: string } {
         const src = dualSrc.split(/-{10,}/, 2);
         if (src.length < 2)
@@ -313,6 +306,18 @@ namespace pxt.diff {
         const diffLines = compute(fileA, fileB, options);
         if (!diffLines) {
             return pxt.dom.el("div", null, pxtc.Util.lf("Too many differences to render diff."));
+        }
+
+        const diffClasses: pxt.Map<string> = {
+            "@": "diff-marker",
+            " ": "diff-unchanged",
+            "+": "diff-added",
+            "-": "diff-removed",
+        }
+        // check if all lines have been changed and we are hiding removeed files
+        if (options.hideRemoved && !diffLines.some(l => /^ {2}/.test(l))) {
+            // render added lines as unchanged since everything changed
+            diffClasses["+"] = "diff-unchanged";
         }
 
         let lnA = 0, lnB = 0

@@ -15,6 +15,7 @@ namespace pxt.runner {
         diffBlocksXmlClass?: string;
         diffClass?: string;
         staticPythonClass?: string; // typescript to be converted to static python
+        diffStaticPythonClass?: string; // diff between two spy snippets
         projectClass?: string;
         blocksAspectRatio?: number;
         simulatorClass?: string;
@@ -43,6 +44,7 @@ namespace pxt.runner {
             blocksXmlClass: 'lang-blocksxml',
             diffBlocksXmlClass: 'lang-diffblocksxml',
             diffClass: 'lang-diff',
+            diffStaticPythonClass: 'lang-diffspy',
             staticPythonClass: 'lang-spy',
             simulatorClass: 'lang-sim',
             linksClass: 'lang-cards',
