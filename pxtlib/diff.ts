@@ -294,6 +294,23 @@ namespace pxt.diff {
         return { fileA, fileB };
     }
 
+    export interface DiffMarker {
+        oldStart: number;
+        oldLength: number;
+        newStart: number;
+        newLength: number;
+    }
+
+    export function parseDiffMarker(ln: string): DiffMarker {
+        const m = /^@@ -(\d+),(\d+) \+(\d+),(\d+)/.exec(ln)
+        return m && {
+                oldStart: parseInt(m[1]) - 1,
+                oldLength: parseInt(m[2]),
+                newStart: parseInt(m[3]) - 1,
+                newLength: parseInt(m[4])
+            }
+    }
+
     export interface RenderOptions extends DiffOptions {
         hideMarkerLine?: boolean;
         hideLineNumbers?: boolean;
@@ -328,10 +345,10 @@ namespace pxt.diff {
         }, tbody);
         let savedDiffEl: HTMLElement = null
         diffLines.forEach((ln: string, idx: number) => {
-            const m = /^@@ -(\d+),\d+ \+(\d+),\d+/.exec(ln)
+            const m = parseDiffMarker(ln);
             if (m) {
-                lnA = parseInt(m[1]) - 1
-                lnB = parseInt(m[2]) - 1
+                lnA = m.oldStart
+                lnB = m.newStart
             } else {
                 if (ln[0] != "+")
                     lnA++
