@@ -600,6 +600,34 @@ namespace pxt.runner {
         return renderNextDiffAsync(cls);
     }
 
+    function renderDiffBlocksAsync(opts: ClientRenderOptions): Promise<void> {
+        if (!opts.diffBlocksClass) return Promise.resolve();
+        const cls = opts.diffBlocksClass;
+        function renderNextDiffAsync(cls: string): Promise<void> {
+            let $el = $("." + cls).first();
+            if (!$el[0]) return Promise.resolve();
+
+            const { fileA: oldSrc, fileB: newSrc } = pxt.diff.split($el.text());
+            return Promise.mapSeries([oldSrc, newSrc], src => pxt.runner.decompileSnippetAsync(src))
+                .then(resps => {
+                    try {
+                        const diffRes = pxt.blocks.decompiledDiffAsync(
+                            oldSrc, resps[0].compileBlocks, newSrc, resps[1].compileBlocks);
+                        if (opts.snippetReplaceParent) $el = $el.parent();
+                        const segment = $('<div class="ui segment codewidget"/>').append(diffRes.svg);
+                        $el.removeClass(cls);
+                        $el.replaceWith(segment);
+                    } catch (e) {
+                        pxt.reportException(e)
+                        $el.append($('<div/>').addClass("ui segment warning").text(e.message));
+                    }
+                    return Promise.delay(1, renderNextDiffAsync(cls));        
+                })
+        }
+
+        return renderNextDiffAsync(cls);
+    }
+
     function renderNamespaces(options: ClientRenderOptions): Promise<void> {
         if (pxt.appTarget.id == "core") return Promise.resolve();
 
@@ -1106,6 +1134,7 @@ namespace pxt.runner {
             .then(() => renderBlocksAsync(options))
             .then(() => renderBlocksXmlAsync(options))
             .then(() => renderDiffBlocksXmlAsync(options))
+            .then(() => renderDiffBlocksAsync(options))
             .then(() => renderDiffAsync(options))
             .then(() => renderStaticPythonAsync(options))
             .then(() => renderProjectAsync(options))

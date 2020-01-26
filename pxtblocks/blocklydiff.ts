@@ -402,12 +402,59 @@ namespace pxt.blocks {
             visDom(child, f);
     }
 
-    export async function decompiledDiffAsync(oldTs: string, oldResp: pxtc.CompileResult, newTs: string, newResp: pxtc.CompileResult) {
+    export async function decompiledDiffAsync(oldTs: string, oldResp: pxtc.CompileResult, newTs: string, newResp: pxtc.CompileResult, options?: DiffOptions): DiffResult {
+        const oldXml = oldResp.outfiles['main.blocks'];
+        let newXml = newResp.outfiles['main.blocks'];
+
+        // compute old line interval mapping
+        const oldLines = parseLines(oldTs);
+        const newLines = parseLines(newTs);
+
         // compute diff
         const diffLines = pxt.diff.compute(oldTs, newTs, {
-            ignoreWhitespace: true
+            ignoreWhitespace: true,
+            full: true
         });
-        const oldXml = oldResp.outfiles['main.blocks'];
-        const newXml = newResp.outfiles['main.blocks'];
+
+        // build old -> new lines mapping
+        let oldLineStart = 0;
+        let newLineStart = 0;
+        diffLines.forEach((line, index) => {
+            // moving cursors
+            const marker = line[0];
+            switch(marker) {
+                case "-": // removed
+                    oldLineStart += line.length + 1;
+                    break;
+                case "+": // added
+                    newLineStart += line.length + 1;
+                    break;
+                default: // unchanged
+                    const oldid = pxt.blocks.findBlockId(oldResp.sourceMap, { start: oldLineStart, length: line.length });
+                    const newid = pxt.blocks.findBlockId(newResp.sourceMap, { start: newLineStart, length: line.length });
+
+                    // patch workspace
+                    newXml = newXml.replace(oldid, newid);
+
+                    oldLineStart += line.length + 1;
+                    newLineStart += line.length + 1;
+                    break;
+            }
+        })
+
+        // parse workspacews
+        const oldWs = pxt.blocks.loadWorkspaceXml(oldXml, true);
+        const newWs = pxt.blocks.loadWorkspaceXml(newXml, true);
+
+        return diffWorkspace(oldWs, newWs, options);
+
+        function parseLines(s: string): { start: number; length: number; marker?: string; }[] {
+            const r: { start: number; length: number, marker?: string; }[] = [];
+            s.split("\n").forEach((line, index) => r.push({
+                start: (r.length ? r[r.length - 1].start : 0) + line.length + 1,
+                length: line.length
+            }));
+            return r;
+        }
     }
 }

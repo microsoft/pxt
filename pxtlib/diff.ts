@@ -28,6 +28,7 @@ namespace pxt.diff {
         context?: number; // lines of context; defaults to 3
         ignoreWhitespace?: boolean;
         maxDiffSize?: number; // defaults to 1024
+        full?: boolean; // don't try to create short diff
     }
 
     // based on An O(ND) Difference Algorithm and Its Variations by EUGENE W. MYERS
@@ -116,7 +117,7 @@ namespace pxt.diff {
         }
         diff.reverse()
 
-        if (options.context == Infinity)
+        if (options.context == Infinity || options.full)
             return diff
 
         let aline = 1, bline = 1, idx = 0
