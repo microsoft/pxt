@@ -401,4 +401,13 @@ namespace pxt.blocks {
         for (const child of Util.toArray(el.children))
             visDom(child, f);
     }
+
+    export async function decompiledDiffAsync(oldTs: string, oldResp: pxtc.CompileResult, newTs: string, newResp: pxtc.CompileResult) {
+        // compute diff
+        const diffLines = pxt.diff.compute(oldTs, newTs, {
+            ignoreWhitespace: true
+        });
+        const oldXml = oldResp.outfiles['main.blocks'];
+        const newXml = newResp.outfiles['main.blocks'];
+    }
 }
