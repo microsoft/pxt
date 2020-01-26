@@ -578,8 +578,8 @@ ${output}</xml>`;
                 kind: "expr",
                 type
             };
-            if (result.sourceMap)
-                expr.id = mkId(type, node);
+            //if (result.sourceMap)
+            //    expr.id = mkId(type, node);
             return expr;
         }
 

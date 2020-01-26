@@ -429,26 +429,43 @@ namespace pxt.blocks {
             // moving cursors
             const marker = ln[0];
             const line = ln.substr(2);
+            let lineLength = line.length;
             switch(marker) {
                 case "-": // removed
-                    oldLineStart += line.length + 1;
+                    oldLineStart += lineLength + 1;
                     break;
                 case "+": // added
-                    newLineStart += line.length + 1;
+                    newLineStart += lineLength + 1;
                     break;
                 default: // unchanged
-                    const oldid = pxt.blocks.findBlockId(oldResp.sourceMap, { start: oldLineStart, length: line.length });
-                    const newid = pxt.blocks.findBlockId(newResp.sourceMap, { start: newLineStart, length: line.length });
+                    // skip leading white space
+                    const lw = /^\s+/.exec(line);
+                    if (lw) {
+                        const lwl = lw[0].length;
+                        oldLineStart += lwl;
+                        newLineStart += lwl;
+                        lineLength -= lwl;
+                    }
+                    // find block ids mapped to the ranges
+                    const oldid = pxt.blocks.findBlockId(oldResp.sourceMap, { 
+                        start: oldLineStart, 
+                        length: lineLength
+                    });
+                    const newid = pxt.blocks.findBlockId(newResp.sourceMap, { 
+                        start: newLineStart, 
+                        length: lineLength 
+                    });
 
                     // patch workspace
+                    console.log(ln);
                     console.log(`id ${oldLineStart}:${line.length}>${oldid} ==> ${newLineStart}:${line.length}>${newid}`)
                     if (oldid && newid) {
                         newXml = newXml.replace(newid, oldid);
                         console.log(newXml);
                     }
 
-                    oldLineStart += line.length + 1;
-                    newLineStart += line.length + 1;
+                    oldLineStart += lineLength + 1;
+                    newLineStart += lineLength + 1;
                     break;
             }
         })
