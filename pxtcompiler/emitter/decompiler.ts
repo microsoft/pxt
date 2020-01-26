@@ -321,7 +321,7 @@ namespace ts.pxtc.decompiler {
         alwaysEmitOnStart?: boolean; // emit "on start" even if empty
         errorOnGreyBlocks?: boolean; // fail on grey blocks (usefull when testing docs)
         allowedArgumentTypes?: string[]; // a whitelist of types that can be decompiled for user defined function arguments
-        ids?: boolean; // generate block ids
+        sourceMap?: boolean; // generate block ids
         /*@internal*/
         includeGreyBlockMessages?: boolean; // adds error attributes to the mutations in typescript_statement blocks (for debug pruposes)
     }
@@ -344,7 +344,7 @@ namespace ts.pxtc.decompiler {
             diagnostics: [], 
             success: true, 
             times: {},
-            sourceMap: options.ids && []
+            sourceMap: options.sourceMap && []
         }
         const env: DecompilerEnv = {
             blocks: blocksInfo,
@@ -758,7 +758,7 @@ ${output}</xml>`;
 
         function openBlockTag(type: string, node: StatementNode) {
             countBlock();
-            write(`<block ${node.id ? `id="${node.id}" ` : ''}type="${U.htmlEscape(type)}">`)
+            write(`<block ${node && node.id ? `id="${node.id}" ` : ''}type="${U.htmlEscape(type)}">`)
         }
 
         function closeBlockTag() {

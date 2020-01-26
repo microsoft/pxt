@@ -608,7 +608,9 @@ namespace pxt.runner {
             if (!$el[0]) return Promise.resolve();
 
             const { fileA: oldSrc, fileB: newSrc } = pxt.diff.split($el.text());
-            return Promise.mapSeries([oldSrc, newSrc], src => pxt.runner.decompileSnippetAsync(src))
+            return Promise.mapSeries([oldSrc, newSrc], src => pxt.runner.decompileSnippetAsync(src, {
+                sourceMap: true
+            }))
                 .then(resps => {
                     try {
                         const diffRes = pxt.blocks.decompiledDiffAsync(

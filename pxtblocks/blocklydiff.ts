@@ -402,19 +402,16 @@ namespace pxt.blocks {
             visDom(child, f);
     }
 
-    export async function decompiledDiffAsync(oldTs: string, oldResp: pxtc.CompileResult, newTs: string, newResp: pxtc.CompileResult, options?: DiffOptions): DiffResult {
+    export function decompiledDiffAsync(oldTs: string, oldResp: pxtc.CompileResult, newTs: string, newResp: pxtc.CompileResult, options?: DiffOptions): DiffResult {
         const oldXml = oldResp.outfiles['main.blocks'];
         let newXml = newResp.outfiles['main.blocks'];
 
-        // compute old line interval mapping
-        const oldLines = parseLines(oldTs);
-        const newLines = parseLines(newTs);
-
-        // compute diff
+        // compute diff of typescript sources
         const diffLines = pxt.diff.compute(oldTs, newTs, {
             ignoreWhitespace: true,
             full: true
         });
+        console.log(diffLines);
 
         // build old -> new lines mapping
         let oldLineStart = 0;
@@ -434,6 +431,7 @@ namespace pxt.blocks {
                     const newid = pxt.blocks.findBlockId(newResp.sourceMap, { start: newLineStart, length: line.length });
 
                     // patch workspace
+                    console.log(`id ${oldid} -> ${newid}`)
                     newXml = newXml.replace(oldid, newid);
 
                     oldLineStart += line.length + 1;
@@ -447,14 +445,5 @@ namespace pxt.blocks {
         const newWs = pxt.blocks.loadWorkspaceXml(newXml, true);
 
         return diffWorkspace(oldWs, newWs, options);
-
-        function parseLines(s: string): { start: number; length: number; marker?: string; }[] {
-            const r: { start: number; length: number, marker?: string; }[] = [];
-            s.split("\n").forEach((line, index) => r.push({
-                start: (r.length ? r[r.length - 1].start : 0) + line.length + 1,
-                length: line.length
-            }));
-            return r;
-        }
     }
 }
