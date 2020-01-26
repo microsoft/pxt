@@ -407,8 +407,12 @@ namespace pxt.blocks {
 
     export function decompiledDiffAsync(oldTs: string, oldResp: pxtc.CompileResult, newTs: string, newResp: pxtc.CompileResult, options?: DiffOptions): DiffResult {
         const oldXml = oldResp.outfiles['main.blocks'];
+        console.log(oldTs);
+        console.log(oldResp.sourceMap)
         console.log(oldXml);
         let newXml = newResp.outfiles['main.blocks'];
+        console.log(newTs);
+        console.log(newResp.sourceMap)
         console.log(newXml);
 
         // compute diff of typescript sources
@@ -421,9 +425,10 @@ namespace pxt.blocks {
         // build old -> new lines mapping
         let oldLineStart = 0;
         let newLineStart = 0;
-        diffLines.forEach((line, index) => {
+        diffLines.forEach((ln, index) => {
             // moving cursors
-            const marker = line[0];
+            const marker = ln[0];
+            const line = ln.substr(2);
             switch(marker) {
                 case "-": // removed
                     oldLineStart += line.length + 1;
@@ -436,7 +441,7 @@ namespace pxt.blocks {
                     const newid = pxt.blocks.findBlockId(newResp.sourceMap, { start: newLineStart, length: line.length });
 
                     // patch workspace
-                    console.log(`id ${oldid} -> ${newid}`)
+                    console.log(`id ${oldLineStart}:${line.length}>${oldid} ==> ${newLineStart}:${line.length}>${newid}`)
                     if (oldid && newid) {
                         newXml = newXml.replace(newid, oldid);
                         console.log(newXml);
