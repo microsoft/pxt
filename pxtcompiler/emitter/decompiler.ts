@@ -477,7 +477,7 @@ namespace ts.pxtc.decompiler {
         if (n) {
             emitStatementNode(n);
         } else if (!options.snippetMode && !stmts.length) {
-            openBlockTag(ts.pxtc.ON_START_TYPE, undefined);
+            openBlockTag(ts.pxtc.ON_START_TYPE, mkStmt(ts.pxtc.ON_START_TYPE, stmts[0]));
             closeBlockTag();
         }
 
@@ -546,8 +546,9 @@ ${output}</xml>`;
             }
         }
 
-        function mkId(node: ts.Node): string {
-            const id = Blockly.utils.genUid();
+        function mkId(type: string, node: ts.Node): string {
+            const ON_START_STATEMENT_ID = "xRRgvHNlG#rZ^u`HECiY";
+            const id = type == ts.pxtc.ON_START_TYPE ? ON_START_STATEMENT_ID : Blockly.utils.genUid();
             if (node) {
                 const start = node.getFullStart();
                 result.sourceMap.push({
@@ -564,8 +565,9 @@ ${output}</xml>`;
                 kind: "statement",
                 type
             };
-            if (result.sourceMap)
-                stm.id = mkId(node);
+            if (result.sourceMap) {
+                stm.id = mkId(type, node);
+            }
             return stm;
         }
 
@@ -758,7 +760,8 @@ ${output}</xml>`;
 
         function openBlockTag(type: string, node: StatementNode) {
             countBlock();
-            write(`<block ${node && node.id ? `id="${node.id}" ` : ''}type="${U.htmlEscape(type)}">`)
+            const id = node && node.id;
+            write(`<block ${id ? `id="${node.id}" ` : ''}type="${U.htmlEscape(type)}">`)
         }
 
         function closeBlockTag() {

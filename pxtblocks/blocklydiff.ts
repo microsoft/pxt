@@ -404,7 +404,9 @@ namespace pxt.blocks {
 
     export function decompiledDiffAsync(oldTs: string, oldResp: pxtc.CompileResult, newTs: string, newResp: pxtc.CompileResult, options?: DiffOptions): DiffResult {
         const oldXml = oldResp.outfiles['main.blocks'];
+        console.log(oldXml);
         let newXml = newResp.outfiles['main.blocks'];
+        console.log(newXml);
 
         // compute diff of typescript sources
         const diffLines = pxt.diff.compute(oldTs, newTs, {
@@ -432,7 +434,8 @@ namespace pxt.blocks {
 
                     // patch workspace
                     console.log(`id ${oldid} -> ${newid}`)
-                    newXml = newXml.replace(oldid, newid);
+                    if (oldid && newid)
+                        newXml = newXml.replace(oldid, newid);
 
                     oldLineStart += line.length + 1;
                     newLineStart += line.length + 1;
