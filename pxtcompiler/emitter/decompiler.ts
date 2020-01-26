@@ -164,7 +164,9 @@ namespace ts.pxtc.decompiler {
 
     interface ExpressionNode extends BlockNode {
         kind: "expr";
+        handlers?: Handler[];
         isShadow?: boolean;
+        id?: string;
     }
 
     interface StatementNode extends BlockNode {
@@ -338,14 +340,15 @@ namespace ts.pxtc.decompiler {
     export function decompileToBlocks(blocksInfo: pxtc.BlocksInfo, file: ts.SourceFile, options: DecompileBlocksOptions, renameMap?: RenameMap): pxtc.CompileResult {
         let emittedBlocks = 0;
         let stmts: NodeArray<ts.Statement> = file.statements;
-        let result: pxtc.CompileResult = {
+        const result: pxtc.CompileResult = {
             blocksInfo: blocksInfo,
-            outfiles: {}, 
-            diagnostics: [], 
-            success: true, 
-            times: {},
-            sourceMap: options.sourceMap && []
+            outfiles: {},
+            diagnostics: [],
+            success: true,
+            times: {}
         }
+        if (options.sourceMap)
+            result.sourceMap = [];
         const env: DecompilerEnv = {
             blocks: blocksInfo,
             declaredFunctions: {},
@@ -565,17 +568,18 @@ ${output}</xml>`;
                 kind: "statement",
                 type
             };
-            if (result.sourceMap) {
+            if (result.sourceMap)
                 stm.id = mkId(type, node);
-            }
             return stm;
         }
 
-        function mkExpr(type: string): ExpressionNode {
+        function mkExpr(type: string, node: ts.Node): ExpressionNode {
             const expr: ExpressionNode = {
                 kind: "expr",
                 type
             };
+            if (result.sourceMap)
+                expr.id = mkId(type, node);
             return expr;
         }
 
@@ -752,7 +756,7 @@ ${output}</xml>`;
                     countBlock();
                 }
 
-                write(`<${tag} type="${U.htmlEscape(node.type)}">`)
+                write(`<${tag} ${node.id ? `id="${node.id}" ` : ''}type="${U.htmlEscape(node.type)}">`)
                 emitBlockNodeCore(node);
                 write(`</${tag}>`)
             }
@@ -876,16 +880,16 @@ ${output}</xml>`;
                 rightValue = getValue(rightName, n.right, numberType);
             }
 
-            const result = mkExpr(npp.type);
-            result.fields = [];
+            const r = mkExpr(npp.type, n);
+            r.fields = [];
 
             if (npp.op) {
-                result.fields.push(getField("OP", npp.op))
+                r.fields.push(getField("OP", npp.op))
             }
 
-            result.inputs = [leftValue, rightValue];
+            r.inputs = [leftValue, rightValue];
 
-            return result;
+            return r;
 
         }
 
@@ -922,12 +926,12 @@ ${output}</xml>`;
                 }
             }
 
-            const result = mkExpr("text_join");
-            result.inputs = inputs;
-            result.mutation = {
+            const r = mkExpr("text_join", n);
+            r.inputs = inputs;
+            r.mutation = {
                 "items": inputs.length.toString()
             };
-            return result;
+            return r;
         }
 
         function getValue(name: string, contents: boolean | number | string | Node, shadowType?: string, shadowMutation?: pxt.Map<string>): ValueNode {
@@ -997,7 +1001,7 @@ ${output}</xml>`;
         }
 
         function getFieldBlock(type: string, fieldName: string, value: string, isShadow?: boolean): ExpressionNode {
-            const r = mkExpr(type);
+            const r = mkExpr(type, null);
             r.fields = [getField(fieldName, value)];
             r.isShadow = isShadow;
             return r;
@@ -1035,7 +1039,7 @@ ${output}</xml>`;
 
         // TODO: Add a real negation block
         function negateNumericNode(node: ts.Node): ExpressionNode {
-            const r = mkExpr("math_arithmetic");
+            const r = mkExpr("math_arithmetic", node);
             r.inputs = [
                 getValue("A", 0, numberType),
                 getValue("B", node, numberType)
@@ -1047,7 +1051,7 @@ ${output}</xml>`;
         function getPrefixUnaryExpression(node: PrefixUnaryExpression): OutputNode {
             switch (node.operator) {
                 case SK.ExclamationToken:
-                    const r = mkExpr("logic_negate");
+                    const r = mkExpr("logic_negate", node);
                     r.inputs = [getConditionalInput("BOOL", node.operand)];
                     return r;
                 case SK.PlusToken:
@@ -1093,7 +1097,7 @@ ${output}</xml>`;
                 return getPropertyGetBlock(n, n)
 
             if (attributes.blockId === "lists_length" || attributes.blockId === "text_length") {
-                const r = mkExpr(U.htmlEscape(attributes.blockId));
+                const r = mkExpr(U.htmlEscape(attributes.blockId) , n);
                 r.inputs = [getValue("VALUE", n.expression)];
 
                 return r;
@@ -1117,7 +1121,7 @@ ${output}</xml>`;
             const info = env.compInfo(callInfo);
 
             if (blockId && info && info.thisParameter) {
-                const r = mkExpr(blockId);
+                const r = mkExpr(blockId, n);
                 r.inputs = [getValue(U.htmlEscape(info.thisParameter.definitionName), n.expression, info.thisParameter.shadowBlockId)];
                 return r;
             }
@@ -1128,7 +1132,7 @@ ${output}</xml>`;
 
         function getEnumFieldBlock(idfn: SymbolInfo, value: string) {
             let f = /(?:%|\$)([a-zA-Z0-9_]+)/.exec(idfn.attributes.block);
-            const r = mkExpr(U.htmlEscape(idfn.attributes.blockId));
+            const r = mkExpr(U.htmlEscape(idfn.attributes.blockId), undefined);
             r.fields = [{
                 kind: "field",
                 name: U.htmlEscape(f[1]),
@@ -1138,7 +1142,7 @@ ${output}</xml>`;
         }
 
         function getArrayLiteralExpression(n: ts.ArrayLiteralExpression): ExpressionNode {
-            const r = mkExpr("lists_create_with");
+            const r = mkExpr("lists_create_with", n);
             r.inputs = n.elements.map((e, i) => getValue("ADD" + i, e));
             r.mutation = {
                 "items": n.elements.length.toString()
@@ -1147,7 +1151,7 @@ ${output}</xml>`;
         }
 
         function getElementAccessExpression(n: ts.ElementAccessExpression): ExpressionNode {
-            const r = mkExpr("lists_index_get");
+            const r = mkExpr("lists_index_get", n);
             r.inputs = [getValue("LIST", n.expression), getValue("INDEX", n.argumentExpression, numberType)]
             return r;
         }
@@ -1169,7 +1173,7 @@ ${output}</xml>`;
 
             const comp = pxt.blocks.compileInfo(api);
 
-            const r = mkExpr(api.attributes.blockId);
+            const r = mkExpr(api.attributes.blockId, t);
 
             const text = (t.template as ts.NoSubstitutionTemplateLiteral).text;
 
@@ -1585,7 +1589,7 @@ ${output}</xml>`;
                         const valueField = getNumericLiteral(decrementedValue + "");
                         r.inputs.push(mkValue("TO", valueField, wholeNumberType));
                     } else {
-                        const ex = mkExpr("math_arithmetic");
+                        const ex = mkExpr("math_arithmetic", n);
                         ex.fields = [getField("OP", "MINUS")];
                         ex.inputs = [
                             getValue("A", unwrappedRightSide, numberType),
@@ -1659,7 +1663,7 @@ ${output}</xml>`;
             }
             const qName = `${sym.namespace}.${sym.retType}.${tp}`;
             const setter = env.blocks.blocks.find(b => b.qName == qName)
-            const r = right ? mkStmt(setter.attributes.blockId, n) : mkExpr(setter.attributes.blockId)
+            const r = right ? mkStmt(setter.attributes.blockId, n) : mkExpr(setter.attributes.blockId, n)
             const pp = setter.attributes._def.parameters;
 
             let fieldValue = info.qName;
@@ -1741,7 +1745,7 @@ ${output}</xml>`;
             const attributes = attrs(info);
 
             if (info.qName == "Math.pow") {
-                const r = mkExpr("math_arithmetic");
+                const r = mkExpr("math_arithmetic", node);
                 r.inputs = [
                     mkValue("A", getOutputBlock(node.arguments[0]), numberType),
                     mkValue("B", getOutputBlock(node.arguments[1]), numberType)
@@ -1755,9 +1759,9 @@ ${output}</xml>`;
                     let r: ExpressionNode;
 
                     if (isRoundingFunction(op)) {
-                        r = mkExpr("math_js_round");
+                        r = mkExpr("math_js_round", node);
                     } else {
-                        r = mkExpr("math_js_op");
+                        r = mkExpr("math_js_op", node);
                         let opType: string;
                         if (isUnaryMathFunction(op)) opType = "unary";
                         else if (isInfixMathFunction(op)) opType = "infix";
@@ -1843,10 +1847,8 @@ ${output}</xml>`;
             const api = env.blocks.apis.byQName[info.qName];
             const comp = pxt.blocks.compileInfo(api);
 
-            const r = {
-                kind: asExpression ? "expr" : "statement",
-                type: attributes.blockId
-            } as StatementNode;
+            const r = asExpression ? mkExpr(attributes.blockId, node) 
+                : mkStmt(attributes.blockId, node);
 
             const addInput = (v: ValueNode) => (r.inputs || (r.inputs = [])).push(v);
             const addField = (f: FieldNode) => (r.fields || (r.fields = [])).push(f);
@@ -2153,7 +2155,7 @@ ${output}</xml>`;
 
             if (blockStatements.length) {
                 // wrap statement in "on start" if top level
-                const stmtNode= blockStatements.shift();
+                const stmtNode = blockStatements.shift();
                 const stmt = getStatementBlock(stmtNode, blockStatements, parent, false, topLevel);
                 if (emitOnStart) {
                     // Preserve any variable edeclarations that were never used

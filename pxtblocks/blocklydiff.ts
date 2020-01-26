@@ -1,6 +1,7 @@
 namespace pxt.blocks {
     export interface DiffOptions {
         hideDeletedTopBlocks?: boolean;
+        hideDeletedBlocks?: boolean;
         renderOptions?: BlocksRenderOptions;
     }
 
@@ -149,20 +150,22 @@ namespace pxt.blocks {
         // 3. delete statement blocks
         // inject deleted blocks in new workspace
         const dids: Map<string> = {};
-        const deletedStatementBlocks = deletedBlocks
-            .filter(b => !todoBlocks[b.id]
-                && !isUsed(b)
-                && (!b.outputConnection || !b.outputConnection.isConnected()) // ignore reporters
-            );
-        deletedStatementBlocks
-            .forEach(b => {
-                const b2 = cloneIntoDiff(b);
-                dids[b.id] = b2.id;
-                log(`deleted block ${b.toDevString()}->${b2.toDevString()}`)
-            })
-        // connect deleted blocks together
-        deletedStatementBlocks
-            .forEach(b => stitch(b));
+        if (!options.hideDeletedBlocks) {
+            const deletedStatementBlocks = deletedBlocks
+                .filter(b => !todoBlocks[b.id]
+                    && !isUsed(b)
+                    && (!b.outputConnection || !b.outputConnection.isConnected()) // ignore reporters
+                );
+            deletedStatementBlocks
+                .forEach(b => {
+                    const b2 = cloneIntoDiff(b);
+                    dids[b.id] = b2.id;
+                    log(`deleted block ${b.toDevString()}->${b2.toDevString()}`)
+                })
+            // connect deleted blocks together
+            deletedStatementBlocks
+                .forEach(b => stitch(b));
+        }
 
         // 4. moved blocks
         let modified = 0;
@@ -434,8 +437,10 @@ namespace pxt.blocks {
 
                     // patch workspace
                     console.log(`id ${oldid} -> ${newid}`)
-                    if (oldid && newid)
-                        newXml = newXml.replace(oldid, newid);
+                    if (oldid && newid) {
+                        newXml = newXml.replace(newid, oldid);
+                        console.log(newXml);
+                    }
 
                     oldLineStart += line.length + 1;
                     newLineStart += line.length + 1;

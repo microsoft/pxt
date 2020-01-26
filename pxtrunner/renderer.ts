@@ -614,7 +614,10 @@ namespace pxt.runner {
                 .then(resps => {
                     try {
                         const diffRes = pxt.blocks.decompiledDiffAsync(
-                            oldSrc, resps[0].compileBlocks, newSrc, resps[1].compileBlocks);
+                            oldSrc, resps[0].compileBlocks, newSrc, resps[1].compileBlocks, {
+                                hideDeletedTopBlocks: true,
+                                hideDeletedBlocks: true
+                            });
                         if (opts.snippetReplaceParent) $el = $el.parent();
                         const segment = $('<div class="ui segment codewidget"/>').append(diffRes.svg);
                         $el.removeClass(cls);
