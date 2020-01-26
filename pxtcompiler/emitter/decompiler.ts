@@ -173,6 +173,7 @@ namespace ts.pxtc.decompiler {
         next?: StatementNode;
         prev?: StatementNode;
         comment?: string;
+        id?: string;
 
         // Optional data that Blockly ignores. We use it to associate statements with workspace comments
         data?: string;
@@ -320,6 +321,7 @@ namespace ts.pxtc.decompiler {
         alwaysEmitOnStart?: boolean; // emit "on start" even if empty
         errorOnGreyBlocks?: boolean; // fail on grey blocks (usefull when testing docs)
         allowedArgumentTypes?: string[]; // a whitelist of types that can be decompiled for user defined function arguments
+        ids?: boolean; // generate block ids
         /*@internal*/
         includeGreyBlockMessages?: boolean; // adds error attributes to the mutations in typescript_statement blocks (for debug pruposes)
     }
@@ -338,7 +340,11 @@ namespace ts.pxtc.decompiler {
         let stmts: NodeArray<ts.Statement> = file.statements;
         let result: pxtc.CompileResult = {
             blocksInfo: blocksInfo,
-            outfiles: {}, diagnostics: [], success: true, times: {}
+            outfiles: {}, 
+            diagnostics: [], 
+            success: true, 
+            times: {},
+            sourceMap: options.ids && []
         }
         const env: DecompilerEnv = {
             blocks: blocksInfo,
@@ -471,7 +477,8 @@ namespace ts.pxtc.decompiler {
         if (n) {
             emitStatementNode(n);
         } else if (!options.snippetMode && !stmts.length) {
-            write(`<block type="${ts.pxtc.ON_START_TYPE}"></block>`);
+            openBlockTag(ts.pxtc.ON_START_TYPE, undefined);
+            closeBlockTag();
         }
 
         workspaceComments.forEach(c => {
@@ -539,18 +546,35 @@ ${output}</xml>`;
             }
         }
 
-        function mkStmt(type: string): StatementNode {
-            return {
+        function mkId(node: ts.Node): string {
+            const id = Blockly.utils.genUid();
+            if (node) {
+                const start = node.getFullStart();
+                result.sourceMap.push({
+                    id,
+                    start,
+                    end: start + node.getFullWidth()
+                })
+            }
+            return id;
+        }
+
+        function mkStmt(type: string, node: ts.Node): StatementNode {
+            const stm: StatementNode = {
                 kind: "statement",
                 type
             };
+            if (result.sourceMap)
+                stm.id = mkId(node);
+            return stm;
         }
 
         function mkExpr(type: string): ExpressionNode {
-            return {
+            const expr: ExpressionNode = {
                 kind: "expr",
                 type
             };
+            return expr;
         }
 
         function mkValue(name: string, value: ExpressionNode | TextNode, shadowType?: string, shadowMutation?: pxt.Map<string>): ValueNode {
@@ -581,7 +605,7 @@ ${output}</xml>`;
                 return;
             }
 
-            openBlockTag(n.type)
+            openBlockTag(n.type, n)
             emitBlockNodeCore(n);
 
             if (n.data !== undefined) {
@@ -732,9 +756,9 @@ ${output}</xml>`;
             }
         }
 
-        function openBlockTag(type: string) {
+        function openBlockTag(type: string, node: StatementNode) {
             countBlock();
-            write(`<block type="${U.htmlEscape(type)}">`)
+            write(`<block ${node.id ? `id="${node.id}" ` : ''}type="${U.htmlEscape(type)}">`)
         }
 
         function closeBlockTag() {
@@ -1063,7 +1087,7 @@ ${output}</xml>`;
             blockId = attributes.blockId || blockId;
 
             if (attributes.blockCombine)
-                return getPropertyGetBlock(n)
+                return getPropertyGetBlock(n, n)
 
             if (attributes.blockId === "lists_length" || attributes.blockId === "text_length") {
                 const r = mkExpr(U.htmlEscape(attributes.blockId));
@@ -1308,7 +1332,7 @@ ${output}</xml>`;
             if (options.errorOnGreyBlocks)
                 error(node);
 
-            const r = mkStmt(pxtc.TS_STATEMENT_TYPE);
+            const r = mkStmt(pxtc.TS_STATEMENT_TYPE, node);
             r.mutation = {}
 
             trackVariableUsagesInText(node);
@@ -1353,17 +1377,17 @@ ${output}</xml>`;
         }
 
         function getContinueStatementBlock(node: ts.Node): StatementNode {
-            const r = mkStmt(pxtc.TS_CONTINUE_TYPE);
+            const r = mkStmt(pxtc.TS_CONTINUE_TYPE, node);
             return r;
         }
 
         function getBreakStatementBlock(node: ts.Node): StatementNode {
-            const r = mkStmt(pxtc.TS_BREAK_TYPE);
+            const r = mkStmt(pxtc.TS_BREAK_TYPE, node);
             return r;
         }
 
         function getDebuggerStatementBlock(node: ts.Node): StatementNode {
-            const r = mkStmt(pxtc.TS_DEBUGGER_TYPE);
+            const r = mkStmt(pxtc.TS_DEBUGGER_TYPE, node);
             return r;
         }
 
@@ -1375,7 +1399,7 @@ ${output}</xml>`;
             }
 
             const attributes = attrs(info);
-            const res = mkStmt(attributes.blockId);
+            const res = mkStmt(attributes.blockId, node);
             res.fields = [];
 
             const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
@@ -1404,17 +1428,17 @@ ${output}</xml>`;
             switch (n.operatorToken.kind) {
                 case SK.EqualsToken:
                     if (n.left.kind === SK.Identifier) {
-                        return getVariableSetOrChangeBlock(n.left as ts.Identifier, n.right);
+                        return getVariableSetOrChangeBlock(n, n.left as ts.Identifier, n.right);
                     }
                     else if (n.left.kind == SK.PropertyAccessExpression) {
-                        return getPropertySetBlock(n.left as ts.PropertyAccessExpression, n.right, "@set@");
+                        return getPropertySetBlock(n, n.left as ts.PropertyAccessExpression, n.right, "@set@");
                     }
                     else {
-                        return getArraySetBlock(n.left as ts.ElementAccessExpression, n.right);
+                        return getArraySetBlock(n, n.left as ts.ElementAccessExpression, n.right);
                     }
                 case SK.PlusEqualsToken:
                     if (isTextJoin(n)) {
-                        const r = mkStmt("variables_set");
+                        const r = mkStmt("variables_set", n);
                         const renamed = getVariableName(n.left as ts.Identifier);
                         trackVariableUsage(renamed, ReferenceType.InBlocksOnly);
                         r.inputs = [mkValue("VALUE", getTextJoin(n), numberType)];
@@ -1423,11 +1447,11 @@ ${output}</xml>`;
                     }
 
                     if (n.left.kind == SK.PropertyAccessExpression)
-                        return getPropertySetBlock(n.left as ts.PropertyAccessExpression, n.right, "@change@");
+                        return getPropertySetBlock(n, n.left as ts.PropertyAccessExpression, n.right, "@change@");
                     else
-                        return getVariableSetOrChangeBlock(n.left as ts.Identifier, n.right, true);
+                        return getVariableSetOrChangeBlock(n, n.left as ts.Identifier, n.right, true);
                 case SK.MinusEqualsToken:
-                    const r = mkStmt("variables_change");
+                    const r = mkStmt("variables_change", n);
                     r.inputs = [mkValue("VALUE", negateNumericNode(n.right), numberType)];
                     r.fields = [getField("VAR", getVariableName(n.left as ts.Identifier))];
 
@@ -1439,7 +1463,7 @@ ${output}</xml>`;
         }
 
         function getWhileStatement(n: ts.WhileStatement): StatementNode {
-            const r = mkStmt("device_while");
+            const r = mkStmt("device_while", n);
             r.inputs = [getConditionalInput("COND", n.expression)];
             r.handlers = [{ name: "DO", statement: getStatementBlock(n.statement) }];
             return r;
@@ -1448,7 +1472,7 @@ ${output}</xml>`;
         function getIfStatement(n: ts.IfStatement): StatementNode {
             let flatif = flattenIfStatement(n);
 
-            const r = mkStmt("controls_if");
+            const r = mkStmt("controls_if", n);
             r.mutation = {
                 "elseif": (flatif.ifStatements.length - 1).toString(),
                 "else": flatif.elseStatement ? "1" : "0"
@@ -1539,13 +1563,13 @@ ${output}</xml>`;
             let r: StatementNode;
 
             if (condition.operatorToken.kind === SK.LessThanToken && !checkForVariableUsages(n.statement)) {
-                r = mkStmt("controls_repeat_ext");
+                r = mkStmt("controls_repeat_ext", n);
                 r.fields = [];
                 r.inputs = [getValue("TIMES", condition.right, wholeNumberType)];
                 r.handlers = [];
             }
             else {
-                r = mkStmt("pxt_controls_for");
+                r = mkStmt("pxt_controls_for", n);
                 r.fields = [];
                 r.inputs = [];
                 r.handlers = [];
@@ -1588,25 +1612,25 @@ ${output}</xml>`;
             const initializer = n.initializer as ts.VariableDeclarationList;
             const renamed = getVariableName(initializer.declarations[0].name as ts.Identifier);
 
-            const r = mkStmt("pxt_controls_for_of");
+            const r = mkStmt("pxt_controls_for_of", n);
             r.inputs = [getValue("LIST", n.expression), getDraggableVariableBlock("VAR", renamed)];
             r.handlers = [{ name: "DO", statement: getStatementBlock(n.statement) }];
 
             return r
         }
 
-        function getVariableSetOrChangeBlock(name: ts.Identifier, value: Node | number, changed = false, overrideName = false): StatementNode {
+        function getVariableSetOrChangeBlock(n: ts.Node, name: ts.Identifier, value: Node | number, changed = false, overrideName = false): StatementNode {
             const renamed = getVariableName(name);
             trackVariableUsage(renamed, ReferenceType.InBlocksOnly);
             // We always do a number shadow even if the variable is not of type number
-            const r = mkStmt(changed ? "variables_change" : "variables_set");
+            const r = mkStmt(changed ? "variables_change" : "variables_set", n);
             r.inputs = [getValue("VALUE", value, numberType)];
             r.fields = [getField("VAR", renamed)]
             return r;
         }
 
-        function getArraySetBlock(left: ts.ElementAccessExpression, right: ts.Expression): StatementNode {
-            const r = mkStmt("lists_index_set");
+        function getArraySetBlock(n: ts.BinaryExpression, left: ts.ElementAccessExpression, right: ts.Expression): StatementNode {
+            const r = mkStmt("lists_index_set", n);
             r.inputs = [
                 getValue("LIST", left.expression),
                 getValue("INDEX", left.argumentExpression, numberType),
@@ -1615,15 +1639,15 @@ ${output}</xml>`;
             return r;
         }
 
-        function getPropertySetBlock(left: ts.PropertyAccessExpression, right: ts.Expression, tp: string) {
-            return getPropertyBlock(left, right, tp) as StatementNode
+        function getPropertySetBlock(n: ts.Node, left: ts.PropertyAccessExpression, right: ts.Expression, tp: string) {
+            return getPropertyBlock(n, left, right, tp) as StatementNode
         }
 
-        function getPropertyGetBlock(left: ts.PropertyAccessExpression) {
-            return getPropertyBlock(left, null, "@get@") as ExpressionNode
+        function getPropertyGetBlock(n: ts.Node, left: ts.PropertyAccessExpression) {
+            return getPropertyBlock(n, left, null, "@get@") as ExpressionNode
         }
 
-        function getPropertyBlock(left: ts.PropertyAccessExpression, right: ts.Expression, tp: string): StatementNode | ExpressionNode {
+        function getPropertyBlock(n: ts.Node, left: ts.PropertyAccessExpression, right: ts.Expression, tp: string): StatementNode | ExpressionNode {
             const info: pxtc.CallInfo = pxtc.pxtInfo(left).callInfo
             const sym = env.blocks.apis.byQName[info ? info.qName : ""]
             if (!sym || !sym.attributes.blockCombine) {
@@ -1632,7 +1656,7 @@ ${output}</xml>`;
             }
             const qName = `${sym.namespace}.${sym.retType}.${tp}`;
             const setter = env.blocks.blocks.find(b => b.qName == qName)
-            const r = right ? mkStmt(setter.attributes.blockId) : mkExpr(setter.attributes.blockId)
+            const r = right ? mkStmt(setter.attributes.blockId, n) : mkExpr(setter.attributes.blockId)
             const pp = setter.attributes._def.parameters;
 
             let fieldValue = info.qName;
@@ -1654,7 +1678,7 @@ ${output}</xml>`;
 
         function getVariableDeclarationStatement(n: ts.VariableDeclaration): StatementNode {
             if (addVariableDeclaration(n)) {
-                return getVariableSetOrChangeBlock(n.name as ts.Identifier, n.initializer)
+                return getVariableSetOrChangeBlock(n, n.name as ts.Identifier, n.initializer)
             }
             return undefined;
         }
@@ -1667,7 +1691,7 @@ ${output}</xml>`;
                 return undefined;
             }
 
-            return getVariableSetOrChangeBlock(node.operand as ts.Identifier, isPlusPlus ? 1 : -1, true);
+            return getVariableSetOrChangeBlock(node, node.operand as ts.Identifier, isPlusPlus ? 1 : -1, true);
         }
 
         function getFunctionDeclaration(n: ts.FunctionDeclaration): StatementNode {
@@ -1686,7 +1710,7 @@ ${output}</xml>`;
 
             let r: StatementNode;
 
-            r = mkStmt("function_definition");
+            r = mkStmt("function_definition", n);
             r.mutation = {
                 name
             };
@@ -1747,7 +1771,7 @@ ${output}</xml>`;
             }
 
             if (attributes.blockId === pxtc.PAUSE_UNTIL_TYPE) {
-                const r = mkStmt(pxtc.PAUSE_UNTIL_TYPE);
+                const r = mkStmt(pxtc.PAUSE_UNTIL_TYPE, node);
                 const lambda = node.arguments[0] as (ts.FunctionExpression | ts.ArrowFunction);
 
                 let condition: ts.Node;
@@ -1770,7 +1794,7 @@ ${output}</xml>`;
                     const name = getVariableName(node.expression as ts.Identifier);
                     if (env.declaredFunctions[name]) {
                         let r: StatementNode;
-                        r = mkStmt("function_call");
+                        r = mkStmt("function_call", node);
                         if (info.args.length) {
                             r.mutationChildren = [];
                             r.inputs = [];
@@ -2126,10 +2150,12 @@ ${output}</xml>`;
 
             if (blockStatements.length) {
                 // wrap statement in "on start" if top level
-                const stmt = getStatementBlock(blockStatements.shift(), blockStatements, parent, false, topLevel);
+                const stmtNode= blockStatements.shift();
+                const stmt = getStatementBlock(stmtNode, blockStatements, parent, false, topLevel);
                 if (emitOnStart) {
                     // Preserve any variable edeclarations that were never used
                     let current = stmt;
+                    let currentNode: ts.Node = stmtNode;
                     autoDeclarations.forEach(([name, node]) => {
                         if (varUsages[name] === ReferenceType.InBlocksOnly) {
                             return;
@@ -2143,14 +2169,15 @@ ${output}</xml>`;
                             v = getTypeScriptStatementBlock(node, "let ");
                         }
                         else {
-                            v = getVariableSetOrChangeBlock((node as ts.VariableDeclaration).name as ts.Identifier, (node as ts.VariableDeclaration).initializer, false, true);
+                            v = getVariableSetOrChangeBlock(node, (node as ts.VariableDeclaration).name as ts.Identifier, (node as ts.VariableDeclaration).initializer, false, true);
                         }
                         v.next = current;
                         current = v;
+                        currentNode = node;
                     });
 
                     if (current) {
-                        const r = mkStmt(ts.pxtc.ON_START_TYPE);
+                        const r = mkStmt(ts.pxtc.ON_START_TYPE, currentNode);
                         r.handlers = [{
                             name: "HANDLER",
                             statement: current
@@ -2158,22 +2185,22 @@ ${output}</xml>`;
                         return r;
                     }
                     else {
-                        maybeEmitEmptyOnStart();
+                        maybeEmitEmptyOnStart(stmt);
                     }
                 }
                 return stmt;
             }
             else if (emitOnStart) {
-                maybeEmitEmptyOnStart();
+                maybeEmitEmptyOnStart(undefined);
             }
 
             return undefined;
         }
 
-        function maybeEmitEmptyOnStart() {
+        function maybeEmitEmptyOnStart(node: StatementNode) {
             if (options.alwaysEmitOnStart) {
-                countBlock();
-                write(`<block type="${ts.pxtc.ON_START_TYPE}"></block>`);
+                openBlockTag(ts.pxtc.ON_START_TYPE, node);
+                closeBlockTag();
             }
         }
 
