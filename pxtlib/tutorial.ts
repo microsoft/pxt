@@ -47,7 +47,7 @@ namespace pxt.tutorial {
                 return "";
             });
 
-        if (!metadata.noDiffs && editor != pxt.BLOCKS_PROJECT_NAME)
+        if (!metadata.noDiffs)
             diffify(steps, activities);
 
         return <pxt.tutorial.TutorialInfo>{
@@ -91,10 +91,17 @@ namespace pxt.tutorial {
         })
 
         function convertSnippetToDiff(src: string): string {
+            const diffClasses: pxt.Map<string> = {
+                "typescript": "diff",
+                "spy": "diffspy",
+                "blocks": "diffblocks",
+                "python": "diff"
+            }
             const highlightRx = /\s*(\/\/|#)\s*@highlight/gm;
+
             if (!src) return src;
             return src
-                .replace(/```(typescript|spy|python)((?:.|[\r\n])+)```/, function (m, type, code) {
+                .replace(/```(typescript|spy|python|blocks)((?:.|[\r\n])+)```/, function (m, type, code) {
                 const fileA = lastSrc;
 
                 const hasHighlight = highlightRx.test(code);
@@ -105,7 +112,7 @@ namespace pxt.tutorial {
                 if (!fileA || hasHighlight)
                     return m; // leave unchanged or reuse highlight info
                 else
-                    return `\`\`\`diff${type == "spy" ? type : ''}
+                    return `\`\`\`${diffClasses[type]}
 ${fileA}
 ----------
 ${code}
