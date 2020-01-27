@@ -762,10 +762,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 ev.stopPropagation();
 
                 // if inline snippet, expects dataTransfer in form "inline:1&qName:name" or "inline:1&[snippet]"
-                let inline = insertText.startsWith("inline:1&");
+                let inline = pxtc.U.startsWith(insertText, "inline:1&");
                 if (inline) insertText = insertText.substring("inline:1&".length);
 
-                let p = insertText.startsWith("qName:")
+                let p = pxtc.U.startsWith(insertText, "qName:")
                     ? compiler.snippetAsync(insertText.substring("qName:".length), this.fileType == pxt.editor.FileType.Python)
                     : Promise.resolve(insertText)
                 p.done(snippet => {
