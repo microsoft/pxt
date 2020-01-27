@@ -3326,7 +3326,7 @@ export class ProjectView
         if (flyoutOnly) {
             margin += 2;
         }
-        return tc ? { 'top': "calc(" + tc.getCardHeight() + "px + " + margin + "em)" } : null;
+        return tc ? { 'top': "calc(min(" + tc.getCardHeight() + "px, 18rem) + " + margin + "em)" } : null;
     }
 
     ///////////////////////////////////////////////////////////

@@ -257,6 +257,21 @@ The **sig** "language" displays a signature of the first function call in the sn
 **Example:** the [forever](https://makecode.microbit.org/reference/basic/forever) reference doc
 and it's [markdown](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference/basic/forever.md) source.
 
+### diff
+
+Render a diff between two JavaScript snippets. The snippet consists of two text section separated by a line of - (at least 10)
+
+    ```diff
+    There is a feeling of deja vu.
+    There is a feeling of Deja Vu.
+    There is a feeling of DejaVu.
+    ----------
+    There is a feeling of Deja Vu.
+    There is a feeling of Deja Vu.
+    There is a feeling of Deja Vu.
+    ```
+
+
 ### cards
 
 The **cards** "language" displays a code card for each function call.
@@ -304,6 +319,14 @@ If you need a rendering of typescript, javascript code, specify the language as 
     ```typescript
     let x = 0;
     ```
+
+#### ~ hint
+
+In tutorial, MakeCode automatically renders a diff between each typescrit or spy snippets.
+To reset the diff on a step, use the ``@resetDiff`` metadata. 
+Use ``### @noDiffs`` to disable diffs for the entire tutorial
+
+#### ~
 
 ### spy
 

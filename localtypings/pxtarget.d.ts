@@ -368,7 +368,9 @@ declare namespace pxt {
         nameProjectFirst?: boolean;
         pythonToolbox?: boolean; // Code toolbox for Python
         githubEditor?: boolean; // allow editing github repositories from the editor
-        githubCompiledJs?: boolean; // commit binary.js in commit when creating a github release
+        githubCompiledJs?: boolean; // commit binary.js in commit when creating a github release,
+        blocksCollapsing?: boolean; // collapse/uncollapse functions/event in blocks
+        hideHomeDetailsVideo?: boolean; // hide video/large image from details card
     }
 
     interface SocialOptions {
@@ -850,6 +852,7 @@ declare namespace pxt.tutorial {
         explicitHints?: boolean; // tutorial expects explicit hints in `#### ~ tutorialhint` format
         flyoutOnly?: boolean; // no categories, display all blocks in flyout
         hideIteration?: boolean; // hide step control in tutorial
+        noDiffs?: boolean; // don't automatically generated diffs
         codeStart?: string; // command to run when code starts (MINECRAFT HOC ONLY)
         codeStop?: string; // command to run when code stops (MINECRAFT HOC ONLY)
     }
@@ -864,6 +867,7 @@ declare namespace pxt.tutorial {
         headerContentMd?: string;
         hintContentMd?: string;
         activity?: number;
+        resetDiff?: boolean; // reset diffify algo
     }
 
     interface TutorialActivityInfo {

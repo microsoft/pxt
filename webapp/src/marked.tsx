@@ -18,7 +18,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
     // Local cache for images, cleared when we create a new project.
     // Stores code => data-uri image of decompiled result
-    private static blockSnippetCache: pxt.Map<string> = {};
+    private static blockSnippetCache: pxt.Map<string | HTMLElement> = {};
     public static clearBlockSnippetCache() {
         this.blockSnippetCache = {};
     }
@@ -52,13 +52,30 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         return wrapperDiv;
     }
 
-    private finishRenderLangSnippet(wrapperDiv: HTMLDivElement, code: string) {
-        const codeDiv = document.createElement('code') as HTMLElement
-        codeDiv.className = "hljs"
-        codeDiv.textContent = code;
-        pxt.tutorial.highlight(codeDiv);
-        wrapperDiv.appendChild(codeDiv);
+    private finishRenderLangSnippet(wrapperDiv: HTMLDivElement, code: string | HTMLElement) {
+        if (typeof code === "string") {
+            let codeDiv = document.createElement('code') as HTMLElement
+            codeDiv.className = "hljs"
+            codeDiv.textContent = code;
+            pxt.tutorial.highlight(codeDiv);
+            code = codeDiv;
+        }
+        wrapperDiv.appendChild(code);
         pxsim.U.removeClass(wrapperDiv, 'loading');
+    }
+
+    private cachedRenderLangSnippet(langBlock: HTMLElement, renderer: (code: string) => Promise<string | HTMLElement>) {
+        const code = langBlock.textContent;
+        const wrapperDiv = this.startRenderLangSnippet(langBlock);
+        if (MarkedContent.blockSnippetCache[code]) {
+            this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[code]);
+        } else {
+            renderer(code)
+                .done(renderedCode => {
+                    MarkedContent.blockSnippetCache[code] = renderedCode;
+                    this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[code]);
+                })
+        }
     }
 
     private renderSnippets(content: HTMLElement) {
@@ -73,19 +90,66 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-spy`))
             .forEach((langBlock: HTMLElement) => {
-                const code = langBlock.textContent;
-                const wrapperDiv = this.startRenderLangSnippet(langBlock);
-                if (MarkedContent.blockSnippetCache[code]) {
-                    this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[code]);
-                } else {
+                this.cachedRenderLangSnippet(langBlock, code =>
                     parent.renderPythonAsync({
                         type: "pxteditor",
                         action: "renderpython", ts: code
-                    }).done(resp => {
-                        MarkedContent.blockSnippetCache[code] = resp.python;
-                        this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[code]);
+                    }).then(resp => resp.python)
+                );
+            });
+
+        pxt.Util.toArray(content.querySelectorAll(`code.lang-diffspy`))
+            .forEach((langBlock: HTMLElement) => {
+                this.cachedRenderLangSnippet(langBlock, code => {
+                    const { fileA, fileB } = pxt.diff.split(code);
+                    return Promise.mapSeries([fileA, fileB],
+                        src => parent.renderPythonAsync({
+                            type: "pxteditor",
+                            action: "renderpython", ts: src
+                        }).then(resp => resp.python))
+                        .then(parts => {
+                            const el = pxt.diff.render(parts[0], parts[1], {
+                                hideLineNumbers: true,
+                                hideMarkerLine: true,
+                                hideMarker: true,
+                                hideRemoved: true,
+                                update: true
+                            });
+                            return el;
+                        });
+                });
+            });
+
+        pxt.Util.toArray(content.querySelectorAll(`code.lang-diff`))
+            .forEach((langBlock: HTMLElement) => {
+                this.cachedRenderLangSnippet(langBlock, code => {
+                    const { fileA, fileB } = pxt.diff.split(code);
+                    const el = pxt.diff.render(fileA, fileB, {
+                        hideLineNumbers: true,
+                        hideMarkerLine: true,
+                        hideMarker: true,
+                        hideRemoved: true,
+                        update: true
                     });
-                }
+                    return Promise.resolve(el);
+                })
+            });
+
+        pxt.Util.toArray(content.querySelectorAll(`code.lang-diffspy`))
+            .forEach((langBlock: HTMLElement) => {
+                const wrapperDiv = this.startRenderLangSnippet(langBlock);
+                const code = langBlock.textContent;
+                Promise.delay(1).then(() => {
+                    const { fileA, fileB } = pxt.diff.split(code);
+                    const el = pxt.diff.render(fileA, fileB, {
+                        hideLineNumbers: true,
+                        hideMarkerLine: true,
+                        hideMarker: true,
+                        hideRemoved: true,
+                        update: true
+                    });
+                    this.finishRenderLangSnippet(wrapperDiv, el)
+                });
             });
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-blocks`))
@@ -101,7 +165,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 wrapperDiv.className = 'ui segment raised loading';
                 if (MarkedContent.blockSnippetCache[code]) {
                     // Use cache
-                    const doc = Blockly.utils.xml.textToDomDocument(pxt.blocks.layout.serializeSvgString(MarkedContent.blockSnippetCache[code]));
+                    const doc = Blockly.utils.xml.textToDomDocument(pxt.blocks.layout.serializeSvgString(MarkedContent.blockSnippetCache[code] as string));
                     wrapperDiv.appendChild(doc.documentElement);
                     pxsim.U.removeClass(wrapperDiv, 'loading');
                 } else {
