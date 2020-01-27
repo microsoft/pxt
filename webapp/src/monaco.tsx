@@ -761,13 +761,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 ev.preventDefault();
                 ev.stopPropagation();
 
+                // if inline snippet, expects dataTransfer in form "inline:1&qName:name" or "inline:1&[snippet]"
+                let inline = insertText.startsWith("inline:1&");
+                if (inline) insertText = insertText.substring("inline:1&".length);
+
                 let p = insertText.startsWith("qName:")
                     ? compiler.snippetAsync(insertText.substring("qName:".length), this.fileType == pxt.editor.FileType.Python)
                     : Promise.resolve(insertText)
                 p.done(snippet => {
                     let mouseTarget = this.editor.getTargetAtClientPoint(ev.clientX, ev.clientY);
                     let position = mouseTarget.position;
-                    this.insertSnippet(position, snippet);
+                    this.insertSnippet(position, snippet, inline);
                 });
             });
 
@@ -795,7 +799,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         })
     }
 
-    private insertSnippet(cursorPos: monaco.Position, insertText: string) {
+    private insertSnippet(cursorPos: monaco.Position, insertText: string, inline = false) {
         let currPos = this.editor.getPosition();
         let model = this.editor.getModel();
         if (!cursorPos) // IE11 fails to locate the mouse
@@ -808,7 +812,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // determine insert mode
         type InsertMode = "NewLineBefore" | "NewLineAfter" | "Inline"
         // TODO: allow expressions to be inserted into the middle of the line
-        const insertMode: InsertMode = (cursorPos.column === 1 ? "NewLineBefore" : "NewLineAfter") as InsertMode
+        let insertMode: InsertMode;
+        if (inline)
+            insertMode = "Inline"
+        else if (cursorPos.column === 1)
+            insertMode = "NewLineBefore"
+        else
+            insertMode = "NewLineAfter"
 
         // determine snippet insert column
         if (insertMode === "NewLineAfter") {
@@ -2002,7 +2012,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 let p = snippet ? Promise.resolve(snippet) : compiler.snippetAsync(qName, isPython);
                 p.done(snip => {
                     let currPos = monacoEditor.editor.getPosition();
-                    this.insertSnippet(currPos, snip);
+                    this.insertSnippet(currPos, snip, fn.retType != "void");
                     // Fire a create event
                     workspace.fireEvent({ type: 'create', editor: 'ts', blockId: fn.attributes.blockId } as pxt.editor.events.CreateEvent);
                 });
@@ -2013,10 +2023,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     monacoFlyout.style.transform = "translateX(-9999px)";
                 });
 
+                let inline = "";
+                if (fn.retType != "void") {
+                    inline = "inline:1&";
+                }
+
                 if (!snippet)
-                    e.dataTransfer.setData('text', 'qName:' + qName); // IE11 only supports text
+                    e.dataTransfer.setData('text', inline + 'qName:' + qName); // IE11 only supports text
                 else
-                    e.dataTransfer.setData('text', snippet); // IE11 only supports text
+                    e.dataTransfer.setData('text', inline + snippet); // IE11 only supports text
                 // Fire a create event
                 workspace.fireEvent({ type: 'create', editor: 'ts', blockId: fn.attributes.blockId } as pxt.editor.events.CreateEvent);
             }
