@@ -2556,6 +2556,11 @@ namespace pxt.py {
         }
 
         let outDiag = patchedDiags()
+
+        if (outDiag.length === 0) {
+
+        }
+
         return {
             outfiles: outfiles,
             success: outDiag.length === 0,

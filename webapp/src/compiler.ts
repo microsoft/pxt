@@ -5,6 +5,7 @@ import * as workspace from "./workspace";
 import U = pxt.Util;
 
 function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
+    console.log(`setDiagnostics`)
     let mainPkg = pkg.mainEditorPkg();
 
     mainPkg.forEachFile(f => f.diagnostics = [])
@@ -15,8 +16,11 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
         if (diagnostic.fileName) {
             output += `${diagnostic.category == ts.pxtc.DiagnosticCategory.Error ? lf("error") : diagnostic.category == ts.pxtc.DiagnosticCategory.Warning ? lf("warning") : lf("message")}: ${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.column + 1}): `;
             let f = mainPkg.filterFiles(f => f.getTypeScriptName() == diagnostic.fileName)[0]
-            if (f)
+            if (f) {
+                console.log("adding diagnostics to")
+                console.log(diagnostic.fileName)
                 f.diagnostics.push(diagnostic)
+            }
         }
 
         const category = ts.pxtc.DiagnosticCategory[diagnostic.category].toLowerCase();

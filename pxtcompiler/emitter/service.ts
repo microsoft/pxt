@@ -1237,6 +1237,7 @@ namespace ts.pxtc.service {
 
         if (operations.hasOwnProperty(op)) {
             try {
+                console.log(`service op: ${op}`)
                 res = operations[op](arg) || {}
             } catch (e) {
                 res = {
