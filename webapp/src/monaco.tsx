@@ -800,9 +800,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let model = this.editor.getModel();
         if (!cursorPos) // IE11 fails to locate the mouse
             cursorPos = currPos;
+        if (!cursorPos) {
+            return
+        }
         let position = cursorPos.clone()
-
-        console.dir(cursorPos)
 
         // determine insert mode
         type InsertMode = "NewLineBefore" | "NewLineAfter" | "Inline"
