@@ -795,18 +795,22 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         })
     }
 
-    private insertSnippet(position: monaco.Position, insertText: string) {
+    private insertSnippet(cursorPos: monaco.Position, insertText: string) {
         let currPos = this.editor.getPosition();
         let model = this.editor.getModel();
+        let position = cursorPos.clone()
         if (!position) // IE11 fails to locate the mouse
             position = currPos;
 
-        // always insert the text on the next lin
+        // always insert the text on the next line
         insertText += "\n";
         position.lineNumber++;
-        position.column = 1;
+        position.column = 1; // TODO: allow snippets to be inserted at the correct indent level within a block
+
         // check existing content
-        if (position.lineNumber < model.getLineCount() && model.getLineContent(position.lineNumber)) // non-empty line
+        const insertBeyondEnd = position.lineNumber > model.getLineCount()
+        const existingContent = !insertBeyondEnd ? model.getLineContent(position.lineNumber) : ""
+        if (insertBeyondEnd || existingContent) // non-empty line
             insertText = "\n" + insertText;
 
         // update cursor
