@@ -402,7 +402,7 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         const tsOnly = languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly;
         const pyOnly = languageRestriction === pxt.editor.LanguageRestriction.PythonOnly;
 
-        return (<div>
+        return (
             <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`}>
                 {sandbox && !headless && <SandboxMenuItem parent={parent} />}
                 {!pyOnly && !tsOnly && <BlocksMenuItem parent={parent} />}
@@ -413,7 +413,7 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
                 </sui.DropdownMenu>}
                 <div className={`ui item toggle ${python ? 'hasdropdown' : ''}`}></div>
             </div>
-        </div>)
+        )
     }
 }
 
@@ -548,8 +548,8 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
             {inTutorial && activityName && <div className="ui item">{activityName}</div>}
             {inTutorial && !hideIteration && <tutorial.TutorialMenu parent={this.props.parent} />}
             {debugging && !inTutorial ? <sui.MenuItem className="debugger-menu-item centered" icon="large bug" name="Debug Mode" /> : undefined}
-            {tsOnly && !sandbox && <sui.MenuItem className="debugger-menu-item centered" icon="xicon js" name="JavaScript" />}
-            {pyOnly && !sandbox && <sui.MenuItem className="debugger-menu-item centered" icon="xicon python" name="Python" />}
+            {tsOnly && !sandbox && <sui.MenuItem className="centered" icon="xicon js" name="JavaScript" />}
+            {pyOnly && !sandbox && <sui.MenuItem className="centered" icon="xicon python" name="Python" />}
             <div className="right menu">
                 {debugging ? <sui.ButtonMenuItem className="exit-debugmode-btn" role="menuitem" icon="external" text={lf("Exit Debug Mode")} textClass="landscape only" onClick={this.toggleDebug} /> : undefined}
                 {docMenu ? <container.DocsMenu parent={this.props.parent} /> : undefined}
