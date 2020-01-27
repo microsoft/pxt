@@ -811,7 +811,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         // determine insert mode
         type InsertMode = "NewLineBefore" | "NewLineAfter" | "Inline"
-        // TODO: allow expressions to be inserted into the middle of the line
         let insertMode: InsertMode;
         if (inline)
             insertMode = "Inline"
