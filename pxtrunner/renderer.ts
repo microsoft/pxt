@@ -607,7 +607,9 @@ namespace pxt.runner {
             let $el = $("." + cls).first();
             if (!$el[0]) return Promise.resolve();
 
-            const { fileA: oldSrc, fileB: newSrc } = pxt.diff.split($el.text());
+            const { fileA: oldSrc, fileB: newSrc } = pxt.diff.split($el.text(), {
+                removeTrailingSemiColumns: true
+            });
             return Promise.mapSeries([oldSrc, newSrc], src => pxt.runner.decompileSnippetAsync(src, {
                 sourceMap: true
             }))

@@ -1817,6 +1817,7 @@ namespace pxt.blocks {
         if (!loc) return undefined;
         let bestChunk: SourceInterval;
         let bestChunkLength: number;
+        // look for smallest chunk containing the block
         for (let i = 0; i < sourceMap.length; ++i) {
             let chunk = sourceMap[i];
             if (chunk.start <= loc.start 

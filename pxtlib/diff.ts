@@ -285,13 +285,23 @@ namespace pxt.diff {
         }
     }
 
-    export function split(dualSrc: string): { fileA: string, fileB: string } {
+    export function removeTrailingSemiColumns(src: string) {
+        return toLines(src).map(line => line.replace(/;\s*$/, '')).join('\n');
+    }
+
+    export function split(dualSrc: string, options?: { removeTrailingSemiColumns?: boolean }): { fileA: string, fileB: string } {
         const src = dualSrc.split(/-{10,}/, 2);
         if (src.length < 2)
             return { fileA: dualSrc, fileB: undefined };
 
-        const fileA = src[0].replace(/\n$/, ''); // intial new line introduced by html
-        const fileB = src[1].replace(/^\n/, ''); // last new line introduct by html
+        let fileA = src[0].replace(/\n$/, ''); // intial new line introduced by html
+        let fileB = src[1].replace(/^\n/, ''); // last new line introduct by html
+
+        if (options && options.removeTrailingSemiColumns) {
+            fileA = removeTrailingSemiColumns(fileA);
+            fileB = removeTrailingSemiColumns(fileB);
+        }
+
         return { fileA, fileB };
     }
 
