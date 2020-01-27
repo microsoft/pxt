@@ -44,8 +44,8 @@
 }
 
 /* inverted */
-.ui.inverted.dropdown {
-    background: @mainMenuInvertedBackground !important;
+.inverted .ui.dropdown {
+    background: #333940 !important;
 }
 
 /* Small + Large Monitor */
