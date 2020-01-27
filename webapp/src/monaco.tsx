@@ -830,7 +830,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const cursorLineContent = model.getLineContent(cursorPos.lineNumber)
         const cursorLineIsEmpty = !cursorLineContent
         if (insertMode === "Inline") {
-            // TODO
         } else {
             if (!cursorLineIsEmpty) {
                 if (insertMode === "NewLineAfter")
