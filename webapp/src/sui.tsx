@@ -417,9 +417,9 @@ export class Select extends UIElement<SelectProps, SelectState> {
     constructor(props: SelectProps) {
         super(props);
         const { options } = props;
-        this.setState({
+        this.state = {
             selected: options[0] && (options[0].value + "")
-        })
+        };
     }
 
     handleOnChange = (ev: React.ChangeEvent<HTMLSelectElement>) => {
@@ -441,7 +441,11 @@ export class Select extends UIElement<SelectProps, SelectState> {
             { label && `${label} ` }
             <select value={selected} className="ui dropdown" onChange={this.handleOnChange}>
                 {options.map(opt =>
-                    opt && <option aria-selected={selected === opt.value} value={opt.value}>{opt.display || opt.value}</option>
+                    opt && <option
+                        aria-selected={selected === opt.value}
+                        value={opt.value}
+                        key={opt.value}
+                    >{opt.display || opt.value}</option>
                 )}
             </select>
         </div>);
