@@ -120,7 +120,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 });
             });
 
-        pxt.Util.toArray(content.querySelectorAll(`code.lang-diff`))
+        pxt.Util.toArray(content.querySelectorAll(`code.lang-diff,code.lang-diffpython`))
             .forEach((langBlock: HTMLElement) => {
                 this.cachedRenderLangSnippet(langBlock, code => {
                     const { fileA, fileB } = pxt.diff.split(code);
@@ -133,23 +133,6 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     });
                     return Promise.resolve(el);
                 })
-            });
-
-        pxt.Util.toArray(content.querySelectorAll(`code.lang-diffspy`))
-            .forEach((langBlock: HTMLElement) => {
-                const wrapperDiv = this.startRenderLangSnippet(langBlock);
-                const code = langBlock.textContent;
-                Promise.delay(1).then(() => {
-                    const { fileA, fileB } = pxt.diff.split(code);
-                    const el = pxt.diff.render(fileA, fileB, {
-                        hideLineNumbers: true,
-                        hideMarkerLine: true,
-                        hideMarker: true,
-                        hideRemoved: true,
-                        update: true
-                    });
-                    this.finishRenderLangSnippet(wrapperDiv, el)
-                });
             });
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-blocks`))
