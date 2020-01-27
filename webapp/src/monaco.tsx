@@ -802,17 +802,53 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!position) // IE11 fails to locate the mouse
             position = currPos;
 
-        // always insert the text on the next line
-        insertText += "\n";
-        position.lineNumber++;
-        position.column = 1; // TODO: allow snippets to be inserted at the correct indent level within a block
+        // place snippet as if the cursor where at the end of the line
+        // TODO: allow expressions to be inserted into the middle of the line
+        position.column = model.getLineMaxColumn(cursorPos.lineNumber)
 
-        // check existing content
-        // Note: if we specify a position beyond the end of the file, Monaco will wrap us to the last line
-        const existingLine = Math.min(position.lineNumber, model.getLineCount())
-        const existingContent = model.getLineContent(existingLine)
-        if (existingContent) // non-empty line
+        // if the line isn't empty, put the snippet on a new line
+        const cursorLineContent = model.getLineContent(cursorPos.lineNumber)
+        if (cursorLineContent) // non-empty line
             insertText = "\n" + insertText;
+
+        // find the correct intent
+        const NUM_SPACES_PER_INDENT = 4 // 4 spaces or 1 tab = 1 indent in MakeCode TS and PY
+        const getIndentLvl = (s: string) => {
+            let ws = s.match(/^\s*/)[0] || ""
+            ws = ws.replace("\t", " ".repeat(NUM_SPACES_PER_INDENT))
+            const indentLvl = Math.floor(ws.length / NUM_SPACES_PER_INDENT) // zero-index
+            return indentLvl
+        }
+        const cursorIndent = getIndentLvl(cursorLineContent)
+        const lineAfter = Math.min(cursorPos.lineNumber + 1, model.getLineCount())
+        const lineAfterContent = model.getLineContent(lineAfter)
+        const lineAfterIndent = getIndentLvl(lineAfterContent)
+        // Case 1:
+        // A: <-
+        //     B
+        // Case 2:
+        // A:
+        //     B <-
+        //     C
+        // Case 3:
+        // A:
+        //     B <-
+        // C
+        // Case 4:
+        // A:
+        //     B: <-
+        //         C
+        // Case 1 => indent to B
+        // Case 2 => indent to B
+        // Case 3 => indent to B
+        // Case 4 => same as Case 1
+        let resultIndent = Math.max(cursorIndent, lineAfterIndent)
+        const prefix = " ".repeat(NUM_SPACES_PER_INDENT * resultIndent)
+        if (prefix) {
+            let insertLines = insertText.split("\n")
+            insertLines = insertLines.map(l => l ? prefix + l : l)
+            insertText = insertLines.join("\n")
+        }
 
         // update cursor
         this.editor.pushUndoStop();
