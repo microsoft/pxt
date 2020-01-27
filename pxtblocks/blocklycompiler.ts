@@ -1820,8 +1820,8 @@ namespace pxt.blocks {
         // look for smallest chunk containing the block
         for (let i = 0; i < sourceMap.length; ++i) {
             let chunk = sourceMap[i];
-            if (chunk.start <= loc.start 
-                && chunk.end >= loc.start + loc.length 
+            if (chunk.start <= loc.start
+                && chunk.end >= loc.start + loc.length
                 && (!bestChunk || bestChunkLength > chunk.end - chunk.start)) {
                 bestChunk = chunk;
                 bestChunkLength = chunk.end - chunk.start;

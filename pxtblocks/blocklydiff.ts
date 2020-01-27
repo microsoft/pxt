@@ -430,7 +430,7 @@ namespace pxt.blocks {
             const marker = ln[0];
             const line = ln.substr(2);
             let lineLength = line.length;
-            switch(marker) {
+            switch (marker) {
                 case "-": // removed
                     oldLineStart += lineLength + 1;
                     break;
@@ -447,13 +447,13 @@ namespace pxt.blocks {
                         lineLength -= lwl;
                     }
                     // find block ids mapped to the ranges
-                    const oldid = pxt.blocks.findBlockId(oldResp.sourceMap, { 
-                        start: oldLineStart, 
+                    const oldid = pxt.blocks.findBlockId(oldResp.sourceMap, {
+                        start: oldLineStart,
                         length: lineLength
                     });
-                    const newid = pxt.blocks.findBlockId(newResp.sourceMap, { 
-                        start: newLineStart, 
-                        length: lineLength 
+                    const newid = pxt.blocks.findBlockId(newResp.sourceMap, {
+                        start: newLineStart,
+                        length: lineLength
                     });
 
                     // patch workspace
