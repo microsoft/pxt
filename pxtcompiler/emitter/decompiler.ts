@@ -1630,7 +1630,7 @@ ${output}</xml>`;
             const renamed = getVariableName(name);
             trackVariableUsage(renamed, ReferenceType.InBlocksOnly);
             // We always do a number shadow even if the variable is not of type number
-            const r = mkStmt(changed ? "variables_change" : "variables_set", n);
+            const r = mkStmt(changed ? "variables_change" : "variables_set", n.parent || n);
             r.inputs = [getValue("VALUE", value, numberType)];
             r.fields = [getField("VAR", renamed)]
             return r;
@@ -2174,7 +2174,7 @@ ${output}</xml>`;
                             v = getTypeScriptStatementBlock(node, "let ");
                         }
                         else {
-                            v = getVariableSetOrChangeBlock(node, (node as ts.VariableDeclaration).name as ts.Identifier, (node as ts.VariableDeclaration).initializer, false, true);
+                            v = getVariableSetOrChangeBlock(stmtNode, (node as ts.VariableDeclaration).name as ts.Identifier, (node as ts.VariableDeclaration).initializer, false, true);
                         }
                         v.next = current;
                         current = v;
