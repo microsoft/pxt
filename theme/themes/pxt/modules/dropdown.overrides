@@ -44,7 +44,7 @@
 }
 
 /* inverted */
-.inverted .ui.dropdown {
+.ui.form.inverted .ui.dropdown {
     background: #333940 !important;
 }
 
