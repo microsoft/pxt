@@ -259,18 +259,31 @@ and it's [markdown](https://github.com/Microsoft/pxt-microbit/blob/master/docs/r
 
 ### diff
 
-Render a diff between two JavaScript snippets. The snippet consists of two text section separated by a line of - (at least 10)
+Render a diff between two JavaScript snippets. The snippet consists of two text section separated by a line of ``-`` (at least 10).
 
     ```diff
-    There is a feeling of deja vu.
-    There is a feeling of Deja Vu.
-    There is a feeling of DejaVu.
+    let x = 1
     ----------
-    There is a feeling of Deja Vu.
-    There is a feeling of Deja Vu.
-    There is a feeling of Deja Vu.
+    let x = 1
+    let y = 1
     ```
 
+#### ~ hint
+
+Avoid using trailing ``;`` in your JavaScript snippets.
+
+#### ~
+
+### diffblocks
+
+Render a diff of blocks between two JavaScript snippets. The snippet consists of two text section separated by a line of ``-`` (at least 10).
+
+    ```diffblocks
+    let x = 1
+    ----------
+    let x = 1
+    let y = 1
+    ```
 
 ### cards
 
