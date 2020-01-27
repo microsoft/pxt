@@ -358,6 +358,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             && pxt.appTarget.appTheme.importExtensionFiles
             && !disableFileAccessinMaciOs
             && !searchFor;
+        const showOpenBeta = mode == ScriptSearchMode.Experiments
+            && pxt.appTarget.appTheme.betaUrl;
 
         const compareConfig = (a: pxt.PackageConfig, b: pxt.PackageConfig) => {
             // core first
@@ -507,7 +509,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     feedbackUrl={experiment.feedbackUrl}
                                 />
                             )}
-                            {showImportFile ? <codecard.CodeCardView
+                            {showImportFile && <codecard.CodeCardView
                                 ariaLabel={lf("Open files from your computer")}
                                 role="button"
                                 key={'import'}
@@ -516,7 +518,19 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 name={lf("Import File...")}
                                 description={lf("Open files from your computer")}
                                 onClick={this.importExtensionFile}
-                            /> : undefined}
+                            />}
+                            {showOpenBeta && <codecard.CodeCardView
+                                ariaLabel={lf("Open the next version of the editor")}
+                                role="button"
+                                key={'beta'}
+                                icon="lab ui cardimage"
+                                iconColor="secondary"
+                                name={lf("Beta Editor")}
+                                label={lf("Beta")}
+                                labelClass="red right ribbon"
+                                description={lf("Open the next version of the editor")}
+                                url={pxt.appTarget.appTheme.betaUrl}
+                            />}
                         </div>
                     }
                     {isEmpty() ?
