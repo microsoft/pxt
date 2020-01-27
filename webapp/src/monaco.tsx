@@ -808,9 +808,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         position.column = 1; // TODO: allow snippets to be inserted at the correct indent level within a block
 
         // check existing content
-        const insertBeyondEnd = position.lineNumber > model.getLineCount()
-        const existingContent = !insertBeyondEnd ? model.getLineContent(position.lineNumber) : ""
-        if (insertBeyondEnd || existingContent) // non-empty line
+        // Note: if we specify a position beyond the end of the file, Monaco will wrap us to the last line
+        const existingLine = Math.min(position.lineNumber, model.getLineCount())
+        const existingContent = model.getLineContent(existingLine)
+        if (existingContent) // non-empty line
             insertText = "\n" + insertText;
 
         // update cursor
