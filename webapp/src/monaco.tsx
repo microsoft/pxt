@@ -798,9 +798,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private insertSnippet(cursorPos: monaco.Position, insertText: string) {
         let currPos = this.editor.getPosition();
         let model = this.editor.getModel();
+        if (!cursorPos) // IE11 fails to locate the mouse
+            cursorPos = currPos;
         let position = cursorPos.clone()
-        if (!position) // IE11 fails to locate the mouse
-            position = currPos;
 
         // place snippet as if the cursor where at the end of the line
         // TODO: allow expressions to be inserted into the middle of the line
