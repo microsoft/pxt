@@ -418,6 +418,7 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
         name = name.replace(/[^\w\-]/g, '');
     }
 
+    const inverted = !!pxt.appTarget.appTheme.invertedMenu;
     let repoName: string = name || "";
     let repoDescription: string = "";
     let repoPublic: boolean = true;
@@ -473,7 +474,7 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
                     <sui.Input type="text" value={repoDescription} onChange={onDescriptionChanged} label={lf("Repository description")} placeholder={lf("MakeCode extension for my gadget")} class="fluid" />
                 </div>
                 <div className="ui field">
-                    <select className="ui dropdown" onChange={onPublicChanged}>
+                    <select className={`ui ${inverted} dropdown`} onChange={onPublicChanged}>
                         <option aria-selected={repoPublic} value="true">{lf("Public repository, anyone can look at your code.")}</option>
                         <option aria-selected={!repoPublic} value="false">{lf("Private repository, your code is only visible to you.")}</option>
                     </select>
