@@ -802,16 +802,57 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             cursorPos = currPos;
         let position = cursorPos.clone()
 
-        // place snippet as if the cursor where at the end of the line
-        // TODO: allow expressions to be inserted into the middle of the line
-        position.column = model.getLineMaxColumn(cursorPos.lineNumber)
+        console.dir(cursorPos)
 
-        // if the line isn't empty, put the snippet on a new line
+        // determine insert mode
+        type InsertMode = "NewLineBefore" | "NewLineAfter" | "Inline"
+        // TODO: allow expressions to be inserted into the middle of the line
+        const insertMode: InsertMode = (cursorPos.column === 1 ? "NewLineBefore" : "NewLineAfter") as InsertMode
+
+        // determine snippet insert column
+        if (insertMode === "NewLineAfter") {
+            // place snippet as if the cursor where at the end of the line
+            position.column = model.getLineMaxColumn(cursorPos.lineNumber)
+        } // else no change
+
+        // if not inline, put snippet on a new line
         const cursorLineContent = model.getLineContent(cursorPos.lineNumber)
-        if (cursorLineContent) // non-empty line
-            insertText = "\n" + insertText;
+        const cursorLineIsEmpty = !cursorLineContent
+        if (insertMode === "Inline") {
+            // TODO
+        } else {
+            if (!cursorLineIsEmpty) {
+                if (insertMode === "NewLineAfter")
+                    insertText = "\n" + insertText;
+                else
+                    insertText = insertText + "\n";
+            }
+        }
 
         // find the correct intent
+        //     Case 1:
+        //     A: <-
+        //         B
+        //     Case 2:
+        //     A:
+        //         B <-
+        //         C
+        //     Case 3:
+        //     A:
+        //         B <-
+        //     C
+        //     Case 4:
+        //     A:
+        //         B: <-
+        //             C
+        //     Case 5:
+        //         B
+        //     ->C          (cursor at start of line)
+        //     Case 1 => indent to B
+        //     Case 2 => indent to B
+        //     Case 3 => indent to B
+        //     Case 4 => same as Case 1
+        //     Case 5 => indent to C, insert BEFORE C
         const NUM_SPACES_PER_INDENT = 4 // 4 spaces or 1 tab = 1 indent in MakeCode TS and PY
         const getIndentLvl = (s: string) => {
             let ws = s.match(/^\s*/)[0] || ""
@@ -820,29 +861,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return indentLvl
         }
         const cursorIndent = getIndentLvl(cursorLineContent)
-        const lineAfter = Math.min(cursorPos.lineNumber + 1, model.getLineCount())
-        const lineAfterContent = model.getLineContent(lineAfter)
-        const lineAfterIndent = getIndentLvl(lineAfterContent)
-        // Case 1:
-        // A: <-
-        //     B
-        // Case 2:
-        // A:
-        //     B <-
-        //     C
-        // Case 3:
-        // A:
-        //     B <-
-        // C
-        // Case 4:
-        // A:
-        //     B: <-
-        //         C
-        // Case 1 => indent to B
-        // Case 2 => indent to B
-        // Case 3 => indent to B
-        // Case 4 => same as Case 1
-        let resultIndent = Math.max(cursorIndent, lineAfterIndent)
+        let resultIndent;
+        if (insertMode === "NewLineAfter") {
+            const lineAfter = Math.min(cursorPos.lineNumber + 1, model.getLineCount())
+            const lineAfterIndent = getIndentLvl(model.getLineContent(lineAfter))
+            resultIndent = Math.max(cursorIndent, lineAfterIndent)
+        }
+        else if (insertMode === "NewLineBefore")
+            resultIndent = cursorIndent
+        else // inline 
+            resultIndent = 0
         const prefix = " ".repeat(NUM_SPACES_PER_INDENT * resultIndent)
         if (prefix) {
             let insertLines = insertText.split("\n")
