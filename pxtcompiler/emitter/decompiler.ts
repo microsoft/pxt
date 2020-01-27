@@ -550,8 +550,9 @@ ${output}</xml>`;
         }
 
         function mkId(type: string, node: ts.Node): string {
-            const ON_START_STATEMENT_ID = "xRRgvHNlG#rZ^u`HECiY";
-            const id = type == ts.pxtc.ON_START_TYPE ? ON_START_STATEMENT_ID : Blockly.utils.genUid();
+            if (type == ts.pxtc.ON_START_TYPE)
+                return "xRRgvHNlG#rZ^u`HECiY";
+            const id = Blockly.utils.genUid();
             if (node) {
                 const start = node.getFullStart();
                 result.sourceMap.push({
@@ -1097,7 +1098,7 @@ ${output}</xml>`;
                 return getPropertyGetBlock(n, n)
 
             if (attributes.blockId === "lists_length" || attributes.blockId === "text_length") {
-                const r = mkExpr(U.htmlEscape(attributes.blockId) , n);
+                const r = mkExpr(U.htmlEscape(attributes.blockId), n);
                 r.inputs = [getValue("VALUE", n.expression)];
 
                 return r;
@@ -1847,7 +1848,7 @@ ${output}</xml>`;
             const api = env.blocks.apis.byQName[info.qName];
             const comp = pxt.blocks.compileInfo(api);
 
-            const r = asExpression ? mkExpr(attributes.blockId, node) 
+            const r = asExpression ? mkExpr(attributes.blockId, node)
                 : mkStmt(attributes.blockId, node);
 
             const addInput = (v: ValueNode) => (r.inputs || (r.inputs = [])).push(v);
