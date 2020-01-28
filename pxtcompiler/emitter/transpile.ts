@@ -11,7 +11,7 @@ namespace ts.pxtc.transpile {
         diagnostics: pxtc.KsDiagnostic[],
         success: boolean,
         outfiles: { [key: string]: string },
-        sourceMap: SourceInterval[]
+        sourceMap: SourceInterval[],
     }
 
     const mainName = (l: CodeLang) => `main.${l}`

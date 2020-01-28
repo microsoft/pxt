@@ -125,7 +125,7 @@ namespace ts.pxtc {
         headerId?: string;
         confirmAsync?: (confirmOptions: {}) => Promise<number>;
         configData?: ConfigEntry[];
-        sourceMap?: SourceInterval;
+        sourceMap?: SourceInterval[];
     }
 
     export interface Breakpoint extends LocationInfo {
