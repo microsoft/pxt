@@ -615,19 +615,33 @@ namespace pxt.runner {
             }))
                 .then(resps => {
                     try {
-                        const diffRes = pxt.blocks.decompiledDiffAsync(
+                        const diffBlocks = pxt.blocks.decompiledDiffAsync(
                             oldSrc, resps[0].compileBlocks, newSrc, resps[1].compileBlocks, {
                             hideDeletedTopBlocks: true,
                             hideDeletedBlocks: true
                         });
-                        const js = pxt.diff.render(oldSrc, newSrc, {
+                        const diffJs = pxt.diff.render(oldSrc, newSrc, {
                             hideLineNumbers: true,
                             hideMarkerLine: true,
                             hideMarker: true,
                             hideRemoved: true,
                             update: true
                         })
-                        fillWithWidget(opts, $el.parent(), $(js), undefined, $(diffRes.svg), undefined, {
+                        let diffPy: HTMLElement;
+                        const [ oldPy, newPy ] = resps.map(resp => 
+                            resp.compilePython 
+                            && resp.compilePython.outfiles
+                            && resp.compilePython.outfiles["main.py"]);
+                        if (oldPy && newPy) {
+                            diffPy = pxt.diff.render(oldPy, newPy, {
+                                hideLineNumbers: true,
+                                hideMarkerLine: true,
+                                hideMarker: true,
+                                hideRemoved: true,
+                                update: true
+                            })
+                        }
+                        fillWithWidget(opts, $el.parent(), $(diffJs), diffPy && $(diffPy), $(diffBlocks.svg), undefined, {
                             showEdit: false,
                             run: false,
                             hexname: undefined,
