@@ -425,7 +425,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const options = this.props.parent.state.tutorialOptions;
         const { tutorialReady, tutorialStepInfo, tutorialStep } = options;
         if (!tutorialReady) return false;
-        return tutorialStepInfo[tutorialStep].hasHint
+        return !!tutorialStepInfo[tutorialStep].hintContentMd
             || tutorialStepInfo[tutorialStep].unplugged;
     }
 

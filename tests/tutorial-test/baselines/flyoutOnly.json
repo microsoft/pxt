@@ -3,20 +3,13 @@
     "title": "Explicit Hints",
     "steps": [
         {
-            "fullscreen": false,
-            "unplugged": false,
-            "tutorialCompleted": false,
             "contentMd": "Tutorials can choose to pin the flyout and display all blocks, rather than use the toolbox. This metadata is parsed and removed.",
             "headerContentMd": "Tutorials can choose to pin the flyout and display all blocks, rather than use the toolbox. This metadata is parsed and removed."
         },
         {
-            "fullscreen": false,
-            "unplugged": false,
-            "tutorialCompleted": false,
             "contentMd": "Tutorial parsing for hints, steps, etc should function exactly as before.\n\n```blocks\nlet x = 8;\nlet y = x + 2;\n```",
             "headerContentMd": "Tutorial parsing for hints, steps, etc should function exactly as before.",
-            "hintContentMd": "```blocks\nlet x = 8;\nlet y = x + 2;\n```",
-            "hasHint": true
+            "hintContentMd": "```diffblocks\nlet x = 8;\nlet y = x + 2;\n```"
         }
     ],
     "activities": null,
