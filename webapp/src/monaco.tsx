@@ -761,13 +761,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 ev.preventDefault();
                 ev.stopPropagation();
 
-                let p = insertText.startsWith("qName:")
+                // if inline snippet, expects dataTransfer in form "inline:1&qName:name" or "inline:1&[snippet]"
+                let inline = pxtc.U.startsWith(insertText, "inline:1&");
+                if (inline) insertText = insertText.substring("inline:1&".length);
+
+                let p = pxtc.U.startsWith(insertText, "qName:")
                     ? compiler.snippetAsync(insertText.substring("qName:".length), this.fileType == pxt.editor.FileType.Python)
                     : Promise.resolve(insertText)
                 p.done(snippet => {
                     let mouseTarget = this.editor.getTargetAtClientPoint(ev.clientX, ev.clientY);
                     let position = mouseTarget.position;
-                    this.insertSnippet(position, snippet);
+                    this.insertSnippet(position, snippet, inline);
                 });
             });
 
@@ -795,19 +799,93 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         })
     }
 
-    private insertSnippet(position: monaco.Position, insertText: string) {
+    private insertSnippet(cursorPos: monaco.Position, insertText: string, inline = false) {
         let currPos = this.editor.getPosition();
         let model = this.editor.getModel();
-        if (!position) // IE11 fails to locate the mouse
-            position = currPos;
+        if (!cursorPos) // IE11 fails to locate the mouse
+            cursorPos = currPos;
+        if (!cursorPos) {
+            return
+        }
+        let position = cursorPos.clone()
 
-        // always insert the text on the next lin
-        insertText += "\n";
-        position.lineNumber++;
-        position.column = 1;
-        // check existing content
-        if (position.lineNumber < model.getLineCount() && model.getLineContent(position.lineNumber)) // non-empty line
-            insertText = "\n" + insertText;
+        // determine insert mode
+        type InsertMode = "NewLineBefore" | "NewLineAfter" | "Inline"
+        let insertMode: InsertMode;
+        if (inline)
+            insertMode = "Inline"
+        else if (cursorPos.column === 1)
+            insertMode = "NewLineBefore"
+        else
+            insertMode = "NewLineAfter"
+
+        // determine snippet insert column
+        if (insertMode === "NewLineAfter") {
+            // place snippet as if the cursor where at the end of the line
+            position.column = model.getLineMaxColumn(cursorPos.lineNumber)
+        } // else no change
+
+        // if not inline, put snippet on a new line
+        const cursorLineContent = model.getLineContent(cursorPos.lineNumber)
+        const cursorLineIsEmpty = !cursorLineContent
+        if (insertMode === "Inline") {
+        } else {
+            if (!cursorLineIsEmpty) {
+                if (insertMode === "NewLineAfter")
+                    insertText = "\n" + insertText;
+                else
+                    insertText = insertText + "\n";
+            }
+        }
+
+        // find the correct intent
+        //     Case 1:
+        //     A: <-
+        //         B
+        //     Case 2:
+        //     A:
+        //         B <-
+        //         C
+        //     Case 3:
+        //     A:
+        //         B <-
+        //     C
+        //     Case 4:
+        //     A:
+        //         B: <-
+        //             C
+        //     Case 5:
+        //         B
+        //     ->C          (cursor at start of line)
+        //     Case 1 => indent to B
+        //     Case 2 => indent to B
+        //     Case 3 => indent to B
+        //     Case 4 => same as Case 1
+        //     Case 5 => indent to C, insert BEFORE C
+        const NUM_SPACES_PER_INDENT = 4 // 4 spaces or 1 tab = 1 indent in MakeCode TS and PY
+        const getIndentLvl = (s: string) => {
+            let ws = s.match(/^\s*/)[0] || ""
+            ws = ws.replace("\t", " ".repeat(NUM_SPACES_PER_INDENT))
+            const indentLvl = Math.floor(ws.length / NUM_SPACES_PER_INDENT) // zero-index
+            return indentLvl
+        }
+        const cursorIndent = getIndentLvl(cursorLineContent)
+        let resultIndent;
+        if (insertMode === "NewLineAfter") {
+            const lineAfter = Math.min(cursorPos.lineNumber + 1, model.getLineCount())
+            const lineAfterIndent = getIndentLvl(model.getLineContent(lineAfter))
+            resultIndent = Math.max(cursorIndent, lineAfterIndent)
+        }
+        else if (insertMode === "NewLineBefore")
+            resultIndent = cursorIndent
+        else // inline 
+            resultIndent = 0
+        const prefix = " ".repeat(NUM_SPACES_PER_INDENT * resultIndent)
+        if (prefix) {
+            let insertLines = insertText.split("\n")
+            insertLines = insertLines.map(l => l ? prefix + l : l)
+            insertText = insertLines.join("\n")
+        }
 
         // update cursor
         this.editor.pushUndoStop();
@@ -1932,7 +2010,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 let p = snippet ? Promise.resolve(snippet) : compiler.snippetAsync(qName, isPython);
                 p.done(snip => {
                     let currPos = monacoEditor.editor.getPosition();
-                    this.insertSnippet(currPos, snip);
+                    this.insertSnippet(currPos, snip, fn.retType != "void");
                     // Fire a create event
                     workspace.fireEvent({ type: 'create', editor: 'ts', blockId: fn.attributes.blockId } as pxt.editor.events.CreateEvent);
                 });
@@ -1943,10 +2021,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     monacoFlyout.style.transform = "translateX(-9999px)";
                 });
 
+                let inline = "";
+                if (fn.retType != "void") {
+                    inline = "inline:1&";
+                }
+
                 if (!snippet)
-                    e.dataTransfer.setData('text', 'qName:' + qName); // IE11 only supports text
+                    e.dataTransfer.setData('text', inline + 'qName:' + qName); // IE11 only supports text
                 else
-                    e.dataTransfer.setData('text', snippet); // IE11 only supports text
+                    e.dataTransfer.setData('text', inline + snippet); // IE11 only supports text
                 // Fire a create event
                 workspace.fireEvent({ type: 'create', editor: 'ts', blockId: fn.attributes.blockId } as pxt.editor.events.CreateEvent);
             }
