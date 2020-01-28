@@ -211,7 +211,10 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     .then(blocksInfo => Promise.mapSeries([oldSrc, newSrc], src => 
                         compiler.decompileBlocksSnippetAsync(src, blocksInfo))
                     )
-                    .then((resps) => pxt.blocks.decompiledDiffAsync(oldSrc, resps[0], newSrc, resps[1]))
+                    .then((resps) => pxt.blocks.decompiledDiffAsync(oldSrc, resps[0], newSrc, resps[1], {
+                        hideDeletedTopBlocks: true,
+                        hideDeletedBlocks: true
+                    }))
                     .then(diff => wrapBlockDiff(diff))
                     );
             });

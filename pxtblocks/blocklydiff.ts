@@ -3,6 +3,7 @@ namespace pxt.blocks {
         hideDeletedTopBlocks?: boolean;
         hideDeletedBlocks?: boolean;
         renderOptions?: BlocksRenderOptions;
+        statementsOnly?: boolean; // consider statement as a whole
     }
 
     export interface DiffResult {
@@ -405,22 +406,15 @@ namespace pxt.blocks {
             visDom(child, f);
     }
 
-    export function decompiledDiffAsync(oldTs: string, oldResp: pxtc.CompileResult, newTs: string, newResp: pxtc.CompileResult, options?: DiffOptions): DiffResult {
+    export function decompiledDiffAsync(oldTs: string, oldResp: pxtc.CompileResult, newTs: string, newResp: pxtc.CompileResult, options: DiffOptions = {}): DiffResult {
         const oldXml = oldResp.outfiles['main.blocks'];
-        console.log(oldTs);
-        console.log(oldResp.sourceMap)
-        console.log(oldXml);
         let newXml = newResp.outfiles['main.blocks'];
-        console.log(newTs);
-        console.log(newResp.sourceMap)
-        console.log(newXml);
 
         // compute diff of typescript sources
         const diffLines = pxt.diff.compute(oldTs, newTs, {
             ignoreWhitespace: true,
             full: true
         });
-        console.log(diffLines);
 
         // build old -> new lines mapping
         let oldLineStart = 0;
@@ -457,8 +451,8 @@ namespace pxt.blocks {
                     });
 
                     // patch workspace
-                    console.log(ln);
-                    console.log(`id ${oldLineStart}:${line.length}>${oldid} ==> ${newLineStart}:${line.length}>${newid}`)
+                    //console.log(ln);
+                    //console.log(`id ${oldLineStart}:${line.length}>${oldid} ==> ${newLineStart}:${line.length}>${newid}`)
                     if (oldid && newid) {
                         newXml = newXml.replace(newid, oldid);
                         console.log(newXml);
@@ -474,6 +468,7 @@ namespace pxt.blocks {
         const oldWs = pxt.blocks.loadWorkspaceXml(oldXml, true);
         const newWs = pxt.blocks.loadWorkspaceXml(newXml, true);
 
+        options.statementsOnly = true; // no info on expression diffs
         return diffWorkspace(oldWs, newWs, options);
     }
 }
