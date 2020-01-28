@@ -5,10 +5,21 @@ import * as sui from "./sui";
 import * as toolbox from "./toolbox";
 import * as workspace from "./workspace";
 
+const DRAG_THRESHOLD = 5;
+
+interface BlockDragInfo {
+    x: number;
+    y: number;
+    block?: toolbox.BlockDefinition;
+    snippet?: string;
+    color?: string;
+}
+
 export interface MonacoFlyoutProps extends pxt.editor.ISettingsProps {
     fileType?: pxt.editor.FileType;
     moveFocusToParent?: () => void;
     insertSnippet?: (position: monaco.Position, insertText: string, inline?: boolean) => void;
+    setInsertionSnippet?: (snippet: string) => void;
 }
 
 export interface MonacoFlyoutState {
@@ -21,9 +32,22 @@ export interface MonacoFlyoutState {
 }
 
 export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyoutState> {
+    protected dragging: boolean = false;
+    protected dragInfo: BlockDragInfo = { x: undefined, y: undefined };
+
     constructor(props: MonacoFlyoutProps) {
         super(props);
         this.state = {};
+    }
+
+    componentDidMount() {
+        document.addEventListener(pxt.BrowserUtils.pointerEvents.move, this.blockDragHandler);
+        document.addEventListener(pxt.BrowserUtils.pointerEvents.up, this.blockDragEndHandler);
+    }
+
+    componentWillUnmount() {
+        document.removeEventListener(pxt.BrowserUtils.pointerEvents.move, this.blockDragHandler);
+        document.removeEventListener(pxt.BrowserUtils.pointerEvents.up, this.blockDragEndHandler)
     }
 
     componentDidUpdate() {
@@ -35,23 +59,50 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         return () => { this.setState({ selectedBlock: name != this.state.selectedBlock ? name : undefined }) };
     }
 
-    protected getBlockDragStartHandler = (block: toolbox.BlockDefinition, name: string, snippet: string) => {
+    protected getBlockDragStartHandler = (block: toolbox.BlockDefinition, snippet: string, color: string) => {
         return (e: any) => {
-            pxt.tickEvent("monaco.toolbox.itemdrag", undefined, { interactiveConsent: true });
-
-            let blockElement = e.target.querySelector(".blockName");
-            if (blockElement) {
-                e.dataTransfer.setDragImage(blockElement, blockElement.clientWidth/2, blockElement.clientHeight/2);
-            }
-
-            if (!snippet)
-                e.dataTransfer.setData('text', 'qName:' + block.qName); // IE11 only supports text
-            else
-                e.dataTransfer.setData('text', snippet); // IE11 only supports text
-
-            // Fire a create event
-            workspace.fireEvent({ type: 'create', editor: 'ts', blockId: block.attributes.blockId } as pxt.editor.events.CreateEvent);
+            this.dragInfo = {
+                x: pxt.BrowserUtils.getPageX(e),
+                y: pxt.BrowserUtils.getPageY(e),
+                block,
+                snippet,
+                color
+            };
         }
+    }
+
+    protected blockDragHandler =  (e: any) => {
+        if (this.dragInfo && (Math.abs(this.dragInfo.x - pxt.BrowserUtils.getPageX(e)) > DRAG_THRESHOLD
+            || Math.abs(this.dragInfo.y - pxt.BrowserUtils.getPageY(e)) > DRAG_THRESHOLD)) {
+            pxt.tickEvent("monaco.toolbox.itemdrag", undefined, { interactiveConsent: true });
+            e.preventDefault();
+            e.stopPropagation();
+
+            const block = this.dragInfo.block;
+            let dragBlock = document.getElementById("monacoDraggingBlock");
+            this.dragging = true;
+            if (!dragBlock) {
+                const parent = document.getElementById("root");
+                dragBlock = document.createElement("div");
+                dragBlock.id = "monacoDraggingBlock";
+                dragBlock.textContent = this.getSnippetName(block);
+                dragBlock.style.backgroundColor = this.dragInfo.color;
+                parent.appendChild(dragBlock);
+
+                // Fire a create event
+                workspace.fireEvent({ type: 'create', editor: 'ts', blockId: block.attributes.blockId } as pxt.editor.events.CreateEvent);
+                this.props.setInsertionSnippet(this.dragInfo.snippet || "qName:" + block.qName);
+            }
+            dragBlock.style.top = `${pxt.BrowserUtils.getPageY(e)}px`;
+            dragBlock.style.left = `${pxt.BrowserUtils.getPageX(e)}px`;
+        }
+    }
+
+    protected blockDragEndHandler = (e: any) => {
+        this.dragInfo = undefined
+        this.dragging = false;
+        const block = document.getElementById("monacoDraggingBlock");
+        if (block) block.remove();
     }
 
     protected getKeyDownHandler = (block?: toolbox.BlockDefinition, snippet?: string, isPython?: boolean) => {
@@ -122,7 +173,10 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
     }
 
     protected getSelectedStyle = (selected: boolean, color: string) => {
-        return { backgroundColor: selected ? color : undefined };
+        return {
+            backgroundColor: selected ? color : undefined,
+            touchAction: (window as any).PointerEvent ? "none"  : undefined
+        };
     }
 
     protected getBlockStyle = (color: string) => {
@@ -175,13 +229,19 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         const selected = snippetName == this.state.selectedBlock;
         const blockColor = block.attributes.color || color;
 
+        const hasPointer = (window as any).PointerEvent;
+        const hasTouch = pxt.BrowserUtils.isTouchEnabled();
+        const dragStartHandler = this.getBlockDragStartHandler(block, snippet, blockColor);
+
         return <div className={`monacoBlock ${disabled ? "monacoDisabledBlock" : ""} ${selected ? "expand" : ""}`}
                     style={this.getSelectedStyle(selected, blockColor)}
-                    title={block.attributes.jsDoc} draggable={true}
+                    title={block.attributes.jsDoc}
                     key={`block_${index}`} tabIndex={0}
                     onClick={this.getBlockClickHandler(snippetName)}
-                    onDragStart={this.getBlockDragStartHandler(block, snippetName, snippet)}
-                    onKeyDown={this.getKeyDownHandler(block, snippet, isPython)}>
+                    onKeyDown={this.getKeyDownHandler(block, snippet, isPython)}
+                    onPointerDown={hasPointer ? dragStartHandler : undefined}
+                    onMouseDown={!hasPointer ? dragStartHandler : undefined}
+                    onTouchStart={!hasPointer && hasTouch ? dragStartHandler : undefined}>
                 <div className="blockHandle" style={this.getSelectedStyle(selected, blockColor)}><i className="icon bars" /></div>
                 <div className="monacoDraggableBlock" style={this.getBlockStyle(blockColor)}>
                     <span className="blockName">{block.qName ? block.qName : (block.snippetOnly ? snippet : snippetName)}</span>
@@ -193,8 +253,8 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                         {params.map((p, i) => {
                             return <div key={i}>
                                 <div className="separator"></div>
-                                <div className="paramName">{p.name}</div>
-                                {p.description && <div className="paramDescription">{p.description}</div>}
+                                <span className="paramName">{p.name}</span>
+                                {p.description && <span className="paramDescription">{p.description}</span>}
                             </div>
                         })}
                     </div>}

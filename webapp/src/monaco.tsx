@@ -304,6 +304,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected breakpoints: BreakpointCollection;
     protected debuggerToolbox: DebuggerToolbox;
     protected flyout: MonacoFlyout;
+    protected insertionSnippet: string;
 
     private loadMonacoPromise: Promise<void>;
     private diagSnapshot: string[];
@@ -508,6 +509,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     <MonacoFlyout ref={this.handleFlyoutRef} fileType={this.fileType}
                         moveFocusToParent={this.moveFocusToToolbox.bind(this)}
                         insertSnippet={this.insertSnippet.bind(this)}
+                        setInsertionSnippet={this.setInsertionSnippet.bind(this)}
                         parent={this.parent} />
                 </div>
             </div>
@@ -748,40 +750,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             })
 
             const monacoEditorInner = document.getElementById('monacoEditorInner');
-            monacoEditorInner.ondragenter = ((ev: DragEvent) => {
-                ev.preventDefault();
-                ev.stopPropagation();
-            });
-            monacoEditorInner.ondragover = ((ev: DragEvent) => {
-                ev.preventDefault();
-                ev.stopPropagation();
-                this.dragCurrentPos = {
-                    x: ev.clientX,
-                    y: ev.clientY
+            if ((window as any).PointerEvent) {
+                monacoEditorInner.onpointermove = this.onPointerMove;
+                monacoEditorInner.onpointerup = this.onPointerUp;
+            } else {
+                monacoEditorInner.onmousemove = this.onPointerMove;
+                monacoEditorInner.onmouseup = this.onPointerUp;
+                if (pxt.BrowserUtils.isTouchEnabled()) {
+                    monacoEditorInner.ontouchmove = this.onPointerMove;
+                    monacoEditorInner.ontouchend = this.onPointerUp;
                 }
-                this.onDragBlockThrottled(ev);
-            });
-            monacoEditorInner.ondrop = ((ev: DragEvent) => {
-                let insertText = ev.dataTransfer.getData('text'); // IE11 only support "text"
-                if (!insertText)
-                    return;
-                ev.preventDefault();
-                ev.stopPropagation();
-
-                // if inline snippet, expects dataTransfer in form "inline:1&qName:name" or "inline:1&[snippet]"
-                let inline = pxtc.U.startsWith(insertText, "inline:1&");
-                if (inline) insertText = insertText.substring("inline:1&".length);
-
-                let p = pxtc.U.startsWith(insertText, "qName:")
-                    ? compiler.snippetAsync(insertText.substring("qName:".length), this.fileType == pxt.editor.FileType.Python)
-                    : Promise.resolve(insertText)
-                p.done(snippet => {
-                    let mouseTarget = this.editor.getTargetAtClientPoint(ev.clientX, ev.clientY);
-                    let position = mouseTarget.position;
-                    this.insertSnippet(position, snippet, inline);
-                });
-            });
-
+            }
 
             this.editor.onDidFocusEditorText(() => {
                 this.hideFlyout();
@@ -918,6 +897,32 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.editor.setPosition(mouseTarget.position);
         this.editor.focus();
     }, 200);
+
+    protected onPointerMove = (ev: any) => {
+        if (this.insertionSnippet) {
+            this.dragCurrentPos = {
+                x: ev.clientX,
+                y: ev.clientY
+            }
+            this.onDragBlockThrottled(ev);
+        }
+    };
+
+    protected onPointerUp = (ev: any) => {
+        let insertText = this.insertionSnippet;
+        this.setInsertionSnippet(undefined);
+        if (insertText) {
+            let p = insertText.startsWith("qName:")
+                ? compiler.snippetAsync(insertText.substring("qName:".length), this.fileType == pxt.editor.FileType.Python)
+                : Promise.resolve(insertText)
+            p.done(snippet => {
+                let mouseTarget = this.editor.getTargetAtClientPoint(ev.clientX, ev.clientY);
+                let position = mouseTarget.position;
+                pxt.tickEvent(`monaco.toolbox.insertsnippet`);
+                this.insertSnippet(position, snippet);
+            });
+        }
+    }
 
     undo() {
         if (!this.editor) return;
@@ -1754,6 +1759,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         })
 
         return results;
+    }
+
+    // Snippet as string, or "qName:" + qualified name of block
+    public setInsertionSnippet(snippet: string) {
+        this.insertionSnippet = snippet;
     }
 
     ///////////////////////////////////////////////////////////
