@@ -1,5 +1,13 @@
 # Diff tutorial
 
+## Step 0
+
+bla
+
+```template
+let k = 0
+```
+
 ## Step 1
 
 bla

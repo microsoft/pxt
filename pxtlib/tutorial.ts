@@ -94,9 +94,14 @@ namespace pxt.tutorial {
                 lastSrc = undefined;
             // extract typescript snippet from hint or content
             {
-            const s = convertSnippetToDiff(step.hintContentMd);
-            if (s && s != step.hintContentMd)
-                step.hintContentMd = s;
+                const s = convertSnippetToDiff(step.contentMd);
+                if (s && s != step.contentMd)
+                    step.contentMd = s;
+            }
+            {
+                const s = convertSnippetToDiff(step.hintContentMd);
+                if (s && s != step.hintContentMd)
+                    step.hintContentMd = s;
             }
             {
                 const s = convertSnippetToDiff(step.headerContentMd);
@@ -198,7 +203,7 @@ ${code}
                 hintContentMd: hint,
                 hasHint: hint && hint.length > 0
             }
-            if(/@resetDiff/.test(flags))
+            if (/@resetDiff/.test(flags))
                 info.resetDiff = true;
             stepInfo.push(info);
             return "";
@@ -213,7 +218,11 @@ ${code}
     }
 
     function parseTutorialHint(step: string, explicitHints?: boolean): { header: string, hint: string } {
+        // remove hidden code sections
+        step = stripHiddenSnippets(step);
+
         let header = step, hint;
+
         if (explicitHints) {
             // hint is explicitly set with hint syntax "#### ~ tutorialhint" and terminates at the next heading
             const hintTextRegex = /#+ ~ tutorialhint([\s\S]*)/i;

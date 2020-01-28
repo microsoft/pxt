@@ -6,18 +6,25 @@
             "fullscreen": false,
             "unplugged": false,
             "tutorialCompleted": false,
-            "contentMd": "bla\n\n```blocks\nlet x = 0\n```",
+            "contentMd": "bla",
+            "headerContentMd": "bla"
+        },
+        {
+            "fullscreen": false,
+            "unplugged": false,
+            "tutorialCompleted": false,
+            "contentMd": "bla\n\n```diffblocks\nlet k = 0\n----------\nlet x = 0\n```",
             "headerContentMd": "bla",
-            "hintContentMd": "```blocks\nlet x = 0\n```",
+            "hintContentMd": "```diffblocks\nlet x = 0\n----------\nlet x = 0\n```",
             "hasHint": true
         },
         {
             "fullscreen": false,
             "unplugged": false,
             "tutorialCompleted": false,
-            "contentMd": "bla\n\n```blocks\nlet x = 0\nlet y = 0\n```",
+            "contentMd": "bla\n\n```diffblocks\nlet x = 0\n----------\nlet x = 0\nlet y = 0\n```",
             "headerContentMd": "bla",
-            "hintContentMd": "```diffblocks\nlet x = 0\n----------\nlet x = 0\nlet y = 0\n```",
+            "hintContentMd": "```diffblocks\nlet x = 0\nlet y = 0\n----------\nlet x = 0\nlet y = 0\n```",
             "hasHint": true
         },
         {
@@ -25,17 +32,15 @@
             "unplugged": false,
             "tutorialCompleted": false,
             "contentMd": "bla",
-            "headerContentMd": "bla",
-            "hintContentMd": "",
-            "hasHint": true
+            "headerContentMd": "bla"
         },
         {
             "fullscreen": false,
             "unplugged": false,
             "tutorialCompleted": false,
-            "contentMd": "bla\n\n```blocks\nlet x = 0\nlet y = 0\nlet z = 0\nlet a = 0\n```",
+            "contentMd": "bla\n\n```diffblocks\nlet x = 0\nlet y = 0\nlet z = 0\n----------\nlet x = 0\nlet y = 0\nlet z = 0\nlet a = 0\n```",
             "headerContentMd": "bla",
-            "hintContentMd": "```diffblocks\nlet x = 0\nlet y = 0\nlet z = 0\n----------\nlet x = 0\nlet y = 0\nlet z = 0\nlet a = 0\n```",
+            "hintContentMd": "```diffblocks\nlet x = 0\nlet y = 0\nlet z = 0\nlet a = 0\n----------\nlet x = 0\nlet y = 0\nlet z = 0\nlet a = 0\n```",
             "hasHint": true
         },
         {
@@ -44,12 +49,13 @@
             "tutorialCompleted": false,
             "contentMd": "bla\n\n```blocks\nlet x = 0\nlet y = 0\nlet z = 0\nlet a = 0\nlet b = 0\n```",
             "headerContentMd": "bla",
-            "hintContentMd": "```blocks\nlet x = 0\nlet y = 0\nlet z = 0\nlet a = 0\nlet b = 0\n```",
+            "hintContentMd": "```diffblocks\nlet x = 0\nlet y = 0\nlet z = 0\nlet a = 0\nlet b = 0\n----------\nlet x = 0\nlet y = 0\nlet z = 0\nlet a = 0\nlet b = 0\n```",
             "hasHint": true,
             "resetDiff": true
         }
     ],
     "activities": null,
-    "code": "\n { \n let x = 0\n } \n\n { \n let x = 0\nlet y = 0\n } \n\n { \n let x = 0\nlet y = 0\nlet z = 0\n } \n\n { \n let x = 0\nlet y = 0\nlet z = 0\nlet a = 0\n } \n\n { \n let x = 0\nlet y = 0\nlet z = 0\nlet a = 0\nlet b = 0\n } \n",
+    "code": "\n { \n let k = 0\n } \n\n { \n let x = 0\n } \n\n { \n let x = 0\nlet y = 0\n } \n\n { \n let x = 0\nlet y = 0\nlet z = 0\n } \n\n { \n let x = 0\nlet y = 0\nlet z = 0\nlet a = 0\n } \n\n { \n let x = 0\nlet y = 0\nlet z = 0\nlet a = 0\nlet b = 0\n } \n",
+    "templateCode": "let k = 0",
     "metadata": {}
 }
