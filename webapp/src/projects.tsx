@@ -1178,7 +1178,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
         const langOpts: sui.SelectItem[] = [
             {
                 value: pxt.editor.LanguageRestriction.Standard,
-                display: lf("All Languages")
+                display: python ? lf("Blocks, {0}, and {1}", "JavaScript", "Python") : lf("Blocks and {0}", "JavaScript")
             },
             python && {
                 value: pxt.editor.LanguageRestriction.PythonOnly,
