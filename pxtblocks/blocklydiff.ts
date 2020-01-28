@@ -201,17 +201,6 @@ namespace pxt.blocks {
         // all unmodifed blocks are greyed out
         Util.values(todoBlocks).filter(b => !!ws.getBlockById(b.id)).forEach(b => {
             unmodified(b);
-            if (options.statementsOnly) {
-                // mark all nested reporters as unmodified
-                (b.inputList || [])
-                    .map(input => input.connection && input.connection.targetBlock())
-                    .filter(argBlock => !!argBlock)
-                    .forEach(argBlock => {
-                        unmodified(argBlock);
-                        argBlock.getDescendants(false).forEach(unmodified);
-                    })
-            }
-            forceRender(b);
         });
 
         // if nothing is left in the workspace, we "missed" change
@@ -377,7 +366,16 @@ namespace pxt.blocks {
         }
 
         function unmodified(b: Blockly.Block) {
-            b.setColour(UNMODIFIED_COLOR)
+            b.setColour(UNMODIFIED_COLOR);
+            forceRender(b);
+
+            if (options.statementsOnly) {
+                // mark all nested reporters as unmodified
+                (b.inputList || [])
+                    .map(input => input.connection && input.connection.targetBlock())
+                    .filter(argBlock => !!argBlock)
+                    .forEach(argBlock => unmodified(argBlock))
+            }
         }
     }
 
