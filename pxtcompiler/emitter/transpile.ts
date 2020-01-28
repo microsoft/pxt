@@ -10,15 +10,16 @@ namespace ts.pxtc.transpile {
     export interface TranspileResult {
         diagnostics: pxtc.KsDiagnostic[],
         success: boolean,
-        outfiles: { [key: string]: string }
+        outfiles: { [key: string]: string },
+        sourceMap: SourceInterval[]
     }
 
-    const mainName = (l: Lang) => `main.${l}`
+    const mainName = (l: CodeLang) => `main.${l}`
 
-    export type Lang = "py" | "blocks" | "ts"
     export interface LangEquivSet {
-        comparable: { [key in Lang]: string },
-        code: { [key in Lang]: string },
+        comparable: { [key in CodeLang]: string },
+        code: { [key in CodeLang]: string },
+        sourceMap: SourceInterval[]
     }
     // a circular buffer of size MAX_CODE_EQUIVS that stores
     // sets of equivalent code files so that when we translate
@@ -33,7 +34,7 @@ namespace ts.pxtc.transpile {
     export function resetCache() {
         codeEquivalences = []
     }
-    function tryGetCachedTranspile(lang: Lang, txt: string): LangEquivSet | undefined {
+    function tryGetCachedTranspile(lang: CodeLang, txt: string): LangEquivSet | undefined {
         let txtComp = toComparable(txt)
         for (let eq of codeEquivalences) {
             if (eq.comparable[lang] === txtComp) {
@@ -42,7 +43,7 @@ namespace ts.pxtc.transpile {
         }
         return undefined
     }
-    function cacheTranspile(lang1: Lang, lang1Txt: string, lang2: Lang, lang2Txt: string) {
+    function cacheTranspile(lang1: CodeLang, lang1Txt: string, lang2: CodeLang, lang2Txt: string, sourceMap: SourceInterval[]) {
         let equiv: LangEquivSet = {
             comparable: {
                 "ts": undefined,
@@ -53,7 +54,8 @@ namespace ts.pxtc.transpile {
                 "ts": undefined,
                 "blocks": undefined,
                 "py": undefined
-            }
+            },
+            sourceMap
         }
         equiv.code[lang1] = lang1Txt
         equiv.comparable[lang1] = toComparable(lang1Txt)
@@ -66,22 +68,23 @@ namespace ts.pxtc.transpile {
             codeEquivalences.pop()
         }
     }
-    function makeSuccess(l: Lang, txt: string): TranspileResult {
+    function makeSuccess(l: CodeLang, txt: string, sourceMap: SourceInterval[]): TranspileResult {
         let outfiles: { [key: string]: string } = {}
         outfiles[mainName(l)] = txt
         return {
             diagnostics: [],
             success: true,
-            outfiles
+            outfiles,
+            sourceMap
         }
     }
 
-    function transpileInternal(from: Lang, fromTxt: string, to: Lang, doRealTranspile: () => TranspileResult): TranspileResult {
+    function transpileInternal(from: CodeLang, fromTxt: string, to: CodeLang, doRealTranspile: () => TranspileResult): TranspileResult {
         let equiv = tryGetCachedTranspile(from, fromTxt)
         if (equiv && equiv.code[to]) {
             // return from cache
             let toTxt = equiv.code[to]
-            let res = makeSuccess(to, toTxt)
+            let res = makeSuccess(to, toTxt, equiv.sourceMap)
             return res
         }
 
@@ -91,7 +94,7 @@ namespace ts.pxtc.transpile {
         if (res.success) {
             // store the result
             let toTxt = res.outfiles[mainName(to)] || ""
-            cacheTranspile(from, fromTxt, to, toTxt)
+            cacheTranspile(from, fromTxt, to, toTxt, res.sourceMap)
         }
         return res
     }

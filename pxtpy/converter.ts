@@ -2254,6 +2254,10 @@ namespace pxt.py {
         ])
     }
 
+    function sourceMapId(e: py.AST): string {
+        return `${e.startPos}:${e.endPos}`
+    }
+
     function expr(e: py.Expr): B.JsNode {
         lastAST = e
         let f = exprMap[e.kind]
@@ -2261,7 +2265,9 @@ namespace pxt.py {
             U.oops(e.kind + " - unknown expr")
         }
         typeOf(e)
-        return f(e)
+        const r = f(e)
+        r.id = sourceMapId(e)
+        return r
     }
 
     function stmt(e: py.Stmt): B.JsNode {
@@ -2277,6 +2283,7 @@ namespace pxt.py {
         if (cmts.length) {
             r = B.mkGroup(cmts.map(c => B.mkStmt(B.H.mkComment(c))).concat(r))
         }
+        r.id = sourceMapId(e)
         return r
     }
 
@@ -2376,7 +2383,8 @@ namespace pxt.py {
         diagnostics: pxtc.KsDiagnostic[],
         success: boolean,
         outfiles: { [key: string]: string },
-        syntaxInfo?: pxtc.SyntaxInfo
+        syntaxInfo?: pxtc.SyntaxInfo,
+        sourceMap: pxtc.SourceInterval[]
     }
     export function py2ts(opts: pxtc.CompileOptions): Py2TsRes {
         let modules: py.Module[] = []
@@ -2388,7 +2396,7 @@ namespace pxt.py {
         // find .ts files that are copies of / shadowed by the .py files
         let pyFiles = opts.sourceFiles!.filter(fn => U.endsWith(fn, ".py"))
         if (pyFiles.length == 0)
-            return { outfiles, diagnostics, success: diagnostics.length === 0 }
+            return { outfiles, diagnostics, success: diagnostics.length === 0, sourceMap: [] }
         let removeEnd = (file: string, ext: string) => file.substr(0, file.length - ext.length)
         let pyFilesSet = U.toDictionary(pyFiles, p => removeEnd(p, ".py"))
         let tsFiles = opts.sourceFiles!
@@ -2454,6 +2462,7 @@ namespace pxt.py {
         resetPass(1000)
         infoNode = undefined
         syntaxInfo = opts.syntaxInfo
+        let sourceMap: pxtc.SourceInterval[] = []
         for (let m of modules) {
             try {
                 let nodes = toTS(m)
@@ -2463,6 +2472,26 @@ namespace pxt.py {
                 opts.generatedFiles.push(m.tsFilename)
                 opts.fileSystem[m.tsFilename] = res.output
                 outfiles[m.tsFilename] = res.output
+                let rawSrcMap = res.sourceMap
+                function unpackInterval(i: B.SourceInterval): pxtc.SourceInterval | undefined {
+                    let splits = i.id.split(":")
+                    if (splits.length != 2)
+                        return undefined
+                    let py = splits.map(i => parseInt(i))
+                    return {
+                        py: {
+                            start: py[0],
+                            end: py[1]
+                        },
+                        ts: {
+                            start: i.start,
+                            end: i.end
+                        }
+                    }
+                }
+                sourceMap = rawSrcMap
+                    .map(unpackInterval)
+                    .filter(i => !!i) as pxtc.SourceInterval[]
             } catch (e) {
                 console.log("Conv error", e);
             }
@@ -2560,7 +2589,8 @@ namespace pxt.py {
             outfiles: outfiles,
             success: outDiag.length === 0,
             diagnostics: outDiag,
-            syntaxInfo
+            syntaxInfo,
+            sourceMap: sourceMap
         }
 
         function patchedDiags() {

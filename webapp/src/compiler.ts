@@ -4,7 +4,7 @@ import * as workspace from "./workspace";
 
 import U = pxt.Util;
 
-function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
+function setDiagnostics(diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.SourceInterval[]) {
     let mainPkg = pkg.mainEditorPkg();
 
     mainPkg.forEachFile(f => f.diagnostics = [])
@@ -387,8 +387,8 @@ export function typecheckAsync() {
             opts.testMode = true // show errors in all top-level code
             return workerOpAsync("setOptions", { options: opts })
         })
-        .then(() => workerOpAsync("allDiags", {}))
-        .then(setDiagnostics)
+        .then(() => workerOpAsync("allDiags", {}) as Promise<pxtc.CompileResult>)
+        .then(r => setDiagnostics(r.diagnostics, r.sourceMap))
         .then(ensureApisInfoAsync)
         .catch(catchUserErrorAndSetDiags(null))
     if (!firstTypecheck) firstTypecheck = p;
