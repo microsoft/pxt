@@ -91,7 +91,11 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
 
                 // Fire a create event
                 workspace.fireEvent({ type: 'create', editor: 'ts', blockId: block.attributes.blockId } as pxt.editor.events.CreateEvent);
-                this.props.setInsertionSnippet(this.dragInfo.snippet || "qName:" + block.qName);
+                let inline = "";
+                if (block.retType != "void") {
+                    inline = "inline:1&";
+                }
+                this.props.setInsertionSnippet(this.dragInfo.snippet || inline + "qName:" + block.qName);
             }
             dragBlock.style.top = `${pxt.BrowserUtils.getPageY(e)}px`;
             dragBlock.style.left = `${pxt.BrowserUtils.getPageX(e)}px`;
@@ -99,8 +103,9 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
     }
 
     protected blockDragEndHandler = (e: any) => {
-        this.dragInfo = undefined
+        this.dragInfo = undefined;
         this.dragging = false;
+        this.props.setInsertionSnippet(undefined);
         const block = document.getElementById("monacoDraggingBlock");
         if (block) block.remove();
     }
@@ -153,6 +158,10 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         evt.stopPropagation();
     }
 
+    protected scrollHandler = (evt:  any) => {
+        this.positionDragHandle();
+    }
+
     protected getFlyoutStyle = () => {
         return {
             display: (this.state && this.state.groups) ? "block" : "none"
@@ -168,7 +177,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
     }
 
     protected getBlockStyle = (color: string) => {
-        return { 
+        return {
             backgroundColor: color,
             fontSize: `${this.props.parent.settings.editorFontSize}px`,
             lineHeight: `${this.props.parent.settings.editorFontSize + 1}px`
@@ -228,7 +237,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         return <div className={`monacoBlock ${disabled ? "monacoDisabledBlock" : ""} ${selected ? "expand" : ""}`}
                     style={this.getSelectedStyle(selected, blockColor)}
                     title={block.attributes.jsDoc}
-                    key={`block_${index}`} tabIndex={0}
+                    key={`block_${index}`} tabIndex={0} role="listitem"
                     onClick={this.getBlockClickHandler(qName)}
                     onKeyDown={this.getKeyDownHandler(block, snippet, isPython)}
                     onPointerDown={hasPointer ? dragStartHandler : undefined}
@@ -259,7 +268,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         const rgb = pxt.toolbox.convertColor(color || (ns && pxt.toolbox.getNamespaceColor(ns)) || "255");
         const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : "Default"}`.replace(/\s/g, "");
         return <div id="monacoFlyoutWidget" className="monacoFlyout" style={this.getFlyoutStyle()}>
-           <div id="monacoFlyoutWrapper" onScroll={this.positionDragHandle} onWheel={this.wheelHandler}>
+           <div id="monacoFlyoutWrapper" onScroll={this.scrollHandler} onWheel={this.wheelHandler} role="list">
                <div className="monacoFlyoutLabel monacoFlyoutHeading">
                     <span className={`monacoFlyoutHeadingIcon blocklyTreeIcon ${iconClass}`} role="presentation" style={this.getIconStyle(rgb)}>
                         {(icon && icon.length === 1) ? icon : ""}
@@ -271,10 +280,12 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                     // Add group label, for non-default groups
                     if (g.name != pxt.DEFAULT_GROUP_NAME && groups.length > 1) {
                         group.push(
-                            <div className="monacoFlyoutLabel blocklyFlyoutGroup" key={`label_${i}`} tabIndex={0} onKeyDown={this.getKeyDownHandler()}>
+                            <div className="monacoFlyoutLabel blocklyFlyoutGroup" key={`label_${i}`} tabIndex={0} onKeyDown={this.getKeyDownHandler()} role="separator">
                                 {g.icon && <span className={`monacoFlyoutHeadingIcon blocklyTreeIcon ${iconClass}`} role="presentation">{g.icon}</span>}
                                 <div className="monacoFlyoutLabelText">{g.name}</div>
-                                {g.hasHelp && pxt.editor.HELP_IMAGE_URI && <span><img src={pxt.editor.HELP_IMAGE_URI} onClick={this.getHelpButtonClickHandler(g.name)}></img></span>}
+                                {g.hasHelp && pxt.editor.HELP_IMAGE_URI && <span>
+                                    <img src={pxt.editor.HELP_IMAGE_URI} onClick={this.getHelpButtonClickHandler(g.name)} alt={lf("Click for help")}>
+                                </img></span>}
                                 <hr className="monacoFlyoutLabelLine" />
                             </div>)
                     }
