@@ -68,7 +68,7 @@ let stack = child_process.execSync("pbpaste", {
     encoding: "utf8"
 })
 for (let line of stack.split(/\n/)) {
-    let m = /^0x[a-f0-9]+:\s+(.*)/.exec(line)
+    let m = /^0x[a-f0-9]+[^:]*:\s+(.*)/.exec(line)
     if (m) {
         for (let w of m[1].split(/\s+/)) {
             let k = parseInt(w, 0)
