@@ -359,7 +359,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             && !searchFor;
         // inject beta at end of / or /#
         // also excludes http://localhost:port/index.html
-        const betaUrl = window.location.href.replace(/\/(#|$)/, "/beta$1")
+        const betaUrl = window.location.href.replace(/\/(#|$|\?)/, "/beta$1")
         const showOpenBeta = mode == ScriptSearchMode.Experiments
             && betaUrl != window.location.href; // don't show beta button in beta
 
