@@ -195,16 +195,19 @@ ${code}
             step = step.trim();
             let { header, hint } = parseTutorialHint(step, metadata && metadata.explicitHints);
             let info: TutorialStepInfo = {
-                fullscreen: /@(fullscreen|unplugged)/.test(flags),
-                unplugged: /@unplugged/.test(flags),
-                tutorialCompleted: /@tutorialCompleted/.test(flags),
                 contentMd: step,
-                headerContentMd: header,
-                hintContentMd: hint,
-                hasHint: hint && hint.length > 0
+                headerContentMd: header
             }
+            if(/@(fullscreen|unplugged)/.test(flags))
+                info.fullscreen = true;
+            if(/@unplugged/.test(flags))
+                info.unplugged = true;
+            if(/@tutorialCompleted/.test(flags))
+                info.tutorialCompleted = true;
             if (/@resetDiff/.test(flags))
                 info.resetDiff = true;
+            if (hint)
+                info.hintContentMd = hint;
             stepInfo.push(info);
             return "";
         });

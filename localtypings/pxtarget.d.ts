@@ -855,7 +855,6 @@ declare namespace pxt.tutorial {
         // no coding
         unplugged?: boolean;
         tutorialCompleted?: boolean;
-        hasHint?: boolean;
         contentMd?: string;
         headerContentMd?: string;
         hintContentMd?: string;

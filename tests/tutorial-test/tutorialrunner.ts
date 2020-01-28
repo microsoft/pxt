@@ -47,12 +47,15 @@ function tutorialTest(filename: string) {
     catch (e) {
         // If there isn't a baseline, generate one.
         let newBaseline = info;
-        fs.writeFileSync(path.join(casesDir, basename + ".local"), JSON.stringify(newBaseline, null, 4));
+        fs.writeFileSync(baseline, JSON.stringify(newBaseline, null, 4));
     }
 
     baseline = baseline || info;
 
     let err = pxt.Util.deq(baseline, info);
-    if (err) fs.writeFileSync(path.join(casesDir, basename + ".err"), JSON.stringify(info, null, 4));
-    chai.assert(err === null, `Parsed tutorial did not match baseline. See ${basename}.err for details.`);
+    if (err) {
+        fs.writeFileSync(baselinePath + ".original", JSON.stringify(baseline, null, 4));
+        fs.writeFileSync(baselinePath, JSON.stringify(info, null, 4));
+    }
+    chai.assert(err === null, `Parsed tutorial did not match baseline. See ${basename} diff for details.`);
 }
