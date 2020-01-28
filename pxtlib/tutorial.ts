@@ -198,11 +198,11 @@ ${code}
                 contentMd: step,
                 headerContentMd: header
             }
-            if(/@(fullscreen|unplugged)/.test(flags))
+            if (/@(fullscreen|unplugged)/.test(flags))
                 info.fullscreen = true;
-            if(/@unplugged/.test(flags))
+            if (/@unplugged/.test(flags))
                 info.unplugged = true;
-            if(/@tutorialCompleted/.test(flags))
+            if (/@tutorialCompleted/.test(flags))
                 info.tutorialCompleted = true;
             if (/@resetDiff/.test(flags))
                 info.resetDiff = true;
