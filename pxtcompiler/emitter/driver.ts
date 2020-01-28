@@ -299,6 +299,7 @@ namespace ts.pxtc {
             snippetMode: false,
             alwaysEmitOnStart: opts.alwaysDecompileOnStart,
             includeGreyBlockMessages,
+            sourceMap: !!opts.ast,
             allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"]
         };
         let [renameMap, _] = pxtc.decompiler.buildRenameMap(program, file)

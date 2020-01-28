@@ -1339,7 +1339,8 @@ export class ProjectView
         }
         else {
             decompilePromise = compiler.decompileBlocksSnippetAsync(template)
-                .then(blockXML => {
+                .then(resp => {
+                    const blockXML = resp.outfiles["main.blocks"];
                     if (blockXML) {
                         pkg.mainEditorPkg().setFile("main.blocks", blockXML);
                     }
@@ -2811,7 +2812,7 @@ export class ProjectView
         return compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileBlocksSnippetAsync(req.ts, blocksInfo))
             .then(resp => {
-                const svg = pxt.blocks.render(resp, {
+                const svg = pxt.blocks.render(resp.outfiles["main.blocks"], {
                     snippetMode: true,
                     layout: pxt.blocks.BlockLayout.Align,
                     splitSvg: false

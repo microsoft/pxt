@@ -552,7 +552,7 @@ ${output}</xml>`;
         function mkId(type: string, node: ts.Node): string {
             if (type == ts.pxtc.ON_START_TYPE)
                 return "xRRgvHNlG#rZ^u`HECiY";
-            const id = Blockly.utils.genUid();
+            const id = Math.random() + '' + Math.random()
             if (node) {
                 const start = node.getFullStart();
                 result.sourceMap.push({

@@ -26,7 +26,8 @@ export function getUsedBlocksAsync(code: string): Promise<pxt.Map<number>> {
         .then(blocksInfo => {
             pxt.blocks.initializeAndInject(blocksInfo);
             return compiler.decompileBlocksSnippetAsync(code, blocksInfo);
-        }).then(blocksXml => {
+        }).then(resp => {
+            const blocksXml = resp.outfiles["main.blocks"];
             if (blocksXml) {
                 const headless = pxt.blocks.loadWorkspaceXml(blocksXml);
                 if (!headless) {
@@ -40,7 +41,7 @@ export function getUsedBlocksAsync(code: string): Promise<pxt.Map<number>> {
                 }
                 return usedBlocks;
             } else {
-                throw new Error("Empty blocksXml, failed to decompile");
+                throw new Error("Failed to decompile");
             }
         }).catch((e) => {
             pxt.reportException(e);
