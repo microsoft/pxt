@@ -102,6 +102,7 @@ namespace pxt.editor {
         temporary?: boolean;
         tutorial?: pxt.tutorial.TutorialOptions;
         dependencies?: pxt.Map<string>;
+        tsOnly?: boolean; // DEPRECATED: use LanguageRestriction.NoBlocks or LanguageRestriction.JavaScriptOnly instead
         languageRestriction?: LanguageRestriction;
         preferredEditor?: string; // preferred editor to open, pxt.BLOCKS_PROJECT_NAME, ...
         extensionUnderTest?: string; // workspace id of the extension under test
@@ -315,7 +316,7 @@ namespace pxt.editor {
 
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
 
-        askForProjectSettingsAsync(): Promise<ProjectCreationOptions>;
+        askForProjectCreationOptionsAsync(): Promise<ProjectCreationOptions>;
 
         pushScreenshotHandler(handler: (msg: ScreenshotData) => void): void;
         popScreenshotHandler(): void;

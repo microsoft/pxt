@@ -1976,6 +1976,9 @@ export class ProjectView
                 cfg.dependencies[ext.name] = `workspace:${ext.id}`;
             }
         }
+
+        if (options.tsOnly)
+            options.languageRestriction = pxt.editor.LanguageRestriction.NoBlocks;
         if (options.preferredEditor)
             cfg.preferredEditor = options.preferredEditor;
 
@@ -3045,7 +3048,7 @@ export class ProjectView
         }
     }
 
-    askForProjectSettingsAsync() {
+    askForProjectCreationOptionsAsync() {
         return this.newProjectDialog.promptUserAsync();
     }
 

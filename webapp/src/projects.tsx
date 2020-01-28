@@ -443,8 +443,8 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
 
     newProject() {
         pxt.tickEvent("projects.new", undefined, { interactiveConsent: true });
-        if (pxt.appTarget.appTheme.nameProjectFirst) {
-            this.props.parent.askForProjectSettingsAsync()
+        if (pxt.appTarget.appTheme.nameProjectFirst || pxt.appTarget.appTheme.newProjectOptions) {
+            this.props.parent.askForProjectCreationOptionsAsync()
                 .then(projectSettings => {
                     const { name, languageRestriction } = projectSettings
                     this.props.parent.newProject({ name, languageRestriction });
@@ -1163,6 +1163,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
 
     renderCore() {
         const { visible, name, emoji } = this.state;
+        const { python, newProjectOptions } = pxt.appTarget.appTheme;
 
         const actions: sui.ModalButton[] = [
             {
@@ -1174,13 +1175,12 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
         ];
 
         const mobile = pxt.BrowserUtils.isMobile();
-        const pythonEnabled = pxt.appTarget.appTheme.python;
         const langOpts: sui.SelectItem[] = [
             {
                 value: pxt.editor.LanguageRestriction.Standard,
-                display: lf("Standard")
+                display: lf("All Languages")
             },
-            pythonEnabled && {
+            python && {
                 value: pxt.editor.LanguageRestriction.PythonOnly,
                 display: lf("{0} Only", "Python")
             },
@@ -1189,6 +1189,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
                 display: lf("{0} Only", "JavaScript")
             }
         ];
+
 
         return <sui.Modal isOpen={visible} className="newproject" size="tiny"
             onClose={this.hide} dimmer={true} buttons={actions}
@@ -1204,10 +1205,12 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
                         selectOnMount={!mobile} autoFocus={!mobile} />
                 </div>
             </div>
-            <br />
-            <sui.ExpandableMenu title={lf("Options")}>
-                <sui.Select label={lf("Project Template:")} options={langOpts} onChange={this.handleLanguageChange} aria-label={lf("Select Language")} />
-            </sui.ExpandableMenu>
+            {newProjectOptions && <div>
+                <br />
+                <sui.ExpandableMenu title={lf("Options")}>
+                    <sui.Select label={lf("I want to code in")} options={langOpts} onChange={this.handleLanguageChange} aria-label={lf("Select Language")} />
+                </sui.ExpandableMenu>
+            </div>}
         </sui.Modal>
     }
 }
