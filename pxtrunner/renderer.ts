@@ -628,8 +628,8 @@ namespace pxt.runner {
                             update: true
                         })
                         let diffPy: HTMLElement;
-                        const [ oldPy, newPy ] = resps.map(resp => 
-                            resp.compilePython 
+                        const [oldPy, newPy] = resps.map(resp =>
+                            resp.compilePython
                             && resp.compilePython.outfiles
                             && resp.compilePython.outfiles["main.py"]);
                         if (oldPy && newPy) {
