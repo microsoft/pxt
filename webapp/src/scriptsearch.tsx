@@ -9,7 +9,6 @@ import * as core from "./core";
 import * as codecard from "./codecard";
 import * as electron from "./electron";
 import * as workspace from "./workspace";
-import * as dialogs from "./dialogs";
 import { SearchInput } from "./components/searchInput";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
@@ -358,8 +357,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             && pxt.appTarget.appTheme.importExtensionFiles
             && !disableFileAccessinMaciOs
             && !searchFor;
+        // inject beta at end of / or /#
+        // also excludes http://localhost:port/index.html
+        const betaUrl = window.location.href.replace(/\/(#|$)/, "/beta$1")
         const showOpenBeta = mode == ScriptSearchMode.Experiments
-            && pxt.appTarget.appTheme.betaUrl;
+            && betaUrl != window.location.href; // don't show beta button in beta
 
         const compareConfig = (a: pxt.PackageConfig, b: pxt.PackageConfig) => {
             // core first
@@ -529,7 +531,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 label={lf("Beta")}
                                 labelClass="red right ribbon"
                                 description={lf("Open the next version of the editor")}
-                                url={pxt.appTarget.appTheme.betaUrl}
+                                url={betaUrl}
                             />}
                         </div>
                     }

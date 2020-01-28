@@ -140,7 +140,6 @@ Here is the appTheme from pxt-sample with some comments:
         "homeUrl": "https://microsoft.github.io/pxt-sample/",
         "privacyUrl": "https://go.microsoft.com/fwlink/?LinkId=521839",
         "termsOfUseUrl": "https://go.microsoft.com/fwlink/?LinkID=206977",
-        "betaUrl": "https://makecode.com/",
         // populating the (?) menu
         "docMenu": [
             {
