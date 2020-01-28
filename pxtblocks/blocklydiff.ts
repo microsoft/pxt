@@ -44,13 +44,17 @@ namespace pxt.blocks {
         }
     }
 
+    function logger() {
+        const log = pxt.options.debug || (window && /diffdbg=1/.test(window.location.href))
+            ? console.log : (message?: any, ...args: any[]) => { };
+        return log;
+
+    }
+
     function diffWorkspaceNoEvents(oldWs: Blockly.Workspace, newWs: Blockly.Workspace, options?: DiffOptions): DiffResult {
         pxt.tickEvent("blocks.diff", { started: 1 })
         options = options || {};
-
-        const log = pxt.options.debug || (window && /diffdbg=1/.test(window.location.href))
-            ? console.log : (message?: any, ...args: any[]) => { };
-
+        const log = logger();
         if (!oldWs) {
             return {
                 ws: undefined,
@@ -420,14 +424,19 @@ namespace pxt.blocks {
     }
 
     export function decompiledDiffAsync(oldTs: string, oldResp: pxtc.CompileResult, newTs: string, newResp: pxtc.CompileResult, options: DiffOptions = {}): DiffResult {
+        const log = logger();
+
         const oldXml = oldResp.outfiles['main.blocks'];
         let newXml = newResp.outfiles['main.blocks'];
+        log(oldXml);
+        log(newXml);
 
         // compute diff of typescript sources
         const diffLines = pxt.diff.compute(oldTs, newTs, {
             ignoreWhitespace: true,
             full: true
         });
+        log(diffLines);
 
         // build old -> new lines mapping
         let oldLineStart = 0;
@@ -464,11 +473,11 @@ namespace pxt.blocks {
                     });
 
                     // patch workspace
-                    //console.log(ln);
-                    //console.log(`id ${oldLineStart}:${line.length}>${oldid} ==> ${newLineStart}:${line.length}>${newid}`)
+                    log(ln);
+                    log(`id ${oldLineStart}:${line.length}>${oldid} ==> ${newLineStart}:${line.length}>${newid}`)
                     if (oldid && newid) {
                         newXml = newXml.replace(newid, oldid);
-                        console.log(newXml);
+                        log(newXml);
                     }
 
                     oldLineStart += lineLength + 1;

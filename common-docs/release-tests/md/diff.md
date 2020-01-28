@@ -12,6 +12,8 @@ let x = 1 + 1;
 let x = 1 + (2 * 3);
 ```
 
+----------
+
 ```diff
 let x = 1;
 ------------
@@ -23,6 +25,8 @@ let x = 1;
 ------------
 let y = 1;
 ```
+
+----------
 
 ```diffblocks
 scene.setBackgroundColor(7)
@@ -251,6 +255,8 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Food, function (sprite, otherSpr
 })
 ```
 
+----------
+
 ```diff
 let x = 1;
 ------------
@@ -264,6 +270,9 @@ let x = 1;
 let x = 1;
 let y = 1;
 ```
+
+----------
+
 
 ```diff
 let x = 1
@@ -283,6 +292,9 @@ let y = 1
 let z = 1
 ```
 
+----------
+
+
 ```diff
 console.log("1");
 ------------
@@ -297,6 +309,9 @@ console.log("1");
 console.log("2");
 ```
 
+----------
+
+
 ```diff
 console.log(
     "1"
@@ -318,6 +333,9 @@ console.log(
     );
 console.log("2");
 ```
+
+----------
+
 
 ```diff
 game.onUpdate(function() {
@@ -338,6 +356,8 @@ game.onUpdate(function() {
     let y = 1;
 })
 ```
+
+----------
 
 ```diff
 game.onUpdate(function() {
@@ -361,6 +381,8 @@ game.onUpdate(function() {
 })
 ```
 
+----------
+
 ```diff
 let x = 1 + (2 * 3);
 ------------
@@ -374,6 +396,7 @@ let x = 1 + (2 * 3);
 let x = 1 + (2 * 3);
 let y = 1;
 ```
+----------
 
 ```diff
 for(let i = 0; i < 5; ++i) {
