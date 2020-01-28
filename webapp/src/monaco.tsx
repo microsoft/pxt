@@ -1033,6 +1033,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!container || !this.blockInfo) return;
 
         const debugging = this.isDebugging();
+        if (debugging && this.flyout) this.flyout.setState( { groups: undefined } );
         const debuggerToolbox = debugging ? <DebuggerToolbox
             ref={this.handleDebugToolboxRef}
             parent={this.parent}

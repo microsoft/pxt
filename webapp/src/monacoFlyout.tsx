@@ -1,11 +1,11 @@
 import * as React from "react";
 import * as compiler from "./compiler"
 import * as core from "./core";
-import * as sui from "./sui";
 import * as toolbox from "./toolbox";
 import * as workspace from "./workspace";
 
 const DRAG_THRESHOLD = 5;
+const SELECTED_BORDER_WIDTH = 4;
 
 interface BlockDragInfo {
     x: number;
@@ -149,15 +149,6 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         }
     }
 
-    protected scrollHandler = () => {
-        let handle = document.querySelector(".monacoBlock.expand .blockHandle") as HTMLDivElement;
-        if (handle) {
-            let parent = handle.parentElement;
-            let container = document.getElementById("monacoFlyoutWrapper");
-            handle.style.height = `${parent.clientHeight}px`;
-            handle.style.top = `${parent.offsetTop - container.scrollTop}px`;
-        }
-    }
     protected wheelHandler = (evt: any) => {
         evt.stopPropagation();
     }
@@ -173,10 +164,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
     }
 
     protected getSelectedStyle = (selected: boolean, color: string) => {
-        return {
-            backgroundColor: selected ? color : undefined,
-            touchAction: (window as any).PointerEvent ? "none"  : undefined
-        };
+        return { touchAction: (window as any).PointerEvent ? "none"  : undefined };
     }
 
     protected getBlockStyle = (color: string) => {
@@ -197,7 +185,8 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         if (handle) {
             let parent = handle.parentElement;
             let container = document.getElementById("monacoFlyoutWrapper");
-            handle.style.height = `${parent.clientHeight}px`;
+            handle.style.height = `${parent.clientHeight + (SELECTED_BORDER_WIDTH * 2)}px`;
+            handle.style.left = `${parent.clientWidth + SELECTED_BORDER_WIDTH - 1}px`;
             handle.style.top = `${parent.offsetTop - container.scrollTop}px`;
         }
     }
@@ -223,11 +212,14 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         // Get block DOM element
         const disabled = fnState == pxt.editor.FilterState.Disabled;
         const isPython = this.props.fileType == pxt.editor.FileType.Python;
+
         const snippetName = this.getSnippetName(block);
         const snippet = isPython ? block.pySnippet : block.snippet;
-        const params = block.parameters || [];
-        const selected = snippetName == this.state.selectedBlock;
+        const params = block.parameters;
         const blockColor = block.attributes.color || color;
+
+        const qName =  block.qName || block.name;
+        const selected = qName == this.state.selectedBlock;
 
         const hasPointer = (window as any).PointerEvent;
         const hasTouch = pxt.BrowserUtils.isTouchEnabled();
@@ -237,15 +229,15 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                     style={this.getSelectedStyle(selected, blockColor)}
                     title={block.attributes.jsDoc}
                     key={`block_${index}`} tabIndex={0}
-                    onClick={this.getBlockClickHandler(snippetName)}
+                    onClick={this.getBlockClickHandler(qName)}
                     onKeyDown={this.getKeyDownHandler(block, snippet, isPython)}
                     onPointerDown={hasPointer ? dragStartHandler : undefined}
                     onMouseDown={!hasPointer ? dragStartHandler : undefined}
                     onTouchStart={!hasPointer && hasTouch ? dragStartHandler : undefined}>
                 <div className="blockHandle" style={this.getSelectedStyle(selected, blockColor)}><i className="icon bars" /></div>
                 <div className="monacoDraggableBlock" style={this.getBlockStyle(blockColor)}>
-                    <span className="blockName">{block.qName ? block.qName : (block.snippetOnly ? snippet : snippetName)}</span>
-                    {block.qName && params && <span>{`(${params.map(p => p.name).join(", ")})`}</span>}
+                    <span className="blockName">{block.snippetOnly ? snippet : snippetName}</span>
+                    {!block.snippetOnly && params && <span>{`(${params.map(p => p.name).join(", ")})`}</span>}
                 </div>
                 <div className="detail">
                     <div className="description">{block.attributes.jsDoc}</div>
@@ -267,7 +259,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         const rgb = pxt.toolbox.convertColor(color || (ns && pxt.toolbox.getNamespaceColor(ns)) || "255");
         const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : "Default"}`.replace(/\s/g, "");
         return <div id="monacoFlyoutWidget" className="monacoFlyout" style={this.getFlyoutStyle()}>
-           <div id="monacoFlyoutWrapper" onScroll={this.scrollHandler} onWheel={this.wheelHandler}>
+           <div id="monacoFlyoutWrapper" onScroll={this.positionDragHandle} onWheel={this.wheelHandler}>
                <div className="monacoFlyoutLabel monacoFlyoutHeading">
                     <span className={`monacoFlyoutHeadingIcon blocklyTreeIcon ${iconClass}`} role="presentation" style={this.getIconStyle(rgb)}>
                         {(icon && icon.length === 1) ? icon : ""}
@@ -277,7 +269,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                {groups && groups.map((g, i) => {
                     let group: JSX.Element[] = [];
                     // Add group label, for non-default groups
-                    if (g.name != pxt.DEFAULT_GROUP_NAME) {
+                    if (g.name != pxt.DEFAULT_GROUP_NAME && groups.length > 1) {
                         group.push(
                             <div className="monacoFlyoutLabel blocklyFlyoutGroup" key={`label_${i}`} tabIndex={0} onKeyDown={this.getKeyDownHandler()}>
                                 {g.icon && <span className={`monacoFlyoutHeadingIcon blocklyTreeIcon ${iconClass}`} role="presentation">{g.icon}</span>}

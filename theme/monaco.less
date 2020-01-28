@@ -105,8 +105,8 @@
         }
     }
     .monacoBlock {
-        border-bottom: 1px solid rgba(255,255,255,0.4);
-        color: #d4d4d4;
+        color: @monacoFlyoutText;
+        border-bottom: 1px solid @monacoFlyoutBorderColor;
 
         .monacoDraggableBlock {
             width: 100%;
@@ -166,6 +166,9 @@
         }
         &.expand {
             color: @white;
+            border-color: @white;
+            border-width: 4px 0px 4px 4px;
+            border-style: solid;
             cursor: grab;
 
             .blockHandle,
@@ -180,6 +183,10 @@
             width: 2rem;
             right: -0.9rem;
             border-radius: 0 1rem 1rem 0;
+            border-color: @white;
+            border-width: 4px 4px 4px 0px;
+            border-style: solid;
+            background: @monacoFlyoutColor;
 
             i.bars {
                 display: block;
