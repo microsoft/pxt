@@ -190,10 +190,10 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
                 this.cachedRenderLangSnippet(langBlock, code =>
                     pxt.BrowserUtils.loadBlocklyAsync()
-                    .then(() => {
-                        const diff = pxt.blocks.diffXml(oldXml, newXml);
-                        return wrapBlockDiff(diff);
-                    }));
+                        .then(() => {
+                            const diff = pxt.blocks.diffXml(oldXml, newXml);
+                            return wrapBlockDiff(diff);
+                        }));
             });
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-diffblocks`))
@@ -204,41 +204,41 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 const code = langBlock.textContent;
                 const { fileA: oldSrc, fileB: newSrc } = pxt.diff.split(code);
 
-    
+
                 this.cachedRenderLangSnippet(langBlock, code =>
                     pxt.BrowserUtils.loadBlocklyAsync()
-                    .then(() => compiler.getBlocksAsync())
-                    .then(blocksInfo => Promise.mapSeries([oldSrc, newSrc], src => 
-                        compiler.decompileBlocksSnippetAsync(src, blocksInfo))
-                    )
-                    .then((resps) => pxt.blocks.decompiledDiffAsync(oldSrc, resps[0], newSrc, resps[1], {
-                        hideDeletedTopBlocks: true,
-                        hideDeletedBlocks: true
-                    }))
-                    .then(diff => wrapBlockDiff(diff))
-                    );
+                        .then(() => compiler.getBlocksAsync())
+                        .then(blocksInfo => Promise.mapSeries([oldSrc, newSrc], src =>
+                            compiler.decompileBlocksSnippetAsync(src, blocksInfo))
+                        )
+                        .then((resps) => pxt.blocks.decompiledDiffAsync(oldSrc, resps[0], newSrc, resps[1], {
+                            hideDeletedTopBlocks: true,
+                            hideDeletedBlocks: true
+                        }))
+                        .then(diff => wrapBlockDiff(diff))
+                );
             });
 
-            function wrapBlockDiff(diff: pxt.blocks.DiffResult): HTMLElement {
-                const svg = diff.svg;
-                if (svg) {
-                    if (svg.tagName == "SVG") { // splitsvg
-                        const viewBox = svg.getAttribute('viewBox').split(' ').map(parseFloat);
-                        const width = viewBox[2];
-                        let height = viewBox[3];
-                        if (width > 480 || height > 128)
-                            height = (height * 0.8) | 0;
-                        svg.setAttribute('height', `${height}px`);
-                    }
-                    return svg as HTMLElement;
-                } else {
-                    // An error occured, show alternate message
-                    const textDiv = document.createElement('div');
-                    textDiv.className = "ui basic segment";
-                    textDiv.textContent = diff.message || lf("No changes.");
-                    return textDiv;
+        function wrapBlockDiff(diff: pxt.blocks.DiffResult): HTMLElement {
+            const svg = diff.svg;
+            if (svg) {
+                if (svg.tagName == "SVG") { // splitsvg
+                    const viewBox = svg.getAttribute('viewBox').split(' ').map(parseFloat);
+                    const width = viewBox[2];
+                    let height = viewBox[3];
+                    if (width > 480 || height > 128)
+                        height = (height * 0.8) | 0;
+                    svg.setAttribute('height', `${height}px`);
                 }
+                return svg as HTMLElement;
+            } else {
+                // An error occured, show alternate message
+                const textDiv = document.createElement('div');
+                textDiv.className = "ui basic segment";
+                textDiv.textContent = diff.message || lf("No changes.");
+                return textDiv;
             }
+        }
     }
 
     private renderInlineBlocks(content: HTMLElement) {
