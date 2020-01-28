@@ -11,6 +11,8 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.Sourc
 
     let output = "";
 
+    // TODO: if a source map is present, map errors into the main language file
+
     for (let diagnostic of diagnostics) {
         if (diagnostic.fileName) {
             output += `${diagnostic.category == ts.pxtc.DiagnosticCategory.Error ? lf("error") : diagnostic.category == ts.pxtc.DiagnosticCategory.Warning ? lf("warning") : lf("message")}: ${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.column + 1}): `;
