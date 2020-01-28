@@ -202,6 +202,7 @@ namespace pxt.blocks {
         Util.values(todoBlocks).filter(b => !!ws.getBlockById(b.id)).forEach(b => {
             unmodified(b);
         });
+        logTodo('unmodified')
 
         // if nothing is left in the workspace, we "missed" change
         if (!ws.getAllBlocks().length) {
@@ -372,7 +373,7 @@ namespace pxt.blocks {
             if (options.statementsOnly) {
                 // mark all nested reporters as unmodified
                 (b.inputList || [])
-                    .map(input => input.connection && input.connection.targetBlock())
+                    .map(input => input.type == Blockly.INPUT_VALUE && input.connection && input.connection.targetBlock())
                     .filter(argBlock => !!argBlock)
                     .forEach(argBlock => unmodified(argBlock))
             }
