@@ -917,7 +917,7 @@ ${linkString}
                         let bresp = pxtc.decompiler.decompileToBlocks(
                             blocksInfo,
                             program.getSourceFile("main.ts"),
-                            { 
+                            {
                                 snippetMode: options && options.snippetMode,
                                 sourceMap: options && options.sourceMap
                             });
