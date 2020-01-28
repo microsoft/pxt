@@ -364,15 +364,23 @@ function ciAsync() {
 
     const latest = branch == "master" ? "latest" : "git-" + branch
     // upload locs on build on master
-    const uploadLocs = /^(master|v\d+\.\d+\.\d+)$/.test(branch)
-        && !pullRequest
-        && !!pxt.appTarget.uploadDocs;
+    const masterOrReleaseBranchRx = /^(master|v\d+\.\d+\.\d+)$/;
+    const apiStringBranchRx = pxt.appTarget.uploadApiStringsBranchRx
+        ? new RegExp(pxt.appTarget.uploadApiStringsBranchRx)
+        : masterOrReleaseBranchRx;
+    const uploadDocs = !pullRequest
+        && !!pxt.appTarget.uploadDocs
+        && masterOrReleaseBranchRx.test(branch);
+    const uploadApiStrings = !pullRequest
+        && (!!pxt.appTarget.uploadDocs || pxt.appTarget.uploadApiStringsBranchRx)
+        && apiStringBranchRx.test(branch);
 
     pxt.log(`tag: ${tag}`);
     pxt.log(`branch: ${branch}`);
-    pxt.log(`pull request: ${pullRequest}`);
-    pxt.log(`upload locs: ${uploadLocs}`);
     pxt.log(`latest: ${latest}`);
+    pxt.log(`pull request: ${pullRequest}`);
+    pxt.log(`upload api strings: ${uploadApiStrings}`);
+    pxt.log(`upload docs: ${uploadDocs}`);
 
     function npmPublishAsync() {
         if (!npmPublish) return Promise.resolve();
@@ -383,12 +391,14 @@ function ciAsync() {
     if (pkg["name"] == "pxt-core") {
         pxt.log("pxt-core build");
         let p = npmPublishAsync();
-        if (uploadLocs)
+        if (uploadDocs)
             p = p
-                .then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
                 .then(() => buildWebStringsAsync())
-                .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"))
-                .then(() => crowdin.internalUploadTargetTranslationsAsync(!!tag));
+                .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"));
+        if (uploadApiStrings)
+            p = p.then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
+        if (uploadDocs || uploadApiStrings)
+            p = p.then(() => crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs));
         return p;
     } else {
         pxt.log("target build");
@@ -409,13 +419,13 @@ function ciAsync() {
             })
             .then(() => {
                 pxt.log("target uploaded");
-                if (uploadLocs) {
-                    pxt.log("uploading translations...");
-                    return crowdin.internalUploadTargetTranslationsAsync(!!tag)
+                if (uploadDocs || uploadApiStrings) {
+                    return crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs)
                         .then(() => pxt.log("translations uploaded"));
+                } else {
+                    pxt.log("skipping translations upload");
+                    return Promise.resolve();
                 }
-                pxt.log("skipping translations upload");
-                return Promise.resolve();
             });
     }
 }
@@ -5139,7 +5149,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                     switch (card.cardType) {
                         case "tutorial": {
                             let urls = [card.url]
-                            if (card.otherActions) card.otherActions.forEach( a => { if (a.url) urls.push(a.url) } );
+                            if (card.otherActions) card.otherActions.forEach(a => { if (a.url) urls.push(a.url) });
                             for (let url of urls) {
                                 const tutorialMd = nodeutil.resolveMd(docsRoot, url);
                                 const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
@@ -5178,7 +5188,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                         }
                         case "example": {
                             let urls = [card.url]
-                            if (card.otherActions) card.otherActions.forEach( a => { if (a.url) urls.push(a.url) } );
+                            if (card.otherActions) card.otherActions.forEach(a => { if (a.url) urls.push(a.url) });
                             for (let url of urls) {
                                 const exMd = nodeutil.resolveMd(docsRoot, url);
                                 const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
@@ -6080,6 +6090,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         name: "uploadtrgtranslations",
         help: "upload translations for target",
         flags: {
+            apis: { description: "upload api strings" },
             docs: { description: "upload markdown docs folder as well" },
             test: { description: "test run, do not upload files to crowdin" }
         },
