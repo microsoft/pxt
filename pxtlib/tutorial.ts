@@ -10,6 +10,31 @@ namespace pxt.tutorial {
             return undefined; // error parsing steps
 
         // collect code and infer editor
+        const { code, templateCode, editor } = computeMetadata(body);
+
+        if (!metadata.noDiffs)
+            diffify(steps, activities);
+
+        // strip hidden snippets
+        steps.forEach(step => {
+            step.contentMd = stripHiddenSnippets(step.contentMd)
+            step.headerContentMd = stripHiddenSnippets(step.headerContentMd)
+            step.hintContentMd = stripHiddenSnippets(step.hintContentMd);
+        });
+
+        return <pxt.tutorial.TutorialInfo>{
+            editor: editor || pxt.BLOCKS_PROJECT_NAME,
+            title: title,
+            steps: steps,
+            activities: activities,
+            code,
+            templateCode,
+            metadata
+        };
+    }
+
+    function computeMetadata(body: string) {
+        // collect code and infer editor
         let editor: string = undefined;
         const regex = /```(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python)?\s*\n([\s\S]*?)\n```/gmi;
         let code = '';
@@ -46,19 +71,7 @@ namespace pxt.tutorial {
                 code += "\n { \n " + m2 + "\n } \n";
                 return "";
             });
-
-        if (!metadata.noDiffs)
-            diffify(steps, activities);
-
-        return <pxt.tutorial.TutorialInfo>{
-            editor: editor || pxt.BLOCKS_PROJECT_NAME,
-            title: title,
-            steps: steps,
-            activities: activities,
-            code,
-            templateCode,
-            metadata
-        };
+        return { code, templateCode, editor }
 
         function checkTutorialEditor(expected: string) {
             if (editor && editor != expected) {
@@ -101,23 +114,24 @@ namespace pxt.tutorial {
 
             if (!src) return src;
             return src
-                .replace(/```(typescript|spy|python|blocks)((?:.|[\r\n])+)```/, function (m, type, code) {
-                const fileA = lastSrc;
+                .replace(/```(typescript|spy|python|blocks|ghost|template)((?:.|[\r\n])+)```/, function (m, type, code) {
+                    const fileA = lastSrc;
 
-                const hasHighlight = highlightRx.test(code);
-                code = code.replace(/^\n+/, '').replace(/\n+$/, ''); // always trim lines
-                if (hasHighlight) code = code.replace(highlightRx, '');
+                    const hidden = /^(template|ghost)$/.test(type);
+                    const hasHighlight = highlightRx.test(code);
+                    code = code.replace(/^\n+/, '').replace(/\n+$/, ''); // always trim lines
+                    if (hasHighlight) code = code.replace(highlightRx, '');
 
-                lastSrc = code;
-                if (!fileA || hasHighlight)
-                    return m; // leave unchanged or reuse highlight info
-                else
-                    return `\`\`\`${diffClasses[type]}
+                    lastSrc = code;
+                    if (!fileA || hasHighlight || hidden)
+                        return m; // leave unchanged or reuse highlight info
+                    else
+                        return `\`\`\`${diffClasses[type]}
 ${fileA}
 ----------
 ${code}
 \`\`\``
-            })
+                })
         }
     }
 
@@ -127,7 +141,6 @@ ${code}
     }
 
     function parseTutorialMarkdown(tutorialmd: string, metadata: TutorialMetadata): { steps: TutorialStepInfo[], activities: TutorialActivityInfo[] } {
-        tutorialmd = stripHiddenSnippets(tutorialmd);
         if (metadata && metadata.activities) {
             // tutorial with "## ACTIVITY", "### STEP" syntax
             return parseTutorialActivities(tutorialmd, metadata);
@@ -220,7 +233,7 @@ ${code}
 
     /* Remove hidden snippets from text */
     function stripHiddenSnippets(str: string): string {
-        if (!str) return null;
+        if (!str) return str;
         const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template)\s*\n([\s\S]*?)\n```/gmi;
         return str.replace(hiddenSnippetRegex, '').trim();
     }
