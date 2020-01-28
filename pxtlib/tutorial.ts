@@ -10,7 +10,7 @@ namespace pxt.tutorial {
             return undefined; // error parsing steps
 
         // collect code and infer editor
-        const { code, templateCode, editor } = computeMetadata(body);
+        const { code, templateCode, editor } = computeBodyMetadata(body);
 
         if (!metadata.noDiffs)
             diffify(steps, activities);
@@ -22,18 +22,18 @@ namespace pxt.tutorial {
             step.hintContentMd = stripHiddenSnippets(step.hintContentMd);
         });
 
-        return <pxt.tutorial.TutorialInfo>{
+        return {
             editor: editor || pxt.BLOCKS_PROJECT_NAME,
-            title: title,
-            steps: steps,
-            activities: activities,
+            title,
+            steps,
+            activities,
             code,
             templateCode,
             metadata
         };
     }
 
-    function computeMetadata(body: string) {
+    function computeBodyMetadata(body: string) {
         // collect code and infer editor
         let editor: string = undefined;
         const regex = /```(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python)?\s*\n([\s\S]*?)\n```/gmi;
@@ -93,11 +93,13 @@ namespace pxt.tutorial {
                 || (activities && activities.find(activity => activity.step == stepi)))
                 lastSrc = undefined;
             // extract typescript snippet from hint or content
-            let s = convertSnippetToDiff(step.hintContentMd);
+            {
+            const s = convertSnippetToDiff(step.hintContentMd);
             if (s && s != step.hintContentMd)
                 step.hintContentMd = s;
-            else {
-                s = convertSnippetToDiff(step.headerContentMd);
+            }
+            {
+                const s = convertSnippetToDiff(step.headerContentMd);
                 if (s && s != step.headerContentMd)
                     step.headerContentMd = s;
             }
@@ -245,7 +247,7 @@ ${code}
     */
     function parseTutorialMetadata(tutorialmd: string): { metadata: TutorialMetadata, body: string } {
         const metadataRegex = /### @(\S+) ([ \S]+)/gi;
-        const m: any = {};
+        const m: pxt.Map<any> = {};
 
         const body = tutorialmd.replace(metadataRegex, function (f, k, v) {
             try {
