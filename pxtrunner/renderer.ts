@@ -617,18 +617,27 @@ namespace pxt.runner {
                     try {
                         const diffRes = pxt.blocks.decompiledDiffAsync(
                             oldSrc, resps[0].compileBlocks, newSrc, resps[1].compileBlocks, {
-                                hideDeletedTopBlocks: true,
-                                hideDeletedBlocks: true
-                            });
-                        if (opts.snippetReplaceParent) $el = $el.parent();
-                        const segment = $('<div class="ui segment codewidget"/>').append(diffRes.svg);
-                        $el.removeClass(cls);
-                        $el.replaceWith(segment);
+                            hideDeletedTopBlocks: true,
+                            hideDeletedBlocks: true
+                        });
+                        const js = pxt.diff.render(oldSrc, newSrc, {
+                            hideLineNumbers: true,
+                            hideMarkerLine: true,
+                            hideMarker: true,
+                            hideRemoved: true,
+                            update: true
+                        })
+                        fillWithWidget(opts, $el.parent(), $(js), undefined, $(diffRes.svg), undefined, {
+                            showEdit: false,
+                            run: false,
+                            hexname: undefined,
+                            hex: undefined
+                        });
                     } catch (e) {
                         pxt.reportException(e)
                         $el.append($('<div/>').addClass("ui segment warning").text(e.message));
                     }
-                    return Promise.delay(1, renderNextDiffAsync(cls));        
+                    return Promise.delay(1, renderNextDiffAsync(cls));
                 })
         }
 
