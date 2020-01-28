@@ -191,12 +191,13 @@ ${code}
                 fullscreen: /@(fullscreen|unplugged)/.test(flags),
                 unplugged: /@unplugged/.test(flags),
                 tutorialCompleted: /@tutorialCompleted/.test(flags),
-                resetDiff: /@resetDiff/.test(flags),
                 contentMd: step,
                 headerContentMd: header,
                 hintContentMd: hint,
                 hasHint: hint && hint.length > 0
             }
+            if(/@resetDiff/.test(flags))
+                info.resetDiff = true;
             stepInfo.push(info);
             return "";
         });
