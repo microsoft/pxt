@@ -285,6 +285,12 @@ Render a diff of blocks between two JavaScript snippets. The snippet consists of
     let y = 1
     ```
 
+#### ~ hint
+
+You can use the ``gost`` code section to provide the code of a step that has a gif instead of code.
+
+#### ~
+
 ### cards
 
 The **cards** "language" displays a code card for each function call.
