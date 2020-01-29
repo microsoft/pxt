@@ -366,7 +366,7 @@ declare namespace pxt {
         shareFinishedTutorials?: boolean; // always pop a share dialog once the tutorial is finished
         leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
         nameProjectFirst?: boolean; // prompt user to name project when creating new one
-        newProjectOptions?: boolean; // include 'options' menu when creating a new project
+        chooseLanguageRestrictionOnNewProject?: boolean; // include 'options' menu when creating a new project
         pythonToolbox?: boolean; // Code toolbox for Python
         githubEditor?: boolean; // allow editing github repositories from the editor
         githubCompiledJs?: boolean; // commit binary.js in commit when creating a github release,

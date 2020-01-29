@@ -443,7 +443,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
 
     newProject() {
         pxt.tickEvent("projects.new", undefined, { interactiveConsent: true });
-        if (pxt.appTarget.appTheme.nameProjectFirst || pxt.appTarget.appTheme.newProjectOptions) {
+        if (pxt.appTarget.appTheme.nameProjectFirst || pxt.appTarget.appTheme.chooseLanguageRestrictionOnNewProject) {
             this.props.parent.askForProjectCreationOptionsAsync()
                 .then(projectSettings => {
                     const { name, languageRestriction } = projectSettings
@@ -1163,7 +1163,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
 
     renderCore() {
         const { visible, name, emoji } = this.state;
-        const { python, newProjectOptions } = pxt.appTarget.appTheme;
+        const { python, chooseLanguageRestrictionOnNewProject } = pxt.appTarget.appTheme;
 
         const actions: sui.ModalButton[] = [
             {
@@ -1205,7 +1205,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
                         selectOnMount={!mobile} autoFocus={!mobile} />
                 </div>
             </div>
-            {newProjectOptions && <div>
+            {chooseLanguageRestrictionOnNewProject && <div>
                 <br />
                 <sui.ExpandableMenu title={lf("Options")}>
                     <sui.Select label={lf("I want to code in")} options={langOpts} onChange={this.handleLanguageChange} aria-label={lf("Select Language")} />
