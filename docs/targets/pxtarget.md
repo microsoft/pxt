@@ -283,15 +283,6 @@ PXT expects to find the C/C++ sources on github.
     }
 ```
 
-### ``uploadDocs`` and ``uploadApiStringsBranchRx``
-
-The ``uploadDocs`` flag determins if the API strings and docs have to be uploaded
-to crowdin when a build occurs on master or release branches.
-
-The ``uploadApiStringsBranchRx`` flag provide a custom regex
-for matching the branch where api strings should be uploaded.
-From a stable branch, this would be ``^stable\d+\.\d+$``
-
 ## Additional settings
 
 ### template project
