@@ -599,6 +599,13 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         if (compileResp && compileResp.success && compileResp.outfiles[pxtc.BINARY_JS]) {
             await addToTree(BINARY_JS_PATH, compileResp.outfiles[pxtc.BINARY_JS]);
             await addToTree(VERSION_TXT_PATH, v);
+            // ensure template files are up to date
+            const templates = pxt.template.targetTemplateFiles();
+            if (templates) {
+                for(const fn of Object.keys(templates)) {
+                    await addToTree(fn, templates[fn]);
+                }
+            }
         }
     }
 
