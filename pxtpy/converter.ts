@@ -2473,7 +2473,7 @@ namespace pxt.py {
                 opts.fileSystem[m.tsFilename] = res.output
                 outfiles[m.tsFilename] = res.output
                 let rawSrcMap = res.sourceMap
-                function unpackInterval(i: B.SourceInterval): pxtc.SourceInterval | undefined {
+                function unpackInterval(i: B.SourceIntervalToId): pxtc.SourceInterval | undefined {
                     let splits = i.id.split(":")
                     if (splits.length != 2)
                         return undefined
