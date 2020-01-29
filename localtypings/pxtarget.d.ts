@@ -51,6 +51,7 @@ declare namespace pxt {
         appTheme: AppTheme;
         compileService?: TargetCompileService;
         ignoreDocsErrors?: boolean;
+        uploadApiStringsBranchRx?: string; // regular expression to match branches that should upload api strings
         uploadDocs?: boolean; // enable uploading to crowdin on master or v* builds
         variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
         multiVariants?: string[];
@@ -238,7 +239,7 @@ declare namespace pxt {
         homeUrl?: string;
         shareUrl?: string;
         embedUrl?: string;
-        betaUrl?: string;
+        // betaUrl?: string; deprecated, beta button automatically shows up in experiments dialog
         docMenu?: DocMenuEntry[];
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
@@ -265,6 +266,7 @@ declare namespace pxt {
         coloredToolbox?: boolean; // if true: color the blockly toolbox categories
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
         invertedMonaco?: boolean; // if true: use the vs-dark monaco theme
+        invertedGitHub?: boolean; // inverted github view
         lightToc?: boolean; // if true: do NOT use inverted style in docs toc
         blocklyOptions?: Blockly.WorkspaceOptions; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
         hideFlyoutHeadings?: boolean; // Hide the flyout headings at the top of the flyout when on a mobile device.

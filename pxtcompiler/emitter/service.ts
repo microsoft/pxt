@@ -492,7 +492,12 @@ namespace ts.pxtc {
 
     let symbolKindWeight: pxt.Map<number>;
     export function compareSymbols(l: SymbolInfo, r: SymbolInfo): number {
-        let c = -(hasBlock(l) ? 1 : -1) + (hasBlock(r) ? 1 : -1);
+        function cmpr(toValue: (s: SymbolInfo) => number) {
+            const c = -toValue(l) + toValue(r)
+            return c
+        }
+
+        let c = cmpr(s => hasBlock(s) ? 1 : -1);
         if (c) return c;
 
         if (!symbolKindWeight) {
@@ -508,10 +513,15 @@ namespace ts.pxtc {
         }
 
         // favor functions
-        c = -(symbolKindWeight[l.kind] || 0) + (symbolKindWeight[r.kind] || 0);
+        c = cmpr(s => symbolKindWeight[s.kind] || 0)
         if (c) return c;
 
-        c = -(l.attributes.weight || 50) + (r.attributes.weight || 50);
+        // check for a weight attribute
+        c = cmpr(s => s.attributes.weight || 50)
+        if (c) return c;
+
+        // favor top-level symbols
+        c = cmpr(s => s.namespace ? 1 : -1)
         if (c) return c;
 
         return U.strcmp(l.name, r.name);

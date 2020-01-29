@@ -1057,10 +1057,14 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
         const pages = this.pagesStatus();
         const hasPages = pages && !!pages.html_url;
         const pagesBuilding = pages && pages.status == "building";
-        return <div className="ui transparent segment">
+        const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
+        return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
             <div className="ui header">{lf("Release zone")}</div>
             {!needsCommit && !tag && <div className="ui field">
-                <sui.Button className="basic" text={lf("Create release")}
+                <sui.Button
+                    className="basic"
+                    text={lf("Create release")}
+                    inverted={inverted}
                     onClick={this.handleBumpClick}
                     onKeyDown={sui.fireClickOnEnter} />
                 <span className="inline-help">
@@ -1078,6 +1082,7 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
                 <div className="ui field">
                     <sui.Link className="basic button"
                         href={pages.html_url}
+                        inverted={inverted}
                         loading={pagesBuilding}
                         text={lf("Open Pages")}
                         target="_blank" />
@@ -1119,14 +1124,15 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
         const testurl = header && `${window.location.href.replace(/#.*$/, '')}#testproject:${header.id}`;
         const showFork = user && user.id != githubId.owner;
 
-        return <div className="ui transparent segment">
+        const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
+        return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
             <div className="ui header">{lf("Extension zone")}</div>
             <div className="ui field">
-                <a href={testurl}
-                    role="button" className="ui basic button"
-                    target={`${pxt.appTarget.id}testproject`} rel="noopener noreferrer">
-                    {lf("Test Extension")}
-                </a>
+                <sui.Link className="basic button"
+                    href={testurl}
+                    inverted={inverted}
+                    text={lf("Test Extension")}
+                    target={`${pxt.appTarget.id}testproject`} />
                 <span className="inline-help">
                     {lf("Open a test project that uses this extension.")}
                     {sui.helpIconLink("/github/test-extension", lf("Learn about testing extensions."))}
@@ -1135,6 +1141,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
             {showFork && <div className="ui field">
                 <sui.Button className="basic" text={lf("Fork repository")}
                     onClick={this.handleForkClick}
+                    inverted={inverted}
                     onKeyDown={sui.fireClickOnEnter} />
                 <span className="inline-help">
                     {lf("Fork your own copy of {0} to your account.", githubId.fullName)}
@@ -1142,11 +1149,11 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                 </span>
             </div>}
             {needsLicenseMessage && <div className={`ui field`}>
-                <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
-                    role="button" className="ui basic button"
-                    target="_blank" rel="noopener noreferrer">
-                    {lf("Add license")}
-                </a>
+                <sui.Link className="basic button"
+                    href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
+                    inverted={inverted}
+                    text={lf("Add license")}
+                    target={"_blank"} />
                 <span className="inline-help">
                     {lf("Your project doesn't seem to have a license.")}
                     {sui.helpIconLink("/github/license", lf("Learn more about licenses."))}
@@ -1155,6 +1162,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
             <div className="ui field">
                 <sui.Button className="basic" text={lf("Save for offline")}
                     onClick={this.handleSaveClick}
+                    inverted={inverted}
                     onKeyDown={sui.fireClickOnEnter} />
                 <span className="inline-help">
                     {lf("Export this extension to a file that can be imported without Internet.")}
