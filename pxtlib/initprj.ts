@@ -171,14 +171,23 @@ jobs:
         };
 
         // override files from target
-        const overrides = pxt.appTarget.bundledpkgs[pxt.template.TEMPLATE_PRJ];
+        const overrides = targetTemplateFiles();
         if (overrides) {
             Object.keys(overrides)
-                .filter(k => k != pxt.CONFIG_NAME)
                 .forEach(k => files[k] = overrides[k]);
         }
 
         return files;
+    }
+
+    export function targetTemplateFiles(): pxt.Map<string> {
+        const overrides = pxt.appTarget.bundledpkgs[pxt.template.TEMPLATE_PRJ];
+        if (overrides) {
+            const r = Util.clone(overrides);
+            delete r[pxt.CONFIG_NAME];
+            return r;
+        }
+        return undefined;
     }
 
     export const TEMPLATE_PRJ = "template";

@@ -340,6 +340,16 @@ namespace pxt.github {
         })
     }
 
+    export async function createReleaseAsync(repopath: string, tag: string, commitid: string) {
+        await ghPostAsync(repopath + "/releases", {
+            tag_name: tag,
+            target_commitish: commitid,
+            name: tag,
+            draft: false,
+            prerelease: false
+        })
+    }
+
     export async function createPRFromBranchAsync(repopath: string, baseBranch: string,
         headBranch: string, title: string, msg?: string) {
         const res = await ghPostAsync(repopath + "/pulls", {
