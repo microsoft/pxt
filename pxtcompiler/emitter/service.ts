@@ -926,8 +926,37 @@ namespace ts.pxtc.service {
                 if (res.sourceMap) {
                     let overlaps = res.sourceMap
                         .filter(i => i.py.start <= v.position && v.position < i.py.end)
-                    let shortest = overlaps
-                        .reduce((p, n) => (n.py.end - n.py.start) < (p.py.end - p.py.start) ? n : p, overlaps[0])
+                    console.log("overlaps")
+                    console.dir(overlaps)
+                    if (overlaps.length) {
+                        let shortest = overlaps
+                            .reduce((p, n) => (n.py.end - n.py.start) < (p.py.end - p.py.start) ? n : p, overlaps[0])
+                        console.dir(overlaps)
+
+                        let tsPos = shortest.ts.start
+
+                        let prog = service.getProgram()
+
+                        let tsAst = prog.getSourceFile("main.ts")
+
+                        console.log(tsAst.getText())
+
+                        const findInnerMostNodeAtPosition = (n: Node): Node => {
+                            console.log(n.kind)
+                            console.log(n.getText())
+                            for (let child of n.getChildren()) {
+                                let s = child.getStart()
+                                let e = child.getEnd()
+                                if (s <= tsPos && tsPos < e)
+                                    return findInnerMostNodeAtPosition(child)
+                            }
+                            return n
+                        }
+
+                        let astNode = findInnerMostNodeAtPosition(tsAst)
+                        console.dir(astNode)
+
+                    }
                 }
             }
 
