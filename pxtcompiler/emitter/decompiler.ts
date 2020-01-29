@@ -549,10 +549,21 @@ ${output}</xml>`;
             }
         }
 
+        function blocklyGenUid() {
+            const soup_ = '!#$%()*+,-./:;=?@[]^_`{|}~ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            var length = 20;
+            const soupLength = soup_.length;
+            const id = [];
+            for (var i = 0; i < length; i++) {
+                id[i] = Blockly.utils.genUid.soup_.charAt(Math.random() * soupLength);
+            }
+            return id.join('');
+        }
+
         function mkId(type: string, node: ts.Node): string {
             if (type == ts.pxtc.ON_START_TYPE)
                 return "xRRgvHNlG#rZ^u`HECiY";
-            const id = Math.random() + '' + Math.random()
+            const id = blocklyGenUid()
             if (node) {
                 const start = node.getFullStart();
                 result.sourceMap.push({
