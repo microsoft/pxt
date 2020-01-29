@@ -77,7 +77,6 @@ export interface CompileOptions {
     background?: boolean; // not explicitly requested by user (hint for simulator)
     forceEmit?: boolean;
     clickTrigger?: boolean;
-    jsMetaVersion?: string;
 }
 
 export let emptyProgram =
@@ -137,20 +136,6 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
             let prevasm = outpkg.files[pxtc.BINARY_ASM]
             if (prevasm && !resp.outfiles[pxtc.BINARY_ASM]) {
                 resp.outfiles[pxtc.BINARY_ASM] = prevasm.content
-            }
-
-            // add metadata about current build
-            if (options.jsMetaVersion && resp.outfiles[pxtc.BINARY_JS]) {
-                const meta: any = {
-                    simUrl: pxt.webConfig.simUrl.replace(/\/[^\-]*---simulator/, `/v${pxt.appTarget.versions.target}/---simulator`),
-                    cdnUrl: pxt.webConfig.cdnUrl,
-                    version: options.jsMetaVersion,
-                    target: pxt.appTarget.id,
-                    targetVersion: pxt.appTarget.versions.target
-                };
-                resp.outfiles[pxtc.BINARY_JS] =
-                    `// meta=${JSON.stringify(meta)}
-${resp.outfiles[pxtc.BINARY_JS]}`;
             }
 
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)

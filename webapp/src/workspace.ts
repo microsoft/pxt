@@ -547,6 +547,7 @@ const BLOCKS_PREVIEW_PATH = ".github/makecode/blocks.png";
 const BLOCKSDIFF_PREVIEW_PATH = ".github/makecode/blocksdiff.png";
 const BINARY_JS_PATH = "assets/js/binary.js";
 const VERSION_TXT_PATH = "assets/version.txt";
+const MANIFEST_JSON_PATH = "assets/manifest.json";
 export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     await cloudsync.ensureGitHubTokenAsync();
 
@@ -589,16 +590,17 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
 
     // add compiled javascript to be run in github pages
     if (pxt.appTarget.appTheme.githubCompiledJs
-        && options.binaryJs
         && (!parsed.tag || parsed.tag == "master")) {
         const v = cfg.version || "0.0.0";
-        const opts: compiler.CompileOptions = {
-            jsMetaVersion: v
-        }
-        const compileResp = await compiler.compileAsync(opts);
-        if (compileResp && compileResp.success && compileResp.outfiles[pxtc.BINARY_JS]) {
-            await addToTree(BINARY_JS_PATH, compileResp.outfiles[pxtc.BINARY_JS]);
+        const vjson: any = {
+            simUrl: pxt.webConfig.simUrl.replace(/\/[^\-]*---simulator/, `/v${pxt.appTarget.versions.target}/---simulator`),
+            cdnUrl: pxt.webConfig.cdnUrl,
+            version: v,
+            target: pxt.appTarget.id,
+            targetVersion: pxt.appTarget.versions.target
+        };
             await addToTree(VERSION_TXT_PATH, v);
+            await addToTree(MANIFEST_JSON_PATH, JSON.stringify(vjson, null, 4) + "\n");
             // ensure template files are up to date
             const templates = pxt.template.targetTemplateFiles();
             if (templates) {
@@ -606,7 +608,6 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
                     await addToTree(fn, templates[fn]);
                 }
             }
-        }
     }
 
     // create tree
@@ -752,7 +753,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
                 // if xml merge fails, leave an empty xml payload to force decompilation
                 blocksNeedDecompilation = blocksNeedDecompilation || !d3;
                 text = d3 || "";
-            } else if (path == BINARY_JS_PATH || path == VERSION_TXT_PATH) {
+            } else if (path == BINARY_JS_PATH || path == VERSION_TXT_PATH || path == MANIFEST_JSON_PATH) {
                 // local build wins, does not matter
                 text = files[path];
             } else {
