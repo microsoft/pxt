@@ -1207,8 +1207,8 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             </div>
             {chooseLanguageRestrictionOnNewProject && <div>
                 <br />
-                <sui.ExpandableMenu title={lf("Options")}>
-                    <sui.Select label={lf("I want to code in")} options={langOpts} onChange={this.handleLanguageChange} aria-label={lf("Select Language")} />
+                <sui.ExpandableMenu title={lf("Code options")}>
+                    <sui.Select options={langOpts} onChange={this.handleLanguageChange} aria-label={lf("Select Language")} />
                 </sui.ExpandableMenu>
             </div>}
         </sui.Modal>
