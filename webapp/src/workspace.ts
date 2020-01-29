@@ -602,7 +602,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
             // ensure template files are up to date
             const templates = pxt.template.targetTemplateFiles();
             if (templates) {
-                for(const fn of Object.keys(templates)) {
+                for (const fn of Object.keys(templates)) {
                     await addToTree(fn, templates[fn]);
                 }
             }
