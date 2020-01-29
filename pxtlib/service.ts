@@ -100,10 +100,10 @@ namespace ts.pxtc {
 
     export type CodeLang = "py" | "blocks" | "ts"
     export type SourceInterval = {
-        [key in CodeLang]: {
+        [key in CodeLang]?: {
             start: number,
             end: number
-        } | undefined
+        }
     }
 
     export interface CompileResult {

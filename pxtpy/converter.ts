@@ -2484,8 +2484,8 @@ namespace pxt.py {
                             end: py[1]
                         },
                         ts: {
-                            start: i.start,
-                            end: i.end
+                            start: i.startPos,
+                            end: i.endPos
                         }
                     }
                 }

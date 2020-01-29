@@ -384,7 +384,7 @@ namespace pxt.blocks {
             }
 
             let end = getCurrentLine();
-            let endPos = output.length;
+            let endPos = Math.max(output.length - 1, 0);
 
             if (n.id) {
                 if (sourceMapById[n.id]) {
