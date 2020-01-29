@@ -556,6 +556,7 @@ namespace pxt.github {
     export interface ParsedRepo {
         owner?: string;
         project?: string;
+        // owner/name
         fullName: string;
         tag?: string;
         fileName?: string;
