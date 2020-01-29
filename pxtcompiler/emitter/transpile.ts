@@ -7,19 +7,20 @@
 // so that we can cache results for better performance and user
 // experience (since compile -> decompile round-trips are lossy)
 namespace ts.pxtc.transpile {
-    export interface TranspileResult {
-        diagnostics: pxtc.KsDiagnostic[],
-        success: boolean,
+    export interface TranspileCodeResult {
         outfiles: { [key: string]: string },
         sourceMap: SourceInterval[],
+        syntaxInfo?: SyntaxInfo,
+    }
+    export interface TranspileResult extends TranspileCodeResult {
+        diagnostics: pxtc.KsDiagnostic[],
+        success: boolean,
     }
 
     const mainName = (l: CodeLang) => `main.${l}`
 
-    export interface LangEquivSet {
-        comparable: { [key in CodeLang]: string },
-        code: { [key in CodeLang]: string },
-        sourceMap: SourceInterval[]
+    export interface LangEquivSet extends TranspileCodeResult {
+        comparable: { [key in CodeLang]: string }
     }
     // a circular buffer of size MAX_CODE_EQUIVS that stores
     // sets of equivalent code files so that when we translate
@@ -50,16 +51,12 @@ namespace ts.pxtc.transpile {
                 "blocks": undefined,
                 "py": undefined
             },
-            code: {
-                "ts": undefined,
-                "blocks": undefined,
-                "py": undefined
-            },
+            outfiles: {},
             sourceMap
         }
-        equiv.code[lang1] = lang1Txt
+        equiv.outfiles[mainName(lang1)] = lang1Txt
         equiv.comparable[lang1] = toComparable(lang1Txt)
-        equiv.code[lang2] = lang2Txt
+        equiv.outfiles[mainName(lang2)] = lang2Txt
         equiv.comparable[lang2] = toComparable(lang2Txt)
 
         codeEquivalences.unshift(equiv)
@@ -68,23 +65,21 @@ namespace ts.pxtc.transpile {
             codeEquivalences.pop()
         }
     }
-    function makeSuccess(l: CodeLang, txt: string, sourceMap: SourceInterval[]): TranspileResult {
-        let outfiles: { [key: string]: string } = {}
-        outfiles[mainName(l)] = txt
+    function makeSuccess(equiv: LangEquivSet): TranspileResult {
         return {
             diagnostics: [],
             success: true,
-            outfiles,
-            sourceMap
+            outfiles: equiv.outfiles,
+            sourceMap: equiv.sourceMap,
+            syntaxInfo: equiv.syntaxInfo
         }
     }
 
     function transpileInternal(from: CodeLang, fromTxt: string, to: CodeLang, doRealTranspile: () => TranspileResult): TranspileResult {
         let equiv = tryGetCachedTranspile(from, fromTxt)
-        if (equiv && equiv.code[to]) {
+        if (equiv && equiv.outfiles[mainName(to)]) {
             // return from cache
-            let toTxt = equiv.code[to]
-            let res = makeSuccess(to, toTxt, equiv.sourceMap)
+            let res = makeSuccess(equiv)
             return res
         }
 
