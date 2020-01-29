@@ -14,7 +14,7 @@
             "contentMd": "Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.\n\n```blocks\nlet x = 1;\nlet y = x + 2;\n```\n\nTry checking the blue drawer for the correct block.",
             "headerContentMd": "Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.",
             "fullscreen": true,
-            "hintContentMd": "```diffblocks\nlet x = 1;\nlet y = x + 2;\n----------\nlet x = 1;\nlet y = x + 2;\n```\n\nTry checking the blue drawer for the correct block.",
+            "hintContentMd": "```blocks\nlet x = 1;\nlet y = x + 2;\n```\n\nTry checking the blue drawer for the correct block.",
             "activity": 1
         },
         {
@@ -44,6 +44,7 @@
     ],
     "code": "\n { \n let x = 1;\nlet y = x + 2;\n } \n",
     "metadata": {
-        "activities": true
+        "activities": true,
+        "noDiffs": true
     }
 }

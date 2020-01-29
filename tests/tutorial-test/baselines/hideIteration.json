@@ -9,12 +9,13 @@
         {
             "contentMd": "Tutorial parsing should happen as expected.\n\n```blocks\nbasic.showString(\"Micro!\")\n```",
             "headerContentMd": "Tutorial parsing should happen as expected.",
-            "hintContentMd": "```diffblocks\nbasic.showString(\"Micro!\")\n```"
+            "hintContentMd": "```blocks\nbasic.showString(\"Micro!\")\n```"
         }
     ],
     "activities": null,
     "code": "\n { \n basic.showString(\"Micro!\")\n } \n\n { \n basic.showIcon(IconNames.Square)\n } \n",
     "metadata": {
+        "noDiffs": true,
         "hideIteration": true
     }
 }

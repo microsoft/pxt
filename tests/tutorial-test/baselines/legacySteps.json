@@ -12,7 +12,7 @@
             "contentMd": "Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.\n\n```blocks\nbasic.showString(\"Micro!\")\n```",
             "headerContentMd": "Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.",
             "fullscreen": true,
-            "hintContentMd": "```diffblocks\nbasic.showString(\"Micro!\")\n----------\nbasic.showString(\"Micro!\")\n```"
+            "hintContentMd": "```blocks\nbasic.showString(\"Micro!\")\n```"
         },
         {
             "contentMd": "Click ``|Download|`` to transfer your code in your unknown macro!",
@@ -22,6 +22,7 @@
     "activities": null,
     "code": "\n { \n basic.showString(\"Micro!\")\n } \n",
     "metadata": {
-        "flyoutOnly": true
+        "flyoutOnly": true,
+        "noDiffs": true
     }
 }

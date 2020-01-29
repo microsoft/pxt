@@ -7,10 +7,12 @@
             "headerContentMd": "Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.",
             "fullscreen": true,
             "unplugged": true,
-            "hintContentMd": "```diffblocks\nbasic.showString(\"Micro!\")\n----------\nbasic.showString(\"Micro!\")\n```"
+            "hintContentMd": "```blocks\nbasic.showString(\"Micro!\")\n```"
         }
     ],
     "activities": null,
     "code": "\n { \n basic.showString(\"Micro!\")\n } \n",
-    "metadata": {}
+    "metadata": {
+        "noDiffs": true
+    }
 }

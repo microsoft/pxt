@@ -9,12 +9,13 @@
         {
             "contentMd": "Tutorial parsing for hints, steps, etc should function exactly as before.\n\n```blocks\nlet x = 8;\nlet y = x + 2;\n```",
             "headerContentMd": "Tutorial parsing for hints, steps, etc should function exactly as before.",
-            "hintContentMd": "```diffblocks\nlet x = 8;\nlet y = x + 2;\n```"
+            "hintContentMd": "```blocks\nlet x = 8;\nlet y = x + 2;\n```"
         }
     ],
     "activities": null,
     "code": "\n { \n let x = 8;\nlet y = x + 2;\n } \n\n { \n basic.showIcon(IconNames.Square)\n } \n",
     "metadata": {
+        "noDiffs": true,
         "flyoutOnly": true
     }
 }
