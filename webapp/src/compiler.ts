@@ -148,6 +148,9 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
                     target: pxt.appTarget.id,
                     targetVersion: pxt.appTarget.versions.target
                 };
+                const gitJson = pkg.mainPkg.readGitJson();
+                if (gitJson)
+                    meta.repo = pxt.github.parseRepoId(gitJson.repo).fullName;
                 resp.outfiles[pxtc.BINARY_JS] =
                     `// meta=${JSON.stringify(meta)}
 ${resp.outfiles[pxtc.BINARY_JS]}`;
