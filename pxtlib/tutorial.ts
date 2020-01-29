@@ -93,20 +93,19 @@ namespace pxt.tutorial {
                 || (activities && activities.find(activity => activity.step == stepi)))
                 lastSrc = undefined;
             // extract typescript snippet from hint or content
-            {
-                const s = convertSnippetToDiff(step.contentMd);
-                if (s && s != step.contentMd)
-                    step.contentMd = s;
-            }
-            {
+            if (step.hintContentMd){
                 const s = convertSnippetToDiff(step.hintContentMd);
-                if (s && s != step.hintContentMd)
+                if (s && s != step.hintContentMd) {
                     step.hintContentMd = s;
+                    return;
+                }
             }
-            {
+            if(step.headerContentMd) {
                 const s = convertSnippetToDiff(step.headerContentMd);
-                if (s && s != step.headerContentMd)
+                if (s && s != step.headerContentMd) {
                     step.headerContentMd = s;
+                    return;
+                }
             }
         })
 
