@@ -270,17 +270,17 @@ namespace pxt.blocks {
         ".": 18,
     }
 
-    export interface SourceInterval {
+    export interface SourceIntervalToId {
         id: string;
-        start: number;
-        startPos: number;
-        end: number;
+        startLine: number; // 0-indexed
+        startPos: number; // 0-indexed from start of file including newlines
+        endLine: number;
         endPos: number;
     }
 
     export function flattenNode(app: JsNode[]) {
-        let sourceMap: SourceInterval[] = [];
-        let sourceMapById: pxt.Map<SourceInterval> = {};
+        let sourceMap: SourceIntervalToId[] = [];
+        let sourceMapById: pxt.Map<SourceIntervalToId> = {};
         let output = ""
         let indent = ""
         let variables: Map<string>[] = [{}];
@@ -389,15 +389,15 @@ namespace pxt.blocks {
             if (n.id) {
                 if (sourceMapById[n.id]) {
                     const node = sourceMapById[n.id];
-                    node.start = Math.min(node.start, start);
-                    node.end = Math.max(node.end, end);
+                    node.startLine = Math.min(node.startLine, start);
+                    node.endLine = Math.max(node.endLine, end);
                     node.startPos = Math.min(node.startPos, startPos);
                     node.endPos = Math.max(node.endPos, endPos);
                 }
                 else {
-                    const interval: SourceInterval = {
+                    const interval: SourceIntervalToId = {
                         id: n.id,
-                        start, startPos, end, endPos
+                        startLine: start, startPos, endLine: end, endPos
                     }
                     sourceMapById[n.id] = interval;
                     sourceMap.push(interval)
