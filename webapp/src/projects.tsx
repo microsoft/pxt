@@ -379,7 +379,6 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
                     {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />) : null}
                 </a>
             </div>
-            {targetTheme.betaUrl ? <a href={`${targetTheme.betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta")}</a> : undefined}
         </div>;
     }
 }

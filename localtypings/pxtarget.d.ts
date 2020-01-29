@@ -239,7 +239,7 @@ declare namespace pxt {
         homeUrl?: string;
         shareUrl?: string;
         embedUrl?: string;
-        betaUrl?: string;
+        // betaUrl?: string; deprecated, beta button automatically shows up in experiments dialog
         docMenu?: DocMenuEntry[];
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
