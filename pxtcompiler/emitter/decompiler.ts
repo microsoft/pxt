@@ -549,13 +549,14 @@ ${output}</xml>`;
             }
         }
 
+        // generated ids with the same entropy as blockly
         function blocklyGenUid() {
             const soup_ = '!#$%()*+,-./:;=?@[]^_`{|}~ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            var length = 20;
+            const length = 20;
             const soupLength = soup_.length;
             const id = [];
             for (var i = 0; i < length; i++) {
-                id[i] = Blockly.utils.genUid.soup_.charAt(Math.random() * soupLength);
+                id[i] = soup_.charAt(Math.random() * soupLength);
             }
             return id.join('');
         }
