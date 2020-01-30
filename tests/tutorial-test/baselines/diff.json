@@ -14,7 +14,7 @@
         {
             "contentMd": "bla\n\n```blocks\nlet x = 0\nlet y = 0\n```",
             "headerContentMd": "bla",
-            "hintContentMd": "```diffblocks\nlet x = 0\n----------\nlet x = 0\nlet y = 0\n```"
+            "hintContentMd": "```blocks\nlet x = 0\nlet y = 0\n```"
         },
         {
             "contentMd": "bla",
@@ -23,7 +23,7 @@
         {
             "contentMd": "bla\n\n```blocks\nlet x = 0\nlet y = 0\nlet z = 0\nlet a = 0\n```",
             "headerContentMd": "bla",
-            "hintContentMd": "```diffblocks\nlet x = 0\nlet y = 0\n----------\nlet x = 0\nlet y = 0\nlet z = 0\nlet a = 0\n```"
+            "hintContentMd": "```blocks\nlet x = 0\nlet y = 0\nlet z = 0\nlet a = 0\n```"
         },
         {
             "contentMd": "bla\n\n```blocks\nlet x = 0\nlet y = 0\nlet z = 0\nlet a = 0\nlet b = 0\n```",
