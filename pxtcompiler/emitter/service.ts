@@ -824,24 +824,6 @@ namespace ts.pxtc.service {
         }
     }
 
-    interface Py2TsRes {
-        // TODO: use the real types from converter.ts
-        diagnostics: pxtc.KsDiagnostic[],
-        success: boolean,
-        outfiles: { [key: string]: string },
-        syntaxInfo?: pxtc.SyntaxInfo
-    }
-    function updatePySyntaxInfo(opts: CompileOptions) {
-        // TODO: We call py2ts here directly to get the python syntax info.
-        // We likely already have the syntax info from a previous compile,
-        // we should do better about cache the latest results and serving those
-        // here. Also, we shouldn't mutate "opts" (the input).
-        let res = (pxt as any).py.py2ts(opts) as Py2TsRes
-        if (res.syntaxInfo && res.syntaxInfo.symbols) {
-            lastPyIdentifierSyntaxInfo = res.syntaxInfo
-        }
-    }
-
     const operations: pxt.Map<(v: OpArg) => any> = {
         reset: () => {
             service.cleanupSemanticCache();
@@ -870,7 +852,10 @@ namespace ts.pxtc.service {
             };
             if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
                 addApiInfo(opts);
-                updatePySyntaxInfo(opts)
+                let res = transpile.pyToTs(opts)
+                if (res.syntaxInfo && res.syntaxInfo.symbols) {
+                    lastPyIdentifierSyntaxInfo = res.syntaxInfo
+                }
                 if (lastPyIdentifierSyntaxInfo)
                     return lastPyIdentifierSyntaxInfo
             }
@@ -903,6 +888,14 @@ namespace ts.pxtc.service {
                 src = src.slice(0, v.position) + "_" + src.slice(v.position)
                 complPosition = v.position
             }
+            console.log("src")
+            console.log(src)
+            console.dir({ dotIdx })
+
+            let lastNl = src.lastIndexOf("\n", v.position)
+            lastNl = Math.max(0, lastNl)
+            const cursorLine = src.substring(lastNl, v.position)
+            console.log(cursorLine)
 
             if (dotIdx != -1)
                 complPosition = dotIdx
@@ -925,8 +918,60 @@ namespace ts.pxtc.service {
                 type: r.isMemberCompletion ? "memberCompletion" : "identifierCompletion"
             };
             if (isPython) {
-                updatePySyntaxInfo(opts)
+                let res = transpile.pyToTs(opts)
+                if (res.syntaxInfo && res.syntaxInfo.symbols) {
+                    lastPyIdentifierSyntaxInfo = res.syntaxInfo
+                }
+
+                if (res.sourceMap) {
+                    let overlaps = res.sourceMap
+                        .filter(i => i.py.startPos <= v.position && v.position < i.py.endPos)
+                    console.log("overlaps")
+                    console.dir(overlaps)
+                    if (overlaps.length) {
+                        let shortest = overlaps
+                            .reduce((p, n) => (n.py.endPos - n.py.startPos) < (p.py.endPos - p.py.startPos) ? n : p, overlaps[0])
+                        console.dir(overlaps)
+
+                        let tsPos = shortest.ts.startPos
+
+                        let prog = service.getProgram()
+
+                        let tsAst = prog.getSourceFile("main.ts")
+
+                        console.log(tsAst.getText())
+
+                        const findInnerMostNodeAtPosition = (n: Node): Node => {
+                            console.log(n.kind)
+                            console.log(n.getText())
+                            for (let child of n.getChildren()) {
+                                let s = child.getStart()
+                                let e = child.getEnd()
+                                if (s <= tsPos && tsPos < e)
+                                    return findInnerMostNodeAtPosition(child)
+                            }
+                            return n
+                        }
+
+                        let astNode = findInnerMostNodeAtPosition(tsAst)
+                        console.dir(astNode)
+
+                    }
+                }
             }
+
+
+            // TODO smart intellisense for callsites
+            // from the position, 
+            // translate position to typescript pos
+            // using typescript lang service
+            // get the AST at that location
+            // find if we're inside a call node
+            // if we are, figure out which parameter we are
+            // figure out the type of the parameter
+            // scope based on that
+            // ---
+
 
             let takenNames: pxt.Map<SymbolInfo> = {}
             if (isPython && lastPyIdentifierSyntaxInfo && lastPyIdentifierSyntaxInfo.globalNames) {
@@ -936,11 +981,10 @@ namespace ts.pxtc.service {
             }
 
             let symbols = opts.syntaxInfo.symbols || []
-
             for (let si of symbols) {
                 if (
                     /^__/.test(si.name) || // ignore members starting with __
-                    /^__/.test(si.namespace) || // ignore namespaces starting with _-
+                    /^__/.test(si.namespace) || // ignore namespaces starting with __
                     si.attributes.hidden ||
                     si.attributes.deprecated ||
                     // don't emit members with an alias
