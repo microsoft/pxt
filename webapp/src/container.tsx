@@ -100,6 +100,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.openSettings = this.openSettings.bind(this);
         this.showPackageDialog = this.showPackageDialog.bind(this);
         this.showBoardDialog = this.showBoardDialog.bind(this);
+        this.showRecipesDialog = this.showRecipesDialog.bind(this);
         this.removeProject = this.removeProject.bind(this);
         this.saveProject = this.saveProject.bind(this);
         this.toggleCollapse = this.toggleCollapse.bind(this);
@@ -137,6 +138,11 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             this.props.parent.showChooseHwDialog();
         else
             this.props.parent.showBoardDialogAsync(undefined, true).done();
+    }
+
+    showRecipesDialog() {
+        pxt.tickEvent("menu.loadrecipe", undefined, { interactiveConsent: true });
+        this.props.parent.showRecipesDialog();
     }
 
     saveProject() {
@@ -233,6 +239,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const targetTheme = pxt.appTarget.appTheme;
         const packages = pxt.appTarget.cloud && !!pxt.appTarget.cloud.packages;
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
+        const recipes = !!targetTheme.recipes;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
         const readOnly = pxt.shell.isReadOnly();
         const isController = pxt.shell.isControllerMode();
@@ -252,6 +259,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {showProjectSettings ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} /> : undefined}
             {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={this.showPackageDialog} /> : undefined}
             {boards ? <sui.Item role="menuitem" icon="microchip" text={lf("Change Board")} onClick={this.showBoardDialog} /> : undefined}
+            {recipes ? <sui.Item role="menuitem" text={lf("Recipes")} onClick={this.showRecipesDialog} /> : undefined}
             {showPairDevice ? <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} /> : undefined}
             {pxt.webBluetooth.isAvailable() ? <sui.Item role="menuitem" icon='bluetooth' text={lf("Pair Bluetooth")} onClick={this.pairBluetooth} /> : undefined}
             {showPrint ? <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} /> : undefined}
