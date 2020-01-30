@@ -1824,7 +1824,7 @@ namespace pxt.blocks {
                 && chunk.endPos >= loc.start + loc.length
                 && (!bestChunk || bestChunkLength > chunk.endPos - chunk.startPos)) {
                 bestChunk = chunk;
-                bestChunkLength = chunk.endLine - chunk.startLine;
+                bestChunkLength = chunk.endPos - chunk.startPos;
             }
         }
         if (bestChunk) {
