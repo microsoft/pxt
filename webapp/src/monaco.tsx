@@ -898,17 +898,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.editor.focus();
     }, 200);
 
-    protected onPointerMove = (ev: any) => {
+    protected onPointerMove = (ev: MouseEvent | TouchEvent) => {
         if (this.insertionSnippet) {
             this.dragCurrentPos = {
-                x: ev.clientX,
-                y: ev.clientY
+                x: pxt.BrowserUtils.getClientX(ev),
+                y: pxt.BrowserUtils.getClientY(ev)
             }
             this.onDragBlockThrottled(ev);
         }
     };
 
-    protected onPointerUp = (ev: any) => {
+    protected onPointerUp = (ev: MouseEvent | TouchEvent) => {
         let insertText = this.insertionSnippet;
         this.setInsertionSnippet(undefined);
         if (insertText) {
@@ -920,7 +920,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 ? compiler.snippetAsync(insertText.substring("qName:".length), this.fileType == pxt.editor.FileType.Python)
                 : Promise.resolve(insertText)
             p.done(snippet => {
-                let mouseTarget = this.editor.getTargetAtClientPoint(ev.clientX, ev.clientY);
+                let mouseTarget = this.editor.getTargetAtClientPoint(pxt.BrowserUtils.getClientX(ev), pxt.BrowserUtils.getClientY(ev));
                 let position = mouseTarget.position;
                 pxt.tickEvent(`monaco.toolbox.insertsnippet`);
                 this.insertSnippet(position, snippet, inline);
