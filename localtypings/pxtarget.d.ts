@@ -373,6 +373,7 @@ declare namespace pxt {
         githubCompiledJs?: boolean; // commit binary.js in commit when creating a github release,
         blocksCollapsing?: boolean; // collapse/uncollapse functions/event in blocks
         hideHomeDetailsVideo?: boolean; // hide video/large image from details card
+        tutorialBlocksDiff?: boolean; // automatically display diffs in tutorials
     }
 
     interface SocialOptions {

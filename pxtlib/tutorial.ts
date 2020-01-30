@@ -12,7 +12,7 @@ namespace pxt.tutorial {
         // collect code and infer editor
         const { code, templateCode, editor } = computeBodyMetadata(body);
 
-        if (!metadata.noDiffs)
+        if (!metadata.noDiffs && pxt.appTarget.appTheme.tutorialBlocksDiff)
             diffify(steps, activities);
 
         // strip hidden snippets
