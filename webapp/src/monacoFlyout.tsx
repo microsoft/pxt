@@ -79,13 +79,16 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
             e.stopPropagation();
 
             const block = this.dragInfo.block;
+            const params = block.parameters;
             let dragBlock = document.getElementById("monacoDraggingBlock");
             this.dragging = true;
             if (!dragBlock) {
                 const parent = document.getElementById("root");
                 dragBlock = document.createElement("div");
                 dragBlock.id = "monacoDraggingBlock";
-                dragBlock.textContent = this.getSnippetName(block);
+                dragBlock.textContent = block.snippetOnly
+                    ? block.snippet
+                    : `${block.qName || this.getSnippetName(block)}${params ? `(${params.map(p => p.name).join(", ")})` : ""}`
                 dragBlock.style.backgroundColor = this.dragInfo.color;
                 parent.appendChild(dragBlock);
 
