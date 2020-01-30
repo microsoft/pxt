@@ -24,7 +24,7 @@ namespace pxt.blocks {
         useViewWidth?: boolean;
         splitSvg?: boolean;
         forceCompilation?: boolean;
-        sourceMap?: boolean;
+        generateSourceMap?: boolean;
     }
 
     export function initRenderingWorkspace() {

@@ -611,7 +611,7 @@ namespace pxt.runner {
                 removeTrailingSemiColumns: true
             });
             return Promise.mapSeries([oldSrc, newSrc], src => pxt.runner.decompileSnippetAsync(src, {
-                sourceMap: true
+                generateSourceMap: true
             }))
                 .then(resps => {
                     try {

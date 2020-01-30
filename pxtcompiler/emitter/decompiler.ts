@@ -323,7 +323,7 @@ namespace ts.pxtc.decompiler {
         alwaysEmitOnStart?: boolean; // emit "on start" even if empty
         errorOnGreyBlocks?: boolean; // fail on grey blocks (usefull when testing docs)
         allowedArgumentTypes?: string[]; // a whitelist of types that can be decompiled for user defined function arguments
-        sourceMap?: boolean; // generate block ids
+        generateSourceMap?: boolean; // generate block ids
         /*@internal*/
         includeGreyBlockMessages?: boolean; // adds error attributes to the mutations in typescript_statement blocks (for debug pruposes)
     }
@@ -347,8 +347,8 @@ namespace ts.pxtc.decompiler {
             success: true,
             times: {}
         }
-        if (options.sourceMap)
-            result.sourceMap = [];
+        if (options.generateSourceMap)
+            result.blockSourceMap = [];
         const env: DecompilerEnv = {
             blocks: blocksInfo,
             declaredFunctions: {},
@@ -565,11 +565,11 @@ ${output}</xml>`;
                 return "xRRgvHNlG#rZ^u`HECiY";
             const id = blocklyGenUid()
             if (node) {
-                const start = node.getFullStart();
-                result.sourceMap.push({
+                const startPos = node.getFullStart();
+                result.blockSourceMap.push(<pxt.blocks.BlockSourceInterval>{
                     id,
-                    start,
-                    end: start + node.getFullWidth()
+                    startPos,
+                    endPos: startPos + node.getFullWidth()
                 })
             }
             return id;
@@ -580,7 +580,7 @@ ${output}</xml>`;
                 kind: "statement",
                 type
             };
-            if (result.sourceMap)
+            if (result.blockSourceMap)
                 stm.id = mkId(type, node);
             return stm;
         }
@@ -590,7 +590,7 @@ ${output}</xml>`;
                 kind: "expr",
                 type
             };
-            //if (result.sourceMap)
+            //if (result.blockSourceMap)
             //    expr.id = mkId(type, node);
             return expr;
         }

@@ -463,11 +463,11 @@ namespace pxt.blocks {
                         lineLength -= lwl;
                     }
                     // find block ids mapped to the ranges
-                    const oldid = pxt.blocks.findBlockId(oldResp.sourceMap, {
+                    const oldid = pxt.blocks.findBlockId(oldResp.blockSourceMap, {
                         start: oldLineStart,
                         length: lineLength
                     });
-                    const newid = pxt.blocks.findBlockId(newResp.sourceMap, {
+                    const newid = pxt.blocks.findBlockId(newResp.blockSourceMap, {
                         start: newLineStart,
                         length: lineLength
                     });

@@ -1822,7 +1822,7 @@ namespace pxt.blocks {
             let chunk = sourceMap[i];
             if (chunk.startPos <= loc.start
                 && chunk.endPos >= loc.start + loc.length
-                && (!bestChunk || bestChunkLength > chunk.end - chunk.start)) {
+                && (!bestChunk || bestChunkLength > chunk.endPos - chunk.startPos)) {
                 bestChunk = chunk;
                 bestChunkLength = chunk.endLine - chunk.startLine;
             }

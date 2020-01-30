@@ -919,7 +919,7 @@ ${linkString}
                             program.getSourceFile("main.ts"),
                             {
                                 snippetMode: options && options.snippetMode,
-                                sourceMap: options && options.sourceMap
+                                generateSourceMap: options && options.generateSourceMap
                             });
                         if (bresp.diagnostics && bresp.diagnostics.length > 0)
                             bresp.diagnostics.forEach(diag => console.error(diag.messageText));
