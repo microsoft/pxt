@@ -98,6 +98,18 @@ namespace ts.pxtc {
         value: number;
     }
 
+    export type CodeLang = "py" | "blocks" | "ts"
+    export interface SourceInterval {
+        ts: {
+            startPos: number;
+            endPos: number;
+        };
+        py: {
+            startPos: number;
+            endPos: number;
+        };
+    }
+
     export interface CompileResult {
         outfiles: pxt.Map<string>;
         diagnostics: KsDiagnostic[];
@@ -117,6 +129,7 @@ namespace ts.pxtc {
         headerId?: string;
         confirmAsync?: (confirmOptions: {}) => Promise<number>;
         configData?: ConfigEntry[];
+        sourceMap?: SourceInterval[];
     }
 
     export interface Breakpoint extends LocationInfo {
@@ -544,8 +557,8 @@ namespace ts.pxtc {
 
     function cleanLocalizations(apis: ApisInfo) {
         Util.values(apis.byQName)
-        .filter(fb => fb.attributes.block && /^{[^:]+:[^}]+}/.test(fb.attributes.block))
-        .forEach(fn => { fn.attributes.block = fn.attributes.block.replace(/^{[^:]+:[^}]+}/, ''); });
+            .filter(fb => fb.attributes.block && /^{[^:]+:[^}]+}/.test(fb.attributes.block))
+            .forEach(fn => { fn.attributes.block = fn.attributes.block.replace(/^{[^:]+:[^}]+}/, ''); });
         return apis;
     }
 
