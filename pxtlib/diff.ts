@@ -4,14 +4,14 @@ namespace pxt.diff {
     Var V: Array [− MAX .. MAX] of Integer
     V[1]←0
     For D←0 to MAX Do
-        For k ← −D to D in steps of 2 Do 
+        For k ← −D to D in steps of 2 Do
             If k=−D or k≠D and V[k−1]<V[k+1] Then
-                x ← V[k+1] 
+                x ← V[k+1]
             Else
-                x ← V[k−1]+1 
+                x ← V[k−1]+1
             y←x−k
-            While x<N and y<M and a[x+1] =b[y+1] Do 
-                (x,y)←(x+1,y+1) 
+            While x<N and y<M and a[x+1] =b[y+1] Do
+                (x,y)←(x+1,y+1)
             V[k]←x
             If x≥N and y≥M Then
                 Length of an SES is D
@@ -460,9 +460,9 @@ namespace pxt.diff {
      * - current preferred editor is kept
      * - conjection of public flag
      * - files list is merged so that added files are kept and deleted files are removed
-     * @param configA 
-     * @param configO 
-     * @param configB 
+     * @param configA
+     * @param configO
+     * @param configB
      */
     export function mergeDiff3Config(configA: string, configO: string, configB: string): string {
         let jsonA: any = pxt.Util.jsonTryParse(configA); //  as pxt.PackageConfig
@@ -508,6 +508,7 @@ namespace pxt.diff {
                     case "version": // pick highest version
                         r[key] = pxt.semver.strcmp(vA, vB) > 0 ? vA : vB;
                         break;
+                    case "languageRestriction":
                     case "preferredEditor":
                         r[key] = vA; // keep current one
                         break;

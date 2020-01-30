@@ -442,10 +442,11 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
 
     newProject() {
         pxt.tickEvent("projects.new", undefined, { interactiveConsent: true });
-        if (pxt.appTarget.appTheme.nameProjectFirst) {
-            this.props.parent.askForProjectNameAsync()
-                .then(name => {
-                    this.props.parent.newProject({ name });
+        if (pxt.appTarget.appTheme.nameProjectFirst || pxt.appTarget.appTheme.chooseLanguageRestrictionOnNewProject) {
+            this.props.parent.askForProjectCreationOptionsAsync()
+                .then(projectSettings => {
+                    const { name, languageRestriction } = projectSettings
+                    this.props.parent.newProject({ name, languageRestriction });
                 })
         } else {
             this.props.parent.newProject({ name });
@@ -1010,14 +1011,9 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         }
 
         this.hide = this.hide.bind(this);
-        this.modalDidOpen = this.modalDidOpen.bind(this);
         this.handleChange = this.handleChange.bind(this);
         this.save = this.save.bind(this);
         this.skip = this.skip.bind(this);
-    }
-
-    componentWillReceiveProps(newProps: ISettingsProps) {
-        this.handleChange(newProps.parent.state.projectName);
     }
 
     hide() {
@@ -1026,41 +1022,17 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
 
     show() {
         pxt.tickEvent('exitandsave.show', undefined, { interactiveConsent: false });
-        this.setState({ visible: true });
-    }
-
-    modalDidOpen(ref: HTMLElement) {
-        // Save on enter typed
-        let dialogInput = document.getElementById('projectNameInput') as HTMLInputElement;
-        if (dialogInput) {
-            if (!pxt.BrowserUtils.isMobile()) dialogInput.setSelectionRange(0, 9999);
-            dialogInput.onkeydown = (e: KeyboardEvent) => {
-                const charCode = core.keyCodeFromEvent(e);
-                if (charCode === core.ENTER_KEY) {
-                    e.preventDefault();
-                    const approveButton = ref.getElementsByClassName("approve positive").item(0) as HTMLElement;
-                    if (approveButton) approveButton.click();
-                }
-            }
-        }
+        this.setState({
+            projectName: this.props.parent.state.projectName,
+            visible: true
+        });
     }
 
     handleChange(name: string) {
-        this.setState({ projectName: name });
-        const untitled = lf("Untitled");
-        name = name || ""; // guard against null/undefined
-        if (!name || pxt.Util.toArray(untitled).some((c, i) => untitled.substr(0, i + 1) == name)) {
-            // the frowny face here seemed a bit pessimistic - the user didn't to anything wrong
-            this.setState({ emoji: "" });
-        } else {
-            const emojis = ["😌", "😄", "😃", "😍"];
-            let emoji = emojis[Math.min(name.length, emojis.length) - 1];
-            const n = name.length >> 1;
-            if (n > emojis.length)
-                for (let i = 0; i < Math.min(2, n - emojis.length); ++i)
-                    emoji += emojis[emojis.length - 1];
-            this.setState({ emoji })
-        }
+        this.setState({
+            projectName: name,
+            emoji: projectNameToEmoji(name)
+        });
     }
 
     skip() {
@@ -1083,38 +1055,36 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         })
     }
 
-    headerText() {
-        return lf("Project has no name {0}", this.state.emoji)
-    }
-
-    actions(): sui.ModalButton[] {
-        return [{
-            label: lf("Save"),
-            onclick: this.save,
-            icon: 'check',
-            className: 'approve positive'
-        }, {
-            label: lf("Skip"),
-            onclick: this.skip
-        }]
-    }
-
     renderCore() {
         const { visible, projectName } = this.state;
 
+        const mobile = pxt.BrowserUtils.isMobile();
+        const actions = [
+            {
+                label: lf("Save"),
+                onclick: this.save,
+                icon: 'check',
+                className: 'approve positive'
+            },
+            {
+                label: lf("Skip"),
+                onclick: this.skip
+            }
+        ];
+
         return (
             <sui.Modal isOpen={visible} className="exitandsave" size="tiny"
-                onClose={this.hide} dimmer={true} buttons={this.actions()}
-                closeIcon={true} header={this.headerText()}
+                onClose={this.hide} dimmer={true} buttons={actions}
+                closeIcon={true} header={lf("Project has no name {0}", this.state.emoji)}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
-                modalDidOpen={this.modalDidOpen}
             >
                 <div>
                     <p>{lf("Give your project a name.")}</p>
                     <div className="ui form">
-                        <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
+                        <sui.Input ref="filenameinput" id={"projectNameInput"}
                             ariaLabel={lf("Type a name for your project")} autoComplete={false}
-                            value={projectName || ''} onChange={this.handleChange} />
+                            value={projectName || ''} onChange={this.handleChange} onEnter={this.save}
+                            selectOnMount={!mobile} autoFocus={!mobile}/>
                     </div>
                 </div>
             </sui.Modal>
@@ -1122,41 +1092,144 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     }
 }
 
-export class NewProjectNameDialog extends ExitAndSaveDialog {
-    private nameCb: (name: string) => void;
+export interface NewProjectDialogState {
+    name?: string;
+    languageRestriction?: pxt.editor.LanguageRestriction;
+    emoji?: string;
+    visible?: boolean;
+}
 
-    headerText() {
-        return lf("Your project needs a name {0}", this.state.emoji)
+export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectDialogState> {
+    private createProjectCb: (projectState: pxt.editor.ProjectCreationOptions) => void;
+
+    constructor(props: ISettingsProps) {
+        super(props);
+        this.state = {
+            visible: false,
+            emoji: "",
+            languageRestriction: pxt.editor.LanguageRestriction.Standard
+        }
     }
 
-    actions(): sui.ModalButton[] {
-        return [{
-            label: lf("Create"),
-            onclick: this.save,
-            icon: 'check',
-            className: 'approve positive'
-        }]
+    hide = () => {
+        this.setState({ visible: false });
     }
 
-    askNameAsync() {
-        this.setState({ projectName: "", emoji: "" })
-        this.show()
-        return new Promise<string>(resolve => {
-            this.nameCb = resolve
-        })
+    show = () => {
+        pxt.tickEvent('newprojectdialog.show', undefined, { interactiveConsent: false });
+        this.setState({
+            name: "",
+            emoji: "",
+            visible: true,
+            languageRestriction: pxt.editor.LanguageRestriction.Standard
+        });
     }
 
-    skip() {
-        this.hide()
+    handleTextChange = (name: string) => {
+        this.setState({
+            name,
+            emoji: projectNameToEmoji(name)
+        });
     }
 
-    save() {
-        const { projectName: newName } = this.state;
+    handleLanguageChange = (lang: string) => {
+        this.setState({
+            languageRestriction: lang as pxt.editor.LanguageRestriction
+        });
+    }
+
+    promptUserAsync() {
+        this.show();
+        return new Promise<pxt.editor.ProjectCreationOptions>(resolve => {
+            this.createProjectCb = resolve;
+        });
+    }
+
+    save = () => {
+        const { name, languageRestriction } = this.state;
+
         this.hide();
-        if (this.nameCb)
-            this.nameCb(newName)
-        this.nameCb = null
+        if (this.createProjectCb) {
+            this.createProjectCb({
+                name,
+                languageRestriction
+            });
+        }
+
+        pxt.tickEvent('newprojectdialog.projectcreate', undefined, { interactiveConsent: true });
+        this.createProjectCb = null;
     }
+
+    renderCore() {
+        const { visible, name, emoji } = this.state;
+        const { python, chooseLanguageRestrictionOnNewProject } = pxt.appTarget.appTheme;
+
+        const actions: sui.ModalButton[] = [
+            {
+                label: lf("Create"),
+                onclick: this.save,
+                icon: 'check',
+                className: 'approve positive'
+            }
+        ];
+
+        const mobile = pxt.BrowserUtils.isMobile();
+        const langOpts: sui.SelectItem[] = [
+            {
+                value: pxt.editor.LanguageRestriction.Standard,
+                display: python ? lf("Blocks, {0}, and {1}", "JavaScript", "Python") : lf("Blocks and {0}", "JavaScript")
+            },
+            python && {
+                value: pxt.editor.LanguageRestriction.PythonOnly,
+                display: lf("{0} Only", "Python")
+            },
+            {
+                value: pxt.editor.LanguageRestriction.JavaScriptOnly,
+                display: lf("{0} Only", "JavaScript")
+            }
+        ];
+
+
+        return <sui.Modal isOpen={visible} className="newproject" size="tiny"
+            onClose={this.hide} dimmer={true} buttons={actions}
+            closeIcon={true} header={lf("Create a Project {0}", emoji)}
+            closeOnDimmerClick closeOnDocumentClick closeOnEscape
+        >
+            <div>
+                <p>{lf("Give your project a name.")}</p>
+                <div className="ui form">
+                    <sui.Input ref="filenameinput" id={"projectNameInput"}
+                        ariaLabel={lf("Type a name for your project")} autoComplete={false}
+                        value={name || ''} onChange={this.handleTextChange} onEnter={this.save}
+                        selectOnMount={!mobile} autoFocus={!mobile} />
+                </div>
+            </div>
+            {chooseLanguageRestrictionOnNewProject && <div>
+                <br />
+                <sui.ExpandableMenu title={lf("Code options")}>
+                    <sui.Select options={langOpts} onChange={this.handleLanguageChange} aria-label={lf("Select Language")} />
+                </sui.ExpandableMenu>
+            </div>}
+        </sui.Modal>
+    }
+}
+
+function projectNameToEmoji(name: string) {
+    const untitled = lf("Untitled");
+
+    let emoji = "";
+    if (name && untitled.indexOf(name) === -1) {
+        const emojis = ["😌", "😄", "😃", "😍"];
+        emoji = emojis[Math.min(name.length, emojis.length) - 1];
+        const n = name.length >> 1;
+        if (n > emojis.length) {
+            for (let i = 0; i < Math.min(2, n - emojis.length); ++i) {
+                emoji += emojis[emojis.length - 1];
+            }
+        }
+    }
+
+    return emoji;
 }
 
 

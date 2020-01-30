@@ -367,7 +367,8 @@ declare namespace pxt {
         checkForHwVariantWebUSB?: boolean; // check for hardware variant using webusb before compiling
         shareFinishedTutorials?: boolean; // always pop a share dialog once the tutorial is finished
         leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
-        nameProjectFirst?: boolean;
+        nameProjectFirst?: boolean; // prompt user to name project when creating new one
+        chooseLanguageRestrictionOnNewProject?: boolean; // include 'options' menu when creating a new project
         pythonToolbox?: boolean; // Code toolbox for Python
         githubEditor?: boolean; // allow editing github repositories from the editor
         githubCompiledJs?: boolean; // commit binary.js in commit when creating a github release,
@@ -425,6 +426,13 @@ declare namespace pxt.editor {
         JSON = "json",
         XML = "xml",
         Asm = "asm"
+    }
+
+    const enum LanguageRestriction {
+        Standard = "",
+        PythonOnly = "python-only",
+        JavaScriptOnly = "javascript-only",
+        NoBlocks = "no-blocks"
     }
 }
 

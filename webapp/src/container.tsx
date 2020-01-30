@@ -8,6 +8,7 @@ import * as container from "./container";
 import * as core from "./core";
 import * as cloud from "./cloud";
 import * as cloudsync from "./cloudsync";
+import * as pkg from "./package";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -387,6 +388,7 @@ interface IEditorSelectorProps extends ISettingsProps {
     python?: boolean;
     sandbox?: boolean;
     headless?: boolean;
+    languageRestriction?: pxt.editor.LanguageRestriction;
 }
 
 export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
@@ -395,21 +397,23 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
     }
 
     renderCore() {
-        const pythonEnabled = this.props.python;
-        const dropdownActive = pythonEnabled && (this.props.parent.isJavaScriptActive() || this.props.parent.isPythonActive());
+        const { python, sandbox, headless, languageRestriction, parent } = this.props;
+        const dropdownActive = python && (parent.isJavaScriptActive() || parent.isPythonActive());
+        const tsOnly = languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly;
+        const pyOnly = languageRestriction === pxt.editor.LanguageRestriction.PythonOnly;
 
-        return (<div>
-            <div id="editortoggle" className="ui grid padded">
-                {this.props.sandbox && !this.props.headless && <SandboxMenuItem parent={this.props.parent} />}
-                <BlocksMenuItem parent={this.props.parent} />
-                {pxt.Util.isPyLangPref() && pythonEnabled ? <PythonMenuItem parent={this.props.parent} /> : <JavascriptMenuItem parent={this.props.parent} />}
-                {pythonEnabled && <sui.DropdownMenu id="editordropdown" role="menuitem" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
-                    <JavascriptMenuItem parent={this.props.parent} />
-                    <PythonMenuItem parent={this.props.parent} />
+        return (
+            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`}>
+                {sandbox && !headless && <SandboxMenuItem parent={parent} />}
+                {!pyOnly && !tsOnly && <BlocksMenuItem parent={parent} />}
+                {pxt.Util.isPyLangPref() && python ? <PythonMenuItem parent={parent} /> : <JavascriptMenuItem parent={parent} />}
+                {!pyOnly && !tsOnly && python && <sui.DropdownMenu id="editordropdown" role="menuitem" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
+                    <JavascriptMenuItem parent={parent} />
+                    <PythonMenuItem parent={parent} />
                 </sui.DropdownMenu>}
-                <div className={`ui item toggle ${pythonEnabled ? 'hasdropdown' : ''}`}></div>
+                <div className={`ui item toggle ${python ? 'hasdropdown' : ''}`}></div>
             </div>
-        </div>)
+        )
     }
 }
 
@@ -509,6 +513,15 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const user = hasCloud ? this.getUser() : undefined;
         const showCloud = !sandbox && !inTutorial && !debugging && !!user;
 
+        const cfg = pkg.mainPkg && pkg.mainPkg.config;
+        const languageRestriction = cfg && cfg.languageRestriction;
+
+        const inAltEditor = debugging || inTutorial;
+        const tsOnly = !inAltEditor && languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly;
+        const pyOnly = !inAltEditor && languageRestriction === pxt.editor.LanguageRestriction.PythonOnly;
+        const showToggle = !inAltEditor && !targetTheme.blocksOnly
+                && (sandbox || !(tsOnly || pyOnly)); // show if sandbox or not single language
+
         /* tslint:disable:react-a11y-anchors */
         return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
             {!sandbox ? <div className="left menu">
@@ -528,12 +541,14 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                         <img className="ui mini image" src={rightLogo} tabIndex={0} onClick={this.launchFullEditor} onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`} />
                     </span>
                 </div>}
-            {!inTutorial && !targetTheme.blocksOnly && !debugging && <div className="ui item link editor-menuitem">
-                <container.EditorSelector parent={this.props.parent} sandbox={sandbox} python={targetTheme.python} headless={isHeadless} />
+            {showToggle && <div className="ui item link editor-menuitem">
+                <container.EditorSelector parent={this.props.parent} sandbox={sandbox} python={targetTheme.python} languageRestriction={languageRestriction} headless={isHeadless} />
             </div>}
             {inTutorial && activityName && <div className="ui item">{activityName}</div>}
             {inTutorial && !hideIteration && <tutorial.TutorialMenu parent={this.props.parent} />}
             {debugging && !inTutorial ? <sui.MenuItem className="debugger-menu-item centered" icon="large bug" name="Debug Mode" /> : undefined}
+            {tsOnly && !sandbox && <sui.MenuItem className="centered" icon="xicon js" name="JavaScript" />}
+            {pyOnly && !sandbox && <sui.MenuItem className="centered" icon="xicon python" name="Python" />}
             <div className="right menu">
                 {debugging ? <sui.ButtonMenuItem className="exit-debugmode-btn" role="menuitem" icon="external" text={lf("Exit Debug Mode")} textClass="landscape only" onClick={this.toggleDebug} /> : undefined}
                 {docMenu ? <container.DocsMenu parent={this.props.parent} /> : undefined}

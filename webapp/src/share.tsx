@@ -28,7 +28,6 @@ export enum ShareRecordingState {
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface ShareEditorState {
-    advancedMenu?: boolean;
     mode?: ShareMode;
     pubId?: string;
     visible?: boolean;
@@ -53,7 +52,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         this.state = {
             pubId: undefined,
             visible: false,
-            advancedMenu: false,
             screenshotUri: undefined,
             recordingState: ShareRecordingState.None,
             recordError: undefined,
@@ -61,7 +59,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         }
 
         this.hide = this.hide.bind(this);
-        this.toggleAdvancedMenu = this.toggleAdvancedMenu.bind(this);
         this.setAdvancedMode = this.setAdvancedMode.bind(this);
         this.handleProjectNameChange = this.handleProjectNameChange.bind(this);
         this.restartSimulator = this.restartSimulator.bind(this);
@@ -178,7 +175,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
     shouldComponentUpdate(nextProps: ShareEditorProps, nextState: ShareEditorState, nextContext: any): boolean {
         return this.state.visible != nextState.visible
-            || this.state.advancedMenu != nextState.advancedMenu
             || this.state.mode != nextState.mode
             || this.state.pubId != nextState.pubId
             || this.state.sharingError != nextState.sharingError
@@ -190,11 +186,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             || this.state.qrCodeUri != nextState.qrCodeUri
             || this.state.title != nextState.title
             ;
-    }
-
-    private toggleAdvancedMenu() {
-        const advancedMenu = !!this.state.advancedMenu;
-        this.setState({ advancedMenu: !advancedMenu });
     }
 
     private setAdvancedMode(mode: ShareMode) {
@@ -313,7 +304,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const { visible, projectName: newProjectName, loading, recordingState, screenshotUri, thumbnails, recordError, pubId, qrCodeUri, title } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const header = this.props.parent.state.header;
-        const advancedMenu = !!this.state.advancedMenu;
         const hideEmbed = !!targetTheme.hideShareEmbed;
         const socialOptions = targetTheme.socialOptions;
         const showSocialIcons = !!socialOptions && !pxt.BrowserUtils.isUwpEdge();
@@ -482,20 +472,19 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                             {socialOptions.discourse ? <SocialButton url={url} icon={"comments"} ariaLabel={lf("Post to Forum")} type='discourse' heading={lf("Share on Forum")} /> : undefined}
                         </div> : undefined}
                     </div> : undefined}
-                    {ready && !hideEmbed ? <div>
+                    {(ready && !hideEmbed) && <div>
                         <div className="ui divider"></div>
-                        <sui.Link icon={`no-select chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed")} ariaExpanded={advancedMenu} onClick={this.toggleAdvancedMenu} />
-                        {advancedMenu ?
+                        <sui.ExpandableMenu title={lf("Embed")}>
                             <sui.Menu pointing secondary>
                                 {formats.map(f =>
                                     <EmbedMenuItem key={`tab${f.label}`} onClick={this.setAdvancedMode} currentMode={mode} {...f} />)}
-                            </sui.Menu> : undefined}
-                        {advancedMenu ?
+                            </sui.Menu>
                             <sui.Field>
                                 <sui.Input id="embedCode" class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} selectOnClick={true} autoComplete={false} />
                                 <label htmlFor="embedCode" id="embedCodeLabel" className="accessible-hidden">{lf("This is the read-only code for the selected tab.")}</label>
-                            </sui.Field> : null}
-                    </div> : undefined}
+                            </sui.Field>
+                        </sui.ExpandableMenu>
+                    </div>}
                 </div>
             </sui.Modal >
         )
