@@ -22,6 +22,8 @@ import { DebuggerCallStack } from "./debuggerCallStack";
 import { DebuggerToolbox } from "./debuggerToolbox";
 import { amendmentToInsertSnippet, listenForEditAmendments, createLineReplacementPyAmendment } from "./monacoEditAmendments";
 
+import { MonacoFlyout } from "./monacoFlyout";
+
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
 
@@ -301,6 +303,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected callStackView: DebuggerCallStack;
     protected breakpoints: BreakpointCollection;
     protected debuggerToolbox: DebuggerToolbox;
+    protected flyout: MonacoFlyout;
+    protected insertionSnippet: string;
 
     private loadMonacoPromise: Promise<void>;
     private diagSnapshot: string[];
@@ -310,6 +314,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private highlightedBreakpoint: number;
     private editAmendmentsListener: monaco.IDisposable | undefined;
 
+    private handleFlyoutWheel = (e: WheelEvent) => e.stopPropagation();
     private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
 
     hasBlocks() {
@@ -500,7 +505,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     <toolbox.Toolbox ref={this.handleToolboxRef} editorname="monaco" parent={this} />
                     <div id="monacoDebuggerToolbox"></div>
                 </div>}
-                <div id='monacoEditorInner' style={{ float: 'right' }} />
+                <div id='monacoEditorInner' style={{ float: 'right' }}>
+                    <MonacoFlyout ref={this.handleFlyoutRef} fileType={this.fileType}
+                        moveFocusToParent={this.moveFocusToToolbox}
+                        insertSnippet={this.insertSnippet}
+                        setInsertionSnippet={this.setInsertionSnippet}
+                        parent={this.parent} />
+                </div>
             </div>
         )
     }
@@ -736,45 +747,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 // Update widgets
                 const toolbox = document.getElementById('monacoToolboxDiv');
                 if (toolbox) toolbox.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
-                const flyout = document.getElementById('monacoFlyoutWidget');
-                if (flyout) flyout.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
             })
 
             const monacoEditorInner = document.getElementById('monacoEditorInner');
-            monacoEditorInner.ondragenter = ((ev: DragEvent) => {
-                ev.preventDefault();
-                ev.stopPropagation();
-            });
-            monacoEditorInner.ondragover = ((ev: DragEvent) => {
-                ev.preventDefault();
-                ev.stopPropagation();
-                this.dragCurrentPos = {
-                    x: ev.clientX,
-                    y: ev.clientY
+            if ((window as any).PointerEvent) {
+                monacoEditorInner.onpointermove = this.onPointerMove;
+                monacoEditorInner.onpointerup = this.onPointerUp;
+            } else {
+                monacoEditorInner.onmousemove = this.onPointerMove;
+                monacoEditorInner.onmouseup = this.onPointerUp;
+                if (pxt.BrowserUtils.isTouchEnabled()) {
+                    monacoEditorInner.ontouchmove = this.onPointerMove;
+                    monacoEditorInner.ontouchend = this.onPointerUp;
                 }
-                this.onDragBlockThrottled(ev);
-            });
-            monacoEditorInner.ondrop = ((ev: DragEvent) => {
-                let insertText = ev.dataTransfer.getData('text'); // IE11 only support "text"
-                if (!insertText)
-                    return;
-                ev.preventDefault();
-                ev.stopPropagation();
-
-                // if inline snippet, expects dataTransfer in form "inline:1&qName:name" or "inline:1&[snippet]"
-                let inline = pxtc.U.startsWith(insertText, "inline:1&");
-                if (inline) insertText = insertText.substring("inline:1&".length);
-
-                let p = pxtc.U.startsWith(insertText, "qName:")
-                    ? compiler.snippetAsync(insertText.substring("qName:".length), this.fileType == pxt.editor.FileType.Python)
-                    : Promise.resolve(insertText)
-                p.done(snippet => {
-                    let mouseTarget = this.editor.getTargetAtClientPoint(ev.clientX, ev.clientY);
-                    let position = mouseTarget.position;
-                    this.insertSnippet(position, snippet, inline);
-                });
-            });
-
+            }
 
             this.editor.onDidFocusEditorText(() => {
                 this.hideFlyout();
@@ -788,7 +774,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             this.editorViewZones = [];
 
-            this.setupToolbox(editorArea);
             this.setupFieldEditors();
 
             editor.onDidChangeModelContent(e => {
@@ -799,7 +784,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         })
     }
 
-    private insertSnippet(cursorPos: monaco.Position, insertText: string, inline = false) {
+    private insertSnippet = (cursorPos: monaco.Position, insertText: string, inline = false) => {
         let currPos = this.editor.getPosition();
         let model = this.editor.getModel();
         if (!cursorPos) // IE11 fails to locate the mouse
@@ -913,6 +898,36 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.editor.focus();
     }, 200);
 
+    protected onPointerMove = (ev: MouseEvent | TouchEvent) => {
+        if (this.insertionSnippet) {
+            this.dragCurrentPos = {
+                x: pxt.BrowserUtils.getClientX(ev),
+                y: pxt.BrowserUtils.getClientY(ev)
+            }
+            this.onDragBlockThrottled(ev);
+        }
+    };
+
+    protected onPointerUp = (ev: MouseEvent | TouchEvent) => {
+        let insertText = this.insertionSnippet;
+        this.setInsertionSnippet(undefined);
+        if (insertText) {
+            // if inline snippet, expects dataTransfer in form "inline:1&qName:name" or "inline:1&[snippet]"
+            let inline = pxtc.U.startsWith(insertText, "inline:1&");
+            if (inline) insertText = insertText.substring("inline:1&".length);
+
+            let p = pxtc.U.startsWith(insertText, "qName:")
+                ? compiler.snippetAsync(insertText.substring("qName:".length), this.fileType == pxt.editor.FileType.Python)
+                : Promise.resolve(insertText)
+            p.done(snippet => {
+                let mouseTarget = this.editor.getTargetAtClientPoint(pxt.BrowserUtils.getClientX(ev), pxt.BrowserUtils.getClientY(ev));
+                let position = mouseTarget.position;
+                pxt.tickEvent(`monaco.toolbox.insertsnippet`);
+                this.insertSnippet(position, snippet, inline);
+            });
+        }
+    }
+
     undo() {
         if (!this.editor) return;
         this.editor.trigger('keyboard', 'undo', null);
@@ -957,32 +972,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    private setupToolbox(editorElement: HTMLElement) {
-        // Monaco flyout widget
-        let flyoutWidget = {
-            domNode: null as HTMLElement,
-            getId: function (): string {
-                return 'pxt.flyout.widget';
-            },
-            getDomNode: function (): HTMLElement {
-                if (!this.domNode) {
-                    this.domNode = document.createElement('div');
-                    this.domNode.id = 'monacoFlyoutWidget';
-                    this.domNode.style.top = `0`;
-                    this.domNode.className = 'monacoFlyout';
-                    // Hide by default
-                    this.domNode.style.display = 'none';
-                    this.domNode.textContent = 'Flyout';
-                }
-                return this.domNode;
-            },
-            getPosition: function (): monaco.editor.IOverlayWidgetPosition {
-                return null;
-            }
-        };
-        this.editor.addOverlayWidget(flyoutWidget);
-    }
-
     private setupFieldEditors() {
         if (!this.hasFieldEditors || pxt.shell.isReadOnly()) return;
         if (!this.fieldEditors) this.fieldEditors = new FieldEditorManager();
@@ -1011,17 +1000,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public hideFlyout() {
-        // Hide the flyout
-        let flyout = document.getElementById('monacoFlyoutWidget');
-        if (flyout) {
-            pxsim.U.clear(flyout);
-            flyout.style.display = 'none';
-            flyout.removeEventListener("wheel", this.handleFlyoutScroll, true);
-        }
+        if (this.flyout) this.flyout.setState( { groups: undefined } );
 
         // Hide the current toolbox category
-        if (this.toolbox)
-            this.toolbox.clearSelection();
+        if (this.toolbox) this.toolbox.clearSelection();
 
         // Clear editor floats
         this.parent.setState({ hideEditorFloats: false });
@@ -1055,6 +1037,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!container || !this.blockInfo) return;
 
         const debugging = this.isDebugging();
+        if (debugging && this.flyout) this.flyout.setState( { groups: undefined } );
         const debuggerToolbox = debugging ? <DebuggerToolbox
             ref={this.handleDebugToolboxRef}
             parent={this.parent}
@@ -1582,16 +1565,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return namespaces.concat(super.getNamespaces());
     }
 
-    public moveFocusToToolbox() {
+    public moveFocusToToolbox = () => {
         // Set focus in toolbox
         if (this.toolbox) this.toolbox.focus();
     }
 
     public moveFocusToFlyout() {
-        // Set focus in the flyout
-        const monacoFlyout = document.getElementById('monacoFlyoutWidget');
-        const topBlock = monacoFlyout.getElementsByClassName("monacoDraggableBlock")[0] as HTMLElement;
-        if (topBlock) topBlock.focus();
+        if (this.flyout) {
+            let firstBlock = document.querySelector(".monacoBlock") as HTMLElement;
+            if (firstBlock) {
+                firstBlock.focus();
+                firstBlock.click();
+            }
+        }
     }
 
     ///////////////////////////////////////////////////////////
@@ -1622,56 +1608,57 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return this.filterBlocks(subns, blocks);
     }
 
+    // Passes blocks to MonacoFlyout component to render
     public showFlyout(treeRow: toolbox.ToolboxCategory) {
         if (!this.editor) return;
-        const { nameid: ns } = treeRow;
+        let { nameid: ns, name, subns, color, icon, blocks } = treeRow;
+        let groups: toolbox.GroupDefinition[] = [];
 
-        // Create a new flyout
-        let monacoFlyout = this.createMonacoFlyout();
+        if (this.flyout) {
+            if (ns == 'search') {
+                try {
+                    blocks = this.getSearchBlocks();
+                    if (blocks.length == 0) {
+                        name = lf("No search results...");
+                    }
+                    groups.push({ name: pxt.DEFAULT_GROUP_NAME, blocks });
+                }
+                catch (e) {
+                    pxt.reportException(e);
+                    blocks = [];
+                    name = lf("No search results...");
+                }
+            } else if (ns == 'topblocks') {
+                blocks = this.getTopBlocks();
 
-        if (ns == 'search') {
-            try {
-                this.showSearchFlyout();
+                if (blocks.length == 0) {
+                    name = lf("No basic results...");
+                } else {
+                    // Show a heading
+                    color = pxt.toolbox.getNamespaceColor('topblocks');
+                    icon = pxt.toolbox.getNamespaceIcon('topblocks');
+                    name = lf("{id:category}Basic");
+                    groups.push({ name: pxt.DEFAULT_GROUP_NAME, blocks });
+                }
+            } else {
+                groups = this.getBlockGroups(treeRow);
             }
-            catch (e) {
-                pxt.reportException(e);
-                pxsim.U.clear(monacoFlyout);
-                this.addNoSearchResultsLabel();
-            }
-            return;
-        }
 
-        if (ns == 'topblocks') {
-            this.showTopBlocksFlyout();
-            return;
-        }
-
-        if (this.abstractShowFlyout(treeRow) || (treeRow.subcategories && treeRow.subcategories.length > 0)) {
-            // Hide editor floats
-            this.parent.setState({ hideEditorFloats: true });
-        } else {
-            this.closeFlyout();
+            this.flyout.setState({
+                name: name || Util.capitalize(subns || ns),
+                selectedBlock: undefined,
+                ns, color, icon, groups
+            })
         }
     }
 
     protected showFlyoutHeadingLabel(ns: string, name: string, subns: string, icon: string, color: string) {
-        const categoryName = name || Util.capitalize(subns || ns);
-        const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : 'Default'}`.replace(/\s/g, '');
-
-        this.getMonacoLabel(categoryName,
-            'monacoFlyoutLabel monacoFlyoutHeading', true, icon, iconClass, color);
     }
 
     protected showFlyoutGroupLabel(group: string, groupicon: string, labelLineWidth: string, helpCallback: string) {
-        this.getMonacoLabel(pxt.Util.rlf(`{id:group}${group}`),
-            'monacoFlyoutLabel blocklyFlyoutGroup', false, undefined, undefined, undefined, true, labelLineWidth, helpCallback);
     }
 
     protected showFlyoutBlocks(ns: string, color: string, blocks: toolbox.BlockDefinition[]) {
-        let monacoFlyout = this.getMonacoFlyout();
-        const filters = this.parent.state.editorState ? this.parent.state.editorState.filters : undefined;
-        const categoryState = filters ? (filters.namespaces && filters.namespaces[ns] != undefined ? filters.namespaces[ns] : filters.defaultState) : undefined;
-        this.createMonacoBlocks(this, monacoFlyout, ns, blocks, color, filters, categoryState);
     }
 
     protected handleGutterClick(e: monaco.editor.IEditorMouseEvent) {
@@ -1730,8 +1717,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.debuggerToolbox) this.debuggerToolbox.setState({ currentFrame: frameIndex });
     }
 
-    private showSearchFlyout() {
-        let monacoBlocks: HTMLDivElement[] = [];
+    private getSearchBlocks(): toolbox.BlockDefinition[] {
+        let results: toolbox.BlockDefinition[] = [];
         const searchBlocks = this.toolbox.getSearchBlocks();
 
         const that = this;
@@ -1750,17 +1737,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     const pauseUntilBlock = snippets.getPauseUntil();
                     if (pauseUntilBlock) {
                         const ns = pauseUntilBlock.attributes.blockNamespace;
-                        const color = getNamespaceColor(ns);
-                        monacoBlocks.push(this.getMonacoBlock(pauseUntilBlock, ns, color));
+                        pauseUntilBlock.attributes.color = getNamespaceColor(ns);
+                        results.push(pauseUntilBlock);
                     }
                 } else {
                     // For built in blocks, let's search from monaco snippets
                     const builtin = snippets.allBuiltinBlocks()[block.attributes.blockId];
                     if (builtin) {
-                        const builtinBlock = builtin[0];
-                        const ns = builtin[1];
-                        const attr = that.getNamespaceAttrs(ns);
-                        monacoBlocks.push(this.getMonacoBlock(builtinBlock, ns, attr.color));
+                        builtin[0].attributes.blockNamespace = builtin[1];
+                        results.push(builtin[0]);
                     } else {
                         pxt.log("couldn't find buildin search qName for block: " + block.attributes.blockId);
                     }
@@ -1770,72 +1755,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (fn) {
                     if (fn.name.indexOf('_') == 0) return;
                     const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-                    const color = fn.attributes.color || getNamespaceColor(ns);
-                    monacoBlocks.push(this.getMonacoBlock(fn, ns, color));
+                    fn.attributes.color = fn.attributes.color || getNamespaceColor(ns);
+                    results.push(fn);
                 } else {
                     pxt.log("couldn't find non builtin search by qName: " + block.name);
                 }
             }
         })
 
-        this.attachMonacoBlockAccessibility(monacoBlocks);
-
-        if (monacoBlocks.length == 0) {
-            this.addNoSearchResultsLabel();
-        }
+        return results;
     }
 
-    private showTopBlocksFlyout() {
-        let monacoBlocks: HTMLDivElement[] = [];
-        const topBlocks = this.getTopBlocks();
-        const monacoFlyout = this.getMonacoFlyout();
-
-        const that = this;
-        function getNamespaceColor(ns: string) {
-            const nsinfo = that.blockInfo.apis.byQName[ns];
-            const color =
-                (nsinfo ? nsinfo.attributes.color : undefined)
-                || pxt.toolbox.getNamespaceColor(ns)
-                || `255`;
-            return color;
-        }
-
-        if (topBlocks.length == 0) {
-            this.getMonacoLabel(lf("No basic results..."), 'monacoFlyoutLabel');
-        } else {
-            // Show a heading
-            this.showFlyoutHeadingLabel('topblocks', lf("{id:category}Basic"), null,
-                pxt.toolbox.getNamespaceIcon('topblocks'), pxt.toolbox.getNamespaceColor('topblocks'));
-
-            topBlocks.forEach((block) => {
-                monacoBlocks.push(this.getMonacoBlock(block, 'topblocks',
-                    getNamespaceColor(block.attributes.blockNamespace || block.namespace), false));
-            })
-        }
-
-        this.attachMonacoBlockAccessibility(monacoBlocks);
-    }
-
-    private addNoSearchResultsLabel() {
-        this.getMonacoLabel(lf("No search results..."), 'monacoFlyoutLabel');
-    }
-
-    private getMonacoFlyout() {
-        return document.getElementById('monacoFlyoutWidget');
-    }
-
-    private createMonacoFlyout() {
-        let monacoFlyout = this.getMonacoFlyout();
-
-        monacoFlyout.style.left = `${this.editor.getLayoutInfo().lineNumbersLeft}px`;
-        monacoFlyout.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
-        monacoFlyout.style.display = 'block';
-        monacoFlyout.className = 'monacoFlyout';
-        monacoFlyout.style.transform = 'none';
-        monacoFlyout.addEventListener("wheel", this.handleFlyoutScroll, true);
-        pxsim.U.clear(monacoFlyout);
-
-        return monacoFlyout;
+    // Snippet as string, or "qName:" + qualified name of block
+    public setInsertionSnippet = (snippet: string) => {
+        this.insertionSnippet = snippet;
     }
 
     ///////////////////////////////////////////////////////////
@@ -1843,263 +1776,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     ///////////////////////////////////////////////////////////
 
     private uniqueBlockId = 0; // Used for hex blocks
-
-    private createMonacoBlocks(
-        monacoEditor: Editor,
-        monacoFlyout: Element,
-        ns: string,
-        fns: toolbox.BlockDefinition[],
-        color: string,
-        filters: pxt.editor.ProjectFilters,
-        categoryState: pxt.editor.FilterState
-    ) {
-        // Render the method blocks
-        const monacoBlocks = fns.sort((f1, f2) => {
-            // sort by fn weight
-            const w2 = (f2.attributes.weight || 50) + (f2.attributes.advanced ? 0 : 1000);
-            const w1 = (f1.attributes.weight || 50) + (f1.attributes.advanced ? 0 : 1000);
-            return w2 > w1 ? 1 : -1;
-        }).map(fn => {
-            let fnState = filters ? filters.defaultState : pxt.editor.FilterState.Visible;
-            if (filters && filters.fns && filters.fns[fn.name] !== undefined) {
-                fnState = filters.fns[fn.name];
-            } else if (filters && filters.blocks && fn.attributes.blockId && filters.blocks[fn.attributes.blockId] !== undefined) {
-                fnState = filters.blocks[fn.attributes.blockId];
-            } else if (categoryState !== undefined) {
-                fnState = categoryState;
-            }
-            if (fnState == pxt.editor.FilterState.Hidden) return undefined;
-
-            const monacoBlockDisabled = fnState == pxt.editor.FilterState.Disabled;
-            return monacoEditor.getMonacoBlock(fn, ns, color, monacoBlockDisabled);
-        })
-        monacoEditor.attachMonacoBlockAccessibility(monacoBlocks);
-    }
-
-    private attachMonacoBlockAccessibility(monacoBlocks: HTMLDivElement[]) {
-        const monacoEditor = this;
-        monacoBlocks.forEach((monacoBlock, index) => {
-            if (!monacoBlock) return;
-            // Accessibility
-            const isRtl = Util.isUserLanguageRtl();
-            monacoBlock.onkeydown = (e: KeyboardEvent) => {
-                const charCode = core.keyCodeFromEvent(e);
-                if (charCode == 40) { //  DOWN
-                    // Next item
-                    if (index < monacoBlocks.length - 1) monacoBlocks[index + 1].focus();
-                } else if (charCode == 38) { // UP
-                    // Previous item
-                    if (index > 0) monacoBlocks[index - 1].focus();
-                } else if ((charCode == 37 && !isRtl) || (charCode == 38 && isRtl)) { // (LEFT & LTR) or (RIGHT & RTL)
-                    // Focus back to toolbox
-                    monacoEditor.moveFocusToToolbox();
-                } else if (charCode == 27) { // ESCAPE
-                    // Focus back to toolbox and close Flyout
-                    monacoEditor.hideFlyout();
-                    monacoEditor.moveFocusToToolbox();
-                } else {
-                    sui.fireClickOnEnter.call(this, e);
-                }
-            }
-        });
-    }
-
-    private getMonacoLabel(label: string, className: string,
-        hasIcon?: boolean, icon?: string, iconClass?: string, iconColor?: string,
-        hasLine?: boolean, labelLineWidth?: string, helpCallback?: string) {
-        const monacoFlyout = this.getMonacoFlyout();
-        const fontSize = this.parent.settings.editorFontSize;
-
-        const labelDiv = document.createElement('div');
-        labelDiv.className = className;
-        const labelText = document.createElement('div');
-        labelText.className = 'monacoFlyoutLabelText';
-        labelText.style.display = 'inline-block';
-        labelText.style.fontSize = `${fontSize + (hasIcon ? 5 : 0)}px`;
-        labelText.style.lineHeight = `${fontSize + 5}px`;
-        labelText.textContent = label;
-
-        if (hasIcon) {
-            let labelIcon = document.createElement('span');
-            labelIcon.className = `monacoFlyoutHeadingIcon blocklyTreeIcon ${iconClass}`;
-            labelIcon.setAttribute('role', 'presentation');
-            labelIcon.style.display = 'inline-block';
-            labelIcon.style.color = `${pxt.toolbox.convertColor(iconColor)}`;
-            if (icon && icon.length === 1) {
-                labelIcon.textContent = icon;
-            }
-            labelDiv.appendChild(labelIcon);
-        }
-        labelDiv.appendChild(labelText);
-
-        if (helpCallback && pxt.editor.HELP_IMAGE_URI) {
-            let labelHelpIcon = document.createElement('span');
-            labelHelpIcon.style.display = 'inline-block';
-            labelHelpIcon.style.cursor = 'pointer';
-            labelHelpIcon.draggable = false;
-            const labelHelpIconImage = document.createElement('img');
-            labelHelpIconImage.setAttribute('src', pxt.editor.HELP_IMAGE_URI);
-            labelHelpIconImage.style.height = `${fontSize + 5}px`;
-            labelHelpIconImage.style.width = `${fontSize + 5}px`;
-            labelHelpIconImage.style.verticalAlign = 'middle';
-            labelHelpIconImage.style.marginLeft = '10px';
-            labelHelpIcon.appendChild(labelHelpIconImage);
-            labelDiv.appendChild(labelHelpIcon);
-
-            labelHelpIconImage.addEventListener('click', () => {
-                this.helpButtonCallback(label);
-            });
-        }
-
-        monacoFlyout.appendChild(labelDiv);
-
-        if (hasLine) {
-            const labelLine = document.createElement('hr');
-            labelLine.className = 'monacoFlyoutLabelLine';
-            labelLine.align = 'left';
-            labelLine.style.width = `${Math.min(labelLineWidth ? parseInt(labelLineWidth) : labelText.offsetWidth, 350)}px`;
-            labelDiv.appendChild(labelLine);
-        }
-        return labelDiv;
-    }
-
-    protected helpButtonCallback(group?: string) {
-        pxt.debug(`${group} help icon clicked.`);
-        workspace.fireEvent({ type: 'ui', editor: 'ts', action: 'groupHelpClicked', data: { group } } as pxt.editor.events.UIEvent);
-    }
-
-    private getMonacoBlock(fn: toolbox.BlockDefinition, ns: string, color: string, isDisabled?: boolean): HTMLDivElement {
-        // Check if the block is built in, ignore it as it's already defined in snippets
-        if (fn.attributes.blockBuiltin) {
-            pxt.log("ignoring built in block: " + fn.attributes.blockId);
-            return undefined;
-        }
-        let monacoEditor = this;
-        let monacoFlyout = this.getMonacoFlyout();
-
-        const isPython = this.fileType == pxt.editor.FileType.Python;
-        if (fn.snippet === undefined)
-            return undefined;
-        const qName = fn.qName;
-        const snippetName = (isPython ? (fn.pySnippetName || fn.pyName) : undefined) || fn.snippetName || fn.name;
-        const snippet = isPython ? fn.pySnippet : fn.snippet;
-
-        let monacoBlockArea = document.createElement('div');
-        monacoBlockArea.className = `monacoBlock ${isDisabled ? 'monacoDisabledBlock' : ''}`;
-        monacoFlyout.appendChild(monacoBlockArea);
-        let monacoBlock = document.createElement('div');
-        monacoBlock.className = 'monacoDraggableBlock';
-        monacoBlock.tabIndex = 0;
-        monacoBlockArea.appendChild(monacoBlock);
-
-        const comment = fn.attributes.jsDoc;
-        monacoBlock.title = comment;
-
-        color = pxt.toolbox.convertColor(color);
-
-        const methodToken = document.createElement('span');
-        methodToken.textContent = fn.snippetOnly ? snippet : snippetName;
-        monacoBlock.appendChild(methodToken);
-
-        if (!isDisabled) {
-            monacoBlock.draggable = true;
-            monacoBlock.onclick = (e: MouseEvent) => {
-                pxt.tickEvent("monaco.toolbox.itemclick", undefined, { interactiveConsent: true });
-                monacoEditor.hideFlyout();
-
-                let p = snippet ? Promise.resolve(snippet) : compiler.snippetAsync(qName, isPython);
-                p.done(snip => {
-                    let currPos = monacoEditor.editor.getPosition();
-                    this.insertSnippet(currPos, snip, fn.retType != "void");
-                    // Fire a create event
-                    workspace.fireEvent({ type: 'create', editor: 'ts', blockId: fn.attributes.blockId } as pxt.editor.events.CreateEvent);
-                });
-            };
-            monacoBlock.ondragstart = (e: DragEvent) => {
-                pxt.tickEvent("monaco.toolbox.itemdrag", undefined, { interactiveConsent: true });
-                setTimeout(function () {
-                    monacoFlyout.style.transform = "translateX(-9999px)";
-                });
-
-                let inline = "";
-                if (fn.retType != "void") {
-                    inline = "inline:1&";
-                }
-
-                if (!snippet)
-                    e.dataTransfer.setData('text', inline + 'qName:' + qName); // IE11 only supports text
-                else
-                    e.dataTransfer.setData('text', inline + snippet); // IE11 only supports text
-                // Fire a create event
-                workspace.fireEvent({ type: 'create', editor: 'ts', blockId: fn.attributes.blockId } as pxt.editor.events.CreateEvent);
-            }
-            monacoBlock.ondragend = (e: DragEvent) => {
-                monacoFlyout.style.transform = "none";
-                monacoEditor.hideFlyout();
-            }
-            // Highlight on hover
-            const highlightBlock = () => {
-                monacoBlock.style.backgroundColor = isDisabled ?
-                    `${pxt.toolbox.fadeColor(color || '#ddd', 0.8, false)}` :
-                    `${pxt.toolbox.fadeColor(color || '#ddd', 0.1, false)}`;
-            }
-            const unhighlightBlock = () => {
-                monacoBlock.style.backgroundColor = isDisabled ?
-                    `${pxt.toolbox.fadeColor(color || '#ddd', 0.8, false)}` :
-                    `${color}`;
-            }
-            monacoBlock.onmouseenter = (e: MouseEvent) => {
-                highlightBlock();
-            }
-            monacoBlock.onmouseleave = (e: MouseEvent) => {
-                unhighlightBlock();
-            }
-            monacoBlock.onfocus = (e: FocusEvent) => {
-                highlightBlock();
-            }
-            monacoBlock.onblur = (e: FocusEvent) => {
-                unhighlightBlock();
-            }
-        }
-
-        // Draw the shape of the block
-        monacoBlock.style.fontSize = `${monacoEditor.parent.settings.editorFontSize}px`;
-        monacoBlock.style.lineHeight = `${monacoEditor.parent.settings.editorFontSize + 1}px`;
-        monacoBlock.style.backgroundColor = isDisabled ?
-            `${pxt.toolbox.fadeColor(color || '#ddd', 0.8, false)}` :
-            `${color}`;
-        monacoBlock.style.borderColor = `${pxt.toolbox.fadeColor(color || '#ddd', 0.2, false)}`;
-        if (fn.retType && fn.retType == "boolean") {
-            // Show a hexagonal shape
-            monacoBlock.style.borderRadius = "0px";
-            const monacoBlockHeight = monacoBlock.offsetHeight - 2; /* Take 2 off to account for the missing border */
-            const monacoHexBlockId = monacoEditor.uniqueBlockId++;
-            monacoBlock.id = `monacoHexBlock${monacoHexBlockId}`;
-            monacoBlock.className += ' monacoHexBlock';
-            const styleBlock = document.createElement('style') as HTMLStyleElement;
-            styleBlock.appendChild(document.createTextNode(`
-                    #monacoHexBlock${monacoHexBlockId}:before,
-                    #monacoHexBlock${monacoHexBlockId}:after {
-                        border-top: ${monacoBlockHeight / 2}px solid transparent;
-                        border-bottom: ${monacoBlockHeight / 2}px solid transparent;
-                    }
-                    #monacoHexBlock${monacoHexBlockId}:before {
-                        border-right: 17px solid ${color};
-                    }
-                    #monacoHexBlock${monacoHexBlockId}:after {
-                        border-left: 17px solid ${color};
-                    }
-                `));
-            monacoBlockArea.insertBefore(styleBlock, monacoBlock);
-        } else if (fn.retType && fn.retType != "void") {
-            // Show a round shape
-            monacoBlock.style.borderRadius = "40px";
-        } else {
-            // Show a normal shape
-            monacoBlock.style.borderRadius = "3px";
-        }
-        return monacoBlock;
-    }
 
     private indentRangeAsync(range: monaco.IRange): Promise<monaco.IRange> {
         const model = this.editor.getModel();
@@ -2165,6 +1841,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.debuggerToolbox = ref;
             if (this.isDebugging()) this.updateToolbox();
         }
+    }
+
+    private handleFlyoutRef = (ref: MonacoFlyout) => {
+        if (ref) { this.flyout = ref; }
     }
 }
 
