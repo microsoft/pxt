@@ -156,13 +156,16 @@ const browserifyWebapp = () => process.env.PXT_ENV == 'production' ?
 
 const copyMonacoBase = () => gulp.src("node_modules/monaco-editor/min/vs/base/**/*")
     .pipe(gulp.dest("webapp/public/vs/base"));
+
 const copyMonacoEditor = () => gulp.src([
         "node_modules/monaco-editor/min/vs/editor/**/*",
         "!**/editor.main.js"
     ])
     .pipe(gulp.dest("webapp/public/vs/editor"));
+
 const copyMonacoLoader = () => gulp.src("node_modules/monaco-editor/min/vs/loader.js")
     .pipe(gulp.dest("webapp/public/vs"));
+
 const copyMonacoEditorMain = () => gulp.src("node_modules/monaco-editor/dev/vs/editor/editor.main.js")
     .pipe(gulp.dest("built/web/vs/editor/"));
 
@@ -186,7 +189,6 @@ const copyMonacoTypescript = () => gulp.src([
 const copyMonacoTypescriptServices = () => gulp.src("node_modules/pxt-monaco-typescript/release/lib/typescriptServices.js")
     .pipe(gulp.dest("built/web/vs/language/typescript/lib/"));
 
-
 const stripMonacoSourceMaps = () => {
     ju.stripSrcMapSync("webapp/public/vs/")
     return Promise.resolve();
@@ -202,6 +204,28 @@ const copyMonaco = gulp.series(gulp.parallel(
     copyMonacoTypescript,
     copyMonacoTypescriptServices
 ), stripMonacoSourceMaps);
+
+
+const copyBlocklyCompressed = () => gulp.src([
+        "node_modules/pxt-blockly/blocks_compressed.js",
+        "node_modules/pxt-blockly/blockly_compressed.js"
+    ])
+    .pipe(gulp.dest("webapp/public/blockly/"));
+
+const copyBlocklyEnJs = () => gulp.src("node_modules/pxt-blockly/msg/js/en.js")
+    .pipe(gulp.dest("webapp/public/blockly/msg/js/"));
+
+const copyBlocklyEnJson = () => gulp.src("node_modules/pxt-blockly/msg/json/en.json")
+    .pipe(gulp.dest("webapp/public/blockly/msg/json/"));
+
+const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyEnJs, copyBlocklyEnJson);
+
+const lint = () => Promise.all(
+        ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
+        "pxtpy", "pxtrunner", "pxtsim", "pxtwinrt", "webapp",
+        "docfiles/pxtweb"].map(dirname =>
+    exec(`node node_modules/tslint/bin/tslint --project ./${dirname}/tsconfig.json`, true)))
+    .then(() => console.log("linted"))
 
 const buildSVGIcons = () => {
     let webfontsGenerator = require('webfonts-generator')
@@ -352,9 +376,11 @@ function rimraf(dirname) {
     });
 }
 
-function exec(command) {
+function exec(command, log) {
     return new Promise((resolve, reject) => {
         child_process.exec(command, { encoding: "utf8"}, (err, stdout) => {
+            if (log && stdout && stdout.trim()) console.log(stdout.trim());
+
             if (err) reject(err);
             else resolve(stdout);
         });
@@ -373,9 +399,10 @@ const buildAll = gulp.series(
     gulp.parallel(buildcss, buildSVGIcons),
     webapp,
     browserifyWebapp,
-    gulp.parallel(semanticjs, copyJquery, copyWebapp, copyPlayground, copySemanticFonts, copyMonaco)
+    gulp.parallel(semanticjs, copyJquery, copyWebapp, copyPlayground, copySemanticFonts, copyMonaco, copyBlockly)
 );
 
+exports.lint = lint
 exports.clean = clean;
 exports.build = buildAll;
 exports.default = buildAll;
