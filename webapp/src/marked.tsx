@@ -1,8 +1,8 @@
 
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as marked from "marked";
+import * as compiler from "./compiler"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -120,7 +120,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 });
             });
 
-        pxt.Util.toArray(content.querySelectorAll(`code.lang-diff`))
+        pxt.Util.toArray(content.querySelectorAll(`code.lang-diff,code.lang-diffpython`))
             .forEach((langBlock: HTMLElement) => {
                 this.cachedRenderLangSnippet(langBlock, code => {
                     const { fileA, fileB } = pxt.diff.split(code);
@@ -133,23 +133,6 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     });
                     return Promise.resolve(el);
                 })
-            });
-
-        pxt.Util.toArray(content.querySelectorAll(`code.lang-diffspy`))
-            .forEach((langBlock: HTMLElement) => {
-                const wrapperDiv = this.startRenderLangSnippet(langBlock);
-                const code = langBlock.textContent;
-                Promise.delay(1).then(() => {
-                    const { fileA, fileB } = pxt.diff.split(code);
-                    const el = pxt.diff.render(fileA, fileB, {
-                        hideLineNumbers: true,
-                        hideMarkerLine: true,
-                        hideMarker: true,
-                        hideRemoved: true,
-                        update: true
-                    });
-                    this.finishRenderLangSnippet(wrapperDiv, el)
-                });
             });
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-blocks`))
@@ -196,47 +179,66 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         })
                 }
             })
+
         pxt.Util.toArray(content.querySelectorAll(`code.lang-diffblocksxml`))
             .forEach((langBlock: HTMLElement) => {
                 // Can't use innerHTML here because it escapes certain characters (e.g. < and >)
                 // Also can't use innerText because IE strips out the newlines from the code
                 // textContent seems to work in all browsers and return the "pure" text
                 const code = langBlock.textContent;
-                const xml = langBlock.textContent.split(/-{10,}/);
-                const oldXml = xml[0];
-                const newXml = xml[1];
+                const { fileA: oldXml, fileB: newXml } = pxt.diff.split(code);
 
-                const wrapperDiv = document.createElement('div');
-                pxsim.U.clear(langBlock);
-                langBlock.appendChild(wrapperDiv);
-
-                pxt.BrowserUtils.loadBlocklyAsync()
-                    .then(() => {
-                        const diff = pxt.blocks.diffXml(oldXml, newXml);
-                        const svg = diff.svg;
-                        if (svg) {
-                            if (svg.tagName == "SVG") { // splitsvg
-                                const viewBox = svg.getAttribute('viewBox').split(' ').map(parseFloat);
-                                const width = viewBox[2];
-                                let height = viewBox[3];
-                                if (width > 480 || height > 128)
-                                    height = (height * 0.8) | 0;
-                                svg.setAttribute('height', `${height}px`);
-                            }
-                            // SVG serialization is broken on IE (SVG namespace issue), don't cache on IE
-                            if (!pxt.BrowserUtils.isIE()) MarkedContent.blockSnippetCache[code] = Blockly.Xml.domToText(svg);
-                            wrapperDiv.appendChild(svg);
-                            pxsim.U.removeClass(wrapperDiv, 'loading');
-                        } else {
-                            // An error occured, show alternate message
-                            const textDiv = document.createElement('div');
-                            textDiv.className = "ui basic segment";
-                            textDiv.textContent = diff.message || lf("No changes.");
-                            wrapperDiv.appendChild(textDiv);
-                            pxsim.U.removeClass(wrapperDiv, 'loading');
-                        }
-                    });
+                this.cachedRenderLangSnippet(langBlock, code =>
+                    pxt.BrowserUtils.loadBlocklyAsync()
+                        .then(() => {
+                            const diff = pxt.blocks.diffXml(oldXml, newXml);
+                            return wrapBlockDiff(diff);
+                        }));
             });
+
+        pxt.Util.toArray(content.querySelectorAll(`code.lang-diffblocks`))
+            .forEach((langBlock: HTMLElement) => {
+                // Can't use innerHTML here because it escapes certain characters (e.g. < and >)
+                // Also can't use innerText because IE strips out the newlines from the code
+                // textContent seems to work in all browsers and return the "pure" text
+                const code = langBlock.textContent;
+                const { fileA: oldSrc, fileB: newSrc } = pxt.diff.split(code);
+
+
+                this.cachedRenderLangSnippet(langBlock, code =>
+                    pxt.BrowserUtils.loadBlocklyAsync()
+                        .then(() => compiler.getBlocksAsync())
+                        .then(blocksInfo => Promise.mapSeries([oldSrc, newSrc], src =>
+                            compiler.decompileBlocksSnippetAsync(src, blocksInfo))
+                        )
+                        .then((resps) => pxt.blocks.decompiledDiffAsync(oldSrc, resps[0], newSrc, resps[1], {
+                            hideDeletedTopBlocks: true,
+                            hideDeletedBlocks: true
+                        }))
+                        .then(diff => wrapBlockDiff(diff))
+                );
+            });
+
+        function wrapBlockDiff(diff: pxt.blocks.DiffResult): HTMLElement {
+            const svg = diff.svg;
+            if (svg) {
+                if (svg.tagName == "SVG") { // splitsvg
+                    const viewBox = svg.getAttribute('viewBox').split(' ').map(parseFloat);
+                    const width = viewBox[2];
+                    let height = viewBox[3];
+                    if (width > 480 || height > 128)
+                        height = (height * 0.8) | 0;
+                    svg.setAttribute('height', `${height}px`);
+                }
+                return svg as HTMLElement;
+            } else {
+                // An error occured, show alternate message
+                const textDiv = document.createElement('div');
+                textDiv.className = "ui basic segment";
+                textDiv.textContent = diff.message || lf("No changes.");
+                return textDiv;
+            }
+        }
     }
 
     private renderInlineBlocks(content: HTMLElement) {

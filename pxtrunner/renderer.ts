@@ -13,6 +13,7 @@ namespace pxt.runner {
         blocksClass?: string;
         blocksXmlClass?: string;
         diffBlocksXmlClass?: string;
+        diffBlocksClass?: string;
         diffClass?: string;
         staticPythonClass?: string; // typescript to be converted to static python
         diffStaticPythonClass?: string; // diff between two spy snippets
@@ -45,6 +46,7 @@ namespace pxt.runner {
             diffBlocksXmlClass: 'lang-diffblocksxml',
             diffClass: 'lang-diff',
             diffStaticPythonClass: 'lang-diffspy',
+            diffBlocksClass: 'lang-diffblocks',
             staticPythonClass: 'lang-spy',
             simulatorClass: 'lang-sim',
             linksClass: 'lang-cards',
@@ -598,6 +600,64 @@ namespace pxt.runner {
         return renderNextDiffAsync(cls);
     }
 
+    function renderDiffBlocksAsync(opts: ClientRenderOptions): Promise<void> {
+        if (!opts.diffBlocksClass) return Promise.resolve();
+        const cls = opts.diffBlocksClass;
+        function renderNextDiffAsync(cls: string): Promise<void> {
+            let $el = $("." + cls).first();
+            if (!$el[0]) return Promise.resolve();
+
+            const { fileA: oldSrc, fileB: newSrc } = pxt.diff.split($el.text(), {
+                removeTrailingSemiColumns: true
+            });
+            return Promise.mapSeries([oldSrc, newSrc], src => pxt.runner.decompileSnippetAsync(src, {
+                generateSourceMap: true
+            }))
+                .then(resps => {
+                    try {
+                        const diffBlocks = pxt.blocks.decompiledDiffAsync(
+                            oldSrc, resps[0].compileBlocks, newSrc, resps[1].compileBlocks, {
+                            hideDeletedTopBlocks: true,
+                            hideDeletedBlocks: true
+                        });
+                        const diffJs = pxt.diff.render(oldSrc, newSrc, {
+                            hideLineNumbers: true,
+                            hideMarkerLine: true,
+                            hideMarker: true,
+                            hideRemoved: true,
+                            update: true
+                        })
+                        let diffPy: HTMLElement;
+                        const [oldPy, newPy] = resps.map(resp =>
+                            resp.compilePython
+                            && resp.compilePython.outfiles
+                            && resp.compilePython.outfiles["main.py"]);
+                        if (oldPy && newPy) {
+                            diffPy = pxt.diff.render(oldPy, newPy, {
+                                hideLineNumbers: true,
+                                hideMarkerLine: true,
+                                hideMarker: true,
+                                hideRemoved: true,
+                                update: true
+                            })
+                        }
+                        fillWithWidget(opts, $el.parent(), $(diffJs), diffPy && $(diffPy), $(diffBlocks.svg), undefined, {
+                            showEdit: false,
+                            run: false,
+                            hexname: undefined,
+                            hex: undefined
+                        });
+                    } catch (e) {
+                        pxt.reportException(e)
+                        $el.append($('<div/>').addClass("ui segment warning").text(e.message));
+                    }
+                    return Promise.delay(1, renderNextDiffAsync(cls));
+                })
+        }
+
+        return renderNextDiffAsync(cls);
+    }
+
     function renderNamespaces(options: ClientRenderOptions): Promise<void> {
         if (pxt.appTarget.id == "core") return Promise.resolve();
 
@@ -1104,6 +1164,7 @@ namespace pxt.runner {
             .then(() => renderBlocksAsync(options))
             .then(() => renderBlocksXmlAsync(options))
             .then(() => renderDiffBlocksXmlAsync(options))
+            .then(() => renderDiffBlocksAsync(options))
             .then(() => renderDiffAsync(options))
             .then(() => renderStaticPythonAsync(options))
             .then(() => renderProjectAsync(options))

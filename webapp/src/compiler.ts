@@ -320,7 +320,7 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
         })
 }
 
-export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<string> {
+export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
     const snippetTs = "main.ts";
     const snippetBlocks = "main.blocks";
     let trg = pkg.mainPkg.getTargetOptions()
@@ -337,9 +337,7 @@ export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.Bl
             }
             opts.ast = true;
             return decompileCoreAsync(opts, snippetTs)
-        }).then(resp => {
-            return resp.outfiles[snippetBlocks]
-        })
+        });
 }
 
 function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {

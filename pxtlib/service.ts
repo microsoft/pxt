@@ -119,6 +119,7 @@ namespace ts.pxtc {
         breakpoints?: Breakpoint[];
         procDebugInfo?: ProcDebugInfo[];
         blocksInfo?: BlocksInfo;
+        blockSourceMap?: pxt.blocks.BlockSourceInterval[]; // mappings id,start,end
         usedSymbols?: pxt.Map<SymbolInfo>; // q-names of symbols used
         usedArguments?: pxt.Map<string[]>;
         needsFullRecompile?: boolean;
