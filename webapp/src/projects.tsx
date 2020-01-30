@@ -1162,6 +1162,14 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
         this.createProjectCb = null;
     }
 
+    onExpandedMenuHide = () => {
+        // reset language restrictions when user closes the options menu;
+        // it's an 'advanced' feature that we want an easy escape hatch for.
+        this.setState({
+            languageRestriction: pxt.editor.LanguageRestriction.Standard
+        });
+    }
+
     renderCore() {
         const { visible, name, emoji } = this.state;
         const { python, chooseLanguageRestrictionOnNewProject } = pxt.appTarget.appTheme;
@@ -1208,7 +1216,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             </div>
             {chooseLanguageRestrictionOnNewProject && <div>
                 <br />
-                <sui.ExpandableMenu title={lf("Code options")}>
+                <sui.ExpandableMenu title={lf("Code options")} onHide={this.onExpandedMenuHide}>
                     <sui.Select options={langOpts} onChange={this.handleLanguageChange} aria-label={lf("Select Language")} />
                 </sui.ExpandableMenu>
             </div>}
