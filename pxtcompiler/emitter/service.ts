@@ -1009,7 +1009,7 @@ namespace ts.pxtc.service {
             timesToMs(res);
             if (host.opts.target.switches.time)
                 console.log("DIAG-TIME", res.times)
-            return res.diagnostics
+            return res
         },
 
         format: v => {
@@ -1206,7 +1206,7 @@ namespace ts.pxtc.service {
         }
     }
 
-    function runConversionsAndCompileUsingService() {
+    function runConversionsAndCompileUsingService(): CompileResult {
         addApiInfo(host.opts)
         const prevFS = U.flatClone(host.opts.fileSystem);
         let res = runConversionsAndStoreResults(host.opts);
@@ -1228,12 +1228,14 @@ namespace ts.pxtc.service {
                 else if (host.pxtModulesOK == "js" && (!host.opts.breakpoints || host.opts.justMyCode))
                     host.opts.skipPxtModulesEmit = true
             }
-            res = compile(host.opts, service);
+            let ts2asm = compile(host.opts, service)
+            res = { sourceMap: res.sourceMap, ...ts2asm }
             if (res.needsFullRecompile) {
                 pxt.log("trigering full recompile")
                 pxt.tickEvent("compile.fullrecompile")
                 host.opts.skipPxtModulesEmit = false
-                res = compile(host.opts, service);
+                ts2asm = compile(host.opts, service);
+                res = { sourceMap: res.sourceMap, ...ts2asm }
             }
             if (res.diagnostics.every(d => !isPxtModulesFilename(d.fileName)))
                 host.pxtModulesOK = currKey

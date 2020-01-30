@@ -1808,23 +1808,23 @@ namespace pxt.blocks {
 
     export interface BlockCompilationResult {
         source: string;
-        sourceMap: SourceInterval[];
+        sourceMap: BlockSourceInterval[];
         stats: pxt.Map<number>;
         diagnostics: BlockDiagnostic[];
     }
 
-    export function findBlockId(sourceMap: SourceInterval[], loc: { start: number; length: number; }): string {
+    export function findBlockId(sourceMap: BlockSourceInterval[], loc: { start: number; length: number; }): string {
         if (!loc) return undefined;
-        let bestChunk: SourceInterval;
+        let bestChunk: BlockSourceInterval;
         let bestChunkLength: number;
         // look for smallest chunk containing the block
         for (let i = 0; i < sourceMap.length; ++i) {
             let chunk = sourceMap[i];
-            if (chunk.start <= loc.start
-                && chunk.end >= loc.start + loc.length
+            if (chunk.startPos <= loc.start
+                && chunk.endPos >= loc.start + loc.length
                 && (!bestChunk || bestChunkLength > chunk.end - chunk.start)) {
                 bestChunk = chunk;
-                bestChunkLength = chunk.end - chunk.start;
+                bestChunkLength = chunk.endLine - chunk.startLine;
             }
         }
         if (bestChunk) {
