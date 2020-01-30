@@ -58,7 +58,7 @@ function expand(dir, ext) {
         }
     }
 
-    var res = expandCore(dir) 
+    var res = expandCore(dir)
     //console.log("expand:", dir, res)
     return res
 }
@@ -133,6 +133,20 @@ function strpSrcMap(task, dir) {
     });
 }
 
+function stripSrcMapSync(dir) {
+    for (let file of fs.readdirSync(dir)) {
+        file = path.resolve(dir, file) + '';
+        let isDirectory = fs.statSync(file).isDirectory();
+        if (isDirectory) {
+            stripSrcMapSync(file);
+        } else {
+            let fileContents = fs.readFileSync(file, "utf8");
+            fileContents = fileContents.replace(/\/\/# sourceMappingURL=.*/gi, '')
+            fs.writeFileSync(file, fileContents)
+        }
+    }
+}
+
 exports.execCallback = execCallback;
 exports.expand = expand;
 exports.expand1 = expand1;
@@ -143,3 +157,4 @@ exports.cmdsIn = cmdsIn;
 exports.cpR = cpR;
 exports.mkdirP = mkdirP;
 exports.strpSrcMap = strpSrcMap;
+exports.stripSrcMapSync = stripSrcMapSync;
