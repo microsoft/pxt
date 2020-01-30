@@ -352,7 +352,7 @@ namespace pxt.blocks {
                 }
             }
 
-            let start = getCurrentLine();
+            let startLine = getCurrentLine();
             let startPos = output.length;
 
             switch (n.type) {
@@ -383,21 +383,21 @@ namespace pxt.blocks {
                     break
             }
 
-            let end = getCurrentLine();
+            let endLine = getCurrentLine();
             let endPos = Math.max(output.length - 1, 0);
 
             if (n.id) {
                 if (sourceMapById[n.id]) {
                     const node = sourceMapById[n.id];
-                    node.startLine = Math.min(node.startLine, start);
-                    node.endLine = Math.max(node.endLine, end);
+                    node.startLine = Math.min(node.startLine, startLine);
+                    node.endLine = Math.max(node.endLine, endLine);
                     node.startPos = Math.min(node.startPos, startPos);
                     node.endPos = Math.max(node.endPos, endPos);
                 }
                 else {
                     const interval: BlockSourceInterval = {
                         id: n.id,
-                        startLine: start, startPos, endLine: end, endPos
+                        startLine: startLine, startPos, endLine: endLine, endPos
                     }
                     sourceMapById[n.id] = interval;
                     sourceMap.push(interval)
