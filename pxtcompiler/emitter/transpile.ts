@@ -10,7 +10,7 @@ namespace ts.pxtc.transpile {
     export interface TranspileResult {
         diagnostics: pxtc.KsDiagnostic[],
         success: boolean,
-        outfiles: { [key: string]: string },
+        outfiles: pxt.Map<string>,
         sourceMap: SourceInterval[],
     }
 
@@ -69,7 +69,7 @@ namespace ts.pxtc.transpile {
         }
     }
     function makeSuccess(l: CodeLang, txt: string, sourceMap: SourceInterval[]): TranspileResult {
-        let outfiles: { [key: string]: string } = {}
+        let outfiles: pxt.Map<string> = {}
         outfiles[mainName(l)] = txt
         return {
             diagnostics: [],

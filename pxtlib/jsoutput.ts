@@ -272,7 +272,7 @@ namespace pxt.blocks {
 
     export interface BlockSourceInterval {
         id: string;
-        startLine: number; // 0-indexed
+        startLine: number; // 0-indexed of the line itself
         startPos: number; // 0-indexed from start of file including newlines
         endLine: number;
         endPos: number;
