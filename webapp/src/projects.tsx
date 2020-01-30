@@ -803,14 +803,14 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     title={lf("Open link in new window")}
                     autoFocus={autoFocus}
                 />
-            : <sui.Button
-                text={text}
-                className={`approve attached large`}
-                onClick={onClick}
-                onKeyDown={sui.fireClickOnEnter}
-                autoFocus={autoFocus}
-                title={lf("Open in {0}", title)}
-            /> }
+                : <sui.Button
+                    text={text}
+                    className={`approve attached large`}
+                    onClick={onClick}
+                    onKeyDown={sui.fireClickOnEnter}
+                    autoFocus={autoFocus}
+                    title={lf("Open in {0}", title)}
+                />}
         </div>
     }
 
@@ -882,7 +882,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             <div className="actions column ten wide">
                 <div className="segment">
                     {this.getActionCard(clickLabel, cardType, this.handleDetailClick, true)}
-                    {otherActions && otherActions.map( (el, i) => {
+                    {otherActions && otherActions.map((el, i) => {
                         let onClick = this.handleActionClick(el);
                         return this.getActionCard(clickLabel, el.cardType || cardType, onClick, false, el, `action${i}`);
                     })}
@@ -978,8 +978,8 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                             description={lf("Open a shared project URL or GitHub repo")}
                             onClick={this.importUrl}
                         /> : undefined}
-                    {pxt.appTarget.cloud 
-                        && pxt.appTarget.cloud.cloudProviders 
+                    {pxt.appTarget.cloud
+                        && pxt.appTarget.cloud.cloudProviders
                         && pxt.appTarget.cloud.cloudProviders ?
                         <codecard.CodeCardView
                             ariaLabel={lf("Clone or create your own GitHub repository")}
