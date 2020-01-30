@@ -56,19 +56,21 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.Sourc
 
         const tsErrToPosAndLen = (err: pxtc.KsDiagnostic) => [tsLineColToPos(err.line, err.column), err.length] as [number, number]
 
-        tsErrToPyLoc = (err: pxtc.KsDiagnostic) => {
+        tsErrToPyLoc = (err: pxtc.KsDiagnostic): pxtc.LocationInfo => {
             const [tsPos, tsLen] = tsErrToPosAndLen(err)
             const overlaps = sourceMap
                 .filter(i => {
                     // O(n), can we and should we do better?
-                    return i.ts.start <= tsPos && tsPos + tsLen - 1 <= i.ts.end
+                    return i.ts.startPos <= tsPos && tsPos + tsLen - 1 <= i.ts.endPos
                 })
-            const intLen = (i: { start: number, end: number }) => i.end - i.start
+            const intLen = (i: { startPos: number, endPos: number }) => i.endPos - i.startPos
             const bestOverlap = overlaps.reduce((p, n) => intLen(n.ts) < intLen(p.ts) ? n : p, overlaps[0])
-            const [startLine, startCol] = pyPosToLineCol(bestOverlap.py.start)
+            if (!bestOverlap)
+                return undefined
+            const [startLine, startCol] = pyPosToLineCol(bestOverlap.py.startPos)
             const pyLoc = {
                 fileName: "main.py",
-                start: bestOverlap.py.start,
+                start: bestOverlap.py.startPos,
                 length: intLen(bestOverlap.py),
                 line: startLine,
                 column: startCol
@@ -88,9 +90,11 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.Sourc
 
                 if (tsErrToPyLoc && diagnostic.fileName === "main.ts") {
                     let pyLoc = tsErrToPyLoc(diagnostic)
-                    let pyError = { ...diagnostic, ...pyLoc }
-                    let pyFile = mainPkg.files["main.py"]
-                    pyFile.diagnostics.push(pyError)
+                    if (pyLoc) {
+                        let pyError = { ...diagnostic, ...pyLoc }
+                        let pyFile = mainPkg.files["main.py"]
+                        pyFile.diagnostics.push(pyError)
+                    }
                 }
             }
         }

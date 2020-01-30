@@ -1808,14 +1808,14 @@ namespace pxt.blocks {
 
     export interface BlockCompilationResult {
         source: string;
-        sourceMap: SourceIntervalToId[];
+        sourceMap: BlockSourceInterval[];
         stats: pxt.Map<number>;
         diagnostics: BlockDiagnostic[];
     }
 
-    export function findBlockId(sourceMap: SourceIntervalToId[], loc: { start: number; length: number; }): string {
+    export function findBlockId(sourceMap: BlockSourceInterval[], loc: { start: number; length: number; }): string {
         if (!loc) return undefined;
-        let bestChunk: SourceIntervalToId;
+        let bestChunk: BlockSourceInterval;
         let bestChunkLength: number;
         for (let i = 0; i < sourceMap.length; ++i) {
             let chunk = sourceMap[i];

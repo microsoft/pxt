@@ -101,12 +101,12 @@ namespace ts.pxtc {
     export type CodeLang = "py" | "blocks" | "ts"
     export interface SourceInterval {
         ts: {
-            start: number;
-            end: number;
+            startPos: number;
+            endPos: number;
         };
         py: {
-            start: number;
-            end: number;
+            startPos: number;
+            endPos: number;
         };
     }
 
