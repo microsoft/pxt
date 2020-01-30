@@ -978,7 +978,9 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                             description={lf("Open a shared project URL or GitHub repo")}
                             onClick={this.importUrl}
                         /> : undefined}
-                    {pxt.appTarget.cloud && pxt.appTarget.cloud.githubPackages ?
+                    {pxt.appTarget.cloud 
+                        && pxt.appTarget.cloud.cloudProviders 
+                        && pxt.appTarget.cloud.cloudProviders ?
                         <codecard.CodeCardView
                             ariaLabel={lf("Clone or create your own GitHub repository")}
                             role="button"
