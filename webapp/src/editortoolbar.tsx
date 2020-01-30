@@ -348,10 +348,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                 </div>}
                                 {(showProjectRename || showGithub) &&
                                     <div className="ui row items" style={compileBtn ? { paddingTop: 0, marginTop: 0 } : {}}>
-                                        {showProjectRename && <div className={`ui item large right ${showSave ? "labeled" : ""} fluid input projectname-input projectname-tablet`}>
-                                            {this.getSaveInput(tablet, showSave, "fileNameInput1", projectName, showProjectRenameReadonly)}
+                                        {(showProjectRename || showGithub) && <div className={`ui item large right ${showSave ? "labeled" : ""} fluid input projectname-input projectname-tablet`}>
+                                            {showProjectRename && this.getSaveInput(tablet, showSave, "fileNameInput1", projectName, showProjectRenameReadonly)}
+                                            {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${tablet}`} />}
                                         </div>}
-                                        {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${tablet}`} />}
                                     </div>}
                             </div>
                         </div>
@@ -393,10 +393,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     </div>
                     {(showProjectRename || showGithub) &&
                         <div id="projectNameArea" className="column left aligned">
-                            {showProjectRename && <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`}>
-                                {this.getSaveInput(computer, showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}
-                            </div>}
-                            {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
+                            <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`}>
+                                {showProjectRename && this.getSaveInput(computer, showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}
+                                {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
+                            </div>
                         </div>}
                     <div id="editorToolbarArea" className="column right aligned">
                         {showUndoRedo && <div className="ui icon small buttons">{this.getUndoRedo(computer)}</div>}
