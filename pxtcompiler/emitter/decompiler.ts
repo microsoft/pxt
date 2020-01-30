@@ -555,7 +555,7 @@ ${output}</xml>`;
             const length = 20;
             const soupLength = soup_.length;
             const id = [];
-            for (var i = 0; i < length; i++) {
+            for (let i = 0; i < length; i++) {
                 id[i] = soup_.charAt(Math.random() * soupLength);
             }
             return id.join('');
