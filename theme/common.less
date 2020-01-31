@@ -1386,7 +1386,7 @@ p.ui.font.small {
         font-size: 0.8em;
 
         input {
-            padding: 0.35rem;            
+            padding: 0.35rem;
         }
     }
 }
@@ -1526,6 +1526,13 @@ div.simframe.ui.embed {
         box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
         background: @editorToggleColor !important;
     }
+
+    .one-language {
+        &:not(.headless) .active.item.javascript-menuitem ~ .toggle,
+        &:not(.headless) .active.item.python-menuitem ~ .toggle {
+            margin-left: 140px !important;
+        }
+    }
 }
 
 /* Hardware selection dialog */
@@ -1600,4 +1607,33 @@ p.ui.tiny {
 }
 p.ui.small {
     font-size: 90%;
+}
+
+.expandable-menu {
+    > .menu-header {
+        text-decoration: none;
+        cursor: pointer;
+        :hover {
+            text-decoration: none;
+        }
+    }
+
+    > .expanded-items {
+        padding: .5em 1.5em;
+    }
+}
+
+select.ui.dropdown {
+    &:focus, &:active {
+        outline: 1px dotted #212121;
+        outline: 5px auto -webkit-focus-ring-color;
+    }
+
+    font-family: @pageFont;
+}
+
+.newproject {
+    .expandable-menu {
+        font-size: 12px !important;
+    }
 }

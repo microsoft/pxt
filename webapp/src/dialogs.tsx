@@ -418,7 +418,6 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
         name = name.replace(/[^\w\-]/g, '');
     }
 
-    const inverted = !!pxt.appTarget.appTheme.invertedMenu;
     let repoName: string = name || "";
     let repoDescription: string = "";
     let repoPublic: boolean = true;
@@ -462,7 +461,7 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
         header: lf("Create GitHub repository"),
         jsxd: () => {
             const nameErr = repoNameError();
-            return <div className={`ui ${inverted ? "inverted" : ""} form`}>
+            return <div className={`ui form`}>
                 <p>
                     {lf("Host your code on GitHub and work together with friends.")}
                     {sui.helpIconLink("/github", lf("Learn more about GitHub"))}

@@ -164,7 +164,9 @@ namespace ts.pxtc.decompiler {
 
     interface ExpressionNode extends BlockNode {
         kind: "expr";
+        handlers?: Handler[];
         isShadow?: boolean;
+        id?: string;
     }
 
     interface StatementNode extends BlockNode {
@@ -173,6 +175,7 @@ namespace ts.pxtc.decompiler {
         next?: StatementNode;
         prev?: StatementNode;
         comment?: string;
+        id?: string;
 
         // Optional data that Blockly ignores. We use it to associate statements with workspace comments
         data?: string;
@@ -320,6 +323,7 @@ namespace ts.pxtc.decompiler {
         alwaysEmitOnStart?: boolean; // emit "on start" even if empty
         errorOnGreyBlocks?: boolean; // fail on grey blocks (usefull when testing docs)
         allowedArgumentTypes?: string[]; // a whitelist of types that can be decompiled for user defined function arguments
+        generateSourceMap?: boolean; // generate block ids
         /*@internal*/
         includeGreyBlockMessages?: boolean; // adds error attributes to the mutations in typescript_statement blocks (for debug pruposes)
     }
@@ -336,10 +340,15 @@ namespace ts.pxtc.decompiler {
     export function decompileToBlocks(blocksInfo: pxtc.BlocksInfo, file: ts.SourceFile, options: DecompileBlocksOptions, renameMap?: RenameMap): pxtc.CompileResult {
         let emittedBlocks = 0;
         let stmts: NodeArray<ts.Statement> = file.statements;
-        let result: pxtc.CompileResult = {
+        const result: pxtc.CompileResult = {
             blocksInfo: blocksInfo,
-            outfiles: {}, diagnostics: [], success: true, times: {}
+            outfiles: {},
+            diagnostics: [],
+            success: true,
+            times: {}
         }
+        if (options.generateSourceMap)
+            result.blockSourceMap = [];
         const env: DecompilerEnv = {
             blocks: blocksInfo,
             declaredFunctions: {},
@@ -471,7 +480,8 @@ namespace ts.pxtc.decompiler {
         if (n) {
             emitStatementNode(n);
         } else if (!options.snippetMode && !stmts.length) {
-            write(`<block type="${ts.pxtc.ON_START_TYPE}"></block>`);
+            openBlockTag(ts.pxtc.ON_START_TYPE, mkStmt(ts.pxtc.ON_START_TYPE, stmts[0]));
+            closeBlockTag();
         }
 
         workspaceComments.forEach(c => {
@@ -539,18 +549,51 @@ ${output}</xml>`;
             }
         }
 
-        function mkStmt(type: string): StatementNode {
-            return {
+        // generated ids with the same entropy as blockly
+        function blocklyGenUid() {
+            const soup_ = '!#$%()*+,-./:;=?@[]^_`{|}~ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            const length = 20;
+            const soupLength = soup_.length;
+            const id = [];
+            for (let i = 0; i < length; i++) {
+                id[i] = soup_.charAt(Math.random() * soupLength);
+            }
+            return id.join('');
+        }
+
+        function mkId(type: string, node: ts.Node): string {
+            if (type == ts.pxtc.ON_START_TYPE)
+                return "xRRgvHNlG#rZ^u`HECiY";
+            const id = blocklyGenUid()
+            if (node) {
+                const startPos = node.getFullStart();
+                result.blockSourceMap.push(<pxt.blocks.BlockSourceInterval>{
+                    id,
+                    startPos,
+                    endPos: startPos + node.getFullWidth()
+                })
+            }
+            return id;
+        }
+
+        function mkStmt(type: string, node: ts.Node): StatementNode {
+            const stm: StatementNode = {
                 kind: "statement",
                 type
             };
+            if (result.blockSourceMap)
+                stm.id = mkId(type, node);
+            return stm;
         }
 
-        function mkExpr(type: string): ExpressionNode {
-            return {
+        function mkExpr(type: string, node: ts.Node): ExpressionNode {
+            const expr: ExpressionNode = {
                 kind: "expr",
                 type
             };
+            //if (result.blockSourceMap)
+            //    expr.id = mkId(type, node);
+            return expr;
         }
 
         function mkValue(name: string, value: ExpressionNode | TextNode, shadowType?: string, shadowMutation?: pxt.Map<string>): ValueNode {
@@ -581,7 +624,7 @@ ${output}</xml>`;
                 return;
             }
 
-            openBlockTag(n.type)
+            openBlockTag(n.type, n)
             emitBlockNodeCore(n);
 
             if (n.data !== undefined) {
@@ -726,15 +769,16 @@ ${output}</xml>`;
                     countBlock();
                 }
 
-                write(`<${tag} type="${U.htmlEscape(node.type)}">`)
+                write(`<${tag} ${node.id ? `id="${node.id}" ` : ''}type="${U.htmlEscape(node.type)}">`)
                 emitBlockNodeCore(node);
                 write(`</${tag}>`)
             }
         }
 
-        function openBlockTag(type: string) {
+        function openBlockTag(type: string, node: StatementNode) {
             countBlock();
-            write(`<block type="${U.htmlEscape(type)}">`)
+            const id = node && node.id;
+            write(`<block ${id ? `id="${node.id}" ` : ''}type="${U.htmlEscape(type)}">`)
         }
 
         function closeBlockTag() {
@@ -849,16 +893,16 @@ ${output}</xml>`;
                 rightValue = getValue(rightName, n.right, numberType);
             }
 
-            const result = mkExpr(npp.type);
-            result.fields = [];
+            const r = mkExpr(npp.type, n);
+            r.fields = [];
 
             if (npp.op) {
-                result.fields.push(getField("OP", npp.op))
+                r.fields.push(getField("OP", npp.op))
             }
 
-            result.inputs = [leftValue, rightValue];
+            r.inputs = [leftValue, rightValue];
 
-            return result;
+            return r;
 
         }
 
@@ -895,12 +939,12 @@ ${output}</xml>`;
                 }
             }
 
-            const result = mkExpr("text_join");
-            result.inputs = inputs;
-            result.mutation = {
+            const r = mkExpr("text_join", n);
+            r.inputs = inputs;
+            r.mutation = {
                 "items": inputs.length.toString()
             };
-            return result;
+            return r;
         }
 
         function getValue(name: string, contents: boolean | number | string | Node, shadowType?: string, shadowMutation?: pxt.Map<string>): ValueNode {
@@ -970,7 +1014,7 @@ ${output}</xml>`;
         }
 
         function getFieldBlock(type: string, fieldName: string, value: string, isShadow?: boolean): ExpressionNode {
-            const r = mkExpr(type);
+            const r = mkExpr(type, null);
             r.fields = [getField(fieldName, value)];
             r.isShadow = isShadow;
             return r;
@@ -1008,7 +1052,7 @@ ${output}</xml>`;
 
         // TODO: Add a real negation block
         function negateNumericNode(node: ts.Node): ExpressionNode {
-            const r = mkExpr("math_arithmetic");
+            const r = mkExpr("math_arithmetic", node);
             r.inputs = [
                 getValue("A", 0, numberType),
                 getValue("B", node, numberType)
@@ -1020,7 +1064,7 @@ ${output}</xml>`;
         function getPrefixUnaryExpression(node: PrefixUnaryExpression): OutputNode {
             switch (node.operator) {
                 case SK.ExclamationToken:
-                    const r = mkExpr("logic_negate");
+                    const r = mkExpr("logic_negate", node);
                     r.inputs = [getConditionalInput("BOOL", node.operand)];
                     return r;
                 case SK.PlusToken:
@@ -1063,10 +1107,10 @@ ${output}</xml>`;
             blockId = attributes.blockId || blockId;
 
             if (attributes.blockCombine)
-                return getPropertyGetBlock(n)
+                return getPropertyGetBlock(n, n)
 
             if (attributes.blockId === "lists_length" || attributes.blockId === "text_length") {
-                const r = mkExpr(U.htmlEscape(attributes.blockId));
+                const r = mkExpr(U.htmlEscape(attributes.blockId), n);
                 r.inputs = [getValue("VALUE", n.expression)];
 
                 return r;
@@ -1090,7 +1134,7 @@ ${output}</xml>`;
             const info = env.compInfo(callInfo);
 
             if (blockId && info && info.thisParameter) {
-                const r = mkExpr(blockId);
+                const r = mkExpr(blockId, n);
                 r.inputs = [getValue(U.htmlEscape(info.thisParameter.definitionName), n.expression, info.thisParameter.shadowBlockId)];
                 return r;
             }
@@ -1101,7 +1145,7 @@ ${output}</xml>`;
 
         function getEnumFieldBlock(idfn: SymbolInfo, value: string) {
             let f = /(?:%|\$)([a-zA-Z0-9_]+)/.exec(idfn.attributes.block);
-            const r = mkExpr(U.htmlEscape(idfn.attributes.blockId));
+            const r = mkExpr(U.htmlEscape(idfn.attributes.blockId), undefined);
             r.fields = [{
                 kind: "field",
                 name: U.htmlEscape(f[1]),
@@ -1111,7 +1155,7 @@ ${output}</xml>`;
         }
 
         function getArrayLiteralExpression(n: ts.ArrayLiteralExpression): ExpressionNode {
-            const r = mkExpr("lists_create_with");
+            const r = mkExpr("lists_create_with", n);
             r.inputs = n.elements.map((e, i) => getValue("ADD" + i, e));
             r.mutation = {
                 "items": n.elements.length.toString()
@@ -1120,7 +1164,7 @@ ${output}</xml>`;
         }
 
         function getElementAccessExpression(n: ts.ElementAccessExpression): ExpressionNode {
-            const r = mkExpr("lists_index_get");
+            const r = mkExpr("lists_index_get", n);
             r.inputs = [getValue("LIST", n.expression), getValue("INDEX", n.argumentExpression, numberType)]
             return r;
         }
@@ -1142,7 +1186,7 @@ ${output}</xml>`;
 
             const comp = pxt.blocks.compileInfo(api);
 
-            const r = mkExpr(api.attributes.blockId);
+            const r = mkExpr(api.attributes.blockId, t);
 
             const text = (t.template as ts.NoSubstitutionTemplateLiteral).text;
 
@@ -1308,7 +1352,7 @@ ${output}</xml>`;
             if (options.errorOnGreyBlocks)
                 error(node);
 
-            const r = mkStmt(pxtc.TS_STATEMENT_TYPE);
+            const r = mkStmt(pxtc.TS_STATEMENT_TYPE, node);
             r.mutation = {}
 
             trackVariableUsagesInText(node);
@@ -1353,17 +1397,17 @@ ${output}</xml>`;
         }
 
         function getContinueStatementBlock(node: ts.Node): StatementNode {
-            const r = mkStmt(pxtc.TS_CONTINUE_TYPE);
+            const r = mkStmt(pxtc.TS_CONTINUE_TYPE, node);
             return r;
         }
 
         function getBreakStatementBlock(node: ts.Node): StatementNode {
-            const r = mkStmt(pxtc.TS_BREAK_TYPE);
+            const r = mkStmt(pxtc.TS_BREAK_TYPE, node);
             return r;
         }
 
         function getDebuggerStatementBlock(node: ts.Node): StatementNode {
-            const r = mkStmt(pxtc.TS_DEBUGGER_TYPE);
+            const r = mkStmt(pxtc.TS_DEBUGGER_TYPE, node);
             return r;
         }
 
@@ -1375,7 +1419,7 @@ ${output}</xml>`;
             }
 
             const attributes = attrs(info);
-            const res = mkStmt(attributes.blockId);
+            const res = mkStmt(attributes.blockId, node);
             res.fields = [];
 
             const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
@@ -1404,17 +1448,17 @@ ${output}</xml>`;
             switch (n.operatorToken.kind) {
                 case SK.EqualsToken:
                     if (n.left.kind === SK.Identifier) {
-                        return getVariableSetOrChangeBlock(n.left as ts.Identifier, n.right);
+                        return getVariableSetOrChangeBlock(n, n.left as ts.Identifier, n.right);
                     }
                     else if (n.left.kind == SK.PropertyAccessExpression) {
-                        return getPropertySetBlock(n.left as ts.PropertyAccessExpression, n.right, "@set@");
+                        return getPropertySetBlock(n, n.left as ts.PropertyAccessExpression, n.right, "@set@");
                     }
                     else {
-                        return getArraySetBlock(n.left as ts.ElementAccessExpression, n.right);
+                        return getArraySetBlock(n, n.left as ts.ElementAccessExpression, n.right);
                     }
                 case SK.PlusEqualsToken:
                     if (isTextJoin(n)) {
-                        const r = mkStmt("variables_set");
+                        const r = mkStmt("variables_set", n);
                         const renamed = getVariableName(n.left as ts.Identifier);
                         trackVariableUsage(renamed, ReferenceType.InBlocksOnly);
                         r.inputs = [mkValue("VALUE", getTextJoin(n), numberType)];
@@ -1423,11 +1467,11 @@ ${output}</xml>`;
                     }
 
                     if (n.left.kind == SK.PropertyAccessExpression)
-                        return getPropertySetBlock(n.left as ts.PropertyAccessExpression, n.right, "@change@");
+                        return getPropertySetBlock(n, n.left as ts.PropertyAccessExpression, n.right, "@change@");
                     else
-                        return getVariableSetOrChangeBlock(n.left as ts.Identifier, n.right, true);
+                        return getVariableSetOrChangeBlock(n, n.left as ts.Identifier, n.right, true);
                 case SK.MinusEqualsToken:
-                    const r = mkStmt("variables_change");
+                    const r = mkStmt("variables_change", n);
                     r.inputs = [mkValue("VALUE", negateNumericNode(n.right), numberType)];
                     r.fields = [getField("VAR", getVariableName(n.left as ts.Identifier))];
 
@@ -1439,7 +1483,7 @@ ${output}</xml>`;
         }
 
         function getWhileStatement(n: ts.WhileStatement): StatementNode {
-            const r = mkStmt("device_while");
+            const r = mkStmt("device_while", n);
             r.inputs = [getConditionalInput("COND", n.expression)];
             r.handlers = [{ name: "DO", statement: getStatementBlock(n.statement) }];
             return r;
@@ -1448,7 +1492,7 @@ ${output}</xml>`;
         function getIfStatement(n: ts.IfStatement): StatementNode {
             let flatif = flattenIfStatement(n);
 
-            const r = mkStmt("controls_if");
+            const r = mkStmt("controls_if", n);
             r.mutation = {
                 "elseif": (flatif.ifStatements.length - 1).toString(),
                 "else": flatif.elseStatement ? "1" : "0"
@@ -1539,13 +1583,13 @@ ${output}</xml>`;
             let r: StatementNode;
 
             if (condition.operatorToken.kind === SK.LessThanToken && !checkForVariableUsages(n.statement)) {
-                r = mkStmt("controls_repeat_ext");
+                r = mkStmt("controls_repeat_ext", n);
                 r.fields = [];
                 r.inputs = [getValue("TIMES", condition.right, wholeNumberType)];
                 r.handlers = [];
             }
             else {
-                r = mkStmt("pxt_controls_for");
+                r = mkStmt("pxt_controls_for", n);
                 r.fields = [];
                 r.inputs = [];
                 r.handlers = [];
@@ -1558,7 +1602,7 @@ ${output}</xml>`;
                         const valueField = getNumericLiteral(decrementedValue + "");
                         r.inputs.push(mkValue("TO", valueField, wholeNumberType));
                     } else {
-                        const ex = mkExpr("math_arithmetic");
+                        const ex = mkExpr("math_arithmetic", n);
                         ex.fields = [getField("OP", "MINUS")];
                         ex.inputs = [
                             getValue("A", unwrappedRightSide, numberType),
@@ -1588,25 +1632,25 @@ ${output}</xml>`;
             const initializer = n.initializer as ts.VariableDeclarationList;
             const renamed = getVariableName(initializer.declarations[0].name as ts.Identifier);
 
-            const r = mkStmt("pxt_controls_for_of");
+            const r = mkStmt("pxt_controls_for_of", n);
             r.inputs = [getValue("LIST", n.expression), getDraggableVariableBlock("VAR", renamed)];
             r.handlers = [{ name: "DO", statement: getStatementBlock(n.statement) }];
 
             return r
         }
 
-        function getVariableSetOrChangeBlock(name: ts.Identifier, value: Node | number, changed = false, overrideName = false): StatementNode {
+        function getVariableSetOrChangeBlock(n: ts.Node, name: ts.Identifier, value: Node | number, changed = false, overrideName = false): StatementNode {
             const renamed = getVariableName(name);
             trackVariableUsage(renamed, ReferenceType.InBlocksOnly);
             // We always do a number shadow even if the variable is not of type number
-            const r = mkStmt(changed ? "variables_change" : "variables_set");
+            const r = mkStmt(changed ? "variables_change" : "variables_set", n.parent || n);
             r.inputs = [getValue("VALUE", value, numberType)];
             r.fields = [getField("VAR", renamed)]
             return r;
         }
 
-        function getArraySetBlock(left: ts.ElementAccessExpression, right: ts.Expression): StatementNode {
-            const r = mkStmt("lists_index_set");
+        function getArraySetBlock(n: ts.BinaryExpression, left: ts.ElementAccessExpression, right: ts.Expression): StatementNode {
+            const r = mkStmt("lists_index_set", n);
             r.inputs = [
                 getValue("LIST", left.expression),
                 getValue("INDEX", left.argumentExpression, numberType),
@@ -1615,15 +1659,15 @@ ${output}</xml>`;
             return r;
         }
 
-        function getPropertySetBlock(left: ts.PropertyAccessExpression, right: ts.Expression, tp: string) {
-            return getPropertyBlock(left, right, tp) as StatementNode
+        function getPropertySetBlock(n: ts.Node, left: ts.PropertyAccessExpression, right: ts.Expression, tp: string) {
+            return getPropertyBlock(n, left, right, tp) as StatementNode
         }
 
-        function getPropertyGetBlock(left: ts.PropertyAccessExpression) {
-            return getPropertyBlock(left, null, "@get@") as ExpressionNode
+        function getPropertyGetBlock(n: ts.Node, left: ts.PropertyAccessExpression) {
+            return getPropertyBlock(n, left, null, "@get@") as ExpressionNode
         }
 
-        function getPropertyBlock(left: ts.PropertyAccessExpression, right: ts.Expression, tp: string): StatementNode | ExpressionNode {
+        function getPropertyBlock(n: ts.Node, left: ts.PropertyAccessExpression, right: ts.Expression, tp: string): StatementNode | ExpressionNode {
             const info: pxtc.CallInfo = pxtc.pxtInfo(left).callInfo
             const sym = env.blocks.apis.byQName[info ? info.qName : ""]
             if (!sym || !sym.attributes.blockCombine) {
@@ -1632,7 +1676,7 @@ ${output}</xml>`;
             }
             const qName = `${sym.namespace}.${sym.retType}.${tp}`;
             const setter = env.blocks.blocks.find(b => b.qName == qName)
-            const r = right ? mkStmt(setter.attributes.blockId) : mkExpr(setter.attributes.blockId)
+            const r = right ? mkStmt(setter.attributes.blockId, n) : mkExpr(setter.attributes.blockId, n)
             const pp = setter.attributes._def.parameters;
 
             let fieldValue = info.qName;
@@ -1654,7 +1698,7 @@ ${output}</xml>`;
 
         function getVariableDeclarationStatement(n: ts.VariableDeclaration): StatementNode {
             if (addVariableDeclaration(n)) {
-                return getVariableSetOrChangeBlock(n.name as ts.Identifier, n.initializer)
+                return getVariableSetOrChangeBlock(n, n.name as ts.Identifier, n.initializer)
             }
             return undefined;
         }
@@ -1667,7 +1711,7 @@ ${output}</xml>`;
                 return undefined;
             }
 
-            return getVariableSetOrChangeBlock(node.operand as ts.Identifier, isPlusPlus ? 1 : -1, true);
+            return getVariableSetOrChangeBlock(node, node.operand as ts.Identifier, isPlusPlus ? 1 : -1, true);
         }
 
         function getFunctionDeclaration(n: ts.FunctionDeclaration): StatementNode {
@@ -1686,7 +1730,7 @@ ${output}</xml>`;
 
             let r: StatementNode;
 
-            r = mkStmt("function_definition");
+            r = mkStmt("function_definition", n);
             r.mutation = {
                 name
             };
@@ -1714,7 +1758,7 @@ ${output}</xml>`;
             const attributes = attrs(info);
 
             if (info.qName == "Math.pow") {
-                const r = mkExpr("math_arithmetic");
+                const r = mkExpr("math_arithmetic", node);
                 r.inputs = [
                     mkValue("A", getOutputBlock(node.arguments[0]), numberType),
                     mkValue("B", getOutputBlock(node.arguments[1]), numberType)
@@ -1728,9 +1772,9 @@ ${output}</xml>`;
                     let r: ExpressionNode;
 
                     if (isRoundingFunction(op)) {
-                        r = mkExpr("math_js_round");
+                        r = mkExpr("math_js_round", node);
                     } else {
-                        r = mkExpr("math_js_op");
+                        r = mkExpr("math_js_op", node);
                         let opType: string;
                         if (isUnaryMathFunction(op)) opType = "unary";
                         else if (isInfixMathFunction(op)) opType = "infix";
@@ -1747,7 +1791,7 @@ ${output}</xml>`;
             }
 
             if (attributes.blockId === pxtc.PAUSE_UNTIL_TYPE) {
-                const r = mkStmt(pxtc.PAUSE_UNTIL_TYPE);
+                const r = mkStmt(pxtc.PAUSE_UNTIL_TYPE, node);
                 const lambda = node.arguments[0] as (ts.FunctionExpression | ts.ArrowFunction);
 
                 let condition: ts.Node;
@@ -1770,7 +1814,7 @@ ${output}</xml>`;
                     const name = getVariableName(node.expression as ts.Identifier);
                     if (env.declaredFunctions[name]) {
                         let r: StatementNode;
-                        r = mkStmt("function_call");
+                        r = mkStmt("function_call", node);
                         if (info.args.length) {
                             r.mutationChildren = [];
                             r.inputs = [];
@@ -1816,10 +1860,8 @@ ${output}</xml>`;
             const api = env.blocks.apis.byQName[info.qName];
             const comp = pxt.blocks.compileInfo(api);
 
-            const r = {
-                kind: asExpression ? "expr" : "statement",
-                type: attributes.blockId
-            } as StatementNode;
+            const r = asExpression ? mkExpr(attributes.blockId, node)
+                : mkStmt(attributes.blockId, node);
 
             const addInput = (v: ValueNode) => (r.inputs || (r.inputs = [])).push(v);
             const addField = (f: FieldNode) => (r.fields || (r.fields = [])).push(f);
@@ -2126,10 +2168,12 @@ ${output}</xml>`;
 
             if (blockStatements.length) {
                 // wrap statement in "on start" if top level
-                const stmt = getStatementBlock(blockStatements.shift(), blockStatements, parent, false, topLevel);
+                const stmtNode = blockStatements.shift();
+                const stmt = getStatementBlock(stmtNode, blockStatements, parent, false, topLevel);
                 if (emitOnStart) {
                     // Preserve any variable edeclarations that were never used
                     let current = stmt;
+                    let currentNode: ts.Node = stmtNode;
                     autoDeclarations.forEach(([name, node]) => {
                         if (varUsages[name] === ReferenceType.InBlocksOnly) {
                             return;
@@ -2143,14 +2187,15 @@ ${output}</xml>`;
                             v = getTypeScriptStatementBlock(node, "let ");
                         }
                         else {
-                            v = getVariableSetOrChangeBlock((node as ts.VariableDeclaration).name as ts.Identifier, (node as ts.VariableDeclaration).initializer, false, true);
+                            v = getVariableSetOrChangeBlock(stmtNode, (node as ts.VariableDeclaration).name as ts.Identifier, (node as ts.VariableDeclaration).initializer, false, true);
                         }
                         v.next = current;
                         current = v;
+                        currentNode = node;
                     });
 
                     if (current) {
-                        const r = mkStmt(ts.pxtc.ON_START_TYPE);
+                        const r = mkStmt(ts.pxtc.ON_START_TYPE, currentNode);
                         r.handlers = [{
                             name: "HANDLER",
                             statement: current
@@ -2158,22 +2203,22 @@ ${output}</xml>`;
                         return r;
                     }
                     else {
-                        maybeEmitEmptyOnStart();
+                        maybeEmitEmptyOnStart(stmt);
                     }
                 }
                 return stmt;
             }
             else if (emitOnStart) {
-                maybeEmitEmptyOnStart();
+                maybeEmitEmptyOnStart(undefined);
             }
 
             return undefined;
         }
 
-        function maybeEmitEmptyOnStart() {
+        function maybeEmitEmptyOnStart(node: StatementNode) {
             if (options.alwaysEmitOnStart) {
-                countBlock();
-                write(`<block type="${ts.pxtc.ON_START_TYPE}"></block>`);
+                openBlockTag(ts.pxtc.ON_START_TYPE, node);
+                closeBlockTag();
             }
         }
 

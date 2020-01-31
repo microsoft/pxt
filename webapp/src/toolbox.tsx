@@ -50,6 +50,14 @@ export interface BlockDefinition {
     blockXml?: string;
     builtinBlock?: boolean;
     builtinField?: [string, string];
+    parameters?: pxtc.ParameterDesc[];
+}
+
+export interface GroupDefinition {
+    name: string;
+    icon?: string;
+    hasHelp?: boolean;
+    blocks: BlockDefinition[];
 }
 
 export interface ButtonDefinition {

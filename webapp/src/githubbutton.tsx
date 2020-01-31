@@ -68,16 +68,9 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
         const repoName = ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName;
         // shrink name...
         const maxLength = 20;
-        let tag = ghid.tag && ghid.tag != "master" ? `#${ghid.tag}` : "";
-        let displayName = repoName.replace(/^pxt-/, '').replace(/#.+$/, '');
-        if (displayName.length + tag.length > maxLength) {
-            // trim branch first
-            if (tag.length > 6) {
-                tag = tag.slice(0, 6) + '..';
-            }
-            if (displayName.length + tag.length > maxLength)
-                displayName = displayName.slice(0, maxLength - 2 - tag.length) + '..';
-        }
+        let displayName = ghid.tag && ghid.tag != "master" ? `#${ghid.tag}` : "";
+        if (displayName.length > maxLength)
+            displayName = displayName.slice(0, maxLength - 2) + '..';
 
         const title =
             hasissue ? lf("{0}: there is an issue with your GitHub connection.", repoName)
@@ -89,7 +82,7 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
             ${this.props.className || ""}`}
             title={title} onClick={this.handleClick}>
             <i className="github icon" />
-            <span className="ui mobile hide">{displayName}{tag}</span>
+            <span className="ui mobile hide">{displayName}</span>
             <i className={`ui long ${
                 hasissue ? "exclamation circle"
                     : haspull ? "arrow alternate down"

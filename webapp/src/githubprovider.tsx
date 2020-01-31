@@ -15,6 +15,8 @@ export class GithubProvider extends cloudsync.ProviderBase {
     logout() {
         pxt.github.token = undefined;
         super.logout();
+
+        window.location.href = "https://github.com/logout";
     }
 
     hasSync(): boolean {

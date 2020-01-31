@@ -917,7 +917,10 @@ ${linkString}
                         let bresp = pxtc.decompiler.decompileToBlocks(
                             blocksInfo,
                             program.getSourceFile("main.ts"),
-                            { snippetMode: options && options.snippetMode });
+                            {
+                                snippetMode: options && options.snippetMode,
+                                generateSourceMap: options && options.generateSourceMap
+                            });
                         if (bresp.diagnostics && bresp.diagnostics.length > 0)
                             bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                         if (!bresp.success)

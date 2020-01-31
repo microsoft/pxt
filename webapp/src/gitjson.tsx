@@ -1057,7 +1057,7 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
         const pages = this.pagesStatus();
         const hasPages = pages && !!pages.html_url;
         const pagesBuilding = pages && pages.status == "building";
-        const inverted = !!pxt.appTarget.appTheme.invertedMenu;
+        const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
         return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
             <div className="ui header">{lf("Release zone")}</div>
             {!needsCommit && !tag && <div className="ui field">
@@ -1124,7 +1124,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
         const testurl = header && `${window.location.href.replace(/#.*$/, '')}#testproject:${header.id}`;
         const showFork = user && user.id != githubId.owner;
 
-        const inverted = !!pxt.appTarget.appTheme.invertedMenu;
+        const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
         return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
             <div className="ui header">{lf("Extension zone")}</div>
             <div className="ui field">

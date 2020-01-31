@@ -4,14 +4,14 @@ namespace pxt.diff {
     Var V: Array [− MAX .. MAX] of Integer
     V[1]←0
     For D←0 to MAX Do
-        For k ← −D to D in steps of 2 Do 
+        For k ← −D to D in steps of 2 Do
             If k=−D or k≠D and V[k−1]<V[k+1] Then
-                x ← V[k+1] 
+                x ← V[k+1]
             Else
-                x ← V[k−1]+1 
+                x ← V[k−1]+1
             y←x−k
-            While x<N and y<M and a[x+1] =b[y+1] Do 
-                (x,y)←(x+1,y+1) 
+            While x<N and y<M and a[x+1] =b[y+1] Do
+                (x,y)←(x+1,y+1)
             V[k]←x
             If x≥N and y≥M Then
                 Length of an SES is D
@@ -28,6 +28,7 @@ namespace pxt.diff {
         context?: number; // lines of context; defaults to 3
         ignoreWhitespace?: boolean;
         maxDiffSize?: number; // defaults to 1024
+        full?: boolean; // don't try to create short diff
     }
 
     // based on An O(ND) Difference Algorithm and Its Variations by EUGENE W. MYERS
@@ -116,7 +117,7 @@ namespace pxt.diff {
         }
         diff.reverse()
 
-        if (options.context == Infinity)
+        if (options.context == Infinity || options.full)
             return diff
 
         let aline = 1, bline = 1, idx = 0
@@ -284,14 +285,41 @@ namespace pxt.diff {
         }
     }
 
-    export function split(dualSrc: string): { fileA: string, fileB: string } {
+    export function removeTrailingSemiColumns(src: string) {
+        return toLines(src).map(line => line.replace(/;\s*$/, '')).join('\n');
+    }
+
+    export function split(dualSrc: string, options?: { removeTrailingSemiColumns?: boolean }): { fileA: string, fileB: string } {
         const src = dualSrc.split(/-{10,}/, 2);
         if (src.length < 2)
             return { fileA: dualSrc, fileB: undefined };
 
-        const fileA = src[0].replace(/\n$/, ''); // intial new line introduced by html
-        const fileB = src[1].replace(/^\n/, ''); // last new line introduct by html
+        let fileA = src[0].replace(/\n$/, ''); // intial new line introduced by html
+        let fileB = src[1].replace(/^\n/, ''); // last new line introduct by html
+
+        if (options && options.removeTrailingSemiColumns) {
+            fileA = removeTrailingSemiColumns(fileA);
+            fileB = removeTrailingSemiColumns(fileB);
+        }
+
         return { fileA, fileB };
+    }
+
+    export interface DiffMarker {
+        oldStart: number;
+        oldLength: number;
+        newStart: number;
+        newLength: number;
+    }
+
+    export function parseDiffMarker(ln: string): DiffMarker {
+        const m = /^@@ -(\d+),(\d+) \+(\d+),(\d+)/.exec(ln)
+        return m && {
+                oldStart: parseInt(m[1]) - 1,
+                oldLength: parseInt(m[2]),
+                newStart: parseInt(m[3]) - 1,
+                newLength: parseInt(m[4])
+            }
     }
 
     export interface RenderOptions extends DiffOptions {
@@ -328,10 +356,10 @@ namespace pxt.diff {
         }, tbody);
         let savedDiffEl: HTMLElement = null
         diffLines.forEach((ln: string, idx: number) => {
-            const m = /^@@ -(\d+),\d+ \+(\d+),\d+/.exec(ln)
+            const m = parseDiffMarker(ln);
             if (m) {
-                lnA = parseInt(m[1]) - 1
-                lnB = parseInt(m[2]) - 1
+                lnA = m.oldStart
+                lnB = m.newStart
             } else {
                 if (ln[0] != "+")
                     lnA++
@@ -460,9 +488,9 @@ namespace pxt.diff {
      * - current preferred editor is kept
      * - conjection of public flag
      * - files list is merged so that added files are kept and deleted files are removed
-     * @param configA 
-     * @param configO 
-     * @param configB 
+     * @param configA
+     * @param configO
+     * @param configB
      */
     export function mergeDiff3Config(configA: string, configO: string, configB: string): string {
         let jsonA: any = pxt.Util.jsonTryParse(configA); //  as pxt.PackageConfig
@@ -508,6 +536,7 @@ namespace pxt.diff {
                     case "version": // pick highest version
                         r[key] = pxt.semver.strcmp(vA, vB) > 0 ? vA : vB;
                         break;
+                    case "languageRestriction":
                     case "preferredEditor":
                         r[key] = vA; // keep current one
                         break;

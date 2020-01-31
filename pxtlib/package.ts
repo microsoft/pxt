@@ -17,6 +17,7 @@ namespace pxt {
         "targetVersions",
         "supportedTargets",
         "preferredEditor",
+        "languageRestriction",
         "additionalFilePath",
         "additionalFilePaths"
     ]

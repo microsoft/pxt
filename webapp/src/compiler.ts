@@ -4,19 +4,99 @@ import * as workspace from "./workspace";
 
 import U = pxt.Util;
 
-function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
+function setDiagnostics(diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.SourceInterval[]) {
     let mainPkg = pkg.mainEditorPkg();
 
     mainPkg.forEachFile(f => f.diagnostics = [])
 
     let output = "";
 
+    // If we have source map information, then prepare a function for converting
+    //  TS errors to PY
+    let tsErrToPyLoc: (err: pxtc.KsDiagnostic) => pxtc.LocationInfo = undefined;
+    let errStart = performance.now()
+    if (diagnostics.length > 0
+        && mainPkg.filterFiles(f => f.name === "main.ts" || f.name === "main.py").length === 2
+        && sourceMap) {
+        const tsFile = mainPkg.files["main.ts"].content
+        const pyFile = mainPkg.files["main.py"].content
+
+        // Notes:
+        //  lines are 0-indexed (Monaco they are 1-indexed)
+        //  columns are 0-indexed (0th is first character)
+        //  positions are 0-indexed, as if getting the index of a character in a file as a giant string (incl. new lines)
+        //  line summation is the length of that line plus its newline plus all the lines before it; aka the position of the next line's first character
+        //  end positions are zero-index but not inclusive, same behavior as substring
+        type LineColToPos = (line: number, col: number) => number
+        type PosToLineCol = (pos: number) => [number, number]
+        const makeLineColPosConverters = (file: string): [PosToLineCol, LineColToPos] => {
+            const lines = file.split("\n")
+            const lineLengths = lines
+                .map(l => l.length)
+            const lineLenSums = lineLengths
+                .reduce(({ lens, sum }, n) =>
+                    ({ lens: [...lens, sum + n + 1], sum: sum + n + 1 }),
+                    { lens: [] as number[], sum: 0 })
+                .lens
+            const lineColToPos = (line: number, col: number) => {
+                let pos = (lineLenSums[line - 1] || 0) + col
+                return pos
+            }
+            const posToLineCol = (pos: number) => {
+                const line = lineLenSums
+                    .reduce((curr, nextLen, i) => pos < nextLen ? curr : i + 1, 0)
+                const col = lineLengths[line] - (lineLenSums[line] - pos) + 1
+                return [line, col] as [number, number]
+            }
+            return [posToLineCol, lineColToPos]
+        }
+
+        const [tsPosToLineCol, tsLineColToPos] = makeLineColPosConverters(tsFile)
+        const [pyPosToLineCol, pyLineColToPos] = makeLineColPosConverters(pyFile)
+
+        const tsErrToPosAndLen = (err: pxtc.KsDiagnostic) => [tsLineColToPos(err.line, err.column), err.length] as [number, number]
+
+        tsErrToPyLoc = (err: pxtc.KsDiagnostic): pxtc.LocationInfo => {
+            const [tsPos, tsLen] = tsErrToPosAndLen(err)
+            const overlaps = sourceMap
+                .filter(i => {
+                    // O(n), can we and should we do better?
+                    return i.ts.startPos <= tsPos && tsPos + tsLen - 1 <= i.ts.endPos
+                })
+            const intLen = (i: { startPos: number, endPos: number }) => i.endPos - i.startPos
+            const bestOverlap = overlaps.reduce((p, n) => intLen(n.ts) < intLen(p.ts) ? n : p, overlaps[0])
+            if (!bestOverlap)
+                return undefined
+            const [startLine, startCol] = pyPosToLineCol(bestOverlap.py.startPos)
+            const pyLoc = {
+                fileName: "main.py",
+                start: bestOverlap.py.startPos,
+                length: intLen(bestOverlap.py),
+                line: startLine,
+                column: startCol
+            }
+            return pyLoc
+        }
+    }
+
+    let errElapsed = performance.now() - errStart
+
     for (let diagnostic of diagnostics) {
         if (diagnostic.fileName) {
             output += `${diagnostic.category == ts.pxtc.DiagnosticCategory.Error ? lf("error") : diagnostic.category == ts.pxtc.DiagnosticCategory.Warning ? lf("warning") : lf("message")}: ${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.column + 1}): `;
             let f = mainPkg.filterFiles(f => f.getTypeScriptName() == diagnostic.fileName)[0]
-            if (f)
+            if (f) {
                 f.diagnostics.push(diagnostic)
+
+                if (tsErrToPyLoc && diagnostic.fileName === "main.ts") {
+                    let pyLoc = tsErrToPyLoc(diagnostic)
+                    if (pyLoc) {
+                        let pyError = { ...diagnostic, ...pyLoc }
+                        let pyFile = mainPkg.files["main.py"]
+                        pyFile.diagnostics.push(pyError)
+                    }
+                }
+            }
         }
 
         const category = ts.pxtc.DiagnosticCategory[diagnostic.category].toLowerCase();
@@ -148,6 +228,9 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
                     target: pxt.appTarget.id,
                     targetVersion: pxt.appTarget.versions.target
                 };
+                const gitJson = pkg.mainPkg.readGitJson();
+                if (gitJson)
+                    meta.repo = pxt.github.parseRepoId(gitJson.repo).fullName;
                 resp.outfiles[pxtc.BINARY_JS] =
                     `// meta=${JSON.stringify(meta)}
 ${resp.outfiles[pxtc.BINARY_JS]}`;
@@ -237,7 +320,7 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
         })
 }
 
-export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<string> {
+export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
     const snippetTs = "main.ts";
     const snippetBlocks = "main.blocks";
     let trg = pkg.mainPkg.getTargetOptions()
@@ -254,9 +337,7 @@ export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.Bl
             }
             opts.ast = true;
             return decompileCoreAsync(opts, snippetTs)
-        }).then(resp => {
-            return resp.outfiles[snippetBlocks]
-        })
+        });
 }
 
 function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
@@ -387,8 +468,8 @@ export function typecheckAsync() {
             opts.testMode = true // show errors in all top-level code
             return workerOpAsync("setOptions", { options: opts })
         })
-        .then(() => workerOpAsync("allDiags", {}))
-        .then(setDiagnostics)
+        .then(() => workerOpAsync("allDiags", {}) as Promise<pxtc.CompileResult>)
+        .then(r => setDiagnostics(r.diagnostics, r.sourceMap))
         .then(ensureApisInfoAsync)
         .catch(catchUserErrorAndSetDiags(null))
     if (!firstTypecheck) firstTypecheck = p;

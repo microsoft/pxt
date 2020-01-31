@@ -32,7 +32,7 @@ export class File implements pxt.editor.IFile {
     constructor(public epkg: EditorPackage, public name: string, public content: string) { }
 
     isReadonly() {
-        return !this.epkg.header
+        return !this.epkg.header;
     }
 
     getName() {
@@ -188,6 +188,12 @@ export class EditorPackage {
 
     getTopHeader() {
         return this.topPkg.header;
+    }
+
+    getLanguageRestrictions() {
+        const ksPkg = this.topPkg.ksPkg;
+        const cfg = ksPkg && ksPkg.config;
+        return cfg && cfg.languageRestriction;
     }
 
     afterMainLoadAsync() {

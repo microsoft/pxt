@@ -269,7 +269,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
             .then(blocksInfo => compiler.decompileBlocksSnippetAsync(this.replaceTokens(tsOutput), blocksInfo))
             .then(resp => {
                 // get the root blocks (e.g. on_start) from the new code
-                const newXml = Blockly.Xml.textToDom(resp);
+                const newXml = Blockly.Xml.textToDom(resp.outfiles["main.blocks"]);
                 const newBlocksDom = pxt.blocks.findRootBlocks(newXml)
 
                 // get the existing root blocks

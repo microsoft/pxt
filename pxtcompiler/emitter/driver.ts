@@ -89,12 +89,12 @@ namespace ts.pxtc {
         })
     }
 
-    export function py2tsIfNecessary(opts: CompileOptions): pxtc.KsDiagnostic[] {
+    export function py2tsIfNecessary(opts: CompileOptions): transpile.TranspileResult | undefined {
         if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
             let res = pxtc.transpile.pyToTs(opts)
-            return res.diagnostics
+            return res
         }
-        return []
+        return undefined
     }
 
     function mkCompileResult(): CompileResult {
@@ -112,12 +112,17 @@ namespace ts.pxtc {
             res.outfiles[f] = opts.fileSystem[f]
     }
 
-    export function runConversionsAndStoreResults(opts: CompileOptions, res?: CompileResult) {
+    export function runConversionsAndStoreResults(opts: CompileOptions, res?: CompileResult): CompileResult {
         const startTime = U.cpuUs()
-        if (!res) res = mkCompileResult()
-        const convDiag = py2tsIfNecessary(opts)
+        if (!res) {
+            res = mkCompileResult();
+        }
+        const convRes = py2tsIfNecessary(opts)
+        if (convRes) {
+            res = { ...res, diagnostics: convRes.diagnostics, sourceMap: convRes.sourceMap }
+        }
+
         storeGeneratedFiles(opts, res)
-        res.diagnostics = convDiag
 
         if (!opts.sourceFiles)
             opts.sourceFiles = Object.keys(opts.fileSystem)
@@ -299,6 +304,7 @@ namespace ts.pxtc {
             snippetMode: false,
             alwaysEmitOnStart: opts.alwaysDecompileOnStart,
             includeGreyBlockMessages,
+            generateSourceMap: !!opts.ast,
             allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"]
         };
         let [renameMap, _] = pxtc.decompiler.buildRenameMap(program, file)

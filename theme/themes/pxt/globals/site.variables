@@ -285,8 +285,10 @@ default semantic
 @flyoutLabelColor: white;
 @blocklyFlyoutColor: @grey;
 @blocklyFlyoutColorOpacity: 0.9;
-@monacoFlyoutColor: fade(@blocklyFlyoutColor, 90%);
 @blocklyFlyoutButtonColor: @primaryColor;
+@monacoFlyoutColor: fade(@blocklyFlyoutColor, 90%);
+@monacoFlyoutBorderColor: fade(@flyoutLabelColor, 40%);
+@monacoFlyoutText: fade(@flyoutLabelColor, 70%);
 
 /*-------------------
    Home

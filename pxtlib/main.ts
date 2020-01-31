@@ -463,6 +463,7 @@ namespace pxt {
     export const BLOCKS_PROJECT_NAME = "blocksprj";
     export const JAVASCRIPT_PROJECT_NAME = "tsprj";
     export const PYTHON_PROJECT_NAME = "pyprj";
+    export const DEFAULT_GROUP_NAME = "other"; // used in flyout, for snippet groups
 
     export function outputName(trg: pxtc.CompileTarget = null) {
         if (!trg) trg = appTarget.compile

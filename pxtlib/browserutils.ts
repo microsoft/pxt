@@ -954,6 +954,42 @@ namespace pxt.BrowserUtils {
         }
     })();
 
+    export function getPageX(event: any) {
+        if ("pageX" in event) {
+            return (event as MouseEvent).pageX;
+        }
+        else {
+            return (event as TouchEvent).changedTouches[0].pageX;
+        }
+    }
+
+    export function getPageY(event: any) {
+        if ("pageY" in event) {
+            return (event as MouseEvent).pageY;
+        }
+        else {
+            return (event as TouchEvent).changedTouches[0].pageY;
+        }
+    }
+
+    export function getClientX(event: any) {
+        if ("clientX" in event) {
+            return (event as MouseEvent).clientX;
+        }
+        else {
+            return (event as TouchEvent).changedTouches[0].clientX;
+        }
+    }
+
+    export function getClientY(event: any) {
+        if ("clientY" in event) {
+            return (event as MouseEvent).clientY;
+        }
+        else {
+            return (event as TouchEvent).changedTouches[0].clientY;
+        }
+    }
+
     export function popupWindow(url: string, title: string, popUpWidth: number, popUpHeight: number) {
         try {
             const winLeft = window.screenLeft ? window.screenLeft : window.screenX;

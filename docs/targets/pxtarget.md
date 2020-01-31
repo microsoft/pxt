@@ -140,7 +140,6 @@ Here is the appTheme from pxt-sample with some comments:
         "homeUrl": "https://microsoft.github.io/pxt-sample/",
         "privacyUrl": "https://go.microsoft.com/fwlink/?LinkId=521839",
         "termsOfUseUrl": "https://go.microsoft.com/fwlink/?LinkID=206977",
-        "betaUrl": "https://makecode.com/",
         // populating the (?) menu
         "docMenu": [
             {
@@ -283,6 +282,15 @@ PXT expects to find the C/C++ sources on github.
         serviceId: string;
     }
 ```
+
+### ``uploadDocs`` and ``uploadApiStringsBranchRx``
+
+The ``uploadDocs`` flag determins if the API strings and docs have to be uploaded
+to crowdin when a build occurs on master or release branches.
+
+The ``uploadApiStringsBranchRx`` flag provide a custom regex
+for matching the branch where api strings should be uploaded.
+From a stable branch, this would be ``^stable\d+\.\d+$``
 
 ## Additional settings
 

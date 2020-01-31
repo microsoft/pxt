@@ -110,7 +110,7 @@ export class ProjectView
     importDialog: projects.ImportDialog;
     signInDialog: cloud.SignInDialog;
     exitAndSaveDialog: projects.ExitAndSaveDialog;
-    newProjectNameDialog: projects.NewProjectNameDialog;
+    newProjectDialog: projects.NewProjectDialog;
     chooseHwDialog: projects.ChooseHwDialog;
     chooseRecipeDialog: tutorial.ChooseRecipeDialog;
     prevEditorId: string;
@@ -1339,7 +1339,8 @@ export class ProjectView
         }
         else {
             decompilePromise = compiler.decompileBlocksSnippetAsync(template)
-                .then(blockXML => {
+                .then(resp => {
+                    const blockXML = resp.outfiles["main.blocks"];
                     if (blockXML) {
                         pkg.mainEditorPkg().setFile("main.blocks", blockXML);
                     }
@@ -1976,12 +1977,26 @@ export class ProjectView
                 cfg.dependencies[ext.name] = `workspace:${ext.id}`;
             }
         }
-        if (options.tsOnly) {
-            cfg.files = cfg.files.filter(f => f != "main.blocks")
-            delete files["main.blocks"]
-        }
+
+        if (options.tsOnly)
+            options.languageRestriction = pxt.editor.LanguageRestriction.NoBlocks;
         if (options.preferredEditor)
             cfg.preferredEditor = options.preferredEditor;
+
+        if (options.languageRestriction) {
+            let filesToDrop = /\.(blocks)$/;
+            if (options.languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly) {
+                filesToDrop = /\.(py|blocks)$/;
+                cfg.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME;
+            } else if (options.languageRestriction === pxt.editor.LanguageRestriction.PythonOnly) {
+                cfg.preferredEditor = pxt.PYTHON_PROJECT_NAME;
+            }
+
+            cfg.languageRestriction = options.languageRestriction;
+            cfg.files = cfg.files.filter(f => !filesToDrop.test(f));
+            delete files["main.blocks"];
+        }
+
         // ensure a main.py is ready if this is the desired project
         if (cfg.preferredEditor == pxt.PYTHON_PROJECT_NAME
             && cfg.files.indexOf("main.py") < 0) {
@@ -2053,7 +2068,9 @@ export class ProjectView
                                 })
                         });
                 } else {
-                    opts.tsOnly = !loadBlocks;
+                    if (!loadBlocks) {
+                        opts.languageRestriction = pxt.editor.LanguageRestriction.NoBlocks;
+                    }
                     opts.preferredEditor = preferredEditor;
                     return this.createProjectAsync(opts)
                         .then(() => {
@@ -2811,7 +2828,7 @@ export class ProjectView
         return compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileBlocksSnippetAsync(req.ts, blocksInfo))
             .then(resp => {
-                const svg = pxt.blocks.render(resp, {
+                const svg = pxt.blocks.render(resp.outfiles["main.blocks"], {
                     snippetMode: true,
                     layout: pxt.blocks.BlockLayout.Align,
                     splitSvg: false
@@ -3032,8 +3049,8 @@ export class ProjectView
         }
     }
 
-    askForProjectNameAsync() {
-        return this.newProjectNameDialog.askNameAsync()
+    askForProjectCreationOptionsAsync() {
+        return this.newProjectDialog.promptUserAsync();
     }
 
     showPackageDialog() {
@@ -3438,8 +3455,8 @@ export class ProjectView
         this.exitAndSaveDialog = c;
     }
 
-    private handleNewProjectNameDialogRef = (c: projects.NewProjectNameDialog) => {
-        this.newProjectNameDialog = c;
+    private handleNewProjectDialogRef = (c: projects.NewProjectDialog) => {
+        this.newProjectDialog = c;
     }
 
     private handleShareEditorRef = (c: share.ShareEditor) => {
@@ -3610,7 +3627,7 @@ export class ProjectView
                 {hasCloud ? <cloud.SignInDialog parent={this} ref={this.handleSignInDialogRef} onComplete={this.cloudSignInComplete} /> : undefined}
                 {inHome && targetTheme.scriptManager ? <scriptmanager.ScriptManagerDialog parent={this} ref={this.handleScriptManagerDialogRef} onClose={this.handleScriptManagerDialogClose} /> : undefined}
                 {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={this.handleExitAndSaveDialogRef} />}
-                {sandbox ? undefined : <projects.NewProjectNameDialog parent={this} ref={this.handleNewProjectNameDialogRef} />}
+                {sandbox ? undefined : <projects.NewProjectDialog parent={this} ref={this.handleNewProjectDialogRef} />}
                 {hwDialog ? <projects.ChooseHwDialog parent={this} ref={this.handleChooseHwDialogRef} /> : undefined}
                 {recipes ? <tutorial.ChooseRecipeDialog parent={this} ref={this.handleChooseRecipeDialogRef} /> : undefined}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={this.handleShareEditorRef} loading={this.state.publishing} />}

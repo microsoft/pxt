@@ -527,14 +527,14 @@ export async function bumpAsync(hd: Header, newVer = "") {
     await saveAsync(hd, files)
     return await commitAsync(hd, {
         message: cfg.version,
-        createTag: "v" + cfg.version,
+        createRelease: "v" + cfg.version,
         binaryJs: true
     })
 }
 
 export interface CommitOptions {
     message?: string;
-    createTag?: string;
+    createRelease?: string;
     filenamesToCommit?: string[];
     binaryJs?: boolean;
     // render blocks to png
@@ -599,6 +599,13 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         if (compileResp && compileResp.success && compileResp.outfiles[pxtc.BINARY_JS]) {
             await addToTree(BINARY_JS_PATH, compileResp.outfiles[pxtc.BINARY_JS]);
             await addToTree(VERSION_TXT_PATH, v);
+            // ensure template files are up to date
+            const templates = pxt.template.targetTemplateFiles();
+            if (templates) {
+                for (const fn of Object.keys(templates)) {
+                    await addToTree(fn, templates[fn]);
+                }
+            }
         }
     }
 
@@ -629,10 +636,10 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
             repo: gitjson.repo,
             sha: newCommit,
             files,
-            saveTag: options.createTag
+            saveTag: options.createRelease
         })
-        if (options.createTag)
-            await pxt.github.createTagAsync(parsed.fullName, options.createTag, newCommit)
+        if (options.createRelease)
+            await pxt.github.createReleaseAsync(parsed.fullName, options.createRelease, newCommit)
         return ""
     }
 
@@ -642,7 +649,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
             encoding: "utf-8"
         } as pxt.github.CreateBlobReq;
         if (path == pxt.CONFIG_NAME)
-            data.content = prepareConfigForGithub(data.content, !!options.createTag);
+            data.content = prepareConfigForGithub(data.content, !!options.createRelease);
         const m = /^data:([^;]+);base64,/.exec(content);
         if (m) {
             data.encoding = "base64";
@@ -935,8 +942,8 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
 }
 
 // replace all file|worspace references with github sha
-// createTag: determine if tags need to be enforced
-export function prepareConfigForGithub(content: string, createTag?: boolean): string {
+// createRelease: determine if tags need to be enforced
+export function prepareConfigForGithub(content: string, createRelease?: boolean): string {
     // replace workspace: references with resolve github sha/tags.
     const cfg = pxt.Package.parseAndValidConfig(content);
     if (!cfg) return content;
@@ -968,11 +975,11 @@ export function prepareConfigForGithub(content: string, createTag?: boolean): st
         const hid = v.substring(v.indexOf(':') + 1);
         const header = getHeader(hid);
         if (!header.githubId) {
-            if (createTag)
+            if (createRelease)
                 U.userError(lf("Dependency {0} is a local project.", d))
         } else {
             const gid = pxt.github.parseRepoId(header.githubId);
-            if (createTag && !/^v\d+/.test(header.githubTag))
+            if (createRelease && !/^v\d+/.test(header.githubTag))
                 U.userError(lf("You need to create a release for dependency {0}.", d))
             const tag = header.githubTag || gid.tag;
             cfg.dependencies[d] = `github:${gid.fullName}#${tag}`;
