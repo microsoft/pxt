@@ -1,4 +1,5 @@
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 const child_process = require("child_process");
 
@@ -367,6 +368,56 @@ function compileTsProject(dirname, destination, useOutdir) {
     );
 }
 
+function testTask(testFolder, testFile) {
+    const buildTs = () => compileTsProject("tests/" + testFolder, "built/tests", true);
+
+    const buildTestRunner = () => gulp.src([
+            "node_modules/typescript/lib/typescript.js",
+            "built/pxtlib.js",
+            "built/pxtcompiler.js",
+            "built/pxtpy.js",
+            "built/pxtsim.js",
+            "built/tests/" + testFolder + "/" + testFile,
+        ])
+        .pipe(concat("runner.js"))
+        .pipe(header(`
+            "use strict";
+            // make sure TypeScript doesn't overwrite our module.exports
+            global.savedModuleExports = module.exports;
+            module.exports = null;
+        `))
+        .pipe(gulp.dest('built/tests/' + testFolder));
+
+    const testArgs = " built/tests/" + testFolder + "/runner.js --reporter dot";
+
+
+    const runTest = () => os.platform() === "win32" ?
+        exec(path.resolve("node_modules/.bin/mocha.cmd") + testArgs, true) :
+        exec("./node_modules/.bin/mocha" + testArgs, true);
+
+    return gulp.series(buildTs, buildTestRunner, runTest);
+}
+
+const testdecompiler = testTask("decompile-test", "decompilerunner.js");
+const testlang = testTask("compile-test", "compilerunner.js");
+const testerr = testTask("errors-test", "errorrunner.js");
+const testfmt = testTask("format-test", "formatrunner.js");
+const testpydecomp = testTask("pydecompile-test", "pydecompilerunner.js");
+const testpycomp = testTask("pyconverter-test", "pyconvertrunner.js");
+const testpytraces = testTask("runtime-trace-tests", "tracerunner.js");
+const testtutorials = testTask("tutorial-test", "tutorialrunner.js");
+
+const testAll = gulp.parallel(
+    testdecompiler,
+    testlang,
+    testerr,
+    testfmt,
+    // testpydecomp,
+    testpycomp,
+    testpytraces,
+    testtutorials
+)
+
 function rimraf(dirname) {
     return new Promise((resolve, reject) => {
         _rimraf(dirname, (err) => {
@@ -378,12 +429,15 @@ function rimraf(dirname) {
 
 function exec(command, log) {
     return new Promise((resolve, reject) => {
-        child_process.exec(command, { encoding: "utf8"}, (err, stdout) => {
-            if (log && stdout && stdout.trim()) console.log(stdout.trim());
-
+        const ps = child_process.exec(command, { encoding: "utf8"}, (err, stdout) => {
             if (err) reject(err);
             else resolve(stdout);
         });
+
+        if (log) {
+            ps.stdout.pipe(process.stdout);
+            ps.stderr.pipe(process.stderr);
+        }
     });
 }
 
@@ -402,8 +456,19 @@ const buildAll = gulp.series(
     gulp.parallel(semanticjs, copyJquery, copyWebapp, copyPlayground, copySemanticFonts, copyMonaco, copyBlockly)
 );
 
+exports.default = buildAll;
+
 exports.lint = lint
 exports.clean = clean;
 exports.build = buildAll;
-exports.default = buildAll;
 exports.updatestrings = updatestrings;
+
+exports.testdecompiler = testdecompiler;
+exports.testlang = testlang;
+exports.testerr = testerr;
+exports.testfmt = testfmt;
+exports.testpydecomp = testpydecomp;
+exports.testpycomp = testpycomp;
+exports.testpytraces = testpytraces;
+exports.testtutorials = testtutorials;
+exports.test = testAll;
