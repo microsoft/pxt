@@ -2,5 +2,5 @@
 
 set -e
 
-jake built/pxt.js
+gulp build
 pxt pyconv -i parse0.py `find tmp -type f -name '*.py'`

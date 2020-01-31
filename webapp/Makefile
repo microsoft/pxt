@@ -1,8 +1,8 @@
 all:
-	jake
+	gulp
 
 test:
-	jake test
+	gulp test
 
 clean:
-	jake clean
+	gulp clean
