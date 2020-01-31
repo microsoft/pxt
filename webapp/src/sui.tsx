@@ -368,6 +368,8 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
 
 export interface ExpandableMenuProps {
     title?: string;
+    onShow?: () => void;
+    onHide?: () => void;
 }
 
 export interface ExpandableMenuState {
@@ -375,10 +377,28 @@ export interface ExpandableMenuState {
 }
 
 export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMenuState> {
+    hide = () => {
+        this.setState({ expanded: false });
+        const { onHide } = this.props;
+        if (onHide)
+            onHide();
+    }
+
+    show = () => {
+        this.setState({ expanded: true });
+        const { onShow } = this.props;
+        if (onShow)
+            onShow();
+    }
+
     toggleExpanded = () => {
-        this.setState({
-            expanded: !this.state.expanded
-        });
+        const { expanded } = this.state;
+
+        if (expanded) {
+            this.hide();
+        } else {
+            this.show();
+        }
     }
 
     render() {
