@@ -56,6 +56,40 @@
     }
 }
 
+.ui.card.file.blocksprj {
+    .fileimage {
+        background-size: 85%;
+        background-position-y: 50%;
+    }
+}
+
+.ui.card.file.pyprj {
+    .fileimage {
+        background-image: @pyIcon;
+        filter: @logoFilter;
+    }
+}
+
+.ui.card.file.tsprj {
+    .fileimage {
+        height: 2.5rem;
+        width: 2.5rem;
+        padding: .3rem;
+        margin: .25rem;
+        text-align: right;
+        background-color: @logoColor;
+        background-image: none;
+    }
+    .fileimage:after {
+        content: "js";
+        color: @white;
+        font-weight: 600;
+        font-family: sans-serif;
+        text-transform: uppercase;
+        line-height: 3rem;
+    }
+}
+
 .ui.card.file.positive, .ui.card.file.positive:focus {
     border-color: @green;
 }
