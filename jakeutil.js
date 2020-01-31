@@ -4,6 +4,7 @@ var child_process = require("child_process");
 var fs = require("fs");
 var util = require("util");
 var path = require("path");
+const _rimraf = require("rimraf")
 
 // for use with child_process.exec/execFile
 function execCallback(task) {
@@ -147,6 +148,29 @@ function stripSrcMapSync(dir) {
     }
 }
 
+function rimraf(dirname) {
+    return new Promise((resolve, reject) => {
+        _rimraf(dirname, (err) => {
+            if (err) reject(err);
+            else resolve();
+        });
+    });
+}
+
+function exec(command, log) {
+    return new Promise((resolve, reject) => {
+        const ps = child_process.exec(command, { encoding: "utf8"}, (err, stdout) => {
+            if (err) reject(err);
+            else resolve(stdout);
+        });
+
+        if (log) {
+            ps.stdout.pipe(process.stdout);
+            ps.stderr.pipe(process.stderr);
+        }
+    });
+}
+
 exports.execCallback = execCallback;
 exports.expand = expand;
 exports.expand1 = expand1;
@@ -158,3 +182,6 @@ exports.cpR = cpR;
 exports.mkdirP = mkdirP;
 exports.strpSrcMap = strpSrcMap;
 exports.stripSrcMapSync = stripSrcMapSync;
+
+exports.exec = exec;
+exports.rimraf = rimraf;

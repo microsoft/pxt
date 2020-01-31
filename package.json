@@ -123,16 +123,16 @@
   },
   "scripts": {
     "build": "gulp",
-    "test": "jake travis --trace",
-    "clean": "jake clean",
-    "lint": "jake lint",
+    "test": "gulp travis --trace",
+    "clean": "gulp clean",
+    "lint": "gulp lint",
     "start": "gulp",
-    "test:all": "jake test",
-    "test:decompiler": "jake testdecompiler",
-    "test:decompiler-errors": "jake testdecompilererrors",
-    "test:err": "jake testerr",
-    "test:fmt": "jake testfmt",
-    "test:lang": "jake testlang",
+    "test:all": "gulp test",
+    "test:decompiler": "gulp testdecompiler",
+    "test:decompiler-errors": "gulp testdecompilererrors",
+    "test:err": "gulp testerr",
+    "test:fmt": "gulp testfmt",
+    "test:lang": "gulp testlang",
     "update": "jake update"
   }
 }
