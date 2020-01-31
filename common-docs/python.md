@@ -1,6 +1,6 @@
 # Python
 
-The Microsoft MakeCode programming environment uses Python along with [JavaScript](/javascript) language.
+The Microsoft MakeCode programming environment uses Python along with the [JavaScript](/javascript) language.
 
 These topics give a brief introduction to Python with MakeCode:
 
