@@ -15,6 +15,7 @@ const rimraf = ju.rimraf;
 const isWin32 = os.platform() === "win32";
 
 const clean = () => rimraf("built").then(() => rimraf("temp"));
+const update = () => exec("git pull", true).then(() => exec("npm install", true))
 
 
 
@@ -205,6 +206,34 @@ function updatestrings() {
     return Promise.resolve();
 }
 
+// TODO: Copied from Jakefile; should be async
+function runUglify() {
+    if (process.env.PXT_ENV == 'production') {
+        console.log("Minifying built/web...")
+
+        const uglify = require("uglify-js");
+
+        ju.expand("built/web", ".js").forEach(fn => {
+            console.log("Minifying " + fn)
+
+            const content = fs.readFileSync(fn, "utf-8")
+            const res = uglify.minify(content);
+
+            if (!res.error) {
+                fs.writeFileSync(fn, res.code, { encoding: "utf8" })
+            }
+            else {
+                console.log("Could not minify " + fn);
+            }
+        });
+    }
+    else {
+        console.log("Skipping minification for non-production build")
+    }
+
+    return Promise.resolve();
+}
+
 
 
 /********************************************************
@@ -390,7 +419,10 @@ const copyBlocklyEnJs = () => gulp.src("node_modules/pxt-blockly/msg/js/en.js")
 const copyBlocklyEnJson = () => gulp.src("node_modules/pxt-blockly/msg/json/en.json")
     .pipe(gulp.dest("webapp/public/blockly/msg/json/"));
 
-const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyEnJs, copyBlocklyEnJson);
+const copyBlocklyMedia = () => gulp.src("node_modules/pxt-blockly/media")
+    .pipe(gulp.dest("webapp/public/blockly/"))
+
+const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyEnJs, copyBlocklyEnJson, copyBlocklyMedia);
 
 
 
@@ -441,8 +473,6 @@ const testAll = gulp.parallel(
     karma
 )
 
-const update = () => exec("git pull", true).then(() => exec("npm install", true))
-
 function testTask(testFolder, testFile) {
     const buildTs = () => compileTsProject("tests/" + testFolder, "built/tests", true);
 
@@ -486,18 +516,19 @@ const buildAll = gulp.series(
     gulp.parallel(buildcss, buildSVGIcons),
     webapp,
     browserifyWebapp,
-    gulp.parallel(semanticjs, copyJquery, copyWebapp, copyPlayground, copySemanticFonts, copyMonaco, copyBlockly)
+    gulp.parallel(semanticjs, copyJquery, copyWebapp, copyPlayground, copySemanticFonts, copyMonaco, copyBlockly),
+    runUglify
 );
 
 const travis = gulp.series(buildAll, lint, testAll, targetjs, pxtTravis);
 
 exports.default = buildAll;
-
-exports.lint = lint
 exports.clean = clean;
 exports.build = buildAll;
-exports.updatestrings = updatestrings;
 
+exports.updatestrings = updatestrings;
+exports.updateblockly = copyBlockly;
+exports.lint = lint
 exports.testdecompiler = testdecompiler;
 exports.testlang = testlang;
 exports.testerr = testerr;
@@ -510,3 +541,4 @@ exports.test = testAll;
 exports.travis = travis;
 exports.karma = karma;
 exports.update = update;
+exports.uglify = runUglify;
