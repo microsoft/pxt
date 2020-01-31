@@ -92,7 +92,7 @@ namespace ts.pxtc {
         //diagnostics = diagnostics.concat(emitOutput.diagnostics);
     }
 
-    export function getProgramDiagnostics(program: ts.Program) {
+    export function getProgramDiagnostics(program: ts.Program): Diagnostic[] {
         let diagnostics = program.getSyntacticDiagnostics();
         if (diagnostics.length === 0) {
             diagnostics = program.getOptionsDiagnostics().concat(Util.toArray(program.getGlobalDiagnostics()));
@@ -100,6 +100,6 @@ namespace ts.pxtc {
                 diagnostics = program.getSemanticDiagnostics();
             }
         }
-        return diagnostics
+        return diagnostics.slice(0); // fix TS 3.5 vs 2.x issue
     }
 }

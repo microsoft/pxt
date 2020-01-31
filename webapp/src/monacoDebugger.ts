@@ -64,7 +64,7 @@ export class MonacoBreakpoint implements monaco.IDisposable {
                 range: this.range,
                 options: {
                     glyphMarginClassName: glyphClass,
-                    glyphMarginHoverMessage: glyphHover
+                    glyphMarginHoverMessage: { value: glyphHover }
                 }
             }
         ]);

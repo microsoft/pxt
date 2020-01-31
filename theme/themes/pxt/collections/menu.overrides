@@ -11,7 +11,7 @@
 }
 
 .ui.menu.fixed {
-    position: absolute;   
+    position: absolute;
 }
 
 .menubar .ui.menu {

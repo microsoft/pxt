@@ -400,7 +400,7 @@ namespace pxt.runner {
 
         let snippetCount = 0;
         return renderNextSnippetAsync(options.snippetClass, (c, r) => {
-            const s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
+            const s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg as HTMLElement) : undefined;
             const p = r.compilePython && r.compilePython.success && r.compilePython.outfiles["main.py"];
             const js = $('<code class="lang-typescript highlight"/>').text(c.text().trim());
             const py = p ? $('<code class="lang-python highlight"/>').text(p.trim()) : undefined;
@@ -445,7 +445,8 @@ namespace pxt.runner {
             let block = Blockly.Blocks[symbolInfo.attributes.blockId];
             let xml = block && block.codeCard ? block.codeCard.blocksXml : undefined;
 
-            const s = xml ? $(pxt.blocks.render(xml)) : r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
+            const blocksHtml = xml ? pxt.blocks.render(xml) : r.compileBlocks && r.compileBlocks.success ? r.blocksSvg : undefined;
+            const s = blocksHtml ? $(blocksHtml as HTMLElement) : undefined
             let sig = info.decl.getText().replace(/^export/, '');
             sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
             const js = $('<code class="lang-typescript highlight"/>').text(sig);
@@ -641,7 +642,7 @@ namespace pxt.runner {
                                 update: true
                             })
                         }
-                        fillWithWidget(opts, $el.parent(), $(diffJs), diffPy && $(diffPy), $(diffBlocks.svg), undefined, {
+                        fillWithWidget(opts, $el.parent(), $(diffJs), diffPy && $(diffPy), $(diffBlocks.svg as HTMLElement), undefined, {
                             showEdit: false,
                             run: false,
                             hexname: undefined,
@@ -1041,7 +1042,7 @@ namespace pxt.runner {
             run: !!options.simulator
         }
 
-        function render(e: Node, ignored: boolean) {
+        function render(e: HTMLElement, ignored: boolean) {
             if (typeof hljs !== "undefined") {
                 $(e).text($(e).text().replace(/^\s*\r?\n/, ''))
                 hljs.highlightBlock(e)
@@ -1067,7 +1068,7 @@ namespace pxt.runner {
             run: !!options.simulator
         }
 
-        function render(e: Node, ignored: boolean) {
+        function render(e: HTMLElement, ignored: boolean) {
             if (typeof hljs !== "undefined") {
                 $(e).text($(e).text().replace(/^\s*\r?\n/, ''))
                 hljs.highlightBlock(e)

@@ -7,6 +7,7 @@ const ts = require("gulp-typescript");
 const merge = require("merge-stream");
 const concat = require("gulp-concat");
 const header = require("gulp-header");
+const replace = require("gulp-replace");
 const ju = require("./jakeutil");
 
 const exec = ju.exec;
@@ -23,7 +24,7 @@ const update = () => exec("git pull", true).then(() => exec("npm install", true)
                     TypeScript build
 *********************************************************/
 
-const copyTypescriptServices = () => gulp.src("node_modules/typescript/lib/typescriptServices.d.ts")
+const copyTypescriptServices = () => gulp.src("pxtcompiler/ext-typescript/lib/typescriptServices.d.ts")
     .pipe(gulp.dest("built"));
 
 const pxtlib = () => compileTsProject("pxtlib");
@@ -59,7 +60,7 @@ const pxtapp = () => gulp.src([
     .pipe(gulp.dest("built/web"));
 
 const pxtworker = () => gulp.src([
-        "node_modules/typescript/lib/typescript.js",
+        "pxtcompiler/ext-typescript/lib/typescript.js",
         "node_modules/fuse.js/dist/fuse.min.js",
         "node_modules/lzma/src/lzma_worker-min.js",
         "built/pxtlib.js",
@@ -71,7 +72,7 @@ const pxtworker = () => gulp.src([
     .pipe(gulp.dest("built/web"));
 
 const pxtembed = () => gulp.src([
-        "node_modules/typescript/lib/typescript.js",
+        "pxtcompiler/ext-typescript/lib/typescript.js",
         "node_modules/lzma/src/lzma_worker-min.js",
         "built/pxtlib.js",
         "built/pxtcompiler.js",
@@ -85,7 +86,7 @@ const pxtembed = () => gulp.src([
     .pipe(gulp.dest("built/web"));
 
 const pxtjs = () => gulp.src([
-        "node_modules/typescript/lib/typescript.js",
+        "pxtcompiler/ext-typescript/lib/typescript.js",
         "built/pxtlib.js",
         "built/pxtcompiler.js",
         "built/pxtpy.js",
@@ -265,7 +266,7 @@ const copyWebapp = () =>
     gulp.src([
         "node_modules/bluebird/js/browser/bluebird.min.js",
         "node_modules/applicationinsights-js/dist/ai.0.js",
-        "node_modules/typescript/lib/typescript.js",
+        "pxtcompiler/ext-typescript/lib/typescript.js",
         "built/pxtlib.js",
         "built/pxtcompiler.js",
         "built/pxtpy.js",
@@ -362,28 +363,37 @@ const copyMonacoEditor = () => gulp.src([
 const copyMonacoLoader = () => gulp.src("node_modules/monaco-editor/min/vs/loader.js")
     .pipe(gulp.dest("webapp/public/vs"));
 
-const copyMonacoEditorMain = () => gulp.src("node_modules/monaco-editor/dev/vs/editor/editor.main.js")
+const languages = ["bat", "cpp", "typescript", "json", "javascript", "markdown", "python"]
+const copyMonacoEditorMain = () => gulp.src("node_modules/monaco-editor/min/vs/editor/editor.main.js")
+    .pipe(replace(/"\.\/([\w-]+)\/\1\.contribution"(?:,)?\s*/gi, (match, lang) => {
+        if (languages.indexOf(lang) === -1) {
+            return ""
+        }
+        return match;
+    }))
     .pipe(gulp.dest("built/web/vs/editor/"));
 
-const copyMonacoBasicLanguages = () => gulp.src([
-        "node_modules/monaco-editor/min/vs/basic-languages/src/bat.js",
-        "node_modules/monaco-editor/min/vs/basic-languages/src/cpp.js",
-        "node_modules/monaco-editor/min/vs/basic-languages/src/python.js",
-        "node_modules/monaco-editor/min/vs/basic-languages/src/markdown.js"
-    ])
-    .pipe(gulp.dest("webapp/public/vs/basic-languages/src/"));
+const basicLanguages = ["bat", "cpp", "typescript", "javascript", "markdown", "python"];
+const copyMonacoBasicLanguages = gulp.parallel(basicLanguages.map(lang => {
+    return () => gulp.src(`node_modules/monaco-editor/min/vs/basic-languages/${lang}/${lang}.js`)
+        .pipe(gulp.dest(`webapp/public/vs/basic-languages/${lang}`))
+}));
 
 const copyMonacoJSON = () => gulp.src("webapp/public/vs/language/json/**/*")
     .pipe(gulp.dest("webapp/public/vs/language/json"));
 
-const copyMonacoTypescript = () => gulp.src([
-        "node_modules/pxt-monaco-typescript/release/src/mode.js",
-        "node_modules/pxt-monaco-typescript/release/src/worker.js"
-    ])
-    .pipe(gulp.dest("built/web/vs/language/typescript/src/"));
+const copyMonacoTypescript = () => gulp.src("webapp/public/vs/language/typescript/**/*")
+    .pipe(gulp.dest("webapp/public/vs/language/typescript"));
 
-const copyMonacoTypescriptServices = () => gulp.src("node_modules/pxt-monaco-typescript/release/lib/typescriptServices.js")
-    .pipe(gulp.dest("built/web/vs/language/typescript/lib/"));
+const inlineCodiconFont = () => {
+    // For whatever reason the codicon.ttf font that comes with the monaco-editor is invalid.
+    // We need to inline the font anyways so fetch a good version of the font from the source
+    let font = fs.readFileSync("node_modules/vscode-codicons/dist/codicon.ttf").toString("base64");
+
+    return gulp.src("webapp/public/vs/editor/editor.main.css")
+        .pipe(replace(`../base/browser/ui/codiconLabel/codicon/codicon.ttf`, `data:application/x-font-ttf;charset=utf-8;base64,${font}`))
+        .pipe(gulp.dest("webapp/public/vs/editor/"))
+}
 
 const stripMonacoSourceMaps = () => {
     ju.stripSrcMapSync("webapp/public/vs/")
@@ -398,7 +408,7 @@ const copyMonaco = gulp.series(gulp.parallel(
     copyMonacoJSON,
     copyMonacoBasicLanguages,
     copyMonacoTypescript,
-    copyMonacoTypescriptServices
+    inlineCodiconFont
 ), stripMonacoSourceMaps);
 
 
@@ -477,7 +487,7 @@ function testTask(testFolder, testFile) {
     const buildTs = () => compileTsProject("tests/" + testFolder, "built/tests", true);
 
     const buildTestRunner = () => gulp.src([
-            "node_modules/typescript/lib/typescript.js",
+            "pxtcompiler/ext-typescript/lib/typescript.js",
             "built/pxtlib.js",
             "built/pxtcompiler.js",
             "built/pxtpy.js",

@@ -149,6 +149,7 @@ namespace pxsim {
         type: "screenshot";
         data: ImageData;
         delay?: number;
+        modalContext?: string;
     }
 
     export interface SimulatorRecorderMessage extends SimulatorMessage {

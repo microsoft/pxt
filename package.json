@@ -78,7 +78,7 @@
     "webusb": "^1.1.1"
   },
   "devDependencies": {
-    "monaco-editor": "0.10.0",
+    "monaco-editor": "0.19.3",
     "pxt-monaco-typescript": "2.3.6",
     "pxt-blockly": "2.1.14",
     "react": "16.8.3",
@@ -88,7 +88,7 @@
     "react-tooltip": "3.9.0",
     "redux": "3.7.2",
     "pouchdb": "5.4.5",
-    "typescript": "2.6.1",
+    "typescript": "3.7.5",
     "jquery": "3.4.1",
     "fuse.js": "3.2.0",
     "highlight.js": "9.12.0",
@@ -104,13 +104,14 @@
     "merge-stream": "2.0.0",
     "gulp-concat": "2.6.1",
     "gulp-header": "2.0.9",
+    "gulp-replace": "1.0.0",
     "@types/react-modal": "3.1.2",
     "@types/react-tooltip": "3.3.6",
     "@types/chai": "4.0.6",
     "@types/bluebird": "2.0.33",
     "@types/fuse": "2.5.2",
     "@types/highlight.js": "9.12.2",
-    "@types/jquery": "3.2.16",
+    "@types/jquery": "3.3.29",
     "@types/marked": "0.3.0",
     "@types/mocha": "2.2.44",
     "@types/node": "8.0.53",
@@ -118,7 +119,8 @@
     "@types/react-dom": "16.0.3",
     "@types/react-redux": "5.0.0",
     "@types/request": "2.48.2",
-    "@types/web-bluetooth": "0.0.4"
+    "@types/web-bluetooth": "0.0.4",
+    "vscode-codicons": "microsoft/vscode-codicons#f0caa623812a"
   },
   "scripts": {
     "build": "gulp",
