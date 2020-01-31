@@ -44,7 +44,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
     constructor(public editor: Editor, public python: boolean) {
     }
 
-    triggerCharacters?: string[] = ["."];
+    triggerCharacters?: string[] = ["(", ",", "."];
 
     kindMap = {}
     private tsKindToMonacoKind(s: pxtc.SymbolKind): monaco.languages.CompletionItemKind {
@@ -780,6 +780,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.hideFlyout();
             })
 
+            // TODO: typescript
             monaco.languages.registerCompletionItemProvider("python", new CompletionProvider(this, true));
             monaco.languages.registerSignatureHelpProvider("python", new SignatureHelper(this, true));
             monaco.languages.registerHoverProvider("python", new HoverProvider(this, true));
