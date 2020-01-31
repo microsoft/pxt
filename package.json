@@ -122,7 +122,7 @@
   },
   "scripts": {
     "build": "gulp",
-    "test": "gulp travis --trace",
+    "test": "gulp travis",
     "clean": "gulp clean",
     "lint": "gulp lint",
     "start": "gulp",
