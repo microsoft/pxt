@@ -22,13 +22,13 @@ namespace pxt.blocks {
             return false;
         // collect all ids
         const oldids: pxt.Map<boolean> = {};
-        oldXml.replace(/id="([^]+)"/g, (m, id) => { oldids[id] = true; return ""; });
+        oldXml.replace(/id="([^"]+)"/g, (m, id) => { oldids[id] = true; return ""; });
         if (!Object.keys(oldids).length)
             return false;
         // test if any newid exists in old
         let total = 0;
         let found = 0;
-        newXml.replace(/id="([^]+)"/g, (m, id) => {
+        newXml.replace(/id="([^"]+)"/g, (m, id) => {
             total++;
             if (oldids[id])
                 found++;
