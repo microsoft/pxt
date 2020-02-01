@@ -16,6 +16,27 @@ namespace pxt.blocks {
         modified: number;
     }
 
+    // sniff ids to see if the xml was completly reconstructed
+    export function needsDecompiledDiff(oldXml: string, newXml: string): boolean {
+        if (!oldXml || !newXml)
+            return false;
+        // collect all ids
+        const oldids: pxt.Map<boolean> = {};
+        oldXml.replace(/id="([^]+)"/g, (m, id) => { oldids[id] = true; return ""; });
+        if (!Object.keys(oldids).length)
+            return false;
+        // test if any newid exists in old
+        let total = 0;
+        let found = 0;
+        newXml.replace(/id="([^]+)"/g, (m, id) => {
+            total++;
+            if (oldids[id])
+                found++;
+            return "";
+        });
+        return total > 0 && found == 0;
+    }
+
     export function diffXml(oldXml: string, newXml: string, options?: DiffOptions): DiffResult {
         const oldWs = pxt.blocks.loadWorkspaceXml(oldXml, true);
         const newWs = pxt.blocks.loadWorkspaceXml(newXml, true);
