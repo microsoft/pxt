@@ -597,21 +597,27 @@ namespace pxt.github {
 
     export function enablePagesAsync(repo: string) {
         // https://developer.github.com/v3/repos/pages/#enable-a-pages-site
-        return ghPostAsync(`https://api.github.com/repos/${repo}/pages`, {
-            source: {
-                branch: "master",
-                path: ""
-          }
-        }, {
-            "Accept": "application/vnd.github.switcheroo-preview+json"
-        }).then(r => {
-            const url = r.html_url;
-            // update repo home page
-            return ghPostAsync(`https://api.github.com/repos/${repo}`,
-            {
-                "homepage": url
-            }, undefined, "PATCH");
-        });
+        return ghGetTextAsync(`${repo}/pages`) // try to get the pages
+            // if failed, try creating the pages
+            .catch(e => ghPostAsync(`${repo}/pages`, {
+                source: {
+                    branch: "master",
+                    path: ""
+                }
+            }, {
+                "Accept": "application/vnd.github.switcheroo-preview+json"
+            })
+            ).then(r => {
+                const url = r.html_url;
+                // check if the repo already has a web site
+                return ghGetJsonAsync(repo)
+                    // no web site, use pages url
+                    .then(rep => !rep.homepage ? ghPostAsync(repo,
+                        {
+                            "homepage": url
+                        }, undefined, "PATCH") : Promise.resolve()
+                    );
+            });
     }
 
     export function repoIconUrl(repo: GitRepo): string {
