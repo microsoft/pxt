@@ -16,6 +16,27 @@ namespace pxt.blocks {
         modified: number;
     }
 
+    // sniff ids to see if the xml was completly reconstructed
+    export function needsDecompiledDiff(oldXml: string, newXml: string): boolean {
+        if (!oldXml || !newXml)
+            return false;
+        // collect all ids
+        const oldids: pxt.Map<boolean> = {};
+        oldXml.replace(/id="([^"]+)"/g, (m, id) => { oldids[id] = true; return ""; });
+        if (!Object.keys(oldids).length)
+            return false;
+        // test if any newid exists in old
+        let total = 0;
+        let found = 0;
+        newXml.replace(/id="([^"]+)"/g, (m, id) => {
+            total++;
+            if (oldids[id])
+                found++;
+            return "";
+        });
+        return total > 0 && found == 0;
+    }
+
     export function diffXml(oldXml: string, newXml: string, options?: DiffOptions): DiffResult {
         const oldWs = pxt.blocks.loadWorkspaceXml(oldXml, true);
         const newWs = pxt.blocks.loadWorkspaceXml(newXml, true);
@@ -400,7 +421,9 @@ namespace pxt.blocks {
             if (!keepChildren) {
                 if (e.localName == "next")
                     e.remove(); // disconnect or unplug not working propertly
-                if (e.localName == "statement")
+                else if (e.localName == "statement")
+                    e.remove();
+                else if (e.localName == "shadow") // ignore internal nodes
                     e.remove();
             }
         })
@@ -439,6 +462,7 @@ namespace pxt.blocks {
         log(diffLines);
 
         // build old -> new lines mapping
+        const newids: pxt.Map<string> = {};
         let oldLineStart = 0;
         let newLineStart = 0;
         diffLines.forEach((ln, index) => {
@@ -463,23 +487,25 @@ namespace pxt.blocks {
                         lineLength -= lwl;
                     }
                     // find block ids mapped to the ranges
-                    const oldid = pxt.blocks.findBlockId(oldResp.blockSourceMap, {
-                        start: oldLineStart,
-                        length: lineLength
-                    });
                     const newid = pxt.blocks.findBlockId(newResp.blockSourceMap, {
                         start: newLineStart,
                         length: lineLength
                     });
+                    if (newid && !newids[newid]) {
+                        const oldid = pxt.blocks.findBlockId(oldResp.blockSourceMap, {
+                            start: oldLineStart,
+                            length: lineLength
+                        });
 
-                    // patch workspace
-                    log(ln);
-                    log(`id ${oldLineStart}:${line.length}>${oldid} ==> ${newLineStart}:${line.length}>${newid}`)
-                    if (oldid && newid) {
-                        newXml = newXml.replace(newid, oldid);
-                        log(newXml);
+                        // patch workspace
+                        if (oldid) {
+                            log(ln);
+                            log(`id ${oldLineStart}:${line.length}>${oldid} ==> ${newLineStart}:${line.length}>${newid}`)
+                            newids[newid] = oldid;
+                            newXml = newXml.replace(newid, oldid);
+                        }
+
                     }
-
                     oldLineStart += lineLength + 1;
                     newLineStart += lineLength + 1;
                     break;

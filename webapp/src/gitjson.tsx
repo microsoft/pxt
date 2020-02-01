@@ -19,6 +19,9 @@ interface DiffFile {
     name: string;
     gitFile: string;
     editorFile: string;
+    // for blocks only
+    tsGitFile?: string;
+    tsEditorFile?: string;
 }
 
 interface DiffCache {
@@ -565,14 +568,31 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             // the xml payload needs to be decompiled
             diffJSX = <div className="ui basic segment">{lf("Your blocks were updated. Go back to the editor to view the changes.")}</div>
         } else {
-            const markdown =
-                `
+            // if the xml is completed reconstructed, 
+            // bail off to decompiled diffs
+            let markdown: string;
+            if (f.tsEditorFile &&
+                pxt.blocks.needsDecompiledDiff(baseContent, content)
+            ) {
+                markdown =
+                    `
+\`\`\`diffblocks
+${f.tsGitFile || ""}
+---------------------
+${f.tsEditorFile}
+\`\`\`
+`;
+
+            } else {
+                markdown =
+                    `
 \`\`\`diffblocksxml
 ${baseContent}
 ---------------------
 ${content}
 \`\`\`
 `;
+            }
             diffJSX = <markedui.MarkedContent key={`diffblocksxxml${f.name}`} parent={this.props.parent} markdown={markdown} />
         }
         const legendJSX = <p className="legend">
@@ -826,13 +846,23 @@ ${content}
                 const c = p.publishedContent();
                 if (p.baseGitContent == c)
                     return undefined;
-                else
-                    return {
+                else {
+                    const df: DiffFile = {
                         file: p,
                         name: p.name,
                         gitFile: p.baseGitContent,
                         editorFile: c
                     }
+                    if (/\.blocks$/.test(p.name)) {
+                        const vpn = p.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME);
+                        const vp = files.find(ff => ff.name == vpn);
+                        if (vp) {
+                            df.tsGitFile = vp.baseGitContent;
+                            df.tsEditorFile = vp.publishedContent();
+                        }
+                    }
+                    return df;
+                }
             })
             .filter(df => !!df);
         const needsCommit = diffFiles.length > 0;

@@ -71,9 +71,12 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[code]);
         } else {
             renderer(code)
-                .done(renderedCode => {
+                .then(renderedCode => {
                     MarkedContent.blockSnippetCache[code] = renderedCode;
                     this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[code]);
+                }).catch(e => {
+                    pxt.reportException(e);
+                    this.finishRenderLangSnippet(wrapperDiv, lf("Something changed."))
                 })
         }
     }
