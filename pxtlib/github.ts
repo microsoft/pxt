@@ -595,29 +595,40 @@ namespace pxt.github {
         }).then(v => mkRepo(v, null))
     }
 
-    export function enablePagesAsync(repo: string) {
+    export async function enablePagesAsync(repo: string) {
         // https://developer.github.com/v3/repos/pages/#enable-a-pages-site
-        return ghGetTextAsync(`${repo}/pages`) // try to get the pages
-            // if failed, try creating the pages
-            .catch(e => ghPostAsync(`${repo}/pages`, {
+        // try read status
+        let url: string = undefined;
+        try {
+            const status = await ghGetJsonAsync(`https://api.github.com/repos/${repo}/pages`) // try to get the pages
+            if (status)
+                url = status.html_url;
+        } catch (e) { }
+
+        // status failed, try enabling pages
+        if (!url) {
+            // enable pages
+            const r = await ghPostAsync(`https://api.github.com/repos/${repo}/pages`, {
                 source: {
                     branch: "master",
                     path: ""
                 }
             }, {
                 "Accept": "application/vnd.github.switcheroo-preview+json"
-            })
-            ).then(r => {
-                const url = r.html_url;
-                // check if the repo already has a web site
-                return ghGetJsonAsync(repo)
-                    // no web site, use pages url
-                    .then(rep => !rep.homepage ? ghPostAsync(repo,
-                        {
-                            "homepage": url
-                        }, undefined, "PATCH") : Promise.resolve()
-                    );
             });
+            url = r.html_url;
+        }
+
+        // we have a URL, update project
+        if (url) {
+            // check if the repo already has a web site
+            const rep = await ghGetJsonAsync(`https://api.github.com/repos/${repo}`);
+            if (rep && !rep.homepage)
+                await ghPostAsync(`https://api.github.com/repos/${repo}`,
+                    {
+                        "homepage": url
+                    }, undefined, "PATCH");
+        }
     }
 
     export function repoIconUrl(repo: GitRepo): string {
