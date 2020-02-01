@@ -70,7 +70,12 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
         const offset = model.getOffsetAt(position);
         const source = model.getValue();
         const fileName = this.editor.currFile.name;
-        return compiler.completionsAsync(fileName, offset, source)
+
+        const word = model.getWordUntilPosition(position);
+        const wordStartOffset = model.getOffsetAt({ lineNumber: position.lineNumber, column: word.startColumn })
+        const wordEndOffset = model.getOffsetAt({ lineNumber: position.lineNumber, column: word.endColumn })
+
+        return compiler.completionsAsync(fileName, offset, wordStartOffset, wordEndOffset, source)
             .then(completions => {
                 const items = (completions.entries || []).map((si, i) => {
                     let insertSnippet = this.python ? si.pySnippet : si.snippet;

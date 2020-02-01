@@ -863,14 +863,22 @@ namespace ts.pxtc.service {
         },
 
         getCompletions: v => {
-            let src: string = v.fileContent
-            if (v.fileContent) {
-                host.setFile(v.fileName, v.fileContent);
+            const { fileName, fileContent, position, wordStartPos, wordEndPos, runtime } = v
+            let src: string = fileContent
+            if (fileContent) {
+                host.setFile(fileName, fileContent);
             }
-            const isPython = /\.py$/.test(v.fileName);
+
+            const word = src.substring(wordStartPos, wordEndPos)
+            const span: PosSpan = { startPos: wordStartPos, endPos: wordEndPos }
+            console.log("word")
+            console.dir({ wordStartPos, wordEndPos })
+            console.log(word)
+
+            const isPython = /\.py$/.test(fileName);
             let dotIdx = -1
             let complPosition = -1
-            for (let i = v.position - 1; i >= 0; --i) {
+            for (let i = position - 1; i >= 0; --i) {
                 if (src[i] == ".") {
                     dotIdx = i
                     break
@@ -881,26 +889,26 @@ namespace ts.pxtc.service {
                     complPosition = i
             }
 
-            if (dotIdx == v.position - 1) {
+            if (dotIdx == position - 1) {
                 // "foo.|" -> we add "_" as field name to minimize the risk of a parse error
-                src = src.slice(0, v.position) + "_" + src.slice(v.position)
+                src = src.slice(0, position) + "_" + src.slice(position)
             } else if (complPosition == -1) {
-                src = src.slice(0, v.position) + "_" + src.slice(v.position)
-                complPosition = v.position
+                src = src.slice(0, position) + "_" + src.slice(position)
+                complPosition = position
             }
-            console.log("src")
-            console.log(src)
-            console.dir({ dotIdx })
+            // console.log("src")
+            // console.log(src)
+            // console.dir({ dotIdx })
 
-            let lastNl = src.lastIndexOf("\n", v.position)
+            let lastNl = src.lastIndexOf("\n", position)
             lastNl = Math.max(0, lastNl)
-            const cursorLine = src.substring(lastNl, v.position)
+            const cursorLine = src.substring(lastNl, position)
             console.log(cursorLine)
 
             if (dotIdx != -1)
                 complPosition = dotIdx
 
-            //console.log(v.fileContent.slice(v.position - 20, v.position) + "<X>" + v.fileContent.slice(v.position, v.position + 20))
+            //console.log(fileContent.slice(cursorPosition - 20, cursorPosition) + "<X>" + fileContent.slice(cursorPosition, cursorPosition + 20))
 
             const entries: pxt.Map<SymbolInfo> = {};
             const r: CompletionInfo = {
@@ -911,7 +919,7 @@ namespace ts.pxtc.service {
             }
 
             let opts = U.flatClone(host.opts)
-            opts.fileSystem[v.fileName] = src
+            opts.fileSystem[fileName] = src
             addApiInfo(opts);
             opts.syntaxInfo = {
                 position: complPosition,
@@ -924,26 +932,35 @@ namespace ts.pxtc.service {
                 }
 
                 if (res.sourceMap) {
-                    let overlaps = res.sourceMap
-                        .filter(i => i.py.startPos <= v.position && v.position < i.py.endPos)
-                    console.log("overlaps")
-                    console.dir(overlaps)
-                    if (overlaps.length) {
-                        let shortest = overlaps
-                            .reduce((p, n) => (n.py.endPos - n.py.startPos) < (p.py.endPos - p.py.startPos) ? n : p, overlaps[0])
-                        console.dir(overlaps)
+                    const pySrc = src
+                    const tsSrc = res.outfiles["main.ts"]
+                    const srcMap = pxtc.BuildSourceMapHelpers(res.sourceMap, tsSrc, pySrc)
 
+                    const shortest = srcMap.py.smallestOverlap(span)
+                    // console.dir(shortest)
+                    const allOverlaps = srcMap.py.allOverlaps(span)
+                    const allTxt = res.sourceMap.map(i => ({
+                        ts: srcMap.ts.getText(i.ts),
+                        py: srcMap.py.getText(i.py)
+                    }))
+                    // console.log("#### ALL OVERLAPS")
+                    // console.log(pySrc)
+                    // console.log(tsSrc)
+                    // console.dir(allTxt)
+
+                    if (shortest) {
                         let tsPos = shortest.ts.startPos
 
                         let prog = service.getProgram()
 
                         let tsAst = prog.getSourceFile("main.ts")
 
-                        console.log(tsAst.getText())
+                        // console.log(tsAst.getText())
 
                         const findInnerMostNodeAtPosition = (n: Node): Node => {
-                            console.log(n.kind)
-                            console.log(n.getText())
+                            // console.log(n.kind)
+                            // console.log(n.getText())
+                            // console.dir(n)
                             for (let child of n.getChildren()) {
                                 let s = child.getStart()
                                 let e = child.getEnd()
@@ -953,9 +970,50 @@ namespace ts.pxtc.service {
                             return n
                         }
 
-                        let astNode = findInnerMostNodeAtPosition(tsAst)
-                        console.dir(astNode)
+                        // CallExpression
+                        let innerMost = findInnerMostNodeAtPosition(tsAst)
+                        if (innerMost) {
 
+                            let tc = prog.getTypeChecker()
+                            // let typ = tc.getTypeAtLocation(innerMost)
+                            // console.log("WORD_TYPE")
+                            // console.dir(typ)
+
+                            const findCallExpression = (n: Node): ts.CallExpression | undefined => {
+                                if (n.parent) {
+                                    if (ts.isCallExpression(n.parent)) {
+                                        return n.parent
+                                    }
+                                    return findCallExpression(n.parent)
+                                }
+                                return undefined
+                            }
+                            const call = findCallExpression(innerMost)
+                            console.log("CALL")
+                            console.dir(call)
+                            if (call) {
+                                // which argument are we ?
+                                let paramIdx = call.arguments
+                                    .map(a => a === innerMost)
+                                    .indexOf(true)
+                                console.log("ARG IDX")
+                                console.dir(paramIdx)
+
+                                const blocksInfo = blocksInfoOp(lastApiInfo.apis, runtime.bannedCategories);
+
+                                if (paramIdx >= 0) {
+                                    let paramType = getParameterTsType(call, paramIdx, blocksInfo)
+                                    // const realSym = lastApiInfo.apis.byQName[paramType]
+                                    // console.log("REAL")
+                                    // console.dir(realSym)
+                                    if (paramType) {
+                                        let matchingApis = getApisForTsType(paramType, call, tc)
+                                        console.log("MATCHING APIS")
+                                        console.dir(matchingApis)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1250,6 +1308,78 @@ namespace ts.pxtc.service {
         }
     }
 
+    function getParameterTsType(call: CallExpression, paramIdx: number, blocksInfo: BlocksInfo): string | undefined {
+        // pxt symbol
+        const callTs = call.expression.getText()
+        console.log("CALL TS")
+        console.log(callTs)
+        const api = lastApiInfo.apis.byQName[callTs]
+        console.log("API")
+        console.dir(api)
+
+        if (!api || paramIdx < 0)
+            return undefined;
+
+        const paramDesc = api.parameters[paramIdx]
+        let result = paramDesc.type;
+
+        // check if this parameter has a shadow block, if so use the type from that instead
+        if (api.attributes._def) {
+            const blockParams = api.attributes._def.parameters
+            const blockParam = blockParams[paramIdx]
+            // console.log("BLK PARAM")
+            // console.dir(blockParam)
+
+            const shadowId = blockParam.shadowBlockId
+            if (shadowId) {
+                const shadowBlk = blocksInfo.blocksById[shadowId]
+                const shadowApi = lastApiInfo.apis.byQName[shadowBlk.qName]
+                // console.log("SHADOW")
+                // console.log(shadowId)
+                // console.dir(shadowBlk)
+                // console.dir(shadowApi)
+
+                const isPassThrough = shadowApi.attributes.shim === "TD_ID"
+                if (isPassThrough && shadowApi.parameters.length === 1) {
+                    const realTyp = shadowApi.parameters[0].type
+                    result = realTyp
+                }
+            }
+        }
+
+        return result
+    }
+
+    function getApisForTsType(pxtType: string, location: Node, tc: TypeChecker): SymbolInfo[] {
+        // any apis that return this type?
+        // TODO: if this becomes expensive, this can be cached between calls since the same
+        // return type is likely to occur over and over.
+        const apisByRetType: pxt.Map<SymbolInfo[]> = {}
+        pxt.U.values(lastApiInfo.apis.byQName)
+            .forEach(i => {
+                apisByRetType[i.retType] = [...(apisByRetType[i.retType] || []), i]
+            })
+
+        const retApis = apisByRetType[pxtType]
+        // console.log("RET APIS")
+        // console.dir(retApis)
+
+        // any enum members?
+        let enumVals: SymbolInfo[] = []
+        for (let r of retApis) {
+            const asTsEnum = getTsSymbolFromPxtSymbol(r, location, SymbolFlags.Enum)
+            if (asTsEnum) {
+                const enumType = tc.getTypeOfSymbolAtLocation(asTsEnum, location)
+                const mems = getEnumMembers(enumType)
+                const enumValQNames = mems.map(e => enumMemberToQName(tc, e))
+                const symbols = enumValQNames.map(n => lastApiInfo.apis.byQName[n])
+                enumVals = [...enumVals, ...symbols]
+            }
+        }
+
+        return [...retApis, ...enumVals]
+    }
+
     function runConversionsAndCompileUsingService(): CompileResult {
         addApiInfo(host.opts)
         const prevFS = U.flatClone(host.opts.fileSystem);
@@ -1346,9 +1476,13 @@ namespace ts.pxtc.service {
 
         const attrs = fn.attributes;
 
-        let blocks = blocksInfoOp(apis, runtimeOps.bannedCategories).blocks;
-        let blocksById = pxt.Util.toDictionary(blocks, t => t.attributes.blockId)
+        const checker = service && service.getProgram().getTypeChecker();
+
+        const blocksInfo = blocksInfoOp(apis, runtimeOps.bannedCategories);
+        const blocksById = blocksInfo.blocksById
+
         function getShadowSymbol(paramName: string): SymbolInfo | null {
+            // TODO(dz): unify this with auto-complete smarts?
             let shadowBlock = (attrs._shadowOverrides || {})[paramName]
             if (!shadowBlock)
                 return null
@@ -1361,15 +1495,6 @@ namespace ts.pxtc.service {
                 sym = realSym || sym
             }
             return sym
-        }
-
-        const checker = service && service.getProgram().getTypeChecker();
-
-        function getTsSymbolFromPxtSymbol(inSym: SymbolInfo, anchor: ts.Node): ts.Symbol | null {
-            // TODO: handle non-enum types
-            const tsSymbols = checker.getSymbolsInScope(anchor, SymbolFlags.Enum)
-            const tsSymbolMap = pxt.Util.toDictionary(tsSymbols, s => s.escapedName.toString())
-            return tsSymbolMap[inSym.qName] || null
         }
 
         function getParameterDefault(param: ParameterDeclaration) {
@@ -1390,7 +1515,7 @@ namespace ts.pxtc.service {
             function getDefaultValueOfType(type: ts.Type): string | null {
                 // TODO: generalize this to handle more types
                 if (type.symbol && type.symbol.flags & SymbolFlags.Enum) {
-                    return getDefaultEnumValue(type);
+                    return getDefaultEnumValue(type, python);
                 }
                 if (isObjectType(type)) {
                     const typeSymbol = apis.byQName[checker.getFullyQualifiedName(type.symbol)];
@@ -1410,10 +1535,26 @@ namespace ts.pxtc.service {
                 return null
             }
 
+            function getShadowSymbol(paramName: string): SymbolInfo | null {
+                // TODO: generalize and unify this with getCompletions code
+                let shadowBlock = (attrs._shadowOverrides || {})[paramName]
+                if (!shadowBlock)
+                    return null
+                let sym = blocksById[shadowBlock]
+                if (!sym)
+                    return null
+                if (sym.attributes.shim === "TD_ID" && sym.parameters.length) {
+                    let realName = sym.parameters[0].type
+                    let realSym = apis.byQName[realName]
+                    sym = realSym || sym
+                }
+                return sym
+            }
+
             // check if there's a shadow override defined
             let shadowSymbol = getShadowSymbol(name)
             if (shadowSymbol) {
-                let tsSymbol = getTsSymbolFromPxtSymbol(shadowSymbol, param)
+                let tsSymbol = getTsSymbolFromPxtSymbol(shadowSymbol, param, SymbolFlags.Enum)
                 if (tsSymbol) {
                     let shadowType = checker.getTypeOfSymbolAtLocation(tsSymbol, param)
                     if (shadowType) {
@@ -1601,37 +1742,63 @@ namespace ts.pxtc.service {
                 return n;
             } else return `function () {}`;
         }
+    }
 
-        function getDefaultEnumValue(t: Type) {
-            // Note: AFAIK this is NOT guranteed to get the same default as you get in
-            // blocks. That being said, it should get the first declared value. Only way
-            // to guarantee an API has the same default in blocks and in TS is to actually
-            // set a default on the parameter in its comment attributes
-            if (checker && t.symbol && t.symbol.declarations && t.symbol.declarations.length) {
-                for (let i = 0; i < t.symbol.declarations.length; i++) {
-                    const decl = t.symbol.declarations[i];
-                    if (decl.kind === SK.EnumDeclaration) {
-                        const enumDeclaration = decl as EnumDeclaration;
-                        for (let j = 0; j < enumDeclaration.members.length; j++) {
-                            const member = enumDeclaration.members[i];
-                            if (member.name.kind === SK.Identifier) {
-                                let fullName = checker.getFullyQualifiedName(checker.getSymbolAtLocation(member.name));
-                                let pxtSym = apis.byQName[fullName]
-                                if (pxtSym) {
-                                    if (pxtSym.attributes.alias)
-                                        // use pyAlias if python; or default to alias
-                                        return (python && pxtSym.attributes.pyAlias) || pxtSym.attributes.alias; // prefer alias
-                                    return python ? pxtSym.pyQName : pxtSym.qName
-                                }
-                                else
-                                    return fullName
-                            }
-                        }
-                    }
+    function getTsSymbolFromPxtSymbol(pxtSym: SymbolInfo, location: ts.Node, meaning: SymbolFlags): ts.Symbol | null {
+        const checker = service && service.getProgram().getTypeChecker();
+        if (!checker)
+            return null
+        const tsSymbols = checker.getSymbolsInScope(location, meaning)
+        for (let tsSym of tsSymbols) {
+            if (tsSym.escapedName.toString() === pxtSym.qName)
+                return tsSym
+        }
+        return null
+    }
+
+    function getEnumMembers(t: Type): NodeArray<EnumMember> | undefined {
+        const checker = service && service.getProgram().getTypeChecker();
+        if (checker && t.symbol && t.symbol.declarations && t.symbol.declarations.length) {
+            for (let i = 0; i < t.symbol.declarations.length; i++) {
+                const decl = t.symbol.declarations[i];
+                if (decl.kind === SK.EnumDeclaration) {
+                    const enumDeclaration = decl as EnumDeclaration;
+                    return enumDeclaration.members
                 }
             }
-
-            return "0";
         }
+        return undefined
+    }
+
+    function enumMemberToQName(tc: TypeChecker, e: EnumMember) {
+        if (e.name.kind === SK.Identifier) {
+            return tc.getFullyQualifiedName(tc.getSymbolAtLocation(e.name));
+        }
+        return undefined
+    }
+
+    function getDefaultEnumValue(t: Type, python: boolean): string {
+        // Note: AFAIK this is NOT guranteed to get the same default as you get in
+        // blocks. That being said, it should get the first declared value. Only way
+        // to guarantee an API has the same default in blocks and in TS is to actually
+        // set a default on the parameter in its comment attributes
+        const checker = service && service.getProgram().getTypeChecker();
+        const members = getEnumMembers(t)
+        for (const member of members) {
+            if (member.name.kind === SK.Identifier) {
+                const fullName = enumMemberToQName(checker, member)
+                const pxtSym = lastApiInfo.apis.byQName[fullName]
+                if (pxtSym) {
+                    if (pxtSym.attributes.alias)
+                        // use pyAlias if python; or default to alias
+                        return (python && pxtSym.attributes.pyAlias) || pxtSym.attributes.alias; // prefer alias
+                    return python ? pxtSym.pyQName : pxtSym.qName
+                }
+                else
+                    return fullName
+            }
+        }
+
+        return "0";
     }
 }

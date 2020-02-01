@@ -1514,6 +1514,8 @@ namespace ts.pxtc.service {
         fileContent?: string;
         infoType?: InfoType;
         position?: number;
+        wordStartPos?: number;
+        wordEndPos?: number;
         options?: CompileOptions;
         search?: SearchOptions;
         format?: FormatOptions;
