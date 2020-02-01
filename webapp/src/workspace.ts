@@ -638,8 +638,10 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
             files,
             saveTag: options.createRelease
         })
-        if (options.createRelease)
+        if (options.createRelease) {
             await pxt.github.createReleaseAsync(parsed.fullName, options.createRelease, newCommit)
+            await pxt.github.enablePagesAsync(parsed.fullName); // ensure pages are on
+        }
         return ""
     }
 
