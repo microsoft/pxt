@@ -421,7 +421,9 @@ namespace pxt.blocks {
             if (!keepChildren) {
                 if (e.localName == "next")
                     e.remove(); // disconnect or unplug not working propertly
-                if (e.localName == "statement")
+                else if (e.localName == "statement")
+                    e.remove();
+                else if (e.localName == "shadow") // ignore internal nodes
                     e.remove();
             }
         })
@@ -460,6 +462,7 @@ namespace pxt.blocks {
         log(diffLines);
 
         // build old -> new lines mapping
+        const newids: pxt.Map<string> = {};
         let oldLineStart = 0;
         let newLineStart = 0;
         diffLines.forEach((ln, index) => {
@@ -484,23 +487,25 @@ namespace pxt.blocks {
                         lineLength -= lwl;
                     }
                     // find block ids mapped to the ranges
-                    const oldid = pxt.blocks.findBlockId(oldResp.blockSourceMap, {
-                        start: oldLineStart,
-                        length: lineLength
-                    });
                     const newid = pxt.blocks.findBlockId(newResp.blockSourceMap, {
                         start: newLineStart,
                         length: lineLength
                     });
+                    if (newid && !newids[newid]) {
+                        const oldid = pxt.blocks.findBlockId(oldResp.blockSourceMap, {
+                            start: oldLineStart,
+                            length: lineLength
+                        });
 
-                    // patch workspace
-                    log(ln);
-                    log(`id ${oldLineStart}:${line.length}>${oldid} ==> ${newLineStart}:${line.length}>${newid}`)
-                    if (oldid && newid) {
-                        newXml = newXml.replace(newid, oldid);
-                        log(newXml);
+                        // patch workspace
+                        if (oldid) {
+                            log(ln);
+                            log(`id ${oldLineStart}:${line.length}>${oldid} ==> ${newLineStart}:${line.length}>${newid}`)
+                            newids[newid] = oldid;
+                            newXml = newXml.replace(newid, oldid);
+                        }
+
                     }
-
                     oldLineStart += lineLength + 1;
                     newLineStart += lineLength + 1;
                     break;
