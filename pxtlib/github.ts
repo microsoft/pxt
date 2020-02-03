@@ -100,11 +100,10 @@ namespace pxt.github {
                 opts.url += "&"
             else
                 opts.url += "?"
-            opts.url += "access_token=" + token
             opts.url += "&anti_cache=" + Math.random()
-            // Token in headers doesn't work with CORS, especially for githubusercontent.com
-            //if (!opts.headers) opts.headers = {}
-            //opts.headers['Authorization'] = `token ${token}`
+            // CORS on raw.githubusercontent.com appears fixed
+            if (!opts.headers) opts.headers = {}
+            opts.headers['Authorization'] = `token ${token}`
         }
         return U.requestAsync(opts)
     }
@@ -221,7 +220,7 @@ namespace pxt.github {
     }
 
     export function downloadTextAsync(repopath: string, commitid: string, filepath: string) {
-        // raw.githubusercontent.com doesn't accept ?access_toke=... and has wrong CORS settings
+        // raw.githubusercontent.com doesn't accept ?access_token=... and has wrong CORS settings
         // for Authorization: header; so try anonymous access first, and otherwise fetch using API
 
         if (isPrivateRepoCache[repopath])
