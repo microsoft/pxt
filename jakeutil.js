@@ -67,6 +67,9 @@ function exec(command, log) {
         });
 
         if (log) {
+            process.stdout.setMaxListeners(20);
+            process.stderr.setMaxListeners(20);
+
             ps.stdout.pipe(process.stdout);
             ps.stderr.pipe(process.stderr);
         }
