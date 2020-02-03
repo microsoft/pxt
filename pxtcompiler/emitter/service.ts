@@ -497,9 +497,15 @@ namespace ts.pxtc {
             return c
         }
 
+        // favor symbols with blocks
         let c = cmpr(s => hasBlock(s) ? 1 : -1);
         if (c) return c;
 
+        // favor top-level symbols
+        c = cmpr(s => !s.namespace ? 1 : -1)
+        if (c) return c;
+
+        // sort by symbol kind
         if (!symbolKindWeight) {
             symbolKindWeight = {};
             symbolKindWeight[SymbolKind.Variable] = 100;
@@ -511,17 +517,11 @@ namespace ts.pxtc {
             symbolKindWeight[SymbolKind.Enum] = 81;
             symbolKindWeight[SymbolKind.EnumMember] = 80;
         }
-
-        // favor functions
         c = cmpr(s => symbolKindWeight[s.kind] || 0)
         if (c) return c;
 
         // check for a weight attribute
         c = cmpr(s => s.attributes.weight || 50)
-        if (c) return c;
-
-        // favor top-level symbols
-        c = cmpr(s => !s.namespace ? 1 : -1)
         if (c) return c;
 
         return U.strcmp(l.name, r.name);
@@ -711,6 +711,8 @@ namespace ts.pxtc.service {
 
         setFile(fn: string, cont: string) {
             if (this.opts.fileSystem[fn] != cont) {
+                console.log("HOST SETFILE")
+                console.log(cont)
                 this.fileVersions[fn] = (this.fileVersions[fn] || 0) + 1
                 this.opts.fileSystem[fn] = cont
                 this.projectVer++
@@ -824,6 +826,12 @@ namespace ts.pxtc.service {
         }
     }
 
+    function cloneCompileOpts(opts: CompileOptions) {
+        let newOpts = pxt.U.flatClone(opts)
+        newOpts.fileSystem = pxt.U.flatClone(newOpts.fileSystem)
+        return newOpts
+    }
+
     const operations: pxt.Map<(v: OpArg) => any> = {
         reset: () => {
             service.cleanupSemanticCache();
@@ -844,7 +852,7 @@ namespace ts.pxtc.service {
             if (v.fileContent) {
                 host.setFile(v.fileName, v.fileContent);
             }
-            let opts = U.flatClone(host.opts)
+            let opts = cloneCompileOpts(host.opts)
             opts.fileSystem[v.fileName] = src
             opts.syntaxInfo = {
                 position: v.position,
@@ -866,6 +874,7 @@ namespace ts.pxtc.service {
             const { fileName, fileContent, position, wordStartPos, wordEndPos, runtime } = v
             let src: string = fileContent
             if (fileContent) {
+                console.dir({ fileName, fileContent })
                 host.setFile(fileName, fileContent);
             }
 
@@ -918,7 +927,7 @@ namespace ts.pxtc.service {
                 isTypeLocation: false
             }
 
-            let opts = U.flatClone(host.opts)
+            let opts = cloneCompileOpts(host.opts)
             opts.fileSystem[fileName] = src
             addApiInfo(opts);
             opts.syntaxInfo = {
@@ -930,11 +939,19 @@ namespace ts.pxtc.service {
 
             let tsPos: number;
             if (isPython) {
-                let res = transpile.pyToTs(opts)
+                const res = transpile.pyToTs(opts)
                 if (res.syntaxInfo && res.syntaxInfo.symbols) {
                     lastPyIdentifierSyntaxInfo = res.syntaxInfo
                     resultSymbols = opts.syntaxInfo.symbols
                 }
+
+                // update our language host
+                Object.keys(res.outfiles)
+                    .forEach(k => {
+                        if (k.endsWith(".ts")) {
+                            host.setFile(k, res.outfiles[k])
+                        }
+                    })
 
                 // convert our location from python to typescript
                 if (res.sourceMap) {
@@ -965,8 +982,8 @@ namespace ts.pxtc.service {
             }
 
             let prog = service.getProgram()
-
-            let tsAst = prog.getSourceFile("main.ts")
+            // let prog = ts.createProgram(oldProg.getRootFileNames(), host.getCompilationSettings(), host, oldProg)
+            let tsAst = prog.getSourceFile("main.ts") // TODO: work for non-main files
 
             function findInnerMostNodeAtPosition(n: Node): Node {
                 // console.log(n.kind)
@@ -1000,6 +1017,23 @@ namespace ts.pxtc.service {
                 const call = findCallExpression(innerMost)
                 console.log("CALL")
                 console.dir(call)
+                if (!call) {
+                    // console.log("TS AST SRC:")
+                    // console.log(tsAst.getText())
+                    // console.log("PY RES SRC:")
+                    // console.log(pyRes.outfiles["main.ts"])
+
+                    // const allOverlaps = srcMap.py.allOverlaps(span)
+                    // const allTxt = res.sourceMap.map(i => ({
+                    //     ts: srcMap.ts.getText(i.ts),
+                    //     py: srcMap.py.getText(i.py)
+                    // }))
+                    // console.log("#### ALL OVERLAPS")
+                    // console.log(pySrc)
+                    // console.log(tsSrc)
+                    // console.dir(allTxt)
+                }
+
                 if (call) {
                     // which argument are we ?
                     let paramIdx = call.arguments

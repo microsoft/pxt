@@ -230,9 +230,11 @@ namespace ts.pxtc {
         let program: Program
 
         if (service) {
+            console.log("driver:233")
             storeGeneratedFiles(opts, res)
             program = service.getProgram()
         } else {
+            console.log("driver:237")
             runConversionsAndStoreResults(opts, res)
             if (res.diagnostics.length > 0)
                 return res;
