@@ -72,21 +72,10 @@
 
 .ui.card.file.tsprj {
     .fileimage {
-        height: 2.5rem;
-        width: 2.5rem;
-        padding: .3rem;
-        margin: .25rem;
-        text-align: right;
-        background-color: @logoColor;
-        background-image: none;
-    }
-    .fileimage:after {
-        content: "js";
-        color: @white;
-        font-weight: 600;
-        font-family: sans-serif;
-        text-transform: uppercase;
-        line-height: 3rem;
+        background-image: @jsIcon;
+        filter: @logoFilter;
+        background-size: 65%;
+        background-position-y: 50%;
     }
 }
 
