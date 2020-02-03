@@ -88,7 +88,7 @@ export interface RenderBlocksRequestMessage extends SimulatorMessage {
 ```
 
 * ``id``: The identifer of the snippet element. This is used to match the document element of the snippet with the rendered blocks returned later.
-* ``code``: The text of the code snippet to send, compile, and render.
+* ``code``: The text of the code snippet to send, compile, and render. The snippet may be JavaScript or the Blockly XML payload.
 * ``packageId``: the identifier of a project shared in the editor (without the ``https://makecode.com/`` prefix)
 
 #### Render Blocks Response message

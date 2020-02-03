@@ -460,8 +460,10 @@ namespace pxt.runner {
             const options = (msg.options || {}) as pxt.blocks.BlocksRenderOptions;
             options.splitSvg = false; // don't split when requesting rendered images
             pxt.tickEvent("renderer.job")
+            const isXml = /^\s*<xml/.test(msg.code);
+
             jobPromise = pxt.BrowserUtils.loadBlocklyAsync()
-                .then(() => runner.decompileSnippetAsync(msg.code, msg.options))
+                .then(() => isXml ? pxt.runner.compileBlocksAsync(msg.code, options) : runner.decompileSnippetAsync(msg.code, msg.options))
                 .then(result => {
                     const blocksSvg = result.blocksSvg as SVGSVGElement;
                     return blocksSvg ? pxt.blocks.layout.blocklyToSvgAsync(blocksSvg, 0, 0, blocksSvg.viewBox.baseVal.width, blocksSvg.viewBox.baseVal.height) : undefined;
