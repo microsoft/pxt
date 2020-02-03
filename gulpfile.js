@@ -379,10 +379,10 @@ const copyMonacoBasicLanguages = gulp.parallel(basicLanguages.map(lang => {
         .pipe(gulp.dest(`webapp/public/vs/basic-languages/${lang}`))
 }));
 
-const copyMonacoJSON = () => gulp.src("webapp/public/vs/language/json/**/*")
+const copyMonacoJSON = () => gulp.src("node_modules/monaco-editor/min/vs/language/json/**/*")
     .pipe(gulp.dest("webapp/public/vs/language/json"));
 
-const copyMonacoTypescript = () => gulp.src("webapp/public/vs/language/typescript/**/*")
+const copyMonacoTypescript = () => gulp.src("node_modules/monaco-editor/min/vs/language/typescript/**/*")
     .pipe(gulp.dest("webapp/public/vs/language/typescript"));
 
 const inlineCodiconFont = () => {
@@ -390,7 +390,7 @@ const inlineCodiconFont = () => {
     // We need to inline the font anyways so fetch a good version of the font from the source
     let font = fs.readFileSync("node_modules/vscode-codicons/dist/codicon.ttf").toString("base64");
 
-    return gulp.src("webapp/public/vs/editor/editor.main.css")
+    return gulp.src("node_modules/monaco-editor/min/vs/editor/editor.main.css")
         .pipe(replace(`../base/browser/ui/codiconLabel/codicon/codicon.ttf`, `data:application/x-font-ttf;charset=utf-8;base64,${font}`))
         .pipe(gulp.dest("webapp/public/vs/editor/"))
 }

@@ -44,7 +44,7 @@ function stripSrcMapSync(dir) {
             stripSrcMapSync(file);
         } else {
             let fileContents = fs.readFileSync(file, "utf8");
-            fileContents = fileContents.replace(/\/\/# sourceMappingURL=.*/gi, '')
+            fileContents = fileContents.replace(/(?:[^"]|^)\/\/# sourceMappingURL=.*/gi, '')
             fs.writeFileSync(file, fileContents)
         }
     }
