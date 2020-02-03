@@ -117,33 +117,33 @@
         color: @githubInvertedTextColor;
         table.diffview {
             .change code {
-                color: @githubInvertedTextColor;
+                color: @githubInvertedTextColor !important;
             }
 
             .diff-added {
-                background: @diffInvertedAddedBackground;
+                background: @diffInvertedAddedBackground !important;
         
                 .ch-added {
-                    background: @diffInvertedAddedTokenBackground;
+                    background: @diffInvertedAddedTokenBackground !important;
                 }
             }
         
             .diff-removed {
-                background: @diffInvertedRemovedBackground;
+                background: @diffInvertedRemovedBackground !important;
         
                 .ch-removed {
-                    background: @diffInvertedRemovedTokenBackground;
+                    background: @diffInvertedRemovedTokenBackground !important;
                 }
             }
         
             .line-a,
             .line-b {
-                color: @diffInvertedLineNumberColor;
+                color: @diffInvertedLineNumberColor !important;
             } 
 
             .diff-marker {
-                background: @diffInvertedMarkerBackground;
-                color: @diffInvertedMarkerColor
+                background: @diffInvertedMarkerBackground !important;
+                color: @diffInvertedMarkerColor !important;
             }
         }
     }
