@@ -351,7 +351,10 @@ const buildSVGIcons = () => {
                      Monaco editor
 *********************************************************/
 
-const copyMonacoBase = () => gulp.src("node_modules/monaco-editor/min/vs/base/**/*")
+const copyMonacoBase = () => gulp.src([
+        "node_modules/monaco-editor/min/vs/base/**/*",
+        "!**/codicon.ttf" // We use a different version of this font that's checked into pxt
+    ])
     .pipe(gulp.dest("webapp/public/vs/base"));
 
 const copyMonacoEditor = () => gulp.src([
@@ -388,7 +391,7 @@ const copyMonacoTypescript = () => gulp.src("node_modules/monaco-editor/min/vs/l
 const inlineCodiconFont = () => {
     // For whatever reason the codicon.ttf font that comes with the monaco-editor is invalid.
     // We need to inline the font anyways so fetch a good version of the font from the source
-    let font = fs.readFileSync("node_modules/vscode-codicons/dist/codicon.ttf").toString("base64");
+    let font = fs.readFileSync("theme/external-font/codicon.ttf").toString("base64");
 
     return gulp.src("node_modules/monaco-editor/min/vs/editor/editor.main.css")
         .pipe(replace(`../base/browser/ui/codiconLabel/codicon/codicon.ttf`, `data:application/x-font-ttf;charset=utf-8;base64,${font}`))
