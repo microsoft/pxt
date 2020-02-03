@@ -521,7 +521,7 @@ namespace ts.pxtc {
         if (c) return c;
 
         // favor top-level symbols
-        c = cmpr(s => s.namespace ? 1 : -1)
+        c = cmpr(s => !s.namespace ? 1 : -1)
         if (c) return c;
 
         return U.strcmp(l.name, r.name);
@@ -925,18 +925,28 @@ namespace ts.pxtc.service {
                 position: complPosition,
                 type: r.isMemberCompletion ? "memberCompletion" : "identifierCompletion"
             };
+
+            let resultSymbols: SymbolInfo[] = []
+
+            let tsPos: number;
             if (isPython) {
                 let res = transpile.pyToTs(opts)
                 if (res.syntaxInfo && res.syntaxInfo.symbols) {
                     lastPyIdentifierSyntaxInfo = res.syntaxInfo
+                    resultSymbols = opts.syntaxInfo.symbols
                 }
 
+                // convert our location from python to typescript
                 if (res.sourceMap) {
                     const pySrc = src
                     const tsSrc = res.outfiles["main.ts"]
                     const srcMap = pxtc.BuildSourceMapHelpers(res.sourceMap, tsSrc, pySrc)
 
-                    const shortest = srcMap.py.smallestOverlap(span)
+                    const smallest = srcMap.py.smallestOverlap(span)
+                    if (smallest) {
+                        tsPos = smallest.ts.startPos
+                    }
+
                     // console.dir(shortest)
                     const allOverlaps = srcMap.py.allOverlaps(span)
                     const allTxt = res.sourceMap.map(i => ({
@@ -947,90 +957,75 @@ namespace ts.pxtc.service {
                     // console.log(pySrc)
                     // console.log(tsSrc)
                     // console.dir(allTxt)
+                }
+            } else {
+                tsPos = position
+                // TODO: get better default result symbols for typescript
+                resultSymbols = pxt.U.values(lastApiInfo.apis.byQName)
+            }
 
-                    if (shortest) {
-                        let tsPos = shortest.ts.startPos
+            let prog = service.getProgram()
 
-                        let prog = service.getProgram()
+            let tsAst = prog.getSourceFile("main.ts")
 
-                        let tsAst = prog.getSourceFile("main.ts")
+            function findInnerMostNodeAtPosition(n: Node): Node {
+                // console.log(n.kind)
+                // console.log(n.getText())
+                // console.dir(n)
+                for (let child of n.getChildren()) {
+                    let s = child.getStart()
+                    let e = child.getEnd()
+                    if (s <= tsPos && tsPos < e)
+                        return findInnerMostNodeAtPosition(child)
+                }
+                return n
+            }
 
-                        // console.log(tsAst.getText())
+            let innerMost = findInnerMostNodeAtPosition(tsAst)
+            if (innerMost) {
+                let tc = prog.getTypeChecker()
+                // let typ = tc.getTypeAtLocation(innerMost)
+                // console.log("WORD_TYPE")
+                // console.dir(typ)
 
-                        const findInnerMostNodeAtPosition = (n: Node): Node => {
-                            // console.log(n.kind)
-                            // console.log(n.getText())
-                            // console.dir(n)
-                            for (let child of n.getChildren()) {
-                                let s = child.getStart()
-                                let e = child.getEnd()
-                                if (s <= tsPos && tsPos < e)
-                                    return findInnerMostNodeAtPosition(child)
-                            }
-                            return n
+                const findCallExpression = (n: Node): ts.CallExpression | undefined => {
+                    if (n.parent) {
+                        if (ts.isCallExpression(n.parent)) {
+                            return n.parent
                         }
+                        return findCallExpression(n.parent)
+                    }
+                    return undefined
+                }
+                const call = findCallExpression(innerMost)
+                console.log("CALL")
+                console.dir(call)
+                if (call) {
+                    // which argument are we ?
+                    let paramIdx = call.arguments
+                        .map(a => a === innerMost)
+                        .indexOf(true)
+                    console.log("ARG IDX")
+                    console.dir(paramIdx)
 
-                        // CallExpression
-                        let innerMost = findInnerMostNodeAtPosition(tsAst)
-                        if (innerMost) {
+                    const blocksInfo = blocksInfoOp(lastApiInfo.apis, runtime.bannedCategories);
 
-                            let tc = prog.getTypeChecker()
-                            // let typ = tc.getTypeAtLocation(innerMost)
-                            // console.log("WORD_TYPE")
-                            // console.dir(typ)
-
-                            const findCallExpression = (n: Node): ts.CallExpression | undefined => {
-                                if (n.parent) {
-                                    if (ts.isCallExpression(n.parent)) {
-                                        return n.parent
-                                    }
-                                    return findCallExpression(n.parent)
-                                }
-                                return undefined
-                            }
-                            const call = findCallExpression(innerMost)
-                            console.log("CALL")
-                            console.dir(call)
-                            if (call) {
-                                // which argument are we ?
-                                let paramIdx = call.arguments
-                                    .map(a => a === innerMost)
-                                    .indexOf(true)
-                                console.log("ARG IDX")
-                                console.dir(paramIdx)
-
-                                const blocksInfo = blocksInfoOp(lastApiInfo.apis, runtime.bannedCategories);
-
-                                if (paramIdx >= 0) {
-                                    let paramType = getParameterTsType(call, paramIdx, blocksInfo)
-                                    // const realSym = lastApiInfo.apis.byQName[paramType]
-                                    // console.log("REAL")
-                                    // console.dir(realSym)
-                                    if (paramType) {
-                                        let matchingApis = getApisForTsType(paramType, call, tc)
-                                        console.log("MATCHING APIS")
-                                        console.dir(matchingApis)
-                                    }
-                                }
-                            }
+                    if (paramIdx >= 0) {
+                        let paramType = getParameterTsType(call, paramIdx, blocksInfo)
+                        // const realSym = lastApiInfo.apis.byQName[paramType]
+                        // console.log("REAL")
+                        // console.dir(realSym)
+                        if (paramType) {
+                            let matchingApis = getApisForTsType(paramType, call, tc)
+                            console.log("MATCHING APIS")
+                            console.dir(matchingApis)
+                            resultSymbols = matchingApis
                         }
                     }
                 }
             }
 
-
-            // TODO smart intellisense for callsites
-            // from the position, 
-            // translate position to typescript pos
-            // using typescript lang service
-            // get the AST at that location
-            // find if we're inside a call node
-            // if we are, figure out which parameter we are
-            // figure out the type of the parameter
-            // scope based on that
-            // ---
-
-
+            // determine which names are taken for auto-generated variable names
             let takenNames: pxt.Map<SymbolInfo> = {}
             if (isPython && lastPyIdentifierSyntaxInfo && lastPyIdentifierSyntaxInfo.globalNames) {
                 takenNames = lastPyIdentifierSyntaxInfo.globalNames
@@ -1038,19 +1033,27 @@ namespace ts.pxtc.service {
                 takenNames = lastApiInfo.apis.byQName
             }
 
-            let symbols = opts.syntaxInfo.symbols || []
-            for (let si of symbols) {
-                if (
+            // console.log("CHICKENS")
+            // let c1 = lastPyIdentifierSyntaxInfo.symbols
+            //     .filter(s => s.pyName === 'CHICKEN')
+            // console.dir(c1)
+            // let c2 = lastApiInfo.apis.byQName["CHICKEN"]
+            // console.dir(c2)
+
+
+            function shouldUseSymbol(si: SymbolInfo) {
+                let use = !(
                     /^__/.test(si.name) || // ignore members starting with __
                     /^__/.test(si.namespace) || // ignore namespaces starting with __
                     si.attributes.hidden ||
                     si.attributes.deprecated ||
-                    // don't emit members with an alias
-                    si.attributes.alias ||
                     // ignore TD_ID helpers
                     si.attributes.shim == "TD_ID"
-                ) continue; // ignore
-                entries[si.qName] = si
+                )
+                return use
+            }
+
+            function patchSymbolWithSnippet(si: SymbolInfo) {
                 const n = lastApiInfo.decls[si.qName];
                 if (isFunctionLike(n)) {
                     // snippet/pySnippet might have been set already
@@ -1064,6 +1067,15 @@ namespace ts.pxtc.service {
                     }
                 }
             }
+
+            // swap aliases, filter symbols and add snippets
+            resultSymbols
+                .map(si => si.attributes.alias ? lastApiInfo.apis.byQName[si.attributes.alias] : si)
+                .filter(shouldUseSymbol)
+                .forEach(si => {
+                    entries[si.qName] = si
+                    patchSymbolWithSnippet(si)
+                })
 
             // sort entries
             r.entries = pxt.Util.values(entries);
