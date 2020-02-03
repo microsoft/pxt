@@ -101,7 +101,6 @@ namespace pxt.github {
             else
                 opts.url += "?"
             opts.url += "&anti_cache=" + Math.random()
-            // CORS on raw.githubusercontent.com appears fixed
             if (!opts.headers) opts.headers = {}
             opts.headers['Authorization'] = `token ${token}`
         }
