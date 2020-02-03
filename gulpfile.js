@@ -518,7 +518,7 @@ const buildAll = gulp.series(
     copyTypescriptServices,
     gulp.parallel(pxtlib, pxtweb),
     gulp.parallel(pxtcompiler, pxtsim, backendutils),
-    gulp.parallel(pxtpy, gulp.series(pxtblocks, pxtblockly)),
+    gulp.parallel(pxtpy, gulp.series(copyBlockly, pxtblocks, pxtblockly)),
     pxteditor,
     gulp.parallel(pxtrunner, pxtwinrt, cli, pxtcommon),
     gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
@@ -526,7 +526,7 @@ const buildAll = gulp.series(
     gulp.parallel(buildcss, buildSVGIcons),
     webapp,
     browserifyWebapp,
-    gulp.parallel(semanticjs, copyJquery, copyWebapp, copyPlayground, copySemanticFonts, copyMonaco, copyBlockly),
+    gulp.parallel(semanticjs, copyJquery, copyWebapp, copyPlayground, copySemanticFonts, copyMonaco),
     runUglify
 );
 
