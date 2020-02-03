@@ -711,8 +711,6 @@ namespace ts.pxtc.service {
 
         setFile(fn: string, cont: string) {
             if (this.opts.fileSystem[fn] != cont) {
-                console.log("HOST SETFILE")
-                console.log(cont)
                 this.fileVersions[fn] = (this.fileVersions[fn] || 0) + 1
                 this.opts.fileSystem[fn] = cont
                 this.projectVer++
@@ -874,15 +872,10 @@ namespace ts.pxtc.service {
             const { fileName, fileContent, position, wordStartPos, wordEndPos, runtime } = v
             let src: string = fileContent
             if (fileContent) {
-                console.dir({ fileName, fileContent })
                 host.setFile(fileName, fileContent);
             }
 
-            const word = src.substring(wordStartPos, wordEndPos)
             const span: PosSpan = { startPos: wordStartPos, endPos: wordEndPos }
-            console.log("word")
-            console.dir({ wordStartPos, wordEndPos })
-            console.log(word)
 
             const isPython = /\.py$/.test(fileName);
             let dotIdx = -1
@@ -905,19 +898,13 @@ namespace ts.pxtc.service {
                 src = src.slice(0, position) + "_" + src.slice(position)
                 complPosition = position
             }
-            // console.log("src")
-            // console.log(src)
-            // console.dir({ dotIdx })
 
             let lastNl = src.lastIndexOf("\n", position)
             lastNl = Math.max(0, lastNl)
             const cursorLine = src.substring(lastNl, position)
-            console.log(cursorLine)
 
             if (dotIdx != -1)
                 complPosition = dotIdx
-
-            //console.log(fileContent.slice(cursorPosition - 20, cursorPosition) + "<X>" + fileContent.slice(cursorPosition, cursorPosition + 20))
 
             const entries: pxt.Map<SymbolInfo> = {};
             const r: CompletionInfo = {
@@ -963,17 +950,6 @@ namespace ts.pxtc.service {
                     if (smallest) {
                         tsPos = smallest.ts.startPos
                     }
-
-                    // console.dir(shortest)
-                    const allOverlaps = srcMap.py.allOverlaps(span)
-                    const allTxt = res.sourceMap.map(i => ({
-                        ts: srcMap.ts.getText(i.ts),
-                        py: srcMap.py.getText(i.py)
-                    }))
-                    // console.log("#### ALL OVERLAPS")
-                    // console.log(pySrc)
-                    // console.log(tsSrc)
-                    // console.dir(allTxt)
                 }
             } else {
                 tsPos = position
@@ -981,14 +957,8 @@ namespace ts.pxtc.service {
                 resultSymbols = pxt.U.values(lastApiInfo.apis.byQName)
             }
 
-            let prog = service.getProgram()
-            // let prog = ts.createProgram(oldProg.getRootFileNames(), host.getCompilationSettings(), host, oldProg)
-            let tsAst = prog.getSourceFile("main.ts") // TODO: work for non-main files
 
             function findInnerMostNodeAtPosition(n: Node): Node {
-                // console.log(n.kind)
-                // console.log(n.getText())
-                // console.dir(n)
                 for (let child of n.getChildren()) {
                     let s = child.getStart()
                     let e = child.getEnd()
@@ -998,12 +968,11 @@ namespace ts.pxtc.service {
                 return n
             }
 
-            let innerMost = findInnerMostNodeAtPosition(tsAst)
+            const prog = service.getProgram()
+            const tsAst = prog.getSourceFile("main.ts") // TODO: work for non-main files
+            const innerMost = findInnerMostNodeAtPosition(tsAst)
             if (innerMost) {
-                let tc = prog.getTypeChecker()
-                // let typ = tc.getTypeAtLocation(innerMost)
-                // console.log("WORD_TYPE")
-                // console.dir(typ)
+                const tc = prog.getTypeChecker()
 
                 const findCallExpression = (n: Node): ts.CallExpression | undefined => {
                     if (n.parent) {
@@ -1015,44 +984,19 @@ namespace ts.pxtc.service {
                     return undefined
                 }
                 const call = findCallExpression(innerMost)
-                console.log("CALL")
-                console.dir(call)
-                if (!call) {
-                    // console.log("TS AST SRC:")
-                    // console.log(tsAst.getText())
-                    // console.log("PY RES SRC:")
-                    // console.log(pyRes.outfiles["main.ts"])
-
-                    // const allOverlaps = srcMap.py.allOverlaps(span)
-                    // const allTxt = res.sourceMap.map(i => ({
-                    //     ts: srcMap.ts.getText(i.ts),
-                    //     py: srcMap.py.getText(i.py)
-                    // }))
-                    // console.log("#### ALL OVERLAPS")
-                    // console.log(pySrc)
-                    // console.log(tsSrc)
-                    // console.dir(allTxt)
-                }
 
                 if (call) {
                     // which argument are we ?
-                    let paramIdx = call.arguments
+                    const paramIdx = call.arguments
                         .map(a => a === innerMost)
                         .indexOf(true)
-                    console.log("ARG IDX")
-                    console.dir(paramIdx)
 
                     const blocksInfo = blocksInfoOp(lastApiInfo.apis, runtime.bannedCategories);
 
                     if (paramIdx >= 0) {
-                        let paramType = getParameterTsType(call, paramIdx, blocksInfo)
-                        // const realSym = lastApiInfo.apis.byQName[paramType]
-                        // console.log("REAL")
-                        // console.dir(realSym)
+                        const paramType = getParameterTsType(call, paramIdx, blocksInfo)
                         if (paramType) {
-                            let matchingApis = getApisForTsType(paramType, call, tc)
-                            console.log("MATCHING APIS")
-                            console.dir(matchingApis)
+                            const matchingApis = getApisForTsType(paramType, call, tc)
                             resultSymbols = matchingApis
                         }
                     }
@@ -1066,14 +1010,6 @@ namespace ts.pxtc.service {
             } else {
                 takenNames = lastApiInfo.apis.byQName
             }
-
-            // console.log("CHICKENS")
-            // let c1 = lastPyIdentifierSyntaxInfo.symbols
-            //     .filter(s => s.pyName === 'CHICKEN')
-            // console.dir(c1)
-            // let c2 = lastApiInfo.apis.byQName["CHICKEN"]
-            // console.dir(c2)
-
 
             function shouldUseSymbol(si: SymbolInfo) {
                 let use = !(
@@ -1357,11 +1293,7 @@ namespace ts.pxtc.service {
     function getParameterTsType(call: CallExpression, paramIdx: number, blocksInfo: BlocksInfo): string | undefined {
         // pxt symbol
         const callTs = call.expression.getText()
-        console.log("CALL TS")
-        console.log(callTs)
         const api = lastApiInfo.apis.byQName[callTs]
-        console.log("API")
-        console.dir(api)
 
         if (!api || paramIdx < 0)
             return undefined;
@@ -1373,17 +1305,11 @@ namespace ts.pxtc.service {
         if (api.attributes._def) {
             const blockParams = api.attributes._def.parameters
             const blockParam = blockParams[paramIdx]
-            // console.log("BLK PARAM")
-            // console.dir(blockParam)
 
             const shadowId = blockParam.shadowBlockId
             if (shadowId) {
                 const shadowBlk = blocksInfo.blocksById[shadowId]
                 const shadowApi = lastApiInfo.apis.byQName[shadowBlk.qName]
-                // console.log("SHADOW")
-                // console.log(shadowId)
-                // console.dir(shadowBlk)
-                // console.dir(shadowApi)
 
                 const isPassThrough = shadowApi.attributes.shim === "TD_ID"
                 if (isPassThrough && shadowApi.parameters.length === 1) {
@@ -1407,8 +1333,6 @@ namespace ts.pxtc.service {
             })
 
         const retApis = apisByRetType[pxtType]
-        // console.log("RET APIS")
-        // console.dir(retApis)
 
         // any enum members?
         let enumVals: SymbolInfo[] = []
