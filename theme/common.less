@@ -336,6 +336,25 @@ div.simframe > iframe {
     }
 }
 
+/* Help dropdown */
+#root {
+    .docsmenu-py, .docsmenu-js {
+        display: none;
+    }
+    &.editorlang-py,  &.editorlang-js {
+        .docsmenu-blocks {
+            display: none;
+        }
+    }
+
+    &.editorlang-py .docsmenu-py {
+        display: block;
+    }
+    &.editorlang-js .docsmenu-js {
+        display: block;
+    }
+}
+
 /* Help card */
 #helpcard {
     position: absolute;

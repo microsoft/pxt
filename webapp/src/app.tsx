@@ -3552,7 +3552,8 @@ export class ProjectView
             isHeadless ? "headless" : "",
             flyoutOnly ? "flyoutOnly" : "",
             hideTutorialIteration ? "hideIteration" : "",
-            this.editor != this.blocksEditor ? "editorlang-text" : "",
+            this.isPythonActive() ? "editorlang-py" : "",
+            this.isJavaScriptActive() ? "editorlang-js" : "",
             'full-abs'
         ];
         const rootClasses = sui.cx(rootClassList);

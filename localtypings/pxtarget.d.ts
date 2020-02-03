@@ -394,6 +394,7 @@ declare namespace pxt {
         popout?: boolean;
         tutorial?: boolean;
         subitems?: DocMenuEntry[];
+        className?: string; // optional class name used in editor help menu rendering
     }
 
     interface TOCMenuEntry {
