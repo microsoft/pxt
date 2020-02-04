@@ -127,8 +127,16 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         // force monaco to use our sorting
                         sortText: `${tosort(i)} ${insertSnippet}`,
                         filterText: `${label} ${documentation} ${block}`,
-                        insertText: completionSnippet,
+                        insertText: completionSnippet || undefined,
                     };
+                    if (!label) {
+                        console.log("NO LABEL")
+                        console.dir(res)
+                    }
+                    // if (!res.insertText || !insertSnippet) {
+                    //     console.log("NO INSERT1:")
+                    //     console.dir(res)
+                    // }
                     return res
                 })
                 return items;
@@ -771,12 +779,22 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.hideFlyout();
             })
 
-            // TODO: typescript
             monaco.languages.registerCompletionItemProvider("python", new CompletionProvider(this, true));
             monaco.languages.registerSignatureHelpProvider("python", new SignatureHelper(this, true));
             monaco.languages.registerHoverProvider("python", new HoverProvider(this, true));
             monaco.languages.registerDocumentRangeFormattingEditProvider("python", new FormattingProvider(this, true));
             monaco.languages.setLanguageConfiguration("python", pythonLanguageConfiguration)
+
+            // TODO(dz): make work
+            monaco.languages.registerCompletionItemProvider("typescript", new CompletionProvider(this, true));
+            // TODO(dz): make work
+            monaco.languages.registerSignatureHelpProvider("typescript", new SignatureHelper(this, true));
+            // TODO(dz): make work
+            monaco.languages.registerHoverProvider("typescript", new HoverProvider(this, true));
+            // TODO(dz): make work
+            monaco.languages.registerDocumentRangeFormattingEditProvider("typescript", new FormattingProvider(this, true));
+            // TODO(dz): make work
+            monaco.languages.setLanguageConfiguration("typescript", pythonLanguageConfiguration)
 
             this.editorViewZones = [];
 
@@ -1006,7 +1024,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public hideFlyout() {
-        if (this.flyout) this.flyout.setState( { groups: undefined } );
+        if (this.flyout) this.flyout.setState({ groups: undefined });
 
         // Hide the current toolbox category
         if (this.toolbox) this.toolbox.clearSelection();
@@ -1043,7 +1061,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!container || !this.blockInfo) return;
 
         const debugging = this.isDebugging();
-        if (debugging && this.flyout) this.flyout.setState( { groups: undefined } );
+        if (debugging && this.flyout) this.flyout.setState({ groups: undefined });
         const debuggerToolbox = debugging ? <DebuggerToolbox
             ref={this.handleDebugToolboxRef}
             parent={this.parent}
