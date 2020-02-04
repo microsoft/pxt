@@ -510,6 +510,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 </div>}
                 <div id='monacoEditorInner' style={{ float: 'right' }}>
                     <MonacoFlyout ref={this.handleFlyoutRef} fileType={this.fileType}
+                        blockIdMap={this.blockIdMap}
                         moveFocusToParent={this.moveFocusToToolbox}
                         insertSnippet={this.insertSnippet}
                         setInsertionSnippet={this.setInsertionSnippet}
@@ -1226,6 +1227,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly())
             this.defineEditorTheme(hc, true);
         });
+        this.blockIdMap = snippets.blockIdMap();
     }
 
     snapshotState() {
