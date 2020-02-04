@@ -123,20 +123,6 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         filterText: `${label} ${documentation} ${block}`,
                         insertText: completionSnippet || undefined,
                     };
-                    if (si.pyQName.indexOf("get_position") >= 0) {
-                        console.log("get_position")
-                        console.dir({ python: this.python })
-                        console.dir(res)
-                        console.dir(si)
-                    }
-                    if (!label) {
-                        console.log("NO LABEL")
-                        console.dir(res)
-                    }
-                    // if (!res.insertText || !insertSnippet) {
-                    //     console.log("NO INSERT1:")
-                    //     console.dir(res)
-                    // }
                     return res
                 })
                 return { suggestions: items };
@@ -192,7 +178,7 @@ class SignatureHelper implements monaco.languages.SignatureHelpProvider {
                     activeSignature: 0,
                     activeParameter: r.auxResult
                 }
-                return { value: res, dispose: () => {} }
+                return { value: res, dispose: () => { } }
             });
     }
 }
@@ -790,12 +776,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             monaco.languages.registerCompletionItemProvider("typescript", new CompletionProvider(this, false));
             monaco.languages.registerSignatureHelpProvider("typescript", new SignatureHelper(this, false));
-            // TODO(dz): make work
             monaco.languages.registerHoverProvider("typescript", new HoverProvider(this, false));
-            // TODO(dz): make work
             monaco.languages.registerDocumentRangeFormattingEditProvider("typescript", new FormattingProvider(this, false));
-            // TODO(dz): make work
-            // monaco.languages.setLanguageConfiguration("typescript", pythonLanguageConfiguration)
 
             this.editorViewZones = [];
 

@@ -869,7 +869,6 @@ namespace ts.pxtc.service {
         },
 
         getCompletions: v => {
-            console.log("GET COMPLETIONS $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
             const { fileName, fileContent, position, wordStartPos, wordEndPos, runtime } = v
             let src: string = fileContent
             if (fileContent) {
@@ -903,7 +902,6 @@ namespace ts.pxtc.service {
             let lastNl = src.lastIndexOf("\n", position)
             lastNl = Math.max(0, lastNl)
             const cursorLine = src.substring(lastNl, position)
-            console.log(cursorLine)
 
             if (dotIdx != -1)
                 complPosition = dotIdx
@@ -983,14 +981,10 @@ namespace ts.pxtc.service {
             const tsAst = prog.getSourceFile("main.ts") // TODO: work for non-main files
             const innerMost = findInnerMostNodeAtPosition(tsAst)
             if (innerMost) {
-                console.log("INNER MOST")
-                console.dir({ tsPos, tsAst, innerMost })
                 const tc = prog.getTypeChecker()
                 const call = findCallExpression(innerMost)
 
                 if (call) {
-                    console.log("CALL")
-                    console.dir(call)
                     function findArgIdx() {
                         // does our cursor syntax node trivially map to an argument?
                         let paramIdx = call.arguments
@@ -1042,10 +1036,8 @@ namespace ts.pxtc.service {
                             if (paramIdx >= callSym.parameters.length)
                                 paramIdx = callSym.parameters.length - 1
                             const paramType = getParameterTsType(callSym, paramIdx, blocksInfo)
-                            console.dir({ paramType })
                             if (paramType) {
                                 const matchingApis = getApisForTsType(paramType, call, tc)
-                                console.dir({ matchingApis })
                                 resultSymbols = matchingApis
                             }
                         }
@@ -1101,9 +1093,6 @@ namespace ts.pxtc.service {
             r.entries = pxt.Util.values(entries)
                 .filter(a => !!a);
             r.entries.sort(compareSymbols);
-
-            // TODO:
-            console.log("MC completion")
 
             return r;
         },
