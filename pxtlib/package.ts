@@ -509,7 +509,7 @@ namespace pxt {
             // add test dependencies if nedeed
             if (this.level == 0 && this.config.testDependencies) {
                 // only add testDepdencies that can be resolved
-                Util.iterMap(this.config.dependencies, (k, v) => {
+                Util.iterMap(this.config.testDependencies, (k, v) => {
                     if (v != "*" || pxt.appTarget.bundledpkgs[k])
                         dependencies[k] = v;
                 })
