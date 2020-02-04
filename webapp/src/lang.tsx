@@ -9,8 +9,6 @@ interface LanguagesState {
     visible?: boolean;
 }
 
-const defaultLanguages = ["en"];
-
 export let initialLang: string;
 
 export function setInitialLang(lang: string) {
@@ -30,10 +28,12 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
     }
 
     languageList(): string[] {
-        if (pxt.appTarget.appTheme.selectLanguage && pxt.appTarget.appTheme.availableLocales && pxt.appTarget.appTheme.availableLocales.length) {
+        if (pxt.appTarget.appTheme.selectLanguage 
+            && pxt.appTarget.appTheme.availableLocales 
+            && pxt.appTarget.appTheme.availableLocales.length) {
             return pxt.appTarget.appTheme.availableLocales;
         }
-        return defaultLanguages;
+        return ["en"];
     }
 
     translateEditor() {
@@ -92,14 +92,14 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                     <div id="availablelocales" className="ui cards centered" role="listbox">
                         {languageList.map(langId => {
                             const lang = pxt.Util.allLanguages[langId];
-                            return <LanguageCard
+                            return lang ? <LanguageCard
                                 key={langId}
                                 langId={langId}
                                 name={lang.localizedName}
                                 ariaLabel={lang.englishName}
                                 description={lang.englishName}
                                 onClick={this.changeLanguage}
-                            />
+                            /> : undefined
                             }
                         )}
                     </div>
