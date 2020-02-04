@@ -114,12 +114,12 @@ const buildcss = () => exec("node built/pxt.js buildcss", true);
 const pxtTravis = () => exec("node built/pxt.js travis", true);
 
 
-function compileTsProject(dirname, destination, useOutdir) {
+function compileTsProject(dirname, destination, useOutdir, filename) {
     if (!destination) destination = "built";
     let opts = useOutdir ? {
         outDir: path.resolve(destination)
     } : {
-        out: path.resolve(destination, path.basename(dirname) + ".js")
+        out: path.resolve(destination, path.basename(filename || dirname) + ".js")
     };
 
     let configPath = path.join(dirname, "tsconfig.json");
@@ -474,6 +474,8 @@ const runKarma = () => {
 }
 const karma = gulp.series(buildKarmaRunner, runKarma);
 
+const buildBlocksTestRunner = () => compileTsProject("tests/blocks-test", "built/tests", false, "blocksrunner")
+
 const testAll = gulp.series(
     testdecompiler,
     testlang,
@@ -530,6 +532,7 @@ const buildAll = gulp.series(
     webapp,
     browserifyWebapp,
     gulp.parallel(semanticjs, copyJquery, copyWebapp, copyPlayground, copySemanticFonts, copyMonaco),
+    buildBlocksTestRunner,
     runUglify
 );
 
