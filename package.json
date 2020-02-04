@@ -79,7 +79,6 @@
   },
   "devDependencies": {
     "monaco-editor": "0.19.3",
-    "pxt-monaco-typescript": "2.3.6",
     "pxt-blockly": "2.1.14",
     "react": "16.8.3",
     "react-dom": "16.11.0",
