@@ -301,7 +301,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     }
 
     getBlockGroups(treeRow: toolbox.ToolboxCategory): toolbox.GroupDefinition[] {
-        const ns = treeRow.nameid;
+        const ns = treeRow.nameid + (treeRow.subns || "");
         if (!this.blockGroups) this.blockGroups = {}
         if (!this.blockGroups[ns]) {
             const {groups, groupIcons, groupHelp, blocks } = treeRow;
