@@ -56,6 +56,29 @@
     }
 }
 
+.ui.card.file.blocksprj {
+    .fileimage {
+        background-size: 85%;
+        background-position-y: 50%;
+    }
+}
+
+.ui.card.file.pyprj {
+    .fileimage {
+        background-image: @pyIcon;
+        filter: @logoFilter;
+    }
+}
+
+.ui.card.file.tsprj {
+    .fileimage {
+        background-image: @jsIcon;
+        filter: @logoFilter;
+        background-size: 65%;
+        background-position-y: 50%;
+    }
+}
+
 .ui.card.file.positive, .ui.card.file.positive:focus {
     border-color: @green;
 }

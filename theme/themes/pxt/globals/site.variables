@@ -148,6 +148,8 @@ default semantic
 @jsIconUrl: "../docs/static/icons/js.svg";
 @jsIcon: data-uri(@jsIconUrl);
 
+@logoFilter: invert(22%) sepia(54%) saturate(2744%) hue-rotate(288deg) brightness(95%) contrast(97%);
+
 /*-------------------
    Menu
 --------------------*/
