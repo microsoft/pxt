@@ -508,7 +508,11 @@ namespace pxt {
             const dependencies = Util.clone(this.config.dependencies || {});
             // add test dependencies if nedeed
             if (this.level == 0 && this.config.testDependencies) {
-                Util.jsonMergeFrom(dependencies, this.config.testDependencies);
+                // only add testDepdencies that can be resolved
+                Util.iterMap(this.config.testDependencies, (k, v) => {
+                    if (v != "*" || pxt.appTarget.bundledpkgs[k])
+                        dependencies[k] = v;
+                })
             }
             if (includeCpp && this.config.cppDependencies) {
                 Util.jsonMergeFrom(dependencies, this.config.cppDependencies);
