@@ -19,5 +19,8 @@
             "bluebird"
         ],
         "incremental": true
-    }
+    },
+    "exclude": [
+        "ext-typescript/lib/lib.d.ts"
+    ]
 }

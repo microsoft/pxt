@@ -474,7 +474,7 @@ const runKarma = () => {
 }
 const karma = gulp.series(buildKarmaRunner, runKarma);
 
-const testAll = gulp.parallel(
+const testAll = gulp.series(
     testdecompiler,
     testlang,
     testerr,
