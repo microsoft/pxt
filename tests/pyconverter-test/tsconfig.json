@@ -16,6 +16,8 @@
         "sourceMap": false
     },
     "files": [
-        "pyconvertrunner.ts"
+        "pyconvertrunner.ts",
+        "../common/testUtils.ts",
+        "../common/testHost.ts"
     ]
 }

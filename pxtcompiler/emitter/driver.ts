@@ -1,4 +1,3 @@
-/// <reference path="../../built/typescriptServices.d.ts"/>
 /// <reference path="../../localtypings/pxtarget.d.ts"/>
 // TODO: enable reference so we don't need to use: (pxt as any).py
 //      the issue is that this creates a circular dependency. This

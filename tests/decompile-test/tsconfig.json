@@ -11,6 +11,8 @@
         "sourceMap": false
     },
     "files": [
-        "decompilerunner.ts"
+        "decompilerunner.ts",
+        "../common/testUtils.ts",
+        "../common/testHost.ts"
     ]
 }

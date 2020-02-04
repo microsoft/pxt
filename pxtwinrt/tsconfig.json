@@ -7,6 +7,7 @@
         "out": "../built/pxtwinrt.js",
         "rootDir": ".",
         "newLine": "LF",
-        "sourceMap": false
+        "sourceMap": false,
+        "incremental": true
     }
 }
