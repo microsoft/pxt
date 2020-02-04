@@ -121,7 +121,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         // force monaco to use our sorting
                         sortText: `${tosort(i)} ${insertSnippet}`,
                         filterText: `${label} ${documentation} ${block}`,
-                        insertText: completionSnippet,
+                        insertText: completionSnippet || undefined,
                     };
                     return res
                 })
@@ -178,7 +178,7 @@ class SignatureHelper implements monaco.languages.SignatureHelpProvider {
                     activeSignature: 0,
                     activeParameter: r.auxResult
                 }
-                return { value: res, dispose: () => {} }
+                return { value: res, dispose: () => { } }
             });
     }
 }
@@ -768,12 +768,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.hideFlyout();
             })
 
-            // TODO: typescript
             monaco.languages.registerCompletionItemProvider("python", new CompletionProvider(this, true));
             monaco.languages.registerSignatureHelpProvider("python", new SignatureHelper(this, true));
             monaco.languages.registerHoverProvider("python", new HoverProvider(this, true));
             monaco.languages.registerDocumentRangeFormattingEditProvider("python", new FormattingProvider(this, true));
             monaco.languages.setLanguageConfiguration("python", pythonLanguageConfiguration)
+
+            monaco.languages.registerCompletionItemProvider("typescript", new CompletionProvider(this, false));
+            monaco.languages.registerSignatureHelpProvider("typescript", new SignatureHelper(this, false));
+            monaco.languages.registerHoverProvider("typescript", new HoverProvider(this, false));
+            monaco.languages.registerDocumentRangeFormattingEditProvider("typescript", new FormattingProvider(this, false));
 
             this.editorViewZones = [];
 
@@ -1003,7 +1007,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public hideFlyout() {
-        if (this.flyout) this.flyout.setState( { groups: undefined } );
+        if (this.flyout) this.flyout.setState({ groups: undefined });
 
         // Hide the current toolbox category
         if (this.toolbox) this.toolbox.clearSelection();
@@ -1040,7 +1044,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!container || !this.blockInfo) return;
 
         const debugging = this.isDebugging();
-        if (debugging && this.flyout) this.flyout.setState( { groups: undefined } );
+        if (debugging && this.flyout) this.flyout.setState({ groups: undefined });
         const debuggerToolbox = debugging ? <DebuggerToolbox
             ref={this.handleDebugToolboxRef}
             parent={this.parent}

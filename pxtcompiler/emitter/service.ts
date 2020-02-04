@@ -968,36 +968,78 @@ namespace ts.pxtc.service {
                 return n
             }
 
+            function findCallExpression(n: Node): ts.CallExpression | undefined {
+                if (ts.isCallExpression(n))
+                    return n
+                else if (n.parent) {
+                    return findCallExpression(n.parent)
+                }
+                return undefined
+            }
+
             const prog = service.getProgram()
             const tsAst = prog.getSourceFile("main.ts") // TODO: work for non-main files
             const innerMost = findInnerMostNodeAtPosition(tsAst)
             if (innerMost) {
                 const tc = prog.getTypeChecker()
-
-                const findCallExpression = (n: Node): ts.CallExpression | undefined => {
-                    if (n.parent) {
-                        if (ts.isCallExpression(n.parent)) {
-                            return n.parent
-                        }
-                        return findCallExpression(n.parent)
-                    }
-                    return undefined
-                }
                 const call = findCallExpression(innerMost)
 
                 if (call) {
-                    // which argument are we ?
-                    const paramIdx = call.arguments
-                        .map(a => a === innerMost)
-                        .indexOf(true)
+                    function findArgIdx() {
+                        // does our cursor syntax node trivially map to an argument?
+                        let paramIdx = call.arguments
+                            .map(a => a === innerMost)
+                            .indexOf(true)
+                        if (paramIdx >= 0)
+                            return paramIdx
 
-                    const blocksInfo = blocksInfoOp(lastApiInfo.apis, runtime.bannedCategories);
+                        // is our cursor within the argument range?
+                        const inRange = call.arguments.pos <= tsPos && tsPos < call.end
+                        if (!inRange)
+                            return -1
+
+                        // is our cursor pointing at one of the pieces of syntax of the call? E.g. "," or ")" or " "
+                        const isTopLeveLSyntax = [call, ...call.getChildren()]
+                            .map(a => a === innerMost)
+                            .reduce((p, n) => p || n, false)
+                        if (!isTopLeveLSyntax)
+                            return -1
+
+                        // no arguments?
+                        if (call.arguments.length === 0)
+                            return 0
+
+                        // then find which argument we're refering to
+                        paramIdx = 0;
+                        for (let a of call.arguments) {
+                            if (a.end <= tsPos)
+                                paramIdx++
+                            else
+                                break
+                        }
+                        if (!call.arguments.hasTrailingComma)
+                            paramIdx = Math.max(0, paramIdx - 1)
+
+                        return paramIdx
+                    }
+
+                    // which argument are we ?
+                    let paramIdx = findArgIdx()
+
+                    // if we're not one of the arguments, are we at the 
+                    // determine parameter idx
 
                     if (paramIdx >= 0) {
-                        const paramType = getParameterTsType(call, paramIdx, blocksInfo)
-                        if (paramType) {
-                            const matchingApis = getApisForTsType(paramType, call, tc)
-                            resultSymbols = matchingApis
+                        const blocksInfo = blocksInfoOp(lastApiInfo.apis, runtime.bannedCategories);
+                        const callSym = getCallSymbol(call)
+                        if (callSym) {
+                            if (paramIdx >= callSym.parameters.length)
+                                paramIdx = callSym.parameters.length - 1
+                            const paramType = getParameterTsType(callSym, paramIdx, blocksInfo)
+                            if (paramType) {
+                                const matchingApis = getApisForTsType(paramType, call, tc)
+                                resultSymbols = matchingApis
+                            }
                         }
                     }
                 }
@@ -1048,7 +1090,8 @@ namespace ts.pxtc.service {
                 })
 
             // sort entries
-            r.entries = pxt.Util.values(entries);
+            r.entries = pxt.Util.values(entries)
+                .filter(a => !!a);
             r.entries.sort(compareSymbols);
 
             return r;
@@ -1290,20 +1333,23 @@ namespace ts.pxtc.service {
         }
     }
 
-    function getParameterTsType(call: CallExpression, paramIdx: number, blocksInfo: BlocksInfo): string | undefined {
-        // pxt symbol
-        const callTs = call.expression.getText()
+    function getCallSymbol(callExp: CallExpression): SymbolInfo {// pxt symbol
+        const callTs = callExp.expression.getText()
         const api = lastApiInfo.apis.byQName[callTs]
+        return api
+    }
 
-        if (!api || paramIdx < 0)
+    function getParameterTsType(callSym: SymbolInfo, paramIdx: number, blocksInfo: BlocksInfo): string | undefined {
+        if (!callSym || paramIdx < 0)
             return undefined;
 
-        const paramDesc = api.parameters[paramIdx]
+        const paramDesc = callSym.parameters[paramIdx]
+        console.dir({ paramDesc })
         let result = paramDesc.type;
 
         // check if this parameter has a shadow block, if so use the type from that instead
-        if (api.attributes._def) {
-            const blockParams = api.attributes._def.parameters
+        if (callSym.attributes._def) {
+            const blockParams = callSym.attributes._def.parameters
             const blockParam = blockParams[paramIdx]
 
             const shadowId = blockParam.shadowBlockId
