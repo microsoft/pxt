@@ -1038,14 +1038,16 @@ namespace ts.pxtc.service {
                     if (paramIdx >= 0) {
                         const blocksInfo = blocksInfoOp(lastApiInfo.apis, runtime.bannedCategories);
                         const callSym = getCallSymbol(call)
-                        if (paramIdx >= callSym.parameters.length)
-                            paramIdx = callSym.parameters.length - 1
-                        const paramType = getParameterTsType(callSym, paramIdx, blocksInfo)
-                        console.dir({ paramType })
-                        if (paramType) {
-                            const matchingApis = getApisForTsType(paramType, call, tc)
-                            console.dir({ matchingApis })
-                            resultSymbols = matchingApis
+                        if (callSym) {
+                            if (paramIdx >= callSym.parameters.length)
+                                paramIdx = callSym.parameters.length - 1
+                            const paramType = getParameterTsType(callSym, paramIdx, blocksInfo)
+                            console.dir({ paramType })
+                            if (paramType) {
+                                const matchingApis = getApisForTsType(paramType, call, tc)
+                                console.dir({ matchingApis })
+                                resultSymbols = matchingApis
+                            }
                         }
                     }
                 }

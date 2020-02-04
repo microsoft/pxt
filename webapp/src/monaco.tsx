@@ -129,6 +129,12 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         filterText: `${label} ${documentation} ${block}`,
                         insertText: completionSnippet || undefined,
                     };
+                    if (si.pyQName.indexOf("get_position") >= 0) {
+                        console.log("get_position")
+                        console.dir({ python: this.python })
+                        console.dir(res)
+                        console.dir(si)
+                    }
                     if (!label) {
                         console.log("NO LABEL")
                         console.dir(res)
@@ -785,16 +791,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             monaco.languages.registerDocumentRangeFormattingEditProvider("python", new FormattingProvider(this, true));
             monaco.languages.setLanguageConfiguration("python", pythonLanguageConfiguration)
 
+            monaco.languages.registerCompletionItemProvider("typescript", new CompletionProvider(this, false));
+            monaco.languages.registerSignatureHelpProvider("typescript", new SignatureHelper(this, false));
             // TODO(dz): make work
-            monaco.languages.registerCompletionItemProvider("typescript", new CompletionProvider(this, true));
+            monaco.languages.registerHoverProvider("typescript", new HoverProvider(this, false));
             // TODO(dz): make work
-            monaco.languages.registerSignatureHelpProvider("typescript", new SignatureHelper(this, true));
+            monaco.languages.registerDocumentRangeFormattingEditProvider("typescript", new FormattingProvider(this, false));
             // TODO(dz): make work
-            monaco.languages.registerHoverProvider("typescript", new HoverProvider(this, true));
-            // TODO(dz): make work
-            monaco.languages.registerDocumentRangeFormattingEditProvider("typescript", new FormattingProvider(this, true));
-            // TODO(dz): make work
-            monaco.languages.setLanguageConfiguration("typescript", pythonLanguageConfiguration)
+            // monaco.languages.setLanguageConfiguration("typescript", pythonLanguageConfiguration)
 
             this.editorViewZones = [];
 
