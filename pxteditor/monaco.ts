@@ -113,7 +113,7 @@ namespace pxt.vs {
         });
 
         // maximum idle time
-        monaco.languages.typescript.typescriptDefaults.setMaximunWorkerIdleTime(20 * 60 * 1000);
+        monaco.languages.typescript.typescriptDefaults.setMaximumWorkerIdleTime(20 * 60 * 1000);
     }
 
     export function createEditor(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {
@@ -135,10 +135,10 @@ namespace pxt.vs {
             minimap: {
                 enabled: false
             },
-            autoIndent: true,
+            autoIndent: "full",
             useTabStops: true,
             dragAndDrop: true,
-            matchBrackets: true,
+            matchBrackets: "always",
             occurrencesHighlight: false,
             quickSuggestionsDelay: 200,
             theme: inverted ? 'vs-dark' : 'vs',

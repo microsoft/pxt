@@ -263,8 +263,9 @@ function compileTsToJs(filename: string): ts.Program {
         noImplicitAny: true,
         target: ts.ScriptTarget.ES5,
         module: ts.ModuleKind.ES2015,
-        // noLib: true,
-        skipLibCheck: true
+        noLib: true,
+        skipLibCheck: true,
+        types: []
     }
     // TODO: it'd be great to include the python helper fns so we can cover
     // more scenarios however this doesn't work easily since we use custom methods
@@ -272,7 +273,7 @@ function compileTsToJs(filename: string): ts.Program {
     // an implementation for these tests
     // const pyHelpers = ["pxt-python-helpers.ts"]
     //     .map(f => path.resolve("libs", "pxt-python", f), 'utf8')
-    let files = [filename /*, ...pyHelpers*/]
+    let files = [filename, path.resolve("pxtcompiler/ext-typescript/lib/lib.d.ts")/*, ...pyHelpers*/]
     return ts.pxtc.plainTscCompileFiles(files, cOpts)
 }
 async function compileAndRunTs(filename: string): Promise<string> {
