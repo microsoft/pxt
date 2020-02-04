@@ -99,7 +99,7 @@ function applyAmendment(amendment: EditAmendmentInstance, editor: monaco.editor.
     const MAX_COLUMN_LENGTH = 99999 // clunky way to select a whole line
     setTimeout(() => { // see top of file comments about why use setTimeout
         // determine where to apply
-        let amendRange = Object.assign({}, amendment.range)
+        let amendRange = amendment.range
         if (amendment.behavior === "replaceLine") {
             amendRange = {
                 ...amendRange,
