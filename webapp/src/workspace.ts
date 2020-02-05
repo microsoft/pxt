@@ -163,18 +163,22 @@ export function isSessionOutdated() {
     return pxt.storage.getLocal('pxt_workspace_session_id') != sessionID;
 }
 function checkSession() {
-    if (isSessionOutdated()) {
-        pxt.Util.assert(false, "trying to access outdated session")
+    refreshSession();
+}
+
+function refreshSession() {
+    sessionID = sha1(allScripts.map(script => `${script.header.id}${script.header.modificationTime}${script.version}`).join('|'))
+    if (pxt.storage.getLocal('pxt_workspace_session_id') != sessionID) {
+        data.invalidate("text:")
+        data.invalidate("header:")
     }
+
+    pxt.storage.setLocal('pxt_workspace_session_id', sessionID);
+    pxt.log(`workspace session: ${sessionID}`);
 }
 
 export function initAsync() {
     if (!impl) impl = browserworkspace.provider;
-
-    // generate new workspace session id to avoid races with other tabs
-    sessionID = "666"//ts.pxtc.Util.guidGen();
-    pxt.storage.setLocal('pxt_workspace_session_id', sessionID);
-    pxt.debug(`workspace session: ${sessionID}`);
 
     allScripts = []
 
@@ -182,6 +186,7 @@ export function initAsync() {
         .then(state => cleanupBackupsAsync().then(() => state))
         .then(_ => {
             pxt.perf.recordMilestone("workspace init finished")
+            refreshSession();
             return _
         })
 }
@@ -296,6 +301,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
         return headerQ.enqueue(h.id, () =>
             fixupVersionAsync(e).then(() =>
                 impl.deleteAsync ? impl.deleteAsync(h, e.version) : impl.setAsync(h, e.version, {})))
+            .finally(() => refreshSession())
     }
 
     // check if we have dynamic boards, store board info for home page rendering
@@ -319,8 +325,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
                         data.invalidate("text:" + h.id)
                         data.invalidate("pkg-git-status:" + h.id)
                     }
-                    data.invalidate("header:" + h.id)
-                    data.invalidate("header:*")
+                    refreshSession()
                 })))
 }
 
