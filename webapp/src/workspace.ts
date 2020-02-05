@@ -168,7 +168,7 @@ function checkSession() {
 }
 
 function refreshSession() {
-    sessionID = gitsha(allScripts.map(hd => `${hd.header.id}${hd.version}`).join('>>>>'))
+    sessionID = gitsha(allScripts.map(hd => `${hd.header.id}${hd.header.modificationTime}${hd.version}`).join('>>>>'))
     pxt.storage.setLocal('pxt_workspace_session_id', sessionID);
     pxt.log(`refreshed workspace session: ${sessionID}`);
 }
@@ -1185,9 +1185,12 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
             allScripts = headers.map(hd => {
                 let ex = existing[hd.id]
                 if (ex) {
-                    U.jsonCopyFrom(ex.header, hd)
-                    //ex.text = null
-                    //ex.version = null
+                    if (JSON.stringify(ex.header) !== JSON.stringify(hd)) {
+                        U.jsonCopyFrom(ex.header, hd)
+                        // force reload
+                        ex.text = undefined
+                        ex.version = undefined    
+                    }
                 } else {
                     ex = {
                         header: hd,
@@ -1208,6 +1211,12 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
         })
         .finally(() => {
             syncAsyncPromise = undefined;
+            // tell other editors that synching is done
+            if (window.parent && window.parent.postMessage)
+                window.parent.postMessage({
+                    type: "syncdone",
+                    broadcast: true
+                }, "*")
         });
 }
 
