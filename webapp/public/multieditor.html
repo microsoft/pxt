@@ -28,7 +28,19 @@
         <script>
 (function() {
     window.onmessage = function(msg) {
-        console.log(msg.data)
+        var data = msg.data;
+        var source = msg.source;
+        if (!!data.broadcast) {
+            var left = document.getElementById("left");
+            var right = document.getElementById("right");
+            [left, right]
+                .filter(function(ifrm) { 
+                    return ifrm.contentWindow !== source; 
+                })
+                .forEach(function(ifrm) { 
+                    ifrm.contentWindow.postMessage(data, "*")
+                });
+        }
     }
 })();        
         </script>
