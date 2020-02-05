@@ -10,5 +10,19 @@
         "newLine": "LF",
         "sourceMap": false,
         "incremental": false
-    }
+    },
+    "references": [
+        {
+            "path": "../pxtlib",
+        },
+        {
+            "path": "../pxtcompiler",
+        },
+        {
+            "path": "../pxtpy",
+        },
+        {
+            "path": "../pxtsim",
+        }
+    ]
 }

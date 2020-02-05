@@ -17,6 +17,7 @@
         "types": [
             "bluebird"
         ],
-        "incremental": true
+        "incremental": true,
+        "composite": true
     }
 }

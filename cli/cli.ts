@@ -1,10 +1,5 @@
 /* tslint:disable:forin cli only run in node */
 
-/// <reference path="../built/pxtlib.d.ts"/>
-/// <reference path="../built/pxtcompiler.d.ts"/>
-/// <reference path="../built/pxtpy.d.ts"/>
-/// <reference path="../built/pxtsim.d.ts"/>
-
 (global as any).pxt = pxt;
 
 import * as nodeutil from './nodeutil';

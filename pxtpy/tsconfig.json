@@ -19,6 +19,7 @@
             "fuse",
             "bluebird"
         ],
-        "incremental": true
+        "incremental": true,
+        "composite": true
     }
 }

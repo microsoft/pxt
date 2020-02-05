@@ -18,7 +18,8 @@
             "fuse",
             "bluebird"
         ],
-        "incremental": true
+        "incremental": true,
+        "composite": true
     },
     "exclude": [
         "ext-typescript/lib/lib.d.ts"

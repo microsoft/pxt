@@ -20,6 +20,7 @@
             "bluebird",
             "web-bluetooth"
         ],
-        "incremental": true
+        "incremental": true,
+        "composite": true
     }
 }
