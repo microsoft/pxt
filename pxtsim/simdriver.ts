@@ -15,6 +15,9 @@ namespace pxsim {
         simUrl?: string;
         stoppedClass?: string;
         invalidatedClass?: string;
+        // instead of spanning multiple simulators,
+        // dispatch messages to parent window
+        nestedEditorSim?: boolean; 
     }
 
     export enum SimulatorState {
@@ -226,9 +229,18 @@ namespace pxsim {
                 this.hwdbg.postMessage(msg)
                 return
             }
+
+            const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
+
+            // the editor is hosted in a multi-editor setting
+            if (this.options.nestedEditorSim && window.parent &&
+                broadcastmsg && !!broadcastmsg.broadcast) {                
+                window.parent.postMessage(msg, "*");
+                return;
+            }
+            
             // dispatch to all iframe besides self
             let frames = this.simFrames();
-            const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
             if (source && broadcastmsg && !!broadcastmsg.broadcast) {
                 if (frames.length < 2) {
                     this.container.appendChild(this.createFrame());

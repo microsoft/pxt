@@ -1,0 +1,36 @@
+<html>
+    <head>
+
+        <style>
+#left {
+    position: absolute;
+    left: 0;
+    right: 50%;
+    width: 50%;
+    height: 100%;
+    bottom: 0;
+    top: 0;
+}        
+#right {
+    position: absolute;
+    right: 0;
+    left: 50%;
+    width: 50%;
+    height: 100%;
+    bottom: 0;
+    top: 0;
+}        
+        </style>
+    </head>
+    <body>
+        <iframe id="left" src="/index.html?nestededitorsim=1&editorlayout=ide&nosandbox=1"></iframe>
+        <iframe id="right" src="/index.html?nestededitorsim=1&editorlayout=ide&nosandbox=1"></iframe>
+        <script>
+(function() {
+    window.onmessage = function(msg) {
+        console.log(msg.data)
+    }
+})();        
+        </script>
+    </body>
+</html>
