@@ -1,3 +1,4 @@
+/// <reference path="../built/pxtlib.d.ts" />
 
 namespace pxt {
     export class SimpleHost implements pxt.Host {

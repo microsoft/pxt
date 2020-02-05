@@ -1,21 +1,14 @@
 {
+    "extends": "../tsconfig_base.json",
     "compilerOptions": {
-        "target": "es5",
-        "noImplicitAny": true,
-        "noImplicitReturns": true,
-        "declaration": true,
-        "out": "../built/pxteditor.js",
-        "newLine": "LF",
-        "sourceMap": false,
-        "lib": [
-            "dom",
-            "dom.iterable",
-            "scripthost",
-            "es6"
-        ],
-        "types": [
-            "bluebird"
-        ],
-        "incremental": true
-    }
+        "outFile": "../built/pxteditor.js",
+    },
+    "references": [
+        {
+            "path": "../pxtlib"
+        },
+        {
+            "path": "../pxtblocks"
+        },
+    ]
 }

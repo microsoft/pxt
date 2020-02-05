@@ -1,0 +1,34 @@
+{
+    "compilerOptions": {
+        "outFile": "./built/pxt.js",
+        "declaration": false,
+        "declarationMap": false,
+        "composite": false,
+    },
+    "files": [
+        "foo.ts"
+    ],
+    "include": [],
+    "references": [
+        {
+            "path": "pxtlib",
+            "prepend": true
+        },
+        {
+            "path": "pxtcompiler",
+            "prepend": true
+        },
+        {
+            "path": "pxtpy",
+            "prepend": true
+        },
+        {
+            "path": "pxtsim",
+            "prepend": true
+        },
+        {
+            "path": "cli",
+            "prepend": true
+        },
+    ]
+}
