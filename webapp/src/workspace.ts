@@ -158,23 +158,19 @@ export function getHeader(id: string) {
     return null
 }
 
-let sessionID: string;
+let sessionID: string = ""
 export function isSessionOutdated() {
     return pxt.storage.getLocal('pxt_workspace_session_id') != sessionID;
 }
 function checkSession() {
-    refreshSession();
+    if (isSessionOutdated()) // another tab took control
+        syncAsync().done();
 }
 
 function refreshSession() {
-    sessionID = sha1(allScripts.map(script => `${script.header.id}${script.header.modificationTime}${script.version}`).join('|'))
-    if (pxt.storage.getLocal('pxt_workspace_session_id') != sessionID) {
-        data.invalidate("text:")
-        data.invalidate("header:")
-    }
-
+    sessionID = sha1(allScripts.map(hd => `${hd.header.id}${hd.text}`).join('|'))
     pxt.storage.setLocal('pxt_workspace_session_id', sessionID);
-    pxt.log(`workspace session: ${sessionID}`);
+    pxt.log(`refreshed workspace session: ${sessionID}`);
 }
 
 export function initAsync() {
@@ -1168,13 +1164,14 @@ export function resetCloudAsync(): Promise<void> {
             h.isDeleted = true;
             h.blobVersion = "DELETED";
             return saveAsync(h, null, true);
-        }))).then(() => data.invalidate("header:*"));
+        })))
+        .then(() => data.invalidate("header:*"));
 }
 
+let syncAsyncPromise: Promise<pxt.editor.EditorSyncState>;
 export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
-    checkSession();
-
-    return impl.listAsync()
+    if (syncAsyncPromise) return syncAsyncPromise;
+    return syncAsyncPromise = impl.listAsync()
         .catch((e) => {
             // There might be a problem with the native databases. Switch to memory for this session so the user can at
             // least use the editor.
@@ -1184,9 +1181,8 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
             return impl.listAsync();
         })
         .then(headers => {
-            let existing = U.toDictionary(allScripts || [], h => h.header.id)
-            allScripts = []
-            for (let hd of headers) {
+            const existing = U.toDictionary(allScripts || [], h => h.header.id)
+            allScripts = headers.map(hd => {
                 let ex = existing[hd.id]
                 if (ex) {
                     U.jsonCopyFrom(ex.header, hd)
@@ -1199,14 +1195,20 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                         version: undefined,
                     }
                 }
-                allScripts.push(ex)
-            }
+                return ex;
+            })
             data.invalidate("header:")
             data.invalidate("text:")
             data.invalidate("pkg-git-status:")
             cloudsync.syncAsync().done() // sync in background
         })
-        .then(() => impl.getSyncState ? impl.getSyncState() : null)
+        .then(() => {
+            refreshSession();
+            return impl.getSyncState ? impl.getSyncState() : null
+        })
+        .finally(() => {
+            syncAsyncPromise = undefined;
+        });
 }
 
 export function resetAsync() {
