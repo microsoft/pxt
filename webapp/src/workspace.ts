@@ -1189,7 +1189,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                         U.jsonCopyFrom(ex.header, hd)
                         // force reload
                         ex.text = undefined
-                        ex.version = undefined    
+                        ex.version = undefined
                     }
                 } else {
                     ex = {
