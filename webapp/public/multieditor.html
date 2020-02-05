@@ -1,53 +1,66 @@
 <html>
-    <head>
 
-        <style>
-#left {
-    position: absolute;
-    left: 0;
-    right: 50%;
-    width: 50%;
-    height: 100%;
-    bottom: 0;
-    top: 0;
-}        
-#right {
-    position: absolute;
-    right: 0;
-    left: 50%;
-    width: 50%;
-    height: 100%;
-    bottom: 0;
-    top: 0;
-}        
-        </style>
-    </head>
-    <body>
-        <iframe id="left"></iframe>
-        <iframe id="right"></iframe>
-        <script>
-(function() {
-    var left = document.getElementById("left");
-    var right = document.getElementById("right");
-    window.onmessage = function(msg) {
-        var data = msg.data;
-        var source = msg.source;
-        if (!!data.broadcast) {
-            data.outer = true;
-            [left, right]
-                .filter(function(ifrm) { 
-                    return ifrm.contentWindow !== source; 
-                })
-                .forEach(function(ifrm) { 
-                    ifrm.contentWindow.postMessage(data, "*")
-                });
+<head>
+
+    <style>
+        #left {
+            position: absolute;
+            left: 0;
+            right: 50%;
+            width: 50%;
+            height: 100%;
+            bottom: 0;
+            top: 0;
         }
-    }
 
-    var editorUrl = "/index.html?nestededitorsim=1&editorlayout=ide&nosandbox=1";
-    left.src = editorUrl;
-    right.src = editorUrl;
-})();        
-        </script>
-    </body>
+        #right {
+            position: absolute;
+            right: 0;
+            left: 50%;
+            width: 50%;
+            height: 100%;
+            bottom: 0;
+            top: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <iframe id="left"></iframe>
+    <iframe id="right"></iframe>
+    <script>
+        (function () {
+            var targets = {
+                "microbit": {
+                    name: "micro:bit",
+                    url: "https://makecode.microbit.org/beta"
+                }
+            };
+
+            var left = document.getElementById("left");
+            var right = document.getElementById("right");
+            window.onmessage = function (msg) {
+                var data = msg.data;
+                var source = msg.source;
+                if (!!data.broadcast) {
+                    data.outer = true;
+                    [left, right]
+                        .filter(function (ifrm) {
+                            return ifrm.contentWindow !== source;
+                        })
+                        .forEach(function (ifrm) {
+                            ifrm.contentWindow.postMessage(data, "*")
+                        });
+                }
+            }
+
+            var localhost = /localhost=1/.test(window.location.href)
+            var target = targets["microbit"];
+            var editorUrl = (localhost ? "/index.html" : target.url) + "?nestededitorsim=1&editorlayout=ide&nosandbox=1";
+            left.src = editorUrl;
+            right.src = editorUrl;
+        })();        
+    </script>
+</body>
+
 </html>
