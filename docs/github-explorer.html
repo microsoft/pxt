@@ -129,13 +129,6 @@
             return response;
         }
 
-        function atobUTF16(sBase64) {
-
-            var sBinaryString = atob(sBase64), aBinaryView = new Uint8Array(sBinaryString.length);
-            Array.prototype.forEach.call(aBinaryView, function (el, idx, arr) { arr[idx] = sBinaryString.charCodeAt(idx); });
-            return String.fromCharCode.apply(null, new Uint16Array(aBinaryView.buffer));
-        }
-
         async function sniffTarget(repo) {
             const response = await fetchJSON(`${api}/repos/${repo.full_name}/contents/README.md`);
             const json = await response.json();
