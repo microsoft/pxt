@@ -168,7 +168,7 @@ function checkSession() {
 }
 
 function refreshSession() {
-    sessionID = sha1(allScripts.map(hd => `${hd.header.id}${hd.text}`).join('|'))
+    sessionID = gitsha(allScripts.map(hd => `${hd.header.id}${hd.version}`).join('>>>>'))
     pxt.storage.setLocal('pxt_workspace_session_id', sessionID);
     pxt.log(`refreshed workspace session: ${sessionID}`);
 }
