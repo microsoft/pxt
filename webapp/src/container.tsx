@@ -232,7 +232,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const { highContrast, greenScreen } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const packages = pxt.appTarget.cloud && !!pxt.appTarget.cloud.packages;
-        const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
         const readOnly = pxt.shell.isReadOnly();
         const isController = pxt.shell.isControllerMode();
@@ -251,7 +250,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
             {showProjectSettings ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} /> : undefined}
             {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={this.showPackageDialog} /> : undefined}
-            {boards ? <sui.Item role="menuitem" icon="microchip" text={lf("Change Board")} onClick={this.showBoardDialog} /> : undefined}
             {showPairDevice ? <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} /> : undefined}
             {pxt.webBluetooth.isAvailable() ? <sui.Item role="menuitem" icon='bluetooth' text={lf("Pair Bluetooth")} onClick={this.pairBluetooth} /> : undefined}
             {showPrint ? <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} /> : undefined}
