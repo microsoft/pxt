@@ -1155,6 +1155,23 @@ export class ProjectView
         if (checkAsync)
             return checkAsync.then(() => this.openHome());
 
+        let p = Promise.resolve();
+        if (workspace.isSessionOutdated()) { // reload header before loading
+            pxt.log(`sync before load`)
+            p = p.then(() => workspace.syncAsync())
+            .then(() => {
+                // update header reference
+                h = workspace.getHeader(h.id);
+            })
+        }
+
+        return p.then(() => {
+            if (!h) return Promise.resolve();
+            else return this.internalLoadHeaderAsync(h, editorState);
+        })
+    }
+
+    private internalLoadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
         pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
         this.stopSimulator(true);
         if (pxt.appTarget.simulator && pxt.appTarget.simulator.aspectRatio)
