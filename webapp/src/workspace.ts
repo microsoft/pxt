@@ -162,7 +162,7 @@ let sessionID: string = ""
 export function isSessionOutdated() {
     return pxt.storage.getLocal('pxt_workspace_session_id') != sessionID;
 }
-function checkSession() {
+export function checkSession() {
     if (isSessionOutdated()) // another tab took control
         syncAsync().done();
 }
