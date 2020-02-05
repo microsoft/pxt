@@ -309,4 +309,4 @@ The words `%tx`, `%rx`, `%rate` `$size`, and `%buffer=serialbuffer` stay the sam
 
 ### What about the text inside the '{ }'
 
-The text inside `{ }` such as `{0:s}` and `{id:name}` are left as is and NOT translated.
+The text inside `{ }` such as `{0:s}` and `{id:name}` are left alone and NOT translated.
