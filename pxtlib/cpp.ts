@@ -1011,14 +1011,14 @@ int main() {
         let buf: number[];
         let ptr = 0;
         hexfile.split(/\r?\n/).forEach(ln => {
-            let m = /^:10....0041140E2FB82FA2BB(....)(....)(....)(....)(..)/.exec(ln)
+            let m = /^:10....0[0E]41140E2FB82FA2BB(....)(....)(....)(....)(..)/.exec(ln)
             if (m) {
                 metaLen = parseInt(swapBytes(m[1]), 16)
                 textLen = parseInt(swapBytes(m[2]), 16)
                 toGo = metaLen + textLen
                 buf = <any>new Uint8Array(toGo)
             } else if (toGo > 0) {
-                m = /^:10....00(.*)(..)$/.exec(ln)
+                m = /^:10....0[0E](.*)(..)$/.exec(ln)
                 if (!m) return
                 let k = m[1]
                 while (toGo > 0 && k.length > 0) {
