@@ -1471,7 +1471,7 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
 }
 
 function buildPxtAsync(includeSourceMaps = false): Promise<string[]> {
-    let ksd = "node_modules/pxt-core"
+    let ksd = fs.realpathSync("node_modules/pxt-core");
     if (!fs.existsSync(ksd + "/pxtlib/main.ts")) return Promise.resolve([]);
 
     console.log(`building ${ksd}...`);
