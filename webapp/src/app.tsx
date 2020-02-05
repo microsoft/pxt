@@ -237,7 +237,7 @@ export class ProjectView
             if (workspace.isSessionOutdated()) {
                 pxt.debug('workspace changed, reloading...')
                 let id = this.state.header ? this.state.header.id : '';
-                workspace.initAsync()
+                workspace.syncAsync()
                     .done(() => !this.state.home && id ? this.loadHeaderAsync(workspace.getHeader(id), this.state.editorState) : Promise.resolve());
             } else if (this.state.resumeOnVisibility) {
                 this.setState({ resumeOnVisibility: false });
