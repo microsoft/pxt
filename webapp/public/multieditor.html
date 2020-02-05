@@ -23,16 +23,16 @@
         </style>
     </head>
     <body>
-        <iframe id="left" src="/index.html?nestededitorsim=1&editorlayout=ide&nosandbox=1"></iframe>
-        <iframe id="right" src="/index.html?nestededitorsim=1&editorlayout=ide&nosandbox=1"></iframe>
+        <iframe id="left"></iframe>
+        <iframe id="right"></iframe>
         <script>
 (function() {
+    var left = document.getElementById("left");
+    var right = document.getElementById("right");
     window.onmessage = function(msg) {
         var data = msg.data;
         var source = msg.source;
         if (!!data.broadcast) {
-            var left = document.getElementById("left");
-            var right = document.getElementById("right");
             data.outer = true;
             [left, right]
                 .filter(function(ifrm) { 
@@ -43,6 +43,10 @@
                 });
         }
     }
+
+    var editorUrl = "/index.html?nestededitorsim=1&editorlayout=ide&nosandbox=1";
+    left.src = editorUrl;
+    right.src = editorUrl;
 })();        
         </script>
     </body>
