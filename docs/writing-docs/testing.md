@@ -10,8 +10,8 @@ To exclude a snippet from being checked, add `-ignore` after the snippet type (s
 
 ## Tutorial testing
 
-The ``jake testtutorials`` command will parse and run the tutorial test cases, and validate against the baselines. Baselines will be automatically generated and stored in the cases folder, if they are not present.
+The ``gulp testtutorials`` command will parse and run the tutorial test cases, and validate against the baselines. Baselines will be automatically generated and stored in the cases folder, if they are not present.
 
 ```
-jake testtutorials
+gulp testtutorials
 ```
