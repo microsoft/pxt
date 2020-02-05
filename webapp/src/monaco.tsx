@@ -1834,40 +1834,40 @@ export function rangeToSelection(range: monaco.IRange): monaco.Selection {
  * because they pretend to be desktops. If Monaco ever fixes this bug, this should be removed.
  */
 class ShowKeyboardWidget implements monaco.editor.IOverlayWidget {
-	private static readonly ID = 'editor.contrib.ShowKeyboardWidget_pxt';
-	private readonly editor: monaco.editor.ICodeEditor;
-	private readonly _domNode: HTMLElement;
+    private static readonly ID = 'editor.contrib.ShowKeyboardWidget_pxt';
+    private readonly editor: monaco.editor.ICodeEditor;
+    private readonly _domNode: HTMLElement;
 
-	constructor(editor: monaco.editor.ICodeEditor) {
-		this.editor = editor;
-		this._domNode = document.createElement('textarea');
+    constructor(editor: monaco.editor.ICodeEditor) {
+        this.editor = editor;
+        this._domNode = document.createElement('textarea');
         this._domNode.className = 'iPadShowKeyboard';
 
         this._domNode.addEventListener("touchstart", this.touchHandler);
         this._domNode.addEventListener("focus", this.touchHandler);
 
-		this.editor.addOverlayWidget(this);
-	}
+        this.editor.addOverlayWidget(this);
+    }
 
-	public dispose(): void {
+    public dispose(): void {
         this.editor.removeOverlayWidget(this);
 
         this._domNode.removeEventListener("touchstart", this.touchHandler);
         this._domNode.removeEventListener("focus", this.touchHandler);
-	}
+    }
 
-	public getId(): string {
-		return ShowKeyboardWidget.ID;
-	}
+    public getId(): string {
+        return ShowKeyboardWidget.ID;
+    }
 
-	public getDomNode(): HTMLElement {
-		return this._domNode;
-	}
+    public getDomNode(): HTMLElement {
+        return this._domNode;
+    }
 
-	public getPosition(): monaco.editor.IOverlayWidgetPosition {
-		return {
-			preference: monaco.editor.OverlayWidgetPositionPreference.BOTTOM_RIGHT_CORNER
-		};
+    public getPosition(): monaco.editor.IOverlayWidgetPosition {
+        return {
+            preference: monaco.editor.OverlayWidgetPositionPreference.BOTTOM_RIGHT_CORNER
+        };
     }
 
     protected touchHandler = () => {
