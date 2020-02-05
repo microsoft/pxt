@@ -1866,7 +1866,7 @@ class ShowKeyboardWidget implements monaco.editor.IOverlayWidget {
 
     public getPosition(): monaco.editor.IOverlayWidgetPosition {
         return {
-            preference: monaco.editor.OverlayWidgetPositionPreference.BOTTOM_RIGHT_CORNER
+            preference: monaco.editor.OverlayWidgetPositionPreference.TOP_RIGHT_CORNER
         };
     }
 
