@@ -4307,7 +4307,5 @@ document.addEventListener("DOMContentLoaded", () => {
                 theEditor.importFile(new File(msg.parts, msg.filename));
             return;
         }
-        if (m.type == "syncdone") // check if sync is needed
-            workspace.checkSession();
     }, false);
 })

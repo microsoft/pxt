@@ -1211,12 +1211,6 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
         })
         .finally(() => {
             syncAsyncPromise = undefined;
-            // tell other editors that synching is done
-            if (window.parent && window.parent.postMessage)
-                window.parent.postMessage({
-                    type: "syncdone",
-                    broadcast: true
-                }, "*")
         });
 }
 
