@@ -17,7 +17,7 @@ namespace pxsim {
         invalidatedClass?: string;
         // instead of spanning multiple simulators,
         // dispatch messages to parent window
-        nestedEditorSim?: boolean; 
+        nestedEditorSim?: boolean;
     }
 
     export enum SimulatorState {
@@ -231,27 +231,28 @@ namespace pxsim {
             }
 
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
-
-            // the editor is hosted in a multi-editor setting
-            if (this.options.nestedEditorSim && window.parent &&
-                broadcastmsg && !!broadcastmsg.broadcast) {                
-                window.parent.postMessage(msg, "*");
-                return;
-            }
-            
-            // dispatch to all iframe besides self
             let frames = this.simFrames();
             if (source && broadcastmsg && !!broadcastmsg.broadcast) {
-                if (frames.length < 2) {
-                    this.container.appendChild(this.createFrame());
-                    frames = this.simFrames();
-                } else if (frames[1].dataset['runid'] != this.runId) {
-                    this.startFrame(frames[1]);
+                // the editor is hosted in a multi-editor setting
+                // don't start extra frames
+                if (this.options.nestedEditorSim && window.parent) {
+                    // if message comes from parent already, don't echo
+                    if (source !== window.parent)
+                        window.parent.postMessage(msg, "*");
+                } else {
+                    // start secondary frame if needed
+                    if (frames.length < 2) {
+                        this.container.appendChild(this.createFrame());
+                        frames = this.simFrames();
+                    } else if (frames[1].dataset['runid'] != this.runId) {
+                        this.startFrame(frames[1]);
+                    }
                 }
             }
 
+            // dispatch message to other frames
             for (let i = 0; i < frames.length; ++i) {
-                let frame = frames[i] as HTMLIFrameElement
+                const frame = frames[i] as HTMLIFrameElement
                 // same frame as source
                 if (source && frame.contentWindow == source) continue;
                 // frame not in DOM

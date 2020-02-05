@@ -33,6 +33,7 @@
         if (!!data.broadcast) {
             var left = document.getElementById("left");
             var right = document.getElementById("right");
+            data.outer = true;
             [left, right]
                 .filter(function(ifrm) { 
                     return ifrm.contentWindow !== source; 
