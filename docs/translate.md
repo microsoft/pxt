@@ -295,7 +295,7 @@ Here are answers to some common questions about localization and translation in 
 
 ### Do I translate those names with special characters in the block strings?
 
-No, leave the words connected to `$`, `%`, `=`, etc. untranslated. These are parameter names and need to remain as they are. Also, the `|` is a separator character and is NOT translated. In this example, two untranslated strings in Crowdin appear as this:
+No, leave the words connected to `$`, `%`, `=`, etc. untranslated. These are parameter names and need to remain as they are. Also, the `|` is a separator character and is NOT translated. In this example, two untranslated strings in Crowdin appear like this:
 
 ```
 serial|redirect to|TX %tx|RX %rx|at baud rate %rate
