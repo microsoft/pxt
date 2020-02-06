@@ -176,6 +176,8 @@ function refreshHeadersSession() {
     if (isHeadersSessionOutdated()) {
         pxt.storage.setLocal('workspacesessionid', sessionID);
         pxt.debug(`workspace: refreshed headers session to ${sessionID}`);
+        data.invalidate("header:*");
+        data.invalidate("text:*");
     }
 }
 // this is an identifier for the current frame
@@ -1202,7 +1204,7 @@ export function resetCloudAsync(): Promise<void> {
             h.blobVersion = "DELETED";
             return forceSaveAsync(h, null, true);
         })))
-        .then(() => data.invalidate("header:*"));
+        .then(() => refreshHeadersSession());
 }
 
 let syncAsyncPromise: Promise<pxt.editor.EditorSyncState>;
@@ -1239,8 +1241,8 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                 }
                 return ex;
             })
-            data.invalidate("header:")
-            data.invalidate("text:")
+            data.invalidate("header:*")
+            data.invalidate("text:*")
             data.invalidate("pkg-git-status:")
             cloudsync.syncAsync().done() // sync in background
         })
