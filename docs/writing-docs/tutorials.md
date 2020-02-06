@@ -6,6 +6,16 @@ Step by step tutorials are authored in markdown and automatically converted by t
 
 A tutorial is a sequence of steps that the user follows in a limited environment. The experience is designed to reduce the complexity of using the full editor to simply guiding the user through a precise sequence of limited interactions. Tutorials are used as "ramp up" tools to teach both how the editor works and how the basics of blocks work. An editor can have as many tutorials as needed.
 
+### ~ hint
+
+#### Basics of writing a tutorial
+
+To watch this video to see a brief introduction about writing tutorials.
+
+[Tutorial Basics](#)
+
+### ~
+
 Each step of the tutorial has a short description, or explanation, of the activity for the step and
 possibly a block example. If the step includes a block example, the editor will restrict the selection of blocks from the toolbox to only those used in the example.
 
