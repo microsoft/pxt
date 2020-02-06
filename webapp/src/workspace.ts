@@ -108,6 +108,7 @@ export function makeBackupAsync(h: Header, text: ScriptText): Promise<Header> {
     return importAsync(h2, text)
         .then(() => {
             h.backupRef = h2.id;
+            clearHeaderSession(h2);
             return saveAsync(h2);
         })
         .then(() => h2)
@@ -121,15 +122,18 @@ export function restoreFromBackupAsync(h: Header) {
     return getTextAsync(refId)
         .then(files => {
             delete h.backupRef;
+            clearHeaderSession(h);
             return saveAsync(h, files);
         })
         .then(() => {
             const backup = getHeader(refId);
             backup.isDeleted = true;
+            clearHeaderSession(backup);
             return saveAsync(backup);
         })
         .catch(() => {
             delete h.backupRef;
+            clearHeaderSession(h);
             return saveAsync(h);
         });
 }
@@ -146,6 +150,7 @@ export function cleanupBackupsAsync() {
     // Delete the backups that don't have any scripts referencing them
     return Promise.all(allHeaders.filter(h => (h.isBackup && !refMap[h.id])).map(h => {
         h.isDeleted = true;
+        clearHeaderSession(h);
         return saveAsync(h);
     }));
 }
@@ -178,10 +183,18 @@ const workspaceID: string = pxt.Util.guidGen();
 export function acquireHeaderSession(h: Header) {
     pxt.storage.setLocal('workspaceheadersessionid:' + h.id, workspaceID);
 }
-function checkHeaderSession(h: Header): void {
+function clearHeaderSession(h: Header) {
+    pxt.storage.removeLocal('workspaceheadersessionid:' + h.id);
+}
+export function isHeaderSessionOutdated(h: Header): boolean {
     const sid = pxt.storage.getLocal('workspaceheadersessionid:' + h.id);
-    if(sid && sid != workspaceID)
+    return sid && sid != workspaceID;
+}
+function checkHeaderSession(h: Header): void {
+    if(isHeaderSessionOutdated(h)) {
+        core.errorNotification(lf("This project is already opened elsewhere."))
         pxt.Util.assert(false, "trying to access outdated session")    
+    }
 }
 
 export function initAsync() {
@@ -257,6 +270,7 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
             h.pubCurrent = h.saveId === saveId
             h.meta = inf.meta;
             pxt.debug(`published; id /${h.pubId}`)
+            clearHeaderSession(h);
             return saveAsync(h)
                 .then(() => inf)
         })
@@ -357,6 +371,7 @@ export function importAsync(h: Header, text: ScriptText, isCloud = false) {
         version: null
     }
     allScripts.push(e)
+    clearHeaderSession(h);
     return saveAsync(h, text, isCloud)
 }
 
@@ -848,6 +863,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         }, files)
     } else {
         hd.name = cfg.name
+        clearHeaderSession(hd);
         await saveAsync(hd, files)
     }
 
