@@ -1,5 +1,3 @@
-/// <reference path="./testBlocks/mb.ts" />
-
 let x = 1
 x = 1
 x = 1

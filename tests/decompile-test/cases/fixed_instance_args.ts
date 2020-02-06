@@ -1,4 +1,3 @@
-/// <reference path="./testBlocks/fixedInstance.ts" />
 
 pins2.fixedInstanceArg(pins2.A3);
 

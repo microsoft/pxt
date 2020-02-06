@@ -1,4 +1,3 @@
-/// <reference path="./testBlocks/basic.ts" />
 
 let x: testNamespace.TestClass = null;
 x = testNamespace.createTestClass(0);

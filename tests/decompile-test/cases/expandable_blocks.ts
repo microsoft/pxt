@@ -1,4 +1,3 @@
-/// <reference path="./testBlocks/expandableBlocks.ts" />
 
 expandable.optionalParams("hello", 180, true, Direction.Right);
 expandable.optionalParams("hi there", 180);
