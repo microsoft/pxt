@@ -1196,7 +1196,7 @@ export function saveToCloudAsync(h: Header) {
 export function resetCloudAsync(): Promise<void> {
     // always sync local scripts before resetting
     // remove all cloudsync or github repositories
-    return syncAsync().catch(e => {})    
+    return syncAsync().catch(e => { })
         .then(() => cloudsync.resetAsync())
         .then(() => Promise.all(allScripts.map(e => e.header).filter(h => h.cloudSync || h.githubId).map(h => {
             // Remove cloud sync'ed project
@@ -1205,7 +1205,7 @@ export function resetCloudAsync(): Promise<void> {
             return forceSaveAsync(h, null, true);
         })))
         .then(() => syncAsync())
-        .then(() => {});
+        .then(() => { });
 }
 
 let syncAsyncPromise: Promise<pxt.editor.EditorSyncState>;
@@ -1269,7 +1269,7 @@ export function resetAsync() {
                 pxt.storage.setLocal("local_token", Cloud.localToken);
         })
         .then(() => syncAsync())
-        .then(() => {});
+        .then(() => { });
 }
 
 export function loadedAsync() {
