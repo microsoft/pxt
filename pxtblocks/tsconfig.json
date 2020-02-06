@@ -1,21 +1,15 @@
 {
+    "extends": "../tsconfig_base.json",
     "compilerOptions": {
-        "target": "es5",
-        "noImplicitAny": true,
-        "noImplicitReturns": true,
-        "declaration": true,
-        "out": "../built/pxtblocks.js",
-        "newLine": "LF",
-        "sourceMap": false,
-        "lib": [
-            "dom",
-            "dom.iterable",
-            "scripthost",
-            "es6"
-        ],
-        "types": [
-            "bluebird"
-        ],
-        "incremental": true
-    }
+        "outFile": "../built/pxtblocks.js",
+        "noImplicitThis": false // TODO
+    },
+    "references": [
+        {
+            "path": "../pxtlib"
+        },
+        {
+            "path": "../pxtsim"
+        }
+    ]
 }

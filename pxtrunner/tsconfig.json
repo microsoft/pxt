@@ -1,23 +1,12 @@
 {
+    "extends": "../tsconfig_base.json",
     "compilerOptions": {
-        "target": "es5",
-        "noImplicitAny": true,
-        "noImplicitReturns": true,
-        "declaration": true,
-        "out": "../built/pxtrunner.js",
-        "newLine": "LF",
-        "sourceMap": false,
-        "lib": [
-            "dom",
-            "dom.iterable",
-            "scripthost",
-            "es6"
-        ],
+        "noImplicitThis": false, // TODO
+        "outFile": "../built/pxtrunner.js",
         "types": [
-            "jquery",
             "highlight.js",
-            "bluebird"
-        ],
-        "incremental": true
+            "bluebird",
+            "jquery"
+        ]
     }
 }

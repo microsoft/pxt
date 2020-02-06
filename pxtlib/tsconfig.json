@@ -1,26 +1,6 @@
 {
+    "extends": "../tsconfig_base.json",
     "compilerOptions": {
-        "target": "es5",
-        "noImplicitAny": true,
-        "noImplicitReturns": true,
-        "noImplicitThis": true,
-        "declaration": true,
-        "out": "../built/pxtlib.js",
-        "newLine": "LF",
-        "sourceMap": false,
-        "lib": [
-            "dom",
-            "dom.iterable",
-            "scripthost",
-            "es6"
-        ],
-        "types": [
-            "highlight.js",
-            "marked",
-            "bluebird",
-            "web-bluetooth"
-        ],
-        "incremental": true,
-        "composite": true
+        "outFile": "../built/pxtlib.js",
     }
 }

@@ -1,5 +1,8 @@
 {
+    // TODO: use tsconfig_base.json ?
+    // "extends": "../tsconfig_base.json",
     "compilerOptions": {
+        // "outFile": "../built/pxtcli.js",
         "target": "es5",
         "noImplicitAny": true,
         "noImplicitReturns": true,
@@ -9,7 +12,8 @@
         "rootDir": ".",
         "newLine": "LF",
         "sourceMap": false,
-        "incremental": false
+        "incremental": false,
+        "composite": false
     },
     "references": [
         {

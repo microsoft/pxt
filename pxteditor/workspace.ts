@@ -1,4 +1,5 @@
 /// <reference path="../built/pxtlib.d.ts"/>
+/// <reference path="../localtypings/projectheader.d.ts"/>
 
 namespace pxt.workspace {
     export type ScriptText = pxt.Map<string>;

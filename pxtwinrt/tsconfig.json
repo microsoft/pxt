@@ -1,13 +1,14 @@
 {
+    "extends": "../tsconfig_base.json",
     "compilerOptions": {
-        "target": "es5",
-        "noImplicitAny": true,
-        "noImplicitReturns": true,
-        "declaration": true,
-        "out": "../built/pxtwinrt.js",
-        "rootDir": ".",
-        "newLine": "LF",
-        "sourceMap": false,
-        "incremental": true
-    }
+        "outFile": "../built/pxtwinrt.js",
+    },
+    "references": [
+        {
+            "path": "../pxtlib"
+        },
+        {
+            "path": "../pxteditor"
+        }
+    ]
 }

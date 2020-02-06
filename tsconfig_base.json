@@ -1,11 +1,10 @@
 {
-    // TODO(dz)
     "compilerOptions": {
         "target": "es5",
         "noImplicitAny": true,
         "noImplicitReturns": true,
+        "noImplicitThis": true,
         "declaration": true,
-        "outFile": "../../built/web/pxtweb.js",
         "newLine": "LF",
         "sourceMap": false,
         "lib": [
@@ -14,6 +13,14 @@
             "scripthost",
             "es6"
         ],
-        "types": []
+        "types": [
+            "fuse",
+            "highlight.js",
+            "marked",
+            "bluebird",
+            "web-bluetooth"
+        ],
+        "incremental": true,
+        "composite": true
     }
 }

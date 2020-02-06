@@ -27,9 +27,38 @@
             "react-dom",
             "bluebird"
         ],
-        "incremental": false
+        "incremental": false,
     },
     "exclude": [
         "node_modules"
+    ],
+    "references": [
+        {
+            "path": "../pxteditor"
+        },
+        {
+            "path": "../pxtlib"
+        },
+        {
+            "path": "../pxtcompiler"
+        },
+        {
+            "path": "../pxtpy"
+        },
+        {
+            "path": "../pxtblocks"
+        },
+        {
+            "path": "../pxtsim"
+        },
+        {
+            "path": "../pxtrunner"
+        },
+        {
+            "path": "../pxteditor"
+        },
+        {
+            "path": "../pxtwinrt"
+        },
     ]
 }

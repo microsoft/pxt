@@ -1,5 +1,4 @@
 /// <reference path='../built/pxtlib.d.ts' />
-
 namespace pxt {
     export function simshim(prog: ts.Program, pathParse: any): pxt.Map<string> {
         let SK = ts.SyntaxKind

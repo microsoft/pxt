@@ -1,23 +1,6 @@
 {
+    "extends": "../tsconfig_base.json",
     "compilerOptions": {
-        "target": "es5",
-        "noImplicitAny": true,
-        "noImplicitReturns": true,
-        "noImplicitThis": true,
-        "declaration": true,
-        "out": "../built/pxtsim.js",
-        "newLine": "LF",
-        "sourceMap": false,
-        "lib": [
-            "dom",
-            "dom.iterable",
-            "scripthost",
-            "es6"
-        ],
-        "types": [
-            "bluebird"
-        ],
-        "incremental": true,
-        "composite": true
+        "outFile": "../built/pxtsim.js",
     }
 }
