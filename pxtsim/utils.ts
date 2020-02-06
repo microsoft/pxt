@@ -250,7 +250,7 @@ namespace pxsim.util {
 
         constructor(private _func: () => T) { }
 
-        get value(): T {
+        value(): T {
             if (!this._evaluated) {
                 this._value = this._func();
                 this._evaluated = true;

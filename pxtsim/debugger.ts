@@ -524,7 +524,7 @@ namespace pxsim {
          */
         getVariables(variablesReference: number): DebugProtocol.Variable[] {
             const lz = this._vars[variablesReference];
-            return (lz && lz.value) || [];
+            return (lz && lz.value()) || [];
         }
 
         private getVariableValues(v: Variables): util.Lazy<DebugProtocol.Variable[]> {
