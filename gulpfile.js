@@ -107,6 +107,47 @@ const pxtdts = () => gulp.src("built/cli.d.ts")
     .pipe(gulp.dest("built"));
 
 
+function initWatch() {
+    gulp.watch("./docfiles/pxtweb/**/*", pxtweb);
+
+    const tasks = [
+        pxtlib,
+        gulp.parallel(pxtcompiler, pxtsim, backendutils),
+        gulp.parallel(pxtpy, gulp.series(copyBlockly, pxtblocks, pxtblockly)),
+        pxteditor,
+        gulp.parallel(pxtrunner, pxtwinrt, cli, pxtcommon),
+        updatestrings,
+        gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
+        targetjs,
+        webapp,
+        browserifyWebapp
+    ];
+
+
+    gulp.watch("./pxtlib/**/*", gulp.series(...tasks));
+
+    gulp.watch("./pxtcompiler/**/*", gulp.series(pxtcompiler, ...tasks.slice(2)));
+    gulp.watch("./pxtsim/**/*", gulp.series(pxtsim, ...tasks.slice(2)));
+    gulp.watch("./backendutils/**/*", gulp.series(backendutils, ...tasks.slice(2)));
+
+    gulp.watch("./pxtpy/**/*", gulp.series(pxtpy, ...tasks.slice(3)));
+    gulp.watch("./pxtblockly/**/*", gulp.series(gulp.series(copyBlockly, pxtblocks, pxtblockly), ...tasks.slice(3)));
+
+    gulp.watch("./pxteditor/**/*", gulp.series(pxteditor, ...tasks.slice(4)));
+
+    gulp.watch("./pxtrunner/**/*", gulp.series(pxtrunner, ...tasks.slice(5)));
+    gulp.watch("./pxtwinrt/**/*", gulp.series(pxtwinrt, ...tasks.slice(5)));
+    gulp.watch("./cli/**/*", gulp.series(cli, ...tasks.slice(5)));
+
+    gulp.watch("./webapp/src/**/*", gulp.series(webapp, browserifyWebapp));
+
+    gulp.watch(["./theme/**/*.less", "./theme/**/*.overrides", "./theme/**/*.variables", "./svgicons/**/*.svg"], gulp.parallel(buildcss, buildSVGIcons))
+
+    buildAll();
+}
+
+
+
 const targetjs = () => exec("node built/pxt.js buildtarget", true);
 
 const buildcss = () => exec("node built/pxt.js buildcss", true);
@@ -558,3 +599,4 @@ exports.travis = travis;
 exports.karma = karma;
 exports.update = update;
 exports.uglify = runUglify;
+exports.watch = initWatch;
