@@ -91,7 +91,7 @@ export function setupWorkspace(id: string) {
 }
 
 export function getHeaders(withDeleted = false) {
-    checkHeadersSession();
+    maybeSyncHeaders();
     let r = allScripts.map(e => e.header).filter(h => (withDeleted || !h.isDeleted) && !h.isBackup)
     r.sort((a, b) => b.recentUse - a.recentUse)
     return r
@@ -134,10 +134,8 @@ export function restoreFromBackupAsync(h: Header) {
         });
 }
 
-export function cleanupBackupsAsync() {
-    checkHeadersSession();
+function cleanupBackupsAsync() {
     const allHeaders = allScripts.map(e => e.header);
-
     const refMap: pxt.Map<boolean> = {};
 
     // Figure out which scripts have backups
@@ -151,7 +149,7 @@ export function cleanupBackupsAsync() {
 }
 
 export function getHeader(id: string) {
-    checkHeadersSession();
+    maybeSyncHeaders();
     let e = lookup(id)
     if (e && !e.header.isDeleted)
         return e.header
@@ -164,7 +162,7 @@ let sessionID: string = "";
 export function isHeadersSessionOutdated() {
     return pxt.storage.getLocal('workspacesessionid') != sessionID;
 }
-function checkHeadersSession() {
+function maybeSyncHeaders() {
     if (isHeadersSessionOutdated()) // another tab took control
         syncAsync().done();
 }
@@ -198,6 +196,7 @@ export function isHeaderSessionOutdated(h: Header): boolean {
 }
 function checkHeaderSession(h: Header): void {
     if (isHeaderSessionOutdated(h)) {
+        pxt.tickEvent(`workspace.conflict.header`);
         core.errorNotification(lf("This project is already opened elsewhere."))
         pxt.Util.assert(false, "trying to access outdated session")
     }
@@ -215,7 +214,7 @@ export function initAsync() {
 }
 
 export function getTextAsync(id: string): Promise<ScriptText> {
-    checkHeadersSession();
+    maybeSyncHeaders();
 
     let e = lookup(id)
     if (!e)
@@ -387,7 +386,7 @@ export function importAsync(h: Header, text: ScriptText, isCloud = false) {
 }
 
 export function installAsync(h0: InstallHeader, text: ScriptText) {
-    checkHeadersSession();
+    maybeSyncHeaders();
     U.assert(h0.target == pxt.appTarget.id);
 
     const h = <Header>h0
@@ -405,7 +404,7 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
 }
 
 export function renameAsync(h: Header, newName: string) {
-    checkHeadersSession();
+    maybeSyncHeaders();
     return cloudsync.renameAsync(h, newName);
 }
 
@@ -439,7 +438,7 @@ export function createDuplicateName(h: Header) {
 }
 
 export function saveScreenshotAsync(h: Header, data: string, icon: string) {
-    checkHeadersSession();
+    maybeSyncHeaders();
     return impl.saveScreenshotAsync
         ? impl.saveScreenshotAsync(h, data, icon)
         : Promise.resolve();
@@ -461,7 +460,7 @@ const scriptDlQ = new U.PromiseQueue();
 const scripts = new db.Table("script"); // cache for published scripts
 //let scriptCache:any = {}
 export function getPublishedScriptAsync(id: string) {
-    checkHeadersSession();
+    maybeSyncHeaders();
     //if (scriptCache.hasOwnProperty(id)) return Promise.resolve(scriptCache[id])
     if (pxt.github.isGithubId(id))
         id = pxt.github.normalizeRepoId(id)
@@ -1190,22 +1189,23 @@ export function installByIdAsync(id: string) {
 }
 
 export function saveToCloudAsync(h: Header) {
-    checkHeadersSession();
+    maybeSyncHeaders();
     return cloudsync.saveToCloudAsync(h)
 }
 
 export function resetCloudAsync(): Promise<void> {
-    checkHeadersSession();
-
+    // always sync local scripts before resetting
     // remove all cloudsync or github repositories
-    return cloudsync.resetAsync()
+    return syncAsync().catch(e => {})    
+        .then(() => cloudsync.resetAsync())
         .then(() => Promise.all(allScripts.map(e => e.header).filter(h => h.cloudSync || h.githubId).map(h => {
             // Remove cloud sync'ed project
             h.isDeleted = true;
             h.blobVersion = "DELETED";
             return forceSaveAsync(h, null, true);
         })))
-        .then(() => refreshHeadersSession());
+        .then(() => syncAsync())
+        .then(() => {});
 }
 
 let syncAsyncPromise: Promise<pxt.editor.EditorSyncState>;
@@ -1257,7 +1257,6 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
 }
 
 export function resetAsync() {
-    checkHeadersSession();
     allScripts = []
     return impl.resetAsync()
         .then(cloudsync.resetAsync)
@@ -1269,10 +1268,12 @@ export function resetAsync() {
             if (Cloud.localToken)
                 pxt.storage.setLocal("local_token", Cloud.localToken);
         })
+        .then(() => syncAsync())
+        .then(() => {});
 }
 
 export function loadedAsync() {
-    checkHeadersSession();
+    maybeSyncHeaders();
     if (impl.loadedAsync)
         return impl.loadedAsync()
     return Promise.resolve()
