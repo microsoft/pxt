@@ -173,7 +173,7 @@ function refreshHeadersSession() {
         .toString()
     if (isHeadersSessionOutdated()) {
         pxt.storage.setLocal('workspacesessionid', sessionID);
-        pxt.log(`workspace: refreshed headers session to ${sessionID}`);
+        pxt.debug(`workspace: refreshed headers session to ${sessionID}`);
     }
 }
 const workspaceID: string = pxt.Util.guidGen();
@@ -290,7 +290,7 @@ export function forceSaveAsync(h: Header, text?: ScriptText, isCloud?: boolean):
 }
 
 export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Promise<void> {
-    pxt.log(`workspace: save ${h.id}`)
+    pxt.debug(`workspace: save ${h.id}`)
     checkHeaderSession(h);
 
     U.assert(h.target == pxt.appTarget.id);
@@ -811,7 +811,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
     if (!cfg || !cfg.files.find(f => /\.ts$/.test(f))) {
         if (hd) // not importing
             U.userError(lf("Invalid pxt.json file."));
-        pxt.log(`github: reconstructing pxt.json`)
+        pxt.debug(`github: reconstructing pxt.json`)
         cfg = pxt.diff.reconstructConfig(files, commit, pxt.appTarget.blocksprj || pxt.appTarget.tsprj);
         files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
@@ -1116,7 +1116,7 @@ export async function importGithubAsync(id: string): Promise<Header> {
         // (must be done before)
         const commit = await pxt.github.getCommitAsync(parsed.fullName, sha)
         if (!commit.tree.tree.find(f => f.path == pxt.CONFIG_NAME)) {
-            pxt.log(`github: detected import non-makecode project`)
+            pxt.debug(`github: detected import non-makecode project`)
             if (pxt.shell.isReadOnly())
                 U.userError(lf("This repository looks empty."));
             isEmpty = true; // needs initialization
@@ -1135,7 +1135,7 @@ export async function importGithubAsync(id: string): Promise<Header> {
         if (e.statusCode == 409) {
             // this means repo is completely empty;
             // put all default files in there
-            pxt.log(`github: detected import empty project`)
+            pxt.debug(`github: detected import empty project`)
             if (pxt.shell.isReadOnly())
                 U.userError(lf("This repository looks empty."));
             await cloudsync.ensureGitHubTokenAsync();
@@ -1202,7 +1202,7 @@ export function resetCloudAsync(): Promise<void> {
 
 let syncAsyncPromise: Promise<pxt.editor.EditorSyncState>;
 export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
-    pxt.log("workspace: sync")
+    pxt.debug("workspace: sync")
     if (syncAsyncPromise) return syncAsyncPromise;
     return syncAsyncPromise = impl.listAsync()
         .catch((e) => {
