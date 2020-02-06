@@ -47,7 +47,7 @@ function tutorialTest(filename: string) {
     catch (e) {
         // If there isn't a baseline, generate one.
         let newBaseline = info;
-        fs.writeFileSync(baseline, JSON.stringify(newBaseline, null, 4));
+        fs.writeFileSync(baselinePath, JSON.stringify(newBaseline, null, 4));
     }
 
     baseline = baseline || info;
