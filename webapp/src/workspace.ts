@@ -108,8 +108,7 @@ export function makeBackupAsync(h: Header, text: ScriptText): Promise<Header> {
     return importAsync(h2, text)
         .then(() => {
             h.backupRef = h2.id;
-            clearHeaderSession(h2);
-            return saveAsync(h2);
+            return forceSaveAsync(h2);
         })
         .then(() => h2)
 }
@@ -122,19 +121,16 @@ export function restoreFromBackupAsync(h: Header) {
     return getTextAsync(refId)
         .then(files => {
             delete h.backupRef;
-            clearHeaderSession(h);
-            return saveAsync(h, files);
+            return forceSaveAsync(h, files);
         })
         .then(() => {
             const backup = getHeader(refId);
             backup.isDeleted = true;
-            clearHeaderSession(backup);
-            return saveAsync(backup);
+            return forceSaveAsync(backup);
         })
         .catch(() => {
             delete h.backupRef;
-            clearHeaderSession(h);
-            return saveAsync(h);
+            return forceSaveAsync(h);
         });
 }
 
@@ -150,8 +146,7 @@ export function cleanupBackupsAsync() {
     // Delete the backups that don't have any scripts referencing them
     return Promise.all(allHeaders.filter(h => (h.isBackup && !refMap[h.id])).map(h => {
         h.isDeleted = true;
-        clearHeaderSession(h);
-        return saveAsync(h);
+        return forceSaveAsync(h);
     }));
 }
 
@@ -235,6 +230,8 @@ export interface ScriptMeta {
 
 // https://github.com/Microsoft/pxt-backend/blob/master/docs/sharing.md#anonymous-publishing
 export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
+    checkHeaderSession(h);
+
     const saveId = {}
     h.saveId = saveId
     let thumbnailBuffer: string;
@@ -270,7 +267,6 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
             h.pubCurrent = h.saveId === saveId
             h.meta = inf.meta;
             pxt.debug(`published; id /${h.pubId}`)
-            clearHeaderSession(h);
             return saveAsync(h)
                 .then(() => inf)
         })
@@ -283,6 +279,11 @@ function fixupVersionAsync(e: HeaderWithScript) {
         .then(resp => {
             e.version = resp.version;
         })
+}
+
+export function forceSaveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Promise<void> {
+    clearHeaderSession(h);
+    return saveAsync(h, text, isCloud);
 }
 
 export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Promise<void> {
@@ -371,8 +372,7 @@ export function importAsync(h: Header, text: ScriptText, isCloud = false) {
         version: null
     }
     allScripts.push(e)
-    clearHeaderSession(h);
-    return saveAsync(h, text, isCloud)
+    return forceSaveAsync(h, text, isCloud)
 }
 
 export function installAsync(h0: InstallHeader, text: ScriptText) {
@@ -546,6 +546,8 @@ export function bumpedVersion(cfg: pxt.PackageConfig) {
 }
 
 export async function bumpAsync(hd: Header, newVer = "") {
+    checkHeaderSession(hd);
+
     let files = await getTextAsync(hd.id)
     let cfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME]);
     cfg.version = newVer || bumpedVersion(cfg)
@@ -863,8 +865,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         }, files)
     } else {
         hd.name = cfg.name
-        clearHeaderSession(hd);
-        await saveAsync(hd, files)
+        await forceSaveAsync(hd, files)
     }
 
     return hd
@@ -893,7 +894,7 @@ export async function exportToGithubAsync(hd: Header, repoid: string) {
         }
     }
     // save updated files
-    await saveAsync(hd, files);
+    await forceSaveAsync(hd, files);
     await initializeGithubRepoAsync(hd, repoid, false, true);
     // race condition, don't pull right away
     // await pullAsync(hd);
@@ -902,6 +903,8 @@ export async function exportToGithubAsync(hd: Header, repoid: string) {
 
 // to be called after loading header in a editor
 export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
+    checkHeaderSession(h);
+
     h.githubCurrent = false
 
     const gitjson: GitJson = JSON.parse(files[GIT_JSON] || "{}")
@@ -1070,7 +1073,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
     currFiles[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(pxtjson);
 
     // save
-    await saveAsync(hd, currFiles)
+    await forceSaveAsync(hd, currFiles)
     await commitAsync(hd, {
         message: lf("Initial files for MakeCode project"),
         filenamesToCommit: Object.keys(currFiles),
@@ -1189,7 +1192,7 @@ export function resetCloudAsync(): Promise<void> {
             // Remove cloud sync'ed project
             h.isDeleted = true;
             h.blobVersion = "DELETED";
-            return saveAsync(h, null, true);
+            return forceSaveAsync(h, null, true);
         })))
         .then(() => data.invalidate("header:*"));
 }
