@@ -1473,24 +1473,6 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
     })
 }
 
-function buildPxtAsync(includeSourceMaps = false): Promise<string[]> {
-    let ksd = "node_modules/pxt-core"
-    if (!fs.existsSync(ksd + "/pxtlib/main.ts")) return Promise.resolve([]);
-
-    console.log(`building ${ksd}...`);
-    return nodeutil.spawnAsync({
-        cmd: nodeutil.addCmd("npm"),
-        args: includeSourceMaps ? ["run", "build", "sourceMaps=true"] : ["run", "build"],
-        cwd: ksd
-    }).then(() => {
-        console.log("local pxt-core built.")
-        return [ksd]
-    }, e => {
-        buildFailed("local pxt-core build FAILED", e)
-        return [ksd]
-    });
-}
-
 let dirsToWatch: string[] = []
 
 interface CiBuildInfo {
@@ -2334,12 +2316,12 @@ function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean)
         simDirectories = simDirectories.filter(fn => fs.existsSync(fn));
     }
 
-    return buildAndWatchAsync(() => buildPxtAsync(includeSourceMaps)
-        .then(buildCommonSimAsync, e => buildFailed("common sim build failed: " + e.message, e))
+    return buildAndWatchAsync(() => buildCommonSimAsync()
+        .catch(e => buildFailed("common sim build failed: " + e.message, e))
         .then(() => internalBuildTargetAsync({ localDir: true, rebundle }))
         .catch(e => buildFailed("target build failed: " + e.message, e))
         .then(() => {
-            let toWatch = [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)
+            let toWatch = dirsToWatch.slice();
             if (hasCommonPackages) {
                 toWatch = toWatch.concat(simDirectories);
             }
