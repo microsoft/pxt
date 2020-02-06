@@ -1209,6 +1209,8 @@ export function resetCloudAsync(): Promise<void> {
         .then(() => { });
 }
 
+// this promise is set while a sync is in progress
+// cleared when sync is done.
 let syncAsyncPromise: Promise<pxt.editor.EditorSyncState>;
 export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     pxt.debug("workspace: sync")
@@ -1233,6 +1235,9 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                         // force reload
                         ex.text = undefined
                         ex.version = undefined
+                        data.invalidateHeader("header", hd);
+                        data.invalidateHeader("text", hd);
+                        data.invalidateHeader("pkg-git-status", hd);
                     }
                 } else {
                     ex = {
@@ -1243,9 +1248,6 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                 }
                 return ex;
             })
-            data.invalidate("header:*")
-            data.invalidate("text:*")
-            data.invalidate("pkg-git-status:")
             cloudsync.syncAsync().done() // sync in background
         })
         .then(() => {
@@ -1269,7 +1271,7 @@ export function resetAsync() {
             if (Cloud.localToken)
                 pxt.storage.setLocal("local_token", Cloud.localToken);
         })
-        .then(() => syncAsync())
+        .then(() => syncAsync()) // sync again to notify other tabs
         .then(() => { });
 }
 
