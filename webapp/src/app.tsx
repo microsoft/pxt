@@ -234,10 +234,11 @@ export class ProjectView
             }
             this.saveFileAsync().done();
         } else {
-            if (workspace.isSessionOutdated()) {
-                pxt.debug('workspace changed, reloading...')
+            if (workspace.isHeadersSessionOutdated()
+                || workspace.isHeaderSessionOutdated(this.state.header)) {
+                pxt.debug('workspace: changed, reloading...')
                 let id = this.state.header ? this.state.header.id : '';
-                workspace.initAsync()
+                workspace.syncAsync()
                     .done(() => !this.state.home && id ? this.loadHeaderAsync(workspace.getHeader(id), this.state.editorState) : Promise.resolve());
             } else if (this.state.resumeOnVisibility) {
                 this.setState({ resumeOnVisibility: false });
@@ -1155,6 +1156,19 @@ export class ProjectView
         if (checkAsync)
             return checkAsync.then(() => this.openHome());
 
+        let p = Promise.resolve();
+        if (workspace.isHeadersSessionOutdated()) { // reload header before loading
+            pxt.log(`sync before load`)
+            p = p.then(() => workspace.syncAsync().then(() => { }))
+        }
+        return p.then(() => {
+            workspace.acquireHeaderSession(h);
+            if (!h) return Promise.resolve();
+            else return this.internalLoadHeaderAsync(h, editorState);
+        })
+    }
+
+    private internalLoadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
         pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
         this.stopSimulator(true);
         if (pxt.appTarget.simulator && pxt.appTarget.simulator.aspectRatio)

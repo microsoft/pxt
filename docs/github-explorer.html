@@ -153,6 +153,7 @@
         }
 
         async function fetchUser(user) {
+            if (!token()) return undefined;
             const response = await fetchJSON(`${api}/users/${user}`);
             if (response.status != 200)
                 return undefined;
