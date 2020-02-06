@@ -158,7 +158,6 @@ export function getHeader(id: string) {
     return null
 }
 
-const workspaceID: string = pxt.Util.guidGen();
 let sessionID: string = "";
 export function isHeadersSessionOutdated() {
     return pxt.storage.getLocal('workspacesessionid') != sessionID;
@@ -175,12 +174,13 @@ function refreshHeadersSession() {
     pxt.storage.setLocal('workspacesessionid', sessionID);
     pxt.log(`workspace: refreshed headers session to ${sessionID}`);
 }
+const workspaceID: string = pxt.Util.guidGen();
 export function acquireHeaderSession(h: Header) {
-    pxt.storage.setLocal('workspaceheadersessionid:' + h.id, sessionID);
+    pxt.storage.setLocal('workspaceheadersessionid:' + h.id, workspaceID);
 }
 function checkHeaderSession(h: Header): void {
     const sid = pxt.storage.getLocal('workspaceheadersessionid:' + h.id);
-    if(sid && sid != sessionID)
+    if(sid && sid != workspaceID)
         pxt.Util.assert(false, "trying to access outdated session")    
 }
 
