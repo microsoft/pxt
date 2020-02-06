@@ -164,7 +164,7 @@ namespace pxsim {
                 case SimulatorState.Suspended:
                     pxsim.U.addClass(frame,
                         (this.state == SimulatorState.Stopped || (this._runOptions && this._runOptions.autoRun))
-                            ? this.stoppedClass : this.invalidatedClass);
+                            ? this.stoppedClass() : this.invalidatedClass());
                     if (!this._runOptions || !this._runOptions.autoRun) {
                         icon.style.display = '';
                         icon.className = 'videoplay xicon icon';
@@ -174,8 +174,8 @@ namespace pxsim {
                     this.scheduleFrameCleanup();
                     break;
                 default:
-                    pxsim.U.removeClass(frame, this.stoppedClass);
-                    pxsim.U.removeClass(frame, this.invalidatedClass);
+                    pxsim.U.removeClass(frame, this.stoppedClass());
+                    pxsim.U.removeClass(frame, this.invalidatedClass());
                     icon.style.display = 'none';
                     loader.style.display = 'none';
                     break;
@@ -709,11 +709,11 @@ namespace pxsim {
             return this.nextFrameId++ + (Math.random() + '' + Math.random()).replace(/[^\d]/, '')
         }
 
-        private get stoppedClass() {
+        private stoppedClass() {
             return (this.options && this.options.stoppedClass) || "grayscale";
         }
 
-        private get invalidatedClass() {
+        private invalidatedClass() {
             return (this.options && this.options.invalidatedClass) || "sepia";
         }
     }
