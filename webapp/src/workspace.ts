@@ -182,7 +182,8 @@ function refreshHeadersSession() {
 // in order to lock headers for editing
 const workspaceID: string = pxt.Util.guidGen();
 export function acquireHeaderSession(h: Header) {
-    pxt.storage.setLocal('workspaceheadersessionid:' + h.id, workspaceID);
+    if (h)
+        pxt.storage.setLocal('workspaceheadersessionid:' + h.id, workspaceID);
 }
 function clearHeaderSession(h: Header) {
     pxt.storage.removeLocal('workspaceheadersessionid:' + h.id);

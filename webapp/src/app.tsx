@@ -1161,8 +1161,8 @@ export class ProjectView
             pxt.log(`sync before load`)
             p = p.then(() => workspace.syncAsync().then(() => { }))
         }
-        workspace.acquireHeaderSession(h);
         return p.then(() => {
+            workspace.acquireHeaderSession(h);
             if (!h) return Promise.resolve();
             else return this.internalLoadHeaderAsync(h, editorState);
         })
