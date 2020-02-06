@@ -158,6 +158,8 @@ export function getHeader(id: string) {
     return null
 }
 
+// this key is the max modificationTime value of the allHeaders
+// it is used to track if allHeaders need to be refreshed (syncAsync)
 let sessionID: string = "";
 export function isHeadersSessionOutdated() {
     return pxt.storage.getLocal('workspacesessionid') != sessionID;
@@ -176,6 +178,8 @@ function refreshHeadersSession() {
         pxt.debug(`workspace: refreshed headers session to ${sessionID}`);
     }
 }
+// this is an identifier for the current frame
+// in order to lock headers for editing
 const workspaceID: string = pxt.Util.guidGen();
 export function acquireHeaderSession(h: Header) {
     pxt.storage.setLocal('workspaceheadersessionid:' + h.id, workspaceID);
