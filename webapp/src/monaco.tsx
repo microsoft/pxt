@@ -308,6 +308,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected debuggerToolbox: DebuggerToolbox;
     protected flyout: MonacoFlyout;
     protected insertionSnippet: string;
+    protected mobileKeyboardWidget: ShowKeyboardWidget;
 
     private loadMonacoPromise: Promise<void>;
     private diagSnapshot: string[];
@@ -655,6 +656,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         return pxt.vs.initMonacoAsync(editorElement).then((editor) => {
             this.editor = editor;
+
+            // This is used to detect ios 13 on iPad, which is not properly detected by monaco
+            if (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1 && !this.mobileKeyboardWidget) {
+                this.mobileKeyboardWidget = new ShowKeyboardWidget(this.editor);
+            }
 
             this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
 
@@ -1821,6 +1827,52 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
 export function rangeToSelection(range: monaco.IRange): monaco.Selection {
     return new monaco.Selection(range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn);
+}
+
+/**
+ * This is mostly copied from vscode. Monaco does not properly detect iPads on ios 13
+ * because they pretend to be desktops. If Monaco ever fixes this bug, this should be removed.
+ */
+class ShowKeyboardWidget implements monaco.editor.IOverlayWidget {
+    private static readonly ID = 'editor.contrib.ShowKeyboardWidget_pxt';
+    private readonly editor: monaco.editor.ICodeEditor;
+    private readonly _domNode: HTMLElement;
+
+    constructor(editor: monaco.editor.ICodeEditor) {
+        this.editor = editor;
+        this._domNode = document.createElement('textarea');
+        this._domNode.className = 'iPadShowKeyboard';
+
+        this._domNode.addEventListener("touchstart", this.touchHandler);
+        this._domNode.addEventListener("focus", this.touchHandler);
+
+        this.editor.addOverlayWidget(this);
+    }
+
+    public dispose(): void {
+        this.editor.removeOverlayWidget(this);
+
+        this._domNode.removeEventListener("touchstart", this.touchHandler);
+        this._domNode.removeEventListener("focus", this.touchHandler);
+    }
+
+    public getId(): string {
+        return ShowKeyboardWidget.ID;
+    }
+
+    public getDomNode(): HTMLElement {
+        return this._domNode;
+    }
+
+    public getPosition(): monaco.editor.IOverlayWidgetPosition {
+        return {
+            preference: monaco.editor.OverlayWidgetPositionPreference.TOP_RIGHT_CORNER
+        };
+    }
+
+    protected touchHandler = () => {
+        this.editor.focus();
+    }
 }
 
 function createIndent(length: number) {
