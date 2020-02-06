@@ -39,7 +39,7 @@ let impl: WorkspaceProvider;
 let implType: string;
 
 function lookup(id: string) {
-    return allScripts.filter(x => x.header.id == id || x.header.path == id)[0]
+    return allScripts.find(x => x.header.id == id || x.header.path == id);
 }
 
 export function gitsha(data: string, encoding: "utf-8" | "base64" = "utf-8") {
@@ -91,7 +91,7 @@ export function setupWorkspace(id: string) {
 }
 
 export function getHeaders(withDeleted = false) {
-    checkSession();
+    checkHeadersSession();
     let r = allScripts.map(e => e.header).filter(h => (withDeleted || !h.isDeleted) && !h.isBackup)
     r.sort((a, b) => b.recentUse - a.recentUse)
     return r
@@ -135,7 +135,7 @@ export function restoreFromBackupAsync(h: Header) {
 }
 
 export function cleanupBackupsAsync() {
-    checkSession();
+    checkHeadersSession();
     const allHeaders = allScripts.map(e => e.header);
 
     const refMap: pxt.Map<boolean> = {};
@@ -151,44 +151,52 @@ export function cleanupBackupsAsync() {
 }
 
 export function getHeader(id: string) {
-    checkSession();
+    checkHeadersSession();
     let e = lookup(id)
     if (e && !e.header.isDeleted)
         return e.header
     return null
 }
 
-let sessionID: string = ""
-export function isSessionOutdated() {
-    return pxt.storage.getLocal('pxt_workspace_session_id') != sessionID;
+const workspaceID: string = pxt.Util.guidGen();
+let sessionID: string = "";
+export function isHeadersSessionOutdated() {
+    return pxt.storage.getLocal('workspacesessionid') != sessionID;
 }
-export function checkSession() {
-    if (isSessionOutdated()) // another tab took control
+function checkHeadersSession() {
+    if (isHeadersSessionOutdated()) // another tab took control
         syncAsync().done();
 }
-
-function refreshSession() {
-    sessionID = gitsha(allScripts.map(hd => `${hd.header.id}${hd.header.modificationTime}${hd.version}`).join('>>>>'))
-    pxt.storage.setLocal('pxt_workspace_session_id', sessionID);
-    pxt.log(`refreshed workspace session: ${sessionID}`);
+function refreshHeadersSession() {
+    sessionID = allScripts
+        .map(h => h.header.modificationTime)
+        .reduce((l,r) => Math.max(l,r), 0)
+        .toString();
+    pxt.storage.setLocal('workspacesessionid', sessionID);
+    pxt.log(`workspace: refreshed headers session to ${sessionID}`);
+}
+export function acquireHeaderSession(h: Header) {
+    pxt.storage.setLocal('workspaceheadersessionid:' + h.id, sessionID);
+}
+function checkHeaderSession(h: Header): void {
+    const sid = pxt.storage.getLocal('workspaceheadersessionid:' + h.id);
+    if(sid && sid != sessionID)
+        pxt.Util.assert(false, "trying to access outdated session")    
 }
 
 export function initAsync() {
     if (!impl) impl = browserworkspace.provider;
 
-    allScripts = []
-
     return syncAsync()
         .then(state => cleanupBackupsAsync().then(() => state))
         .then(_ => {
             pxt.perf.recordMilestone("workspace init finished")
-            refreshSession();
             return _
         })
 }
 
 export function getTextAsync(id: string): Promise<ScriptText> {
-    checkSession();
+    checkHeadersSession();
 
     let e = lookup(id)
     if (!e)
@@ -264,7 +272,9 @@ function fixupVersionAsync(e: HeaderWithScript) {
 }
 
 export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Promise<void> {
-    checkSession();
+    pxt.log(`workspace: save ${h.id}`)
+    checkHeaderSession(h);
+
     U.assert(h.target == pxt.appTarget.id);
 
     if (h.temporary)
@@ -297,7 +307,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
         return headerQ.enqueue(h.id, () =>
             fixupVersionAsync(e).then(() =>
                 impl.deleteAsync ? impl.deleteAsync(h, e.version) : impl.setAsync(h, e.version, {})))
-            .finally(() => refreshSession())
+            .finally(() => refreshHeadersSession())
     }
 
     // check if we have dynamic boards, store board info for home page rendering
@@ -321,7 +331,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
                         data.invalidate("text:" + h.id)
                         data.invalidate("pkg-git-status:" + h.id)
                     }
-                    refreshSession()
+                    refreshHeadersSession()
                 })))
 }
 
@@ -351,7 +361,7 @@ export function importAsync(h: Header, text: ScriptText, isCloud = false) {
 }
 
 export function installAsync(h0: InstallHeader, text: ScriptText) {
-    checkSession();
+    checkHeadersSession();
     U.assert(h0.target == pxt.appTarget.id);
 
     const h = <Header>h0
@@ -369,7 +379,7 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
 }
 
 export function renameAsync(h: Header, newName: string) {
-    checkSession();
+    checkHeadersSession();
     return cloudsync.renameAsync(h, newName);
 }
 
@@ -403,7 +413,7 @@ export function createDuplicateName(h: Header) {
 }
 
 export function saveScreenshotAsync(h: Header, data: string, icon: string) {
-    checkSession();
+    checkHeadersSession();
     return impl.saveScreenshotAsync
         ? impl.saveScreenshotAsync(h, data, icon)
         : Promise.resolve();
@@ -425,7 +435,7 @@ const scriptDlQ = new U.PromiseQueue();
 const scripts = new db.Table("script"); // cache for published scripts
 //let scriptCache:any = {}
 export function getPublishedScriptAsync(id: string) {
-    checkSession();
+    checkHeadersSession();
     //if (scriptCache.hasOwnProperty(id)) return Promise.resolve(scriptCache[id])
     if (pxt.github.isGithubId(id))
         id = pxt.github.normalizeRepoId(id)
@@ -1150,12 +1160,12 @@ export function installByIdAsync(id: string) {
 }
 
 export function saveToCloudAsync(h: Header) {
-    checkSession();
+    checkHeadersSession();
     return cloudsync.saveToCloudAsync(h)
 }
 
 export function resetCloudAsync(): Promise<void> {
-    checkSession();
+    checkHeadersSession();
 
     // remove all cloudsync or github repositories
     return cloudsync.resetAsync()
@@ -1170,18 +1180,20 @@ export function resetCloudAsync(): Promise<void> {
 
 let syncAsyncPromise: Promise<pxt.editor.EditorSyncState>;
 export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
+    pxt.log("workspace: sync")
     if (syncAsyncPromise) return syncAsyncPromise;
     return syncAsyncPromise = impl.listAsync()
         .catch((e) => {
             // There might be a problem with the native databases. Switch to memory for this session so the user can at
             // least use the editor.
             pxt.tickEvent("workspace.syncerror", { ws: implType });
-            pxt.log("Workspace error, switching to memory workspace");
+            pxt.log("workspace: error, switching to memory workspace");
             impl = memoryworkspace.provider;
             return impl.listAsync();
         })
         .then(headers => {
             const existing = U.toDictionary(allScripts || [], h => h.header.id)
+            // this is an in-place update the header instances
             allScripts = headers.map(hd => {
                 let ex = existing[hd.id]
                 if (ex) {
@@ -1206,7 +1218,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
             cloudsync.syncAsync().done() // sync in background
         })
         .then(() => {
-            refreshSession();
+            refreshHeadersSession();
             return impl.getSyncState ? impl.getSyncState() : null
         })
         .finally(() => {
@@ -1215,7 +1227,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
 }
 
 export function resetAsync() {
-    checkSession();
+    checkHeadersSession();
     allScripts = []
     return impl.resetAsync()
         .then(cloudsync.resetAsync)
@@ -1230,7 +1242,7 @@ export function resetAsync() {
 }
 
 export function loadedAsync() {
-    checkSession();
+    checkHeadersSession();
     if (impl.loadedAsync)
         return impl.loadedAsync()
     return Promise.resolve()

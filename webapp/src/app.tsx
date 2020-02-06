@@ -1156,15 +1156,11 @@ export class ProjectView
             return checkAsync.then(() => this.openHome());
 
         let p = Promise.resolve();
-        if (workspace.isSessionOutdated()) { // reload header before loading
+        if (workspace.isHeadersSessionOutdated()) { // reload header before loading
             pxt.log(`sync before load`)
-            p = p.then(() => workspace.syncAsync())
-            .then(() => {
-                // update header reference
-                h = workspace.getHeader(h.id);
-            })
+            p = p.then(() => workspace.syncAsync().then(() => { }))
         }
-
+        workspace.acquireHeaderSession(h);
         return p.then(() => {
             if (!h) return Promise.resolve();
             else return this.internalLoadHeaderAsync(h, editorState);
