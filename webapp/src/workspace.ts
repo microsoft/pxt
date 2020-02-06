@@ -169,7 +169,7 @@ function checkHeadersSession() {
 function refreshHeadersSession() {
     sessionID = allScripts
         .map(h => h.header.modificationTime)
-        .reduce((l,r) => Math.max(l,r), 0)
+        .reduce((l, r) => Math.max(l, r), 0)
         .toString()
     if (isHeadersSessionOutdated()) {
         pxt.storage.setLocal('workspacesessionid', sessionID);
@@ -189,9 +189,9 @@ export function isHeaderSessionOutdated(h: Header): boolean {
     return sid && sid != workspaceID;
 }
 function checkHeaderSession(h: Header): void {
-    if(isHeaderSessionOutdated(h)) {
+    if (isHeaderSessionOutdated(h)) {
         core.errorNotification(lf("This project is already opened elsewhere."))
-        pxt.Util.assert(false, "trying to access outdated session")    
+        pxt.Util.assert(false, "trying to access outdated session")
     }
 }
 
