@@ -20,6 +20,7 @@ export interface UiProps {
     ariaLabel?: string;
     tabIndex?: number;
     rightIcon?: boolean;
+    inverted?: boolean;
 }
 
 export type SIZES = 'mini' | 'tiny' | 'small' | 'medium' | 'large' | 'big' | 'huge' | 'massive';
@@ -33,7 +34,7 @@ export function cx(classes: string[]): string {
 }
 
 function genericClassName(cls: string, props: UiProps, ignoreIcon: boolean = false): string {
-    return `${cls} ${ignoreIcon ? '' : props.icon && props.text ? 'icon icon-and-text' : props.icon ? 'icon' : ""} ${props.className || ""}`;
+    return `${cls} ${ignoreIcon ? '' : props.icon && props.text ? 'icon icon-and-text' : props.icon ? 'icon' : ""} ${props.inverted ? 'inverted' : ''} ${props.className || ""}`;
 }
 
 function genericContent(props: UiProps) {
@@ -365,6 +366,113 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 }
 
+export interface ExpandableMenuProps {
+    title?: string;
+    onShow?: () => void;
+    onHide?: () => void;
+}
+
+export interface ExpandableMenuState {
+    expanded?: boolean;
+}
+
+export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMenuState> {
+    hide = () => {
+        this.setState({ expanded: false });
+        const { onHide } = this.props;
+        if (onHide)
+            onHide();
+    }
+
+    show = () => {
+        this.setState({ expanded: true });
+        const { onShow } = this.props;
+        if (onShow)
+            onShow();
+    }
+
+    toggleExpanded = () => {
+        const { expanded } = this.state;
+
+        if (expanded) {
+            this.hide();
+        } else {
+            this.show();
+        }
+    }
+
+    render() {
+        const { title, children } = this.props;
+        const { expanded } = this.state
+
+        return (<div className="expandable-menu">
+            <Link
+                className="no-select menu-header"
+                icon={`no-select chevron ${expanded ? "down" : "right"}`}
+                text={title}
+                ariaExpanded={expanded}
+                onClick={this.toggleExpanded} />
+            {expanded && <div className="expanded-items">
+                {children}
+            </div> }
+        </div>);
+    }
+}
+
+export interface SelectProps {
+    options: SelectItem[];
+    onChange?: (value: string) => void;
+    label?: string;
+}
+
+export interface SelectState {
+    selected?: string;
+}
+
+export interface SelectItem {
+    value: string | number;
+    display?: string;
+}
+
+export class Select extends UIElement<SelectProps, SelectState> {
+    constructor(props: SelectProps) {
+        super(props);
+        const { options } = props;
+        this.state = {
+            selected: options[0] && (options[0].value + "")
+        };
+    }
+
+    handleOnChange = (ev: React.ChangeEvent<HTMLSelectElement>) => {
+        const { onChange } = this.props;
+        this.setState({
+            selected: ev.target.value
+        });
+
+        if (onChange) {
+            onChange(ev.target.value);
+        }
+    }
+
+    render() {
+        const { options, label } = this.props;
+        const { selected } = this.state;
+
+        return (<div>
+            { label && `${label} ` }
+            <select value={selected} className="ui dropdown" onChange={this.handleOnChange}>
+                {options.map(opt =>
+                    opt && <option
+                        aria-selected={selected === opt.value}
+                        value={opt.value}
+                        key={opt.value}
+                    >{opt.display || opt.value}</option>
+                )}
+            </select>
+        </div>);
+    }
+}
+
 ///////////////////////////////////////////////////////////
 ////////////             Items                /////////////
 ///////////////////////////////////////////////////////////
@@ -500,7 +608,9 @@ export interface LinkProps extends ButtonProps {
 export class Link extends StatelessUIElement<LinkProps> {
     renderCore() {
         return (
-            <a className={genericClassName("ui", this.props) + " " + (this.props.disabled ? "disabled" : "")}
+            <a className={genericClassName("ui", this.props)
+                + (this.props.loading ? " loading" : "")
+                + (this.props.disabled ? " disabled" : "")}
                 id={this.props.id}
                 href={this.props.href}
                 target={this.props.target}
@@ -561,6 +671,7 @@ export interface InputProps {
     placeholder?: string;
     disabled?: boolean;
     onChange?: (v: string) => void;
+    onEnter?: () => void;
     lines?: number;
     readOnly?: boolean;
     copy?: boolean;
@@ -586,6 +697,7 @@ export class Input extends data.Component<InputProps, InputState> {
         this.copy = this.copy.bind(this);
         this.handleClick = this.handleClick.bind(this);
         this.handleChange = this.handleChange.bind(this);
+        this.handleEnterPressed = this.handleEnterPressed.bind(this);
     }
 
     componentDidMount() {
@@ -641,6 +753,17 @@ export class Input extends data.Component<InputProps, InputState> {
         }
     }
 
+    handleEnterPressed(e: React.KeyboardEvent) {
+        const charCode = core.keyCodeFromEvent(e);
+        if (charCode === core.ENTER_KEY) {
+            const { onEnter } = this.props;
+            if (onEnter) {
+                e.preventDefault();
+                onEnter();
+            }
+        }
+    }
+
     renderCore() {
         let p = this.props
         let copyBtn = p.copy && document.queryCommandSupported('copy')
@@ -663,6 +786,7 @@ export class Input extends data.Component<InputProps, InputState> {
                         readOnly={!!p.readOnly}
                         onClick={this.handleClick}
                         onChange={this.handleChange}
+                        onKeyDown={this.handleEnterPressed}
                         autoComplete={p.autoComplete ? "" : "off"}
                         autoCorrect={p.autoComplete ? "" : "off"}
                         autoCapitalize={p.autoComplete ? "" : "off"}
@@ -676,7 +800,8 @@ export class Input extends data.Component<InputProps, InputState> {
                             value={value || ''}
                             readOnly={!!p.readOnly}
                             onClick={this.handleClick}
-                            onChange={this.handleChange}>
+                            onChange={this.handleChange}
+                            onKeyDown={this.handleEnterPressed}>
                         </textarea>}
                     {copyBtn}
                 </div>

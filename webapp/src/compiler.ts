@@ -4,19 +4,41 @@ import * as workspace from "./workspace";
 
 import U = pxt.Util;
 
-function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
+function setDiagnostics(diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.SourceInterval[]) {
     let mainPkg = pkg.mainEditorPkg();
 
     mainPkg.forEachFile(f => f.diagnostics = [])
 
     let output = "";
 
+    // If we have source map information, then prepare a function for converting
+    //  TS errors to PY
+    let tsErrToPyLoc: (err: pxtc.LocationInfo) => pxtc.LocationInfo = undefined;
+    if (diagnostics.length > 0
+        && mainPkg.filterFiles(f => f.name === "main.ts" || f.name === "main.py").length === 2
+        && sourceMap) {
+        const tsFile = mainPkg.files["main.ts"].content
+        const pyFile = mainPkg.files["main.py"].content
+        const helpers = pxtc.BuildSourceMapHelpers(sourceMap, tsFile, pyFile)
+        tsErrToPyLoc = helpers.ts.locToLoc
+    }
+
     for (let diagnostic of diagnostics) {
         if (diagnostic.fileName) {
             output += `${diagnostic.category == ts.pxtc.DiagnosticCategory.Error ? lf("error") : diagnostic.category == ts.pxtc.DiagnosticCategory.Warning ? lf("warning") : lf("message")}: ${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.column + 1}): `;
             let f = mainPkg.filterFiles(f => f.getTypeScriptName() == diagnostic.fileName)[0]
-            if (f)
+            if (f) {
                 f.diagnostics.push(diagnostic)
+
+                if (tsErrToPyLoc && diagnostic.fileName === "main.ts") {
+                    let pyLoc = tsErrToPyLoc(diagnostic)
+                    if (pyLoc) {
+                        let pyError = { ...diagnostic, ...pyLoc }
+                        let pyFile = mainPkg.files["main.py"]
+                        pyFile.diagnostics.push(pyError)
+                    }
+                }
+            }
         }
 
         const category = ts.pxtc.DiagnosticCategory[diagnostic.category].toLowerCase();
@@ -148,6 +170,9 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
                     target: pxt.appTarget.id,
                     targetVersion: pxt.appTarget.versions.target
                 };
+                const gitJson = pkg.mainPkg.readGitJson();
+                if (gitJson)
+                    meta.repo = pxt.github.parseRepoId(gitJson.repo).fullName;
                 resp.outfiles[pxtc.BINARY_JS] =
                     `// meta=${JSON.stringify(meta)}
 ${resp.outfiles[pxtc.BINARY_JS]}`;
@@ -198,11 +223,13 @@ export function py2tsAsync(): Promise<pxtc.transpile.TranspileResult> {
         })
 }
 
-export function completionsAsync(fileName: string, position: number, fileContent?: string): Promise<pxtc.CompletionInfo> {
+export function completionsAsync(fileName: string, position: number, wordStartPos: number, wordEndPos: number, fileContent?: string): Promise<pxtc.CompletionInfo> {
     return workerOpAsync("getCompletions", {
         fileName,
         fileContent,
         position,
+        wordStartPos,
+        wordEndPos,
         runtime: pxt.appTarget.runtime
     });
 }
@@ -237,7 +264,7 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
         })
 }
 
-export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<string> {
+export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
     const snippetTs = "main.ts";
     const snippetBlocks = "main.blocks";
     let trg = pkg.mainPkg.getTargetOptions()
@@ -254,9 +281,7 @@ export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.Bl
             }
             opts.ast = true;
             return decompileCoreAsync(opts, snippetTs)
-        }).then(resp => {
-            return resp.outfiles[snippetBlocks]
-        })
+        });
 }
 
 function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
@@ -387,8 +412,8 @@ export function typecheckAsync() {
             opts.testMode = true // show errors in all top-level code
             return workerOpAsync("setOptions", { options: opts })
         })
-        .then(() => workerOpAsync("allDiags", {}))
-        .then(setDiagnostics)
+        .then(() => workerOpAsync("allDiags", {}) as Promise<pxtc.CompileResult>)
+        .then(r => setDiagnostics(r.diagnostics, r.sourceMap))
         .then(ensureApisInfoAsync)
         .catch(catchUserErrorAndSetDiags(null))
     if (!firstTypecheck) firstTypecheck = p;

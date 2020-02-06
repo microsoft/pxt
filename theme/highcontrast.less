@@ -124,6 +124,13 @@
     .monacoFlyout {
         background: @HCblocklySvgColor !important;
         border-right: 4px solid @HCtextColor !important;
+
+        .monacoBlock {
+            color: @HCtextColor !important;
+        }
+        .blockHandle {
+            background: @HCblocklySvgColor !important;
+        }
     }
 
     /* Main editor areas */
@@ -333,7 +340,25 @@
                 background-color: @HCbackground;
             }
             .header {
-                color: @HCbackground;
+                color: @HCtextColor;
+            }
+            .ui.grid {
+                background-color: @HChomeScreenBackground;
+                border-width: 2px 0;
+                border-color: @HCtextColor;
+                border-style: solid;
+            }
+            .actions {
+                .card-action {
+                    border: 2px solid @HCtextColor;
+                    .button.attached i {
+                        opacity: 1;
+                        color: @HCtextColor;
+                    }
+                }
+                .card-action-title {
+                    color: @HCtextColor;
+                }
             }
         }
     }

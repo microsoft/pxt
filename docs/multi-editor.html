@@ -1,0 +1,98 @@
+<html>
+
+<head>
+    <title>MakeCode Multi Editor</title>
+    <style>
+        iframe {
+            position: absolute;
+            width: 50%;
+            height: calc(100% - 1rem);
+            bottom: 0;
+            top: 1rem;
+            border: none;
+        }
+        #left {
+            left: 0;
+            right: 50%;
+        }
+        #right {
+            right: 0;
+            left: 50%;
+        }
+        #selectleft {
+            position: absolute;
+            left: 0;
+            right: 50%;
+            width: 50%;
+            height: 1rem;
+            top: 0rem;
+        }
+        #selectright {
+            position: absolute;
+            right: 0;
+            left: 50%;
+            width: 50%;
+            height: 1rem;
+            top: 0rem;
+        }
+    </style>
+</head>
+
+<body>
+    <select id="selectleft">
+        <option value="https://makecode.microbit.org/beta">micro:bit (beta)</option>
+        <option value="https://makecode.adafruit.com/beta">Adafruit Circuit Playground Express (beta)</option>
+        <option value="https://arcade.makecode.com/beta">Arcade (beta)</option>
+        <option value="https://makecode.calliope.cc/beta">Calliope (beta)</option>
+        <option value="https://maker.makecode.com/beta">Maker (beta)</option>
+    </select>
+    <select id="selectright">
+        <option value="https://makecode.microbit.org/beta">micro:bit (beta)</option>
+        <option value="https://makecode.adafruit.com/beta">Adafruit Circuit Playground Express (beta)</option>
+        <option value="https://arcade.makecode.com/beta">Arcade (beta)</option>
+        <option value="https://makecode.calliope.cc/beta">Calliope (beta)</option>
+        <option value="https://maker.makecode.com/beta">Maker (beta)</option>
+    </select>
+    <iframe id="left"></iframe>
+    <iframe id="right"></iframe>
+    <script>
+        (function () {
+            var left = document.getElementById("left");
+            var right = document.getElementById("right");
+            var selectleft = document.getElementById("selectleft");
+            var selectright = document.getElementById("selectright");
+            var localhost = /localhost=1/.test(window.location.href)
+            var flags = "?nestededitorsim=1&editorlayout=ide&nosandbox=1";
+
+            window.onmessage = function (msg) {
+                var data = msg.data;
+                var source = msg.source;
+                if (!!data.broadcast) {
+                    data.outer = true;
+                    [left, right]
+                        .filter(function (ifrm) {
+                            return ifrm.contentWindow !== source;
+                        })
+                        .forEach(function (ifrm) {
+                            ifrm.contentWindow.postMessage(data, "*")
+                        });
+                }
+            };
+
+            function updateSrc(ifrm, select) {
+                if (localhost) {
+                    ifrm.src = "/index.html" + flags;
+                } else {
+                    ifrm.src = select.value + flags;
+                }
+            }
+
+            selectleft.onchange = function() { updateSrc(left, selectleft); }
+            selectright.onchange = function() { updateSrc(right, selectright); }
+            updateSrc(left, selectleft);
+            updateSrc(right, selectright);
+        })();        
+    </script>
+    <!-- @include tracking.html -->
+</body>
+</html>

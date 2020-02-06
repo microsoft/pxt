@@ -461,7 +461,7 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
         header: lf("Create GitHub repository"),
         jsxd: () => {
             const nameErr = repoNameError();
-            return <div className="ui form">
+            return <div className={`ui form`}>
                 <p>
                     {lf("Host your code on GitHub and work together with friends.")}
                     {sui.helpIconLink("/github", lf("Learn more about GitHub"))}
@@ -473,7 +473,7 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
                     <sui.Input type="text" value={repoDescription} onChange={onDescriptionChanged} label={lf("Repository description")} placeholder={lf("MakeCode extension for my gadget")} class="fluid" />
                 </div>
                 <div className="ui field">
-                    <select className="ui dropdown" onChange={onPublicChanged}>
+                    <select className={`ui dropdown`} onChange={onPublicChanged}>
                         <option aria-selected={repoPublic} value="true">{lf("Public repository, anyone can look at your code.")}</option>
                         <option aria-selected={!repoPublic} value="false">{lf("Private repository, your code is only visible to you.")}</option>
                     </select>

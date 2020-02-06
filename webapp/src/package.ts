@@ -32,7 +32,7 @@ export class File implements pxt.editor.IFile {
     constructor(public epkg: EditorPackage, public name: string, public content: string) { }
 
     isReadonly() {
-        return !this.epkg.header
+        return !this.epkg.header;
     }
 
     getName() {
@@ -188,6 +188,12 @@ export class EditorPackage {
 
     getTopHeader() {
         return this.topPkg.header;
+    }
+
+    getLanguageRestrictions() {
+        const ksPkg = this.topPkg.ksPkg;
+        const cfg = ksPkg && ksPkg.config;
+        return cfg && cfg.languageRestriction;
     }
 
     afterMainLoadAsync() {
@@ -732,6 +738,25 @@ data.mountVirtualApi("pkg-git-pr", {
         if (!parsed || !parsed.tag || parsed.tag == "master") return Promise.resolve(missing);
         return pxt.github.findPRNumberforBranchAsync(parsed.fullName, parsed.tag)
             .catch(e => missing);
+    },
+    expirationTime: p => 3600 * 1000
+})
+
+export function invalidatePagesStatus(hd: pxt.workspace.Header) {
+    data.invalidateHeader("pkg-git-pages", hd)
+}
+
+data.mountVirtualApi("pkg-git-pages", {
+    getAsync: p => {
+        p = data.stripProtocol(p)
+        const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
+        const header = f.header;
+        const ghid = f.getPkgId() == "this" && header && header.githubId;
+        if (!ghid) return Promise.resolve(undefined);
+        const parsed = pxt.github.parseRepoId(ghid);
+        if (!parsed) return Promise.resolve(undefined);
+        return pxt.github.getPagesStatusAsync(parsed.fullName)
+            .catch(e => undefined);
     },
     expirationTime: p => 3600 * 1000
 })

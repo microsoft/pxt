@@ -149,6 +149,7 @@ namespace pxsim {
         type: "screenshot";
         data: ImageData;
         delay?: number;
+        modalContext?: string;
     }
 
     export interface SimulatorRecorderMessage extends SimulatorMessage {
@@ -171,9 +172,9 @@ namespace pxsim {
 
     export interface TutorialStepInfo {
         fullscreen?: boolean;
-        hasHint?: boolean;
         contentMd?: string;
         headerContentMd?: string;
+        hintContentMd?: string;
     }
 
     export interface TutorialLoadedMessage extends TutorialMessage {

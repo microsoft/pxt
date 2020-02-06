@@ -260,10 +260,13 @@ namespace pxt.BrowserUtils {
     export function devicePixelRatio(): number {
         if (typeof window === "undefined" || !window.screen) return 1;
 
-        if (window.screen.systemXDPI !== undefined
-            && window.screen.logicalXDPI !== undefined
-            && window.screen.systemXDPI > window.screen.logicalXDPI) {
-            return window.screen.systemXDPI / window.screen.logicalXDPI;
+        // these are IE specific
+        const sysXDPI = (window.screen as any).systemXDPI
+        const logicalXDPI = (window.screen as any).logicalXDPI
+        if (sysXDPI !== undefined
+            && logicalXDPI !== undefined
+            && sysXDPI > logicalXDPI) {
+            return sysXDPI / logicalXDPI;
         }
         else if (window && window.devicePixelRatio !== undefined) {
             return window.devicePixelRatio;
@@ -370,7 +373,7 @@ namespace pxt.BrowserUtils {
     }
 
     export function loadImageAsync(data: string): Promise<HTMLImageElement> {
-        const img = document.createElement("img") as HTMLImageElement;
+        const img = document.createElement("img")
         return new Promise<HTMLImageElement>((resolve, reject) => {
             img.onload = () => resolve(img);
             img.onerror = () => resolve(undefined);
@@ -953,6 +956,42 @@ namespace pxt.BrowserUtils {
             }
         }
     })();
+
+    export function getPageX(event: any) {
+        if ("pageX" in event) {
+            return (event as MouseEvent).pageX;
+        }
+        else {
+            return (event as TouchEvent).changedTouches[0].pageX;
+        }
+    }
+
+    export function getPageY(event: any) {
+        if ("pageY" in event) {
+            return (event as MouseEvent).pageY;
+        }
+        else {
+            return (event as TouchEvent).changedTouches[0].pageY;
+        }
+    }
+
+    export function getClientX(event: any) {
+        if ("clientX" in event) {
+            return (event as MouseEvent).clientX;
+        }
+        else {
+            return (event as TouchEvent).changedTouches[0].clientX;
+        }
+    }
+
+    export function getClientY(event: any) {
+        if ("clientY" in event) {
+            return (event as MouseEvent).clientY;
+        }
+        else {
+            return (event as TouchEvent).changedTouches[0].clientY;
+        }
+    }
 
     export function popupWindow(url: string, title: string, popUpWidth: number, popUpHeight: number) {
         try {

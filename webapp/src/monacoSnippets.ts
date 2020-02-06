@@ -25,7 +25,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     name: "loops_for",
                     snippetName: "for",
                     snippet: `for(let i = 0; i < 5; i++) {\n\n}`,
-                    pySnippet: `for i in range(0, 4):\n  pass`,
+                    pySnippet: `for i in range(4):\n  pass`,
                     attributes: {
                         blockId: 'pxt_controls_for',
                         weight: 47,

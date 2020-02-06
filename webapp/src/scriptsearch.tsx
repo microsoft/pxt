@@ -9,7 +9,6 @@ import * as core from "./core";
 import * as codecard from "./codecard";
 import * as electron from "./electron";
 import * as workspace from "./workspace";
-import * as dialogs from "./dialogs";
 import { SearchInput } from "./components/searchInput";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
@@ -358,6 +357,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             && pxt.appTarget.appTheme.importExtensionFiles
             && !disableFileAccessinMaciOs
             && !searchFor;
+        // inject beta at end of / or /#
+        // also excludes http://localhost:port/index.html
+        const betaUrl = window.location.href.replace(/\/(#|$|\?)/, "/beta$1")
+        const showOpenBeta = mode == ScriptSearchMode.Experiments
+            && betaUrl != window.location.href; // don't show beta button in beta
 
         const compareConfig = (a: pxt.PackageConfig, b: pxt.PackageConfig) => {
             // core first
@@ -507,7 +511,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     feedbackUrl={experiment.feedbackUrl}
                                 />
                             )}
-                            {showImportFile ? <codecard.CodeCardView
+                            {showImportFile && <codecard.CodeCardView
                                 ariaLabel={lf("Open files from your computer")}
                                 role="button"
                                 key={'import'}
@@ -516,7 +520,19 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 name={lf("Import File...")}
                                 description={lf("Open files from your computer")}
                                 onClick={this.importExtensionFile}
-                            /> : undefined}
+                            />}
+                            {showOpenBeta && <codecard.CodeCardView
+                                ariaLabel={lf("Open the next version of the editor")}
+                                role="button"
+                                key={'beta'}
+                                icon="lab ui cardimage"
+                                iconColor="secondary"
+                                name={lf("Beta Editor")}
+                                label={lf("Beta")}
+                                labelClass="red right ribbon"
+                                description={lf("Open the next version of the editor")}
+                                url={betaUrl}
+                            />}
                         </div>
                     }
                     {isEmpty() ?

@@ -148,6 +148,8 @@ default semantic
 @jsIconUrl: "../docs/static/icons/js.svg";
 @jsIcon: data-uri(@jsIconUrl);
 
+@logoFilter: invert(22%) sepia(54%) saturate(2744%) hue-rotate(288deg) brightness(95%) contrast(97%);
+
 /*-------------------
    Menu
 --------------------*/
@@ -250,6 +252,10 @@ default semantic
 @diffAddedTokenBackground: darken(@diffAddedBackground, @diffTokenDarkenRatio);
 @diffInvertedRemovedTokenBackground:darken(@diffInvertedRemovedBackground, @diffTokenDarkenRatio);
 @diffInvertedAddedTokenBackground: darken(@diffInvertedAddedBackground, @diffTokenDarkenRatio);
+@diffUpdateAddedBackground: #fcfc90;
+@diffUpdateAddedTokenBackground: darken(@diffUpdateAddedBackground, @diffTokenDarkenRatio);
+@diffUpdateInlineAddedOutline: 1px solid #ccc;
+
 @conflictBorderColor: orange;
 @conflictHeaderBackgroundColor: lighten(@conflictBorderColor, 30);
 @conflictHeaderColor: black;
@@ -281,8 +287,10 @@ default semantic
 @flyoutLabelColor: white;
 @blocklyFlyoutColor: @grey;
 @blocklyFlyoutColorOpacity: 0.9;
-@monacoFlyoutColor: fade(@blocklyFlyoutColor, 90%);
 @blocklyFlyoutButtonColor: @primaryColor;
+@monacoFlyoutColor: fade(@blocklyFlyoutColor, 90%);
+@monacoFlyoutBorderColor: fade(@flyoutLabelColor, 40%);
+@monacoFlyoutText: fade(@flyoutLabelColor, 70%);
 
 /*-------------------
    Home
@@ -311,6 +319,7 @@ default semantic
 @homeDetailCloseColor: white;
 @homeDetailCloseBackground: @grey;
 @homeDetailCardActionBackground: darken(@homeDetailViewBackground, 10%);
+@homeInvertedDetailCardActionBackground: lighten(@homeScreenBackground, 10%);
 
 /*-------------------
    Tutorial

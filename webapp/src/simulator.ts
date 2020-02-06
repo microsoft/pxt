@@ -44,6 +44,8 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
     debuggerDiv.className = 'ui item landscape only';
     root.appendChild(debuggerDiv);
 
+    const nestedEditorSim = /nestededitorsim=1/i.test(window.location.href);
+
     let options: pxsim.SimulatorDriverOptions = {
         restart: () => cfg.restartSimulator(),
         revealElement: (el) => {
@@ -217,6 +219,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         stoppedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass,
         invalidatedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass,
+        nestedEditorSim: nestedEditorSim
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg

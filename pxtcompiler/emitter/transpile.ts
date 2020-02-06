@@ -7,18 +7,20 @@
 // so that we can cache results for better performance and user
 // experience (since compile -> decompile round-trips are lossy)
 namespace ts.pxtc.transpile {
-    export interface TranspileResult {
+    export interface TranspileCodeResult {
+        outfiles: pxt.Map<string>,
+        sourceMap: SourceInterval[],
+        syntaxInfo?: SyntaxInfo,
+    }
+    export interface TranspileResult extends TranspileCodeResult {
         diagnostics: pxtc.KsDiagnostic[],
         success: boolean,
-        outfiles: { [key: string]: string }
     }
 
-    const mainName = (l: Lang) => `main.${l}`
+    const mainName = (l: CodeLang) => `main.${l}`
 
-    export type Lang = "py" | "blocks" | "ts"
-    export interface LangEquivSet {
-        comparable: { [key in Lang]: string },
-        code: { [key in Lang]: string },
+    export interface LangEquivSet extends TranspileCodeResult {
+        comparable: { [key in CodeLang]: string }
     }
     // a circular buffer of size MAX_CODE_EQUIVS that stores
     // sets of equivalent code files so that when we translate
@@ -27,15 +29,13 @@ namespace ts.pxtc.transpile {
     const MAX_CODE_EQUIVS = 10
 
     function toComparable(code: string): string {
-        // Ignore whitespace
-        code = code.replace(/\s/g, "")
-
+        // Note that whitespace is semantic for Python
         return code
     }
     export function resetCache() {
         codeEquivalences = []
     }
-    function tryGetCachedTranspile(lang: Lang, txt: string): LangEquivSet | undefined {
+    function tryGetCachedTranspile(lang: CodeLang, txt: string): LangEquivSet | undefined {
         let txtComp = toComparable(txt)
         for (let eq of codeEquivalences) {
             if (eq.comparable[lang] === txtComp) {
@@ -44,22 +44,19 @@ namespace ts.pxtc.transpile {
         }
         return undefined
     }
-    function cacheTranspile(lang1: Lang, lang1Txt: string, lang2: Lang, lang2Txt: string) {
+    function cacheTranspile(lang1: CodeLang, lang1Txt: string, lang2: CodeLang, lang2Txt: string, sourceMap: SourceInterval[]) {
         let equiv: LangEquivSet = {
             comparable: {
                 "ts": undefined,
                 "blocks": undefined,
                 "py": undefined
             },
-            code: {
-                "ts": undefined,
-                "blocks": undefined,
-                "py": undefined
-            }
+            outfiles: {},
+            sourceMap
         }
-        equiv.code[lang1] = lang1Txt
+        equiv.outfiles[mainName(lang1)] = lang1Txt
         equiv.comparable[lang1] = toComparable(lang1Txt)
-        equiv.code[lang2] = lang2Txt
+        equiv.outfiles[mainName(lang2)] = lang2Txt
         equiv.comparable[lang2] = toComparable(lang2Txt)
 
         codeEquivalences.unshift(equiv)
@@ -68,22 +65,21 @@ namespace ts.pxtc.transpile {
             codeEquivalences.pop()
         }
     }
-    function makeSuccess(l: Lang, txt: string): TranspileResult {
-        let outfiles: { [key: string]: string } = {}
-        outfiles[mainName(l)] = txt
+    function makeSuccess(equiv: LangEquivSet): TranspileResult {
         return {
             diagnostics: [],
             success: true,
-            outfiles
+            outfiles: equiv.outfiles,
+            sourceMap: equiv.sourceMap,
+            syntaxInfo: equiv.syntaxInfo
         }
     }
 
-    function transpileInternal(from: Lang, fromTxt: string, to: Lang, doRealTranspile: () => TranspileResult): TranspileResult {
+    function transpileInternal(from: CodeLang, fromTxt: string, to: CodeLang, doRealTranspile: () => TranspileResult): TranspileResult {
         let equiv = tryGetCachedTranspile(from, fromTxt)
-        if (equiv && equiv.code[to]) {
+        if (equiv && equiv.outfiles[mainName(to)]) {
             // return from cache
-            let toTxt = equiv.code[to]
-            let res = makeSuccess(to, toTxt)
+            let res = makeSuccess(equiv)
             return res
         }
 
@@ -93,7 +89,7 @@ namespace ts.pxtc.transpile {
         if (res.success) {
             // store the result
             let toTxt = res.outfiles[mainName(to)] || ""
-            cacheTranspile(from, fromTxt, to, toTxt)
+            cacheTranspile(from, fromTxt, to, toTxt, res.sourceMap)
         }
         return res
     }

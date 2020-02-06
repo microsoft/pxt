@@ -20,7 +20,7 @@ Text, or [strings](/types/string), used in the editor and documentation pages ar
 
 ## Want to help?
 
-Good! A description of the process and general guidance is found in the [Microsoft MakeCode translation](https://makecode.com/translate) page to help you get started.
+Good! **A description of the process and general guidance is found in the [Microsoft MakeCode translation](https://makecode.com/translate) page to help you get started.**
 
 ## Crowdin files for @boardname@
 

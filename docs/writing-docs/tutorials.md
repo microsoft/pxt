@@ -405,7 +405,11 @@ player.onChat("blockleft", function () {
 
 ## Using Python
 
-If the target supports Python, snippets can be written directly in Python by using "python" after the triple tick like this:
+If the target supports Python, snippets can be written in JavaScript or Python directly.
+
+## Python snippets
+
+Using ``python`` after the triple tick like this:
 ````
 ```python
 for i in range(100):
@@ -413,7 +417,20 @@ for i in range(100):
 ```
 ````
 
-Note that if the target supports python then snippets written in the usuall way like:
+## Spy snippets (JavaScript to Python)
+
+Snippets can also be written in JavaScript and automatically converted to Python
+at display time. Use the ``spy`` section:
+
+````
+```spy
+basic.showString("Hello!")
+```
+````
+
+## Other languages
+
+Note that if the target supports python then snippets written in the usual way like:
 ````
 ```typescript
 basic.showString("Hello!")
@@ -424,6 +441,50 @@ basic.showString("Hello!")
 ```
 ````
 users will have the option of clicking the Python icon to see the snippet in Python just like they can with Blocks and Javascript/Typescript.
+
+## JavaScript and Python tutorial ("Spy tutorials")
+
+If you author tutorials using ``JavaScript`` or ``spy``, MakeCode is able to automatically
+render them in JavaScript or Python. Overriding the default language is done in the
+``tutorials.md`` page, in the cards section by specifying the ``editor`` field.
+
+If you are able to author your tutorial in a language agnostic way, 
+you will be able to have a single source for both JavaScript and Python.
+
+````
+```codecard
+[{
+    "name": "Chicken Rain",
+    "cardType": "tutorial",
+    "url": "/tutorials/spy/chicken-rain",
+    ...
+    "otherActions": [{
+        "url": "/tutorials/spy/chicken-rain",
+        "editor": "py",
+        "cardType": "tutorial"
+    }, {
+        "url": "/tutorials/spy/chicken-rain",
+        "editor": "js",
+        "cardType": "tutorial"
+    }]
+}]
+```
+````
+
+Leave ``otherActions`` empty, to automatically populate it.
+
+````
+```codecard
+[{
+    "name": "Chicken Rain",
+    "cardType": "tutorial",
+    "url": "/tutorials/spy/chicken-rain",
+    ...
+    "otherActions": []
+}]
+```
+````
+
 
 ## Testing
 

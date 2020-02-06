@@ -19,6 +19,9 @@ interface DiffFile {
     name: string;
     gitFile: string;
     editorFile: string;
+    // for blocks only
+    tsGitFile?: string;
+    tsEditorFile?: string;
 }
 
 interface DiffCache {
@@ -418,6 +421,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             await workspace.pullAsync(header)
             // skip bump in this case - we don't know if it was merged
         } else {
+            pkg.invalidatePagesStatus(header);
             // maybe needs a reload
             await this.maybeReloadAsync();
         }
@@ -438,7 +442,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     }
 
     private lineDiff(lineA: string, lineB: string): { a: JSX.Element, b: JSX.Element } {
-        const df = pxt.github.diff(lineA.split("").join("\n"), lineB.split("").join("\n"), {
+        const df = pxt.diff.compute(lineA.split("").join("\n"), lineB.split("").join("\n"), {
             context: Infinity
         })
         if (!df) // diff failed
@@ -564,14 +568,31 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             // the xml payload needs to be decompiled
             diffJSX = <div className="ui basic segment">{lf("Your blocks were updated. Go back to the editor to view the changes.")}</div>
         } else {
-            const markdown =
-                `
+            // if the xml is completed reconstructed, 
+            // bail off to decompiled diffs
+            let markdown: string;
+            if (f.tsEditorFile &&
+                pxt.blocks.needsDecompiledDiff(baseContent, content)
+            ) {
+                markdown =
+                    `
+\`\`\`diffblocks
+${f.tsGitFile || ""}
+---------------------
+${f.tsEditorFile}
+\`\`\`
+`;
+
+            } else {
+                markdown =
+                    `
 \`\`\`diffblocksxml
 ${baseContent}
 ---------------------
 ${content}
 \`\`\`
 `;
+            }
             diffJSX = <markedui.MarkedContent key={`diffblocksxxml${f.name}`} parent={this.props.parent} markdown={markdown} />
         }
         const legendJSX = <p className="legend">
@@ -592,7 +613,7 @@ ${content}
             "+": "diff-added",
             "-": "diff-removed",
         }
-        const diffLines = pxt.github.diff(baseContent, content, { ignoreWhitespace: !!ignoreWhitespace })
+        const diffLines = pxt.diff.compute(baseContent, content, { ignoreWhitespace: !!ignoreWhitespace })
         if (!diffLines) {
             pxt.tickEvent("github.diff.toobig");
             return {
@@ -705,7 +726,7 @@ ${content}
     private handleMergeConflictResolution(f: DiffFile, startMarkerLine: number, local: boolean, remote: boolean) {
         pxt.tickEvent("github.conflict.resolve", { "local": local ? 1 : 0, "remote": remote ? 1 : 0 }, { interactiveConsent: true });
 
-        const content = pxt.github.resolveMergeConflictMarker(f.file.content, startMarkerLine, local, remote);
+        const content = pxt.diff.resolveMergeConflictMarker(f.file.content, startMarkerLine, local, remote);
         f.file.setContentAsync(content)
             .then(() => delete this.diffCache[f.name]) // clear cached diff
             .done(() => this.props.parent.forceUpdate());
@@ -825,13 +846,23 @@ ${content}
                 const c = p.publishedContent();
                 if (p.baseGitContent == c)
                     return undefined;
-                else
-                    return {
+                else {
+                    const df: DiffFile = {
                         file: p,
                         name: p.name,
                         gitFile: p.baseGitContent,
                         editorFile: c
                     }
+                    if (/\.blocks$/.test(p.name)) {
+                        const vpn = p.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME);
+                        const vp = files.find(ff => ff.name == vpn);
+                        if (vp) {
+                            df.tsGitFile = vp.baseGitContent;
+                            df.tsEditorFile = vp.publishedContent();
+                        }
+                    }
+                    return df;
+                }
             })
             .filter(df => !!df);
         const needsCommit = diffFiles.length > 0;
@@ -1006,6 +1037,7 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
         pxt.tickEvent("github.releasezone.bump", undefined, { interactiveConsent: true });
         e.stopPropagation();
         const { needsCommit, master } = this.props;
+        const header = this.props.parent.props.parent.state.header;
         if (needsCommit)
             core.confirmAsync({
                 header: lf("Commit your changes..."),
@@ -1023,22 +1055,46 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
         else
             cloudsync.githubProvider()
                 .loginAsync()
-                .then(() => pxt.github.token && this.props.parent.bumpAsync());
+                .then(() => pxt.github.token && this.props.parent.bumpAsync())
+                .finally(() => pkg.invalidatePagesStatus(header))
+    }
+
+    private scheduleRefreshPageStatus = pxtc.Util.debounce(() => {
+        const header = this.props.parent.props.parent.state.header;
+        pkg.invalidatePagesStatus(header);
+        this.pagesStatus();
+    }, 10000, false);
+
+    private pagesStatus() {
+        const header = this.props.parent.props.parent.state.header;
+        const pages = this.props.parent.getData("pkg-git-pages:" + header.id) as pxt.github.GitHubPagesStatus;
+
+        // schedule a refresh
+        if (pages && pages.status == "building")
+            this.scheduleRefreshPageStatus();
+
+        return pages;
     }
 
     renderCore() {
-        const { gs, githubId, needsCommit } = this.props;
+        const { gs, needsCommit } = this.props;
         const tag = gs.commit && gs.commit.tag;
         const compiledJs = !!pxt.appTarget.appTheme.githubCompiledJs;
-        const ghpages = compiledJs && `https://${githubId.owner}.github.io/${githubId.project}`;
 
         if (needsCommit && !compiledJs) // nothing to show here
             return <div></div>
 
-        return <div className="ui transparent segment">
+        const pages = this.pagesStatus();
+        const hasPages = pages && !!pages.html_url;
+        const pagesBuilding = pages && pages.status == "building";
+        const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
+        return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
             <div className="ui header">{lf("Release zone")}</div>
             {!needsCommit && !tag && <div className="ui field">
-                <sui.Button className="basic" text={lf("Create release")}
+                <sui.Button
+                    className="basic"
+                    text={lf("Create release")}
+                    inverted={inverted}
                     onClick={this.handleBumpClick}
                     onKeyDown={sui.fireClickOnEnter} />
                 <span className="inline-help">
@@ -1052,12 +1108,19 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
                         {sui.helpIconLink("/github/release", lf("Learn about releases."))}
                     </p>
                 </div>}
-            {compiledJs &&
+            {hasPages &&
                 <div className="ui field">
-                    <a className="ui basic button" href={ghpages} target="_blank" rel="noopener noreferrer">{lf("Open Project")}</a>
+                    <sui.Link className="basic button"
+                        href={pages.html_url}
+                        inverted={inverted}
+                        loading={pagesBuilding}
+                        text={lf("Open Pages")}
+                        target="_blank" />
                     <span className="inline-help">
-                        {lf("Commit & create release to update.")}
-                        {sui.helpIconLink("/github/pages", lf("Learn about publishing projects."))}
+                        {pagesBuilding ? lf("Pages building, it may take a few minutes.")
+                            : compiledJs ? lf("Commit & create release to update Pages.")
+                                : lf("Commit to update Pages.")}
+                        {sui.helpIconLink("/github/pages", lf("Learn about GitHub Pages."))}
                     </span>
                 </div>}
         </div>
@@ -1091,14 +1154,15 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
         const testurl = header && `${window.location.href.replace(/#.*$/, '')}#testproject:${header.id}`;
         const showFork = user && user.id != githubId.owner;
 
-        return <div className="ui transparent segment">
+        const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
+        return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
             <div className="ui header">{lf("Extension zone")}</div>
             <div className="ui field">
-                <a href={testurl}
-                    role="button" className="ui basic button"
-                    target={`${pxt.appTarget.id}testproject`} rel="noopener noreferrer">
-                    {lf("Test Extension")}
-                </a>
+                <sui.Link className="basic button"
+                    href={testurl}
+                    inverted={inverted}
+                    text={lf("Test Extension")}
+                    target={`${pxt.appTarget.id}testproject`} />
                 <span className="inline-help">
                     {lf("Open a test project that uses this extension.")}
                     {sui.helpIconLink("/github/test-extension", lf("Learn about testing extensions."))}
@@ -1107,6 +1171,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
             {showFork && <div className="ui field">
                 <sui.Button className="basic" text={lf("Fork repository")}
                     onClick={this.handleForkClick}
+                    inverted={inverted}
                     onKeyDown={sui.fireClickOnEnter} />
                 <span className="inline-help">
                     {lf("Fork your own copy of {0} to your account.", githubId.fullName)}
@@ -1114,11 +1179,11 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                 </span>
             </div>}
             {needsLicenseMessage && <div className={`ui field`}>
-                <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
-                    role="button" className="ui basic button"
-                    target="_blank" rel="noopener noreferrer">
-                    {lf("Add license")}
-                </a>
+                <sui.Link className="basic button"
+                    href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
+                    inverted={inverted}
+                    text={lf("Add license")}
+                    target={"_blank"} />
                 <span className="inline-help">
                     {lf("Your project doesn't seem to have a license.")}
                     {sui.helpIconLink("/github/license", lf("Learn more about licenses."))}
@@ -1127,6 +1192,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
             <div className="ui field">
                 <sui.Button className="basic" text={lf("Save for offline")}
                     onClick={this.handleSaveClick}
+                    inverted={inverted}
                     onKeyDown={sui.fireClickOnEnter} />
                 <span className="inline-help">
                     {lf("Export this extension to a file that can be imported without Internet.")}

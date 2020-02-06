@@ -6,6 +6,7 @@ import * as compiler from "./compiler";
 export abstract class ToolboxEditor extends srceditor.Editor {
 
     protected blockInfo: pxtc.BlocksInfo;
+    protected blockGroups: pxt.Map<toolbox.GroupDefinition[]>;
 
     private searchSubset: pxt.Map<boolean | string>;
 
@@ -215,12 +216,11 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     protected abstract showFlyoutBlocks(ns: string, color: string, blocks: toolbox.BlockDefinition[]): void;
 
     abstractShowFlyout(treeRow: toolbox.ToolboxCategory): boolean {
-        const { nameid: ns, name, subns, icon, color, groups, groupIcons, groupHelp, labelLineWidth, blocks } = treeRow;
+        const { nameid: ns, name, subns, icon, color, labelLineWidth, blocks } = treeRow;
         const inTutorial = this.parent.state.tutorialOptions
             && !!this.parent.state.tutorialOptions.tutorial;
 
-        let fns = blocks;
-        if (!fns || !fns.length) return false;
+        if (!blocks || !blocks.length) return false;
 
         if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
             // Add the Heading label
@@ -228,67 +228,21 @@ export abstract class ToolboxEditor extends srceditor.Editor {
         }
 
         // Organize and rearrange methods into groups
-        let blockGroups: pxt.Map<toolbox.BlockDefinition[]> = {}
-        let sortedGroups: string[] = [];
-        if (groups) sortedGroups = groups;
+        let blockGroups = this.getBlockGroups(treeRow);
 
-        // Create a dict of group icon pairs
-        let groupIconsDict: { [group: string]: string } = {}
-        if (groups && groupIcons) {
-            let groupIconsList = groupIcons;
-            for (let i = 0; i < sortedGroups.length; i++) {
-                let groupIcon = groupIconsList[i];
-                groupIconsDict[sortedGroups[i]] = groupIcon || '';
+        // Add labels and insert the blocks into the flyout
+        for (let i = 0; i < blockGroups.length; ++i) {
+            let group = blockGroups[i];
+            // Check if there are any blocks in that group
+            if (!group.blocks || !group.blocks.length) continue;
+
+            // Add the group label
+            if (group.name != pxt.DEFAULT_GROUP_NAME && !inTutorial && blockGroups.length != 1) {
+                this.showFlyoutGroupLabel(group.name, group.icon, labelLineWidth, group.hasHelp ? "help" : "");
             }
-        }
 
-        // Create a dict of group help callback pairs
-        let groupHelpDict: { [group: string]: string } = {}
-        if (groups && groupHelp) {
-            let groupHelpCallbackList = groupHelp;
-            for (let i = 0; i < sortedGroups.length; i++) {
-                let helpCallback = groupHelpCallbackList[i];
-                groupHelpDict[sortedGroups[i]] = helpCallback || '';
-            }
-        }
-
-        // Organize the blocks into the different groups
-        for (let bi = 0; bi < fns.length; ++bi) {
-            let blk = fns[bi];
-            let group = blk.attributes.group || 'other';
-            if (!blockGroups[group]) blockGroups[group] = [];
-            blockGroups[group].push(blk);
-        }
-
-        const groupLength = Object.keys(blockGroups).length;
-        if (groupLength > 1) {
-            // Add any missing groups to the sorted groups list
-            Object.keys(blockGroups).sort().forEach(group => {
-                if (sortedGroups.indexOf(group) == -1) {
-                    sortedGroups.push(group);
-                }
-            })
-
-            // Add labels and insert the blocks into the flyout
-            for (let bg = 0; bg < sortedGroups.length; ++bg) {
-                let group = sortedGroups[bg];
-                // Check if there are any blocks in that group
-                if (!blockGroups[group] || !blockGroups[group].length) continue;
-
-                // Add the group label
-                if (group != 'other' && !inTutorial) {
-                    this.showFlyoutGroupLabel(group, groupIconsDict[group], labelLineWidth, groupHelpDict[group]);
-                }
-
-                // Add the blocks in that group
-                if (blockGroups[group]) {
-                    this.showFlyoutBlocks(ns, color, blockGroups[group]);
-                }
-            }
-        } else if (groupLength == 1) {
-            Object.keys(blockGroups).forEach(blockGroup => {
-                this.showFlyoutBlocks(ns, color, blockGroups[blockGroup]);
-            })
+            // Add the blocks in that group
+            this.showFlyoutBlocks(ns, color, group.blocks);
         }
 
         return true;
@@ -344,5 +298,46 @@ export abstract class ToolboxEditor extends srceditor.Editor {
             const w2 = fn2.attributes.topblockWeight || fn2.attributes.weight || 50;
             return w2 >= w1 ? 1 : -1;
         });
+    }
+
+    getBlockGroups(treeRow: toolbox.ToolboxCategory): toolbox.GroupDefinition[] {
+        const ns = treeRow.nameid + (treeRow.subns || "");
+        if (!this.blockGroups) this.blockGroups = {}
+        if (!this.blockGroups[ns]) {
+            const {groups, groupIcons, groupHelp, blocks } = treeRow;
+
+            // Parse full list of groups from block attributes
+            let parsedGroups = groups || [];
+            blocks.forEach(b => {
+                let g = (b.attributes && b.attributes.group) || pxt.DEFAULT_GROUP_NAME;
+                if (parsedGroups.indexOf(g) < 0) parsedGroups.push(g);
+            })
+
+            // Organize and rearrange methods into groups
+            let blockGroups: toolbox.GroupDefinition[] = [];
+            if (parsedGroups) {
+                for (let i = 0; i < parsedGroups.length; i++) {
+                    let name = parsedGroups[i];
+                    let groupBlocks =  blocks.filter(b => (b.attributes.group || pxt.DEFAULT_GROUP_NAME) == name)
+                    .sort((f1, f2) => {
+                        // sort by fn weight
+                        const w2 = (f2.attributes.weight || 50) + (f2.attributes.advanced ? 0 : 1000);
+                        const w1 = (f1.attributes.weight || 50) + (f1.attributes.advanced ? 0 : 1000);
+                        return w2 > w1 ? 1 : -1;
+                    })
+                    if (groupBlocks && groupBlocks.length > 0) {
+                        blockGroups.push({
+                            name,
+                            icon: (groupIcons && groupIcons[i]) || '',
+                            hasHelp: groupHelp && !!groupHelp[i],
+                            blocks: groupBlocks
+                        });
+                    }
+                }
+            }
+            this.blockGroups[ns] = blockGroups;
+        }
+
+        return this.blockGroups[ns];
     }
 }

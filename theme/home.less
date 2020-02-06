@@ -246,6 +246,7 @@
                 }
 
                 .button.approve {
+                    width: 100%;
                     color: @homeCardHeaderColor;
                     background-color: @orange;
                     transition-duration: 0s;
@@ -288,7 +289,7 @@
                 background-blend-mode: color-burn;
                 font-size: 6.5rem!important;
             }
-            .card-action .xicon.python { background-image: @pyIcon; }
+            .card-action .xicon.py { background-image: @pyIcon; }
             .card-action .xicon.js { background-image: @jsIcon; }
 
             /* unset semantic properties */
@@ -418,6 +419,26 @@
     right: 0rem;
 }
 
+/* Inverted */
+.inverted-theme {
+    .projectsdialog .detailview .actions {
+        height: 9rem;
+        .card-action {
+            > .item, > .icon {
+                background: @homeInvertedDetailCardActionBackground;
+            }
+
+            .button.approve {
+                color: @invertedLightTextColor;
+            }
+
+            i.xicon {
+                filter: invert(1);
+            }
+        }
+    }
+}
+
 /* <= Tablet (Mobile + Tablet) */
 
 @media only screen and (max-width: @largestTabletScreen) {
@@ -500,6 +521,12 @@
             }
             .ui.header {
                 padding-left: @carouselArrowSizeMobile;
+            }
+        }
+        .carouselitem.selected {
+            .ui.card {
+                margin-top: -8px;
+                border-width: 5px!important;
             }
         }
     }

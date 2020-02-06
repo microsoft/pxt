@@ -149,6 +149,16 @@ namespace pxt.editor.experiments {
                 id: "githubCompiledJs",
                 name: lf("GitHub Pages JavaScript"),
                 description: lf("Commit compiled javascript when creating a release")
+            },
+            {
+                id: "blocksCollapsing",
+                name: lf("Collapse blocks"),
+                description: lf("Collapse and expand functions or event blocks")
+            },
+            {
+                id: "tutorialBlocksDiff",
+                name: lf("Tutorial Block Diffs"),
+                description: lf("Automatially render blocks diff in tutorials")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }

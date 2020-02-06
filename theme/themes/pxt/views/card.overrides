@@ -56,6 +56,29 @@
     }
 }
 
+.ui.card.file.blocksprj {
+    .fileimage {
+        background-size: 85%;
+        background-position-y: 50%;
+    }
+}
+
+.ui.card.file.pyprj {
+    .fileimage {
+        background-image: @pyIcon;
+        filter: @logoFilter;
+    }
+}
+
+.ui.card.file.tsprj {
+    .fileimage {
+        background-image: @jsIcon;
+        filter: @logoFilter;
+        background-size: 65%;
+        background-position-y: 50%;
+    }
+}
+
 .ui.card.file.positive, .ui.card.file.positive:focus {
     border-color: @green;
 }
@@ -161,8 +184,10 @@ a.ui.card:focus,
 .setExampleCardFullHeight() when (@exampleCardFullHeight) {
     .projectsdialog {
         .ui.card.example {
-            .ui.image, .ui.cardimage {
-                height: 12rem !important;
+            height: 12rem;
+
+            .ui.image, .ui.imagewrapper, .ui.cardimage {
+                height: 100% !important;
             }
             .ui.image ~ .content {
                 background: @exampleCardFullHeightBackground;
@@ -178,6 +203,8 @@ a.ui.card:focus,
     @media only screen and (max-width: @largestMobileScreen) {
         .projectsdialog {
             .ui.card.example {
+                height: 9rem;
+
                 .ui.image, .ui.cardimage {
                     height: 8.4rem !important;
                 }

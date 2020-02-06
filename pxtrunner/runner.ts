@@ -460,8 +460,10 @@ namespace pxt.runner {
             const options = (msg.options || {}) as pxt.blocks.BlocksRenderOptions;
             options.splitSvg = false; // don't split when requesting rendered images
             pxt.tickEvent("renderer.job")
+            const isXml = /^\s*<xml/.test(msg.code);
+
             jobPromise = pxt.BrowserUtils.loadBlocklyAsync()
-                .then(() => runner.decompileSnippetAsync(msg.code, msg.options))
+                .then(() => isXml ? pxt.runner.compileBlocksAsync(msg.code, options) : runner.decompileSnippetAsync(msg.code, msg.options))
                 .then(result => {
                     const blocksSvg = result.blocksSvg as SVGSVGElement;
                     return blocksSvg ? pxt.blocks.layout.blocklyToSvgAsync(blocksSvg, 0, 0, blocksSvg.viewBox.baseVal.width, blocksSvg.viewBox.baseVal.height) : undefined;
@@ -847,28 +849,10 @@ ${linkString}
             || window.innerHeight < window.innerWidth ? 1.62 : 1 / 1.62;
         $(content).html(html);
         $(content).find('a').attr('target', '_blank');
-        const renderOptions: ClientRenderOptions = {
-            blocksAspectRatio: blocksAspectRatio,
-            snippetClass: 'lang-blocks',
-            signatureClass: 'lang-sig',
-            blocksClass: 'lang-block',
-            blocksXmlClass: 'lang-blocksxml',
-            diffBlocksXmlClass: 'lang-diffblocksxml',
-            staticPythonClass: 'lang-spy',
-            simulatorClass: 'lang-sim',
-            linksClass: 'lang-cards',
-            namespacesClass: 'lang-namespaces',
-            codeCardClass: 'lang-codecard',
-            packageClass: 'lang-package',
-            projectClass: 'lang-project',
-            snippetReplaceParent: true,
-            simulator: true,
-            showEdit: true,
-            hex: true,
-            tutorial: !!options.tutorial,
-            showJavaScript: editorLanguageMode == LanguageMode.TypeScript,
-            hexName: pxt.appTarget.id
-        }
+        const renderOptions = pxt.runner.defaultClientRenderOptions();
+        renderOptions.tutorial = !!options.tutorial;
+        renderOptions.blocksAspectRatio = blocksAspectRatio || renderOptions.blocksAspectRatio;
+        renderOptions.showJavaScript = editorLanguageMode == LanguageMode.TypeScript;
         if (options.print) {
             renderOptions.showEdit = false;
             renderOptions.simulator = false;
@@ -935,7 +919,10 @@ ${linkString}
                         let bresp = pxtc.decompiler.decompileToBlocks(
                             blocksInfo,
                             program.getSourceFile("main.ts"),
-                            { snippetMode: options && options.snippetMode });
+                            {
+                                snippetMode: options && options.snippetMode,
+                                generateSourceMap: options && options.generateSourceMap
+                            });
                         if (bresp.diagnostics && bresp.diagnostics.length > 0)
                             bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                         if (!bresp.success)

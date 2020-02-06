@@ -105,7 +105,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view={this.getViewString(view)} key="plus" />]
     }
 
-    private getSaveInput(view: View, showSave: boolean, id?: string, projectName?: string): JSX.Element[] {
+    private getSaveInput(view: View, showSave: boolean, id?: string, projectName?: string, projectNameReadOnly?: boolean): JSX.Element[] {
         let saveButtonClasses = "";
         if (this.props.parent.state.isSaving) {
             saveButtonClasses = "loading disabled";
@@ -121,7 +121,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                 aria-labelledby={id}
                 placeholder={lf("Pick a name...")}
                 value={projectName || ''}
-                onChangeValue={this.saveProjectName} />)
+                onChangeValue={this.saveProjectName}
+                disabled={projectNameReadOnly}
+                readOnly={projectNameReadOnly}
+                />)
         }
 
         if (showSave) {
@@ -133,7 +136,11 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     protected onHwItemClick = () => {
-        this.props.parent.showChooseHwDialog(true);
+        if (pxt.hasHwVariants())
+            this.props.parent.showChooseHwDialog(true);
+        else
+            this.props.parent.showBoardDialogAsync(undefined, true).done();
+
     }
 
     protected onHwDownloadClick = () => {
@@ -214,6 +221,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const showSave = !readOnly && !isController && !targetTheme.saveInMenu
             && !tutorial && !debugging && !disableFileAccessinMaciOs
             && !hasRepository;
+        const showProjectRename = !tutorial && !readOnly && !isController
+            && !targetTheme.hideProjectRename && !debugging;
+        const showProjectRenameReadonly = hasRepository;
         const compile = pxt.appTarget.compile;
         const compileBtn = compile.hasHex || compile.saveAsPNG || compile.useUF2;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
@@ -223,9 +233,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
         const hasUndo = this.props.parent.editor.hasUndo();
 
-        const showProjectRename = !tutorial && !readOnly && !isController
-            && !targetTheme.hideProjectRename && !debugging
-            && !hasRepository;
         const showUndoRedo = !readOnly && !debugging;
         const showZoomControls = true;
         const showGithub = !!pxt.appTarget.cloud
@@ -345,10 +352,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                 </div>}
                                 {(showProjectRename || showGithub) &&
                                     <div className="ui row items" style={compileBtn ? { paddingTop: 0, marginTop: 0 } : {}}>
-                                        {showProjectRename && <div className={`ui item large right ${showSave ? "labeled" : ""} fluid input projectname-input projectname-tablet`} title={lf("Pick a name for your project")}>
-                                            {showSave && this.getSaveInput(tablet, showSave, "fileNameInput1", projectName)}
+                                        {(showProjectRename || showGithub) && <div className={`ui item large right ${showSave ? "labeled" : ""} fluid input projectname-input projectname-tablet`}>
+                                            {showProjectRename && this.getSaveInput(tablet, showSave, "fileNameInput1", projectName, showProjectRenameReadonly)}
+                                            {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${tablet}`} />}
                                         </div>}
-                                        {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${tablet}`} />}
                                     </div>}
                             </div>
                         </div>
@@ -390,10 +397,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     </div>
                     {(showProjectRename || showGithub) &&
                         <div id="projectNameArea" className="column left aligned">
-                            {showProjectRename && <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`} title={lf("Pick a name for your project")}>
-                                {showSave && this.getSaveInput(computer, showSave, "fileNameInput2", projectName)}
-                            </div>}
-                            {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
+                            <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`}>
+                                {showProjectRename && this.getSaveInput(computer, showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}
+                                {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
+                            </div>
                         </div>}
                     <div id="editorToolbarArea" className="column right aligned">
                         {showUndoRedo && <div className="ui icon small buttons">{this.getUndoRedo(computer)}</div>}

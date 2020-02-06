@@ -13,7 +13,10 @@ namespace pxt.runner {
         blocksClass?: string;
         blocksXmlClass?: string;
         diffBlocksXmlClass?: string;
+        diffBlocksClass?: string;
+        diffClass?: string;
         staticPythonClass?: string; // typescript to be converted to static python
+        diffStaticPythonClass?: string; // diff between two spy snippets
         projectClass?: string;
         blocksAspectRatio?: number;
         simulatorClass?: string;
@@ -31,6 +34,35 @@ namespace pxt.runner {
         showEdit?: boolean;
         showJavaScript?: boolean; // default is to show blocks first
         split?: boolean; // split in multiple divs if too big
+    }
+
+    export function defaultClientRenderOptions() {
+        const renderOptions: ClientRenderOptions = {
+            blocksAspectRatio: window.innerHeight < window.innerWidth ? 1.62 : 1 / 1.62,
+            snippetClass: 'lang-blocks',
+            signatureClass: 'lang-sig',
+            blocksClass: 'lang-block',
+            blocksXmlClass: 'lang-blocksxml',
+            diffBlocksXmlClass: 'lang-diffblocksxml',
+            diffClass: 'lang-diff',
+            diffStaticPythonClass: 'lang-diffspy',
+            diffBlocksClass: 'lang-diffblocks',
+            staticPythonClass: 'lang-spy',
+            simulatorClass: 'lang-sim',
+            linksClass: 'lang-cards',
+            namespacesClass: 'lang-namespaces',
+            codeCardClass: 'lang-codecard',
+            packageClass: 'lang-package',
+            projectClass: 'lang-project',
+            snippetReplaceParent: true,
+            simulator: true,
+            showEdit: true,
+            hex: true,
+            tutorial: false,
+            showJavaScript: false,
+            hexName: pxt.appTarget.id
+        }
+        return renderOptions;
     }
 
     export interface WidgetOptions {
@@ -368,7 +400,7 @@ namespace pxt.runner {
 
         let snippetCount = 0;
         return renderNextSnippetAsync(options.snippetClass, (c, r) => {
-            const s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
+            const s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg as HTMLElement) : undefined;
             const p = r.compilePython && r.compilePython.success && r.compilePython.outfiles["main.py"];
             const js = $('<code class="lang-typescript highlight"/>').text(c.text().trim());
             const py = p ? $('<code class="lang-python highlight"/>').text(p.trim()) : undefined;
@@ -413,7 +445,8 @@ namespace pxt.runner {
             let block = Blockly.Blocks[symbolInfo.attributes.blockId];
             let xml = block && block.codeCard ? block.codeCard.blocksXml : undefined;
 
-            const s = xml ? $(pxt.blocks.render(xml)) : r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
+            const blocksHtml = xml ? pxt.blocks.render(xml) : r.compileBlocks && r.compileBlocks.success ? r.blocksSvg : undefined;
+            const s = blocksHtml ? $(blocksHtml as HTMLElement) : undefined
             let sig = info.decl.getText().replace(/^export/, '');
             sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
             const js = $('<code class="lang-typescript highlight"/>').text(sig);
@@ -534,6 +567,96 @@ namespace pxt.runner {
             const segment = $('<div class="ui segment codewidget"/>').append(s);
             c.replaceWith(segment);
         }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio });
+    }
+
+
+    function renderDiffAsync(opts: ClientRenderOptions): Promise<void> {
+        if (!opts.diffClass) return Promise.resolve();
+        const cls = opts.diffClass;
+        function renderNextDiffAsync(cls: string): Promise<void> {
+            let $el = $("." + cls).first();
+            if (!$el[0]) return Promise.resolve();
+
+            const { fileA: oldSrc, fileB: newSrc } = pxt.diff.split($el.text());
+
+            try {
+                const diffEl = pxt.diff.render(oldSrc, newSrc, {
+                    hideLineNumbers: true,
+                    hideMarkerLine: true,
+                    hideMarker: true,
+                    hideRemoved: true,
+                    update: true
+                });
+                if (opts.snippetReplaceParent) $el = $el.parent();
+                const segment = $('<div class="ui segment codewidget"/>').append(diffEl);
+                $el.removeClass(cls);
+                $el.replaceWith(segment);
+            } catch (e) {
+                pxt.reportException(e)
+                $el.append($('<div/>').addClass("ui segment warning").text(e.message));
+            }
+            return Promise.delay(1, renderNextDiffAsync(cls));
+        }
+
+        return renderNextDiffAsync(cls);
+    }
+
+    function renderDiffBlocksAsync(opts: ClientRenderOptions): Promise<void> {
+        if (!opts.diffBlocksClass) return Promise.resolve();
+        const cls = opts.diffBlocksClass;
+        function renderNextDiffAsync(cls: string): Promise<void> {
+            let $el = $("." + cls).first();
+            if (!$el[0]) return Promise.resolve();
+
+            const { fileA: oldSrc, fileB: newSrc } = pxt.diff.split($el.text(), {
+                removeTrailingSemiColumns: true
+            });
+            return Promise.mapSeries([oldSrc, newSrc], src => pxt.runner.decompileSnippetAsync(src, {
+                generateSourceMap: true
+            }))
+                .then(resps => {
+                    try {
+                        const diffBlocks = pxt.blocks.decompiledDiffAsync(
+                            oldSrc, resps[0].compileBlocks, newSrc, resps[1].compileBlocks, {
+                            hideDeletedTopBlocks: true,
+                            hideDeletedBlocks: true
+                        });
+                        const diffJs = pxt.diff.render(oldSrc, newSrc, {
+                            hideLineNumbers: true,
+                            hideMarkerLine: true,
+                            hideMarker: true,
+                            hideRemoved: true,
+                            update: true
+                        })
+                        let diffPy: HTMLElement;
+                        const [oldPy, newPy] = resps.map(resp =>
+                            resp.compilePython
+                            && resp.compilePython.outfiles
+                            && resp.compilePython.outfiles["main.py"]);
+                        if (oldPy && newPy) {
+                            diffPy = pxt.diff.render(oldPy, newPy, {
+                                hideLineNumbers: true,
+                                hideMarkerLine: true,
+                                hideMarker: true,
+                                hideRemoved: true,
+                                update: true
+                            })
+                        }
+                        fillWithWidget(opts, $el.parent(), $(diffJs), diffPy && $(diffPy), $(diffBlocks.svg as HTMLElement), undefined, {
+                            showEdit: false,
+                            run: false,
+                            hexname: undefined,
+                            hex: undefined
+                        });
+                    } catch (e) {
+                        pxt.reportException(e)
+                        $el.append($('<div/>').addClass("ui segment warning").text(e.message));
+                    }
+                    return Promise.delay(1, renderNextDiffAsync(cls));
+                })
+        }
+
+        return renderNextDiffAsync(cls);
     }
 
     function renderNamespaces(options: ClientRenderOptions): Promise<void> {
@@ -919,7 +1042,7 @@ namespace pxt.runner {
             run: !!options.simulator
         }
 
-        function render(e: Node, ignored: boolean) {
+        function render(e: HTMLElement, ignored: boolean) {
             if (typeof hljs !== "undefined") {
                 $(e).text($(e).text().replace(/^\s*\r?\n/, ''))
                 hljs.highlightBlock(e)
@@ -945,7 +1068,7 @@ namespace pxt.runner {
             run: !!options.simulator
         }
 
-        function render(e: Node, ignored: boolean) {
+        function render(e: HTMLElement, ignored: boolean) {
             if (typeof hljs !== "undefined") {
                 $(e).text($(e).text().replace(/^\s*\r?\n/, ''))
                 hljs.highlightBlock(e)
@@ -1020,7 +1143,7 @@ namespace pxt.runner {
 
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
         pxt.analytics.enable();
-        if (!options) options = {}
+        if (!options) options = defaultClientRenderOptions();
         if (options.pxtUrl) options.pxtUrl = options.pxtUrl.replace(/\/$/, '');
         if (options.showEdit) options.showEdit = !pxt.BrowserUtils.isIFrame();
 
@@ -1042,6 +1165,8 @@ namespace pxt.runner {
             .then(() => renderBlocksAsync(options))
             .then(() => renderBlocksXmlAsync(options))
             .then(() => renderDiffBlocksXmlAsync(options))
+            .then(() => renderDiffBlocksAsync(options))
+            .then(() => renderDiffAsync(options))
             .then(() => renderStaticPythonAsync(options))
             .then(() => renderProjectAsync(options))
             .then(() => consumeRenderQueueAsync())

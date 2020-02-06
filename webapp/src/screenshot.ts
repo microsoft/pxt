@@ -41,8 +41,7 @@ export function saveAsync(header: Header, screenshot: string): Promise<void> {
             const icon = renderIcon(img);
             return workspace.saveScreenshotAsync(header, screenshot, icon)
                 .then(() => {
-                    data.invalidate("header:" + header.id);
-                    data.invalidate("header:*");
+                    data.invalidateHeader("header", header);
                 });
         });
 }

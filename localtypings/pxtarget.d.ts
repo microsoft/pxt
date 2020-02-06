@@ -51,6 +51,7 @@ declare namespace pxt {
         appTheme: AppTheme;
         compileService?: TargetCompileService;
         ignoreDocsErrors?: boolean;
+        uploadApiStringsBranchRx?: string; // regular expression to match branches that should upload api strings
         uploadDocs?: boolean; // enable uploading to crowdin on master or v* builds
         variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
         multiVariants?: string[];
@@ -238,7 +239,7 @@ declare namespace pxt {
         homeUrl?: string;
         shareUrl?: string;
         embedUrl?: string;
-        betaUrl?: string;
+        // betaUrl?: string; deprecated, beta button automatically shows up in experiments dialog
         docMenu?: DocMenuEntry[];
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
@@ -265,6 +266,7 @@ declare namespace pxt {
         coloredToolbox?: boolean; // if true: color the blockly toolbox categories
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
         invertedMonaco?: boolean; // if true: use the vs-dark monaco theme
+        invertedGitHub?: boolean; // inverted github view
         lightToc?: boolean; // if true: do NOT use inverted style in docs toc
         blocklyOptions?: Blockly.WorkspaceOptions; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
         hideFlyoutHeadings?: boolean; // Hide the flyout headings at the top of the flyout when on a mobile device.
@@ -365,10 +367,14 @@ declare namespace pxt {
         checkForHwVariantWebUSB?: boolean; // check for hardware variant using webusb before compiling
         shareFinishedTutorials?: boolean; // always pop a share dialog once the tutorial is finished
         leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
-        nameProjectFirst?: boolean;
+        nameProjectFirst?: boolean; // prompt user to name project when creating new one
+        chooseLanguageRestrictionOnNewProject?: boolean; // include 'options' menu when creating a new project
         pythonToolbox?: boolean; // Code toolbox for Python
         githubEditor?: boolean; // allow editing github repositories from the editor
-        githubCompiledJs?: boolean; // commit binary.js in commit when creating a github release
+        githubCompiledJs?: boolean; // commit binary.js in commit when creating a github release,
+        blocksCollapsing?: boolean; // collapse/uncollapse functions/event in blocks
+        hideHomeDetailsVideo?: boolean; // hide video/large image from details card
+        tutorialBlocksDiff?: boolean; // automatically display diffs in tutorials
     }
 
     interface SocialOptions {
@@ -421,6 +427,13 @@ declare namespace pxt.editor {
         JSON = "json",
         XML = "xml",
         Asm = "asm"
+    }
+
+    const enum LanguageRestriction {
+        Standard = "",
+        PythonOnly = "python-only",
+        JavaScriptOnly = "javascript-only",
+        NoBlocks = "no-blocks"
     }
 }
 
@@ -843,6 +856,7 @@ declare namespace pxt.tutorial {
         explicitHints?: boolean; // tutorial expects explicit hints in `#### ~ tutorialhint` format
         flyoutOnly?: boolean; // no categories, display all blocks in flyout
         hideIteration?: boolean; // hide step control in tutorial
+        noDiffs?: boolean; // don't automatically generated diffs
         codeStart?: string; // command to run when code starts (MINECRAFT HOC ONLY)
         codeStop?: string; // command to run when code stops (MINECRAFT HOC ONLY)
     }
@@ -852,11 +866,11 @@ declare namespace pxt.tutorial {
         // no coding
         unplugged?: boolean;
         tutorialCompleted?: boolean;
-        hasHint?: boolean;
         contentMd?: string;
         headerContentMd?: string;
         hintContentMd?: string;
         activity?: number;
+        resetDiff?: boolean; // reset diffify algo
     }
 
     interface TutorialActivityInfo {

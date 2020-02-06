@@ -3,16 +3,16 @@
     "title": "Getting started",
     "steps": [
         {
-            "fullscreen": true,
-            "unplugged": true,
-            "tutorialCompleted": false,
             "contentMd": "Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.\n\n```blocks\nbasic.showString(\"Micro!\")\n```",
             "headerContentMd": "Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.",
-            "hintContentMd": "```blocks\nbasic.showString(\"Micro!\")\n```",
-            "hasHint": true
+            "fullscreen": true,
+            "unplugged": true,
+            "hintContentMd": "```blocks\nbasic.showString(\"Micro!\")\n```"
         }
     ],
     "activities": null,
     "code": "\n { \n basic.showString(\"Micro!\")\n } \n",
-    "metadata": {}
+    "metadata": {
+        "noDiffs": true
+    }
 }

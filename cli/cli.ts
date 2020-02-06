@@ -364,15 +364,23 @@ function ciAsync() {
 
     const latest = branch == "master" ? "latest" : "git-" + branch
     // upload locs on build on master
-    const uploadLocs = /^(master|v\d+\.\d+\.\d+)$/.test(branch)
-        && !pullRequest
-        && !!pxt.appTarget.uploadDocs;
+    const masterOrReleaseBranchRx = /^(master|v\d+\.\d+\.\d+)$/;
+    const apiStringBranchRx = pxt.appTarget.uploadApiStringsBranchRx
+        ? new RegExp(pxt.appTarget.uploadApiStringsBranchRx)
+        : masterOrReleaseBranchRx;
+    const uploadDocs = !pullRequest
+        && !!pxt.appTarget.uploadDocs
+        && masterOrReleaseBranchRx.test(branch);
+    const uploadApiStrings = !pullRequest
+        && (!!pxt.appTarget.uploadDocs || pxt.appTarget.uploadApiStringsBranchRx)
+        && apiStringBranchRx.test(branch);
 
     pxt.log(`tag: ${tag}`);
     pxt.log(`branch: ${branch}`);
-    pxt.log(`pull request: ${pullRequest}`);
-    pxt.log(`upload locs: ${uploadLocs}`);
     pxt.log(`latest: ${latest}`);
+    pxt.log(`pull request: ${pullRequest}`);
+    pxt.log(`upload api strings: ${uploadApiStrings}`);
+    pxt.log(`upload docs: ${uploadDocs}`);
 
     function npmPublishAsync() {
         if (!npmPublish) return Promise.resolve();
@@ -383,12 +391,14 @@ function ciAsync() {
     if (pkg["name"] == "pxt-core") {
         pxt.log("pxt-core build");
         let p = npmPublishAsync();
-        if (uploadLocs)
+        if (uploadDocs)
             p = p
-                .then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
                 .then(() => buildWebStringsAsync())
-                .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"))
-                .then(() => crowdin.internalUploadTargetTranslationsAsync(!!tag));
+                .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"));
+        if (uploadApiStrings)
+            p = p.then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
+        if (uploadDocs || uploadApiStrings)
+            p = p.then(() => crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs));
         return p;
     } else {
         pxt.log("target build");
@@ -409,13 +419,13 @@ function ciAsync() {
             })
             .then(() => {
                 pxt.log("target uploaded");
-                if (uploadLocs) {
-                    pxt.log("uploading translations...");
-                    return crowdin.internalUploadTargetTranslationsAsync(!!tag)
+                if (uploadDocs || uploadApiStrings) {
+                    return crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs)
                         .then(() => pxt.log("translations uploaded"));
+                } else {
+                    pxt.log("skipping translations upload");
+                    return Promise.resolve();
                 }
-                pxt.log("skipping translations upload");
-                return Promise.resolve();
             });
     }
 }
@@ -1460,24 +1470,6 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
     })
 }
 
-function buildPxtAsync(includeSourceMaps = false): Promise<string[]> {
-    let ksd = "node_modules/pxt-core"
-    if (!fs.existsSync(ksd + "/pxtlib/main.ts")) return Promise.resolve([]);
-
-    console.log(`building ${ksd}...`);
-    return nodeutil.spawnAsync({
-        cmd: nodeutil.addCmd("npm"),
-        args: includeSourceMaps ? ["run", "build", "sourceMaps=true"] : ["run", "build"],
-        cwd: ksd
-    }).then(() => {
-        console.log("local pxt-core built.")
-        return [ksd]
-    }, e => {
-        buildFailed("local pxt-core build FAILED", e)
-        return [ksd]
-    });
-}
-
 let dirsToWatch: string[] = []
 
 interface CiBuildInfo {
@@ -2319,12 +2311,12 @@ function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean)
         simDirectories = simDirectories.filter(fn => fs.existsSync(fn));
     }
 
-    return buildAndWatchAsync(() => buildPxtAsync(includeSourceMaps)
-        .then(buildCommonSimAsync, e => buildFailed("common sim build failed: " + e.message, e))
+    return buildAndWatchAsync(() => buildCommonSimAsync()
+        .catch(e => buildFailed("common sim build failed: " + e.message, e))
         .then(() => internalBuildTargetAsync({ localDir: true, rebundle }))
         .catch(e => buildFailed("target build failed: " + e.message, e))
         .then(() => {
-            let toWatch = [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)
+            let toWatch = dirsToWatch.slice();
             if (hasCommonPackages) {
                 toWatch = toWatch.concat(simDirectories);
             }
@@ -5138,50 +5130,60 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                     pxt.debug(`card ${card.shortName || card.name}`);
                     switch (card.cardType) {
                         case "tutorial": {
-                            const tutorialMd = nodeutil.resolveMd(docsRoot, card.url);
-                            const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
-                            const pkgs: pxt.Map<string> = { "blocksprj": "*" };
-                            pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
+                            let urls = [card.url]
+                            if (card.otherActions) card.otherActions.forEach(a => { if (a.url) urls.push(a.url) });
+                            for (let url of urls) {
+                                const tutorialMd = nodeutil.resolveMd(docsRoot, url);
+                                const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
+                                const pkgs: pxt.Map<string> = { "blocksprj": "*" };
+                                pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
 
-                            if (tutorial.code.indexOf("namespace") !== -1) {
-                                // Handles tilemaps and spritekinds
-                                tutorial.steps
-                                    .filter(step => !!step.contentMd)
-                                    .forEach((step, stepIndex) => getCodeSnippets(`${gal.name}-${stepIndex}`, step.contentMd)
-                                        .forEach((snippet, snippetIndex) => {
-                                            snippet.packages = pkgs;
-                                            addSnippet(
-                                                snippet,
-                                                "tutorial" + `${gal.name}-${stepIndex}-${snippetIndex}`,
-                                                cardIndex
-                                            )
-                                        })
-                                    );
-                            }
-                            else {
-                                addSnippet(<CodeSnippet>{
-                                    name: card.name,
-                                    code: tutorial.code,
-                                    type: "blocks",
-                                    ext: "ts",
-                                    packages: pkgs
-                                }, "tutorial" + gal.name, cardIndex);
+                                // Handles tilemaps, spritekinds
+                                if (tutorial.code.indexOf("namespace") !== -1
+                                    // Handles ```python``` code, TODO when tutorial.ts python parsing is added, update !tutorial.code check to verify code is python (not spy)
+                                    || (tutorial.editor == pxt.PYTHON_PROJECT_NAME && !tutorial.code)) {
+                                    tutorial.steps
+                                        .filter(step => !!step.contentMd)
+                                        .forEach((step, stepIndex) => getCodeSnippets(`${gal.name}-${stepIndex}`, step.contentMd)
+                                            .forEach((snippet, snippetIndex) => {
+                                                snippet.packages = pkgs;
+                                                addSnippet(
+                                                    snippet,
+                                                    "tutorial" + `${gal.name}-${stepIndex}-${snippetIndex}`,
+                                                    cardIndex
+                                                )
+                                            })
+                                        );
+                                }
+                                else {
+                                    addSnippet(<CodeSnippet>{
+                                        name: card.name,
+                                        code: tutorial.code,
+                                        type: "blocks",
+                                        ext: "ts",
+                                        packages: pkgs
+                                    }, "tutorial" + gal.name, cardIndex);
+                                }
                             }
 
                             break;
                         }
                         case "example": {
-                            const exMd = nodeutil.resolveMd(docsRoot, card.url);
-                            const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
-                            const pkgs: pxt.Map<string> = { "blocksprj": "*" };
-                            pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
-                            addSnippet(<CodeSnippet>{
-                                name: card.name,
-                                code: prj.filesOverride["main.ts"],
-                                type: "blocks",
-                                ext: "ts",
-                                packages: pkgs
-                            }, "example" + gal.name, cardIndex);
+                            let urls = [card.url]
+                            if (card.otherActions) card.otherActions.forEach(a => { if (a.url) urls.push(a.url) });
+                            for (let url of urls) {
+                                const exMd = nodeutil.resolveMd(docsRoot, url);
+                                const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
+                                const pkgs: pxt.Map<string> = { "blocksprj": "*" };
+                                pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
+                                addSnippet(<CodeSnippet>{
+                                    name: card.name,
+                                    code: prj.filesOverride["main.ts"],
+                                    type: "blocks",
+                                    ext: "ts",
+                                    packages: pkgs
+                                }, "example" + gal.name, cardIndex);
+                            }
                             break;
                         }
                     }
@@ -6070,6 +6072,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         name: "uploadtrgtranslations",
         help: "upload translations for target",
         flags: {
+            apis: { description: "upload api strings" },
             docs: { description: "upload markdown docs folder as well" },
             test: { description: "test run, do not upload files to crowdin" }
         },

@@ -339,7 +339,7 @@ namespace pxt.py {
         function emitWhileStmt(s: ts.WhileStatement): string[] {
             let [cond, condSup] = emitExp(s.expression)
             let body = emitBody(s.statement)
-            let whileStmt = expWrap("while ", cond);
+            let whileStmt = expWrap("while ", cond, ":");
             return condSup.concat(whileStmt).concat(body)
         }
         type RangeItr = {

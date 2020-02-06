@@ -26,7 +26,8 @@ export function getUsedBlocksAsync(code: string): Promise<pxt.Map<number>> {
         .then(blocksInfo => {
             pxt.blocks.initializeAndInject(blocksInfo);
             return compiler.decompileBlocksSnippetAsync(code, blocksInfo);
-        }).then(blocksXml => {
+        }).then(resp => {
+            const blocksXml = resp.outfiles["main.blocks"];
             if (blocksXml) {
                 const headless = pxt.blocks.loadWorkspaceXml(blocksXml);
                 if (!headless) {
@@ -40,7 +41,7 @@ export function getUsedBlocksAsync(code: string): Promise<pxt.Map<number>> {
                 }
                 return usedBlocks;
             } else {
-                throw new Error("Empty blocksXml, failed to decompile");
+                throw new Error("Failed to decompile");
             }
         }).catch((e) => {
             pxt.reportException(e);
@@ -424,7 +425,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const options = this.props.parent.state.tutorialOptions;
         const { tutorialReady, tutorialStepInfo, tutorialStep } = options;
         if (!tutorialReady) return false;
-        return tutorialStepInfo[tutorialStep].hasHint
+        return !!tutorialStepInfo[tutorialStep].hintContentMd
             || tutorialStepInfo[tutorialStep].unplugged;
     }
 
@@ -543,7 +544,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                         <div role="button" className={`avatar-image ${hasHint && this.props.pokeUser ? 'shake' : ''}`} onClick={hintOnClick} onKeyDown={sui.fireClickOnEnter}></div>
                         {hasHint && <sui.Button className="ui circular small label blue hintbutton hidelightbox" icon="lightbulb outline" tabIndex={-1} onClick={hintOnClick} onKeyDown={sui.fireClickOnEnter} />}
                         {hasHint && <HintTooltip ref="hinttooltip" pokeUser={this.props.pokeUser} text={tutorialHintTooltip} onClick={hintOnClick} />}
-                        {hasHint && <TutorialHint ref="tutorialhint" parent={this.props.parent} />}
+                        <TutorialHint ref="tutorialhint" parent={this.props.parent} />
                     </div>
                     <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
                         onClick={hasHint ? hintOnClick : undefined} onKeyDown={hasHint ? sui.fireClickOnEnter : undefined}>
