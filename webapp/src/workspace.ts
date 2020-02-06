@@ -169,7 +169,8 @@ function checkHeadersSession() {
         syncAsync().done();
 }
 function refreshHeadersSession() {
-    sessionID = allScripts
+    // use # of scripts + time of last mod as key
+    sessionID = allScripts.length + ' ' + allScripts
         .map(h => h.header.modificationTime)
         .reduce((l, r) => Math.max(l, r), 0)
         .toString()
