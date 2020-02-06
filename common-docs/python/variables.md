@@ -8,11 +8,11 @@ a = 10
 
 ## Block-scoping
 
-When a variable is declared with and assignment, it uses what some call *lexical-scoping* or *block-scoping*.
+When a variable is declared with an assignment, it uses what some call *lexical-scoping* or *block-scoping*.
 Block-scoped variables are not visible outside of their nearest containing block or `for`-loop.
 
 ```python
-def f(inp: bool):
+def f(inp):
     a = 100
 
     if inp:

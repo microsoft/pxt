@@ -7,7 +7,7 @@ Let's take a look at a simple class-based example:
 ```python
 class Greeter:
     greeting = ""
-    def __init__(self, message: str):
+    def __init__(self, message):
         self.greeting = message
     def greet(self):
         return "Hello, " + self.greeting
@@ -32,20 +32,20 @@ Let's take a look at an example:
 ```python-ignore
 class Animal:
     name = ""
-    def __init__(self, theName: str):
+    def __init__(self, theName):
         self.name = theName
     def move(self, distanceInMeters = 0):
         print(self.name + " moved " + str(distanceInMeters) + "m.")
 
 class Snake(Animal):
-    def __init__(self, name: str):
+    def __init__(self, name):
         Animal.__init__(self, name)
     def move(self, distanceInMeters = 5):
         print("Slithering...")
         Animal.move(self, distanceInMeters)
 
 class Horse(Animal):
-    def __init__(self, name: str):
+    def __init__(self, name):
         Animal.__init__(self, name)
     def move(self, distanceInMeters = 45):
         print("Galloping...")
@@ -91,9 +91,9 @@ We could have written the `Animal` class from the previous section in the follow
 ```python-ignore
 class Animal:
     name = ""
-    def __init__(self, theName: str):
+    def __init__(self, theName):
         self.name = theName
-    def move(self, distanceInMeters: int):
+    def move(self, distanceInMeters):
         print(str.format("{0} moved {1}m.", self.name, distanceInMeters))
 ```
 
@@ -104,9 +104,9 @@ When a member is prefixes with a double underscore `__` it is **private** and ca
 ```python-ignore
 class Animal:
     __name = ""
-    def __init__(self, theName: str):
+    def __init__(self, theName):
         self.name = theName
-    def move(self, distanceInMeters: int):
+    def move(self, distanceInMeters):
         print(str.format("{0} moved {1}m.", self.name, distanceInMeters))
 
 Animal("Cat").name # Error: 'name' is private
@@ -125,14 +125,14 @@ Let's look at an example to better see how this plays out in practice:
 ```python-ignore
 class Animal:
     __name = ""
-    def __init__(self, theName: str):
+    def __init__(self, theName):
         self.__name = theName
 class Rhino(Animal):
     def __init__(self):
         Animal.__init__(self, "Rhino")
 class Employee:
     __name = ""
-    def __init__(self, theName: str):
+    def __init__(self, theName):
         self.__name = theName
 
 animal = Animal("Goat")
@@ -159,13 +159,13 @@ declared protected can also be accessed by instances of deriving classes. For ex
 ```python-ignore
 class Person:
     _name = ""
-    def __init__(self, name: str):
+    def __init__(self, name):
         self.name = name
 
 class Employee(Person):
     __department = ""
 
-    def __init__(self, name: str, department: str):
+    def __init__(self, name, department):
         Person.__init__(self, name)
         self.department = department
 

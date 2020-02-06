@@ -5,7 +5,7 @@ way to make a function that adds two numbers:
 
 ```python
 // Named function
-def add(x: int, y: int):
+def add(x, y):
     return x + y
 
 sum = add(1, 2)
@@ -23,7 +23,7 @@ When they do so, they're said to `capture` these variables.
 ```python
 z = 100
 
-def addToZ(x: int, y: int):
+def addToZ(x, y):
     return x + y + z
 
 sum = addToZ(1, 2)
@@ -32,7 +32,7 @@ sum = addToZ(1, 2)
 Let's add a return type to our add function:
 
 ```python
-def add(x: int, y: int):
+def add(x, y):
     return x + y
 ```
 
@@ -43,7 +43,7 @@ Python can figure the return type out by looking at the return statements, so yo
 In TypeScript, the number of arguments given to a function has to match the number of parameters the function expects.
 
 ```python-ignore
-def buildName(firstName: str, lastName: str):
+def buildName(firstName, lastName):
     return firstName + " " + lastName;
 
 result1 = buildName("Bob")                  # error, too few parameters
@@ -57,7 +57,7 @@ We can get this functionality in Python by assigning `None` to the parameters we
 For example, let's say we want the last name parameter from above to be optional:
 
 ```python-ignore
-def buildName(firstName: str, lastName: str = None):
+def buildName(firstName, lastName = None):
     if lastName:
         return firstName + " " + lastName
     else:
@@ -77,7 +77,7 @@ These are called default-initialized parameters.
 Let's take the previous example and default the last name to `"Smith"`.
 
 ```python-ignore
-def buildName(firstName: str, lastName: str = "Smith"):
+def buildName(firstName, lastName = "Smith"):
     return firstName + " " + lastName
 
 result1 = buildName("Bob")                  # works correctly now, returns "Bob Smith"
@@ -90,14 +90,14 @@ Default-initialized parameters that come after all required parameters are treat
 This means optional parameters and trailing default parameters will share commonality in their types, so both
 
 ```python
-def buildName(firstName: str, lastName: str = None):
+def buildName(firstName, lastName = None):
     # ...
 ```
 
 and
 
 ```python
-def buildName(firstName: str, lastName: str = "Smith"):
+def buildName(firstName, lastName = "Smith"):
     # ...
 ```
 
@@ -140,12 +140,12 @@ thermal.checkCold()
 Lamda functions serve as a kind of shortcut to return a result of an expression. A lamda is often saved to a variable and then used like a function to return the expression result:
 
 ```python
-def square(x: int):
+def square(x):
     return x * x
 
 area = lambda x, y: x * y
 
-def cube(area: int, height: int):
+def cube(area, height):
     return area * height
 
 volume1 = cube(square(5), 5)
