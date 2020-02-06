@@ -234,7 +234,8 @@ export class ProjectView
             }
             this.saveFileAsync().done();
         } else {
-            if (workspace.isHeadersSessionOutdated()) {
+            if (workspace.isHeadersSessionOutdated()
+                || workspace.isHeaderSessionOutdated(this.state.header)) {
                 pxt.debug('workspace: changed, reloading...')
                 let id = this.state.header ? this.state.header.id : '';
                 workspace.syncAsync()

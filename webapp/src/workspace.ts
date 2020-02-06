@@ -170,9 +170,11 @@ function refreshHeadersSession() {
     sessionID = allScripts
         .map(h => h.header.modificationTime)
         .reduce((l,r) => Math.max(l,r), 0)
-        .toString();
-    pxt.storage.setLocal('workspacesessionid', sessionID);
-    pxt.log(`workspace: refreshed headers session to ${sessionID}`);
+        .toString()
+    if (isHeadersSessionOutdated()) {
+        pxt.storage.setLocal('workspacesessionid', sessionID);
+        pxt.log(`workspace: refreshed headers session to ${sessionID}`);
+    }
 }
 const workspaceID: string = pxt.Util.guidGen();
 export function acquireHeaderSession(h: Header) {
@@ -182,6 +184,7 @@ function clearHeaderSession(h: Header) {
     pxt.storage.removeLocal('workspaceheadersessionid:' + h.id);
 }
 export function isHeaderSessionOutdated(h: Header): boolean {
+    if (!h) return false;
     const sid = pxt.storage.getLocal('workspaceheadersessionid:' + h.id);
     return sid && sid != workspaceID;
 }
