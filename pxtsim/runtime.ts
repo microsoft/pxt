@@ -288,7 +288,7 @@ namespace pxsim {
             this.messageListeners.push(listener);
         }
 
-        get storedState(): Map<any> {
+        storedState(): Map<any> {
             if (!this.runOptions) return {}
             if (!this.runOptions.storedState)
                 this.runOptions.storedState = {}
@@ -300,9 +300,9 @@ namespace pxsim {
         }
         public setStoredState(k: string, value: any) {
             if (value == null)
-                delete this.storedState[k]
+                delete this.storedState()[k]
             else
-                this.storedState[k] = value
+                this.storedState()[k] = value
             Runtime.postMessage({
                 type: "simulator",
                 command: "setstate",
@@ -441,7 +441,7 @@ namespace pxsim {
                     aws.forEach(aw => aw());
                 }
             }
-            if (this.handlers.length == 0 || this.events.length > this.max)
+            if (this._handlers.length == 0 || this.events.length > this.max)
                 return Promise.resolve()
 
             this.events.push(e)
@@ -460,7 +460,7 @@ namespace pxsim {
             this.events = []
             // in order semantics for events and handlers
             return Promise.each(events, (value) => {
-                return Promise.each(this.handlers, (handler) => {
+                return Promise.each(this._handlers, (handler) => {
                     return this.runtime.runFiberAsync(handler, ...(this.valueToArgs ? this.valueToArgs(value) : [value]))
                 })
             }).then(() => {
@@ -481,7 +481,7 @@ namespace pxsim {
             })
         }
 
-        get handlers() {
+        handlers() {
             return this._handlers;
         }
 
