@@ -91,7 +91,7 @@ export function setupWorkspace(id: string) {
 }
 
 export function getHeaders(withDeleted = false) {
-    maybeSyncHeaders();
+    maybeSyncHeadersAsync().done();
     let r = allScripts.map(e => e.header).filter(h => (withDeleted || !h.isDeleted) && !h.isBackup)
     r.sort((a, b) => b.recentUse - a.recentUse)
     return r
@@ -149,7 +149,7 @@ function cleanupBackupsAsync() {
 }
 
 export function getHeader(id: string) {
-    maybeSyncHeaders();
+    maybeSyncHeadersAsync().done();
     let e = lookup(id)
     if (e && !e.header.isDeleted)
         return e.header
@@ -162,9 +162,10 @@ let sessionID: string = "";
 export function isHeadersSessionOutdated() {
     return pxt.storage.getLocal('workspacesessionid') != sessionID;
 }
-function maybeSyncHeaders() {
+function maybeSyncHeadersAsync(): Promise<void> {
     if (isHeadersSessionOutdated()) // another tab took control
-        syncAsync().done();
+        return syncAsync().then(() => { })
+    return Promise.resolve();
 }
 function refreshHeadersSession() {
     // use # of scripts + time of last mod as key
@@ -187,7 +188,8 @@ export function acquireHeaderSession(h: Header) {
         pxt.storage.setLocal('workspaceheadersessionid:' + h.id, workspaceID);
 }
 function clearHeaderSession(h: Header) {
-    pxt.storage.removeLocal('workspaceheadersessionid:' + h.id);
+    if (h)
+        pxt.storage.removeLocal('workspaceheadersessionid:' + h.id);
 }
 export function isHeaderSessionOutdated(h: Header): boolean {
     if (!h) return false;
@@ -214,22 +216,23 @@ export function initAsync() {
 }
 
 export function getTextAsync(id: string): Promise<ScriptText> {
-    maybeSyncHeaders();
-
-    let e = lookup(id)
-    if (!e)
-        return Promise.resolve(null as ScriptText)
-    if (e.text)
-        return Promise.resolve(e.text)
-    return headerQ.enqueue(id, () => impl.getAsync(e.header)
-        .then(resp => {
-            if (!e.text) {
-                // otherwise we were beaten to it
-                e.text = fixupFileNames(resp.text);
-            }
-            e.version = resp.version;
-            return e.text
-        }))
+    return maybeSyncHeadersAsync()
+        .then(() => {
+            let e = lookup(id)
+            if (!e)
+                return Promise.resolve(null as ScriptText)
+            if (e.text)
+                return Promise.resolve(e.text)
+            return headerQ.enqueue(id, () => impl.getAsync(e.header)
+                .then(resp => {
+                    if (!e.text) {
+                        // otherwise we were beaten to it
+                        e.text = fixupFileNames(resp.text);
+                    }
+                    e.version = resp.version;
+                    return e.text
+                }))
+        })
 }
 
 export interface ScriptMeta {
@@ -386,7 +389,6 @@ export function importAsync(h: Header, text: ScriptText, isCloud = false) {
 }
 
 export function installAsync(h0: InstallHeader, text: ScriptText) {
-    maybeSyncHeaders();
     U.assert(h0.target == pxt.appTarget.id);
 
     const h = <Header>h0
@@ -404,7 +406,7 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
 }
 
 export function renameAsync(h: Header, newName: string) {
-    maybeSyncHeaders();
+    checkHeaderSession(h);
     return cloudsync.renameAsync(h, newName);
 }
 
@@ -438,7 +440,7 @@ export function createDuplicateName(h: Header) {
 }
 
 export function saveScreenshotAsync(h: Header, data: string, icon: string) {
-    maybeSyncHeaders();
+    checkHeaderSession(h);
     return impl.saveScreenshotAsync
         ? impl.saveScreenshotAsync(h, data, icon)
         : Promise.resolve();
@@ -460,7 +462,6 @@ const scriptDlQ = new U.PromiseQueue();
 const scripts = new db.Table("script"); // cache for published scripts
 //let scriptCache:any = {}
 export function getPublishedScriptAsync(id: string) {
-    maybeSyncHeaders();
     //if (scriptCache.hasOwnProperty(id)) return Promise.resolve(scriptCache[id])
     if (pxt.github.isGithubId(id))
         id = pxt.github.normalizeRepoId(id)
@@ -1189,7 +1190,7 @@ export function installByIdAsync(id: string) {
 }
 
 export function saveToCloudAsync(h: Header) {
-    maybeSyncHeaders();
+    checkHeaderSession(h);
     return cloudsync.saveToCloudAsync(h)
 }
 
@@ -1273,7 +1274,6 @@ export function resetAsync() {
 }
 
 export function loadedAsync() {
-    maybeSyncHeaders();
     if (impl.loadedAsync)
         return impl.loadedAsync()
     return Promise.resolve()
