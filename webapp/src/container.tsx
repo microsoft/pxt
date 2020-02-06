@@ -42,13 +42,25 @@ function renderDocItems(parent: pxt.editor.IProjectView, elements: pxt.DocMenuEn
     );
 }
 
-export class DocsMenu extends data.PureComponent<ISettingsProps, {}> {
+// Always append a link to the appropriate language (Blocks, JS, Python) to the help menu
+function getDocsLanguageItem(editor: DocsMenuEditorName, parent: pxt.editor.IProjectView, cls: string = ""): JSX.Element {
+    const path = "/" + editor.toLowerCase();
+    return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={pxt.Util.rlf(editor)} text={pxt.Util.rlf(editor)} className={`ui ${cls}`} parent={parent} path={path} onItemClick={openDocs} />
+}
+
+type DocsMenuEditorName = "Blocks" | "Javascript" | "Python";
+interface DocsMenuProps extends ISettingsProps {
+    editor: DocsMenuEditorName;
+}
+
+export class DocsMenu extends data.PureComponent<DocsMenuProps, {}> {
     renderCore() {
         const parent = this.props.parent;
         const targetTheme = pxt.appTarget.appTheme;
         return <sui.DropdownMenu role="menuitem" icon="help circle large"
             className="item mobile hide help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help")} >
             {renderDocItems(parent, targetTheme.docMenu)}
+            {getDocsLanguageItem(this.props.editor, parent)}
         </sui.DropdownMenu>
     }
 }
@@ -519,6 +531,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const pyOnly = !inAltEditor && languageRestriction === pxt.editor.LanguageRestriction.PythonOnly;
         const showToggle = !inAltEditor && !targetTheme.blocksOnly
                 && (sandbox || !(tsOnly || pyOnly)); // show if sandbox or not single language
+        const editor = this.props.parent.isPythonActive() ? "Python" : (this.props.parent.isJavaScriptActive() ? "Javascript" : "Blocks");
 
         /* tslint:disable:react-a11y-anchors */
         return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
@@ -549,7 +562,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
             {pyOnly && !sandbox && <sui.MenuItem className="centered" icon="xicon python" name="Python" />}
             <div className="right menu">
                 {debugging ? <sui.ButtonMenuItem className="exit-debugmode-btn" role="menuitem" icon="external" text={lf("Exit Debug Mode")} textClass="landscape only" onClick={this.toggleDebug} /> : undefined}
-                {docMenu ? <container.DocsMenu parent={this.props.parent} /> : undefined}
+                {docMenu ? <container.DocsMenu parent={this.props.parent} editor={editor} /> : undefined}
                 {sandbox || inTutorial || debugging ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} />}
                 {showCloud ? <cloud.UserMenu parent={this.props.parent} /> : undefined}
                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} /> : undefined}
