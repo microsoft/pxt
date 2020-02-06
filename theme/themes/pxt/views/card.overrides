@@ -18,7 +18,9 @@
         height: 3rem;
         background-repeat: no-repeat;
         background-size: contain;
-        background-image: @fileLogo;
+        background-image: @blocksIcon;
+        filter: @logoFilter;
+        opacity: 0.8;
     }
     .content {
         margin-left: 4rem;
