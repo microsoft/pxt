@@ -113,7 +113,6 @@ const buildcss = () => exec("node built/pxt.js buildcss", true);
 
 const pxtTravis = () => exec("node built/pxt.js travis", true);
 
-
 function compileTsProject(dirname, destination, useOutdir, filename) {
     if (!destination) destination = "built";
     let opts = useOutdir ? {
@@ -536,7 +535,7 @@ const buildAll = gulp.series(
     runUglify
 );
 
-const travis = gulp.series(buildAll, lint, testAll, targetjs, pxtTravis);
+const travis = gulp.series(lint, buildAll, testAll, targetjs, pxtTravis);
 
 exports.default = buildAll;
 exports.clean = clean;
