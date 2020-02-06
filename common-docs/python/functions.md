@@ -11,12 +11,6 @@ def add(x, y):
 sum = add(1, 2)
 ```
 
-### ~ hint
-
-For the @boardname@, you must specify a [type](/python/types) for each function parameter. 
-
-### ~ 
-
 Functions can refer to variables outside of the function body.
 When they do so, they're said to `capture` these variables.
 
@@ -29,18 +23,11 @@ def addToZ(x, y):
 sum = addToZ(1, 2)
 ```
 
-Let's add a return type to our add function:
-
-```python
-def add(x, y):
-    return x + y
-```
-
 Python can figure the return type out by looking at the return statements, so you can optionally leave this off in many cases.
 
 ## Optional and Default Parameters
 
-In TypeScript, the number of arguments given to a function has to match the number of parameters the function expects.
+The number of arguments given to a function has to match the number of parameters the function expects.
 
 ```python-ignore
 def buildName(firstName, lastName):
