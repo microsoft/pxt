@@ -3,14 +3,21 @@
 <head>
     <title>MakeCode Multi Editor</title>
     <style>
-        #left {
+        iframe {
             position: absolute;
-            left: 0;
-            right: 50%;
             width: 50%;
             height: calc(100% - 1rem);
             bottom: 0;
             top: 1rem;
+            border: none;
+        }
+        #left {
+            left: 0;
+            right: 50%;
+        }
+        #right {
+            right: 0;
+            left: 50%;
         }
         #selectleft {
             position: absolute;
@@ -19,15 +26,6 @@
             width: 50%;
             height: 1rem;
             top: 0rem;
-        }
-        #right {
-            position: absolute;
-            right: 0;
-            left: 50%;
-            width: 50%;
-            height: calc(100% - 1rem);
-            bottom: 0;
-            top: 1rem;
         }
         #selectright {
             position: absolute;
