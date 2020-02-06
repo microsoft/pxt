@@ -45,10 +45,11 @@ function renderDocItems(parent: pxt.editor.IProjectView, elements: pxt.DocMenuEn
 // Always append a link to the appropriate language (Blocks, JS, Python) to the help menu
 function getDocsLanguageItem(editor: DocsMenuEditorName, parent: pxt.editor.IProjectView, cls: string = ""): JSX.Element {
     const path = "/" + editor.toLowerCase();
-    return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={lf(editor)} text={lf(editor)} className={`ui ${cls}`} parent={parent} path={path} onItemClick={openDocs} />
+    // Use rlf as "Blocks" is localized above & "JavaScript" and "Python" should not be localized
+    return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={pxt.Util.rlf(editor)} text={pxt.Util.rlf(editor)} className={`ui ${cls}`} parent={parent} path={path} onItemClick={openDocs} />
 }
 
-type DocsMenuEditorName = "Blocks" | "Javascript" | "Python";
+type DocsMenuEditorName = "Blocks" | "JavaScript" | "Python";
 interface DocsMenuProps extends ISettingsProps {
     editor: DocsMenuEditorName;
 }
@@ -531,7 +532,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const pyOnly = !inAltEditor && languageRestriction === pxt.editor.LanguageRestriction.PythonOnly;
         const showToggle = !inAltEditor && !targetTheme.blocksOnly
                 && (sandbox || !(tsOnly || pyOnly)); // show if sandbox or not single language
-        const editor = this.props.parent.isPythonActive() ? "Python" : (this.props.parent.isJavaScriptActive() ? "Javascript" : "Blocks");
+        const editor = this.props.parent.isPythonActive() ? "Python" : (this.props.parent.isJavaScriptActive() ? "JavaScript" : "Blocks");
 
         /* tslint:disable:react-a11y-anchors */
         return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
