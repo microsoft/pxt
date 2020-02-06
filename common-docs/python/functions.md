@@ -114,7 +114,7 @@ As an example, the `Thermal` class will check for changes in temperature and run
 ```python
 # the handler function when it's cold...
 def whenCold():
-    console.log("It's cold!")
+    print("It's cold!")
 
 # 'Thermal' class to monitor temperature
 class Thermal:
@@ -155,5 +155,5 @@ volume2 = cube(area(4, 3), 10)
 A lambda can also be used anonymously to directly return a result.
 
 ```python
-console.logValue("area", (lambda x, y: x * y)(3, 4))
+print("area = " + str((lambda x, y: x * y)(3, 4)))
 ```

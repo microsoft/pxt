@@ -35,20 +35,20 @@ class Animal:
     def __init__(self, theName: str):
         self.name = theName
     def move(self, distanceInMeters = 0):
-        console.log(self.name + " moved " + str(distanceInMeters) + "m.")
+        print(self.name + " moved " + str(distanceInMeters) + "m.")
 
 class Snake(Animal):
     def __init__(self, name: str):
         Animal.__init__(self, name)
     def move(self, distanceInMeters = 5):
-        console.log("Slithering...")
+        print("Slithering...")
         Animal.move(self, distanceInMeters)
 
 class Horse(Animal):
     def __init__(self, name: str):
         Animal.__init__(self, name)
     def move(self, distanceInMeters = 45):
-        console.log("Galloping...")
+        print("Galloping...")
         Animal.move(self, distanceInMeters)
 
 sam = Snake("Sammy the Python")
@@ -94,7 +94,7 @@ class Animal:
     def __init__(self, theName: str):
         self.name = theName
     def move(self, distanceInMeters: int):
-        console.log(str.format("{0} moved {1}m.", self.name, distanceInMeters))
+        print(str.format("{0} moved {1}m.", self.name, distanceInMeters))
 ```
 
 ### Understanding `private`
@@ -107,7 +107,7 @@ class Animal:
     def __init__(self, theName: str):
         self.name = theName
     def move(self, distanceInMeters: int):
-        console.log(str.format("{0} moved {1}m.", self.name, distanceInMeters))
+        print(str.format("{0} moved {1}m.", self.name, distanceInMeters))
 
 Animal("Cat").name # Error: 'name' is private
 ```
@@ -173,8 +173,8 @@ class Employee(Person):
         return "Hello, my name is " + self.name + " and I work in " + self.department + "."
 
 howard = Employee("Howard", "Sales")
-console.log(howard.getElevatorPitch())
-console.log(howard.name) # error
+print(howard.getElevatorPitch())
+print(howard.name) # error
 ```
 
 Notice that while we can't use `name` from outside of `Person`, 
