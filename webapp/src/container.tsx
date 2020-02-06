@@ -45,7 +45,7 @@ function renderDocItems(parent: pxt.editor.IProjectView, elements: pxt.DocMenuEn
 // Always append a link to the appropriate language (Blocks, JS, Python) to the help menu
 function getDocsLanguageItem(editor: DocsMenuEditorName, parent: pxt.editor.IProjectView, cls: string = ""): JSX.Element {
     const path = "/" + editor.toLowerCase();
-    return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={pxt.Util.rlf(editor)} text={pxt.Util.rlf(editor)} className={`ui ${cls}`} parent={parent} path={path} onItemClick={openDocs} />
+    return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={lf(editor)} text={lf(editor)} className={`ui ${cls}`} parent={parent} path={path} onItemClick={openDocs} />
 }
 
 type DocsMenuEditorName = "Blocks" | "Javascript" | "Python";
