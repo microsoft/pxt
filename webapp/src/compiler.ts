@@ -291,7 +291,8 @@ export function pySnippetToBlocksAsync(code: string, blockInfo?: ts.pxtc.BlocksI
     const snippetTs = "main.ts";
     const snippetBlocks = "main.blocks";
     let trg = pkg.mainPkg.getTargetOptions()
-    return pkg.mainPkg.getCompileOptionsAsync(trg)
+    return waitForFirstTypecheckAsync()
+        .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
         .then(opts => {
             opts.fileSystem[snippetPy] = code;
             opts.fileSystem[snippetBlocks] = "";
