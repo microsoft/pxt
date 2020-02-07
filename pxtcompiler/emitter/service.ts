@@ -1691,7 +1691,13 @@ namespace ts.pxtc.service {
                 else if (element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Property) {
                     const params = pxt.blocks.compileInfo(element);
                     if (params.thisParameter) {
-                        snippetPrefix = params.thisParameter.defaultValue || params.thisParameter.definitionName;
+                        let varName: string = undefined
+                        if (params.thisParameter.definitionName) {
+                            varName = params.thisParameter.definitionName
+                            varName = varName[0].toUpperCase() + varName.substring(1)
+                            varName = `my${varName}`
+                        }
+                        snippetPrefix = params.thisParameter.defaultValue || varName;
                         if (python && snippetPrefix)
                             snippetPrefix = snakify(snippetPrefix);
                     }
