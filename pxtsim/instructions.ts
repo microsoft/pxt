@@ -38,7 +38,6 @@ namespace pxsim.instructions {
     const PARTS_BB_SCALE = 0.25;
     const PARTS_CMP_SCALE = 0.3;
     const PARTS_WIRE_SCALE = 0.23;
-    const BACK_PAGE_BOARD_WIDTH = PANEL_WIDTH - PANEL_PADDING * 1.5;
     const STYLE = `
             .instr-panel {
                 margin: ${PANEL_MARGIN}px;
@@ -553,16 +552,6 @@ namespace pxsim.instructions {
         panel.appendChild(board.getView());
 
         return [panel, props];
-    }
-    function mkFinalPanel(props: BoardProps) {
-
-        let panel = mkPanel();
-        pxsim.U.addClass(panel, "back-panel");
-        let board = mkBlankBoardAndBreadboard(props, BACK_PAGE_BOARD_WIDTH, false)
-        board.addAll(props.allAlloc);
-        panel.appendChild(board.getView());
-
-        return panel;
     }
 
     export interface RenderPartsOptions {
