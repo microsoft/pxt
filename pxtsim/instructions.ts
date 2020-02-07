@@ -546,7 +546,6 @@ namespace pxsim.instructions {
     }
     function updateFrontPanel(props: BoardProps): [HTMLElement, BoardProps] {
         let panel = document.getElementById("front-panel");
-
         let board = mkBlankBoardAndBreadboard(props, FRONT_PAGE_BOARD_WIDTH, false);
         board.addAll(props.allAlloc);
         panel.appendChild(board.getView());
@@ -595,6 +594,7 @@ namespace pxsim.instructions {
             fnArgs: options.fnArgs,
             getBBCoord: dummyBreadboard.getCoord.bind(dummyBreadboard)
         });
+        props.allAlloc.requiresBreadboard = true;
 
         //front page
         let frontPanel = updateFrontPanel(props);
