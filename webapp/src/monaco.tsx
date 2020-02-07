@@ -90,7 +90,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         completionSnippet = amendmentToInsertSnippet(
                             createLineReplacementPyAmendment(insertSnippet))
                     } else {
-                        completionSnippet = insertSnippet
+                        completionSnippet = insertSnippet || qName
                         // if we're past the first ".", i.e. we're doing member completion, be sure to
                         // remove what precedes the "." in the full snippet.
                         // E.g. if the user is typing "mobs.", we want to complete with "spawn" (name) not "mobs.spawn" (qName)
