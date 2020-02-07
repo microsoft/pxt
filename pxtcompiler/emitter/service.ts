@@ -1617,7 +1617,7 @@ namespace ts.pxtc.service {
             .filter(param => !param.initializer && !param.questionToken)
             .map(getParameterDefault) : [];
 
-        let snippetPrefix = (fn.attributes.blockNamespace || fn.namespace);
+        let snippetPrefix = fn.namespace;
         let isInstance = false;
         let addNamespace = false;
         let namespaceToUse = "";
