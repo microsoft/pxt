@@ -19,6 +19,30 @@ namespace ts.pxtc.decompiler {
         DecompileArgumentAsString = "decompileArgumentAsString"
     }
 
+    export interface CommentInfo {
+        kind: CommentKind;
+        hasTrailingNewline: boolean;
+        followedByEmptyLine: boolean;
+        isTrailingComment: boolean;
+    }
+
+    export enum CommentKind {
+        SingleLine,
+        MultiLine
+    }
+
+    export interface MultiLineComment extends CommentInfo {
+        kind: CommentKind.MultiLine;
+        lines: string[];
+    }
+
+    export interface SingleLineComment extends CommentInfo {
+        kind: CommentKind.SingleLine;
+        text: string;
+    }
+
+    export type Comment = MultiLineComment | SingleLineComment;
+
     export const FILE_TOO_LARGE_CODE = 9266;
     export const DECOMPILER_ERROR = 9267;
 
@@ -448,6 +472,21 @@ namespace ts.pxtc.decompiler {
         let n: StatementNode;
         try {
             n = codeBlock(stmts, undefined, true, undefined, !options.snippetMode);
+
+            let orphanComments: Comment[];
+            if (stmts.length) {
+                orphanComments = getOrphanComments(stmts.end, file);
+            }
+            else {
+                orphanComments = getOrphanComments(file.getStart(), file);
+            }
+
+            if (orphanComments.length) {
+                workspaceComments.push({
+                    text: formatCommentsForBlocks(orphanComments),
+                    refId: getCommentRef()
+                });
+            }
         }
         catch (e) {
             if ((<any>e).programTooLarge) {
@@ -1224,7 +1263,9 @@ ${output}</xml>`;
             else {
                 switch (node.kind) {
                     case SK.Block:
-                        return codeBlock((node as ts.Block).statements, next, topLevel);
+                        let bBlock = codeBlock((node as ts.Block).statements, next, topLevel);
+
+                        return bBlock;
                     case SK.ExpressionStatement:
                         return getStatementBlock((node as ts.ExpressionStatement).expression, next, parent || node, asExpression, topLevel);
                     case SK.VariableStatement:
@@ -1325,18 +1366,71 @@ ${output}</xml>`;
                 return undefined;
             }
 
+            /**
+             * We split up comments according to the following rules:
+             *      1. If the comment is not top-level:
+             *          a. Combine it with all comments for the following statement
+             *          b. If there is no following statement in the current block, group it with the previous statement
+             *          c. If there are no statements inside the block, group it with the parent block
+             *      2. If the comment is top-level:
+             *          b. If the comment is followed by an empty line, it becomes a workspace comment
+             *          c. If the comment is followed by a multi-line comment, it becomes a workspace comment
+             *          a. If the comment is a single-line comment, combine it with the next single-line comment
+             *          d. If the comment is not followed with an empty line, group it with the next statement or event
+             *          e. All other comments are workspace comments
+             */
+
             function getComments(commented: Node) {
                 const commentRanges = ts.getLeadingCommentRangesOfNode(commented, file)
                 if (commentRanges) {
                     const wsCommentRefs: string[] = [];
-                    const commentText = getCommentText(commentRanges, node, wsCommentRefs)
+
+                    let comments = getLeadingComments(node, file, commentRanges).concat(getTrailingComments(node, file));
+
+                    if (isTopLevelComment(node)) {
+                        let currentWorkspaceComment: Comment[] = [];
+
+                        const workspaceCommentStrings: string[] = [];
+
+                        comments.forEach((comment, index) => {
+                            if (comment.kind === CommentKind.MultiLine) {
+                                if (currentWorkspaceComment.length) {
+                                    workspaceCommentStrings.push(formatCommentsForBlocks(currentWorkspaceComment));
+                                    currentWorkspaceComment = [];
+                                }
+                                if (index != comments.length - 1) {
+                                    workspaceCommentStrings.push(formatCommentsForBlocks([comment]));
+                                    return;
+                                }
+                            }
+
+                            currentWorkspaceComment.push(comment);
+
+                            if (comment.followedByEmptyLine) {
+                                workspaceCommentStrings.push(formatCommentsForBlocks(currentWorkspaceComment));
+                                currentWorkspaceComment = [];
+                            }
+                        });
+
+                        comments = currentWorkspaceComment;
+
+                        workspaceCommentStrings.forEach(commentText => {
+                            const ref = getCommentRef();
+
+                            wsCommentRefs.push(ref);
+                            workspaceComments.push({ text: commentText, refId: ref });
+                        });
+                    }
+
+                    const commentText = formatCommentsForBlocks(comments);
 
                     if (stmt) {
                         if (wsCommentRefs.length) {
                             stmt.data = wsCommentRefs.join(";")
                         }
                         if (commentText && stmt) {
-                            stmt.comment = commentText;
+                            if (stmt.comment) stmt.comment = stmt.comment + "\n" + commentText;
+                            else stmt.comment = commentText || undefined;
                         }
                         else {
                             // ERROR TODO
@@ -1486,6 +1580,8 @@ ${output}</xml>`;
             const r = mkStmt("device_while", n);
             r.inputs = [getConditionalInput("COND", n.expression)];
             r.handlers = [{ name: "DO", statement: getStatementBlock(n.statement) }];
+
+            addOrphanComments(getStatementsOfBlock(n.statement), n.statement, r.handlers[0].statement, r);
             return r;
         }
 
@@ -1501,12 +1597,18 @@ ${output}</xml>`;
             r.handlers = [];
 
             flatif.ifStatements.forEach((stmt, i) => {
+                let statement = getStatementBlock(stmt.thenStatement)
                 r.inputs.push(getConditionalInput("IF" + i, (stmt as ts.IfStatement).expression));
-                r.handlers.push({ name: "DO" + i, statement: getStatementBlock(stmt.thenStatement) });
+                r.handlers.push({ name: "DO" + i, statement });
+
+                addOrphanComments(getStatementsOfBlock(stmt.thenStatement), stmt.thenStatement, statement, r);
             });
 
             if (flatif.elseStatement) {
-                r.handlers.push({ name: "ELSE", statement: getStatementBlock(flatif.elseStatement) });
+                let statement = getStatementBlock(flatif.elseStatement);
+                r.handlers.push({ name: "ELSE", statement });
+
+                addOrphanComments(getStatementsOfBlock(flatif.elseStatement), flatif.elseStatement, statement, r);
             }
 
             return r;
@@ -1616,7 +1718,9 @@ ${output}</xml>`;
                 }
             }
 
-            r.handlers.push({ name: "DO", statement: getStatementBlock(n.statement) });
+            const statement = getStatementBlock(n.statement);
+            r.handlers = [{ name: "DO", statement  }];
+            addOrphanComments(getStatementsOfBlock(n.statement), n.statement, statement, r);
             return r;
 
             function checkForVariableUsages(node: Node): boolean {
@@ -1634,7 +1738,9 @@ ${output}</xml>`;
 
             const r = mkStmt("pxt_controls_for_of", n);
             r.inputs = [getValue("LIST", n.expression), getDraggableVariableBlock("VAR", renamed)];
-            r.handlers = [{ name: "DO", statement: getStatementBlock(n.statement) }];
+            const statement = getStatementBlock(n.statement);
+            r.handlers = [{ name: "DO", statement  }];
+            addOrphanComments(getStatementsOfBlock(n.statement), n.statement, statement, r);
 
             return r
         }
@@ -1747,6 +1853,10 @@ ${output}</xml>`;
                         }
                     });
                 });
+            }
+
+            if (n.body) {
+                addOrphanComments(n.body.statements, n.body, statements, r);
             }
 
             r.handlers = [{ name: "STACK", statement: statements }];
@@ -1937,6 +2047,7 @@ ${output}</xml>`;
                 switch (e.kind) {
                     case SK.FunctionExpression:
                     case SK.ArrowFunction:
+                        let expBody = (e as ArrowFunction | FunctionExpression).body;
                         const m = getDestructuringMutation(e as ArrowFunction);
                         let mustPopLocalScope = false;
                         if (m) {
@@ -1991,7 +2102,10 @@ ${output}</xml>`;
                                 }
                             }
                         }
-                        (r.handlers || (r.handlers = [])).push({ name: "HANDLER", statement: getStatementBlock(e) });
+                        const statement = getStatementBlock(e);
+                        (r.handlers || (r.handlers = [])).push({ name: "HANDLER", statement });
+                        addOrphanComments(getStatementsOfBlock(expBody), expBody, statement, r as StatementNode);
+
                         if (mustPopLocalScope) {
                             env.localReporters.pop();
                         }
@@ -2215,6 +2329,26 @@ ${output}</xml>`;
             return undefined;
         }
 
+        function addOrphanComments(blockStatements: NodeArray<Node>, block: Node, firstStatement: StatementNode, parentStatement: StatementNode) {
+            let trailingComments: Comment[];
+            let statementNode: StatementNode;
+
+            if (blockStatements.length) {
+                trailingComments = getOrphanComments(blockStatements.end, file);
+                statementNode = getLastStatement(firstStatement)
+            }
+            else {
+                trailingComments = getOrphanComments(block.getStart() + 1, file);
+                statementNode = parentStatement;
+            }
+
+            if (trailingComments.length) {
+                statementNode.comment = statementNode.comment ?
+                    statementNode.comment + "\n" + formatCommentsForBlocks(trailingComments) :
+                    formatCommentsForBlocks(trailingComments);
+            }
+        }
+
         function maybeEmitEmptyOnStart(node: StatementNode) {
             if (options.alwaysEmitOnStart) {
                 openBlockTag(ts.pxtc.ON_START_TYPE, node);
@@ -2235,85 +2369,6 @@ ${output}</xml>`;
                 }
                 trackVariableUsagesInText(n);
             })
-        }
-
-        /**
-         * Takes a series of comment ranges and converts them into string suitable for a
-         * comment block in blockly. All comments above a statement will be included,
-         * regardless of single vs multi line and whitespace. Paragraphs are delineated
-         * by empty lines between comments (a commented empty line, not an empty line
-         * between two separate comment blocks)
-         */
-        function getCommentText(commentRanges: ts.CommentRange[], node: Node, workspaceRefs?: string[]) {
-            let text = ""
-            let currentLine = ""
-
-            const isTopLevel = isTopLevelComment(node);
-
-            for (const commentRange of commentRanges) {
-                let commentText = fileText.substr(commentRange.pos, commentRange.end - commentRange.pos)
-                if (commentText) {
-                    // Strip windows line endings because they break the regex we use to extract content
-                    commentText = commentText.replace(/\r\n/g, "\n");
-                }
-                if (commentRange.kind === SyntaxKind.SingleLineCommentTrivia) {
-                    appendMatch(commentText, 1, 3, singleLineCommentRegex)
-                }
-                else if (commentRange.kind === SyntaxKind.MultiLineCommentTrivia && isTopLevel) {
-                    const lines = commentText.split("\n")
-                    for (let i = 0; i < lines.length; i++) {
-                        appendMatch(lines[i], i, lines.length, multiLineCommentRegex);
-                    }
-                    if (currentLine) text += currentLine
-                    const ref = getCommentRef();
-                    if (workspaceRefs) {
-                        workspaceRefs.push(ref);
-                    }
-                    workspaceComments.push({ text, refId: ref });
-                    text = '';
-                    currentLine = '';
-                }
-                else {
-                    const lines = commentText.split("\n")
-                    for (let i = 0; i < lines.length; i++) {
-                        appendMatch(lines[i], i, lines.length, multiLineCommentRegex)
-                    }
-                }
-            }
-
-            text += currentLine
-
-            return text.trim()
-
-            function isTopLevelComment(n: Node): boolean {
-                const [parent,] = getParent(n);
-                if (!parent || parent.kind == SK.SourceFile) return true;
-                // Expression statement
-                if (parent.kind == SK.ExpressionStatement) return isTopLevelComment(parent);
-                // Variable statement
-                if (parent.kind == SK.VariableDeclarationList) return isTopLevelComment(parent.parent);
-                return false;
-            }
-
-            function appendMatch(line: string, lineno: number, lineslen: number, regex: RegExp) {
-                const match = regex.exec(line)
-                if (match) {
-                    const matched = match[1].trim()
-
-                    if (matched === ON_START_COMMENT || matched === HANDLER_COMMENT) {
-                        return;
-                    }
-
-                    if (matched) {
-                        currentLine += currentLine ? " " + matched : matched
-                    } else {
-                        if (lineno && lineno < lineslen - 1) {
-                            text += currentLine + "\n"
-                            currentLine = ""
-                        }
-                    }
-                }
-            }
         }
 
         function trackAutoDeclaration(n: ts.VariableDeclaration) {
@@ -3534,5 +3589,126 @@ ${output}</xml>`;
     function isCommented(node: ts.Node) {
         const ranges = ts.getLeadingCommentRangesOfNode(node, node.getSourceFile());
         return !!(ranges && ranges.length)
+    }
+
+    export function getLeadingComments(node: Node, file: ts.SourceFile, commentRanges?: ts.CommentRange[]): Comment[] {
+        return getCommentsFromRanges(file, commentRanges || ts.getLeadingCommentRangesOfNode(node, file));
+    }
+
+    export function getTrailingComments(node: Node, file: ts.SourceFile): Comment[] {
+        return getCommentsFromRanges(file, ts.getTrailingCommentRanges(file.getFullText(), node.end));
+    }
+
+    export function getOrphanComments(position: number, file: ts.SourceFile) {
+        return getCommentsFromRanges(file, ts.getLeadingCommentRanges(file.getFullText(), position));
+    }
+
+    function getCommentsFromRanges(file: ts.SourceFile, commentRanges: ts.CommentRange[], isTrailingComment = false) {
+        const res: Comment[] = [];
+        const fileText = file.getFullText();
+
+        if (commentRanges && commentRanges.length) {
+            for (const commentRange of commentRanges) {
+
+                const endLine = ts.getLineOfLocalPosition(file, commentRange.end);
+
+                const followedByEmptyLine = !isTrailingComment && !fileText.substr(
+                    ts.getStartPositionOfLine(endLine + 1, file),
+                    ts.getStartPositionOfLine(endLine + 2, file) - ts.getStartPositionOfLine(endLine + 1, file)
+                ).trim();
+
+                let commentText = fileText.substr(commentRange.pos, commentRange.end - commentRange.pos)
+                if (commentText) {
+                    // Strip windows line endings because they break the regex we use to extract content
+                    commentText = commentText.replace(/\r\n/g, "\n");
+                }
+                if (commentRange.kind === SyntaxKind.SingleLineCommentTrivia) {
+                    const match = singleLineCommentRegex.exec(commentText);
+
+                    if (match) {
+                        res.push({
+                            kind: CommentKind.SingleLine,
+                            text: match[1],
+                            hasTrailingNewline: !!commentRange.hasTrailingNewLine,
+                            followedByEmptyLine,
+                            isTrailingComment
+                        });
+                    }
+                    else {
+                        res.push({
+                            kind: CommentKind.SingleLine,
+                            text: "",
+                            hasTrailingNewline: !!commentRange.hasTrailingNewLine,
+                            followedByEmptyLine,
+                            isTrailingComment
+                        });
+                    }
+                }
+                else {
+                    const lines = commentText.split("\n").map(line => {
+                        const match = multiLineCommentRegex.exec(line);
+                        return match ? match[1] : "";
+                    });
+                    res.push({
+                        kind: CommentKind.MultiLine,
+                        lines,
+                        hasTrailingNewline: !!commentRange.hasTrailingNewLine,
+                        followedByEmptyLine,
+                        isTrailingComment
+                    });
+                }
+            }
+        }
+
+        return res;
+    }
+
+    function formatCommentsForBlocks(comments: Comment[]) {
+        let out = "";
+
+        for (const comment of comments) {
+            if (comment.kind === CommentKind.SingleLine) {
+                if (comment.text === ON_START_COMMENT || comment.text === HANDLER_COMMENT) {
+                    continue;
+                }
+                else {
+                    out += comment.text.trim() + "\n";
+                }
+            }
+            else {
+                for (const line of comment.lines) {
+                    out += line.trim() + "\n";
+                }
+            }
+
+            if (comment.hasTrailingNewline) {
+                out += "\n";
+            }
+        }
+
+        return out.trim();
+    }
+
+    function isTopLevelComment(n: Node): boolean {
+        const [parent,] = getParent(n);
+        if (!parent || parent.kind == SK.SourceFile) return true;
+        // Expression statement
+        if (parent.kind == SK.ExpressionStatement) return isTopLevelComment(parent);
+        // Variable statement
+        if (parent.kind == SK.VariableDeclarationList) return isTopLevelComment(parent.parent);
+        return false;
+    }
+
+    function getLastStatement(node: StatementNode) {
+        while (node && node.next) node = node.next;
+        return node;
+    }
+
+    function getStatementsOfBlock(node: Node) {
+        switch (node.kind) {
+            case SyntaxKind.Block:
+                return (node as Block).statements;
+            default: return ts.createNodeArray([node]);
+        }
     }
 }
