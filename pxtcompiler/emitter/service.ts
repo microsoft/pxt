@@ -774,6 +774,7 @@ namespace ts.pxtc.service {
 
     let lastApiInfo: CachedApisInfo | undefined;
     let lastPyIdentifierSyntaxInfo: SyntaxInfo | undefined;
+    let lastGlobalNames: pxt.Map<SymbolInfo> | undefined;
     let lastBlocksInfo: BlocksInfo;
     let lastLocBlocksInfo: BlocksInfo;
     let lastFuse: Fuse<SearchInfo>;
@@ -835,6 +836,7 @@ namespace ts.pxtc.service {
             service.cleanupSemanticCache();
             lastApiInfo = undefined
             lastPyIdentifierSyntaxInfo = undefined
+            lastGlobalNames = undefined
             host.reset()
             transpile.resetCache()
         },
@@ -862,6 +864,8 @@ namespace ts.pxtc.service {
                 if (res.syntaxInfo && res.syntaxInfo.symbols) {
                     lastPyIdentifierSyntaxInfo = res.syntaxInfo
                 }
+                if (res.globalNames)
+                    lastGlobalNames = res.globalNames
                 if (lastPyIdentifierSyntaxInfo)
                     return lastPyIdentifierSyntaxInfo
             }
@@ -931,6 +935,8 @@ namespace ts.pxtc.service {
                     lastPyIdentifierSyntaxInfo = res.syntaxInfo
                     resultSymbols = opts.syntaxInfo.symbols
                 }
+                if (res.globalNames)
+                    lastGlobalNames = res.globalNames
 
                 // update our language host
                 Object.keys(res.outfiles)
@@ -1047,8 +1053,8 @@ namespace ts.pxtc.service {
 
             // determine which names are taken for auto-generated variable names
             let takenNames: pxt.Map<SymbolInfo> = {}
-            if (isPython && lastPyIdentifierSyntaxInfo && lastPyIdentifierSyntaxInfo.globalNames) {
-                takenNames = lastPyIdentifierSyntaxInfo.globalNames
+            if (isPython && lastGlobalNames) {
+                takenNames = lastGlobalNames
             } else {
                 takenNames = lastApiInfo.apis.byQName
             }
@@ -1161,7 +1167,18 @@ namespace ts.pxtc.service {
             const n = lastApiInfo.decls[o.qName];
             if (!fn || !n || !ts.isFunctionLike(n))
                 return undefined;
-            return ts.pxtc.service.getSnippet(lastApiInfo.apis, lastApiInfo.apis.byQName, v.runtime, fn, n as FunctionLikeDeclaration, !!o.python)
+
+            const isPython = !!o.python
+
+            // determine which names are taken for auto-generated variable names
+            let takenNames: pxt.Map<SymbolInfo> = {}
+            if (isPython && lastGlobalNames) {
+                takenNames = lastGlobalNames
+            } else {
+                takenNames = lastApiInfo.apis.byQName
+            }
+
+            return ts.pxtc.service.getSnippet(lastApiInfo.apis, takenNames, v.runtime, fn, n as FunctionLikeDeclaration, isPython)
         },
         blocksInfo: v => blocksInfoOp(v as any, v.blocks && v.blocks.bannedCategories),
         apiSearch: v => {
@@ -1400,6 +1417,9 @@ namespace ts.pxtc.service {
         addApiInfo(host.opts)
         const prevFS = U.flatClone(host.opts.fileSystem);
         let res = runConversionsAndStoreResults(host.opts);
+        if (res && res.globalNames) {
+            lastGlobalNames = res.globalNames
+        }
         const newFS = host.opts.fileSystem
         host.opts.fileSystem = prevFS
         for (let k of Object.keys(newFS))

@@ -11,6 +11,7 @@ namespace ts.pxtc.transpile {
         outfiles: pxt.Map<string>,
         sourceMap: SourceInterval[],
         syntaxInfo?: SyntaxInfo,
+        globalNames?: pxt.Map<SymbolInfo>,
     }
     export interface TranspileResult extends TranspileCodeResult {
         diagnostics: pxtc.KsDiagnostic[],

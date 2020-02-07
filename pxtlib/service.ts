@@ -252,6 +252,7 @@ namespace ts.pxtc {
         confirmAsync?: (confirmOptions: {}) => Promise<number>;
         configData?: ConfigEntry[];
         sourceMap?: SourceInterval[];
+        globalNames?: pxt.Map<SymbolInfo>;
     }
 
     export interface Breakpoint extends LocationInfo {
