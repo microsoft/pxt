@@ -400,7 +400,6 @@ export function formatAsync(input: string, pos: number) {
 }
 
 export function snippetAsync(qName: string, python?: boolean): Promise<string> {
-    console.log(`compiler snippet: ${qName} ${python}`)
     return workerOpAsync("snippet", {
         snippet: { qName, python },
         runtime: pxt.appTarget.runtime
