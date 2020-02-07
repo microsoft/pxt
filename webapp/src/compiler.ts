@@ -264,6 +264,7 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
         })
 }
 
+// TS -> blocks
 export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
     const snippetTs = "main.ts";
     const snippetBlocks = "main.blocks";
@@ -284,10 +285,36 @@ export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.Bl
         });
 }
 
+// Py -> blocks
+export function pySnippetToBlocksAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
+    const snippetPy = "main.py";
+    const snippetTs = "main.ts";
+    const snippetBlocks = "main.blocks";
+    let trg = pkg.mainPkg.getTargetOptions()
+    return waitForFirstTypecheckAsync()
+        .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
+        .then(opts => {
+            opts.fileSystem[snippetPy] = code;
+            opts.fileSystem[snippetBlocks] = "";
+
+            if (opts.sourceFiles.indexOf(snippetPy) === -1) {
+                opts.sourceFiles.push(snippetPy);
+            }
+            if (opts.sourceFiles.indexOf(snippetBlocks) === -1) {
+                opts.sourceFiles.push(snippetBlocks);
+            }
+            return workerOpAsync("py2ts", { options: opts });
+        })
+        .then(res => {
+            return decompileBlocksSnippetAsync(res.outfiles[snippetTs], blockInfo)
+        });
+}
+
 function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
     return workerOpAsync("decompile", { options: opts, fileName: fileName })
 }
 
+// TS -> Py
 export function pyDecompileAsync(fileName: string): Promise<pxtc.transpile.TranspileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
@@ -304,6 +331,7 @@ export function pyDecompileAsync(fileName: string): Promise<pxtc.transpile.Trans
         })
 }
 
+// TS -> Py
 export function decompilePythonSnippetAsync(code: string): Promise<string> {
     const snippetTs = "main.ts";
     const snippetPy = "main.py";

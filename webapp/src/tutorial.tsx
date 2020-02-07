@@ -19,12 +19,14 @@ type ISettingsProps = pxt.editor.ISettingsProps;
  * We'll run this step when we first start the tutorial to figure out what blocks are used so we can
  * filter the toolbox. 
  */
-export function getUsedBlocksAsync(code: string): Promise<pxt.Map<number>> {
+export function getUsedBlocksAsync(code: string, language?: string): Promise<pxt.Map<number>> {
     if (!code) return Promise.resolve({});
     const usedBlocks: pxt.Map<number> = {};
     return compiler.getBlocksAsync()
         .then(blocksInfo => {
             pxt.blocks.initializeAndInject(blocksInfo);
+            if (language == "python")
+                return compiler.pySnippetToBlocksAsync(code, blocksInfo);
             return compiler.decompileBlocksSnippetAsync(code, blocksInfo);
         }).then(resp => {
             const blocksXml = resp.outfiles["main.blocks"];

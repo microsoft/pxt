@@ -601,6 +601,18 @@ export function getPauseUntil() {
     return pauseUntil;
 }
 
+// Map of defined snippets to blockIds, for when multiple
+// blocks (eg "for index" and "repeat") map to the same snippet
+let _blockIdMap: pxt.Map<string>;
+export function blockIdMap() {
+    if (!_blockIdMap) {
+        _blockIdMap = {
+            "pxt_controls_for": "controls_repeat_ext"
+        }
+    }
+    return _blockIdMap;
+}
+
 export function getBuiltinCategory(ns: string) {
     return cachedBuiltinCategories()[ns];
 }

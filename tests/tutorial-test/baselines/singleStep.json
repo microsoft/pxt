@@ -11,7 +11,7 @@
         }
     ],
     "activities": null,
-    "code": "\n { \n basic.showString(\"Micro!\")\n } \n",
+    "code": "\n{\nbasic.showString(\"Micro!\")\n}\n",
     "metadata": {
         "noDiffs": true
     }
