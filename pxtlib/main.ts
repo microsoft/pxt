@@ -58,6 +58,7 @@ namespace pxt {
             for (const apiName of Object.keys(byQName)) {
                 const sym = byQName[apiName]
                 const lastDot = apiName.lastIndexOf(".")
+                const pyQName = sym.pyQName;
                 // re-create the object - this will hint the JIT that these are objects of the same type
                 // and the same hidden class should be used
                 const newsym = byQName[apiName] = {
@@ -65,6 +66,8 @@ namespace pxt {
                     qName: apiName,
                     namespace: apiName.slice(0, lastDot < 0 ? 0 : lastDot),
                     name: apiName.slice(lastDot + 1),
+                    pyQName: pyQName,
+                    pyName: pyQName ? pyQName.slice(pyQName.lastIndexOf(".") + 1) : undefined,
                     fileName: "",
                     attributes: sym.attributes || ({} as any),
                     retType: sym.retType || "void",
