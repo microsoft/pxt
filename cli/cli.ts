@@ -2014,6 +2014,7 @@ function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
         if (isEmpty(attrs))
             attrs = undefined
         const kind = sym.snippet !== undefined ? -sym.kind : sym.kind
+        const pyQName = sym.pyQName !== sym.qName ? sym.pyQName : undefined
         return {
             kind: kind == 7 ? undefined : kind,
             retType: sym.retType == "void" ? undefined : sym.retType,
@@ -2031,6 +2032,7 @@ function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
             })) : undefined,
             isInstance: sym.isInstance || undefined,
             isReadOnly: sym.isReadOnly || undefined,
+            pyQName: pyQName
         } as any
     }
 
