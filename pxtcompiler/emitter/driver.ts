@@ -118,7 +118,7 @@ namespace ts.pxtc {
         }
         const convRes = py2tsIfNecessary(opts)
         if (convRes) {
-            res = { ...res, diagnostics: convRes.diagnostics, sourceMap: convRes.sourceMap }
+            res = { ...res, diagnostics: convRes.diagnostics, sourceMap: convRes.sourceMap, globalNames: convRes.globalNames }
         }
 
         storeGeneratedFiles(opts, res)

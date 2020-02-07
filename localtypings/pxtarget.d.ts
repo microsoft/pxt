@@ -753,9 +753,7 @@ declare namespace ts.pxtc {
     interface SyntaxInfo {
         type: InfoType;
         position: number;
-
         symbols?: SymbolInfo[];
-        globalNames?: pxt.Map<SymbolInfo>;
         beginPos?: number;
         endPos?: number;
         auxResult?: any;
