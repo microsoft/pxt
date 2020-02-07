@@ -1429,7 +1429,7 @@ namespace pxsim {
             }
 
             // tslint:disable-next-line
-            const entryPoint = eval(msg.code)(evalIface);
+            const entryPoint = msg.code && eval(msg.code)(evalIface);
 
             this.run = (cb) => topCall(entryPoint, cb)
             this.getResume = () => {
