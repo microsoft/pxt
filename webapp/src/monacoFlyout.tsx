@@ -17,6 +17,7 @@ interface BlockDragInfo {
 
 export interface MonacoFlyoutProps extends pxt.editor.ISettingsProps {
     fileType?: pxt.editor.FileType;
+    blockIdMap?: pxt.Map<string>;
     moveFocusToParent?: () => void;
     insertSnippet?: (position: monaco.Position, insertText: string, inline?: boolean) => void;
     setInsertionSnippet?: (snippet: string) => void;
@@ -210,11 +211,13 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         const { ns } = this.state;
         const filters = this.props.parent.state.editorState ? this.props.parent.state.editorState.filters : undefined;
         const categoryState = filters ? (filters.namespaces && filters.namespaces[ns] != undefined ? filters.namespaces[ns] : filters.defaultState) : undefined;
+        const mappedId = this.props.blockIdMap && this.props.blockIdMap[block.attributes.blockId];
 
         let fnState = filters ? filters.defaultState : pxt.editor.FilterState.Visible;
         if (filters && filters.fns && filters.fns[block.name] !== undefined) {
             fnState = filters.fns[block.name];
-        } else if (filters && filters.blocks && block.attributes.blockId && filters.blocks[block.attributes.blockId] !== undefined) {
+        } else if (filters && filters.blocks && block.attributes.blockId &&
+            (filters.blocks[block.attributes.blockId] !== undefined || filters.blocks[mappedId] !== undefined)) {
             fnState = filters.blocks[block.attributes.blockId];
         } else if (categoryState !== undefined) {
             fnState = categoryState;

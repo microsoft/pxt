@@ -66,9 +66,9 @@ pre {
     top: @mainMenuHeight;
 }
 
-.hideMenuBar #filelist,
-    .hideMenuBar #maineditor,
-    .hideMenuBar #sidedocs {
+.hideMenuBar:not(.headless) #filelist,
+    .hideMenuBar:not(.headless) #maineditor,
+    .hideMenuBar:not(.headless) #sidedocs {
     top: 0 !important;
 }
 
