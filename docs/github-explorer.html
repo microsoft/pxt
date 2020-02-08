@@ -129,21 +129,51 @@
             return response;
         }
 
-        async function sniffTarget(repo) {
-            const response = await fetchJSON(`${api}/repos/${repo.full_name}/contents/README.md`);
-            const json = await response.json();
-            const msg = atob(json.content);
-            return Object.keys(targets)
-                .find(k => msg.indexOf(`PXT/${k}`) > -1)
+        async function fetchGraphQL(query) {
+            const response = await fetch("https://api.github.com/graphql", {
+                method: 'POST', // *GET, POST, PUT, DELETE, etc.
+                mode: 'cors', // no-cors, *cors, same-origin
+                headers: {
+                    "Authorization": "bearer " + token()
+                },
+                body: JSON.stringify({ query: query })
+            });
+            return response;
+        }        
+
+        function sniffTarget(repo) {
+            try {
+                const pxtJson = JSON.parse(repo.object.text);
+                return pxtJson.supportedTargets && pxtJson.supportedTargets[0];
+            } catch(e) {
+                return undefined;
+            }
         }
 
         async function fetchUserRepos(user) {
-            const query = `user:${user} in:name,description,readme "for PXT/"`;
-            const url = `${api}/search/repositories?q=${encodeURIComponent(query)}&sort=updated&anti_cache=${Math.random()}`;
-            const response = await fetchJSON(url);
-            const { items } = await response.json();
+            const query = `
+            {
+  user(login:"${user}") {
+    repositories(first: 100, orderBy: {field: UPDATED_AT, direction: DESC}) {
+      nodes {
+        name
+        nameWithOwner
+        object(expression: "master:pxt.json") {
+          ... on Blob {
+            text
+          }
+        }
+      }
+    }
+  }
+}
+`;
+            const response = await fetchGraphQL(query);
+            const responseJSON = await response.json();
+            const items = responseJSON.data.user.repositories.nodes
+                .filter(node => node.object)
             for (let i = 0; i < items.length; ++i) {
-                const target = await sniffTarget(items[i]);
+                const target = sniffTarget(items[i]);
                 if (!target)
                     items[i] = undefined;
                 else
@@ -219,7 +249,7 @@
 
                                 const url = targets[repo.target].url +
                                     `?nocookiebanner=1&${readOnly ? 'controller=1&readonly=1&ws=mem&' : 'editorLayout=ide&nosandbox=1'}#pub:github:`
-                                    + repo.full_name + "#master";
+                                    + repo.nameWithOwner + "#master";
                                 $("#makecodecolumn").attr("src", url);
                             })
 
