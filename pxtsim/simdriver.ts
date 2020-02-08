@@ -235,10 +235,11 @@ namespace pxsim {
             if (source && broadcastmsg && !!broadcastmsg.broadcast) {
                 // the editor is hosted in a multi-editor setting
                 // don't start extra frames
-                if (this.options.nestedEditorSim && window.parent) {
+                if (this.options.nestedEditorSim && (window.parent || window.opener)) {
                     // if message comes from parent already, don't echo
-                    if (source !== window.parent)
-                        window.parent.postMessage(msg, "*");
+                    const w = window.parent || window.opener;
+                    if (source !== w)
+                        w.postMessage(msg, "*");
                 } else {
                     // start secondary frame if needed
                     if (frames.length < 2) {
