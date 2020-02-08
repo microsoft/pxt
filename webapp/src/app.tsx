@@ -2750,6 +2750,18 @@ export class ProjectView
         })();
     }
 
+    openDependentEditor() {
+        if (pxt.BrowserUtils.isElectron() 
+            || pxt.BrowserUtils.isUwpEdge() 
+            || pxt.BrowserUtils.isIOS())
+            return;
+        const url = window.location.href.replace(/#.*$/, '');
+        const w = window.open(url + (url.indexOf('?') > -1 ? '&' : '?') + "nestededitorsim=1", "_blank");
+        if (w) {
+            // tell sim driver
+            simulator.driver.registerDependentEditor(w);
+        }
+    }
     ///////////////////////////////////////////////////////////
     ////////////             Debugging            /////////////
     ///////////////////////////////////////////////////////////
