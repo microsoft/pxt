@@ -292,8 +292,8 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                     <div className="description">{block.attributes.jsDoc.replace(/``/g, '"')}</div>
                     <div className="signature">
                         <span>{snippet ? snippet : `${qName}(${params ? params.map(p => `${p.name}`).join(", ") : ""})`}</span>
-                        {helpUrl && <a className="blockHelp" href={`/reference/${helpUrl}`} target="_blank">
-                            <i className="question circle outline icon"></i>
+                        {helpUrl && <a className="blockHelp" href={`/reference/${helpUrl}`} target="_blank" rel="noopener noreferrer" role="button">
+                            <i className="question circle outline icon" aria-label={lf("Go to help documentation")}></i>
                         </a>}
                     </div>
                     {params && <div className="params">
