@@ -2758,7 +2758,7 @@ export class ProjectView
             return;
         let url = window.location.href.replace(/#.*$/, '');
         url = url + (url.indexOf('?') > -1 ? '&' : '?') + "nestededitorsim=1";
-        url += "#pub:" + hd.id;
+        url += "#header:" + hd.id;
         const w = window.open(url, pxt.appTarget.id + hd.id);
         if (w) {
             pxt.log(`dependent editor window registered`)
@@ -3891,6 +3891,11 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             else
                 loadHeaderBySharedIdAsync(hash.arg).done();
             return true;
+        case "header":
+            pxt.tickEvent("hash." + hash.cmd);
+            pxt.BrowserUtils.changeHash("");
+            editor.loadHeaderAsync(workspace.getHeader(hash.arg)).done();
+            return true;
         case "sandboxproject":
         case "project":
             pxt.tickEvent("hash." + hash.cmd);
@@ -3950,6 +3955,7 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
         case "sandboxproject":
         case "project":
         case "github":
+        case "header":
             return true;
         default:
             return false;
