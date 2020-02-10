@@ -307,7 +307,6 @@ namespace pxt.editor {
         showExitAndSaveDialog(): void;
         showChooseHwDialog(skipDownload?: boolean): void;
         showExperimentsDialog(): void;
-        showRecipesDialog(): void;
 
         showPackageDialog(): void;
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
