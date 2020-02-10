@@ -3330,7 +3330,12 @@ export class ProjectView
         if (flyoutOnly) {
             margin += 2;
         }
-        return tc ? { 'top': "calc(min(" + tc.getCardHeight() + "px, 18rem) + " + margin + "em)" } : null;
+        if (tc) {
+            // maxium offset of 18rem
+            let maxOffset = Math.min(tc.getCardHeight(), parseFloat(getComputedStyle(document.documentElement).fontSize) * 18);
+            return { 'top': "calc(" + maxOffset + "px + " + margin + "em)" };
+        }
+        return null;
     }
 
     ///////////////////////////////////////////////////////////
