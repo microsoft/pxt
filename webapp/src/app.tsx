@@ -3972,7 +3972,7 @@ async function importGithubProject(repoid: string, requireSignin?: boolean) {
     }
 }
 
-function loadHeaderBySharedId(id: string) {
+async function loadHeaderBySharedId(id: string) {
     core.showLoading("loadingheader", lf("loading project..."));
 
     workspace.installByIdAsync(id)
