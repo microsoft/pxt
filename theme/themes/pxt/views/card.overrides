@@ -20,7 +20,6 @@
         background-size: contain;
         background-image: @blocksIcon;
         filter: @logoFilter;
-        opacity: 0.8;
     }
     .content {
         margin-left: 4rem;
