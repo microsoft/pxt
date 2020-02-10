@@ -45,6 +45,8 @@ export interface BlockDefinition {
         group?: string;
         subcategory?: string;
         topblockWeight?: number;
+        help?: string;
+        _def?: pxtc.ParsedBlockDef;
     };
     retType?: string;
     blockXml?: string;

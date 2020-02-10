@@ -184,13 +184,47 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         return {
             backgroundColor: color,
             fontSize: `${this.props.parent.settings.editorFontSize}px`,
-            lineHeight: `${this.props.parent.settings.editorFontSize + 1}px`
+            lineHeight: `${this.props.parent.settings.editorFontSize + 16}px`
         };
     }
 
     protected getSnippetName(block: toolbox.BlockDefinition): string {
         const isPython = this.props.fileType == pxt.editor.FileType.Python;
         return (isPython ? (block.pySnippetName || block.pyName) : undefined) || block.snippetName || block.name;
+    }
+
+    protected getBlockDescription(block: toolbox.BlockDefinition, params: pxtc.ParameterDesc[]): JSX.Element[] {
+        let description = [];
+        let parts = block.attributes._def && block.attributes._def.parts;
+        if (parts) {
+            if (parts.filter((p: any) => p.kind == "param").length > params.length) {
+                // add empty param when first argument is "this"
+                params.unshift(null);
+            }
+            for (let part of parts) {
+                switch (part.kind) {
+                    case "label":
+                        description.push(<span>{part.text}</span>);
+                        break;
+                    case "break":
+                        description.push(<span>{" "}</span>);
+                        break;
+                    case "param":
+                        let p = params && params.shift();
+                        let val = p && (p.default || p.name) || part.name;
+                        description.push(<span className="argName">{val}</span>);
+                        break;
+                }
+            }
+        } else {
+            // if no blockdef found, use the snippet name
+            description.push(<span>{block.snippetName || block.name}</span>)
+        }
+
+        // imitates block behavior in adding "run code" before any handler
+        if (params && params.find(p => p.type && p.type.indexOf("=>") >= 0)) description.unshift(<span>{lf("run code ")}</span>)
+
+        return description;
     }
 
     protected positionDragHandle(): void {
@@ -228,12 +262,13 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         const disabled = fnState == pxt.editor.FilterState.Disabled;
         const isPython = this.props.fileType == pxt.editor.FileType.Python;
 
-        const snippetName = this.getSnippetName(block);
         const snippet = isPython ? block.pySnippet : block.snippet;
         const params = block.parameters;
         const blockColor = block.attributes.color || color;
+        const blockDescription = this.getBlockDescription(block, params ? params.slice() : null);
+        const helpUrl = block.attributes.help;
 
-        const qName =  block.qName || block.name;
+        const qName =  block.qName || this.getSnippetName(block);
         const selected = qName == this.state.selectedBlock;
 
         const hasPointer = (window as any).PointerEvent;
@@ -251,17 +286,22 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                     onTouchStart={!hasPointer && hasTouch ? dragStartHandler : undefined}>
                 <div className="blockHandle" style={this.getSelectedStyle(selected, blockColor)}><i className="icon bars" /></div>
                 <div className="monacoDraggableBlock" style={this.getBlockStyle(blockColor)}>
-                    <span className="blockName">{block.snippetOnly ? snippet : snippetName}</span>
-                    {!block.snippetOnly && params && <span>{`(${params.map(p => p.name).join(", ")})`}</span>}
+                    <span className="blockName">{blockDescription}</span>
                 </div>
                 <div className="detail">
-                    <div className="description">{block.attributes.jsDoc}</div>
+                    <div className="description">{block.attributes.jsDoc.replace(/``/g, '"')}</div>
+                    <div className="signature">
+                        <span>{snippet ? snippet : `${qName}(${params ? params.map(p => `${p.name}`).join(", ") : ""})`}</span>
+                        {helpUrl && <a className="blockHelp" href={`/reference/${helpUrl}`} target="_blank">
+                            <i className="question circle outline icon"></i>
+                        </a>}
+                    </div>
                     {params && <div className="params">
                         {params.map((p, i) => {
                             return <div key={i}>
                                 <div className="separator"></div>
                                 <span className="paramName">{p.name}</span>
-                                {p.description && <span className="paramDescription">{p.description}</span>}
+                                {p.description && <span className="paramDescription">{p.description.replace(/``/g, '"')}</span>}
                             </div>
                         })}
                     </div>}
