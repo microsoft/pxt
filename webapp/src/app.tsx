@@ -2757,7 +2757,7 @@ export class ProjectView
             || pxt.BrowserUtils.isIOS())
             return;
         let url = window.location.href.replace(/#.*$/, '');
-        url = url + (url.indexOf('?') > -1 ? '&' : '?') + "nestededitorsim=1";
+        url = url + (url.indexOf('?') > -1 ? '&' : '?') + "nestededitorsim=1&lockededitor=1";
         url += "#header:" + hd.id;
         const w = window.open(url, pxt.appTarget.id + hd.id);
         if (w) {

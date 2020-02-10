@@ -46,7 +46,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         this.handleCardClick = this.handleCardClick.bind(this);
         this.handleDelete = this.handleDelete.bind(this);
         this.handleOpen = this.handleOpen.bind(this);
-        this.handleOpenNewEditor = this.handleOpenNewEditor.bind(this);
+        this.handleOpenNewTab = this.handleOpenNewTab.bind(this);
         this.handleDuplicate = this.handleDuplicate.bind(this);
         this.handleSwitchView = this.handleSwitchView.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
@@ -141,6 +141,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
     }
 
     handleOpen() {
+        pxt.tickEvent("scriptmanager.open", undefined, { interactiveConsent: true });
         const header = this.getSelectedHeader();
 
         core.showLoading("changeheader", lf("loading..."));
@@ -150,12 +151,14 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             })
     }
 
-    handleOpenNewEditor() {
+    handleOpenNewTab() {
+        pxt.tickEvent("scriptmanager.newtab", undefined, { interactiveConsent: true });
         const header = this.getSelectedHeader();
         this.props.parent.openDependentEditor(header);
     }
 
     handleDuplicate() {
+        pxt.tickEvent("scriptmanager.dup", undefined, { interactiveConsent: true });
         const header = this.getSelectedHeader();
         // Prompt for the new project name
         const opts: core.PromptOptions = {
@@ -340,7 +343,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                         text={lf("Open")} textClass="landscape only" title={lf("Open Project")} onClick={this.handleOpen} />);
                     if (openDependent)
                         headerActions.push(<sui.Button key="editnew" icon="external alternate" className="icon"
-                            text={lf("New Tab")} textClass="landscape only" title={lf("Open Project in a new tab")} onClick={this.handleOpenNewEditor} />);
+                            text={lf("New Tab")} textClass="landscape only" title={lf("Open Project in a new tab")} onClick={this.handleOpenNewTab} />);
                     headerActions.push(<sui.Button key="clone" icon="clone outline" className="icon"
                         text={lf("Duplicate")} textClass="landscape only" title={lf("Duplicate Project")} onClick={this.handleDuplicate} />);
                 }
