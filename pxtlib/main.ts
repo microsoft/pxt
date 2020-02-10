@@ -219,12 +219,12 @@ namespace pxt {
                     appTheme: {
                         lockedEditor: true
                     }
-                },        
+                },
                 "hidemenu": {
                     appTheme: {
                         hideMenuBar: true
                     }
-                }            
+                }
             }
             // import target specific flags
             if (appTarget.queryVariants)
