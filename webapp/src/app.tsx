@@ -2750,15 +2750,18 @@ export class ProjectView
         })();
     }
 
-    openDependentEditor() {
-        if (pxt.BrowserUtils.isElectron() 
+    openDependentEditor(hd: pxt.workspace.Header) {
+        if (!hd 
+            || pxt.BrowserUtils.isElectron() 
             || pxt.BrowserUtils.isUwpEdge() 
             || pxt.BrowserUtils.isIOS())
             return;
-        const url = window.location.href.replace(/#.*$/, '');
-        const w = window.open(url + (url.indexOf('?') > -1 ? '&' : '?') + "nestededitorsim=1", "_blank");
+        let url = window.location.href.replace(/#.*$/, '');
+        url = url + (url.indexOf('?') > -1 ? '&' : '?') + "nestededitorsim=1";
+        url += "pub:" + hd.id;
+        const w = window.open(url, pxt.appTarget.id + hd.id);
         if (w) {
-            // tell sim driver
+            pxt.log(`dependent editor window registered`)
             simulator.driver.registerDependentEditor(w);
         }
     }

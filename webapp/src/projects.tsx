@@ -260,7 +260,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.showReportAbuse = this.showReportAbuse.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
         this.signOutGithub = this.signOutGithub.bind(this);
-        this.openDependentEditor = this.openDependentEditor.bind(this);
     }
 
     showLanguagePicker() {
@@ -272,11 +271,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         pxt.tickEvent("home.togglecontrast", undefined, { interactiveConsent: true });
         this.props.parent.toggleHighContrast();
         this.setState({ highContrast: !this.state.highContrast });
-    }
-
-    openDependentEditor() {
-        pxt.tickEvent("home.opendependenteditor", undefined, { interactiveConsent: true });
-        this.props.parent.openDependentEditor();
     }
 
     toggleGreenScreen() {
@@ -315,15 +309,11 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         const targetTheme = pxt.appTarget.appTheme;
         const githubUser = this.getData("github:user") as pxt.editor.UserInfo;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
-        const openDependent = !pxt.BrowserUtils.isElectron() 
-            && !pxt.BrowserUtils.isUwpEdge()
-            && !pxt.BrowserUtils.isIOS();
 
         // tslint:disable react-a11y-anchors
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
             {targetTheme.selectLanguage && <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} />}
             {targetTheme.highContrast && <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} />}
-            {openDependent && <sui.Item role="menuitem" text={lf("Open dependent editor")} onClick={this.openDependentEditor} />}
             {githubUser && <div className="ui divider"></div>}
             {githubUser && <div className="ui item" title={lf("Sign out {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>
                 <div className="avatar" role="presentation">

@@ -321,7 +321,7 @@ namespace pxt.editor {
         pushScreenshotHandler(handler: (msg: ScreenshotData) => void): void;
         popScreenshotHandler(): void;
 
-        openDependentEditor(): void;
+        openDependentEditor(header: pxt.workspace.Header): void;
     }
 
     export interface IHexFileImporter {

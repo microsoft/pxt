@@ -46,6 +46,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         this.handleCardClick = this.handleCardClick.bind(this);
         this.handleDelete = this.handleDelete.bind(this);
         this.handleOpen = this.handleOpen.bind(this);
+        this.handleOpenNewEditor = this.handleOpenNewEditor.bind(this);
         this.handleDuplicate = this.handleDuplicate.bind(this);
         this.handleSwitchView = this.handleSwitchView.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
@@ -147,6 +148,11 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             .done(() => {
                 core.hideLoading("changeheader");
             })
+    }
+
+    handleOpenNewEditor() {
+        const header = this.getSelectedHeader();
+        this.props.parent.openDependentEditor(header);
     }
 
     handleDuplicate() {
@@ -312,6 +318,9 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         const isSearching = false;
         const hasHeaders = !searchFor ? headers.length > 0 : true;
         const selectedAll = headers.length > 0 && headers.length == Object.keys(selected).length;
+        const openDependent = !pxt.BrowserUtils.isElectron()
+            && !pxt.BrowserUtils.isUwpEdge()
+            && !pxt.BrowserUtils.isIOS();
 
         let headerActions: JSX.Element[];
         if (hasHeaders) {
@@ -328,6 +337,9 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 if (Object.keys(selected).length == 1) {
                     headerActions.push(<sui.Button key="edit" icon="edit outline" className="icon"
                         text={lf("Open")} textClass="landscape only" title={lf("Open Project")} onClick={this.handleOpen} />);
+                    if (openDependent)
+                        headerActions.push(<sui.Button key="editnew" icon="external alternate" className="icon"
+                            text={lf("New Tab")} textClass="landscape only" title={lf("Open Project in new editor")} onClick={this.handleOpenNewEditor} />);
                     headerActions.push(<sui.Button key="clone" icon="clone outline" className="icon"
                         text={lf("Duplicate")} textClass="landscape only" title={lf("Duplicate Project")} onClick={this.handleDuplicate} />);
                 }
