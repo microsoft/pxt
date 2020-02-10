@@ -3975,10 +3975,14 @@ async function importGithubProject(repoid: string, requireSignin?: boolean) {
 async function loadHeaderBySharedId(id: string) {
     core.showLoading("loadingheader", lf("loading project..."));
 
-    workspace.installByIdAsync(id)
-        .then(hd => theEditor.loadHeaderAsync(hd, null))
-        .catch(core.handleNetworkError)
-        .finally(() => core.hideLoading("loadingheader"));
+    try {
+        const header = await workspace.installByIdAsync(id);
+        theEditor.loadHeaderAsync(header, null);
+    } catch (e) {
+        core.handleNetworkError(e);
+    } finally {
+        core.hideLoading("loadingheader")
+    }
 }
 
 const handleHashChange = (e: HashChangeEvent) => {
