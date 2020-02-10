@@ -220,7 +220,7 @@ namespace pxt {
                         lockedEditor: true
                     }
                 },
-                "hidemenu": {
+                "hidemenu=1": {
                     appTheme: {
                         hideMenuBar: true
                     }
