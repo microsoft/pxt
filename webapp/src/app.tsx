@@ -3520,7 +3520,6 @@ export class ProjectView
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
         const logoWide = !!targetTheme.logoWide;
         const hwDialog = !sandbox && pxt.hasHwVariants();
-        const recipes = !!targetTheme.recipes;
         const expandedStyle = inTutorialExpanded ? this.getExpandedCardStyle(flyoutOnly) : null;
         const invertedTheme = targetTheme.invertedMenu && targetTheme.invertedMonaco;
 
