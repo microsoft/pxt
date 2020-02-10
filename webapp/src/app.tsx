@@ -2751,9 +2751,9 @@ export class ProjectView
     }
 
     openDependentEditor(hd: pxt.workspace.Header) {
-        if (!hd 
-            || pxt.BrowserUtils.isElectron() 
-            || pxt.BrowserUtils.isUwpEdge() 
+        if (!hd
+            || pxt.BrowserUtils.isElectron()
+            || pxt.BrowserUtils.isUwpEdge()
             || pxt.BrowserUtils.isIOS())
             return;
         let url = window.location.href.replace(/#.*$/, '');
