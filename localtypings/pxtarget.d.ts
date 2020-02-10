@@ -375,6 +375,7 @@ declare namespace pxt {
         blocksCollapsing?: boolean; // collapse/uncollapse functions/event in blocks
         hideHomeDetailsVideo?: boolean; // hide video/large image from details card
         tutorialBlocksDiff?: boolean; // automatically display diffs in tutorials
+        openProjectNewTab?: boolean; // allow opening project in a new tab
     }
 
     interface SocialOptions {

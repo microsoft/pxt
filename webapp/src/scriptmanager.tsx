@@ -321,7 +321,8 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         const isSearching = false;
         const hasHeaders = !searchFor ? headers.length > 0 : true;
         const selectedAll = headers.length > 0 && headers.length == Object.keys(selected).length;
-        const openDependent = !pxt.BrowserUtils.isElectron()
+        const openDependent = pxt.appTarget.appTheme.openProjectNewTab
+            && !pxt.BrowserUtils.isElectron()
             && !pxt.BrowserUtils.isUwpEdge()
             && !pxt.BrowserUtils.isIOS()
             && !/nestededitorsim=1/.test(window.location.href); // don't nest dependent editors
