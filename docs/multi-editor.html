@@ -5,35 +5,49 @@
     <style>
         iframe {
             position: absolute;
-            width: 50%;
+            width: calc(50% - 0.15rem);
             height: calc(100% - 1rem);
             bottom: 0;
             top: 1rem;
             border: none;
         }
+
         #left {
             left: 0;
-            right: 50%;
+            right: calc(50% - 0.15rem);
         }
+
         #right {
             right: 0;
-            left: 50%;
+            left: calc(50% + 0.15rem);
         }
+
+        #divider {
+            position: absolute;
+            width: 0.3rem;
+            cursor: col-resize;
+            height: 100%;
+            left: calc(50% - 0.15rem);
+            right: calc(50% + 0.15rem);
+            background: #999;
+            top: 0rem;
+        }
+
+        select {
+            position: absolute;
+            width: calc(50% - 0.15rem);
+            height: 1rem;
+            top: 0rem;
+        }
+
         #selectleft {
-            position: absolute;
             left: 0;
-            right: 50%;
-            width: 50%;
-            height: 1rem;
-            top: 0rem;
+            right: calc(50% + 0.15rem);
         }
+
         #selectright {
-            position: absolute;
             right: 0;
-            left: 50%;
-            width: 50%;
-            height: 1rem;
-            top: 0rem;
+            left: cal(50% - 0.15rem);
         }
     </style>
 </head>
@@ -54,15 +68,19 @@
         <option value="https://maker.makecode.com/beta">Maker (beta)</option>
     </select>
     <iframe id="left" allow="usb"></iframe>
+    <div id="divider"></div>
     <iframe id="right" allow="usb"></iframe>
     <script>
         (function () {
             var left = document.getElementById("left");
             var right = document.getElementById("right");
-            var selectleft = document.getElementById("selectleft");
-            var selectright = document.getElementById("selectright");
+            var selectLeft = document.getElementById("selectleft");
+            var selectRight = document.getElementById("selectright");
+            var divider = document.getElementById("divider");
             var localhost = /localhost=1/.test(window.location.href)
             var flags = "?nestededitorsim=1&editorlayout=ide&nosandbox=1";
+            var ratio = .5;
+            var dividerWidth = 6;
 
             window.onmessage = function (msg) {
                 var data = msg.data;
@@ -87,12 +105,60 @@
                 }
             }
 
-            selectleft.onchange = function() { updateSrc(left, selectleft); }
-            selectright.onchange = function() { updateSrc(right, selectright); }
-            updateSrc(left, selectleft);
-            updateSrc(right, selectright);
+            selectLeft.onchange = function () { updateSrc(left, selectLeft); }
+            selectRight.onchange = function () { updateSrc(right, selectRight); }
+            updateSrc(left, selectLeft);
+            updateSrc(right, selectRight);
+
+            function setWidths() {
+                var t = document.body.clientWidth;
+                var n = Math.floor(t * ratio);
+                var i = Math.max(t - n - dividerWidth, 4);
+                left.style.width = n + "px";
+                selectLeft.style.width = n + "px";
+                divider.style.left = n + "px";
+                divider.style.width = dividerWidth + "px";
+                right.style.left = n + dividerWidth + "px";
+                right.style.width = i + "px";
+                selectRight.style.left = n + dividerWidth + "px";
+                selectRight.style.width = i + "px";
+            }
+            function startDrag() {
+                left.style.visibility = "hidden";
+                right.style.visibility = "hidden";
+                var n = divider.onmouseover;
+                var t = divider.onmouseout;
+                divider.onmouseover = null;
+                divider.onmouseout = null;
+                document.body.onmousemove = function (n) {
+                    n || (n = window.event);
+                    ratio = (n.clientX - dividerWidth / 2) / document.body.clientWidth;
+                    ratio < .1 && (ratio = .1);
+                    ratio > .9 && (ratio = .9);
+                    setWidths();
+                }
+                document.body.onmouseup = function () {
+                    document.body.onmousemove = null;
+                    document.body.onmouseup = null;
+                    left.style.visibility = "inherit";
+                    right.style.visibility = "inherit";
+                    divider.onmouseover = n;
+                    divider.onmouseout = t;
+                }
+            }
+            window.onresize = setWidths;
+            setWidths();
+            divider.onmouseover = function () {
+                document.body.style.cursor = "w-resize";
+                divider.onmousedown = startDrag;
+            }
+            divider.onmouseout = function () {
+                document.body.style.cursor = "default";
+                divider.onmousedown = null;
+            }
         })();        
     </script>
     <!-- @include tracking.html -->
 </body>
+
 </html>
