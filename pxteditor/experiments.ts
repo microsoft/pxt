@@ -129,12 +129,6 @@ namespace pxt.editor.experiments {
                 description: lf("Enable support for hardware marked 'experimental' in the hardware seletion dialog")
             },
             {
-                id: "recipes",
-                name: lf("Tutorials in Context"),
-                description: lf("Micro-tutorials running within your program."),
-                feedbackUrl: "https://github.com/microsoft/pxt/issues/5646"
-            },
-            {
                 id: "checkForHwVariantWebUSB",
                 name: lf("Detect Hardware with WebUSB"),
                 description: lf("When compiling, use WebUSB to detect hardware configuration.")
