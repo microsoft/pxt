@@ -7,7 +7,15 @@
         "out": "../built/pxteditor.js",
         "newLine": "LF",
         "sourceMap": false,
-        "lib": ["dom", "dom.iterable", "scripthost", "es6"],
-        "types": ["bluebird"]
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "scripthost",
+            "es6"
+        ],
+        "types": [
+            "bluebird"
+        ],
+        "incremental": true
     }
 }

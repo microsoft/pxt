@@ -647,11 +647,12 @@ export class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardPro
             else if (scr.board) {
                 className = 'file board ' + className;
                 imageUrl = pxt.bundledSvg(scr.board)
+            } else if (scr.editor) {
+                className = 'file ' + scr.editor;
             }
             else
                 className = 'file ' + className;
         }
-
         return <codecard.CodeCardView className={className} imageUrl={imageUrl} cardType={cardType} {...rest} onClick={this.handleClick}
             onLabelClicked={onLabelClick ? this.handleLabelClick : undefined} />
     }
@@ -757,10 +758,10 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             case "tutorial":
             case "example":
                 icon = "xicon blocks"
-                if (editor) icon = (editor == "py") ? "xicon python" : "xicon " + editor;
+                if (editor) icon = `xicon ${editor}`;
                 break;
             case "codeExample":
-                icon = (editor == "py") ? "xicon python" : "xicon js";
+                icon = `xicon ${editor || "js"}`;
                 break;
             case "forumUrl":
                 icon = "comments"

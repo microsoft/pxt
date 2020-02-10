@@ -8,9 +8,8 @@
         href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css"
         type="text/css">
     <style>
-        @targetstyle@ 
-        
-        label, nav.ui.menu {
+        @targetstyle@ label,
+        nav.ui.menu {
             font-size: 0.8rem !important;
         }
 
@@ -19,7 +18,7 @@
             margin-top: 10rem;
             width: 20rem;
             text-align: center;
-            margin-right: calc(50% - 10rem);            
+            margin-right: calc(50% - 10rem);
         }
 
         #user {
@@ -119,20 +118,51 @@
                 pxt.aiTrackEvent(id);
         }
 
-        async function sniffTarget(repo) {
-            const response = await fetch(`https://raw.githubusercontent.com/${repo.full_name}/master/README.md?token=${token()}`);
-            const msg = await response.text();
-            return Object.keys(targets)
-                .find(k => msg.indexOf(`PXT/${k}`) > -1)
+        async function fetchGraphQL(query) {
+            const response = await fetch("https://api.github.com/graphql", {
+                method: 'POST', // *GET, POST, PUT, DELETE, etc.
+                mode: 'cors', // no-cors, *cors, same-origin
+                headers: {
+                    "Authorization": "bearer " + token()
+                },
+                body: JSON.stringify({ query: query })
+            });
+            return response;
+        }        
+
+        function sniffTarget(repo) {
+            try {
+                const pxtJson = JSON.parse(repo.object.text);
+                return pxtJson.supportedTargets && pxtJson.supportedTargets[0];
+            } catch(e) {
+                return undefined;
+            }
         }
 
         async function fetchUserRepos(user) {
-            const query = `user:${user} in:name,description,readme "for PXT/"`;
-            const url = `${api}/search/repositories?q=${encodeURIComponent(query)}&sort=updated&access_token=${token()}&anti_cache=${Math.random()}`;
-            const response = await fetch(url);
-            const { items } = await response.json();
+            const query = `
+            {
+  user(login:"${user}") {
+    repositories(first: 100, orderBy: {field: UPDATED_AT, direction: DESC}) {
+      nodes {
+        name
+        nameWithOwner
+        object(expression: "master:pxt.json") {
+          ... on Blob {
+            text
+          }
+        }
+      }
+    }
+  }
+}
+`;
+            const response = await fetchGraphQL(query);
+            const responseJSON = await response.json();
+            const items = responseJSON.data.user.repositories.nodes
+                .filter(node => node.object)
             for (let i = 0; i < items.length; ++i) {
-                const target = await sniffTarget(items[i]);
+                const target = sniffTarget(items[i]);
                 if (!target)
                     items[i] = undefined;
                 else
@@ -142,19 +172,28 @@
         }
 
         async function fetchUser(user) {
-            const response = await fetch(`${api}/users/${user}?access_token=${token()}`);
+            if (!token()) return undefined;
+            const response = await fetchGraphQL(`{
+  user(login:"${user}") {
+    name
+    login
+    avatarUrl
+  }
+}`);
             if (response.status != 200)
                 return undefined;
             const msg = await response.json();
-            return msg;
+            return msg && msg.data && msg.data.user;
         }
 
         async function fetchCurrentUser() {
-            const response = await fetch(`${api}/user?access_token=${token()}`);
-            if (response.status != 200)
-                return undefined;
+            const response = await fetchGraphQL(`{
+  viewer {
+      login
+  }
+}`);
             const msg = await response.json();
-            return msg;
+            return msg && msg.data && msg.data.viewer && msg.data.viewer.login;
         }
 
         async function update(userName) {
@@ -171,11 +210,11 @@
                     </div>`)
                     return;
                 }
-                $('#repoes')                
+                $('#repoes')
                     .append(`
 <a href="https://github.com/${user.login}" target="_blank" class="ui link item" title="Open user profile">
                     <div class="ui mini image">
-      <img src="${user.avatar_url}">
+      <img src="${user.avatarUrl}">
     </div>
     <div class="content">
         <div class="header">${user.name}</div>
@@ -206,8 +245,8 @@
                                 const readOnly = !$('#edit').is(':checked');
 
                                 const url = targets[repo.target].url +
-                                    `?nocookiebanner=1&${readOnly ? 'controller=1&readonly=1&ws=mem&' : 'editorLayout=ide&nosandbox=1'}#pub:github:` 
-                                    + repo.full_name + "#master";
+                                    `?nocookiebanner=1&${readOnly ? 'controller=1&readonly=1&ws=mem&' : 'editorLayout=ide&nosandbox=1'}#pub:github:`
+                                    + repo.nameWithOwner + "#master";
                                 $("#makecodecolumn").attr("src", url);
                             })
 
@@ -295,11 +334,11 @@
             fetchCurrentUser()
                 .then(user => {
                     if (user) {
-                        $("#user").val(user.login);
-                        update(user.login);
+                        $("#user").val(user);
+                        update(user);
                     }
                 })
-            
+
         });
     </script>
 </head>

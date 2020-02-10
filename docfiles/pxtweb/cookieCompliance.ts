@@ -233,7 +233,7 @@ namespace pxt {
         // Warning: app.tsx overwrites the hash after reading the language so this needs
         // to be called before that happens
         const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-        return mlang ? mlang[2] : ((navigator as any).userLanguage || navigator.language);
+        return (mlang ? mlang[2] : ((navigator as any).userLanguage || navigator.language)) || "en";
     }
 
     function getCookieBannerAsync(domain: string, locale: string, cb: Callback<CookieBannerInfo>) {

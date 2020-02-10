@@ -13,73 +13,15 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.Sourc
 
     // If we have source map information, then prepare a function for converting
     //  TS errors to PY
-    let tsErrToPyLoc: (err: pxtc.KsDiagnostic) => pxtc.LocationInfo = undefined;
-    let errStart = performance.now()
+    let tsErrToPyLoc: (err: pxtc.LocationInfo) => pxtc.LocationInfo = undefined;
     if (diagnostics.length > 0
         && mainPkg.filterFiles(f => f.name === "main.ts" || f.name === "main.py").length === 2
         && sourceMap) {
         const tsFile = mainPkg.files["main.ts"].content
         const pyFile = mainPkg.files["main.py"].content
-
-        // Notes:
-        //  lines are 0-indexed (Monaco they are 1-indexed)
-        //  columns are 0-indexed (0th is first character)
-        //  positions are 0-indexed, as if getting the index of a character in a file as a giant string (incl. new lines)
-        //  line summation is the length of that line plus its newline plus all the lines before it; aka the position of the next line's first character
-        //  end positions are zero-index but not inclusive, same behavior as substring
-        type LineColToPos = (line: number, col: number) => number
-        type PosToLineCol = (pos: number) => [number, number]
-        const makeLineColPosConverters = (file: string): [PosToLineCol, LineColToPos] => {
-            const lines = file.split("\n")
-            const lineLengths = lines
-                .map(l => l.length)
-            const lineLenSums = lineLengths
-                .reduce(({ lens, sum }, n) =>
-                    ({ lens: [...lens, sum + n + 1], sum: sum + n + 1 }),
-                    { lens: [] as number[], sum: 0 })
-                .lens
-            const lineColToPos = (line: number, col: number) => {
-                let pos = (lineLenSums[line - 1] || 0) + col
-                return pos
-            }
-            const posToLineCol = (pos: number) => {
-                const line = lineLenSums
-                    .reduce((curr, nextLen, i) => pos < nextLen ? curr : i + 1, 0)
-                const col = lineLengths[line] - (lineLenSums[line] - pos) + 1
-                return [line, col] as [number, number]
-            }
-            return [posToLineCol, lineColToPos]
-        }
-
-        const [tsPosToLineCol, tsLineColToPos] = makeLineColPosConverters(tsFile)
-        const [pyPosToLineCol, pyLineColToPos] = makeLineColPosConverters(pyFile)
-
-        const tsErrToPosAndLen = (err: pxtc.KsDiagnostic) => [tsLineColToPos(err.line, err.column), err.length] as [number, number]
-
-        tsErrToPyLoc = (err: pxtc.KsDiagnostic): pxtc.LocationInfo => {
-            const [tsPos, tsLen] = tsErrToPosAndLen(err)
-            const overlaps = sourceMap
-                .filter(i => {
-                    // O(n), can we and should we do better?
-                    return i.ts.startPos <= tsPos && tsPos + tsLen - 1 <= i.ts.endPos
-                })
-            const intLen = (i: { startPos: number, endPos: number }) => i.endPos - i.startPos
-            const bestOverlap = overlaps.reduce((p, n) => intLen(n.ts) < intLen(p.ts) ? n : p, overlaps[0])
-            if (!bestOverlap)
-                return undefined
-            const [startLine, startCol] = pyPosToLineCol(bestOverlap.py.startPos)
-            const pyLoc = {
-                fileName: "main.py",
-                start: bestOverlap.py.startPos,
-                length: intLen(bestOverlap.py),
-                line: startLine,
-                column: startCol
-            }
-            return pyLoc
-        }
+        const helpers = pxtc.BuildSourceMapHelpers(sourceMap, tsFile, pyFile)
+        tsErrToPyLoc = helpers.ts.locToLoc
     }
-
-    let errElapsed = performance.now() - errStart
 
     for (let diagnostic of diagnostics) {
         if (diagnostic.fileName) {
@@ -281,11 +223,13 @@ export function py2tsAsync(): Promise<pxtc.transpile.TranspileResult> {
         })
 }
 
-export function completionsAsync(fileName: string, position: number, fileContent?: string): Promise<pxtc.CompletionInfo> {
+export function completionsAsync(fileName: string, position: number, wordStartPos: number, wordEndPos: number, fileContent?: string): Promise<pxtc.CompletionInfo> {
     return workerOpAsync("getCompletions", {
         fileName,
         fileContent,
         position,
+        wordStartPos,
+        wordEndPos,
         runtime: pxt.appTarget.runtime
     });
 }
@@ -320,6 +264,7 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
         })
 }
 
+// TS -> blocks
 export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
     const snippetTs = "main.ts";
     const snippetBlocks = "main.blocks";
@@ -340,10 +285,36 @@ export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.Bl
         });
 }
 
+// Py -> blocks
+export function pySnippetToBlocksAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
+    const snippetPy = "main.py";
+    const snippetTs = "main.ts";
+    const snippetBlocks = "main.blocks";
+    let trg = pkg.mainPkg.getTargetOptions()
+    return waitForFirstTypecheckAsync()
+        .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
+        .then(opts => {
+            opts.fileSystem[snippetPy] = code;
+            opts.fileSystem[snippetBlocks] = "";
+
+            if (opts.sourceFiles.indexOf(snippetPy) === -1) {
+                opts.sourceFiles.push(snippetPy);
+            }
+            if (opts.sourceFiles.indexOf(snippetBlocks) === -1) {
+                opts.sourceFiles.push(snippetBlocks);
+            }
+            return workerOpAsync("py2ts", { options: opts });
+        })
+        .then(res => {
+            return decompileBlocksSnippetAsync(res.outfiles[snippetTs], blockInfo)
+        });
+}
+
 function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
     return workerOpAsync("decompile", { options: opts, fileName: fileName })
 }
 
+// TS -> Py
 export function pyDecompileAsync(fileName: string): Promise<pxtc.transpile.TranspileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
@@ -360,6 +331,7 @@ export function pyDecompileAsync(fileName: string): Promise<pxtc.transpile.Trans
         })
 }
 
+// TS -> Py
 export function decompilePythonSnippetAsync(code: string): Promise<string> {
     const snippetTs = "main.ts";
     const snippetPy = "main.py";

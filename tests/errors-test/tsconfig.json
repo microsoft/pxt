@@ -11,6 +11,8 @@
         "sourceMap": false
     },
     "files": [
-        "errorrunner.ts"
+        "errorrunner.ts",
+        "../common/testUtils.ts",
+        "../common/testHost.ts"
     ]
 }

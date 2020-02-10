@@ -384,7 +384,8 @@ namespace pxt.blocks {
             }
 
             let endLine = getCurrentLine();
-            let endPos = Math.max(output.length - 1, 0);
+            // end position is non-inclusive
+            let endPos = Math.max(output.length, 1);
 
             if (n.id) {
                 if (sourceMapById[n.id]) {

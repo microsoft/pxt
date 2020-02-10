@@ -1,4 +1,3 @@
-/// <reference path="../../built/typescriptServices.d.ts"/>
 /// <reference path="../../localtypings/pxtarget.d.ts"/>
 // TODO: enable reference so we don't need to use: (pxt as any).py
 //      the issue is that this creates a circular dependency. This
@@ -119,7 +118,7 @@ namespace ts.pxtc {
         }
         const convRes = py2tsIfNecessary(opts)
         if (convRes) {
-            res = { ...res, diagnostics: convRes.diagnostics, sourceMap: convRes.sourceMap }
+            res = { ...res, diagnostics: convRes.diagnostics, sourceMap: convRes.sourceMap, globalNames: convRes.globalNames }
         }
 
         storeGeneratedFiles(opts, res)

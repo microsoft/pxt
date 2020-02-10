@@ -1,0 +1,23 @@
+{
+    "editor": "pyprj",
+    "title": "Native python",
+    "steps": [
+        {
+            "contentMd": "Tutorials can be written with code in Python.\n```python\nbasic.show_string(\"Hello\")\n```",
+            "headerContentMd": "Tutorials can be written with code in Python.",
+            "fullscreen": true,
+            "hintContentMd": "```python\nbasic.show_string(\"Hello\")\n```"
+        },
+        {
+            "contentMd": "Show some LEDs\n\n```python\nbasic.forever(function() {\n    basic.show_leds(`\n        . # . # .\n        # # # # #\n        # # # # #\n        . # # # .\n        . . # . .`);\n})\n\n```",
+            "headerContentMd": "Show some LEDs",
+            "hintContentMd": "```python\nbasic.forever(function() {\n    basic.show_leds(`\n        . # . # .\n        # # # # #\n        # # # # #\n        . # # # .\n        . . # . .`);\n})\n\n```"
+        }
+    ],
+    "activities": null,
+    "code": "\nbasic.show_string(\"Hello\")\n\nbasic.forever(function() {\n    basic.show_leds(`\n        . # . # .\n        # # # # #\n        # # # # #\n        . # # # .\n        . . # . .`);\n})\n",
+    "metadata": {
+        "noDiffs": true
+    },
+    "language": "python"
+}

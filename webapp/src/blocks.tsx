@@ -254,17 +254,21 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             needsLayout = needsLayout || (tpX == 10 && tpY == 10);
         });
+        let blockPositions: { left: number, top: number }[] = [];
         (this.editor.getTopBlocks(false) as Blockly.BlockSvg[]).forEach(b => {
-            const tpX = b.getBoundingRectangle().left;
-            const tpY = b.getBoundingRectangle().top;
-            if (minX === undefined || tpX < minX) {
-                minX = tpX;
+            const bounds = b.getBoundingRectangle()
+            if (minX === undefined || bounds.left < minX) {
+                minX = bounds.left;
             }
-            if (minY === undefined || tpY < minY) {
-                minY = tpY;
+            if (minY === undefined || bounds.top < minY) {
+                minY = bounds.top;
             }
 
-            needsLayout = needsLayout || (b.type != ts.pxtc.ON_START_TYPE && tpX == 10 && tpY == 10);
+            const isOverlapping = !!blockPositions.find(b => b.left === bounds.left && b.top === bounds.top)
+
+            needsLayout = needsLayout || isOverlapping;
+
+            blockPositions.push(bounds)
         });
 
         if (needsLayout && !flyoutOnly) {
@@ -825,7 +829,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             b.setWarningText(null);
             b.setHighlightWarning(false);
         });
-        let tsfile = file.epkg.files[file.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
+        let tsfile = file && file.epkg && file.epkg.files[file.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
         if (!tsfile || !tsfile.diagnostics) return;
 
         // only show errors

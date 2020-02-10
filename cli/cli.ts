@@ -1470,24 +1470,6 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
     })
 }
 
-function buildPxtAsync(includeSourceMaps = false): Promise<string[]> {
-    let ksd = "node_modules/pxt-core"
-    if (!fs.existsSync(ksd + "/pxtlib/main.ts")) return Promise.resolve([]);
-
-    console.log(`building ${ksd}...`);
-    return nodeutil.spawnAsync({
-        cmd: nodeutil.addCmd("npm"),
-        args: includeSourceMaps ? ["run", "build", "sourceMaps=true"] : ["run", "build"],
-        cwd: ksd
-    }).then(() => {
-        console.log("local pxt-core built.")
-        return [ksd]
-    }, e => {
-        buildFailed("local pxt-core build FAILED", e)
-        return [ksd]
-    });
-}
-
 let dirsToWatch: string[] = []
 
 interface CiBuildInfo {
@@ -2014,6 +1996,7 @@ function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
         if (isEmpty(attrs))
             attrs = undefined
         const kind = sym.snippet !== undefined ? -sym.kind : sym.kind
+        const pyQName = sym.pyQName !== sym.qName ? sym.pyQName : undefined
         return {
             kind: kind == 7 ? undefined : kind,
             retType: sym.retType == "void" ? undefined : sym.retType,
@@ -2031,6 +2014,7 @@ function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
             })) : undefined,
             isInstance: sym.isInstance || undefined,
             isReadOnly: sym.isReadOnly || undefined,
+            pyQName: pyQName
         } as any
     }
 
@@ -2329,12 +2313,12 @@ function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean)
         simDirectories = simDirectories.filter(fn => fs.existsSync(fn));
     }
 
-    return buildAndWatchAsync(() => buildPxtAsync(includeSourceMaps)
-        .then(buildCommonSimAsync, e => buildFailed("common sim build failed: " + e.message, e))
+    return buildAndWatchAsync(() => buildCommonSimAsync()
+        .catch(e => buildFailed("common sim build failed: " + e.message, e))
         .then(() => internalBuildTargetAsync({ localDir: true, rebundle }))
         .catch(e => buildFailed("target build failed: " + e.message, e))
         .then(() => {
-            let toWatch = [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)
+            let toWatch = dirsToWatch.slice();
             if (hasCommonPackages) {
                 toWatch = toWatch.concat(simDirectories);
             }
@@ -5158,8 +5142,8 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
 
                                 // Handles tilemaps, spritekinds
                                 if (tutorial.code.indexOf("namespace") !== -1
-                                    // Handles ```python``` code, TODO when tutorial.ts python parsing is added, update !tutorial.code check to verify code is python (not spy)
-                                    || (tutorial.editor == pxt.PYTHON_PROJECT_NAME && !tutorial.code)) {
+                                    // Handles ```python``` snippets
+                                    || (tutorial.language == "python")) {
                                     tutorial.steps
                                         .filter(step => !!step.contentMd)
                                         .forEach((step, stepIndex) => getCodeSnippets(`${gal.name}-${stepIndex}`, step.contentMd)

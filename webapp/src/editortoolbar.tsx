@@ -136,7 +136,11 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     protected onHwItemClick = () => {
-        this.props.parent.showChooseHwDialog(true);
+        if (pxt.hasHwVariants())
+            this.props.parent.showChooseHwDialog(true);
+        else
+            this.props.parent.showBoardDialogAsync(undefined, true).done();
+
     }
 
     protected onHwDownloadClick = () => {

@@ -10,7 +10,7 @@ namespace pxt.tutorial {
             return undefined; // error parsing steps
 
         // collect code and infer editor
-        const { code, templateCode, editor } = computeBodyMetadata(body);
+        const { code, templateCode, editor, language } = computeBodyMetadata(body);
 
         if (!metadata.noDiffs && pxt.appTarget.appTheme.tutorialBlocksDiff)
             diffify(steps, activities);
@@ -29,7 +29,8 @@ namespace pxt.tutorial {
             activities,
             code,
             templateCode,
-            metadata
+            metadata,
+            language
         };
     }
 
@@ -39,6 +40,7 @@ namespace pxt.tutorial {
         const regex = /```(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python)?\s*\n([\s\S]*?)\n```/gmi;
         let code = '';
         let templateCode: string;
+        let language: string;
         // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
         body
             .replace(/((?!.)\s)+/g, "\n")
@@ -55,7 +57,7 @@ namespace pxt.tutorial {
                         if (!checkTutorialEditor(pxt.PYTHON_PROJECT_NAME))
                             return undefined;
                         if (m1 == "python")
-                            return undefined; // TODO: support for those?
+                            language = m1;
                         break;
                     case "typescript":
                     case "ts":
@@ -68,10 +70,10 @@ namespace pxt.tutorial {
                         templateCode = m2;
                         break;
                 }
-                code += "\n { \n " + m2 + "\n } \n";
+                code += `\n${ m1 == "python" ? m2 : "{\n" + m2 + "\n}" }\n`;
                 return "";
             });
-        return { code, templateCode, editor }
+        return { code, templateCode, editor, language }
 
         function checkTutorialEditor(expected: string) {
             if (editor && editor != expected) {
@@ -323,7 +325,8 @@ ${code}
             tutorialRecipe: !!recipe,
             templateCode: tutorialInfo.templateCode,
             autoexpandStep: true,
-            metadata: tutorialInfo.metadata
+            metadata: tutorialInfo.metadata,
+            language: tutorialInfo.language
         };
 
         return { options: tutorialOptions, editor: tutorialInfo.editor };

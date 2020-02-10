@@ -753,9 +753,7 @@ declare namespace ts.pxtc {
     interface SyntaxInfo {
         type: InfoType;
         position: number;
-
         symbols?: SymbolInfo[];
-        globalNames?: pxt.Map<SymbolInfo>;
         beginPos?: number;
         endPos?: number;
         auxResult?: any;
@@ -847,6 +845,7 @@ declare namespace pxt.tutorial {
         steps: TutorialStepInfo[];
         activities: TutorialActivityInfo[];
         code: string; // all code
+        language?: string; // language of code snippet (ts or python)
         templateCode?: string;
         metadata?: TutorialMetadata;
     }
@@ -894,6 +893,7 @@ declare namespace pxt.tutorial {
         templateCode?: string;
         autoexpandStep?: boolean; // autoexpand tutorial card if instruction text overflows
         metadata?: TutorialMetadata; // metadata about the tutorial parsed from the markdown
+        language?: string; // native language of snippets ("python" for python, otherwise defaults to typescript)
     }
     interface TutorialCompletionInfo {
         // id of the tutorial
