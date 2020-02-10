@@ -339,7 +339,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                         text={lf("Open")} textClass="landscape only" title={lf("Open Project")} onClick={this.handleOpen} />);
                     if (openDependent)
                         headerActions.push(<sui.Button key="editnew" icon="external alternate" className="icon"
-                            text={lf("New Tab")} textClass="landscape only" title={lf("Open Project in new editor")} onClick={this.handleOpenNewEditor} />);
+                            text={lf("New Tab")} textClass="landscape only" title={lf("Open Project in a new tab")} onClick={this.handleOpenNewEditor} />);
                     headerActions.push(<sui.Button key="clone" icon="clone outline" className="icon"
                         text={lf("Duplicate")} textClass="landscape only" title={lf("Duplicate Project")} onClick={this.handleDuplicate} />);
                 }
