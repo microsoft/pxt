@@ -441,7 +441,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                             )) : undefined}
                         </CategoryItem>
                     ))}
-                    {hasAdvanced || hasRecipes ? <TreeSeparator key="advancedseparator" /> : undefined}
+                    {hasAdvanced ? <TreeSeparator key="advancedseparator" /> : undefined}
                     {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ nameid: "", name: pxt.toolbox.advancedTitle(), color: pxt.toolbox.getNamespaceColor('advanced'), icon: pxt.toolbox.getNamespaceIcon(showAdvanced ? 'advancedexpanded' : 'advancedcollapsed') }} onCategoryClick={this.advancedClicked} /> : undefined}
                     {showAdvanced ? advancedCategories.map((treeRow) => (
                         <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection}>
@@ -879,7 +879,7 @@ export class ToolboxTrashIcon extends data.Component<ToolboxTrashIconProps, {}> 
         let style: any = { opacity: 0, display: 'none' };
         if (this.props.flyoutOnly) {
             let flyout = document.querySelector('.blocklyFlyout');
-            if (flyout ) {
+            if (flyout) {
                 style["left"] = (flyout.clientWidth / 2);
                 style["transform"] = "translateX(-45%)";
             }
