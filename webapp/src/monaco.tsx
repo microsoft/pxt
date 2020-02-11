@@ -63,7 +63,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
 
         return compiler.completionsAsync(fileName, offset, wordStartOffset, wordEndOffset, source)
             .then(completions => {
-                const items = (completions.entries || []).map((si, i) => {
+                let items = (completions.entries || []).map((si, i) => {
                     let insertSnippet = this.python ? si.pySnippet : si.snippet;
                     let qName = this.python ? si.pyQName : si.qName;
                     let name = this.python ? si.pyName : si.name;
@@ -123,8 +123,16 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         filterText: `${label} ${documentation} ${block}`,
                         insertText: completionSnippet || undefined,
                     };
+
+                    if (qName.indexOf("say") >= 0) {
+                        console.dir({ si, res })
+                    }
+
                     return res
                 })
+                items = items
+                    .filter(i => !!i?.detail)
+                    .filter(i => i?.detail?.indexOf("say") < 0)
                 return { suggestions: items };
             });
 
@@ -139,6 +147,10 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
      * The editor will only resolve a completion item once.
      */
     resolveCompletionItem(model: monaco.editor.ITextModel, position: monaco.Position, item: monaco.languages.CompletionItem, token: monaco.CancellationToken): monaco.languages.CompletionItem | monaco.Thenable<monaco.languages.CompletionItem> {
+        if (item.label.indexOf("say") >= 0)
+            console.dir(item)
+        else
+            console.log(item.label)
         return item
     }
 }
