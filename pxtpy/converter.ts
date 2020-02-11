@@ -1666,6 +1666,8 @@ namespace pxt.py {
             if (pref)
                 return pref + "." + (e as py.Attribute).attr
         }
+        // Call
+        // Attribute
         error(null, 9542, lf("Cannot get name of unknown expression kind '{0}'", e.kind));
         return undefined!
     }
