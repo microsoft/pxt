@@ -24,6 +24,10 @@ namespace ts.pxtc.decompiler {
         hasTrailingNewline: boolean;
         followedByEmptyLine: boolean;
         isTrailingComment: boolean;
+
+        start: number;
+        end: number;
+        owner?: Node;
     }
 
     export enum CommentKind {
@@ -198,7 +202,7 @@ namespace ts.pxtc.decompiler {
         handlers?: Handler[];
         next?: StatementNode;
         prev?: StatementNode;
-        comment?: string;
+        comment?: Comment[];
         id?: string;
 
         // Optional data that Blockly ignores. We use it to associate statements with workspace comments
@@ -395,6 +399,9 @@ namespace ts.pxtc.decompiler {
 
         const getCommentRef = (() => { let currentCommentId = 0; return () => `${currentCommentId++}` })();
 
+
+        const commentMap = buildCommentMap(file);
+
         const checkTopNode = (topLevelNode: Node) => {
             if (topLevelNode.kind === SK.FunctionDeclaration && !checkStatement(topLevelNode, env, false, true)) {
                 env.declaredFunctions[getVariableName((topLevelNode as ts.FunctionDeclaration).name)] = topLevelNode as ts.FunctionDeclaration;
@@ -473,19 +480,14 @@ namespace ts.pxtc.decompiler {
         try {
             n = codeBlock(stmts, undefined, true, undefined, !options.snippetMode);
 
-            let orphanComments: Comment[];
-            if (stmts.length) {
-                orphanComments = getOrphanComments(stmts.end, file);
-            }
-            else {
-                orphanComments = getOrphanComments(file.getStart(), file);
-            }
-
-            if (orphanComments.length) {
-                workspaceComments.push({
-                    text: formatCommentsForBlocks(orphanComments),
-                    refId: getCommentRef()
-                });
+            // Emit all of the orphaned comments
+            for (const comment of commentMap) {
+                if (!comment.owner) {
+                    workspaceComments.push({
+                        refId: getCommentRef(),
+                        text: formatCommentsForBlocks([comment])
+                    });
+                }
             }
         }
         catch (e) {
@@ -681,7 +683,7 @@ ${output}</xml>`;
             }
 
             if (n.comment !== undefined) {
-                write(`<comment pinned="false">${U.htmlEscape(n.comment)}</comment>`)
+                write(`<comment pinned="false">${U.htmlEscape(formatCommentsForBlocks(n.comment))}</comment>`)
             }
 
             closeBlockTag();
@@ -906,6 +908,10 @@ ${output}</xml>`;
         function getTypeScriptExpressionBlock(n: ts.Node) {
             const text = applyRenamesInRange(n.getFullText(), n.getFullStart(), n.getEnd()).trim();
             trackVariableUsagesInText(n);
+
+            // Mark comments or else they are emitted twice
+            markCommentsInRange(n, commentMap);
+
             return getFieldBlock(pxtc.TS_OUTPUT_TYPE, "EXPRESSION", text);
         }
 
@@ -1292,7 +1298,6 @@ ${output}</xml>`;
                             // never get used in the blocks (and thus won't be emitted again)
 
                             trackAutoDeclaration(decl);
-                            getComments(parent || node);
                             return getNext();
                         }
                         stmt = getVariableDeclarationStatement(node as ts.VariableDeclaration);
@@ -1330,6 +1335,7 @@ ${output}</xml>`;
                     case SK.EnumDeclaration:
                     case SK.ModuleDeclaration:
                         // If the enum declaration made it past the checker then it is emitted elsewhere
+                        markCommentsInRange(node, commentMap);
                         return getNext();
                     default:
                         if (next) {
@@ -1381,19 +1387,39 @@ ${output}</xml>`;
              */
 
             function getComments(commented: Node) {
-                const commentRanges = ts.getLeadingCommentRangesOfNode(commented, file)
-                if (commentRanges) {
+                let comments: Comment[] = [];
+                let current: Comment;
+                for (let i = 0; i < commentMap.length; i++) {
+                    current = commentMap[i];
+                    if (!current.owner && current.start >= commented.pos && current.end <= commented.end) {
+                        current.owner = commented;
+                        comments.push(current);
+                    }
+
+                    if (current.start > commented.end) break;
+                }
+
+                if (current && current.isTrailingComment && !current.owner) {
+                    const endLine = ts.getLineAndCharacterOfPosition(file, commented.end);
+                    const commentLine = ts.getLineAndCharacterOfPosition(file, current.start);
+
+                    if (endLine.line === commentLine.line) {
+                        current.owner = commented;
+                        comments.push(current);
+                    }
+                }
+
+                if (comments.length) {
                     const wsCommentRefs: string[] = [];
 
-                    let comments = getLeadingComments(node, file, commentRanges).concat(getTrailingComments(node, file));
-
-                    if (isTopLevelComment(node)) {
+                    if (isTopLevelComment(commented)) {
                         let currentWorkspaceComment: Comment[] = [];
 
                         const workspaceCommentStrings: string[] = [];
 
                         comments.forEach((comment, index) => {
-                            if (comment.kind === CommentKind.MultiLine) {
+                            let pastStart = comment.owner && comment.start < comment.owner.getStart();
+                            if (comment.kind === CommentKind.MultiLine && pastStart) {
                                 if (currentWorkspaceComment.length) {
                                     workspaceCommentStrings.push(formatCommentsForBlocks(currentWorkspaceComment));
                                     currentWorkspaceComment = [];
@@ -1406,7 +1432,7 @@ ${output}</xml>`;
 
                             currentWorkspaceComment.push(comment);
 
-                            if (comment.followedByEmptyLine) {
+                            if (comment.followedByEmptyLine && pastStart) {
                                 workspaceCommentStrings.push(formatCommentsForBlocks(currentWorkspaceComment));
                                 currentWorkspaceComment = [];
                             }
@@ -1422,27 +1448,21 @@ ${output}</xml>`;
                         });
                     }
 
-                    const commentText = formatCommentsForBlocks(comments);
-
                     if (stmt) {
                         if (wsCommentRefs.length) {
-                            stmt.data = wsCommentRefs.join(";")
+                            if (stmt.data) stmt.data += ";" + wsCommentRefs.join(";")
+                            else stmt.data = wsCommentRefs.join(";")
                         }
-                        if (commentText && stmt) {
-                            if (stmt.comment) stmt.comment = stmt.comment + "\n" + commentText;
-                            else stmt.comment = commentText || undefined;
-                        }
-                        else {
-                            // ERROR TODO
+                        if (comments && comments.length) {
+                            if (stmt.comment) stmt.comment = stmt.comment.concat(comments);
+                            else stmt.comment = comments;
                         }
                     }
                 }
-
             }
         }
 
         function getTypeScriptStatementBlock(node: ts.Node, prefix?: string, err?: string): StatementNode {
-
             if (options.errorOnGreyBlocks)
                 error(node);
 
@@ -1457,6 +1477,8 @@ ${output}</xml>`;
 
             text = applyRenamesInRange(text, start, end);
 
+            // Mark comments or else they are emitted twice
+            markCommentsInRange(node, commentMap);
 
             if (prefix) {
                 text = prefix + text;
@@ -1580,8 +1602,6 @@ ${output}</xml>`;
             const r = mkStmt("device_while", n);
             r.inputs = [getConditionalInput("COND", n.expression)];
             r.handlers = [{ name: "DO", statement: getStatementBlock(n.statement) }];
-
-            addOrphanComments(getStatementsOfBlock(n.statement), n.statement, r.handlers[0].statement, r);
             return r;
         }
 
@@ -1600,15 +1620,11 @@ ${output}</xml>`;
                 let statement = getStatementBlock(stmt.thenStatement)
                 r.inputs.push(getConditionalInput("IF" + i, (stmt as ts.IfStatement).expression));
                 r.handlers.push({ name: "DO" + i, statement });
-
-                addOrphanComments(getStatementsOfBlock(stmt.thenStatement), stmt.thenStatement, statement, r);
             });
 
             if (flatif.elseStatement) {
                 let statement = getStatementBlock(flatif.elseStatement);
                 r.handlers.push({ name: "ELSE", statement });
-
-                addOrphanComments(getStatementsOfBlock(flatif.elseStatement), flatif.elseStatement, statement, r);
             }
 
             return r;
@@ -1720,7 +1736,6 @@ ${output}</xml>`;
 
             const statement = getStatementBlock(n.statement);
             r.handlers = [{ name: "DO", statement  }];
-            addOrphanComments(getStatementsOfBlock(n.statement), n.statement, statement, r);
             return r;
 
             function checkForVariableUsages(node: Node): boolean {
@@ -1740,7 +1755,6 @@ ${output}</xml>`;
             r.inputs = [getValue("LIST", n.expression), getDraggableVariableBlock("VAR", renamed)];
             const statement = getStatementBlock(n.statement);
             r.handlers = [{ name: "DO", statement  }];
-            addOrphanComments(getStatementsOfBlock(n.statement), n.statement, statement, r);
 
             return r
         }
@@ -1853,10 +1867,6 @@ ${output}</xml>`;
                         }
                     });
                 });
-            }
-
-            if (n.body) {
-                addOrphanComments(n.body.statements, n.body, statements, r);
             }
 
             r.handlers = [{ name: "STACK", statement: statements }];
@@ -2104,7 +2114,6 @@ ${output}</xml>`;
                         }
                         const statement = getStatementBlock(e);
                         (r.handlers || (r.handlers = [])).push({ name: "HANDLER", statement });
-                        addOrphanComments(getStatementsOfBlock(expBody), expBody, statement, r as StatementNode);
 
                         if (mustPopLocalScope) {
                             env.localReporters.pop();
@@ -2327,26 +2336,6 @@ ${output}</xml>`;
             }
 
             return undefined;
-        }
-
-        function addOrphanComments(blockStatements: NodeArray<Node>, block: Node, firstStatement: StatementNode, parentStatement: StatementNode) {
-            let trailingComments: Comment[];
-            let statementNode: StatementNode;
-
-            if (blockStatements.length) {
-                trailingComments = getOrphanComments(blockStatements.end, file);
-                statementNode = getLastStatement(firstStatement)
-            }
-            else {
-                trailingComments = getOrphanComments(block.getStart() + 1, file);
-                statementNode = parentStatement;
-            }
-
-            if (trailingComments.length) {
-                statementNode.comment = statementNode.comment ?
-                    statementNode.comment + "\n" + formatCommentsForBlocks(trailingComments) :
-                    formatCommentsForBlocks(trailingComments);
-            }
         }
 
         function maybeEmitEmptyOnStart(node: StatementNode) {
@@ -3599,10 +3588,6 @@ ${output}</xml>`;
         return getCommentsFromRanges(file, ts.getTrailingCommentRanges(file.getFullText(), node.end));
     }
 
-    export function getOrphanComments(position: number, file: ts.SourceFile) {
-        return getCommentsFromRanges(file, ts.getLeadingCommentRanges(file.getFullText(), position));
-    }
-
     function getCommentsFromRanges(file: ts.SourceFile, commentRanges: ts.CommentRange[], isTrailingComment = false) {
         const res: Comment[] = [];
         const fileText = file.getFullText();
@@ -3629,6 +3614,8 @@ ${output}</xml>`;
                         res.push({
                             kind: CommentKind.SingleLine,
                             text: match[1],
+                            start: commentRange.pos,
+                            end: commentRange.end,
                             hasTrailingNewline: !!commentRange.hasTrailingNewLine,
                             followedByEmptyLine,
                             isTrailingComment
@@ -3638,6 +3625,8 @@ ${output}</xml>`;
                         res.push({
                             kind: CommentKind.SingleLine,
                             text: "",
+                            start: commentRange.pos,
+                            end: commentRange.end,
                             hasTrailingNewline: !!commentRange.hasTrailingNewLine,
                             followedByEmptyLine,
                             isTrailingComment
@@ -3652,6 +3641,8 @@ ${output}</xml>`;
                     res.push({
                         kind: CommentKind.MultiLine,
                         lines,
+                        start: commentRange.pos,
+                        end: commentRange.end,
                         hasTrailingNewline: !!commentRange.hasTrailingNewLine,
                         followedByEmptyLine,
                         isTrailingComment
@@ -3699,16 +3690,46 @@ ${output}</xml>`;
         return false;
     }
 
-    function getLastStatement(node: StatementNode) {
-        while (node && node.next) node = node.next;
-        return node;
+    function buildCommentMap(file: SourceFile) {
+        const fileText = file.getFullText();
+        const scanner = ts.createScanner(file.languageVersion, false, file.languageVariant, fileText, undefined, file.getFullStart());
+        let res: Comment[] = [];
+
+        let leading: CommentRange[];
+        let trailing: CommentRange[];
+
+        while (scanner.getTextPos() < file.end) {
+            const val = scanner.scan();
+            if (val === SK.SingleLineCommentTrivia || val === SK.MultiLineCommentTrivia) {
+                leading = ts.getLeadingCommentRanges(fileText, scanner.getTokenPos()) || [];
+                trailing = ts.getTrailingCommentRanges(fileText, scanner.getTokenPos()) || [];
+
+                // Filter out duplicates
+                trailing = trailing.filter(range => !leading.some(other => other.pos === range.pos));
+
+                res.push(...getCommentsFromRanges(file, leading, false));
+                res.push(...getCommentsFromRanges(file, trailing, true));
+
+                for (const range of res) {
+                    if (range.end > scanner.getTextPos()) {
+                        scanner.setTextPos(range.end)
+                    }
+                }
+            }
+        }
+
+        res.sort((a, b) => a.start - b.start);
+
+        return res;
     }
 
-    function getStatementsOfBlock(node: Node) {
-        switch (node.kind) {
-            case SyntaxKind.Block:
-                return (node as Block).statements;
-            default: return ts.createNodeArray([node]);
+    function markCommentsInRange(node: Node, commentMap: Comment[]) {
+        let current: Comment;
+        for (let i = 0; i < commentMap.length; i++) {
+            current = commentMap[i];
+            if (!current.owner && current.start >= node.pos && current.end <= node.end) {
+                current.owner = node;
+            }
         }
     }
 }
