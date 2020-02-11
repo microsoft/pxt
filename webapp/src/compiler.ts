@@ -553,6 +553,9 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
     for (const used of usedInfo) {
         if (!used) continue;
         pxt.Util.jsonCopyFrom(result.byQName, used.apis.byQName);
+        for (const api of Object.keys(used.apis.byQName)) {
+            result.byQName[api].pkg = used.name;
+        }
 
         if (used.apis.jres) pxt.Util.jsonCopyFrom(result.jres, used.apis.jres);
     }
@@ -587,12 +590,13 @@ async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo
         const db = await ApiInfoIndexedDb.createAsync();
 
         for (const dep of externalPackages) {
+            const name = dep.getKsPkg().config.name;
             const entry: pxt.PackageApiInfo = {
+                name: name,
                 sha: null,
                 apis: { byQName: {} }
             }
 
-            const name = dep.getKsPkg().config.name;
 
             for (const api of apiList) {
                 if (info.byQName[api].pkg === name) {

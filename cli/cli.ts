@@ -2015,7 +2015,7 @@ function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
             isInstance: sym.isInstance || undefined,
             isReadOnly: sym.isReadOnly || undefined,
             pyQName: pyQName
-        } as any
+        } as pxtc.SymbolInfo;
     }
 
     inf = U.clone(inf)
@@ -2126,6 +2126,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                         // JRES is already included in the target bundle
                         api.jres = undefined;
                         builtInfo[dirname] = {
+                            name: dirname,
                             apis: api,
                             sha: packageSha
                         };

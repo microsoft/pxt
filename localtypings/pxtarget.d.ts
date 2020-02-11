@@ -413,6 +413,7 @@ declare namespace pxt {
     interface PackageApiInfo {
         sha: string;
         apis: ts.pxtc.ApisInfo;
+        name: string;
     }
 }
 
