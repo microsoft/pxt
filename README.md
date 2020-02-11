@@ -81,6 +81,16 @@ of an app target (e.g. pxt-microbit). PXT will open the editor in your default w
 If you are developing against pxt, you can run `gulp watch` from within the root of the
 pxt repository to watch for changes and rebuild.
 
+```
+gulp watch
+```
+
+If you are working on the CLI exclusively,
+
+```
+gulp watchCli
+```
+
 ### Icons
 
 There are a number of custom icons (to use in addition
