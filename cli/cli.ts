@@ -3123,7 +3123,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
     const tag = parsed.args[0] as string;
     if (!tag)
         U.userError("Missing tag")
-    const out = parsed.flags["out"] as string || "./temp";
+    const out = parsed.flags["out"] as string || "temp";
     const outmd = parsed.flags["md"] as string;
     const discourseRoot = pxt.appTarget.appTheme
         && pxt.appTarget.appTheme.socialOptions
@@ -3146,6 +3146,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                         })
                         .catch(e => {
                             pxt.log(`error: project ${id} could not be loaded`);
+                            console.log(e);
                         });
                 })
         }))
@@ -4844,7 +4845,7 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
 
             if (json[pxt.CONFIG_NAME]) {
                 console.log("Raw JSON files.")
-                let cfg: pxt.PackageConfig = JSON.parse(json[pxt.CONFIG_NAME])
+                let cfg: pxt.PackageConfig = pxt.Package.parseAndValidConfig(json[pxt.CONFIG_NAME])
                 let files = json
                 json = {
                     projects: [{
