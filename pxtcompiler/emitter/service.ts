@@ -1757,7 +1757,11 @@ namespace ts.pxtc.service {
                 returnValue = python ? "return False" : "return false";
 
             if (python) {
-                let functionArgument = `(${functionSignature.parameters.map(p => p.name).join(', ')})`;
+                let functionArgument: string;
+                if (attrs.optionalVariableArgs)
+                    functionArgument = `()`
+                else
+                    functionArgument = `(${functionSignature.parameters.map(p => p.name).join(', ')})`;
                 let n = fnName || "fn";
                 if (functionCount++ > 0) n += functionCount;
                 n = snakify(n);
