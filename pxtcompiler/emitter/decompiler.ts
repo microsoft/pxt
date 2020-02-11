@@ -1379,6 +1379,7 @@ ${output}</xml>`;
              *          a. Combine it with all comments for the following statement
              *          b. If there is no following statement in the current block, group it with the previous statement
              *          c. If there are no statements inside the block, group it with the parent block
+             *          d. If trailing the same line as the statement, group it with the comments for that statement
              *      2. If the comment is top-level:
              *          b. If the comment is followed by an empty line, it becomes a workspace comment
              *          c. If the comment is followed by a multi-line comment, it becomes a workspace comment
@@ -3593,14 +3594,6 @@ ${output}</xml>`;
         return !!(ranges && ranges.length)
     }
 
-    export function getLeadingComments(node: Node, file: ts.SourceFile, commentRanges?: ts.CommentRange[]): Comment[] {
-        return getCommentsFromRanges(file, commentRanges || ts.getLeadingCommentRangesOfNode(node, file));
-    }
-
-    export function getTrailingComments(node: Node, file: ts.SourceFile): Comment[] {
-        return getCommentsFromRanges(file, ts.getTrailingCommentRanges(file.getFullText(), node.end));
-    }
-
     function getCommentsFromRanges(file: ts.SourceFile, commentRanges: ts.CommentRange[], isTrailingComment = false) {
         const res: Comment[] = [];
         const fileText = file.getFullText();
@@ -3705,7 +3698,31 @@ ${output}</xml>`;
         return false;
     }
 
-    function buildCommentMap(file: SourceFile) {
+    export function getLeadingComments(node: Node, file: ts.SourceFile, commentRanges?: ts.CommentRange[]): Comment[] {
+        return getCommentsFromRanges(file, commentRanges || ts.getLeadingCommentRangesOfNode(node, file));
+    }
+
+    export function getTrailingComments(node: Node, file: ts.SourceFile): Comment[] {
+        return getCommentsFromRanges(file, ts.getTrailingCommentRanges(file.getFullText(), node.end));
+    }
+
+    export function getCommentsForStatement(commented: Node, commentMap: Comment[]) {
+        let comments: Comment[] = [];
+        let current: Comment;
+        for (let i = 0; i < commentMap.length; i++) {
+            current = commentMap[i];
+            if (!current.owner && current.start >= commented.pos && current.end <= commented.end) {
+                current.owner = commented;
+                comments.push(current);
+            }
+
+            if (current.start > commented.end) break;
+        }
+
+        return comments;
+    }
+
+    export function buildCommentMap(file: SourceFile) {
         const fileText = file.getFullText();
         const scanner = ts.createScanner(file.languageVersion, false, file.languageVariant, fileText, undefined, file.getFullStart());
         let res: Comment[] = [];
