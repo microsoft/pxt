@@ -3120,7 +3120,6 @@ export function exportCppAsync(parsed: commandParser.ParsedCommand) {
 }
 
 export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): Promise<void> {
-    ensurePkgDir();
     const tag = parsed.args[0] as string;
     const out = parsed.flags["out"] as string || "./temp";
     const outmd = parsed.flags["md"] as string;
@@ -6187,7 +6186,8 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
     }, exportCppAsync);
 
     p.defineCommand({
-        name: "downloaddiscourse",
+        name: "downloaddiscoursetag",
+        aliases: ["ddt"],
         help: "Download program for a discourse tag",
         advanced: true,
         argString: "<tag>",
