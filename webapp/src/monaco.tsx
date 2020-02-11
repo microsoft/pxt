@@ -1173,10 +1173,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         });
                         this.editorViewZones = [];
 
-                        // Test for left and right double quotes because ios safari will sometimes insert
+                        // Test for left and right quotes because ios safari will sometimes insert
                         // them automatically for the user. Convert them to normal quotes
-                        if (e.changes.some(change => /\u{201c}|\u{201d}/u.test(change.text))) {
-                            this.editor.setValue(this.editor.getValue().replace(/\u{201c}|\u{201d}/gu, `"`));
+                        if (e.changes.some(change => /[\u{201c}\u{201d}\u{2018}\u{2019}]/u.test(change.text))) {
+                            this.editor.setValue(this.editor.getValue().replace(/\u{201c}|\u{201d}/gu, `"`).replace(/\u{2018}|\u{2019}/gu, `'`));
                         }
 
                         if (!e.isRedoing && !e.isUndoing && !this.editor.getValue()) {
