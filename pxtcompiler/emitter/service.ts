@@ -1770,11 +1770,13 @@ namespace ts.pxtc.service {
                 return n;
             } else {
                 let functionArgument = "()";
-                let displayParts = (ts as any).mapToDisplayParts((writer: ts.DisplayPartsSymbolWriter) => {
-                    checker.getSymbolDisplayBuilder().buildSignatureDisplay(functionSignature, writer);
-                });
-                let displayPartsStr = ts.displayPartsToString(displayParts);
-                functionArgument = displayPartsStr.substr(0, displayPartsStr.lastIndexOf(":"));
+                if (!attrs.optionalVariableArgs) {
+                    let displayParts = (ts as any).mapToDisplayParts((writer: ts.DisplayPartsSymbolWriter) => {
+                        checker.getSymbolDisplayBuilder().buildSignatureDisplay(functionSignature, writer);
+                    });
+                    let displayPartsStr = ts.displayPartsToString(displayParts);
+                    functionArgument = displayPartsStr.substr(0, displayPartsStr.lastIndexOf(":"));
+                }
                 return `function ${functionArgument} {\n    ${returnValue}\n}`;
             }
         }
