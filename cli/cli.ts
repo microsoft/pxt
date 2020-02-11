@@ -3130,6 +3130,10 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
         && pxt.appTarget.appTheme.socialOptions.discourse;
     if (!discourseRoot)
         U.userError("Target not configured for discourse");
+    if (outmd && !fs.existsSync(outmd))
+        U.userError(`${outmd} file not found`)
+    let md: string = outmd && fs.readFileSync(outmd, { encoding: "utf8" });
+
     nodeutil.mkdirP(out);
     let n = 0;
     let cards: pxt.CodeCard[] = [];
@@ -3155,7 +3159,6 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                 })
         }))
         .then(() => {
-            let md: string = outmd && fs.readFileSync(outmd, { encoding: "utf8" });
             if (md) {
                 md.replace(/```codecard(.*)```/, (m, c) => {
                     return `\`\`\`codecard
@@ -6194,7 +6197,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         argString: "<tag>",
         flags: {
             out: { description: "output folder, default is temp" },
-            md: { description: "path of the markdown file to generate" }
+            md: { description: "path of the markdown file to generate", type: "string" }
         }
     }, downloadDiscourseTagAsync)
 
