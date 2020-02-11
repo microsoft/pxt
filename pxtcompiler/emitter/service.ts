@@ -1757,7 +1757,11 @@ namespace ts.pxtc.service {
                 returnValue = python ? "return False" : "return false";
 
             if (python) {
-                let functionArgument = `(${functionSignature.parameters.map(p => p.name).join(', ')})`;
+                let functionArgument: string;
+                if (attrs.optionalVariableArgs)
+                    functionArgument = `()`
+                else
+                    functionArgument = `(${functionSignature.parameters.map(p => p.name).join(', ')})`;
                 let n = fnName || "fn";
                 if (functionCount++ > 0) n += functionCount;
                 n = snakify(n);
@@ -1766,11 +1770,13 @@ namespace ts.pxtc.service {
                 return n;
             } else {
                 let functionArgument = "()";
-                let displayParts = (ts as any).mapToDisplayParts((writer: ts.DisplayPartsSymbolWriter) => {
-                    checker.getSymbolDisplayBuilder().buildSignatureDisplay(functionSignature, writer);
-                });
-                let displayPartsStr = ts.displayPartsToString(displayParts);
-                functionArgument = displayPartsStr.substr(0, displayPartsStr.lastIndexOf(":"));
+                if (!attrs.optionalVariableArgs) {
+                    let displayParts = (ts as any).mapToDisplayParts((writer: ts.DisplayPartsSymbolWriter) => {
+                        checker.getSymbolDisplayBuilder().buildSignatureDisplay(functionSignature, writer);
+                    });
+                    let displayPartsStr = ts.displayPartsToString(displayParts);
+                    functionArgument = displayPartsStr.substr(0, displayPartsStr.lastIndexOf(":"));
+                }
                 return `function ${functionArgument} {\n    ${returnValue}\n}`;
             }
         }
