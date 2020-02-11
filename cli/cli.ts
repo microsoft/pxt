@@ -3149,25 +3149,31 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                     n++;
                     return extractAsyncInternal(id, out, false)
                         .then(() => {
-                            if (md && topic.imageUrl) {
+                            const ifn = `/static/discourse/${topic.id}.png`;
+                            const localifn = "./docs" + ifn;
+                            if (md && topic.imageUrl 
+                                && !nodeutil.fileExistsSync(localifn)) {
                                 cards.push(topic);
                                 return pxt.Util.requestAsync({
-                                    url: `https://makecode.com/${id}/thumb`,
+                                    url: `https://makecode.com/api/${id}/thumb`,
                                     method: "GET",
                                     responseArrayBuffer: true,
-                                    allowHttpErrors: true,
                                     headers: {
                                         "accept": "image/*"
                                     }
                                 }).then(resp => {
-                                    if (resp.statusCode != 200)
-                                        return;
-                                    let ext = /image\/(png|jpeg)/.exec(resp.headers["content-type"] as string)[1];
-                                    if (ext == "jpeg")
-                                        ext = "jpg";
-                                    topic.imageUrl = `docs/static/discourse/${topic.id}.${ext}`
-                                    nodeutil.mkdirP("docs/static/discourse");
-                                    fs.writeFileSync(topic.imageUrl, new Buffer(resp.buffer as ArrayBuffer));
+                                    if (resp.buffer) {
+                                        const m = /image\/png/.exec(resp.headers["content-type"] as string);
+                                        if (!m) {
+                                            pxt.log(`unknown image type: ${resp.headers["content-type"]}`);
+                                        } else {
+                                            topic.imageUrl = ifn;
+                                            nodeutil.writeFileSync(localifn, new Buffer(resp.buffer as ArrayBuffer));
+                                        }
+                                    }
+                                }).catch(e => {
+                                    // no image
+                                    pxt.debug(`no thumb ${e}`);
                                 })
                                 // drop topic image in static folder
                             }
@@ -3183,7 +3189,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
             if (md) {
                 md = md.replace(/```codecard(.*)```/s, (m, c) => {
                     return `\`\`\`codecard
-${JSON.stringify(cards)}
+${JSON.stringify(cards, null, 4)}
 \`\`\``;
                 })
                 fs.writeFileSync(outmd, md, { encoding: "utf8" });
