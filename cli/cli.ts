@@ -3159,7 +3159,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
         }))
         .then(() => {
             if (md) {
-                md = md.replace(/```codecard(.*)```/, (m, c) => {
+                md = md.replace(/```codecard(.*)```/s, (m, c) => {
                     return `\`\`\`codecard
 ${JSON.stringify(cards)}
 \`\`\``;
