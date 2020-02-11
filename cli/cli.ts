@@ -3121,6 +3121,8 @@ export function exportCppAsync(parsed: commandParser.ParsedCommand) {
 
 export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     const tag = parsed.args[0] as string;
+    if (!tag)
+        U.userError("Missing tag")
     const out = parsed.flags["out"] as string || "./temp";
     const outmd = parsed.flags["md"] as string;
     const discourseRoot = pxt.appTarget.appTheme
@@ -3130,9 +3132,9 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
         U.userError("Target not configured for discourse");
     nodeutil.mkdirP(out);
     let n = 0;
-    let topics: pxt.CodeCard[] = [];
+    let cards: pxt.CodeCard[] = [];
     return pxt.discourse.topicsByTag(discourseRoot, tag)
-        .then(urls => Promise.mapSeries(topics, topic => {
+        .then(topics => Promise.mapSeries(topics, topic => {
             pxt.log(`  ${topic.title}`)
             return pxt.discourse.extractSharedIdFromPostUrl(topic.url)
                 .then(id => {
@@ -3141,10 +3143,10 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                     return pxt.Cloud.privateGetAsync(id) // make sure it still exists
                         .then(() => extractAsyncInternal(id, out, false))
                         .then(() => {
-                            topics.push(<pxt.CodeCard>{
+                            cards.push(<pxt.CodeCard>{
                                 title: topic.title,
                                 url: topic.url,
-                                imageUrl: topic.imageUrl,
+                                imageUrl: topic.image_url,
                                 cardType: "forumUrl"
                             });
                         })
@@ -3156,9 +3158,9 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
         .then(() => {
             let md: string = outmd && fs.readFileSync(outmd, { encoding: "utf8" });
             if (md) {
-                md.replace(/```codecard(.*)```/, (m, cards) => {
+                md.replace(/```codecard(.*)```/, (m, c) => {
                     return `\`\`\`codecard
-${JSON.stringify(topics)}
+${JSON.stringify(cards)}
 \`\`\``;
                 })
                 fs.writeFileSync(outmd, md, { encoding: "uf8" });

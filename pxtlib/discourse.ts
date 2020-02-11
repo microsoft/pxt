@@ -45,7 +45,8 @@ namespace pxt.discourse {
 
     export function topicsByTag(apiUrl: string, tag: string): Promise<Topic[]> {
         apiUrl = apiUrl.replace(/\/$/, '');
-        return pxt.Util.httpGetJsonAsync(`${apiUrl.replace(/\/$/, '')}/tags/${tag}.json`)
+        const q = `${apiUrl}/tags/${tag}.json`;
+        return pxt.Util.httpGetJsonAsync(q)
             .then((json: TagsResponse) =>
                 json.topic_list.topics.map(t => {
                     t.url = `${apiUrl}/t/${t.slug}/${t.id}`;
