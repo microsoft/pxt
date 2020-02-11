@@ -28,6 +28,7 @@ namespace ts.pxtc.decompiler {
         start: number;
         end: number;
         owner?: Node;
+        ownerStatement?: StatementNode;
     }
 
     export enum CommentKind {
@@ -220,10 +221,9 @@ namespace ts.pxtc.decompiler {
     }
 
     interface WorkspaceComment {
-        text: string;
-
         // Used for grouping comments and statements
         refId: string;
+        comment: Comment[];
     }
 
     type OutputNode = ExpressionNode | TextNode;
@@ -485,7 +485,7 @@ namespace ts.pxtc.decompiler {
                 if (!comment.owner) {
                     workspaceComments.push({
                         refId: getCommentRef(),
-                        text: formatCommentsForBlocks([comment])
+                        comment: [comment]
                     });
                 }
             }
@@ -828,7 +828,8 @@ ${output}</xml>`;
 
         function emitWorkspaceComment(comment: WorkspaceComment) {
             let maxLineLength = 0;
-            const lines = comment.text.split("\n");
+            const text = formatCommentsForBlocks(comment.comment);
+            const lines = text.split("\n");
             lines.forEach(line => maxLineLength = Math.max(maxLineLength, line.length));
 
             // These are just approximations but they are the best we can do outside the DOM
@@ -836,7 +837,7 @@ ${output}</xml>`;
             const height = Math.max(Math.min(lines.length * 40, maxCommentHeight), minCommentHeight);
 
             write(`<comment h="${height}" w="${width}" data="${U.htmlEscape(comment.refId)}">`)
-            write(U.htmlEscape(comment.text))
+            write(U.htmlEscape(text))
             write(`</comment>`);
         }
 
@@ -1393,18 +1394,30 @@ ${output}</xml>`;
                     current = commentMap[i];
                     if (!current.owner && current.start >= commented.pos && current.end <= commented.end) {
                         current.owner = commented;
+                        current.ownerStatement = stmt;
                         comments.push(current);
                     }
 
                     if (current.start > commented.end) break;
                 }
 
-                if (current && current.isTrailingComment && !current.owner) {
+                if (current && current.isTrailingComment) {
                     const endLine = ts.getLineAndCharacterOfPosition(file, commented.end);
                     const commentLine = ts.getLineAndCharacterOfPosition(file, current.start);
 
                     if (endLine.line === commentLine.line) {
+                        // If the comment is trailing and on the same line as the statement, it probably belongs
+                        // to this statement. Remove it from any statement it's already assigned to and any workspace
+                        // comments
+                        if (current.ownerStatement) {
+                            current.ownerStatement.comment.splice(current.ownerStatement.comment.indexOf(current), 1);
+
+                            for (const wsComment of workspaceComments) {
+                                wsComment.comment.splice(wsComment.comment.indexOf(current), 1)
+                            }
+                        }
                         current.owner = commented;
+                        current.ownerStatement = stmt;
                         comments.push(current);
                     }
                 }
@@ -1415,17 +1428,17 @@ ${output}</xml>`;
                     if (isTopLevelComment(commented)) {
                         let currentWorkspaceComment: Comment[] = [];
 
-                        const workspaceCommentStrings: string[] = [];
+                        const localWorkspaceComments: Comment[][] = [];
 
                         comments.forEach((comment, index) => {
                             let pastStart = comment.owner && comment.start < comment.owner.getStart();
                             if (comment.kind === CommentKind.MultiLine && pastStart) {
                                 if (currentWorkspaceComment.length) {
-                                    workspaceCommentStrings.push(formatCommentsForBlocks(currentWorkspaceComment));
+                                    localWorkspaceComments.push(currentWorkspaceComment);
                                     currentWorkspaceComment = [];
                                 }
                                 if (index != comments.length - 1) {
-                                    workspaceCommentStrings.push(formatCommentsForBlocks([comment]));
+                                    localWorkspaceComments.push([comment]);
                                     return;
                                 }
                             }
@@ -1433,18 +1446,18 @@ ${output}</xml>`;
                             currentWorkspaceComment.push(comment);
 
                             if (comment.followedByEmptyLine && pastStart) {
-                                workspaceCommentStrings.push(formatCommentsForBlocks(currentWorkspaceComment));
+                                localWorkspaceComments.push(currentWorkspaceComment);
                                 currentWorkspaceComment = [];
                             }
                         });
 
                         comments = currentWorkspaceComment;
 
-                        workspaceCommentStrings.forEach(commentText => {
-                            const ref = getCommentRef();
+                        localWorkspaceComments.forEach(comment => {
+                            const refId = getCommentRef();
 
-                            wsCommentRefs.push(ref);
-                            workspaceComments.push({ text: commentText, refId: ref });
+                            wsCommentRefs.push(refId);
+                            workspaceComments.push({ comment, refId });
                         });
                     }
 
