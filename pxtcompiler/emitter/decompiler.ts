@@ -1431,8 +1431,8 @@ ${output}</xml>`;
                         const localWorkspaceComments: Comment[][] = [];
 
                         comments.forEach((comment, index) => {
-                            let pastStart = comment.owner && comment.start < comment.owner.getStart();
-                            if (comment.kind === CommentKind.MultiLine && pastStart) {
+                            let beforeStatement = comment.owner && comment.start < comment.owner.getStart();
+                            if (comment.kind === CommentKind.MultiLine && beforeStatement) {
                                 if (currentWorkspaceComment.length) {
                                     localWorkspaceComments.push(currentWorkspaceComment);
                                     currentWorkspaceComment = [];
@@ -1445,7 +1445,7 @@ ${output}</xml>`;
 
                             currentWorkspaceComment.push(comment);
 
-                            if (comment.followedByEmptyLine && pastStart) {
+                            if (comment.followedByEmptyLine && beforeStatement) {
                                 localWorkspaceComments.push(currentWorkspaceComment);
                                 currentWorkspaceComment = [];
                             }
@@ -3609,10 +3609,12 @@ ${output}</xml>`;
             for (const commentRange of commentRanges) {
 
                 const endLine = ts.getLineOfLocalPosition(file, commentRange.end);
+                const nextLineStart = ts.getStartPositionOfLine(endLine + 1, file) || fileText.length;
+                const nextLineEnd = ts.getStartPositionOfLine(endLine + 2, file) || fileText.length;
 
                 const followedByEmptyLine = !isTrailingComment && !fileText.substr(
-                    ts.getStartPositionOfLine(endLine + 1, file),
-                    ts.getStartPositionOfLine(endLine + 2, file) - ts.getStartPositionOfLine(endLine + 1, file)
+                    nextLineStart,
+                    nextLineEnd - nextLineStart
                 ).trim();
 
                 let commentText = fileText.substr(commentRange.pos, commentRange.end - commentRange.pos)
