@@ -565,14 +565,17 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
     };
 
     for (const used of usedPackageInfo) {
-        const { info, dirname } = used;
         if (!used) continue;
-        pxt.Util.jsonCopyFrom(result.byQName, info.apis.byQName);
+        const { info, dirname } = used;
+
+        // reinclude the pkg the api originates from, which is trimmed during compression
         for (const api of Object.keys(info.apis.byQName)) {
-            result.byQName[api].pkg = dirname;
+            info.apis.byQName[api].pkg = dirname;
         }
 
-        if (info.apis.jres) pxt.Util.jsonCopyFrom(result.jres, info.apis.jres);
+        pxt.Util.jsonCopyFrom(result.byQName, info.apis.byQName);
+        if (info.apis.jres)
+            pxt.Util.jsonCopyFrom(result.jres, info.apis.jres);
     }
 
     const jres = pkg.mainPkg.getJRes();
