@@ -81,7 +81,7 @@
     "webusb": "^1.1.1"
   },
   "devDependencies": {
-    "monaco-editor": "0.19.3",
+    "monaco-editor-core": "0.19.3",
     "pxt-blockly": "2.1.14",
     "react": "16.8.3",
     "react-dom": "16.11.0",

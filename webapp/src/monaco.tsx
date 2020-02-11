@@ -787,12 +787,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.hideFlyout();
             })
 
+            monaco.languages.register({
+                id: "python",
+                extensions: ["py"]
+            })
             monaco.languages.registerCompletionItemProvider("python", new CompletionProvider(this, true));
             monaco.languages.registerSignatureHelpProvider("python", new SignatureHelper(this, true));
             monaco.languages.registerHoverProvider("python", new HoverProvider(this, true));
             monaco.languages.registerDocumentRangeFormattingEditProvider("python", new FormattingProvider(this, true));
             monaco.languages.setLanguageConfiguration("python", pythonLanguageConfiguration)
 
+            monaco.languages.register({
+                id: "typescript",
+                extensions: ["ts"]
+            })
             monaco.languages.registerCompletionItemProvider("typescript", new CompletionProvider(this, false));
             monaco.languages.registerSignatureHelpProvider("typescript", new SignatureHelper(this, false));
             monaco.languages.registerHoverProvider("typescript", new HoverProvider(this, false));

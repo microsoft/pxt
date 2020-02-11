@@ -392,22 +392,22 @@ const buildSVGIcons = () => {
 *********************************************************/
 
 const copyMonacoBase = () => gulp.src([
-    "node_modules/monaco-editor/min/vs/base/**/*",
+    "node_modules/monaco-editor-core/min/vs/base/**/*",
     "!**/codicon.ttf" // We use a different version of this font that's checked into pxt
 ])
     .pipe(gulp.dest("webapp/public/vs/base"));
 
 const copyMonacoEditor = () => gulp.src([
-    "node_modules/monaco-editor/min/vs/editor/**/*",
+    "node_modules/monaco-editor-core/min/vs/editor/**/*",
     "!**/editor.main.js"
 ])
     .pipe(gulp.dest("webapp/public/vs/editor"));
 
-const copyMonacoLoader = () => gulp.src("node_modules/monaco-editor/min/vs/loader.js")
+const copyMonacoLoader = () => gulp.src("node_modules/monaco-editor-core/min/vs/loader.js")
     .pipe(gulp.dest("webapp/public/vs"));
 
 const languages = ["bat", "cpp", "json", "javascript", "markdown", "python"]
-const copyMonacoEditorMain = () => gulp.src("node_modules/monaco-editor/min/vs/editor/editor.main.js")
+const copyMonacoEditorMain = () => gulp.src("node_modules/monaco-editor-core/min/vs/editor/editor.main.js")
     .pipe(replace(/"\.\/([\w-]+)\/\1\.contribution"(?:,)?\s*/gi, (match, lang) => {
         if (languages.indexOf(lang) === -1) {
             return ""
@@ -418,14 +418,14 @@ const copyMonacoEditorMain = () => gulp.src("node_modules/monaco-editor/min/vs/e
 
 const basicLanguages = ["bat", "cpp", "javascript", "markdown", "python"];
 const copyMonacoBasicLanguages = gulp.parallel(basicLanguages.map(lang => {
-    return () => gulp.src(`node_modules/monaco-editor/min/vs/basic-languages/${lang}/${lang}.js`)
+    return () => gulp.src(`node_modules/monaco-editor-core/min/vs/basic-languages/${lang}/${lang}.js`)
         .pipe(gulp.dest(`webapp/public/vs/basic-languages/${lang}`))
 }));
 
-const copyMonacoJSON = () => gulp.src("node_modules/monaco-editor/min/vs/language/json/**/*")
+const copyMonacoJSON = () => gulp.src("node_modules/monaco-editor-core/min/vs/language/json/**/*")
     .pipe(gulp.dest("webapp/public/vs/language/json"));
 
-const copyMonacoTypescript = () => gulp.src("node_modules/monaco-editor/min/vs/language/typescript/**/*")
+const copyMonacoTypescript = () => gulp.src("node_modules/monaco-editor-core/min/vs/language/typescript/**/*")
     .pipe(gulp.dest("webapp/public/vs/language/typescript"));
 
 const inlineCodiconFont = () => {
@@ -433,7 +433,7 @@ const inlineCodiconFont = () => {
     // We need to inline the font anyways so fetch a good version of the font from the source
     let font = fs.readFileSync("theme/external-font/codicon.ttf").toString("base64");
 
-    return gulp.src("node_modules/monaco-editor/min/vs/editor/editor.main.css")
+    return gulp.src("node_modules/monaco-editor-core/min/vs/editor/editor.main.css")
         .pipe(replace(`../base/browser/ui/codiconLabel/codicon/codicon.ttf`, `data:application/x-font-ttf;charset=utf-8;base64,${font}`))
         .pipe(gulp.dest("webapp/public/vs/editor/"))
 }
@@ -448,8 +448,8 @@ const copyMonaco = gulp.series(gulp.parallel(
     copyMonacoEditor,
     copyMonacoLoader,
     copyMonacoEditorMain,
-    copyMonacoJSON,
-    copyMonacoBasicLanguages,
+    // copyMonacoJSON,
+    // copyMonacoBasicLanguages,
     //copyMonacoTypescript,
     inlineCodiconFont
 ), stripMonacoSourceMaps);
