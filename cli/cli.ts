@@ -3135,17 +3135,23 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
     return pxt.discourse.topicsByTag(discourseRoot, tag)
         .then(urls => Promise.mapSeries(topics, topic => {
             pxt.log(`  ${topic.title}`)
-            topics.push(<pxt.CodeCard>{
-                title: topic.title,
-                url: topic.url,
-                imageUrl: topic.imageUrl,
-                cardType: "forumUrl"
-            });
             return pxt.discourse.extractSharedIdFromPostUrl(topic.url)
                 .then(id => {
                     n++;
                     pxt.log(`    --> ${id}`)
-                    return extractAsyncInternal(id, out, false);
+                    return pxt.Cloud.privateGetAsync(id) // make sure it still exists
+                        .then(() => extractAsyncInternal(id, out, false))
+                        .then(() => {
+                            topics.push(<pxt.CodeCard>{
+                                title: topic.title,
+                                url: topic.url,
+                                imageUrl: topic.imageUrl,
+                                cardType: "forumUrl"
+                            });
+                        })
+                        .catch(e => {
+                            pxt.log(`error: project ${id} could not be loaded`);
+                        });
                 })
         }))
         .then(() => {
@@ -3156,6 +3162,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
 ${JSON.stringify(topics)}
 \`\`\``;
                 })
+                fs.writeFileSync(outmd, md, { encoding: "uf8" });
             }
             pxt.log(`downloaded ${n} programs from tag ${tag}`)
         })

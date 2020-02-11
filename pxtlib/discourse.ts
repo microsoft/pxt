@@ -50,6 +50,6 @@ namespace pxt.discourse {
                 json.topic_list.topics.map(t => {
                     t.url = `${apiUrl}/t/${t.slug}/${t.id}`;
                     return t;
-                })
+                }));
     }
 }
