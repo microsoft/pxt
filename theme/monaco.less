@@ -113,7 +113,7 @@
             margin-bottom: 0.75rem;
             border-radius: 0.25rem;
             color: @white;
-            padding: 0.6rem;
+            padding: .25rem 0.75rem;
             cursor: pointer;
             display: inline-block;
             -moz-user-select: none;
@@ -121,6 +121,7 @@
             -webkit-user-select: none;
             user-select: none;
             position: relative;
+            font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
 
             span {
                 word-wrap: break-word;
@@ -148,8 +149,43 @@
             margin: 0.25rem 0;
         }
 
+        .monacoDraggableBlock {
+            font-family: @pageFont;
+            width: auto;
+        }
         .description {
             font-family: @pageFont;
+        }
+        .signature {
+            margin-top: 0.5rem;
+            font-weight: 600;
+
+            span {
+                display: inline-block;
+                width: calc(~'100% - 1.75rem');
+            }
+
+            .blockHelp {
+                float: right;
+                color: @white;
+
+                i {
+                    font-size: 1.25rem;
+                }
+            }
+            .blockHelp:hover {
+                text-decoration: none;
+            }
+        }
+        .argName {
+            font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+            font-weight: 600;
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            padding: 0.1rem .5rem;
+            display: inline-block;
+            border-radius: 0.8rem;
+            line-height: 1.75rem;
         }
 
         .paramName {
@@ -160,8 +196,12 @@
             margin: 0.5rem;
             font-family: @pageFont;
         }
+        .paramDescription {
+            font-family: @pageFont;
+        }
 
-        .detail .params {
+        .detail .params,
+        .signature {
             display: none;
         }
         &.expand {
@@ -172,7 +212,8 @@
             cursor: grab;
 
             .blockHandle,
-            .detail .params {
+            .detail .params,
+            .signature {
                 display: block;
             }
         }

@@ -774,6 +774,7 @@ namespace ts.pxtc.service {
 
     let lastApiInfo: CachedApisInfo | undefined;
     let lastPyIdentifierSyntaxInfo: SyntaxInfo | undefined;
+    let lastGlobalNames: pxt.Map<SymbolInfo> | undefined;
     let lastBlocksInfo: BlocksInfo;
     let lastLocBlocksInfo: BlocksInfo;
     let lastFuse: Fuse<SearchInfo>;
@@ -835,6 +836,7 @@ namespace ts.pxtc.service {
             service.cleanupSemanticCache();
             lastApiInfo = undefined
             lastPyIdentifierSyntaxInfo = undefined
+            lastGlobalNames = undefined
             host.reset()
             transpile.resetCache()
         },
@@ -862,6 +864,8 @@ namespace ts.pxtc.service {
                 if (res.syntaxInfo && res.syntaxInfo.symbols) {
                     lastPyIdentifierSyntaxInfo = res.syntaxInfo
                 }
+                if (res.globalNames)
+                    lastGlobalNames = res.globalNames
                 if (lastPyIdentifierSyntaxInfo)
                     return lastPyIdentifierSyntaxInfo
             }
@@ -931,6 +935,8 @@ namespace ts.pxtc.service {
                     lastPyIdentifierSyntaxInfo = res.syntaxInfo
                     resultSymbols = opts.syntaxInfo.symbols
                 }
+                if (res.globalNames)
+                    lastGlobalNames = res.globalNames
 
                 // update our language host
                 Object.keys(res.outfiles)
@@ -1047,8 +1053,8 @@ namespace ts.pxtc.service {
 
             // determine which names are taken for auto-generated variable names
             let takenNames: pxt.Map<SymbolInfo> = {}
-            if (isPython && lastPyIdentifierSyntaxInfo && lastPyIdentifierSyntaxInfo.globalNames) {
-                takenNames = lastPyIdentifierSyntaxInfo.globalNames
+            if (isPython && lastGlobalNames) {
+                takenNames = lastGlobalNames
             } else {
                 takenNames = lastApiInfo.apis.byQName
             }
@@ -1161,7 +1167,18 @@ namespace ts.pxtc.service {
             const n = lastApiInfo.decls[o.qName];
             if (!fn || !n || !ts.isFunctionLike(n))
                 return undefined;
-            return ts.pxtc.service.getSnippet(lastApiInfo.apis, lastApiInfo.apis.byQName, v.runtime, fn, n as FunctionLikeDeclaration, !!o.python)
+
+            const isPython = !!o.python
+
+            // determine which names are taken for auto-generated variable names
+            let takenNames: pxt.Map<SymbolInfo> = {}
+            if (isPython && lastGlobalNames) {
+                takenNames = lastGlobalNames
+            } else {
+                takenNames = lastApiInfo.apis.byQName
+            }
+
+            return ts.pxtc.service.getSnippet(lastApiInfo.apis, takenNames, v.runtime, fn, n as FunctionLikeDeclaration, isPython)
         },
         blocksInfo: v => blocksInfoOp(v as any, v.blocks && v.blocks.bannedCategories),
         apiSearch: v => {
@@ -1400,6 +1417,9 @@ namespace ts.pxtc.service {
         addApiInfo(host.opts)
         const prevFS = U.flatClone(host.opts.fileSystem);
         let res = runConversionsAndStoreResults(host.opts);
+        if (res && res.globalNames) {
+            lastGlobalNames = res.globalNames
+        }
         const newFS = host.opts.fileSystem
         host.opts.fileSystem = prevFS
         for (let k of Object.keys(newFS))
@@ -1617,7 +1637,7 @@ namespace ts.pxtc.service {
             .filter(param => !param.initializer && !param.questionToken)
             .map(getParameterDefault) : [];
 
-        let snippetPrefix = (fn.attributes.blockNamespace || fn.namespace);
+        let snippetPrefix = fn.namespace;
         let isInstance = false;
         let addNamespace = false;
         let namespaceToUse = "";
@@ -1671,7 +1691,13 @@ namespace ts.pxtc.service {
                 else if (element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Property) {
                     const params = pxt.blocks.compileInfo(element);
                     if (params.thisParameter) {
-                        snippetPrefix = params.thisParameter.defaultValue || params.thisParameter.definitionName;
+                        let varName: string = undefined
+                        if (params.thisParameter.definitionName) {
+                            varName = params.thisParameter.definitionName
+                            varName = varName[0].toUpperCase() + varName.substring(1)
+                            varName = `my${varName}`
+                        }
+                        snippetPrefix = params.thisParameter.defaultValue || varName;
                         if (python && snippetPrefix)
                             snippetPrefix = snakify(snippetPrefix);
                     }
@@ -1731,7 +1757,11 @@ namespace ts.pxtc.service {
                 returnValue = python ? "return False" : "return false";
 
             if (python) {
-                let functionArgument = `(${functionSignature.parameters.map(p => p.name).join(', ')})`;
+                let functionArgument: string;
+                if (attrs.optionalVariableArgs)
+                    functionArgument = `()`
+                else
+                    functionArgument = `(${functionSignature.parameters.map(p => p.name).join(', ')})`;
                 let n = fnName || "fn";
                 if (functionCount++ > 0) n += functionCount;
                 n = snakify(n);
@@ -1740,11 +1770,13 @@ namespace ts.pxtc.service {
                 return n;
             } else {
                 let functionArgument = "()";
-                let displayParts = (ts as any).mapToDisplayParts((writer: ts.DisplayPartsSymbolWriter) => {
-                    checker.getSymbolDisplayBuilder().buildSignatureDisplay(functionSignature, writer);
-                });
-                let displayPartsStr = ts.displayPartsToString(displayParts);
-                functionArgument = displayPartsStr.substr(0, displayPartsStr.lastIndexOf(":"));
+                if (!attrs.optionalVariableArgs) {
+                    let displayParts = (ts as any).mapToDisplayParts((writer: ts.DisplayPartsSymbolWriter) => {
+                        checker.getSymbolDisplayBuilder().buildSignatureDisplay(functionSignature, writer);
+                    });
+                    let displayPartsStr = ts.displayPartsToString(displayParts);
+                    functionArgument = displayPartsStr.substr(0, displayPartsStr.lastIndexOf(":"));
+                }
                 return `function ${functionArgument} {\n    ${returnValue}\n}`;
             }
         }

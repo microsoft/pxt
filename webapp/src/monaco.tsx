@@ -90,7 +90,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         completionSnippet = amendmentToInsertSnippet(
                             createLineReplacementPyAmendment(insertSnippet))
                     } else {
-                        completionSnippet = insertSnippet
+                        completionSnippet = insertSnippet || qName
                         // if we're past the first ".", i.e. we're doing member completion, be sure to
                         // remove what precedes the "." in the full snippet.
                         // E.g. if the user is typing "mobs.", we want to complete with "spawn" (name) not "mobs.spawn" (qName)
@@ -511,6 +511,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 </div>}
                 <div id='monacoEditorInner' style={{ float: 'right' }}>
                     <MonacoFlyout ref={this.handleFlyoutRef} fileType={this.fileType}
+                        blockIdMap={this.blockIdMap}
                         moveFocusToParent={this.moveFocusToToolbox}
                         insertSnippet={this.insertSnippet}
                         setInsertionSnippet={this.setInsertionSnippet}
@@ -1232,6 +1233,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly())
             this.defineEditorTheme(hc, true);
         });
+        this.blockIdMap = snippets.blockIdMap();
     }
 
     snapshotState() {

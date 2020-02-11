@@ -112,7 +112,6 @@ export class ProjectView
     exitAndSaveDialog: projects.ExitAndSaveDialog;
     newProjectDialog: projects.NewProjectDialog;
     chooseHwDialog: projects.ChooseHwDialog;
-    chooseRecipeDialog: tutorial.ChooseRecipeDialog;
     prevEditorId: string;
     screenshotHandlers: ((msg: pxt.editor.ScreenshotData) => void)[] = [];
 
@@ -1296,7 +1295,7 @@ export class ProjectView
 
         const t = header.tutorial;
         return this.loadBlocklyAsync()
-            .then(() => tutorial.getUsedBlocksAsync(t.tutorialCode))
+            .then(() => tutorial.getUsedBlocksAsync(t.tutorialCode, t.language))
             .then((usedBlocks) => {
                 let editorState: pxt.editor.EditorState = {
                     searchBar: false
@@ -2750,6 +2749,21 @@ export class ProjectView
         })();
     }
 
+    openDependentEditor(hd: pxt.workspace.Header) {
+        if (!hd
+            || pxt.BrowserUtils.isElectron()
+            || pxt.BrowserUtils.isUwpEdge()
+            || pxt.BrowserUtils.isIOS())
+            return;
+        let url = window.location.href.replace(/#.*$/, '');
+        url = url + (url.indexOf('?') > -1 ? '&' : '?') + "nestededitorsim=1&lockededitor=1";
+        url += "#header:" + hd.id;
+        const w = window.open(url, pxt.appTarget.id + hd.id);
+        if (w) {
+            pxt.log(`dependent editor window registered`)
+            simulator.driver.registerDependentEditor(w);
+        }
+    }
     ///////////////////////////////////////////////////////////
     ////////////             Debugging            /////////////
     ///////////////////////////////////////////////////////////
@@ -3004,7 +3018,7 @@ export class ProjectView
                     if (pxt.github.isGithubId(id))
                         importGithubProject(id);
                     else
-                        loadHeaderBySharedIdAsync(id).done();
+                        loadHeaderBySharedId(id);
                 }
             }, (e) => {
                 core.errorNotification(lf("Sorry, the project url looks invalid."));
@@ -3092,11 +3106,6 @@ export class ProjectView
     showChooseHwDialog(skipDownload?: boolean) {
         if (this.chooseHwDialog)
             this.chooseHwDialog.show(skipDownload)
-    }
-
-    showRecipesDialog() {
-        if (this.chooseRecipeDialog)
-            this.chooseRecipeDialog.show()
     }
 
     showRenameProjectDialogAsync(): Promise<boolean> {
@@ -3344,7 +3353,12 @@ export class ProjectView
         if (flyoutOnly) {
             margin += 2;
         }
-        return tc ? { 'top': "calc(min(" + tc.getCardHeight() + "px, 18rem) + " + margin + "em)" } : null;
+        if (tc) {
+            // maxium offset of 18rem
+            let maxOffset = Math.min(tc.getCardHeight(), parseFloat(getComputedStyle(document.documentElement).fontSize) * 18);
+            return { 'top': "calc(" + maxOffset + "px + " + margin + "em)" };
+        }
+        return null;
     }
 
     ///////////////////////////////////////////////////////////
@@ -3489,10 +3503,6 @@ export class ProjectView
         this.signInDialog = c;
     }
 
-    private handleChooseRecipeDialogRef = (c: tutorial.ChooseRecipeDialog) => {
-        this.chooseRecipeDialog = c;
-    }
-
     ///////////////////////////////////////////////////////////
     ////////////             RENDER               /////////////
     ///////////////////////////////////////////////////////////
@@ -3530,7 +3540,6 @@ export class ProjectView
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
         const logoWide = !!targetTheme.logoWide;
         const hwDialog = !sandbox && pxt.hasHwVariants();
-        const recipes = !!targetTheme.recipes;
         const expandedStyle = inTutorialExpanded ? this.getExpandedCardStyle(flyoutOnly) : null;
         const invertedTheme = targetTheme.invertedMenu && targetTheme.invertedMonaco;
 
@@ -3643,7 +3652,6 @@ export class ProjectView
                 {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={this.handleExitAndSaveDialogRef} />}
                 {sandbox ? undefined : <projects.NewProjectDialog parent={this} ref={this.handleNewProjectDialogRef} />}
                 {hwDialog ? <projects.ChooseHwDialog parent={this} ref={this.handleChooseHwDialogRef} /> : undefined}
-                {recipes ? <tutorial.ChooseRecipeDialog parent={this} ref={this.handleChooseRecipeDialogRef} /> : undefined}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={this.handleShareEditorRef} loading={this.state.publishing} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={this.handleLanguagePickerRef} /> : undefined}
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}
@@ -3874,7 +3882,12 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             if (/^(github:|https:\/\/github\.com\/)/.test(hash.arg))
                 importGithubProject(hash.arg);
             else
-                loadHeaderBySharedIdAsync(hash.arg).done();
+                loadHeaderBySharedId(hash.arg);
+            return true;
+        case "header":
+            pxt.tickEvent("hash." + hash.cmd);
+            pxt.BrowserUtils.changeHash("");
+            editor.loadHeaderAsync(workspace.getHeader(hash.arg)).done();
             return true;
         case "sandboxproject":
         case "project":
@@ -3935,6 +3948,7 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
         case "sandboxproject":
         case "project":
         case "github":
+        case "header":
             return true;
         default:
             return false;
@@ -3972,17 +3986,13 @@ async function importGithubProject(repoid: string, requireSignin?: boolean) {
     }
 }
 
-function loadHeaderBySharedIdAsync(id: string) {
+function loadHeaderBySharedId(id: string) {
     core.showLoading("loadingheader", lf("loading project..."));
 
-    // try to find project with same id
-    const hdid = workspace.getHeaders().find(h => h.pubId == id);
-
-    let p = hdid ? Promise.resolve(hdid) : workspace.installByIdAsync(id);
-    p.then(hd => theEditor.loadHeaderAsync(hd, null))
+    workspace.installByIdAsync(id)
+        .then(hd => theEditor.loadHeaderAsync(hd, null))
         .catch(core.handleNetworkError)
         .finally(() => core.hideLoading("loadingheader"));
-    return p;
 }
 
 const handleHashChange = (e: HashChangeEvent) => {

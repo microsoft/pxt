@@ -33,7 +33,7 @@
         }
     ],
     "activities": null,
-    "code": "\n { \n let k = 0\n } \n\n { \n let x = 0\n } \n\n { \n let x = 0\nlet y = 0\n } \n\n { \n let x = 0\nlet y = 0\nlet z = 0\n } \n\n { \n let x = 0\nlet y = 0\nlet z = 0\nlet a = 0\n } \n\n { \n let x = 0\nlet y = 0\nlet z = 0\nlet a = 0\nlet b = 0\n } \n",
+    "code": "\n{\nlet k = 0\n}\n\n{\nlet x = 0\n}\n\n{\nlet x = 0\nlet y = 0\n}\n\n{\nlet x = 0\nlet y = 0\nlet z = 0\n}\n\n{\nlet x = 0\nlet y = 0\nlet z = 0\nlet a = 0\n}\n\n{\nlet x = 0\nlet y = 0\nlet z = 0\nlet a = 0\nlet b = 0\n}\n",
     "templateCode": "let k = 0",
     "metadata": {}
 }

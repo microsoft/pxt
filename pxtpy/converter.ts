@@ -2384,6 +2384,7 @@ namespace pxt.py {
         success: boolean,
         outfiles: { [key: string]: string },
         syntaxInfo?: pxtc.SyntaxInfo,
+        globalNames?: pxt.Map<SymbolInfo>,
         sourceMap: pxtc.SourceInterval[]
     }
     export function py2ts(opts: pxtc.CompileOptions): Py2TsRes {
@@ -2461,7 +2462,10 @@ namespace pxt.py {
 
         resetPass(1000)
         infoNode = undefined
-        syntaxInfo = opts.syntaxInfo
+        syntaxInfo = opts.syntaxInfo || {
+            position: 0,
+            type: "symbol"
+        }
         let sourceMap: pxtc.SourceInterval[] = []
         for (let m of modules) {
             try {
@@ -2515,15 +2519,25 @@ namespace pxt.py {
             }
         }
 
-        if (syntaxInfo) syntaxInfo.symbols = []
+        // always return global symbols because we might need to check for
+        // name collisions downstream
+        let globalNames: pxt.Map<SymbolInfo> = {}
+        const apis = U.values(externalApis).concat(U.values(internalApis))
+        let existing: SymbolInfo[] = []
+        const addSym = (v: SymbolInfo) => {
+            if (isGlobalSymbol(v) && existing.indexOf(v) < 0) {
+                let s = cleanSymbol(v)
+                globalNames[s.qName || s.name] = s
+            }
+        }
+        for (let s: ScopeDef | undefined = infoScope; !!s; s = s.parent) {
+            if (s && s.vars)
+                U.values(s.vars).forEach(addSym)
+        }
+        apis.forEach(addSym)
 
-        if (infoNode)
-            error(null, 9569, lf("type annotation error; this should be unreachable"));
         if (syntaxInfo && infoNode) {
-            // TODO: unreachable since infoNode is always undefined here
             infoNode = infoNode as AST
-
-            const apis = U.values(externalApis).concat(U.values(internalApis))
 
             syntaxInfo.beginPos = infoNode.startPos
             syntaxInfo.endPos = infoNode.endPos
@@ -2531,22 +2545,7 @@ namespace pxt.py {
             if (!syntaxInfo.symbols)
                 syntaxInfo.symbols = []
 
-            // always return global symbols because we might need to check for
-            // name collisions downstream
-            syntaxInfo.globalNames = syntaxInfo.globalNames || {}
-            let existing: SymbolInfo[] = []
-            const addSym = (v: SymbolInfo) => {
-                if (isGlobalSymbol(v) && existing.indexOf(v) < 0) {
-                    let s = cleanSymbol(v)
-                    syntaxInfo!.globalNames![s.qName || s.name] = s
-                }
-            }
             existing = syntaxInfo.symbols.slice()
-            for (let s: ScopeDef | undefined = infoScope; !!s; s = s.parent) {
-                if (s && s.vars)
-                    U.values(s.vars).forEach(addSym)
-            }
-            apis.forEach(addSym)
 
             if (syntaxInfo.type == "memberCompletion" && infoNode.kind == "Attribute") {
                 const attr = infoNode as Attribute
@@ -2574,7 +2573,7 @@ namespace pxt.py {
                 }
 
             } else if (syntaxInfo.type == "identifierCompletion") {
-                syntaxInfo.symbols = pxt.U.values(syntaxInfo.globalNames)
+                syntaxInfo.symbols = pxt.U.values(globalNames)
             } else {
                 let sym = (infoNode as Expr).symbolInfo
                 if (sym)
@@ -2590,6 +2589,7 @@ namespace pxt.py {
             success: outDiag.length === 0,
             diagnostics: outDiag,
             syntaxInfo,
+            globalNames,
             sourceMap: sourceMap
         }
 

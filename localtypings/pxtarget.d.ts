@@ -363,7 +363,7 @@ declare namespace pxt {
         debugExtensionCode?: boolean; // debug extension and libs code in the Monaco debugger
         snippetBuilder?: boolean; // Snippet builder experimental feature
         experimentalHw?: boolean; // enable experimental hardware
-        recipes?: boolean; // inlined tutorials
+        // recipes?: boolean; // inlined tutorials - deprecated
         checkForHwVariantWebUSB?: boolean; // check for hardware variant using webusb before compiling
         shareFinishedTutorials?: boolean; // always pop a share dialog once the tutorial is finished
         leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
@@ -375,6 +375,7 @@ declare namespace pxt {
         blocksCollapsing?: boolean; // collapse/uncollapse functions/event in blocks
         hideHomeDetailsVideo?: boolean; // hide video/large image from details card
         tutorialBlocksDiff?: boolean; // automatically display diffs in tutorials
+        openProjectNewTab?: boolean; // allow opening project in a new tab
     }
 
     interface SocialOptions {
@@ -753,9 +754,7 @@ declare namespace ts.pxtc {
     interface SyntaxInfo {
         type: InfoType;
         position: number;
-
         symbols?: SymbolInfo[];
-        globalNames?: pxt.Map<SymbolInfo>;
         beginPos?: number;
         endPos?: number;
         auxResult?: any;
@@ -847,6 +846,7 @@ declare namespace pxt.tutorial {
         steps: TutorialStepInfo[];
         activities: TutorialActivityInfo[];
         code: string; // all code
+        language?: string; // language of code snippet (ts or python)
         templateCode?: string;
         metadata?: TutorialMetadata;
     }
@@ -894,6 +894,7 @@ declare namespace pxt.tutorial {
         templateCode?: string;
         autoexpandStep?: boolean; // autoexpand tutorial card if instruction text overflows
         metadata?: TutorialMetadata; // metadata about the tutorial parsed from the markdown
+        language?: string; // native language of snippets ("python" for python, otherwise defaults to typescript)
     }
     interface TutorialCompletionInfo {
         // id of the tutorial

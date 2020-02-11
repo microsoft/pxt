@@ -45,6 +45,8 @@ export interface BlockDefinition {
         group?: string;
         subcategory?: string;
         topblockWeight?: number;
+        help?: string;
+        _def?: pxtc.ParsedBlockDef;
     };
     retType?: string;
     blockXml?: string;
@@ -124,7 +126,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
         this.setSelection = this.setSelection.bind(this);
         this.advancedClicked = this.advancedClicked.bind(this);
-        this.recipesClicked = this.recipesClicked.bind(this);
         this.recoverToolbox = this.recoverToolbox.bind(this);
     }
 
@@ -282,12 +283,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.showAdvanced();
     }
 
-    recipesClicked() {
-        const { editorname } = this.props;
-        pxt.tickEvent(`${editorname}.recipes`);
-        this.props.parent.parent.showRecipesDialog();
-    }
-
     showAdvanced() {
         const { parent } = this.props;
         if (this.selectedItem && this.selectedItem.props.treeRow
@@ -418,8 +413,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
         this.items = this.getAllCategoriesList();
 
-        const hasRecipes = !!theme.recipes && !inTutorial && this.items.length > 0;
-
         const searchTreeRow = ToolboxSearch.getSearchTreeRow();
         const topBlocksTreeRow = {
             nameid: 'topblocks',
@@ -450,8 +443,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                             )) : undefined}
                         </CategoryItem>
                     ))}
-                    {hasAdvanced || hasRecipes ? <TreeSeparator key="advancedseparator" /> : undefined}
-                    {hasRecipes ? <CategoryItem toolbox={this} treeRow={{ nameid: "", name: pxt.toolbox.recipesTitle(), color: pxt.toolbox.getNamespaceColor('recipes'), icon: pxt.toolbox.getNamespaceIcon('recipes') }} onCategoryClick={this.recipesClicked} /> : undefined}
+                    {hasAdvanced ? <TreeSeparator key="advancedseparator" /> : undefined}
                     {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ nameid: "", name: pxt.toolbox.advancedTitle(), color: pxt.toolbox.getNamespaceColor('advanced'), icon: pxt.toolbox.getNamespaceIcon(showAdvanced ? 'advancedexpanded' : 'advancedcollapsed') }} onCategoryClick={this.advancedClicked} /> : undefined}
                     {showAdvanced ? advancedCategories.map((treeRow) => (
                         <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection}>
@@ -889,7 +881,7 @@ export class ToolboxTrashIcon extends data.Component<ToolboxTrashIconProps, {}> 
         let style: any = { opacity: 0, display: 'none' };
         if (this.props.flyoutOnly) {
             let flyout = document.querySelector('.blocklyFlyout');
-            if (flyout ) {
+            if (flyout) {
                 style["left"] = (flyout.clientWidth / 2);
                 style["transform"] = "translateX(-45%)";
             }
