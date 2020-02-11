@@ -12,19 +12,27 @@ namespace pxt.discourse {
     interface DiscourseLinkCount {
         url?: string;
     }
-    export interface Topic {
+    interface TagTopic {
         id: string;
         title: string;
         image_url: string;
         slug: string;
         views: number;
         like_count: number;
-        url: string;
+        posters: {
+            user_id: string;
+        }[];
     }
-    export interface TagsResponse {
-        users: any[];
+    interface TagUser {
+        id: number;
+        username: string;
+        name: string;
+        avatar_template: string;
+    }
+    interface TagsResponse {
+        users: TagUser[];
         topic_list: {
-            topics: Topic[];
+            topics: TagTopic[];
         }
     }
 
@@ -43,14 +51,21 @@ namespace pxt.discourse {
             });
     }
 
-    export function topicsByTag(apiUrl: string, tag: string): Promise<Topic[]> {
+    export function topicsByTag(apiUrl: string, tag: string): Promise<pxt.CodeCard[]> {
         apiUrl = apiUrl.replace(/\/$/, '');
         const q = `${apiUrl}/tags/${tag}.json`;
         return pxt.Util.httpGetJsonAsync(q)
-            .then((json: TagsResponse) =>
-                json.topic_list.topics.map(t => {
-                    t.url = `${apiUrl}/t/${t.slug}/${t.id}`;
-                    return t;
-                }));
+            .then((json: TagsResponse) => {
+                const users = pxt.Util.toDictionary(json.users, u => u.id.toString());
+                return json.topic_list.topics.map(t => {
+                    return <pxt.CodeCard>{
+                        title: t.title,
+                        url: `${apiUrl}/t/${t.slug}/${t.id}`,
+                        imageUrl: t.image_url,
+                        author: users[t.posters[0].user_id].name,
+                        cardType: "forumUrl"
+                    }
+                });
+            });
     }
 }

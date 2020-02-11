@@ -3142,12 +3142,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                     pxt.log(`    --> ${id}`)
                     return extractAsyncInternal(id, out, false)
                         .then(() => {
-                            cards.push(<pxt.CodeCard>{
-                                title: topic.title,
-                                url: topic.url,
-                                imageUrl: topic.image_url,
-                                cardType: "forumUrl"
-                            });
+                            cards.push(topic);
                         })
                         .catch(e => {
                             pxt.log(`error: project ${id} could not be loaded`);
