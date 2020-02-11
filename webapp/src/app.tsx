@@ -3018,7 +3018,7 @@ export class ProjectView
                     if (pxt.github.isGithubId(id))
                         importGithubProject(id);
                     else
-                        loadHeaderBySharedIdAsync(id).done();
+                        loadHeaderBySharedId(id);
                 }
             }, (e) => {
                 core.errorNotification(lf("Sorry, the project url looks invalid."));
@@ -3882,7 +3882,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             if (/^(github:|https:\/\/github\.com\/)/.test(hash.arg))
                 importGithubProject(hash.arg);
             else
-                loadHeaderBySharedIdAsync(hash.arg).done();
+                loadHeaderBySharedId(hash.arg);
             return true;
         case "header":
             pxt.tickEvent("hash." + hash.cmd);
@@ -3986,17 +3986,13 @@ async function importGithubProject(repoid: string, requireSignin?: boolean) {
     }
 }
 
-function loadHeaderBySharedIdAsync(id: string) {
+function loadHeaderBySharedId(id: string) {
     core.showLoading("loadingheader", lf("loading project..."));
 
-    // try to find project with same id
-    const hdid = workspace.getHeaders().find(h => h.pubId == id);
-
-    let p = hdid ? Promise.resolve(hdid) : workspace.installByIdAsync(id);
-    p.then(hd => theEditor.loadHeaderAsync(hd, null))
+    workspace.installByIdAsync(id)
+        .then(hd => theEditor.loadHeaderAsync(hd, null))
         .catch(core.handleNetworkError)
         .finally(() => core.hideLoading("loadingheader"));
-    return p;
 }
 
 const handleHashChange = (e: HashChangeEvent) => {
