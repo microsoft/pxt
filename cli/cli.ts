@@ -6196,8 +6196,16 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         advanced: true,
         argString: "<tag>",
         flags: {
-            out: { description: "output folder, default is temp" },
-            md: { description: "path of the markdown file to generate", type: "string" }
+            out: {
+                description: "output folder, default is temp",
+                argument: "out",
+                type: "string"
+            },
+            md: {
+                description: "path of the markdown file to generate",
+                argument: "out",
+                type: "string"
+            }
         }
     }, downloadDiscourseTagAsync)
 
