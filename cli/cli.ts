@@ -3150,14 +3150,18 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                     return extractAsyncInternal(id, out, false)
                         .then(() => {
                             if (md && topic.imageUrl) {
+                                cards.push(topic);
                                 return pxt.Util.requestAsync({
-                                    url: topic.imageUrl,
+                                    url: `https://makecode.com/${id}/thumb`,
                                     method: "GET",
                                     responseArrayBuffer: true,
+                                    allowHttpErrors: true,
                                     headers: {
                                         "accept": "image/*"
                                     }
                                 }).then(resp => {
+                                    if (resp.statusCode != 200)
+                                        return;
                                     let ext = /image\/(png|jpeg)/.exec(resp.headers["content-type"] as string)[1];
                                     if (ext == "jpeg")
                                         ext = "jpg";
@@ -3168,9 +3172,6 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                                 // drop topic image in static folder
                             }
                             return Promise.resolve();
-                        })
-                        .then(() => { 
-                            cards.push(topic);
                         })
                         .catch(e => {
                             pxt.log(`error: project ${id} could not be loaded`);
