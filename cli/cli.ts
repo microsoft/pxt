@@ -3140,8 +3140,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                 .then(id => {
                     n++;
                     pxt.log(`    --> ${id}`)
-                    return pxt.Cloud.privateGetAsync(id) // make sure it still exists
-                        .then(() => extractAsyncInternal(id, out, false))
+                    return extractAsyncInternal(id, out, false)
                         .then(() => {
                             cards.push(<pxt.CodeCard>{
                                 title: topic.title,
