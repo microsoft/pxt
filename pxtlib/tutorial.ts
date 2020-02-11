@@ -12,7 +12,9 @@ namespace pxt.tutorial {
         // collect code and infer editor
         const { code, templateCode, editor, language } = computeBodyMetadata(body);
 
-        if (!metadata.noDiffs && pxt.appTarget.appTheme.tutorialBlocksDiff)
+        if (!metadata.noDiffs
+            && (editor != pxt.BLOCKS_PROJECT_NAME || pxt.appTarget.appTheme.tutorialBlocksDiff)
+        )
             diffify(steps, activities);
 
         // strip hidden snippets
@@ -23,7 +25,7 @@ namespace pxt.tutorial {
         });
 
         return {
-            editor: editor || pxt.BLOCKS_PROJECT_NAME,
+            editor,
             title,
             steps,
             activities,
@@ -70,9 +72,11 @@ namespace pxt.tutorial {
                         templateCode = m2;
                         break;
                 }
-                code += `\n${ m1 == "python" ? m2 : "{\n" + m2 + "\n}" }\n`;
+                code += `\n${m1 == "python" ? m2 : "{\n" + m2 + "\n}"}\n`;
                 return "";
             });
+        // default to blocks
+        editor = editor || pxt.BLOCKS_PROJECT_NAME
         return { code, templateCode, editor, language }
 
         function checkTutorialEditor(expected: string) {
