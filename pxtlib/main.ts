@@ -212,14 +212,31 @@ namespace pxt {
         })
 
         // patch any pre-configured query url appTheme overrides
-        if (appTarget.queryVariants && typeof window !== 'undefined') {
+        if (typeof window !== 'undefined') {
+            // Map<AppTarget>
+            const queryVariants: Map<any> = {
+                "lockededitor=1": {
+                    appTheme: {
+                        lockedEditor: true
+                    }
+                },
+                "hidemenu=1": {
+                    appTheme: {
+                        hideMenuBar: true
+                    }
+                }
+            }
+            // import target specific flags
+            if (appTarget.queryVariants)
+                Util.jsonCopyFrom(queryVariants, appTarget.queryVariants);
+
             const href = window.location.href;
-            Object.keys(appTarget.queryVariants).forEach(queryRegex => {
+            Object.keys(queryVariants).forEach(queryRegex => {
                 const regex = new RegExp(queryRegex, "i");
                 const match = regex.exec(href);
                 if (match) {
                     // Apply any appTheme overrides
-                    let v = appTarget.queryVariants[queryRegex];
+                    let v = queryVariants[queryRegex];
                     if (v) {
                         U.jsonMergeFrom(appTarget, v);
                     }

@@ -153,6 +153,11 @@ namespace pxt.editor.experiments {
                 id: "tutorialBlocksDiff",
                 name: lf("Tutorial Block Diffs"),
                 description: lf("Automatially render blocks diff in tutorials")
+            },
+            {
+                id: "openProjectNewTab",
+                name: lf("Open in New Tab"),
+                description: lf("Open connected editors in different browser tabs.")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
