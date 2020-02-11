@@ -3147,7 +3147,6 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                         return Promise.resolve();
                     }
                     n++;
-                    pxt.log(`    --> ${id}`)
                     return extractAsyncInternal(id, out, false)
                         .then(() => {
                             cards.push(topic);
@@ -3165,7 +3164,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
 ${JSON.stringify(cards)}
 \`\`\``;
                 })
-                fs.writeFileSync(outmd, md, { encoding: "uf8" });
+                fs.writeFileSync(outmd, md, { encoding: "utf8" });
             }
             pxt.log(`downloaded ${n} programs from tag ${tag}`)
         })
@@ -4818,16 +4817,16 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
         .then(() => {
             let str = buf.toString("utf8")
             if (str[0] == ":") {
-                console.log("Detected .hex file.")
+                pxt.debug("Detected .hex file.")
                 return unpackHexAsync(buf)
             } else if (str[0] == "U") {
-                console.log("Detected .uf2 file.")
+                pxt.debug("Detected .uf2 file.")
                 return unpackHexAsync(buf)
             } else if (str[0] == "{") {  // JSON
-                console.log("Detected .json file.")
+                pxt.debug("Detected .json file.")
                 return JSON.parse(str)
             } else if (buf[0] == 0x5d) { // JSZ
-                console.log("Detected .jsz/.pxt file.")
+                pxt.debug("Detected .jsz/.pxt file.")
                 return pxt.lzmaDecompressAsync(buf as any)
                     .then(str => JSON.parse(str))
             } else
@@ -4835,14 +4834,14 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
         })
         .then(json => {
             if (!json) {
-                console.log("Couldn't extract.")
+                pxt.log("Couldn't extract.")
                 return undefined;
             }
             if (json.meta && json.source) {
                 json = typeof json.source == "string" ? JSON.parse(json.source) : json.source
             }
             if (Array.isArray(json.scripts)) {
-                console.log("Legacy TD workspace.")
+                pxt.debug("Legacy TD workspace.")
                 json.projects = json.scripts.map((scr: any) => ({
                     name: scr.header.name,
                     files: oneFile(scr.source, scr.header.editor)
@@ -4851,7 +4850,7 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
             }
 
             if (json[pxt.CONFIG_NAME]) {
-                console.log("Raw JSON files.")
+                pxt.debug("Raw JSON files.")
                 let cfg: pxt.PackageConfig = pxt.Package.parseAndValidConfig(json[pxt.CONFIG_NAME])
                 let files = json
                 json = {
@@ -4864,7 +4863,7 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
 
             let prjs: SavedProject[] = json.projects
             if (!prjs) {
-                console.log("No projects found.")
+                pxt.log("No projects found.")
                 return undefined;
             }
             const dirs = writeProjects(prjs, outDir)
