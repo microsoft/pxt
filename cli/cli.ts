@@ -3149,44 +3149,31 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                     n++;
                     return extractAsyncInternal(id, out, false)
                         .then(() => {
-                            const ifn = `/static/discourse/${topic.id}.png`;
-                            const localifn = "./docs" + ifn;
-                            if (md && topic.imageUrl 
-                                && !nodeutil.fileExistsSync(localifn)) {
-                                cards.push(topic);
-                                return pxt.Util.requestAsync({
-                                    url: `https://makecode.com/api/${id}/thumb`,
-                                    method: "GET",
-                                    responseArrayBuffer: true,
-                                    headers: {
-                                        "accept": "image/*"
-                                    }
-                                }).then(resp => {
-                                    if (resp.buffer) {
-                                        const m = /image\/png/.exec(resp.headers["content-type"] as string);
-                                        if (!m) {
-                                            pxt.log(`unknown image type: ${resp.headers["content-type"]}`);
-                                        } else {
-                                            topic.imageUrl = ifn;
-                                            nodeutil.writeFileSync(localifn, new Buffer(resp.buffer as ArrayBuffer));
-                                        }
-                                    }
-                                }).catch(e => {
-                                    // no image
-                                    pxt.debug(`no thumb ${e}`);
-                                })
-                                // drop topic image in static folder
+                            const pfn = `./docs/static/discourse/${topic.id}.`;
+                            if (md && !["png", "jpg", "gif"].some(ext => nodeutil.fileExistsSync(pfn + ext))) {
+                                return downloadImageAsync(id, topic, `https://makecode.com/api/${id}/thumb`)
+                                    .catch(e => {
+                                        // no image
+                                        pxt.debug(`no thumb ${e}`);
+                                        // use image from forum
+                                        if (topic.imageUrl)
+                                            return downloadImageAsync(id, topic, topic.imageUrl);
+                                        else
+                                            throw e; // bail out
+                                    })
                             }
                             return Promise.resolve();
                         })
+                        .then(() => { cards.push(topic); })
                         .catch(e => {
-                            pxt.log(`error: project ${id} could not be loaded`);
-                            console.log(e);
+                            pxt.log(`error: project ${id} could not be loaded or no image`);
                         });
                 })
         }))
         .then(() => {
             if (md) {
+                // sort cards by id
+                cards.sort((l, r) => parseInt(l.id) - parseInt(r.id));
                 md = md.replace(/```codecard(.*)```/s, (m, c) => {
                     return `\`\`\`codecard
 ${JSON.stringify(cards, null, 4)}
@@ -3196,6 +3183,31 @@ ${JSON.stringify(cards, null, 4)}
             }
             pxt.log(`downloaded ${n} programs from tag ${tag}`)
         })
+
+    function downloadImageAsync(id: string, topic: pxt.CodeCard, url: string): Promise<void> {
+        return pxt.Util.requestAsync({
+            url: `https://makecode.com/api/${id}/thumb`,
+            method: "GET",
+            responseArrayBuffer: true,
+            headers: {
+                "accept": "image/*"
+            }
+        }).then(resp => {
+            if (resp.buffer) {
+                const m = /image\/(png|jpeg|gif)/.exec(resp.headers["content-type"] as string);
+                if (!m) {
+                    pxt.log(`unknown image type: ${resp.headers["content-type"]}`);
+                } else {
+                    let ext = m[1];
+                    if (ext == "jpeg") ext = "jpg";
+                    const ifn = `/static/discourse/${topic.id}.${ext}`;
+                    const localifn = "./docs" + ifn;
+                    topic.imageUrl = ifn;
+                    nodeutil.writeFileSync(localifn, new Buffer(resp.buffer as ArrayBuffer));
+                }
+            }
+        });
+    }
 }
 
 export function formatAsync(parsed: commandParser.ParsedCommand) {
