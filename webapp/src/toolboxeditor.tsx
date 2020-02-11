@@ -336,7 +336,12 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                     }
                 }
             }
-            this.blockGroups[ns] = blockGroups;
+            // Only cache if there are no filters
+            if (!this.parent.state?.editorState?.filters) {
+                this.blockGroups[ns] = blockGroups;
+            } else {
+                return blockGroups;
+            }
         }
 
         return this.blockGroups[ns];
