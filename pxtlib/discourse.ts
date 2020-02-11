@@ -12,18 +12,19 @@ namespace pxt.discourse {
     interface DiscourseLinkCount {
         url?: string;
     }
-    interface DiscourseTopic {
+    export interface Topic {
         id: string;
         title: string;
         image_url: string;
         slug: string;
         views: number;
         like_count: number;
+        url: string;
     }
-    interface DiscourseTagsResponse {
+    export interface TagsResponse {
         users: any[];
         topic_list: {
-            topics: DiscourseTopic[];
+            topics: Topic[];
         }
     }
 
@@ -42,9 +43,13 @@ namespace pxt.discourse {
             });
     }
 
-    export function topicsByTag(apiUrl: string, tag: string): Promise<string[]> {
+    export function topicsByTag(apiUrl: string, tag: string): Promise<Topic[]> {
         apiUrl = apiUrl.replace(/\/$/, '');
         return pxt.Util.httpGetJsonAsync(`${apiUrl.replace(/\/$/, '')}/tags/${tag}.json`)
-            .then((json: DiscourseTagsResponse) => json.topic_list.topics.map(t => `${apiUrl}/t/${t.slug}/${t.id}`))
+            .then((json: TagsResponse) =>
+                json.topic_list.topics.map(t => {
+                    t.url = `${apiUrl}/t/${t.slug}/${t.id}`;
+                    return t;
+                })
     }
 }

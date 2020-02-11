@@ -3123,6 +3123,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
     ensurePkgDir();
     const tag = parsed.args[0] as string;
     const out = parsed.flags["out"] as string || "./temp";
+    const outmd = parsed.flags["md"] as string;
     const discourseRoot = pxt.appTarget.appTheme
         && pxt.appTarget.appTheme.socialOptions
         && pxt.appTarget.appTheme.socialOptions.discourse;
@@ -3130,10 +3131,17 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
         U.userError("Target not configured for discourse");
     nodeutil.mkdirP(out);
     let n = 0;
+    let topics: pxt.CodeCard[] = [];
     return pxt.discourse.topicsByTag(discourseRoot, tag)
-        .then(urls => Promise.mapSeries(urls, url => {
-            pxt.log(`  ${url}`)
-            return pxt.discourse.extractSharedIdFromPostUrl(url)
+        .then(urls => Promise.mapSeries(topics, topic => {
+            pxt.log(`  ${topic.title}`)
+            topics.push(<pxt.CodeCard>{
+                title: topic.title,
+                url: topic.url,
+                imageUrl: topic.imageUrl,
+                cardType: "forumUrl"
+            });
+            return pxt.discourse.extractSharedIdFromPostUrl(topic.url)
                 .then(id => {
                     n++;
                     pxt.log(`    --> ${id}`)
@@ -3141,6 +3149,14 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                 })
         }))
         .then(() => {
+            let md: string = outmd && fs.readFileSync(outmd, { encoding: "utf8" });
+            if (md) {
+                md.replace(/```codecard(.*)```/, (m, cards) => {
+                    return `\`\`\`codecard
+${JSON.stringify(topics)}
+\`\`\``;
+                })
+            }
             pxt.log(`downloaded ${n} programs from tag ${tag}`)
         })
 }
@@ -6167,7 +6183,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         name: "downloaddiscourse",
         help: "Download program for a discourse tag",
         advanced: true,
-        argString: "<tag>"
+        argString: "<tag>",
+        flags: {
+            out: { description: "output folder, default is temp" },
+            md: { description: "path of the markdown file to generate" }
+        }
     }, downloadDiscourseTagAsync)
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
