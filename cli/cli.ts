@@ -3119,6 +3119,32 @@ export function exportCppAsync(parsed: commandParser.ParsedCommand) {
         })
 }
 
+export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): Promise<void> {
+    ensurePkgDir();
+    const tag = parsed.args[0] as string;
+    const out = parsed.flags["out"] as string || "./temp";
+    const discourseRoot = pxt.appTarget.appTheme
+        && pxt.appTarget.appTheme.socialOptions
+        && pxt.appTarget.appTheme.socialOptions.discourse;
+    if (!discourseRoot)
+        U.userError("Target not configured for discourse");
+    nodeutil.mkdirP(out);
+    let n = 0;
+    return pxt.discourse.topicsByTag(discourseRoot, tag)
+        .then(urls => Promise.mapSeries(urls, url => {
+            pxt.log(`  ${url}`)
+            return pxt.discourse.extractSharedIdFromPostUrl(url)
+                .then(id => {
+                    n++;
+                    pxt.log(`    --> ${id}`)
+                    return extractAsyncInternal(id, out, false);
+                })
+        }))
+        .then(() => {
+            pxt.log(`downloaded ${n} programs from tag ${tag}`)
+        })
+}
+
 export function formatAsync(parsed: commandParser.ParsedCommand) {
     let inPlace = !!parsed.flags["i"];
     let testMode = !!parsed.flags["t"];
@@ -6136,6 +6162,13 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         advanced: true,
         argString: "<target-directory>"
     }, exportCppAsync);
+
+    p.defineCommand({
+        name: "downloaddiscourse",
+        help: "Download program for a discourse tag",
+        advanced: true,
+        argString: "<tag>"
+    }, downloadDiscourseTagAsync)
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
         p.defineCommand({ name, help, onlineHelp, argString }, callback);
