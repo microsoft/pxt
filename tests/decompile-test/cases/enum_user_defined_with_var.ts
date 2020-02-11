@@ -1,4 +1,3 @@
-/// <reference path="./testBlocks/enums.ts" />
 
 let varEnumTest = 0;
 

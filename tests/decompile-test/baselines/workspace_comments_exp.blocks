@@ -16,13 +16,10 @@
 <field name="NUM">1</field>
 </shadow>
 </value>
-<data>0</data>
+<comment pinned="false">More</comment>
 </block>
 </next>
 </block>
 </statement>
 </block>
-<comment h="120" w="160" data="0">
-More
-</comment>
 </xml>
