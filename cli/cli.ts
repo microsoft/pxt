@@ -3172,8 +3172,6 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
         }))
         .then(() => {
             if (md) {
-                // sort cards by id
-                cards.sort((l, r) => parseInt(l.id) - parseInt(r.id));
                 md = md.replace(/```codecard(.*)```/s, (m, c) => {
                     return `\`\`\`codecard
 ${JSON.stringify(cards, null, 4)}
