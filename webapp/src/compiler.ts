@@ -485,10 +485,15 @@ interface BundledPackage {
     files: pxt.Map<string>;
 }
 
+interface UsedPackageInfo {
+    dirname: string,
+    info: pxt.PackageApiInfo
+}
+
 async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Map<pxt.PackageApiInfo>): Promise<pxtc.ApisInfo> {
     if (!bundled) return null;
-
-    const corePkg = bundled["libs/" + pxt.appTarget.corepkg];
+    const corePkgName = "libs/" + pxt.appTarget.corepkg;
+    const corePkg = bundled[corePkgName];
     if (!corePkg) return null;
 
     // If the project has a TypeScript file beside main.ts, it could export blocks so we can't use the cache
@@ -511,7 +516,10 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
 
     const usedPackages = project.pkgAndDeps();
     const externalPackages: pkg.EditorPackage[] = [];
-    const usedInfo: pxt.PackageApiInfo[] = [corePkg];
+    const usedPackageInfo: UsedPackageInfo[] = [{
+        dirname: corePkgName,
+        info: corePkg
+    }];
 
     for (const dep of usedPackages) {
         if (dep.id === "built" || dep.isTopLevel()) continue;
@@ -519,7 +527,10 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
         let foundIt = false;
         for (const bundle of bundledPackages) {
             if (bundle.config.name === dep.getKsPkg().config.name) {
-                usedInfo.push(bundled[bundle.dirname]);
+                usedPackageInfo.push({
+                    dirname: bundle.dirname,
+                    info: bundled[bundle.dirname]
+                });
                 foundIt = true;
                 break;
             }
@@ -540,7 +551,10 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
             }
             else {
                 pxt.debug(`Fetched cached API info for ${dep.getKsPkg().config.name}`);
-                usedInfo.push(entry);
+                usedPackageInfo.push({
+                    dirname: dep.getKsPkg().config.name,
+                    info: entry
+                });
             }
         }
     }
@@ -550,14 +564,15 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
         jres: {}
     };
 
-    for (const used of usedInfo) {
+    for (const used of usedPackageInfo) {
+        const { info, dirname } = used;
         if (!used) continue;
-        pxt.Util.jsonCopyFrom(result.byQName, used.apis.byQName);
-        for (const api of Object.keys(used.apis.byQName)) {
-            result.byQName[api].pkg = used.name;
+        pxt.Util.jsonCopyFrom(result.byQName, info.apis.byQName);
+        for (const api of Object.keys(info.apis.byQName)) {
+            result.byQName[api].pkg = dirname;
         }
 
-        if (used.apis.jres) pxt.Util.jsonCopyFrom(result.jres, used.apis.jres);
+        if (info.apis.jres) pxt.Util.jsonCopyFrom(result.jres, info.apis.jres);
     }
 
     const jres = pkg.mainPkg.getJRes();
@@ -592,7 +607,6 @@ async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo
         for (const dep of externalPackages) {
             const name = dep.getKsPkg().config.name;
             const entry: pxt.PackageApiInfo = {
-                name: name,
                 sha: null,
                 apis: { byQName: {} }
             }

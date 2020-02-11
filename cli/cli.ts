@@ -2126,7 +2126,6 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                         // JRES is already included in the target bundle
                         api.jres = undefined;
                         builtInfo[dirname] = {
-                            name: dirname,
                             apis: api,
                             sha: packageSha
                         };
