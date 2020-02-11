@@ -4722,7 +4722,8 @@ export function extractAsync(parsed: commandParser.ParsedCommand): Promise<void>
     const vscode = !!parsed.flags["code"];
     const out = parsed.flags["code"] || '.';
     const filename = parsed.args[0];
-    return extractAsyncInternal(filename, out as string, vscode);
+    return extractAsyncInternal(filename, out as string, vscode)
+        .then(() => {});
 }
 
 function isScriptId(id: string) {
