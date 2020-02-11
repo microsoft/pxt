@@ -59,6 +59,7 @@ namespace pxt.discourse {
                 const users = pxt.Util.toDictionary(json.users, u => u.id.toString());
                 return json.topic_list.topics.map(t => {
                     return <pxt.CodeCard>{
+                        id: t.id,
                         title: t.title,
                         url: `${apiUrl}/t/${t.slug}/${t.id}`,
                         imageUrl: t.image_url,

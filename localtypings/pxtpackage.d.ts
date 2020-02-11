@@ -127,6 +127,7 @@ declare namespace pxt {
         labelClass?: string;
         tags?: string[]; // tags shown in home screen, colors specified in theme
         tabIndex?: number;
+        id?: string; // optional identifier
 
         color?: string; // one of semantic ui colors
         description?: string;

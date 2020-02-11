@@ -3149,6 +3149,27 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                     n++;
                     return extractAsyncInternal(id, out, false)
                         .then(() => {
+                            if (md && topic.imageUrl) {
+                                return pxt.Util.requestAsync({
+                                    url: topic.imageUrl,
+                                    method: "GET",
+                                    responseArrayBuffer: true,
+                                    headers: {
+                                        "accept": "image/*"
+                                    }
+                                }).then(resp => {
+                                    let ext = /image\/(png|jpeg)/.exec(resp.headers["content-type"] as string)[1];
+                                    if (ext == "jpeg")
+                                        ext = "jpg";
+                                    topic.imageUrl = `docs/static/discourse/${topic.id}.${ext}`
+                                    nodeutil.mkdirP("docs/static/discourse");
+                                    fs.writeFileSync(topic.imageUrl, new Buffer(resp.buffer as ArrayBuffer));
+                                })
+                                // drop topic image in static folder
+                            }
+                            return Promise.resolve();
+                        })
+                        .then(() => { 
                             cards.push(topic);
                         })
                         .catch(e => {
@@ -4723,7 +4744,7 @@ export function extractAsync(parsed: commandParser.ParsedCommand): Promise<void>
     const out = parsed.flags["code"] || '.';
     const filename = parsed.args[0];
     return extractAsyncInternal(filename, out as string, vscode)
-        .then(() => {});
+        .then(() => { });
 }
 
 function isScriptId(id: string) {
