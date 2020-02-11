@@ -4762,13 +4762,13 @@ function fetchTextAsync(filename: string): Promise<Buffer> {
         return readFileAsync(filename)
 }
 
-function extractAsyncInternal(filename: string, out: string, vscode: boolean): Promise<void> {
+function extractAsyncInternal(filename: string, out: string, vscode: boolean): Promise<string[]> {
     if (filename && nodeutil.existsDirSync(filename)) {
         pxt.log(`extracting folder ${filename}`);
         return Promise.all(fs.readdirSync(filename)
             .filter(f => /\.(hex|uf2)/.test(f))
             .map(f => extractAsyncInternal(path.join(filename, f), out, vscode)))
-            .then(() => { });
+            .then(() => [filename]);
     }
 
     return fetchTextAsync(filename)
@@ -4778,6 +4778,7 @@ function extractAsyncInternal(filename: string, out: string, vscode: boolean): P
                 pxt.debug('launching code...')
                 dirs.forEach(dir => openVsCode(dir));
             }
+            return dirs;
         })
 }
 
