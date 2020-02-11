@@ -3138,6 +3138,10 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
             pxt.log(`  ${topic.title}`)
             return pxt.discourse.extractSharedIdFromPostUrl(topic.url)
                 .then(id => {
+                    if (!id) {
+                        pxt.log(`  --> unknown project id`)
+                        return Promise.resolve();
+                    }
                     n++;
                     pxt.log(`    --> ${id}`)
                     return extractAsyncInternal(id, out, false)
