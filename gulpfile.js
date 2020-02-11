@@ -123,7 +123,6 @@ function initWatch() {
         browserifyWebapp
     ];
 
-
     gulp.watch("./pxtlib/**/*", gulp.series(...tasks));
 
     gulp.watch("./pxtcompiler/**/*", gulp.series(pxtcompiler, ...tasks.slice(2)));
@@ -146,6 +145,23 @@ function initWatch() {
     buildAll();
 }
 
+function initWatchCli() {
+    const tasks = [
+        pxtlib,
+        gulp.parallel(pxtcompiler),
+        gulp.parallel(pxtpy, gulp.series(pxtblocks, pxtblockly)),
+        cli
+    ]
+
+    gulp.watch("./pxtlib/**/*", gulp.series(...tasks));
+
+    gulp.watch("./pxtcompiler/**/*", gulp.series(pxtcompiler, ...tasks.slice(2)));
+
+    gulp.watch("./pxtpy/**/*", gulp.series(pxtpy, ...tasks.slice(3)));
+    gulp.watch("./pxtblockly/**/*", gulp.series(gulp.series(copyBlockly, pxtblocks, pxtblockly), ...tasks.slice(3)));
+
+    gulp.watch("./cli/**/*", gulp.series(cli, ...tasks.slice(5)));
+}
 
 
 const targetjs = () => exec("node built/pxt.js buildtarget", true);
@@ -599,3 +615,4 @@ exports.karma = karma;
 exports.update = update;
 exports.uglify = runUglify;
 exports.watch = initWatch;
+exports.watchCli = initWatchCli;
