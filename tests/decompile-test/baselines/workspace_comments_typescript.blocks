@@ -1,11 +1,12 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
 <block type="function_definition">
 <mutation name="doSomething" >
-<arg name="arg" type="number" id="uwrac1xniv9bql0sm0y66s" />
+<arg name="arg" type="number" />
 </mutation>
 <data>0</data>
 <statement name="STACK">
 </statement>
+<comment pinned="false">This is not</comment>
 </block>
 <comment h="120" w="270" data="0">
 This is a workspace comment

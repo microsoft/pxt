@@ -2,8 +2,7 @@
 <block type="pxt-on-start">
 <statement name="HANDLER">
 <block type="typescript_statement">
-<mutation numlines="1" line0="testNamespace.objectDestructuringTest&#40;whatever &#61;&#62; &#123;&#125;&#41;&#59;" />
-<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
+<mutation numlines="1" error="Object destructuring mutation callbacks can only have destructuring patters as arguments" line0="testNamespace.objectDestructuringTest&#40;whatever &#61;&#62; &#123;&#125;&#41;&#59;" />
 </block>
 </statement>
 </block>
