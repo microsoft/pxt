@@ -3158,7 +3158,10 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                         .then(() => {
                             // does the current card have an image?
                             let card = cards.filter(c => c.url == topic.url)[0];
-                            if (card && card.imageUrl) return Promise.resolve(); // already handled
+                            if (card && card.imageUrl) {
+                                pxt.log(`${card.name} already in markdown`)
+                                return Promise.resolve(); // already handled
+                            }
                             // new card? add to list
                             if (!card) {
                                 card = topic;
