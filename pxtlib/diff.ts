@@ -105,7 +105,7 @@ namespace pxt.diff {
             let y = x - k
             const snakeLen = V[MAX + k] - x
             for (let i = snakeLen - 1; i >= 0; --i)
-                diff.push("  " + a[x + i])
+                diff.push("  " + b[y + i])
 
             if (nextK == k - 1) {
                 diff.push("- " + a[x - 1])
