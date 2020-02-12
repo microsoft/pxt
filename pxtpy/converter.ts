@@ -732,7 +732,7 @@ namespace pxt.py {
         return null
     }
 
-    function lookupSymbol(n: string) {
+    function lookupSymbol(n: string | undefined) {
         if (!n)
             return null
 
@@ -832,7 +832,7 @@ namespace pxt.py {
     function compileType(e: Expr): Type {
         if (!e)
             return mkType()
-        let tpName = getName(e)
+        let tpName = tryGetName(e)
         if (tpName) {
             let sym = lookupApi(tpName + "@type") || lookupApi(tpName)
             if (sym) {
@@ -1058,7 +1058,7 @@ namespace pxt.py {
             let prefix = ""
             let funname = n.name
             const remainingDecorators = n.decorator_list.filter(d => {
-                if (getName(d) == "property") {
+                if (tryGetName(d) == "property") {
                     prefix = "get"
                     return false
                 }
@@ -1163,7 +1163,7 @@ namespace pxt.py {
                     quote(n.name)
                 ]
             if (!n.isNamespace && n.bases.length > 0) {
-                if (getName(n.bases[0]) == "Enum") {
+                if (tryGetName(n.bases[0]) == "Enum") {
                     n.isEnum = true
                 } else {
                     nodes.push(B.mkText(" extends "))
@@ -1306,7 +1306,7 @@ namespace pxt.py {
                 let res: B.JsNode[] = []
                 let devRef = expr(it.context_expr)
                 if (it.optional_vars) {
-                    let id = getName(it.optional_vars)
+                    let id = tryGetName(it.optional_vars)
                     if (id) {
                         let v = defvar(id, { isLocal: true })
                         id = quoteStr(id)
@@ -1328,7 +1328,6 @@ namespace pxt.py {
                 let varName = "with" + idx
                 if (it.optional_vars) {
                     let id = getName(it.optional_vars)
-                    U.assert(id != null)
                     defvar(id, { isLocal: true })
                     varName = quoteStr(id)
                 }
@@ -1504,7 +1503,7 @@ namespace pxt.py {
 
         let pref = ""
         let isConstCall = value ? isCallTo(value, "const") : false
-        let nm = getName(target) || ""
+        let nm = tryGetName(target) || ""
         if (!isTopLevel() && !ctx.currClass && !ctx.currFun && nm[0] != "_")
             pref = "export "
         if (nm && ctx.currClass && !ctx.currFun) {
@@ -1654,7 +1653,7 @@ namespace pxt.py {
         //return id.replace(/([a-z0-9])_([a-zA-Z0-9])/g, (f: string, x: string, y: string) => x + y.toUpperCase())
     }
 
-    function getName(e: py.Expr): string {
+    function tryGetName(e: py.Expr): string | undefined {
         if (e.kind == "Name") {
             let s = (e as py.Name).id
             let v = lookupVar(s)
@@ -1662,14 +1661,17 @@ namespace pxt.py {
             else return s
         }
         if (e.kind == "Attribute") {
-            let pref = getName((e as py.Attribute).value)
+            let pref = tryGetName((e as py.Attribute).value)
             if (pref)
                 return pref + "." + (e as py.Attribute).attr
         }
-        // Call
-        // Attribute
-        error(null, 9542, lf("Cannot get name of unknown expression kind '{0}'", e.kind));
         return undefined!
+    }
+    function getName(e: py.Expr): string {
+        let name = tryGetName(e)
+        if (!name)
+            error(null, 9542, lf("Cannot get name of unknown expression kind '{0}'", e.kind));
+        return name!
     }
 
     function quote(id: py.identifier) {
@@ -1682,7 +1684,7 @@ namespace pxt.py {
         if (n.kind != "Call")
             return false
         let c = n as py.Call
-        return getName(c.func) === fn
+        return tryGetName(c.func) === fn
     }
 
     function binop(left: B.JsNode, pyName: string, right: B.JsNode) {
@@ -1882,7 +1884,7 @@ namespace pxt.py {
             // TODO(dz): move body out; needs seperate PR that doesn't touch content
             n.func.inCalledPosition = true
 
-            let nm = getName(n.func)
+            let nm = tryGetName(n.func)
             let namedSymbol = lookupSymbol(nm)
             let isClass = namedSymbol && namedSymbol.kind == SK.Class
 
@@ -1919,7 +1921,7 @@ namespace pxt.py {
             }
 
             if (!fun) {
-                let over = U.lookup(py2TsFunMap, nm)
+                let over = U.lookup(py2TsFunMap, nm!)
                 if (over)
                     methName = ""
 
