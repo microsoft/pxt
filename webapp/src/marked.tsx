@@ -9,6 +9,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 interface MarkedContentProps extends ISettingsProps {
     markdown: string;
     className?: string;
+    onDidRender?: () => void;
 }
 
 interface MarkedContentState {
@@ -83,7 +84,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     }
 
     private renderSnippets(content: HTMLElement) {
-        const { parent } = this.props;
+        const { parent, onDidRender } = this.props;
 
         let promises: Promise<void>[] = [];
         pxt.Util.toArray(content.querySelectorAll(`code.lang-typescript,code.lang-python`))
@@ -224,10 +225,11 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             });
 
         promises = promises.filter(p => !!p);
-        if (promises.length)
+        if (promises.length && onDidRender)
             Promise.all(promises)
                 .then(() => {
-                    this.forceUpdate()
+                    pxt.log(`markdowcontent: forcing update after async rendering`)
+                    onDidRender();
                 });
 
         function wrapBlockDiff(diff: pxt.blocks.DiffResult): HTMLElement {

@@ -376,6 +376,7 @@ declare namespace pxt {
         hideHomeDetailsVideo?: boolean; // hide video/large image from details card
         tutorialBlocksDiff?: boolean; // automatically display diffs in tutorials
         openProjectNewTab?: boolean; // allow opening project in a new tab
+        tutorialExplicitHints?: boolean; // allow use explicit hints
     }
 
     interface SocialOptions {

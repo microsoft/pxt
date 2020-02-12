@@ -275,8 +275,13 @@ ${code}
 
             return "";
         });
+        const metadata = (m as TutorialMetadata);
+        if (metadata.explicitHints !== undefined 
+            && pxt.appTarget.appTheme 
+            && pxt.appTarget.appTheme.tutorialExplicitHints)
+            metadata.explicitHints = true;
 
-        return { metadata: (m as TutorialMetadata), body };
+        return { metadata, body };
     }
 
     export function highlight(pre: HTMLElement): void {
