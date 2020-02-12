@@ -96,23 +96,23 @@ namespace pxt.github {
 
     function ghRequestAsync(opts: U.HttpRequestOptions) {
         if (token) {
-            if (opts.url.indexOf('?') > 0)
-                opts.url += "&"
-            else
-                opts.url += "?"
-            opts.url += "&anti_cache=" + Math.random()
             if (!opts.headers) opts.headers = {}
-            opts.headers['Authorization'] = `token ${token}`
+            if (opts.url == GRAPHQL_URL)
+                opts.headers['Authorization'] = `bearer ${token}`
+            else {
+                if (opts.url.indexOf('?') > 0)
+                    opts.url += "&"
+                else
+                    opts.url += "?"
+                opts.url += "anti_cache=" + Math.random()
+                opts.headers['Authorization'] = `token ${token}`
+            }
         }
         return U.requestAsync(opts)
     }
 
     function ghGetJsonAsync(url: string) {
         return ghRequestAsync({ url }).then(resp => resp.json)
-    }
-
-    function ghGetTextAsync(url: string) {
-        return ghRequestAsync({ url }).then(resp => resp.text)
     }
 
     function ghProxyJsonAsync(path: string) {
@@ -576,9 +576,44 @@ namespace pxt.github {
         fork?: boolean;
     }
 
-    export function listUserReposAsync() {
-        return ghGetJsonAsync("https://api.github.com/user/repos?per_page=200&sort=updated&affiliation=owner,collaborator")
-            .then((res: Repo[]) => res.map(r => mkRepo(r, null)))
+    export function listUserReposAsync(): Promise<GitRepo[]> {
+        const q = `{
+  viewer {
+    repositories(first: 100, affiliations: [OWNER, COLLABORATOR], orderBy: {field: PUSHED_AT, direction: DESC}) {
+      nodes {
+        name
+        description
+        full_name: nameWithOwner
+        private: isPrivate
+        fork: isFork
+        updated_at: updatedAt
+        owner {
+          login
+        }
+        defaultBranchRef {
+          name
+        }
+        object(expression: "master:pxt.json") {
+          ... on Blob {
+            text
+          }
+        }
+      }
+    }
+  }
+}`
+        return ghGraphQLQueryAsync(q)
+            .then(res => (<any[]>res.data.viewer.repositories.nodes)
+                .filter((node: any) => node.object)
+                .filter((node: any) => {
+                    node.default_branch = node.defaultBranchRef.name;
+                    const pxtJson = pxt.Package.parseAndValidConfig(node.object.text);
+                    return pxtJson
+                        && pxtJson.supportedTargets
+                        && pxtJson.supportedTargets.indexOf(pxt.appTarget.id) > -1;
+                })
+                .map((node: any) => mkRepo(node, null))
+            );
     }
 
     export function createRepoAsync(name: string, description: string, priv?: boolean) {
@@ -876,6 +911,7 @@ namespace pxt.github {
     }
 
     export const GIT_JSON = ".git.json"
+    const GRAPHQL_URL = "https://api.github.com/graphql";
 
     export function lookupFile(commit: pxt.github.Commit, path: string) {
         if (!commit)
@@ -891,7 +927,7 @@ namespace pxt.github {
         const payload = JSON.stringify({
             query
         })
-        return ghPostAsync("https://api.github.com/graphql", payload);
+        return ghPostAsync(GRAPHQL_URL, payload);
     }
 
     export interface PullRequest {

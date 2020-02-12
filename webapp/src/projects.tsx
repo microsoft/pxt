@@ -982,7 +982,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                         /> : undefined}
                     {pxt.appTarget.cloud
                         && pxt.appTarget.cloud.cloudProviders
-                        && pxt.appTarget.cloud.cloudProviders ?
+                        && pxt.appTarget.cloud.cloudProviders.github ?
                         <codecard.CodeCardView
                             ariaLabel={lf("Clone or create your own GitHub repository")}
                             role="button"
