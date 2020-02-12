@@ -116,7 +116,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                                 hideMarkerLine: true,
                                 hideMarker: true,
                                 hideRemoved: true,
-                                update: true
+                                update: true,
+                                ignoreWhitespace: true
                             });
                             return el;
                         });
@@ -132,7 +133,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         hideMarkerLine: true,
                         hideMarker: true,
                         hideRemoved: true,
-                        update: true
+                        update: true,
+                        ignoreWhitespace: true
                     });
                     return Promise.resolve(el);
                 })
