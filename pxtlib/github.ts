@@ -577,8 +577,51 @@ namespace pxt.github {
     }
 
     export function listUserReposAsync() {
-        return ghGetJsonAsync("https://api.github.com/user/repos?per_page=200&sort=updated&affiliation=owner,collaborator")
-            .then((res: Repo[]) => res.map(r => mkRepo(r, null)))
+        const q = `{
+  viewer {
+    repositories(first: 100, affiliations: [OWNER, COLLABORATOR], orderBy: {field: PUSHED_AT, direction: DESC}) {
+      nodes {
+        name
+        description
+        fullName: nameWithOwner
+        private: isPrivate
+        fork: isFork
+        updatedAt
+        owner {
+            login
+        }
+        defaultBranchRef {
+          name
+        }
+        object(expression: "master:pxt.json") {
+          ... on Blob {
+            text
+          }
+        }
+      }
+    }
+  }
+}`
+        return ghGraphQLQueryAsync(q)
+            .then(res => res.data.viewer.repositories.nodes
+                .filter((node: any) => node.object)
+                .filer((node: any) => {
+                    const pxtJson = pxt.Package.parseAndValidConfig(node.object.text);
+                    return pxtJson 
+                        && pxtJson.supportedTargets 
+                        && pxtJson.supportedTargets.indexOf(pxt.appTarget.id) > 0;
+                })
+                .map((node: any) => <pxt.github.GitRepo>{
+                    name: node.name,
+                    fullName: node.nameWithOwner,
+                    owner: node.owner.login,
+                    description: node.description,
+                    defaultBranch: node.defaultBranchRef.name,
+                    updatedAt: new Date(node.updatedAt).getTime(),
+                    private: node.private,
+                    fork: node.fork
+                })
+            );
     }
 
     export function createRepoAsync(name: string, description: string, priv?: boolean) {
