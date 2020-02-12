@@ -613,11 +613,11 @@ namespace pxt.github {
                 })
                 .map((node: any) => <pxt.github.GitRepo>{
                     name: node.name,
-                    fullName: node.nameWithOwner,
+                    fullName: node.fullName,
                     owner: node.owner.login,
                     description: node.description,
                     defaultBranch: node.defaultBranchRef.name,
-                    updatedAt: new Date(node.updatedAt).getTime(),
+                    updatedAt: new Date(node.updatedAt).getMilliseconds(),
                     private: node.private,
                     fork: node.fork
                 })
