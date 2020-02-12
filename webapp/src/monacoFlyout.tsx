@@ -216,7 +216,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
     }
 
     protected getQName(block: toolbox.BlockDefinition): string {
-        return this.props.fileType == pxt.editor.FileType.Python ? block.pyQName : block.qName;
+        return this.props.fileType == pxt.editor.FileType.Python && block.pyQName ? block.pyQName : block.qName;
     }
 
     protected getSnippetName(block: toolbox.BlockDefinition): string {
@@ -250,7 +250,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
             })
         } else {
             // if no blockdef found, use the snippet name
-            description.push(<span>{block.snippetName || block.name}</span>)
+            description.push(<span key={name}>{block.snippetName || block.name}</span>)
         }
 
         // imitates block behavior in adding "run code" before any handler
@@ -310,7 +310,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         return <div className={`monacoBlock ${disabled ? "monacoDisabledBlock" : ""} ${selected ? "expand" : ""}`}
                     style={this.getSelectedStyle()}
                     title={block.attributes.jsDoc}
-                    key={`block_${qName}`} tabIndex={0} role="listitem"
+                    key={`block_${qName}_${index}`} tabIndex={0} role="listitem"
                     onClick={this.getBlockClickHandler(qName)}
                     onKeyDown={this.getKeyDownHandler(block, snippet, isPython)}
                     onPointerDown={hasPointer ? dragStartHandler : undefined}
