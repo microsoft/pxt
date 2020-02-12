@@ -87,6 +87,15 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         const { parent, onDidRender } = this.props;
 
         let promises: Promise<void>[] = [];
+
+        pxt.Util.toArray(content.querySelectorAll(`img`))
+            .forEach((imgBlock: HTMLImageElement) => {
+                promises.push(new Promise<void>((resolve, reject) => {
+                    imgBlock.addEventListener("load", () => resolve(), false); 
+                    imgBlock.addEventListener("error", () => resolve(), false); 
+                }))
+            });
+
         pxt.Util.toArray(content.querySelectorAll(`code.lang-typescript,code.lang-python`))
             .forEach((langBlock: HTMLElement) => {
                 const code = langBlock.textContent;
@@ -305,6 +314,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         /* tslint:disable:no-inner-html (marked content is already sanitized) */
         content.innerHTML = marked(markdown);
         /* tslint:enable:no-inner-html */
+
+        // 
 
         // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed
         this.renderInlineBlocks(content);
