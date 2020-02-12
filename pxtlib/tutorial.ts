@@ -276,8 +276,8 @@ ${code}
             return "";
         });
         const metadata = (m as TutorialMetadata);
-        if (metadata.explicitHints !== undefined 
-            && pxt.appTarget.appTheme 
+        if (metadata.explicitHints !== undefined
+            && pxt.appTarget.appTheme
             && pxt.appTarget.appTheme.tutorialExplicitHints)
             metadata.explicitHints = true;
 
