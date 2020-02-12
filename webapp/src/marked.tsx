@@ -91,8 +91,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         pxt.Util.toArray(content.querySelectorAll(`img`))
             .forEach((imgBlock: HTMLImageElement) => {
                 promises.push(new Promise<void>((resolve, reject) => {
-                    imgBlock.addEventListener("load", () => resolve(), false); 
-                    imgBlock.addEventListener("error", () => resolve(), false); 
+                    imgBlock.addEventListener("load", () => resolve(), false);
+                    imgBlock.addEventListener("error", () => resolve(), false);
                 }))
             });
 
