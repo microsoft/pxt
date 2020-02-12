@@ -603,13 +603,13 @@ namespace pxt.github {
   }
 }`
         return ghGraphQLQueryAsync(q)
-            .then(res => res.data.viewer.repositories.nodes
+            .then(res => (<any[]>res.data.viewer.repositories.nodes)
                 .filter((node: any) => node.object)
-                .filer((node: any) => {
+                .filter((node: any) => {
                     const pxtJson = pxt.Package.parseAndValidConfig(node.object.text);
                     return pxtJson
                         && pxtJson.supportedTargets
-                        && pxtJson.supportedTargets.indexOf(pxt.appTarget.id) > 0;
+                        && pxtJson.supportedTargets.indexOf(pxt.appTarget.id) > -1;
                 })
                 .map((node: any) => <pxt.github.GitRepo>{
                     name: node.name,

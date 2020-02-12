@@ -521,9 +521,7 @@ export function showImportGithubDialogAsync() {
     return pxt.github.listUserReposAsync()
         .finally(() => core.hideLoading("githublist"))
         .then(repos => {
-            let isPXT = (r: pxt.github.GitRepo) => /pxt|makecode/.test(r.name)
-            return repos.filter(isPXT).concat(repos.filter(r => !isPXT(r)))
-                .map(r => ({
+            return repos.map(r => ({
                     name: r.fullName,
                     description: r.description,
                     updatedAt: r.updatedAt,
