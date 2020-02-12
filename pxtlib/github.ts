@@ -583,12 +583,12 @@ namespace pxt.github {
       nodes {
         name
         description
-        fullName: nameWithOwner
+        full_name: nameWithOwner
         private: isPrivate
         fork: isFork
-        updatedAt
+        updated_at: updatedAt
         owner {
-            login
+          login
         }
         defaultBranchRef {
           name
@@ -606,21 +606,13 @@ namespace pxt.github {
             .then(res => (<any[]>res.data.viewer.repositories.nodes)
                 .filter((node: any) => node.object)
                 .filter((node: any) => {
+                    node.default_branch = node.defaultBranchRef.name;
                     const pxtJson = pxt.Package.parseAndValidConfig(node.object.text);
                     return pxtJson
                         && pxtJson.supportedTargets
                         && pxtJson.supportedTargets.indexOf(pxt.appTarget.id) > -1;
                 })
-                .map((node: any) => <pxt.github.GitRepo>{
-                    name: node.name,
-                    fullName: node.fullName,
-                    owner: node.owner.login,
-                    description: node.description,
-                    defaultBranch: node.defaultBranchRef.name,
-                    updatedAt: new Date(node.updatedAt).getMilliseconds(),
-                    private: node.private,
-                    fork: node.fork
-                })
+                .map((node: any) => mkRepo(node, null))
             );
     }
 
