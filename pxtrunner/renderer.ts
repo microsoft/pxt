@@ -585,7 +585,8 @@ namespace pxt.runner {
                     hideMarkerLine: true,
                     hideMarker: true,
                     hideRemoved: true,
-                    update: true
+                    update: true,
+                    ignoreWhitespace: true,
                 });
                 if (opts.snippetReplaceParent) $el = $el.parent();
                 const segment = $('<div class="ui segment codewidget"/>').append(diffEl);
@@ -626,7 +627,8 @@ namespace pxt.runner {
                             hideMarkerLine: true,
                             hideMarker: true,
                             hideRemoved: true,
-                            update: true
+                            update: true,
+                            ignoreWhitespace: true
                         })
                         let diffPy: HTMLElement;
                         const [oldPy, newPy] = resps.map(resp =>
@@ -639,7 +641,8 @@ namespace pxt.runner {
                                 hideMarkerLine: true,
                                 hideMarker: true,
                                 hideRemoved: true,
-                                update: true
+                                update: true,
+                                ignoreWhitespace: true
                             })
                         }
                         fillWithWidget(opts, $el.parent(), $(diffJs), diffPy && $(diffPy), $(diffBlocks.svg as HTMLElement), undefined, {
