@@ -66,7 +66,10 @@ namespace pxt.vs {
 
             let onGotAmdLoader = () => {
                 let req = (window as any).require
-                req.config({ paths: monacoPaths });
+                req.config({
+                    paths: monacoPaths,
+                    ignoreDuplicateModules: ["vs/basic-languages/typescript/typescript.contribution", "vs/basic-languages/javascript/javascript.contribution"]
+                });
 
                 // Mock out the JavaScript and TypeScript modules because we use our own language service
                 let def = (window as any).define;
