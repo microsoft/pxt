@@ -3120,6 +3120,7 @@ export function exportCppAsync(parsed: commandParser.ParsedCommand) {
 }
 
 export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): Promise<void> {
+    const rx = /```codecard((.|\s)*)```/;
     const tag = parsed.args[0] as string;
     if (!tag)
         U.userError("Missing tag")
@@ -3139,7 +3140,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
     let cards: pxt.CodeCard[] = [];
     // parse existing cards
     if (md) {
-        md.replace(/```codecard(.*)```/s, (m, c) => {
+        md.replace(rx, (m, c) => {
             cards = JSON.parse(c);
             return "";
         })
@@ -3194,7 +3195,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                 cards.forEach(card => {
                     delete card.id;
                 })
-                md = md.replace(/```codecard(.*)```/s, (m, c) => {
+                md = md.replace(rx, (m, c) => {
                     return `\`\`\`codecard
 ${JSON.stringify(cards, null, 4)}
 \`\`\``;
