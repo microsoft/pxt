@@ -96,23 +96,23 @@ namespace pxt.github {
 
     function ghRequestAsync(opts: U.HttpRequestOptions) {
         if (token) {
-            if (opts.url.indexOf('?') > 0)
-                opts.url += "&"
-            else
-                opts.url += "?"
-            opts.url += "&anti_cache=" + Math.random()
             if (!opts.headers) opts.headers = {}
-            opts.headers['Authorization'] = `token ${token}`
+            if (opts.url == GRAPHQL_URL)
+                opts.headers['Authorization'] = `bearer ${token}`
+            else {
+                if (opts.url.indexOf('?') > 0)
+                    opts.url += "&"
+                else
+                    opts.url += "?"
+                opts.url += "anti_cache=" + Math.random()
+                opts.headers['Authorization'] = `token ${token}`
+            }
         }
         return U.requestAsync(opts)
     }
 
     function ghGetJsonAsync(url: string) {
         return ghRequestAsync({ url }).then(resp => resp.json)
-    }
-
-    function ghGetTextAsync(url: string) {
-        return ghRequestAsync({ url }).then(resp => resp.text)
     }
 
     function ghProxyJsonAsync(path: string) {
@@ -576,7 +576,7 @@ namespace pxt.github {
         fork?: boolean;
     }
 
-    export function listUserReposAsync() {
+    export function listUserReposAsync(): Promise<GitRepo[]> {
         const q = `{
   viewer {
     repositories(first: 100, affiliations: [OWNER, COLLABORATOR], orderBy: {field: PUSHED_AT, direction: DESC}) {
@@ -607,8 +607,8 @@ namespace pxt.github {
                 .filter((node: any) => node.object)
                 .filer((node: any) => {
                     const pxtJson = pxt.Package.parseAndValidConfig(node.object.text);
-                    return pxtJson 
-                        && pxtJson.supportedTargets 
+                    return pxtJson
+                        && pxtJson.supportedTargets
                         && pxtJson.supportedTargets.indexOf(pxt.appTarget.id) > 0;
                 })
                 .map((node: any) => <pxt.github.GitRepo>{
@@ -919,6 +919,7 @@ namespace pxt.github {
     }
 
     export const GIT_JSON = ".git.json"
+    const GRAPHQL_URL = "https://api.github.com/graphql";
 
     export function lookupFile(commit: pxt.github.Commit, path: string) {
         if (!commit)
@@ -934,7 +935,7 @@ namespace pxt.github {
         const payload = JSON.stringify({
             query
         })
-        return ghPostAsync("https://api.github.com/graphql", payload);
+        return ghPostAsync(GRAPHQL_URL, payload);
     }
 
     export interface PullRequest {
