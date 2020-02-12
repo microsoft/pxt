@@ -616,3 +616,4 @@ exports.update = update;
 exports.uglify = runUglify;
 exports.watch = initWatch;
 exports.watchCli = initWatchCli;
+exports.cli = cli;

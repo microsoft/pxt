@@ -3137,6 +3137,13 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
     nodeutil.mkdirP(out);
     let n = 0;
     let cards: pxt.CodeCard[] = [];
+    // parse existing cards
+    if (md) {
+        md.replace(/```codecard(.*)```/s, (m, c) => {
+            cards = JSON.parse(c);
+            return "";
+        })
+    }
     return pxt.discourse.topicsByTag(discourseRoot, tag)
         .then(topics => Promise.mapSeries(topics, topic => {
             pxt.log(`  ${topic.title}`)
@@ -3149,6 +3156,16 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                     n++;
                     return extractAsyncInternal(id, out, false)
                         .then(() => {
+                            // does the current card have an image?
+                            let card = cards.filter(c => c.url == topic.url)[0];
+                            if (card && card.imageUrl) return Promise.resolve(); // already handled
+                            // new card? add to list
+                            if (!card) {
+                                card = topic;
+                                card.description = "";
+                                cards.push(card);
+                            }
+
                             const pfn = `./docs/static/discourse/${topic.id}.`;
                             if (md && !["png", "jpg", "gif"].some(ext => nodeutil.fileExistsSync(pfn + ext))) {
                                 return downloadImageAsync(id, topic, `https://makecode.com/api/${id}/thumb`)
@@ -3163,15 +3180,17 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                                     })
                             }
                             return Promise.resolve();
-                        })
-                        .then(() => { cards.push(topic); })
-                        .catch(e => {
+                        }).catch(e => {
                             pxt.log(`error: project ${id} could not be loaded or no image`);
                         });
                 })
         }))
         .then(() => {
             if (md) {
+                // inject updated cards
+                cards.forEach(card => {
+                    delete card.id;
+                })
                 md = md.replace(/```codecard(.*)```/s, (m, c) => {
                     return `\`\`\`codecard
 ${JSON.stringify(cards, null, 4)}
