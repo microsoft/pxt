@@ -366,7 +366,7 @@ const copyMonacoEditor = () => gulp.src([
 const copyMonacoLoader = () => gulp.src("node_modules/monaco-editor/min/vs/loader.js")
     .pipe(gulp.dest("webapp/public/vs"));
 
-const languages = ["bat", "cpp", "typescript", "json", "javascript", "markdown", "python"]
+const languages = ["bat", "cpp", "json", "markdown", "python"]
 const copyMonacoEditorMain = () => gulp.src("node_modules/monaco-editor/min/vs/editor/editor.main.js")
     .pipe(replace(/"\.\/([\w-]+)\/\1\.contribution"(?:,)?\s*/gi, (match, lang) => {
         if (languages.indexOf(lang) === -1) {
@@ -376,7 +376,7 @@ const copyMonacoEditorMain = () => gulp.src("node_modules/monaco-editor/min/vs/e
     }))
     .pipe(gulp.dest("built/web/vs/editor/"));
 
-const basicLanguages = ["bat", "cpp", "typescript", "javascript", "markdown", "python"];
+const basicLanguages = ["bat", "cpp", "markdown", "python"];
 const copyMonacoBasicLanguages = gulp.parallel(basicLanguages.map(lang => {
     return () => gulp.src(`node_modules/monaco-editor/min/vs/basic-languages/${lang}/${lang}.js`)
         .pipe(gulp.dest(`webapp/public/vs/basic-languages/${lang}`))
@@ -385,8 +385,6 @@ const copyMonacoBasicLanguages = gulp.parallel(basicLanguages.map(lang => {
 const copyMonacoJSON = () => gulp.src("node_modules/monaco-editor/min/vs/language/json/**/*")
     .pipe(gulp.dest("webapp/public/vs/language/json"));
 
-const copyMonacoTypescript = () => gulp.src("node_modules/monaco-editor/min/vs/language/typescript/**/*")
-    .pipe(gulp.dest("webapp/public/vs/language/typescript"));
 
 const inlineCodiconFont = () => {
     // For whatever reason the codicon.ttf font that comes with the monaco-editor is invalid.
@@ -410,7 +408,6 @@ const copyMonaco = gulp.series(gulp.parallel(
     copyMonacoEditorMain,
     copyMonacoJSON,
     copyMonacoBasicLanguages,
-    copyMonacoTypescript,
     inlineCodiconFont
 ), stripMonacoSourceMaps);
 
