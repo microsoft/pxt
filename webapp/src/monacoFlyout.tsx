@@ -30,11 +30,12 @@ export interface MonacoFlyoutState {
     icon?: string;
     groups?: toolbox.GroupDefinition[];
     selectedBlock?: string;
+    hide?: boolean;
 }
 
 export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyoutState> {
     protected dragging: boolean = false;
-    protected dragInfo: BlockDragInfo = { x: undefined, y: undefined };
+    protected dragInfo: BlockDragInfo;
 
     constructor(props: MonacoFlyoutProps) {
         super(props);
@@ -42,13 +43,31 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
     }
 
     componentDidMount() {
-        document.addEventListener(pxt.BrowserUtils.pointerEvents.move, this.blockDragHandler);
-        document.addEventListener(pxt.BrowserUtils.pointerEvents.up, this.blockDragEndHandler);
+        if ((window as any).PointerEvent) {
+            document.addEventListener("pointermove", this.blockDragHandler);
+            document.addEventListener("pointerup", this.blockDragEndHandler);
+        } else {
+            document.addEventListener("mousemove", this.blockDragHandler);
+            document.addEventListener("mouseup", this.blockDragEndHandler);
+            if (pxt.BrowserUtils.isTouchEnabled()) {
+                document.addEventListener("touchmove", this.blockDragHandler);
+                document.addEventListener("touchend", this.blockDragEndHandler);
+            }
+        }
     }
 
     componentWillUnmount() {
-        document.removeEventListener(pxt.BrowserUtils.pointerEvents.move, this.blockDragHandler);
-        document.removeEventListener(pxt.BrowserUtils.pointerEvents.up, this.blockDragEndHandler)
+        if ((window as any).PointerEvent) {
+            document.removeEventListener("pointermove", this.blockDragHandler);
+            document.removeEventListener("pointerup", this.blockDragEndHandler);
+        } else {
+            document.removeEventListener("mousemove", this.blockDragHandler);
+            document.removeEventListener("mouseup", this.blockDragEndHandler);
+            if (pxt.BrowserUtils.isTouchEnabled()) {
+                document.removeEventListener("touchmove", this.blockDragHandler);
+                document.removeEventListener("touchend", this.blockDragEndHandler);
+            }
+        }
     }
 
     componentDidUpdate() {
@@ -63,8 +82,8 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
     protected getBlockDragStartHandler = (block: toolbox.BlockDefinition, snippet: string, color: string) => {
         return (e: any) => {
             this.dragInfo = {
-                x: pxt.BrowserUtils.getPageX(e),
-                y: pxt.BrowserUtils.getPageY(e),
+                x: pxt.BrowserUtils.getClientX(e),
+                y: pxt.BrowserUtils.getClientY(e),
                 block,
                 snippet,
                 color
@@ -72,16 +91,21 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         }
     }
 
+    protected isHorizontalDrag = (e: any) => {
+        const dX = Math.abs(this.dragInfo.x - pxt.BrowserUtils.getClientX(e));
+        const dY = Math.abs(this.dragInfo.y - pxt.BrowserUtils.getClientY(e))
+        return dX > DRAG_THRESHOLD && dY > DRAG_THRESHOLD && dX > dY;
+    }
+
     protected blockDragHandler =  (e: any) => {
-        if (this.dragInfo && (Math.abs(this.dragInfo.x - pxt.BrowserUtils.getPageX(e)) > DRAG_THRESHOLD
-            || Math.abs(this.dragInfo.y - pxt.BrowserUtils.getPageY(e)) > DRAG_THRESHOLD)) {
+        let dragBlock = document.getElementById("monacoDraggingBlock");
+        if (this.dragInfo && (dragBlock || this.isHorizontalDrag(e))) {
             pxt.tickEvent("monaco.toolbox.itemdrag", undefined, { interactiveConsent: true });
             e.preventDefault();
             e.stopPropagation();
 
             const block = this.dragInfo.block;
             const params = block.parameters;
-            let dragBlock = document.getElementById("monacoDraggingBlock");
             this.dragging = true;
             if (!dragBlock) {
                 const parent = document.getElementById("root");
@@ -89,7 +113,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                 dragBlock.id = "monacoDraggingBlock";
                 dragBlock.textContent = block.snippetOnly
                     ? block.snippet
-                    : `${block.qName || this.getSnippetName(block)}${params ? `(${params.map(p => p.name).join(", ")})` : ""}`
+                    : `${this.getQName(block) || this.getSnippetName(block)}${params ? `(${params.map(p => p.name).join(", ")})` : ""}`
                 dragBlock.style.backgroundColor = this.dragInfo.color;
                 parent.appendChild(dragBlock);
 
@@ -101,8 +125,11 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                 }
                 this.props.setInsertionSnippet(this.dragInfo.snippet || inline + "qName:" + block.qName);
             }
-            dragBlock.style.top = `${pxt.BrowserUtils.getPageY(e)}px`;
-            dragBlock.style.left = `${pxt.BrowserUtils.getPageX(e)}px`;
+            dragBlock.style.top = `${pxt.BrowserUtils.getClientY(e)}px`;
+            dragBlock.style.left = `${pxt.BrowserUtils.getClientX(e)}px`;
+            // For devices without PointerEvents (iOS < 13.0) use state to
+            // hide the flyout rather than focusing the editor
+            this.setState({ hide: true });
         }
     }
 
@@ -166,9 +193,9 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         this.positionDragHandle();
     }
 
-    protected getFlyoutStyle = () => {
+    protected getFlyoutStyle = (): React.CSSProperties => {
         return {
-            display: (this.state && this.state.groups) ? "block" : "none"
+            display: (this.state?.groups && !this.state?.hide ) ? "block" : "none"
         }
     }
 
@@ -176,8 +203,8 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         return { color };
     }
 
-    protected getSelectedStyle = (selected: boolean, color: string) => {
-        return { touchAction: (window as any).PointerEvent ? "none"  : undefined };
+    protected getSelectedStyle = () => {
+        return { touchAction: (window as any).PointerEvent ? "pan-y"  : undefined };
     }
 
     protected getBlockStyle = (color: string) => {
@@ -188,6 +215,10 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         };
     }
 
+    protected getQName(block: toolbox.BlockDefinition): string {
+        return this.props.fileType == pxt.editor.FileType.Python ? block.pyQName : block.qName;
+    }
+
     protected getSnippetName(block: toolbox.BlockDefinition): string {
         const isPython = this.props.fileType == pxt.editor.FileType.Python;
         return (isPython ? (block.pySnippetName || block.pyName) : undefined) || block.snippetName || block.name;
@@ -196,33 +227,34 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
     protected getBlockDescription(block: toolbox.BlockDefinition, params: pxtc.ParameterDesc[]): JSX.Element[] {
         let description = [];
         let parts = block.attributes._def && block.attributes._def.parts;
+        let name = block.qName || block.name;
         if (parts) {
             if (parts.filter((p: any) => p.kind == "param").length > params.length) {
                 // add empty param when first argument is "this"
                 params.unshift(null);
             }
-            for (let part of parts) {
+            parts.forEach((part, i) => {
                 switch (part.kind) {
                     case "label":
-                        description.push(<span>{part.text}</span>);
+                        description.push(<span key={name + i}>{part.text}</span>);
                         break;
                     case "break":
-                        description.push(<span>{" "}</span>);
+                        description.push(<span key={name + i}>{" "}</span>);
                         break;
                     case "param":
                         let p = params && params.shift();
                         let val = p && (p.default || p.name) || part.name;
-                        description.push(<span className="argName">{val}</span>);
+                        description.push(<span className="argName" key={name + i}>{val}</span>);
                         break;
                 }
-            }
+            })
         } else {
             // if no blockdef found, use the snippet name
             description.push(<span>{block.snippetName || block.name}</span>)
         }
 
         // imitates block behavior in adding "run code" before any handler
-        if (params && params.find(p => p.type && p.type.indexOf("=>") >= 0)) description.unshift(<span>{lf("run code ")}</span>)
+        if (params && params.find(p => p.type && p.type.indexOf("=>") >= 0)) description.unshift(<span key="prefix">{lf("run code ")}</span>)
 
         return description;
     }
@@ -268,7 +300,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         const blockDescription = this.getBlockDescription(block, params ? params.slice() : null);
         const helpUrl = block.attributes.help;
 
-        const qName =  block.qName || this.getSnippetName(block);
+        const qName =  this.getQName(block) || this.getSnippetName(block);
         const selected = qName == this.state.selectedBlock;
 
         const hasPointer = (window as any).PointerEvent;
@@ -276,15 +308,15 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         const dragStartHandler = this.getBlockDragStartHandler(block, snippet, blockColor);
 
         return <div className={`monacoBlock ${disabled ? "monacoDisabledBlock" : ""} ${selected ? "expand" : ""}`}
-                    style={this.getSelectedStyle(selected, blockColor)}
+                    style={this.getSelectedStyle()}
                     title={block.attributes.jsDoc}
-                    key={`block_${index}`} tabIndex={0} role="listitem"
+                    key={`block_${qName}`} tabIndex={0} role="listitem"
                     onClick={this.getBlockClickHandler(qName)}
                     onKeyDown={this.getKeyDownHandler(block, snippet, isPython)}
                     onPointerDown={hasPointer ? dragStartHandler : undefined}
                     onMouseDown={!hasPointer ? dragStartHandler : undefined}
                     onTouchStart={!hasPointer && hasTouch ? dragStartHandler : undefined}>
-                <div className="blockHandle" style={this.getSelectedStyle(selected, blockColor)}><i className="icon bars" /></div>
+                <div className="blockHandle" style={this.getSelectedStyle()}><i className="icon bars" /></div>
                 <div className="monacoDraggableBlock" style={this.getBlockStyle(blockColor)}>
                     <span className="blockName">{blockDescription}</span>
                 </div>

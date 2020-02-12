@@ -766,7 +766,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 monacoEditorInner.onmousemove = this.onPointerMove;
                 monacoEditorInner.onmouseup = this.onPointerUp;
                 if (pxt.BrowserUtils.isTouchEnabled()) {
-                    monacoEditorInner.ontouchmove = this.onPointerMove;
+                    // For devices without PointerEvents (iOS < 13.0), use state to
+                    // hide the flyout rather than focusing the editor (onPointerMove)
                     monacoEditorInner.ontouchend = this.onPointerUp;
                 }
             }
@@ -1622,6 +1623,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.flyout.setState({
                 name: name || Util.capitalize(subns || ns),
                 selectedBlock: undefined,
+                hide: false,
                 ns, color, icon, groups
             })
         }
