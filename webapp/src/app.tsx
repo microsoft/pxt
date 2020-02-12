@@ -2835,7 +2835,8 @@ export class ProjectView
     }
 
     importProjectDialog() {
-        this.importDialog.show();
+        cloudsync.ensureGitHubTokenAsync()
+            .then(() => this.importDialog.show());
     }
 
     renderPythonAsync(req: pxt.editor.EditorMessageRenderPythonRequest): Promise<pxt.editor.EditorMessageRenderPythonResponse> {
