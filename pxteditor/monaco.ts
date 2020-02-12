@@ -135,6 +135,7 @@ namespace pxt.vs {
             minimap: {
                 enabled: false
             },
+            fixedOverflowWidgets: true,
             autoIndent: "full",
             useTabStops: true,
             dragAndDrop: true,
