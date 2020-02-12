@@ -1,4 +1,3 @@
-/// <reference path="./testBlocks/basic.ts" />
 
 testNamespace.numberWithEnumShadow(5)
 testNamespace.numberWithEnumShadow(EnumWithValueBlock.testValue1)

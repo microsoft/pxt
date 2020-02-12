@@ -337,7 +337,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                     }
                     // Add group blocks
                     if (g.blocks) {
-                        group = group.concat(g.blocks.map((b, j) => {
+                        let blocks = g.blocks.map((b, j) => {
                             // Check if the block is built in, ignore it as it's already defined in snippets
                             if (b.attributes.blockBuiltin) {
                                 pxt.log("ignoring built in block: " + b.attributes.blockId);
@@ -345,7 +345,12 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                             } else {
                                 return this.getMonacoBlock(b, j, rgb);
                             }
-                        }));
+                        }).filter(b => b !== undefined);
+                        if (blocks && blocks.length > 0) {
+                            group = group.concat(blocks);
+                        } else {
+                            return null;
+                        }
                     }
                    return group;
                })}

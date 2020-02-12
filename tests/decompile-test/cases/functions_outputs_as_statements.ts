@@ -1,4 +1,3 @@
-/// <reference path="./testBlocks/basic.ts" />
 
 testNamespace.noArgumentOutput()
 testNamespace.booleanArgumentOutput(true)

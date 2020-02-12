@@ -14,7 +14,6 @@
 <mutation numlines="1" error="Unsupported statement in block&#58; TaggedTemplateExpression" line0="withID&#96;1234&#96;&#59;" />
 </block>
 </next>
-<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;templateStrings.ts&#34; &#47;&#62;</comment>
 </block>
 </statement>
 </block>

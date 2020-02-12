@@ -9,7 +9,6 @@
 <field name="melody">Melodies.Blues</field>
 </block>
 </value>
-<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;mb.ts&#34; &#47;&#62;</comment>
 </block>
 </statement>
 </block>
