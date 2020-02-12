@@ -64,13 +64,14 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         pxsim.U.removeClass(wrapperDiv, 'loading');
     }
 
-    private cachedRenderLangSnippet(langBlock: HTMLElement, renderer: (code: string) => Promise<string | HTMLElement>) {
+    private cachedRenderLangSnippetAsync(langBlock: HTMLElement, renderer: (code: string) => Promise<string | HTMLElement>): Promise<void> {
         const code = langBlock.textContent;
         const wrapperDiv = this.startRenderLangSnippet(langBlock);
         if (MarkedContent.blockSnippetCache[code]) {
             this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[code]);
+            return undefined;
         } else {
-            renderer(code)
+            return renderer(code)
                 .then(renderedCode => {
                     MarkedContent.blockSnippetCache[code] = renderedCode;
                     this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[code]);
@@ -84,6 +85,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     private renderSnippets(content: HTMLElement) {
         const { parent } = this.props;
 
+        let promises: Promise<void>[] = [];
         pxt.Util.toArray(content.querySelectorAll(`code.lang-typescript,code.lang-python`))
             .forEach((langBlock: HTMLElement) => {
                 const code = langBlock.textContent;
@@ -93,17 +95,17 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-spy`))
             .forEach((langBlock: HTMLElement) => {
-                this.cachedRenderLangSnippet(langBlock, code =>
+                promises.push(this.cachedRenderLangSnippetAsync(langBlock, code =>
                     parent.renderPythonAsync({
                         type: "pxteditor",
                         action: "renderpython", ts: code
                     }).then(resp => resp.python)
-                );
+                ));
             });
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-diffspy`))
             .forEach((langBlock: HTMLElement) => {
-                this.cachedRenderLangSnippet(langBlock, code => {
+                promises.push(this.cachedRenderLangSnippetAsync(langBlock, code => {
                     const { fileA, fileB } = pxt.diff.split(code);
                     return Promise.mapSeries([fileA, fileB],
                         src => parent.renderPythonAsync({
@@ -120,12 +122,12 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                             });
                             return el;
                         });
-                });
+                }));
             });
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-diff,code.lang-diffpython`))
             .forEach((langBlock: HTMLElement) => {
-                this.cachedRenderLangSnippet(langBlock, code => {
+                promises.push(this.cachedRenderLangSnippetAsync(langBlock, code => {
                     const { fileA, fileB } = pxt.diff.split(code);
                     const el = pxt.diff.render(fileA, fileB, {
                         hideLineNumbers: true,
@@ -135,7 +137,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         update: true
                     });
                     return Promise.resolve(el);
-                })
+                }))
             });
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-blocks`))
@@ -155,31 +157,30 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     wrapperDiv.appendChild(doc.documentElement);
                     pxsim.U.removeClass(wrapperDiv, 'loading');
                 } else {
-                    parent.renderBlocksAsync({
+                    promises.push(parent.renderBlocksAsync({
                         type: "pxteditor",
                         action: "renderblocks", ts: code
-                    })
-                        .done(resp => {
-                            const svg = resp.svg;
-                            if (svg) {
-                                const viewBox = svg.getAttribute('viewBox').split(' ').map(parseFloat);
-                                const width = viewBox[2];
-                                let height = viewBox[3];
-                                if (width > 480 || height > 128)
-                                    height = (height * 0.8) | 0;
-                                svg.setAttribute('height', `${height}px`);
-                                // SVG serialization is broken on IE (SVG namespace issue), don't cache on IE
-                                if (!pxt.BrowserUtils.isIE()) MarkedContent.blockSnippetCache[code] = Blockly.Xml.domToText(svg);
-                                wrapperDiv.appendChild(svg);
-                                pxsim.U.removeClass(wrapperDiv, 'loading');
-                            } else {
-                                // An error occured, show alternate message
-                                const textDiv = document.createElement('span');
-                                textDiv.textContent = lf("Oops, something went wrong trying to render this block snippet.");
-                                wrapperDiv.appendChild(textDiv);
-                                pxsim.U.removeClass(wrapperDiv, 'loading');
-                            }
-                        })
+                    }).then(resp => {
+                        const svg = resp.svg;
+                        if (svg) {
+                            const viewBox = svg.getAttribute('viewBox').split(' ').map(parseFloat);
+                            const width = viewBox[2];
+                            let height = viewBox[3];
+                            if (width > 480 || height > 128)
+                                height = (height * 0.8) | 0;
+                            svg.setAttribute('height', `${height}px`);
+                            // SVG serialization is broken on IE (SVG namespace issue), don't cache on IE
+                            if (!pxt.BrowserUtils.isIE()) MarkedContent.blockSnippetCache[code] = Blockly.Xml.domToText(svg);
+                            wrapperDiv.appendChild(svg);
+                            pxsim.U.removeClass(wrapperDiv, 'loading');
+                        } else {
+                            // An error occured, show alternate message
+                            const textDiv = document.createElement('span');
+                            textDiv.textContent = lf("Oops, something went wrong trying to render this block snippet.");
+                            wrapperDiv.appendChild(textDiv);
+                            pxsim.U.removeClass(wrapperDiv, 'loading');
+                        }
+                    }));
                 }
             })
 
@@ -191,12 +192,12 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 const code = langBlock.textContent;
                 const { fileA: oldXml, fileB: newXml } = pxt.diff.split(code);
 
-                this.cachedRenderLangSnippet(langBlock, code =>
+                promises.push(this.cachedRenderLangSnippetAsync(langBlock, code =>
                     pxt.BrowserUtils.loadBlocklyAsync()
                         .then(() => {
                             const diff = pxt.blocks.diffXml(oldXml, newXml);
                             return wrapBlockDiff(diff);
-                        }));
+                        })));
             });
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-diffblocks`))
@@ -208,7 +209,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 const { fileA: oldSrc, fileB: newSrc } = pxt.diff.split(code);
 
 
-                this.cachedRenderLangSnippet(langBlock, code =>
+                promises.push(this.cachedRenderLangSnippetAsync(langBlock, code =>
                     pxt.BrowserUtils.loadBlocklyAsync()
                         .then(() => compiler.getBlocksAsync())
                         .then(blocksInfo => Promise.mapSeries([oldSrc, newSrc], src =>
@@ -219,8 +220,15 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                             hideDeletedBlocks: true
                         }))
                         .then(diff => wrapBlockDiff(diff))
-                );
+                ));
             });
+
+        promises = promises.filter(p => !!p);
+        if (promises.length)
+            Promise.all(promises)
+                .then(() => {
+                    this.forceUpdate()
+                });
 
         function wrapBlockDiff(diff: pxt.blocks.DiffResult): HTMLElement {
             const svg = diff.svg;
