@@ -866,8 +866,6 @@ namespace ts.pxtc.service {
                 }
                 if (res.globalNames)
                     lastGlobalNames = res.globalNames
-                if (lastPyIdentifierSyntaxInfo)
-                    return lastPyIdentifierSyntaxInfo
             }
             return opts.syntaxInfo
         },
