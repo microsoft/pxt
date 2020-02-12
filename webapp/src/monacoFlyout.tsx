@@ -229,7 +229,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         let parts = block.attributes._def && block.attributes._def.parts;
         let name = block.qName || block.name;
         if (parts) {
-            if (parts.filter((p: any) => p.kind == "param").length > params.length) {
+            if (parts.filter((p: any) => p.kind == "param").length > (params && params.length)) {
                 // add empty param when first argument is "this"
                 params.unshift(null);
             }
