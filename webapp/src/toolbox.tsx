@@ -23,6 +23,7 @@ export const enum CategoryNameID {
 export interface BlockDefinition {
     qName?: string;
     name: string;
+    pyQName?: string;
     pyName?: string;
     namespace?: string;
     type?: string;
