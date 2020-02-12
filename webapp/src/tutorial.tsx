@@ -300,6 +300,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.nextTutorialStep = this.nextTutorialStep.bind(this);
         this.finishTutorial = this.finishTutorial.bind(this);
         this.toggleExpanded = this.toggleExpanded.bind(this);
+        this.onMarkdownDidRender = this.onMarkdownDidRender.bind(this);
 
     }
 
@@ -395,6 +396,10 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     }
 
     componentDidMount() {
+        this.setShowSeeMore(this.props.parent.state.tutorialOptions.autoexpandStep);
+    }
+
+    onMarkdownDidRender() {
         this.setShowSeeMore(this.props.parent.state.tutorialOptions.autoexpandStep);
     }
 
@@ -551,7 +556,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                     <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
                         onClick={hasHint ? hintOnClick : undefined} onKeyDown={hasHint ? sui.fireClickOnEnter : undefined}>
                         <div className="content">
-                            {!unplugged && <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} />}
+                            {!unplugged && <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} onDidRender={this.onMarkdownDidRender} />}
                         </div>
                     </div>
                     {this.state.showSeeMore && !tutorialStepExpanded && <sui.Button className="fluid compact lightgrey" icon="chevron down" tabIndex={0} text={lf("More...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} />}
