@@ -43,7 +43,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
     }
 
     componentDidMount() {
-        if ((window as any).PointerEvent) {
+        if (pxt.BrowserUtils.hasPointerEvents()) {
             document.addEventListener("pointermove", this.blockDragHandler);
             document.addEventListener("pointerup", this.blockDragEndHandler);
         } else {
@@ -57,7 +57,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
     }
 
     componentWillUnmount() {
-        if ((window as any).PointerEvent) {
+        if (pxt.BrowserUtils.hasPointerEvents()) {
             document.removeEventListener("pointermove", this.blockDragHandler);
             document.removeEventListener("pointerup", this.blockDragEndHandler);
         } else {
@@ -204,7 +204,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
     }
 
     protected getSelectedStyle = () => {
-        return { touchAction: (window as any).PointerEvent ? "pan-y"  : undefined };
+        return { touchAction: pxt.BrowserUtils.hasPointerEvents() ? "pan-y"  : undefined };
     }
 
     protected getBlockStyle = (color: string) => {
@@ -303,7 +303,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         const qName =  this.getQName(block) || this.getSnippetName(block);
         const selected = qName == this.state.selectedBlock;
 
-        const hasPointer = (window as any).PointerEvent;
+        const hasPointer = pxt.BrowserUtils.hasPointerEvents();
         const hasTouch = pxt.BrowserUtils.isTouchEnabled();
         const dragStartHandler = this.getBlockDragStartHandler(block, snippet, blockColor);
 

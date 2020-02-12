@@ -759,7 +759,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             })
 
             const monacoEditorInner = document.getElementById('monacoEditorInner');
-            if ((window as any).PointerEvent) {
+            if (pxt.BrowserUtils.hasPointerEvents()) {
                 monacoEditorInner.onpointermove = this.onPointerMove;
                 monacoEditorInner.onpointerup = this.onPointerUp;
             } else {
