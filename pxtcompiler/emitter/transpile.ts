@@ -72,6 +72,7 @@ namespace ts.pxtc.transpile {
             success: true,
             outfiles: equiv.outfiles,
             sourceMap: equiv.sourceMap,
+            globalNames: equiv.globalNames,
             syntaxInfo: equiv.syntaxInfo
         }
     }
