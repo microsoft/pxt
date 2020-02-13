@@ -964,33 +964,27 @@ namespace ts.pxtc.service {
             }
 
 
-            function findInnerMostNodeAtPosition(n: Node): Node {
+            function findInnerMostNodeAtPosition(n: Node, position: number): Node {
                 for (let child of n.getChildren()) {
                     let s = child.getStart()
                     let e = child.getEnd()
-                    if (s <= tsPos && tsPos < e)
-                        return findInnerMostNodeAtPosition(child)
+                    if (s <= position && position < e)
+                        return findInnerMostNodeAtPosition(child, position)
                 }
-                return n
-            }
-
-            function findCallExpression(n: Node): ts.CallExpression | undefined {
-                if (ts.isCallExpression(n))
-                    return n
-                else if (n.parent) {
-                    return findCallExpression(n.parent)
-                }
-                return undefined
+                return (n && n.kind === SK.SourceFile) ? null : n;
             }
 
             const prog = service.getProgram()
             const tsAst = prog.getSourceFile("main.ts") // TODO: work for non-main files
-            const innerMost = findInnerMostNodeAtPosition(tsAst)
-            if (innerMost) {
-                const tc = prog.getTypeChecker()
-                const call = findCallExpression(innerMost)
+            const innerMost = findInnerMostNodeAtPosition(tsAst, tsPos)
+            let propertyAccessTarget: Node;
+            const tc = prog.getTypeChecker()
 
-                if (call) {
+
+            if (innerMost) {
+                if (innerMost.parent && ts.isCallExpression(innerMost.parent)) {
+                    const call = innerMost.parent as ts.CallExpression;
+
                     function findArgIdx() {
                         // does our cursor syntax node trivially map to an argument?
                         let paramIdx = call.arguments
@@ -1032,7 +1026,7 @@ namespace ts.pxtc.service {
                     // which argument are we ?
                     let paramIdx = findArgIdx()
 
-                    // if we're not one of the arguments, are we at the 
+                    // if we're not one of the arguments, are we at the
                     // determine parameter idx
 
                     if (paramIdx >= 0) {
@@ -1047,6 +1041,31 @@ namespace ts.pxtc.service {
                                 resultSymbols = matchingApis
                             }
                         }
+                    }
+                }
+
+                if (ts.isPropertyAccessExpression(innerMost)) {
+                    propertyAccessTarget = innerMost.expression;
+                }
+            }
+            else if (dotIdx !== -1) {
+                propertyAccessTarget = findInnerMostNodeAtPosition(tsAst, dotIdx - 1)
+            }
+
+            if (propertyAccessTarget) {
+                const symbol = tc.getSymbolAtLocation(propertyAccessTarget);
+
+                if (symbol) {
+                    const type = tc.getTypeOfSymbolAtLocation(symbol, propertyAccessTarget);
+
+                    if (type && type.symbol) {
+                        const qname = tc.getFullyQualifiedName(type.symbol);
+                        const props = type.getApparentProperties()
+                            .map(prop => qname + "." + prop.getName())
+                            .map(propQname => lastApiInfo.apis.byQName[propQname])
+                            .filter(prop => !!prop);
+
+                        resultSymbols = props;
                     }
                 }
             }
