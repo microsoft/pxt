@@ -773,7 +773,6 @@ namespace ts.pxtc.service {
     }
 
     let lastApiInfo: CachedApisInfo | undefined;
-    let lastPyIdentifierSyntaxInfo: SyntaxInfo | undefined;
     let lastGlobalNames: pxt.Map<SymbolInfo> | undefined;
     let lastBlocksInfo: BlocksInfo;
     let lastLocBlocksInfo: BlocksInfo;
@@ -835,7 +834,6 @@ namespace ts.pxtc.service {
         reset: () => {
             service.cleanupSemanticCache();
             lastApiInfo = undefined
-            lastPyIdentifierSyntaxInfo = undefined
             lastGlobalNames = undefined
             host.reset()
             transpile.resetCache()
@@ -861,13 +859,8 @@ namespace ts.pxtc.service {
             if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
                 addApiInfo(opts);
                 let res = transpile.pyToTs(opts)
-                if (res.syntaxInfo && res.syntaxInfo.symbols) {
-                    lastPyIdentifierSyntaxInfo = res.syntaxInfo
-                }
                 if (res.globalNames)
                     lastGlobalNames = res.globalNames
-                if (lastPyIdentifierSyntaxInfo)
-                    return lastPyIdentifierSyntaxInfo
             }
             return opts.syntaxInfo
         },
@@ -932,7 +925,6 @@ namespace ts.pxtc.service {
             if (isPython) {
                 const res = transpile.pyToTs(opts)
                 if (res.syntaxInfo && res.syntaxInfo.symbols) {
-                    lastPyIdentifierSyntaxInfo = res.syntaxInfo
                     resultSymbols = opts.syntaxInfo.symbols
                 }
                 if (res.globalNames)
