@@ -97,7 +97,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         return dX > DRAG_THRESHOLD && dY > DRAG_THRESHOLD && dX > dY;
     }
 
-    protected blockDragHandler =  (e: any) => {
+    protected blockDragHandler = (e: any) => {
         let dragBlock = document.getElementById("monacoDraggingBlock");
         if (this.dragInfo && (dragBlock || this.isHorizontalDrag(e))) {
             pxt.tickEvent("monaco.toolbox.itemdrag", undefined, { interactiveConsent: true });
@@ -165,7 +165,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                 this.props.moveFocusToParent();
             } else if (charCode == 27) { // ESCAPE
                 // Focus back to toolbox and close Flyout
-                this.setState( { groups: undefined });
+                this.setState({ groups: undefined });
                 this.props.moveFocusToParent();
             } else if (charCode == 13 && block) { // ENTER
                 let p = snippet ? Promise.resolve(snippet) : compiler.snippetAsync(block.qName, isPython);
@@ -189,13 +189,13 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         evt.stopPropagation();
     }
 
-    protected scrollHandler = (evt:  any) => {
+    protected scrollHandler = (evt: any) => {
         this.positionDragHandle();
     }
 
     protected getFlyoutStyle = (): React.CSSProperties => {
         return {
-            display: (this.state?.groups && !this.state?.hide ) ? "block" : "none"
+            display: (this.state?.groups && !this.state?.hide) ? "block" : "none"
         }
     }
 
@@ -204,7 +204,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
     }
 
     protected getSelectedStyle = () => {
-        return { touchAction: pxt.BrowserUtils.hasPointerEvents() ? "pan-y"  : undefined };
+        return { touchAction: pxt.BrowserUtils.hasPointerEvents() ? "pan-y" : undefined };
     }
 
     protected getBlockStyle = (color: string) => {
@@ -229,7 +229,8 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         let parts = block.attributes._def && block.attributes._def.parts;
         let name = block.qName || block.name;
         if (parts) {
-            if (parts.filter((p: any) => p.kind == "param").length > (params && params.length)) {
+            if (params &&
+                parts.filter((p: any) => p.kind == "param").length > params.length) {
                 // add empty param when first argument is "this"
                 params.unshift(null);
             }
@@ -300,45 +301,48 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         const blockDescription = this.getBlockDescription(block, params ? params.slice() : null);
         const helpUrl = block.attributes.help;
 
-        const qName =  this.getQName(block) || this.getSnippetName(block);
+        const qName = this.getQName(block) || this.getSnippetName(block);
         const selected = qName == this.state.selectedBlock;
 
         const hasPointer = pxt.BrowserUtils.hasPointerEvents();
         const hasTouch = pxt.BrowserUtils.isTouchEnabled();
         const dragStartHandler = this.getBlockDragStartHandler(block, snippet, blockColor);
 
+        const description = block.attributes.jsDoc.replace(/``/g, '"')
+            .split("* @param", 1)[0] // drop any kind of parameter annotation
+
         return <div className={`monacoBlock ${disabled ? "monacoDisabledBlock" : ""} ${selected ? "expand" : ""}`}
-                    style={this.getSelectedStyle()}
-                    title={block.attributes.jsDoc}
-                    key={`block_${qName}_${index}`} tabIndex={0} role="listitem"
-                    onClick={this.getBlockClickHandler(qName)}
-                    onKeyDown={this.getKeyDownHandler(block, snippet, isPython)}
-                    onPointerDown={hasPointer ? dragStartHandler : undefined}
-                    onMouseDown={!hasPointer ? dragStartHandler : undefined}
-                    onTouchStart={!hasPointer && hasTouch ? dragStartHandler : undefined}>
-                <div className="blockHandle" style={this.getSelectedStyle()}><i className="icon bars" /></div>
-                <div className="monacoDraggableBlock" style={this.getBlockStyle(blockColor)}>
-                    <span className="blockName">{blockDescription}</span>
-                </div>
-                <div className="detail">
-                    <div className="description">{block.attributes.jsDoc.replace(/``/g, '"')}</div>
-                    <div className="signature">
-                        <span>{snippet ? snippet : `${qName}(${params ? params.map(p => `${p.name}`).join(", ") : ""})`}</span>
-                        {helpUrl && <a className="blockHelp" href={`/reference/${helpUrl}`} target="_blank" rel="noopener noreferrer" role="button">
-                            <i className="question circle outline icon" aria-label={lf("Go to help documentation")}></i>
-                        </a>}
-                    </div>
-                    {params && <div className="params">
-                        {params.map((p, i) => {
-                            return <div key={i}>
-                                <div className="separator"></div>
-                                <span className="paramName">{p.name}</span>
-                                {p.description && <span className="paramDescription">{p.description.replace(/``/g, '"')}</span>}
-                            </div>
-                        })}
-                    </div>}
-                </div>
+            style={this.getSelectedStyle()}
+            title={block.attributes.jsDoc}
+            key={`block_${qName}_${index}`} tabIndex={0} role="listitem"
+            onClick={this.getBlockClickHandler(qName)}
+            onKeyDown={this.getKeyDownHandler(block, snippet, isPython)}
+            onPointerDown={hasPointer ? dragStartHandler : undefined}
+            onMouseDown={!hasPointer ? dragStartHandler : undefined}
+            onTouchStart={!hasPointer && hasTouch ? dragStartHandler : undefined}>
+            <div className="blockHandle" style={this.getSelectedStyle()}><i className="icon bars" /></div>
+            <div className="monacoDraggableBlock" style={this.getBlockStyle(blockColor)}>
+                <span className="blockName">{blockDescription}</span>
             </div>
+            <div className="detail">
+                <div className="description">{description}</div>
+                <div className="signature">
+                    <span>{snippet ? snippet : `${qName}(${params ? params.map(p => `${p.name}`).join(", ") : ""})`}</span>
+                    {helpUrl && <a className="blockHelp" href={`/reference/${helpUrl}`} target="_blank" rel="noopener noreferrer" role="button">
+                        <i className="question circle outline icon" aria-label={lf("Open documentation")}></i>
+                    </a>}
+                </div>
+                {params && <div className="params">
+                    {params.map((p, i) => {
+                        return <div key={i}>
+                            <div className="separator"></div>
+                            <span className="paramName">{p.name}</span>
+                            {p.description && <span className="paramDescription">{p.description.replace(/``/g, '"')}</span>}
+                        </div>
+                    })}
+                </div>}
+            </div>
+        </div>
     }
 
     render() {
@@ -346,14 +350,14 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         const rgb = pxt.toolbox.convertColor(color || (ns && pxt.toolbox.getNamespaceColor(ns)) || "255");
         const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : "Default"}`.replace(/\s/g, "");
         return <div id="monacoFlyoutWidget" className="monacoFlyout" style={this.getFlyoutStyle()}>
-           <div id="monacoFlyoutWrapper" onScroll={this.scrollHandler} onWheel={this.wheelHandler} role="list">
-               <div className="monacoFlyoutLabel monacoFlyoutHeading">
+            <div id="monacoFlyoutWrapper" onScroll={this.scrollHandler} onWheel={this.wheelHandler} role="list">
+                <div className="monacoFlyoutLabel monacoFlyoutHeading">
                     <span className={`monacoFlyoutHeadingIcon blocklyTreeIcon ${iconClass}`} role="presentation" style={this.getIconStyle(rgb)}>
                         {(icon && icon.length === 1) ? icon : ""}
                     </span>
                     <div className="monacoFlyoutLabelText">{name}</div>
-               </div>
-               {groups && groups.map((g, i) => {
+                </div>
+                {groups && groups.map((g, i) => {
                     let group: JSX.Element[] = [];
                     // Add group label, for non-default groups
                     if (g.name != pxt.DEFAULT_GROUP_NAME && groups.length > 1) {
@@ -363,7 +367,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                                 <div className="monacoFlyoutLabelText">{g.name}</div>
                                 {g.hasHelp && pxt.editor.HELP_IMAGE_URI && <span>
                                     <img src={pxt.editor.HELP_IMAGE_URI} onClick={this.getHelpButtonClickHandler(g.name)} alt={lf("Click for help")}>
-                                </img></span>}
+                                    </img></span>}
                                 <hr className="monacoFlyoutLabelLine" />
                             </div>)
                     }
@@ -384,9 +388,9 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                             return null;
                         }
                     }
-                   return group;
-               })}
-           </div>
+                    return group;
+                })}
+            </div>
         </div>
     }
 }
