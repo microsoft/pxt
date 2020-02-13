@@ -35,18 +35,15 @@ CACHE:
 # monaco; keep in sync with webapp/public/index.html
 /blb/vs/loader.js
 /blb/vs/base/worker/workerMain.js
-/blb/vs/basic-languages/src/bat.js
-/blb/vs/basic-languages/src/cpp.js
-/blb/vs/basic-languages/src/python.js
-/blb/vs/basic-languages/src/markdown.js
+/blb/vs/basic-languages/bat/bat.js
+/blb/vs/basic-languages/cpp/cpp.js
+/blb/vs/basic-languages/python/python.js
+/blb/vs/basic-languages/markdown/markdown.js
 /blb/vs/editor/editor.main.css
 /blb/vs/editor/editor.main.js
 /blb/vs/editor/editor.main.nls.js
 /blb/vs/language/json/jsonMode.js
 /blb/vs/language/json/jsonWorker.js
-/blb/vs/language/typescript/lib/typescriptServices.js
-/blb/vs/language/typescript/src/mode.js
-/blb/vs/language/typescript/src/worker.js
 
 # charts
 /blb/smoothie/smoothie_compressed.js
@@ -67,6 +64,6 @@ CACHE:
 @targetImages@
 
 /blb/target.js
-  
+
 NETWORK:
 *
