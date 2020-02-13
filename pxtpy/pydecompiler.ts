@@ -49,19 +49,97 @@ namespace pxt.py {
     }
     const indent1 = indent(1)
 
+    ///
+    /// VARIABLE SCOPE ANALYSIS
+    ///
     // TODO handle shadowing
     // TODO handle types at initialization when ambiguous (e.g. x = [], x = None)
-
-    interface Scope {
-        vars: pxt.Map<ts.Node>
+    type VarUse = ts.Identifier
+    type VarDecl = ts.VariableDeclaration | ts.ParameterDeclaration
+    interface VarScopeInternal {
+        refs: (VarUse | VarDecl)[],
+        children: VarScopeInternal[]
     }
+    function computeVarScopes(node: ts.Node): VarScopeInternal {
+        const EMPTY: VarScopeInternal = { refs: [], children: [] }
+
+        return walk(node)
+
+        function walk(s: ts.Node | undefined): VarScopeInternal {
+            if (!s)
+                return EMPTY
+
+            // ignore these subtrees because identifiers
+            // in here are not variable usages
+            if (ts.isPropertyAccessOrQualifiedName(s))
+                return EMPTY
+
+            // variable usage
+            if (ts.isIdentifier(s)) {
+                return {
+                    refs: [s],
+                    children: []
+                }
+            }
+
+            // variable decleration
+            if (ts.isVariableDeclaration(s) || ts.isParameter(s)) {
+                let init = walk(s.initializer)
+                return {
+                    refs: [...init.refs, s],
+                    children: init.children
+                }
+            }
+
+            // new scope
+            if (ts.isFunctionExpression(s)
+                || ts.isArrowFunction(s)
+                || ts.isFunctionDeclaration(s)
+                || ts.isMethodDeclaration(s)) {
+                let params = s.parameters
+                    .map(p => walk(p))
+                    .reduce(merge, EMPTY)
+                let body = walk(s.body)
+                let child = merge(params, body)
+                return {
+                    refs: [],
+                    children: [child]
+                }
+            }
+
+            // keep walking
+            return s.getChildren()
+                .map(walk)
+                .reduce(merge, EMPTY)
+        }
+
+        function merge(p: VarScopeInternal, n: VarScopeInternal): VarScopeInternal {
+            if (!p || !n)
+                return p || n
+            return {
+                refs: [...p.refs, ...n.refs],
+                children: [...p.children, ...n.children]
+            }
+        }
+    }
+    function toStringVarScopes(s: VarScopeInternal): string {
+        function internalToStringVarScopes(s: VarScopeInternal): string[] {
+            let refs = s.refs.map(i => i.getText()).join(", ")
+            let children = s.children
+                .map(internalToStringVarScopes)
+                .map(c => c.map(indent1))
+                .map(c => ["{", ...c, "}"])
+                .reduce((p, n) => [...p, ...n], [])
+            return [
+                refs,
+                ...children
+            ]
+        }
+        return internalToStringVarScopes(s).join("\n")
+    }
+    // for each used, last declared
 
     function tsToPy(prog: ts.Program, filename: string): string {
-        // state
-        // TODO pass state explicitly
-        let global: Scope = { vars: {} } // TODO populate global scope
-        let env: Scope[] = [global]
-
         // helpers
         let tc = prog.getTypeChecker()
         let lhost = new ts.pxtc.LSHost(prog)
@@ -73,23 +151,16 @@ namespace pxt.py {
         let symbols = pxt.U.mapMap(allSymbols.byQName,
             // filter out symbols from the .ts corresponding to this file
             (k, v) => v.fileName == filename ? undefined : v)
+
+        // analysis
+        let analysisResult = computeVarScopes(file)
+        return toStringVarScopes(analysisResult) // For debugging
+
         // ts->py
         return emitFile(file)
         ///
         /// ENVIRONMENT
         ///
-        // TODO: it's possible this parallel scope construction isn't necessary if we can get the info we need from the TS semantic info
-        function pushScope(): Scope {
-            let newScope = mkScope()
-            env.unshift(newScope)
-            return newScope
-            function mkScope(): Scope {
-                return { vars: {} }
-            }
-        }
-        function popScope(): Scope | undefined {
-            return env.shift()
-        }
         function getReservedNmes(): string[] {
             const reservedNames = ['ArithmeticError', 'AssertionError', 'AttributeError',
                 'BaseException', 'BlockingIOError', 'BrokenPipeError', 'BufferError', 'BytesWarning',
@@ -705,14 +776,6 @@ namespace pxt.py {
             let stmts = s.getChildren()
                 .map(emitNode)
                 .reduce((p, c) => p.concat(c), [])
-            // TODO figuring out variable scoping..
-            // let syms = tc.getSymbolsInScope(s, ts.SymbolFlags.Variable)
-            // let symTxt = "#ts@ " + syms.map(s => s.name).join(", ")
-            // stmts.unshift(symTxt)
-            // stmts.unshift("# {") // TODO
-            // let pyVars = "#py@ " + Object.keys(env[0].vars).join(", ")
-            // stmts.push(pyVars)
-            // stmts.push("# }")
             return stmts
         }
         function emitFuncDecl(s: ts.FunctionDeclaration | ts.MethodDeclaration | ts.FunctionExpression | ts.ConstructorDeclaration | ts.ArrowFunction,
@@ -752,8 +815,6 @@ namespace pxt.py {
 
             out.push(`def ${fnName}(${params}):`)
 
-            pushScope() // functions start a new scope in python
-
             if (!s.body)
                 return throwError(s, 3013, "Unsupported: function decleration without body");
 
@@ -770,8 +831,6 @@ namespace pxt.py {
             } else {
                 out.push(indent1("pass")) // cannot have an empty body
             }
-
-            popScope()
 
             return out
         }
@@ -1311,31 +1370,29 @@ namespace pxt.py {
             return asExpRes(exp, sup)
         }
         function emitExp(s: ts.Expression): ExpRes {
+            if (ts.isBinaryExpression(s))
+                return emitBinExp(s)
+            if (ts.isPropertyAccessExpression(s))
+                return emitDotExp(s)
+            if (ts.isCallExpression(s))
+                return emitCallExp(s)
+            if (ts.isNewExpression(s))
+                return emitCallExp(s)
+            if (ts.isFunctionExpression(s) || ts.isArrowFunction(s))
+                return emitFnExp(s)
+            if (ts.isPrefixUnaryExpression(s))
+                return emitPreUnaryExp(s)
+            if (ts.isPostfixUnaryExpression(s))
+                return emitPostUnaryExp(s)
+            if (ts.isParenthesizedExpression(s))
+                return emitParenthesisExp(s)
+            if (ts.isArrayLiteralExpression(s))
+                return emitArrayLitExp(s)
+            if (ts.isElementAccessExpression(s))
+                return emitElAccessExp(s)
+            if (ts.isNoSubstitutionTemplateLiteral(s) || ts.isTaggedTemplateExpression(s))
+                return emitMultiLnStrLitExp(s as ts.NoSubstitutionTemplateLiteral | ts.TaggedTemplateExpression)
             switch (s.kind) {
-                case ts.SyntaxKind.BinaryExpression:
-                    return emitBinExp(s as ts.BinaryExpression)
-                case ts.SyntaxKind.PropertyAccessExpression:
-                    return emitDotExp(s as ts.PropertyAccessExpression)
-                case ts.SyntaxKind.CallExpression:
-                    return emitCallExp(s as ts.CallExpression)
-                case ts.SyntaxKind.NewExpression:
-                    return emitCallExp(s as ts.NewExpression)
-                case ts.SyntaxKind.FunctionExpression:
-                case ts.SyntaxKind.ArrowFunction:
-                    return emitFnExp(s as ts.FunctionExpression | ts.ArrowFunction)
-                case ts.SyntaxKind.PrefixUnaryExpression:
-                    return emitPreUnaryExp(s as ts.PrefixUnaryExpression);
-                case ts.SyntaxKind.PostfixUnaryExpression:
-                    return emitPostUnaryExp(s as ts.PostfixUnaryExpression);
-                case ts.SyntaxKind.ParenthesizedExpression:
-                    return emitParenthesisExp(s as ts.ParenthesizedExpression)
-                case ts.SyntaxKind.ArrayLiteralExpression:
-                    return emitArrayLitExp(s as ts.ArrayLiteralExpression)
-                case ts.SyntaxKind.ElementAccessExpression:
-                    return emitElAccessExp(s as ts.ElementAccessExpression)
-                case ts.SyntaxKind.NoSubstitutionTemplateLiteral:
-                case ts.SyntaxKind.TaggedTemplateExpression:
-                    return emitMultiLnStrLitExp(s as ts.TaggedTemplateExpression)
                 case ts.SyntaxKind.TrueKeyword:
                     return asExpRes("True")
                 case ts.SyntaxKind.FalseKeyword:
@@ -1345,19 +1402,18 @@ namespace pxt.py {
                 case ts.SyntaxKind.NullKeyword:
                 case ts.SyntaxKind.UndefinedKeyword:
                     return asExpRes("None")
-                case ts.SyntaxKind.Identifier:
-                    return emitIdentifierExp(s as ts.Identifier)
-                case ts.SyntaxKind.NumericLiteral:
-                case ts.SyntaxKind.StringLiteral:
-                    // TODO handle weird syntax?
-                    return asExpRes(s.getText())
-                case ts.SyntaxKind.ConditionalExpression:
-                    return emitCondExp(s as ts.ConditionalExpression)
-                default:
-                    // TODO handle more expressions
-                    return asExpRes(s.getText(), ["# unknown expression:  " + s.kind]) // uncomment for easier locating
-                // throw Error("Unknown expression: " + s.kind)
             }
+            if (ts.isIdentifier(s))
+                return emitIdentifierExp(s)
+            if (ts.isNumericLiteral(s) || ts.isStringLiteral(s))
+                // TODO handle weird syntax?
+                return asExpRes(s.getText())
+            if (ts.isConditionalExpression(s))
+                return emitCondExp(s)
+
+            // TODO handle more expressions
+            return asExpRes(s.getText(), ["# unknown expression:  " + s.kind]) // uncomment for easier locating
+            // throw Error("Unknown expression: " + s.kind)
         }
     }
 }
