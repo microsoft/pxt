@@ -229,7 +229,8 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         let parts = block.attributes._def && block.attributes._def.parts;
         let name = block.qName || block.name;
         if (parts) {
-            if (parts.filter((p: any) => p.kind == "param").length > (params && params.length)) {
+            if (params && 
+                parts.filter((p: any) => p.kind == "param").length > params.length) {
                 // add empty param when first argument is "this"
                 params.unshift(null);
             }
@@ -307,6 +308,9 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         const hasTouch = pxt.BrowserUtils.isTouchEnabled();
         const dragStartHandler = this.getBlockDragStartHandler(block, snippet, blockColor);
 
+        const description = block.attributes.jsDoc.replace(/``/g, '"')
+            .split("* @param", 1)[0] // drop any kind of parameter annotation
+
         return <div className={`monacoBlock ${disabled ? "monacoDisabledBlock" : ""} ${selected ? "expand" : ""}`}
                     style={this.getSelectedStyle()}
                     title={block.attributes.jsDoc}
@@ -321,11 +325,11 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                     <span className="blockName">{blockDescription}</span>
                 </div>
                 <div className="detail">
-                    <div className="description">{block.attributes.jsDoc.replace(/``/g, '"')}</div>
+                    <div className="description">{description}</div>
                     <div className="signature">
                         <span>{snippet ? snippet : `${qName}(${params ? params.map(p => `${p.name}`).join(", ") : ""})`}</span>
                         {helpUrl && <a className="blockHelp" href={`/reference/${helpUrl}`} target="_blank" rel="noopener noreferrer" role="button">
-                            <i className="question circle outline icon" aria-label={lf("Go to help documentation")}></i>
+                            <i className="question circle outline icon" aria-label={lf("Open documentation")}></i>
                         </a>}
                     </div>
                     {params && <div className="params">
