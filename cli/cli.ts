@@ -3158,7 +3158,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                     return extractAsyncInternal(id, out, false)
                         .then(() => {
                             // does the current card have an image?
-                            let card = cards.find(c => c.url == topic.url);
+                            let card = cards.filter(c => c.url == topic.url)[0];
                             if (card && card.imageUrl) {
                                 pxt.log(`${card.name} already in markdown`)
                                 return Promise.resolve(); // already handled
