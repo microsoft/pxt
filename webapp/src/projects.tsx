@@ -111,7 +111,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 prj.config.dependencies = {}; // clear all dependencies
                 this.chgCode(scr.name, url, true, pxt.BLOCKS_PROJECT_NAME, prj); break;
             case "example": this.chgCode(scr.name, url, true, editorPref); break;
-            case "codeExample": this.chgCode(scr.name, url, false); break;
+            case "codeExample": this.chgCode(scr.name, url, false, editorPref); break;
             case "side":
                 this.props.parent.newEmptyProject(scr.name, url);
                 break;
