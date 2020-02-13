@@ -8,7 +8,6 @@
 <mutation declaredvars="userDefinedTest3" numlines="1" error="Enum value without a corresponding block" line0="let userDefinedTest3 &#61; PlainOldEnum.G" />
 </block>
 </next>
-<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;enums.ts&#34; &#47;&#62;</comment>
 </block>
 </statement>
 </block>

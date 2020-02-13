@@ -2,7 +2,6 @@
 <block type="test_handler_arguments">
 <statement name="HANDLER">
 </statement>
-<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
 </block>
 <block type="test_handler_arguments">
 <field name="HANDLER_a">a</field>

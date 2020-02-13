@@ -487,12 +487,12 @@ namespace pxt.blocks {
                         lineLength -= lwl;
                     }
                     // find block ids mapped to the ranges
-                    const newid = pxt.blocks.findBlockId(newResp.blockSourceMap, {
+                    const newid = pxt.blocks.findBlockIdByPosition(newResp.blockSourceMap, {
                         start: newLineStart,
                         length: lineLength
                     });
                     if (newid && !newids[newid]) {
-                        const oldid = pxt.blocks.findBlockId(oldResp.blockSourceMap, {
+                        const oldid = pxt.blocks.findBlockIdByPosition(oldResp.blockSourceMap, {
                             start: oldLineStart,
                             length: lineLength
                         });

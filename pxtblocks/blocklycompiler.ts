@@ -1515,7 +1515,7 @@ namespace pxt.blocks {
                 // Otherwise, after the first compile the function will be renamed because it conflicts
                 // with itself. You can still get collisions if you attempt to define a function with
                 // the same name as a function defined in another file in the user's project (e.g. custom.ts)
-                if (info.pkg && (info.kind === pxtc.SymbolKind.Enum || info.kind === pxtc.SymbolKind.Function || info.kind === pxtc.SymbolKind.Module)) {
+                if (info.pkg && (info.kind === pxtc.SymbolKind.Enum || info.kind === pxtc.SymbolKind.Function || info.kind === pxtc.SymbolKind.Module || info.kind === pxtc.SymbolKind.Variable)) {
                     e.renames.takenNames[info.qName] = true;
                 }
             });
@@ -1813,7 +1813,7 @@ namespace pxt.blocks {
         diagnostics: BlockDiagnostic[];
     }
 
-    export function findBlockId(sourceMap: BlockSourceInterval[], loc: { start: number; length: number; }): string {
+    export function findBlockIdByPosition(sourceMap: BlockSourceInterval[], loc: { start: number; length: number; }): string {
         if (!loc) return undefined;
         let bestChunk: BlockSourceInterval;
         let bestChunkLength: number;
@@ -1821,10 +1821,30 @@ namespace pxt.blocks {
         for (let i = 0; i < sourceMap.length; ++i) {
             let chunk = sourceMap[i];
             if (chunk.startPos <= loc.start
-                && chunk.endPos >= loc.start + loc.length
-                && (!bestChunk || bestChunkLength > chunk.endPos - chunk.startPos)) {
+                    && chunk.endPos >= loc.start + loc.length
+                    && (!bestChunk || bestChunkLength > chunk.endPos - chunk.startPos)) {
                 bestChunk = chunk;
                 bestChunkLength = chunk.endPos - chunk.startPos;
+            }
+        }
+        if (bestChunk) {
+            return bestChunk.id;
+        }
+        return undefined;
+    }
+
+    export function findBlockIdByLine(sourceMap: BlockSourceInterval[], loc: { start: number; length: number; }): string {
+        if (!loc) return undefined;
+        let bestChunk: BlockSourceInterval;
+        let bestChunkLength: number;
+        // look for smallest chunk containing the block
+        for (let i = 0; i < sourceMap.length; ++i) {
+            let chunk = sourceMap[i];
+            if (chunk.startLine <= loc.start
+                    && chunk.endLine > loc.start + loc.length
+                    && (!bestChunk || bestChunkLength > chunk.endLine - chunk.startLine)) {
+                bestChunk = chunk;
+                bestChunkLength = chunk.endLine - chunk.startLine;
             }
         }
         if (bestChunk) {

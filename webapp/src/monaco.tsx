@@ -31,7 +31,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
     constructor(public editor: Editor, public python: boolean) {
     }
 
-    triggerCharacters?: string[] = ["(", ",", "."];
+    triggerCharacters?: string[] = ["(", "."];
 
     kindMap = {}
     private tsKindToMonacoKind(s: pxtc.SymbolKind): monaco.languages.CompletionItemKind {
@@ -203,7 +203,7 @@ class HoverProvider implements monaco.languages.HoverProvider {
                 if (!sym) return null;
                 const documentation = pxt.Util.rlf(sym.attributes.jsDoc);
                 const res: monaco.languages.Hover = {
-                    contents: [`**${sym.pyQName}**`, documentation].map(toMarkdownString),
+                    contents: [`**${sym.pyQName}**${sym.retType ? `: ${sym.retType}` : ''}`, documentation].map(toMarkdownString),
                     range: monaco.Range.fromPositions(model.getPositionAt(r.beginPos), model.getPositionAt(r.endPos))
                 }
                 return res
@@ -759,14 +759,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             })
 
             const monacoEditorInner = document.getElementById('monacoEditorInner');
-            if ((window as any).PointerEvent) {
+            if (pxt.BrowserUtils.hasPointerEvents()) {
                 monacoEditorInner.onpointermove = this.onPointerMove;
                 monacoEditorInner.onpointerup = this.onPointerUp;
             } else {
                 monacoEditorInner.onmousemove = this.onPointerMove;
                 monacoEditorInner.onmouseup = this.onPointerUp;
                 if (pxt.BrowserUtils.isTouchEnabled()) {
-                    monacoEditorInner.ontouchmove = this.onPointerMove;
+                    // For devices without PointerEvents (iOS < 13.0), use state to
+                    // hide the flyout rather than focusing the editor (onPointerMove)
                     monacoEditorInner.ontouchend = this.onPointerUp;
                 }
             }
@@ -1172,6 +1173,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             });
                         });
                         this.editorViewZones = [];
+
+                        // Test for left and right quotes because ios safari will sometimes insert
+                        // them automatically for the user. Convert them to normal quotes
+                        if (e.changes.some(change => /[\u{201c}\u{201d}\u{2018}\u{2019}]/u.test(change.text))) {
+                            this.editor.setValue(this.editor.getValue().replace(/\u{201c}|\u{201d}/gu, `"`).replace(/\u{2018}|\u{2019}/gu, `'`));
+                        }
 
                         if (!e.isRedoing && !e.isUndoing && !this.editor.getValue()) {
                             this.editor.setValue(" ");
@@ -1616,6 +1623,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.flyout.setState({
                 name: name || Util.capitalize(subns || ns),
                 selectedBlock: undefined,
+                hide: false,
                 ns, color, icon, groups
             })
         }

@@ -363,7 +363,7 @@ declare namespace pxt {
         debugExtensionCode?: boolean; // debug extension and libs code in the Monaco debugger
         snippetBuilder?: boolean; // Snippet builder experimental feature
         experimentalHw?: boolean; // enable experimental hardware
-        recipes?: boolean; // inlined tutorials
+        // recipes?: boolean; // inlined tutorials - deprecated
         checkForHwVariantWebUSB?: boolean; // check for hardware variant using webusb before compiling
         shareFinishedTutorials?: boolean; // always pop a share dialog once the tutorial is finished
         leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
@@ -375,6 +375,8 @@ declare namespace pxt {
         blocksCollapsing?: boolean; // collapse/uncollapse functions/event in blocks
         hideHomeDetailsVideo?: boolean; // hide video/large image from details card
         tutorialBlocksDiff?: boolean; // automatically display diffs in tutorials
+        openProjectNewTab?: boolean; // allow opening project in a new tab
+        tutorialExplicitHints?: boolean; // allow use explicit hints
     }
 
     interface SocialOptions {

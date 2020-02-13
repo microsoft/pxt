@@ -169,6 +169,7 @@
         transition: height 0.5s;
         z-index: @homeDetailViewZIndex;
         position: relative;
+        overflow: hidden;
         .ui.grid {
             background: @homeDetailViewBackground;
         }
@@ -211,7 +212,7 @@
             color: @homeDetailViewColor;
         }
         .actions {
-            padding: 2rem 0;
+            padding-right: 4rem !important;
             position: absolute;
             bottom: 0;
             text-align: right;
@@ -239,10 +240,12 @@
                 .button.attached i {
                     display: block;
                     margin: auto!important;
-                    font-size: 5rem;
-                    line-height: 8rem;
                     opacity: 0.1;
                     color: @homeCardHeaderColor;
+                }
+                .button.attached .icon:not(.xicon) {
+                    font-size: 5rem;
+                    line-height: 8rem;
                 }
 
                 .button.approve {
@@ -253,9 +256,6 @@
                 }
                 &:first-child .button.approve {
                     background-color: @green;
-                }
-                &:last-child {
-                    margin-right: 6rem;
                 }
             }
             .card-action-title {
@@ -422,7 +422,6 @@
 /* Inverted */
 .inverted-theme {
     .projectsdialog .detailview .actions {
-        height: 9rem;
         .card-action {
             > .item, > .icon {
                 background: @homeInvertedDetailCardActionBackground;
@@ -469,12 +468,25 @@
             }
         }
         .detailview {
+            .actions .card-action {
+                max-width: 10rem;
+                .button.attached .icon:not(.xicon) {
+                    line-height: 6rem;
+                }
+            }
             .actions .card-action > .item,
             .actions .card-action > .icon {
                 height: 6rem;
+                max-width: 10rem;
+                background-size: 60%;
+            }
+            .actions .segment {
+                margin-top: 4rem;
+                margin-right: 2rem;
             }
             .ui.button.approve {
                 font-size: 1rem!important;
+                padding: 0.7rem 1rem;
             }
         }
     }
@@ -608,15 +620,20 @@
             }
             .actions {
                 height: 9rem;
+                padding-right: 4rem !important;
                 .card-action {
                     > .item, > .icon {
                         height: 2rem;
                     }
                     .xicon {
-                        background-image: none;
+                        background-image: none!important;
                     }
                     .button.approve {
                         padding: .35em 1em .5em;
+                    }
+                    .button.attached .icon:not(.xicon) {
+                        font-size: 2rem;
+                        line-height: 2rem;
                     }
                     &:first-child {
                         margin-left: 0;

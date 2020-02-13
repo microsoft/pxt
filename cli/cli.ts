@@ -2015,7 +2015,7 @@ function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
             isInstance: sym.isInstance || undefined,
             isReadOnly: sym.isReadOnly || undefined,
             pyQName: pyQName
-        } as any
+        } as pxtc.SymbolInfo;
     }
 
     inf = U.clone(inf)

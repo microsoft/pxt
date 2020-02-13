@@ -300,6 +300,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.nextTutorialStep = this.nextTutorialStep.bind(this);
         this.finishTutorial = this.finishTutorial.bind(this);
         this.toggleExpanded = this.toggleExpanded.bind(this);
+        this.onMarkdownDidRender = this.onMarkdownDidRender.bind(this);
 
     }
 
@@ -395,6 +396,10 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     }
 
     componentDidMount() {
+        this.setShowSeeMore(this.props.parent.state.tutorialOptions.autoexpandStep);
+    }
+
+    onMarkdownDidRender() {
         this.setShowSeeMore(this.props.parent.state.tutorialOptions.autoexpandStep);
     }
 
@@ -551,7 +556,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                     <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
                         onClick={hasHint ? hintOnClick : undefined} onKeyDown={hasHint ? sui.fireClickOnEnter : undefined}>
                         <div className="content">
-                            {!unplugged && <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} />}
+                            {!unplugged && <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} onDidRender={this.onMarkdownDidRender} />}
                         </div>
                     </div>
                     {this.state.showSeeMore && !tutorialStepExpanded && <sui.Button className="fluid compact lightgrey" icon="chevron down" tabIndex={0} text={lf("More...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} />}
@@ -562,96 +567,6 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;
-    }
-}
-
-export interface ChooseRecipeDialogState {
-    visible?: boolean;
-}
-
-export class ChooseRecipeDialog extends data.Component<ISettingsProps, ChooseRecipeDialogState> {
-    private prevGalleries: pxt.CodeCard[] = [];
-
-    constructor(props: ISettingsProps) {
-        super(props);
-        this.state = {
-            visible: false
-        }
-        this.close = this.close.bind(this);
-    }
-
-    hide() {
-        this.setState({ visible: false });
-    }
-
-    close() {
-        this.setState({ visible: false });
-    }
-
-    show() {
-        this.setState({ visible: true });
-    }
-
-    start(card: pxt.CodeCard) {
-        pxt.tickEvent("recipe." + card.url);
-        this.hide();
-        this.props.parent.startTutorial(card.url, undefined, true);
-    }
-
-    fetchGallery(): pxt.CodeCard[] {
-        const path = "/recipes";
-        let res = this.getData(`gallery:${encodeURIComponent(path)}`) as pxt.gallery.Gallery[];
-        if (res) {
-            if (res instanceof Error) {
-                // ignore
-            } else {
-                const editor: pxt.CodeCardEditorType = this.props.parent.isJavaScriptActive()
-                    ? "js" : this.props.parent.isPythonActive() ? "py"
-                        : "blocks";
-                this.prevGalleries = pxt.Util.concat(res.map(g =>
-                    g.cards.filter(c => c.cardType == "tutorial")
-                        .filter(c => (c.editor == editor) || (editor == "blocks" && !c.editor))
-                ));
-            }
-        }
-        return this.prevGalleries || [];
-    }
-
-    renderCore() {
-        const { visible } = this.state;
-        if (!visible) return <div />;
-
-        const cards = this.fetchGallery();
-        return (
-            <sui.Modal isOpen={visible} className="recipedialog"
-                size="large"
-                onClose={this.close} dimmer={true}
-                closeIcon={true} header={lf("Try a Tutorial")}
-                closeOnDimmerClick closeOnDocumentClick closeOnEscape
-            >
-                <div className="group">
-                    <div className="ui cards centered" role="listbox">
-                        {!cards.length && <div className="ui items">
-                            <div className="ui item">
-                                {lf("Oops, we couldn't find any tutorials for this editor.")}
-                            </div>
-                        </div>}
-                        {cards.length > 0 ? cards.map(card =>
-                            <codecard.CodeCardView
-                                key={'card' + card.name}
-                                name={card.name}
-                                ariaLabel={card.name}
-                                description={card.description}
-                                imageUrl={card.imageUrl}
-                                largeImageUrl={card.largeImageUrl}
-                                // tslint:disable-next-line:react-this-binding-issue
-                                onClick={() => this.start(card)}
-                            />
-                        ) : undefined}
-                    </div>
-                </div>
-            </sui.Modal>
-        )
     }
 }
 

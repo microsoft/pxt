@@ -30,11 +30,12 @@ export interface MonacoFlyoutState {
     icon?: string;
     groups?: toolbox.GroupDefinition[];
     selectedBlock?: string;
+    hide?: boolean;
 }
 
 export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyoutState> {
     protected dragging: boolean = false;
-    protected dragInfo: BlockDragInfo = { x: undefined, y: undefined };
+    protected dragInfo: BlockDragInfo;
 
     constructor(props: MonacoFlyoutProps) {
         super(props);
@@ -42,13 +43,31 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
     }
 
     componentDidMount() {
-        document.addEventListener(pxt.BrowserUtils.pointerEvents.move, this.blockDragHandler);
-        document.addEventListener(pxt.BrowserUtils.pointerEvents.up, this.blockDragEndHandler);
+        if (pxt.BrowserUtils.hasPointerEvents()) {
+            document.addEventListener("pointermove", this.blockDragHandler);
+            document.addEventListener("pointerup", this.blockDragEndHandler);
+        } else {
+            document.addEventListener("mousemove", this.blockDragHandler);
+            document.addEventListener("mouseup", this.blockDragEndHandler);
+            if (pxt.BrowserUtils.isTouchEnabled()) {
+                document.addEventListener("touchmove", this.blockDragHandler);
+                document.addEventListener("touchend", this.blockDragEndHandler);
+            }
+        }
     }
 
     componentWillUnmount() {
-        document.removeEventListener(pxt.BrowserUtils.pointerEvents.move, this.blockDragHandler);
-        document.removeEventListener(pxt.BrowserUtils.pointerEvents.up, this.blockDragEndHandler)
+        if (pxt.BrowserUtils.hasPointerEvents()) {
+            document.removeEventListener("pointermove", this.blockDragHandler);
+            document.removeEventListener("pointerup", this.blockDragEndHandler);
+        } else {
+            document.removeEventListener("mousemove", this.blockDragHandler);
+            document.removeEventListener("mouseup", this.blockDragEndHandler);
+            if (pxt.BrowserUtils.isTouchEnabled()) {
+                document.removeEventListener("touchmove", this.blockDragHandler);
+                document.removeEventListener("touchend", this.blockDragEndHandler);
+            }
+        }
     }
 
     componentDidUpdate() {
@@ -63,8 +82,8 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
     protected getBlockDragStartHandler = (block: toolbox.BlockDefinition, snippet: string, color: string) => {
         return (e: any) => {
             this.dragInfo = {
-                x: pxt.BrowserUtils.getPageX(e),
-                y: pxt.BrowserUtils.getPageY(e),
+                x: pxt.BrowserUtils.getClientX(e),
+                y: pxt.BrowserUtils.getClientY(e),
                 block,
                 snippet,
                 color
@@ -72,16 +91,21 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         }
     }
 
-    protected blockDragHandler =  (e: any) => {
-        if (this.dragInfo && (Math.abs(this.dragInfo.x - pxt.BrowserUtils.getPageX(e)) > DRAG_THRESHOLD
-            || Math.abs(this.dragInfo.y - pxt.BrowserUtils.getPageY(e)) > DRAG_THRESHOLD)) {
+    protected isHorizontalDrag = (e: any) => {
+        const dX = Math.abs(this.dragInfo.x - pxt.BrowserUtils.getClientX(e));
+        const dY = Math.abs(this.dragInfo.y - pxt.BrowserUtils.getClientY(e))
+        return dX > DRAG_THRESHOLD && dY > DRAG_THRESHOLD && dX > dY;
+    }
+
+    protected blockDragHandler = (e: any) => {
+        let dragBlock = document.getElementById("monacoDraggingBlock");
+        if (this.dragInfo && (dragBlock || this.isHorizontalDrag(e))) {
             pxt.tickEvent("monaco.toolbox.itemdrag", undefined, { interactiveConsent: true });
             e.preventDefault();
             e.stopPropagation();
 
             const block = this.dragInfo.block;
             const params = block.parameters;
-            let dragBlock = document.getElementById("monacoDraggingBlock");
             this.dragging = true;
             if (!dragBlock) {
                 const parent = document.getElementById("root");
@@ -89,7 +113,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                 dragBlock.id = "monacoDraggingBlock";
                 dragBlock.textContent = block.snippetOnly
                     ? block.snippet
-                    : `${block.qName || this.getSnippetName(block)}${params ? `(${params.map(p => p.name).join(", ")})` : ""}`
+                    : `${this.getQName(block) || this.getSnippetName(block)}${params ? `(${params.map(p => p.name).join(", ")})` : ""}`
                 dragBlock.style.backgroundColor = this.dragInfo.color;
                 parent.appendChild(dragBlock);
 
@@ -101,8 +125,11 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                 }
                 this.props.setInsertionSnippet(this.dragInfo.snippet || inline + "qName:" + block.qName);
             }
-            dragBlock.style.top = `${pxt.BrowserUtils.getPageY(e)}px`;
-            dragBlock.style.left = `${pxt.BrowserUtils.getPageX(e)}px`;
+            dragBlock.style.top = `${pxt.BrowserUtils.getClientY(e)}px`;
+            dragBlock.style.left = `${pxt.BrowserUtils.getClientX(e)}px`;
+            // For devices without PointerEvents (iOS < 13.0) use state to
+            // hide the flyout rather than focusing the editor
+            this.setState({ hide: true });
         }
     }
 
@@ -138,7 +165,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                 this.props.moveFocusToParent();
             } else if (charCode == 27) { // ESCAPE
                 // Focus back to toolbox and close Flyout
-                this.setState( { groups: undefined });
+                this.setState({ groups: undefined });
                 this.props.moveFocusToParent();
             } else if (charCode == 13 && block) { // ENTER
                 let p = snippet ? Promise.resolve(snippet) : compiler.snippetAsync(block.qName, isPython);
@@ -162,13 +189,13 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         evt.stopPropagation();
     }
 
-    protected scrollHandler = (evt:  any) => {
+    protected scrollHandler = (evt: any) => {
         this.positionDragHandle();
     }
 
-    protected getFlyoutStyle = () => {
+    protected getFlyoutStyle = (): React.CSSProperties => {
         return {
-            display: (this.state && this.state.groups) ? "block" : "none"
+            display: (this.state?.groups && !this.state?.hide) ? "block" : "none"
         }
     }
 
@@ -176,21 +203,61 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         return { color };
     }
 
-    protected getSelectedStyle = (selected: boolean, color: string) => {
-        return { touchAction: (window as any).PointerEvent ? "none"  : undefined };
+    protected getSelectedStyle = () => {
+        return { touchAction: pxt.BrowserUtils.hasPointerEvents() ? "pan-y" : undefined };
     }
 
     protected getBlockStyle = (color: string) => {
         return {
             backgroundColor: color,
             fontSize: `${this.props.parent.settings.editorFontSize}px`,
-            lineHeight: `${this.props.parent.settings.editorFontSize + 1}px`
+            lineHeight: `${this.props.parent.settings.editorFontSize + 16}px`
         };
+    }
+
+    protected getQName(block: toolbox.BlockDefinition): string {
+        return this.props.fileType == pxt.editor.FileType.Python && block.pyQName ? block.pyQName : block.qName;
     }
 
     protected getSnippetName(block: toolbox.BlockDefinition): string {
         const isPython = this.props.fileType == pxt.editor.FileType.Python;
         return (isPython ? (block.pySnippetName || block.pyName) : undefined) || block.snippetName || block.name;
+    }
+
+    protected getBlockDescription(block: toolbox.BlockDefinition, params: pxtc.ParameterDesc[]): JSX.Element[] {
+        let description = [];
+        let parts = block.attributes._def && block.attributes._def.parts;
+        let name = block.qName || block.name;
+        if (parts) {
+            if (params &&
+                parts.filter((p: any) => p.kind == "param").length > params.length) {
+                // add empty param when first argument is "this"
+                params.unshift(null);
+            }
+            parts.forEach((part, i) => {
+                switch (part.kind) {
+                    case "label":
+                        description.push(<span key={name + i}>{part.text}</span>);
+                        break;
+                    case "break":
+                        description.push(<span key={name + i}>{" "}</span>);
+                        break;
+                    case "param":
+                        let p = params && params.shift();
+                        let val = p && (p.default || p.name) || part.name;
+                        description.push(<span className="argName" key={name + i}>{val}</span>);
+                        break;
+                }
+            })
+        } else {
+            // if no blockdef found, use the snippet name
+            description.push(<span key={name}>{block.snippetName || block.name}</span>)
+        }
+
+        // imitates block behavior in adding "run code" before any handler
+        if (params && params.find(p => p.type && p.type.indexOf("=>") >= 0)) description.unshift(<span key="prefix">{lf("run code ")}</span>)
+
+        return description;
     }
 
     protected positionDragHandle(): void {
@@ -228,45 +295,54 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         const disabled = fnState == pxt.editor.FilterState.Disabled;
         const isPython = this.props.fileType == pxt.editor.FileType.Python;
 
-        const snippetName = this.getSnippetName(block);
         const snippet = isPython ? block.pySnippet : block.snippet;
         const params = block.parameters;
         const blockColor = block.attributes.color || color;
+        const blockDescription = this.getBlockDescription(block, params ? params.slice() : null);
+        const helpUrl = block.attributes.help;
 
-        const qName =  block.qName || block.name;
+        const qName = this.getQName(block) || this.getSnippetName(block);
         const selected = qName == this.state.selectedBlock;
 
-        const hasPointer = (window as any).PointerEvent;
+        const hasPointer = pxt.BrowserUtils.hasPointerEvents();
         const hasTouch = pxt.BrowserUtils.isTouchEnabled();
         const dragStartHandler = this.getBlockDragStartHandler(block, snippet, blockColor);
 
+        const description = block.attributes.jsDoc.replace(/``/g, '"')
+            .split("* @param", 1)[0] // drop any kind of parameter annotation
+
         return <div className={`monacoBlock ${disabled ? "monacoDisabledBlock" : ""} ${selected ? "expand" : ""}`}
-                    style={this.getSelectedStyle(selected, blockColor)}
-                    title={block.attributes.jsDoc}
-                    key={`block_${index}`} tabIndex={0} role="listitem"
-                    onClick={this.getBlockClickHandler(qName)}
-                    onKeyDown={this.getKeyDownHandler(block, snippet, isPython)}
-                    onPointerDown={hasPointer ? dragStartHandler : undefined}
-                    onMouseDown={!hasPointer ? dragStartHandler : undefined}
-                    onTouchStart={!hasPointer && hasTouch ? dragStartHandler : undefined}>
-                <div className="blockHandle" style={this.getSelectedStyle(selected, blockColor)}><i className="icon bars" /></div>
-                <div className="monacoDraggableBlock" style={this.getBlockStyle(blockColor)}>
-                    <span className="blockName">{block.snippetOnly ? snippet : snippetName}</span>
-                    {!block.snippetOnly && params && <span>{`(${params.map(p => p.name).join(", ")})`}</span>}
-                </div>
-                <div className="detail">
-                    <div className="description">{block.attributes.jsDoc}</div>
-                    {params && <div className="params">
-                        {params.map((p, i) => {
-                            return <div key={i}>
-                                <div className="separator"></div>
-                                <span className="paramName">{p.name}</span>
-                                {p.description && <span className="paramDescription">{p.description}</span>}
-                            </div>
-                        })}
-                    </div>}
-                </div>
+            style={this.getSelectedStyle()}
+            title={block.attributes.jsDoc}
+            key={`block_${qName}_${index}`} tabIndex={0} role="listitem"
+            onClick={this.getBlockClickHandler(qName)}
+            onKeyDown={this.getKeyDownHandler(block, snippet, isPython)}
+            onPointerDown={hasPointer ? dragStartHandler : undefined}
+            onMouseDown={!hasPointer ? dragStartHandler : undefined}
+            onTouchStart={!hasPointer && hasTouch ? dragStartHandler : undefined}>
+            <div className="blockHandle" style={this.getSelectedStyle()}><i className="icon bars" /></div>
+            <div className="monacoDraggableBlock" style={this.getBlockStyle(blockColor)}>
+                <span className="blockName">{blockDescription}</span>
             </div>
+            <div className="detail">
+                <div className="description">{description}</div>
+                <div className="signature">
+                    <span>{snippet ? snippet : `${qName}(${params ? params.map(p => `${p.name}`).join(", ") : ""})`}</span>
+                    {helpUrl && <a className="blockHelp" href={`/reference/${helpUrl}`} target="_blank" rel="noopener noreferrer" role="button">
+                        <i className="question circle outline icon" aria-label={lf("Open documentation")}></i>
+                    </a>}
+                </div>
+                {params && <div className="params">
+                    {params.map((p, i) => {
+                        return <div key={i}>
+                            <div className="separator"></div>
+                            <span className="paramName">{p.name}</span>
+                            {p.description && <span className="paramDescription">{p.description.replace(/``/g, '"')}</span>}
+                        </div>
+                    })}
+                </div>}
+            </div>
+        </div>
     }
 
     render() {
@@ -274,14 +350,14 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         const rgb = pxt.toolbox.convertColor(color || (ns && pxt.toolbox.getNamespaceColor(ns)) || "255");
         const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : "Default"}`.replace(/\s/g, "");
         return <div id="monacoFlyoutWidget" className="monacoFlyout" style={this.getFlyoutStyle()}>
-           <div id="monacoFlyoutWrapper" onScroll={this.scrollHandler} onWheel={this.wheelHandler} role="list">
-               <div className="monacoFlyoutLabel monacoFlyoutHeading">
+            <div id="monacoFlyoutWrapper" onScroll={this.scrollHandler} onWheel={this.wheelHandler} role="list">
+                <div className="monacoFlyoutLabel monacoFlyoutHeading">
                     <span className={`monacoFlyoutHeadingIcon blocklyTreeIcon ${iconClass}`} role="presentation" style={this.getIconStyle(rgb)}>
                         {(icon && icon.length === 1) ? icon : ""}
                     </span>
                     <div className="monacoFlyoutLabelText">{name}</div>
-               </div>
-               {groups && groups.map((g, i) => {
+                </div>
+                {groups && groups.map((g, i) => {
                     let group: JSX.Element[] = [];
                     // Add group label, for non-default groups
                     if (g.name != pxt.DEFAULT_GROUP_NAME && groups.length > 1) {
@@ -291,13 +367,13 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                                 <div className="monacoFlyoutLabelText">{g.name}</div>
                                 {g.hasHelp && pxt.editor.HELP_IMAGE_URI && <span>
                                     <img src={pxt.editor.HELP_IMAGE_URI} onClick={this.getHelpButtonClickHandler(g.name)} alt={lf("Click for help")}>
-                                </img></span>}
+                                    </img></span>}
                                 <hr className="monacoFlyoutLabelLine" />
                             </div>)
                     }
                     // Add group blocks
                     if (g.blocks) {
-                        group = group.concat(g.blocks.map((b, j) => {
+                        let blocks = g.blocks.map((b, j) => {
                             // Check if the block is built in, ignore it as it's already defined in snippets
                             if (b.attributes.blockBuiltin) {
                                 pxt.log("ignoring built in block: " + b.attributes.blockId);
@@ -305,11 +381,16 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                             } else {
                                 return this.getMonacoBlock(b, j, rgb);
                             }
-                        }));
+                        }).filter(b => b !== undefined);
+                        if (blocks && blocks.length > 0) {
+                            group = group.concat(blocks);
+                        } else {
+                            return null;
+                        }
                     }
-                   return group;
-               })}
-           </div>
+                    return group;
+                })}
+            </div>
         </div>
     }
 }

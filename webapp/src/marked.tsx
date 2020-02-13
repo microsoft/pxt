@@ -9,6 +9,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 interface MarkedContentProps extends ISettingsProps {
     markdown: string;
     className?: string;
+    onDidRender?: () => void;
 }
 
 interface MarkedContentState {
@@ -64,13 +65,14 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         pxsim.U.removeClass(wrapperDiv, 'loading');
     }
 
-    private cachedRenderLangSnippet(langBlock: HTMLElement, renderer: (code: string) => Promise<string | HTMLElement>) {
+    private cachedRenderLangSnippetAsync(langBlock: HTMLElement, renderer: (code: string) => Promise<string | HTMLElement>): Promise<void> {
         const code = langBlock.textContent;
         const wrapperDiv = this.startRenderLangSnippet(langBlock);
         if (MarkedContent.blockSnippetCache[code]) {
             this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[code]);
+            return undefined;
         } else {
-            renderer(code)
+            return renderer(code)
                 .then(renderedCode => {
                     MarkedContent.blockSnippetCache[code] = renderedCode;
                     this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[code]);
@@ -82,7 +84,17 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     }
 
     private renderSnippets(content: HTMLElement) {
-        const { parent } = this.props;
+        const { parent, onDidRender } = this.props;
+
+        let promises: Promise<void>[] = [];
+
+        pxt.Util.toArray(content.querySelectorAll(`img`))
+            .forEach((imgBlock: HTMLImageElement) => {
+                promises.push(new Promise<void>((resolve, reject) => {
+                    imgBlock.addEventListener("load", () => resolve(), false);
+                    imgBlock.addEventListener("error", () => resolve(), false);
+                }))
+            });
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-typescript,code.lang-python`))
             .forEach((langBlock: HTMLElement) => {
@@ -93,17 +105,17 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-spy`))
             .forEach((langBlock: HTMLElement) => {
-                this.cachedRenderLangSnippet(langBlock, code =>
+                promises.push(this.cachedRenderLangSnippetAsync(langBlock, code =>
                     parent.renderPythonAsync({
                         type: "pxteditor",
                         action: "renderpython", ts: code
                     }).then(resp => resp.python)
-                );
+                ));
             });
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-diffspy`))
             .forEach((langBlock: HTMLElement) => {
-                this.cachedRenderLangSnippet(langBlock, code => {
+                promises.push(this.cachedRenderLangSnippetAsync(langBlock, code => {
                     const { fileA, fileB } = pxt.diff.split(code);
                     return Promise.mapSeries([fileA, fileB],
                         src => parent.renderPythonAsync({
@@ -116,26 +128,28 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                                 hideMarkerLine: true,
                                 hideMarker: true,
                                 hideRemoved: true,
-                                update: true
+                                update: true,
+                                ignoreWhitespace: true
                             });
                             return el;
                         });
-                });
+                }));
             });
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-diff,code.lang-diffpython`))
             .forEach((langBlock: HTMLElement) => {
-                this.cachedRenderLangSnippet(langBlock, code => {
+                promises.push(this.cachedRenderLangSnippetAsync(langBlock, code => {
                     const { fileA, fileB } = pxt.diff.split(code);
                     const el = pxt.diff.render(fileA, fileB, {
                         hideLineNumbers: true,
                         hideMarkerLine: true,
                         hideMarker: true,
                         hideRemoved: true,
-                        update: true
+                        update: true,
+                        ignoreWhitespace: true
                     });
                     return Promise.resolve(el);
-                })
+                }))
             });
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-blocks`))
@@ -155,31 +169,30 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     wrapperDiv.appendChild(doc.documentElement);
                     pxsim.U.removeClass(wrapperDiv, 'loading');
                 } else {
-                    parent.renderBlocksAsync({
+                    promises.push(parent.renderBlocksAsync({
                         type: "pxteditor",
                         action: "renderblocks", ts: code
-                    })
-                        .done(resp => {
-                            const svg = resp.svg;
-                            if (svg) {
-                                const viewBox = svg.getAttribute('viewBox').split(' ').map(parseFloat);
-                                const width = viewBox[2];
-                                let height = viewBox[3];
-                                if (width > 480 || height > 128)
-                                    height = (height * 0.8) | 0;
-                                svg.setAttribute('height', `${height}px`);
-                                // SVG serialization is broken on IE (SVG namespace issue), don't cache on IE
-                                if (!pxt.BrowserUtils.isIE()) MarkedContent.blockSnippetCache[code] = Blockly.Xml.domToText(svg);
-                                wrapperDiv.appendChild(svg);
-                                pxsim.U.removeClass(wrapperDiv, 'loading');
-                            } else {
-                                // An error occured, show alternate message
-                                const textDiv = document.createElement('span');
-                                textDiv.textContent = lf("Oops, something went wrong trying to render this block snippet.");
-                                wrapperDiv.appendChild(textDiv);
-                                pxsim.U.removeClass(wrapperDiv, 'loading');
-                            }
-                        })
+                    }).then(resp => {
+                        const svg = resp.svg;
+                        if (svg) {
+                            const viewBox = svg.getAttribute('viewBox').split(' ').map(parseFloat);
+                            const width = viewBox[2];
+                            let height = viewBox[3];
+                            if (width > 480 || height > 128)
+                                height = (height * 0.8) | 0;
+                            svg.setAttribute('height', `${height}px`);
+                            // SVG serialization is broken on IE (SVG namespace issue), don't cache on IE
+                            if (!pxt.BrowserUtils.isIE()) MarkedContent.blockSnippetCache[code] = Blockly.Xml.domToText(svg);
+                            wrapperDiv.appendChild(svg);
+                            pxsim.U.removeClass(wrapperDiv, 'loading');
+                        } else {
+                            // An error occured, show alternate message
+                            const textDiv = document.createElement('span');
+                            textDiv.textContent = lf("Oops, something went wrong trying to render this block snippet.");
+                            wrapperDiv.appendChild(textDiv);
+                            pxsim.U.removeClass(wrapperDiv, 'loading');
+                        }
+                    }));
                 }
             })
 
@@ -191,12 +204,12 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 const code = langBlock.textContent;
                 const { fileA: oldXml, fileB: newXml } = pxt.diff.split(code);
 
-                this.cachedRenderLangSnippet(langBlock, code =>
+                promises.push(this.cachedRenderLangSnippetAsync(langBlock, code =>
                     pxt.BrowserUtils.loadBlocklyAsync()
                         .then(() => {
                             const diff = pxt.blocks.diffXml(oldXml, newXml);
                             return wrapBlockDiff(diff);
-                        }));
+                        })));
             });
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-diffblocks`))
@@ -208,7 +221,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 const { fileA: oldSrc, fileB: newSrc } = pxt.diff.split(code);
 
 
-                this.cachedRenderLangSnippet(langBlock, code =>
+                promises.push(this.cachedRenderLangSnippetAsync(langBlock, code =>
                     pxt.BrowserUtils.loadBlocklyAsync()
                         .then(() => compiler.getBlocksAsync())
                         .then(blocksInfo => Promise.mapSeries([oldSrc, newSrc], src =>
@@ -219,8 +232,16 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                             hideDeletedBlocks: true
                         }))
                         .then(diff => wrapBlockDiff(diff))
-                );
+                ));
             });
+
+        promises = promises.filter(p => !!p);
+        if (promises.length && onDidRender)
+            Promise.all(promises)
+                .then(() => {
+                    pxt.log(`markdowcontent: forcing update after async rendering`)
+                    onDidRender();
+                });
 
         function wrapBlockDiff(diff: pxt.blocks.DiffResult): HTMLElement {
             const svg = diff.svg;
@@ -295,6 +316,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         /* tslint:disable:no-inner-html (marked content is already sanitized) */
         content.innerHTML = marked(markdown);
         /* tslint:enable:no-inner-html */
+
+        // 
 
         // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed
         this.renderInlineBlocks(content);

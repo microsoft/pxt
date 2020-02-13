@@ -1,5 +1,3 @@
-/// <reference path="./testBlocks/constantShim.ts" />
-
 let cs_1 = constant.PI;
 let cs_2 = constant.LN2;
 let cs_3 = constant._constant(constant.PI);

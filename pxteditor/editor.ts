@@ -307,7 +307,6 @@ namespace pxt.editor {
         showExitAndSaveDialog(): void;
         showChooseHwDialog(skipDownload?: boolean): void;
         showExperimentsDialog(): void;
-        showRecipesDialog(): void;
 
         showPackageDialog(): void;
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
@@ -320,6 +319,8 @@ namespace pxt.editor {
 
         pushScreenshotHandler(handler: (msg: ScreenshotData) => void): void;
         popScreenshotHandler(): void;
+
+        openDependentEditor(header: pxt.workspace.Header): void;
     }
 
     export interface IHexFileImporter {
