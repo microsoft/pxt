@@ -586,11 +586,12 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         scr.tutorial ? scr.tutorial.tutorialStepInfo.length
                             : scr.tutorialCompleted ? scr.tutorialCompleted.steps
                                 : undefined;
+                    const ghid = pxt.github.parseRepoId(scr.githubId);
                     return <ProjectsCodeCard
                         key={'local' + scr.id + scr.recentUse}
                         // ref={(view) => { if (index === 1) this.latestProject = view }}
                         cardType="file"
-                        name={scr.name}
+                        name={(ghid && ghid.project) || scr.name}
                         time={scr.recentUse}
                         url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
                         scr={scr} index={index}

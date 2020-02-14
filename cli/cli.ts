@@ -36,10 +36,25 @@ let forceBuild = false; // don't use cache
 
 Error.stackTraceLimit = 100;
 
+function parseHwVariant(parsed: commandParser.ParsedCommand) {
+    let hwvariant = parsed && parsed.flags["hwvariant"] as string;
+    if (hwvariant) {
+        // map known variants
+        const knowVariants: pxt.Map<string> = {
+            "f4": "stm32f401",
+            "d5": "samd51",
+            "p0": "rpi"
+        }
+        hwvariant = knowVariants[hwvariant.toLowerCase()] || hwvariant;
+        if (!/^hw---/.test(hwvariant)) hwvariant = 'hw---' + hwvariant;
+    }
+    return hwvariant;
+}
+
 function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     const cloud = parsed && parsed.flags["cloudbuild"];
     const local = parsed && parsed.flags["localbuild"];
-    let hwvariant = parsed && parsed.flags["hwvariant"] as string;
+    const hwvariant = parseHwVariant(parsed);
     forceBuild = parsed && !!parsed.flags["force"];
     if (cloud && local)
         U.userError("cannot specify local-build and cloud-build together");
@@ -54,8 +69,7 @@ function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     }
 
     if (hwvariant) {
-        if (!/^hw---/.test(hwvariant)) hwvariant = 'hw---' + hwvariant;
-        pxt.debug(`setting hardware variant to ${hwvariant}`);
+        pxt.log(`setting hardware variant to ${hwvariant}`);
         pxt.setHwVariant(hwvariant)
     }
 }
@@ -2849,10 +2863,7 @@ export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void
     pxt.log("installing dependencies...");
     ensurePkgDir();
     const packageName = parsed && parsed.args.length ? parsed.args[0] : undefined;
-    let hwvariant = parsed && parsed.flags["hwvariant"] as string;
-    if (hwvariant && !/^hw---/.test(hwvariant))
-        hwvariant = 'hw---' + hwvariant;
-
+    const hwvariant = parseHwVariant(parsed);
     return installPackageNameAsync(packageName)
         .then(() => addDepsAsync())
         .then(() => mainPkg.installAllAsync())

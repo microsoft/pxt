@@ -972,8 +972,9 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
     }
 
     // automatically update project name with github name
+    // if it start with pxt-
     const ghid = pxt.github.parseRepoId(h.githubId);
-    if (ghid.project) {
+    if (ghid.project && /^pxt-/.test(ghid.project)) {
         const ghname = ghid.project.replace(/^pxt-/, '').replace(/-+/g, ' ')
         if (ghname != h.name) {
             const cfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME]);

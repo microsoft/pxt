@@ -283,9 +283,10 @@ namespace pxt {
                 U.userError("Missing dependencies in config of: " + this.id)
             if (!Array.isArray(this.config.files))
                 U.userError("Missing files in config of: " + this.id)
-            if (typeof this.config.name != "string" || !this.config.name ||
-                (this.config.public && !/^[a-z][a-z0-9\-_]+$/i.test(this.config.name)))
-                U.userError("Invalid extension name: " + this.config.name)
+            if (typeof this.config.name != "string" || !this.config.name)
+                this.config.name = lf("Untitled");
+            // don't be so uptight about project names,
+            // handle invalid names downstream
             if (this.config.targetVersions
                 && this.config.targetVersions.target
                 && semver.majorCmp(this.config.targetVersions.target, appTarget.versions.target) > 0)
