@@ -309,6 +309,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         const targetTheme = pxt.appTarget.appTheme;
         const githubUser = this.getData("github:user") as pxt.editor.UserInfo;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
+        const showDivider = targetTheme.selectLanguage || targetTheme.highContrast || githubUser;
 
         // tslint:disable react-a11y-anchors
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
@@ -321,7 +322,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
                 </div>
                 {lf("Sign out")}
             </div> : undefined}
-            <div className="ui divider"></div>
+            {showDivider && <div className="ui divider"></div>}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
             <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} />
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
@@ -1087,7 +1088,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                         <sui.Input ref="filenameinput" id={"projectNameInput"}
                             ariaLabel={lf("Type a name for your project")} autoComplete={false}
                             value={projectName || ''} onChange={this.handleChange} onEnter={this.save}
-                            selectOnMount={!mobile} autoFocus={!mobile}/>
+                            selectOnMount={!mobile} autoFocus={!mobile} />
                     </div>
                 </div>
             </sui.Modal>
