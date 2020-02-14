@@ -49,20 +49,14 @@ namespace pxt.py {
     }
     const indent1 = indent(1)
 
+    // TODO handle types at initialization when ambiguous (e.g. x = [], x = None)
+
     ///
     /// VARIABLE SCOPE ANALYSIS
     ///
-    // TODO handle shadowing
-    // TODO handle types at initialization when ambiguous (e.g. x = [], x = None)
-    // type VarUse = ts.Identifier
-    // type VarDecl = ts.VariableDeclaration | ts.ParameterDeclaration
-    // // track use, decl, assign
-    // function isVarUse(s: VarUse | VarDecl): s is VarUse {
-    //     return ts.isIdentifier(s)
-    // }
 
-    interface VarUse {
-        kind: "use",
+    interface VarRead {
+        kind: "read",
         node: ts.Identifier,
         varName: string
     }
@@ -96,13 +90,15 @@ namespace pxt.py {
         return ts.isBinaryExpression(s)
             && !!AssignmentOperators.find(o => s.operatorToken.kind === o)
     }
-    type VarRef = VarUse | VarDecl | VarAssign
+    type VarUse = VarRead | VarAssign
+    type VarRef = VarRead | VarDecl | VarAssign
     interface VarScope {
         refs: VarRef[],
-        children: VarScope[]
+        children: VarScope[],
+        owner: ts.FunctionLikeDeclaration | undefined
     }
     function computeVarScopes(node: ts.Node): VarScope {
-        const EMPTY: VarScope = { refs: [], children: [] }
+        const EMPTY: VarScope = { refs: [], children: [], owner: undefined }
 
         return walk(node)
 
@@ -119,11 +115,12 @@ namespace pxt.py {
             if (ts.isIdentifier(s)) {
                 return {
                     refs: [{
-                        kind: "use",
+                        kind: "read",
                         node: s,
                         varName: s.text
                     }],
-                    children: []
+                    children: [],
+                    owner: undefined
                 }
             }
 
@@ -136,7 +133,8 @@ namespace pxt.py {
                         node: s,
                         varName: s.name.getText()
                     }],
-                    children: init.children
+                    children: init.children,
+                    owner: undefined
                 }
             }
 
@@ -150,7 +148,8 @@ namespace pxt.py {
                         node: s,
                         varName,
                     }],
-                    children: []
+                    children: [],
+                    owner: undefined
                 }
                 return merge(operandUse, assign)
             }
@@ -167,7 +166,8 @@ namespace pxt.py {
                         node: s,
                         varName,
                     }],
-                    children: []
+                    children: [],
+                    owner: undefined
                 }
                 return merge(leftUse, merge(rightUse, assign))
             }
@@ -191,9 +191,11 @@ namespace pxt.py {
                     .reduce(merge, EMPTY)
                 let body = walk(s.body)
                 let child = merge(params, body)
+                child.owner = s
                 return {
                     refs: fnDecl ? [fnDecl] : [],
-                    children: [child]
+                    children: [child],
+                    owner: undefined
                 }
             }
 
@@ -208,13 +210,110 @@ namespace pxt.py {
                 return p || n || EMPTY
             return {
                 refs: [...p.refs, ...n.refs],
-                children: [...p.children, ...n.children]
+                children: [...p.children, ...n.children],
+                owner: p.owner || n.owner
             }
         }
     }
+    interface VarUsages {
+        globalUsage: VarUse[],
+        nonlocalUsage: VarUse[],
+        localUsage: VarUse[],
+        environmentUsage: VarUse[],
+        children: VarUsages[],
+        owner: ts.FunctionLikeDeclaration | undefined
+    }
+    function getExplicitGlobals(u: VarUsages): VarAssign[] {
+        return [...u.globalUsage, ...u.environmentUsage]
+            .filter(r => r.kind === "assign")
+            .map(r => r as VarAssign)
+    }
+    function getExplicitNonlocals(u: VarUsages): VarAssign[] {
+        return u.nonlocalUsage
+            .filter(r => r.kind === "assign")
+            .map(r => r as VarAssign)
+    }
+    type Decls = { [key: string]: VarDecl }
+    function computeVarUsage(s: VarScope, globals?: Decls, nonlocals: Decls[] = []): VarUsages {
+        let globalUsage: VarUse[] = []
+        let nonlocalUsage: VarUse[] = []
+        let localUsage: VarUse[] = []
+        let environmentUsage: VarUse[] = []
+        let locals: Decls = {}
+        for (let r of s.refs) {
+            if (r.kind === "read" || r.kind === "assign") {
+                if (locals[r.varName])
+                    localUsage.push(r)
+                else if (lookupNonlocal(r))
+                    nonlocalUsage.push(r)
+                else if (globals && globals[r.varName])
+                    globalUsage.push(r)
+                else
+                    environmentUsage.push(r)
+            } else {
+                locals[r.varName] = r
+            }
+        }
+        let nextGlobals = globals || locals
+        let nextNonlocals = globals ? [...nonlocals, locals] : []
+        let children = s.children
+            .map(s => computeVarUsage(s, nextGlobals, nextNonlocals))
+        return {
+            globalUsage,
+            nonlocalUsage,
+            localUsage,
+            environmentUsage,
+            children,
+            owner: s.owner
+        }
+
+        function lookupNonlocal(use: VarUse): VarDecl | undefined {
+            return nonlocals
+                .map(d => d[use.varName])
+                .reduce((p, n) => n || p, undefined)
+        }
+    }
+    interface ScopeVariableLookup {
+        getExplicitGlobals(fn: ts.FunctionLikeDeclaration): string[];
+        getExplicitNonlocals(fn: ts.FunctionLikeDeclaration): string[];
+    }
+    function computeScopeVariableLookup(n: ts.Node): ScopeVariableLookup {
+        const scopeInfo = computeVarScopes(n)
+        const usageInfo = computeVarUsage(scopeInfo)
+
+        const globalsByFn = new Map()
+        const nonlocalsByFn = new Map()
+
+        walk(usageInfo)
+
+        return {
+            getExplicitGlobals: (fn) => globalsByFn.get(fn),
+            getExplicitNonlocals: (fn) => nonlocalsByFn.get(fn),
+        }
+
+        function walk(s: VarUsages) {
+            const gs = getExplicitGlobals(s)
+                .map(a => a.varName)
+                .reduce(dedup, [] as string[])
+            globalsByFn.set(s.owner, gs)
+
+            const ls = getExplicitNonlocals(s)
+                .map(a => a.varName)
+                .reduce(dedup, [] as string[])
+            nonlocalsByFn.set(s.owner, ls)
+
+            s.children.forEach(walk)
+        }
+        function dedup<T>(p: T[], n: T) {
+            return p.find(r => r === n) ? p : [...p, n]
+        }
+    }
+    function toStringVarRef(i: VarRef): string {
+        return `${i.kind}:${i.varName}`
+    }
     function toStringVarScopes(s: VarScope): string {
         function internalToStringVarScopes(s: VarScope): string[] {
-            let refs = s.refs.map(i => `${i.kind}:${i.varName}`).join(", ")
+            let refs = s.refs.map(toStringVarRef).join(", ")
             let children = s.children
                 .map(internalToStringVarScopes)
                 .map(c => c.map(indent1))
@@ -227,93 +326,47 @@ namespace pxt.py {
         }
         return internalToStringVarScopes(s).join("\n")
     }
-    // interface VarUsage {
-    //     globalUsage: VarUse[],
-    //     nonlocalUsage: VarUse[],
-    //     localUsage: VarUse[],
-    //     environmentUsage: VarUse[],
-    //     children: VarUsage[]
-    // }
-    // type Decls = { [key: string]: VarDecl }
-    // function computeVarUsage(s: VarScope, globals?: Decls, nonlocals: Decls[] = []): VarUsage {
-    //     let globalUsage: VarUse[] = []
-    //     let nonlocalUsage: VarUse[] = []
-    //     let localUsage: VarUse[] = []
-    //     let environmentUsage: VarUse[] = []
-    //     let locals: Decls = {}
-    //     for (let r of s.refs) {
-    //         if (r.kind === "use" || r.kind === "assign") {
-    //             if (lookupNonlocal(r))
-    //                 nonlocalUsage.push(r)
-    //             else if (globals && globals[r.text])
-    //                 globalUsage.push(r)
-    //             else if (locals[r.text])
-    //                 localUsage.push(r)
-    //             else
-    //                 environmentUsage.push(r)
-    //         } else {
-    //             locals[r.name.getText()] = r
-    //         }
-    //     }
-    //     let nextGlobals = globals || locals
-    //     let nextNonlocals = globals ? [...nonlocals, locals] : []
-    //     let children = s.children
-    //         .map(s => computeVarUsage(s, nextGlobals, nextNonlocals))
-    //     return {
-    //         globalUsage,
-    //         nonlocalUsage,
-    //         localUsage,
-    //         environmentUsage,
-    //         children
-    //     }
-
-    //     function lookupNonlocal(use: VarUse): VarDecl | undefined {
-    //         return nonlocals
-    //             .map(d => d[use.text])
-    //             .reduce((p, n) => n || p, undefined)
-    //     }
-    // }
-    // function toStringVarUsage(s: VarUsage): string {
-    //     function internalToStringVarUsage(s: VarUsage): string[] {
-    //         let gs = s.globalUsage.map(i => i.getText()).join(', ')
-    //         let ns = s.nonlocalUsage.map(i => i.getText()).join(', ')
-    //         let ls = s.localUsage.map(i => i.getText()).join(', ')
-    //         let es = s.environmentUsage.map(i => i.getText()).join(', ')
-    //         let children = s.children
-    //             .map(internalToStringVarUsage)
-    //             .map(c => c.map(indent1))
-    //             .map(c => ["{", ...c, "}"])
-    //             .reduce((p, n) => [...p, ...n], [])
-    //         return [
-    //             gs ? "global " + gs : "",
-    //             ns ? "nonlocal " + ns : "",
-    //             ls ? "local " + ls : "",
-    //             es ? "env " + es : "",
-    //             ...children
-    //         ].filter(i => !!i)
-    //     }
-    //     return internalToStringVarUsage(s).join("\n")
-    // }
+    function toStringVarUsage(s: VarUsages): string {
+        function internalToStringVarUsage(s: VarUsages): string[] {
+            let gs = s.globalUsage.map(toStringVarRef).join(', ')
+            let ns = s.nonlocalUsage.map(toStringVarRef).join(', ')
+            let ls = s.localUsage.map(toStringVarRef).join(', ')
+            let es = s.environmentUsage.map(toStringVarRef).join(', ')
+            let children = s.children
+                .map(internalToStringVarUsage)
+                .map(c => c.map(indent1))
+                .map(c => ["{", ...c, "}"])
+                .reduce((p, n) => [...p, ...n], [])
+            return [
+                gs ? "global " + gs : "",
+                ns ? "nonlocal " + ns : "",
+                ls ? "local " + ls : "",
+                es ? "env " + es : "",
+                ...children
+            ].filter(i => !!i)
+        }
+        return internalToStringVarUsage(s).join("\n")
+    }
 
     function tsToPy(prog: ts.Program, filename: string): string {
         // helpers
-        let tc = prog.getTypeChecker()
-        let lhost = new ts.pxtc.LSHost(prog)
-        // let ls = ts.createLanguageService(lhost) // TODO
-        let file = prog.getSourceFile(filename)
-        let commentMap = pxtc.decompiler.buildCommentMap(file);
-        let reservedWords = pxt.U.toSet(getReservedNmes(), s => s)
-        let [renameMap, globalNames] = ts.pxtc.decompiler.buildRenameMap(prog, file, reservedWords)
-        let allSymbols = pxtc.getApiInfo(prog)
-        let symbols = pxt.U.mapMap(allSymbols.byQName,
+        const tc = prog.getTypeChecker()
+        const lhost = new ts.pxtc.LSHost(prog)
+        // const ls = ts.createLanguageService(lhost) // TODO
+        const file = prog.getSourceFile(filename)
+        const commentMap = pxtc.decompiler.buildCommentMap(file);
+        const reservedWords = pxt.U.toSet(getReservedNmes(), s => s)
+        const [renameMap, globalNames] = ts.pxtc.decompiler.buildRenameMap(prog, file, reservedWords)
+        const allSymbols = pxtc.getApiInfo(prog)
+        const symbols = pxt.U.mapMap(allSymbols.byQName,
             // filter out symbols from the .ts corresponding to this file
             (k, v) => v.fileName == filename ? undefined : v)
 
-        // analysis
-        let varScopes = computeVarScopes(file)
-        // let varUsage = computeVarUsage(varScopes)
-        return toStringVarScopes(varScopes) // For debugging
-        // return toStringVarUsage(varUsage) // For debugging
+        // variables analysis
+        // const varScopes = computeVarScopes(file)
+        // const varUsage = computeVarUsage(varScopes)
+        // return toStringVarScopes(varScopes) + "\n\n\n" + toStringVarUsage(varUsage) // For debugging
+        const scopeLookup = computeScopeVariableLookup(file)
 
         // ts->py
         return emitFile(file)
@@ -380,13 +433,6 @@ namespace pxt.py {
                 return throwError(name, 3001, "Unsupported advanced name format: " + name.getText());
             }
             let outName = name.text;
-            let hasSrc = name.getSourceFile()
-            if (renameMap && hasSrc) {
-                const rename = renameMap.getRenameForPosition(name.getStart());
-                if (rename) {
-                    outName = rename.name;
-                }
-            }
             return outName
         }
         function getNewGlobalName(nameHint: string | ts.Identifier | ts.BindingPattern | ts.PropertyName | ts.EntityName) {
@@ -400,34 +446,6 @@ namespace pxt.py {
                 return nameHint
             }
         }
-        // TODO decide on strategy for tracking variable scope(s)
-        // function introVar(name: string, decl: ts.Node): string {
-        //     let scope = env[0]
-        //     let maxItr = 100
-        //     let newName = name
-        //     for (let i = 0; i < maxItr && newName in scope.vars; i++) {
-        //         let matches = newName.match(/\d+$/);
-        //         if (matches) {
-        //             let num = parseInt(matches[0], 10)
-        //             num++
-        //             newName = newName.replace(/\d+$/, num.toString())
-        //         } else {
-        //             newName += 1
-        //         }
-        //     }
-        //     if (newName in scope.vars)
-        //         throw Error("Implementation error: unable to find an alternative variable name for: " + newName)
-        //     if (newName !== name) {
-        //         // do rename
-        //         let locs = ls.findRenameLocations(filename, decl.pos + 1, false, false)
-        //         for (let l of locs) {
-        //             // ts.getNode
-
-        //         }
-        //     }
-        //     scope.vars[newName] = decl
-        //     return newName
-        // }
 
         ///
         /// TYPE UTILS
@@ -961,7 +979,6 @@ namespace pxt.py {
             let out = []
 
             let fnName: string
-
             if (s.kind === ts.SyntaxKind.Constructor) {
                 fnName = "__init__"
             }
@@ -988,6 +1005,14 @@ namespace pxt.py {
                 stmts.concat(exp)
             }
             if (stmts.length) {
+                // global or nonlocal declerations
+                let globals = scopeLookup.getExplicitGlobals(s)
+                if (globals && globals.length)
+                    stmts.unshift(`global ${globals.join(", ")}`)
+                let nonlocals = scopeLookup.getExplicitNonlocals(s)
+                if (nonlocals && nonlocals.length)
+                    stmts.unshift(`nonlocal ${nonlocals.join(", ")}`)
+
                 out = out.concat(stmts.map(indent1))
             } else {
                 out.push(indent1("pass")) // cannot have an empty body
