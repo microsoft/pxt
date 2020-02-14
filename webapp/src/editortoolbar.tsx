@@ -217,13 +217,14 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         if (!isEditor) return <div />;
 
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
-        const hasRepository = header && !!header.githubId;
+        const ghid = header && pxt.github.parseRepoId(header.githubId);
+        const hasRepository = !!ghid;
         const showSave = !readOnly && !isController && !targetTheme.saveInMenu
             && !tutorial && !debugging && !disableFileAccessinMaciOs
             && !hasRepository;
         const showProjectRename = !tutorial && !readOnly && !isController
             && !targetTheme.hideProjectRename && !debugging;
-        const showProjectRenameReadonly = hasRepository;
+        const showProjectRenameReadonly = hasRepository && /^pxt-/.test(ghid.project); // allow renaming of name with github
         const compile = pxt.appTarget.compile;
         const compileBtn = compile.hasHex || compile.saveAsPNG || compile.useUF2;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
