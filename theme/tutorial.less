@@ -389,8 +389,10 @@ code.lang-filterblocks {
 }
 
 .avatar-container .tooltip {
-    top: 5rem;
-    left: 1.5rem;
+    top: 5.2rem;
+    // left: 1.5rem;
+    left: auto;
+    width: 10rem;
     max-width: 175px;
 }
 
@@ -398,6 +400,11 @@ code.lang-filterblocks {
 .avatar-container .tooltip:before {
     background-color: @blue;
     color: @white;
+}
+
+.avatar-container .tooltip:before {
+    right: 3rem;
+    left: auto;
 }
 
 .hideIteration .avatar-container .tooltip {
@@ -522,7 +529,7 @@ code.lang-filterblocks {
 /* Tablet */
 @media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
     .avatar-container .tooltip:before {
-        left: 2rem;
+        right: 2.1rem;
     }
 }
 
@@ -565,12 +572,12 @@ code.lang-filterblocks {
     }
 
     // mobile tutorial tooltip positioning
-    // .avatar-container .tooltip {
-    //     // top: 2rem;
-    // }
+    .avatar-container .tooltip {
+        top: 2.4rem;
+    }
 
     .avatar-container .tooltip:before {
-        left: 1rem;
+        right: 2.7rem;
     }
 }
 
@@ -586,7 +593,7 @@ code.lang-filterblocks {
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
     .avatar-container .tooltip {
-        left: 5rem;
+        width: 8rem;
     }
 
     #tutorialdropdown {
