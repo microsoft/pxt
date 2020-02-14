@@ -73,7 +73,7 @@ namespace pxt.py {
 
             // variable decleration
             if (ts.isVariableDeclaration(s) || ts.isParameter(s)) {
-                let init = walk(s.initializer)
+                const init = walk(s.initializer)
                 return {
                     refs: [...init.refs, {
                         kind: "decl",
@@ -87,9 +87,9 @@ namespace pxt.py {
 
             // variable assignment
             if (ts.isPrefixUnaryExpression(s) || ts.isPostfixUnaryExpression(s)) {
-                let operandUse = walk(s.operand)
-                let varName = s.operand.getText()
-                let assign: VarScope = {
+                const operandUse = walk(s.operand)
+                const varName = s.operand.getText()
+                const assign: VarScope = {
                     refs: [{
                         kind: "assign",
                         node: s,
@@ -101,13 +101,13 @@ namespace pxt.py {
                 return merge(operandUse, assign)
             }
             if (isAssignmentExpression(s)) {
-                let rightUse = walk(s.right)
+                const rightUse = walk(s.right)
                 let leftUse: VarScope | undefined;
                 if (s.operatorToken.kind !== ts.SyntaxKind.EqualsToken) {
                     leftUse = walk(s.left)
                 }
-                let varName = s.left.getText()
-                let assign: VarScope = {
+                const varName = s.left.getText()
+                const assign: VarScope = {
                     refs: [{
                         kind: "assign",
                         node: s,
@@ -124,7 +124,7 @@ namespace pxt.py {
                 || ts.isArrowFunction(s)
                 || ts.isFunctionDeclaration(s)
                 || ts.isMethodDeclaration(s)) {
-                let fnName = s.name?.getText()
+                const fnName = s.name?.getText()
                 let fnDecl: VarDecl | undefined = undefined;
                 if (fnName) {
                     fnDecl = {
@@ -133,11 +133,11 @@ namespace pxt.py {
                         varName: fnName
                     }
                 }
-                let params = s.parameters
+                const params = s.parameters
                     .map(p => walk(p))
                     .reduce(merge, EMPTY)
-                let body = walk(s.body)
-                let child = merge(params, body)
+                const body = walk(s.body)
+                const child = merge(params, body)
                 child.owner = s
                 return {
                     refs: fnDecl ? [fnDecl] : [],
@@ -182,12 +182,12 @@ namespace pxt.py {
     }
     type Decls = { [key: string]: VarDecl }
     function computeVarUsage(s: VarScope, globals?: Decls, nonlocals: Decls[] = []): VarUsages {
-        let globalUsage: VarUse[] = []
-        let nonlocalUsage: VarUse[] = []
-        let localUsage: VarUse[] = []
-        let environmentUsage: VarUse[] = []
-        let locals: Decls = {}
-        for (let r of s.refs) {
+        const globalUsage: VarUse[] = []
+        const nonlocalUsage: VarUse[] = []
+        const localUsage: VarUse[] = []
+        const environmentUsage: VarUse[] = []
+        const locals: Decls = {}
+        for (const r of s.refs) {
             if (r.kind === "read" || r.kind === "assign") {
                 if (locals[r.varName])
                     localUsage.push(r)
@@ -201,9 +201,9 @@ namespace pxt.py {
                 locals[r.varName] = r
             }
         }
-        let nextGlobals = globals || locals
-        let nextNonlocals = globals ? [...nonlocals, locals] : []
-        let children = s.children
+        const nextGlobals = globals || locals
+        const nextNonlocals = globals ? [...nonlocals, locals] : []
+        const children = s.children
             .map(s => computeVarUsage(s, nextGlobals, nextNonlocals))
         return {
             globalUsage,
@@ -262,8 +262,8 @@ namespace pxt.py {
     }
     function toStringVarScopes(s: VarScope): string {
         function internalToStringVarScopes(s: VarScope): string[] {
-            let refs = s.refs.map(toStringVarRef).join(", ")
-            let children = s.children
+            const refs = s.refs.map(toStringVarRef).join(", ")
+            const children = s.children
                 .map(internalToStringVarScopes)
                 .map(c => c.map(indent1))
                 .map(c => ["{", ...c, "}"])
@@ -277,11 +277,11 @@ namespace pxt.py {
     }
     function toStringVarUsage(s: VarUsages): string {
         function internalToStringVarUsage(s: VarUsages): string[] {
-            let gs = s.globalUsage.map(toStringVarRef).join(', ')
-            let ns = s.nonlocalUsage.map(toStringVarRef).join(', ')
-            let ls = s.localUsage.map(toStringVarRef).join(', ')
-            let es = s.environmentUsage.map(toStringVarRef).join(', ')
-            let children = s.children
+            const gs = s.globalUsage.map(toStringVarRef).join(', ')
+            const ns = s.nonlocalUsage.map(toStringVarRef).join(', ')
+            const ls = s.localUsage.map(toStringVarRef).join(', ')
+            const es = s.environmentUsage.map(toStringVarRef).join(', ')
+            const children = s.children
                 .map(internalToStringVarUsage)
                 .map(c => c.map(indent1))
                 .map(c => ["{", ...c, "}"])
