@@ -829,16 +829,18 @@ ${output}</xml>`;
         function emitWorkspaceComment(comment: WorkspaceComment) {
             let maxLineLength = 0;
             const text = formatCommentsForBlocks(comment.comment);
-            const lines = text.split("\n");
-            lines.forEach(line => maxLineLength = Math.max(maxLineLength, line.length));
+            if (text.trim()) {
+                const lines = text.split("\n");
+                lines.forEach(line => maxLineLength = Math.max(maxLineLength, line.length));
 
-            // These are just approximations but they are the best we can do outside the DOM
-            const width = Math.max(Math.min(maxLineLength * 10, maxCommentWidth), minCommentWidth);
-            const height = Math.max(Math.min(lines.length * 40, maxCommentHeight), minCommentHeight);
+                // These are just approximations but they are the best we can do outside the DOM
+                const width = Math.max(Math.min(maxLineLength * 10, maxCommentWidth), minCommentWidth);
+                const height = Math.max(Math.min(lines.length * 40, maxCommentHeight), minCommentHeight);
 
-            write(`<comment h="${height}" w="${width}" data="${U.htmlEscape(comment.refId)}">`)
-            write(U.htmlEscape(text))
-            write(`</comment>`);
+                write(`<comment h="${height}" w="${width}" data="${U.htmlEscape(comment.refId)}">`)
+                write(U.htmlEscape(text))
+                write(`</comment>`);
+            }
         }
 
         function getOutputBlock(n: ts.Node): OutputNode {
