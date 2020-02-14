@@ -54,6 +54,13 @@ function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     }
 
     if (hwvariant) {
+        // map known variants
+        const knowVariants: pxt.Map<string> = {
+            "f4": "stm32f401",
+            "d5": "samd51",
+            "p0": "rpi"
+        }
+        hwvariant = knowVariants[hwvariant.toLowerCase()] || hwvariant;
         if (!/^hw---/.test(hwvariant)) hwvariant = 'hw---' + hwvariant;
         pxt.debug(`setting hardware variant to ${hwvariant}`);
         pxt.setHwVariant(hwvariant)
