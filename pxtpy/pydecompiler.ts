@@ -54,29 +54,51 @@ namespace pxt.py {
     ///
     // TODO handle shadowing
     // TODO handle types at initialization when ambiguous (e.g. x = [], x = None)
-    type VarUse = ts.Identifier
-    type VarDecl = ts.VariableDeclaration | ts.ParameterDeclaration
-    // track use, decl, assign
-    function isVarUse(s: VarUse | VarDecl): s is VarUse {
-        return ts.isIdentifier(s)
-    }
+    // type VarUse = ts.Identifier
+    // type VarDecl = ts.VariableDeclaration | ts.ParameterDeclaration
+    // // track use, decl, assign
+    // function isVarUse(s: VarUse | VarDecl): s is VarUse {
+    //     return ts.isIdentifier(s)
+    // }
 
-    // interface VarUse {
-    //     kind: "use",
-    //     node: ts.Identifier
-    // }
-    // type VarDeclNodeType = ts.VariableDeclaration | ts.ParameterDeclaration | ts.FunctionExpression | ts.FunctionDeclaration | ts.ArrowFunction | ts.MethodDeclaration
-    // interface VarDecl {
-    //     kind: "decl",
-    //     node: VarDeclNodeType
-    // }
-    // type VarAssignNodeType = ts.LeftHandSideExpression
-    // interface VarAssign {
-    //     kind: "assign",
-    //     node: VarAssignNodeType
-    // }
+    interface VarUse {
+        kind: "use",
+        node: ts.Identifier,
+        varName: string
+    }
+    type VarDeclNodeType = ts.VariableDeclaration | ts.ParameterDeclaration
+        | ts.FunctionExpression | ts.FunctionDeclaration | ts.ArrowFunction
+        | ts.MethodDeclaration
+    interface VarDecl {
+        kind: "decl",
+        node: VarDeclNodeType,
+        varName: string
+    }
+    type VarAssignNodeType = ts.AssignmentExpression<ts.AssignmentOperatorToken>
+        | ts.PostfixUnaryExpression | ts.PrefixUnaryExpression
+    interface VarAssign {
+        kind: "assign",
+        node: VarAssignNodeType,
+        varName: string
+    }
+    function isAssignmentExpression(s: ts.Node): s is ts.AssignmentExpression<ts.AssignmentOperatorToken> {
+        // why is this not built in...
+        const AssignmentOperators: ts.AssignmentOperator[] = [
+            ts.SyntaxKind.EqualsToken, ts.SyntaxKind.PlusEqualsToken,
+            ts.SyntaxKind.MinusEqualsToken, ts.SyntaxKind.AsteriskEqualsToken,
+            ts.SyntaxKind.AsteriskAsteriskEqualsToken, ts.SyntaxKind.SlashEqualsToken,
+            ts.SyntaxKind.PercentEqualsToken, ts.SyntaxKind.LessThanLessThanEqualsToken,
+            ts.SyntaxKind.GreaterThanGreaterThanEqualsToken,
+            ts.SyntaxKind.GreaterThanGreaterThanGreaterThanEqualsToken,
+            ts.SyntaxKind.AmpersandEqualsToken, ts.SyntaxKind.BarEqualsToken,
+            ts.SyntaxKind.CaretEqualsToken
+        ]
+        return ts.isBinaryExpression(s)
+            && !!AssignmentOperators.find(o => s.operatorToken.kind === o)
+    }
+    type VarRef = VarUse | VarDecl | VarAssign
     interface VarScope {
-        refs: (VarUse | VarDecl)[],
+        refs: VarRef[],
         children: VarScope[]
     }
     function computeVarScopes(node: ts.Node): VarScope {
@@ -96,7 +118,11 @@ namespace pxt.py {
             // variable usage
             if (ts.isIdentifier(s)) {
                 return {
-                    refs: [s],
+                    refs: [{
+                        kind: "use",
+                        node: s,
+                        varName: s.text
+                    }],
                     children: []
                 }
             }
@@ -105,9 +131,45 @@ namespace pxt.py {
             if (ts.isVariableDeclaration(s) || ts.isParameter(s)) {
                 let init = walk(s.initializer)
                 return {
-                    refs: [...init.refs, s],
+                    refs: [...init.refs, {
+                        kind: "decl",
+                        node: s,
+                        varName: s.name.getText()
+                    }],
                     children: init.children
                 }
+            }
+
+            // variable assignment
+            if (ts.isPrefixUnaryExpression(s) || ts.isPostfixUnaryExpression(s)) {
+                let operandUse = walk(s.operand)
+                let varName = s.operand.getText()
+                let assign: VarScope = {
+                    refs: [{
+                        kind: "assign",
+                        node: s,
+                        varName,
+                    }],
+                    children: []
+                }
+                return merge(operandUse, assign)
+            }
+            if (isAssignmentExpression(s)) {
+                let rightUse = walk(s.right)
+                let leftUse: VarScope | undefined;
+                if (s.operatorToken.kind !== ts.SyntaxKind.EqualsToken) {
+                    leftUse = walk(s.left)
+                }
+                let varName = s.left.getText()
+                let assign: VarScope = {
+                    refs: [{
+                        kind: "assign",
+                        node: s,
+                        varName,
+                    }],
+                    children: []
+                }
+                return merge(leftUse, merge(rightUse, assign))
             }
 
             // new scope
@@ -115,13 +177,22 @@ namespace pxt.py {
                 || ts.isArrowFunction(s)
                 || ts.isFunctionDeclaration(s)
                 || ts.isMethodDeclaration(s)) {
+                let fnName = s.name?.getText()
+                let fnDecl: VarDecl | undefined = undefined;
+                if (fnName) {
+                    fnDecl = {
+                        kind: "decl",
+                        node: s,
+                        varName: fnName
+                    }
+                }
                 let params = s.parameters
                     .map(p => walk(p))
                     .reduce(merge, EMPTY)
                 let body = walk(s.body)
                 let child = merge(params, body)
                 return {
-                    refs: [],
+                    refs: fnDecl ? [fnDecl] : [],
                     children: [child]
                 }
             }
@@ -132,9 +203,9 @@ namespace pxt.py {
                 .reduce(merge, EMPTY)
         }
 
-        function merge(p: VarScope, n: VarScope): VarScope {
+        function merge(p: VarScope | undefined, n: VarScope | undefined): VarScope {
             if (!p || !n)
-                return p || n
+                return p || n || EMPTY
             return {
                 refs: [...p.refs, ...n.refs],
                 children: [...p.children, ...n.children]
@@ -143,7 +214,7 @@ namespace pxt.py {
     }
     function toStringVarScopes(s: VarScope): string {
         function internalToStringVarScopes(s: VarScope): string[] {
-            let refs = s.refs.map(i => i.getText()).join(", ")
+            let refs = s.refs.map(i => `${i.kind}:${i.varName}`).join(", ")
             let children = s.children
                 .map(internalToStringVarScopes)
                 .map(c => c.map(indent1))
@@ -156,73 +227,73 @@ namespace pxt.py {
         }
         return internalToStringVarScopes(s).join("\n")
     }
-    interface VarUsage {
-        globalUsage: VarUse[],
-        nonlocalUsage: VarUse[],
-        localUsage: VarUse[],
-        environmentUsage: VarUse[],
-        children: VarUsage[]
-    }
-    type Decls = { [key: string]: VarDecl }
-    function computeVarUsage(s: VarScope, globals?: Decls, nonlocals: Decls[] = []): VarUsage {
-        let globalUsage: VarUse[] = []
-        let nonlocalUsage: VarUse[] = []
-        let localUsage: VarUse[] = []
-        let environmentUsage: VarUse[] = []
-        let locals: Decls = {}
-        for (let r of s.refs) {
-            if (isVarUse(r)) {
-                if (lookupNonlocal(r))
-                    nonlocalUsage.push(r)
-                else if (globals && globals[r.text])
-                    globalUsage.push(r)
-                else if (locals[r.text])
-                    localUsage.push(r)
-                else
-                    environmentUsage.push(r)
-            } else {
-                locals[r.name.getText()] = r
-            }
-        }
-        let nextGlobals = globals || locals
-        let nextNonlocals = globals ? [...nonlocals, locals] : []
-        let children = s.children
-            .map(s => computeVarUsage(s, nextGlobals, nextNonlocals))
-        return {
-            globalUsage,
-            nonlocalUsage,
-            localUsage,
-            environmentUsage,
-            children
-        }
+    // interface VarUsage {
+    //     globalUsage: VarUse[],
+    //     nonlocalUsage: VarUse[],
+    //     localUsage: VarUse[],
+    //     environmentUsage: VarUse[],
+    //     children: VarUsage[]
+    // }
+    // type Decls = { [key: string]: VarDecl }
+    // function computeVarUsage(s: VarScope, globals?: Decls, nonlocals: Decls[] = []): VarUsage {
+    //     let globalUsage: VarUse[] = []
+    //     let nonlocalUsage: VarUse[] = []
+    //     let localUsage: VarUse[] = []
+    //     let environmentUsage: VarUse[] = []
+    //     let locals: Decls = {}
+    //     for (let r of s.refs) {
+    //         if (r.kind === "use" || r.kind === "assign") {
+    //             if (lookupNonlocal(r))
+    //                 nonlocalUsage.push(r)
+    //             else if (globals && globals[r.text])
+    //                 globalUsage.push(r)
+    //             else if (locals[r.text])
+    //                 localUsage.push(r)
+    //             else
+    //                 environmentUsage.push(r)
+    //         } else {
+    //             locals[r.name.getText()] = r
+    //         }
+    //     }
+    //     let nextGlobals = globals || locals
+    //     let nextNonlocals = globals ? [...nonlocals, locals] : []
+    //     let children = s.children
+    //         .map(s => computeVarUsage(s, nextGlobals, nextNonlocals))
+    //     return {
+    //         globalUsage,
+    //         nonlocalUsage,
+    //         localUsage,
+    //         environmentUsage,
+    //         children
+    //     }
 
-        function lookupNonlocal(use: VarUse): VarDecl | undefined {
-            return nonlocals
-                .map(d => d[use.text])
-                .reduce((p, n) => n || p, undefined)
-        }
-    }
-    function toStringVarUsage(s: VarUsage): string {
-        function internalToStringVarUsage(s: VarUsage): string[] {
-            let gs = s.globalUsage.map(i => i.getText()).join(', ')
-            let ns = s.nonlocalUsage.map(i => i.getText()).join(', ')
-            let ls = s.localUsage.map(i => i.getText()).join(', ')
-            let es = s.environmentUsage.map(i => i.getText()).join(', ')
-            let children = s.children
-                .map(internalToStringVarUsage)
-                .map(c => c.map(indent1))
-                .map(c => ["{", ...c, "}"])
-                .reduce((p, n) => [...p, ...n], [])
-            return [
-                gs ? "global " + gs : "",
-                ns ? "nonlocal " + ns : "",
-                ls ? "local " + ls : "",
-                es ? "env " + es : "",
-                ...children
-            ].filter(i => !!i)
-        }
-        return internalToStringVarUsage(s).join("\n")
-    }
+    //     function lookupNonlocal(use: VarUse): VarDecl | undefined {
+    //         return nonlocals
+    //             .map(d => d[use.text])
+    //             .reduce((p, n) => n || p, undefined)
+    //     }
+    // }
+    // function toStringVarUsage(s: VarUsage): string {
+    //     function internalToStringVarUsage(s: VarUsage): string[] {
+    //         let gs = s.globalUsage.map(i => i.getText()).join(', ')
+    //         let ns = s.nonlocalUsage.map(i => i.getText()).join(', ')
+    //         let ls = s.localUsage.map(i => i.getText()).join(', ')
+    //         let es = s.environmentUsage.map(i => i.getText()).join(', ')
+    //         let children = s.children
+    //             .map(internalToStringVarUsage)
+    //             .map(c => c.map(indent1))
+    //             .map(c => ["{", ...c, "}"])
+    //             .reduce((p, n) => [...p, ...n], [])
+    //         return [
+    //             gs ? "global " + gs : "",
+    //             ns ? "nonlocal " + ns : "",
+    //             ls ? "local " + ls : "",
+    //             es ? "env " + es : "",
+    //             ...children
+    //         ].filter(i => !!i)
+    //     }
+    //     return internalToStringVarUsage(s).join("\n")
+    // }
 
     function tsToPy(prog: ts.Program, filename: string): string {
         // helpers
@@ -240,8 +311,9 @@ namespace pxt.py {
 
         // analysis
         let varScopes = computeVarScopes(file)
-        let varUsage = computeVarUsage(varScopes)
-        return toStringVarUsage(varUsage) // For debugging
+        // let varUsage = computeVarUsage(varScopes)
+        return toStringVarScopes(varScopes) // For debugging
+        // return toStringVarUsage(varUsage) // For debugging
 
         // ts->py
         return emitFile(file)
