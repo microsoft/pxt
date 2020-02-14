@@ -930,6 +930,12 @@ function getBootInfo() {
         r.boot = 0xf01669ef
     }
 
+    if (/nrf52/.test(pxt.appTarget.compile.openocdScript)) {
+        r.addr = 0x20007F7C
+        r.app = 0x4ee5677e
+        r.boot = 0x5A1AD5
+    }
+
     return r
 }
 
