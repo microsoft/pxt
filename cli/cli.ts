@@ -46,7 +46,7 @@ function parseHwVariant(parsed: commandParser.ParsedCommand) {
             "p0": "rpi"
         }
         hwvariant = knowVariants[hwvariant.toLowerCase()] || hwvariant;
-        if (!/^hw---/.test(hwvariant)) hwvariant = 'hw---' + hwvariant;    
+        if (!/^hw---/.test(hwvariant)) hwvariant = 'hw---' + hwvariant;
     }
     return hwvariant;
 }
