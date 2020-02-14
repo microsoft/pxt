@@ -221,8 +221,8 @@ namespace pxt.py {
         }
     }
     export interface ScopeVariableLookup {
-        getExplicitGlobals(fn: ts.FunctionLikeDeclaration): string[];
-        getExplicitNonlocals(fn: ts.FunctionLikeDeclaration): string[];
+        getExplicitGlobals(fn: ts.FunctionLikeDeclaration): ts.Identifier[];
+        getExplicitNonlocals(fn: ts.FunctionLikeDeclaration): ts.Identifier[];
     }
     export function computeScopeVariableLookup(n: ts.Node): ScopeVariableLookup {
         const scopeInfo = computeVarScopes(n)
@@ -234,25 +234,31 @@ namespace pxt.py {
         walk(usageInfo)
 
         return {
-            getExplicitGlobals: (fn) => globalsByFn.get(fn),
-            getExplicitNonlocals: (fn) => nonlocalsByFn.get(fn),
+            getExplicitGlobals: (fn) => globalsByFn.get(fn) || [],
+            getExplicitNonlocals: (fn) => nonlocalsByFn.get(fn) || [],
+        }
+
+        function toId(a: VarAssign): ts.Identifier | undefined {
+            let i = (a.node as ts.PrefixUnaryExpression | ts.PostfixUnaryExpression).operand
+                || (a.node as ts.BinaryExpression).left
+            return ts.isIdentifier(i) ? i : undefined
+        }
+        function toIds(ns: VarAssign[]): ts.Identifier[] {
+            return ns
+                .map(toId)
+                .filter(i => !!i)
+                .map(i => i as ts.Identifier)
+                .reduce((p, n) => p.find(r => r.text === n.text) ? p : [...p, n], [] as ts.Identifier[])
         }
 
         function walk(s: VarUsages) {
-            const gs = getExplicitGlobals(s)
-                .map(a => a.varName)
-                .reduce(dedup, [] as string[])
+            const gs = toIds(getExplicitGlobals(s))
             globalsByFn.set(s.owner, gs)
 
-            const ls = getExplicitNonlocals(s)
-                .map(a => a.varName)
-                .reduce(dedup, [] as string[])
+            const ls = toIds(getExplicitNonlocals(s))
             nonlocalsByFn.set(s.owner, ls)
 
             s.children.forEach(walk)
-        }
-        function dedup<T>(p: T[], n: T) {
-            return p.find(r => r === n) ? p : [...p, n]
         }
     }
 

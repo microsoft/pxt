@@ -136,6 +136,13 @@ namespace pxt.py {
                 return throwError(name, 3001, "Unsupported advanced name format: " + name.getText());
             }
             let outName = name.text;
+            let hasSrc = name.getSourceFile()
+            if (renameMap && hasSrc) {
+                const rename = renameMap.getRenameForPosition(name.getStart());
+                if (rename) {
+                    outName = rename.name;
+                }
+            }
             return outName
         }
         function getNewGlobalName(nameHint: string | ts.Identifier | ts.BindingPattern | ts.PropertyName | ts.EntityName) {
@@ -710,9 +717,11 @@ namespace pxt.py {
             if (stmts.length) {
                 // global or nonlocal declerations
                 let globals = scopeLookup.getExplicitGlobals(s)
+                    .map(g => getName(g))
                 if (globals && globals.length)
                     stmts.unshift(`global ${globals.join(", ")}`)
                 let nonlocals = scopeLookup.getExplicitNonlocals(s)
+                    .map(n => getName(n))
                 if (nonlocals && nonlocals.length)
                     stmts.unshift(`nonlocal ${nonlocals.join(", ")}`)
 
