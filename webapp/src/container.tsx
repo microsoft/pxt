@@ -260,6 +260,8 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const githubUser = !readOnly && !isController && this.getData("github:user") as pxt.editor.UserInfo;
         const showPairDevice = pxt.usb.isEnabled && !pxt.BrowserUtils.isElectron();
 
+        const showCenterDivider = targetTheme.selectLanguage || targetTheme.highContrast || showGreenScreen || githubUser;
+
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
             {showProjectSettings ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} /> : undefined}
             {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={this.showPackageDialog} /> : undefined}
@@ -281,7 +283,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
                 </div>
                 {lf("Sign out")}
             </div> : undefined}
-            <div className="ui divider"></div>
+            {showCenterDivider && <div className="ui divider"></div>}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
             {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} /> : undefined}
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />

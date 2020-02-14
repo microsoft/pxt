@@ -111,7 +111,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 prj.config.dependencies = {}; // clear all dependencies
                 this.chgCode(scr.name, url, true, pxt.BLOCKS_PROJECT_NAME, prj); break;
             case "example": this.chgCode(scr.name, url, true, editorPref); break;
-            case "codeExample": this.chgCode(scr.name, url, false); break;
+            case "codeExample": this.chgCode(scr.name, url, false, editorPref); break;
             case "side":
                 this.props.parent.newEmptyProject(scr.name, url);
                 break;
@@ -309,6 +309,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         const targetTheme = pxt.appTarget.appTheme;
         const githubUser = this.getData("github:user") as pxt.editor.UserInfo;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
+        const showDivider = targetTheme.selectLanguage || targetTheme.highContrast || githubUser;
 
         // tslint:disable react-a11y-anchors
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
@@ -321,7 +322,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
                 </div>
                 {lf("Sign out")}
             </div>}
-            <div className="ui divider"></div>
+            {showDivider && <div className="ui divider"></div>}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
             <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} />
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
