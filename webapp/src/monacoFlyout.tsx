@@ -109,6 +109,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
             this.dragging = true;
             if (!dragBlock) {
                 const parent = document.getElementById("root");
+                parent.style.overflow = "hidden";
                 dragBlock = document.createElement("div");
                 dragBlock.id = "monacoDraggingBlock";
                 dragBlock.textContent = block.snippetOnly
@@ -139,6 +140,8 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         this.props.setInsertionSnippet(undefined);
         const block = document.getElementById("monacoDraggingBlock");
         if (block) block.remove();
+        const parent = document.getElementById("root");
+        parent.style.overflow = "";
     }
 
     protected getKeyDownHandler = (block?: toolbox.BlockDefinition, snippet?: string, isPython?: boolean) => {
