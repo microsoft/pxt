@@ -169,7 +169,6 @@ body#docs.tutorial {
     width: ~'calc(100% - @{avatarMargin} - 0.5rem)';
     padding: 0.5rem;
     height: calc(@tutorialCardHeight - 1.5rem);
-    // margin-left: @avatarMargin + 0.35rem;
     overflow: hidden;
 }
 
@@ -285,16 +284,21 @@ code.lang-filterblocks {
     font-size: 22.5px !important;
     color: white; // match menubutton color
     border-radius: 50%;
-    animation-name: hint-bubble-pulse;
+    animation-name: large-bubble-pulse-animation;
     animation-direction: alternate;
     animation-iteration-count: infinite;
-    animation-duration: .5s
+    animation-duration: .5s;
 }
 
-@keyframes hint-bubble-pulse {
-     0% { box-shadow: 0 0 0 0px fade(@yellow, 100%); }
-     100% { box-shadow: 0 0 0 9px fade(@mainMenuTutorialButtons, 60%); }
+.bubble-pulse-animation (@size, @name) {
+    @keyframes @name {
+        20% { box-shadow: 0 0 0 0px fade(@yellow, 100%); }
+        100% { box-shadow: 0 0 calc(3 * @size / 4 ) @size fade(@mainMenuTutorialButtons, 60%); }
+    }
 }
+
+.bubble-pulse-animation(12px, large-bubble-pulse-animation);
+.bubble-pulse-animation(7px, small-bubble-pulse-animation);
 
 /*******************************
         Tutorial Hint
@@ -324,7 +328,6 @@ code.lang-filterblocks {
     position: absolute;
     max-width: 100%;
     min-width: 300px;
-    // top: 6.5rem;
     top: ~'calc(50% + 3rem)';
     right: 2rem;
     padding: 10px 26px;
@@ -381,16 +384,12 @@ code.lang-filterblocks {
      Tutorial Tooltip
 *******************************/
 .avatar-container {
-    // position: absolute;
-    // top: .9rem;
     left: .7rem;
-    // width: 100%;
     height: 100%;
 }
 
 .avatar-container .tooltip {
     top: 5.2rem;
-    // left: 1.5rem;
     left: auto;
     width: 10rem;
     max-width: 175px;
@@ -545,25 +544,23 @@ code.lang-filterblocks {
     }
 
     #tutorialcard .ui.button.hintbutton {
+        animation-name: small-bubble-pulse-animation;
         font-size: 12.5px !important;
         top: 20%;
     }
 
     .tutorial #tutorialcard .tutorialmessage {
         width: ~'calc(100% - @{mobileAvatarMargin} - 0.5rem)';
-        // margin-left: @mobileAvatarMargin + 0.35rem;
     }
 
     #tutorialcard:not(.hasHint) .tutorialmessage {
         width: ~'calc(100% - .5rem)';
-        // margin-left: 0.35rem;
     }
 
     // mobile hint positioning
     .tutorialhint {
         top: ~'calc(20% + 2.1rem)';
         right: -2rem;
-
     }
 
     .tutorialhint:before {
