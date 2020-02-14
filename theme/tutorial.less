@@ -283,11 +283,19 @@ code.lang-filterblocks {
     transform: translateY(-50%);
     font-size: 22.5px !important;
     color: white; // match menubutton color
-    border-radius: 50%;
-    animation-name: large-bubble-pulse-animation;
-    animation-direction: alternate;
-    animation-iteration-count: infinite;
-    animation-duration: .5s;
+
+    &:before {
+        content: " ";
+        position: absolute;
+        background-color: transparent;
+        width: 1;
+        height: 1;
+        border-radius: 50%;
+        animation-name: large-bubble-pulse-animation;
+        animation-direction: alternate;
+        animation-iteration-count: infinite;
+        animation-duration: .5s;
+    }
 }
 
 .bubble-pulse-animation (@size, @name) {
@@ -298,8 +306,8 @@ code.lang-filterblocks {
     }
 }
 
-.bubble-pulse-animation(12px, large-bubble-pulse-animation);
-.bubble-pulse-animation(7px, small-bubble-pulse-animation);
+.bubble-pulse-animation(30px, large-bubble-pulse-animation);
+.bubble-pulse-animation(15px, small-bubble-pulse-animation);
 
 /*******************************
         Tutorial Hint
@@ -409,12 +417,8 @@ code.lang-filterblocks {
     left: auto;
 }
 
-.hideIteration .avatar-container .tooltip {
-    left: 4.5rem;
-}
-
 .hideIteration .avatar-container .tooltip:before {
-    left: 27%;
+    right: 2.8rem;
 }
 
 #tutorialcard:not(.showTooltip) .tooltip,
@@ -547,9 +551,12 @@ code.lang-filterblocks {
     }
 
     #tutorialcard .ui.button.hintbutton {
-        animation-name: small-bubble-pulse-animation;
         font-size: 12.5px !important;
         top: 20%;
+
+        &:before {
+            animation-name: small-bubble-pulse-animation;
+        }
     }
 
     .tutorial #tutorialcard .tutorialmessage {
