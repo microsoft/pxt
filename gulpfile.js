@@ -120,7 +120,8 @@ function initWatch() {
         gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
         targetjs,
         webapp,
-        browserifyWebapp
+        browserifyWebapp,
+        copyWebapp
     ];
 
     gulp.watch("./pxtlib/**/*", gulp.series(...tasks));
@@ -332,7 +333,8 @@ const copyWebapp = () =>
         "built/pxtrunner.js",
         "built/pxteditor.js",
         "built/pxtwinrt.js",
-        "built/webapp/src/worker.js"
+        "built/webapp/src/worker.js",
+        "built/webapp/src/serviceworker.js"
     ])
     .pipe(gulp.dest("built/web"));
 

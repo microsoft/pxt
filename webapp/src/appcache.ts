@@ -1,6 +1,18 @@
 import * as core from "./core";
 
 export function init(updated: () => void) {
+    if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+            navigator.serviceWorker.register(pxt.webConfig.serviceworkerjs).then(function (registration) {
+                // Registration was successful
+                console.log("ServiceWorker registration successful with scope: ", registration.scope);
+            }, function (err) {
+                // registration failed :(
+                console.log("ServiceWorker registration failed: ", err);
+            });
+        });
+    }
+
     const appCache = window.applicationCache;
     if (!appCache) return;
 
