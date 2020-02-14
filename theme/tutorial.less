@@ -286,14 +286,14 @@ code.lang-filterblocks {
     color: white; // match menubutton color
     border-radius: 50%;
     animation-name: hint-bubble-pulse;
+    animation-direction: alternate;
     animation-iteration-count: infinite;
-    animation-duration: .75s
+    animation-duration: .5s
 }
 
 @keyframes hint-bubble-pulse {
      0% { box-shadow: 0 0 0 0px fade(@yellow, 100%); }
-     80% { box-shadow: 0 0 0 6px fade(@mainMenuTutorialButtons, 60%); }
-     100% { box-shadow: 0 0 0 9px fade(@mainMenuTutorialButtons, 0%); }
+     100% { box-shadow: 0 0 0 9px fade(@mainMenuTutorialButtons, 60%); }
 }
 
 /*******************************
