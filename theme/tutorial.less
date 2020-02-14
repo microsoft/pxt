@@ -292,6 +292,7 @@ code.lang-filterblocks {
 
 .bubble-pulse-animation (@size, @name) {
     @keyframes @name {
+        0% { }
         20% { box-shadow: 0 0 0 0px fade(@yellow, 100%); }
         100% { box-shadow: 0 0 calc(3 * @size / 4 ) @size fade(@mainMenuTutorialButtons, 60%); }
     }
@@ -389,7 +390,9 @@ code.lang-filterblocks {
 }
 
 .avatar-container .tooltip {
-    top: 5.2rem;
+    position: absolute;
+
+    top: ~'calc(50% + 1.8rem)';
     left: auto;
     width: 10rem;
     max-width: 175px;
@@ -570,7 +573,7 @@ code.lang-filterblocks {
 
     // mobile tutorial tooltip positioning
     .avatar-container .tooltip {
-        top: 2.4rem;
+        top: ~'calc(20% + 1.1rem)';
     }
 
     .avatar-container .tooltip:before {
