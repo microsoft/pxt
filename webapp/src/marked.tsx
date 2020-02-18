@@ -244,7 +244,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             const reqid = JSON.stringify(req);
             if (MarkedContent.blockSnippetCache[reqid]) {
                 // Use cache
-                const doc = Blockly.utils.xml.textToDomDocument(pxt.blocks.layout.serializeSvgString(MarkedContent.blockSnippetCache[code] as string));
+                const workspaceXml = MarkedContent.blockSnippetCache[reqid] as string;
+                const doc = Blockly.utils.xml.textToDomDocument(pxt.blocks.layout.serializeSvgString(workspaceXml));
                 wrapperDiv.appendChild(doc.documentElement);
                 pxsim.U.removeClass(wrapperDiv, 'loading');
             } else {
