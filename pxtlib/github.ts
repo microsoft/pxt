@@ -614,13 +614,13 @@ namespace pxt.github {
                     node.default_branch = node.defaultBranchRef.name;
                     const pxtJson = pxt.Package.parseAndValidConfig(node.pxtjson && node.pxtjson.text);
                     const readme = node.readme && node.readme.text;
-                    return pxtJson // needs to have a valid pxt.json file
-                        && (
-                            // use new supportedTarget annotation
-                            (pxtJson.supportedTargets && pxtJson.supportedTargets.indexOf(pxt.appTarget.id) > -1)
-                            // bail out on readme.md annotations
-                            || (readme && readme.indexOf("PXT/" + pxt.appTarget.id) > -1)
-                        )
+                    // needs to have a valid pxt.json file                    
+                    if (!pxtJson) return false;
+                    // new style of supported annontation
+                    if (pxtJson.supportedTargets)
+                        return pxtJson.supportedTargets.indexOf(pxt.appTarget.id) > -1;
+                    // legacy readme.md annotations
+                    return readme && readme.indexOf("PXT/" + pxt.appTarget.id) > -1;
                 })
                 .map((node: any) => mkRepo(node, null))
             );
