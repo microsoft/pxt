@@ -554,8 +554,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                         </div>
                     </div>
                     <div className="avatar-container">
-                        {false && <div role="button" className={`avatar-image ${hasHint && this.props.pokeUser ? 'shake' : ''}`} onClick={hintOnClick} onKeyDown={sui.fireClickOnEnter}></div>}
-                        {hasHint && <sui.Button className="ui circular label blue hintbutton hidelightbox" icon="lightbulb outline" tabIndex={-1} onClick={hintOnClick} onKeyDown={sui.fireClickOnEnter} />}
+                        {hasHint && <sui.Button className={`ui circular label blue hintbutton hidelightbox ${hasHint && this.props.pokeUser ? 'shake' : ''}`} icon="lightbulb outline" tabIndex={-1} onClick={hintOnClick} onKeyDown={sui.fireClickOnEnter} />}
                         {hasHint && <HintTooltip ref="hinttooltip" pokeUser={this.props.pokeUser} text={tutorialHintTooltip} onClick={hintOnClick} />}
                         <TutorialHint ref="tutorialhint" parent={this.props.parent} />
                     </div>
