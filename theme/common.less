@@ -1535,8 +1535,14 @@ div.simframe.ui.embed {
     }
 
     .one-language {
-        &:not(.headless) .active.item.javascript-menuitem ~ .toggle,
-        &:not(.headless) .active.item.python-menuitem ~ .toggle {
+        .active.item.javascript-menuitem ~ .toggle,
+        .active.item.python-menuitem ~ .toggle {
+            margin-left: 0px !important;
+        }
+    }
+    &:not(.headless) .one-language {
+        .active.item.javascript-menuitem ~ .toggle,
+        .active.item.python-menuitem ~ .toggle {
             margin-left: 140px !important;
         }
     }
