@@ -49,7 +49,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         const parentBlock = preBlock.parentElement as HTMLDivElement; // parent containing all text
 
         const wrapperDiv = document.createElement('div');
-        wrapperDiv.className = `ui ${unboxSnippets ? "": "segment raised " }loading codewidget`;
+        wrapperDiv.className = `ui ${unboxSnippets ? "" : "segment raised "}loading codewidget`;
         parentBlock.insertBefore(wrapperDiv, preBlock);
         parentBlock.removeChild(preBlock);
 
