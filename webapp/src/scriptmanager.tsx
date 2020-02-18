@@ -129,7 +129,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 if (selected[index]) {
                     // Delete each selected project
                     header.isDeleted = true;
-                    promises.push(workspace.saveAsync(header, {}));
+                    promises.push(workspace.forceSaveAsync(header, {}));
                 }
             })
             this.setState({ selected: {} })

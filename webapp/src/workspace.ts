@@ -301,8 +301,7 @@ export function forceSaveAsync(h: Header, text?: ScriptText, isCloud?: boolean):
 
 export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Promise<void> {
     pxt.debug(`workspace: save ${h.id}`)
-    if (!h.isDeleted) // special case deleting a script, don't check
-        checkHeaderSession(h);
+    checkHeaderSession(h);
 
     U.assert(h.target == pxt.appTarget.id);
 
