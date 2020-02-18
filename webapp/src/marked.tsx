@@ -154,8 +154,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-blocks`))
             .forEach((langBlock: HTMLElement) => renderBlock(langBlock, false));
-        pxt.Util.toArray(content.querySelectorAll(`lang-block`)) // snippet mode
-            .forEach((langBlock: HTMLElement) => renderBlock(langBlock, false));
+        pxt.Util.toArray(content.querySelectorAll(`code.lang-block`)) // snippet mode
+            .forEach((langBlock: HTMLElement) => renderBlock(langBlock, true));
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-diffblocksxml`))
             .forEach((langBlock: HTMLElement) => {
