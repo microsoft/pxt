@@ -283,18 +283,19 @@ code.lang-filterblocks {
     transform: translateY(-50%);
     font-size: 22.5px !important;
     color: white; // match menubutton color
+    border-radius: 50%;
+    transform-style: preserve-3d;
 
     &:before {
-        content: " ";
+        content: "";
         position: absolute;
-        background-color: transparent;
-        width: 1;
-        height: 1;
-        border-radius: 50%;
+        top: 50%;
+        left: 50%;
         animation-name: large-bubble-pulse-animation;
         animation-direction: alternate;
         animation-iteration-count: infinite;
         animation-duration: .5s;
+        transform: translateZ(-1px);
     }
 }
 
@@ -306,8 +307,8 @@ code.lang-filterblocks {
     }
 }
 
-.bubble-pulse-animation(30px, large-bubble-pulse-animation);
-.bubble-pulse-animation(15px, small-bubble-pulse-animation);
+.bubble-pulse-animation(35px, large-bubble-pulse-animation);
+.bubble-pulse-animation(20px, small-bubble-pulse-animation);
 
 /*******************************
         Tutorial Hint
