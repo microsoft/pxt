@@ -42,6 +42,7 @@ namespace pxt {
         }
 
         static parseAndValidConfig(configStr: string): pxt.PackageConfig {
+            if (!configStr) return undefined;
             const json = Util.jsonTryParse(configStr) as pxt.PackageConfig;
             return json
                 && json.name !== undefined && typeof json.name === "string"
