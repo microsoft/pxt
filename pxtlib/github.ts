@@ -593,7 +593,12 @@ namespace pxt.github {
         defaultBranchRef {
           name
         }
-        object(expression: "master:pxt.json") {
+        pxtjson: object(expression: "master:pxt.json") {
+          ... on Blob {
+            text
+          }
+        }
+        readme: object(expression: "master:README.md") {
           ... on Blob {
             text
           }
@@ -604,13 +609,18 @@ namespace pxt.github {
 }`
         return ghGraphQLQueryAsync(q)
             .then(res => (<any[]>res.data.viewer.repositories.nodes)
-                .filter((node: any) => node.object)
+                .filter((node: any) => node.pxtjson) // needs a pxt.json file
                 .filter((node: any) => {
                     node.default_branch = node.defaultBranchRef.name;
-                    const pxtJson = pxt.Package.parseAndValidConfig(node.object.text);
-                    return pxtJson
-                        && pxtJson.supportedTargets
-                        && pxtJson.supportedTargets.indexOf(pxt.appTarget.id) > -1;
+                    const pxtJson = pxt.Package.parseAndValidConfig(node.pxtjson && node.pxtjson.text);
+                    const readme = node.readme && node.readme.text;
+                    // needs to have a valid pxt.json file                    
+                    if (!pxtJson) return false;
+                    // new style of supported annontation
+                    if (pxtJson.supportedTargets)
+                        return pxtJson.supportedTargets.indexOf(pxt.appTarget.id) > -1;
+                    // legacy readme.md annotations
+                    return readme && readme.indexOf("PXT/" + pxt.appTarget.id) > -1;
                 })
                 .map((node: any) => mkRepo(node, null))
             );
