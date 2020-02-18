@@ -9,6 +9,8 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 interface MarkedContentProps extends ISettingsProps {
     markdown: string;
     className?: string;
+    // do not emit segment around snippets
+    unboxSnippets?: boolean;
     onDidRender?: () => void;
 }
 
@@ -42,11 +44,12 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     }
 
     private startRenderLangSnippet(langBlock: HTMLElement): HTMLDivElement {
+        const { unboxSnippets } = this.props;
         const preBlock = langBlock.parentElement as HTMLPreElement; // pre parent of the code
         const parentBlock = preBlock.parentElement as HTMLDivElement; // parent containing all text
 
         const wrapperDiv = document.createElement('div');
-        wrapperDiv.className = 'ui segment raised loading codewidget';
+        wrapperDiv.className = `ui ${unboxSnippets ? "" : "segment raised "}loading codewidget`;
         parentBlock.insertBefore(wrapperDiv, preBlock);
         parentBlock.removeChild(preBlock);
 
@@ -84,7 +87,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     }
 
     private renderSnippets(content: HTMLElement) {
-        const { parent, onDidRender } = this.props;
+        const { parent, unboxSnippets, onDidRender } = this.props;
 
         let promises: Promise<void>[] = [];
 
@@ -162,7 +165,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 const wrapperDiv = document.createElement('div');
                 pxsim.U.clear(langBlock);
                 langBlock.appendChild(wrapperDiv);
-                wrapperDiv.className = 'ui segment raised loading';
+                wrapperDiv.className = `ui ${unboxSnippets ? "" : "segment raised "} loading`;
                 if (MarkedContent.blockSnippetCache[code]) {
                     // Use cache
                     const doc = Blockly.utils.xml.textToDomDocument(pxt.blocks.layout.serializeSvgString(MarkedContent.blockSnippetCache[code] as string));
