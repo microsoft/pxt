@@ -840,7 +840,7 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.U
             let cleanupOperation = Promise.resolve();
             if (backup) {
                 backup.isDeleted = true;
-                cleanupOperation = workspace.saveAsync(backup)
+                cleanupOperation = workspace.forceSaveAsync(backup)
             }
 
             return cleanupOperation
