@@ -244,7 +244,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
             if (!tutorialHint) return <div />;
 
             return <div className={`tutorialhint ${!visible ? 'hidden' : ''}`} ref={this.setRef}>
-                <md.MarkedContent markdown={this.state.showFullText ? fullText : tutorialHint} parent={this.props.parent} />
+                <md.MarkedContent markdown={this.state.showFullText ? fullText : tutorialHint} unboxSnippets={true} parent={this.props.parent} />
             </div>
         } else {
             let onClick = tutorialStep < tutorialStepInfo.length - 1 ? this.next : this.closeHint;
