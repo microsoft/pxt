@@ -609,7 +609,7 @@ namespace pxt.github {
 }`
         return ghGraphQLQueryAsync(q)
             .then(res => (<any[]>res.data.viewer.repositories.nodes)
-                .filter((node: any) => node.object || node.readme)
+                .filter((node: any) => node.pxtjson) // needs a pxt.json file
                 .filter((node: any) => {
                     node.default_branch = node.defaultBranchRef.name;
                     const pxtJson = pxt.Package.parseAndValidConfig(node.pxtjson && node.pxtjson.text);
