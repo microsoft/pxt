@@ -235,18 +235,20 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             pxsim.U.clear(langBlock);
             langBlock.appendChild(wrapperDiv);
             wrapperDiv.className = 'ui segment raised loading';
-            if (MarkedContent.blockSnippetCache[code]) {
+            const req: pxt.editor.EditorMessageRenderBlocksRequest = {
+                type: "pxteditor",
+                action: "renderblocks",
+                ts: code,
+                snippetMode
+            };
+            const reqid = JSON.stringify(req);
+            if (MarkedContent.blockSnippetCache[reqid]) {
                 // Use cache
                 const doc = Blockly.utils.xml.textToDomDocument(pxt.blocks.layout.serializeSvgString(MarkedContent.blockSnippetCache[code] as string));
                 wrapperDiv.appendChild(doc.documentElement);
                 pxsim.U.removeClass(wrapperDiv, 'loading');
             } else {
-                promises.push(parent.renderBlocksAsync({
-                    type: "pxteditor",
-                    action: "renderblocks",
-                    ts: code,
-                    snippetMode
-                }).then(resp => {
+                promises.push(parent.renderBlocksAsync(req).then(resp => {
                     const svg = resp.svg;
                     if (svg) {
                         const viewBox = svg.getAttribute('viewBox').split(' ').map(parseFloat);
@@ -256,7 +258,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                             height = (height * 0.8) | 0;
                         svg.setAttribute('height', `${height}px`);
                         // SVG serialization is broken on IE (SVG namespace issue), don't cache on IE
-                        if (!pxt.BrowserUtils.isIE()) MarkedContent.blockSnippetCache[code] = Blockly.Xml.domToText(svg);
+                        if (!pxt.BrowserUtils.isIE()) MarkedContent.blockSnippetCache[reqid] = Blockly.Xml.domToText(svg);
                         wrapperDiv.appendChild(svg);
                         pxsim.U.removeClass(wrapperDiv, 'loading');
                     } else {
