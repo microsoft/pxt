@@ -1101,7 +1101,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     ////////////         Toolbox methods          /////////////
     ///////////////////////////////////////////////////////////
 
-    protected clearCaches() {
+    clearCaches() {
         super.clearCaches();
         this.clearFlyoutCaches();
         snippets.clearBuiltinBlockCache();

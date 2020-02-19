@@ -1174,6 +1174,8 @@ export class ProjectView
             simulator.driver.preload(pxt.appTarget.simulator.aspectRatio);
         this.clearSerial()
         this.firstRun = true
+        // clear caches in all editors
+        this.allEditors.forEach(editor => editor.clearCaches())
         // always start simulator once at least if autoRun is enabled
         // always disable tracing
         this.setState({

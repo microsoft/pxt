@@ -99,7 +99,8 @@ export abstract class ToolboxEditor extends srceditor.Editor {
             });
     }
 
-    protected clearCaches() {
+    clearCaches() {
+        super.clearCaches();
         this.searchSubset = undefined;
     }
 
