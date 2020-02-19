@@ -113,11 +113,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    updateBlocksInfo(bi: pxtc.BlocksInfo) {
-        this.blockInfo = bi;
-        this.refreshToolbox();
-    }
-
     domUpdate() {
         if (this.delayLoadXml) {
             if (this.loadingXml) return

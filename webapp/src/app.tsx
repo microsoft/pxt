@@ -1175,6 +1175,7 @@ export class ProjectView
         this.clearSerial()
         this.firstRun = true
         // clear caches in all editors
+        compiler.clearCaches();
         this.allEditors.forEach(editor => editor.clearCaches())
         // always start simulator once at least if autoRun is enabled
         // always disable tracing
