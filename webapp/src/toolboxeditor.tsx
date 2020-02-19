@@ -336,12 +336,12 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                     }
                 }
             }
-            // Only cache if there are no filters
-            if (!this.parent.state?.editorState?.filters) {
-                this.blockGroups[ns] = blockGroups;
-            } else {
+            // TODO (shakao): re-enable group caching later (fix for extensions)
+            // if (!this.parent.state?.editorState?.filters) {
+            //    this.blockGroups[ns] = blockGroups;
+            //  } else {
                 return blockGroups;
-            }
+            // }
         }
 
         return this.blockGroups[ns];
