@@ -301,6 +301,8 @@ export function forceSaveAsync(h: Header, text?: ScriptText, isCloud?: boolean):
 
 export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Promise<void> {
     pxt.debug(`workspace: save ${h.id}`)
+    if (h.isDeleted)
+        clearHeaderSession(h);
     checkHeaderSession(h);
 
     U.assert(h.target == pxt.appTarget.id);
@@ -972,8 +974,9 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
     }
 
     // automatically update project name with github name
+    // if it start with pxt-
     const ghid = pxt.github.parseRepoId(h.githubId);
-    if (ghid.project) {
+    if (ghid.project && /^pxt-/.test(ghid.project)) {
         const ghname = ghid.project.replace(/^pxt-/, '').replace(/-+/g, ' ')
         if (ghname != h.name) {
             const cfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME]);

@@ -772,8 +772,12 @@ namespace ts.pxtc.service {
         decls: pxt.Map<Declaration>;
     }
 
+    interface CompletionSymbol {
+        symbol: SymbolInfo;
+        weight: number;
+    }
+
     let lastApiInfo: CachedApisInfo | undefined;
-    let lastPyIdentifierSyntaxInfo: SyntaxInfo | undefined;
     let lastGlobalNames: pxt.Map<SymbolInfo> | undefined;
     let lastBlocksInfo: BlocksInfo;
     let lastLocBlocksInfo: BlocksInfo;
@@ -835,7 +839,6 @@ namespace ts.pxtc.service {
         reset: () => {
             service.cleanupSemanticCache();
             lastApiInfo = undefined
-            lastPyIdentifierSyntaxInfo = undefined
             lastGlobalNames = undefined
             host.reset()
             transpile.resetCache()
@@ -861,13 +864,8 @@ namespace ts.pxtc.service {
             if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
                 addApiInfo(opts);
                 let res = transpile.pyToTs(opts)
-                if (res.syntaxInfo && res.syntaxInfo.symbols) {
-                    lastPyIdentifierSyntaxInfo = res.syntaxInfo
-                }
                 if (res.globalNames)
                     lastGlobalNames = res.globalNames
-                if (lastPyIdentifierSyntaxInfo)
-                    return lastPyIdentifierSyntaxInfo
             }
             return opts.syntaxInfo
         },
@@ -910,7 +908,7 @@ namespace ts.pxtc.service {
             if (dotIdx != -1)
                 complPosition = dotIdx
 
-            const entries: pxt.Map<SymbolInfo> = {};
+            const entries: pxt.Map<CompletionSymbol> = {};
             const r: CompletionInfo = {
                 entries: [],
                 isMemberCompletion: dotIdx != -1,
@@ -926,14 +924,13 @@ namespace ts.pxtc.service {
                 type: r.isMemberCompletion ? "memberCompletion" : "identifierCompletion"
             };
 
-            let resultSymbols: SymbolInfo[] = []
+            let resultSymbols: CompletionSymbol[] = []
 
             let tsPos: number;
             if (isPython) {
                 const res = transpile.pyToTs(opts)
                 if (res.syntaxInfo && res.syntaxInfo.symbols) {
-                    lastPyIdentifierSyntaxInfo = res.syntaxInfo
-                    resultSymbols = opts.syntaxInfo.symbols
+                    resultSymbols = completionSymbols(opts.syntaxInfo.symbols);
                 }
                 if (res.globalNames)
                     lastGlobalNames = res.globalNames
@@ -959,96 +956,118 @@ namespace ts.pxtc.service {
                 }
             } else {
                 tsPos = position
-                // TODO: get better default result symbols for typescript
-                resultSymbols = pxt.U.values(lastApiInfo.apis.byQName)
             }
 
 
-            function findInnerMostNodeAtPosition(n: Node): Node {
+            function findInnerMostNodeAtPosition(n: Node, position: number): Node {
                 for (let child of n.getChildren()) {
                     let s = child.getStart()
                     let e = child.getEnd()
-                    if (s <= tsPos && tsPos < e)
-                        return findInnerMostNodeAtPosition(child)
+                    if (s <= position && position < e)
+                        return findInnerMostNodeAtPosition(child, position)
                 }
-                return n
-            }
-
-            function findCallExpression(n: Node): ts.CallExpression | undefined {
-                if (ts.isCallExpression(n))
-                    return n
-                else if (n.parent) {
-                    return findCallExpression(n.parent)
-                }
-                return undefined
+                return (n && n.kind === SK.SourceFile) ? null : n;
             }
 
             const prog = service.getProgram()
             const tsAst = prog.getSourceFile("main.ts") // TODO: work for non-main files
-            const innerMost = findInnerMostNodeAtPosition(tsAst)
-            if (innerMost) {
-                const tc = prog.getTypeChecker()
-                const call = findCallExpression(innerMost)
+            const tc = prog.getTypeChecker()
+            let isPropertyAccess = false;
 
-                if (call) {
-                    function findArgIdx() {
-                        // does our cursor syntax node trivially map to an argument?
-                        let paramIdx = call.arguments
-                            .map(a => a === innerMost)
-                            .indexOf(true)
-                        if (paramIdx >= 0)
-                            return paramIdx
+            if (dotIdx !== -1) {
+                const propertyAccessTarget = findInnerMostNodeAtPosition(tsAst, isPython ? tsPos : dotIdx - 1)
 
-                        // is our cursor within the argument range?
-                        const inRange = call.arguments.pos <= tsPos && tsPos < call.end
-                        if (!inRange)
-                            return -1
+                if (propertyAccessTarget) {
+                    const symbol = tc.getSymbolAtLocation(propertyAccessTarget);
 
-                        // is our cursor pointing at one of the pieces of syntax of the call? E.g. "," or ")" or " "
-                        const isTopLeveLSyntax = [call, ...call.getChildren()]
-                            .map(a => a === innerMost)
-                            .reduce((p, n) => p || n, false)
-                        if (!isTopLeveLSyntax)
-                            return -1
+                    if (symbol) {
+                        const type = tc.getTypeOfSymbolAtLocation(symbol, propertyAccessTarget);
 
-                        // no arguments?
-                        if (call.arguments.length === 0)
-                            return 0
+                        if (type && type.symbol) {
+                            const qname = tc.getFullyQualifiedName(type.symbol);
+                            const props = type.getApparentProperties()
+                                .map(prop => qname + "." + prop.getName())
+                                .map(propQname => lastApiInfo.apis.byQName[propQname])
+                                .filter(prop => !!prop)
+                                .map(prop => completionSymbol(prop));
 
-                        // then find which argument we're refering to
-                        paramIdx = 0;
-                        for (let a of call.arguments) {
-                            if (a.end <= tsPos)
-                                paramIdx++
-                            else
-                                break
+                            if (props.length) {
+                                resultSymbols = props;
+                                isPropertyAccess = true;
+                            }
                         }
-                        if (!call.arguments.hasTrailingComma)
-                            paramIdx = Math.max(0, paramIdx - 1)
-
-                        return paramIdx
                     }
+                }
+            }
 
-                    // which argument are we ?
-                    let paramIdx = findArgIdx()
+            const innerMost = findInnerMostNodeAtPosition(tsAst, tsPos)
+            if (innerMost && innerMost.parent && ts.isCallExpression(innerMost.parent)) {
+                const call = innerMost.parent as ts.CallExpression;
 
-                    // if we're not one of the arguments, are we at the 
-                    // determine parameter idx
+                function findArgIdx() {
+                    // does our cursor syntax node trivially map to an argument?
+                    let paramIdx = call.arguments
+                        .map(a => a === innerMost)
+                        .indexOf(true)
+                    if (paramIdx >= 0)
+                        return paramIdx
 
-                    if (paramIdx >= 0) {
-                        const blocksInfo = blocksInfoOp(lastApiInfo.apis, runtime.bannedCategories);
-                        const callSym = getCallSymbol(call)
-                        if (callSym) {
-                            if (paramIdx >= callSym.parameters.length)
-                                paramIdx = callSym.parameters.length - 1
-                            const paramType = getParameterTsType(callSym, paramIdx, blocksInfo)
-                            if (paramType) {
-                                const matchingApis = getApisForTsType(paramType, call, tc)
+                    // is our cursor within the argument range?
+                    const inRange = call.arguments.pos <= tsPos && tsPos < call.end
+                    if (!inRange)
+                        return -1
+
+                    // no arguments?
+                    if (call.arguments.length === 0)
+                        return 0
+
+                    // then find which argument we're refering to
+                    paramIdx = 0;
+                    for (let a of call.arguments) {
+                        if (a.end <= tsPos)
+                            paramIdx++
+                        else
+                            break
+                    }
+                    if (!call.arguments.hasTrailingComma)
+                        paramIdx = Math.max(0, paramIdx - 1)
+
+                    return paramIdx
+                }
+
+                // which argument are we ?
+                let paramIdx = findArgIdx()
+
+                // if we're not one of the arguments, are we at the
+                // determine parameter idx
+
+                if (paramIdx >= 0) {
+                    const blocksInfo = blocksInfoOp(lastApiInfo.apis, runtime.bannedCategories);
+                    const callSym = getCallSymbol(call)
+                    if (callSym) {
+                        if (paramIdx >= callSym.parameters.length)
+                            paramIdx = callSym.parameters.length - 1
+                        const paramType = getParameterTsType(callSym, paramIdx, blocksInfo)
+                        if (paramType) {
+                            // if this is a property access, then weight the results higher if they return the
+                            // correct type for the parameter
+                            if (isPropertyAccess && resultSymbols.length) {
+                                const matchingApis = getApisForTsType(paramType, call, tc, resultSymbols);
+
+                                matchingApis.forEach(match => match.weight = 1);
+                            }
+                            else {
+                                const matchingApis = getApisForTsType(paramType, call, tc, completionSymbols(pxt.Util.values(lastApiInfo.apis.byQName)))
                                 resultSymbols = matchingApis
                             }
                         }
                     }
                 }
+            }
+
+            if (!isPython && !resultSymbols.length) {
+                // TODO: get better default result symbols for typescript
+                resultSymbols = completionSymbols(pxt.U.values(lastApiInfo.apis.byQName))
             }
 
             // determine which names are taken for auto-generated variable names
@@ -1059,7 +1078,7 @@ namespace ts.pxtc.service {
                 takenNames = lastApiInfo.apis.byQName
             }
 
-            function shouldUseSymbol(si: SymbolInfo) {
+            function shouldUseSymbol({ symbol: si }: CompletionSymbol) {
                 let use = !(
                     /^__/.test(si.name) || // ignore members starting with __
                     /^__/.test(si.namespace) || // ignore namespaces starting with __
@@ -1088,17 +1107,20 @@ namespace ts.pxtc.service {
 
             // swap aliases, filter symbols and add snippets
             resultSymbols
-                .map(si => si.attributes.alias ? lastApiInfo.apis.byQName[si.attributes.alias] : si)
+                .map(sym => sym.symbol.attributes.alias ? completionSymbol(lastApiInfo.apis.byQName[sym.symbol.attributes.alias], sym.weight) : sym)
                 .filter(shouldUseSymbol)
-                .forEach(si => {
-                    entries[si.qName] = si
-                    patchSymbolWithSnippet(si)
+                .forEach(sym => {
+                    entries[sym.symbol.qName] = sym
+                    patchSymbolWithSnippet(sym.symbol)
                 })
 
+            resultSymbols = pxt.Util.values(entries)
+                .filter(a => !!a && !!a.symbol)
+
+            resultSymbols.sort(compareCompletionSymbols);
+
             // sort entries
-            r.entries = pxt.Util.values(entries)
-                .filter(a => !!a);
-            r.entries.sort(compareSymbols);
+            r.entries = resultSymbols.map(sym => sym.symbol);
 
             return r;
         },
@@ -1385,22 +1407,21 @@ namespace ts.pxtc.service {
         return result
     }
 
-    function getApisForTsType(pxtType: string, location: Node, tc: TypeChecker): SymbolInfo[] {
+    function getApisForTsType(pxtType: string, location: Node, tc: TypeChecker, symbols: CompletionSymbol[]): CompletionSymbol[] {
         // any apis that return this type?
         // TODO: if this becomes expensive, this can be cached between calls since the same
         // return type is likely to occur over and over.
-        const apisByRetType: pxt.Map<SymbolInfo[]> = {}
-        pxt.U.values(lastApiInfo.apis.byQName)
-            .forEach(i => {
-                apisByRetType[i.retType] = [...(apisByRetType[i.retType] || []), i]
-            })
+        const apisByRetType: pxt.Map<CompletionSymbol[]> = {}
+        symbols.forEach(i => {
+            apisByRetType[i.symbol.retType] = [...(apisByRetType[i.symbol.retType] || []), i]
+        })
 
         const retApis = apisByRetType[pxtType]
 
         // any enum members?
         let enumVals: SymbolInfo[] = []
         for (let r of retApis) {
-            const asTsEnum = getTsSymbolFromPxtSymbol(r, location, SymbolFlags.Enum)
+            const asTsEnum = getTsSymbolFromPxtSymbol(r.symbol, location, SymbolFlags.Enum)
             if (asTsEnum) {
                 const enumType = tc.getTypeOfSymbolAtLocation(asTsEnum, location)
                 const mems = getEnumMembers(enumType)
@@ -1410,7 +1431,7 @@ namespace ts.pxtc.service {
             }
         }
 
-        return [...retApis, ...enumVals]
+        return [...retApis, ...completionSymbols(enumVals)]
     }
 
     function runConversionsAndCompileUsingService(): CompileResult {
@@ -1848,5 +1869,20 @@ namespace ts.pxtc.service {
         }
 
         return "0";
+    }
+
+    function compareCompletionSymbols(a: CompletionSymbol, b: CompletionSymbol) {
+        if (a.weight !== b.weight) {
+            return b.weight - a.weight
+        }
+        return compareSymbols(a.symbol, b.symbol);
+    }
+
+    function completionSymbol(symbol: SymbolInfo, weight = 0): CompletionSymbol {
+        return { symbol, weight };
+    }
+
+    function completionSymbols(symbols: SymbolInfo[], weight = 0): CompletionSymbol[] {
+        return symbols.map(s => completionSymbol(s, weight));
     }
 }

@@ -72,13 +72,15 @@ namespace ts.pxtc.transpile {
             success: true,
             outfiles: equiv.outfiles,
             sourceMap: equiv.sourceMap,
+            globalNames: equiv.globalNames,
             syntaxInfo: equiv.syntaxInfo
         }
     }
 
-    function transpileInternal(from: CodeLang, fromTxt: string, to: CodeLang, doRealTranspile: () => TranspileResult): TranspileResult {
+    // @param force: forces a live transpile, and does not cache the result
+    function transpileInternal(from: CodeLang, fromTxt: string, to: CodeLang, doRealTranspile: () => TranspileResult, force?: boolean): TranspileResult {
         let equiv = tryGetCachedTranspile(from, fromTxt)
-        if (equiv && equiv.outfiles[mainName(to)]) {
+        if (equiv && equiv.outfiles[mainName(to)] && !force) {
             // return from cache
             let res = makeSuccess(equiv)
             return res
@@ -87,7 +89,7 @@ namespace ts.pxtc.transpile {
         // not found in cache, do the compile
         let res = doRealTranspile()
 
-        if (res.success) {
+        if (res.success && !force) {
             // store the result
             let toTxt = res.outfiles[mainName(to)] || ""
             cacheTranspile(from, fromTxt, to, toTxt, res.sourceMap)
@@ -103,7 +105,7 @@ namespace ts.pxtc.transpile {
         let fromTxt = options.fileSystem[filename]
         U.assert(fromTxt !== undefined && fromTxt !== null, `Missing file "${filename}" when converting from py->ts`)
 
-        return transpileInternal("py", fromTxt, "ts", doRealTranspile)
+        return transpileInternal("py", fromTxt, "ts", doRealTranspile, !!options.syntaxInfo)
     }
 
     export function tsToPy(program: ts.Program, filename: string = mainName("ts")): TranspileResult {

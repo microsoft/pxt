@@ -264,15 +264,16 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
         })
 }
 
-// TS -> blocks
-export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
+// TS -> blocks, load blocs before calling this api
+export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo, dopts?: { snippetMode?: boolean }): Promise<pxtc.CompileResult> {
     const snippetTs = "main.ts";
     const snippetBlocks = "main.blocks";
-    let trg = pkg.mainPkg.getTargetOptions()
+    const trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
             opts.fileSystem[snippetTs] = code;
             opts.fileSystem[snippetBlocks] = "";
+            opts.snippetMode = (dopts && dopts.snippetMode) || false;
 
             if (opts.sourceFiles.indexOf(snippetTs) === -1) {
                 opts.sourceFiles.push(snippetTs);
@@ -485,10 +486,15 @@ interface BundledPackage {
     files: pxt.Map<string>;
 }
 
+interface UsedPackageInfo {
+    dirname: string,
+    info: pxt.PackageApiInfo
+}
+
 async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Map<pxt.PackageApiInfo>): Promise<pxtc.ApisInfo> {
     if (!bundled) return null;
-
-    const corePkg = bundled["libs/" + pxt.appTarget.corepkg];
+    const corePkgName = "libs/" + pxt.appTarget.corepkg;
+    const corePkg = bundled[corePkgName];
     if (!corePkg) return null;
 
     // If the project has a TypeScript file beside main.ts, it could export blocks so we can't use the cache
@@ -511,7 +517,10 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
 
     const usedPackages = project.pkgAndDeps();
     const externalPackages: pkg.EditorPackage[] = [];
-    const usedInfo: pxt.PackageApiInfo[] = [corePkg];
+    const usedPackageInfo: UsedPackageInfo[] = [{
+        dirname: corePkgName,
+        info: corePkg
+    }];
 
     for (const dep of usedPackages) {
         if (dep.id === "built" || dep.isTopLevel()) continue;
@@ -519,7 +528,10 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
         let foundIt = false;
         for (const bundle of bundledPackages) {
             if (bundle.config.name === dep.getKsPkg().config.name) {
-                usedInfo.push(bundled[bundle.dirname]);
+                usedPackageInfo.push({
+                    dirname: bundle.dirname,
+                    info: bundled[bundle.dirname]
+                });
                 foundIt = true;
                 break;
             }
@@ -540,7 +552,10 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
             }
             else {
                 pxt.debug(`Fetched cached API info for ${dep.getKsPkg().config.name}`);
-                usedInfo.push(entry);
+                usedPackageInfo.push({
+                    dirname: dep.getKsPkg().config.name,
+                    info: entry
+                });
             }
         }
     }
@@ -550,11 +565,18 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
         jres: {}
     };
 
-    for (const used of usedInfo) {
+    for (const used of usedPackageInfo) {
         if (!used) continue;
-        pxt.Util.jsonCopyFrom(result.byQName, used.apis.byQName);
+        const { info, dirname } = used;
 
-        if (used.apis.jres) pxt.Util.jsonCopyFrom(result.jres, used.apis.jres);
+        // reinclude the pkg the api originates from, which is trimmed during compression
+        for (const api of Object.keys(info.apis.byQName)) {
+            info.apis.byQName[api].pkg = dirname;
+        }
+
+        pxt.Util.jsonCopyFrom(result.byQName, info.apis.byQName);
+        if (info.apis.jres)
+            pxt.Util.jsonCopyFrom(result.jres, info.apis.jres);
     }
 
     const jres = pkg.mainPkg.getJRes();
@@ -587,12 +609,12 @@ async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo
         const db = await ApiInfoIndexedDb.createAsync();
 
         for (const dep of externalPackages) {
+            const name = dep.getKsPkg().config.name;
             const entry: pxt.PackageApiInfo = {
                 sha: null,
                 apis: { byQName: {} }
             }
 
-            const name = dep.getKsPkg().config.name;
 
             for (const api of apiList) {
                 if (info.byQName[api].pkg === name) {
@@ -819,7 +841,7 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.U
             let cleanupOperation = Promise.resolve();
             if (backup) {
                 backup.isDeleted = true;
-                cleanupOperation = workspace.saveAsync(backup)
+                cleanupOperation = workspace.forceSaveAsync(backup)
             }
 
             return cleanupOperation

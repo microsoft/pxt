@@ -1099,7 +1099,7 @@ export class ProjectView
                         let curr = pkg.mainEditorPkg().header
                         curr.isDeleted = true;
                         curr.tutorial = undefined;
-                        workspace.saveAsync(curr, {})
+                        workspace.forceSaveAsync(curr, {})
                             .then(() => {
                                 this.openHome();
                             }).finally(() => core.hideLoading("tutorial"));
@@ -1369,7 +1369,7 @@ export class ProjectView
         core.confirmDelete(pkg.mainEditorPkg().header.name, () => {
             let curr = pkg.mainEditorPkg().header
             curr.isDeleted = true
-            return workspace.saveAsync(curr, {})
+            return workspace.forceSaveAsync(curr, {})
                 .then(() => this.openHome());
         })
     }
@@ -2854,11 +2854,11 @@ export class ProjectView
 
     renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<pxt.editor.EditorMessageRenderBlocksResponse> {
         return compiler.getBlocksAsync()
-            .then(blocksInfo => compiler.decompileBlocksSnippetAsync(req.ts, blocksInfo))
+            .then(blocksInfo => compiler.decompileBlocksSnippetAsync(req.ts, blocksInfo, req))
             .then(resp => {
                 const svg = pxt.blocks.render(resp.outfiles["main.blocks"], {
-                    snippetMode: true,
-                    layout: pxt.blocks.BlockLayout.Align,
+                    snippetMode: req.snippetMode || false,
+                    layout: req.layout !== undefined ? req.layout : pxt.blocks.BlockLayout.Align,
                     splitSvg: false
                 }) as SVGSVGElement;
                 // TODO: what if svg is undefined? handle that scenario

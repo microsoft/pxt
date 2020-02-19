@@ -49,6 +49,11 @@
     color: #FFB900 !important;
 }
 
+/* Monaco Editor Rename Widget: default positioning causes scroll with transparent editor toolbar, so we reposition */
+.monaco-editor .rename-box {
+    bottom: 3rem;
+}
+
 /* The view lines in the monaco editor sometimes ignore the editor width and cause a scrollbar to appear */
 .monaco-editor.vs {
     overflow: hidden;
@@ -163,6 +168,7 @@
             span {
                 display: inline-block;
                 width: calc(~'100% - 1.75rem');
+                word-wrap: break-word;
             }
 
             .blockHelp {
@@ -182,7 +188,7 @@
             font-weight: 600;
             background: rgba(0,0,0,0.3);
             color: #fff;
-            padding: 0.1rem .5rem;
+            padding: 0 .5rem;
             display: inline-block;
             border-radius: 0.8rem;
             line-height: 1.75rem;
@@ -247,6 +253,7 @@
     overflow-x: visible;
     overflow-y: auto;
     height: 100%;
+    -webkit-overflow-scrolling: touch;
 
     & > div {
         padding: 1rem;
@@ -280,6 +287,7 @@
     pointer-events: none;
     touch-action: none;
     font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+    white-space: nowrap;
 }
 
 /* Limit color interferences with semantic anchor element */
@@ -329,6 +337,7 @@
 #monacoEditorInner {
     position: relative !important;
     display: inline-block;
+    overflow: hidden;
 }
 
 /*******************************
