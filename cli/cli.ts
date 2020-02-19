@@ -3203,7 +3203,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
         .then(() => {
             if (md) {
                 // inject updated cards
-                cards.forEach(card => delete card.id);
+                cards.forEach(card => delete (card as any).id);
                 md = md.replace(rx, (m, c) => {
                     return `\`\`\`codecard
 ${JSON.stringify(cards, null, 4)}
