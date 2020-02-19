@@ -264,15 +264,16 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
         })
 }
 
-// TS -> blocks
-export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
+// TS -> blocks, load blocs before calling this api
+export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo, dopts?: { snippetMode?: boolean }): Promise<pxtc.CompileResult> {
     const snippetTs = "main.ts";
     const snippetBlocks = "main.blocks";
-    let trg = pkg.mainPkg.getTargetOptions()
+    const trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
             opts.fileSystem[snippetTs] = code;
             opts.fileSystem[snippetBlocks] = "";
+            opts.snippetMode = (dopts && dopts.snippetMode) || false;
 
             if (opts.sourceFiles.indexOf(snippetTs) === -1) {
                 opts.sourceFiles.push(snippetTs);

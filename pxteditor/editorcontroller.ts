@@ -182,6 +182,9 @@ namespace pxt.editor {
         action: "renderblocks";
         // typescript code to render
         ts: string;
+        // rendering options
+        snippetMode?: boolean;
+        layout?: pxt.blocks.BlockLayout;
     }
 
     export interface EditorMessageRenderBlocksResponse {
