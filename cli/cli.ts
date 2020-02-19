@@ -3181,7 +3181,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                                 cards.push(card);
                             }
 
-                            const pfn = `./docs/static/discourse/${topic.id}.`;
+                            const pfn = `./docs/static/discourse/${id}.`;
                             if (md && !["png", "jpg", "gif"].some(ext => nodeutil.fileExistsSync(pfn + ext))) {
                                 return downloadImageAsync(id, topic, `https://makecode.com/api/${id}/thumb`)
                                     .catch(e => {
@@ -3203,9 +3203,6 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
         .then(() => {
             if (md) {
                 // inject updated cards
-                cards.forEach(card => {
-                    delete card.id;
-                })
                 md = md.replace(rx, (m, c) => {
                     return `\`\`\`codecard
 ${JSON.stringify(cards, null, 4)}
@@ -3232,7 +3229,7 @@ ${JSON.stringify(cards, null, 4)}
                 } else {
                     let ext = m[1];
                     if (ext == "jpeg") ext = "jpg";
-                    const ifn = `/static/discourse/${topic.id}.${ext}`;
+                    const ifn = `/static/discourse/${id}.${ext}`;
                     const localifn = "./docs" + ifn;
                     topic.imageUrl = ifn;
                     nodeutil.writeFileSync(localifn, new Buffer(resp.buffer as ArrayBuffer));
