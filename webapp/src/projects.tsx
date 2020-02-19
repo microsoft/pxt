@@ -1161,7 +1161,11 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             });
         }
 
-        pxt.tickEvent('newprojectdialog.projectcreate', undefined, { interactiveConsent: true });
+        pxt.tickEvent(
+            'newprojectdialog.projectcreate',
+            { language: languageRestriction },
+            { interactiveConsent: true }
+        );
         this.createProjectCb = null;
     }
 
