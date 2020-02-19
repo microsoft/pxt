@@ -6,7 +6,7 @@ import * as compiler from "./compiler";
 export abstract class ToolboxEditor extends srceditor.Editor {
 
     protected blockInfo: pxtc.BlocksInfo;
-    protected blockGroups: pxt.Map<toolbox.GroupDefinition[]>;
+    protected blockGroupsCache: pxt.Map<toolbox.GroupDefinition[]>;
     protected blockIdMap: pxt.Map<string>;
 
     private searchSubset: pxt.Map<boolean | string>;
@@ -99,8 +99,10 @@ export abstract class ToolboxEditor extends srceditor.Editor {
             });
     }
 
-    protected clearCaches() {
+    clearCaches() {
+        super.clearCaches();
         this.searchSubset = undefined;
+        this.blockGroupsCache = undefined;
     }
 
     abstract getBuiltinCategory(ns: string): toolbox.ToolboxCategory;
@@ -303,8 +305,8 @@ export abstract class ToolboxEditor extends srceditor.Editor {
 
     getBlockGroups(treeRow: toolbox.ToolboxCategory): toolbox.GroupDefinition[] {
         const ns = treeRow.nameid + (treeRow.subns || "");
-        if (!this.blockGroups) this.blockGroups = {}
-        if (!this.blockGroups[ns]) {
+        if (!this.blockGroupsCache) this.blockGroupsCache = {}
+        if (!this.blockGroupsCache[ns]) {
             const {groups, groupIcons, groupHelp, blocks } = treeRow;
 
             // Parse full list of groups from block attributes
@@ -338,12 +340,12 @@ export abstract class ToolboxEditor extends srceditor.Editor {
             }
             // Only cache if there are no filters
             if (!this.parent.state?.editorState?.filters) {
-                this.blockGroups[ns] = blockGroups;
+                this.blockGroupsCache[ns] = blockGroups;
             } else {
                 return blockGroups;
             }
         }
 
-        return this.blockGroups[ns];
+        return this.blockGroupsCache[ns];
     }
 }
