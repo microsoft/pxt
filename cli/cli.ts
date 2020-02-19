@@ -6246,6 +6246,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     pxt.setAppTarget(trg)
 
     pxt.setCompileSwitches(process.env["PXT_COMPILE_SWITCHES"])
+    trg = pxt.appTarget
 
     let compileId = "none"
     if (trg.compileService) {
