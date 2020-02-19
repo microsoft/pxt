@@ -230,7 +230,9 @@ jobs:
         const configMap = JSON.parse(files[pxt.CONFIG_NAME])
         if (options)
             Util.jsonMergeFrom(configMap, options);
-        Object.keys(pxt.webConfig).forEach(k => configMap[k.toLowerCase()] = (<any>pxt.webConfig)[k]);
+        if (pxt.webConfig)
+            Object.keys(pxt.webConfig)
+                .forEach(k => configMap[k.toLowerCase()] = (<any>pxt.webConfig)[k]);
         configMap["platform"] = pxt.appTarget.platformid || pxt.appTarget.id
         configMap["target"] = pxt.appTarget.id
         configMap["docs"] = pxt.appTarget.appTheme.homeUrl || "./";
