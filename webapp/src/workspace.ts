@@ -1020,7 +1020,7 @@ export function prepareConfigForGithub(content: string, createRelease?: boolean)
         const v = cfg.dependencies[d];
         const hid = v.substring(v.indexOf(':') + 1);
         const header = getHeader(hid);
-        if (!header.githubId) {
+        if (header && !header.githubId) {
             if (createRelease)
                 U.userError(lf("Dependency {0} is a local project.", d))
         } else {
