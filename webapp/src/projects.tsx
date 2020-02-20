@@ -8,7 +8,6 @@ import * as core from "./core";
 import * as cloud from "./cloud";
 import * as cloudsync from "./cloudsync";
 
-import * as discourse from "./discourse";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
 import { showAboutDialogAsync } from "./dialogs";
@@ -830,7 +829,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
     handleOpenForumUrlInEditor() {
         const { url } = this.props;
-        discourse.extractSharedIdFromPostUrl(url)
+        pxt.discourse.extractSharedIdFromPostUrl(url)
             .then(projectId => {
                 // if we have a projectid, load it
                 if (projectId)

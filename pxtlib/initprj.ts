@@ -230,14 +230,13 @@ jobs:
         const configMap = JSON.parse(files[pxt.CONFIG_NAME])
         if (options)
             Util.jsonMergeFrom(configMap, options);
-        if (pxt.webConfig)
-            Object.keys(pxt.webConfig)
-                .forEach(k => configMap[k.toLowerCase()] = (<any>pxt.webConfig)[k]);
-        configMap["platform"] = pxt.appTarget.platformid || pxt.appTarget.id
-        configMap["target"] = pxt.appTarget.id
-        configMap["docs"] = pxt.appTarget.appTheme.homeUrl || "./";
-        configMap["homeurl"] = pxt.appTarget.appTheme.homeUrl || "???";
-
+        if (pxt.webConfig) { // CLI
+            Object.keys(pxt.webConfig).forEach(k => configMap[k.toLowerCase()] = (<any>pxt.webConfig)[k]);
+            configMap["platform"] = pxt.appTarget.platformid || pxt.appTarget.id
+            configMap["target"] = pxt.appTarget.id
+            configMap["docs"] = pxt.appTarget.appTheme.homeUrl || "./";
+            configMap["homeurl"] = pxt.appTarget.appTheme.homeUrl || "???";
+        }
         U.iterMap(files, (k, v) => {
             v = v.replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
             files[k] = v
