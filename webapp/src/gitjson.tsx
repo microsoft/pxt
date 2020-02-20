@@ -1283,7 +1283,7 @@ ${c}
         const date = new Date(Date.parse(commit.author.date));
         return <div className={`ui item ${loading ? "loading" : ""}`}>
             <div className="content">
-                <div className="header link" onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>{lf("{id:date}{0}, {1}", date.toLocaleDateString(), date.toLocaleTimeString())}</div>
+                <div className="header" onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>{date.toLocaleString()}</div>
                 <div className="description" onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>{commit.message}</div>
                 <div className="extra">
                     {expanded && markdown && <sui.Button text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />}
