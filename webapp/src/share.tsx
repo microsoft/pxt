@@ -418,7 +418,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 : isGifRendering ? lf("Rendering gif...")
                     : undefined;
         const screenshotMessageClass = recordError ? "warning" : "";
-        const tooBigErrorSuggestGitHub = sharingError 
+        const tooBigErrorSuggestGitHub = sharingError
             && (sharingError as any).statusCode === 413
             && pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders && pxt.appTarget.cloud.cloudProviders.github;
         const unknownError = sharingError && !tooBigErrorSuggestGitHub;
