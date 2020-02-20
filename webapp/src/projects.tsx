@@ -1161,16 +1161,25 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             });
         }
 
-        pxt.tickEvent('newprojectdialog.projectcreate', undefined, { interactiveConsent: true });
+        pxt.tickEvent(
+            'newprojectdialog.projectcreate',
+            { language: languageRestriction },
+            { interactiveConsent: true }
+        );
         this.createProjectCb = null;
     }
 
     onExpandedMenuHide = () => {
+        pxt.tickEvent('newprojectdialog.codeoptions.hide');
         // reset language restrictions when user closes the options menu;
         // it's an 'advanced' feature that we want an easy escape hatch for.
         this.setState({
             languageRestriction: pxt.editor.LanguageRestriction.Standard
         });
+    }
+
+    onExpandedMenuShow = () => {
+        pxt.tickEvent('newprojectdialog.codeoptions.show');
     }
 
     renderCore() {
@@ -1219,7 +1228,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             </div>
             {chooseLanguageRestrictionOnNewProject && <div>
                 <br />
-                <sui.ExpandableMenu title={lf("Code options")} onHide={this.onExpandedMenuHide}>
+                <sui.ExpandableMenu title={lf("Code options")} onShow={this.onExpandedMenuShow} onHide={this.onExpandedMenuHide}>
                     <sui.Select options={langOpts} onChange={this.handleLanguageChange} aria-label={lf("Select Language")} />
                 </sui.ExpandableMenu>
             </div>}
