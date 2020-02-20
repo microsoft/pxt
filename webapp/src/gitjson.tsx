@@ -1240,10 +1240,10 @@ class CommitView extends sui.UIElement<CommitProps, CommitState> {
         }
     }
 
-    private generateDiffAsync(commit: pxt.github.Commit): string {
+    private generateDiffAsync(commit: pxt.github.Commit): Promise<string> {
         const { githubId } = this.props;
         const files = pkg.mainEditorPkg().sortedFiles();
-        const markdown = Promise.all<string>(files
+        return Promise.all<string>(files
             .map<Promise<string>>(p => {
                 const path = p.name;
                 const isBlocks = /\.blocks$/.test(path);
@@ -1258,19 +1258,19 @@ class CommitView extends sui.UIElement<CommitProps, CommitState> {
                         if (isBlocks && pxt.blocks.needsDecompiledDiff(c, content))
                             return undefined;
                         return `
-        ### ${p.name}
+### ${p.name}
         
-        \`\`\`${isBlocks ? "diffblocksxml" : "diff"}
-        ${content}
-        ---------------------
-        ${c}
-        \`\`\`
-        `;
+\`\`\`${isBlocks ? "diffblocksxml" : "diff"}
+${content}
+---------------------
+${c}
+\`\`\`
+`;
                     })
-            }))
-            .filter(df => !!df)
-            .join('\n\n');
-        return markdown;
+            })).then(diffs => {
+                return diffs.filter(df => !!df)
+                    .join("");
+            })
     }
 
     handleRestore() {
