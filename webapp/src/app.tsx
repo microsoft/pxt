@@ -2926,10 +2926,6 @@ export class ProjectView
             }).finally(() => {
                 this.setState({ publishing: false })
             })
-            .catch(e => {
-                core.errorNotification(e.message)
-                throw e;
-            })
     }
 
     private debouncedSaveProjectName: () => void;
