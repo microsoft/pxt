@@ -65,6 +65,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         this.handleRecordClick = this.handleRecordClick.bind(this);
         this.handleScreenshotClick = this.handleScreenshotClick.bind(this);
         this.handleScreenshotMessage = this.handleScreenshotMessage.bind(this);
+        this.handleCreateGitHubRepository = this.handleCreateGitHubRepository.bind(this);
     }
 
     hide() {
@@ -300,6 +301,12 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             });
     }
 
+    handleCreateGitHubRepository() {
+        pxt.tickEvent("share.github.create", undefined, { interactiveConsent: true });
+        this.hide();
+        this.props.parent.createGitHubRepositoryAsync().done();
+    }
+
     renderCore() {
         const { visible, projectName: newProjectName, loading, recordingState, screenshotUri, thumbnails, recordError, pubId, qrCodeUri, title, sharingError } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
@@ -461,7 +468,9 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                         </div>
                     </div> : undefined}
                     {action && !this.loanedSimulator ? <p className="ui tiny message info">{disclaimer}</p> : undefined}
-                    {tooBigErrorSuggestGitHub && <p className="ui orange inverted segment">{lf("Oops! Your project is too big. You can create a GitHub repository to share it.")}</p>}
+                    {tooBigErrorSuggestGitHub && <p className="ui orange inverted segment">{lf("Oops! Your project is too big. You can create a GitHub repository to share it.")}
+                        <sui.Button className="inverted basic" text={lf("Create")} icon="github" onClick={this.handleCreateGitHubRepository} />
+                    </p>}
                     {unknownError && <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}</p>}
                     {url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.")}</p>
