@@ -248,7 +248,12 @@ namespace pxt.github {
 
     export function getCommitsAsync(repopath: string, sha: string): Promise<CommitInfo[]> {
         return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/commits?sha=" + sha)
-            .then(objs => objs.map((obj: any) => obj.commit));
+            .then(objs => objs.map((obj: any) => {
+                const c = obj.commit;
+                c.url = obj.url;
+                c.sha = obj.sha;
+                return c;
+            }));
     }
 
     export function getCommitAsync(repopath: string, sha: string) {
