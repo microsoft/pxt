@@ -1206,6 +1206,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
 
 interface CommitProps {
     parent: pxt.editor.IProjectView;
+    githubId: pxt.github.ParsedRepo;
     commit: pxt.github.CommitInfo;
 }
 
@@ -1223,16 +1224,47 @@ class CommitView extends sui.UIElement<CommitProps, CommitState> {
 
     handleClick() {
         pxt.tickEvent("github.history.commit.click")
+        const { commit, githubId } = this.props;
         const { expanded, markdown } = this.state;
         if (expanded) {
             this.setState({ expanded: false });
         } else {
-            if (markdown)
-                this.setState({ expanded: true });
-            else {
-                // load commit and compute markdown
-            }
+            this.setState({ expanded: true });
+            // load commit and compute markdown
+            pxt.github.getCommitAsync(githubId.fullName, commit.sha)
+                .then(cmt => {
+                    let md = this.generateDiff(cmt);
+                    this.setState({ markdown: md })
+                });
         }
+    }
+
+    private generateDiff(commit: pxt.github.Commit): string {
+        commit.tree.tree
+        const files = pkg.mainEditorPkg().sortedFiles();
+        const markdown = files
+            .map(p => {
+                const c = p.publishedContent();
+                const oldEnt = pxt.github.lookupFile(commit, p.name);
+                const content = oldEnt?.blobContent;
+                const isBlocks = /\.blocks$/.test(p.name);
+                const hasChanges = !oldEnt || oldEnt.blobContent != c;
+                if (!hasChanges) return undefined;
+                if (isBlocks && pxt.blocks.needsDecompiledDiff(c, content))
+                    return undefined;
+                return `
+### ${p.name}
+
+\`\`\`${isBlocks ? "diffblocksxml" : "diff"}
+${content}
+---------------------
+${c}
+\`\`\`
+`;
+            })
+            .filter(df => !!df)
+            .join('\n\n');
+        return markdown;
     }
 
     handleRestore() {
@@ -1279,6 +1311,7 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
     }
 
     renderCore() {
+        const { githubId } = this.props;
         const { commits } = this.state;
         const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
         return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
@@ -1294,7 +1327,7 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
                 </span>
             </div>}
             {commits && <div className="ui divided items">
-                {commits.map(commit => <CommitView parent={this.props.parent.props.parent} key={'commit' + commit.sha} commit={commit} />)}
+                {commits.map(commit => <CommitView parent={this.props.parent.props.parent} key={'commit' + commit.sha} commit={commit} githubId={githubId} />)}
             </div>}
         </div>
     }
