@@ -951,6 +951,10 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
     renderCore() {
         const { visible } = this.state;
         const disableFileAccessinMaciOs = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
+        const showImport = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
+        const showCreateGithubRepo = pxt.appTarget.cloud
+            && pxt.appTarget.cloud.cloudProviders
+            && pxt.appTarget.cloud.cloudProviders.github;
         /* tslint:disable:react-a11y-anchors */
         return (
             <sui.Modal isOpen={visible} className="importdialog" size="small"
@@ -970,7 +974,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                             description={lf("Open files from your computer")}
                             onClick={this.importHex}
                         /> : undefined}
-                    {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing ?
+                    {showImport &&
                         <codecard.CodeCardView
                             ariaLabel={lf("Open a shared project URL or GitHub repo")}
                             role="button"
@@ -980,10 +984,8 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                             name={lf("Import URL...")}
                             description={lf("Open a shared project URL or GitHub repo")}
                             onClick={this.importUrl}
-                        /> : undefined}
-                    {pxt.appTarget.cloud
-                        && pxt.appTarget.cloud.cloudProviders
-                        && pxt.appTarget.cloud.cloudProviders.github ?
+                        />}
+                    {showCreateGithubRepo &&
                         <codecard.CodeCardView
                             ariaLabel={lf("Clone or create your own GitHub repository")}
                             role="button"
@@ -993,7 +995,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                             name={lf("Your GitHub Repo...")}
                             description={lf("Clone or create your own GitHub repository")}
                             onClick={this.cloneGithub}
-                        /> : undefined}
+                        />}
                 </div>
             </sui.Modal>
         )
@@ -1088,7 +1090,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                         <sui.Input ref="filenameinput" id={"projectNameInput"}
                             ariaLabel={lf("Type a name for your project")} autoComplete={false}
                             value={projectName || ''} onChange={this.handleChange} onEnter={this.save}
-                            selectOnMount={!mobile} autoFocus={!mobile}/>
+                            selectOnMount={!mobile} autoFocus={!mobile} />
                     </div>
                 </div>
             </sui.Modal>
