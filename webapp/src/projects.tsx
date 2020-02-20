@@ -952,7 +952,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
         const { visible } = this.state;
         const disableFileAccessinMaciOs = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
         const showImport = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
-        const showCreateGithubRepo = pxt.appTarget.cloud
+        const showCreateGithubRepo = pxt.appTarget?.cloud?.cloudProviders?.github
             && pxt.appTarget.cloud.cloudProviders
             && pxt.appTarget.cloud.cloudProviders.github;
         /* tslint:disable:react-a11y-anchors */
@@ -1382,4 +1382,3 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
         )
     }
 }
-
