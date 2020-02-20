@@ -2775,6 +2775,13 @@ export class ProjectView
             simulator.driver.registerDependentEditor(w);
         }
     }
+
+    createGitHubRepositoryAsync(): Promise<void> {
+        const { projectName, header } = this.state;
+        return cloudsync.githubProvider().createRepositoryAsync(projectName, header)
+            .then(r => r && this.reloadHeaderAsync());
+    }
+
     ///////////////////////////////////////////////////////////
     ////////////             Debugging            /////////////
     ///////////////////////////////////////////////////////////
@@ -2925,10 +2932,6 @@ export class ProjectView
                     .then(inf => inf.id)
             }).finally(() => {
                 this.setState({ publishing: false })
-            })
-            .catch(e => {
-                core.errorNotification(e.message)
-                throw e;
             })
     }
 

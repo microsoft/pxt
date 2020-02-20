@@ -321,6 +321,7 @@ namespace pxt.editor {
         popScreenshotHandler(): void;
 
         openDependentEditor(header: pxt.workspace.Header): void;
+        createGitHubRepositoryAsync(): Promise<void>;
     }
 
     export interface IHexFileImporter {
