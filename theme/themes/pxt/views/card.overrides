@@ -26,9 +26,9 @@
         min-width: 5rem;
         height: 8rem;
         .header {
-            word-wrap: break-word;
+            word-break: break-all;
             overflow: hidden;
-            white-space: nowrap;
+            height: 6.5rem;
             text-overflow: ellipsis;
         }
     }
@@ -256,6 +256,7 @@ a.ui.card:focus,
         .content .header {
             font-size: 80%;
             font-weight: normal;
+            white-space: nowrap;
         }
     }
 }
