@@ -251,12 +251,12 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const bigRunButtonTooltip = (() => {
             switch (simState) {
                 case pxt.editor.SimState.Stopped:
-                    return lf("Start the simulator");
+                    return lf("Start");
                 case pxt.editor.SimState.Pending:
                 case pxt.editor.SimState.Starting:
-                    return lf("Starting the simulator");
+                    return lf("Starting");
                 default:
-                    return lf("Stop the simulator");
+                    return lf("Stop");
             }
         })();
 
