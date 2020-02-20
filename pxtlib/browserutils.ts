@@ -218,8 +218,10 @@ namespace pxt.BrowserUtils {
         if (/bot|crawler|spider|crawling/i.test(navigator.userAgent))
             return true;
 
-        //Check target theme to see if this browser is supported
-        if (pxt.appTarget.unsupportedBrowsers && pxt.appTarget.unsupportedBrowsers.some(b => b.id == browser())) {
+        // Check target theme to see if this browser is supported
+        let unsupportedBrowsers = pxt.appTarget?.unsupportedBrowsers
+            || (window as any).pxtTargetBundle?.unsupportedBrowsers as BrowserOptions[];
+        if (unsupportedBrowsers?.some(b => b.id == browser())) {
             return false
         }
 
