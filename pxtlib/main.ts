@@ -106,8 +106,10 @@ namespace pxt {
     }
 
     export function setCompileSwitch(name: string, value: boolean) {
-        (savedSwitches as any)[name] = value
-        if (appTarget) {
+        if (/^csv-/.test(name)) {
+            pxt.setAppTargetVariant(name.replace(/^csv-*/, ""))
+        } else if (appTarget) {
+            (savedSwitches as any)[name] = value
             U.jsonCopyFrom(appTarget.compile.switches, savedSwitches)
             U.jsonCopyFrom(savedAppTarget.compile.switches, savedSwitches)
         }
