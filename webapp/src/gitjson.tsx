@@ -1213,6 +1213,7 @@ interface CommitProps {
 interface CommitState {
     expanded?: boolean;
     markdown?: string;
+    loading?: boolean;
 }
 
 class CommitView extends sui.UIElement<CommitProps, CommitState> {
@@ -1229,39 +1230,44 @@ class CommitView extends sui.UIElement<CommitProps, CommitState> {
         if (expanded) {
             this.setState({ expanded: false });
         } else {
-            this.setState({ expanded: true });
             // load commit and compute markdown
+            this.setState({ expanded: true, loading: true });
             pxt.github.getCommitAsync(githubId.fullName, commit.sha)
-                .then(cmt => {
-                    let md = this.generateDiff(cmt);
-                    this.setState({ markdown: md })
-                });
+                .then(cmt => this.generateDiffAsync(cmt))
+                .then(md => this.setState({ markdown: md }))
+                .finally(() => this.setState({ loading: false }))
+                ;
         }
     }
 
-    private generateDiff(commit: pxt.github.Commit): string {
-        commit.tree.tree
+    private generateDiffAsync(commit: pxt.github.Commit): string {
+        const { githubId } = this.props;
         const files = pkg.mainEditorPkg().sortedFiles();
-        const markdown = files
-            .map(p => {
+        const markdown = Promise.all<string>(files
+            .map<Promise<string>>(p => {
+                const path = p.name;
+                const isBlocks = /\.blocks$/.test(path);
                 const c = p.publishedContent();
-                const oldEnt = pxt.github.lookupFile(commit, p.name);
-                const content = oldEnt?.blobContent;
-                const isBlocks = /\.blocks$/.test(p.name);
-                const hasChanges = !oldEnt || oldEnt.blobContent != c;
-                if (!hasChanges) return undefined;
-                if (isBlocks && pxt.blocks.needsDecompiledDiff(c, content))
-                    return undefined;
-                return `
-### ${p.name}
+                const oldEnt = pxt.github.lookupFile(commit, path);
+                if (!oldEnt) return Promise.resolve(undefined);
 
-\`\`\`${isBlocks ? "diffblocksxml" : "diff"}
-${content}
----------------------
-${c}
-\`\`\`
-`;
-            })
+                return pxt.github.downloadTextAsync(githubId.fullName, commit.sha, path)
+                    .then(content => {
+                        const hasChanges = content != c;
+                        if (!hasChanges) return undefined;
+                        if (isBlocks && pxt.blocks.needsDecompiledDiff(c, content))
+                            return undefined;
+                        return `
+        ### ${p.name}
+        
+        \`\`\`${isBlocks ? "diffblocksxml" : "diff"}
+        ${content}
+        ---------------------
+        ${c}
+        \`\`\`
+        `;
+                    })
+            }))
             .filter(df => !!df)
             .join('\n\n');
         return markdown;
@@ -1273,14 +1279,14 @@ ${c}
 
     renderCore() {
         const { parent, commit } = this.props;
-        const { expanded, markdown } = this.state;
+        const { expanded, markdown, loading } = this.state;
         const date = new Date(Date.parse(commit.author.date));
-        return <div className="ui item">
+        return <div className={`ui item ${loading ? "loading" : ""}`}>
             <div className="content">
                 <div className="header link" onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>{date.toLocaleDateString()}</div>
                 <div className="description" onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>{commit.message}</div>
                 <div className="extra">
-                    {expanded && <sui.Button text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />}
+                    {expanded && markdown && <sui.Button text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />}
                     {expanded && markdown && <markedui.MarkedContent parent={parent} markdown={markdown} />}
                 </div>
             </div>
