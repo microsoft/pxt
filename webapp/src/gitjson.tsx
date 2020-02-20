@@ -924,6 +924,7 @@ ${content}
                     </div> : undefined}
                     {master && <ReleaseZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {!isBlocksMode && <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
+                    {!needsCommit && <HistoryZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     <div></div>
                 </div>
             </div>
@@ -1199,6 +1200,102 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                     {sui.helpIconLink("/github/offline", lf("Learn more about offline support for extensions."))}
                 </span>
             </div>
+        </div>
+    }
+}
+
+interface CommitProps {
+    parent: pxt.editor.IProjectView;
+    commit: pxt.github.CommitInfo;
+}
+
+interface CommitState {
+    expanded?: boolean;
+    markdown?: string;
+}
+
+class CommitView extends sui.UIElement<CommitProps, CommitState> {
+    constructor(props: CommitProps) {
+        super(props);
+        this.handleClick = this.handleClick.bind(this);
+        this.handleRestore = this.handleRestore.bind(this);
+    }
+
+    handleClick() {
+        pxt.tickEvent("github.history.commit.click")
+        const { expanded, markdown } = this.state;
+        if (expanded) {
+            this.setState({ expanded: false });
+        } else {
+            if (markdown)
+                this.setState({ expanded: true });
+            else {
+                // load commit and compute markdown
+            }
+        }
+    }
+
+    handleRestore() {
+
+    }
+
+    renderCore() {
+        const { parent, commit } = this.props;
+        const { expanded, markdown } = this.state;
+        const date = new Date(Date.parse(commit.author.date));
+        return <div className="ui item">
+            <div className="content">
+                <div className="header link" onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>{date.toLocaleDateString()}</div>
+                <div className="description" onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>{commit.message}</div>
+                <div className="extra">
+                    {expanded && <sui.Button text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />}
+                    {expanded && markdown && <markedui.MarkedContent parent={parent} markdown={markdown} />}
+                </div>
+            </div>
+        </div>
+    }
+}
+
+interface HistoryState {
+    loading?: boolean;
+    commits?: pxt.github.CommitInfo[];
+}
+
+class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
+    constructor(props: GitHubViewProps) {
+        super(props);
+        this.handleLoadClick = this.handleLoadClick.bind(this);
+    }
+
+    handleLoadClick() {
+        pxt.tickEvent("github.history.load", undefined, { interactiveConsent: true });
+        const { githubId, gs } = this.props;
+        this.setState({ loading: true });
+        pxt.github.getCommitsAsync(githubId.fullName, gs.commit.sha)
+            .then(commits => {
+                this.setState({ commits: commits });
+            })
+            .finally(() => this.setState({ loading: false }));
+    }
+
+    renderCore() {
+        const { commits } = this.state;
+        const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
+        return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
+            <div className="ui header">{lf("History")}</div>
+            {!commits && <div className="ui field">
+                <sui.Button className="basic" text={lf("View commits")}
+                    onClick={this.handleLoadClick}
+                    inverted={inverted}
+                    onKeyDown={sui.fireClickOnEnter} />
+                <span className="inline-help">
+                    {lf("Restore your project to a previous commit.")}
+                    {sui.helpIconLink("/github/history", lf("Learn more about history of commits."))}
+                </span>
+            </div>}
+            {commits && <div className="ui divided items">
+                {commits.map(commit => <CommitView parent={this.props.parent.props.parent} key={'commit' + commit.sha} commit={commit} />)}
+            </div>}
         </div>
     }
 }
