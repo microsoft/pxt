@@ -916,7 +916,7 @@ class ApiInfoIndexedDb {
                 const db = r.result as IDBDatabase;
                 db.createObjectStore(ApiInfoIndexedDb.TABLE, { keyPath: ApiInfoIndexedDb.KEYPATH });
             }, () => {
-                // quota exceeeded, nuke db
+                // quota exceeeded, clear db
                 pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName())
             });
             return idbWrapper.openAsync()
