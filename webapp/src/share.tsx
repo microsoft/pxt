@@ -362,6 +362,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                     this.forceUpdate();
                 })
                 .catch((e: Error) => {
+                    pxt.tickEvent("menu.embed.error", { code: (e as any).statusCode })
                     this.setState({
                         pubId: undefined,
                         sharingError: e,
