@@ -637,13 +637,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                         <span className="repo-name">{githubId.fullName}</span>
                         <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
                     </h3>
-                    {needsCommit ?
-                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
-                        : <div className="ui segment">
-                            {lf("No local changes found.")}
-                            {" "}
-                            {lf("Your project is saved in GitHub.")}
-                        </div>}
+                    {needsCommit && <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {diffFiles && <DiffView parent={this} diffFiles={diffFiles} cacheKey={gs.commit.sha} allowRevert={true} showWhitespaceDiff={true} blocksMode={isBlocksMode} showConflicts={true} />}
                     {master && <ReleaseZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {!isBlocksMode && <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
