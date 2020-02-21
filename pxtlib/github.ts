@@ -321,14 +321,14 @@ namespace pxt.github {
             .then((resp: CommitComment) => resp.id);
     }
 
-    export async function fastForwardAsync(repopath: string, branch: string, commitid: string, force?: boolean) {
+    export async function fastForwardAsync(repopath: string, branch: string, commitid: string) {
         let resp = await ghRequestAsync({
             url: "https://api.github.com/repos/" + repopath + "/git/refs/heads/" + branch,
             method: "PATCH",
             allowHttpErrors: true,
             data: {
                 sha: commitid,
-                force: !!force
+                force: false
             }
         })
         return (resp.statusCode == 200)

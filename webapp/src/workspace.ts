@@ -737,7 +737,7 @@ export async function restoreCommitAsync(hd: Header, commit: pxt.github.CommitIn
     }
 
     const commitId = await pxt.github.createObjectAsync(parsed.fullName, "commit", restored)
-    await pxt.github.fastForwardAsync(parsed.fullName, parsed.tag, commitId, true)
+    await pxt.github.fastForwardAsync(parsed.fullName, parsed.tag, commitId)
     await githubUpdateToAsync(hd, {
         repo: gitjson.repo,
         sha: commitId,
