@@ -1308,8 +1308,10 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
             })).then(diffs => diffs.filter(df => !!df));
     }
 
-    handleRestore() {
-
+    handleRestore(e: React.MouseEvent<HTMLElement>) {
+        e.stopPropagation();
+        
+        return false;
     }
 
     renderCore() {
