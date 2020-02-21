@@ -1337,7 +1337,7 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
 
         return <div className={`ui item link`} role="button" onClick={onClick} onKeyDown={sui.fireClickOnEnter}>
             <div className="content">
-                <sui.Button loading={loading} className="right floated" text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />
+                {expanded && <sui.Button loading={loading} className="right floated" text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />}
                 <div className="header">
                     {date.toLocaleString()}
                 </div>
