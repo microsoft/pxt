@@ -1318,10 +1318,9 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
         const { expanded, diffFiles, loading } = this.state;
         const date = new Date(Date.parse(commit.author.date));
 
-        return <div className={`ui item`}>
+        return <div className={`ui item link`} onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>
             <div className="content">
-                <sui.Button className={`right floated ${loading ? "loading" : ""}`} text={expanded ? lf("Hide") : lf("View")} onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter} />
-                {expanded && <sui.Button className="right floated" text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />}
+                <sui.Button className={`right floated ${loading ? "loading" : ""}`} text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />
                 <div className="header" onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>{date.toLocaleString()}</div>
                 <div className="description" onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>{commit.message}</div>
                 {expanded && diffFiles && <DiffView parent={parent} diffFiles={diffFiles} cacheKey={commit.sha} />}
