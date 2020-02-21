@@ -730,7 +730,7 @@ export async function restoreCommitAsync(hd: Header, commit: pxt.github.CommitIn
     const parsed = pxt.github.parseRepoId(gitjson.repo)
     const date = new Date(Date.parse(commit.committer.date));
     const restored: pxt.github.CreateCommitReq = {
-        message: lf("Restore '{0} {1}' ({2})", date.toLocaleString(), commit.message, commit.sha),
+        message: lf("Restore '{0} {1}'", date.toLocaleString(), commit.message),
         parents: [gitjson.commit.sha],
         tree: commit.tree.sha
     }

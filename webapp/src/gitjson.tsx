@@ -832,7 +832,7 @@ ${content}
     private createTextDiffJSX(f: DiffFile, ignoreWhitespace: boolean): { diffJSX: JSX.Element, legendJSX?: JSX.Element, conflicts: number } {
         const { showConflicts } = this.props;
         const baseContent = f.gitFile || "";
-        const content = f.editorFile;
+        const content = f.editorFile || "";
         const classes: pxt.Map<string> = {
             "@": "diff-marker",
             " ": "diff-unchanged",
@@ -1302,10 +1302,10 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
                 }
                 if (isBlocks && pxt.blocks.needsDecompiledDiff(oldContent, newContent)) {
                     const vpn = p.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME);
-                    const virtualNewContent = files.find(ff => ff.name == vpn);
+                    const virtualNewFile = files.find(ff => ff.name == vpn);
                     const virtualOldContent = oldFiles[vpn];
-                    if (virtualNewContent) {
-                        df.tsEditorFile = virtualNewContent.publishedContent();
+                    if (virtualNewFile && virtualOldContent) {
+                        df.tsEditorFile = virtualNewFile.publishedContent();
                         df.tsGitFile = virtualOldContent;
                     }
                 }
