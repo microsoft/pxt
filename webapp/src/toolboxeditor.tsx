@@ -7,7 +7,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
 
     protected blockInfo: pxtc.BlocksInfo;
     protected blockGroupsCache: pxt.Map<toolbox.GroupDefinition[]>;
-    protected blockIdMap: pxt.Map<string>;
+    protected blockIdMap: pxt.Map<string[]>;
 
     private searchSubset: pxt.Map<boolean | string>;
 
@@ -20,7 +20,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
         const filters = this.parent.state.editorState && this.parent.state.editorState.filters;
         if (filters) {
             // block-level filters should not apply to shadow blocks (nested)
-            const blockFilter = filters.blocks && (filters.blocks[blockId] || (this.blockIdMap && filters.blocks[this.blockIdMap[blockId]]));
+            const blockFilter = filters.blocks && (filters.blocks[blockId] || (this.blockIdMap && this.blockIdMap[blockId]?.some(id => filters.blocks[id])));
             const categoryFilter = filters.namespaces && filters.namespaces[ns];
             // First try block filters
             if (blockFilter != undefined && blockFilter == pxt.editor.FilterState.Hidden && !shadow) return false;
