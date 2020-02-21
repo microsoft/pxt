@@ -7,22 +7,19 @@ const isNamedEndpoint = ref.indexOf("/") !== -1;
 // pxtRelId is replaced with the commit hash for this release
 const refCacheName = "makecode;" + ref + ";@pxtRelId@";
 
+const cdnUrl = `@cdnUrl@`;
+
 interface ServiceWorkerEvent extends Event {
     waitUntil<U>(promise: Promise<U>): void;
     respondWith(response: Promise<Response>): void;
     request: Request;
 }
 
-interface ServiceWorkerScope extends Window {
-    clients: ServiceWorkerClients;
-}
-
-interface ServiceWorkerClients {
-    matchAll(): Promise<{url: string}[]>;
-}
-
 const webappUrls = [
+    // The current page
     `@targetUrl@/` + ref,
+
+    // webapp files
     `/blb/semantic.js`,
     `/blb/main.js`,
     `/blb/pxtapp.js`,
@@ -85,11 +82,14 @@ const webappUrls = [
 ];
 
 // Replaced by the backend by a list of encoded urls separated by semicolons
-const cachedHexFiles = `@cachedHexFilesEncoded@`.split(";").map(encoded => decodeURIComponent(encoded));
+const cachedHexFiles = decodeURLs(`@cachedHexFilesEncoded@`);
+const cachedTargetImages = decodeURLs(`@targetImagesEncoded@`);
 
-const allFiles = dedupe(webappUrls.concat(cachedHexFiles)
+// Duplicate entries in this list will cause an exception so call dedupe
+// just in case
+const allFiles = dedupe(webappUrls.concat(cachedTargetImages)
     .map(url => url.trim())
-    .filter(url => !!url && url.indexOf("@") !== 0))
+    .filter(url => !!url && url.indexOf("@") !== 0));
 
 self.addEventListener("install", (ev: ServiceWorkerEvent) => {
     if (!isNamedEndpoint) {
@@ -102,8 +102,15 @@ self.addEventListener("install", (ev: ServiceWorkerEvent) => {
         .then(cache => {
             console.log("Opened cache")
             console.log("Caching:\n" + allFiles.join("\n"))
-            return cache.addAll(allFiles);
-        }))
+            return cache.addAll(allFiles).then(() => cache)
+        })
+        .then(cache =>
+            cache.addAll(cachedHexFiles).catch(e => {
+                // Hex files might return a 404 if they haven't hit the backend yet. We
+                // need to catch the exception or the service worker will fail to install
+                console.log("Failed to cache hexfiles")
+             })
+        ));
 });
 
 self.addEventListener("activate", (ev: ServiceWorkerEvent) => {
@@ -154,4 +161,14 @@ function getRefFromCacheName(name: string) {
     if (parts.length !== 3) return null;
 
     return parts[1];
+}
+
+function decodeURLs(encodedURLs: string) {
+    const cdnEscaped = "@" + "cdnUrl" + "@";
+
+    return dedupe(
+        encodedURLs.split(";")
+            .map(encoded => decodeURIComponent(encoded).replace(cdnEscaped, cdnUrl).trim()
+        )
+    );
 }

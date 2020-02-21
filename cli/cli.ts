@@ -919,10 +919,11 @@ function uploadCoreAsync(opts: UploadOptions) {
         "var pxtConfig = null": "var pxtConfig = @cfg@",
         "@defaultLocaleStrings@": defaultLocale ? "@commitCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
         "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : "",
-        "@cachedHexFilesEncoded@": hexFiles.map(url => encodeURIComponent(url)).join(";"),
+        "@cachedHexFilesEncoded@": encodeURLs(hexFiles),
         "@targetEditorJs@": targetEditorJs,
         "@targetFieldEditorsJs@": targetFieldEditorsJs,
-        "@targetImages@": targetImagesHashed.length ? targetImagesHashed.join('\n') : ''
+        "@targetImages@": targetImagesHashed.length ? targetImagesHashed.join('\n') : '',
+        "@targetImagesEncoded@": targetImagesHashed.length ? encodeURLs(targetImagesHashed) : ""
     }
 
     if (opts.localDir) {
@@ -949,6 +950,9 @@ function uploadCoreAsync(opts: UploadOptions) {
             "docsUrl": opts.localDir + "docs.html",
             "isStatic": true,
         }
+        const targetImagePaths = targetImages.map(k =>
+            `${opts.localDir}${path.join('./docs', logos[k])}`);
+
         replacements = {
             "/embed.js": opts.localDir + "embed.js",
             "/cdn/": opts.localDir,
@@ -966,8 +970,8 @@ function uploadCoreAsync(opts: UploadOptions) {
             "@cachedHexFilesEncoded@": "",
             "@targetEditorJs@": targetEditorJs ? `${opts.localDir}editor.js` : "",
             "@targetFieldEditorsJs@": targetFieldEditorsJs ? `${opts.localDir}fieldeditors.js` : "",
-            "@targetImages@": targetImages.length ? targetImages.map(k =>
-                `${opts.localDir}${path.join('./docs', logos[k])}`).join('\n') : ''
+            "@targetImages@": targetImages.length ? targetImagePaths.join('\n') : '',
+            "@targetImagesEncoded@": targetImages.length ? encodeURLs(targetImagePaths) : ''
         }
         if (!opts.noAppCache) {
             replacements["data-manifest=\"\""] = `manifest="${opts.localDir}release.manifest"`;
@@ -991,6 +995,10 @@ function uploadCoreAsync(opts: UploadOptions) {
     ]
 
     nodeutil.mkdirP("built/uploadrepl")
+
+    function encodeURLs(urls: string[]) {
+        return urls.map(url => encodeURIComponent(url)).join(";")
+    }
 
     let uplReqs: Map<BlobReq> = {}
 
