@@ -973,7 +973,9 @@ ${content}
             : diffFiles;
         return displayDiffFiles.length ? <div className="ui">
             {displayDiffFiles.map(df => this.showDiff(df))}
-        </div> : <div></div>;
+        </div> : <div className="ui segment">
+                {lf("No local changes found.")}
+            </div>;
     }
 }
 
@@ -1310,7 +1312,11 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
 
     handleRestore(e: React.MouseEvent<HTMLElement>) {
         e.stopPropagation();
-        
+        pxt.tickEvent("github.restore", undefined, { interactiveConsent: true })
+        const { commit } = this.props;
+        core.showLoading("github.restore", lf("Restoring commit..."))
+        workspace.restoreCommitAsync(this.props.parent.props.parent.state.header, commit)
+            .finally(() => core.hideLoading("github.restore"))
         return false;
     }
 

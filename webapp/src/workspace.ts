@@ -721,6 +721,28 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     }
 }
 
+export async function restoreCommitAsync(hd: Header, commit: pxt.github.CommitInfo) {
+    await cloudsync.ensureGitHubTokenAsync();
+
+    const files = await getTextAsync(hd.id)
+    const gitjsontext = files[GIT_JSON]
+    const gitjson = JSON.parse(gitjsontext) as GitJson
+    const parsed = pxt.github.parseRepoId(gitjson.repo)
+    const restored: pxt.github.CreateCommitReq = {
+        message: lf("Restore '{0}'", commit.message),
+        parents: [gitjson.commit.sha],
+        tree: commit.tree.sha
+    }
+    
+    const commitId = await pxt.github.createObjectAsync(parsed.fullName, "commit", restored)
+    const ok = await pxt.github.fastForwardAsync(parsed.fullName, parsed.tag, commitId)
+    await githubUpdateToAsync(hd, {
+        repo: gitjson.repo,
+        sha: commitId,
+        files
+    })
+}
+
 interface UpdateOptions {
     repo: string;
     sha: string;

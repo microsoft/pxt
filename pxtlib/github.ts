@@ -40,11 +40,15 @@ namespace pxt.github {
         author: UserInfo;
         committer: UserInfo;
         message: string; // "added readme, because im a good github citizen",
-        tag?: string;
-        parents: SHAObject[]; // commit[]
+        tree: SHAObject;
     }
 
-    export interface Commit extends CommitInfo {
+    export interface Commit extends SHAObject {
+        author: UserInfo;
+        committer: UserInfo;
+        message: string; // "added readme, because im a good github citizen",
+        tag?: string;
+        parents: SHAObject[]; // commit[]
         tree: Tree; // tree
     }
 
