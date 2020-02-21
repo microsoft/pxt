@@ -1269,6 +1269,8 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
         const { expanded, diffFiles } = this.state;
         if (expanded) {
             this.setState({ expanded: false });
+        } else if (diffFiles) {
+            this.setState({ expanded: true });
         } else {
             // load commit and compute markdown
             this.setState({ expanded: true, loading: true });
