@@ -247,9 +247,18 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const debug = !!targetTheme.debugger && !readOnly;
         const debugTooltip = debugging ? lf("Disable Debugging") : lf("Debugging")
         const downloadIcon = pxt.appTarget.appTheme.downloadIcon || "download";
-        const downloadText = pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download");
 
-        const bigRunButtonTooltip = [lf("Stop"), lf("Starting"), lf("Run Code in Game")][simState || 0];
+        const bigRunButtonTooltip = (() => {
+            switch (simState) {
+                case pxt.editor.SimState.Stopped:
+                    return lf("Start");
+                case pxt.editor.SimState.Pending:
+                case pxt.editor.SimState.Starting:
+                    return lf("Starting");
+                default:
+                    return lf("Stop");
+            }
+        })();
 
         const mobile = View.Mobile;
         const tablet = View.Tablet;
