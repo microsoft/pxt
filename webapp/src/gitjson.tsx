@@ -28,7 +28,7 @@ interface DiffCache {
     file: DiffFile;
     diff: JSX.Element;
     whitespace?: boolean;
-    revert: () => void;
+    revert?: () => void;
 }
 
 interface GithubProps {
@@ -56,18 +56,18 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.handlePullRequest = this.handlePullRequest.bind(this);
     }
 
-    clearCacheDiff(f?: DiffFile) {
+    clearCacheDiff(cachePrefix?: string, f?: DiffFile) {
         if (f)
-            delete this.diffCache[f.name];
+            delete this.diffCache[cachePrefix + f.name];
         else
             this.diffCache = {};
     }
 
-    cachedDiff(f: DiffFile): DiffCache {
-        let cache = this.diffCache[f.name]
+    cachedDiff(cachePrefix: string, f: DiffFile): DiffCache {
+        let cache = this.diffCache[cachePrefix + f.name]
         if (!cache || cache.file.file !== f.file) {
             cache = { file: f } as any
-            this.diffCache[f.name] = cache
+            this.diffCache[cachePrefix + f.name] = cache
         }
         return cache;
     }
@@ -644,7 +644,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                             {" "}
                             {lf("Your project is saved in GitHub.")}
                         </div>}
-                    {diffFiles && <DiffView parent={this} diffFiles={diffFiles} />}
+                    {diffFiles && <DiffView parent={this} diffFiles={diffFiles} cacheKey={gs.commit.sha} allowRevert={true} showWhitespaceDiff={true} />}
                     {master && <ReleaseZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {!isBlocksMode && <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {!needsCommit && <HistoryZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
@@ -658,6 +658,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 interface DiffViewProps {
     parent: GithubComponent;
     diffFiles: DiffFile[];
+    cacheKey: string;
+    allowRevert?: boolean;
+    showWhitespaceDiff?: boolean;
 }
 
 class DiffView extends sui.StatelessUIElement<DiffViewProps> {
@@ -703,7 +706,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
     }
 
     private showDiff(isBlocksMode: boolean, f: DiffFile) {
-        const cache = this.props.parent.cachedDiff(f);
+        const cache = this.props.parent.cachedDiff(this.props.cacheKey, f);
         if (cache.diff
             && cache.file.gitFile == f.gitFile
             && cache.file.editorFile == f.editorFile)
@@ -753,7 +756,8 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
                     <div className="ui segment">
                         <p>
                             {lf("Whitespace changes only.")}
-                            <sui.Link className="link" text={lf("Show")} onClick={showWhitespace} />
+                            {this.props.showWhitespaceDiff &&
+                                <sui.Link className="link" text={lf("Show")} onClick={showWhitespace} />}
                         </p>
                     </div>
                 }
@@ -777,7 +781,8 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
         if (virtualF == f.file) virtualF = undefined;
 
         cache.file = f
-        cache.revert = () => this.props.parent.revertFileAsync(f, deletedFiles, addedFiles, virtualF);
+        if (this.props.allowRevert)
+            cache.revert = () => this.props.parent.revertFileAsync(f, deletedFiles, addedFiles, virtualF);
         cache.diff = createDiff()
         return cache.diff;
     }
@@ -951,7 +956,7 @@ ${content}
 
         const content = pxt.diff.resolveMergeConflictMarker(f.file.content, startMarkerLine, local, remote);
         f.file.setContentAsync(content)
-            .then(() => this.props.parent.clearCacheDiff(f)) // clear cached diff
+            .then(() => this.props.parent.clearCacheDiff(this.props.cacheKey, f)) // clear cached diff
             .done(() => this.props.parent.forceUpdate());
     }
 
@@ -1328,7 +1333,7 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
                 <div className="description" onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>{commit.message}</div>
                 <div className="extra">
                     {expanded && <sui.Button text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />}
-                    {expanded && diffFiles && <DiffView parent={parent} diffFiles={diffFiles} />}
+                    {expanded && diffFiles && <DiffView parent={parent} diffFiles={diffFiles} cacheKey={commit.sha} />}
                 </div>
             </div>
         </div>
