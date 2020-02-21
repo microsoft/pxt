@@ -644,7 +644,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                             {" "}
                             {lf("Your project is saved in GitHub.")}
                         </div>}
-                    {diffFiles && <DiffView parent={this} diffFiles={diffFiles} cacheKey={gs.commit.sha} allowRevert={true} showWhitespaceDiff={true} />}
+                    {diffFiles && <DiffView parent={this} diffFiles={diffFiles} cacheKey={gs.commit.sha} allowRevert={true} showWhitespaceDiff={true} blocksMode={isBlocksMode} showConflicts={true} />}
                     {master && <ReleaseZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {!isBlocksMode && <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {!needsCommit && <HistoryZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
@@ -661,6 +661,8 @@ interface DiffViewProps {
     cacheKey: string;
     allowRevert?: boolean;
     showWhitespaceDiff?: boolean;
+    showConflicts?: boolean;
+    blocksMode?: boolean;
 }
 
 class DiffView extends sui.StatelessUIElement<DiffViewProps> {
@@ -705,8 +707,8 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
         }
     }
 
-    private showDiff(isBlocksMode: boolean, f: DiffFile) {
-        const { cacheKey } = this.props;
+    private showDiff(f: DiffFile) {
+        const { cacheKey, blocksMode, showConflicts, showWhitespaceDiff } = this.props;
         const cache = this.props.parent.cachedDiff(cacheKey, f);
         if (cache.diff
             && cache.file.gitFile == f.gitFile
@@ -731,23 +733,23 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
             // tslint:disable: react-this-binding-issue
             return <div key={`difffile${cacheKey}${f.name}`} className="ui segments filediff">
                 <div className="ui segment diffheader">
-                    {isBlocksMode && f.name == "main.blocks" ? undefined : <span>{f.name}</span>}
+                    {blocksMode && f.name == "main.blocks" ? undefined : <span>{f.name}</span>}
                     {cache.revert && <sui.Button className="small" icon="undo" text={lf("Revert")}
                         ariaLabel={lf("Revert file")} title={lf("Revert file")}
                         textClass={"landscape only"} onClick={cache.revert} />}
                     {jsxEls.legendJSX}
-                    {jsxEls.conflicts ? <p>{lf("Merge conflicts found. Resolve them before commiting.")}</p> : undefined}
-                    {deletedFiles.length == 0 ? undefined :
+                    {showConflicts && jsxEls.conflicts ? <p>{lf("Merge conflicts found. Resolve them before commiting.")}</p> : undefined}
+                    {cache.revert && deletedFiles.length &&
                         <p>
                             {lf("Reverting this file will also restore: {0}", deletedFiles.join(", "))}
                         </p>}
-                    {addedFiles.length == 0 ? undefined :
+                    {cache.revert && addedFiles.length &&
                         <p>
                             {lf("Reverting this file will also remove: {0}", addedFiles.join(", "))}
                         </p>}
-                    {virtualF && !isBlocksMode ? <p>
+                    {cache.revert && virtualF && !blocksMode && <p>
                         {lf("Reverting this file will also revert: {0}", virtualF.name)}
-                    </p> : undefined}
+                    </p>}
                 </div>
                 {jsxEls.diffJSX ?
                     <div className="ui segment diff">
@@ -757,7 +759,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
                     <div className="ui segment">
                         <p>
                             {lf("Whitespace changes only.")}
-                            {this.props.showWhitespaceDiff &&
+                            {showWhitespaceDiff &&
                                 <sui.Link className="link" text={lf("Show")} onClick={showWhitespace} />}
                         </p>
                     </div>
@@ -778,7 +780,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
             }
         }
         // backing .ts for .blocks/.py files
-        let virtualF = isBlocksMode && pkg.mainEditorPkg().files[f.file.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
+        let virtualF = blocksMode && pkg.mainEditorPkg().files[f.file.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
         if (virtualF == f.file) virtualF = undefined;
 
         cache.file = f
@@ -834,6 +836,7 @@ ${content}
     }
 
     private createTextDiffJSX(f: DiffFile, ignoreWhitespace: boolean): { diffJSX: JSX.Element, legendJSX?: JSX.Element, conflicts: number } {
+        const { showConflicts } = this.props;
         const baseContent = f.gitFile || "";
         const content = f.editorFile;
         const classes: pxt.Map<string> = {
@@ -901,14 +904,16 @@ ${content}
                 const keepLocalHandler = () => this.handleMergeConflictResolution(f, lnMarker, true, false);
                 const keepRemoteHandler = () => this.handleMergeConflictResolution(f, lnMarker, false, true);
                 const keepBothHandler = () => this.handleMergeConflictResolution(f, lnMarker, true, true);
-                // tslint:disable: react-this-binding-issue
-                linesTSX.push(<tr key={"merge" + lnA + lnB} className="conflict ui mergebtn">
-                    <td colSpan={4} className="ui">
-                        <sui.Button className="compact" text={lf("Keep local")} title={lf("Ignore the changes from GitHub.")} onClick={keepLocalHandler} />
-                        <sui.Button className="compact" text={lf("Keep remote")} title={lf("Override local changes with changes from GitHub.")} onClick={keepRemoteHandler} />
-                        <sui.Button className="compact" text={lf("Keep both")} title={lf("Keep both local and remote changes.")} onClick={keepBothHandler} />
-                    </td>
-                </tr>);
+                if (showConflicts) {
+                    // tslint:disable: react-this-binding-issue
+                    linesTSX.push(<tr key={"merge" + lnA + lnB} className="conflict ui mergebtn">
+                        <td colSpan={4} className="ui">
+                            <sui.Button className="compact" text={lf("Keep local")} title={lf("Ignore the changes from GitHub.")} onClick={keepLocalHandler} />
+                            <sui.Button className="compact" text={lf("Keep remote")} title={lf("Override local changes with changes from GitHub.")} onClick={keepRemoteHandler} />
+                            <sui.Button className="compact" text={lf("Keep both")} title={lf("Keep both local and remote changes.")} onClick={keepBothHandler} />
+                        </td>
+                    </tr>);
+                }
             }
             else if (lastMark == "+" && /^>>>>>>>[^>]/.test(lnSrc)) {
                 conflictState = "footer";
@@ -962,13 +967,12 @@ ${content}
     }
 
     renderCore() {
-        const { diffFiles } = this.props;
-        const isBlocksMode = pkg.mainPkg.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
-        const displayDiffFiles = isBlocksMode
+        const { diffFiles, blocksMode } = this.props;
+        const displayDiffFiles = blocksMode
             && !pxt.options.debug ? diffFiles.filter(f => /\.blocks$/.test(f.name))
             : diffFiles;
         return displayDiffFiles.length ? <div className="ui">
-            {displayDiffFiles.map(df => this.showDiff(isBlocksMode, df))}
+            {displayDiffFiles.map(df => this.showDiff(df))}
         </div> : <div></div>;
     }
 }
@@ -1248,7 +1252,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
 interface CommitViewProps {
     parent: GithubComponent;
     githubId: pxt.github.ParsedRepo;
-    commit: pxt.github.CommitInfo;    
+    commit: pxt.github.CommitInfo;
     expanded: boolean;
     onClick?: () => void;
 }
@@ -1321,7 +1325,7 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
                 <sui.Button className={`right floated ${loading ? "loading" : ""}`} text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />
                 <div className="header">{date.toLocaleString()}</div>
                 <div className="description">{commit.message}</div>
-                {expanded && diffFiles && <DiffView parent={parent} diffFiles={diffFiles} cacheKey={commit.sha} />}
+                {expanded && diffFiles && <DiffView parent={parent} blocksMode={false} diffFiles={diffFiles} cacheKey={commit.sha} />}
             </div>
         </div>
     }
@@ -1369,7 +1373,7 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
                 </span>
             </div>}
             {commits && <div className="ui divided items">
-                {commits.map(commit => <CommitView 
+                {commits.map(commit => <CommitView
                     key={'commit' + commit.sha}
                     onClick={() => this.setState({ selectedCommit: commit })}
                     commit={commit}
