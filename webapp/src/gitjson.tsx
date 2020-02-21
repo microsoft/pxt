@@ -1311,7 +1311,7 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
         core.showLoading("github.restore", lf("restoring commit..."))
         workspace.restoreCommitAsync(this.props.parent.props.parent.state.header, commit)
             .then(() => {
-                data.invalidate("x:*");
+                data.invalidate("gh-commits:*");
                 return this.props.parent.props.parent.reloadHeaderAsync();
             })
             .finally(() => core.hideLoading("github.restore"))
@@ -1331,7 +1331,6 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
                 <sui.Button loading={loading} className="right floated" text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />
                 <div className="header">
                     {date.toLocaleString()}
-                    <sui.Link icon="external" href={`https://github.com/${githubId.fullName}/commit/${commit.sha}`} target="_blank" />
                 </div>
                 <div className="description">{commit.message}</div>
                 {expanded && diffFiles && <DiffView parent={parent} blocksMode={false} diffFiles={diffFiles} cacheKey={commit.sha} />}
