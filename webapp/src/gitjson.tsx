@@ -56,8 +56,59 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.handlePullRequest = this.handlePullRequest.bind(this);
     }
 
-    private clearCache() {
-        this.diffCache = {};
+    clearCacheDiff(f?: DiffFile) {
+        if (f)
+            delete this.diffCache[f.name];
+        else
+            this.diffCache = {};
+    }
+
+    cachedDiff(f: DiffFile): DiffCache {
+        let cache = this.diffCache[f.name]
+        if (!cache || cache.file.file !== f.file) {
+            cache = { file: f } as any
+            this.diffCache[f.name] = cache
+        }
+        return cache;
+    }
+
+    async revertFileAsync(f: DiffFile, deletedFiles: string[], addedFiles: string[], virtualF: pkg.File) {
+        pxt.tickEvent("github.revert", { start: 1 }, { interactiveConsent: true })
+        const res = await core.confirmAsync({
+            header: lf("Would you like to revert changes to {0}?", f.name),
+            body: lf("Changes will be lost for good. No undo."),
+            agreeLbl: lf("Revert"),
+            agreeClass: "red",
+            agreeIcon: "trash",
+        })
+
+        if (!res)
+            return
+
+        pxt.tickEvent("github.revert", { ok: 1 })
+        this.setState({ needsCommitMessage: false }); // maybe we no longer do
+
+        if (f.gitFile == null) {
+            await pkg.mainEditorPkg().removeFileAsync(f.name)
+            await this.props.parent.reloadHeaderAsync()
+        } else if (f.name == pxt.CONFIG_NAME) {
+            const gs = this.getGitJson()
+            for (let d of deletedFiles) {
+                const prev = pxt.github.lookupFile(gs.commit, d)
+                pkg.mainEditorPkg().setFile(d, prev && prev.blobContent || "// Cannot restore.")
+            }
+            for (let d of addedFiles) {
+                delete pkg.mainEditorPkg().files[d]
+            }
+            await f.file.setContentAsync(f.gitFile)
+            await this.props.parent.reloadHeaderAsync()
+        } else {
+            await f.file.setContentAsync(f.gitFile)
+            // revert generated .ts file as well
+            if (virtualF)
+                await virtualF.setContentAsync(virtualF.baseGitContent);
+            this.forceUpdate();
+        }
     }
 
     private async saveGitJsonAsync(gs: pxt.github.GitJson) {
@@ -441,6 +492,180 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
     }
 
+    setVisible(b: boolean) {
+        if (b === this.state.isVisible) return;
+
+        const { header } = this.props.parent.state
+        if (b) {
+            data.invalidateHeader("pkg-git-pr", header);
+            this.setState({
+                previousCfgKey: this.pkgConfigKey(pkg.mainEditorPkg().files[pxt.CONFIG_NAME].content)
+            });
+        } else {
+            this.clearCacheDiff();
+            this.setState({
+                needsCommitMessage: false,
+            });
+        }
+    }
+
+    private async handlePullRequest() {
+        const title = await core.promptAsync({
+            header: lf("Create pull request"),
+            body: lf("Pull requests let you tell others about changes you've pushed to a branch in a repository on GitHub."),
+            helpUrl: "/github/pull-request",
+            hasCloseIcon: true,
+            hideCancel: true,
+            placeholder: lf("Describe the changes in this branch.")
+        });
+        if (title === null) return;
+
+        this.showLoading("github.createpr", true, lf("creating pull request..."));
+        try {
+            const gh = this.parsedRepoId();
+            const msg =
+                `
+### ${lf("How to use this pull request")}
+
+- [ ] ${lf("assign a reviewer")}
+- [ ] ${lf("reviewer approves or request changes")}
+- [ ] ${lf("apply requested changes if any")}
+- [ ] ${lf("merge once approved")}
+`; // TODO
+            /*
+                        `
+            ![${lf("A rendered view of the blocks")}](https://github.com/${gh.fullName}/raw/${gh.tag}/.github/makecode/blocks.png)
+            
+            ${lf("This image shows the blocks code from the last commit in this pull request.")}
+            ${lf("This image may take a few minutes to refresh.")}
+            
+            `
+            */
+            const id = await pxt.github.createPRFromBranchAsync(gh.fullName, "master", gh.tag, title, msg);
+            data.invalidateHeader("pkg-git-pr", this.props.parent.state.header);
+            core.infoNotification(lf("Pull request created successfully!", id));
+        } catch (e) {
+            if (e.statusCode == 422)
+                core.warningNotification(lf("Please commit changes before creating a pull request."));
+            else
+                this.handleGithubError(e);
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+    private computeDiffFiles() {
+        const files = pkg.mainEditorPkg().sortedFiles();
+        const diffFiles = files
+            .map<DiffFile>(p => {
+                const c = p.publishedContent();
+                if (p.baseGitContent == c)
+                    return undefined;
+                else {
+                    const df: DiffFile = {
+                        file: p,
+                        name: p.name,
+                        gitFile: p.baseGitContent,
+                        editorFile: c
+                    }
+                    if (/\.blocks$/.test(p.name)) {
+                        const vpn = p.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME);
+                        const vp = files.find(ff => ff.name == vpn);
+                        if (vp) {
+                            df.tsGitFile = vp.baseGitContent;
+                            df.tsEditorFile = vp.publishedContent();
+                        }
+                    }
+                    return df;
+                }
+            })
+            .filter(df => !!df);
+        return diffFiles;        
+    }
+
+    renderCore(): JSX.Element {
+        const gs = this.getGitJson();
+        if (!gs)
+            return <div></div>; // shortcut for projects not using github, should not happen when visible
+
+        const { header } = this.props.parent.state;
+        const isBlocksMode = pkg.mainPkg.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
+        const diffFiles = this.computeDiffFiles();
+        const needsCommit = diffFiles.length > 0;
+
+        const pullStatus: workspace.PullStatus = this.getData("pkg-git-pull-status:" + header.id);
+        const hasissue = pullStatus == workspace.PullStatus.BranchNotFound;
+        const haspull = pullStatus == workspace.PullStatus.GotChanges;
+        const githubId = this.parsedRepoId()
+        const master = githubId.tag == "master";
+        const user = this.getData("github:user");
+
+        // don't use gs.prUrl, as it gets cleared often
+        const url = `https://github.com/${githubId.fullName}${master ? "" : `/tree/${githubId.tag}`}`;
+        const needsToken = !pxt.github.token;
+        // this will show existing PR if any
+        const pr: pxt.github.PullRequest = this.getData("pkg-git-pr:" + header.id)
+        const showPr = pr !== null && (gs.isFork || !master);
+        return (
+            <div id="githubArea">
+                <div id="serialHeader" className="ui serialHeader">
+                    <div className="leftHeaderWrapper">
+                        <div className="leftHeader">
+                            <sui.Button title={lf("Go back")} icon="arrow left" text={lf("Go back")} textClass="landscape only" tabIndex={0} onClick={this.goBack} onKeyDown={sui.fireClickOnEnter} />
+                        </div>
+                    </div>
+                    <div className="rightHeader">
+                        <sui.Button icon={`${hasissue ? "exclamation circle" : haspull ? "long arrow alternate down" : "check"}`}
+                            className={haspull === true ? "positive" : ""}
+                            text={lf("Pull changes")} textClass={"landscape only"} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
+                        {!needsToken ? <sui.Link className="ui button" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite collaborators.")} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                        <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
+                    </div>
+                </div>
+                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
+                <div className="ui form">
+                    {showPr && pr.number > 0 &&
+                        <a href={`https://github.com/${githubId.fullName}/pull/${pr.number}`} role="button" className="ui tiny basic button create-pr"
+                            target="_blank" rel="noopener noreferrer">
+                            {lf("Pull request (#{0})", pr.number)}
+                        </a>}
+                    {showPr && pr.number <= 0 &&
+                        <sui.Button className="tiny basic create-pr" text={lf("Pull request")} onClick={this.handlePullRequest} />
+                    }
+                    <h3 className="header">
+                        <i className="large github icon" />
+                        <span className="repo-name">{githubId.fullName}</span>
+                        <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
+                    </h3>
+                    {needsCommit ?
+                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
+                        : <div className="ui segment">
+                            {lf("No local changes found.")}
+                            {" "}
+                            {lf("Your project is saved in GitHub.")}
+                        </div>}
+                    <CommitDiffView parent={this} diffFiles={diffFiles} />
+                    {master && <ReleaseZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
+                    {!isBlocksMode && <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
+                    {!needsCommit && <HistoryZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
+                    <div></div>
+                </div>
+            </div>
+        )
+    }
+}
+
+interface CommitDiffViewProps {
+    parent: GithubComponent;
+    diffFiles: DiffFile[];
+}
+
+class CommitDiffView extends sui.StatelessUIElement<CommitDiffViewProps> {
+
+    constructor(props: CommitDiffViewProps) {
+        super(props);
+    }
+
     private lineDiff(lineA: string, lineB: string): { a: JSX.Element, b: JSX.Element } {
         const df = pxt.diff.compute(lineA.split("").join("\n"), lineB.split("").join("\n"), {
             context: Infinity
@@ -478,12 +703,10 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     }
 
     private showDiff(isBlocksMode: boolean, f: DiffFile) {
-        let cache = this.diffCache[f.name]
-        if (!cache || cache.file.file !== f.file) {
-            cache = { file: f } as any
-            this.diffCache[f.name] = cache
-        }
-        if (cache.diff && cache.file.gitFile == f.gitFile && cache.file.editorFile == f.editorFile)
+        const cache = this.props.parent.cachedDiff(f);
+        if (cache.diff 
+            && cache.file.gitFile == f.gitFile 
+            && cache.file.editorFile == f.editorFile)
             return cache.diff
 
         const isBlocks = /\.blocks$/.test(f.name)
@@ -554,7 +777,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         if (virtualF == f.file) virtualF = undefined;
 
         cache.file = f
-        cache.revert = () => this.revertFileAsync(f, deletedFiles, addedFiles, virtualF);
+        cache.revert = () => this.props.parent.revertFileAsync(f, deletedFiles, addedFiles, virtualF);
         cache.diff = createDiff()
         return cache.diff;
     }
@@ -593,7 +816,7 @@ ${content}
 \`\`\`
 `;
             }
-            diffJSX = <markedui.MarkedContent key={`diffblocksxxml${f.name}`} parent={this.props.parent} markdown={markdown} />
+            diffJSX = <markedui.MarkedContent key={`diffblocksxxml${f.name}`} parent={this.props.parent.props.parent} markdown={markdown} />
         }
         const legendJSX = <p className="legend">
             <span><span className="added icon"></span>{lf("added, changed or moved")}</span>
@@ -728,221 +951,20 @@ ${content}
 
         const content = pxt.diff.resolveMergeConflictMarker(f.file.content, startMarkerLine, local, remote);
         f.file.setContentAsync(content)
-            .then(() => delete this.diffCache[f.name]) // clear cached diff
+            .then(() => this.props.parent.clearCacheDiff(f)) // clear cached diff
             .done(() => this.props.parent.forceUpdate());
     }
 
-    private async revertFileAsync(f: DiffFile, deletedFiles: string[], addedFiles: string[], virtualF: pkg.File) {
-        pxt.tickEvent("github.revert", { start: 1 }, { interactiveConsent: true })
-        const res = await core.confirmAsync({
-            header: lf("Would you like to revert changes to {0}?", f.name),
-            body: lf("Changes will be lost for good. No undo."),
-            agreeLbl: lf("Revert"),
-            agreeClass: "red",
-            agreeIcon: "trash",
-        })
-
-        if (!res)
-            return
-
-        pxt.tickEvent("github.revert", { ok: 1 })
-        this.setState({ needsCommitMessage: false }); // maybe we no longer do
-
-        if (f.gitFile == null) {
-            await pkg.mainEditorPkg().removeFileAsync(f.name)
-            await this.props.parent.reloadHeaderAsync()
-        } else if (f.name == pxt.CONFIG_NAME) {
-            const gs = this.getGitJson()
-            for (let d of deletedFiles) {
-                const prev = pxt.github.lookupFile(gs.commit, d)
-                pkg.mainEditorPkg().setFile(d, prev && prev.blobContent || "// Cannot restore.")
-            }
-            for (let d of addedFiles) {
-                delete pkg.mainEditorPkg().files[d]
-            }
-            await f.file.setContentAsync(f.gitFile)
-            await this.props.parent.reloadHeaderAsync()
-        } else {
-            await f.file.setContentAsync(f.gitFile)
-            // revert generated .ts file as well
-            if (virtualF)
-                await virtualF.setContentAsync(virtualF.baseGitContent);
-            this.forceUpdate();
-        }
-    }
-
-    setVisible(b: boolean) {
-        if (b === this.state.isVisible) return;
-
-        const { header } = this.props.parent.state
-        if (b) {
-            data.invalidateHeader("pkg-git-pr", header);
-            this.setState({
-                previousCfgKey: this.pkgConfigKey(pkg.mainEditorPkg().files[pxt.CONFIG_NAME].content)
-            });
-        } else {
-            this.clearCache();
-            this.setState({
-                needsCommitMessage: false,
-            });
-        }
-    }
-
-    private async handlePullRequest() {
-        const title = await core.promptAsync({
-            header: lf("Create pull request"),
-            body: lf("Pull requests let you tell others about changes you've pushed to a branch in a repository on GitHub."),
-            helpUrl: "/github/pull-request",
-            hasCloseIcon: true,
-            hideCancel: true,
-            placeholder: lf("Describe the changes in this branch.")
-        });
-        if (title === null) return;
-
-        this.showLoading("github.createpr", true, lf("creating pull request..."));
-        try {
-            const gh = this.parsedRepoId();
-            const msg =
-                `
-### ${lf("How to use this pull request")}
-
-- [ ] ${lf("assign a reviewer")}
-- [ ] ${lf("reviewer approves or request changes")}
-- [ ] ${lf("apply requested changes if any")}
-- [ ] ${lf("merge once approved")}
-`; // TODO
-            /*
-                        `
-            ![${lf("A rendered view of the blocks")}](https://github.com/${gh.fullName}/raw/${gh.tag}/.github/makecode/blocks.png)
-            
-            ${lf("This image shows the blocks code from the last commit in this pull request.")}
-            ${lf("This image may take a few minutes to refresh.")}
-            
-            `
-            */
-            const id = await pxt.github.createPRFromBranchAsync(gh.fullName, "master", gh.tag, title, msg);
-            data.invalidateHeader("pkg-git-pr", this.props.parent.state.header);
-            core.infoNotification(lf("Pull request created successfully!", id));
-        } catch (e) {
-            if (e.statusCode == 422)
-                core.warningNotification(lf("Please commit changes before creating a pull request."));
-            else
-                this.handleGithubError(e);
-        } finally {
-            this.hideLoading();
-        }
-    }
-
-    renderCore(): JSX.Element {
-        const gs = this.getGitJson();
-        if (!gs)
-            return <div></div>; // shortcut for projects not using github, should not happen when visible
-
-        const { header } = this.props.parent.state;
+    renderCore() {
+        const { diffFiles } = this.props;
         const isBlocksMode = pkg.mainPkg.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
-        const files = pkg.mainEditorPkg().sortedFiles();
-        const diffFiles = files
-            .map<DiffFile>(p => {
-                const c = p.publishedContent();
-                if (p.baseGitContent == c)
-                    return undefined;
-                else {
-                    const df: DiffFile = {
-                        file: p,
-                        name: p.name,
-                        gitFile: p.baseGitContent,
-                        editorFile: c
-                    }
-                    if (/\.blocks$/.test(p.name)) {
-                        const vpn = p.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME);
-                        const vp = files.find(ff => ff.name == vpn);
-                        if (vp) {
-                            df.tsGitFile = vp.baseGitContent;
-                            df.tsEditorFile = vp.publishedContent();
-                        }
-                    }
-                    return df;
-                }
-            })
-            .filter(df => !!df);
-        const needsCommit = diffFiles.length > 0;
-        const displayDiffFiles = isBlocksMode && !pxt.options.debug ? diffFiles.filter(f => /\.blocks$/.test(f.name)) : diffFiles;
-
-        const pullStatus: workspace.PullStatus = this.getData("pkg-git-pull-status:" + header.id);
-        const hasissue = pullStatus == workspace.PullStatus.BranchNotFound;
-        const haspull = pullStatus == workspace.PullStatus.GotChanges;
-        const githubId = this.parsedRepoId()
-        const master = githubId.tag == "master";
-        const user = this.getData("github:user");
-
-        // don't use gs.prUrl, as it gets cleared often
-        const url = `https://github.com/${githubId.fullName}${master ? "" : `/tree/${githubId.tag}`}`;
-        const needsToken = !pxt.github.token;
-        // this will show existing PR if any
-        const pr: pxt.github.PullRequest = this.getData("pkg-git-pr:" + header.id)
-        const showPr = pr !== null && (gs.isFork || !master);
-        return (
-            <div id="githubArea">
-                <div id="serialHeader" className="ui serialHeader">
-                    <div className="leftHeaderWrapper">
-                        <div className="leftHeader">
-                            <sui.Button title={lf("Go back")} icon="arrow left" text={lf("Go back")} textClass="landscape only" tabIndex={0} onClick={this.goBack} onKeyDown={sui.fireClickOnEnter} />
-                        </div>
-                    </div>
-                    <div className="rightHeader">
-                        <sui.Button icon={`${hasissue ? "exclamation circle" : haspull ? "long arrow alternate down" : "check"}`}
-                            className={haspull === true ? "positive" : ""}
-                            text={lf("Pull changes")} textClass={"landscape only"} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
-                        {!needsToken ? <sui.Link className="ui button" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite collaborators.")} onKeyDown={sui.fireClickOnEnter} /> : undefined}
-                        <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
-                    </div>
-                </div>
-                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
-                <div className="ui form">
-                    {showPr && pr.number > 0 &&
-                        <a href={`https://github.com/${githubId.fullName}/pull/${pr.number}`} role="button" className="ui tiny basic button create-pr"
-                            target="_blank" rel="noopener noreferrer">
-                            {lf("Pull request (#{0})", pr.number)}
-                        </a>}
-                    {showPr && pr.number <= 0 &&
-                        <sui.Button className="tiny basic create-pr" text={lf("Pull request")} onClick={this.handlePullRequest} />
-                    }
-                    <h3 className="header">
-                        <i className="large github icon" />
-                        <span className="repo-name">{githubId.fullName}</span>
-                        <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
-                    </h3>
-                    {needsCommit ?
-                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
-                        : <div className="ui segment">
-                            {lf("No local changes found.")}
-                            {" "}
-                            {lf("Your project is saved in GitHub.")}
-                        </div>}
-                    {displayDiffFiles.length ? <div className="ui">
-                        {displayDiffFiles.map(df => this.showDiff(isBlocksMode, df))}
-                    </div> : undefined}
-                    {master && <ReleaseZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
-                    {!isBlocksMode && <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
-                    {!needsCommit && <HistoryZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
-                    <div></div>
-                </div>
-            </div>
-        )
+        const displayDiffFiles = isBlocksMode 
+            && !pxt.options.debug ? diffFiles.filter(f => /\.blocks$/.test(f.name)) 
+            : diffFiles;
+        return displayDiffFiles.length ? <div className="ui">
+            {displayDiffFiles.map(df => this.showDiff(isBlocksMode, df))}
+        </div> : <div></div>;
     }
-}
-
-interface GitHubViewProps {
-    githubId: pxt.github.ParsedRepo;
-    needsToken: boolean;
-    master: boolean;
-    parent: GithubComponent;
-    gs: pxt.github.GitJson;
-    isBlocks: boolean;
-    needsCommit: boolean;
-    user: pxt.editor.UserInfo;
-    pullStatus: workspace.PullStatus;
-    pullRequest: pxt.github.PullRequest;
 }
 
 class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
@@ -988,6 +1010,19 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
 
         return <div />;
     }
+}
+
+interface GitHubViewProps {
+    githubId: pxt.github.ParsedRepo;
+    needsToken: boolean;
+    master: boolean;
+    parent: GithubComponent;
+    gs: pxt.github.GitJson;
+    isBlocks: boolean;
+    needsCommit: boolean;
+    user: pxt.editor.UserInfo;
+    pullStatus: workspace.PullStatus;
+    pullRequest: pxt.github.PullRequest;
 }
 
 class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
@@ -1255,7 +1290,7 @@ class CommitView extends sui.UIElement<CommitProps, CommitState> {
                     .then(content => {
                         const hasChanges = content != c;
                         if (!hasChanges) return undefined;
-                        if (isBlocks && pxt.blocks.needsDecompiledDiff(c, content))
+                        if (isBlocks && pxt.blocks.needsDecompiledDiff(content, c))
                             return undefined;
                         return `
 ### ${p.name}
@@ -1281,13 +1316,16 @@ ${c}
         const { parent, commit } = this.props;
         const { expanded, markdown, loading } = this.state;
         const date = new Date(Date.parse(commit.author.date));
+        const textDiffOptions: pxt.diff.RenderOptions = {
+        }
+
         return <div className={`ui item ${loading ? "loading" : ""}`}>
             <div className="content">
                 <div className="header" onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>{date.toLocaleString()}</div>
                 <div className="description" onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>{commit.message}</div>
                 <div className="extra">
                     {expanded && markdown && <sui.Button text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />}
-                    {expanded && markdown && <markedui.MarkedContent parent={parent} markdown={markdown} />}
+                    {expanded && markdown && <markedui.MarkedContent parent={parent} markdown={markdown} textDiffOptions={textDiffOptions} />}
                 </div>
             </div>
         </div>
@@ -1333,7 +1371,7 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
                 </span>
             </div>}
             {commits && <div className="ui divided items">
-                {commits.map(commit => <CommitView parent={this.props.parent.props.parent} key={'commit' + commit.sha} commit={commit} githubId={githubId} />)}
+                {commits.map(commit => <div  />)}
             </div>}
         </div>
     }
