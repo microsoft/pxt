@@ -1372,7 +1372,7 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
                 </span>
             </div>}
             {commits && <div className="ui divided items">
-                {commits.map(commit => <CommitView commit={commit} parent={parent} githubId={githubId} />)}
+                {commits.map(commit => <CommitView key={'commit' + commit.sha} commit={commit} parent={parent} githubId={githubId} />)}
             </div>}
         </div>
     }
