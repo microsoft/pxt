@@ -1326,7 +1326,7 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
         if (expanded && !diffFiles && !loading)
             this.loadDiffFilesAsync();
 
-        return <div className={`ui item link`} onClick={onClick} onKeyDown={sui.fireClickOnEnter}>
+        return <div className={`ui item link`} role="button" onClick={onClick} onKeyDown={sui.fireClickOnEnter}>
             <div className="content">
                 <sui.Button loading={loading} className="right floated" text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />
                 <div className="header">
