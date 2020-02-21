@@ -919,6 +919,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "var pxtConfig = null": "var pxtConfig = @cfg@",
         "@defaultLocaleStrings@": defaultLocale ? "@commitCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
         "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : "",
+        "@cachedHexFilesEncoded@": hexFiles.map(url => encodeURIComponent(url)).join(";"),
         "@targetEditorJs@": targetEditorJs,
         "@targetFieldEditorsJs@": targetFieldEditorsJs,
         "@targetImages@": targetImagesHashed.length ? targetImagesHashed.join('\n') : ''
@@ -962,6 +963,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),
             "@defaultLocaleStrings@": "",
             "@cachedHexFiles@": "",
+            "@cachedHexFilesEncoded@": "",
             "@targetEditorJs@": targetEditorJs ? `${opts.localDir}editor.js` : "",
             "@targetFieldEditorsJs@": targetFieldEditorsJs ? `${opts.localDir}fieldeditors.js` : "",
             "@targetImages@": targetImages.length ? targetImages.map(k =>

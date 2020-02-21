@@ -1,10 +1,11 @@
-const WEBAPP_CACHE = "makecode-site-cache-v1";
+// Empty string for released, otherwise contains the ref or version path
+const ref = `@relprefix@`.replace("---", "").replace(/^\//, "");
 
-// All caches outside this list are deleted on activation
-const allCaches = [
-    WEBAPP_CACHE
-];
+// We don't do offline for version paths, only named releases
+const isNamedEndpoint = ref.indexOf("/") !== -1;
 
+// pxtRelId is replaced with the commit hash for this release
+const refCacheName = "makecode;" + ref + ";@pxtRelId@";
 
 interface ServiceWorkerEvent extends Event {
     waitUntil<U>(promise: Promise<U>): void;
@@ -12,7 +13,16 @@ interface ServiceWorkerEvent extends Event {
     request: Request;
 }
 
+interface ServiceWorkerScope extends Window {
+    clients: ServiceWorkerClients;
+}
+
+interface ServiceWorkerClients {
+    matchAll(): Promise<{url: string}[]>;
+}
+
 const webappUrls = [
+    `@targetUrl@/` + ref,
     `/blb/semantic.js`,
     `/blb/main.js`,
     `/blb/pxtapp.js`,
@@ -65,35 +75,59 @@ const webappUrls = [
 
     // target
     `/blb/target.js`,
+
+    // These macros should be replaced by the backend
+    `@targetFieldEditorsJs@`,
+    `@targetEditorJs@`,
+    `@defaultLocaleStrings@`,
+    `@targetUrl@@monacoworkerjs@`,
+    `@targetUrl@@workerjs@`
 ];
 
-// These tags are all replaced by the server. Some of them are newline
-// separated lists, some of them are single line urls
-const serverReplacedUrls = `
-@targetFieldEditorsJs@
-@targetEditorJs@
-@defaultLocaleStrings@
-@monacoworkerjs@
-@workerjs@
-@targetImages@
-@cachedHexFiles@
-`.split("\n").map(url => url.trim()).filter(url => !!url)
+// Replaced by the backend by a list of encoded urls separated by semicolons
+const cachedHexFiles = `@cachedHexFilesEncoded@`.split(";").map(encoded => decodeURIComponent(encoded));
+
+const allFiles = dedupe(webappUrls.concat(cachedHexFiles)
+    .map(url => url.trim())
+    .filter(url => !!url && url.indexOf("@") !== 0))
 
 self.addEventListener("install", (ev: ServiceWorkerEvent) => {
+    if (!isNamedEndpoint) {
+        console.log("Skipping service worker install for unnamed endpoint");
+        return;
+    }
+
     console.log("Installing service worker...")
-    ev.waitUntil(caches.open(WEBAPP_CACHE)
+    ev.waitUntil(caches.open(refCacheName)
         .then(cache => {
             console.log("Opened cache")
-            return cache.addAll(webappUrls.concat(serverReplacedUrls));
+            console.log("Caching:\n" + allFiles.join("\n"))
+            return cache.addAll(allFiles);
         }))
 });
 
 self.addEventListener("activate", (ev: ServiceWorkerEvent) => {
-    // Clean up any caches that no longer exist
+    if (!isNamedEndpoint) {
+        console.log("Skipping service worker activate for unnamed endpoint");
+        return;
+    }
+
+    console.log("Activating service worker...")
     ev.waitUntil(caches.keys()
-        .then(cacheNames => Promise.all(
-            cacheNames.map(name => allCaches.indexOf(name) === -1 ? caches.delete(name) : Promise.resolve())
-        )))
+        .then(cacheNames => {
+            // Delete all caches that "belong" to this ref except for the current version
+            const toDelete = cacheNames.filter(c => {
+                const cacheRef = getRefFromCacheName(c);
+                if (cacheRef === null || (cacheRef === ref && c !== refCacheName)) {
+                    return true;
+                }
+                return false;
+            })
+
+            return  Promise.all(
+                toDelete.map(name => caches.delete(name))
+            );
+        }))
 });
 
 self.addEventListener("fetch", (ev: ServiceWorkerEvent) => {
@@ -102,3 +136,22 @@ self.addEventListener("fetch", (ev: ServiceWorkerEvent) => {
             return response || fetch(ev.request)
         }))
 });
+
+
+function dedupe(urls: string[]) {
+    const res: string[] = [];
+
+    for (const url of urls) {
+        if (res.indexOf(url) === -1) res.push(url)
+    }
+
+    return res;
+}
+
+function getRefFromCacheName(name: string) {
+    const parts = name.split(";");
+
+    if (parts.length !== 3) return null;
+
+    return parts[1];
+}
