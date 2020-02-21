@@ -1248,11 +1248,12 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
 interface CommitViewProps {
     parent: GithubComponent;
     githubId: pxt.github.ParsedRepo;
-    commit: pxt.github.CommitInfo;
+    commit: pxt.github.CommitInfo;    
+    expanded: boolean;
+    onClick?: () => void;
 }
 
 interface CommitViewState {
-    expanded?: boolean;
     diffFiles?: DiffFile[];
     loading?: boolean;
 }
@@ -1260,26 +1261,17 @@ interface CommitViewState {
 class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
     constructor(props: CommitViewProps) {
         super(props);
-        this.handleClick = this.handleClick.bind(this);
         this.handleRestore = this.handleRestore.bind(this);
     }
 
-    handleClick() {
-        pxt.tickEvent("github.history.commit.click")
-        const { commit, githubId } = this.props;
-        const { expanded, diffFiles } = this.state;
-        if (expanded) {
-            this.setState({ expanded: false });
-        } else if (diffFiles) {
-            this.setState({ expanded: true });
-        } else {
-            // load commit and compute markdown
-            this.setState({ expanded: true, loading: true });
-            pxt.github.getCommitAsync(githubId.fullName, commit.sha)
-                .then(cmt => this.computeDiffAsync(cmt))
-                .then(dfs => this.setState({ diffFiles: dfs }))
-                .finally(() => this.setState({ loading: false }))
-        }
+    private loadDiffFilesAsync() {
+        // load commit and compute markdown
+        const { githubId, commit } = this.props;
+        this.setState({ loading: true });
+        pxt.github.getCommitAsync(githubId.fullName, commit.sha)
+            .then(cmt => this.computeDiffAsync(cmt))
+            .then(dfs => this.setState({ diffFiles: dfs }))
+            .finally(() => this.setState({ loading: false }))
     }
 
     private computeDiffAsync(commit: pxt.github.Commit): Promise<DiffFile[]> {
@@ -1317,16 +1309,19 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
     }
 
     renderCore() {
-        const { parent, commit } = this.props;
-        const { expanded, diffFiles, loading } = this.state;
+        const { parent, commit, expanded, onClick } = this.props;
+        const { diffFiles, loading } = this.state;
         const date = new Date(Date.parse(commit.author.date));
 
-        return <div className={`ui item link`} onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>
+        if (expanded && !diffFiles && !loading)
+            this.loadDiffFilesAsync();
+
+        return <div className={`ui item link`} onClick={onClick} onKeyDown={sui.fireClickOnEnter}>
             <div className="content">
                 <sui.Button className={`right floated ${loading ? "loading" : ""}`} text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />
-                <div className="header" onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>{date.toLocaleString()}</div>
-                <div className="description" onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>{commit.message}</div>
-                {expanded && diffFiles && <DiffView parent={parent} diffFiles={diffFiles} cacheKey={commit.sha} />}
+                <div className="header">{date.toLocaleString()}</div>
+                <div className="description">{commit.message}</div>
+                {diffFiles && <DiffView parent={parent} diffFiles={diffFiles} cacheKey={commit.sha} />}
             </div>
         </div>
     }
@@ -1335,6 +1330,7 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
 interface HistoryState {
     loading?: boolean;
     commits?: pxt.github.CommitInfo[];
+    selectedCommit?: pxt.github.CommitInfo;
 }
 
 class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
@@ -1358,7 +1354,7 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
 
     renderCore() {
         const { githubId, parent } = this.props;
-        const { commits } = this.state;
+        const { commits, selectedCommit } = this.state;
         const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
         return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
             <div className="ui header">{lf("History")}</div>
@@ -1373,7 +1369,14 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
                 </span>
             </div>}
             {commits && <div className="ui divided items">
-                {commits.map(commit => <CommitView key={'commit' + commit.sha} commit={commit} parent={parent} githubId={githubId} />)}
+                {commits.map(commit => <CommitView 
+                    key={'commit' + commit.sha}
+                    onClick={() => this.setState({ selectedCommit: commit })}
+                    commit={commit}
+                    parent={parent}
+                    githubId={githubId}
+                    expanded={selectedCommit === commit}
+                />)}
             </div>}
         </div>
     }
