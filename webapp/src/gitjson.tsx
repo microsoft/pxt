@@ -727,21 +727,21 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
             // tslint:disable: react-this-binding-issue
             return <div key={`difffile${cacheKey}${f.name}`} className="ui segments filediff">
                 <div className="ui segment diffheader">
-                    {blocksMode && f.name == "main.blocks" ? undefined : <span>{f.name}</span>}
-                    {cache.revert && <sui.Button className="small" icon="undo" text={lf("Revert")}
+                    {(!blocksMode || f.name != "main.blocks") && <span>{f.name}</span>}
+                    {!!cache.revert && <sui.Button className="small" icon="undo" text={lf("Revert")}
                         ariaLabel={lf("Revert file")} title={lf("Revert file")}
                         textClass={"landscape only"} onClick={cache.revert} />}
                     {jsxEls.legendJSX}
-                    {showConflicts && jsxEls.conflicts ? <p>{lf("Merge conflicts found. Resolve them before commiting.")}</p> : undefined}
-                    {cache.revert && deletedFiles.length &&
+                    {showConflicts && !!jsxEls.conflicts && <p>{lf("Merge conflicts found. Resolve them before commiting.")}</p>}
+                    {!!cache.revert && !!deletedFiles.length &&
                         <p>
                             {lf("Reverting this file will also restore: {0}", deletedFiles.join(", "))}
                         </p>}
-                    {cache.revert && addedFiles.length &&
+                    {!!cache.revert && !!addedFiles.length &&
                         <p>
                             {lf("Reverting this file will also remove: {0}", addedFiles.join(", "))}
                         </p>}
-                    {cache.revert && virtualF && !blocksMode && <p>
+                    {!!cache.revert && virtualF && !blocksMode && <p>
                         {lf("Reverting this file will also revert: {0}", virtualF.name)}
                     </p>}
                 </div>
@@ -1381,7 +1381,7 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
                     inverted={inverted}
                     onKeyDown={sui.fireClickOnEnter} />
                 <span className="inline-help">
-                    {lf("Restore your project files to a previous commit.")}
+                    {lf("Restore your project to a previous commit.")}
                     {sui.helpIconLink("/github/history", lf("Learn more about history of commits."))}
                 </span>
             </div>}
