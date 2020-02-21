@@ -706,7 +706,8 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
     }
 
     private showDiff(isBlocksMode: boolean, f: DiffFile) {
-        const cache = this.props.parent.cachedDiff(this.props.cacheKey, f);
+        const { cacheKey } = this.props;
+        const cache = this.props.parent.cachedDiff(cacheKey, f);
         if (cache.diff
             && cache.file.gitFile == f.gitFile
             && cache.file.editorFile == f.editorFile)
@@ -728,7 +729,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
                 jsxEls = this.createTextDiffJSX(f, !cache.whitespace);
             }
             // tslint:disable: react-this-binding-issue
-            return <div key={`difffile${f.name}`} className="ui segments filediff">
+            return <div key={`difffile${cacheKey}${f.name}`} className="ui segments filediff">
                 <div className="ui segment diffheader">
                     {isBlocksMode && f.name == "main.blocks" ? undefined : <span>{f.name}</span>}
                     {cache.revert && <sui.Button className="small" icon="undo" text={lf("Revert")}
