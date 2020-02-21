@@ -613,3 +613,8 @@ exports.update = update;
 exports.uglify = runUglify;
 exports.watch = initWatch;
 exports.watchCli = initWatchCli;
+
+console.log(`pxt build how to:`)
+console.log(`run "gulp watch" in pxt folder`)
+console.log(`run "pxt serve" in target folder in new command prompt`)
+console.log();

@@ -36,13 +36,20 @@ namespace pxt.github {
         truncated: boolean;
     }
 
+    export interface CommitInfo extends SHAObject {
+        author: UserInfo;
+        committer: UserInfo;
+        message: string; // "added readme, because im a good github citizen",
+        tree: SHAObject;
+    }
+
     export interface Commit extends SHAObject {
         author: UserInfo;
         committer: UserInfo;
         message: string; // "added readme, because im a good github citizen",
-        tree: Tree; // tree
-        parents: SHAObject[]; // commit[]
         tag?: string;
+        parents: SHAObject[]; // commit[]
+        tree: Tree; // tree
     }
 
     export let token: string = null;
@@ -239,7 +246,18 @@ namespace pxt.github {
     export let db: IGithubDb = new MemoryGithubDb();
 
     export function authenticatedUserAsync(): Promise<User> {
+        if (!token) return Promise.resolve(undefined); // no token, bail out
         return ghGetJsonAsync("https://api.github.com/user");
+    }
+
+    export function getCommitsAsync(repopath: string, sha: string): Promise<CommitInfo[]> {
+        return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/commits?sha=" + sha)
+            .then(objs => objs.map((obj: any) => {
+                const c = obj.commit;
+                c.url = obj.url;
+                c.sha = obj.sha;
+                return c;
+            }));
     }
 
     export function getCommitAsync(repopath: string, sha: string) {

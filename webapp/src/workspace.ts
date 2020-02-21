@@ -666,6 +666,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     if (newCommit == null) {
         return commitId
     } else {
+        data.invalidate("gh-commits:*"); // invalid any cached commits
         // if we created a block preview, add as comment
         if (blocksDiffSha)
             await pxt.github.postCommitComment(
@@ -719,6 +720,29 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         }
         return res;
     }
+}
+
+export async function restoreCommitAsync(hd: Header, commit: pxt.github.CommitInfo) {
+    await cloudsync.ensureGitHubTokenAsync();
+
+    const files = await getTextAsync(hd.id)
+    const gitjsontext = files[GIT_JSON]
+    const gitjson = JSON.parse(gitjsontext) as GitJson
+    const parsed = pxt.github.parseRepoId(gitjson.repo)
+    const date = new Date(Date.parse(commit.committer.date));
+    const restored: pxt.github.CreateCommitReq = {
+        message: lf("Restore '{0} {1}'", date.toLocaleString(), commit.message),
+        parents: [gitjson.commit.sha],
+        tree: commit.tree.sha
+    }
+
+    const commitId = await pxt.github.createObjectAsync(parsed.fullName, "commit", restored)
+    await pxt.github.fastForwardAsync(parsed.fullName, parsed.tag, commitId)
+    await githubUpdateToAsync(hd, {
+        repo: gitjson.repo,
+        sha: commitId,
+        files
+    })
 }
 
 interface UpdateOptions {
@@ -1241,6 +1265,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                         data.invalidateHeader("header", hd);
                         data.invalidateHeader("text", hd);
                         data.invalidateHeader("pkg-git-status", hd);
+                        data.invalidate("gh-commits:*"); // invalidate commits just in case
                     }
                 } else {
                     ex = {
