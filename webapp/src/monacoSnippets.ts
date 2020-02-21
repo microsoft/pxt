@@ -607,9 +607,10 @@ let _blockIdMap: pxt.Map<string[]>;
 export function blockIdMap() {
     if (!_blockIdMap) {
         _blockIdMap = {
-            "pxt_controls_for": ["controls_repeat_ext"],
-            "minecraftAgentTurn": ["agentturnleft", "agentturnright"],
+            "pxt_controls_for": ["controls_repeat_ext"]
         }
+        const targetIds = pxt.appTarget.blockIdMap;
+        if (targetIds) Object.keys(targetIds).forEach(id => _blockIdMap[id] = targetIds[id]);
     }
     return _blockIdMap;
 }
