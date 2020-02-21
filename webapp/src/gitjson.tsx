@@ -1321,7 +1321,7 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
                 <sui.Button className={`right floated ${loading ? "loading" : ""}`} text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />
                 <div className="header">{date.toLocaleString()}</div>
                 <div className="description">{commit.message}</div>
-                {diffFiles && <DiffView parent={parent} diffFiles={diffFiles} cacheKey={commit.sha} />}
+                {expanded && diffFiles && <DiffView parent={parent} diffFiles={diffFiles} cacheKey={commit.sha} />}
             </div>
         </div>
     }
