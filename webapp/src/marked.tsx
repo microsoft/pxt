@@ -11,6 +11,8 @@ interface MarkedContentProps extends ISettingsProps {
     className?: string;
     // do not emit segment around snippets
     unboxSnippets?: boolean;
+    blocksDiffOptions?: pxt.blocks.DiffOptions;
+    textDiffOptions?: pxt.diff.RenderOptions;
     onDidRender?: () => void;
 }
 
@@ -87,7 +89,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     }
 
     private renderSnippets(content: HTMLElement) {
-        const { parent, unboxSnippets, onDidRender } = this.props;
+        const { parent, unboxSnippets, onDidRender, blocksDiffOptions, textDiffOptions } = this.props;
 
         let promises: Promise<void>[] = [];
 
@@ -126,7 +128,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                             action: "renderpython", ts: src
                         }).then(resp => resp.python))
                         .then(parts => {
-                            const el = pxt.diff.render(parts[0], parts[1], {
+                            const el = pxt.diff.render(parts[0], parts[1], textDiffOptions || {
                                 hideLineNumbers: true,
                                 hideMarkerLine: true,
                                 hideMarker: true,
@@ -143,7 +145,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             .forEach((langBlock: HTMLElement) => {
                 promises.push(this.cachedRenderLangSnippetAsync(langBlock, code => {
                     const { fileA, fileB } = pxt.diff.split(code);
-                    const el = pxt.diff.render(fileA, fileB, {
+                    const el = pxt.diff.render(fileA, fileB, textDiffOptions || {
                         hideLineNumbers: true,
                         hideMarkerLine: true,
                         hideMarker: true,
@@ -171,7 +173,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 promises.push(this.cachedRenderLangSnippetAsync(langBlock, code =>
                     pxt.BrowserUtils.loadBlocklyAsync()
                         .then(() => {
-                            const diff = pxt.blocks.diffXml(oldXml, newXml);
+                            const diff = pxt.blocks.diffXml(oldXml, newXml, blocksDiffOptions);
                             return wrapBlockDiff(diff);
                         })));
             });
@@ -191,7 +193,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         .then(blocksInfo => Promise.mapSeries([oldSrc, newSrc], src =>
                             compiler.decompileBlocksSnippetAsync(src, blocksInfo))
                         )
-                        .then((resps) => pxt.blocks.decompiledDiffAsync(oldSrc, resps[0], newSrc, resps[1], {
+                        .then((resps) => pxt.blocks.decompiledDiffAsync(oldSrc, resps[0], newSrc, resps[1], blocksDiffOptions || {
                             hideDeletedTopBlocks: true,
                             hideDeletedBlocks: true
                         }))
