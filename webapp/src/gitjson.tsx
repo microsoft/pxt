@@ -1389,6 +1389,7 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
                 {commits.map(commit => <CommitView
                     key={'commit' + commit.sha}
                     onClick={() => {
+                        pxt.tickEvent("github.history.selectcommit", undefined, { interactiveConsent: true })
                         const { selectedCommit } = this.state;
                         this.setState({ selectedCommit: commit == selectedCommit ? undefined : commit })
                     }}
