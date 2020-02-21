@@ -1265,6 +1265,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                         data.invalidateHeader("header", hd);
                         data.invalidateHeader("text", hd);
                         data.invalidateHeader("pkg-git-status", hd);
+                        data.invalidate("gh-commits:*"); // invalidate commits just in case
                     }
                 } else {
                     ex = {
