@@ -1314,14 +1314,15 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
         e.stopPropagation();
         pxt.tickEvent("github.restore", undefined, { interactiveConsent: true })
         const { commit } = this.props;
-        core.showLoading("github.restore", lf("Restoring commit..."))
+        core.showLoading("github.restore", lf("restoring commit..."))
         workspace.restoreCommitAsync(this.props.parent.props.parent.state.header, commit)
+            .then(() => data.invalidate("gh-commits:*"))
             .finally(() => core.hideLoading("github.restore"))
         return false;
     }
 
     renderCore() {
-        const { parent, commit, expanded, onClick } = this.props;
+        const { parent, commit, expanded, onClick, githubId } = this.props;
         const { diffFiles, loading } = this.state;
         const date = new Date(Date.parse(commit.author.date));
 
@@ -1330,8 +1331,11 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
 
         return <div className={`ui item link`} onClick={onClick} onKeyDown={sui.fireClickOnEnter}>
             <div className="content">
-                <sui.Button className={`right floated ${loading ? "loading" : ""}`} text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />
-                <div className="header">{date.toLocaleString()}</div>
+                <sui.Button loading={loading} className="right floated" text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />
+                <div className="header">
+                    {date.toLocaleString()}
+                    <sui.Link icon="external" href={`https://github.com/${githubId.fullName}/commit/${commit.sha}`} target="_blank" />
+                </div>
                 <div className="description">{commit.message}</div>
                 {expanded && diffFiles && <DiffView parent={parent} blocksMode={false} diffFiles={diffFiles} cacheKey={commit.sha} />}
             </div>
@@ -1340,8 +1344,7 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
 }
 
 interface HistoryState {
-    loading?: boolean;
-    commits?: pxt.github.CommitInfo[];
+    expanded?: boolean;
     selectedCommit?: pxt.github.CommitInfo;
 }
 
@@ -1353,30 +1356,26 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
 
     handleLoadClick() {
         pxt.tickEvent("github.history.load", undefined, { interactiveConsent: true });
-        const { githubId, gs } = this.props;
-        this.setState({ loading: true });
-        pxt.github.getCommitsAsync(githubId.fullName, gs.commit.sha)
-            .then(commits => {
-                // drop first commit
-                commits.shift();
-                this.setState({ commits: commits });
-            })
-            .finally(() => this.setState({ loading: false }));
+        const { expanded } = this.state;
+        this.setState({ expanded: !expanded, selectedCommit: undefined })
     }
 
     renderCore() {
-        const { githubId, parent } = this.props;
-        const { commits, selectedCommit } = this.state;
+        const { githubId, gs, parent } = this.props;
+        const { selectedCommit, expanded } = this.state;
         const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
+        const commits = expanded && this.getData(`gh-commits:${gs.repo}#${gs.commit.sha}`) as pxt.github.CommitInfo[];
+        const loading = expanded && !commits;
+
         return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
             <div className="ui header">{lf("History")}</div>
-            {!commits && <div className="ui field">
-                <sui.Button className="basic" text={lf("View commits")}
+            {(loading || !expanded) && <div className="ui field">
+                <sui.Button loading={loading} className="basic" text={lf("View commits")}
                     onClick={this.handleLoadClick}
                     inverted={inverted}
                     onKeyDown={sui.fireClickOnEnter} />
                 <span className="inline-help">
-                    {lf("Restore your project to a previous commit.")}
+                    {lf("Restore your project files to a previous commit.")}
                     {sui.helpIconLink("/github/history", lf("Learn more about history of commits."))}
                 </span>
             </div>}
