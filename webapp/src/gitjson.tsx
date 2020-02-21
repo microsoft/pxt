@@ -1297,20 +1297,11 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
                         if (!hasChanges) return undefined;
                         if (isBlocks && pxt.blocks.needsDecompiledDiff(content, c))
                             return undefined;
-
                         const df: DiffFile = {
                             file: p,
                             name: p.name,
-                            gitFile: p.baseGitContent,
+                            gitFile: content,
                             editorFile: c
-                        }
-                        if (/\.blocks$/.test(p.name)) {
-                            const vpn = p.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME);
-                            const vp = files.find(ff => ff.name == vpn);
-                            if (vp) {
-                                df.tsGitFile = vp.baseGitContent;
-                                df.tsEditorFile = vp.publishedContent();
-                            }
                         }
                         return df;
 
