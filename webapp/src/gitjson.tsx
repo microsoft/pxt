@@ -1277,30 +1277,39 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
     private computeDiffAsync(commit: pxt.github.Commit): Promise<DiffFile[]> {
         const { githubId } = this.props;
         const files = pkg.mainEditorPkg().sortedFiles();
+        const oldFiles: pxt.Map<string> = {};
 
         return Promise.all(
             files.map(p => {
                 const path = p.name;
-                const isBlocks = /\.blocks$/.test(path);
-                const c = p.publishedContent();
                 const oldEnt = pxt.github.lookupFile(commit, path);
-                if (!oldEnt) return Promise.resolve(undefined);
-
+                if (!oldEnt) return Promise.resolve();
                 return pxt.github.downloadTextAsync(githubId.fullName, commit.sha, path)
-                    .then(content => {
-                        const hasChanges = content != c;
-                        if (!hasChanges) return undefined;
-                        if (isBlocks && pxt.blocks.needsDecompiledDiff(content, c))
-                            return undefined;
-                        const df: DiffFile = {
-                            file: p,
-                            name: p.name,
-                            gitFile: content,
-                            editorFile: c
-                        }
-                        return df;
-
-                    })
+                    .then(content => { oldFiles[path] = content; });
+            }))
+            .then(() => files.map(p => {
+                const path = p.name;
+                const oldContent = oldFiles[path];
+                const isBlocks = /\.blocks$/.test(path);
+                const newContent = p.publishedContent();
+                const hasChanges = oldContent !== newContent;
+                if (!hasChanges) return undefined;
+                const df: DiffFile = {
+                    file: p,
+                    name: p.name,
+                    gitFile: oldContent,
+                    editorFile: newContent
+                }
+                if (isBlocks && pxt.blocks.needsDecompiledDiff(oldContent, newContent)) {
+                    const vpn = p.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME);
+                    const virtualNewContent = files.find(ff => ff.name == vpn);
+                    const virtualOldContent = oldFiles[vpn];
+                    if (virtualNewContent) {
+                        df.tsEditorFile = virtualNewContent.publishedContent();
+                        df.tsGitFile = virtualOldContent;
+                    }
+                }
+                return df;
             })).then(diffs => diffs.filter(df => !!df));
     }
 
@@ -1360,7 +1369,7 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
         const { githubId, gs, parent } = this.props;
         const { selectedCommit, expanded } = this.state;
         const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
-        let commits = expanded && 
+        let commits = expanded &&
             this.getData(`gh-commits:${gs.repo}#${gs.commit.sha}`) as pxt.github.CommitInfo[];
         if (commits)
             commits = commits.slice(1); // drop current commit
