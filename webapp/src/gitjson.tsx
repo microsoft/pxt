@@ -728,9 +728,9 @@ class CommitDiffView extends sui.StatelessUIElement<CommitDiffViewProps> {
             return <div key={`difffile${f.name}`} className="ui segments filediff">
                 <div className="ui segment diffheader">
                     {isBlocksMode && f.name == "main.blocks" ? undefined : <span>{f.name}</span>}
-                    <sui.Button className="small" icon="undo" text={lf("Revert")}
+                    {cache.revert && <sui.Button className="small" icon="undo" text={lf("Revert")}
                         ariaLabel={lf("Revert file")} title={lf("Revert file")}
-                        textClass={"landscape only"} onClick={cache.revert} />
+                        textClass={"landscape only"} onClick={cache.revert} />}
                     {jsxEls.legendJSX}
                     {jsxEls.conflicts ? <p>{lf("Merge conflicts found. Resolve them before commiting.")}</p> : undefined}
                     {deletedFiles.length == 0 ? undefined :
