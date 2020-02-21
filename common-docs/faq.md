@@ -23,6 +23,11 @@ Projects are kept in the browser's local indexed data store. You can save your p
 
 Read more about [saving](/save) projects.
 
+## Can I restore a previous version of my project?
+
+Yes! Go to the GitHub view and click on ``View commits`` in the [History](/github/history) section. 
+You can review each commit and select to restore your project to that commit.
+
 ## Can I use MakeCode when I'm not connected to the internet? #work-offline
 
 Some MakeCode editors are available as [offline apps](/offline). Also, when MakeCode first loads in the browser, a cached version of MakeCode is stored automatically. If later you want to add an extension to use with your program, you will need to connect again. For more information see the page about using MakeCode [offline](/offline).

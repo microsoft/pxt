@@ -2,6 +2,7 @@
 
 * [GitHub](/github)
     * [commit](/github/commit)
+    * [history](/github/history)
     * [fork](/github/fork)
     * [diff](/github/diff)
     * [release](/github/release)
