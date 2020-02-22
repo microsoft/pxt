@@ -242,7 +242,7 @@ namespace pxsim {
         export function start() {
             window.addEventListener("message", receiveMessage, false);
             frameid = window.location.hash.slice(1)
-            initAppcache();
+            initServiceWorker();
             Runtime.postMessage(<SimulatorReadyMessage>{ type: 'ready', frameid: frameid });
         }
 
@@ -381,13 +381,14 @@ namespace pxsim {
         }
     }
 
-    function initAppcache() {
-        if (typeof window !== 'undefined' && window.applicationCache) {
-            if (window.applicationCache.status === window.applicationCache.UPDATEREADY)
-                reload();
-            window.applicationCache.addEventListener("updateready", () => {
-                if (window.applicationCache.status === window.applicationCache.UPDATEREADY)
-                    reload();
+    function initServiceWorker() {
+        if ("serviceWorker" in navigator) {
+            const serviceWorkerUrl = window.location.href.replace(/---simulator.*$/, "---simserviceworker");
+            navigator.serviceWorker.register(serviceWorkerUrl).then(function (registration) {
+                console.log("Simulator ServiceWorker registration successful with scope: ", registration.scope);
+                registration.addEventListener("updatefound", reload);
+            }, function (err) {
+                console.log("Simulator ServiceWorker registration failed: ", err);
             });
         }
     }

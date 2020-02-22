@@ -334,7 +334,8 @@ const copyWebapp = () =>
         "built/pxteditor.js",
         "built/pxtwinrt.js",
         "built/webapp/src/worker.js",
-        "built/webapp/src/serviceworker.js"
+        "built/webapp/src/serviceworker.js",
+        "built/webapp/src/simulatorserviceworker.js"
     ])
     .pipe(gulp.dest("built/web"));
 
