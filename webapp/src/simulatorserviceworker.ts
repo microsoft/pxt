@@ -19,10 +19,7 @@ function initSimulatorServiceWorker() {
     const ref = `@relprefix@`.replace("---", "").replace(/^\//, "");
 
     // We don't do offline for version paths, only named releases
-
-    // FIXME
-    // const isNamedEndpoint = ref.indexOf("/") === -1;
-    const isNamedEndpoint = true;
+    const isNamedEndpoint = ref.indexOf("/") === -1;
 
     // pxtRelId is replaced with the commit hash for this release
     const refCacheName = "makecode-sim;" + ref + ";@pxtRelId@";

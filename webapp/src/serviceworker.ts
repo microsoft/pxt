@@ -11,9 +11,7 @@ function initWebappServiceWorker() {
     const ref = `@relprefix@`.replace("---", "").replace(/^\//, "");
 
     // We don't do offline for version paths, only named releases
-    // FIXME
-    // const isNamedEndpoint = ref.indexOf("/") === -1;
-    const isNamedEndpoint = true;
+    const isNamedEndpoint = ref.indexOf("/") === -1;
 
     // pxtRelId is replaced with the commit hash for this release
     const refCacheName = "makecode;" + ref + ";@pxtRelId@";
@@ -105,9 +103,9 @@ function initWebappServiceWorker() {
         console.log("Installing service worker...")
         ev.waitUntil(caches.open(refCacheName)
             .then(cache => {
-                console.log("Opened cache")
-                console.log("Caching:\n" + allFiles.join("\n"))
-                return cache.addAll(allFiles).then(() => cache)
+                console.log("Opened cache");
+                console.log("Caching:\n" + allFiles.join("\n"));
+                return cache.addAll(allFiles).then(() => cache);
             })
             .then(cache =>
                 cache.addAll(cachedHexFiles).catch(e => {
