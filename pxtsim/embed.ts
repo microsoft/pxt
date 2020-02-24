@@ -382,7 +382,7 @@ namespace pxsim {
     }
 
     function initServiceWorker() {
-        if ("serviceWorker" in navigator) {
+        if ("serviceWorker" in navigator && window.location.href.indexOf("---simulator") !== -1) {
             const serviceWorkerUrl = window.location.href.replace(/---simulator.*$/, "---simserviceworker");
             navigator.serviceWorker.register(serviceWorkerUrl).then(function (registration) {
                 console.log("Simulator ServiceWorker registration successful with scope: ", registration.scope);

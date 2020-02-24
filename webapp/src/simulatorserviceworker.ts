@@ -4,8 +4,12 @@ interface ServiceWorkerEvent extends Event {
     request: Request;
 }
 
+interface SimWorkerOptions {
+    urls?: string[];
+}
+
 interface SimWorkerContext {
-    getPxtargetSimulatorURLs?: () => string[];
+    setSimulatorWorkerOptions: (opts: SimWorkerOptions) => void;
 }
 
 initSimulatorServiceWorker();
@@ -33,7 +37,15 @@ function initSimulatorServiceWorker() {
     ];
 
     const allFiles = simUrls.map(url => url.trim())
-        .filter(url => !!url && url.indexOf("@") !== 0)
+        .filter(url => !!url && url.indexOf("@") !== 0);
+
+    // This function is called by workerConfig.js in the target to configure any
+    // extra URLs that need to be cached
+    (self as unknown as SimWorkerContext).setSimulatorWorkerOptions = opts => {
+        if (opts && Array.isArray(opts.urls)) {
+            allFiles.push(...resolveURLs(opts.urls));
+        }
+    }
 
     self.addEventListener("install", (ev: ServiceWorkerEvent) => {
         if (!isNamedEndpoint) {
@@ -44,16 +56,6 @@ function initSimulatorServiceWorker() {
         // Check to see if there are any extra sim URLs to be cached by the target
         try {
             importScripts(`/sim/workerConfig.js`);
-
-            const context = (self as unknown as SimWorkerContext);
-            // The worker config should have defined this function on the global scope
-            if (context.getPxtargetSimulatorURLs) {
-                const extraURLs = context.getPxtargetSimulatorURLs();
-
-                if (Array.isArray(extraURLs) && extraURLs.length) {
-                    allFiles.push(...resolveURLs(extraURLs));
-                }
-            }
         }
         catch (e) {
             // This file is optional in the target, so ignore 404 response
