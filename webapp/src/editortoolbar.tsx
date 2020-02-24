@@ -217,13 +217,14 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         if (!isEditor) return <div />;
 
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
-        const hasRepository = header && !!header.githubId;
+        const ghid = header && pxt.github.parseRepoId(header.githubId);
+        const hasRepository = !!ghid;
         const showSave = !readOnly && !isController && !targetTheme.saveInMenu
             && !tutorial && !debugging && !disableFileAccessinMaciOs
             && !hasRepository;
         const showProjectRename = !tutorial && !readOnly && !isController
             && !targetTheme.hideProjectRename && !debugging;
-        const showProjectRenameReadonly = hasRepository;
+        const showProjectRenameReadonly = hasRepository && /^pxt-/.test(ghid.project); // allow renaming of name with github
         const compile = pxt.appTarget.compile;
         const compileBtn = compile.hasHex || compile.saveAsPNG || compile.useUF2;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
@@ -246,9 +247,18 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const debug = !!targetTheme.debugger && !readOnly;
         const debugTooltip = debugging ? lf("Disable Debugging") : lf("Debugging")
         const downloadIcon = pxt.appTarget.appTheme.downloadIcon || "download";
-        const downloadText = pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download");
 
-        const bigRunButtonTooltip = [lf("Stop"), lf("Starting"), lf("Run Code in Game")][simState || 0];
+        const bigRunButtonTooltip = (() => {
+            switch (simState) {
+                case pxt.editor.SimState.Stopped:
+                    return lf("Start");
+                case pxt.editor.SimState.Pending:
+                case pxt.editor.SimState.Starting:
+                    return lf("Starting");
+                default:
+                    return lf("Stop");
+            }
+        })();
 
         const mobile = View.Mobile;
         const tablet = View.Tablet;

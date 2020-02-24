@@ -4,6 +4,14 @@
 /// <reference path="../../built/pxtsim.d.ts"/>
 /// <reference path="../../built/pxtwinrt.d.ts"/>
 
+// redirect for unsupported browsers (IE11) before loading
+(function _() {
+    if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
+        window.location.href = "/browsers";
+        return;
+    }
+})();
+
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as workspace from "./workspace";
@@ -1099,7 +1107,7 @@ export class ProjectView
                         let curr = pkg.mainEditorPkg().header
                         curr.isDeleted = true;
                         curr.tutorial = undefined;
-                        workspace.saveAsync(curr, {})
+                        workspace.forceSaveAsync(curr, {})
                             .then(() => {
                                 this.openHome();
                             }).finally(() => core.hideLoading("tutorial"));
@@ -1174,6 +1182,9 @@ export class ProjectView
             simulator.driver.preload(pxt.appTarget.simulator.aspectRatio);
         this.clearSerial()
         this.firstRun = true
+        // clear caches in all editors
+        compiler.clearCaches();
+        this.allEditors.forEach(editor => editor.clearCaches())
         // always start simulator once at least if autoRun is enabled
         // always disable tracing
         this.setState({
@@ -1369,7 +1380,7 @@ export class ProjectView
         core.confirmDelete(pkg.mainEditorPkg().header.name, () => {
             let curr = pkg.mainEditorPkg().header
             curr.isDeleted = true
-            return workspace.saveAsync(curr, {})
+            return workspace.forceSaveAsync(curr, {})
                 .then(() => this.openHome());
         })
     }
@@ -2764,6 +2775,13 @@ export class ProjectView
             simulator.driver.registerDependentEditor(w);
         }
     }
+
+    createGitHubRepositoryAsync(): Promise<void> {
+        const { projectName, header } = this.state;
+        return cloudsync.githubProvider().createRepositoryAsync(projectName, header)
+            .then(r => r && this.reloadHeaderAsync());
+    }
+
     ///////////////////////////////////////////////////////////
     ////////////             Debugging            /////////////
     ///////////////////////////////////////////////////////////
@@ -2854,11 +2872,11 @@ export class ProjectView
 
     renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<pxt.editor.EditorMessageRenderBlocksResponse> {
         return compiler.getBlocksAsync()
-            .then(blocksInfo => compiler.decompileBlocksSnippetAsync(req.ts, blocksInfo))
+            .then(blocksInfo => compiler.decompileBlocksSnippetAsync(req.ts, blocksInfo, req))
             .then(resp => {
                 const svg = pxt.blocks.render(resp.outfiles["main.blocks"], {
-                    snippetMode: true,
-                    layout: pxt.blocks.BlockLayout.Align,
+                    snippetMode: req.snippetMode || false,
+                    layout: req.layout !== undefined ? req.layout : pxt.blocks.BlockLayout.Align,
                     splitSvg: false
                 }) as SVGSVGElement;
                 // TODO: what if svg is undefined? handle that scenario
@@ -2914,10 +2932,6 @@ export class ProjectView
                     .then(inf => inf.id)
             }).finally(() => {
                 this.setState({ publishing: false })
-            })
-            .catch(e => {
-                core.errorNotification(e.message)
-                throw e;
             })
     }
 
@@ -4083,6 +4097,7 @@ function initExtensionsAsync(): Promise<void> {
 pxt.winrt.captureInitialActivation();
 document.addEventListener("DOMContentLoaded", () => {
     pxt.perf.recordMilestone(`DOM loaded`)
+
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
     pxt.options.debug = /dbg=1/i.test(window.location.href);
@@ -4101,13 +4116,6 @@ document.addEventListener("DOMContentLoaded", () => {
     pxt.setBundledApiInfo((window as any).pxtTargetBundle.apiInfo);
 
     enableAnalytics()
-
-    if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
-        pxt.tickEvent("unsupported");
-        window.location.href = "/browsers";
-        core.showLoading("browsernotsupported", lf("Sorry, this browser is not supported."));
-        return;
-    }
 
     initLogin();
     hash = parseHash();

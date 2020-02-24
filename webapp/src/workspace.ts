@@ -301,6 +301,8 @@ export function forceSaveAsync(h: Header, text?: ScriptText, isCloud?: boolean):
 
 export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Promise<void> {
     pxt.debug(`workspace: save ${h.id}`)
+    if (h.isDeleted)
+        clearHeaderSession(h);
     checkHeaderSession(h);
 
     U.assert(h.target == pxt.appTarget.id);
@@ -664,6 +666,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     if (newCommit == null) {
         return commitId
     } else {
+        data.invalidate("gh-commits:*"); // invalid any cached commits
         // if we created a block preview, add as comment
         if (blocksDiffSha)
             await pxt.github.postCommitComment(
@@ -717,6 +720,29 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         }
         return res;
     }
+}
+
+export async function restoreCommitAsync(hd: Header, commit: pxt.github.CommitInfo) {
+    await cloudsync.ensureGitHubTokenAsync();
+
+    const files = await getTextAsync(hd.id)
+    const gitjsontext = files[GIT_JSON]
+    const gitjson = JSON.parse(gitjsontext) as GitJson
+    const parsed = pxt.github.parseRepoId(gitjson.repo)
+    const date = new Date(Date.parse(commit.committer.date));
+    const restored: pxt.github.CreateCommitReq = {
+        message: lf("Restore '{0} {1}'", date.toLocaleString(), commit.message),
+        parents: [gitjson.commit.sha],
+        tree: commit.tree.sha
+    }
+
+    const commitId = await pxt.github.createObjectAsync(parsed.fullName, "commit", restored)
+    await pxt.github.fastForwardAsync(parsed.fullName, parsed.tag, commitId)
+    await githubUpdateToAsync(hd, {
+        repo: gitjson.repo,
+        sha: commitId,
+        files
+    })
 }
 
 interface UpdateOptions {
@@ -972,8 +998,9 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
     }
 
     // automatically update project name with github name
+    // if it start with pxt-
     const ghid = pxt.github.parseRepoId(h.githubId);
-    if (ghid.project) {
+    if (ghid.project && /^pxt-/.test(ghid.project)) {
         const ghname = ghid.project.replace(/^pxt-/, '').replace(/-+/g, ' ')
         if (ghname != h.name) {
             const cfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME]);
@@ -1017,7 +1044,7 @@ export function prepareConfigForGithub(content: string, createRelease?: boolean)
         const v = cfg.dependencies[d];
         const hid = v.substring(v.indexOf(':') + 1);
         const header = getHeader(hid);
-        if (!header.githubId) {
+        if (header && !header.githubId) {
             if (createRelease)
                 U.userError(lf("Dependency {0} is a local project.", d))
         } else {
@@ -1238,6 +1265,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                         data.invalidateHeader("header", hd);
                         data.invalidateHeader("text", hd);
                         data.invalidateHeader("pkg-git-status", hd);
+                        data.invalidate("gh-commits:*"); // invalidate commits just in case
                     }
                 } else {
                     ex = {

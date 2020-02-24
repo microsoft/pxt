@@ -785,8 +785,12 @@ declare namespace ts.pxtc {
 
         syntaxInfo?: SyntaxInfo;
 
-        alwaysDecompileOnStart?: boolean; // decompiler only
-        allowedArgumentTypes?: string[]; // decompiler-only; the types allowed for user-defined function arguments in blocks (unlisted types will cause grey blocks)
+        // decompiler only
+        alwaysDecompileOnStart?: boolean; 
+        // decompiler-only; the types allowed for user-defined function arguments in blocks (unlisted types will cause grey blocks)
+        allowedArgumentTypes?: string[]; 
+        // decompiler only
+        snippetMode?: boolean;
 
         embedMeta?: string;
         embedBlob?: string; // base64

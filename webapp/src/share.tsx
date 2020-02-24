@@ -31,7 +31,7 @@ export interface ShareEditorState {
     mode?: ShareMode;
     pubId?: string;
     visible?: boolean;
-    sharingError?: boolean;
+    sharingError?: Error;
     loading?: boolean;
     projectName?: string;
     projectNameChanged?: boolean;
@@ -65,6 +65,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         this.handleRecordClick = this.handleRecordClick.bind(this);
         this.handleScreenshotClick = this.handleScreenshotClick.bind(this);
         this.handleScreenshotMessage = this.handleScreenshotMessage.bind(this);
+        this.handleCreateGitHubRepository = this.handleCreateGitHubRepository.bind(this);
     }
 
     hide() {
@@ -104,7 +105,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             visible: true,
             mode: ShareMode.Code,
             pubId: undefined,
-            sharingError: false,
+            sharingError: undefined,
             screenshotUri: undefined,
             qrCodeUri: undefined,
             title
@@ -177,7 +178,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         return this.state.visible != nextState.visible
             || this.state.mode != nextState.mode
             || this.state.pubId != nextState.pubId
-            || this.state.sharingError != nextState.sharingError
+            || this.state.sharingError !== nextState.sharingError
             || this.state.projectName != nextState.projectName
             || this.state.projectNameChanged != nextState.projectNameChanged
             || this.state.loading != nextState.loading
@@ -300,8 +301,14 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             });
     }
 
+    handleCreateGitHubRepository() {
+        pxt.tickEvent("share.github.create", undefined, { interactiveConsent: true });
+        this.hide();
+        this.props.parent.createGitHubRepositoryAsync().done();
+    }
+
     renderCore() {
-        const { visible, projectName: newProjectName, loading, recordingState, screenshotUri, thumbnails, recordError, pubId, qrCodeUri, title } = this.state;
+        const { visible, projectName: newProjectName, loading, recordingState, screenshotUri, thumbnails, recordError, pubId, qrCodeUri, title, sharingError } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const header = this.props.parent.state.header;
         const hideEmbed = !!targetTheme.hideShareEmbed;
@@ -344,7 +351,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         }
         const publish = () => {
             pxt.tickEvent("menu.embed.publish", undefined, { interactiveConsent: true });
-            this.setState({ sharingError: false, loading: true });
+            this.setState({ sharingError: undefined, loading: true });
             let p = Promise.resolve();
             if (newProjectName && this.props.parent.state.projectName != newProjectName) {
                 // save project name if we've made a change change
@@ -361,10 +368,11 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                             });
                     this.forceUpdate();
                 })
-                .catch((e) => {
+                .catch((e: Error) => {
+                    pxt.tickEvent("menu.embed.error", { code: (e as any).statusCode })
                     this.setState({
                         pubId: undefined,
-                        sharingError: true,
+                        sharingError: e,
                         qrCodeUri: undefined
                     });
                 });
@@ -417,6 +425,10 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 : isGifRendering ? lf("Rendering gif...")
                     : undefined;
         const screenshotMessageClass = recordError ? "warning" : "";
+        const tooBigErrorSuggestGitHub = sharingError
+            && (sharingError as any).statusCode === 413
+            && pxt.appTarget?.cloud?.cloudProviders?.github;
+        const unknownError = sharingError && !tooBigErrorSuggestGitHub;
 
         return (
             <sui.Modal isOpen={visible} className="sharedialog"
@@ -456,9 +468,10 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                         </div>
                     </div> : undefined}
                     {action && !this.loanedSimulator ? <p className="ui tiny message info">{disclaimer}</p> : undefined}
-                    {this.state.sharingError ?
-                        <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}</p>
-                        : undefined}
+                    {tooBigErrorSuggestGitHub && <p className="ui orange inverted segment">{lf("Oops! Your project is too big. You can create a GitHub repository to share it.")}
+                        <sui.Button className="inverted basic" text={lf("Create")} icon="github" onClick={this.handleCreateGitHubRepository} />
+                    </p>}
+                    {unknownError && <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}</p>}
                     {url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.")}</p>
                         <sui.Input id="projectUri" class="mini" readOnly={true} lines={1} value={url} copy={true} autoFocus={!pxt.BrowserUtils.isMobile()} selectOnClick={true} aria-describedby="projectUriLabel" autoComplete={false} />

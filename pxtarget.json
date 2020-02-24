@@ -34,5 +34,10 @@
         "hideDocsEdit": true,
         "hideDocsSimulator": true
     },
+    "unsupportedBrowsers": [
+        {
+            "id": "ie"
+        }
+    ],
     "uploadDocs": true
 }
