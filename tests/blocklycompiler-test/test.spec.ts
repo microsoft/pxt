@@ -50,6 +50,7 @@ pxt.webConfig = {
     targetUrl: undefined,
     targetId: undefined,
     simUrl: undefined,
+    simserviceworkerUrl: undefined,
     partsUrl: undefined,
     runUrl: undefined,
     docsUrl: undefined,
