@@ -43,6 +43,7 @@ namespace pxt.tutorial {
         let code = '';
         let templateCode: string;
         let language: string;
+        let idx = 0;
         // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
         body
             .replace(/((?!.)\s)+/g, "\n")
@@ -72,7 +73,10 @@ namespace pxt.tutorial {
                         templateCode = m2;
                         break;
                 }
-                code += `\n${m1 == "python" ? m2 : "{\n" + m2 + "\n}"}\n`;
+                code += `\n${m1 == "python"
+                    ? "def __wrapper_" + idx + "():\n" + m2.replace(/^/gm, "    ")
+                    : "{\n" + m2 + "\n}"}\n`;
+                idx++
                 return "";
             });
         // default to blocks
