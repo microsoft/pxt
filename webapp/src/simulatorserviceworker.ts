@@ -1,9 +1,3 @@
-interface ServiceWorkerEvent extends Event {
-    waitUntil<U>(promise: Promise<U>): void;
-    respondWith(response: Promise<Response>): void;
-    request: Request;
-}
-
 interface SimWorkerOptions {
     urls?: string[];
 }
@@ -19,7 +13,7 @@ function initSimulatorServiceWorker() {
     const ref = `@relprefix@`.replace("---", "").replace(/^\//, "");
 
     // We don't do offline for version paths, only named releases
-    const isNamedEndpoint = ref.indexOf("/") === -1;
+    const isNamedEndpoint = true || ref.indexOf("/") === -1;
 
     // pxtRelId is replaced with the commit hash for this release
     const refCacheName = "makecode-sim;" + ref + ";@pxtRelId@";
@@ -44,11 +38,15 @@ function initSimulatorServiceWorker() {
         }
     }
 
+    let didInstall = false;
+
     self.addEventListener("install", (ev: ServiceWorkerEvent) => {
         if (!isNamedEndpoint) {
             console.log("Skipping service worker install for unnamed endpoint");
             return;
         }
+
+        didInstall = true;
 
         // Check to see if there are any extra sim URLs to be cached by the target
         try {
@@ -64,7 +62,8 @@ function initSimulatorServiceWorker() {
             .then(cache => {
                 console.log("Opened cache")
                 return cache.addAll(dedupe(allFiles))
-            }))
+            })
+            .then(() => (self as any).skipWaiting()))
     });
 
     self.addEventListener("activate", (ev: ServiceWorkerEvent) => {
@@ -88,6 +87,14 @@ function initSimulatorServiceWorker() {
                 return  Promise.all(
                     toDelete.map(name => caches.delete(name))
                 );
+            })
+            .then(() => {
+                if (didInstall) {
+                    // Only notify clients for the first activation
+                    didInstall = false;
+                    return notifyAllClientsAsync();
+                }
+                return Promise.resolve();
             }))
     });
 
@@ -128,5 +135,17 @@ function initSimulatorServiceWorker() {
         if (parts.length !== 3) return null;
 
         return parts[1];
+    }
+
+    function notifyAllClientsAsync() {
+        const scope = (self as unknown as ServiceWorkerScope);
+
+        return scope.clients.claim().then(() => scope.clients.matchAll()).then(clients => {
+            clients.forEach(client => client.postMessage({
+                type: "serviceworker",
+                state: "activated",
+                ref: ref
+            }))
+        });
     }
 }

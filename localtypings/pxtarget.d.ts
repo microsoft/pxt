@@ -416,6 +416,12 @@ declare namespace pxt {
         sha: string;
         apis: ts.pxtc.ApisInfo;
     }
+
+    interface ServiceWorkerEvent {
+        type: "serviceworker";
+        state: "activated";
+        ref: string;
+    }
 }
 
 declare namespace pxt.editor {
@@ -786,9 +792,9 @@ declare namespace ts.pxtc {
         syntaxInfo?: SyntaxInfo;
 
         // decompiler only
-        alwaysDecompileOnStart?: boolean; 
+        alwaysDecompileOnStart?: boolean;
         // decompiler-only; the types allowed for user-defined function arguments in blocks (unlisted types will cause grey blocks)
-        allowedArgumentTypes?: string[]; 
+        allowedArgumentTypes?: string[];
         // decompiler only
         snippetMode?: boolean;
 

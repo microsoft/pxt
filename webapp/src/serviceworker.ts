@@ -4,6 +4,23 @@ interface ServiceWorkerEvent extends Event {
     request: Request;
 }
 
+interface ServiceWorkerScope {
+    clients: ServiceWorkerClients;
+}
+
+interface ServiceWorkerClients {
+    matchAll(): Promise<ServiceWorkerClient[]>;
+    claim(): Promise<void>;
+}
+
+interface ServiceWorkerClient {
+    readonly id: string;
+    readonly type: "window" | "worker" | "sharedworker";
+    readonly url: string;
+
+    postMessage(message: pxt.ServiceWorkerEvent): void;
+}
+
 initWebappServiceWorker();
 
 function initWebappServiceWorker() {
@@ -11,7 +28,7 @@ function initWebappServiceWorker() {
     const ref = `@relprefix@`.replace("---", "").replace(/^\//, "");
 
     // We don't do offline for version paths, only named releases
-    const isNamedEndpoint = ref.indexOf("/") === -1;
+    const isNamedEndpoint = true || ref.indexOf("/") === -1;
 
     // pxtRelId is replaced with the commit hash for this release
     const refCacheName = "makecode;" + ref + ";@pxtRelId@";
@@ -94,12 +111,15 @@ function initWebappServiceWorker() {
         .map(url => url.trim())
         .filter(url => !!url && url.indexOf("@") !== 0));
 
+    let didInstall = false;
+
     self.addEventListener("install", (ev: ServiceWorkerEvent) => {
         if (!isNamedEndpoint) {
             console.log("Skipping service worker install for unnamed endpoint");
             return;
         }
 
+        didInstall = true;
         console.log("Installing service worker...")
         ev.waitUntil(caches.open(refCacheName)
             .then(cache => {
@@ -113,7 +133,8 @@ function initWebappServiceWorker() {
                     // need to catch the exception or the service worker will fail to install
                     console.log("Failed to cache hexfiles")
                 })
-            ));
+            )
+            .then(() => (self as any).skipWaiting()))
     });
 
     self.addEventListener("activate", (ev: ServiceWorkerEvent) => {
@@ -137,6 +158,14 @@ function initWebappServiceWorker() {
                 return  Promise.all(
                     toDelete.map(name => caches.delete(name))
                 );
+            })
+            .then(() => {
+                if (didInstall) {
+                    // Only notify clients for the first activation
+                    didInstall = false;
+                    return notifyAllClientsAsync();
+                }
+                return Promise.resolve();
             }))
     });
 
@@ -174,5 +203,17 @@ function initWebappServiceWorker() {
                 .map(encoded => decodeURIComponent(encoded).replace(cdnEscaped, cdnUrl).trim()
             )
         );
+    }
+
+    function notifyAllClientsAsync() {
+        const scope = (self as unknown as ServiceWorkerScope);
+
+        return scope.clients.claim().then(() => scope.clients.matchAll()).then(clients => {
+            clients.forEach(client => client.postMessage({
+                type: "serviceworker",
+                state: "activated",
+                ref: ref
+            }))
+        });
     }
 }

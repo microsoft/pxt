@@ -1,4 +1,5 @@
 /// <reference path="../localtypings/pxtparts.d.ts"/>
+/// <reference path="../localtypings/pxtarget.d.ts"/>
 
 namespace pxsim {
     export interface SimulatorRunMessage extends SimulatorMessage {
@@ -383,10 +384,26 @@ namespace pxsim {
 
     function initServiceWorker() {
         if ("serviceWorker" in navigator && window.location.href.indexOf("---simulator") !== -1) {
+            // We don't have access to the webconfig in pxtsim so we need to extract the ref from the URL
+            const pathname = window.location.pathname;
+            const ref = pathname.substring(1, pathname.indexOf("---"));
+
+            // Only reload if there is already a service worker installed
+            if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.addEventListener("message", ev => {
+                    const message = ev.data as pxt.ServiceWorkerEvent;
+
+                    // We need to check the ref of the activated service worker so that we don't reload if you have
+                    // index.html and beta open at the same time
+                    if (message && message.type === "serviceworker" && message.state === "activated" && message.ref === ref) {
+                        reload();
+                    }
+                });
+            }
+
             const serviceWorkerUrl = window.location.href.replace(/---simulator.*$/, "---simserviceworker");
             navigator.serviceWorker.register(serviceWorkerUrl).then(function (registration) {
                 console.log("Simulator ServiceWorker registration successful with scope: ", registration.scope);
-                registration.addEventListener("updatefound", reload);
             }, function (err) {
                 console.log("Simulator ServiceWorker registration failed: ", err);
             });
