@@ -128,9 +128,12 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         const isWindows10 = pxt.BrowserUtils.isWindows10();
         const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
         const showExperiments = pxt.editor.experiments.someEnabled();
+        const showsIEDeprecatedBanner = pxt.BrowserUtils.isIE() && Cloud.isOnline();
         const showWindowsStoreBanner = isWindows10 && Cloud.isOnline() && targetConfig && targetConfig.windowsStoreLink
             && !isApp
             && !pxt.shell.isSandboxMode();
+
+
 
         if (showExperiments) {
             const displayTime = 20 * 1000; // 20 seconds
@@ -141,7 +144,7 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
             </GenericBanner>
         }
 
-        if (showExperimentalBanner) {
+        if (showExperimentalBanner) {``
             const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
             return (
                 <GenericBanner id="experimental" parent={this.props.parent} bannerType={"negative"} >
@@ -150,6 +153,16 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
                     <sui.Link className="link" ariaLabel={lf("Go back to live editor")} href={liveUrl}>{lf("Take me back")}</sui.Link>
                 </GenericBanner>
             );
+        }
+
+        if (showsIEDeprecatedBanner) {
+            const displayTime = 120 * 1000; // 120 seconds
+            return <GenericBanner id="ieDeprecated" parent={this.props.parent} bannerType={"negative"} displayTime={displayTime} >
+                <sui.Icon icon="warning circle" />
+                <sui.Link className="link" target="_blank" ariaLabel={lf("IE will not be supported from June 2020")} href="/browsers" onClick={this.handleBannerClick}>
+                        {lf("Internet Explorer (IE) will not be supported from June 2020. Please upgrade to Microsoft Edge.")}
+                </sui.Link>
+            </GenericBanner>
         }
 
         if (showWindowsStoreBanner) {
