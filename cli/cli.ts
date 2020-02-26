@@ -36,10 +36,25 @@ let forceBuild = false; // don't use cache
 
 Error.stackTraceLimit = 100;
 
+function parseHwVariant(parsed: commandParser.ParsedCommand) {
+    let hwvariant = parsed && parsed.flags["hwvariant"] as string;
+    if (hwvariant) {
+        // map known variants
+        const knowVariants: pxt.Map<string> = {
+            "f4": "stm32f401",
+            "d5": "samd51",
+            "p0": "rpi"
+        }
+        hwvariant = knowVariants[hwvariant.toLowerCase()] || hwvariant;
+        if (!/^hw---/.test(hwvariant)) hwvariant = 'hw---' + hwvariant;
+    }
+    return hwvariant;
+}
+
 function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     const cloud = parsed && parsed.flags["cloudbuild"];
     const local = parsed && parsed.flags["localbuild"];
-    let hwvariant = parsed && parsed.flags["hwvariant"] as string;
+    const hwvariant = parseHwVariant(parsed);
     forceBuild = parsed && !!parsed.flags["force"];
     if (cloud && local)
         U.userError("cannot specify local-build and cloud-build together");
@@ -54,8 +69,7 @@ function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     }
 
     if (hwvariant) {
-        if (!/^hw---/.test(hwvariant)) hwvariant = 'hw---' + hwvariant;
-        pxt.debug(`setting hardware variant to ${hwvariant}`);
+        pxt.log(`setting hardware variant to ${hwvariant}`);
         pxt.setHwVariant(hwvariant)
     }
 }
@@ -2849,10 +2863,7 @@ export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void
     pxt.log("installing dependencies...");
     ensurePkgDir();
     const packageName = parsed && parsed.args.length ? parsed.args[0] : undefined;
-    let hwvariant = parsed && parsed.flags["hwvariant"] as string;
-    if (hwvariant && !/^hw---/.test(hwvariant))
-        hwvariant = 'hw---' + hwvariant;
-
+    const hwvariant = parseHwVariant(parsed);
     return installPackageNameAsync(packageName)
         .then(() => addDepsAsync())
         .then(() => mainPkg.installAllAsync())
@@ -3117,6 +3128,116 @@ export function exportCppAsync(parsed: commandParser.ParsedCommand) {
                 fs.writeFileSync(trg, opts.extinfo.extensionFiles[s])
             }
         })
+}
+
+export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): Promise<void> {
+    const rx = /```codecard((.|\s)*)```/;
+    const tag = parsed.args[0] as string;
+    if (!tag)
+        U.userError("Missing tag")
+    const out = parsed.flags["out"] as string || "temp";
+    const outmd = parsed.flags["md"] as string;
+    const discourseRoot = pxt.appTarget.appTheme
+        && pxt.appTarget.appTheme.socialOptions
+        && pxt.appTarget.appTheme.socialOptions.discourse;
+    if (!discourseRoot)
+        U.userError("Target not configured for discourse");
+    if (outmd && !fs.existsSync(outmd))
+        U.userError(`${outmd} file not found`)
+    let md: string = outmd && fs.readFileSync(outmd, { encoding: "utf8" });
+
+    nodeutil.mkdirP(out);
+    let n = 0;
+    let cards: pxt.CodeCard[] = [];
+    // parse existing cards
+    if (md) {
+        md.replace(rx, (m, c) => {
+            cards = JSON.parse(c);
+            return "";
+        })
+    }
+    return pxt.discourse.topicsByTag(discourseRoot, tag)
+        .then(topics => Promise.mapSeries(topics, topic => {
+            pxt.log(`  ${topic.title}`)
+            return pxt.discourse.extractSharedIdFromPostUrl(topic.url)
+                .then(id => {
+                    if (!id) {
+                        pxt.log(`  --> unknown project id`)
+                        return Promise.resolve();
+                    }
+                    n++;
+                    return extractAsyncInternal(id, out, false)
+                        .then(() => {
+                            // does the current card have an image?
+                            let card = cards.filter(c => c.url == topic.url)[0];
+                            if (card && card.imageUrl) {
+                                pxt.log(`${card.name} already in markdown`)
+                                return Promise.resolve(); // already handled
+                            }
+                            // new card? add to list
+                            if (!card) {
+                                card = topic;
+                                card.description = "";
+                                cards.push(card);
+                            }
+
+                            const pfn = `./docs/static/discourse/${id}.`;
+                            if (md && !["png", "jpg", "gif"].some(ext => nodeutil.fileExistsSync(pfn + ext))) {
+                                return downloadImageAsync(id, topic, `https://makecode.com/api/${id}/thumb`)
+                                    .catch(e => {
+                                        // no image
+                                        pxt.debug(`no thumb ${e}`);
+                                        // use image from forum
+                                        if (topic.imageUrl)
+                                            return downloadImageAsync(id, topic, topic.imageUrl);
+                                        else
+                                            throw e; // bail out
+                                    })
+                            }
+                            return Promise.resolve();
+                        }).catch(e => {
+                            pxt.log(`error: project ${id} could not be loaded or no image`);
+                        });
+                })
+        }))
+        .then(() => {
+            if (md) {
+                // inject updated cards
+                cards.forEach(card => delete (card as any).id);
+                md = md.replace(rx, (m, c) => {
+                    return `\`\`\`codecard
+${JSON.stringify(cards, null, 4)}
+\`\`\``;
+                })
+                fs.writeFileSync(outmd, md, { encoding: "utf8" });
+            }
+            pxt.log(`downloaded ${n} programs from tag ${tag}`)
+        })
+
+    function downloadImageAsync(id: string, topic: pxt.CodeCard, url: string): Promise<void> {
+        return pxt.Util.requestAsync({
+            url: `https://makecode.com/api/${id}/thumb`,
+            method: "GET",
+            responseArrayBuffer: true,
+            headers: {
+                "accept": "image/*"
+            }
+        }).then(resp => {
+            if (resp.buffer) {
+                const m = /image\/(png|jpeg|gif)/.exec(resp.headers["content-type"] as string);
+                if (!m) {
+                    pxt.log(`unknown image type: ${resp.headers["content-type"]}`);
+                } else {
+                    let ext = m[1];
+                    if (ext == "jpeg") ext = "jpg";
+                    const ifn = `/static/discourse/${id}.${ext}`;
+                    const localifn = "./docs" + ifn;
+                    topic.imageUrl = ifn;
+                    nodeutil.writeFileSync(localifn, new Buffer(resp.buffer as ArrayBuffer));
+                }
+            }
+        });
+    }
 }
 
 export function formatAsync(parsed: commandParser.ParsedCommand) {
@@ -4671,7 +4792,8 @@ export function extractAsync(parsed: commandParser.ParsedCommand): Promise<void>
     const vscode = !!parsed.flags["code"];
     const out = parsed.flags["code"] || '.';
     const filename = parsed.args[0];
-    return extractAsyncInternal(filename, out as string, vscode);
+    return extractAsyncInternal(filename, out as string, vscode)
+        .then(() => { });
 }
 
 function isScriptId(id: string) {
@@ -4711,13 +4833,13 @@ function fetchTextAsync(filename: string): Promise<Buffer> {
         return readFileAsync(filename)
 }
 
-function extractAsyncInternal(filename: string, out: string, vscode: boolean): Promise<void> {
+function extractAsyncInternal(filename: string, out: string, vscode: boolean): Promise<string[]> {
     if (filename && nodeutil.existsDirSync(filename)) {
         pxt.log(`extracting folder ${filename}`);
         return Promise.all(fs.readdirSync(filename)
             .filter(f => /\.(hex|uf2)/.test(f))
             .map(f => extractAsyncInternal(path.join(filename, f), out, vscode)))
-            .then(() => { });
+            .then(() => [filename]);
     }
 
     return fetchTextAsync(filename)
@@ -4727,6 +4849,7 @@ function extractAsyncInternal(filename: string, out: string, vscode: boolean): P
                 pxt.debug('launching code...')
                 dirs.forEach(dir => openVsCode(dir));
             }
+            return dirs;
         })
 }
 
@@ -4766,16 +4889,16 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
         .then(() => {
             let str = buf.toString("utf8")
             if (str[0] == ":") {
-                console.log("Detected .hex file.")
+                pxt.debug("Detected .hex file.")
                 return unpackHexAsync(buf)
             } else if (str[0] == "U") {
-                console.log("Detected .uf2 file.")
+                pxt.debug("Detected .uf2 file.")
                 return unpackHexAsync(buf)
             } else if (str[0] == "{") {  // JSON
-                console.log("Detected .json file.")
+                pxt.debug("Detected .json file.")
                 return JSON.parse(str)
             } else if (buf[0] == 0x5d) { // JSZ
-                console.log("Detected .jsz/.pxt file.")
+                pxt.debug("Detected .jsz/.pxt file.")
                 return pxt.lzmaDecompressAsync(buf as any)
                     .then(str => JSON.parse(str))
             } else
@@ -4783,14 +4906,14 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
         })
         .then(json => {
             if (!json) {
-                console.log("Couldn't extract.")
+                pxt.log("Couldn't extract.")
                 return undefined;
             }
             if (json.meta && json.source) {
                 json = typeof json.source == "string" ? JSON.parse(json.source) : json.source
             }
             if (Array.isArray(json.scripts)) {
-                console.log("Legacy TD workspace.")
+                pxt.debug("Legacy TD workspace.")
                 json.projects = json.scripts.map((scr: any) => ({
                     name: scr.header.name,
                     files: oneFile(scr.source, scr.header.editor)
@@ -4799,8 +4922,8 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
             }
 
             if (json[pxt.CONFIG_NAME]) {
-                console.log("Raw JSON files.")
-                let cfg: pxt.PackageConfig = JSON.parse(json[pxt.CONFIG_NAME])
+                pxt.debug("Raw JSON files.")
+                let cfg: pxt.PackageConfig = pxt.Package.parseAndValidConfig(json[pxt.CONFIG_NAME])
                 let files = json
                 json = {
                     projects: [{
@@ -4812,7 +4935,7 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
 
             let prjs: SavedProject[] = json.projects
             if (!prjs) {
-                console.log("No projects found.")
+                pxt.log("No projects found.")
                 return undefined;
             }
             const dirs = writeProjects(prjs, outDir)
@@ -6137,6 +6260,26 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         argString: "<target-directory>"
     }, exportCppAsync);
 
+    p.defineCommand({
+        name: "downloaddiscoursetag",
+        aliases: ["ddt"],
+        help: "Download program for a discourse tag",
+        advanced: true,
+        argString: "<tag>",
+        flags: {
+            out: {
+                description: "output folder, default is temp",
+                argument: "out",
+                type: "string"
+            },
+            md: {
+                description: "path of the markdown file to generate",
+                argument: "out",
+                type: "string"
+            }
+        }
+    }, downloadDiscourseTagAsync)
+
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
         p.defineCommand({ name, help, onlineHelp, argString }, callback);
     }
@@ -6235,6 +6378,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     pxt.setAppTarget(trg)
 
     pxt.setCompileSwitches(process.env["PXT_COMPILE_SWITCHES"])
+    trg = pxt.appTarget
 
     let compileId = "none"
     if (trg.compileService) {

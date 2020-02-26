@@ -603,12 +603,14 @@ export function getPauseUntil() {
 
 // Map of defined snippets to blockIds, for when multiple
 // blocks (eg "for index" and "repeat") map to the same snippet
-let _blockIdMap: pxt.Map<string>;
+let _blockIdMap: pxt.Map<string[]>;
 export function blockIdMap() {
     if (!_blockIdMap) {
         _blockIdMap = {
-            "pxt_controls_for": "controls_repeat_ext"
+            "pxt_controls_for": ["controls_repeat_ext"]
         }
+        const targetIds = pxt.appTarget.blockIdMap;
+        if (targetIds) Object.keys(targetIds).forEach(id => _blockIdMap[id] = targetIds[id]);
     }
     return _blockIdMap;
 }

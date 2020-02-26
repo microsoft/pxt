@@ -8,7 +8,6 @@ import * as core from "./core";
 import * as cloud from "./cloud";
 import * as cloudsync from "./cloudsync";
 
-import * as discourse from "./discourse";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
 import { showAboutDialogAsync } from "./dialogs";
@@ -309,6 +308,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         const targetTheme = pxt.appTarget.appTheme;
         const githubUser = this.getData("github:user") as pxt.editor.UserInfo;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
+        const showDivider = targetTheme.selectLanguage || targetTheme.highContrast || githubUser;
 
         // tslint:disable react-a11y-anchors
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
@@ -321,7 +321,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
                 </div>
                 {lf("Sign out")}
             </div>}
-            <div className="ui divider"></div>
+            {showDivider && <div className="ui divider"></div>}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
             <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} />
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
@@ -585,11 +585,12 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         scr.tutorial ? scr.tutorial.tutorialStepInfo.length
                             : scr.tutorialCompleted ? scr.tutorialCompleted.steps
                                 : undefined;
+                    const ghid = pxt.github.parseRepoId(scr.githubId);
                     return <ProjectsCodeCard
                         key={'local' + scr.id + scr.recentUse}
                         // ref={(view) => { if (index === 1) this.latestProject = view }}
                         cardType="file"
-                        name={scr.name}
+                        name={(ghid && ghid.project) || scr.name}
                         time={scr.recentUse}
                         url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
                         scr={scr} index={index}
@@ -828,7 +829,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
     handleOpenForumUrlInEditor() {
         const { url } = this.props;
-        discourse.extractSharedIdFromPostUrl(url)
+        pxt.discourse.extractSharedIdFromPostUrl(url)
             .then(projectId => {
                 // if we have a projectid, load it
                 if (projectId)
@@ -950,6 +951,8 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
     renderCore() {
         const { visible } = this.state;
         const disableFileAccessinMaciOs = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
+        const showImport = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
+        const showCreateGithubRepo = pxt.appTarget?.cloud?.cloudProviders?.github;
         /* tslint:disable:react-a11y-anchors */
         return (
             <sui.Modal isOpen={visible} className="importdialog" size="small"
@@ -969,7 +972,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                             description={lf("Open files from your computer")}
                             onClick={this.importHex}
                         /> : undefined}
-                    {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing ?
+                    {showImport &&
                         <codecard.CodeCardView
                             ariaLabel={lf("Open a shared project URL or GitHub repo")}
                             role="button"
@@ -979,10 +982,8 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                             name={lf("Import URL...")}
                             description={lf("Open a shared project URL or GitHub repo")}
                             onClick={this.importUrl}
-                        /> : undefined}
-                    {pxt.appTarget.cloud
-                        && pxt.appTarget.cloud.cloudProviders
-                        && pxt.appTarget.cloud.cloudProviders.github ?
+                        />}
+                    {showCreateGithubRepo &&
                         <codecard.CodeCardView
                             ariaLabel={lf("Clone or create your own GitHub repository")}
                             role="button"
@@ -992,7 +993,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                             name={lf("Your GitHub Repo...")}
                             description={lf("Clone or create your own GitHub repository")}
                             onClick={this.cloneGithub}
-                        /> : undefined}
+                        />}
                 </div>
             </sui.Modal>
         )
@@ -1087,7 +1088,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                         <sui.Input ref="filenameinput" id={"projectNameInput"}
                             ariaLabel={lf("Type a name for your project")} autoComplete={false}
                             value={projectName || ''} onChange={this.handleChange} onEnter={this.save}
-                            selectOnMount={!mobile} autoFocus={!mobile}/>
+                            selectOnMount={!mobile} autoFocus={!mobile} />
                     </div>
                 </div>
             </sui.Modal>
@@ -1159,16 +1160,25 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             });
         }
 
-        pxt.tickEvent('newprojectdialog.projectcreate', undefined, { interactiveConsent: true });
+        pxt.tickEvent(
+            'newprojectdialog.projectcreate',
+            { language: languageRestriction },
+            { interactiveConsent: true }
+        );
         this.createProjectCb = null;
     }
 
     onExpandedMenuHide = () => {
+        pxt.tickEvent('newprojectdialog.codeoptions.hide');
         // reset language restrictions when user closes the options menu;
         // it's an 'advanced' feature that we want an easy escape hatch for.
         this.setState({
             languageRestriction: pxt.editor.LanguageRestriction.Standard
         });
+    }
+
+    onExpandedMenuShow = () => {
+        pxt.tickEvent('newprojectdialog.codeoptions.show');
     }
 
     renderCore() {
@@ -1217,7 +1227,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             </div>
             {chooseLanguageRestrictionOnNewProject && <div>
                 <br />
-                <sui.ExpandableMenu title={lf("Code options")} onHide={this.onExpandedMenuHide}>
+                <sui.ExpandableMenu title={lf("Code options")} onShow={this.onExpandedMenuShow} onHide={this.onExpandedMenuHide}>
                     <sui.Select options={langOpts} onChange={this.handleLanguageChange} aria-label={lf("Select Language")} />
                 </sui.ExpandableMenu>
             </div>}
@@ -1370,4 +1380,3 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
         )
     }
 }
-

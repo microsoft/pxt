@@ -58,6 +58,7 @@ declare namespace pxt {
         queryVariants?: Map<AppTarget>; // patches on top of the current AppTarget using query url regex
         unsupportedBrowsers?: BrowserOptions[]; // list of unsupported browsers for a specific target (eg IE11 in arcade). check browserutils.js browser() function for strings
         checkdocsdirs?: string[]; // list of folders for checkdocs, irrespective of SUMMARY.md
+        blockIdMap?: Map<string[]>; // list of target-specific blocks that are "synonyms" (eg. "agentturnright" and "minecraftAgentTurn")
     }
 
     interface BrowserOptions {
@@ -785,8 +786,12 @@ declare namespace ts.pxtc {
 
         syntaxInfo?: SyntaxInfo;
 
-        alwaysDecompileOnStart?: boolean; // decompiler only
-        allowedArgumentTypes?: string[]; // decompiler-only; the types allowed for user-defined function arguments in blocks (unlisted types will cause grey blocks)
+        // decompiler only
+        alwaysDecompileOnStart?: boolean; 
+        // decompiler-only; the types allowed for user-defined function arguments in blocks (unlisted types will cause grey blocks)
+        allowedArgumentTypes?: string[]; 
+        // decompiler only
+        snippetMode?: boolean;
 
         embedMeta?: string;
         embedBlob?: string; // base64

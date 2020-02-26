@@ -1,6 +1,6 @@
 # MakeCode Arcade Released for General Availability!
 
-**Posted on January 6th, 2019 by [Jaqster](https://github.com/jaqster)**
+**Posted on January 6th, 2020 by [Jaqster](https://github.com/jaqster)**
 
 Ringing in the New Year with a New Release! The MakeCode team is very happy and proud to announce that [MakeCode Arcade](https://arcade.makecode.com) has been officially released for general availability today!
 
