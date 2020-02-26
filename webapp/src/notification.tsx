@@ -133,8 +133,6 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
             && !isApp
             && !pxt.shell.isSandboxMode();
 
-
-
         if (showExperiments) {
             const displayTime = 20 * 1000; // 20 seconds
             return <GenericBanner id="experimentsbanner" parent={this.props.parent} bannerType={"negative"} displayTime={displayTime} >
@@ -144,7 +142,7 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
             </GenericBanner>
         }
 
-        if (showExperimentalBanner) {``
+        if (showExperimentalBanner) {
             const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
             return (
                 <GenericBanner id="experimental" parent={this.props.parent} bannerType={"negative"} >
@@ -159,7 +157,7 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
             const displayTime = 120 * 1000; // 120 seconds
             return <GenericBanner id="ieDeprecated" parent={this.props.parent} bannerType={"negative"} displayTime={displayTime} >
                 <sui.Icon icon="warning circle" />
-                <sui.Link className="link" target="_blank" ariaLabel={lf("IE will not be supported from June 2020")} href="/browsers" onClick={this.handleBannerClick}>
+                <sui.Link className="link" target="_blank" ariaLabel={lf("Internet Explorer will not be supported from June 2020")} href="/browsers" onClick={this.handleBannerClick}>
                         {lf("Internet Explorer (IE) will not be supported from June 2020. Please upgrade to Microsoft Edge.")}
                 </sui.Link>
             </GenericBanner>
