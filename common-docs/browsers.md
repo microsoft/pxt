@@ -49,7 +49,7 @@ version of one of the following:
 
 Internet Explorer (IE) is **not** supported. Please upgrade to Microsoft Edge ([Download](https://www.microsoft.com/en-us/edge) or use one of the other supported browsers. You can check the settings to see if you are running Interent Explorer.
 
-![](/static/configurations/windows-version.png)
+![Internet Explorer version](/static/configurations/ie-version.png)
 
 ## How to check your OS or browser
 
