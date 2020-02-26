@@ -5,7 +5,7 @@
 You need one of these browsers running on Windows 7, Windows 8, Windows 8.1, or
 Windows 10:
 
-* Microsoft Edge
+* Microsoft Edge ([Download](https://www.microsoft.com/en-us/edge))
 * Google Chrome
 * Mozilla Firefox
 
@@ -15,18 +15,20 @@ You need one of these browsers running on OS X 10.9 Mavericks, OS X 10.10
 Yosemite, OS X 10.11 El Capitan, or macOS 10.12 Sierra:
 
 * Safari
-* Google Chrome
+* Microsoft Edge
+* Google Chrome 
 * Mozilla Firefox
 
 ## iOS
 
-* Safari 9 or higher
+* Safari 
+* Microsoft Edge
+* Google Chrome
 
 ## Android
 
 * Google Chrome
-* Chrome for Android
-* Firefox for Android
+* Microsoft Edge
 
 ## Linux
 
@@ -36,12 +38,18 @@ here](/raspberry-pi).
 You need to be running a Linux distribution recent enough to run the most recent
 version of one of the following:
 
-* Google Chrome, or Chromium (default in pixel)
-* Mozilla Firefox, Iceweasel, or Seamonkey
+* Google Chrome or Chromium
+* Mozilla Firefox
 
 ## Chrome OS
 
-* Version 69 or higher
+* Version 70 or higher
+
+## Internet Explorer
+
+Internet Explorer (IE) is **not** supported. Please upgarde to Microsoft Edge ([Download](https://www.microsoft.com/en-us/edge)). You can check the settings to see if you are running Interent Explorer.
+
+![](/static/configurations/windows-version.png)
 
 ## How to check your OS or browser
 
