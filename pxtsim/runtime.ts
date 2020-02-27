@@ -408,7 +408,10 @@ namespace pxsim {
             createBuffer: BufferMethods.createBuffer,
         }
         myRT.control = {
-            inBackground: thread.runInBackground
+            inBackground: thread.runInBackground,
+            createBuffer: BufferMethods.createBuffer,
+            dmesg: (s: string) => console.log("DMESG: " + s),
+            __log: (pri: number, s: string) => console.log("LOG: " + s.trim()),
         }
     }
 
