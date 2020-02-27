@@ -447,6 +447,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const step = tutorialStepInfo[tutorialStep];
         const unplugged = tutorialStep < tutorialStepInfo.length - 1 && step && !!step.unplugged;
 
+        this.props.parent.clearUserPoke();
+
         if (!unplugged) {
             this.toggleHint();
         }
@@ -554,7 +556,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                         </div>
                     </div>
                     <div className="avatar-container">
-                        {hasHint && <sui.Button className={`ui circular label blue hintbutton hidelightbox ${hasHint && this.props.pokeUser ? 'shake' : ''}`} icon="lightbulb outline" tabIndex={-1} onClick={hintOnClick} onKeyDown={sui.fireClickOnEnter} />}
+                        {hasHint && <sui.Button className={`ui circular label blue hintbutton hidelightbox ${hasHint && this.props.pokeUser ? 'shake flash' : ''}`} icon="lightbulb outline" tabIndex={-1} onClick={hintOnClick} onKeyDown={sui.fireClickOnEnter} />}
                         {hasHint && <HintTooltip ref="hinttooltip" pokeUser={this.props.pokeUser} text={tutorialHintTooltip} onClick={hintOnClick} />}
                         <TutorialHint ref="tutorialhint" parent={this.props.parent} />
                     </div>
