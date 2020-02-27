@@ -135,7 +135,7 @@ function fatal(msg: string) {
     U.userError(msg)
 }
 
-function getOpenOcdPath(cmds = "") {
+function getOpenOcdPath(cmds = "", showLog = false) {
     function latest(tool: string) {
         let dir = path.join(pkgDir, "tools/", tool, "/")
         if (!fs.existsSync(dir)) fatal(dir + " doesn't exists; " + tool + " not installed in Arduino?")
@@ -207,15 +207,10 @@ gdb_memory_map disable
 $_TARGETNAME configure -event gdb-attach {
     echo "Halting target"
     halt
-}
-
-$_TARGETNAME configure -event gdb-detach {
-    echo "Resetting target"
-    reset
 }`
 
     fs.writeFileSync("built/debug.cfg", `
-log_output built/openocd.log
+${showLog ? "" : "log_output built/openocd.log"}
 ${script}
 ${cmds}
 `)
@@ -304,6 +299,19 @@ async function initGdbServerAsync() {
         let g = gdbServer
         gdbServer = null
         return g.io.disconnectAsync()
+    })
+}
+
+async function flashAsync() {
+    const r = pxtc.UF2.toBin(fs.readFileSync("built/binary.uf2"))
+    fs.writeFileSync("built/binary.bin", r.buf)
+    let toolPaths = getOpenOcdPath(`
+        program built/binary.bin ${r.start} verify reset exit
+    `, true)
+    let oargs = toolPaths.args
+    await nodeutil.spawnAsync({
+        cmd: oargs[0],
+        args: oargs.slice(1)
     })
 }
 
@@ -961,6 +969,11 @@ export async function startAsync(gdbArgs: string[]) {
     let mapsrc = ""
     if (/docker/.test(buildengine.thisBuild.buildPath)) {
         mapsrc = "set substitute-path /src " + buildengine.thisBuild.buildPath
+    }
+
+    if (gdbArgs[0] == "flash") {
+        await flashAsync()
+        return
     }
 
     let toolPaths = getOpenOcdPath()
