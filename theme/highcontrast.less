@@ -543,16 +543,36 @@
     }
 
     /* Tutorial */
-    .ui.message {
+    .ui.tutorialsegment {
         background-color: @HCbackground !important;
         color: @HCtextColor !important;
 
         .tutorialmessage {
-            outline: 1px solid @HCtextColor !important;
             border: none !important;
 
             &:focus {
                 color: @selected !important;
+            }
+
+        }
+
+        .tooltip, .tooltip:before {
+            background-color: @HCbackground;
+            border: 2px solid @HCtextColor;
+            color: @HCtextColor;
+        }
+
+        .tooltip:before {
+            border-color: @HCtextColor transparent transparent @HCtextColor !important;
+        }
+
+        .tutorialhint {
+            border-color: @HCtextColor;
+            background-color: @HCbackground;
+            color: @HCtextColor;
+
+            &:before {
+                border-right-color: @HCtextColor;
             }
         }
     }

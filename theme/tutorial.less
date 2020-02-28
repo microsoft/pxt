@@ -288,6 +288,9 @@ code.lang-filterblocks {
     }
 }
 
+// TODO jwunderl: before merging, with ie dropped should be able to change this to just use a pair of
+// css vars for color, so the color can be customized at runtime for the glow without
+// duping the keyframes all over the place (for high contrast, hour of code, etc)
 .bubble-pulse-animation (@name, @size, @color) {
     @keyframes @name {
         0% { }
