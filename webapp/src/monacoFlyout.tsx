@@ -213,6 +213,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
     protected getBlockStyle = (color: string) => {
         return {
             backgroundColor: color,
+            border: this.props.parent.state.highContrast ? `2px solid ${color}` : "none",
             fontSize: `${this.props.parent.settings.editorFontSize}px`,
             lineHeight: `${this.props.parent.settings.editorFontSize + 16}px`
         };

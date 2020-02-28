@@ -100,7 +100,7 @@
         }
     }
 
-    /* Blockly toolbox */
+    /* Toolbox */
     .pxtToolbox:not(.invertedToolbox) {
         span.blocklyTreeLabel {
             color: @HCblocklyTreeLabelColor;
@@ -111,6 +111,14 @@
         .blocklyTreeRow:not(.blocklyTreeSelected):hover,
         .blocklyTreeRow:not(.blocklyTreeSelected):focus {
             background-color: lighten(@HCblocklyToolboxColor, 25.0);
+        }
+    }
+
+    #monacoEditor .monacoDraggableBlock {
+        background: none !important;
+
+        span.argName {
+            border: 1px solid rgba(255, 255, 255, .7);
         }
     }
 
