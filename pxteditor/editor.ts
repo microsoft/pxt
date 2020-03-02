@@ -76,6 +76,7 @@ namespace pxt.editor {
         debugging?: boolean;
         bannerVisible?: boolean;
         pokeUserComponent?: string;
+        flashHint?: boolean;
 
         highContrast?: boolean;
         print?: boolean;
@@ -228,6 +229,7 @@ namespace pxt.editor {
         showTutorialHint(): void;
         pokeUserActivity(): void;
         stopPokeUserActivity(): void;
+        clearUserPoke(): void;
 
         anonymousPublishAsync(screenshotUri?: string): Promise<string>;
 
