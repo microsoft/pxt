@@ -251,7 +251,8 @@ namespace pxt {
         pxt.debug(`app variant: ${variant}`);
         if (!opts.force && (appTargetVariant === variant || (!appTargetVariant && !variant))) return;
         appTargetVariant = variant
-        reloadAppTargetVariant(opts.temporary);
+        if (pxt.appTarget)
+            reloadAppTargetVariant(opts.temporary);
     }
 
     // notify when app target was changed
