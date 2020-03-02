@@ -315,10 +315,20 @@ async function flashAsync() {
     })
 }
 
-async function getMemoryAsync(addr: number, bytes: number) {
+async function getMemoryAsync(addr: number, bytes: number): Promise<Buffer> {
     if (gdbServer) {
         return gdbServer.readMemAsync(addr, bytes)
             .then((b: Uint8Array) => Buffer.from(b))
+    }
+
+    const maxMem = 32 * 1024
+
+    if (bytes > maxMem) {
+        let bufs: Buffer[] = []
+        for (let ptr = 0; ptr < bytes; ptr += maxMem) {
+            bufs.push(await getMemoryAsync(addr + ptr, Math.min(maxMem, bytes - ptr)))
+        }
+        return Buffer.concat(bufs)
     }
 
     let toolPaths = getOpenOcdPath(`
@@ -374,15 +384,24 @@ function VAR_BLOCK_WORDS(vt: number) {
     return (((vt) << 12) >> (12 + 2))
 }
 
-export async function dumpMemAsync(filename: string) {
+export async function dumpMemAsync(args: string[]) {
     await initGdbServerAsync()
 
     let memStart = findAddr("_sdata", true) || findAddr("__data_start__")
     memStart &= ~0xffff
     let memEnd = findAddr("_estack", true) || findAddr("__StackTop")
+
+    if (!isNaN(parseInt(args[0]))) {
+        memStart = parseInt(args[0])
+        memEnd = parseInt(args[1])
+        args.shift()
+        args.shift()
+    }
+
     console.log(`memory: ${hex(memStart)} - ${hex(memEnd)}`)
+
     let mem = await getMemoryAsync(memStart, memEnd - memStart)
-    fs.writeFileSync(filename, mem)
+    fs.writeFileSync(args[0], mem)
 }
 
 export async function dumpheapAsync(filename?: string) {
