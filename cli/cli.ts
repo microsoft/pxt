@@ -4141,7 +4141,7 @@ function dumpheapAsync(c: commandParser.ParsedCommand) {
 function dumpmemAsync(c: commandParser.ParsedCommand) {
     ensurePkgDir()
     return mainPkg.loadAsync()
-        .then(() => gdb.dumpMemAsync(c.args[0]))
+        .then(() => gdb.dumpMemAsync(c.args))
 }
 
 async function buildDalDTSAsync(c: commandParser.ParsedCommand) {
@@ -6105,7 +6105,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
     p.defineCommand({
         name: "memdump",
         help: "attempt to dump raw memory image using openocd",
-        argString: "<memdump-file.bin>",
+        argString: "[startAddr stopAddr] <memdump-file.bin>",
         aliases: ["dumpmem"],
         advanced: true,
     }, dumpmemAsync);
