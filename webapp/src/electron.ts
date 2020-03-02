@@ -51,6 +51,8 @@ export function initElectron(projectView: ProjectView): void {
         }
 
         switch (status) {
+            case pxt.electron.UpdateStatus.UpdateAvailable:
+                // Downloading update in background; nothing to do
             case pxt.electron.UpdateStatus.Ok:
                 // No update available; nothing to do
                 return;
