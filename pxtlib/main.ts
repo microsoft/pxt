@@ -385,6 +385,7 @@ namespace pxt {
         targetId: string; // "microbit",
         simUrl: string; // "https://trg-microbit.userpxt.io/beta---simulator"
         simserviceworkerUrl: string; // https://trg-microbit.userpxt.io/beta---simserviceworker
+        simworkerconfigUrl: string; // https://trg-microbit.userpxt.io/beta---simworkerconfig
         partsUrl?: string; // /beta---parts
         runUrl?: string; // "/beta---run"
         docsUrl?: string; // "/beta---docs"
@@ -411,6 +412,7 @@ namespace pxt {
             targetId: appTarget ? appTarget.id : "",
             simUrl: "/sim/simulator.html",
             simserviceworkerUrl: "/simulatorserviceworker.js",
+            simworkerconfigUrl: "/sim/workerConfig.js",
             partsUrl: "/sim/siminstructions.html"
         }
         return r

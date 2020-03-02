@@ -50,7 +50,7 @@ function initSimulatorServiceWorker() {
 
         // Check to see if there are any extra sim URLs to be cached by the target
         try {
-            importScripts(`/sim/workerConfig.js`);
+            importScripts(`@simworkerconfigUrl@`);
         }
         catch (e) {
             // This file is optional in the target, so ignore 404 response
@@ -116,17 +116,7 @@ function initSimulatorServiceWorker() {
     }
 
     function resolveURLs(urls: string[]) {
-        const simPrefix = `/sim/`;
-        const escapedSimPrefix = "/" + "sim" + "/";
-
-        const cdnPrefix = `/cdn/`;
-        const escapedCdnPrefix = "/" + "cdn" + "/";
-
-        return dedupe(urls.map(url => url
-            .replace(escapedSimPrefix, simPrefix)
-            .replace(escapedCdnPrefix, cdnPrefix)
-            .trim()
-        ).filter(url => !!url));
+        return dedupe(urls.map(url => url.trim()).filter(url => !!url));
     }
 
     function getRefFromCacheName(name: string) {

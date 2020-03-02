@@ -38,6 +38,7 @@ function initWebappServiceWorker() {
     const webappUrls = [
         // The current page
         `@targetUrl@/` + ref,
+        `@simUrl@`,
 
         // webapp files
         `/blb/semantic.js`,

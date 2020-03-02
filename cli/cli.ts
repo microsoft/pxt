@@ -960,6 +960,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "targetId": opts.target,
             "simUrl": opts.localDir + "simulator.html",
             "simserviceworkerUrl": opts.localDir + "simulatorserviceworker.js",
+            "simworkerconfigUrl": opts.localDir + "workerConfig.js",
             "partsUrl": opts.localDir + "siminstructions.html",
             "runUrl": opts.localDir + "run.html",
             "docsUrl": opts.localDir + "docs.html",
@@ -1008,6 +1009,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "simulator.html",
         "sim.manifest",
         "sim.webmanifest",
+        "workerConfig.js"
     ]
 
     nodeutil.mkdirP("built/uploadrepl")
@@ -1057,7 +1059,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                     content = server.expandHtml(content)
                 }
 
-                if (/^sim/.test(fileName)) {
+                if (/^sim/.test(fileName) || /^workerConfig/.test(fileName)) {
                     // just force blobs for everything in simulator manifest
                     content = content.replace(/\/(cdn|sim)\//g, "/blb/")
                 }
