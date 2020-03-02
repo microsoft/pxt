@@ -135,7 +135,7 @@ function fatal(msg: string) {
     U.userError(msg)
 }
 
-function getOpenOcdPath(cmds = "") {
+function getOpenOcdPath(cmds = "", showLog = false) {
     function latest(tool: string) {
         let dir = path.join(pkgDir, "tools/", tool, "/")
         if (!fs.existsSync(dir)) fatal(dir + " doesn't exists; " + tool + " not installed in Arduino?")
@@ -207,15 +207,10 @@ gdb_memory_map disable
 $_TARGETNAME configure -event gdb-attach {
     echo "Halting target"
     halt
-}
-
-$_TARGETNAME configure -event gdb-detach {
-    echo "Resetting target"
-    reset
 }`
 
     fs.writeFileSync("built/debug.cfg", `
-log_output built/openocd.log
+${showLog ? "" : "log_output built/openocd.log"}
 ${script}
 ${cmds}
 `)
@@ -307,10 +302,33 @@ async function initGdbServerAsync() {
     })
 }
 
-async function getMemoryAsync(addr: number, bytes: number) {
+async function flashAsync() {
+    const r = pxtc.UF2.toBin(fs.readFileSync("built/binary.uf2"))
+    fs.writeFileSync("built/binary.bin", r.buf)
+    let toolPaths = getOpenOcdPath(`
+        program built/binary.bin ${r.start} verify reset exit
+    `, true)
+    let oargs = toolPaths.args
+    await nodeutil.spawnAsync({
+        cmd: oargs[0],
+        args: oargs.slice(1)
+    })
+}
+
+async function getMemoryAsync(addr: number, bytes: number): Promise<Buffer> {
     if (gdbServer) {
         return gdbServer.readMemAsync(addr, bytes)
             .then((b: Uint8Array) => Buffer.from(b))
+    }
+
+    const maxMem = 32 * 1024
+
+    if (bytes > maxMem) {
+        let bufs: Buffer[] = []
+        for (let ptr = 0; ptr < bytes; ptr += maxMem) {
+            bufs.push(await getMemoryAsync(addr + ptr, Math.min(maxMem, bytes - ptr)))
+        }
+        return Buffer.concat(bufs)
     }
 
     let toolPaths = getOpenOcdPath(`
@@ -366,15 +384,24 @@ function VAR_BLOCK_WORDS(vt: number) {
     return (((vt) << 12) >> (12 + 2))
 }
 
-export async function dumpMemAsync(filename: string) {
+export async function dumpMemAsync(args: string[]) {
     await initGdbServerAsync()
 
     let memStart = findAddr("_sdata", true) || findAddr("__data_start__")
     memStart &= ~0xffff
     let memEnd = findAddr("_estack", true) || findAddr("__StackTop")
+
+    if (!isNaN(parseInt(args[0]))) {
+        memStart = parseInt(args[0])
+        memEnd = parseInt(args[1])
+        args.shift()
+        args.shift()
+    }
+
     console.log(`memory: ${hex(memStart)} - ${hex(memEnd)}`)
+
     let mem = await getMemoryAsync(memStart, memEnd - memStart)
-    fs.writeFileSync(filename, mem)
+    fs.writeFileSync(args[0], mem)
 }
 
 export async function dumpheapAsync(filename?: string) {
@@ -961,6 +988,11 @@ export async function startAsync(gdbArgs: string[]) {
     let mapsrc = ""
     if (/docker/.test(buildengine.thisBuild.buildPath)) {
         mapsrc = "set substitute-path /src " + buildengine.thisBuild.buildPath
+    }
+
+    if (gdbArgs[0] == "flash") {
+        await flashAsync()
+        return
     }
 
     let toolPaths = getOpenOcdPath()

@@ -4,14 +4,6 @@
 /// <reference path="../../built/pxtsim.d.ts"/>
 /// <reference path="../../built/pxtwinrt.d.ts"/>
 
-// redirect for unsupported browsers (IE11) before loading
-(function _() {
-    if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
-        window.location.href = "/browsers";
-        return;
-    }
-})();
-
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as workspace from "./workspace";
@@ -3390,6 +3382,10 @@ export class ProjectView
         this.hintManager.stopPokeUserActivity();
     }
 
+    clearUserPoke() {
+        this.setState({ pokeUserComponent: null });
+    }
+
     private tutorialCardHintCallback() {
         let tutorialOptions = this.state.tutorialOptions;
         tutorialOptions.tutorialHintCounter = tutorialOptions.tutorialHintCounter + 1;
@@ -3399,7 +3395,7 @@ export class ProjectView
             tutorialOptions: tutorialOptions
         });
 
-        setTimeout(() => { this.setState({ pokeUserComponent: null }); }, 3000);
+        setTimeout(() => this.clearUserPoke(), 10000);
     }
 
     ///////////////////////////////////////////////////////////
@@ -4116,6 +4112,13 @@ document.addEventListener("DOMContentLoaded", () => {
     pxt.setBundledApiInfo((window as any).pxtTargetBundle.apiInfo);
 
     enableAnalytics()
+
+    if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
+        pxt.tickEvent("unsupported");
+        window.location.href = "/browsers";
+        core.showLoading("browsernotsupported", lf("Sorry, this browser is not supported."));
+        return;
+    }
 
     initLogin();
     hash = parseHash();

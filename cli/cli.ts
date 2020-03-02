@@ -1870,62 +1870,6 @@ function buildWebStringsAsync() {
     return Promise.resolve()
 }
 
-function thirdPartyNoticesAsync(parsed: commandParser.ParsedCommand): Promise<void> {
-    const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
-    let tpn = `
-/*!----------------- MakeCode (PXT) ThirdPartyNotices -------------------------------------------------------
-
-MakeCode (PXT) uses third party material from the projects listed below.
-The original copyright notice and the license under which Microsoft
-received such third party material are set forth below. Microsoft
-reserves all other rights not expressly granted, whether by
-implication, estoppel or otherwise.
-
-In the event that we accidentally failed to list a required notice, please
-bring it to our attention. Post an issue or email us:
-
-           makecode@microsoft.com
-
----------------------------------------------
-Third Party Code Components
----------------------------------------------
-
-    `;
-
-    function lic(dep: string) {
-        const license = path.join("node_modules", dep, "LICENSE");
-        if (fs.existsSync(license))
-            return fs.readFileSync(license, 'utf8');
-        const readme = fs.readFileSync("README.md", "utf8");
-        const lic = /## License([^#]+)/.exec(readme);
-        if (lic)
-            return lic[1];
-
-        return undefined;
-    }
-
-    for (const dep of Object.keys(pkg.dependencies).concat(Object.keys(pkg.devDependencies))) {
-        pxt.log(`scanning ${dep}`)
-        const license = lic(dep);
-        if (!license)
-            pxt.log(`no license for ${dep} at ${license}`);
-        else
-            tpn += `
------------------ ${dep} -------------------
-
-${license}
-
----------------------------------------------
-`
-    }
-
-    tpn += `
-------------- End of ThirdPartyNotices --------------------------------------------------- */`;
-
-    nodeutil.writeFileSync("THIRD-PARTY-NOTICES.txt", tpn, { encoding: 'utf8' });
-    return Promise.resolve();
-}
-
 function updateDefaultProjects(cfg: pxt.TargetBundle) {
     let defaultProjects = [
         pxt.BLOCKS_PROJECT_NAME,
@@ -4214,7 +4158,7 @@ function dumpheapAsync(c: commandParser.ParsedCommand) {
 function dumpmemAsync(c: commandParser.ParsedCommand) {
     ensurePkgDir()
     return mainPkg.loadAsync()
-        .then(() => gdb.dumpMemAsync(c.args[0]))
+        .then(() => gdb.dumpMemAsync(c.args))
 }
 
 async function buildDalDTSAsync(c: commandParser.ParsedCommand) {
@@ -6117,7 +6061,6 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         }
     }, c => pyconv.convertAsync(c.args, !!c.flags["internal"]))
 
-    advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
     p.defineCommand({
         name: "cherrypick",
         aliases: ["cp"],
@@ -6179,7 +6122,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
     p.defineCommand({
         name: "memdump",
         help: "attempt to dump raw memory image using openocd",
-        argString: "<memdump-file.bin>",
+        argString: "[startAddr stopAddr] <memdump-file.bin>",
         aliases: ["dumpmem"],
         advanced: true,
     }, dumpmemAsync);

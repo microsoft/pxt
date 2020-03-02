@@ -100,7 +100,7 @@
         }
     }
 
-    /* Blockly toolbox */
+    /* Toolbox */
     .pxtToolbox:not(.invertedToolbox) {
         span.blocklyTreeLabel {
             color: @HCblocklyTreeLabelColor;
@@ -111,6 +111,14 @@
         .blocklyTreeRow:not(.blocklyTreeSelected):hover,
         .blocklyTreeRow:not(.blocklyTreeSelected):focus {
             background-color: lighten(@HCblocklyToolboxColor, 25.0);
+        }
+    }
+
+    #monacoEditor .monacoDraggableBlock {
+        background: none !important;
+
+        span.argName {
+            border: 1px solid rgba(255, 255, 255, .7);
         }
     }
 
@@ -543,16 +551,36 @@
     }
 
     /* Tutorial */
-    .ui.message {
+    .ui.tutorialsegment {
         background-color: @HCbackground !important;
         color: @HCtextColor !important;
 
         .tutorialmessage {
-            outline: 1px solid @HCtextColor !important;
             border: none !important;
 
             &:focus {
                 color: @selected !important;
+            }
+
+        }
+
+        .tooltip, .tooltip:before {
+            background-color: @HCbackground;
+            border: 2px solid @HCtextColor;
+            color: @HCtextColor;
+        }
+
+        .tooltip:before {
+            border-color: @HCtextColor transparent transparent @HCtextColor !important;
+        }
+
+        .tutorialhint {
+            border-color: @HCtextColor;
+            background-color: @HCbackground;
+            color: @HCtextColor;
+
+            &:before {
+                border-right-color: @HCtextColor;
             }
         }
     }

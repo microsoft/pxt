@@ -83,6 +83,13 @@ If you want to create your own tutorial, more documentation describing how to do
 
 Yes! We have prepared a list of tips and tricks for teachers. [Check it out](/teachers).
 
+## How do I choose the folder where my downloaded projects are saved?
+
+Most browsers will let you turn on a setting to require the browser to first ask you where you want to save your files before they are downloaded.
+
+* On Microsoft Edge you open the browser menu and select **Settings**. In the "General" settings pane, scroll down to the **Downloads** section. Turn **ON** the "Ask me what to do with each download" setting.
+* In Chrome, you go to the **Settings** item in the browser menu. On the "Settings" page, click on **Advanced** to view more settings. Under the advanced settings find the **Downloads** section. In that section, turn **ON** the "Ask where to save each file before downloading" setting.
+
 ## #specific
 
 ## I don't see my question here. What's next?

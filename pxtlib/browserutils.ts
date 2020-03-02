@@ -209,6 +209,7 @@ namespace pxt.BrowserUtils {
 
     let hasLoggedBrowser = false
 
+    // Note that IE11 is no longer supported in any target. Redirect handled in docfiles/pxtweb/browserRedirect.ts
     export function isBrowserSupported(): boolean {
         if (!navigator) {
             return true; //All browsers define this, but we can't make any predictions if it isn't defined, so assume the best
@@ -219,7 +220,7 @@ namespace pxt.BrowserUtils {
             return true;
 
         // Check target theme to see if this browser is supported
-        let unsupportedBrowsers = pxt.appTarget?.unsupportedBrowsers
+        const unsupportedBrowsers = pxt.appTarget?.unsupportedBrowsers
             || (window as any).pxtTargetBundle?.unsupportedBrowsers as BrowserOptions[];
         if (unsupportedBrowsers?.some(b => b.id == browser())) {
             return false
@@ -234,8 +235,7 @@ namespace pxt.BrowserUtils {
         const isRecentEdge = isEdge();
         const isRecentSafari = isSafari() && v >= 9;
         const isRecentOpera = (isOpera() && isChrome()) && v >= 21;
-        const isRecentIE = isIE() && v >= 11;
-        const isModernBrowser = isRecentChrome || isRecentFirefox || isRecentEdge || isRecentSafari || isRecentOpera || isRecentIE
+        const isModernBrowser = isRecentChrome || isRecentFirefox || isRecentEdge || isRecentSafari || isRecentOpera
 
         //In the future this should check for the availability of features, such
         //as web workers

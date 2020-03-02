@@ -1202,12 +1202,12 @@ __flash_checksums:
                 for (let extinfo of otherVariants) {
                     const localOpts = U.flatClone(opts0)
                     localOpts.extinfo = extinfo
-                    pxt.setAppTargetVariant(extinfo.appVariant, { temporary: true })
+                    //pxt.setAppTargetVariant(extinfo.appVariant, { temporary: true })
                     hexfile.setupFor(localOpts.target, extinfo)
                     assembleAndPatch(src, bin, localOpts, cres)
                 }
             } finally {
-                pxt.setAppTargetVariant(null, { temporary: true })
+                //pxt.setAppTargetVariant(null, { temporary: true })
                 hexfile.setupFor(opts0.target, opts0.extinfo)
             }
     }
