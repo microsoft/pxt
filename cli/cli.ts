@@ -3094,10 +3094,12 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
     let n = 0;
     let newcards = 0;
     let cards: pxt.CodeCard[] = [];
+    let lastCard: pxt.CodeCard = undefined;
     // parse existing cards
     if (md) {
         md.replace(rx, (m, c) => {
             cards = JSON.parse(c);
+            lastCard = cards.pop();
             return "";
         })
     }
@@ -3151,6 +3153,8 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
         .then(() => {
             if (md) {
                 // inject updated cards
+                if (lastCard)
+                    cards.push(lastCard);
                 cards.forEach(card => delete (card as any).id);
                 md = md.replace(rx, (m, c) => {
                     return `\`\`\`codecard
