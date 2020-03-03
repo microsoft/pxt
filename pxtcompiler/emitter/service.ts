@@ -6,13 +6,6 @@
 namespace ts.pxtc {
 
     export const placeholderChar = "◊";
-    export const defaultImgLit = `
-. . . . .
-. . . . .
-. . # . .
-. . . . .
-. . . . .
-`
 
     export interface FunOverride {
         n: string;
@@ -1463,18 +1456,24 @@ namespace ts.pxtc.service {
             service = ts.createLanguageService(host)
         }
     }
-    const defaultImgLit = `\`
+    const defaultTsImgList = `\`
 . . . . .
 . . . . .
 . . # . .
 . . . . .
 . . . . .
 \``;
+    const defaultPyImgList = `"""
+. . . . .
+. . . . .
+. . # . .
+. . . . .
+. . . . .
+"""`;
 
     export function getSnippet(apis: ApisInfo, takenNames: pxt.Map<SymbolInfo>, runtimeOps: pxt.RuntimeOptions, fn: SymbolInfo, decl: ts.FunctionLikeDeclaration, python?: boolean): string {
         const PY_INDENT: string = (pxt as any).py.INDENT;
 
-        let findex = 0;
         let preStmt = "";
 
         let fnName = ""
@@ -1499,22 +1498,6 @@ namespace ts.pxtc.service {
 
         const blocksInfo = blocksInfoOp(apis, runtimeOps.bannedCategories);
         const blocksById = blocksInfo.blocksById
-
-        function getShadowSymbol(paramName: string): SymbolInfo | null {
-            // TODO(dz): unify this with auto-complete smarts?
-            let shadowBlock = (attrs._shadowOverrides || {})[paramName]
-            if (!shadowBlock)
-                return null
-            let sym = blocksById[shadowBlock]
-            if (!sym)
-                return null
-            if (sym.attributes.shim === "TD_ID" && sym.parameters.length) {
-                let realName = sym.parameters[0].type
-                let realSym = apis.byQName[realName]
-                sym = realSym || sym
-            }
-            return sym
-        }
 
         function getParameterDefault(param: ParameterDeclaration) {
             const typeNode = param.type;
@@ -1588,7 +1571,9 @@ namespace ts.pxtc.service {
             // simple types we can determine defaults for
             // TODO: move into getDefaultValueOfType
             switch (typeNode.kind) {
-                case SK.StringKeyword: return (name == "leds" ? defaultImgLit : `""`);
+                case SK.StringKeyword: return (name == "leds"
+                    ? (python ? defaultPyImgList : defaultTsImgList)
+                    : `""`);
                 case SK.NumberKeyword: return "0";
                 case SK.BooleanKeyword: return python ? "False" : "false";
                 case SK.ArrayType: return "[]";
