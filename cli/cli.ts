@@ -3118,12 +3118,14 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                                 pxt.log(`${card.name} already in markdown`)
                                 return Promise.resolve(); // already handled
                             }
-                            // new card? add to list
-                            if (!card) {
-                                card = topic;
-                                card.description = "";
-                                cards.push(card);
-                            }
+
+                            card = topic;
+                            card.name = topic.title;
+                            delete card.title;
+                            card.name = card.name
+                                .replace(/^\s*(introducing|presenting):?\s*/i, '');
+                            card.description = "";
+                            cards.push(card);
 
                             const pfn = `./docs/static/discourse/${id}.`;
                             if (md && !["png", "jpg", "gif"].some(ext => nodeutil.fileExistsSync(pfn + ext))) {
@@ -3176,8 +3178,19 @@ ${JSON.stringify(cards, null, 4)}
                     if (ext == "jpeg") ext = "jpg";
                     const ifn = `/static/discourse/${id}.${ext}`;
                     const localifn = "./docs" + ifn;
-                    topic.imageUrl = ifn;
                     nodeutil.writeFileSync(localifn, new Buffer(resp.buffer as ArrayBuffer));
+                    if (/\.(jpg|png)/.test(ifn))
+                        topic.imageUrl = ifn;
+                    else if (/\.gif/.test(ifn)) {
+                        topic.largeImageUrl = ifn;
+                        topic.imageUrl = `/static/discourse/${id}.png`;
+                        // render png
+                        nodeutil.spawnAsync({
+                            cmd: "magick",
+                            cwd: `./static/discourse`,
+                            args: [`${id}.gif[0]`, `${id}.png`]
+                        })
+                    }
                 }
             }
         });
