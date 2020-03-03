@@ -10,7 +10,7 @@ declare namespace pxt {
         url: string;
         experimentName?: string;
         locales?: string[];
-        shuffled?: GalleryShuffle;
+        shuffle?: GalleryShuffle;
     }
     interface TargetConfig {
         packages?: PackagesConfig;

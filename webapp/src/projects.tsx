@@ -222,7 +222,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 .map(galleryName => {
                     const galProps = galleries[galleryName] as pxt.GalleryProps | string
                     const url = typeof galProps === "string" ? galProps : galProps.url
-                    const shuffle : pxt.GalleryShuffle = typeof galProps === "string" ? undefined : galProps.shuffled;
+                    const shuffle : pxt.GalleryShuffle = typeof galProps === "string" ? undefined : galProps.shuffle;
                     return <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment" role="region" aria-label={pxt.Util.rlf(galleryName)}>
                         <h2 className="ui header heading">{pxt.Util.rlf(galleryName)} </h2>
                         <div className="content">
