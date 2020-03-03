@@ -3092,6 +3092,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
 
     nodeutil.mkdirP(out);
     let n = 0;
+    let newcards = 0;
     let cards: pxt.CodeCard[] = [];
     // parse existing cards
     if (md) {
@@ -3119,6 +3120,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                                 return Promise.resolve(); // already handled
                             }
 
+                            newcards++;
                             card = topic;
                             card.name = topic.title;
                             delete card.title;
@@ -3155,9 +3157,9 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
 ${JSON.stringify(cards, null, 4)}
 \`\`\``;
                 })
-                fs.writeFileSync(outmd, md, { encoding: "utf8" });
+                nodeutil.writeFileSync(outmd, md, { encoding: "utf8" });
             }
-            pxt.log(`downloaded ${n} programs from tag ${tag}`)
+            pxt.log(`downloaded ${n} programs (${newcards} new) from tag ${tag}`)
         })
 
     function downloadImageAsync(id: string, topic: pxt.CodeCard, url: string): Promise<void> {
@@ -3187,7 +3189,7 @@ ${JSON.stringify(cards, null, 4)}
                         // render png
                         nodeutil.spawnAsync({
                             cmd: "magick",
-                            cwd: `./static/discourse`,
+                            cwd: `./docs/static/discourse`,
                             args: [`${id}.gif[0]`, `${id}.png`]
                         })
                     }
