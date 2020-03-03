@@ -821,11 +821,16 @@ namespace ts.pxtc.service {
         }
     }
 
+    function getLastApiInfo(opts: CompileOptions) {
+        if (!lastApiInfo)
+            lastApiInfo = internalGetApiInfo(service.getProgram(), opts.jres)
+        return lastApiInfo;
+    }
+
     function addApiInfo(opts: CompileOptions) {
         if (!opts.apisInfo && opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
-            if (!lastApiInfo)
-                lastApiInfo = internalGetApiInfo(service.getProgram(), opts.jres)
-            opts.apisInfo = U.clone(lastApiInfo.apis)
+            const info = getLastApiInfo(opts);
+            opts.apisInfo = U.clone(info.apis)
         }
     }
 
@@ -866,6 +871,16 @@ namespace ts.pxtc.service {
                 let res = transpile.pyToTs(opts)
                 if (res.globalNames)
                     lastGlobalNames = res.globalNames
+            }
+            else {
+                const info = getNodeAndSymbolAtLocation(service.getProgram(), v.fileName, v.position, getLastApiInfo(opts).apis);
+
+                if (info) {
+                    const [node, sym] = info;
+                    opts.syntaxInfo.symbols = [sym];
+                    opts.syntaxInfo.beginPos = node.getStart();
+                    opts.syntaxInfo.endPos = node.getEnd();
+                }
             }
             return opts.syntaxInfo
         },
@@ -956,17 +971,6 @@ namespace ts.pxtc.service {
                 }
             } else {
                 tsPos = position
-            }
-
-
-            function findInnerMostNodeAtPosition(n: Node, position: number): Node {
-                for (let child of n.getChildren()) {
-                    let s = child.getStart()
-                    let e = child.getEnd()
-                    if (s <= position && position < e)
-                        return findInnerMostNodeAtPosition(child, position)
-                }
-                return (n && n.kind === SK.SourceFile) ? null : n;
             }
 
             const prog = service.getProgram()
@@ -1884,5 +1888,31 @@ namespace ts.pxtc.service {
 
     function completionSymbols(symbols: SymbolInfo[], weight = 0): CompletionSymbol[] {
         return symbols.map(s => completionSymbol(s, weight));
+    }
+
+    function getNodeAndSymbolAtLocation(program: Program, filename: string, position: number, apiInfo: ApisInfo): [Node, SymbolInfo] {
+        const source = program.getSourceFile(filename);
+        const checker = program.getTypeChecker();
+
+        const node = findInnerMostNodeAtPosition(source, position);
+
+        if (node) {
+            const symbol = checker.getSymbolAtLocation(node);
+            if (symbol) {
+                return [node, apiInfo.byQName[checker.getFullyQualifiedName(symbol)]];
+            }
+        }
+
+        return null;
+    }
+
+    function findInnerMostNodeAtPosition(n: Node, position: number): Node | null {
+        for (let child of n.getChildren()) {
+            let s = child.getStart()
+            let e = child.getEnd()
+            if (s <= position && position < e)
+                return findInnerMostNodeAtPosition(child, position)
+        }
+        return (n && n.kind === SK.SourceFile) ? null : n;
     }
 }
