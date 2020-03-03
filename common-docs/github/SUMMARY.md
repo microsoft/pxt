@@ -9,6 +9,8 @@
     * [release](/github/release)
     * [pages](/github/pages)
     * [classroom](/github/classroom)
+    * [public assignment](/github/public-assignment)
+    * [private assignment](/github/private-assignment)
     * [test extension](/github/test-extension)
     * [token](/github/token)
     * [offline](/github/offline)
