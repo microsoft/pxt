@@ -34,7 +34,7 @@ The student will have to invite the teacher as **collaborator**.
 
 #### GitHub and 404
 
-If you try the invitation link and it gives you a **404** error, it most likely means that you are not signed in with GitHub. 
+If you try the invitation link and it gives you a **404** error, it most likely means that you are not signed in with GitHub.
 
 ![GitHub 404 page](/static/github/classroom/404.png)
 
@@ -45,7 +45,7 @@ If you try the invitation link and it gives you a **404** error, it most likely 
 It's time to work! Student can do all their work and use the **commit & push** button to save their work. It is a good idea to encourage them to commit whenever they feel
 they have made progress and always provide a meaningful description of the changes.
 
-### Step 4: Teacher reviews the commit history
+## Step 4: Teacher reviews the commit history
 
 The teacher can use the [MakeCode GitHub Explorer](https://makecode.com/github-explorer) browse the repositories of a user easily. If needed the teacher can also review the entire history of the project on GitHub.
 

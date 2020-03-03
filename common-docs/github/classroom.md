@@ -11,16 +11,10 @@ Students can create new repositories, public or private, for each assignments. R
 There are different ways to use repositories, in order of complexity:
 
 * [public assignments](/github/public-assignments) using public repositories. Easy to setup but code is public.
-* [private assignments](/github/private-assigments) using private repositories. More setup steps but code is only visible to student and teacher.
+* [private assignments](/github/private-assignments) using private repositories. More setup steps but code is only visible to student and teacher.
 * [GitHub classroom](https://classroom.github.com) provides an integrated classroom management system that automates a lot of the repository creation steps.
 
 ### ~hint
-
-#### GitHub Classroom and MakeCode
-
-Make sure to grant organization access to the [Microsoft MakeCode for GitHub](https://github.com/settings/connections/applications/1919c4da46b6e87c4469) application.
-
-### ~
 
 ## GitHub Explorer
 
