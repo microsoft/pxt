@@ -5,9 +5,12 @@
 
 declare namespace pxt {
     // targetconfig.json
+    type GalleryShuffle = "daily";
     interface GalleryProps {
-        url: string,
-        experimentName?: string
+        url: string;
+        experimentName?: string;
+        locales?: string[];
+        shuffle?: GalleryShuffle;
     }
     interface TargetConfig {
         packages?: PackagesConfig;
@@ -786,9 +789,9 @@ declare namespace ts.pxtc {
         syntaxInfo?: SyntaxInfo;
 
         // decompiler only
-        alwaysDecompileOnStart?: boolean; 
+        alwaysDecompileOnStart?: boolean;
         // decompiler-only; the types allowed for user-defined function arguments in blocks (unlisted types will cause grey blocks)
-        allowedArgumentTypes?: string[]; 
+        allowedArgumentTypes?: string[];
         // decompiler only
         snippetMode?: boolean;
 
