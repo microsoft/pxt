@@ -222,13 +222,13 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 .map(galleryName => {
                     const galProps = galleries[galleryName] as pxt.GalleryProps | string
                     const url = typeof galProps === "string" ? galProps : galProps.url
-                    const shuffle : pxt.GalleryShuffle = typeof galProps === "string" ? undefined : galProps.shuffle;
+                    const shuffle: pxt.GalleryShuffle = typeof galProps === "string" ? undefined : galProps.shuffle;
                     return <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment" role="region" aria-label={pxt.Util.rlf(galleryName)}>
                         <h2 className="ui header heading">{pxt.Util.rlf(galleryName)} </h2>
                         <div className="content">
-                            <ProjectsCarousel ref={`${selectedCategory == galleryName ? 'activeCarousel' : ''}`} 
-                                key={`${galleryName}_carousel`} parent={this.props.parent} 
-                                name={galleryName} 
+                            <ProjectsCarousel ref={`${selectedCategory == galleryName ? 'activeCarousel' : ''}`}
+                                key={`${galleryName}_carousel`} parent={this.props.parent}
+                                name={galleryName}
                                 path={url}
                                 onClick={this.chgGallery} setSelected={this.setSelected}
                                 shuffle={shuffle}
@@ -450,8 +450,8 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     // shuffle array
                     const now = new Date(Date.now());
                     const seed = now.toDateString();
-                    this.prevGalleries.sort((l, r) => 
-                        ts.pxtc.Util.codalHash16(l.name + seed) 
+                    this.prevGalleries.sort((l, r) =>
+                        ts.pxtc.Util.codalHash16(l.name + seed)
                         - ts.pxtc.Util.codalHash16(r.name + seed)
                     );
                     // add last back
