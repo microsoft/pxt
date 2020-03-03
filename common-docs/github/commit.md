@@ -10,6 +10,10 @@ on the **GitHub** button. The arrow means that there are changes are **local**. 
 The GitHub view contains the [diffs](/github/diff) that represents every **local** change.
 If the changes look good, click on **commit & push changes** to create a **commit** and **push** to GitHub. Once the commit is pushed, all your code is safely stored in GitHub!
 
+## Review & revert
+
+It is a good habit to **review** your **local** changes before commiting; just like you review your answer sheet before returning a test. If you detect incorrect changes, you can decide to fix them right away, **revert** the entire file or even commit them and fix them later.
+
 ## See Also
 
 [GitHub Commit Documentation](https://help.github.com/en/categories/committing-changes-to-your-project)
