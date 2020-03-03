@@ -448,7 +448,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     // keep last one
                     const last = this.prevGalleries.pop();
                     // shuffle array
-                    const now = new Date(Date.now());
+                    const now = new Date();
                     const seed = now.toDateString();
                     this.prevGalleries.sort((l, r) =>
                         ts.pxtc.Util.codalHash16(l.name + seed)
