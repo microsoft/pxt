@@ -3138,7 +3138,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                                         // no image
                                         pxt.debug(`no thumb ${e}`);
                                         // use image from forum
-                                        if (topic.imageUrl)
+                                        if (topic.imageUrl && !/\.svg$/.test(topic.imageUrl))
                                             return downloadImageAsync(id, topic, topic.imageUrl);
                                         else
                                             throw e; // bail out
