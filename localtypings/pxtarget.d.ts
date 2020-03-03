@@ -5,9 +5,12 @@
 
 declare namespace pxt {
     // targetconfig.json
+    type GalleryShuffle = "daily";
     interface GalleryProps {
-        url: string,
-        experimentName?: string
+        url: string;
+        experimentName?: string;
+        locales?: string[];
+        shuffled?: GalleryShuffle;
     }
     interface TargetConfig {
         packages?: PackagesConfig;
