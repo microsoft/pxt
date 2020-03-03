@@ -41,44 +41,6 @@ namespace ts.pxtc {
         "parseInt": { n: "int", t: ts.SyntaxKind.NumberKeyword, snippet: 'int("0")' }
     }
 
-    function renderDefaultVal(apis: pxtc.ApisInfo, p: pxtc.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
-        if (p.initializer) return p.initializer
-        if (p.default) return p.default
-        if (p.type == "number") return "0"
-        if (p.type == "boolean") return "false"
-        else if (p.type == "string") {
-            if (imgLit) {
-                imgLit = false
-                return "`" + defaultImgLit + cursorMarker + "`";
-            }
-            return `"${cursorMarker}"`
-        }
-        let si = apis ? Util.lookup(apis.byQName, p.type) : undefined;
-        if (si && si.kind == SymbolKind.Enum) {
-            let en = Util.values(apis.byQName).filter(e => e.namespace == p.type)[0]
-            if (en)
-                return en.namespace + "." + en.name;
-        }
-        let m = /^\((.*)\) => (.*)$/.exec(p.type)
-        if (m)
-            return `(${m[1]}) => {\n    ${cursorMarker}\n}`
-        return placeholderChar;
-    }
-
-    export function renderCall(apiInfo: pxtc.ApisInfo, si: SymbolInfo): string {
-        return `${si.namespace}.${si.name}${renderParameters(apiInfo, si)};`;
-    }
-
-    export function renderParameters(apis: pxtc.ApisInfo, si: SymbolInfo, cursorMarker: string = ''): string {
-        if (si.parameters) {
-            let imgLit = !!si.attributes.imageLiteral
-            return "(" + si.parameters
-                .filter(p => !p.initializer)
-                .map(p => renderDefaultVal(apis, p, imgLit, cursorMarker)).join(", ") + ")"
-        }
-        return '';
-    }
-
     export function snakify(s: string) {
         const up = s.toUpperCase()
         const lo = s.toLowerCase()
