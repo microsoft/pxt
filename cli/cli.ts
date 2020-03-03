@@ -3092,11 +3092,14 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
 
     nodeutil.mkdirP(out);
     let n = 0;
+    let newcards = 0;
     let cards: pxt.CodeCard[] = [];
+    let lastCard: pxt.CodeCard = undefined;
     // parse existing cards
     if (md) {
         md.replace(rx, (m, c) => {
             cards = JSON.parse(c);
+            lastCard = cards.pop();
             return "";
         })
     }
@@ -3118,12 +3121,15 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                                 pxt.log(`${card.name} already in markdown`)
                                 return Promise.resolve(); // already handled
                             }
-                            // new card? add to list
-                            if (!card) {
-                                card = topic;
-                                card.description = "";
-                                cards.push(card);
-                            }
+
+                            newcards++;
+                            card = topic;
+                            card.name = topic.title;
+                            delete card.title;
+                            card.name = card.name
+                                .replace(/^\s*(introducing|presenting):?\s*/i, '');
+                            card.description = "";
+                            cards.push(card);
 
                             const pfn = `./docs/static/discourse/${id}.`;
                             if (md && !["png", "jpg", "gif"].some(ext => nodeutil.fileExistsSync(pfn + ext))) {
@@ -3132,7 +3138,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                                         // no image
                                         pxt.debug(`no thumb ${e}`);
                                         // use image from forum
-                                        if (topic.imageUrl)
+                                        if (topic.imageUrl && !/\.svg$/.test(topic.imageUrl))
                                             return downloadImageAsync(id, topic, topic.imageUrl);
                                         else
                                             throw e; // bail out
@@ -3147,15 +3153,17 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
         .then(() => {
             if (md) {
                 // inject updated cards
+                if (lastCard)
+                    cards.push(lastCard);
                 cards.forEach(card => delete (card as any).id);
                 md = md.replace(rx, (m, c) => {
                     return `\`\`\`codecard
 ${JSON.stringify(cards, null, 4)}
 \`\`\``;
                 })
-                fs.writeFileSync(outmd, md, { encoding: "utf8" });
+                nodeutil.writeFileSync(outmd, md, { encoding: "utf8" });
             }
-            pxt.log(`downloaded ${n} programs from tag ${tag}`)
+            pxt.log(`downloaded ${n} programs (${newcards} new) from tag ${tag}`)
         })
 
     function downloadImageAsync(id: string, topic: pxt.CodeCard, url: string): Promise<void> {
@@ -3176,8 +3184,19 @@ ${JSON.stringify(cards, null, 4)}
                     if (ext == "jpeg") ext = "jpg";
                     const ifn = `/static/discourse/${id}.${ext}`;
                     const localifn = "./docs" + ifn;
-                    topic.imageUrl = ifn;
                     nodeutil.writeFileSync(localifn, new Buffer(resp.buffer as ArrayBuffer));
+                    if (/\.(jpg|png)/.test(ifn))
+                        topic.imageUrl = ifn;
+                    else if (/\.gif/.test(ifn)) {
+                        topic.largeImageUrl = ifn;
+                        topic.imageUrl = `/static/discourse/${id}.png`;
+                        // render png
+                        nodeutil.spawnAsync({
+                            cmd: "magick",
+                            cwd: `./docs/static/discourse`,
+                            args: [`${id}.gif[0]`, `${id}.png`]
+                        })
+                    }
                 }
             }
         });
