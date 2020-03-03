@@ -9,7 +9,7 @@ You don't need to know anything special beyond what you've already learned in Ma
 
 ## Classroom usage
 
-GitHub can be used to create and collect assignments from students. [Learn more...](/github/classroom) or quickly review their repositories in the [Explorer](/github/explorer)
+GitHub can be used to create and collect assignments from students. [Learn more...](/github/classroom)
 
 ## Repository as web sites
 
