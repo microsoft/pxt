@@ -8,3 +8,7 @@ on **commit & push** to save your changes in GitHub.
 ## Is there an easy way to review all the repositories from a user?
 
 Yes, use the [Explorer](/github/explorer).
+
+## My organization won't allow the "Microsoft MakeCode for GitHub" app?
+
+If you cannot get our GitHub app approved, use a developer token instead in the sign in dialog.
