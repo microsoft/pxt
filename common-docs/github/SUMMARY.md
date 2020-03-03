@@ -1,6 +1,7 @@
 # MakeCode with GitHub
 
 * [GitHub](/github)
+    * [Getting started](/github/getting-started)
     * [commit](/github/commit)
     * [history](/github/history)
     * [fork](/github/fork)
