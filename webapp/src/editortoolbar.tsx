@@ -150,7 +150,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     protected getCompileButton(view: View, collapsed?: boolean): JSX.Element[] {
         const targetTheme = pxt.appTarget.appTheme;
         const { compiling, isSaving } = this.props.parent.state;
-        const compileLoading = !!compiling;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
         const downloadIcon = targetTheme.downloadIcon || "download";
         const downloadText = targetTheme.useUploadMessage ? lf("Upload") : lf("Download");
@@ -161,9 +160,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         let displayRight = false;
         if (isSaving) {
             downloadButtonClasses += "disabled ";
-        } else if (compileLoading) {
+        } else if (compiling) {
             downloadButtonClasses += "loading disabled ";
         }
+
         switch (view) {
             case View.Mobile:
                 downloadButtonClasses += "download-button-full";

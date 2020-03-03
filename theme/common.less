@@ -1159,6 +1159,7 @@ p.ui.font.small {
         left: 4rem; /* match left pos of #boardview */
         bottom: -3rem;
         width: 10rem; /* match width of div.simframe */
+        max-width: 35vw;
         height: 9rem;
     }
     #root:not(.fullscreensim):not(.headless) {
@@ -1166,6 +1167,7 @@ p.ui.font.small {
             position: absolute;
             left: 4rem;
             width: 10rem;
+            max-width: 35vw;
         }
         #filelist .simtoolbar {
             margin: 0.5em 0;
@@ -1236,6 +1238,7 @@ p.ui.font.small {
     div.simframe {
         display:inline-block;
         width: 10rem;
+        max-width: 35rem;
         margin-right:0.5rem;
         padding-bottom: 81.96% !important;
     }
@@ -1315,6 +1318,14 @@ p.ui.font.small {
     }
     #root #editordropdown .menu .item .text {
         display: inline-block!important;
+    }
+}
+
+/* Thin view, likely zoomed in; toggles need  */
+@media only screen and (max-height: 450px) {
+    #mobiletogglesim.collapse-button.toggle-hide {
+        z-index: @editorToolsZIndex + 1;
+        bottom: 0 !important;
     }
 }
 
