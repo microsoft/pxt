@@ -56,6 +56,10 @@ You can override the markdown file from the project used for the content of the 
 where MakeCode will load the ``filename.md`` file from the project. Don't forget to add this file in the
 ``files`` list in ``pxt.json``.
 
+### Testing
+
+When looking at the diff of a markdown file (``.md``) in the GitHub view, a ``Preview as Tutorial`` will be avaiable to load through that particular file as a tutorial. Commiting to GitHub is not needed to do the local testing.
+
 ### Localization
 
 Localized copies of the tutorial can be added to a subfolder ``_locales/[isocode]/[filename].md`` 
