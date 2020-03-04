@@ -5,14 +5,14 @@ On GitHub, **saved changes** are called commits. Each commit has an associated c
 ## Commit & push
 
 Make any change in the code editor and you will notice that an up arrow is displayed
-on the **GitHub** button. The arrow means that there are changes are **local**. They stored on your computer and they need to get saved to GitHub. Click on that button to open the **GitHub view**.
+on the **GitHub** button. The arrow means that there are **local** changes. They are stored on your computer and they need to get saved on GitHub. Click on that button to open the **GitHub view**.
 
-The GitHub view contains the [diffs](/github/diff) that represents every **local** change.
-If the changes look good, click on **commit & push changes** to create a **commit** and **push** to GitHub. Once the commit is pushed, all your code is safely stored in GitHub!
+The GitHub view contains the [diffs](/github/diff) that represent every **local** change.
+If the changes look correct, click on **commit & push changes** to create a **commit** of the changes and **push** them to GitHub. Once the commit is pushed, all of your code is safely stored in GitHub!
 
 ## Review & revert
 
-It is a good habit to **review** your **local** changes before commiting; just like you review your answer sheet before returning a test. If you detect incorrect changes, you can decide to fix them right away, **revert** the entire file or even commit them and fix them later.
+It's good practice to **review** your **local** changes before commiting; just like you review your answer sheet before turning in a test. If you find some changes that are incorrect, you can decide to fix them right away, **revert** the entire file, or even just **commit** them so you can make any fixes later.
 
 ## See Also
 
