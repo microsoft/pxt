@@ -21,7 +21,7 @@ PXT support cooperative multithreading and implicit async functions.
 
 If your simulator references images or external resources then it might not work
 when offline. You can fix this by configuring the service worker for the simulator
-that PXT creates. Inside of your target's `sim/public folder`, add a file named
+that PXT creates. Inside of your target's `sim/public` folder, add a file named
 `workerConfig.js` with the following contents:
 
 ```javascript

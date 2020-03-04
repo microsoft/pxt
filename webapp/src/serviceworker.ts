@@ -150,13 +150,10 @@ function initWebappServiceWorker() {
                 // Delete all caches that "belong" to this ref except for the current version
                 const toDelete = cacheNames.filter(c => {
                     const cacheRef = getRefFromCacheName(c);
-                    if (cacheRef === null || (cacheRef === ref && c !== refCacheName)) {
-                        return true;
-                    }
-                    return false;
+                    return cacheRef === null || (cacheRef === ref && c !== refCacheName);
                 })
 
-                return  Promise.all(
+                return Promise.all(
                     toDelete.map(name => caches.delete(name))
                 );
             })
