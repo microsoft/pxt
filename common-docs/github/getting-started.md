@@ -14,7 +14,7 @@ A **repository** is used to organize a single project. Repositories will contain
 
 ### Sign in
 
-If you haven't signed in yet with GitHub, you will be redirected to the GitHub sign page. On your first use of MakeCode, you will also be asked to authorize the **Microsoft MakeCode with GitHub** app. This integrates MakeCode
+If you haven't signed in yet with GitHub, you will be redirected to the GitHub sign in page. On your first use of MakeCode, you will also be asked to authorize the **Microsoft MakeCode with GitHub** app. This integrates MakeCode with GitHub using our GitHub app.
 
 Advanced users can use a [developer token](/github/token) so that they can work directly with GitHub without having to sign in with the app.
 
