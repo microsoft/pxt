@@ -648,9 +648,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                     </h3>
                     {needsCommit && <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {diffFiles && <DiffView parent={this} diffFiles={diffFiles} cacheKey={gs.commit.sha} allowRevert={true} showWhitespaceDiff={true} blocksMode={isBlocksMode} showConflicts={true} />}
+                    <HistoryZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
                     {master && <ReleaseZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {!isBlocksMode && <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
-                    <HistoryZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
                     <div></div>
                 </div>
             </div>
@@ -1354,8 +1354,8 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
         return <div className={`ui item link`} role="button" onClick={onClick} onKeyDown={sui.fireClickOnEnter}>
             <div className="content">
                 {expanded && <sui.Button loading={loading} className="right floated" text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />}
-                <div className="header">
-                    {date.toLocaleString()}
+                <div className="meta">
+                    <span>{date.toLocaleTimeString()}</span>
                 </div>
                 <div className="description">{commit.message}</div>
                 {expanded && diffFiles && <DiffView parent={parent} blocksMode={false} diffFiles={diffFiles} cacheKey={commit.sha} />}
@@ -1389,6 +1389,15 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
             this.getData(`gh-commits:${githubId.fullName}#${gs.commit.sha}`) as pxt.github.CommitInfo[];
         const loading = expanded && !commits;
 
+        // group commits by day
+        const days: pxt.Map<pxt.github.CommitInfo[]> = {};
+        commits && commits.forEach(commit => {
+            const day = new Date(Date.parse(commit.author.date)).toLocaleDateString();
+            let dcommit = days[day];
+            if (!dcommit) dcommit = days[day] = [];
+            dcommit.push(commit);
+        })
+
         return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
             <div className="ui header">{lf("History")}</div>
             {(loading || !expanded) && <div className="ui field">
@@ -1401,19 +1410,27 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
                     {sui.helpIconLink("/github/history", lf("Learn more about history of commits."))}
                 </span>
             </div>}
-            {commits && <div className="ui divided items">
-                {commits.map(commit => <CommitView
-                    key={'commit' + commit.sha}
-                    onClick={() => {
-                        pxt.tickEvent("github.history.selectcommit", undefined, { interactiveConsent: true })
-                        const { selectedCommit } = this.state;
-                        this.setState({ selectedCommit: commit == selectedCommit ? undefined : commit })
-                    }}
-                    commit={commit}
-                    parent={parent}
-                    githubId={githubId}
-                    expanded={selectedCommit === commit}
-                />)}
+            {commits && <div className="ui items">
+                {Object.keys(days).map(day =>
+                    <div className="ui item" key={"commitday" + day}>
+                        <div className="content">
+                            <div className="ui header">{day}</div>
+                            <div className="ui divided items">
+                                {days[day].map(commit => <CommitView
+                                    key={'commit' + commit.sha}
+                                    onClick={() => {
+                                        pxt.tickEvent("github.history.selectcommit", undefined, { interactiveConsent: true })
+                                        const { selectedCommit } = this.state;
+                                        this.setState({ selectedCommit: commit == selectedCommit ? undefined : commit })
+                                    }}
+                                    commit={commit}
+                                    parent={parent}
+                                    githubId={githubId}
+                                    expanded={selectedCommit === commit}
+                                />)}
+                            </div>
+                        </div>
+                    </div>)}
             </div>}
         </div>
     }
