@@ -1,19 +1,19 @@
 # Public assignments
 
-This section describes a methodology to manage assignment via GitHub. 
-Each assigment is a **public repository** under the student account.
+This page describes a methodology to manage public assignments via GitHub. 
+Each assignment is a **public repository** under the student's account.
 
-Let's illustrate it for a **homework** asignment.
+Let's illustrate the actions for a **homework** assignment.
 
 ## Step 1: Students create a new public repository 
 
-From the MakeCode editor, the student create a **public** repository for the assignment that will be hosted under their account. Students should all name the repository with the assignment name (e.g. "homework" in this example).
+From the MakeCode editor, the student creates a **public** repository for the assignment that will be hosted under their account. All students should name the repository using the same name as the assignment (e.g. "homework" in this example).
 
 ## Step 2: Student change, commit, push cycle
 
-It's time to work! Student can do all their work and use the **commit & push** button to save their work. It is a good idea to encourage them to commit whenever they feel
-they have made progress and always provide a meaningful description of the changes.
+It's time to work! Students do their work and use the **commit & push** button to save it. It is a good idea to encourage them to commit whenever they feel
+they have made progress and to provide a meaningful description of the changes made.
 
 ## Step 3: Teacher reviews the commit history
 
-The teacher can use the [MakeCode GitHub Explorer](https://makecode.com/github-explorer) browse the repositories of a user easily. If needed the teacher can also review the entire history of the project on GitHub.
+The teacher can use the [MakeCode GitHub Explorer](https://makecode.com/github-explorer) to easily browse the repositories of a user. If needed the teacher can also review the entire history of the project on GitHub.
