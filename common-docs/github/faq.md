@@ -11,4 +11,4 @@ Yes, use the [Explorer](/github/explorer).
 
 ## My organization won't allow the "Microsoft MakeCode for GitHub" app?
 
-If you cannot get our GitHub app approved, use a developer token instead in the sign in dialog.
+If you can't get our GitHub app approved, use a developer token in the sign in dialog instead.
