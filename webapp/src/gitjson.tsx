@@ -975,12 +975,15 @@ ${content}
 
     renderCore() {
         const { diffFiles, blocksMode } = this.props;
+        const targetTheme = pxt.appTarget.appTheme;
+        const invertedTheme = targetTheme.invertedMenu && targetTheme.invertedMonaco;
+
         const displayDiffFiles = blocksMode
             && !pxt.options.debug ? diffFiles.filter(f => /\.blocks$/.test(f.name))
             : diffFiles;
         return displayDiffFiles.length ? <div className="ui">
             {displayDiffFiles.map(df => this.showDiff(df))}
-        </div> : <div className="ui segment">
+        </div> : <div className={`ui ${invertedTheme ? "inverted " : ""}segment`}>
                 {lf("No local changes found.")}
             </div>;
     }
