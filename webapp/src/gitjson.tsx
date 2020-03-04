@@ -71,11 +71,6 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         let cache = this.diffCache[cachePrefix + f.name]
         if (!cache || cache.file.file !== f.file) {
             cache = { file: f } as any
-            if (/\.md$/.test(f.name))
-                cache.testAction = {
-                    text: lf("Preview as Tutorial"),
-                    url: `#tutorial:${this.props.parent.state.header.id}:${f.name.replace(/\.[a-z]+$/, '')}`
-                }
             this.diffCache[cachePrefix + f.name] = cache
         }
         return cache;
@@ -791,8 +786,15 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
         if (virtualF == f.file) virtualF = undefined;
 
         cache.file = f
-        if (this.props.allowRevert)
+        if (this.props.allowRevert) {
             cache.revert = () => this.props.parent.revertFileAsync(f, deletedFiles, addedFiles, virtualF);
+            if (/\.md$/.test(cache.file.name)) {
+                cache.testAction = {
+                    text: lf("Preview as Tutorial"),
+                    url: `#tutorial:${this.props.parent.props.parent.state.header.id}:${cache.file.name.replace(/\.[a-z]+$/, '')}`
+                }
+            }
+        }
         cache.diff = createDiff()
         return cache.diff;
     }
