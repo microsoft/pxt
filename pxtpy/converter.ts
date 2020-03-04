@@ -1984,9 +1984,9 @@ namespace pxt.py {
                         orderedArgs[idx] = kw.value
                 }
 
-                // skip optional args
+                // skip optional args or args with initializers
                 for (let i = orderedArgs.length - 1; i >= 0; i--) {
-                    if (formals[i].initializer == "undefined" && orderedArgs[i] == null)
+                    if (!!formals[i].initializer && orderedArgs[i] == null)
                         orderedArgs.pop()
                     else
                         break
