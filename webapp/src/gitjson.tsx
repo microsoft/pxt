@@ -742,7 +742,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
                         textClass={"landscape only"} onClick={cache.revert} />}
                     {!!cache.testAction && <sui.Link className="small button" icon="external"
                         ariaLabel={cache.testAction.text} textClass={"landscape only"}
-                        text={cache.testAction.text} href={cache.testAction.url} 
+                        text={cache.testAction.text} href={cache.testAction.url}
                         target="_blank" />}
                     {jsxEls.legendJSX}
                     {showConflicts && !!jsxEls.conflicts && <p>{lf("Merge conflicts found. Resolve them before commiting.")}</p>}
