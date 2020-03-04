@@ -1,7 +1,7 @@
 # Private Assignments
 
-This section describes a methodology to manage assignments via GitHub. 
-Each assigment is a **private repository** under the student's account; where the teacher has been given **collaborator** access.
+This page describes a methodology to manage private assignments via GitHub. 
+Each assignment is a **private repository** under the student's account; where the teacher has been given **collaborator** access.
 The student does their work in a **branch** and returns their work by creating a **pull request** with the teacher as **reviewer**.
 
 This collaboration method is quite similar to the way professional developers use GitHub.
