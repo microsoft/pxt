@@ -115,6 +115,9 @@
 .inverted-theme {
     #githubEditor {
         color: @githubInvertedTextColor;
+        .ui.transparent.segment {
+            border: 1px solid @mainMenuInvertedBackground;
+        }
         .ui.basic.button > .ui.text,
         .ui.header {
             color: @githubInvertedTextColor !important;
