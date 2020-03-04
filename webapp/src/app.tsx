@@ -2791,12 +2791,18 @@ export class ProjectView
                     return pxt.github.downloadPackageAsync(ghid.fullName, config);
                 })
                 .then(gh => {
-                    const pxtJson = JSON.parse(gh.files["pxt.json"]) as pxt.PackageConfig;
+                    const files = gh.files;
+                    const pxtJson = JSON.parse(files["pxt.json"]) as pxt.PackageConfig;
                     dependencies = pxtJson.dependencies || {};
                     title = pxtJson.name || lf("Untitled");
                     autoChooseBoard = false;
                     const mfn = (ghid.fileName || "README") + ".md";
-                    return gh.files[mfn];
+                    const lang = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
+                    const md =
+                        (lang && lang[1] && files[`_locales/${lang[0]}-${lang[1]}/${mfn}`])
+                        || (lang && lang[0] && files[`_locales/${lang[0]}/${mfn}`])
+                        || files[mfn];                    
+                    return md;
                 }).catch((e) => {
                     core.errorNotification(tutorialErrorMessage);
                     core.handleNetworkError(e);
