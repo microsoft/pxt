@@ -3190,6 +3190,7 @@ export class ProjectView
                     core.handleNetworkError(e);
                 });
         } else if (!!ghid && ghid.owner && ghid.project) {
+            pxt.tickEvent("tutorial.github");
             p = pxt.packagesConfigAsync()
                 .then(config => {
                     const status = pxt.github.repoStatus(ghid, config);
@@ -3209,6 +3210,7 @@ export class ProjectView
                     core.handleNetworkError(e);
                 });
         } else if (header) {
+            pxt.tickEvent("tutorial.header");
             const hghid = pxt.github.parseRepoId(header.githubId);
             const hfileName = tutorialId.split(':')[1] || "README";
             p = workspace.getTextAsync(header.id)

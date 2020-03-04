@@ -29,6 +29,10 @@ interface DiffCache {
     diff: JSX.Element;
     whitespace?: boolean;
     revert?: () => void;
+    testAction?: {
+        text: string;
+        url: string;
+    }
 }
 
 interface GithubProps {
@@ -67,6 +71,11 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         let cache = this.diffCache[cachePrefix + f.name]
         if (!cache || cache.file.file !== f.file) {
             cache = { file: f } as any
+            if (/\.md$/.test(f.name))
+                cache.testAction = {
+                    text: lf("Preview as Tutorial"),
+                    url: `#tutorial:${this.props.parent.state.header.id}:${f.name.replace(/\.[a-z]+$/, '')}`
+                }
             this.diffCache[cachePrefix + f.name] = cache
         }
         return cache;
@@ -731,6 +740,10 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
                     {!!cache.revert && <sui.Button className="small" icon="undo" text={lf("Revert")}
                         ariaLabel={lf("Revert file")} title={lf("Revert file")}
                         textClass={"landscape only"} onClick={cache.revert} />}
+                    {!!cache.testAction && <sui.Link className="small button" icon="external"
+                        ariaLabel={cache.testAction.text} textClass={"landscape only"}
+                        text={cache.testAction.text} href={cache.testAction.url} 
+                        target="_blank" />}
                     {jsxEls.legendJSX}
                     {showConflicts && !!jsxEls.conflicts && <p>{lf("Merge conflicts found. Resolve them before commiting.")}</p>}
                     {!!cache.revert && !!deletedFiles.length &&
