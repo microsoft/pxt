@@ -2801,7 +2801,7 @@ export class ProjectView
                     const md =
                         (lang && lang[1] && files[`_locales/${lang[0]}-${lang[1]}/${mfn}`])
                         || (lang && lang[0] && files[`_locales/${lang[0]}/${mfn}`])
-                        || files[mfn];                    
+                        || files[mfn];
                     return md;
                 }).catch((e) => {
                     core.errorNotification(tutorialErrorMessage);
