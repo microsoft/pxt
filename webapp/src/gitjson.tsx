@@ -1386,7 +1386,7 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
         const { selectedCommit, expanded } = this.state;
         const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
         const commits = expanded &&
-            this.getData(`gh-commits:${gs.repo}#${gs.commit.sha}`) as pxt.github.CommitInfo[];
+            this.getData(`gh-commits:${githubId.fullName}#${gs.commit.sha}`) as pxt.github.CommitInfo[];
         const loading = expanded && !commits;
 
         return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
