@@ -115,6 +115,13 @@
 .inverted-theme {
     #githubEditor {
         color: @githubInvertedTextColor;
+        .ui.basic.button > .ui.text,
+        .ui.header {
+            color: @githubInvertedTextColor !important;
+        }
+        .diffheader {
+            background: @mainMenuInvertedBackground !important;
+        }
         table.diffview {
             .change code {
                 color: @githubInvertedTextColor !important;
