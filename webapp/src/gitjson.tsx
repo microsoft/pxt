@@ -1266,7 +1266,7 @@ interface CommitViewProps {
     githubId: pxt.github.ParsedRepo;
     commit: pxt.github.CommitInfo;
     expanded: boolean;
-    onClick?: () => void;
+    onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }
 
 interface CommitViewState {
@@ -1367,6 +1367,7 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
 interface HistoryState {
     expanded?: boolean;
     selectedCommit?: pxt.github.CommitInfo;
+    selectedDay?: string;
 }
 
 class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
@@ -1378,12 +1379,12 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
     handleLoadClick() {
         pxt.tickEvent("github.history.load", undefined, { interactiveConsent: true });
         const { expanded } = this.state;
-        this.setState({ expanded: !expanded, selectedCommit: undefined })
+        this.setState({ expanded: !expanded, selectedCommit: undefined, selectedDay: undefined })
     }
 
     renderCore() {
         const { githubId, gs, parent } = this.props;
-        const { selectedCommit, expanded } = this.state;
+        const { selectedCommit, expanded, selectedDay } = this.state;
         const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
         const commits = expanded &&
             this.getData(`gh-commits:${githubId.fullName}#${gs.commit.sha}`) as pxt.github.CommitInfo[];
@@ -1412,23 +1413,36 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
             </div>}
             {commits && <div className="ui items">
                 {Object.keys(days).map(day =>
-                    <div className="ui item" key={"commitday" + day}>
+                    <div className="ui link item"
+                        key={"commitday" + day}
+                        onClick={e => {
+                            e.stopPropagation();
+                            pxt.tickEvent("github.history.selectday");
+                            this.setState({ selectedDay: selectedDay === day ? undefined : day });
+                        }}
+                        onKeyDown={sui.fireClickOnEnter}>
                         <div className="content">
-                            <div className="ui header">{day}</div>
-                            <div className="ui divided items">
-                                {days[day].map(commit => <CommitView
-                                    key={'commit' + commit.sha}
-                                    onClick={() => {
-                                        pxt.tickEvent("github.history.selectcommit", undefined, { interactiveConsent: true })
-                                        const { selectedCommit } = this.state;
-                                        this.setState({ selectedCommit: commit == selectedCommit ? undefined : commit })
-                                    }}
-                                    commit={commit}
-                                    parent={parent}
-                                    githubId={githubId}
-                                    expanded={selectedCommit === commit}
-                                />)}
+                            <div className="ui header">{day}
+                                <div className="ui label">
+                                    <i className="long arrow alternate up icon"></i> {days[day].length}
+                                </div>
                             </div>
+                            {day === selectedDay &&
+                                <div className="ui divided items">
+                                    {days[day].map(commit => <CommitView
+                                        key={'commit' + commit.sha}
+                                        onClick={e => {
+                                            e.stopPropagation();
+                                            pxt.tickEvent("github.history.selectcommit", undefined, { interactiveConsent: true })
+                                            const { selectedCommit } = this.state;
+                                            this.setState({ selectedCommit: commit == selectedCommit ? undefined : commit })
+                                        }}
+                                        commit={commit}
+                                        parent={parent}
+                                        githubId={githubId}
+                                        expanded={selectedCommit === commit}
+                                    />)}
+                                </div>}
                         </div>
                     </div>)}
             </div>}
