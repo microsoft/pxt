@@ -1418,7 +1418,7 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
                         onClick={e => {
                             e.stopPropagation();
                             pxt.tickEvent("github.history.selectday");
-                            this.setState({ selectedDay: selectedDay === day ? undefined : day });
+                            this.setState({ selectedDay: selectedDay === day ? undefined : day, selectedCommit: undefined });
                         }}
                         onKeyDown={sui.fireClickOnEnter}>
                         <div className="content">
