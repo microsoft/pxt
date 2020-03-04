@@ -809,8 +809,7 @@ namespace ts.pxtc.service {
         },
 
         syntaxInfo: v => {
-            // TODO: Currently this is only used for Python's language service. Ideally we should
-            // use this for Typescript too but that might require some emitter or other work.
+            // TODO: TypeScript currently only supports syntaxInfo for symbols
             let src: string = v.fileContent
             if (v.fileContent) {
                 host.setFile(v.fileName, v.fileContent);
@@ -821,22 +820,34 @@ namespace ts.pxtc.service {
                 position: v.position,
                 type: v.infoType
             };
-            if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
+
+            const isPython = opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME;
+            const isSymbol = opts.syntaxInfo.type === "symbol";
+
+            if (isPython) {
                 addApiInfo(opts);
                 let res = transpile.pyToTs(opts)
                 if (res.globalNames)
                     lastGlobalNames = res.globalNames
             }
-            else {
+            else if (isSymbol) {
                 const info = getNodeAndSymbolAtLocation(service.getProgram(), v.fileName, v.position, getLastApiInfo(opts).apis);
 
                 if (info) {
                     const [node, sym] = info;
-                    opts.syntaxInfo.symbols = [sym];
-                    opts.syntaxInfo.beginPos = node.getStart();
-                    opts.syntaxInfo.endPos = node.getEnd();
+                    if (sym) {
+                        opts.syntaxInfo.symbols = [sym];
+                        opts.syntaxInfo.beginPos = node.getStart();
+                        opts.syntaxInfo.endPos = node.getEnd();
+                    }
                 }
             }
+
+            if (isSymbol && opts.syntaxInfo.symbols) {
+                const apiInfo = getLastApiInfo(opts).apis;
+                opts.syntaxInfo.auxResult = opts.syntaxInfo.symbols.map(s => displayStringForSymbol(s, isPython, apiInfo))
+            }
+
             return opts.syntaxInfo
         },
 
