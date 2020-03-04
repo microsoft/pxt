@@ -27,6 +27,6 @@ You can read a more [detailed](https://help.github.com/en/github/authenticating-
 
 #### Public scope
 
-For **public only repositories**, select the ``public_repo`` scope.
+For **public only repositories**, select the ``public_repo`` and ``workflow`` scope.
 
 ### ~
