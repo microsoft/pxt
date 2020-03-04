@@ -85,7 +85,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
     private filesOf(pkg: pkg.EditorPackage): JSX.Element[] {
         const { currentFile } = this.state;
         const deleteFiles = !pxt.shell.isReadOnly() && pkg.getPkgId() == "this";
-        const langRestrictions =  pkg.getLanguageRestrictions();
+        const langRestrictions = pkg.getLanguageRestrictions();
         let files = pkg.sortedFiles();
 
         if (pkg.isTopLevel()) {
@@ -228,7 +228,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                         comment = ">";
                         break;
                     case "json":
-                        ext= "json";
+                        ext = "json";
                         comment = "{}";
                         break;
                     default:
