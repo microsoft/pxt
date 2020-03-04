@@ -227,6 +227,10 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                         ext = "md";
                         comment = ">";
                         break;
+                    case "json":
+                        ext= "json";
+                        comment = "{}";
+                        break;
                     default:
                         // not a valid extension; leave it as it was and append def extension
                         name = str;
