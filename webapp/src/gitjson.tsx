@@ -1415,7 +1415,7 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
             </div>}
             {commits && <div className="ui items">
                 {Object.keys(days).map(day =>
-                    <div className="ui link item"
+                    <div role="button" className="ui link item"
                         key={"commitday" + day}
                         onClick={e => {
                             e.stopPropagation();
