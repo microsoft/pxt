@@ -3266,7 +3266,7 @@ export class ProjectView
             const pxtJson = pxt.Package.parseAndValidConfig(files["pxt.json"]);
             // if there is any .ts file in the tutorial repo,
             // add as a dependency itself
-            if (pxtJson.files.find(f => /\.ts/.test(f))) {
+            if (pxtJson.files.find(f => /\.ts$/.test(f))) {
                 dependencies = {}
                 dependencies[ghid.project] = pxt.github.toGithubDependencyPath(ghid);
             }
