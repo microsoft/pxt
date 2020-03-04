@@ -1394,12 +1394,13 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
 
         // group commits by day
         const days: pxt.Map<pxt.github.CommitInfo[]> = {};
-        commits && commits.forEach(commit => {
-            const day = new Date(Date.parse(commit.author.date)).toLocaleDateString();
-            let dcommit = days[day];
-            if (!dcommit) dcommit = days[day] = [];
-            dcommit.push(commit);
-        })
+        if (commits)
+            commits.forEach(commit => {
+                const day = new Date(Date.parse(commit.author.date)).toLocaleDateString();
+                let dcommit = days[day];
+                if (!dcommit) dcommit = days[day] = [];
+                dcommit.push(commit);
+            })
 
         return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
             <div className="ui header">{lf("History")}</div>
