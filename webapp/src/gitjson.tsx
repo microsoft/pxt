@@ -1354,7 +1354,7 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
                     <span>{date.toLocaleTimeString()}</span>
                 </div>
                 <div className="description">{commit.message}</div>
-                {expanded && diffFiles && <div className="extra">{lf("Comparing selected commit with local files")}</div>}
+                {expanded && diffFiles && <div className="ui inverted segment">{lf("Comparing selected commit with local files")}</div>}
                 {expanded && diffFiles && <DiffView parent={parent} blocksMode={false} diffFiles={diffFiles} cacheKey={commit.sha} />}
             </div>
         </div>

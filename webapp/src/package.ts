@@ -72,6 +72,8 @@ export class File implements pxt.editor.IFile {
     weight() {
         if (/^main\./.test(this.name))
             return 5;
+        if (/^_locales\//.test(this.name))
+            return 500;
         if (extWeight.hasOwnProperty(this.getExtension()))
             return extWeight[this.getExtension()]
         return 60;
