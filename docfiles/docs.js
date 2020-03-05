@@ -247,7 +247,6 @@ function setupBlocklyAsync() {
                 })
         })
     }
-    setupLangPicker();
     return promise;
 }
 
@@ -375,4 +374,5 @@ $(document).ready(function () {
     setupSidebar();
     setupSemantic();
     renderSnippets();
+    setupLangPicker();
 });
