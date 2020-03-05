@@ -296,6 +296,18 @@ function languageOption(code) {
 }
 
 function setupLangPicker() {
+    if (typeof ksRunnerReady === "undefined") {
+        // probably in pxt docs
+        removeLangPicker();
+        return;
+    }
+
+    ksRunnerReady(function () {
+        buildLangPicker();
+    });
+}
+
+function buildLangPicker() {
     var appTheme = pxt && pxt.appTarget && pxt.appTarget.appTheme;
     var modalContainer = document.querySelector("#langmodal");
 
@@ -365,9 +377,13 @@ function setupLangPicker() {
         }
     } else {
         // remove the locale picker and modal if unavailable in this editor
-        document.querySelector("#langpicker").remove();
-        modalContainer.remove();
+        removeLangPicker();
     }
+}
+
+function removeLangPicker() {
+    document.querySelector("#langpicker").remove();
+    modalContainer.remove();
 }
 
 $(document).ready(function () {
