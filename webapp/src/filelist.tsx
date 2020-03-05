@@ -120,7 +120,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             const localized = `_locales/${lang}/${file.name}`;
             const addLocale = pxt.Util.userLanguage() !== (pxt.appTarget.appTheme.defaultLocale || "en")
                 && isTutorialMd 
-                && !/^_locale\//.test(file.name)
+                && !/^_locales\//.test(file.name)
                 && !files.some(f => f.name == localized);
 
             return (
