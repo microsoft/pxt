@@ -58,7 +58,8 @@ where MakeCode will load the ``filename.md`` file from the project. Don't forget
 
 ### Testing
 
-When looking at the diff of a markdown file (``.md``) in the GitHub view, a ``Preview as Tutorial`` will be avaiable to load through that particular file as a tutorial. Commiting to GitHub is not needed to do the local testing.
+Click on the ``external link`` icon in the **Explorer** view to open any markdown file (``.md``)
+as a tutorial in a new tab.
 
 ### Localization
 
