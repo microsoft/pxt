@@ -121,9 +121,8 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 && `#tutorial:${header.id}:${file.name.replace(/\.[a-z]+$/, '')}`;
             const lang = pxt.Util.userLanguage();
             const localized = `_locales/${lang}/${file.name}`;
-            const addLocale = pxt.Util.userLanguage() !== (pxt.appTarget.appTheme.defaultLocale || "en")
-                && isTutorialMd
-                && !/^_locales\//.test(file.name)
+            const addLocale = isTutorialMd
+                && pxt.Util.userLanguage() !== (pxt.appTarget.appTheme.defaultLocale || "en")
                 && !files.some(f => f.name == localized);
 
             return (
