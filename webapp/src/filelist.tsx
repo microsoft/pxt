@@ -113,8 +113,8 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             // we keep this disabled, until implemented for cloud syncing
             // makse no sense for local saves - the star just blinks for half second after every change
             const showStar = false // !meta.isSaved
-            const isTutorialMd = topPkg 
-                && !!header && !!header.githubId 
+            const isTutorialMd = topPkg
+                && !!header && !!header.githubId
                 && /\.md$/.test(file.name)
                 && !/^_locales\//.test(file.name)
             const openUrl = isTutorialMd
@@ -122,7 +122,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             const lang = pxt.Util.userLanguage();
             const localized = `_locales/${lang}/${file.name}`;
             const addLocale = pxt.Util.userLanguage() !== (pxt.appTarget.appTheme.defaultLocale || "en")
-                && isTutorialMd 
+                && isTutorialMd
                 && !/^_locales\//.test(file.name)
                 && !files.some(f => f.name == localized);
 
