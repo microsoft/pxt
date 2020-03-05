@@ -5,6 +5,10 @@ If you plan to reuse your repository in other projects as an extension, you will
 Releases mark a specific point in your repository's history and allow you to publish your extension
 for use by others when you think your changes are ready.
 
+### #youtube
+
+https://youtu.be/vkOWnBfBqak
+
 ## Versioning #versioning
 
 In MakeCode, the each of the 3 numbers in the extension version have a special meaning. It follows a common scheme called [semver](https://semver.org/).

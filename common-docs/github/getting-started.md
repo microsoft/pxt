@@ -4,6 +4,8 @@ Let's start discovering GitHub by explaining a common usage scenario: you are ed
 
 ### #youtube
 
+https://youtu.be/J-pI1sEWPV0
+
 ## Step 1 - Create a repository
 
 A **repository** is used to organize a single project. Repositories will contain all the files needed for your MakeCode projects.
