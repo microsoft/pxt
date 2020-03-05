@@ -1323,7 +1323,7 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
         const { commit } = this.props;
         core.confirmAsync({
             header: lf("Would you like to restore this commit?"),
-            body: lf("You will restore all the files from this commit and keep the history."),
+            body: lf("You will restore your project to the point in time when this commit was made. Don't worry, you can undo this action by restoring to the previous commit."),
             agreeLbl: lf("Restore"),
             agreeClass: "green",
         }).then(r => {
