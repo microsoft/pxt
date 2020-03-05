@@ -423,11 +423,11 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
                 onClick={this.handleRemove}
                 onKeyDown={this.handleButtonKeydown} />}
             {meta && meta.numErrors ? <span className='ui label red button' role="button" title={lf("Go to error")}>{meta.numErrors}</span> : undefined}
+            {openUrl && <sui.Button className="button primary label" icon="external" title={lf("Preview")} onClick={this.handleOpen} onKeyDown={sui.fireClickOnEnter} />}
             {!!addLocalizedFile && <sui.Button className="primary label" icon="xicon globe"
                 title={lf("Add localized file")}
                 onClick={this.handleAddLocale}
                 onKeyDown={this.handleButtonKeydown} />}
-            {openUrl && <sui.Button className="button primary label" icon="external" title={lf("Preview")} onClick={this.handleOpen} onKeyDown={sui.fireClickOnEnter} />}
         </a>
     }
 }
