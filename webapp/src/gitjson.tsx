@@ -1321,13 +1321,21 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
         e.stopPropagation();
         pxt.tickEvent("github.restore", undefined, { interactiveConsent: true })
         const { commit } = this.props;
-        core.showLoading("github.restore", lf("restoring commit..."))
-        workspace.restoreCommitAsync(this.props.parent.props.parent.state.header, commit)
-            .then(() => {
-                data.invalidate("gh-commits:*");
-                return this.props.parent.props.parent.reloadHeaderAsync();
-            })
-            .finally(() => core.hideLoading("github.restore"))
+        core.confirmAsync({
+            header: lf("Would you like to restore this commit?"),
+            body: lf("You will restore all the files from this commit and keep the history."),
+            agreeLbl: lf("Restore"),
+            agreeClass: "green",
+        }).then(r => {
+            if (!r) return;
+            core.showLoading("github.restore", lf("restoring commit..."))
+            workspace.restoreCommitAsync(this.props.parent.props.parent.state.header, commit)
+                .then(() => {
+                    data.invalidate("gh-commits:*");
+                    return this.props.parent.props.parent.reloadHeaderAsync();
+                })
+                .finally(() => core.hideLoading("github.restore"))
+        })
         return false;
     }
 
