@@ -315,6 +315,27 @@ async function flashAsync() {
     })
 }
 
+async function resetAsync(bootMode: boolean) {
+    let bi = getBootInfo()
+    if (gdbServer) {
+        if (bootMode && bi.addr)
+            await gdbServer.write32Async(bi.addr, bi.boot)
+        await gdbServer.sendCmdAsync("R00", null)
+    } else {
+        let cmd = "init\nhalt\n"
+        if (bootMode && bi.addr) {
+            cmd += `set M(0) ${bi.boot}\narray2mem M 32 ${bi.addr} 1\n`
+        }
+        cmd += `reset run\nshutdown`
+        let toolPaths = getOpenOcdPath(cmd, true)
+        let oargs = toolPaths.args
+        await nodeutil.spawnAsync({
+            cmd: oargs[0],
+            args: oargs.slice(1)
+        })
+    }
+}
+
 async function getMemoryAsync(addr: number, bytes: number): Promise<Buffer> {
     if (gdbServer) {
         return gdbServer.readMemAsync(addr, bytes)
@@ -927,14 +948,10 @@ export async function hwAsync(cmds: string[]) {
     switch (cmds[0]) {
         case "rst":
         case "reset":
-            await gdbServer.sendCmdAsync("R00", null)
+            await resetAsync(false)
             break
         case "boot":
-            let bi = getBootInfo()
-            if (bi.addr) {
-                await gdbServer.write32Async(bi.addr, bi.boot)
-            }
-            await gdbServer.sendCmdAsync("R00", null)
+            await resetAsync(true)
             break
         case "log":
         case "dmesg":
