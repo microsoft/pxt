@@ -29,10 +29,6 @@ interface DiffCache {
     diff: JSX.Element;
     whitespace?: boolean;
     revert?: () => void;
-    testAction?: {
-        text: string;
-        url: string;
-    }
 }
 
 interface GithubProps {
@@ -735,10 +731,6 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
                     {!!cache.revert && <sui.Button className="small" icon="undo" text={lf("Revert")}
                         ariaLabel={lf("Revert file")} title={lf("Revert file")}
                         textClass={"landscape only"} onClick={cache.revert} />}
-                    {!!cache.testAction && <sui.Link className="small button" icon="external"
-                        ariaLabel={cache.testAction.text} textClass={"landscape only"}
-                        text={cache.testAction.text} href={cache.testAction.url}
-                        target="_blank" />}
                     {jsxEls.legendJSX}
                     {showConflicts && !!jsxEls.conflicts && <p>{lf("Merge conflicts found. Resolve them before commiting.")}</p>}
                     {!!cache.revert && !!deletedFiles.length &&
@@ -788,12 +780,6 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
         cache.file = f
         if (this.props.allowRevert) {
             cache.revert = () => this.props.parent.revertFileAsync(f, deletedFiles, addedFiles, virtualF);
-            if (/\.md$/.test(cache.file.name)) {
-                cache.testAction = {
-                    text: lf("Preview as Tutorial"),
-                    url: `#tutorial:${this.props.parent.props.parent.state.header.id}:${cache.file.name.replace(/\.[a-z]+$/, '')}`
-                }
-            }
         }
         cache.diff = createDiff()
         return cache.diff;
@@ -1335,13 +1321,21 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
         e.stopPropagation();
         pxt.tickEvent("github.restore", undefined, { interactiveConsent: true })
         const { commit } = this.props;
-        core.showLoading("github.restore", lf("restoring commit..."))
-        workspace.restoreCommitAsync(this.props.parent.props.parent.state.header, commit)
-            .then(() => {
-                data.invalidate("gh-commits:*");
-                return this.props.parent.props.parent.reloadHeaderAsync();
-            })
-            .finally(() => core.hideLoading("github.restore"))
+        core.confirmAsync({
+            header: lf("Would you like to restore this commit?"),
+            body: lf("You will restore your project to the point in time when this commit was made. Don't worry, you can undo this action by restoring to the previous commit."),
+            agreeLbl: lf("Restore"),
+            agreeClass: "green",
+        }).then(r => {
+            if (!r) return;
+            core.showLoading("github.restore", lf("restoring commit..."))
+            workspace.restoreCommitAsync(this.props.parent.props.parent.state.header, commit)
+                .then(() => {
+                    data.invalidate("gh-commits:*");
+                    return this.props.parent.props.parent.reloadHeaderAsync();
+                })
+                .finally(() => core.hideLoading("github.restore"))
+        })
         return false;
     }
 
@@ -1360,6 +1354,7 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
                     <span>{date.toLocaleTimeString()}</span>
                 </div>
                 <div className="description">{commit.message}</div>
+                {expanded && diffFiles && <div className="extra">{lf("Comparing selected commit with local files")}</div>}
                 {expanded && diffFiles && <DiffView parent={parent} blocksMode={false} diffFiles={diffFiles} cacheKey={commit.sha} />}
             </div>
         </div>

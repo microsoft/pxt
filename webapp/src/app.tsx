@@ -3158,6 +3158,7 @@ export class ProjectView
         let autoChooseBoard: boolean = true;
         let dependencies: pxt.Map<string> = {};
         let features: string[] = undefined;
+        let temporary = false;
         let tutorialErrorMessage = lf("Please check your internet access and ensure the tutorial is valid.");
         let p: Promise<string>;
 
@@ -3211,6 +3212,7 @@ export class ProjectView
                 });
         } else if (header) {
             pxt.tickEvent("tutorial.header");
+            temporary = true;
             const hghid = pxt.github.parseRepoId(header.githubId);
             const hfileName = tutorialId.split(':')[1] || "README";
             p = workspace.getTextAsync(header.id)
@@ -3240,7 +3242,8 @@ export class ProjectView
                 name: filename,
                 tutorial: options,
                 preferredEditor: editor,
-                dependencies
+                dependencies,
+                temporary: temporary
             });
         }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve()
         ).catch((e) => {
