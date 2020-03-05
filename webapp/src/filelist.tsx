@@ -366,6 +366,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
         this.handleRemove = this.handleRemove.bind(this);
         this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
         this.handleOpen = this.handleOpen.bind(this);
+        this.handleAddLocale = this.handleAddLocale.bind(this);
     }
 
     handleClick(e: React.MouseEvent<HTMLElement>) {
