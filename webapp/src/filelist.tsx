@@ -113,8 +113,9 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             // we keep this disabled, until implemented for cloud syncing
             // makse no sense for local saves - the star just blinks for half second after every change
             const showStar = false // !meta.isSaved
+            const usesGitHub = !!header && !!header.githubId;
             const isTutorialMd = topPkg
-                && !!header && !!header.githubId
+                && usesGitHub
                 && /\.md$/.test(file.name)
                 && !/^_locales\//.test(file.name)
             const openUrl = isTutorialMd
@@ -124,6 +125,9 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             const addLocale = isTutorialMd
                 && pxt.Util.userLanguage() !== (pxt.appTarget.appTheme.defaultLocale || "en")
                 && !files.some(f => f.name == localized);
+            const hasDelete = deleteFiles
+                && file.name != pxt.CONFIG_NAME
+                && (usesGitHub || file.name != "main.ts");
 
             return (
                 <FileTreeItem key={file.getName()}
@@ -134,7 +138,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     onErrorClick={this.navigateToError}
                     onItemLocalize={this.addLocalizedFile}
                     isActive={currentFile == file}
-                    hasDelete={deleteFiles && !/^(main\.ts|pxt\.json)$/.test(file.name)}
+                    hasDelete={hasDelete}
                     openUrl={openUrl}
                     addLocalizedFile={addLocale && localized}
                     className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
