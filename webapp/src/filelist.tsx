@@ -130,7 +130,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 && (usesGitHub || file.name != "main.ts");
 
             return (
-                <FileTreeItem key={file.getName()}
+                <FileTreeItem key={"file" + file.getName()}
                     file={file}
                     meta={meta}
                     onItemClick={this.setFile}
@@ -401,7 +401,9 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
 
     handleAddLocale(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("explorer.file.addlocale");
-        this.props.onItemLocalize(this.props.file, this.props.addLocalizedFile);
+        const { addLocalizedFile, onItemLocalize } = this.props;
+        if (onItemLocalize && addLocalizedFile)
+            onItemLocalize(this.props.file, addLocalizedFile);
         e.stopPropagation();
     }
 
