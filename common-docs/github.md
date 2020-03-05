@@ -5,7 +5,11 @@
 To use GitHub, you need an [account](https://github.com/join) and internet access.
 You don't need to know anything special beyond what you've already learned in MakeCode.
 
-* [Getting started](/github/getting-started)
+## ~button /github/getting-started
+
+Getting started
+
+## ~
 
 ## Classroom usage
 
