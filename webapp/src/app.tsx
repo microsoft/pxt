@@ -411,9 +411,10 @@ export class ProjectView
             // make sure there's .py file
             const mpkg = pkg.mainEditorPkg();
             const mainpy = mpkg.files["main.py"];
-            const p = mainpy ? Promise.resolve()
-                : this.updateFileAsync("main.py", "# ...", open);
-            p.done(() => this.setFile(pkg.mainEditorPkg().files["main.py"]))
+            if (!mainpy)
+                this.updateFileAsync("main.py", "# ...", true);
+            else
+                this.setFile(mainpy);
         }
     }
 
