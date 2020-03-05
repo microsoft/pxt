@@ -1,7 +1,7 @@
 import * as core from "./core";
 
 export function init(updated: () => void) {
-    if ("serviceWorker" in navigator) {
+    if ("serviceWorker" in navigator && !pxt.webConfig.isStatic) {
         window.addEventListener("load", function () {
             const ref = pxt.webConfig.relprefix.replace("---", "").replace(/^\//, "");
 
