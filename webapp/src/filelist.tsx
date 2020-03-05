@@ -108,7 +108,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             // we keep this disabled, until implemented for cloud syncing
             // makse no sense for local saves - the star just blinks for half second after every change
             const showStar = false // !meta.isSaved
-            const openUrl = topPkg && !!header.githubId && /\.md$/.test(file.name)
+            const openUrl = topPkg && !!header && !!header.githubId && /\.md$/.test(file.name)
                 && `#tutorial:${header.id}:${file.name.replace(/\.[a-z]+$/, '')}`
 
             return (
