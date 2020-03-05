@@ -219,6 +219,15 @@ namespace pxt.blocks {
         }
     }
 
+    export function hasHandler(fn: pxtc.SymbolInfo) {
+        return fn.parameters && fn.parameters.some(p => (
+            p.type == "() => void" ||
+            p.type == "Action" ||
+            !!p.properties?.length ||
+            !!p.handlerParameters?.length
+        ));
+    }
+
     /**
      * Returns which Blockly block type to use for an argument reporter based
      * on the specified TypeScript type.
