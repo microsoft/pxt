@@ -26,6 +26,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
         this.setFile = this.setFile.bind(this);
         this.removeFile = this.removeFile.bind(this);
+        this.addLocalizedFile = this.addLocalizedFile.bind(this);
         this.removePkg = this.removePkg.bind(this);
         this.updatePkg = this.updatePkg.bind(this);
         this.togglePkg = this.togglePkg.bind(this);
@@ -70,6 +71,10 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         this.props.parent.removeFile(f);
     }
 
+    private addLocalizedFile(f: pkg.File, localizedF: string) {
+        return this.props.parent.updateFileAsync(localizedF, f.content, true);
+    }
+
     private updatePkg(p: pkg.EditorPackage) {
         pkg.mainEditorPkg().updateDepAsync(p.getPkgId())
             .then(() => this.props.parent.reloadHeaderAsync())
@@ -110,7 +115,13 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             const showStar = false // !meta.isSaved
             const isTutorialMd = topPkg && !!header && !!header.githubId && /\.md$/.test(file.name);
             const openUrl = isTutorialMd
-                && `#tutorial:${header.id}:${file.name.replace(/\.[a-z]+$/, '')}`
+                && `#tutorial:${header.id}:${file.name.replace(/\.[a-z]+$/, '')}`;
+            const lang = pxt.Util.userLanguage();
+            const localized = `_locales/${lang}/${file.name}`;
+            const addLocale = pxt.Util.userLanguage() !== (pxt.appTarget.appTheme.defaultLocale || "en")
+                && isTutorialMd 
+                && !/^_locale\//.test(file.name)
+                && !files.some(f => f.name == localized);
 
             return (
                 <FileTreeItem key={file.getName()}
@@ -119,10 +130,11 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     onItemClick={this.setFile}
                     onItemRemove={this.removeFile}
                     onErrorClick={this.navigateToError}
+                    onItemLocalize={this.addLocalizedFile}
                     isActive={currentFile == file}
                     hasDelete={deleteFiles && !/^(main\.ts|pxt\.json)$/.test(file.name)}
                     openUrl={openUrl}
-                    addLocale={isTutorialMd && !/^_locale\//.test(file.name)}
+                    addLocalizedFile={addLocale && localized}
                     className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                 >
                     {file.name}
@@ -338,11 +350,12 @@ interface FileTreeItemProps extends React.DetailedHTMLProps<React.AnchorHTMLAttr
     meta: pkg.FileMeta;
     onItemClick: (fn: pkg.File) => void;
     onItemRemove: (fn: pkg.File) => void;
+    onItemLocalize: (fn: pkg.File, localizedf: string) => void;
     onErrorClick?: (meta: pkg.FileMeta) => void;
     isActive: boolean;
     hasDelete?: boolean;
     openUrl?: string;
-    addLocale?: boolean;
+    addLocalizedFile?: string;
 }
 
 class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
@@ -381,7 +394,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
 
     handleAddLocale(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("explorer.file.addlocale");
-
+        this.props.onItemLocalize(this.props.file, this.props.addLocalizedFile);
         e.stopPropagation();
     }
 
@@ -391,7 +404,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
 
     renderCore() {
         const { onClick, onItemClick, onItemRemove, onErrorClick, // keep these to avoid warnings with ...rest
-            isActive, hasDelete, file, meta, openUrl, addLocale, ...rest } = this.props;
+            isActive, hasDelete, file, meta, openUrl, addLocalizedFile, ...rest } = this.props;
 
         return <a
             onClick={this.handleClick}
@@ -407,7 +420,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
                 onClick={this.handleRemove}
                 onKeyDown={this.handleButtonKeydown} />}
             {meta && meta.numErrors ? <span className='ui label red button' role="button" title={lf("Go to error")}>{meta.numErrors}</span> : undefined}
-            {addLocale && <sui.Button className="primary label" icon="xicon globe"
+            {!!addLocalizedFile && <sui.Button className="primary label" icon="xicon globe"
                 title={lf("Add localized file")}
                 onClick={this.handleAddLocale}
                 onKeyDown={this.handleButtonKeydown} />}
