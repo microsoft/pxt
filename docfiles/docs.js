@@ -296,11 +296,11 @@ function languageOption(code) {
 }
 
 function setupLangPicker() {
-    var appTheme = pxt.appTarget.appTheme;
-    var initialLang = pxt.Util.normalizeLanguageCode(pxt.BrowserUtils.getCookieLang())[0];
+    var appTheme = pxt && pxt.appTarget && pxt.appTarget.appTheme;
     var modalContainer = document.querySelector("#langmodal");
 
     if (appTheme && appTheme.availableLocales && appTheme.selectLanguage) {
+        var initialLang = pxt && pxt.Util.normalizeLanguageCode(pxt.BrowserUtils.getCookieLang())[0];
         var localesContainer = document.querySelector("#availablelocales");
         appTheme.availableLocales.forEach(function(locale) {
             var card = languageOption(locale);
