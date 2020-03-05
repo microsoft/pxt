@@ -29,10 +29,6 @@ interface DiffCache {
     diff: JSX.Element;
     whitespace?: boolean;
     revert?: () => void;
-    testAction?: {
-        text: string;
-        url: string;
-    }
 }
 
 interface GithubProps {
@@ -735,10 +731,6 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
                     {!!cache.revert && <sui.Button className="small" icon="undo" text={lf("Revert")}
                         ariaLabel={lf("Revert file")} title={lf("Revert file")}
                         textClass={"landscape only"} onClick={cache.revert} />}
-                    {!!cache.testAction && <sui.Link className="small button" icon="external"
-                        ariaLabel={cache.testAction.text} textClass={"landscape only"}
-                        text={cache.testAction.text} href={cache.testAction.url}
-                        target="_blank" />}
                     {jsxEls.legendJSX}
                     {showConflicts && !!jsxEls.conflicts && <p>{lf("Merge conflicts found. Resolve them before commiting.")}</p>}
                     {!!cache.revert && !!deletedFiles.length &&
@@ -788,12 +780,6 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
         cache.file = f
         if (this.props.allowRevert) {
             cache.revert = () => this.props.parent.revertFileAsync(f, deletedFiles, addedFiles, virtualF);
-            if (/\.md$/.test(cache.file.name)) {
-                cache.testAction = {
-                    text: lf("Preview as Tutorial"),
-                    url: `#tutorial:${this.props.parent.props.parent.state.header.id}:${cache.file.name.replace(/\.[a-z]+$/, '')}`
-                }
-            }
         }
         cache.diff = createDiff()
         return cache.diff;

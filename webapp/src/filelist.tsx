@@ -84,11 +84,13 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     private filesOf(pkg: pkg.EditorPackage): JSX.Element[] {
         const { currentFile } = this.state;
-        const deleteFiles = !pxt.shell.isReadOnly() && pkg.getPkgId() == "this";
+        const header = this.props.parent.state.header;
+        const topPkg = pkg.isTopLevel();           
+        const deleteFiles = topPkg && !pxt.shell.isReadOnly();
         const langRestrictions =  pkg.getLanguageRestrictions();
         let files = pkg.sortedFiles();
 
-        if (pkg.isTopLevel()) {
+        if (topPkg) {
             files = files.filter(f => {
                 switch (langRestrictions) {
                     case pxt.editor.LanguageRestriction.JavaScriptOnly:
@@ -106,6 +108,9 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             // we keep this disabled, until implemented for cloud syncing
             // makse no sense for local saves - the star just blinks for half second after every change
             const showStar = false // !meta.isSaved
+            const openUrl = topPkg && /\.md$/.test(file.name)
+                && `#tutorial:${header.id}:${file.name.replace(/\.[a-z]+$/, '')}`
+
             return (
                 <FileTreeItem key={file.getName()}
                     file={file}
@@ -115,6 +120,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     onErrorClick={this.navigateToError}
                     isActive={currentFile == file}
                     hasDelete={deleteFiles && !/^(main\.ts|pxt\.json)$/.test(file.name)}
+                    openUrl={openUrl}
                     className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                 >
                     {file.name}
@@ -333,6 +339,7 @@ interface FileTreeItemProps extends React.DetailedHTMLProps<React.AnchorHTMLAttr
     onErrorClick?: (meta: pkg.FileMeta) => void;
     isActive: boolean;
     hasDelete?: boolean;
+    openUrl?: string;
 }
 
 class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
@@ -367,7 +374,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
 
     renderCore() {
         const { onClick, onItemClick, onItemRemove, onErrorClick, // keep these to avoid warnings with ...rest
-            isActive, hasDelete, file, meta, ...rest } = this.props;
+            isActive, hasDelete, file, meta, openUrl, ...rest } = this.props;
 
         return <a
             onClick={this.handleClick}
@@ -378,12 +385,12 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
             onKeyDown={sui.fireClickOnEnter}
             {...rest}>
             {this.props.children}
-
-            {hasDelete ? <sui.Button className="primary label" icon="trash"
+            {hasDelete && <sui.Button className="primary label" icon="trash"
                 title={lf("Delete file {0}", file.name)}
                 onClick={this.handleRemove}
-                onKeyDown={this.handleButtonKeydown} /> : ''}
+                onKeyDown={this.handleButtonKeydown} />}
             {meta && meta.numErrors ? <span className='ui label red button' role="button" title={lf("Go to error")}>{meta.numErrors}</span> : undefined}
+            {openUrl && <sui.Link className="primary label" icon="external" title={lf("Preview")} href={openUrl} target="_blank" />}
         </a>
     }
 }
