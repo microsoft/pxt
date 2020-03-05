@@ -400,6 +400,8 @@ export class ProjectView
             this.textEditor.giveFocusOnLoading = giveFocusOnLoading;
         }
 
+        // update language pref
+        pxt.Util.setEditorLanguagePref("py");
         // switch
         if (this.isBlocksActive()) {
             this.blocksEditor.openPython();
@@ -409,12 +411,10 @@ export class ProjectView
             // make sure there's .py file
             const mpkg = pkg.mainEditorPkg();
             const mainpy = mpkg.files["main.py"];
-            if (!mainpy)
-                mpkg.setFile("main.py", "# ...");
-            this.setFile(pkg.mainEditorPkg().files["main.py"])
+            const p = mainpy ? Promise.resolve()
+                : this.updateFileAsync("main.py", "# ...", open);
+            p.done(() => this.setFile(pkg.mainEditorPkg().files["main.py"]))
         }
-
-        pxt.Util.setEditorLanguagePref("py");
     }
 
     openJavaScript(giveFocusOnLoading = true) {
