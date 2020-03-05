@@ -85,9 +85,9 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
     private filesOf(pkg: pkg.EditorPackage): JSX.Element[] {
         const { currentFile } = this.state;
         const header = this.props.parent.state.header;
-        const topPkg = pkg.isTopLevel();           
+        const topPkg = pkg.isTopLevel();
         const deleteFiles = topPkg && !pxt.shell.isReadOnly();
-        const langRestrictions =  pkg.getLanguageRestrictions();
+        const langRestrictions = pkg.getLanguageRestrictions();
         let files = pkg.sortedFiles();
 
         if (topPkg) {
