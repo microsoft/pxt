@@ -349,6 +349,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
         this.handleClick = this.handleClick.bind(this);
         this.handleRemove = this.handleRemove.bind(this);
         this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
+        this.handleOpen = this.handleOpen.bind(this);
     }
 
     handleClick(e: React.MouseEvent<HTMLElement>) {
@@ -364,7 +365,14 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
     }
 
     handleRemove(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("explorer.file.remove");
         this.props.onItemRemove(this.props.file);
+        e.stopPropagation();
+    }
+
+    handleOpen(e: React.MouseEvent<HTMLElement>) {
+        e.stopPropagation();
+        window.open(this.props.openUrl, "_blank");
         e.stopPropagation();
     }
 
@@ -390,7 +398,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
                 onClick={this.handleRemove}
                 onKeyDown={this.handleButtonKeydown} />}
             {meta && meta.numErrors ? <span className='ui label red button' role="button" title={lf("Go to error")}>{meta.numErrors}</span> : undefined}
-            {openUrl && <sui.Link className="primary label" icon="external" title={lf("Preview")} href={openUrl} target="_blank" />}
+            {openUrl && <sui.Button className="button primary label" icon="external" title={lf("Preview")} onClick={this.handleOpen} onKeyDown={sui.fireClickOnEnter} />}
         </a>
     }
 }
