@@ -841,8 +841,8 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
     const oldCfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME])
     const cfgText = await downloadAsync(pxt.CONFIG_NAME)
     let cfg = pxt.Package.parseAndValidConfig(cfgText);
-    // invalid cfg or no TypeScript files
-    if (!cfg || !cfg.files.find(f => /\.ts$/.test(f))) {
+    // invalid cfg
+    if (!cfg) {
         if (hd) // not importing
             U.userError(lf("Invalid pxt.json file."));
         pxt.debug(`github: reconstructing pxt.json`)

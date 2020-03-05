@@ -26,6 +26,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
         this.setFile = this.setFile.bind(this);
         this.removeFile = this.removeFile.bind(this);
+        this.addLocalizedFile = this.addLocalizedFile.bind(this);
         this.removePkg = this.removePkg.bind(this);
         this.updatePkg = this.updatePkg.bind(this);
         this.togglePkg = this.togglePkg.bind(this);
@@ -70,6 +71,10 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         this.props.parent.removeFile(f);
     }
 
+    private addLocalizedFile(f: pkg.File, localizedF: string) {
+        return this.props.parent.updateFileAsync(localizedF, f.content, true);
+    }
+
     private updatePkg(p: pkg.EditorPackage) {
         pkg.mainEditorPkg().updateDepAsync(p.getPkgId())
             .then(() => this.props.parent.reloadHeaderAsync())
@@ -84,11 +89,13 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     private filesOf(pkg: pkg.EditorPackage): JSX.Element[] {
         const { currentFile } = this.state;
-        const deleteFiles = !pxt.shell.isReadOnly() && pkg.getPkgId() == "this";
-        const langRestrictions =  pkg.getLanguageRestrictions();
+        const header = this.props.parent.state.header;
+        const topPkg = pkg.isTopLevel();
+        const deleteFiles = topPkg && !pxt.shell.isReadOnly();
+        const langRestrictions = pkg.getLanguageRestrictions();
         let files = pkg.sortedFiles();
 
-        if (pkg.isTopLevel()) {
+        if (topPkg) {
             files = files.filter(f => {
                 switch (langRestrictions) {
                     case pxt.editor.LanguageRestriction.JavaScriptOnly:
@@ -106,15 +113,34 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             // we keep this disabled, until implemented for cloud syncing
             // makse no sense for local saves - the star just blinks for half second after every change
             const showStar = false // !meta.isSaved
+            const usesGitHub = !!header && !!header.githubId;
+            const isTutorialMd = topPkg
+                && usesGitHub
+                && /\.md$/.test(file.name)
+                && !/^_locales\//.test(file.name)
+            const openUrl = isTutorialMd
+                && `#tutorial:${header.id}:${file.name.replace(/\.[a-z]+$/, '')}`;
+            const lang = pxt.Util.userLanguage();
+            const localized = `_locales/${lang}/${file.name}`;
+            const addLocale = isTutorialMd
+                && pxt.Util.userLanguage() !== (pxt.appTarget.appTheme.defaultLocale || "en")
+                && !files.some(f => f.name == localized);
+            const hasDelete = deleteFiles
+                && file.name != pxt.CONFIG_NAME
+                && (usesGitHub || file.name != "main.ts");
+
             return (
-                <FileTreeItem key={file.getName()}
+                <FileTreeItem key={"file" + file.getName()}
                     file={file}
                     meta={meta}
                     onItemClick={this.setFile}
                     onItemRemove={this.removeFile}
                     onErrorClick={this.navigateToError}
+                    onItemLocalize={this.addLocalizedFile}
                     isActive={currentFile == file}
-                    hasDelete={deleteFiles && !/^(main\.ts|pxt\.json)$/.test(file.name)}
+                    hasDelete={hasDelete}
+                    openUrl={openUrl}
+                    addLocalizedFile={addLocale && localized}
                     className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                 >
                     {file.name}
@@ -325,14 +351,18 @@ namespace custom {
     }
 }
 
-interface FileTreeItemProps extends React.DetailedHTMLProps<React.AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement> {
+interface FileTreeItemProps {
     file: pkg.File;
     meta: pkg.FileMeta;
     onItemClick: (fn: pkg.File) => void;
     onItemRemove: (fn: pkg.File) => void;
+    onItemLocalize: (fn: pkg.File, localizedf: string) => void;
     onErrorClick?: (meta: pkg.FileMeta) => void;
     isActive: boolean;
     hasDelete?: boolean;
+    openUrl?: string;
+    addLocalizedFile?: string;
+    className?: string;
 }
 
 class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
@@ -342,6 +372,8 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
         this.handleClick = this.handleClick.bind(this);
         this.handleRemove = this.handleRemove.bind(this);
         this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
+        this.handleOpen = this.handleOpen.bind(this);
+        this.handleAddLocale = this.handleAddLocale.bind(this);
     }
 
     handleClick(e: React.MouseEvent<HTMLElement>) {
@@ -357,7 +389,22 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
     }
 
     handleRemove(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("explorer.file.remove");
         this.props.onItemRemove(this.props.file);
+        e.stopPropagation();
+    }
+
+    handleOpen(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("explorer.file.open");
+        window.open(this.props.openUrl, "_blank");
+        e.stopPropagation();
+    }
+
+    handleAddLocale(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("explorer.file.addlocale");
+        const { addLocalizedFile, onItemLocalize } = this.props;
+        if (onItemLocalize && addLocalizedFile)
+            onItemLocalize(this.props.file, addLocalizedFile);
         e.stopPropagation();
     }
 
@@ -366,8 +413,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
     }
 
     renderCore() {
-        const { onClick, onItemClick, onItemRemove, onErrorClick, // keep these to avoid warnings with ...rest
-            isActive, hasDelete, file, meta, ...rest } = this.props;
+        const { isActive, hasDelete, file, meta, openUrl, addLocalizedFile, className } = this.props;
 
         return <a
             onClick={this.handleClick}
@@ -376,14 +422,18 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
             aria-selected={isActive}
             aria-label={isActive ? lf("{0}, it is the current opened file in the JavaScript editor", file.name) : file.name}
             onKeyDown={sui.fireClickOnEnter}
-            {...rest}>
+            className={className}>
             {this.props.children}
-
-            {hasDelete ? <sui.Button className="primary label" icon="trash"
+            {hasDelete && <sui.Button className="primary label" icon="trash"
                 title={lf("Delete file {0}", file.name)}
                 onClick={this.handleRemove}
-                onKeyDown={this.handleButtonKeydown} /> : ''}
+                onKeyDown={this.handleButtonKeydown} />}
             {meta && meta.numErrors ? <span className='ui label red button' role="button" title={lf("Go to error")}>{meta.numErrors}</span> : undefined}
+            {openUrl && <sui.Button className="button primary label" icon="external" title={lf("Preview")} onClick={this.handleOpen} onKeyDown={sui.fireClickOnEnter} />}
+            {!!addLocalizedFile && <sui.Button className="primary label" icon="xicon globe"
+                title={lf("Add localized file")}
+                onClick={this.handleAddLocale}
+                onKeyDown={this.handleButtonKeydown} />}
         </a>
     }
 }

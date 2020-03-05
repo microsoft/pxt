@@ -410,10 +410,11 @@ export class ProjectView
             const mpkg = pkg.mainEditorPkg();
             const mainpy = mpkg.files["main.py"];
             if (!mainpy)
-                mpkg.setFile("main.py", "# ...");
-            this.setFile(pkg.mainEditorPkg().files["main.py"])
+                this.updateFileAsync("main.py", "# ...", false);
+            else
+                this.setFile(mainpy);
         }
-
+        // update language pref
         pxt.Util.setEditorLanguagePref("py");
     }
 
@@ -3150,13 +3151,15 @@ export class ProjectView
         core.hideDialog();
         core.showLoading("tutorial", lf("starting tutorial..."));
         sounds.initTutorial(); // pre load sounds
-        const scriptId = pxt.Cloud.parseScriptId(tutorialId);
-        const ghid = pxt.github.parseRepoId(tutorialId);
+        const header = workspace.getHeader(tutorialId.split(':')[0]);
+        const scriptId = !header && pxt.Cloud.parseScriptId(tutorialId);
+        const ghid = !header && !scriptId && pxt.github.parseRepoId(tutorialId);
         let reportId: string = undefined;
         let filename: string;
         let autoChooseBoard: boolean = true;
         let dependencies: pxt.Map<string> = {};
         let features: string[] = undefined;
+        let temporary = false;
         let tutorialErrorMessage = lf("Please check your internet access and ensure the tutorial is valid.");
         let p: Promise<string>;
 
@@ -3189,6 +3192,7 @@ export class ProjectView
                     core.handleNetworkError(e);
                 });
         } else if (!!ghid && ghid.owner && ghid.project) {
+            pxt.tickEvent("tutorial.github");
             p = pxt.packagesConfigAsync()
                 .then(config => {
                     const status = pxt.github.repoStatus(ghid, config);
@@ -3202,31 +3206,18 @@ export class ProjectView
                     }
                     return pxt.github.downloadPackageAsync(ghid.fullName, config);
                 })
-                .then(gh => {
-                    const pxtJson = pxt.Package.parseAndValidConfig(gh.files["pxt.json"]);
-                    // if there is any .ts file in the tutorial repo,
-                    // add as a dependency itself
-                    if (pxtJson.files.find(f => /\.ts/.test(f))) {
-                        dependencies = {}
-                        dependencies[ghid.project] = pxt.github.toGithubDependencyPath(ghid);
-                    }
-                    else {// just use dependencies from the tutorial
-                        pxt.Util.jsonMergeFrom(dependencies, pxtJson.dependencies);
-                    }
-                    filename = pxtJson.name || lf("Untitled");
-                    autoChooseBoard = false;
-                    // if non-default language, find localized file if any
-                    const mfn = (ghid.fileName || "README") + ".md";
-                    const lang = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
-                    const md =
-                        (lang && lang[1] && gh.files[`_locales/${lang[0]}-${lang[1]}/${mfn}`])
-                        || (lang && lang[0] && gh.files[`_locales/${lang[0]}/${mfn}`])
-                        || gh.files[mfn];
-                    return processMarkdown(md);
-                }).catch((e) => {
+                .then(gh => loadGitHubTutorial(ghid, gh.files))
+                .catch((e) => {
                     core.errorNotification(tutorialErrorMessage);
                     core.handleNetworkError(e);
                 });
+        } else if (header) {
+            pxt.tickEvent("tutorial.header");
+            temporary = true;
+            const hghid = pxt.github.parseRepoId(header.githubId);
+            const hfileName = tutorialId.split(':')[1] || "README";
+            p = workspace.getTextAsync(header.id)
+                .then(script => loadGitHubTutorial(hghid, script, hfileName))
         } else {
             p = Promise.resolve(undefined);
         }
@@ -3252,7 +3243,8 @@ export class ProjectView
                 name: filename,
                 tutorial: options,
                 preferredEditor: editor,
-                dependencies
+                dependencies,
+                temporary: temporary
             });
         }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve()
         ).catch((e) => {
@@ -3272,6 +3264,29 @@ export class ProjectView
             pxt.Util.jsonMergeFrom(dependencies, pxt.gallery.parsePackagesFromMarkdown(md));
             features = pxt.gallery.parseFeaturesFromMarkdown(md);
             return md;
+        }
+
+        function loadGitHubTutorial(ghid: pxt.github.ParsedRepo, files: pxt.Map<string>, fileName?: string) {
+            const pxtJson = pxt.Package.parseAndValidConfig(files["pxt.json"]);
+            // if there is any .ts file in the tutorial repo,
+            // add as a dependency itself
+            if (pxtJson.files.find(f => /\.ts$/.test(f))) {
+                dependencies = {}
+                dependencies[ghid.project] = pxt.github.toGithubDependencyPath(ghid);
+            }
+            else {// just use dependencies from the tutorial
+                pxt.Util.jsonMergeFrom(dependencies, pxtJson.dependencies);
+            }
+            filename = pxtJson.name || lf("Untitled");
+            autoChooseBoard = false;
+            // if non-default language, find localized file if any
+            const mfn = (fileName || ghid.fileName || "README") + ".md";
+            const lang = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
+            const md =
+                (lang && lang[1] && files[`_locales/${lang[0]}-${lang[1]}/${mfn}`])
+                || (lang && lang[0] && files[`_locales/${lang[0]}/${mfn}`])
+                || files[mfn];
+            return processMarkdown(md);
         }
     }
 
@@ -3638,7 +3653,7 @@ export class ProjectView
                 </div>
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
                     {showCollapseButton && <sui.Button id='computertogglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
-                    {showCollapseButton && <sui.Button id='mobiletogglesim' className={`mobile tablet only collapse-button large`} icon={`inverted chevron ${this.state.collapseEditorTools ? 'up' : 'down'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
+                    {showCollapseButton && <sui.Button id='mobiletogglesim' className={`mobile tablet only collapse-button large ${!this.state.collapseEditorTools ? "toggle-hide" : ""}`} icon={`inverted chevron ${this.state.collapseEditorTools ? 'up' : 'down'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
                     {this.allEditors.map(e => e.displayOuter(expandedStyle))}
                 </div>
                 {inHome ? <div id="homescreen" className="full-abs">

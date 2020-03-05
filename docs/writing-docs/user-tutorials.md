@@ -56,6 +56,11 @@ You can override the markdown file from the project used for the content of the 
 where MakeCode will load the ``filename.md`` file from the project. Don't forget to add this file in the
 ``files`` list in ``pxt.json``.
 
+### Testing
+
+Click on the ``external link`` icon in the **Explorer** view to open any markdown file (``.md``)
+as a tutorial in a new tab.
+
 ### Localization
 
 Localized copies of the tutorial can be added to a subfolder ``_locales/[isocode]/[filename].md`` 

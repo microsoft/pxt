@@ -202,8 +202,11 @@ class HoverProvider implements monaco.languages.HoverProvider {
                 let sym = r.symbols ? r.symbols[0] : null
                 if (!sym) return null;
                 const documentation = pxt.Util.rlf(sym.attributes.jsDoc);
+
+                let contents: string[] = [r.auxResult[0], documentation];
+
                 const res: monaco.languages.Hover = {
-                    contents: [`**${sym.pyQName}**${sym.retType ? `: ${sym.retType}` : ''}`, documentation].map(toMarkdownString),
+                    contents: contents.map(toMarkdownString),
                     range: monaco.Range.fromPositions(model.getPositionAt(r.beginPos), model.getPositionAt(r.endPos))
                 }
                 return res
@@ -1096,7 +1099,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return pxt.appTarget.appTheme.monacoToolbox
             && !readOnly
             && ((this.fileType == "typescript" && this.currFile.name == "main.ts")
-                || (pxt.appTarget.appTheme.pythonToolbox && this.fileType == "python" && this.currFile.name == "main.py"));
+                || (this.fileType == "python" && this.currFile.name == "main.py"));
     }
 
     loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {

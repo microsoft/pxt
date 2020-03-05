@@ -6,13 +6,6 @@
 namespace ts.pxtc {
 
     export const placeholderChar = "◊";
-    export const defaultImgLit = `
-. . . . .
-. . . . .
-. . # . .
-. . . . .
-. . . . .
-`
 
     export interface FunOverride {
         n: string;
@@ -39,44 +32,6 @@ namespace ts.pxtc {
         "!!": { n: "bool", t: ts.SyntaxKind.BooleanKeyword },
         ".indexOf": { n: "Array.index", t: ts.SyntaxKind.NumberKeyword },
         "parseInt": { n: "int", t: ts.SyntaxKind.NumberKeyword, snippet: 'int("0")' }
-    }
-
-    function renderDefaultVal(apis: pxtc.ApisInfo, p: pxtc.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
-        if (p.initializer) return p.initializer
-        if (p.default) return p.default
-        if (p.type == "number") return "0"
-        if (p.type == "boolean") return "false"
-        else if (p.type == "string") {
-            if (imgLit) {
-                imgLit = false
-                return "`" + defaultImgLit + cursorMarker + "`";
-            }
-            return `"${cursorMarker}"`
-        }
-        let si = apis ? Util.lookup(apis.byQName, p.type) : undefined;
-        if (si && si.kind == SymbolKind.Enum) {
-            let en = Util.values(apis.byQName).filter(e => e.namespace == p.type)[0]
-            if (en)
-                return en.namespace + "." + en.name;
-        }
-        let m = /^\((.*)\) => (.*)$/.exec(p.type)
-        if (m)
-            return `(${m[1]}) => {\n    ${cursorMarker}\n}`
-        return placeholderChar;
-    }
-
-    export function renderCall(apiInfo: pxtc.ApisInfo, si: SymbolInfo): string {
-        return `${si.namespace}.${si.name}${renderParameters(apiInfo, si)};`;
-    }
-
-    export function renderParameters(apis: pxtc.ApisInfo, si: SymbolInfo, cursorMarker: string = ''): string {
-        if (si.parameters) {
-            let imgLit = !!si.attributes.imageLiteral
-            return "(" + si.parameters
-                .filter(p => !p.initializer)
-                .map(p => renderDefaultVal(apis, p, imgLit, cursorMarker)).join(", ") + ")"
-        }
-        return '';
     }
 
     export function snakify(s: string) {
@@ -821,11 +776,16 @@ namespace ts.pxtc.service {
         }
     }
 
+    function getLastApiInfo(opts: CompileOptions) {
+        if (!lastApiInfo)
+            lastApiInfo = internalGetApiInfo(service.getProgram(), opts.jres)
+        return lastApiInfo;
+    }
+
     function addApiInfo(opts: CompileOptions) {
         if (!opts.apisInfo && opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
-            if (!lastApiInfo)
-                lastApiInfo = internalGetApiInfo(service.getProgram(), opts.jres)
-            opts.apisInfo = U.clone(lastApiInfo.apis)
+            const info = getLastApiInfo(opts);
+            opts.apisInfo = U.clone(info.apis)
         }
     }
 
@@ -849,8 +809,7 @@ namespace ts.pxtc.service {
         },
 
         syntaxInfo: v => {
-            // TODO: Currently this is only used for Python's language service. Ideally we should
-            // use this for Typescript too but that might require some emitter or other work.
+            // TODO: TypeScript currently only supports syntaxInfo for symbols
             let src: string = v.fileContent
             if (v.fileContent) {
                 host.setFile(v.fileName, v.fileContent);
@@ -861,12 +820,34 @@ namespace ts.pxtc.service {
                 position: v.position,
                 type: v.infoType
             };
-            if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
+
+            const isPython = opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME;
+            const isSymbol = opts.syntaxInfo.type === "symbol";
+
+            if (isPython) {
                 addApiInfo(opts);
                 let res = transpile.pyToTs(opts)
                 if (res.globalNames)
                     lastGlobalNames = res.globalNames
             }
+            else if (isSymbol) {
+                const info = getNodeAndSymbolAtLocation(service.getProgram(), v.fileName, v.position, getLastApiInfo(opts).apis);
+
+                if (info) {
+                    const [node, sym] = info;
+                    if (sym) {
+                        opts.syntaxInfo.symbols = [sym];
+                        opts.syntaxInfo.beginPos = node.getStart();
+                        opts.syntaxInfo.endPos = node.getEnd();
+                    }
+                }
+            }
+
+            if (isSymbol && opts.syntaxInfo.symbols) {
+                const apiInfo = getLastApiInfo(opts).apis;
+                opts.syntaxInfo.auxResult = opts.syntaxInfo.symbols.map(s => displayStringForSymbol(s, isPython, apiInfo))
+            }
+
             return opts.syntaxInfo
         },
 
@@ -956,17 +937,6 @@ namespace ts.pxtc.service {
                 }
             } else {
                 tsPos = position
-            }
-
-
-            function findInnerMostNodeAtPosition(n: Node, position: number): Node {
-                for (let child of n.getChildren()) {
-                    let s = child.getStart()
-                    let e = child.getEnd()
-                    if (s <= position && position < e)
-                        return findInnerMostNodeAtPosition(child, position)
-                }
-                return (n && n.kind === SK.SourceFile) ? null : n;
             }
 
             const prog = service.getProgram()
@@ -1501,18 +1471,24 @@ namespace ts.pxtc.service {
             service = ts.createLanguageService(host)
         }
     }
-    const defaultImgLit = `\`
+    const defaultTsImgList = `\`
 . . . . .
 . . . . .
 . . # . .
 . . . . .
 . . . . .
 \``;
+    const defaultPyImgList = `"""
+. . . . .
+. . . . .
+. . # . .
+. . . . .
+. . . . .
+"""`;
 
     export function getSnippet(apis: ApisInfo, takenNames: pxt.Map<SymbolInfo>, runtimeOps: pxt.RuntimeOptions, fn: SymbolInfo, decl: ts.FunctionLikeDeclaration, python?: boolean): string {
         const PY_INDENT: string = (pxt as any).py.INDENT;
 
-        let findex = 0;
         let preStmt = "";
 
         let fnName = ""
@@ -1537,22 +1513,6 @@ namespace ts.pxtc.service {
 
         const blocksInfo = blocksInfoOp(apis, runtimeOps.bannedCategories);
         const blocksById = blocksInfo.blocksById
-
-        function getShadowSymbol(paramName: string): SymbolInfo | null {
-            // TODO(dz): unify this with auto-complete smarts?
-            let shadowBlock = (attrs._shadowOverrides || {})[paramName]
-            if (!shadowBlock)
-                return null
-            let sym = blocksById[shadowBlock]
-            if (!sym)
-                return null
-            if (sym.attributes.shim === "TD_ID" && sym.parameters.length) {
-                let realName = sym.parameters[0].type
-                let realSym = apis.byQName[realName]
-                sym = realSym || sym
-            }
-            return sym
-        }
 
         function getParameterDefault(param: ParameterDeclaration) {
             const typeNode = param.type;
@@ -1626,7 +1586,9 @@ namespace ts.pxtc.service {
             // simple types we can determine defaults for
             // TODO: move into getDefaultValueOfType
             switch (typeNode.kind) {
-                case SK.StringKeyword: return (name == "leds" ? defaultImgLit : `""`);
+                case SK.StringKeyword: return (name == "leds"
+                    ? (python ? defaultPyImgList : defaultTsImgList)
+                    : `""`);
                 case SK.NumberKeyword: return "0";
                 case SK.BooleanKeyword: return python ? "False" : "false";
                 case SK.ArrayType: return "[]";
@@ -1884,5 +1846,31 @@ namespace ts.pxtc.service {
 
     function completionSymbols(symbols: SymbolInfo[], weight = 0): CompletionSymbol[] {
         return symbols.map(s => completionSymbol(s, weight));
+    }
+
+    function getNodeAndSymbolAtLocation(program: Program, filename: string, position: number, apiInfo: ApisInfo): [Node, SymbolInfo] {
+        const source = program.getSourceFile(filename);
+        const checker = program.getTypeChecker();
+
+        const node = findInnerMostNodeAtPosition(source, position);
+
+        if (node) {
+            const symbol = checker.getSymbolAtLocation(node);
+            if (symbol) {
+                return [node, apiInfo.byQName[checker.getFullyQualifiedName(symbol)]];
+            }
+        }
+
+        return null;
+    }
+
+    function findInnerMostNodeAtPosition(n: Node, position: number): Node | null {
+        for (let child of n.getChildren()) {
+            let s = child.getStart()
+            let e = child.getEnd()
+            if (s <= position && position < e)
+                return findInnerMostNodeAtPosition(child, position)
+        }
+        return (n && n.kind === SK.SourceFile) ? null : n;
     }
 }
