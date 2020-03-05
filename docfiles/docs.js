@@ -309,9 +309,9 @@ function setupLangPicker() {
 
 function buildLangPicker() {
     var appTheme = pxt && pxt.appTarget && pxt.appTarget.appTheme;
-    var modalContainer = document.querySelector("#langmodal");
 
     if (appTheme && appTheme.availableLocales && appTheme.selectLanguage) {
+        var modalContainer = document.querySelector("#langmodal");
         var initialLang = pxt && pxt.Util.normalizeLanguageCode(pxt.BrowserUtils.getCookieLang())[0];
         var localesContainer = document.querySelector("#availablelocales");
         appTheme.availableLocales.forEach(function(locale) {
@@ -383,7 +383,7 @@ function buildLangPicker() {
 
 function removeLangPicker() {
     document.querySelector("#langpicker").remove();
-    modalContainer.remove();
+    document.querySelector("#langmodal").remove();
 }
 
 $(document).ready(function () {
