@@ -108,7 +108,8 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             // we keep this disabled, until implemented for cloud syncing
             // makse no sense for local saves - the star just blinks for half second after every change
             const showStar = false // !meta.isSaved
-            const openUrl = topPkg && !!header && !!header.githubId && /\.md$/.test(file.name)
+            const isTutorialMd = topPkg && !!header && !!header.githubId && /\.md$/.test(file.name);
+            const openUrl = isTutorialMd
                 && `#tutorial:${header.id}:${file.name.replace(/\.[a-z]+$/, '')}`
 
             return (
@@ -121,6 +122,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     isActive={currentFile == file}
                     hasDelete={deleteFiles && !/^(main\.ts|pxt\.json)$/.test(file.name)}
                     openUrl={openUrl}
+                    addLocale={isTutorialMd && !/^_locale\//.test(file.name)}
                     className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                 >
                     {file.name}
@@ -340,6 +342,7 @@ interface FileTreeItemProps extends React.DetailedHTMLProps<React.AnchorHTMLAttr
     isActive: boolean;
     hasDelete?: boolean;
     openUrl?: string;
+    addLocale?: boolean;
 }
 
 class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
@@ -371,8 +374,14 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
     }
 
     handleOpen(e: React.MouseEvent<HTMLElement>) {
-        e.stopPropagation();
+        pxt.tickEvent("explorer.file.open");
         window.open(this.props.openUrl, "_blank");
+        e.stopPropagation();
+    }
+
+    handleAddLocale(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("explorer.file.addlocale");
+
         e.stopPropagation();
     }
 
@@ -382,7 +391,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
 
     renderCore() {
         const { onClick, onItemClick, onItemRemove, onErrorClick, // keep these to avoid warnings with ...rest
-            isActive, hasDelete, file, meta, openUrl, ...rest } = this.props;
+            isActive, hasDelete, file, meta, openUrl, addLocale, ...rest } = this.props;
 
         return <a
             onClick={this.handleClick}
@@ -398,6 +407,10 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
                 onClick={this.handleRemove}
                 onKeyDown={this.handleButtonKeydown} />}
             {meta && meta.numErrors ? <span className='ui label red button' role="button" title={lf("Go to error")}>{meta.numErrors}</span> : undefined}
+            {addLocale && <sui.Button className="primary label" icon="xicon globe"
+                title={lf("Add localized file")}
+                onClick={this.handleAddLocale}
+                onKeyDown={this.handleButtonKeydown} />}
             {openUrl && <sui.Button className="button primary label" icon="external" title={lf("Preview")} onClick={this.handleOpen} onKeyDown={sui.fireClickOnEnter} />}
         </a>
     }
