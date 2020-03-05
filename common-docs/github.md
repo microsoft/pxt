@@ -1,4 +1,4 @@
-# GitHub
+# GitHub with MakeCode
 
 [GitHub](https://github.com) is a popular web site used by developers to host and work together on code. Using the GitHub integration in MakeCode, you can easily and **freely** host your programs and collaborate on them with friends.
 
