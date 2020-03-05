@@ -351,7 +351,7 @@ namespace custom {
     }
 }
 
-interface FileTreeItemProps extends React.DetailedHTMLProps<React.AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement> {
+interface FileTreeItemProps {
     file: pkg.File;
     meta: pkg.FileMeta;
     onItemClick: (fn: pkg.File) => void;
@@ -362,6 +362,7 @@ interface FileTreeItemProps extends React.DetailedHTMLProps<React.AnchorHTMLAttr
     hasDelete?: boolean;
     openUrl?: string;
     addLocalizedFile?: string;
+    className?: string;
 }
 
 class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
@@ -412,8 +413,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
     }
 
     renderCore() {
-        const { onClick, onItemClick, onItemRemove, onErrorClick, // keep these to avoid warnings with ...rest
-            isActive, hasDelete, file, meta, openUrl, addLocalizedFile, ...rest } = this.props;
+        const { isActive, hasDelete, file, meta, openUrl, addLocalizedFile, className } = this.props;
 
         return <a
             onClick={this.handleClick}
@@ -422,7 +422,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
             aria-selected={isActive}
             aria-label={isActive ? lf("{0}, it is the current opened file in the JavaScript editor", file.name) : file.name}
             onKeyDown={sui.fireClickOnEnter}
-            {...rest}>
+            className={className}>
             {this.props.children}
             {hasDelete && <sui.Button className="primary label" icon="trash"
                 title={lf("Delete file {0}", file.name)}
