@@ -102,8 +102,9 @@ namespace ts.pxtc.transpile {
             return (pxt as any).py.py2ts(options) as TranspileResult
         }
 
-        let fromTxt = options.fileSystem[filename]
-        U.assert(fromTxt !== undefined && fromTxt !== null, `Missing file "${filename}" when converting from py->ts`)
+        let fromTxt = options.fileSystem[filename];
+        if (fromTxt === undefined || fromTxt === null)
+            fromTxt = ""; // don't crash if main.ts is missing, just create new file
 
         return transpileInternal("py", fromTxt, "ts", doRealTranspile, !!options.syntaxInfo)
     }

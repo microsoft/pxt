@@ -517,7 +517,7 @@ export function showImportGithubDialogAsync() {
         res = "NEW"
         core.hideDialog()
     }
-    core.showLoading("githublist", lf("Getting repo list..."))
+    core.showLoading("githublist", lf("searching GitHub repositories..."))
     return pxt.github.listUserReposAsync()
         .finally(() => core.hideLoading("githublist"))
         .then(repos => {

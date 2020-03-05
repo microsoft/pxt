@@ -410,10 +410,11 @@ export class ProjectView
             const mpkg = pkg.mainEditorPkg();
             const mainpy = mpkg.files["main.py"];
             if (!mainpy)
-                mpkg.setFile("main.py", "# ...");
-            this.setFile(pkg.mainEditorPkg().files["main.py"])
+                this.updateFileAsync("main.py", "# ...", false);
+            else
+                this.setFile(mainpy);
         }
-
+        // update language pref
         pxt.Util.setEditorLanguagePref("py");
     }
 
