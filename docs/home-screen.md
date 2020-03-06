@@ -1,1 +1,0 @@
-# Configuring the Home Screen
