@@ -2797,9 +2797,9 @@ export class ProjectView
                     title = pxtJson.name || lf("Untitled");
                     autoChooseBoard = false;
                     const mfn = (ghid.fileName || "README") + ".md";
-                    
-                    let md : string = undefined;
-                    let [initialLang, baseLang] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
+
+                    let md: string = undefined;
+                    const [initialLang, baseLang] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
                     if (initialLang && baseLang) {
                         //We need to first search base lang and then intial Lang
                         //Example: normalizeLanguageCode en-IN  will return ["en-IN", "en"] and nb will be returned as ["nb"]                        
