@@ -3281,11 +3281,17 @@ export class ProjectView
             autoChooseBoard = false;
             // if non-default language, find localized file if any
             const mfn = (fileName || ghid.fileName || "README") + ".md";
-            const lang = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
-            const md =
-                (lang && lang[1] && files[`_locales/${lang[0]}-${lang[1]}/${mfn}`])
-                || (lang && lang[0] && files[`_locales/${lang[0]}/${mfn}`])
-                || files[mfn];
+
+            let md: string = undefined;
+            const [initialLang, baseLang] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
+            if (initialLang && baseLang) {
+                //We need to first search base lang and then intial Lang
+                //Example: normalizeLanguageCode en-IN  will return ["en-IN", "en"] and nb will be returned as ["nb"]
+                md = files[`_locales/${initialLang}/${mfn}`] || files[`_locales/${baseLang}/${mfn}`];
+            } else {
+                md = files[`_locales/${initialLang}/${mfn}`];
+            }
+            md = md || files[mfn];
             return processMarkdown(md);
         }
     }
