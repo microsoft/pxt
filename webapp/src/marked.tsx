@@ -326,6 +326,10 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             sanitize: true
         })
 
+        // preemptively remove script tags, although they'll be escaped anyway
+        // prevents ugly <script ...> rendering in docs
+        markdown = markdown.replace(/<\s*script[^>]*>.*<\/\s*script\s*>/g, '');
+
         // Render the markdown and add it to the content div
         /* tslint:disable:no-inner-html (marked content is already sanitized) */
         content.innerHTML = marked(markdown);
