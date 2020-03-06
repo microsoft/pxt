@@ -1,8 +1,9 @@
 # Private Assignments
 
-This page describes a methodology to manage private assignments via GitHub. 
-Each assignment is a **private repository** under the student's account; where the teacher has been given **collaborator** access.
-The student does their work in a **branch** and returns their work by creating a **pull request** with the teacher as **reviewer**.
+This page describes how private assignments are managed via GitHub. In short, it works like this:
+
+1. Each assignment is a **private repository** under the student's account; where the teacher has been given **collaborator** access.
+2. The student does their work in a **branch** and returns their work by creating a **pull request** with the teacher as **reviewer**.
 
 This collaboration method is quite similar to the way professional developers use GitHub.
 
@@ -11,7 +12,7 @@ This collaboration method is quite similar to the way professional developers us
 #### Public repositories
 
 Using **public** repositories simplifies a lot the configuration phase for the assignments.
-If it is acceptable for the code to be publically available on https://github.com, 
+If it is acceptable for the code to be publically available on [GitHub](https://github.com), 
 we recommend using the [public assignments](/github/public-assignments).
 
 ### ~
@@ -40,15 +41,15 @@ If you try the invitation link and it gives you a **404** error, it most likely 
 
 ### ~
 
-## Step 3: Student change, commit, push cycle
+## Step 2: Student change, commit, push cycle
 
 It's time to work! Students can create all their work and use the **commit & push** button to save it. It is a good idea to encourage them to perform a commit whenever they feel
-they have made significant progress and to provide a meaningful description of the changes.
+they have made significant progress. Make sure they provide a meaningful description of the changes for the commit.
 
-## Step 4: Teacher reviews the commit history
+## Step 3: Teacher reviews the commit history
 
 The teacher can use the [MakeCode GitHub Explorer](https://makecode.com/github-explorer) to easily browse the repositories of a user. If needed, the teacher can also review the entire history of the project on GitHub.
 
-## Step 5: (optional) Student makes the repository public
+## Step 4: (optional) Student makes the repository public
 
-If the student wants to add this project to his portfolio, he can simply make it public and it will be visible on his GitHub user page.
+If the student wants to add this project to their portfolio, they can simply make it public and it will be visible on their GitHub user page.
