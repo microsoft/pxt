@@ -2797,19 +2797,19 @@ export class ProjectView
                     title = pxtJson.name || lf("Untitled");
                     autoChooseBoard = false;
                     const mfn = (ghid.fileName || "README") + ".md";
-
-                    let md = gh.files[mfn];
+                    
+                    let md : string = undefined;
                     let [initialLang, baseLang] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
                     if (initialLang && baseLang) {
-                        //Example: normalizeLanguageCode en-IN  will return ["en-IN", "en"] and nb will be returned as ["nb"]
-                        //We need to first search full lang and then the base Lang
-                        md = gh.files[`_locales/${initialLang}/${mfn}`] || gh.files[`_locales/${baseLang}/${mfn}`]
-                    } else if (initialLang) {
-                        // Simple case where there is just one lang code.
-                        md = gh.files[`_locales/${initialLang}/${mfn}`]
+                        //We need to first search base lang and then intial Lang
+                        //Example: normalizeLanguageCode en-IN  will return ["en-IN", "en"] and nb will be returned as ["nb"]                        
+                        md = files[`_locales/${initialLang}/${mfn}`] || files[`_locales/${baseLang}/${mfn}`];
+                    } else {
+                        md = files[`_locales/${initialLang}/${mfn}`];
                     }
-
+                    md = md || files[mfn];
                     return md;
+
                 }).catch((e) => {
                     core.errorNotification(tutorialErrorMessage);
                     core.handleNetworkError(e);
