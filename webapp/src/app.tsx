@@ -2802,7 +2802,7 @@ export class ProjectView
                     let [initialLang, baseLang] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
                     if (initialLang && baseLang) {
                         //Example: normalizeLanguageCode en-IN  will return ["en-IN", "en"] and nb will be returned as ["nb"]
-                        //We need to first search base lang and then intial Lang
+                        //We need to first search full lang and then the base Lang
                         md = gh.files[`_locales/${initialLang}/${mfn}`] || gh.files[`_locales/${baseLang}/${mfn}`]
                     } else if (initialLang) {
                         // Simple case where there is just one lang code.
