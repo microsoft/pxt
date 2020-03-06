@@ -14,26 +14,26 @@ A **repository** is used to organize a single project. Repositories will contain
 2. Click on the **GitHub** button next to the **Save** button.
 3. Select a good name and description (it helps with internet searches!).
 
-## ~ hint
+### ~ hint
 
-### Sign in
+#### Sign in
 
 If you haven't signed in yet with GitHub, you will be redirected to the GitHub sign in page. On your first use of MakeCode, you will also be asked to authorize the **Microsoft MakeCode with GitHub** app. This integrates MakeCode with GitHub using our GitHub app.
 
 Advanced users can use a [developer token](/github/token) so that they can work directly with GitHub without having to sign in with the app.
 
-## ~
+### ~
 
 ## Step 2 - Make code changes
 
-Go ahead and make some changes to the code of your project.
+Go ahead and make some changes to the code in your project.
 
 ## Step 3 - Review your changes
 
 Make any change in the code editor and you will notice that an up arrow is displayed
 on the **GitHub** button. The arrow means that there are changes stored on your computer and they need to get saved to GitHub. Click on that button to open the **GitHub view**.
 
-You will see the list of modified failes and their **diff**. A **diff** is common jargon used by developers to describe a formatted display of differences between two pieces of text (read about using [diffs](/github/diff)). Look at the diff carefully, it tells you which lines you added, deleted or modified.
+You will see the list of modified files and their differences, or **diffs**. A **diff** is common jargon used by developers to describe a formatted display of differences between two pieces of text (read about using [diffs](/github/diff)). Look at the diff carefully, it tells you which lines you added, deleted or modified.
 
 ### ~ hint
 
@@ -43,9 +43,9 @@ If you do not like some of your changes, you can click on the **Revert** button 
 
 ### ~
 
-### Step 4 - Commit & push changes
+## Step 4 - Commit & push changes
 
 Click on the **commit & push changes** button to save these changes to GitHub. This will create a new **commit** in your repository. A **commit** is a bundled set of changes that can be uploaded to GitHub (read more about [commits](/github/commit)).
 
 
-That's it! Keep repeating step 2, 3, 4 in a loop!
+That's it! Each time you want to keep a set of changes to your code, repeat steps 2, 3, and 4!

@@ -25,7 +25,7 @@ Basically, the rules of **semver** are, for a particular version ``MAJOR.MINOR.P
 
 ## Pre-compiled javascript
 
-Releases also upload a pre-compiled version of your application so that the GitHub pages web site can be using it.
+Releases also upload a pre-compiled version of your application so that the GitHub pages web site can use it.
 You will find the file at ``assets/js/binary.js``.
 
 ## License #license
