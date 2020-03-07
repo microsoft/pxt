@@ -73,7 +73,10 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
         // Create the function editor workspace
         functionEditorWorkspace = Blockly.inject(workspaceDiv, {
             trashcan: false,
-            scrollbars: true
+            move: {
+                scrollbars: true
+            },
+            renderer: "pxt"
         }) as Blockly.WorkspaceSvg;
         (functionEditorWorkspace as any).showContextMenu_ = () => { }; // Disable the context menu
         functionEditorWorkspace.clear();

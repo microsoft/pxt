@@ -539,7 +539,7 @@ namespace pxt.blocks {
             block.setHelpUrl(`/pkg/${fn.pkg}#${encodeURIComponent(anchor.join('-'))}`)
         }
 
-        block.setColour(color, fn.attributes.colorSecondary, fn.attributes.colorTertiary);
+        block.setColour(color);
         let blockShape = Blockly.OUTPUT_SHAPE_ROUND;
         if (fn.retType == "boolean")
             blockShape = Blockly.OUTPUT_SHAPE_HEXAGONAL;
@@ -901,7 +901,7 @@ namespace pxt.blocks {
         goog.require('Blockly.Blocks');
 
         Blockly.FieldCheckbox.CHECK_CHAR = '■';
-        Blockly.BlockSvg.START_HAT = !!pxt.appTarget.appTheme.blockHats;
+        // Blockly.BlockSvg.START_HAT = !!pxt.appTarget.appTheme.blockHats;
 
         initFieldEditors();
         initContextMenu();
@@ -1382,7 +1382,7 @@ namespace pxt.blocks {
     }
 
     export let onShowContextMenu: (workspace: Blockly.Workspace,
-        items: Blockly.ContextMenu.MenuItem[]) => void = undefined;
+        items: Blockly.MenuItem[]) => void = undefined;
 
     /**
      * The following patch to blockly is to add the Trash icon on top of the toolbox,
@@ -1477,11 +1477,11 @@ namespace pxt.blocks {
          * @param {!Event} e Mouse event.
          * @private
          */
-        (<any>Blockly).WorkspaceSvg.prototype.showContextMenu_ = function (e: any) {
+        /*(<any>Blockly).WorkspaceSvg.prototype.showContextMenu_ = function (e: any) {
             if (this.options.readOnly || this.isFlyout) {
                 return;
             }
-            let menuOptions: Blockly.ContextMenu.MenuItem[] = [];
+            let menuOptions: Blockly.MenuItem[] = [];
             let topBlocks = this.getTopBlocks();
             let topComments = this.getTopComments();
             let eventGroup = Blockly.utils.genUid();
@@ -1519,50 +1519,44 @@ namespace pxt.blocks {
                 Blockly.Events.setGroup(false);
             }
 
-            const deleteOption = {
-                text: deleteCount == 1 ? msg.DELETE_BLOCK : msg.DELETE_ALL_BLOCKS,
-                enabled: deleteCount > 0,
-                callback: function () {
-                    pxt.tickEvent("blocks.context.delete", undefined, { interactiveConsent: true });
-                    if (deleteCount < 2) {
-                        deleteNext();
-                    } else {
-                        Blockly.confirm(lf("Delete all {0} blocks?", deleteCount), (ok) => {
-                            if (ok) {
-                                deleteNext();
-                            }
-                        });
-                    }
+            const deleteOption = new Blockly.MenuItem(deleteCount == 1 ? msg.DELETE_BLOCK : msg.DELETE_ALL_BLOCKS);
+            deleteOption.setEnabled(deleteCount > 0);
+            deleteOption.onAction((e: Blockly.MenuItem) => {
+                pxt.tickEvent("blocks.context.delete", undefined, { interactiveConsent: true });
+                if (deleteCount < 2) {
+                    deleteNext();
+                } else {
+                    Blockly.confirm(lf("Delete all {0} blocks?", deleteCount), (ok) => {
+                        if (ok) {
+                            deleteNext();
+                        }
+                    });
                 }
-            };
+            })
             menuOptions.push(deleteOption);
 
-            const formatCodeOption = {
-                text: lf("Format Code"),
-                enabled: true,
-                callback: () => {
-                    pxt.tickEvent("blocks.context.format", undefined, { interactiveConsent: true });
-                    pxt.blocks.layout.flow(this, { useViewWidth: true });
-                }
-            }
+            const formatCodeOption = new Blockly.MenuItem(lf("Format Code"));
+            formatCodeOption.setEnabled(true);
+            formatCodeOption.onAction((e: Blockly.MenuItem) => {
+                pxt.tickEvent("blocks.context.format", undefined, { interactiveConsent: true });
+                pxt.blocks.layout.flow(this, { useViewWidth: true });
+            })
             menuOptions.push(formatCodeOption);
 
             if (pxt.blocks.layout.screenshotEnabled()) {
-                const screenshotOption = {
-                    text: lf("Snapshot"),
-                    enabled: topBlocks.length > 0 || topComments.length > 0,
-                    callback: () => {
-                        pxt.tickEvent("blocks.context.screenshot", undefined, { interactiveConsent: true });
-                        pxt.blocks.layout.screenshotAsync(this)
-                            .done((uri) => {
-                                if (pxt.BrowserUtils.isSafari())
-                                    uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
-                                BrowserUtils.browserDownloadDataUri(
-                                    uri,
-                                    `${pxt.appTarget.nickname || pxt.appTarget.id}-${lf("screenshot")}.png`);
-                            });
-                    }
-                };
+                const screenshotOption = new Blockly.MenuItem(lf("Snapshot"));
+                screenshotOption.setEnabled(topBlocks.length > 0 || topComments.length > 0);
+                screenshotOption.onAction( (e: Blockly.MenuItem) => {
+                    pxt.tickEvent("blocks.context.screenshot", undefined, { interactiveConsent: true });
+                    pxt.blocks.layout.screenshotAsync(this)
+                        .done((uri) => {
+                            if (pxt.BrowserUtils.isSafari())
+                                uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
+                            BrowserUtils.browserDownloadDataUri(
+                                uri,
+                                `${pxt.appTarget.nickname || pxt.appTarget.id}-${lf("screenshot")}.png`);
+                        });
+                });
                 menuOptions.push(screenshotOption);
             }
 
@@ -1571,7 +1565,7 @@ namespace pxt.blocks {
                 onShowContextMenu(this, menuOptions);
 
             Blockly.ContextMenu.show(e, menuOptions, this.RTL);
-        };
+        };*/
 
         // Get rid of bumping behavior
         (Blockly as any).Constants.Logic.LOGIC_COMPARE_ONCHANGE_MIXIN.onchange = function () { }
@@ -2201,7 +2195,7 @@ namespace pxt.blocks {
         // New functions implementation messages
         msg.FUNCTION_CREATE_NEW = lf("Make a Function...");
         msg.FUNCTION_WARNING_DUPLICATE_ARG = lf("Functions cannot use the same argument name more than once.");
-        msg.FUNCTION_WARNING_ARG_NAME_IS_FUNCTION_NAME = lf("Argument names must not be the same as the function name.");
+        // msg.FUNCTION_WARNING_ARG_NAME_IS_FUNCTION_NAME = lf("Argument names must not be the same as the function name.");
         msg.FUNCTION_WARNING_EMPTY_NAME = lf("Function and argument names cannot be empty.");
         msg.FUNCTIONS_DEFAULT_FUNCTION_NAME = lf("doSomething");
         msg.FUNCTIONS_DEFAULT_BOOLEAN_ARG_NAME = lf("bool");
@@ -2218,7 +2212,7 @@ namespace pxt.blocks {
         msg.PROCEDURES_DEFNORETURN_TITLE = proceduresDef.block["PROCEDURES_DEFNORETURN_TITLE"];
         (msg as any).PROCEDURE_ALREADY_EXISTS = proceduresDef.block["PROCEDURE_ALREADY_EXISTS"];
 
-        Blockly.Blocks['procedures_defnoreturn'].init = function () {
+        (Blockly.Blocks['procedures_defnoreturn']).init = function () {
             let nameField = new Blockly.FieldTextInput('',
                 (Blockly as any).Procedures.rename);
             //nameField.setSpellcheck(false); //TODO
@@ -2239,7 +2233,7 @@ namespace pxt.blocks {
         const proceduresCallId = "procedures_callnoreturn";
         const proceduresCallDef = pxt.blocks.getBlockDefinition(proceduresCallId);
 
-        msg.PROCEDURES_CALLRETURN_TOOLTIP = proceduresDef.tooltip;
+        // msg.PROCEDURES_CALLRETURN_TOOLTIP = proceduresDef.tooltip;
 
         Blockly.Blocks['procedures_callnoreturn'] = {
             init: function () {
@@ -2456,13 +2450,13 @@ namespace pxt.blocks {
                                         promptAndCheckWithAlert(newFunc);  // Recurse
                                     });
                             }
-                            else if (!Blockly.Procedures.isLegalName_(newFunc, workspace)) {
+                            /*else if (!Blockly.Procedures.isLegalName_(newFunc, workspace)) {
                                 Blockly.alert((Blockly.Msg as any).PROCEDURE_ALREADY_EXISTS.replace('%1',
                                     newFunc.toLowerCase()),
                                     function () {
                                         promptAndCheckWithAlert(newFunc);  // Recurse
                                     });
-                            }
+                            }*/
                             else {
                                 createFunction(newFunc);
                             }
@@ -2534,7 +2528,7 @@ namespace pxt.blocks {
             // The logic for setting the output check relies on the internals of PXT
             // too much to be refactored into pxt-blockly, so we need to monkey patch
             // it here
-            Blockly.Blocks["argument_reporter_custom"].domToMutation = function (xmlElement: Element) {
+            (Blockly.Blocks["argument_reporter_custom"]).domToMutation = function (xmlElement: Element) {
                 const typeName = xmlElement.getAttribute('typename');
                 this.typeName_ = typeName;
 
@@ -2676,77 +2670,77 @@ namespace pxt.blocks {
             }
             return tip;
         }
-        // TODO: update this when pulling new blockly
+        // TODO shakao check if tooltip can be modified via new rendering
         /**
          * Create the tooltip and show it.
          * @private
          */
-        Blockly.Tooltip.show_ = function () {
-            Blockly.Tooltip.poisonedElement_ = Blockly.Tooltip.element_;
-            if (!Blockly.Tooltip.DIV) {
-                return;
-            }
-            // Erase all existing text.
-            goog.dom.removeChildren(/** @type {!Element} */(Blockly.Tooltip.DIV));
-            // Get the new text.
-            const card = Blockly.Tooltip.element_.codeCard as pxt.CodeCard;
+        // Blockly.Tooltip.show_ = function () {
+        //     Blockly.Tooltip.poisonedElement_ = Blockly.Tooltip.element_;
+        //     if (!Blockly.Tooltip.DIV) {
+        //         return;
+        //     }
+        //     // Erase all existing text.
+        //     goog.dom.removeChildren(/** @type {!Element} */(Blockly.Tooltip.DIV));
+        //     // Get the new text.
+        //     const card = Blockly.Tooltip.element_.codeCard as pxt.CodeCard;
 
-            function render() {
-                let rtl = Blockly.Tooltip.element_.RTL;
-                let windowSize = goog.dom.getViewportSize();
-                // Display the tooltip.
-                let tooltip = Blockly.Tooltip.DIV as HTMLElement;
-                tooltip.style.direction = rtl ? 'rtl' : 'ltr';
-                tooltip.style.display = 'block';
-                Blockly.Tooltip.visible = true;
-                // Move the tooltip to just below the cursor.
-                let anchorX = Blockly.Tooltip.lastX_;
-                if (rtl) {
-                    anchorX -= Blockly.Tooltip.OFFSET_X + tooltip.offsetWidth;
-                } else {
-                    anchorX += Blockly.Tooltip.OFFSET_X;
-                }
-                let anchorY = Blockly.Tooltip.lastY_ + Blockly.Tooltip.OFFSET_Y;
+        //     function render() {
+        //         let rtl = Blockly.Tooltip.element_.RTL;
+        //         let windowSize = goog.dom.getViewportSize();
+        //         // Display the tooltip.
+        //         let tooltip = Blockly.Tooltip.DIV as HTMLElement;
+        //         tooltip.style.direction = rtl ? 'rtl' : 'ltr';
+        //         tooltip.style.display = 'block';
+        //         Blockly.Tooltip.visible = true;
+        //         // Move the tooltip to just below the cursor.
+        //         let anchorX = Blockly.Tooltip.lastX_;
+        //         if (rtl) {
+        //             anchorX -= Blockly.Tooltip.OFFSET_X + tooltip.offsetWidth;
+        //         } else {
+        //             anchorX += Blockly.Tooltip.OFFSET_X;
+        //         }
+        //         let anchorY = Blockly.Tooltip.lastY_ + Blockly.Tooltip.OFFSET_Y;
 
-                if (anchorY + tooltip.offsetHeight >
-                    windowSize.height + window.scrollY) {
-                    // Falling off the bottom of the screen; shift the tooltip up.
-                    anchorY -= tooltip.offsetHeight + 2 * Blockly.Tooltip.OFFSET_Y;
-                }
-                if (rtl) {
-                    // Prevent falling off left edge in RTL mode.
-                    anchorX = Math.max(Blockly.Tooltip.MARGINS - window.scrollX, anchorX);
-                } else {
-                    if (anchorX + tooltip.offsetWidth >
-                        windowSize.width + window.scrollX - 2 * Blockly.Tooltip.MARGINS) {
-                        // Falling off the right edge of the screen;
-                        // clamp the tooltip on the edge.
-                        anchorX = windowSize.width - tooltip.offsetWidth -
-                            2 * Blockly.Tooltip.MARGINS;
-                    }
-                }
-                tooltip.style.top = anchorY + 'px';
-                tooltip.style.left = anchorX + 'px';
-            }
-            if (card) {
-                const cardEl = pxt.docs.codeCard.render({
-                    header: renderTip(Blockly.Tooltip.element_)
-                })
-                Blockly.Tooltip.DIV.appendChild(cardEl);
-                render();
-            } else {
-                let tip = renderTip(Blockly.Tooltip.element_);
-                tip = Blockly.utils._string.wrap(tip, Blockly.Tooltip.LIMIT);
-                // Create new text, line by line.
-                let lines = tip.split('\n');
-                for (let i = 0; i < lines.length; i++) {
-                    let div = document.createElement('div');
-                    div.appendChild(document.createTextNode(lines[i]));
-                    Blockly.Tooltip.DIV.appendChild(div);
-                }
-                render();
-            }
-        }
+        //         if (anchorY + tooltip.offsetHeight >
+        //             windowSize.height + window.scrollY) {
+        //             // Falling off the bottom of the screen; shift the tooltip up.
+        //             anchorY -= tooltip.offsetHeight + 2 * Blockly.Tooltip.OFFSET_Y;
+        //         }
+        //         if (rtl) {
+        //             // Prevent falling off left edge in RTL mode.
+        //             anchorX = Math.max(Blockly.Tooltip.MARGINS - window.scrollX, anchorX);
+        //         } else {
+        //             if (anchorX + tooltip.offsetWidth >
+        //                 windowSize.width + window.scrollX - 2 * Blockly.Tooltip.MARGINS) {
+        //                 // Falling off the right edge of the screen;
+        //                 // clamp the tooltip on the edge.
+        //                 anchorX = windowSize.width - tooltip.offsetWidth -
+        //                     2 * Blockly.Tooltip.MARGINS;
+        //             }
+        //         }
+        //         tooltip.style.top = anchorY + 'px';
+        //         tooltip.style.left = anchorX + 'px';
+        //     }
+        //     if (card) {
+        //         const cardEl = pxt.docs.codeCard.render({
+        //             header: renderTip(Blockly.Tooltip.element_)
+        //         })
+        //         Blockly.Tooltip.DIV.appendChild(cardEl);
+        //         render();
+        //     } else {
+        //         let tip = renderTip(Blockly.Tooltip.element_);
+        //         tip = Blockly.utils._string.wrap(tip, Blockly.Tooltip.LIMIT);
+        //         // Create new text, line by line.
+        //         let lines = tip.split('\n');
+        //         for (let i = 0; i < lines.length; i++) {
+        //             let div = document.createElement('div');
+        //             div.appendChild(document.createTextNode(lines[i]));
+        //             Blockly.Tooltip.DIV.appendChild(div);
+        //         }
+        //         render();
+        //     }
+        // }
     }
 
     function removeBlock(fn: pxtc.SymbolInfo) {

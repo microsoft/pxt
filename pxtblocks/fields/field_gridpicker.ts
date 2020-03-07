@@ -151,7 +151,7 @@ namespace pxtblockly {
                     // This option is selected
                     menuItem.setAttribute('aria-selected', 'true');
                     pxt.BrowserUtils.addClass(menuItem, 'goog-option-selected');
-                    backgroundColour = this.sourceBlock_.getColourTertiary();
+                    backgroundColour = "#000000" // this.sourceBlock_.getColourTertiary();
 
                     // Save so we can scroll to it later
                     this.selectedItemDom = menuItem;
@@ -311,11 +311,11 @@ namespace pxtblockly {
                 if ((options[i] as any)[1] == newValue) {
                     let content = (options[i] as any)[0];
                     if (typeof content == 'object') {
-                        this.imageJson_ = content;
+                        this.renderSelectedImage_(content);
                         this.setText(content.alt); // Use setText() because it handles displaying image selection
                     } else {
-                        this.imageJson_ = null;
-                        this.setText(content); // Use setText() because it handles displaying image selection
+                        // this.renderSelectedText_(content)
+                        // this.setText(content); // Use setText() because it handles displaying image selection
                     }
                     return;
                 }
@@ -446,12 +446,13 @@ namespace pxtblockly {
         }
 
         private getAnchorDimensions_() {
-            const boundingBox = this.getScaledBBox_();
+            const boundingBox = this.getScaledBBox();
             if (this.sourceBlock_.RTL) {
-                boundingBox.right += Blockly.FieldDropdown.CHECKMARK_OVERHANG;
+                // boundingBox.right += Blockly.FieldDropdown.CHECKMARK_OVERHANG;
             } else {
-                boundingBox.left -= Blockly.FieldDropdown.CHECKMARK_OVERHANG;
+                // boundingBox.left -= Blockly.FieldDropdown.CHECKMARK_OVERHANG;
             }
+            this.sourceBlock_.colour_
             return boundingBox;
         };
 
@@ -684,7 +685,7 @@ namespace pxtblockly {
          * Sets the text in this field.  Trigger a rerender of the source block.
          * @param {?string} text New text.
          */
-        setText(text: string) {
+        /*setText(text: string) {
             if (text === null || text === this.text_) {
                 // No change if null.
                 return;
@@ -712,14 +713,14 @@ namespace pxtblockly {
                 sourceBlock.render();
                 sourceBlock.bumpNeighbours_();
             }
-        };
+        };*/
 
         /**
          * Updates the width of the field. This calls getCachedWidth which won't cache
          * the approximated width on IE/Microsoft Edge when `getComputedTextLength` fails. Once
          * it eventually does succeed, the result will be cached.
          **/
-        updateSize_() {
+        /*updateSize_() {
             let width: number;
             if (this.imageJson_) {
                 width = this.imageJson_.width + 5;
@@ -754,7 +755,7 @@ namespace pxtblockly {
          * Update the text node of this field to display the current text.
          * @private
          */
-        updateTextNode_() {
+        /*updateTextNode_() {
             if (!this.textElement_ && !this.imageElement_) {
                 // Not rendered yet.
                 return;
@@ -770,7 +771,7 @@ namespace pxtblockly {
             }
 
             // Empty the text element.
-            goog.dom.removeChildren(/** @type {!Element} */(this.textElement_));
+            goog.dom.removeChildren(/** @type {!Element} *//*(this.textElement_));
             goog.dom.removeNode(this.imageElement_);
             this.imageElement_ = null;
             if (this.imageJson_) {
@@ -806,6 +807,6 @@ namespace pxtblockly {
 
             // Cached width is obsolete.  Clear it.
             this.size_.width = 0;
-        };
+        };*/
     }
 }

@@ -88,7 +88,7 @@ namespace pxtblockly {
                 let backgroundColor = this.backgroundColour_;
                 if (value == this.getValue()) {
                     // This icon is selected, show it in a different colour
-                    backgroundColor = this.sourceBlock_.getColourTertiary();
+                    backgroundColor = (this.sourceBlock_ as Blockly.BlockSvg).getColourTertiary();
                     button.setAttribute('aria-selected', 'true');
                 }
                 button.style.backgroundColor = backgroundColor;
@@ -130,12 +130,12 @@ namespace pxtblockly {
             Blockly.DropDownDiv.showPositionedByBlock(
                 this, this.sourceBlock_, this.onHide_.bind(this));
 
-            if (this.sourceBlock_.isShadow()) {
-                this.savedPrimary_ = this.sourceBlock_.getColour();
-                this.sourceBlock_.setColour(this.sourceBlock_.getColourTertiary(),
-                    this.sourceBlock_.getColourSecondary(), this.sourceBlock_.getColourTertiary());
-            } else if (this.box_) {
-                this.box_.setAttribute('fill', this.sourceBlock_.getColourTertiary());
+            let source = this.sourceBlock_ as Blockly.BlockSvg;
+            if (source?.isShadow()) {
+                this.savedPrimary_ = source.getColour();
+                source.setColour(source.getColourTertiary());
+            } else if (this.borderRect_) {
+                this.borderRect_.setAttribute('fill', source.getColourTertiary());
             }
         }
 
@@ -164,13 +164,12 @@ namespace pxtblockly {
             content.style.width = '';
             content.style.paddingRight = '';
 
-            if (this.sourceBlock_) {
-                if (this.sourceBlock_.isShadow()) {
-                    this.sourceBlock_.setColour(this.savedPrimary_,
-                        this.sourceBlock_.getColourSecondary(), this.sourceBlock_.getColourTertiary());
-                } else if (this.box_) {
-                    this.box_.setAttribute('fill', this.sourceBlock_.getColour());
-                }
+            let source = this.sourceBlock_ as Blockly.BlockSvg;
+            if (source?.isShadow()) {
+                this.savedPrimary_ = source.getColour();
+                this.sourceBlock_.setColour(this.savedPrimary_);
+            } else if (this.borderRect_) {
+                this.borderRect_.setAttribute('fill', source.getColour());
             }
         };
 
@@ -178,7 +177,7 @@ namespace pxtblockly {
          * Sets the text in this field.  Trigger a rerender of the source block.
          * @param {?string} text New text.
          */
-        setText(text: string) {
+        /*setText(text: string) {
             if (text === null || text === this.text_) {
                 // No change if null.
                 return;
@@ -206,14 +205,14 @@ namespace pxtblockly {
                 sourceBlock.render();
                 sourceBlock.bumpNeighbours_();
             }
-        };
+        };*/
 
         /**
          * Updates the width of the field. This calls getCachedWidth which won't cache
          * the approximated width on IE/Microsoft Edge when `getComputedTextLength` fails. Once
          * it eventually does succeed, the result will be cached.
          **/
-        updateSize_() {
+        /*updateSize_() {
             // Calculate width of field
             let width = this.imageJson_.width + 5;
 
@@ -244,7 +243,7 @@ namespace pxtblockly {
          * Update the text node of this field to display the current text.
          * @private
          */
-        updateTextNode_() {
+        /*updateTextNode_() {
             if (!this.textElement_ && !this.imageElement_) {
                 // Not rendered yet.
                 return;
@@ -260,8 +259,8 @@ namespace pxtblockly {
             }
 
             // Empty the text element.
-            goog.dom.removeChildren(/** @type {!Element} */(this.textElement_));
-            goog.dom.removeNode(this.imageElement_);
+            //goog.dom.removeChildren(/** @type {!Element} *//*(this.textElement_));*/
+            /*goog.dom.removeNode(this.imageElement_);
             this.imageElement_ = null;
             if (this.imageJson_) {
                 // Image option is selected.
@@ -292,6 +291,6 @@ namespace pxtblockly {
 
             // Cached width is obsolete.  Clear it.
             this.size_.width = 0;
-        };
+        };*/
     }
 }

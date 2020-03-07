@@ -272,7 +272,7 @@ declare namespace pxt {
         invertedMonaco?: boolean; // if true: use the vs-dark monaco theme
         invertedGitHub?: boolean; // inverted github view
         lightToc?: boolean; // if true: do NOT use inverted style in docs toc
-        blocklyOptions?: Blockly.WorkspaceOptions; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
+        blocklyOptions?: Blockly.BlocklyOptions; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
         hideFlyoutHeadings?: boolean; // Hide the flyout headings at the top of the flyout when on a mobile device.
         monacoColors?: pxt.Map<string>; // Monaco theme colors, see https://code.visualstudio.com/docs/getstarted/theme-color-reference
         simAnimationEnter?: string; // Simulator enter animation

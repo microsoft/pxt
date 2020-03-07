@@ -26,7 +26,7 @@ namespace pxt.blocks.layout {
     function alignBlocks(blockInfo: ts.pxtc.BlocksInfo, oldWs: Blockly.Workspace, newWs: Blockly.Workspace) {
         let env: pxt.blocks.Environment;
         let newBlocks: pxt.Map<Blockly.Block[]>; // support for multiple events with similar name
-        oldWs.getTopBlocks(false).filter(ob => !ob.disabled)
+        oldWs.getTopBlocks(false).filter(ob => ob.isEnabled())
             .forEach(ob => {
                 const otp = ob.xy_;
                 if (otp && otp.x != 0 && otp.y != 0) {
@@ -139,7 +139,7 @@ namespace pxt.blocks.layout {
     export function flow(ws: Blockly.WorkspaceSvg, opts?: FlowOptions) {
         if (opts) {
             if (opts.useViewWidth) {
-                const metrics = ws.getMetrics();
+                const metrics = ws.getMetrics() as Blockly.Metrics;
 
                 // Only use the width if in portrait, otherwise the blocks are too spread out
                 if (metrics.viewHeight > metrics.viewWidth) {
@@ -423,7 +423,7 @@ namespace pxt.blocks.layout {
             }
             const f = formattable(block);
 
-            if (!onStart && !block.disabled && block.type === pxtc.ON_START_TYPE) { // there might be duplicate on-start blocks
+            if (!onStart && block.isEnabled() && block.type === pxtc.ON_START_TYPE) { // there might be duplicate on-start blocks
                 onStart = f;
             }
             else {
