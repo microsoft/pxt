@@ -1,3 +1,4 @@
+/// <reference path='../../localtypings/dompurify.d.ts' />
 
 import * as React from "react";
 import * as data from "./data";
@@ -323,7 +324,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         // Set markdown options
         marked.setOptions({
             renderer: renderer,
-            sanitize: true
+            sanitize: true,
+            sanitizer: pxt.docs.requireDOMSanitizer()
         })
 
         // preemptively remove script tags, although they'll be escaped anyway
@@ -335,7 +337,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         content.innerHTML = marked(markdown);
         /* tslint:enable:no-inner-html */
 
-        // 
+        //
 
         // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed
         this.renderInlineBlocks(content);
