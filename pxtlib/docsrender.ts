@@ -1,5 +1,6 @@
 /// <reference path='../localtypings/pxtarget.d.ts' />
 /// <reference path="util.ts"/>
+/// <reference path='../localtypings/dompurify.d.ts' />
 
 namespace pxt.docs {
     declare var require: any;
@@ -78,6 +79,12 @@ namespace pxt.docs {
         if (typeof marked !== "undefined") return marked;
         if (typeof require === "undefined") return undefined;
         return require("marked") as typeof marked;
+    }
+
+    export let requireDOMSanitizer = () => {
+        if (typeof DOMPurify !== "undefined") return DOMPurify.sanitize;
+        if (typeof require === "undefined") return undefined;
+        return (require("DOMPurify") as typeof DOMPurify).sanitize;
     }
 
     export interface RenderData {
@@ -458,6 +465,7 @@ namespace pxt.docs {
                 }
                 return `<h${level} id="${this.options.headerPrefix}${id}">${text}</h${level}>`
             } as any
+            let sanitizer = requireDOMSanitizer();
             markedInstance.setOptions({
                 renderer: renderer,
                 gfm: true,
@@ -465,10 +473,13 @@ namespace pxt.docs {
                 breaks: false,
                 pedantic: false,
                 sanitize: true,
+                sanitizer: sanitizer,
                 smartLists: true,
                 smartypants: true
-            })
+            });
         };
+
+
 
         let markdown = opts.markdown
 
@@ -779,13 +790,15 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
             return null
 
         const markedInstance = pxt.docs.requireMarked();
+        const sanitizer = requireDOMSanitizer();
         const options = {
             renderer: new markedInstance.Renderer(),
             gfm: true,
             tables: false,
             breaks: false,
             pedantic: false,
-            sanitize: false,
+            sanitize: true,
+            sanitizer: sanitizer,
             smartLists: false,
             smartypants: false
         };
