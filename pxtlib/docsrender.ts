@@ -869,7 +869,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
             tables: false,
             breaks: false,
             pedantic: false,
-            sanitize: false,
+            sanitize: true,
             sanitizer: sanitizer,
             smartLists: false,
             smartypants: false
