@@ -61,7 +61,9 @@
     "rtlcss": "2.2.1",
     "cssnano": "3.10.0",
     "less": "2.7.3",
-    "semantic-ui-less": "2.2.14"
+    "semantic-ui-less": "2.2.14",
+    "dompurify": "2.0.8",
+    "sanitize-html": "1.22.0"
   },
   "lazyDependencies": {
     "keytar": "4.2.1",
