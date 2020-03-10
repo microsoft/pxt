@@ -1,5 +1,12 @@
 # Microsoft MakeCode Blog
 
+## [Online Learning Resources](/blog/minecraft/online-learning)
+
+March 10th, 2020 by [pelikhan](https://github.com/pelikhan)
+
+We've compiled a list of resources that could be useful if you find yourself needing to do online learning.
+**[Continue reading this blog post](/blog/minecraft/online-learning)**
+
 ## [MakeCode Python is here!](/blog/minecraft/python-release)
 
 February 19th, 2020 by [Jaqster](https://github.com/jaqster)
