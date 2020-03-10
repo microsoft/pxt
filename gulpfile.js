@@ -177,7 +177,9 @@ function compileTsProject(dirname, destination, useOutdir, filename) {
     } : {
         out: path.resolve(destination, path.basename(filename || dirname) + ".js")
     };
-
+     
+    opts["removeComments"] = true;
+    
     let configPath = path.join(dirname, "tsconfig.json");
     let tsProject = ts.createProject(configPath, opts);
     let tsResult = tsProject.src()
