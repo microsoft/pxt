@@ -3222,6 +3222,9 @@ export class ProjectView
                 temporary,
                 md
             };
+        }).catch(e => {
+            core.handleNetworkError(e);
+            core.errorNotification(lf("Oops, we could not load this activity."))
         });
 
         function processMarkdown(md: string) {
@@ -3277,7 +3280,7 @@ export class ProjectView
 
         return this.loadActivityFromMarkdownAsync(tutorialId, tutorialTitle, editorProjectName)
             .then(r => {
-                const { filename, dependencies, temporary, reportId, autoChooseBoard, features, md } = r;
+                const { filename, dependencies, temporary, reportId, autoChooseBoard, features, md } = (r || {});
                 if (!md)
                     throw new Error(lf("Tutorial not found"));
 
