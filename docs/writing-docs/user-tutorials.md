@@ -64,6 +64,12 @@ For example,
 
     https://makecode.microbit.org/#tutorial:https://github.com/myorg/myrepo/mytutorial
 
+### Examples
+
+You can also use the ``#example`` route similarly to ``#tutorial`` to load a markdown example into the editor.
+
+    https://[editor url]/#example:[GitHub repository url]/[filename]
+
 ### Testing
 
 Click on the ``external link`` icon in the **Explorer** view to open any markdown file (``.md``)
