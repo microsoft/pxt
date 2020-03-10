@@ -3191,7 +3191,7 @@ export class ProjectView
                     const status = pxt.github.repoStatus(ghid, config);
                     switch (status) {
                         case pxt.github.GitRepoStatus.Banned:
-                            throw lf("This tutorial has been banned.");
+                            throw lf("This GitHub repository has been banned.");
                         case pxt.github.GitRepoStatus.Approved:
                             reportId = undefined;
                             break;
