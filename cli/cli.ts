@@ -30,6 +30,8 @@ import * as crowdin from './crowdin';
 
 const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void = require('rimraf');
 
+pxt.docs.requireDOMSanitizer = () => require("sanitize-html");
+
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] !== "no";
 let forceLocalBuild = !!process.env["PXT_FORCE_LOCAL"];
 let forceBuild = false; // don't use cache
