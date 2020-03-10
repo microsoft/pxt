@@ -1,15 +1,17 @@
 import { ImageEditorTool } from './store/imageReducer';
-import { dispatchChangeZoom, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchChangeImageTool, dispatchSwapBackgroundForeground } from './actions/dispatch';
+import { dispatchChangeZoom, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchChangeImageTool, dispatchSwapBackgroundForeground, dispatchChangeSelectedColor} from './actions/dispatch';
 import store from './store/imageStore';
 
 export function addKeyListener() {
     document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("keydown", handleUndoRedo, true);
+    document.addEventListener("keydown", overrideBlocklyShortcuts, true);
 }
 
 export function removeKeyListener() {
     document.removeEventListener("keydown", handleKeyDown);
     document.removeEventListener("keydown", handleUndoRedo, true);
+    document.removeEventListener("keydown", overrideBlocklyShortcuts, true);
 }
 
 function handleUndoRedo(event: KeyboardEvent) {
@@ -20,6 +22,13 @@ function handleUndoRedo(event: KeyboardEvent) {
         event.stopPropagation();
     } else if (event.key === "Redo" || (controlOrMeta && event.key === "y")) {
         redo();
+        event.preventDefault();
+        event.stopPropagation();
+    }
+}
+
+function overrideBlocklyShortcuts(event: KeyboardEvent) {
+    if (event.key === "Backspace" || event.key === "Delete") {
         event.preventDefault();
         event.stopPropagation();
     }
@@ -59,6 +68,12 @@ function handleKeyDown(event: KeyboardEvent) {
             swapForegroundBackground();
             break;
     }
+
+    if (/Digit\d/.test(event.code)) {
+        const keyAsNum = +event.code.slice(-1);
+        const color = keyAsNum + (event.shiftKey ? 9 : 0);
+        setColor(color);
+    }
 }
 
 function undo() {
@@ -71,6 +86,10 @@ function redo() {
 
 function setTool(tool: ImageEditorTool) {
     dispatchAction(dispatchChangeImageTool(tool));
+}
+
+function setColor(selectedColor: number) {
+    dispatchAction(dispatchChangeSelectedColor(selectedColor))
 }
 
 function zoom(delta: number) {
