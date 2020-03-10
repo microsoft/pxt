@@ -470,6 +470,7 @@ file('built/web/main.js', ["built/web/pxtapp.js", "built/webapp/src/app.js"], { 
 
 ju.catFiles('built/web/pxtapp.js', [
     "node_modules/lzma/src/lzma_worker-min.js",
+    "node_modules/dompurify/dist/purify.min.js",
     "built/web/pxtlib.js",
     "built/web/pxtwinrt.js",
     "built/web/pxteditor.js",
@@ -484,6 +485,7 @@ ju.catFiles('built/web/pxtworker.js', [
     "built/web/typescript.js",
     "node_modules/fuse.js/dist/fuse.min.js",
     "node_modules/lzma/src/lzma_worker-min.js",
+    "node_modules/dompurify/dist/purify.min.js",
     "built/web/pxtlib.js",
     "built/web/pxtcompiler.js",
     "built/web/pxtpy.js"
@@ -492,6 +494,7 @@ ju.catFiles('built/web/pxtworker.js', [
 ju.catFiles('built/web/pxtembed.js', [
     "built/web/typescript.js",
     "node_modules/lzma/src/lzma_worker-min.js",
+    "node_modules/dompurify/dist/purify.min.js",
     "built/web/pxtlib.js",
     "built/web/pxtcompiler.js",
     "built/web/pxtpy.js",
