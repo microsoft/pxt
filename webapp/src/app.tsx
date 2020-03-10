@@ -3142,39 +3142,33 @@ export class ProjectView
 
     private hintManager: HintManager = new HintManager();
 
-    startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorProjectName?: string) {
-        pxt.tickEvent("tutorial.start", { editor: editorProjectName });
-        this.startTutorialAsync(tutorialId, tutorialTitle, recipe, editorProjectName);
-    }
-
-    startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorProjectName?: string): Promise<void> {
-        core.hideDialog();
-        core.showLoading("tutorial", lf("starting tutorial..."));
-        sounds.initTutorial(); // pre load sounds
+    private loadActivityFromMarkdownAsync(tutorialId: string, tutorialTitle?: string, editorProjectName?: string): Promise<{
+        reportId: string;
+        filename: string;
+        autoChooseBoard: boolean;
+        dependencies: pxt.Map<string>;
+        features: string[];
+        temporary: boolean;
+        md: string;
+    }> {
         const header = workspace.getHeader(tutorialId.split(':')[0]);
         const scriptId = !header && pxt.Cloud.parseScriptId(tutorialId);
         const ghid = !header && !scriptId && pxt.github.parseRepoId(tutorialId);
+
         let reportId: string = undefined;
         let filename: string;
         let autoChooseBoard: boolean = true;
         let dependencies: pxt.Map<string> = {};
         let features: string[] = undefined;
         let temporary = false;
-        let tutorialErrorMessage = lf("Please check your internet access and ensure the tutorial is valid.");
+
         let p: Promise<string>;
-
-        // make sure we are in the editor
-        recipe = recipe && !!this.state.header;
-
         if (/^\//.test(tutorialId)) {
             filename = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
             p = pxt.Cloud.markdownAsync(tutorialId)
                 .then(md => {
                     autoChooseBoard = true;
                     return processMarkdown(md);
-                }).catch((e) => {
-                    core.errorNotification(tutorialErrorMessage);
-                    core.handleNetworkError(e);
                 });
         } else if (scriptId) {
             pxt.tickEvent("tutorial.shared");
@@ -3187,9 +3181,6 @@ export class ProjectView
                     reportId = scriptId;
                     const md = files["README.md"];
                     return processMarkdown(md);
-                }).catch((e) => {
-                    core.errorNotification(tutorialErrorMessage);
-                    core.handleNetworkError(e);
                 });
         } else if (!!ghid && ghid.owner && ghid.project) {
             pxt.tickEvent("tutorial.github");
@@ -3199,58 +3190,37 @@ export class ProjectView
                     switch (status) {
                         case pxt.github.GitRepoStatus.Banned:
                             throw lf("This tutorial has been banned.");
-                        //case pxt.github.GitRepoStatus.Approved:
+                        case pxt.github.GitRepoStatus.Approved:
+                            reportId = undefined;
+                            break;
                         default:
                             reportId = "https://github.com/" + ghid.fullName;
                             break;
                     }
                     return pxt.github.downloadPackageAsync(ghid.fullName, config);
                 })
-                .then(gh => loadGitHubTutorial(ghid, gh.files))
-                .catch((e) => {
-                    core.errorNotification(tutorialErrorMessage);
-                    core.handleNetworkError(e);
-                });
+                .then(gh => resolveMarkdown(ghid, gh.files));
         } else if (header) {
             pxt.tickEvent("tutorial.header");
             temporary = true;
             const hghid = pxt.github.parseRepoId(header.githubId);
             const hfileName = tutorialId.split(':')[1] || "README";
             p = workspace.getTextAsync(header.id)
-                .then(script => loadGitHubTutorial(hghid, script, hfileName))
+                .then(script => resolveMarkdown(hghid, script, hfileName))
         } else {
             p = Promise.resolve(undefined);
         }
-
         return p.then(md => {
-            if (!md)
-                throw new Error(lf("Tutorial not found"));
-
-            const { options, editor: parsedEditor } = pxt.tutorial.getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
-
-            // pick tutorial editor
-            const editor = editorProjectName || parsedEditor;
-
-            // start a tutorial within the context of an existing program
-            if (recipe) {
-                const header = pkg.mainEditorPkg().header;
-                header.tutorial = options;
-                header.tutorialCompleted = undefined;
-                return this.loadHeaderAsync(header);
-            }
-
-            return this.createProjectAsync({
-                name: filename,
-                tutorial: options,
-                preferredEditor: editor,
+            return {
+                reportId,
+                filename,
+                autoChooseBoard,
                 dependencies,
-                temporary: temporary
-            });
-        }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve()
-        ).catch((e) => {
-            core.errorNotification(tutorialErrorMessage);
-            core.handleNetworkError(e);
-        }).finally(() => core.hideLoading("tutorial"));
+                features,
+                temporary,
+                md
+            };
+        });
 
         function processMarkdown(md: string) {
             if (!md) return md;
@@ -3266,7 +3236,7 @@ export class ProjectView
             return md;
         }
 
-        function loadGitHubTutorial(ghid: pxt.github.ParsedRepo, files: pxt.Map<string>, fileName?: string) {
+        function resolveMarkdown(ghid: pxt.github.ParsedRepo, files: pxt.Map<string>, fileName?: string): string {
             const pxtJson = pxt.Package.parseAndValidConfig(files["pxt.json"]);
             // if there is any .ts file in the tutorial repo,
             // add as a dependency itself
@@ -3294,6 +3264,51 @@ export class ProjectView
             md = md || files[mfn];
             return processMarkdown(md);
         }
+    }
+
+    private startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorProjectName?: string): Promise<void> {
+        core.hideDialog();
+        core.showLoading("tutorial", lf("starting tutorial..."));
+        sounds.initTutorial(); // pre load sounds
+        // make sure we are in the editor
+        recipe = recipe && !!this.state.header;
+
+        return this.loadActivityFromMarkdownAsync(tutorialId, tutorialTitle, editorProjectName)
+            .then(r => {
+                const { filename, dependencies, temporary, reportId, autoChooseBoard, features, md } = r;
+                if (!md)
+                    throw new Error(lf("Tutorial not found"));
+
+                const { options, editor: parsedEditor } = pxt.tutorial.getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
+
+                // pick tutorial editor
+                const editor = editorProjectName || parsedEditor;
+
+                // start a tutorial within the context of an existing program
+                if (recipe) {
+                    const header = pkg.mainEditorPkg().header;
+                    header.tutorial = options;
+                    header.tutorialCompleted = undefined;
+                    return this.loadHeaderAsync(header);
+                }
+
+                return this.createProjectAsync({
+                    name: filename,
+                    tutorial: options,
+                    preferredEditor: editor,
+                    dependencies,
+                    temporary: temporary
+                }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve());
+            }).catch((e) => {
+                core.errorNotification(lf("Please check your internet connection and check the tutorial is valid."));
+                core.handleNetworkError(e);
+            })
+            .finally(() => core.hideLoading("tutorial"));
+    }
+
+    startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorProjectName?: string) {
+        pxt.tickEvent("tutorial.start", { editor: editorProjectName });
+        this.startTutorialAsync(tutorialId, tutorialTitle, recipe, editorProjectName);
     }
 
     completeTutorialAsync(): Promise<void> {
