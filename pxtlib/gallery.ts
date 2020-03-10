@@ -115,9 +115,4 @@ namespace pxt.gallery {
         return pxt.Cloud.markdownAsync(name)
             .then(md => parseGalleryMardown(md))
     }
-
-    export function loadExampleAsync(name: string, path: string): Promise<GalleryProject> {
-        return pxt.Cloud.markdownAsync(path)
-            .then(md => parseExampleMarkdown(name, md))
-    }
 }
