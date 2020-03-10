@@ -115,7 +115,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 this.props.parent.newEmptyProject(scr.name, url);
                 break;
             case "tutorial":
-                this.props.parent.startActivity("tutorial", url, scr.name, false, editorPref);
+                this.props.parent.startActivity("tutorial", url, scr.name, editorPref);
                 break;
             default:
                 const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(url); // Tutorial
