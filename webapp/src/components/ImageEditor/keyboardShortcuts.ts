@@ -69,7 +69,7 @@ function handleKeyDown(event: KeyboardEvent) {
             break;
     }
 
-    if (/Digit\d/.test(event.code)) {
+    if (/^Digit\d$/.test(event.code)) {
         const keyAsNum = +event.code.slice(-1);
         const color = keyAsNum + (event.shiftKey ? 9 : 0);
         setColor(color);
