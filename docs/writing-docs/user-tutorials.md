@@ -47,6 +47,10 @@ If you plan to update your tutorial over time, we recommend storing your project
 
     https://[editor url]/#tutorial:[GitHub repository url]
 
+For example,
+
+    https://makecode.microbit.org/#tutorial:https://github.com/myorg/myrepo
+
 ### Multiple tutorials per repository
 
 You can override the markdown file from the project used for the content of the tutorial (default is ``README.md``) by adding the path to the query argument (``.md`` not needed)
@@ -55,6 +59,16 @@ You can override the markdown file from the project used for the content of the 
 
 where MakeCode will load the ``filename.md`` file from the project. Don't forget to add this file in the
 ``files`` list in ``pxt.json``.
+
+For example,
+
+    https://makecode.microbit.org/#tutorial:https://github.com/myorg/myrepo/mytutorial
+
+### Examples
+
+You can also use the ``#example`` route similarly to ``#tutorial`` to load a markdown example into the editor.
+
+    https://[editor url]/#example:[GitHub repository url]/[filename]
 
 ### Testing
 

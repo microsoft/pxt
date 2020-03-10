@@ -115,11 +115,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 this.props.parent.newEmptyProject(scr.name, url);
                 break;
             case "tutorial":
-                this.props.parent.startTutorial(url, scr.name, false, editorPref);
+                this.props.parent.startActivity("tutorial", url, scr.name, editorPref);
                 break;
             default:
                 const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(url); // Tutorial
-                if (m) this.props.parent.startTutorial(m[1]);
+                if (m) this.props.parent.startActivity("tutorial", m[1]);
                 else {
                     if (scr.youTubeId && !url) // Youtube video
                         return; // Handled by href
@@ -136,8 +136,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         }
     }
 
-    chgCode(name: string, path: string, loadBlocks: boolean, preferredEditor?: string, prj?: pxt.ProjectTemplate) {
-        return this.props.parent.importExampleAsync({ name, path, loadBlocks, preferredEditor, prj });
+    chgCode(name: string, path: string, loadBlocks: boolean, preferredEditor?: string, template?: pxt.ProjectTemplate) {
+        return this.props.parent.importExampleAsync({ name, path, loadBlocks, preferredEditor, prj: template });
     }
 
     importProject() {
