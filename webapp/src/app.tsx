@@ -3313,7 +3313,7 @@ export class ProjectView
 
     startActivity(activity: pxt.editor.Activity, path: string, title?: string, editorProjectName?: string) {
         pxt.tickEvent(activity + ".start", { editor: editorProjectName });
-        switch(activity) {
+        switch (activity) {
             case "tutorial":
                 this.startTutorialAsync(path, title, false, editorProjectName); break;
             case "recipe":
@@ -3910,7 +3910,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         }
         // shortcut to a tutorial. eg: #tutorial:tutorials/getting-started
         // or #tutorial:py:tutorials/getting-started
-        case "tutorial": 
+        case "tutorial":
         case "example":
         case "recipe": {
             pxt.tickEvent("hash." + hash.cmd)
