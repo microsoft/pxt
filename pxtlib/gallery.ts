@@ -41,7 +41,7 @@ namespace pxt.gallery {
     export function parseExampleMarkdown(name: string, md: string): GalleryProject {
         if (!md) return undefined;
 
-        const m = /```(blocks?|typescript|python|spy)\s+((.|\s)+?)\s*```/i.exec(md);
+        const m = /```(blocks?|typescript|python|spy|sim)\s+((.|\s)+?)\s*```/i.exec(md);
         if (!m) return undefined;
 
         const dependencies = parsePackagesFromMarkdown(md);
