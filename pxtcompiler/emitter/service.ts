@@ -948,13 +948,20 @@ namespace ts.pxtc.service {
                 const propertyAccessTarget = findInnerMostNodeAtPosition(tsAst, isPython ? tsPos : dotIdx - 1)
 
                 if (propertyAccessTarget) {
+                    let type: Type;
+
                     const symbol = tc.getSymbolAtLocation(propertyAccessTarget);
-
                     if (symbol) {
-                        const type = tc.getTypeOfSymbolAtLocation(symbol, propertyAccessTarget);
+                        type = tc.getTypeOfSymbolAtLocation(symbol, propertyAccessTarget);
+                    }
+                    else {
+                        type = tc.getTypeAtLocation(propertyAccessTarget);
+                    }
 
-                        if (type && type.symbol) {
-                            const qname = tc.getFullyQualifiedName(type.symbol);
+                    if (type) {
+                        const qname = type.symbol ? tc.getFullyQualifiedName(type.symbol) : getNameOfWidenedType(type, tc);
+
+                        if (qname) {
                             const props = type.getApparentProperties()
                                 .map(prop => qname + "." + prop.getName())
                                 .map(propQname => lastApiInfo.apis.byQName[propQname])
@@ -1872,5 +1879,19 @@ namespace ts.pxtc.service {
                 return findInnerMostNodeAtPosition(child, position)
         }
         return (n && n.kind === SK.SourceFile) ? null : n;
+    }
+
+    function getNameOfWidenedType(t: Type, tc: TypeChecker) {
+        if (t.flags & TypeFlags.NumberLiteral) {
+            return "number";
+        }
+        else if (t.flags & TypeFlags.StringLiteral) {
+            return "String";
+        }
+        else if (t.flags & TypeFlags.BooleanLiteral) {
+            return "boolean";
+        }
+
+        return tc.typeToString(t);
     }
 }

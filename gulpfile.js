@@ -514,6 +514,7 @@ const testpydecomp = testTask("pydecompile-test", "pydecompilerunner.js");
 const testpycomp = testTask("pyconverter-test", "pyconvertrunner.js");
 const testpytraces = testTask("runtime-trace-tests", "tracerunner.js");
 const testtutorials = testTask("tutorial-test", "tutorialrunner.js");
+const testlanguageservice = testTask("language-service", "languageservicerunner.js");
 
 const buildKarmaRunner = () => compileTsProject("tests/blocklycompiler-test", "built/tests/", true);
 const runKarma = () => {
@@ -541,6 +542,7 @@ const testAll = gulp.series(
     testpycomp,
     testpytraces,
     testtutorials,
+    testlanguageservice,
     karma
 )
 
@@ -616,6 +618,7 @@ exports.update = update;
 exports.uglify = runUglify;
 exports.watch = initWatch;
 exports.watchCli = initWatchCli;
+exports.testlanguageservice = testlanguageservice;
 
 console.log(`pxt build how to:`)
 console.log(`run "gulp watch" in pxt folder`)
