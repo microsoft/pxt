@@ -5,9 +5,12 @@
 
 declare namespace pxt {
     // targetconfig.json
+    type GalleryShuffle = "daily";
     interface GalleryProps {
-        url: string,
-        experimentName?: string
+        url: string;
+        experimentName?: string;
+        locales?: string[];
+        shuffle?: GalleryShuffle;
     }
     interface TargetConfig {
         packages?: PackagesConfig;
@@ -370,7 +373,6 @@ declare namespace pxt {
         leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
         nameProjectFirst?: boolean; // prompt user to name project when creating new one
         chooseLanguageRestrictionOnNewProject?: boolean; // include 'options' menu when creating a new project
-        pythonToolbox?: boolean; // Code toolbox for Python
         githubEditor?: boolean; // allow editing github repositories from the editor
         githubCompiledJs?: boolean; // commit binary.js in commit when creating a github release,
         blocksCollapsing?: boolean; // collapse/uncollapse functions/event in blocks
@@ -787,9 +789,9 @@ declare namespace ts.pxtc {
         syntaxInfo?: SyntaxInfo;
 
         // decompiler only
-        alwaysDecompileOnStart?: boolean; 
+        alwaysDecompileOnStart?: boolean;
         // decompiler-only; the types allowed for user-defined function arguments in blocks (unlisted types will cause grey blocks)
-        allowedArgumentTypes?: string[]; 
+        allowedArgumentTypes?: string[];
         // decompiler only
         snippetMode?: boolean;
 

@@ -51,6 +51,7 @@ const pxtblockly = () => gulp.src([
 
 const pxtapp = () => gulp.src([
         "node_modules/lzma/src/lzma_worker-min.js",
+        "node_modules/dompurify/dist/purify.min.js",
         "built/pxtlib.js",
         "built/pxtwinrt.js",
         "built/pxteditor.js",
@@ -63,6 +64,7 @@ const pxtworker = () => gulp.src([
         "pxtcompiler/ext-typescript/lib/typescript.js",
         "node_modules/fuse.js/dist/fuse.min.js",
         "node_modules/lzma/src/lzma_worker-min.js",
+        "node_modules/dompurify/dist/purify.min.js",
         "built/pxtlib.js",
         "built/pxtcompiler.js",
         "built/pxtpy.js"
@@ -74,6 +76,7 @@ const pxtworker = () => gulp.src([
 const pxtembed = () => gulp.src([
         "pxtcompiler/ext-typescript/lib/typescript.js",
         "node_modules/lzma/src/lzma_worker-min.js",
+        "node_modules/dompurify/dist/purify.min.js",
         "built/pxtlib.js",
         "built/pxtcompiler.js",
         "built/pxtpy.js",

@@ -30,6 +30,8 @@ import * as crowdin from './crowdin';
 
 const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void = require('rimraf');
 
+pxt.docs.requireDOMSanitizer = () => require("sanitize-html");
+
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] !== "no";
 let forceLocalBuild = !!process.env["PXT_FORCE_LOCAL"];
 let forceBuild = false; // don't use cache
@@ -1853,62 +1855,6 @@ function buildWebStringsAsync() {
     return Promise.resolve()
 }
 
-function thirdPartyNoticesAsync(parsed: commandParser.ParsedCommand): Promise<void> {
-    const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
-    let tpn = `
-/*!----------------- MakeCode (PXT) ThirdPartyNotices -------------------------------------------------------
-
-MakeCode (PXT) uses third party material from the projects listed below.
-The original copyright notice and the license under which Microsoft
-received such third party material are set forth below. Microsoft
-reserves all other rights not expressly granted, whether by
-implication, estoppel or otherwise.
-
-In the event that we accidentally failed to list a required notice, please
-bring it to our attention. Post an issue or email us:
-
-           makecode@microsoft.com
-
----------------------------------------------
-Third Party Code Components
----------------------------------------------
-
-    `;
-
-    function lic(dep: string) {
-        const license = path.join("node_modules", dep, "LICENSE");
-        if (fs.existsSync(license))
-            return fs.readFileSync(license, 'utf8');
-        const readme = fs.readFileSync("README.md", "utf8");
-        const lic = /## License([^#]+)/.exec(readme);
-        if (lic)
-            return lic[1];
-
-        return undefined;
-    }
-
-    for (const dep of Object.keys(pkg.dependencies).concat(Object.keys(pkg.devDependencies))) {
-        pxt.log(`scanning ${dep}`)
-        const license = lic(dep);
-        if (!license)
-            pxt.log(`no license for ${dep} at ${license}`);
-        else
-            tpn += `
------------------ ${dep} -------------------
-
-${license}
-
----------------------------------------------
-`
-    }
-
-    tpn += `
-------------- End of ThirdPartyNotices --------------------------------------------------- */`;
-
-    nodeutil.writeFileSync("THIRD-PARTY-NOTICES.txt", tpn, { encoding: 'utf8' });
-    return Promise.resolve();
-}
-
 function updateDefaultProjects(cfg: pxt.TargetBundle) {
     let defaultProjects = [
         pxt.BLOCKS_PROJECT_NAME,
@@ -3148,11 +3094,14 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
 
     nodeutil.mkdirP(out);
     let n = 0;
+    let newcards = 0;
     let cards: pxt.CodeCard[] = [];
+    let lastCard: pxt.CodeCard = undefined;
     // parse existing cards
     if (md) {
         md.replace(rx, (m, c) => {
             cards = JSON.parse(c);
+            lastCard = cards.pop();
             return "";
         })
     }
@@ -3174,12 +3123,15 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                                 pxt.log(`${card.name} already in markdown`)
                                 return Promise.resolve(); // already handled
                             }
-                            // new card? add to list
-                            if (!card) {
-                                card = topic;
-                                card.description = "";
-                                cards.push(card);
-                            }
+
+                            newcards++;
+                            card = topic;
+                            card.name = topic.title;
+                            delete card.title;
+                            card.name = card.name
+                                .replace(/^\s*(introducing|presenting):?\s*/i, '');
+                            card.description = "";
+                            cards.push(card);
 
                             const pfn = `./docs/static/discourse/${id}.`;
                             if (md && !["png", "jpg", "gif"].some(ext => nodeutil.fileExistsSync(pfn + ext))) {
@@ -3188,7 +3140,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                                         // no image
                                         pxt.debug(`no thumb ${e}`);
                                         // use image from forum
-                                        if (topic.imageUrl)
+                                        if (topic.imageUrl && !/\.svg$/.test(topic.imageUrl))
                                             return downloadImageAsync(id, topic, topic.imageUrl);
                                         else
                                             throw e; // bail out
@@ -3203,15 +3155,17 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
         .then(() => {
             if (md) {
                 // inject updated cards
+                if (lastCard)
+                    cards.push(lastCard);
                 cards.forEach(card => delete (card as any).id);
                 md = md.replace(rx, (m, c) => {
                     return `\`\`\`codecard
 ${JSON.stringify(cards, null, 4)}
 \`\`\``;
                 })
-                fs.writeFileSync(outmd, md, { encoding: "utf8" });
+                nodeutil.writeFileSync(outmd, md, { encoding: "utf8" });
             }
-            pxt.log(`downloaded ${n} programs from tag ${tag}`)
+            pxt.log(`downloaded ${n} programs (${newcards} new) from tag ${tag}`)
         })
 
     function downloadImageAsync(id: string, topic: pxt.CodeCard, url: string): Promise<void> {
@@ -3232,8 +3186,19 @@ ${JSON.stringify(cards, null, 4)}
                     if (ext == "jpeg") ext = "jpg";
                     const ifn = `/static/discourse/${id}.${ext}`;
                     const localifn = "./docs" + ifn;
-                    topic.imageUrl = ifn;
                     nodeutil.writeFileSync(localifn, new Buffer(resp.buffer as ArrayBuffer));
+                    if (/\.(jpg|png)/.test(ifn))
+                        topic.imageUrl = ifn;
+                    else if (/\.gif/.test(ifn)) {
+                        topic.largeImageUrl = ifn;
+                        topic.imageUrl = `/static/discourse/${id}.png`;
+                        // render png
+                        nodeutil.spawnAsync({
+                            cmd: "magick",
+                            cwd: `./docs/static/discourse`,
+                            args: [`${id}.gif[0]`, `${id}.png`]
+                        })
+                    }
                 }
             }
         });
@@ -4197,7 +4162,7 @@ function dumpheapAsync(c: commandParser.ParsedCommand) {
 function dumpmemAsync(c: commandParser.ParsedCommand) {
     ensurePkgDir()
     return mainPkg.loadAsync()
-        .then(() => gdb.dumpMemAsync(c.args[0]))
+        .then(() => gdb.dumpMemAsync(c.args))
 }
 
 async function buildDalDTSAsync(c: commandParser.ParsedCommand) {
@@ -6100,7 +6065,6 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         }
     }, c => pyconv.convertAsync(c.args, !!c.flags["internal"]))
 
-    advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
     p.defineCommand({
         name: "cherrypick",
         aliases: ["cp"],
@@ -6162,7 +6126,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
     p.defineCommand({
         name: "memdump",
         help: "attempt to dump raw memory image using openocd",
-        argString: "<memdump-file.bin>",
+        argString: "[startAddr stopAddr] <memdump-file.bin>",
         aliases: ["dumpmem"],
         advanced: true,
     }, dumpmemAsync);

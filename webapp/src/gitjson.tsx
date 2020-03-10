@@ -639,9 +639,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                     </h3>
                     {needsCommit && <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {diffFiles && <DiffView parent={this} diffFiles={diffFiles} cacheKey={gs.commit.sha} allowRevert={true} showWhitespaceDiff={true} blocksMode={isBlocksMode} showConflicts={true} />}
+                    <HistoryZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
                     {master && <ReleaseZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {!isBlocksMode && <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
-                    <HistoryZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
                     <div></div>
                 </div>
             </div>
@@ -778,8 +778,9 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
         if (virtualF == f.file) virtualF = undefined;
 
         cache.file = f
-        if (this.props.allowRevert)
+        if (this.props.allowRevert) {
             cache.revert = () => this.props.parent.revertFileAsync(f, deletedFiles, addedFiles, virtualF);
+        }
         cache.diff = createDiff()
         return cache.diff;
     }
@@ -962,12 +963,15 @@ ${content}
 
     renderCore() {
         const { diffFiles, blocksMode } = this.props;
+        const targetTheme = pxt.appTarget.appTheme;
+        const invertedTheme = targetTheme.invertedMenu && targetTheme.invertedMonaco;
+
         const displayDiffFiles = blocksMode
             && !pxt.options.debug ? diffFiles.filter(f => /\.blocks$/.test(f.name))
             : diffFiles;
         return displayDiffFiles.length ? <div className="ui">
             {displayDiffFiles.map(df => this.showDiff(df))}
-        </div> : <div className="ui segment">
+        </div> : <div className={`ui ${invertedTheme ? "inverted " : ""}segment`}>
                 {lf("No local changes found.")}
             </div>;
     }
@@ -1250,7 +1254,7 @@ interface CommitViewProps {
     githubId: pxt.github.ParsedRepo;
     commit: pxt.github.CommitInfo;
     expanded: boolean;
-    onClick?: () => void;
+    onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }
 
 interface CommitViewState {
@@ -1317,13 +1321,21 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
         e.stopPropagation();
         pxt.tickEvent("github.restore", undefined, { interactiveConsent: true })
         const { commit } = this.props;
-        core.showLoading("github.restore", lf("restoring commit..."))
-        workspace.restoreCommitAsync(this.props.parent.props.parent.state.header, commit)
-            .then(() => {
-                data.invalidate("gh-commits:*");
-                return this.props.parent.props.parent.reloadHeaderAsync();
-            })
-            .finally(() => core.hideLoading("github.restore"))
+        core.confirmAsync({
+            header: lf("Would you like to restore this commit?"),
+            body: lf("You will restore your project to the point in time when this commit was made. Don't worry, you can undo this action by restoring to the previous commit."),
+            agreeLbl: lf("Restore"),
+            agreeClass: "green",
+        }).then(r => {
+            if (!r) return;
+            core.showLoading("github.restore", lf("restoring commit..."))
+            workspace.restoreCommitAsync(this.props.parent.props.parent.state.header, commit)
+                .then(() => {
+                    data.invalidate("gh-commits:*");
+                    return this.props.parent.props.parent.reloadHeaderAsync();
+                })
+                .finally(() => core.hideLoading("github.restore"))
+        })
         return false;
     }
 
@@ -1338,10 +1350,11 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
         return <div className={`ui item link`} role="button" onClick={onClick} onKeyDown={sui.fireClickOnEnter}>
             <div className="content">
                 {expanded && <sui.Button loading={loading} className="right floated" text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />}
-                <div className="header">
-                    {date.toLocaleString()}
+                <div className="meta">
+                    <span>{date.toLocaleTimeString()}</span>
                 </div>
                 <div className="description">{commit.message}</div>
+                {expanded && diffFiles && <div className="ui inverted segment">{lf("Comparing selected commit with local files")}</div>}
                 {expanded && diffFiles && <DiffView parent={parent} blocksMode={false} diffFiles={diffFiles} cacheKey={commit.sha} />}
             </div>
         </div>
@@ -1351,6 +1364,7 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
 interface HistoryState {
     expanded?: boolean;
     selectedCommit?: pxt.github.CommitInfo;
+    selectedDay?: string;
 }
 
 class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
@@ -1362,16 +1376,26 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
     handleLoadClick() {
         pxt.tickEvent("github.history.load", undefined, { interactiveConsent: true });
         const { expanded } = this.state;
-        this.setState({ expanded: !expanded, selectedCommit: undefined })
+        this.setState({ expanded: !expanded, selectedCommit: undefined, selectedDay: undefined })
     }
 
     renderCore() {
         const { githubId, gs, parent } = this.props;
-        const { selectedCommit, expanded } = this.state;
+        const { selectedCommit, expanded, selectedDay } = this.state;
         const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
         const commits = expanded &&
-            this.getData(`gh-commits:${gs.repo}#${gs.commit.sha}`) as pxt.github.CommitInfo[];
+            this.getData(`gh-commits:${githubId.fullName}#${gs.commit.sha}`) as pxt.github.CommitInfo[];
         const loading = expanded && !commits;
+
+        // group commits by day
+        const days: pxt.Map<pxt.github.CommitInfo[]> = {};
+        if (commits)
+            commits.forEach(commit => {
+                const day = new Date(Date.parse(commit.author.date)).toLocaleDateString();
+                let dcommit = days[day];
+                if (!dcommit) dcommit = days[day] = [];
+                dcommit.push(commit);
+            })
 
         return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
             <div className="ui header">{lf("History")}</div>
@@ -1385,19 +1409,40 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
                     {sui.helpIconLink("/github/history", lf("Learn more about history of commits."))}
                 </span>
             </div>}
-            {commits && <div className="ui divided items">
-                {commits.map(commit => <CommitView
-                    key={'commit' + commit.sha}
-                    onClick={() => {
-                        pxt.tickEvent("github.history.selectcommit", undefined, { interactiveConsent: true })
-                        const { selectedCommit } = this.state;
-                        this.setState({ selectedCommit: commit == selectedCommit ? undefined : commit })
-                    }}
-                    commit={commit}
-                    parent={parent}
-                    githubId={githubId}
-                    expanded={selectedCommit === commit}
-                />)}
+            {commits && <div className="ui items">
+                {Object.keys(days).map(day =>
+                    <div role="button" className="ui link item"
+                        key={"commitday" + day}
+                        onClick={e => {
+                            e.stopPropagation();
+                            pxt.tickEvent("github.history.selectday");
+                            this.setState({ selectedDay: selectedDay === day ? undefined : day, selectedCommit: undefined });
+                        }}
+                        onKeyDown={sui.fireClickOnEnter}>
+                        <div className="content">
+                            <div className="ui header">{day}
+                                <div className="ui label">
+                                    <i className="long arrow alternate up icon"></i> {days[day].length}
+                                </div>
+                            </div>
+                            {day === selectedDay &&
+                                <div className="ui divided items">
+                                    {days[day].map(commit => <CommitView
+                                        key={'commit' + commit.sha}
+                                        onClick={e => {
+                                            e.stopPropagation();
+                                            pxt.tickEvent("github.history.selectcommit", undefined, { interactiveConsent: true })
+                                            const { selectedCommit } = this.state;
+                                            this.setState({ selectedCommit: commit == selectedCommit ? undefined : commit })
+                                        }}
+                                        commit={commit}
+                                        parent={parent}
+                                        githubId={githubId}
+                                        expanded={selectedCommit === commit}
+                                    />)}
+                                </div>}
+                        </div>
+                    </div>)}
             </div>}
         </div>
     }

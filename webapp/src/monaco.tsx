@@ -69,7 +69,8 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                     let name = this.python ? si.pyName : si.name;
                     let completionSnippet: string | undefined = undefined;
                     let isMultiLine = insertSnippet && insertSnippet.indexOf("\n") >= 0
-                    if (this.python && insertSnippet && isMultiLine) {
+
+                    if (this.python && insertSnippet && isMultiLine && pxt.blocks.hasHandler(si)) {
                         // For python, we want to replace the entire line because when creating
                         // new functions these need to be placed before the line the user was typing
                         // unlike with typescript where callbacks use lambdas.
@@ -94,10 +95,11 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         // if we're past the first ".", i.e. we're doing member completion, be sure to
                         // remove what precedes the "." in the full snippet.
                         // E.g. if the user is typing "mobs.", we want to complete with "spawn" (name) not "mobs.spawn" (qName)
-                        if (completions.isMemberCompletion
-                            && completionSnippet
-                            && completionSnippet.startsWith(qName)) {
-                            completionSnippet = completionSnippet.replace(qName, name)
+                        if (completions.isMemberCompletion && completionSnippet) {
+                            const nameStart = completionSnippet.indexOf(name);
+                            if (nameStart !== -1) {
+                                completionSnippet = completionSnippet.substr(nameStart)
+                            }
                         }
                     }
                     const label = completions.isMemberCompletion ? name : qName
@@ -202,8 +204,11 @@ class HoverProvider implements monaco.languages.HoverProvider {
                 let sym = r.symbols ? r.symbols[0] : null
                 if (!sym) return null;
                 const documentation = pxt.Util.rlf(sym.attributes.jsDoc);
+
+                let contents: string[] = [r.auxResult[0], documentation];
+
                 const res: monaco.languages.Hover = {
-                    contents: [`**${sym.pyQName}**${sym.retType ? `: ${sym.retType}` : ''}`, documentation].map(toMarkdownString),
+                    contents: contents.map(toMarkdownString),
                     range: monaco.Range.fromPositions(model.getPositionAt(r.beginPos), model.getPositionAt(r.endPos))
                 }
                 return res
@@ -1096,7 +1101,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return pxt.appTarget.appTheme.monacoToolbox
             && !readOnly
             && ((this.fileType == "typescript" && this.currFile.name == "main.ts")
-                || (pxt.appTarget.appTheme.pythonToolbox && this.fileType == "python" && this.currFile.name == "main.py"));
+                || (this.fileType == "python" && this.currFile.name == "main.py"));
     }
 
     loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {

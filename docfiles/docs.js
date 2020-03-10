@@ -247,7 +247,6 @@ function setupBlocklyAsync() {
                 })
         })
     }
-    setupLangPicker();
     return promise;
 }
 
@@ -297,11 +296,23 @@ function languageOption(code) {
 }
 
 function setupLangPicker() {
-    var appTheme = pxt.appTarget.appTheme;
-    var initialLang = pxt.Util.normalizeLanguageCode(pxt.BrowserUtils.getCookieLang())[0];
-    var modalContainer = document.querySelector("#langmodal");
+    if (typeof ksRunnerReady === "undefined") {
+        // probably in pxt docs
+        removeLangPicker();
+        return;
+    }
+
+    ksRunnerReady(function () {
+        buildLangPicker();
+    });
+}
+
+function buildLangPicker() {
+    var appTheme = pxt && pxt.appTarget && pxt.appTarget.appTheme;
 
     if (appTheme && appTheme.availableLocales && appTheme.selectLanguage) {
+        var modalContainer = document.querySelector("#langmodal");
+        var initialLang = pxt && pxt.Util.normalizeLanguageCode(pxt.BrowserUtils.getCookieLang())[0];
         var localesContainer = document.querySelector("#availablelocales");
         appTheme.availableLocales.forEach(function(locale) {
             var card = languageOption(locale);
@@ -366,13 +377,18 @@ function setupLangPicker() {
         }
     } else {
         // remove the locale picker and modal if unavailable in this editor
-        document.querySelector("#langpicker").remove();
-        modalContainer.remove();
+        removeLangPicker();
     }
+}
+
+function removeLangPicker() {
+    document.querySelector("#langpicker").remove();
+    document.querySelector("#langmodal").remove();
 }
 
 $(document).ready(function () {
     setupSidebar();
     setupSemantic();
     renderSnippets();
+    setupLangPicker();
 });

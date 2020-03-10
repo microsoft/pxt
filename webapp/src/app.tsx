@@ -4,14 +4,6 @@
 /// <reference path="../../built/pxtsim.d.ts"/>
 /// <reference path="../../built/pxtwinrt.d.ts"/>
 
-// redirect for unsupported browsers (IE11) before loading
-(function _() {
-    if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
-        window.location.href = "/browsers";
-        return;
-    }
-})();
-
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as workspace from "./workspace";
@@ -418,10 +410,11 @@ export class ProjectView
             const mpkg = pkg.mainEditorPkg();
             const mainpy = mpkg.files["main.py"];
             if (!mainpy)
-                mpkg.setFile("main.py", "# ...");
-            this.setFile(pkg.mainEditorPkg().files["main.py"])
+                this.updateFileAsync("main.py", "# ...", false);
+            else
+                this.setFile(mainpy);
         }
-
+        // update language pref
         pxt.Util.setEditorLanguagePref("py");
     }
 
@@ -2071,13 +2064,15 @@ export class ProjectView
     importExampleAsync(options: pxt.editor.ExampleImportOptions): Promise<void> {
         const { name, path, loadBlocks, prj, preferredEditor } = options;
         core.showLoading("changingcode", lf("loading..."));
-        let features: string[];
-        return pxt.gallery.loadExampleAsync(name.toLowerCase(), path)
-            .then(example => {
-                if (!example) return Promise.resolve();
+        return this.loadActivityFromMarkdownAsync(path, name.toLowerCase(), preferredEditor)
+            .then(r => {
+                const { filename, md, features, autoChooseBoard: autoChooseBoardMeta } = (r || {});
+                const autoChooseBoard = !prj && autoChooseBoardMeta;
+                const example = !!md && pxt.gallery.parseExampleMarkdown(filename, md);
+                if (!example)
+                    throw new Error(lf("Example not found or invalid format"))
                 const opts: pxt.editor.ProjectCreationOptions = example;
                 if (prj) opts.prj = prj;
-                features = example.features;
                 if (loadBlocks && preferredEditor == pxt.BLOCKS_PROJECT_NAME) {
                     return this.createProjectAsync(opts)
                         .then(() => {
@@ -2090,6 +2085,7 @@ export class ProjectView
                                         this.overrideBlocksFile(resp.outfiles["main.blocks"])
                                     }
                                 })
+                                .then(() => autoChooseBoard && this.autoChooseBoardAsync(features));
                         });
                 } else {
                     if (!loadBlocks) {
@@ -2108,12 +2104,13 @@ export class ProjectView
                                             this.overrideTypescriptFile(resp.outfiles["main.py"])
                                         }
                                     })
+                                    .then(() => autoChooseBoard && this.autoChooseBoardAsync(features));
                             }
                             return Promise.resolve();
                         })
                 }
             })
-            .then(() => this.autoChooseBoardAsync(features))
+
             .finally(() => core.hideLoading("changingcode"))
     }
 
@@ -3149,37 +3146,33 @@ export class ProjectView
 
     private hintManager: HintManager = new HintManager();
 
-    startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorProjectName?: string) {
-        pxt.tickEvent("tutorial.start", { editor: editorProjectName });
-        this.startTutorialAsync(tutorialId, tutorialTitle, recipe, editorProjectName);
-    }
+    private loadActivityFromMarkdownAsync(path: string, title?: string, editorProjectName?: string): Promise<{
+        reportId: string;
+        filename: string;
+        autoChooseBoard: boolean;
+        dependencies: pxt.Map<string>;
+        features: string[];
+        temporary: boolean;
+        md: string;
+    }> {
+        const header = workspace.getHeader(path.split(':')[0]);
+        const scriptId = !header && pxt.Cloud.parseScriptId(path);
+        const ghid = !header && !scriptId && pxt.github.parseRepoId(path);
 
-    startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorProjectName?: string): Promise<void> {
-        core.hideDialog();
-        core.showLoading("tutorial", lf("starting tutorial..."));
-        sounds.initTutorial(); // pre load sounds
-        const scriptId = pxt.Cloud.parseScriptId(tutorialId);
-        const ghid = pxt.github.parseRepoId(tutorialId);
         let reportId: string = undefined;
         let filename: string;
         let autoChooseBoard: boolean = true;
         let dependencies: pxt.Map<string> = {};
         let features: string[] = undefined;
-        let tutorialErrorMessage = lf("Please check your internet access and ensure the tutorial is valid.");
+        let temporary = false;
+
         let p: Promise<string>;
-
-        // make sure we are in the editor
-        recipe = recipe && !!this.state.header;
-
-        if (/^\//.test(tutorialId)) {
-            filename = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
-            p = pxt.Cloud.markdownAsync(tutorialId)
+        if (/^\//.test(path)) {
+            filename = title || path.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
+            p = pxt.Cloud.markdownAsync(path)
                 .then(md => {
                     autoChooseBoard = true;
                     return processMarkdown(md);
-                }).catch((e) => {
-                    core.errorNotification(tutorialErrorMessage);
-                    core.handleNetworkError(e);
                 });
         } else if (scriptId) {
             pxt.tickEvent("tutorial.shared");
@@ -3192,81 +3185,49 @@ export class ProjectView
                     reportId = scriptId;
                     const md = files["README.md"];
                     return processMarkdown(md);
-                }).catch((e) => {
-                    core.errorNotification(tutorialErrorMessage);
-                    core.handleNetworkError(e);
                 });
         } else if (!!ghid && ghid.owner && ghid.project) {
+            pxt.tickEvent("tutorial.github");
             p = pxt.packagesConfigAsync()
                 .then(config => {
                     const status = pxt.github.repoStatus(ghid, config);
                     switch (status) {
                         case pxt.github.GitRepoStatus.Banned:
-                            throw lf("This tutorial has been banned.");
-                        //case pxt.github.GitRepoStatus.Approved:
+                            throw lf("This GitHub repository has been banned.");
+                        case pxt.github.GitRepoStatus.Approved:
+                            reportId = undefined;
+                            break;
                         default:
                             reportId = "https://github.com/" + ghid.fullName;
                             break;
                     }
                     return pxt.github.downloadPackageAsync(ghid.fullName, config);
                 })
-                .then(gh => {
-                    const pxtJson = pxt.Package.parseAndValidConfig(gh.files["pxt.json"]);
-                    // if there is any .ts file in the tutorial repo,
-                    // add as a dependency itself
-                    if (pxtJson.files.find(f => /\.ts/.test(f))) {
-                        dependencies = {}
-                        dependencies[ghid.project] = pxt.github.toGithubDependencyPath(ghid);
-                    }
-                    else {// just use dependencies from the tutorial
-                        pxt.Util.jsonMergeFrom(dependencies, pxtJson.dependencies);
-                    }
-                    filename = pxtJson.name || lf("Untitled");
-                    autoChooseBoard = false;
-                    // if non-default language, find localized file if any
-                    const mfn = (ghid.fileName || "README") + ".md";
-                    const lang = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
-                    const md =
-                        (lang && lang[1] && gh.files[`_locales/${lang[0]}-${lang[1]}/${mfn}`])
-                        || (lang && lang[0] && gh.files[`_locales/${lang[0]}/${mfn}`])
-                        || gh.files[mfn];
-                    return processMarkdown(md);
-                }).catch((e) => {
-                    core.errorNotification(tutorialErrorMessage);
-                    core.handleNetworkError(e);
-                });
+                .then(gh => resolveMarkdown(ghid, gh.files));
+        } else if (header) {
+            pxt.tickEvent("tutorial.header");
+            temporary = true;
+            const hghid = pxt.github.parseRepoId(header.githubId);
+            const hfileName = path.split(':')[1] || "README";
+            p = workspace.getTextAsync(header.id)
+                .then(script => resolveMarkdown(hghid, script, hfileName))
         } else {
             p = Promise.resolve(undefined);
         }
-
         return p.then(md => {
-            if (!md)
-                throw new Error(lf("Tutorial not found"));
-
-            const { options, editor: parsedEditor } = pxt.tutorial.getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
-
-            // pick tutorial editor
-            const editor = editorProjectName || parsedEditor;
-
-            // start a tutorial within the context of an existing program
-            if (recipe) {
-                const header = pkg.mainEditorPkg().header;
-                header.tutorial = options;
-                header.tutorialCompleted = undefined;
-                return this.loadHeaderAsync(header);
-            }
-
-            return this.createProjectAsync({
-                name: filename,
-                tutorial: options,
-                preferredEditor: editor,
-                dependencies
-            });
-        }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve()
-        ).catch((e) => {
-            core.errorNotification(tutorialErrorMessage);
+            return {
+                reportId,
+                filename,
+                autoChooseBoard,
+                dependencies,
+                features,
+                temporary,
+                md
+            };
+        }).catch(e => {
             core.handleNetworkError(e);
-        }).finally(() => core.hideLoading("tutorial"));
+            core.errorNotification(lf("Oops, we could not load this activity."))
+        });
 
         function processMarkdown(md: string) {
             if (!md) return md;
@@ -3280,6 +3241,87 @@ export class ProjectView
             pxt.Util.jsonMergeFrom(dependencies, pxt.gallery.parsePackagesFromMarkdown(md));
             features = pxt.gallery.parseFeaturesFromMarkdown(md);
             return md;
+        }
+
+        function resolveMarkdown(ghid: pxt.github.ParsedRepo, files: pxt.Map<string>, fileName?: string): string {
+            const pxtJson = pxt.Package.parseAndValidConfig(files["pxt.json"]);
+            // if there is any .ts file in the tutorial repo,
+            // add as a dependency itself
+            if (pxtJson.files.find(f => /\.ts$/.test(f))) {
+                dependencies = {}
+                dependencies[ghid.project] = pxt.github.toGithubDependencyPath(ghid);
+            }
+            else {// just use dependencies from the tutorial
+                pxt.Util.jsonMergeFrom(dependencies, pxtJson.dependencies);
+            }
+            filename = pxtJson.name || lf("Untitled");
+            autoChooseBoard = false;
+            // if non-default language, find localized file if any
+            const mfn = (fileName || ghid.fileName || "README") + ".md";
+
+            let md: string = undefined;
+            const [initialLang, baseLang] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
+            if (initialLang && baseLang) {
+                //We need to first search base lang and then intial Lang
+                //Example: normalizeLanguageCode en-IN  will return ["en-IN", "en"] and nb will be returned as ["nb"]
+                md = files[`_locales/${initialLang}/${mfn}`] || files[`_locales/${baseLang}/${mfn}`];
+            } else {
+                md = files[`_locales/${initialLang}/${mfn}`];
+            }
+            md = md || files[mfn];
+            return processMarkdown(md);
+        }
+    }
+
+    private startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorProjectName?: string): Promise<void> {
+        core.hideDialog();
+        core.showLoading("tutorial", lf("starting tutorial..."));
+        sounds.initTutorial(); // pre load sounds
+        // make sure we are in the editor
+        recipe = recipe && !!this.state.header;
+
+        return this.loadActivityFromMarkdownAsync(tutorialId, tutorialTitle, editorProjectName)
+            .then(r => {
+                const { filename, dependencies, temporary, reportId, autoChooseBoard, features, md } = (r || {});
+                if (!md)
+                    throw new Error(lf("Tutorial not found"));
+
+                const { options, editor: parsedEditor } = pxt.tutorial.getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
+
+                // pick tutorial editor
+                const editor = editorProjectName || parsedEditor;
+
+                // start a tutorial within the context of an existing program
+                if (recipe) {
+                    const header = pkg.mainEditorPkg().header;
+                    header.tutorial = options;
+                    header.tutorialCompleted = undefined;
+                    return this.loadHeaderAsync(header);
+                }
+
+                return this.createProjectAsync({
+                    name: filename,
+                    tutorial: options,
+                    preferredEditor: editor,
+                    dependencies,
+                    temporary: temporary
+                }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve());
+            }).catch((e) => {
+                core.errorNotification(lf("Please check your internet connection and check the tutorial is valid."));
+                core.handleNetworkError(e);
+            })
+            .finally(() => core.hideLoading("tutorial"));
+    }
+
+    startActivity(activity: pxt.editor.Activity, path: string, title?: string, editorProjectName?: string) {
+        pxt.tickEvent(activity + ".start", { editor: editorProjectName });
+        switch (activity) {
+            case "tutorial":
+                this.startTutorialAsync(path, title, false, editorProjectName); break;
+            case "recipe":
+                this.startTutorialAsync(path, title, true, editorProjectName); break;
+            case "example":
+                this.importExampleAsync({ name, path, loadBlocks: false, preferredEditor: editorProjectName }); break;
         }
     }
 
@@ -3390,6 +3432,10 @@ export class ProjectView
         this.hintManager.stopPokeUserActivity();
     }
 
+    clearUserPoke() {
+        this.setState({ pokeUserComponent: null });
+    }
+
     private tutorialCardHintCallback() {
         let tutorialOptions = this.state.tutorialOptions;
         tutorialOptions.tutorialHintCounter = tutorialOptions.tutorialHintCounter + 1;
@@ -3399,7 +3445,7 @@ export class ProjectView
             tutorialOptions: tutorialOptions
         });
 
-        setTimeout(() => { this.setState({ pokeUserComponent: null }); }, 3000);
+        setTimeout(() => this.clearUserPoke(), 10000);
     }
 
     ///////////////////////////////////////////////////////////
@@ -3549,9 +3595,8 @@ export class ProjectView
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
 
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
-        const showCollapseButton = showEditorToolbar && !inHome && !inTutorial && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode);
-        const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
-        const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
+        const showCollapseButton = showEditorToolbar && !inHome && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode);
+        const shouldHideEditorFloats = this.state.hideEditorFloats || this.state.collapseEditorTools;
         const logoWide = !!targetTheme.logoWide;
         const hwDialog = !sandbox && pxt.hasHwVariants();
         const expandedStyle = inTutorialExpanded ? this.getExpandedCardStyle(flyoutOnly) : null;
@@ -3565,7 +3610,7 @@ export class ProjectView
             "ui",
             lightbox ? 'dimmable dimmed' : 'dimmable',
             shouldHideEditorFloats ? "hideEditorFloats" : '',
-            shouldCollapseEditorTools ? "collapsedEditorTools" : '',
+            this.state.collapseEditorTools ? "collapsedEditorTools" : '',
             transparentEditorToolbar ? "transparentEditorTools" : '',
             invertedTheme ? 'inverted-theme' : '',
             this.state.fullscreen ? 'fullscreensim' : '',
@@ -3642,7 +3687,7 @@ export class ProjectView
                 </div>
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
                     {showCollapseButton && <sui.Button id='computertogglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
-                    {showCollapseButton && <sui.Button id='mobiletogglesim' className={`mobile tablet only collapse-button large`} icon={`inverted chevron ${this.state.collapseEditorTools ? 'up' : 'down'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
+                    {showCollapseButton && <sui.Button id='mobiletogglesim' className={`mobile tablet only collapse-button large ${!this.state.collapseEditorTools ? "toggle-hide" : ""}`} icon={`inverted chevron ${this.state.collapseEditorTools ? 'up' : 'down'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
                     {this.allEditors.map(e => e.displayOuter(expandedStyle))}
                 </div>
                 {inHome ? <div id="homescreen" className="full-abs">
@@ -3859,15 +3904,18 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             pxt.BrowserUtils.changeHash("");
             return true;
         }
-        case "gettingstarted":
+        case "gettingstarted": {
             pxt.tickEvent("hash.gettingstarted");
             editor.newProject();
             pxt.BrowserUtils.changeHash("");
             return true;
+        }
         // shortcut to a tutorial. eg: #tutorial:tutorials/getting-started
         // or #tutorial:py:tutorials/getting-started
         case "tutorial":
-            pxt.tickEvent("hash.tutorial")
+        case "example":
+        case "recipe": {
+            pxt.tickEvent("hash." + hash.cmd)
             let tutorialPath = hash.arg;
             let editorProjectName: string = undefined;
             if (/^(js|py):/.test(tutorialPath)) {
@@ -3875,14 +3923,10 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
                     ? pxt.PYTHON_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME;
                 tutorialPath = tutorialPath.substr(tutorialPath.indexOf(':') + 1)
             }
-            editor.startTutorial(tutorialPath, undefined, undefined, editorProjectName);
+            editor.startActivity(hash.cmd, tutorialPath, undefined, editorProjectName);
             pxt.BrowserUtils.changeHash("editor");
             return true;
-        case "recipe": // shortcut to a recipe. eg: #recipe:recipes/getting-started
-            pxt.tickEvent("hash.recipe")
-            editor.startTutorial(hash.arg, undefined, true);
-            pxt.BrowserUtils.changeHash("editor");
-            return true;
+        }
         case "home": // shortcut to home
             pxt.tickEvent("hash.home");
             editor.openHome();
@@ -3954,6 +3998,7 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
         case "testproject":
         // case "gettingstarted": // This should be true, #gettingstarted hash handling is not yet implemented
         case "tutorial":
+        case "example":
         case "recipe":
         case "projects":
         case "sandbox":
@@ -4116,6 +4161,13 @@ document.addEventListener("DOMContentLoaded", () => {
     pxt.setBundledApiInfo((window as any).pxtTargetBundle.apiInfo);
 
     enableAnalytics()
+
+    if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
+        pxt.tickEvent("unsupported");
+        window.location.href = "/browsers";
+        core.showLoading("browsernotsupported", lf("Sorry, this browser is not supported."));
+        return;
+    }
 
     initLogin();
     hash = parseHash();

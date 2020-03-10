@@ -1,6 +1,6 @@
 # Home Screen
 
-The home screen is the initial landing place for your users in the code editor. You can control the content displayed on the screen using settings in ``pxtarget.json`` and ``targetconfig.json``.
+The home screen is the initial landing place for your users in the code editor. You can control the content displayed on the screen using settings in the two target configuration files: ``pxtarget.json`` and ``targetconfig.json``.
 
 ## Hero banner
 
@@ -31,6 +31,24 @@ Gallery contents are defined by entries in markdown files stored in the document
 
 * the gallery contents are downloaded and parsed into a series of cards (the format is described below).
 
+### Shuffling Gallery Items
+
+The order in which the gallery entries appear in the gallery display can be randomized by adding a shuffle
+value to the gallery specifier. To do this, replace the single URL string with a two values named ``url`` and ``shuffle``. For ``url``, use the URL from the previous single entry. The ``shuffle`` value deterimes how often the order of the gallery items is changed.
+
+Shuffle values:
+
+* ``daily`` - change the gallery item order once for each day the home screen is viewed
+
+```
+    "galleries": {
+        "Classics": {
+            "url": "/classics",
+            "shuffle": "daily"
+        },
+        ...
+```
+
 ## Gallery Format
 
 A gallery is a markdown file with one or more ``codecard`` code sections. Each ``codecard`` is formatted
@@ -57,6 +75,7 @@ as a JavaScript array of ``CodeCard`` instance.
 
 The ``name``, ``description``, ``url``, ``imageUrl`` are mandatory. They are used to display the card in the home screen. A page with a URL that starts with ``https://`` will automatically open in a new tab. If you want to have multiple paragraphs in the description, you can use ``\n`` to separate the description into separate paragraphs:
 
+````
 ```codecard
 [
 {

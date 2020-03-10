@@ -115,11 +115,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 this.props.parent.newEmptyProject(scr.name, url);
                 break;
             case "tutorial":
-                this.props.parent.startTutorial(url, scr.name, false, editorPref);
+                this.props.parent.startActivity("tutorial", url, scr.name, editorPref);
                 break;
             default:
                 const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(url); // Tutorial
-                if (m) this.props.parent.startTutorial(m[1]);
+                if (m) this.props.parent.startActivity("tutorial", m[1]);
                 else {
                     if (scr.youTubeId && !url) // Youtube video
                         return; // Handled by href
@@ -136,8 +136,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         }
     }
 
-    chgCode(name: string, path: string, loadBlocks: boolean, preferredEditor?: string, prj?: pxt.ProjectTemplate) {
-        return this.props.parent.importExampleAsync({ name, path, loadBlocks, preferredEditor, prj });
+    chgCode(name: string, path: string, loadBlocks: boolean, preferredEditor?: string, template?: pxt.ProjectTemplate) {
+        return this.props.parent.importExampleAsync({ name, path, loadBlocks, preferredEditor, prj: template });
     }
 
     importProject() {
@@ -207,20 +207,32 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 .filter(galleryName => {
                     // hide galleries that are part of an experiment and that experiment is
                     // not enabled
-                    let galProps = galleries[galleryName] as pxt.GalleryProps | string
+                    const galProps = galleries[galleryName] as pxt.GalleryProps | string
                     if (typeof galProps === "string")
                         return true
-                    let exp = galProps.experimentName
-                    return !exp || !!(pxt.appTarget.appTheme as any)[exp]
+                    // filter categories by experiment
+                    const exp = galProps.experimentName;
+                    if (exp && !(pxt.appTarget.appTheme as any)[exp])
+                        return false; // experiment not enabled
+                    const locales = galProps.locales;
+                    if (locales && locales.indexOf(pxt.Util.userLanguage()) < 0)
+                        return false; // locale not supported
+                    return true;
                 })
                 .map(galleryName => {
-                    let galProps = galleries[galleryName] as pxt.GalleryProps | string
-                    let url = typeof galProps === "string" ? galProps : galProps.url
+                    const galProps = galleries[galleryName] as pxt.GalleryProps | string
+                    const url = typeof galProps === "string" ? galProps : galProps.url
+                    const shuffle: pxt.GalleryShuffle = typeof galProps === "string" ? undefined : galProps.shuffle;
                     return <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment" role="region" aria-label={pxt.Util.rlf(galleryName)}>
                         <h2 className="ui header heading">{pxt.Util.rlf(galleryName)} </h2>
                         <div className="content">
-                            <ProjectsCarousel ref={`${selectedCategory == galleryName ? 'activeCarousel' : ''}`} key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={url}
-                                onClick={this.chgGallery} setSelected={this.setSelected} selectedIndex={selectedCategory == galleryName ? selectedIndex : undefined} />
+                            <ProjectsCarousel ref={`${selectedCategory == galleryName ? 'activeCarousel' : ''}`}
+                                key={`${galleryName}_carousel`} parent={this.props.parent}
+                                name={galleryName}
+                                path={url}
+                                onClick={this.chgGallery} setSelected={this.setSelected}
+                                shuffle={shuffle}
+                                selectedIndex={selectedCategory == galleryName ? selectedIndex : undefined} />
                         </div>
                     </div>
                 }
@@ -390,6 +402,7 @@ interface ProjectsCarouselProps extends ISettingsProps {
     onClick: (src: any, action?: pxt.CodeCardAction) => void;
     selectedIndex?: number;
     setSelected?: (name: string, index: number) => void;
+    shuffle?: pxt.GalleryShuffle;
 }
 
 interface ProjectsCarouselState {
@@ -430,6 +443,21 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                 this.hasFetchErrors = true;
             } else {
                 this.prevGalleries = pxt.Util.concat(res.map(g => g.cards));
+                const shuffle = this.props.shuffle
+                if (shuffle) {
+                    // keep last one
+                    const last = this.prevGalleries.pop();
+                    // shuffle array
+                    const now = new Date();
+                    const seed = now.toDateString();
+                    this.prevGalleries.sort((l, r) =>
+                        ts.pxtc.Util.codalHash16(l.name + seed)
+                        - ts.pxtc.Util.codalHash16(r.name + seed)
+                    );
+                    // add last back
+                    if (last)
+                        this.prevGalleries.push(last);
+                }
             }
         }
         return this.prevGalleries || [];

@@ -76,6 +76,7 @@ namespace pxt.editor {
         debugging?: boolean;
         bannerVisible?: boolean;
         pokeUserComponent?: string;
+        flashHint?: boolean;
 
         highContrast?: boolean;
         print?: boolean;
@@ -165,6 +166,8 @@ namespace pxt.editor {
         photo?: string;
     }
 
+    export type Activity = "tutorial" | "recipe" | "example";
+
     export interface IProjectView {
         state: IAppState;
         setState(st: IAppState): void;
@@ -228,6 +231,7 @@ namespace pxt.editor {
         showTutorialHint(): void;
         pokeUserActivity(): void;
         stopPokeUserActivity(): void;
+        clearUserPoke(): void;
 
         anonymousPublishAsync(screenshotUri?: string): Promise<string>;
 
@@ -288,7 +292,7 @@ namespace pxt.editor {
 
         editor: IEditor;
 
-        startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editor?: string): void;
+        startActivity(activitity: Activity, path: string, title?: string, editor?: string): void;
         showLightbox(): void;
         hideLightbox(): void;
         showKeymap(show: boolean): void;

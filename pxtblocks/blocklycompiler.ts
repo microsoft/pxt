@@ -1552,7 +1552,7 @@ namespace pxt.blocks {
                         imageLiteral: fn.attributes.imageLiteral,
                         imageLiteralColumns: fn.attributes.imageLiteralColumns,
                         imageLiteralRows: fn.attributes.imageLiteralRows,
-                        hasHandler: !!comp.handlerArgs.length || fn.parameters && fn.parameters.some(p => (p.type == "() => void" || p.type == "Action" || !!p.properties)),
+                        hasHandler: pxt.blocks.hasHandler(fn),
                         property: !fn.parameters,
                         isIdentity: fn.attributes.shim == "TD_ID"
                     }
