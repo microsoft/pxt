@@ -2064,13 +2064,15 @@ export class ProjectView
     importExampleAsync(options: pxt.editor.ExampleImportOptions): Promise<void> {
         const { name, path, loadBlocks, prj, preferredEditor } = options;
         core.showLoading("changingcode", lf("loading..."));
-        let features: string[];
-        return pxt.gallery.loadExampleAsync(name.toLowerCase(), path)
-            .then(example => {
+        let features: string[] = undefined;
+        return this.loadActivityFromMarkdownAsync(path, name.toLowerCase(), preferredEditor)
+            .then(r => {
+                const { filename, md } = r;
+                const example = pxt.gallery.parseExampleMarkdown(filename, md);
                 if (!example) return Promise.resolve();
                 const opts: pxt.editor.ProjectCreationOptions = example;
                 if (prj) opts.prj = prj;
-                features = example.features;
+                features = r.features;
                 if (loadBlocks && preferredEditor == pxt.BLOCKS_PROJECT_NAME) {
                     return this.createProjectAsync(opts)
                         .then(() => {
@@ -3142,7 +3144,7 @@ export class ProjectView
 
     private hintManager: HintManager = new HintManager();
 
-    private loadActivityFromMarkdownAsync(tutorialId: string, tutorialTitle?: string, editorProjectName?: string): Promise<{
+    private loadActivityFromMarkdownAsync(path: string, title?: string, editorProjectName?: string): Promise<{
         reportId: string;
         filename: string;
         autoChooseBoard: boolean;
@@ -3151,9 +3153,9 @@ export class ProjectView
         temporary: boolean;
         md: string;
     }> {
-        const header = workspace.getHeader(tutorialId.split(':')[0]);
-        const scriptId = !header && pxt.Cloud.parseScriptId(tutorialId);
-        const ghid = !header && !scriptId && pxt.github.parseRepoId(tutorialId);
+        const header = workspace.getHeader(path.split(':')[0]);
+        const scriptId = !header && pxt.Cloud.parseScriptId(path);
+        const ghid = !header && !scriptId && pxt.github.parseRepoId(path);
 
         let reportId: string = undefined;
         let filename: string;
@@ -3163,9 +3165,9 @@ export class ProjectView
         let temporary = false;
 
         let p: Promise<string>;
-        if (/^\//.test(tutorialId)) {
-            filename = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
-            p = pxt.Cloud.markdownAsync(tutorialId)
+        if (/^\//.test(path)) {
+            filename = title || path.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
+            p = pxt.Cloud.markdownAsync(path)
                 .then(md => {
                     autoChooseBoard = true;
                     return processMarkdown(md);
@@ -3204,7 +3206,7 @@ export class ProjectView
             pxt.tickEvent("tutorial.header");
             temporary = true;
             const hghid = pxt.github.parseRepoId(header.githubId);
-            const hfileName = tutorialId.split(':')[1] || "README";
+            const hfileName = path.split(':')[1] || "README";
             p = workspace.getTextAsync(header.id)
                 .then(script => resolveMarkdown(hghid, script, hfileName))
         } else {
@@ -3306,9 +3308,16 @@ export class ProjectView
             .finally(() => core.hideLoading("tutorial"));
     }
 
-    startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorProjectName?: string) {
-        pxt.tickEvent("tutorial.start", { editor: editorProjectName });
-        this.startTutorialAsync(tutorialId, tutorialTitle, recipe, editorProjectName);
+    startActivity(activity: pxt.editor.Activity, path: string, title?: string, editorProjectName?: string) {
+        pxt.tickEvent(activity + ".start", { editor: editorProjectName });
+        switch(activity) {
+            case "tutorial":
+                this.startTutorialAsync(path, title, false, editorProjectName); break;
+            case "recipe":
+                this.startTutorialAsync(path, title, true, editorProjectName); break;
+            case "example":
+                this.importExampleAsync({ name, path, loadBlocks: false, preferredEditor: editorProjectName }); break;
+        }
     }
 
     completeTutorialAsync(): Promise<void> {
@@ -3890,15 +3899,18 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             pxt.BrowserUtils.changeHash("");
             return true;
         }
-        case "gettingstarted":
+        case "gettingstarted": {
             pxt.tickEvent("hash.gettingstarted");
             editor.newProject();
             pxt.BrowserUtils.changeHash("");
             return true;
+        }
         // shortcut to a tutorial. eg: #tutorial:tutorials/getting-started
         // or #tutorial:py:tutorials/getting-started
-        case "tutorial":
-            pxt.tickEvent("hash.tutorial")
+        case "tutorial": 
+        case "example":
+        case "recipe": {
+            pxt.tickEvent("hash." + hash.cmd)
             let tutorialPath = hash.arg;
             let editorProjectName: string = undefined;
             if (/^(js|py):/.test(tutorialPath)) {
@@ -3906,14 +3918,10 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
                     ? pxt.PYTHON_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME;
                 tutorialPath = tutorialPath.substr(tutorialPath.indexOf(':') + 1)
             }
-            editor.startTutorial(tutorialPath, undefined, undefined, editorProjectName);
+            editor.startActivity(hash.cmd, tutorialPath, undefined, editorProjectName);
             pxt.BrowserUtils.changeHash("editor");
             return true;
-        case "recipe": // shortcut to a recipe. eg: #recipe:recipes/getting-started
-            pxt.tickEvent("hash.recipe")
-            editor.startTutorial(hash.arg, undefined, true);
-            pxt.BrowserUtils.changeHash("editor");
-            return true;
+        }
         case "home": // shortcut to home
             pxt.tickEvent("hash.home");
             editor.openHome();
@@ -3985,6 +3993,7 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
         case "testproject":
         // case "gettingstarted": // This should be true, #gettingstarted hash handling is not yet implemented
         case "tutorial":
+        case "example":
         case "recipe":
         case "projects":
         case "sandbox":

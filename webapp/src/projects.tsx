@@ -115,11 +115,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 this.props.parent.newEmptyProject(scr.name, url);
                 break;
             case "tutorial":
-                this.props.parent.startTutorial(url, scr.name, false, editorPref);
+                this.props.parent.startActivity("tutorial", url, scr.name, false, editorPref);
                 break;
             default:
                 const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(url); // Tutorial
-                if (m) this.props.parent.startTutorial(m[1]);
+                if (m) this.props.parent.startActivity("tutorial", m[1]);
                 else {
                     if (scr.youTubeId && !url) // Youtube video
                         return; // Handled by href
