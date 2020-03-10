@@ -410,10 +410,6 @@ const editorReducer = (state: EditorState, action: any): EditorState => {
             return { ...state, cursorSize: action.cursorSize };
         case actions.CHANGE_SELECTED_COLOR:
             tickEvent(`foreground-color-${action.selectedColor}`);
-            // TODO: if we need to generalize for different numbers of colors,
-            // will need to fix the magic 16 here
-            if (action.selectedColor < 0 || action.selectedColor >= 16)
-                return state;
 
             // If the selected tool is the eraser, make sure to switch to pencil
             return {
@@ -425,8 +421,6 @@ const editorReducer = (state: EditorState, action: any): EditorState => {
             return { ...state, cursorLocation: action.cursorLocation };
         case actions.CHANGE_BACKGROUND_COLOR:
             tickEvent(`background-color-${action.backgroundColor}`);
-            if (action.selectedColor < 0 || action.selectedColor >= 16)
-                return state;
             return { ...state, backgroundColor: action.backgroundColor };
         case actions.SWAP_FOREGROUND_BACKGROUND:
             tickEvent(`swap-foreground-background`);

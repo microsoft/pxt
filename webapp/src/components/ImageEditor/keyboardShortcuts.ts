@@ -74,7 +74,10 @@ function handleKeyDown(event: KeyboardEvent) {
     if (!editorState.isTilemap && /^Digit\d$/.test(event.code)) {
         const keyAsNum = +event.code.slice(-1);
         const color = keyAsNum + (event.shiftKey ? 9 : 0);
-        setColor(color);
+        // TODO: if we need to generalize for different numbers of colors,
+        // will need to fix the magic 16 here
+        if (color >= 0 && color < 16)
+            setColor(color);
     }
 }
 
