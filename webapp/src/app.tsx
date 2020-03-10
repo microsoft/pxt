@@ -2066,7 +2066,8 @@ export class ProjectView
         core.showLoading("changingcode", lf("loading..."));
         return this.loadActivityFromMarkdownAsync(path, name.toLowerCase(), preferredEditor)
             .then(r => {
-                const { filename, md, features, autoChooseBoard } = (r || {});
+                const { filename, md, features, autoChooseBoard: autoChooseBoardMeta } = (r || {});
+                const autoChooseBoard = !prj && autoChooseBoardMeta ;
                 const example = !!md && pxt.gallery.parseExampleMarkdown(filename, md);
                 if (!example)
                     throw new Error(lf("Example not found or invalid format"))
