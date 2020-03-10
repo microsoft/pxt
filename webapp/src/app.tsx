@@ -2064,15 +2064,14 @@ export class ProjectView
     importExampleAsync(options: pxt.editor.ExampleImportOptions): Promise<void> {
         const { name, path, loadBlocks, prj, preferredEditor } = options;
         core.showLoading("changingcode", lf("loading..."));
-        let features: string[] = undefined;
         return this.loadActivityFromMarkdownAsync(path, name.toLowerCase(), preferredEditor)
             .then(r => {
-                const { filename, md } = r;
-                const example = pxt.gallery.parseExampleMarkdown(filename, md);
-                if (!example) return Promise.resolve();
+                const { filename, md, features, autoChooseBoard } = (r || {});
+                const example = !!md && pxt.gallery.parseExampleMarkdown(filename, md);
+                if (!example)
+                    throw new Error(lf("Example not found or invalid format"))
                 const opts: pxt.editor.ProjectCreationOptions = example;
                 if (prj) opts.prj = prj;
-                features = r.features;
                 if (loadBlocks && preferredEditor == pxt.BLOCKS_PROJECT_NAME) {
                     return this.createProjectAsync(opts)
                         .then(() => {
@@ -2085,6 +2084,7 @@ export class ProjectView
                                         this.overrideBlocksFile(resp.outfiles["main.blocks"])
                                     }
                                 })
+                                .then(() => autoChooseBoard && this.autoChooseBoardAsync(features));
                         });
                 } else {
                     if (!loadBlocks) {
@@ -2103,12 +2103,13 @@ export class ProjectView
                                             this.overrideTypescriptFile(resp.outfiles["main.py"])
                                         }
                                     })
-                            }
+                                    .then(() => autoChooseBoard && this.autoChooseBoardAsync(features));
+                                }
                             return Promise.resolve();
                         })
-                }
+                    }
             })
-            .then(() => this.autoChooseBoardAsync(features))
+
             .finally(() => core.hideLoading("changingcode"))
     }
 
