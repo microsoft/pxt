@@ -43,7 +43,7 @@ Shuffle values:
 ```
     "galleries": {
         "Classics": {
-            "url": "classics",
+            "url": "/classics",
             "shuffle": "daily"
         },
         ...
