@@ -685,6 +685,7 @@ export interface InputProps {
 
 export interface InputState {
     value: string;
+    copied?: boolean;
 }
 
 export class Input extends data.Component<InputProps, InputState> {
@@ -717,6 +718,7 @@ export class Input extends data.Component<InputProps, InputState> {
     }
 
     copy() {
+        this.setState({ copied: false });
         const p = this.props
         const el = ReactDOM.findDOMNode(this);
 
@@ -733,7 +735,9 @@ export class Input extends data.Component<InputProps, InputState> {
         try {
             const success = document.execCommand("copy");
             pxt.debug('copy: ' + success);
+            this.setState({ copied: !!success });
         } catch (e) {
+            this.setState({ copied: false });
         }
     }
 
@@ -746,7 +750,7 @@ export class Input extends data.Component<InputProps, InputState> {
     handleChange(e: React.ChangeEvent<any>) {
         const newValue = (e.target as any).value;
         if (!this.props.readOnly && (!this.state || this.state.value !== newValue)) {
-            this.setState({ value: newValue })
+            this.setState({ value: newValue, copied: false })
         }
         if (this.props.onChange) {
             this.props.onChange(newValue);
@@ -765,40 +769,40 @@ export class Input extends data.Component<InputProps, InputState> {
     }
 
     renderCore() {
-        let p = this.props
-        let copyBtn = p.copy && document.queryCommandSupported('copy')
-            ? <Button className="ui right labeled primary icon button" text={lf("Copy")} icon="copy" onClick={this.copy} />
+        const p = this.props;
+        const { copy, error, ariaLabel, id, label, inputLabel, lines, autoFocus, placeholder, readOnly, autoComplete } = p;
+        const { value, copied } = this.state;
+        const copyBtn = copy && document.queryCommandSupported('copy')
+            ? <Button className={`ui right labeled ${copied ? "green" : "primary"} icon button`} text={copied ? lf("Copied!") : lf("Copy")} icon="copy" onClick={this.copy} />
             : null;
-        const { error } = this.props;
-        const { value } = this.state;
 
         return (
-            <Field ariaLabel={p.ariaLabel} htmlFor={p.id} label={p.label}>
-                <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (p.copy ? " action fluid" : "") + (p.disabled ? " disabled" : "")}>
-                    {p.inputLabel ? (<div className="ui label">{p.inputLabel}</div>) : ""}
-                    {!p.lines || p.lines == 1 ? <input
+            <Field ariaLabel={ariaLabel} htmlFor={id} label={label}>
+                <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (copy ? " action fluid" : "") + (p.disabled ? " disabled" : "")}>
+                    {inputLabel ? (<div className="ui label">{inputLabel}</div>) : ""}
+                    {!lines || lines == 1 ? <input
                         ref='inputField'
-                        autoFocus={p.autoFocus}
-                        id={p.id}
+                        autoFocus={autoFocus}
+                        id={id}
                         className={p.class || ""}
                         type={p.type || "text"}
-                        placeholder={p.placeholder} value={value || ''}
-                        readOnly={!!p.readOnly}
+                        placeholder={placeholder} value={value || ''}
+                        readOnly={!!readOnly}
                         onClick={this.handleClick}
                         onChange={this.handleChange}
                         onKeyDown={this.handleEnterPressed}
-                        autoComplete={p.autoComplete ? "" : "off"}
-                        autoCorrect={p.autoComplete ? "" : "off"}
-                        autoCapitalize={p.autoComplete ? "" : "off"}
-                        spellCheck={p.autoComplete}
+                        autoComplete={autoComplete ? "" : "off"}
+                        autoCorrect={autoComplete ? "" : "off"}
+                        autoCapitalize={autoComplete ? "" : "off"}
+                        spellCheck={autoComplete}
                     />
                         : <textarea
-                            id={p.id}
-                            className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "")}
-                            rows={p.lines}
-                            placeholder={p.placeholder}
+                            id={id}
+                            className={"ui input " + (p.class || "") + (inputLabel ? " labelled" : "")}
+                            rows={lines}
+                            placeholder={placeholder}
                             value={value || ''}
-                            readOnly={!!p.readOnly}
+                            readOnly={!!readOnly}
                             onClick={this.handleClick}
                             onChange={this.handleChange}
                             onKeyDown={this.handleEnterPressed}>
