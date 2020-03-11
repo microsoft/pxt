@@ -38,6 +38,24 @@ Examples of Editors built with PXT:
 * ``master`` is the active development branch, currently ``v3.*`` builds
 * ``v*`` is the servicing branch for ``v*.*`` builds
 
+Current servicing branches:
+
+Target      | Ref   | Branch
+------------|-------|-------
+microbit    |       | stable5.15
+microbit    | beta  | master
+adafruit    |       | stable5.20
+adafruit    | beta  | master
+minecraft   |       | stable5.33
+minecraft   | beta  | master
+ev3         |       | stable4.0
+ev3         | beta  | stable5.32
+arcade      |       | stable5.30
+arcade      | beta  | master
+chibitronics|       | stable3.15
+chibitronics| beta  | stable3.18
+
+
 ## Running a target from localhost
 
 Please follow the [instructions here](https://makecode.com/cli).
