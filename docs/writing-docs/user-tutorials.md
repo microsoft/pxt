@@ -10,13 +10,13 @@ There are 2 ways of sharing a tutorial: use a shared script or publish it in a [
 
 For a quick introduction on writing and sharing a user tutorial, see this video:
 
-https://youtu.be/lZucrzDgoIE
+https://youtu.be/XsM8hp7eysA
 
 ## ~
 
 ## Authoring
 
-Author the tutorial content in the **README.md** file in your project. The format is the same as what's documented in [tutorials](/writing-docs/tutorials). 
+Author the tutorial content in a **Markdown** file in your project. The format is the same as what's documented in [tutorials](/writing-docs/tutorials). 
 
 The dependencies are used when starting the tutorial project, but code content (``main.blocks``, ``main.ts``) is ignored.
 
@@ -72,8 +72,7 @@ You can also use the ``#example`` route similarly to ``#tutorial`` to load a mar
 
 ### Testing
 
-Click on the ``external link`` icon in the **Explorer** view to open any markdown file (``.md``)
-as a tutorial in a new tab.
+Click on the ``lab`` icon in the **Explorer** view to open any markdown file (``.md``) as a tutorial in a new tab.
 
 ### Localization
 
