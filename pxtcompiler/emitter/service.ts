@@ -858,6 +858,8 @@ namespace ts.pxtc.service {
                 host.setFile(fileName, fileContent);
             }
 
+            const tsFilename = filenameWithExtension(fileName, "ts");
+
             const span: PosSpan = { startPos: wordStartPos, endPos: wordEndPos }
 
             const isPython = /\.py$/.test(fileName);
@@ -884,7 +886,6 @@ namespace ts.pxtc.service {
 
             let lastNl = src.lastIndexOf("\n", position)
             lastNl = Math.max(0, lastNl)
-            const cursorLine = src.substring(lastNl, position)
 
             if (dotIdx != -1)
                 complPosition = dotIdx
@@ -919,7 +920,7 @@ namespace ts.pxtc.service {
                 // update our language host
                 Object.keys(res.outfiles)
                     .forEach(k => {
-                        if (k.endsWith(".ts")) {
+                        if (k === tsFilename) {
                             host.setFile(k, res.outfiles[k])
                         }
                     })
@@ -927,7 +928,7 @@ namespace ts.pxtc.service {
                 // convert our location from python to typescript
                 if (res.sourceMap) {
                     const pySrc = src
-                    const tsSrc = res.outfiles["main.ts"]
+                    const tsSrc = res.outfiles[tsFilename]
                     const srcMap = pxtc.BuildSourceMapHelpers(res.sourceMap, tsSrc, pySrc)
 
                     const smallest = srcMap.py.smallestOverlap(span)
@@ -940,7 +941,7 @@ namespace ts.pxtc.service {
             }
 
             const prog = service.getProgram()
-            const tsAst = prog.getSourceFile("main.ts") // TODO: work for non-main files
+            const tsAst = prog.getSourceFile(tsFilename)
             const tc = prog.getTypeChecker()
             let isPropertyAccess = false;
 
@@ -1873,7 +1874,8 @@ namespace ts.pxtc.service {
 
     function findInnerMostNodeAtPosition(n: Node, position: number): Node | null {
         for (let child of n.getChildren()) {
-            if (ts.isToken(child)) continue;
+            if (child.kind >= ts.SyntaxKind.FirstPunctuation && child.kind <= ts.SyntaxKind.LastPunctuation)
+                continue;
 
             let s = child.getStart()
             let e = child.getEnd()
@@ -1895,5 +1897,10 @@ namespace ts.pxtc.service {
         }
 
         return tc.typeToString(t);
+    }
+
+    function filenameWithExtension(filename: string, extension: string) {
+        if (extension.charAt(0) === ".") extension = extension.substr(1);
+        return filename.substr(0, filename.lastIndexOf(".") + 1) + extension;
     }
 }
