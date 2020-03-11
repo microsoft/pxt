@@ -1873,6 +1873,8 @@ namespace ts.pxtc.service {
 
     function findInnerMostNodeAtPosition(n: Node, position: number): Node | null {
         for (let child of n.getChildren()) {
+            if (ts.isToken(child)) continue;
+
             let s = child.getStart()
             let e = child.getEnd()
             if (s <= position && position < e)

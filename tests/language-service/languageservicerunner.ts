@@ -40,7 +40,6 @@ describe("language service", () => {
 
     for (const testCase of cases) {
         it("get completions " + testCase.fileName + testCase.position, () => {
-            console.log(JSON.stringify(testCase));
             return runCompletionTestCaseAsync(testCase);
         });
     }
@@ -107,8 +106,6 @@ function runCompletionTestCaseAsync(testCase: CompletionTestCase) {
                 testCase.wordEndPos,
                 testCase.fileText
             );
-
-            console.log(result.entries.map(e => e.qName).join(", "))
 
             for (const sym of testCase.expectedSymbols) {
                 chai.assert(result.entries.some(s => (testCase.isPython ? s.pyQName : s.qName) === sym), `Did not receive symbol '${sym}'`);
