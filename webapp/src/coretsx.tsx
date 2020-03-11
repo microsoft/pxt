@@ -127,7 +127,7 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
                 {options.jsx}
                 {!!options.jsxd && options.jsxd()}
                 {!!options.body && <p>{options.body}</p>}
-                {options.copyable && <sui.Input copy={true} readOnly={true} value={options.copyable} selectOnClick={true} autoComplete={false} />}
+                {!!options.copyable && <sui.Input copy={true} readOnly={true} value={options.copyable} selectOnClick={true} autoComplete={false} />}
             </sui.Modal >)
         /* tslint:enable:react-no-dangerous-html */
     }
