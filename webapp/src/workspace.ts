@@ -1036,15 +1036,16 @@ export function prepareConfigForGithub(content: string, createRelease?: boolean)
     const localDependencies = Object.keys(cfg.dependencies)
         .filter(d => /^(file|workspace):/.test(cfg.dependencies[d]));
     for (const d of localDependencies)
-        resolveDependencyAsync(d);
+        resolveDependency(d);
 
     return pxt.Package.stringifyConfig(cfg);
 
-    function resolveDependencyAsync(d: string) {
+    function resolveDependency(d: string) {
         const v = cfg.dependencies[d];
         const hid = v.substring(v.indexOf(':') + 1);
         const header = getHeader(hid);
-        if (header && !header.githubId) {
+        if (!header) return;
+        if (!header.githubId) {
             if (createRelease)
                 U.userError(lf("Dependency {0} is a local project.", d))
         } else {
