@@ -362,7 +362,7 @@ function checkIfTaggedCommitAsync() {
     return nodeutil.gitInfoAsync(["rev-parse", "HEAD"])
         .then(info => {
             currentCommit = info.trim();
-            return nodeutil.gitInfoAsync(["ls-remote", "--tags"])
+            return nodeutil.gitInfoAsync(["ls-remote", "--tags"], undefined, true)
         })
         .then(info => {
             const tagCommits = info.split("\n")
