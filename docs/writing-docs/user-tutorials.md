@@ -4,15 +4,9 @@ This guide explains how users can publish their own [tutorials](/writing-docs/tu
 
 There are 2 ways of sharing a tutorial: use a shared script or publish it in a [GitHub](https://github.com) repository.
 
-## ~ hint
-
-#### Custom tutorial example
-
-For a quick introduction on writing and sharing a user tutorial, see this video:
+### #youtubegithub
 
 https://youtu.be/XsM8hp7eysA
-
-## ~
 
 ## Authoring
 
@@ -79,6 +73,10 @@ Click on the ``lab`` icon in the **Explorer** view to open any markdown file (``
 Localized copies of the tutorial can be added to a subfolder ``_locales/[isocode]/[filename].md`` 
 where ``filename`` is the name of the tutorial in the default locale. ``icocode`` can be the 
 region specific language code or language neutral. MakeCode will pick the best match.
+
+#### #youtubeloc
+
+https://youtu.be/3LKmE0c5UZU
 
 ### Repository as extension
 
