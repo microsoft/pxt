@@ -371,8 +371,6 @@ function checkIfTaggedCommitAsync() {
                     return match && match[1]
                 });
 
-            console.log(tagCommits.filter(t => !!t).join("\n"))
-
             return tagCommits.some(t => t === currentCommit)
         });
 }
