@@ -39,6 +39,9 @@ namespace pxtblockly {
                 this.setColours(p, t);
             }
 
+            // Set to first color in palette (for toolbox)
+            this.setValue(this.getColours_()[0]);
+
             if (params.columns) this.setColumns(parseInt(params.columns));
             if (params.className) this.className_ = params.className;
             if (params.valueMode) this.valueMode_ = params.valueMode;
@@ -51,8 +54,8 @@ namespace pxtblockly {
             if (this.borderRect_) {
                 this.borderRect_.style.fill = this.value_;
             } else if (this.sourceBlock_) {
-                (this.sourceBlock_ as any).pathObject.svgPath.setAttribute('fill', this.value_);
-                (this.sourceBlock_ as any).pathObject.svgPath.setAttribute('stroke', '#fff');
+                (this.sourceBlock_ as any)?.pathObject?.svgPath?.setAttribute('fill', this.value_);
+                (this.sourceBlock_ as any)?.pathObject?.svgPath?.setAttribute('stroke', '#fff');
             }
         };
 

@@ -101,28 +101,26 @@ namespace pxtblockly {
 
             Blockly.DropDownDiv.setColour(sourceBlock.getColour(), sourceBlock.getColourTertiary());
 
-            // Calculate positioning based on the field position.
-            let scale = (this.sourceBlock_.workspace as Blockly.WorkspaceSvg).scale;
-            let bBox = { width: this.size_.width, height: this.size_.height };
-            bBox.width *= scale;
-            bBox.height *= scale;
-            let position = this.fieldGroup_.getBoundingClientRect();
-            let primaryX = position.left + bBox.width / 2;
-            let primaryY = position.top + bBox.height;
-            let secondaryX = primaryX;
-            let secondaryY = position.top;
-            // Set bounds to workspace; show the drop-down.
-            (Blockly.DropDownDiv as any).setBoundsElement((this.sourceBlock_.workspace as Blockly.WorkspaceSvg).getParentSvg().parentNode);
-            (Blockly.DropDownDiv as any).show(this, primaryX, primaryY, secondaryX, secondaryY,
-                this.onHide_.bind(this));
+            // Position based on the field position.
+            Blockly.DropDownDiv.showPositionedByField(this, this.onHideCallback.bind(this));
 
             // Update colour to look selected.
             let source = this.sourceBlock_ as Blockly.BlockSvg;
+            this.savedPrimary_ = source.getColour();
             if (source?.isShadow()) {
-                this.savedPrimary_ = source.getColour();
                 source.setColour(source.style.colourTertiary);
             } else if (this.borderRect_) {
                 this.borderRect_.setAttribute('fill', source.style.colourTertiary);
+            }
+        }
+
+        // Update color (deselect) on dropdown hide
+        protected onHideCallback() {
+            let source = this.sourceBlock_ as Blockly.BlockSvg;
+            if (source?.isShadow()) {
+                source.setColour(this.savedPrimary_);
+            } else if (this.borderRect_) {
+                this.borderRect_.setAttribute('fill', this.savedPrimary_);
             }
         }
 

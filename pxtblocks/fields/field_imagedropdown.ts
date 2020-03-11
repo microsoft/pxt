@@ -131,8 +131,8 @@ namespace pxtblockly {
                 this, this.sourceBlock_, this.onHide_.bind(this));
 
             let source = this.sourceBlock_ as Blockly.BlockSvg;
+            this.savedPrimary_ = source.getColour();
             if (source?.isShadow()) {
-                this.savedPrimary_ = source.getColour();
                 source.setColour(source.getColourTertiary());
             } else if (this.borderRect_) {
                 this.borderRect_.setAttribute('fill', source.getColourTertiary());
@@ -149,7 +149,6 @@ namespace pxtblockly {
             let value = e.target.getAttribute('data-value');
             if (!value) return;
             this.setValue(value);
-            this.setText(value);
             Blockly.DropDownDiv.hide();
         };
 
@@ -166,10 +165,9 @@ namespace pxtblockly {
 
             let source = this.sourceBlock_ as Blockly.BlockSvg;
             if (source?.isShadow()) {
-                this.savedPrimary_ = source.getColour();
                 this.sourceBlock_.setColour(this.savedPrimary_);
             } else if (this.borderRect_) {
-                this.borderRect_.setAttribute('fill', source.getColour());
+                this.borderRect_.setAttribute('fill', this.savedPrimary_);
             }
         };
 

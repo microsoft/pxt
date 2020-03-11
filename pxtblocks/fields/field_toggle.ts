@@ -110,7 +110,9 @@ namespace pxtblockly {
                 this.fieldGroup_) as SVGTextElement;
 
             this.updateEditable();
-            (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(this.fieldGroup_);
+            const svgRoot = (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot();
+            svgRoot.appendChild(this.fieldGroup_);
+            svgRoot.querySelector(".blocklyBlockBackground").setAttribute('fill', (this.sourceBlock_ as Blockly.BlockSvg).getColourTertiary())
 
             this.switchToggle(this.state_);
             this.setValue(this.getValue());

@@ -2670,77 +2670,79 @@ namespace pxt.blocks {
             }
             return tip;
         }
-        // TODO shakao check if tooltip can be modified via new rendering
+
         /**
-         * Create the tooltip and show it.
+         * Override Blockly tooltip rendering with our own.
+         * TODO shakao check if tooltip can be modified in a cleaner way
          * @private
          */
-        // Blockly.Tooltip.show_ = function () {
-        //     Blockly.Tooltip.poisonedElement_ = Blockly.Tooltip.element_;
-        //     if (!Blockly.Tooltip.DIV) {
-        //         return;
-        //     }
-        //     // Erase all existing text.
-        //     goog.dom.removeChildren(/** @type {!Element} */(Blockly.Tooltip.DIV));
-        //     // Get the new text.
-        //     const card = Blockly.Tooltip.element_.codeCard as pxt.CodeCard;
+        (Blockly.Tooltip as any).show_ = function () {
+            const BlocklyTooltip = Blockly.Tooltip as any;
+            BlocklyTooltip.poisonedElement_ = BlocklyTooltip.element_;
+            if (!Blockly.Tooltip.DIV) {
+                return;
+            }
+            // Erase all existing text.
+            goog.dom.removeChildren(/** @type {!Element} */(Blockly.Tooltip.DIV));
+            // Get the new text.
+            const card = BlocklyTooltip.element_.codeCard as pxt.CodeCard;
 
-        //     function render() {
-        //         let rtl = Blockly.Tooltip.element_.RTL;
-        //         let windowSize = goog.dom.getViewportSize();
-        //         // Display the tooltip.
-        //         let tooltip = Blockly.Tooltip.DIV as HTMLElement;
-        //         tooltip.style.direction = rtl ? 'rtl' : 'ltr';
-        //         tooltip.style.display = 'block';
-        //         Blockly.Tooltip.visible = true;
-        //         // Move the tooltip to just below the cursor.
-        //         let anchorX = Blockly.Tooltip.lastX_;
-        //         if (rtl) {
-        //             anchorX -= Blockly.Tooltip.OFFSET_X + tooltip.offsetWidth;
-        //         } else {
-        //             anchorX += Blockly.Tooltip.OFFSET_X;
-        //         }
-        //         let anchorY = Blockly.Tooltip.lastY_ + Blockly.Tooltip.OFFSET_Y;
+            function render() {
+                let rtl = BlocklyTooltip.element_.RTL;
+                let windowSize = goog.dom.getViewportSize();
+                // Display the tooltip.
+                let tooltip = Blockly.Tooltip.DIV as HTMLElement;
+                tooltip.style.direction = rtl ? 'rtl' : 'ltr';
+                tooltip.style.display = 'block';
+                Blockly.Tooltip.visible = true;
+                // Move the tooltip to just below the cursor.
+                let anchorX = BlocklyTooltip.lastX_;
+                if (rtl) {
+                    anchorX -= Blockly.Tooltip.OFFSET_X + tooltip.offsetWidth;
+                } else {
+                    anchorX += Blockly.Tooltip.OFFSET_X;
+                }
+                let anchorY = BlocklyTooltip.lastY_ + Blockly.Tooltip.OFFSET_Y;
 
-        //         if (anchorY + tooltip.offsetHeight >
-        //             windowSize.height + window.scrollY) {
-        //             // Falling off the bottom of the screen; shift the tooltip up.
-        //             anchorY -= tooltip.offsetHeight + 2 * Blockly.Tooltip.OFFSET_Y;
-        //         }
-        //         if (rtl) {
-        //             // Prevent falling off left edge in RTL mode.
-        //             anchorX = Math.max(Blockly.Tooltip.MARGINS - window.scrollX, anchorX);
-        //         } else {
-        //             if (anchorX + tooltip.offsetWidth >
-        //                 windowSize.width + window.scrollX - 2 * Blockly.Tooltip.MARGINS) {
-        //                 // Falling off the right edge of the screen;
-        //                 // clamp the tooltip on the edge.
-        //                 anchorX = windowSize.width - tooltip.offsetWidth -
-        //                     2 * Blockly.Tooltip.MARGINS;
-        //             }
-        //         }
-        //         tooltip.style.top = anchorY + 'px';
-        //         tooltip.style.left = anchorX + 'px';
-        //     }
-        //     if (card) {
-        //         const cardEl = pxt.docs.codeCard.render({
-        //             header: renderTip(Blockly.Tooltip.element_)
-        //         })
-        //         Blockly.Tooltip.DIV.appendChild(cardEl);
-        //         render();
-        //     } else {
-        //         let tip = renderTip(Blockly.Tooltip.element_);
-        //         tip = Blockly.utils._string.wrap(tip, Blockly.Tooltip.LIMIT);
-        //         // Create new text, line by line.
-        //         let lines = tip.split('\n');
-        //         for (let i = 0; i < lines.length; i++) {
-        //             let div = document.createElement('div');
-        //             div.appendChild(document.createTextNode(lines[i]));
-        //             Blockly.Tooltip.DIV.appendChild(div);
-        //         }
-        //         render();
-        //     }
-        // }
+                if (anchorY + tooltip.offsetHeight >
+                    windowSize.height + window.scrollY) {
+                    // Falling off the bottom of the screen; shift the tooltip up.
+                    anchorY -= tooltip.offsetHeight + 2 * Blockly.Tooltip.OFFSET_Y;
+                }
+                if (rtl) {
+                    // Prevent falling off left edge in RTL mode.
+                    anchorX = Math.max(Blockly.Tooltip.MARGINS - window.scrollX, anchorX);
+                } else {
+                    if (anchorX + tooltip.offsetWidth >
+                        windowSize.width + window.scrollX - 2 * Blockly.Tooltip.MARGINS) {
+                        // Falling off the right edge of the screen;
+                        // clamp the tooltip on the edge.
+                        anchorX = windowSize.width - tooltip.offsetWidth -
+                            2 * Blockly.Tooltip.MARGINS;
+                    }
+                }
+                tooltip.style.top = anchorY + 'px';
+                tooltip.style.left = anchorX + 'px';
+            }
+            if (card) {
+                const cardEl = pxt.docs.codeCard.render({
+                    header: renderTip(BlocklyTooltip.element_)
+                })
+                Blockly.Tooltip.DIV.appendChild(cardEl);
+                render();
+            } else {
+                let tip = renderTip(BlocklyTooltip.element_);
+                tip = Blockly.utils._string.wrap(tip, Blockly.Tooltip.LIMIT);
+                // Create new text, line by line.
+                let lines = tip.split('\n');
+                for (let i = 0; i < lines.length; i++) {
+                    let div = document.createElement('div');
+                    div.appendChild(document.createTextNode(lines[i]));
+                    Blockly.Tooltip.DIV.appendChild(div);
+                }
+                render();
+            }
+        }
     }
 
     function removeBlock(fn: pxtc.SymbolInfo) {

@@ -290,40 +290,46 @@ namespace pxtblockly {
             return !this.hideRect_ ? !this.sourceBlock_.isShadow() : false;
         }
 
+        doClassValidation_(newValue: string) {
+            return newValue;
+        }
+
         /**
          * Set the language-neutral value for this dropdown menu.
          * We have to override this from field.js because the grid picker needs to redraw the selected item's image.
          * @param {string} newValue New value to set.
          */
-        public setValue(newValue: string) {
-            if (newValue === null || newValue === this.value_) {
-                return;  // No change if null.
-            }
-            if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
-                Blockly.Events.fire(new Blockly.Events.BlockChange(
-                    this.sourceBlock_, 'field', this.name, this.value_, newValue));
-            }
-            this.value_ = newValue;
-            // Look up and display the human-readable text.
-            let options = this.getOptions();
-            for (let i = 0; i < options.length; i++) {
-                // Options are tuples of human-readable text and language-neutral values.
-                if ((options[i] as any)[1] == newValue) {
-                    let content = (options[i] as any)[0];
-                    if (typeof content == 'object') {
-                        this.renderSelectedImage_(content);
-                        this.setText(content.alt); // Use setText() because it handles displaying image selection
-                    } else {
-                        // this.renderSelectedText_(content)
-                        // this.setText(content); // Use setText() because it handles displaying image selection
-                    }
-                    return;
-                }
-            }
-            // Value not found.  Add it, maybe it will become valid once set
-            // (like variable names).
-            this.setText(newValue); // Use setText() because it handles displaying image selection
-        };
+        // public doValueUpdate_(newValue: string) {
+        //     if (newValue === null || newValue === this.value_) {
+        //         return;  // No change if null.
+        //     }
+        //     if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
+        //         Blockly.Events.fire(new Blockly.Events.BlockChange(
+        //             this.sourceBlock_, 'field', this.name, this.value_, newValue));
+        //     }
+        //     this.value_ = newValue;
+        //     // Look up and display the human-readable text.
+        //     let options = this.getOptions();
+        //     for (let i = 0; i < options.length; i++) {
+        //         // Options are tuples of human-readable text and language-neutral values.
+        //         if ((options[i] as any)[1] == newValue) {
+        //             let content = (options[i] as any)[0];
+        //             if (typeof content == 'object') {
+        //                 if ((this as any).imageElement_) this.renderSelectedImage_(content);
+        //                 this.value_ = newValue;
+        //                 // this.setText(content.alt); // Use setText() because it handles displaying image selection
+        //             } else {
+        //                 // this.renderSelectedText_(content)
+        //                 // this.setText(content); // Use setText() because it handles displaying image selection
+        //             }
+        //             return;
+        //         }
+        //     }
+        //     // Value not found.  Add it, maybe it will become valid once set
+        //     // (like variable names).
+        //     this.value_ = newValue;
+        //     // this.setText(newValue); // Use setText() because it handles displaying image selection
+        // };
 
         /**
          * Closes the gridpicker.
@@ -682,38 +688,39 @@ namespace pxtblockly {
         }
 
         /**
-         * Sets the text in this field.  Trigger a rerender of the source block.
-         * @param {?string} text New text.
+         * Sets the value in this field. Trigger a rerender of the source block.
+         * @param {?string} value New value.
          */
-        /*setText(text: string) {
-            if (text === null || text === this.text_) {
-                // No change if null.
-                return;
-            }
-            this.text_ = text;
-            this.updateTextNode_();
+        // setText(value: string) {
+        //     if (value === null || value === this.value_) {
+        //         // No change if null.
+        //         return;
+        //     }
+        //     this.value_ = value;
+        //     this.isDirty_ = true;
+        //     // this.updateTextNode_();
 
-            if (this.imageJson_ && this.textElement_) {
-                // Update class for dropdown text.
-                // This class is reset every time updateTextNode_ is called.
-                this.textElement_.setAttribute('class',
-                    this.textElement_.getAttribute('class') + ' blocklyHidden'
-                );
-                this.imageElement_.parentNode.appendChild(this.arrow_);
-            } else if (this.textElement_) {
-                // Update class for dropdown text.
-                // This class is reset every time updateTextNode_ is called.
-                this.textElement_.setAttribute('class',
-                    this.textElement_.getAttribute('class') + ' blocklyDropdownText'
-                );
-                this.textElement_.parentNode.appendChild(this.arrow_);
-            }
-            const sourceBlock = this.sourceBlock_ as Blockly.BlockSvg;
-            if (sourceBlock && sourceBlock.rendered) {
-                sourceBlock.render();
-                sourceBlock.bumpNeighbours_();
-            }
-        };*/
+        //     // if (this.imageJson_ && this.textElement_) {
+        //     //     // Update class for dropdown text.
+        //     //     // This class is reset every time updateTextNode_ is called.
+        //     //     this.textElement_.setAttribute('class',
+        //     //         this.textElement_.getAttribute('class') + ' blocklyHidden'
+        //     //     );
+        //     //     // this.imageElement_.parentNode.appendChild(this.arrow_);
+        //     // } else if (this.textElement_) {
+        //     //     // Update class for dropdown text.
+        //     //     // This class is reset every time updateTextNode_ is called.
+        //     //     this.textElement_.setAttribute('class',
+        //     //         this.textElement_.getAttribute('class') + ' blocklyDropdownText'
+        //     //     );
+        //     //     // this.textElement_.parentNode.appendChild(this.arrow_);
+        //     // }
+        //     // const sourceBlock = this.sourceBlock_ as Blockly.BlockSvg;
+        //     // if (sourceBlock && sourceBlock.rendered) {
+        //     //     sourceBlock.render();
+        //     //     sourceBlock.bumpNeighbours_();
+        //     // }
+        // };
 
         /**
          * Updates the width of the field. This calls getCachedWidth which won't cache
