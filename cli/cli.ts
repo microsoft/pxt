@@ -429,6 +429,7 @@ function ciAsync() {
         pxt.log("pxt-core build");
         return checkIfTaggedCommitAsync()
             .then(isTaggedCommit => {
+                pxt.log(`is tagged commit: ${isTaggedCommit}`);
                 let p = npmPublishAsync();
                 if (uploadDocs && branch === "master" && isTaggedCommit)
                     p = p
