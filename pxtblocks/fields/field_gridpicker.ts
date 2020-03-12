@@ -458,7 +458,6 @@ namespace pxtblockly {
             } else {
                 // boundingBox.left -= Blockly.FieldDropdown.CHECKMARK_OVERHANG;
             }
-            this.sourceBlock_.colour_
             return boundingBox;
         };
 

@@ -121,8 +121,7 @@ namespace pxtblockly {
                     }
                 }
 
-                this.fieldGroup_.innerHTML = "";
-                this.fieldGroup_.appendChild(this.elt);
+                this.fieldGroup_.replaceChild(this.elt, this.fieldGroup_.firstChild);
             }
         }
 

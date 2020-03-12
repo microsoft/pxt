@@ -54,7 +54,7 @@ namespace pxtblockly {
                     'y': 0,
                     'width': this.size_.width,
                     'height': this.size_.height,
-                    'fill': (Blockly as any).Colours.textField,
+                    'fill': (this.sourceBlock_ as Blockly.BlockSvg).getColour(),
                     'stroke': (this.sourceBlock_ as Blockly.BlockSvg).getColourTertiary()
                 }, null) as SVGRectElement;
                 this.fieldGroup_.insertBefore(this.borderRect_, this.textElement_);
@@ -164,6 +164,15 @@ namespace pxtblockly {
             return typeof this.fromVal(newBool) == "boolean" ? newBool : "false";
         }
 
+        applyColour = function() {
+            let color = (this.sourceBlock_ as Blockly.BlockSvg).getColourTertiary();
+            if (this.borderRect_) {
+                this.borderRect_.setAttribute('stroke', color);
+            } else {
+                this.sourceBlock_.pathObject.svgPath.setAttribute('fill', color);
+            }
+        };
+
         /**
          * Return 'TRUE' if the toggle is ON, 'FALSE' otherwise.
          * @return {string} Current state.
@@ -212,10 +221,10 @@ namespace pxtblockly {
                         halfWidth = width / 2;
                         let quarterWidth = halfWidth / 2;
                         // TODO: the left padding calculation is a hack, we should calculate left padding based on width (generic case)
-                        leftPadding = this.getMaxLength() > 3 ? -4 : 1;
+                        leftPadding = this.getMaxLength() > 3 ? -10 : 1;
                         rightPadding = -quarterWidth;
                         const topLeftPoint = -quarterWidth;
-                        const bottomRightPoint = quarterWidth;
+                        const bottomRightPoint = halfWidth;
                         this.toggleThumb_.setAttribute('points', `${topLeftPoint},-14 ${topLeftPoint - 14},0 ${topLeftPoint},14 ${bottomRightPoint},14 ${bottomRightPoint + 14},0 ${bottomRightPoint},-14`);
                         break;
                     case Blockly.OUTPUT_SHAPE_ROUND:
@@ -242,8 +251,7 @@ namespace pxtblockly {
 
                 // Update text centering, based on newly calculated width.
                 let width = this.size_.width;
-                let halfWidth = width / 2;
-                let centerTextX = this.state_ ? halfWidth + halfWidth / 2 : halfWidth / 2;
+                let centerTextX = this.state_ ? (width + width / 8) : width / 2;
 
                 // Apply new text element x position.
                 let newX = centerTextX - width / 2;

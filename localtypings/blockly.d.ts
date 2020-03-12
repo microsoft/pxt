@@ -746,7 +746,7 @@ declare module Blockly {
              * The block's position in workspace units.  (0, 0) is at the workspace's
              * origin; scale does not change this value.
              * @type {!Blockly.utils.Coordinate}
-             * @public
+             * @package pxt-blockly
              */
             xy_: Blockly.utils.Coordinate;
     
@@ -2611,13 +2611,13 @@ declare module Blockly {
             getColour(): string;
     
             /**
-             * Get the secondary colour of a block.
+             * pxt-blockly: Get the secondary colour of a block.
              * @return {string} #RRGGBB string.
              */
             getColourSecondary(): string;
     
             /**
-             * Get the tertiary colour of a block.
+             * pxt-blockly: Get the tertiary colour of a block.
              * @return {string} #RRGGBB string.
              */
             getColourTertiary(): string;
@@ -5377,7 +5377,7 @@ declare module Blockly {
             /**
              * The field's colour picker element.
              * @type {Element}
-             * @protected
+             * @protected pxt-blockly
              */
             picker_: Element;
     
@@ -5405,7 +5405,7 @@ declare module Blockly {
             /**
              * Array of colours used by this field.  If null, use the global list.
              * @type {Array.<string>}
-             * @protected
+             * @protected pxt-blockly
              */
             colours_: string[];
     
@@ -5794,7 +5794,7 @@ declare module Blockly {
              * Renders the selected option, which must be an image.
              * @param {!Blockly.FieldDropdown.ImageProperties} imageJson Selected
              *   option that must be an image.
-             * @protected
+             * @protected pxt-blockly
              */
             renderSelectedImage_(imageJson: Blockly.FieldDropdown.ImageProperties): void;
     
@@ -6460,7 +6460,7 @@ declare module Blockly {
             /**
              * Update the displayed value and resize/scroll the text field as needed.
              * @param {string} newValue The new text to display.
-             * @protected.
+             * @protected pxt-blockly
              */
             updateDisplay_(newValue: string): void;
     
@@ -6617,35 +6617,35 @@ declare module Blockly {
             /**
              * Minimum value
              * @type {number}
-             * @protected
+             * @protected pxt-blockly
              */
             min_: number;
     
             /**
              * Maximum value
              * @type {number}
-             * @protected
+             * @protected pxt-blockly
              */
             max_: number;
     
             /**
              * Step value
              * @type {number}
-             * @protected
+             * @protected pxt-blockly
              */
             step_: number;
     
             /**
              * Precision for value
              * @type {number}
-             * @protected
+             * @protected pxt-blockly
              */
             precision_: number;
     
             /**
              * Label text
              * @type {string}
-             * @protected
+             * @protected pxt-blockly
              */
             labelText_: string;
     
@@ -6953,7 +6953,7 @@ declare module Blockly {
             /**
              * Handle a change to the editor.
              * @param {!Event} e Keyboard event.
-             * @protected
+             * @protected pxt-blockly
              */
             onHtmlInputChange_(e: Event): void;
     
@@ -7588,14 +7588,14 @@ declare module Blockly {
             /**
              * The svg or g element that contains the flyout dom (excluding scrollbar).
              * @type {SVGElement}
-             * @public
+             * @package pxt-blockly
              */
             svgGroup_: SVGElement;
     
             /**
              * The workspace this flyout puts blocks on
              * @type {Blockly.WorkspaceSvg}
-             * @public
+             * @package pxt-blockly
              */
             targetWorkspace_: Blockly.WorkspaceSvg;
     
@@ -10123,7 +10123,7 @@ declare module Blockly {
     
             /**
              * @type {!Blockly.WorkspaceSvg}
-             * @public
+             * @package pxt-blockly
              */
             workspace_: Blockly.WorkspaceSvg;
     
@@ -10142,7 +10142,7 @@ declare module Blockly {
             /**
              * The toolbox flyout.
              * @type {Blockly.Flyout}
-             * @public
+             * @package pxt-blockly
              */
             flyout_: Blockly.Flyout;
     
@@ -13955,7 +13955,7 @@ declare module Blockly.WorkspaceSvg {
      *     workspace.
      * @return {!Array.<!Blockly.BlockSvg>} A list of deletable blocks on the
      *     workspace.
-     * @package
+     * @package pxt-blockly
      */
     function buildDeleteList_(topBlocks: Blockly.BlockSvg[]): Blockly.BlockSvg[];
 }
