@@ -592,6 +592,15 @@ declare module Blockly {
     viewWidth: number;
   }
 
+  // pxt-blockly specific
+  namespace ContextMenu {
+    interface Option {
+      enabled?: boolean;
+      text?: string;
+      callback?: () => void;
+    }
+  }
+
   /**
    * Set the Blockly locale.
    * Note: this method is only available in the npm release of Blockly.
@@ -13935,6 +13944,20 @@ declare module Blockly {
             getGrid(): Blockly.Grid;
     } 
     
+}
+
+declare module Blockly.WorkspaceSvg {
+
+    /**
+     * Build a list of all deletable blocks that are reachable from the given
+     * list of top blocks.
+     * @param {!Array.<!Blockly.BlockSvg>} topBlocks The list of top blocks on the
+     *     workspace.
+     * @return {!Array.<!Blockly.BlockSvg>} A list of deletable blocks on the
+     *     workspace.
+     * @package
+     */
+    function buildDeleteList_(topBlocks: Blockly.BlockSvg[]): Blockly.BlockSvg[];
 }
 
 

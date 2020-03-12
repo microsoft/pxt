@@ -1382,7 +1382,7 @@ namespace pxt.blocks {
     }
 
     export let onShowContextMenu: (workspace: Blockly.Workspace,
-        items: Blockly.MenuItem[]) => void = undefined;
+        items: Blockly.ContextMenu.Option[]) => void = undefined;
 
     /**
      * The following patch to blockly is to add the Trash icon on top of the toolbox,
@@ -1472,32 +1472,30 @@ namespace pxt.blocks {
             if (url) (pxt.blocks.openHelpUrl || window.open)(url);
         };
 
-        /**
-         * Show the context menu for the workspace.
-         * @param {!Event} e Mouse event.
-         * @private
-         */
-        /*(<any>Blockly).WorkspaceSvg.prototype.showContextMenu_ = function (e: any) {
+        // Use Blockly hook to customize context menu
+        (<any>Blockly).WorkspaceSvg.prototype.configureContextMenu = function (options: Blockly.ContextMenu.Option[]) {
             if (this.options.readOnly || this.isFlyout) {
                 return;
             }
-            let menuOptions: Blockly.MenuItem[] = [];
-            let topBlocks = this.getTopBlocks();
-            let topComments = this.getTopComments();
+            // Store workspace comment option
+            const commentOption = options.find(el => el.text.toLowerCase().includes("comment"));
+
+            // Clear default Blockly options
+            options.length = 0;
+            let topBlocks = this.getTopBlocks(true);
             let eventGroup = Blockly.utils.genUid();
+            let topComments = this.getTopComments();
             let ws = this;
 
             // Option to add a workspace comment.
             if (this.options.comments && !BrowserUtils.isIE()) {
-                menuOptions.push((Blockly.ContextMenu as any).workspaceCommentOption(ws, e));
+                options.push(commentOption);
             }
 
-            // Add a little animation to deleting.
-            const DELAY = 10;
 
             // Option to delete all blocks.
             // Count the number of blocks that are deletable.
-            let deleteList = Blockly.WorkspaceSvg.buildDeleteList_(topBlocks);
+            let deleteList = (Blockly.WorkspaceSvg as any).buildDeleteList_(topBlocks);
             let deleteCount = 0;
             for (let i = 0; i < deleteList.length; i++) {
                 if (!deleteList[i].isShadow()) {
@@ -1505,6 +1503,8 @@ namespace pxt.blocks {
                 }
             }
 
+            // Add a little animation to deleting.
+            const DELAY = 10;
             function deleteNext() {
                 (<any>Blockly).Events.setGroup(eventGroup);
                 let block = deleteList.shift();
@@ -1519,53 +1519,57 @@ namespace pxt.blocks {
                 Blockly.Events.setGroup(false);
             }
 
-            const deleteOption = new Blockly.MenuItem(deleteCount == 1 ? msg.DELETE_BLOCK : msg.DELETE_ALL_BLOCKS);
-            deleteOption.setEnabled(deleteCount > 0);
-            deleteOption.onAction((e: Blockly.MenuItem) => {
-                pxt.tickEvent("blocks.context.delete", undefined, { interactiveConsent: true });
-                if (deleteCount < 2) {
-                    deleteNext();
-                } else {
-                    Blockly.confirm(lf("Delete all {0} blocks?", deleteCount), (ok) => {
-                        if (ok) {
-                            deleteNext();
-                        }
-                    });
+            const deleteOption = {
+                text: deleteCount == 1 ? msg.DELETE_BLOCK : msg.DELETE_ALL_BLOCKS,
+                enabled: deleteCount > 0,
+                callback: () => {
+                    pxt.tickEvent("blocks.context.delete", undefined, { interactiveConsent: true });
+                    if (deleteCount < 2) {
+                        deleteNext();
+                    } else {
+                        Blockly.confirm(lf("Delete all {0} blocks?", deleteCount), (ok) => {
+                            if (ok) {
+                                deleteNext();
+                            }
+                        });
+                    }
                 }
-            })
-            menuOptions.push(deleteOption);
+            }
+            options.push(deleteOption);
 
-            const formatCodeOption = new Blockly.MenuItem(lf("Format Code"));
-            formatCodeOption.setEnabled(true);
-            formatCodeOption.onAction((e: Blockly.MenuItem) => {
-                pxt.tickEvent("blocks.context.format", undefined, { interactiveConsent: true });
-                pxt.blocks.layout.flow(this, { useViewWidth: true });
-            })
-            menuOptions.push(formatCodeOption);
+            const formatCodeOption = {
+                text: lf("Format Code"),
+                enabled: true,
+                callback: () => {
+                    pxt.tickEvent("blocks.context.format", undefined, { interactiveConsent: true });
+                    pxt.blocks.layout.flow(this, { useViewWidth: true });
+                }
+            }
+            options.push(formatCodeOption);
 
             if (pxt.blocks.layout.screenshotEnabled()) {
-                const screenshotOption = new Blockly.MenuItem(lf("Snapshot"));
-                screenshotOption.setEnabled(topBlocks.length > 0 || topComments.length > 0);
-                screenshotOption.onAction( (e: Blockly.MenuItem) => {
-                    pxt.tickEvent("blocks.context.screenshot", undefined, { interactiveConsent: true });
-                    pxt.blocks.layout.screenshotAsync(this)
-                        .done((uri) => {
-                            if (pxt.BrowserUtils.isSafari())
-                                uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
-                            BrowserUtils.browserDownloadDataUri(
-                                uri,
-                                `${pxt.appTarget.nickname || pxt.appTarget.id}-${lf("screenshot")}.png`);
-                        });
-                });
-                menuOptions.push(screenshotOption);
+                const screenshotOption = {
+                    text: lf("Snapshot"),
+                    enabled: topBlocks.length > 0 || topComments.length > 0,
+                    callback: () => {
+                        pxt.tickEvent("blocks.context.screenshot", undefined, { interactiveConsent: true });
+                        pxt.blocks.layout.screenshotAsync(this)
+                            .done((uri) => {
+                                if (pxt.BrowserUtils.isSafari())
+                                    uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
+                                BrowserUtils.browserDownloadDataUri(
+                                    uri,
+                                    `${pxt.appTarget.nickname || pxt.appTarget.id}-${lf("screenshot")}.png`);
+                            });
+                    },
+                }
+                options.push(screenshotOption);
             }
 
             // custom options...
             if (onShowContextMenu)
-                onShowContextMenu(this, menuOptions);
-
-            Blockly.ContextMenu.show(e, menuOptions, this.RTL);
-        };*/
+                onShowContextMenu(this, options);
+        };
 
         // Get rid of bumping behavior
         (Blockly as any).Constants.Logic.LOGIC_COMPARE_ONCHANGE_MIXIN.onchange = function () { }
