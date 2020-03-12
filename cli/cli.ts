@@ -393,14 +393,15 @@ function ciAsync() {
     if (pkg["name"] == "pxt-core") {
         pxt.log("pxt-core build");
         let p = npmPublishAsync();
-        if (uploadDocs)
-            p = p
-                .then(() => buildWebStringsAsync())
-                .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"));
-        if (uploadApiStrings)
-            p = p.then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
-        if (uploadDocs || uploadApiStrings)
-            p = p.then(() => crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs));
+        pxt.log("skipping upload of strings because this is a stable branch")
+        // if (uploadDocs)
+        //     p = p
+        //         .then(() => buildWebStringsAsync())
+        //         .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"));
+        // if (uploadApiStrings)
+        //     p = p.then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
+        // if (uploadDocs || uploadApiStrings)
+        //     p = p.then(() => crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs));
         return p;
     } else {
         pxt.log("target build");
