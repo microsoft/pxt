@@ -429,14 +429,16 @@ function ciAsync() {
             .then(isTaggedCommit => {
                 pxt.log(`is tagged commit: ${isTaggedCommit}`);
                 let p = npmPublishAsync();
-                if (uploadDocs && branch === "master" && isTaggedCommit)
-                    p = p
-                        .then(() => buildWebStringsAsync())
-                        .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"));
-                if (uploadApiStrings)
-                    p = p.then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
-                if (uploadDocs || uploadApiStrings)
-                    p = p.then(() => crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs));
+                if (branch === "master" && isTaggedCommit) {
+                    if (uploadDocs)
+                        p = p
+                            .then(() => buildWebStringsAsync())
+                            .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"));
+                    if (uploadApiStrings)
+                        p = p.then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
+                    if (uploadDocs || uploadApiStrings)
+                        p = p.then(() => crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs));
+                }
                 return p;
             });
     } else {
