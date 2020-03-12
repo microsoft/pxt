@@ -1262,8 +1262,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
         ])
         const aria = {
             labelledby: header ? this.id + 'title' : undefined,
-            describedby: (!isFullscreen && description) ? this.id + 'description' : this.id + 'desc',
-            modal: 'true'
+            describedby: (!isFullscreen && description) ? this.id + 'description' : this.id + 'desc'
         }
         const customStyles = {
             content: {
@@ -1280,6 +1279,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             overlayClassName={`ui page modals dimmer transition ${overlayClassName} ${isOpen ? 'visible active' : ''}`}
             className={classes}
             style={customStyles}
+            role="dialog"
             aria={aria} {...rest}>
             {header || showBack || helpUrl ? <div id={this.id + 'title'} className={"header " + (headerClass || "")}>
                 <span className="header-title" style={{ margin: `0 ${helpUrl ? '-20rem' : '0'} 0 ${showBack ? '-20rem' : '0'}` }}>{header}</span>
