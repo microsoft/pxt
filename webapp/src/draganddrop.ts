@@ -19,7 +19,8 @@ export function setupDragAndDrop(
             dragged(files);
         }
     })
-    r.addEventListener('dragover', function (e: DragEvent) {
+    r.addEventListener('dragstart', function (e: DragEvent) {
+        console.log('dragstart')
         let types = e.dataTransfer.types;
         let found = false;
         for (let i = 0; i < types.length; ++i)
@@ -35,6 +36,7 @@ export function setupDragAndDrop(
         return true;
     }, false);
     r.addEventListener('drop', function (e: DragEvent) {
+        console.log('drop')
         let files = pxt.Util.toArray<File>(e.dataTransfer.files);
         if (files.length > 0) {
             e.stopPropagation(); // Stops some browsers from redirecting.
@@ -49,10 +51,17 @@ export function setupDragAndDrop(
                 draggedUri(imgUri);
             }
         }
-        return false;
-    }, false);
-    r.addEventListener('dragend', function (e: DragEvent) {
         dragEnd();
         return false;
     }, false);
+    // and we're done
+    r.addEventListener('dragleave', end, false);
+    r.addEventListener('dragexit', end, false);
+    r.addEventListener('dragend', end, false);
+
+    function end(e: DragEvent) {
+        console.log('dragend')
+        dragEnd();
+        return false;
+    }
 }

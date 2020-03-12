@@ -3658,7 +3658,8 @@ export class ProjectView
         const hasCloud = this.hasCloud();
         return (
             <div id='root' className={rootClasses}>
-                {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
+                {dragging && <sui.Dimmer isOpen={true} closable={false} active={true} />}
+                {greenScreen && <greenscreen.WebCam close={this.toggleGreenScreen} />}
                 {hideMenuBar || inHome ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast} /> : undefined}
