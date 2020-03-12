@@ -15,7 +15,7 @@ MakeCode [Arcade]( https://arcade.makecode.com), is an immersive game coding pla
 
 ## Minecraft Education
 
-Minecraft Education is offering access to Minecraft:Education Edition through June 2020. In addition, there is a remote learning available to use alons side with STEM based lessons. See the details on the [Minecraft Education blog](https://education.minecraft.net/blog/microsoft-extends-access-to-minecraft-education-edition-and-resources-to-support-remote-learning/)
+Minecraft Education is offering access to Minecraft:Education Edition through June 2020. In addition, there is a remote learning available to use alons side with STEM based lessons. See the details on the [Minecraft Education blog](https://education.minecraft.net/blog/microsoft-extends-access-to-minecraft-education-edition-and-resources-to-support-remote-learning/).
 
 Within MakeCode too, you can utilize the **Introduction to Computer Science with MakeCode for Minecraft** course:
 
