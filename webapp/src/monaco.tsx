@@ -1185,9 +1185,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             this.editor.setValue(this.editor.getValue().replace(/\u{201c}|\u{201d}/gu, `"`).replace(/\u{2018}|\u{2019}/gu, `'`));
                         }
 
-                        if (!e.isRedoing && !e.isUndoing && !this.editor.getValue()) {
-                            this.editor.setValue(" ");
-                        }
                         this.updateDiagnostics();
                         this.changeCallback();
                         this.updateFieldEditors();
