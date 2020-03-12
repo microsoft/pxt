@@ -4,7 +4,7 @@
 
 March 10th, 2020 by [pelikhan](https://github.com/pelikhan)
 
-Many schools have closed or my soon close to help prevent the spread of illness. Both educators and students may need to find ways to promote and continue learning without a classroom. We thought that it might be helpful to again highlight the learning resources available with MakeCode that can help support online learning.
+Many schools have closed or might soon close to help prevent the spread of illness. Both educators and students may need to find ways to promote and continue learning without a classroom. We thought that it might be helpful to again highlight the learning resources we have with MakeCode that support online learning.
 **[Continue reading this blog post](/blog/minecraft/online-learning)**
 
 ## [MakeCode Python is here!](/blog/minecraft/python-release)
