@@ -2,7 +2,7 @@
 
 **Posted on March 10th, 2020 by [pelikhan](https://github.com/pelikhan)**
 
-Many schools have closed or my soon close to help prevent the spread of illness. Educators may need to find ways to promote and continue learning for students without a classroom. We thought that it might be helpful to again highlight the learning resources available with MakeCode that can help support online learning.
+Many schools have closed or might soon close to help prevent the spread of illness. Educators may need to find ways to promote and continue learning for students without a classroom. We thought that it might be helpful to again highlight the learning resources available with MakeCode that can help support online learning.
 
 ## MakeCode Arcade
 
@@ -36,6 +36,4 @@ For [MakeCode for micro:bit](https://makecode.microbit.org) you can find a numbe
 * Flipgrid: **[csintromicrobit](https://flipgrid.com/csintromicrobit)**
 
 <br/>
-Happy Making and Coding!
-
 The MakeCode Team 
