@@ -536,12 +536,13 @@ function travisAsync() {
     if (pkg["name"] == "pxt-core") {
         pxt.log("pxt-core build");
         let p = npmPublishAsync();
-        if (uploadLocs)
-            p = p
-                .then(() => execCrowdinAsync("upload", "built/strings.json"))
-                .then(() => buildWebStringsAsync())
-                .then(() => execCrowdinAsync("upload", "built/webstrings.json"))
-                .then(() => internalUploadTargetTranslationsAsync(!!rel));
+        pxt.log("skipping upload of strings because this is a stable branch")
+        // if (uploadLocs)
+        //     p = p
+        //         .then(() => execCrowdinAsync("upload", "built/strings.json"))
+        //         .then(() => buildWebStringsAsync())
+        //         .then(() => execCrowdinAsync("upload", "built/webstrings.json"))
+        //         .then(() => internalUploadTargetTranslationsAsync(!!rel));
         return p;
     } else {
         pxt.log("target build");
