@@ -9173,6 +9173,18 @@ declare module Blockly.Procedures {
     function findLegalName(name: string, block: Blockly.Block): string;
 
     /**
+     * Does this procedure have a legal name?  Illegal names include names of
+     * procedures already defined.
+     * @param {string} name The questionable name.
+     * @param {!Blockly.Workspace} workspace The workspace to scan for collisions.
+     * @param {Blockly.Block=} opt_exclude Optional block to exclude from
+     *     comparisons (one doesn't want to collide with oneself).
+     * @return {boolean} True if the name is legal.
+     * @package pxt-blockly
+     */
+    function isLegalName_(name: string, workspace: Blockly.Workspace, opt_exclude?: Blockly.Block): boolean;
+
+    /**
      * Return if the given name is already a procedure name.
      * @param {string} name The questionable name.
      * @param {!Blockly.Workspace} workspace The workspace to scan for collisions.
@@ -20902,6 +20914,9 @@ declare module Blockly.Msg {
 
     /** @type {string} */
     var FUNCTION_WARNING_DUPLICATE_ARG: string;
+
+    /** @type {string} */
+    var FUNCTION_WARNING_ARG_NAME_IS_FUNCTION_NAME: string;
 
     /** @type {string} */
     var FUNCTION_WARNING_EMPTY_NAME: string;

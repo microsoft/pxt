@@ -901,7 +901,8 @@ namespace pxt.blocks {
         goog.require('Blockly.Blocks');
 
         Blockly.FieldCheckbox.CHECK_CHAR = '■';
-        // Blockly.BlockSvg.START_HAT = !!pxt.appTarget.appTheme.blockHats;
+
+        (<any>Blockly).Constants.ADD_START_HATS = !!pxt.appTarget.appTheme.blockHats;
 
         initFieldEditors();
         initContextMenu();
@@ -2199,7 +2200,7 @@ namespace pxt.blocks {
         // New functions implementation messages
         msg.FUNCTION_CREATE_NEW = lf("Make a Function...");
         msg.FUNCTION_WARNING_DUPLICATE_ARG = lf("Functions cannot use the same argument name more than once.");
-        // msg.FUNCTION_WARNING_ARG_NAME_IS_FUNCTION_NAME = lf("Argument names must not be the same as the function name.");
+        msg.FUNCTION_WARNING_ARG_NAME_IS_FUNCTION_NAME = lf("Argument names must not be the same as the function name.");
         msg.FUNCTION_WARNING_EMPTY_NAME = lf("Function and argument names cannot be empty.");
         msg.FUNCTIONS_DEFAULT_FUNCTION_NAME = lf("doSomething");
         msg.FUNCTIONS_DEFAULT_BOOLEAN_ARG_NAME = lf("bool");
@@ -2237,7 +2238,7 @@ namespace pxt.blocks {
         const proceduresCallId = "procedures_callnoreturn";
         const proceduresCallDef = pxt.blocks.getBlockDefinition(proceduresCallId);
 
-        // msg.PROCEDURES_CALLRETURN_TOOLTIP = proceduresDef.tooltip;
+        msg.PROCEDURES_CALLRETURN_TOOLTIP = proceduresDef.tooltip.toString();
 
         Blockly.Blocks['procedures_callnoreturn'] = {
             init: function () {
@@ -2454,13 +2455,13 @@ namespace pxt.blocks {
                                         promptAndCheckWithAlert(newFunc);  // Recurse
                                     });
                             }
-                            /*else if (!Blockly.Procedures.isLegalName_(newFunc, workspace)) {
+                            else if (!Blockly.Procedures.isLegalName_(newFunc, workspace)) {
                                 Blockly.alert((Blockly.Msg as any).PROCEDURE_ALREADY_EXISTS.replace('%1',
                                     newFunc.toLowerCase()),
                                     function () {
                                         promptAndCheckWithAlert(newFunc);  // Recurse
                                     });
-                            }*/
+                            }
                             else {
                                 createFunction(newFunc);
                             }
