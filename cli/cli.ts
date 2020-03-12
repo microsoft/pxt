@@ -502,12 +502,13 @@ function travisAsync() {
     let pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") {
         let p = npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve();
-        if (uploadLocs)
-            p = p
-                .then(() => execCrowdinAsync("upload", "built/strings.json"))
-                .then(() => buildWebStringsAsync())
-                .then(() => execCrowdinAsync("upload", "built/webstrings.json"))
-                .then(() => internalUploadTargetTranslationsAsync(!!rel));
+        pxt.log("skipping upload of strings because this is a stable branch")
+        // if (uploadLocs)
+        //     p = p
+        //         .then(() => execCrowdinAsync("upload", "built/strings.json"))
+        //         .then(() => buildWebStringsAsync())
+        //         .then(() => execCrowdinAsync("upload", "built/webstrings.json"))
+        //         .then(() => internalUploadTargetTranslationsAsync(!!rel));
         return p;
     } else {
         return internalBuildTargetAsync()
