@@ -1,10 +1,10 @@
 # Microsoft MakeCode Blog
 
-## [Online Learning Resources](/blog/minecraft/online-learning)
+## [Online Learning Resources](/blog/online-learning)
 
 March 10th, 2020 by [pelikhan](https://github.com/pelikhan)
 
-We've compiled a list of resources that could be useful if you find yourself needing to do online learning.
+Many schools have closed or my soon close to help prevent the spread of illness. Both educators and students may need to find ways to promote and continue learning without a classroom. We thought that it might be helpful to again highlight the learning resources available with MakeCode that can help support online learning.
 **[Continue reading this blog post](/blog/minecraft/online-learning)**
 
 ## [MakeCode Python is here!](/blog/minecraft/python-release)
