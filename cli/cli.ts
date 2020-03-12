@@ -356,6 +356,25 @@ function semverCmp(a: string, b: string) {
     return parse(a) - parse(b)
 }
 
+function checkIfTaggedCommitAsync() {
+    let currentCommit: string;
+
+    return nodeutil.gitInfoAsync(["rev-parse", "HEAD"])
+        .then(info => {
+            currentCommit = info.trim();
+            return nodeutil.gitInfoAsync(["ls-remote", "--tags"], undefined, true)
+        })
+        .then(info => {
+            const tagCommits = info.split("\n")
+                .map(line => {
+                    const match = /^([a-fA-F0-9]+)\s+refs\/tags\/v\d+\.\d+\.\d+\^\{\}$/.exec(line);
+                    return match && match[1]
+                });
+
+            return tagCommits.some(t => t === currentCommit)
+        });
+}
+
 let readJson = nodeutil.readJson;
 
 function ciAsync() {
@@ -406,16 +425,20 @@ function ciAsync() {
     let pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") {
         pxt.log("pxt-core build");
-        let p = npmPublishAsync();
-        if (uploadDocs)
-            p = p
-                .then(() => buildWebStringsAsync())
-                .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"));
-        if (uploadApiStrings)
-            p = p.then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
-        if (uploadDocs || uploadApiStrings)
-            p = p.then(() => crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs));
-        return p;
+        return checkIfTaggedCommitAsync()
+            .then(isTaggedCommit => {
+                pxt.log(`is tagged commit: ${isTaggedCommit}`);
+                let p = npmPublishAsync();
+                if (uploadDocs && branch === "master" && isTaggedCommit)
+                    p = p
+                        .then(() => buildWebStringsAsync())
+                        .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"));
+                if (uploadApiStrings)
+                    p = p.then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
+                if (uploadDocs || uploadApiStrings)
+                    p = p.then(() => crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs));
+                return p;
+            });
     } else {
         pxt.log("target build");
         return internalBuildTargetAsync()
