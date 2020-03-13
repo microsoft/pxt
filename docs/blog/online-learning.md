@@ -4,10 +4,10 @@
 
 Many schools have closed or might soon close to help prevent the spread of illness. Educators may need to find ways to promote and continue learning for students without a classroom. We thought that it might be helpful to again highlight the learning resources we have with MakeCode that support online learning.
 
-## Live Streaming from the MakeCode team
+## Live Streaming from the MakeCode team!
 
-To help families with school closures, the MakeCode team will be streaming daily 
-on how to learn coding using MakeCode editors. All streams will be recorded and available in the [MakeCode YouTube Channel](https://www.youtube.com/channel/UCye7YlvFUUQ1dSy0WZZ1T_Q).
+To help families with school closures, we're the bringing learning to you! The MakeCode team will live stream daily sessions
+on how to learn coding using MakeCode editors. All streams will be recorded and available on the [MakeCode YouTube Channel](https://www.youtube.com/channel/UCye7YlvFUUQ1dSy0WZZ1T_Q).
 
 * 09:00AM PST - **micro:bit** - live stream at https://aka.ms/makecodemicrobitstream
 * 10:30AM PST - **Arcade** - live stream at https://aka.ms/makecodearcadestream - [Forum](https://forum.makecode.com/t/news-remote-learning-with-the-makecode-team/1399)
