@@ -10,8 +10,8 @@ To help families with school closures, the MakeCode team will be streaming daily
 on how to learn coding using MakeCode editors. All streams will be recorded and available in the [MakeCode YouTube Channel](https://www.youtube.com/channel/UCye7YlvFUUQ1dSy0WZZ1T_Q).
 
 * 09:00AM PST - **micro:bit** - live stream at https://aka.ms/makecodemicrobitstream
-* 10:30AM PST - **Arcade** - live stream at https://aka.ms/makecodearcadestream - [Forum](https://forum.makecode.com/t/news-remote-learning-with-the-makecode-team/1399)
-* 01:00PM PST - **Minecraft EDU** - live stream at https://aka.ms/makecodeminecraftstream
+* 10:30AM PST - **Minecraft EDU** - live stream at https://aka.ms/makecodeminecraftstream
+* 01:00PM PST - **Arcade** - live stream at https://aka.ms/makecodearcadestream - [Forum](https://forum.makecode.com/t/news-remote-learning-with-the-makecode-team/1399)
 
 ## MakeCode Arcade
 
