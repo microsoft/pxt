@@ -19,9 +19,11 @@ MakeCode [Arcade]( https://arcade.makecode.com), is an immersive game coding pla
 
 ![Arcade courses](/static/blog/remote-learning/arcade-courses.jpg)
 
+* Online editor: https://arcade.makecode.com
 * Online Course: [Intro to CS](https://arcade.makecode.com/courses/csintro)
 * [Forum](https://forum.makecode.com/c/Share-your-Arcade-projects-here/5)
 * Flipgrid: **[csintroarcade](https://flipgrid.com/csintroarcade)**
+* (optional) Buy/Build an Arcade: https://arcade.makecode.com/hardware
 
 ## Minecraft Education
 
@@ -31,6 +33,7 @@ Within MakeCode too, you can utilize the **Introduction to Computer Science with
 
 ![minecraft courses](/static/blog/remote-learning/minecraft-courses.jpg)
 
+* Download Minecraft EDU: https://education.minecraft.net/get-started/download/ 
 * Online course: [Intro to CS](https://minecraft.makecode.com/courses/csintro)
 * [Forum](https://forum.makecode.com/c/microbit/11)
 * Flipgrid: **[csintrominecraft](https://flipgrid.com/csintrominecraft)**
@@ -43,9 +46,11 @@ For [MakeCode for micro:bit](https://makecode.microbit.org) you can find a numbe
 
 ![micro:bit courses](/static/blog/remote-learning/microbit-courses.jpg)
 
+* Online editor: https://makecode.microbit.org
 * Online course: [Intro to CS](https://makecode.microbit.org/courses/csintro)
 * [Forum](https://forum.makecode.com/c/Discussion-around-MakeCode-for-Minecraft/12)
 * Flipgrid: **[csintromicrobit](https://flipgrid.com/csintromicrobit)**
+* (optional) Buy a micro:bit: https://microbit.org/buy/
 
 <br/>
 The MakeCode Team 
