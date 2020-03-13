@@ -2380,6 +2380,45 @@ namespace pxt.blocks {
         msg.FUNCTIONS_CALL_TITLE = functionCall.block["FUNCTIONS_CALL_TITLE"];
         installBuiltinHelpInfo(functionCallId);
 
+        const functionReturnId = "function_return";
+        const functionReturn = pxt.blocks.getBlockDefinition(functionReturnId);
+
+        Blockly.Blocks[functionReturnId] = {
+            init: function() {
+                const that = this as Blockly.Block;
+                that.jsonInit({
+                    "message0": functionReturn.block["message0"],
+                    "args0": [
+                        {
+                            "type": "input_value",
+                            "name": "RETURN_VALUE",
+                            "check": null
+                        }
+                    ],
+                    "previousStatement": null,
+                    "nextStatement": false,
+                    "colour": pxt.toolbox.getNamespaceColor('functions')
+                })
+                that.setNextStatement(false);
+                that.setPreviousStatement(true);
+            }
+        };
+
+
+        const callDefinition = Blockly.Blocks["function_call"]
+        Blockly.Blocks["function_call_output"] = {
+            ...callDefinition,
+            init: function() {
+                callDefinition.init.call(this);
+                this.setPreviousStatement(false);
+                this.setNextStatement(false);
+                this.setOutput(true, null);
+                this.setOutputShape(Blockly.OUTPUT_SHAPE_ROUND);
+            }
+        };
+
+        installBuiltinHelpInfo(functionReturnId);
+
         Blockly.Procedures.flyoutCategory = function (workspace: Blockly.WorkspaceSvg) {
             let xmlList: HTMLElement[] = [];
 
@@ -2501,11 +2540,24 @@ namespace pxt.blocks {
         const oldFlyout = Blockly.Functions.flyoutCategory;
         Blockly.Functions.flyoutCategory = (workspace) => {
             const elems = oldFlyout(workspace);
+            let returnBlock = Blockly.utils.xml.createElement('block');
+            returnBlock.setAttribute('type', functionReturnId);
+            elems.unshift(returnBlock as HTMLElement);
+
             const headingLabel = createFlyoutHeadingLabel(lf("Functions"),
                 pxt.toolbox.getNamespaceColor('functions'),
                 pxt.toolbox.getNamespaceIcon('functions'),
                 'blocklyFlyoutIconfunctions');
             elems.unshift(headingLabel);
+
+            for (const e of elems) {
+                if (e.getAttribute("type") === "function_call") {
+                    const clone = e.cloneNode(true) as HTMLElement;
+                    clone.setAttribute("type", "function_call_output");
+                    elems.push(clone);
+                }
+            }
+
             return elems;
         };
 

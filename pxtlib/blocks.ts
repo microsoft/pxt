@@ -677,6 +677,15 @@ namespace pxt.blocks {
                     PROCEDURES_CALLNORETURN_TITLE: Util.lf("call function")
                 }
             },
+            'function_return': {
+                name: Util.lf("return a value from within a function"),
+                tooltip: Util.lf("Return a value from within a user-defined function."),
+                url: 'types/function/return',
+                category: 'functions',
+                block: {
+                    message0: Util.lf("return %1")
+                }
+            },
             'function_definition': {
                 name: Util.lf("define the function"),
                 tooltip: Util.lf("Create a function."),

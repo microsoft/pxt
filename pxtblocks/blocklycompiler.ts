@@ -425,6 +425,7 @@ namespace pxt.blocks {
                         unionParam(e, b, "INDEX", ground(pNumber.type));
                         break;
                     case 'function_call':
+                    case 'function_call_output':
                         (b as Blockly.FunctionCallBlock).getArguments().forEach(arg => {
                             unionParam(e, b, arg.id, ground(arg.type));
                         });
@@ -764,6 +765,10 @@ namespace pxt.blocks {
         return mkStmt(H.stdCall(name, compiledArgs, externalInputs));
     }
 
+    function compileReturnStatement(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
+        return mkStmt(mkText("return "), compileExpression(e, getInputTargetBlock(b, "RETURN_VALUE"), comments));
+    }
+
     function compileArgumentReporter(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         const name = escapeVarName(b.getFieldValue("VALUE"), e);
         return mkText(name);
@@ -866,6 +871,8 @@ namespace pxt.blocks {
             case "argument_reporter_string":
             case "argument_reporter_custom":
                 expr = compileArgumentReporter(e, b, comments); break;
+            case "function_call_output":
+                expr = compileFunctionCall(e, b, comments); break;
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) {
@@ -1393,6 +1400,9 @@ namespace pxt.blocks {
                 break;
             case 'function_call':
                 r = [compileFunctionCall(e, b, comments)];
+                break;
+            case 'function_return':
+                r = [compileReturnStatement(e, b, comments)];
                 break;
             case ts.pxtc.ON_START_TYPE:
                 r = compileStartEvent(e, b).children;

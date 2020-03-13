@@ -123,7 +123,8 @@ function initWatch() {
         gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
         targetjs,
         webapp,
-        browserifyWebapp
+        browserifyWebapp,
+        gulp.parallel(semanticjs, copyJquery, copyWebapp, copyPlayground, copySemanticFonts, copyMonaco)
     ];
 
     gulp.watch("./pxtlib/**/*", gulp.series(...tasks));
@@ -133,7 +134,7 @@ function initWatch() {
     gulp.watch("./backendutils/**/*", gulp.series(backendutils, ...tasks.slice(2)));
 
     gulp.watch("./pxtpy/**/*", gulp.series(pxtpy, ...tasks.slice(3)));
-    gulp.watch("./pxtblockly/**/*", gulp.series(gulp.series(copyBlockly, pxtblocks, pxtblockly), ...tasks.slice(3)));
+    gulp.watch("./pxtblocks/**/*", gulp.series(gulp.series(copyBlockly, pxtblocks, pxtblockly), ...tasks.slice(3)));
 
     gulp.watch("./pxteditor/**/*", gulp.series(pxteditor, ...tasks.slice(4)));
 
