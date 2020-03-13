@@ -191,6 +191,10 @@ namespace pxt.blocks {
         if (b.type == "variables_get")
             return find(lookup(e, b, b.getField("VAR").getText()).type);
 
+        if (b.type == "function_call_output")  {
+            return getReturnTypeOfFunctionCall(e, b);
+        }
+
         if (!b.outputConnection) {
             return ground(pUnit.type);
         }
@@ -251,6 +255,48 @@ namespace pxt.blocks {
         }
 
         return ground(check);
+    }
+
+    function getReturnTypeOfFunction(e: Environment, name: string) {
+        if (!e.userFunctionReturnValues[name]) {
+            const definition = Blockly.Functions.getDefinition(name, e.workspace);
+
+            const returnTypes: Point[] = [];
+            for (const child of definition.getDescendants(false)) {
+                if (child.type === "function_return") {
+                    returnTypes.push(returnType(e, getInputTargetBlock(child, "RETURN_VALUE")));
+                }
+            }
+
+            let res = mkPoint("void");
+
+            if (returnTypes.length) {
+                try {
+                    const unified = mkPoint(null);
+                    for (const point of returnTypes) {
+                        union(unified, point);
+                    }
+                    res = unified
+                }
+                catch (err) {
+                    e.diagnostics.push({
+                        blockId: definition.id,
+                        message: Util.lf("Function '{0}' has an invalid return type", name)
+                    });
+
+                    res = mkPoint("any")
+                }
+            }
+
+            e.userFunctionReturnValues[name] = res;
+        }
+
+        return e.userFunctionReturnValues[name];
+    }
+
+    function getReturnTypeOfFunctionCall(e: Environment, call: Blockly.Block) {
+        const name = call.getField("function_name").getText();
+        return getReturnTypeOfFunction(e, name);
     }
 
     // Basic type unification routine; easy, because there's no structural types.
@@ -902,6 +948,8 @@ namespace pxt.blocks {
     export interface Environment {
         workspace: Blockly.Workspace;
         stdCallTable: pxt.Map<StdFunc>;
+        userFunctionReturnValues: pxt.Map<Point>;
+        diagnostics: BlockDiagnostic[];
         errors: Blockly.Block[];
         renames: RenameMap;
         stats: pxt.Map<number>;
@@ -927,6 +975,8 @@ namespace pxt.blocks {
         return {
             workspace: w,
             stdCallTable: {},
+            userFunctionReturnValues: {},
+            diagnostics: [],
             errors: [],
             renames: {
                 oldToNew: {},
@@ -1726,21 +1776,19 @@ namespace pxt.blocks {
 
             const leftoverVars = e.allVariables.filter(v => !v.alreadyDeclared).map(v => mkVariableDeclaration(v, blockInfo));
 
-            const diags: BlockDiagnostic[] = [];
-
             e.allVariables.filter(v => v.alreadyDeclared === BlockDeclarationType.Implicit && !v.isAssigned).forEach(v => {
                 const t = getConcreteType(v.type);
 
                 // The primitive types all get initializers set to default values, other types are set to null
                 if (t.type === "string" || t.type === "number" || t.type === "boolean" || isArrayType(t.type)) return;
 
-                diags.push({
+                e.diagnostics.push({
                     blockId: v.firstReference && v.firstReference.id,
                     message: lf("Variable '{0}' is never assigned", v.name)
                 });
             });
 
-            return [stmtsEnums.concat(leftoverVars.concat(stmtsMain)), diags];
+            return [stmtsEnums.concat(leftoverVars.concat(stmtsMain)), e.diagnostics];
         } catch (err) {
             let be: Blockly.Block = (err as any).block;
             if (be) {
