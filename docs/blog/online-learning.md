@@ -1,6 +1,6 @@
 # Online Learning Resources
 
-**Posted on March 10th, 2020 by [pelikhan](https://github.com/pelikhan)**
+**Posted on March 10th, 2020**
 
 Many schools have closed or might soon close to help prevent the spread of illness. Educators may need to find ways to promote and continue learning for students without a classroom. We thought that it might be helpful to again highlight the learning resources we have with MakeCode that support online learning.
 
