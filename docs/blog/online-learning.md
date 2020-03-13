@@ -4,6 +4,14 @@
 
 Many schools have closed or might soon close to help prevent the spread of illness. Educators may need to find ways to promote and continue learning for students without a classroom. We thought that it might be helpful to again highlight the learning resources we have with MakeCode that support online learning.
 
+## Live Streaming from the MakeCode
+
+To help families with school closures, the MakeCode team will be streaming daily on how to learn coding using MakeCode editors.
+
+* 09:00AM PST - **micro:bit** - live stream at https://aka.ms/makecodemicrobitstream
+* 10:30AM PST - **Arcade** - live stream at https://aka.ms/makecodearcadestream
+* 01:00PM PST - **Minecraft EDU** - live stream at https://aka.ms/makecodeminecraftstream
+
 ## MakeCode Arcade
 
 MakeCode [Arcade]( https://arcade.makecode.com), is an immersive game coding platform which has a course series in Computer Science through game programming:
