@@ -4,7 +4,7 @@
 
 Many schools have closed or might soon close to help prevent the spread of illness. Educators may need to find ways to promote and continue learning for students without a classroom. We thought that it might be helpful to again highlight the learning resources we have with MakeCode that support online learning.
 
-## Live Streaming from the MakeCode
+## Live Streaming from the MakeCode team
 
 To help families with school closures, the MakeCode team will be streaming daily 
 on how to learn coding using MakeCode editors. All streams will be recorded and available in the [MakeCode YouTube Channel](https://www.youtube.com/channel/UCye7YlvFUUQ1dSy0WZZ1T_Q).
@@ -20,6 +20,7 @@ MakeCode [Arcade]( https://arcade.makecode.com), is an immersive game coding pla
 ![Arcade courses](/static/blog/remote-learning/arcade-courses.jpg)
 
 * Online Course: [Intro to CS](https://arcade.makecode.com/courses/csintro)
+* [Forum](https://forum.makecode.com/c/Share-your-Arcade-projects-here/5)
 * Flipgrid: **[csintroarcade](https://flipgrid.com/csintroarcade)**
 
 ## Minecraft Education
@@ -31,6 +32,7 @@ Within MakeCode too, you can utilize the **Introduction to Computer Science with
 ![minecraft courses](/static/blog/remote-learning/minecraft-courses.jpg)
 
 * Online course: [Intro to CS](https://minecraft.makecode.com/courses/csintro)
+* [Forum](https://forum.makecode.com/c/microbit/11)
 * Flipgrid: **[csintrominecraft](https://flipgrid.com/csintrominecraft)**
 
 ## micro:bit
@@ -42,6 +44,7 @@ For [MakeCode for micro:bit](https://makecode.microbit.org) you can find a numbe
 ![micro:bit courses](/static/blog/remote-learning/microbit-courses.jpg)
 
 * Online course: [Intro to CS](https://makecode.microbit.org/courses/csintro)
+* [Forum](https://forum.makecode.com/c/Discussion-around-MakeCode-for-Minecraft/12)
 * Flipgrid: **[csintromicrobit](https://flipgrid.com/csintromicrobit)**
 
 <br/>
