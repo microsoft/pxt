@@ -6,7 +6,8 @@ Many schools have closed or might soon close to help prevent the spread of illne
 
 ## Live Streaming from the MakeCode
 
-To help families with school closures, the MakeCode team will be streaming daily on how to learn coding using MakeCode editors.
+To help families with school closures, the MakeCode team will be streaming daily 
+on how to learn coding using MakeCode editors.
 
 * 09:00AM PST - **micro:bit** - live stream at https://aka.ms/makecodemicrobitstream
 * 10:30AM PST - **Arcade** - live stream at https://aka.ms/makecodearcadestream
