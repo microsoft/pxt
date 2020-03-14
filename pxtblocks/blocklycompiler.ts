@@ -470,6 +470,9 @@ namespace pxt.blocks {
                         handleGenericType(b, "LIST");
                         unionParam(e, b, "INDEX", ground(pNumber.type));
                         break;
+                    case 'function_definition':
+                        getReturnTypeOfFunction(e, b.getField("function_name",).getText());
+                        break;
                     case 'function_call':
                     case 'function_call_output':
                         (b as Blockly.FunctionCallBlock).getArguments().forEach(arg => {

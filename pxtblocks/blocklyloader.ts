@@ -2540,9 +2540,14 @@ namespace pxt.blocks {
         const oldFlyout = Blockly.Functions.flyoutCategory;
         Blockly.Functions.flyoutCategory = (workspace) => {
             const elems = oldFlyout(workspace);
-            let returnBlock = Blockly.utils.xml.createElement('block');
-            returnBlock.setAttribute('type', functionReturnId);
-            elems.unshift(returnBlock as HTMLElement);
+            let returnBlock = mkReturnStatementBlock();
+
+            // Insert after the "make a function" button
+            elems.splice(1, 0, returnBlock as HTMLElement);
+
+            const functionsWithReturn = Blockly.Functions.getAllFunctionDefinitionBlocks(workspace)
+                .filter(def => def.getDescendants(false).some(child => child.type === "function_return" && child.getInputTargetBlock("RETURN_VALUE")))
+                .map(def => def.getField("function_name").getText())
 
             const headingLabel = createFlyoutHeadingLabel(lf("Functions"),
                 pxt.toolbox.getNamespaceColor('functions'),
@@ -2552,9 +2557,16 @@ namespace pxt.blocks {
 
             for (const e of elems) {
                 if (e.getAttribute("type") === "function_call") {
-                    const clone = e.cloneNode(true) as HTMLElement;
-                    clone.setAttribute("type", "function_call_output");
-                    elems.push(clone);
+                    const mutation = e.children.item(0);
+
+                    if (mutation) {
+                        const name = mutation.getAttribute("name");
+                        if (functionsWithReturn.some(n => n === name)) {
+                            const clone = e.cloneNode(true) as HTMLElement;
+                            clone.setAttribute("type", "function_call_output");
+                            elems.push(clone);
+                        }
+                    }
                 }
             }
 
@@ -2839,6 +2851,20 @@ namespace pxt.blocks {
         fieldBlock.appendChild(field);
 
         return fieldBlock;
+    }
+
+    function mkReturnStatementBlock() {
+        const block = document.createElement("block");
+        block.setAttribute("type", "function_return");
+
+        const value = document.createElement("value");
+        value.setAttribute("name", "RETURN_VALUE");
+        block.appendChild(value);
+
+        const shadow = mkFieldBlock("math_number", "NUM", "0", true);
+        value.appendChild(shadow);
+
+        return block;
     }
 
     let jresIconCache: Map<string> = {};
