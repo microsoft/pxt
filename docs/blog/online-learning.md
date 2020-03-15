@@ -9,7 +9,7 @@ Many schools have closed or might soon close to help prevent the spread of illne
 To help families with school closures, the MakeCode team will be streaming daily, Monday through Friday, 
 on how to learn coding using MakeCode editors. All streams will be recorded and available in the [MakeCode YouTube Channel](https://www.youtube.com/channel/UCye7YlvFUUQ1dSy0WZZ1T_Q).
 
-* 09:00AM PST Mon-Fri - **micro:bit** - live stream at https://aka.ms/makecodemicrobitstream
+* 09:00AM PST Mon-Fri - **micro:bit** - live stream at https://aka.ms/makecodemicrobitstream - [Forum](https://forum.makecode.com/c/microbit/live/16) - [Flipgrid](https://flipgrid.com/e915ed6b)
 * 10:30AM PST Mon-Fri - **Minecraft EDU** - live stream at https://aka.ms/makecodeminecraftstream
 * 01:00PM PST Mon-Fri - **Arcade** - live stream at https://aka.ms/makecodearcadestream - [Forum](https://forum.makecode.com/t/news-remote-learning-with-the-makecode-team/1399)
 
@@ -35,7 +35,7 @@ Within MakeCode too, you can utilize the **Introduction to Computer Science with
 
 * Download Minecraft EDU: https://education.minecraft.net/get-started/download/ 
 * Online course: [Intro to CS](https://minecraft.makecode.com/courses/csintro)
-* [Forum](https://forum.makecode.com/c/microbit/11)
+* [Forum](https://forum.makecode.com/c/Discussion-around-MakeCode-for-Minecraft/12)
 * Flipgrid: **[csintrominecraft](https://flipgrid.com/csintrominecraft)**
 
 ## micro:bit
@@ -48,7 +48,7 @@ For [MakeCode for micro:bit](https://makecode.microbit.org) you can find a numbe
 
 * Online editor: https://makecode.microbit.org
 * Online course: [Intro to CS](https://makecode.microbit.org/courses/csintro)
-* [Forum](https://forum.makecode.com/c/Discussion-around-MakeCode-for-Minecraft/12)
+* [Forum](https://forum.makecode.com/c/microbit/11)
 * Flipgrid: **[csintromicrobit](https://flipgrid.com/csintromicrobit)**
 * (optional) Buy a micro:bit: https://microbit.org/buy/
 
