@@ -2,30 +2,31 @@
 
 **Posted on March 10th, 2020**
 
-## Live Streaming from the MakeCode team
+## Live Streaming from the MakeCode team & Community
 
 To help families with school closures, the MakeCode team will be streaming daily, Monday through Friday, 
 on how to learn coding using MakeCode editors. All streams will be recorded and available in the [MakeCode YouTube Channel](https://www.youtube.com/channel/UCye7YlvFUUQ1dSy0WZZ1T_Q).
 
 * Send us questions and feedback on our Forum [https://aka.ms/makecodeliveforum](https://aka.ms/makecodeliveforum)
 
-### 09:00AM PST Mon-Fri - **micro:bit**
+### 09:00AM PST Mon-Fri - micro:bit - MakeCode team
 
 * Live stream at https://aka.ms/makecodemicrobitstream
-* Online editor: https://makecode.microbit.org
 * Show & Tell your creations on [Flipgrid](https://flipgrid.com/e915ed6b)
 
-### 10:30AM PST Mon-Fri - **Minecraft EDU** 
+### 10:30AM PST Mon-Fri - Minecraft EDU - MakeCode team
 
 * Live stream at https://aka.ms/makecodeminecraftstream
-* Download Minecraft EDU: https://education.minecraft.net/get-started/download/ 
 * Show & Tell your creations on [Flipgrid](https://flipgrid.com/73ab7a4c)
 
-### 01:00PM PST Mon-Fri - **Arcade**
+### 01:00PM PST Mon-Fri - Arcade - MakeCode team
 
 * Live stream at https://aka.ms/makecodearcadestream
-* Online editor: https://arcade.makecode.com
 * Sends questions and feedback on our [Forum](https://forum.makecode.com/t/news-remote-learning-with-the-makecode-team/1399)
+
+### 09:00AM EST Monday - Arcade - [Steve Isaacs](https://twitter.com/mr_isaacs)
+
+* Twitch channel at https://www.twitch.tv/mr_isaacs
 
 ## Online courses and resources
 
