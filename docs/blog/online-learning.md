@@ -7,18 +7,18 @@
 To help families with school closures, the MakeCode team will be streaming daily, Monday through Friday, 
 on how to learn coding using MakeCode editors. All streams will be recorded and available in the [MakeCode YouTube Channel](https://www.youtube.com/channel/UCye7YlvFUUQ1dSy0WZZ1T_Q).
 
+* Send us questions and feedback on our [Forum](https://forum.makecode.com/c/live/18)
+
 ### 09:00AM PST Mon-Fri - **micro:bit**
 
 * Live stream at https://aka.ms/makecodemicrobitstream
 * Online editor: https://makecode.microbit.org
-* Send us questions and feedback on our [Forum](https://forum.makecode.com/c/microbit/live/16)
 * Show & Tell your creations on [Flipgrid](https://flipgrid.com/e915ed6b)
 
 ### 10:30AM PST Mon-Fri - **Minecraft EDU** 
 
 * Live stream at https://aka.ms/makecodeminecraftstream
 * Download Minecraft EDU: https://education.minecraft.net/get-started/download/ 
-* Send us questions and feedback on our [Forum](https://forum.makecode.com/c/Discussion-around-MakeCode-for-Minecraft/minecraft-live/17)
 * Show & Tell your creations on [Flipgrid](https://flipgrid.com/73ab7a4c)
 
 ### 01:00PM PST Mon-Fri - **Arcade**
