@@ -2,18 +2,36 @@
 
 **Posted on March 10th, 2020**
 
-Many schools have closed or might soon close to help prevent the spread of illness. Educators may need to find ways to promote and continue learning for students without a classroom. We thought that it might be helpful to again highlight the learning resources we have with MakeCode that support online learning.
-
 ## Live Streaming from the MakeCode team
 
 To help families with school closures, the MakeCode team will be streaming daily, Monday through Friday, 
 on how to learn coding using MakeCode editors. All streams will be recorded and available in the [MakeCode YouTube Channel](https://www.youtube.com/channel/UCye7YlvFUUQ1dSy0WZZ1T_Q).
 
-* 09:00AM PST Mon-Fri - **micro:bit** - live stream at https://aka.ms/makecodemicrobitstream - [Forum](https://forum.makecode.com/c/microbit/live/16) - [Flipgrid](https://flipgrid.com/e915ed6b)
-* 10:30AM PST Mon-Fri - **Minecraft EDU** - live stream at https://aka.ms/makecodeminecraftstream
-* 01:00PM PST Mon-Fri - **Arcade** - live stream at https://aka.ms/makecodearcadestream - [Forum](https://forum.makecode.com/t/news-remote-learning-with-the-makecode-team/1399)
+### 09:00AM PST Mon-Fri - **micro:bit**
 
-## MakeCode Arcade
+* Live stream at https://aka.ms/makecodemicrobitstream
+* Online editor: https://makecode.microbit.org
+* Send us questions and feedback on our [Forum](https://forum.makecode.com/c/microbit/live/16)
+* Show & Tell your creations on [Flipgrid](https://flipgrid.com/e915ed6b)
+
+### 10:30AM PST Mon-Fri - **Minecraft EDU** 
+
+* Live stream at https://aka.ms/makecodeminecraftstream
+* Download Minecraft EDU: https://education.minecraft.net/get-started/download/ 
+* Send us questions and feedback on our [Forum](https://forum.makecode.com/c/Discussion-around-MakeCode-for-Minecraft/minecraft-live/17)
+* Show & Tell your creations on [Flipgrid](https://flipgrid.com/73ab7a4c)
+
+### 01:00PM PST Mon-Fri - **Arcade**
+
+* Live stream at https://aka.ms/makecodearcadestream
+* Online editor: https://arcade.makecode.com
+* Sends questions and feedback on our [Forum](https://forum.makecode.com/t/news-remote-learning-with-the-makecode-team/1399)
+
+## Online courses and resources
+
+Many schools have closed or might soon close to help prevent the spread of illness. Educators may need to find ways to promote and continue learning for students without a classroom. We thought that it might be helpful to again highlight the learning resources we have with MakeCode that support online learning.
+
+### MakeCode Arcade
 
 MakeCode [Arcade]( https://arcade.makecode.com), is an immersive game coding platform which has a course series in Computer Science through game programming:
 
@@ -25,7 +43,7 @@ MakeCode [Arcade]( https://arcade.makecode.com), is an immersive game coding pla
 * Flipgrid: **[csintroarcade](https://flipgrid.com/csintroarcade)**
 * (optional) Buy/Build an Arcade: https://arcade.makecode.com/hardware
 
-## Minecraft Education
+### Minecraft Education
 
 Minecraft Education is offering access to Minecraft:Education Edition through June 2020. In addition, there is a remote learning available to use alons side with STEM based lessons. See the details on the [Minecraft Education blog](https://education.minecraft.net/blog/microsoft-extends-access-to-minecraft-education-edition-and-resources-to-support-remote-learning/).
 
@@ -38,7 +56,7 @@ Within MakeCode too, you can utilize the **Introduction to Computer Science with
 * [Forum](https://forum.makecode.com/c/Discussion-around-MakeCode-for-Minecraft/12)
 * Flipgrid: **[csintrominecraft](https://flipgrid.com/csintrominecraft)**
 
-## micro:bit
+### micro:bit
 
 The [micro:bit](https://microbit.org) foundation offers structured [courses](https://classroom.microbit.org/) and [lessons](https://microbit.org/lessons/) that students can engage with.
 
