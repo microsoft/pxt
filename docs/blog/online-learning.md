@@ -7,7 +7,7 @@
 To help families with school closures, the MakeCode team will be streaming daily, Monday through Friday, 
 on how to learn coding using MakeCode editors. All streams will be recorded and available in the [MakeCode YouTube Channel](https://www.youtube.com/channel/UCye7YlvFUUQ1dSy0WZZ1T_Q).
 
-* Send us questions and feedback on our [Forum](https://forum.makecode.com/c/live/18)
+* Send us questions and feedback on our Forum [https://aka.ms/makecodeliveforum](https://aka.ms/makecodeliveforum)
 
 ### 09:00AM PST Mon-Fri - **micro:bit**
 
