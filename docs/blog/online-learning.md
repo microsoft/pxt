@@ -12,11 +12,13 @@ on how to learn coding using MakeCode editors. All streams will be recorded and 
 ### 09:00AM PST Mon-Fri - micro:bit - MakeCode team
 
 * Live stream at https://aka.ms/makecodemicrobitstream
+* [YouTube Playlist](https://www.youtube.com/playlist?list=PLMMBk9hE-SepocOwueEtTDyOPI_TBE9yC)
 * Show & Tell your creations on [Flipgrid](https://flipgrid.com/e915ed6b)
 
 ### 10:30AM PST Mon-Fri - Minecraft EDU - MakeCode team
 
 * Live stream at https://aka.ms/makecodeminecraftstream
+* [YouTube Playlist](https://www.youtube.com/playlist?list=PLMMBk9hE-Sep-xPDSqsdUCPcI6RXNwt4t)
 * Show & Tell your creations on [Flipgrid](https://flipgrid.com/73ab7a4c)
 
 ### 01:00PM PST Mon-Fri - Arcade - MakeCode team
