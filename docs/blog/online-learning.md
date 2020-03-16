@@ -2,6 +2,8 @@
 
 **Posted on March 10th, 2020**
 
+Many schools have closed or might soon close to help prevent the spread of illness. Educators may need to find ways to promote and continue learning for students without a classroom. We thought that it might be helpful to again highlight the learning resources we have with MakeCode that support online learning.
+
 ## Live Streaming from the MakeCode team & Community
 
 To help families with school closures, the MakeCode team will be streaming daily, Monday through Friday, 
@@ -32,9 +34,19 @@ https://youtu.be/94JX6ogZmm0?t=528
 
 * Twitch channel at https://www.twitch.tv/mr_isaacs
 
-## Online courses and resources
+## Assignments and classroom management
 
-Many schools have closed or might soon close to help prevent the spread of illness. Educators may need to find ways to promote and continue learning for students without a classroom. We thought that it might be helpful to again highlight the learning resources we have with MakeCode that support online learning.
+### Microsoft Teams Assignments
+
+**Microsoft Teams** is a collaboration hub for Office 365 where Educators can organize student groups into classes with content, conversations, apps, and assignments all in one place.
+
+You can now create MakeCode programming assignments for your students by attaching a MakeCode project. Students can then open the MakeCode editor and complete the assignment without ever leaving Teams!
+
+* [Blog post about MakeCode Assignments](https://www.microsoft.com/en-us/education/products/teams/default.aspx)
+
+https://youtu.be/oBarPukXXXQ
+
+## Online courses and resources
 
 ### MakeCode Arcade
 
