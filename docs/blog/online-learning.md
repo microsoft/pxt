@@ -9,6 +9,8 @@ on how to learn coding using MakeCode editors. All streams will be recorded and 
 
 * Send us questions and feedback on our Forum [https://aka.ms/makecodeliveforum](https://aka.ms/makecodeliveforum)
 
+https://youtu.be/94JX6ogZmm0?t=528
+
 ### 09:00AM PST Mon-Fri - micro:bit - MakeCode team
 
 * Live stream at https://aka.ms/makecodemicrobitstream
