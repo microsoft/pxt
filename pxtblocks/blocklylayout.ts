@@ -75,7 +75,7 @@ namespace pxt.blocks.layout {
             // collect all blocks
             const parentSvg = svgclone.querySelector(`g.blocklyWorkspace > g.${parentClass}`) as SVGGElement;
             const otherSvg = svgclone.querySelector(`g.blocklyWorkspace > g.${otherClass}`) as SVGGElement;
-            const blocksSvg = Util.toArray(parentSvg.querySelectorAll(`g.blocklyWorkspace > g.${parentClass} > g`));
+            const blocksSvg = Util.toArray(parentSvg.querySelectorAll(`g.blocklyWorkspace > g.${parentClass} > g[data-id]`));
             const blockSvg = blocksSvg.splice(blocki, 1)[0];
             if (!blockSvg) {
                 // seems like no blocks were generated

@@ -1243,8 +1243,8 @@ declare module Blockly {
             setStartHat(newBoolean: boolean): void;
     
             /**
-             * Get whether value inputs are arranged horizontally or vertically.
-             * @return {boolean} True if inputs are horizontal.
+             * Set whether value statements have a start hat or not.
+             * @return {boolean} True if statement has a start hat.
              */
             getStartHat(): boolean;
     
