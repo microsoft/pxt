@@ -11,26 +11,27 @@ on how to learn coding using MakeCode editors. All streams will be recorded and 
 
 * Send us questions and feedback on our Forum [https://aka.ms/makecodeliveforum](https://aka.ms/makecodeliveforum)
 
-https://youtu.be/94JX6ogZmm0?t=528
-
-### 09:00AM PST Mon-Fri - micro:bit - MakeCode team
+### 09:00AM PST Mon-Fri - micro:bit (Beginner) by MakeCode team
 
 * Live stream at https://aka.ms/makecodemicrobitstream
 * [YouTube Playlist](https://www.youtube.com/playlist?list=PLMMBk9hE-SepocOwueEtTDyOPI_TBE9yC)
-* Show & Tell your creations on [Flipgrid](https://flipgrid.com/e915ed6b)
 
-### 10:30AM PST Mon-Fri - Minecraft EDU - MakeCode team
+### 10:00AM PST Mon-Fri - Minecraft EDU (Beginner) by MakeCode team
 
 * Live stream at https://aka.ms/makecodeminecraftstream
 * [YouTube Playlist](https://www.youtube.com/playlist?list=PLMMBk9hE-Sep-xPDSqsdUCPcI6RXNwt4t)
-* Show & Tell your creations on [Flipgrid](https://flipgrid.com/73ab7a4c)
 
-### 01:00PM PST Mon-Fri - Arcade - MakeCode team
+### 11:00AM PST Mon-Fri - Arcade (Beginnner) by MakeCode team
+
+* Live stream at https://aka.ms/makecodearcadestreambeginner
+* [YouTube Playlist](https://www.youtube.com/playlist?list=PLMMBk9hE-Sep-xPDSqsdUCPcI6RXNwt4t)
+
+### 01:00PM PST Mon-Fri - Arcade (Advanced) by MakeCode team
 
 * Live stream at https://aka.ms/makecodearcadestream
 * Sends questions and feedback on our [Forum](https://forum.makecode.com/t/news-remote-learning-with-the-makecode-team/1399)
 
-### 09:00AM EST Monday - Arcade - [Steve Isaacs](https://twitter.com/mr_isaacs)
+### 09:00AM EST Monday - Arcade by [Steve Isaacs](https://twitter.com/mr_isaacs)
 
 * Twitch channel at https://www.twitch.tv/mr_isaacs
 
