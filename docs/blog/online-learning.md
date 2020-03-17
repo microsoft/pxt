@@ -105,6 +105,12 @@ You can now create MakeCode programming assignments for your students by attachi
 
 https://youtu.be/oBarPukXXXQ
 
+### Google Classroom
+
+You can use shared urls or download files from the MakeCode editor to create assigments in Google Classroom. See the tutorial video below.
+
+https://youtu.be/vDISKdJ3ynA
+
 ## Online courses and resources
 
 ### MakeCode Arcade
