@@ -213,6 +213,19 @@ svg {
     justify-content: space-between;
     align-items: center;
 }
+
+#docs h1:before, #docs h2:before,
+#docs h3:before, #docs h4:before,
+#docs h5:before, #docs h6:before {
+    content: '';
+    display: block;
+    /* keep this aligned with top bar menu height */
+    height: 3.5em;
+    margin-top: -3.5em;
+    visibility: hidden;
+}
+
+
 /* first children are left & right div wrappers */
 .fixed.menu div {
     display:flex;
