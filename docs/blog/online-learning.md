@@ -63,10 +63,8 @@ MakeCode [Arcade]( https://arcade.makecode.com), is an immersive game coding pla
 
 ### Minecraft:Education Edition
 
-If your school is using Office 365, your account probably already works with Minecraft:Education Edition. 
-If your Office 365 account does not work, Minecraft:Education Edition is free through June 2020. 
+If your school is using Office 365, your account probably already works with Minecraft:Education Edition. If your Office 365 account does not work, Minecraft:Education Edition is free through June 2020 for anyone with an Office 365 Education sign-in. 
 Read the [announcement]( https://education.minecraft.net/blog/microsoft-extends-access-to-minecraft-education-edition-and-resources-to-support-remote-learning/) on how to enable it.
-
 Within MakeCode too, you can utilize the **Introduction to Computer Science with MakeCode for Minecraft** course. In addition, there is a remote learning available to use alons side with STEM based lessons.
 
 ![minecraft courses](/static/blog/remote-learning/minecraft-courses.jpg)
