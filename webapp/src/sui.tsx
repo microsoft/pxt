@@ -1394,6 +1394,7 @@ export class Dimmer extends UIElement<DimmerProps, DimmerState> {
             shouldCloseOnOverlayClick={closable}
             onRequestClose={onClose}
             overlayClassName={portalClasses}
+            role="dialog"
             {...rest}>
             {children}
         </ReactModal>
