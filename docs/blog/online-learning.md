@@ -24,7 +24,7 @@ Click on any link in the table below for
 
 ### ~hint
 
-### 09:00AM PST Mon-Fri - micro:bit (Beginner) by MakeCode team #peli-mbit
+#### 09:00AM PST Mon-Fri - micro:bit (Beginner) by MakeCode team #peli-mbit
 
 Learn to code together with Peli and his children using the BBC micro:bit; no hardware required!
 
@@ -36,7 +36,7 @@ Learn to code together with Peli and his children using the BBC micro:bit; no ha
 
 ### ~hint
 
-### 10:00AM PST Mon-Fri - Minecraft EDU (Beginner) by MakeCode team #peli-minecraft
+#### 10:00AM PST Mon-Fri - Minecraft EDU (Beginner) by MakeCode team #peli-minecraft
 
 Learn to code in Minecraft: Education Edition with Peli and his children
 
@@ -48,7 +48,7 @@ Learn to code in Minecraft: Education Edition with Peli and his children
 
 ### ~hint
 
-### 11:00AM PST Mon-Fri - Arcade (Beginnner) by MakeCode team #peli-arcade
+#### 11:00AM PST Mon-Fri - Arcade (Beginnner) by MakeCode team #peli-arcade
 
 Learn to code retro arcade games with Peli and his children
 
@@ -60,7 +60,7 @@ Learn to code retro arcade games with Peli and his children
 
 ### ~hint
 
-### 01:00PM PST Mon-Fri - Arcade (Advanced) by MakeCode team #rsdj-arcade
+#### 01:00PM PST Mon-Fri - Arcade (Advanced) by MakeCode team #rsdj-arcade
 
 Create new games (or recreate old ones) with a rotating cast of developers from the MakeCode team, including Richard, Shannon, Daryl, and Joey
 
@@ -72,7 +72,7 @@ Create new games (or recreate old ones) with a rotating cast of developers from 
 
 ### ~hint
 
-### 02:00PM PST Fri - Adafruit Circuit Playground Express Project by MakeCode Team #jaq-cpx
+#### 02:00PM PST Fri - Adafruit Circuit Playground Express Project by MakeCode Team #jaq-cpx
 
 Learn about physical computing and create fun projects with Jacqueline
 
@@ -84,7 +84,7 @@ Learn about physical computing and create fun projects with Jacqueline
 
 ### ~hint
 
-### 09:00AM EST Monday - Arcade by [Steve Isaacs](https://twitter.com/mr_isaacs) #steve-arcade
+#### 09:00AM EST Monday - Arcade by [Steve Isaacs](https://twitter.com/mr_isaacs) #steve-arcade
 
 Learn to develop games with Steve Isaacs, an ISTE outstanding teacher and PBS Lead Digital Innovator
 
