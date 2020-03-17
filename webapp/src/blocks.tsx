@@ -1087,7 +1087,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     public hideFlyout() {
         if (this.editor.toolbox_) {
-            this.editor.toolbox_.flyout_.hide();
+            this.editor.toolbox_.getFlyout().hide();
         }
         if (this.toolbox) this.toolbox.clear();
     }
@@ -1389,7 +1389,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         old.setVisible(false)
 
         // set the "current" flyout
-        this.editor.toolbox_.flyout_ = nw;
+        this.editor.toolbox_.setFlyout(nw);
 
         // show the new flyout
         nw.setVisible(true)
@@ -1407,7 +1407,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default") {
         if ((!this.parent.state.editorState || this.parent.state.editorState.hasCategories !== false)
             && this.editor.toolbox_) {
-            const oldFlyout = this.editor.toolbox_.flyout_ as Blockly.VerticalFlyout;
+            const oldFlyout = this.editor.toolbox_.getFlyout() as Blockly.VerticalFlyout;
 
             // determine if the cached flyout exists and isn't stale
             const hasCachedFlyout = flyoutName in this.flyouts

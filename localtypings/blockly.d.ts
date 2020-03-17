@@ -19,7 +19,7 @@
  * @fileoverview Type definitions for Blockly.
  * @author samelh@google.com (Sam El-Husseini)
  */
-
+// export = Blockly; // pxt-blockly
 
 declare namespace goog {
     function require(name: string): void;
@@ -10152,13 +10152,6 @@ declare module Blockly {
             toolboxPosition: number;
     
             /**
-             * The toolbox flyout.
-             * @type {Blockly.Flyout}
-             * @package pxt-blockly
-             */
-            flyout_: Blockly.Flyout;
-    
-            /**
              * Width of the toolbox, which changes only in vertical layout.
              * @type {number}
              */
@@ -10221,6 +10214,12 @@ declare module Blockly {
              * @return {Blockly.Flyout} The toolbox flyout.
              */
             getFlyout(): Blockly.Flyout;
+    
+            /**
+             * pxt-blockly Set the toolbox flyout.
+             * @param {Blockly.Flyout} flyout The toolbox flyout.
+             */
+            setFlyout(flyout: Blockly.Flyout): void;
     
             /**
              * Move the toolbox to the edge.
