@@ -306,8 +306,6 @@ switch (step) {
         if (proc.isRoot)
             writeRaw(`${proc.label()}.continuations = [ ${asyncContinuations.join(",")} ]`)
 
-        writeRaw(`${proc.label()}.info = ${JSON.stringify(info)}`)
-
         writeRaw(fnctor(proc.label() + "_mk", proc.label(), maxStack, Object.keys(localsCache)))
         writeRaw(hexlits)
 
