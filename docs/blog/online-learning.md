@@ -61,7 +61,7 @@ MakeCode [Arcade]( https://arcade.makecode.com), is an immersive game coding pla
 * Flipgrid: **[csintroarcade](https://flipgrid.com/csintroarcade)**
 * (optional) Buy/Build an Arcade: https://arcade.makecode.com/hardware
 
-### Minecraft Education
+### Minecraft:Education Edition
 
 If your school is using Office 365, your account probably already works with Minecraft:Education Edition. 
 If your Office 365 account does not work, Minecraft:Education Edition is free through June 2020. 
