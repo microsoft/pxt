@@ -163,6 +163,11 @@ svg {
     padding-bottom: 3em;
 }
 
+#docs .mainbody table {
+    display: block;
+    overflow-x: auto;
+}
+
 #accessibleMenu .ui.item.link {
     position: absolute;
     height: 4em;
