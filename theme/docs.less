@@ -219,75 +219,45 @@
     }
 
     /* Warning Message Box */
-    .ui.warning.message {
-        padding: 2em;
-    }
-
     .ui.warning.message > .content:before {
         content: '\f05a';
-        font-family: Icons;
-        font-size: 1.3em;
-        vertical-align: top;
-    }
-
-    .ui.warning.message > .content > h4 {
-        display: inline;
-        margin-left: 1em;
-        font-weight: 500;
     }
 
     /* Alert Message Box */
-     .ui.negative.message {
-        padding: 2em;
-    }
-
     .ui.negative.message > .content:before {
         content: '\f071';
-        font-family: Icons;
-        font-size: 1.3em;
-        vertical-align: top;
-    }
-
-    .ui.negative.message > .content > h4 {
-        display: inline;
-        margin-left: 1em;
-        font-weight: 500;
     }
 
     /* Tip Message Box */
-    .ui.positive.message {
-        padding: 2em;
-    }
-
     .ui.positive.message > .content:before {
         content: '\f058';
-        font-family: Icons;
-        font-size: 1.3em;
-        vertical-align: top;
-    }
-
-    .ui.positive.message > .content > h4 {
-        display: inline;
-        margin-left: 1em;
-        font-weight: 500;
     }
 
     /* Hint Message Box */
-    .ui.info.message {
-        padding: 2em;
-    }
-
     .ui.info.message > .content:before {
         content: '\f15c';
-        font-family: Icons;
-        font-size: 1.3em;
-        vertical-align: top;
     }
 
-    .ui.info.message > .content > h4 {
-        display: inline;
-        margin-left: 1em;
-        font-weight: 500;
+    /* message boxes */
+
+    .ui.message {
+        &.info, &.positive, &.negative, &.warning {
+            padding: 2em;
+
+            > .content:before {
+                font-family: Icons;
+                font-size: 1.3em;
+                vertical-align: top;
+            }
+
+            > .content > h4 {
+                display: inline;
+                margin-left: 1em;
+                font-weight: 500;
+
+                scroll-margin-top: 6em;
+            }
+        }
     }
 
     .footer {
