@@ -14,6 +14,7 @@ namespace ts.pxtc {
     export const TS_BREAK_TYPE = "break_keyword";
     export const TS_CONTINUE_TYPE = "continue_keyword";
     export const TS_OUTPUT_TYPE = "typescript_expression";
+    export const TS_RETURN_STATEMENT_TYPE = "function_return";
     export const PAUSE_UNTIL_TYPE = "pxt_pause_until";
     export const COLLAPSED_BLOCK = "pxt_collapsed_block"
     export const FUNCTION_DEFINITION_TYPE = "function_definition";
