@@ -800,7 +800,7 @@ namespace pxt.blocks {
         return mkStmt(mkText(name + "()"));
     }
 
-    function compileFunctionCall(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
+    function compileFunctionCall(e: Environment, b: Blockly.Block, comments: string[], statement: boolean): JsNode {
         const name = escapeVarName(b.getField("function_name").getText(), e, true);
         const externalInputs = !b.getInputsInline();
         const args: BlockParameter[] = (b as Blockly.FunctionCallBlock).getArguments().map(a => {
@@ -811,7 +811,12 @@ namespace pxt.blocks {
         });
 
         const compiledArgs = args.map(a => compileArgument(e, b, a, comments));
-        return mkStmt(H.stdCall(name, compiledArgs, externalInputs));
+        const res = H.stdCall(name, compiledArgs, externalInputs)
+
+        if (statement) {
+            return mkStmt(res);
+        }
+        return res;
     }
 
     function compileReturnStatement(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
@@ -921,7 +926,7 @@ namespace pxt.blocks {
             case "argument_reporter_custom":
                 expr = compileArgumentReporter(e, b, comments); break;
             case "function_call_output":
-                expr = compileFunctionCall(e, b, comments); break;
+                expr = compileFunctionCall(e, b, comments, false); break;
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) {
@@ -1452,7 +1457,7 @@ namespace pxt.blocks {
                 r = [compileProcedureCall(e, b, comments)];
                 break;
             case 'function_call':
-                r = [compileFunctionCall(e, b, comments)];
+                r = [compileFunctionCall(e, b, comments, true)];
                 break;
             case 'function_return':
                 r = [compileReturnStatement(e, b, comments)];
