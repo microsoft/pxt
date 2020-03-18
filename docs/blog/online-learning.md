@@ -111,6 +111,12 @@ You can use shared urls or download files from the MakeCode editor to create ass
 
 https://youtu.be/vDISKdJ3ynA
 
+### Canvas
+
+You can use shared urls or download files from the MakeCode editor to create assigments in Canvas. See the tutorial video below.
+
+https://youtu.be/r3T0nG_KuUM
+
 ## Online courses and resources
 
 ### MakeCode Arcade
