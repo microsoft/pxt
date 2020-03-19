@@ -289,6 +289,11 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.props.parent.toggleGreenScreen();
     }
 
+    toggleKeyboardAccessibility() {
+        pxt.tickEvent("home.togglekeyboardaccessibility", undefined, { interactiveConsent: true });
+        this.props.parent.toggleKeyboardAccessibility();
+    }
+
     showResetDialog() {
         pxt.tickEvent("home.reset", undefined, { interactiveConsent: true });
         this.props.parent.showResetDialog();

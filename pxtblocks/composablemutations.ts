@@ -154,8 +154,8 @@ namespace pxt.blocks {
                     if (!isNaN(val)) {
                         const delta = val - (state.getNumber(numVisibleAttr) || 0);
                         if (state.getBoolean(inputInitAttr)) {
-                            if ((b as Blockly.BlockSvg).rendered) {
-                                updateShape(delta, true);
+                            if ((b as Blockly.BlockSvg).rendered || b.isInsertionMarker()) {
+                                updateShape(delta, true, b.isInsertionMarker());
                             }
                             else {
                                 state.setValue(numVisibleAttr, addDelta(delta));

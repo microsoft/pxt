@@ -375,7 +375,7 @@ namespace pxt.blocks {
     }
 
     function infer(allBlocks: Blockly.Block[], e: Environment, w: Blockly.Workspace) {
-        if (allBlocks) allBlocks.filter(b => !b.disabled).forEach((b: Blockly.Block) => {
+        if (allBlocks) allBlocks.filter(b => b.isEnabled()).forEach((b: Blockly.Block) => {
             try {
                 switch (b.type) {
                     case "math_op2":
@@ -874,7 +874,7 @@ namespace pxt.blocks {
         e.stats[b.type] = (e.stats[b.type] || 0) + 1;
         maybeAddComment(b, comments);
         let expr: JsNode;
-        if (b.disabled || b.type == "placeholder") {
+        if (b.type == "placeholder" || !(b.isEnabled && b.isEnabled())) {
             const ret = find(returnType(e, b));
             if (ret.type === "Array") {
                 // FIXME: Can't use default type here because TS complains about
@@ -1517,7 +1517,7 @@ namespace pxt.blocks {
         let firstBlock = b;
 
         while (b) {
-            if (!b.disabled) append(stmts, compileStatementBlock(e, b));
+            if (b.isEnabled()) append(stmts, compileStatementBlock(e, b));
             b = b.getNextBlock();
         }
 
@@ -1682,8 +1682,8 @@ namespace pxt.blocks {
             // update disable blocks
             updateDisabledBlocks(e, allBlocks, topblocks);
             // drop disabled blocks
-            allBlocks = allBlocks.filter(b => !b.disabled);
-            topblocks = topblocks.filter(b => !b.disabled);
+            allBlocks = allBlocks.filter(b => b.isEnabled());
+            topblocks = topblocks.filter(b => b.isEnabled());
             trackAllVariables(topblocks, e);
             infer(allBlocks, e, w);
 

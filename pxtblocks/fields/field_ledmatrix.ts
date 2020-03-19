@@ -121,7 +121,7 @@ namespace pxtblockly {
                     }
                 }
 
-                this.fieldGroup_.appendChild(this.elt);
+                this.fieldGroup_.replaceChild(this.elt, this.fieldGroup_.firstChild);
             }
         }
 
@@ -267,13 +267,13 @@ namespace pxtblockly {
         // The return value of this function is inserted in the code
         getValue() {
             // getText() returns the value that is set by calls to setValue()
-            let text = removeQuotes(this.getText());
+            let text = removeQuotes(this.value_);
             return `\`\n${FieldMatrix.TAB}${text}\n${FieldMatrix.TAB}\``;
         }
 
         // Restores the block state from the text value of the field
         private restoreStateFromString() {
-            let r = this.getText();
+            let r = this.value_ as string;
             if (r) {
                 const rows = r.split("\n").filter(r => rowRegex.test(r));
 
@@ -330,7 +330,7 @@ namespace pxtblockly {
     const allQuotes = ["'", '"', "`"];
 
     function removeQuotes(str: string) {
-        str = str.trim();
+        str = (str || "").trim();
         const start = str.charAt(0);
         if (start === str.charAt(str.length - 1) && allQuotes.indexOf(start) !== -1) {
             return str.substr(1, str.length - 2).trim();
