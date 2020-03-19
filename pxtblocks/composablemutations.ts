@@ -312,16 +312,26 @@ namespace pxt.blocks {
         let returnValueVisible = true;
         updateShape();
 
+        // When the value input is removed, we disconnect the block that was connected to it. This
+        // is the id of whatever block was last connected
+        let lastConnectedId: string;
+
         b.domToMutation = saved => {
-            if (!hasReturnValue(saved)) {
-                returnValueVisible = false;
-                updateShape();
+            if (saved.hasAttribute("last_connected_id")) {
+                lastConnectedId = saved.getAttribute("last_connected_id");
             }
+            returnValueVisible = hasReturnValue(saved);
+            updateShape();
         }
 
         b.mutationToDom = () => {
             const mutation = document.createElement("mutation");
             setReturnValue(mutation, !!b.getInput("RETURN_VALUE"));
+
+            if (lastConnectedId) {
+                mutation.setAttribute("last_connected_id", lastConnectedId);
+            }
+
             return mutation;
         }
 
@@ -352,6 +362,14 @@ namespace pxt.blocks {
                 if (!b.getInput(buttonRemName)) {
                     addMinusButton();
                 }
+
+                if (lastConnectedId) {
+                    const lastConnected = b.workspace.getBlockById(lastConnectedId);
+                    if (lastConnected && lastConnected.outputConnection && !lastConnected.outputConnection.targetBlock()) {
+                        b.getInput("RETURN_VALUE").connection.connect(lastConnected.outputConnection);
+                    }
+                    lastConnectedId = undefined;
+                }
             }
             else {
                 if (returnValueInput) {
@@ -359,6 +377,7 @@ namespace pxt.blocks {
                     if (target) {
                         if (target.isShadow()) target.setShadow(false);
                         returnValueInput.connection.disconnect();
+                        lastConnectedId = target.id;
                     }
                     b.removeInput("RETURN_VALUE");
                     b.jsonInit({
@@ -395,11 +414,29 @@ namespace pxt.blocks {
             addButton(buttonRemName, (b as any).REMOVE_IMAGE_DATAURI, lf("Remove return value"));
         }
 
+        function mutationString() {
+            return Blockly.Xml.domToText(b.mutationToDom());
+        }
+
+        function fireMutationChange(pre: string, post: string) {
+            if (pre !== post)
+                Blockly.Events.fire(new Blockly.Events.BlockChange(b, "mutation", null, pre, post));
+        }
+
         function addButton(name: string, uri: string, alt: string) {
             b.appendDummyInput(name)
                 .appendField(new Blockly.FieldImage(uri, 24, 24, alt, () => {
+                    const oldMutation = mutationString();
                     returnValueVisible = !returnValueVisible;
-                    updateShape()
+
+                    const preUpdate = mutationString()
+                    fireMutationChange(oldMutation, preUpdate);
+
+                    updateShape();
+
+                    const postUpdate = mutationString();
+                    fireMutationChange(preUpdate, postUpdate);
+
                 }, false))
         }
     }
