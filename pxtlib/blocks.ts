@@ -683,7 +683,8 @@ namespace pxt.blocks {
                 url: 'types/function/return',
                 category: 'functions',
                 block: {
-                    message0: Util.lf("return %1")
+                    message_with_value: Util.lf("return %1"),
+                    message_no_value: Util.lf("return")
                 }
             },
             'function_definition': {

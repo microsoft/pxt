@@ -1553,6 +1553,11 @@ ${output}</xml>`;
                     mkValue("RETURN_VALUE", getOutputBlock(node.expression), numberType)
                 ];
             }
+            else {
+                r.mutation = {
+                    "no_return_value": "true"
+                };
+            }
             return r
         }
 

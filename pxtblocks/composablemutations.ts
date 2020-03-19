@@ -301,6 +301,109 @@ namespace pxt.blocks {
         }
     }
 
+    export function initReturnStatement(b: Blockly.Block) {
+        const returnDef = pxt.blocks.getBlockDefinition("function_return");
+
+        const buttonAddName = "0_add_button";
+        const buttonRemName = "0_rem_button";
+
+        Blockly.Extensions.apply('inline-svgs', b, false);
+
+        let returnValueVisible = true;
+        updateShape();
+
+        b.domToMutation = saved => {
+            if (!hasReturnValue(saved)) {
+                returnValueVisible = false;
+                updateShape();
+            }
+        }
+
+        b.mutationToDom = () => {
+            const mutation = document.createElement("mutation");
+            setReturnValue(mutation, !!b.getInput("RETURN_VALUE"));
+            return mutation;
+        }
+
+        function updateShape() {
+            const returnValueInput = b.getInput("RETURN_VALUE");
+
+            if (returnValueVisible) {
+                if (!returnValueInput) {
+                    // Remove any labels
+                    while (b.getInput("")) b.removeInput("");
+
+                    b.jsonInit({
+                        "message0": returnDef.block["message_with_value"],
+                        "args0": [
+                            {
+                                "type": "input_value",
+                                "name": "RETURN_VALUE",
+                                "check": null
+                            }
+                        ],
+                        "previousStatement": null,
+                        "colour": pxt.toolbox.getNamespaceColor('functions')
+                    });
+                }
+                if (b.getInput(buttonAddName)) {
+                    b.removeInput(buttonAddName);
+                }
+                if (!b.getInput(buttonRemName)) {
+                    addMinusButton();
+                }
+            }
+            else {
+                if (returnValueInput) {
+                    const target = returnValueInput.connection.targetBlock()
+                    if (target) {
+                        if (target.isShadow()) target.setShadow(false);
+                        returnValueInput.connection.disconnect();
+                    }
+                    b.removeInput("RETURN_VALUE");
+                    b.jsonInit({
+                        "message0": returnDef.block["message_no_value"],
+                        "args0": [],
+                        "previousStatement": null,
+                        "colour": pxt.toolbox.getNamespaceColor('functions')
+                    })
+                }
+                if (b.getInput(buttonRemName)) {
+                    b.removeInput(buttonRemName);
+                }
+                if (!b.getInput(buttonAddName)) {
+                    addPlusButton();
+                }
+            }
+
+            b.setInputsInline(true);
+        }
+
+        function setReturnValue(mutation: Element, hasReturnValue: boolean) {
+            mutation.setAttribute("no_return_value", hasReturnValue ? "false" : "true")
+        }
+
+        function hasReturnValue(mutation: Element) {
+            return mutation.getAttribute("no_return_value") !== "true"
+        }
+
+        function addPlusButton() {
+            addButton(buttonAddName, (b as any).ADD_IMAGE_DATAURI, lf("Add return value"));
+        }
+
+        function addMinusButton() {
+            addButton(buttonRemName, (b as any).REMOVE_IMAGE_DATAURI, lf("Remove return value"));
+        }
+
+        function addButton(name: string, uri: string, alt: string) {
+            b.appendDummyInput(name)
+                .appendField(new Blockly.FieldImage(uri, 24, 24, alt, () => {
+                    returnValueVisible = !returnValueVisible;
+                    updateShape()
+                }, false))
+        }
+    }
+
     class MutationState {
         private state: pxt.Map<string>;
         private fireEvents = true;

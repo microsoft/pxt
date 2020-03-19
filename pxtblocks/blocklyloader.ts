@@ -2380,28 +2380,12 @@ namespace pxt.blocks {
         installBuiltinHelpInfo(functionCallId);
 
         const functionReturnId = "function_return";
-        const functionReturn = pxt.blocks.getBlockDefinition(functionReturnId);
-
         Blockly.Blocks[functionReturnId] = {
             init: function() {
-                const that = this as Blockly.Block;
-                that.jsonInit({
-                    "message0": functionReturn.block["message0"],
-                    "args0": [
-                        {
-                            "type": "input_value",
-                            "name": "RETURN_VALUE",
-                            "check": null
-                        }
-                    ],
-                    "previousStatement": null,
-                    "nextStatement": false,
-                    "colour": pxt.toolbox.getNamespaceColor('functions')
-                })
-                that.setNextStatement(false);
-                that.setPreviousStatement(true);
+                initReturnStatement(this);
             }
         };
+        installBuiltinHelpInfo(functionReturnId);
 
 
         const callDefinition = Blockly.Blocks["function_call"]
@@ -2416,7 +2400,6 @@ namespace pxt.blocks {
             }
         };
 
-        installBuiltinHelpInfo(functionReturnId);
 
         Blockly.Procedures.flyoutCategory = function (workspace: Blockly.WorkspaceSvg) {
             let xmlList: HTMLElement[] = [];
@@ -2539,10 +2522,12 @@ namespace pxt.blocks {
         const oldFlyout = Blockly.Functions.flyoutCategory;
         Blockly.Functions.flyoutCategory = (workspace) => {
             const elems = oldFlyout(workspace);
-            let returnBlock = mkReturnStatementBlock();
 
-            // Insert after the "make a function" button
-            elems.splice(1, 0, returnBlock as HTMLElement);
+            if (elems.length > 1) {
+                let returnBlock = mkReturnStatementBlock();
+                // Insert after the "make a function" button
+                elems.splice(1, 0, returnBlock as HTMLElement);
+            }
 
             const functionsWithReturn = Blockly.Functions.getAllFunctionDefinitionBlocks(workspace)
                 .filter(def => def.getDescendants(false).some(child => child.type === "function_return" && child.getInputTargetBlock("RETURN_VALUE")))
@@ -2554,7 +2539,10 @@ namespace pxt.blocks {
                 'blocklyFlyoutIconfunctions');
             elems.unshift(headingLabel);
 
+            const res: Element[] = [];
+
             for (const e of elems) {
+                res.push(e);
                 if (e.getAttribute("type") === "function_call") {
                     const mutation = e.children.item(0);
 
@@ -2563,13 +2551,13 @@ namespace pxt.blocks {
                         if (functionsWithReturn.some(n => n === name)) {
                             const clone = e.cloneNode(true) as HTMLElement;
                             clone.setAttribute("type", "function_call_output");
-                            elems.push(clone);
+                            res.push(clone);
                         }
                     }
                 }
             }
 
-            return elems;
+            return res;
         };
 
         // Configure function editor argument icons
