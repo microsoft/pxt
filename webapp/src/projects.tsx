@@ -217,6 +217,14 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                     const locales = galProps.locales;
                     if (locales && locales.indexOf(pxt.Util.userLanguage()) < 0)
                         return false; // locale not supported
+                    // test if blocked
+                    const testUrl = galProps.testUrl;
+                    if (testUrl) {
+                        const ping = this.getData(`ping:${testUrl.replace('@random@', Math.random().toString())}`);
+                        if (ping !== true) // still loading or can't ping
+                            return false;
+                    }
+                    // show the gallery
                     return true;
                 })
                 .map(galleryName => {

@@ -760,8 +760,34 @@ function githubApiHandler(p: string) {
     return null
 }
 
+function pingApiHandlerAsync(p: string): Promise<any> {
+    const url = data.stripProtocol(p);
+    // special case favicon.ico
+    if (/\.ico$/.test(p)) {
+        const imgUrl = `${url}?v=${Math.random()}&origin=${encodeURIComponent(window.location.origin)}`;
+        const img = document.createElement("img")
+        return new Promise<boolean>((resolve, reject) => {
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            img.src = imgUrl;
+        });
+    }
+    // other request
+    return pxt.Util.requestAsync({
+        url,
+        method: "GET",
+        allowHttpErrors: true
+    }).then(r => r.statusCode === 200 || r.statusCode == 403 || r.statusCode == 400)
+        .catch(e => false)
+}
+
 data.mountVirtualApi("sync", { getSync: syncApiHandler })
 data.mountVirtualApi("github", { getSync: githubApiHandler })
+data.mountVirtualApi("ping", {
+    getAsync: pingApiHandlerAsync,
+    expirationTime: p => 24 * 3600 * 1000,
+    isOffline: () => !pxt.Cloud.isOnline()
+})
 
 function invalidateData() {
     data.invalidate("sync:status")
