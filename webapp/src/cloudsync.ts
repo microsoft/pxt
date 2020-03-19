@@ -765,7 +765,7 @@ function pingApiHandlerAsync(p: string): Promise<any> {
         url: data.stripProtocol(p),
         method: "GET",
         allowHttpErrors: true
-    }).then(r => r.statusCode === 200 || r.statusCode == 403)
+    }).then(r => r.statusCode === 200 || r.statusCode == 403 || r.statusCode == 400)
     .catch(e => false)
 }
 
