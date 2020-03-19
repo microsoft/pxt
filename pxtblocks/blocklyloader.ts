@@ -2383,6 +2383,37 @@ namespace pxt.blocks {
         Blockly.Blocks[functionReturnId] = {
             init: function() {
                 initReturnStatement(this);
+            },
+            onchange: function (event) {
+                const block = this as Blockly.Block;
+                if (!block.workspace || (block.workspace as Blockly.WorkspaceSvg).isFlyout) {
+                    // Block is deleted or is in a flyout.
+                    return;
+                }
+
+                const thisWasCreated =
+                    event.type === Blockly.Events.BLOCK_CREATE && event.ids.indexOf(block.id) != -1;
+                const thisWasDragged =
+                    event.type === Blockly.Events.END_DRAG && event.allNestedIds.indexOf(block.id) != -1;
+
+                if (thisWasCreated || thisWasDragged) {
+                    const rootBlock = block.getRootBlock();
+                    const isTopBlock = rootBlock.type === functionReturnId;
+
+                    if (isTopBlock || rootBlock.previousConnection != null) {
+                        // Statement is by itself on the workspace, or it is slotted into a
+                        // stack of statements that is not attached to a function or event. Let
+                        // it exist until it is connected to a function
+                        return;
+                    }
+
+                    if (rootBlock.type !== functionDefinitionId) {
+                        // Not a function block, so disconnect
+                        Blockly.Events.setGroup(event.group);
+                        block.previousConnection.disconnect();
+                        Blockly.Events.setGroup(false);
+                    }
+                }
             }
         };
         installBuiltinHelpInfo(functionReturnId);

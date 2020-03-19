@@ -2465,11 +2465,12 @@ ${output}</xml>`;
                 return checkEnumDeclaration(node as ts.EnumDeclaration, topLevel);
             case SK.ModuleDeclaration:
                 return checkNamespaceDeclaration(node as ts.NamespaceDeclaration);
+            case SK.ReturnStatement:
+                return checkReturnStatement(node as ts.ReturnStatement);
             case SK.BreakStatement:
             case SK.ContinueStatement:
             case SK.DebuggerStatement:
             case SK.EmptyStatement:
-            case SK.ReturnStatement:
                 return undefined;
         }
 
@@ -3022,6 +3023,31 @@ ${output}</xml>`;
             if (!tilesetCheck) return undefined;
 
             return kindCheck;
+        }
+
+        function checkReturnStatement(n: ts.ReturnStatement) {
+            if (checkIfWithinFunction(n)) {
+                return undefined;
+            }
+            return Util.lf("Return statements can only be used within top-level function declarations");
+
+            function checkIfWithinFunction(n: Node): boolean {
+                const enclosing = ts.getEnclosingBlockScopeContainer(n);
+                if (enclosing) {
+                    switch (enclosing.kind) {
+                        case SK.SourceFile:
+                        case SK.ArrowFunction:
+                        case SK.FunctionExpression:
+                            return false;
+                        case SK.FunctionDeclaration:
+                            return enclosing.parent && enclosing.parent.kind === SK.SourceFile && !checkStatement(enclosing, env, false, true);
+                        default:
+                            return checkIfWithinFunction(enclosing);
+                    }
+                }
+
+                return false;
+            }
         }
     }
 
