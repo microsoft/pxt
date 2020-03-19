@@ -105,12 +105,11 @@ namespace pxtblockly {
             Blockly.DropDownDiv.showPositionedByField(this, this.onHideCallback.bind(this));
 
             // Update colour to look selected.
-            let source = this.sourceBlock_ as Blockly.BlockSvg;
-            this.savedPrimary_ = source.getColour();
-            if (source?.isShadow()) {
-                source.setColour(source.style.colourTertiary);
+            this.savedPrimary_ = sourceBlock?.getColour();
+            if (sourceBlock?.isShadow()) {
+                sourceBlock.setColour(sourceBlock.style.colourTertiary);
             } else if (this.borderRect_) {
-                this.borderRect_.setAttribute('fill', source.style.colourTertiary);
+                this.borderRect_.setAttribute('fill', sourceBlock.style.colourTertiary);
             }
         }
 

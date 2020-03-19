@@ -131,7 +131,7 @@ namespace pxtblockly {
                 this, this.sourceBlock_, this.onHide_.bind(this));
 
             let source = this.sourceBlock_ as Blockly.BlockSvg;
-            this.savedPrimary_ = source.getColour();
+            this.savedPrimary_ = source?.getColour();
             if (source?.isShadow()) {
                 source.setColour(source.getColourTertiary());
             } else if (this.borderRect_) {

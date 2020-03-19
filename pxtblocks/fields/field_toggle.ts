@@ -164,12 +164,12 @@ namespace pxtblockly {
             return typeof this.fromVal(newBool) == "boolean" ? newBool : "false";
         }
 
-        applyColour = function() {
+        applyColour() {
             let color = (this.sourceBlock_ as Blockly.BlockSvg).getColourTertiary();
             if (this.borderRect_) {
                 this.borderRect_.setAttribute('stroke', color);
             } else {
-                this.sourceBlock_.pathObject.svgPath.setAttribute('fill', color);
+                (this.sourceBlock_ as any).pathObject.svgPath.setAttribute('fill', color);
             }
         };
 
