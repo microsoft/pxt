@@ -760,8 +760,22 @@ function githubApiHandler(p: string) {
     return null
 }
 
+function pingApiHandlerAsync(p: string): Promise<any> {
+    return pxt.Util.requestAsync({
+        url: data.stripProtocol(p),
+        method: "GET",
+        allowHttpErrors: true
+    }).then(r => r.statusCode === 200 || r.statusCode == 403)
+    .catch(e => false)
+}
+
 data.mountVirtualApi("sync", { getSync: syncApiHandler })
 data.mountVirtualApi("github", { getSync: githubApiHandler })
+data.mountVirtualApi("ping", { 
+    getAsync: pingApiHandlerAsync, 
+    expirationTime: p => 24 * 3600 * 1000,
+    isOffline: () => !pxt.Cloud.isOnline()
+})
 
 function invalidateData() {
     data.invalidate("sync:status")

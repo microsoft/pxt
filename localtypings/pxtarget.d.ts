@@ -11,6 +11,10 @@ declare namespace pxt {
         experimentName?: string;
         locales?: string[];
         shuffle?: GalleryShuffle;
+        // pings this url to determine if the gallery is available
+        // value @random@ will be expanded to a random string
+        // looks for 200, 403 error codes
+        testUrl?: string;
     }
     interface TargetConfig {
         packages?: PackagesConfig;
