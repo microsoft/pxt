@@ -264,6 +264,7 @@ namespace pxt.blocks {
             const returnTypes: Point[] = [];
             for (const child of definition.getDescendants(false)) {
                 if (child.type === "function_return") {
+                    attachPlaceholderIf(e, child, "RETURN_VALUE");
                     returnTypes.push(returnType(e, getInputTargetBlock(child, "RETURN_VALUE")));
                 }
             }
@@ -478,6 +479,9 @@ namespace pxt.blocks {
                         (b as Blockly.FunctionCallBlock).getArguments().forEach(arg => {
                             unionParam(e, b, arg.id, ground(arg.type));
                         });
+                        break;
+                    case pxtc.TS_RETURN_STATEMENT_TYPE:
+                        attachPlaceholderIf(e, b, "RETURN_VALUE");
                         break;
                     case pxtc.PAUSE_UNTIL_TYPE:
                         unionParam(e, b, "PREDICATE", pBoolean);
@@ -820,7 +824,14 @@ namespace pxt.blocks {
     }
 
     function compileReturnStatement(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
-        return mkStmt(mkText("return "), compileExpression(e, getInputTargetBlock(b, "RETURN_VALUE"), comments));
+        const expression = getInputTargetBlock(b, "RETURN_VALUE");
+
+        if (expression && expression.type != "placeholder") {
+            return mkStmt(mkText("return "), compileExpression(e, expression, comments));
+        }
+        else {
+            return mkStmt(mkText("return"));
+        }
     }
 
     function compileArgumentReporter(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
@@ -1459,7 +1470,7 @@ namespace pxt.blocks {
             case 'function_call':
                 r = [compileFunctionCall(e, b, comments, true)];
                 break;
-            case 'function_return':
+            case pxtc.TS_RETURN_STATEMENT_TYPE:
                 r = [compileReturnStatement(e, b, comments)];
                 break;
             case ts.pxtc.ON_START_TYPE:
