@@ -29,3 +29,11 @@ You can use shared urls or download files from the MakeCode editor to create ass
 ### #youtubecanvas
 
 https://youtu.be/r3T0nG_KuUM
+
+## [SeeSaw](https://web.seesaw.me/)
+
+You can use shared urls or download files from the MakeCode editor to create activities in SeeSaw. See the tutorial video below.
+
+### #youtubeseesaw
+
+https://youtu.be/nrmJrSBjxi4
