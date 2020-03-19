@@ -81,6 +81,7 @@ namespace pxt.editor {
         highContrast?: boolean;
         print?: boolean;
         greenScreen?: boolean;
+        keyboardAccessibility?: boolean;
 
         home?: boolean;
         hasError?: boolean;
@@ -280,6 +281,7 @@ namespace pxt.editor {
 
         toggleHighContrast(): void;
         toggleGreenScreen(): void;
+        toggleKeyboardAccessibility(): void;
         pair(): void;
         launchFullEditor(): void;
 

@@ -115,9 +115,9 @@ namespace pxt.blocks {
 
         // we'll ignore disabled blocks in the final output
 
-        const oldBlocks = oldWs.getAllBlocks().filter(b => !b.disabled);
-        const oldTopBlocks = oldWs.getTopBlocks(false).filter(b => !b.disabled);
-        const newBlocks = newWs.getAllBlocks().filter(b => !b.disabled);
+        const oldBlocks = oldWs.getAllBlocks().filter(b => b.isEnabled());
+        const oldTopBlocks = oldWs.getTopBlocks(false).filter(b => b.isEnabled());
+        const newBlocks = newWs.getAllBlocks().filter(b => b.isEnabled());
         log(`blocks`, newBlocks.map(b => b.toDevString()));
         log(newBlocks);
 
@@ -143,7 +143,7 @@ namespace pxt.blocks {
         pxt.blocks.domToWorkspaceNoEvents(Blockly.Xml.textToDom(newXml), ws);
 
         // delete disabled blocks from final workspace
-        ws.getAllBlocks().filter(b => b.disabled).forEach(b => {
+        ws.getAllBlocks().filter(b => !b.isEnabled()).forEach(b => {
             log('disabled ', b.toDevString())
             b.dispose(false)
         })
@@ -323,9 +323,9 @@ namespace pxt.blocks {
             a.rendered = false;
             b.inputList.forEach(i => i.fieldRow.forEach(f => {
                 f.init();
-                if (f.box_) {
-                    f.box_.setAttribute('fill', b.getColour())
-                    f.box_.setAttribute('stroke', b.getColourTertiary())
+                if (f.borderRect_) {
+                    f.borderRect_.setAttribute('fill', b.getColour())
+                    f.borderRect_.setAttribute('stroke', (b as Blockly.BlockSvg).getColourTertiary())
                 }
             }));
         }

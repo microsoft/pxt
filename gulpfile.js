@@ -488,8 +488,8 @@ const copyBlocklyEnJs = () => gulp.src("node_modules/pxt-blockly/msg/js/en.js")
 const copyBlocklyEnJson = () => gulp.src("node_modules/pxt-blockly/msg/json/en.json")
     .pipe(gulp.dest("webapp/public/blockly/msg/json/"));
 
-const copyBlocklyMedia = () => gulp.src("node_modules/pxt-blockly/media")
-    .pipe(gulp.dest("webapp/public/blockly/"))
+const copyBlocklyMedia = () => gulp.src("node_modules/pxt-blockly/media/*")
+    .pipe(gulp.dest("webapp/public/blockly/media"))
 
 const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyEnJs, copyBlocklyEnJson, copyBlocklyMedia);
 
