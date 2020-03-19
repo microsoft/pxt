@@ -105,7 +105,11 @@ Learn to develop games with Steve Isaacs, an ISTE outstanding teacher and PBS Le
 
 ### ~
 
-## Assignments and classroom management
+## Assignments
+
+* [micro:bit](https://arcade.makecode.com/online-learning)
+* [Minecraft:Education Edition](https://minecraft.makecode.com/online-learning)
+* [MakeCode Arcade](https://arcade.makecode.com/online-learning)
 
 ### Microsoft Teams Assignments
 
