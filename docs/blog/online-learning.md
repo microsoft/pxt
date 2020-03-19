@@ -9,14 +9,13 @@ Many schools have closed or might soon close to help prevent the spread of illne
 To help families with school closures, the MakeCode team will be streaming daily, Monday through Friday,
 on how to learn coding using MakeCode editors. All streams will be recorded and available in the [MakeCode YouTube Channel](https://www.youtube.com/channel/UCye7YlvFUUQ1dSy0WZZ1T_Q).
 
-* Send us questions and feedback on our Forum [https://aka.ms/makecodeliveforum](https://aka.ms/makecodeliveforum)
-
 ### ~ hint
 
-#### Streaming cancelled for Thursday 17th
+#### Streaming cancelled for Thursday 17th, Friday 18th Morning.
 
-We are experiencing technical issues with our streaming and working on a solution. Unfortunately,
-we will not be able to stream activities today.
+We are experiencing technical issues with our streaming and working on a solution.
+We are migrating to a new streaming service, https://mixer.com/makecode, and we will need another
+day to get setup. **Streaming will resume Friday 18th with the Arcade Game Jam stream!** 
 
 ### ~
 
@@ -25,11 +24,15 @@ Click on any link in the table below for
 | Time (PST) | Monday | Tuesday | Wednesday | Thursday | Friday |
 |------------|--------|---------|-----------|----------|--------|
 |06:00am|[Arcade with Steve Isaacs](#steve-arcade)| | | | |
-|09:00am|[micro:bit (beginner)](#peli-mbit)|[micro:bit (beginner)](#peli-mbit)|[micro:bit (beginner)](#peli-mbit)|[micro:bit (beginner)](#peli-mbit)|[micro:bit (beginner)](#peli-mbit)|
-|10:00am|[Minecraft (beginner)](#peli-minecraft)|[Minecraft (beginner)](#peli-minecraft)|[Minecraft (beginner)](#peli-minecraft)|[Minecraft (beginner)](#peli-minecraft)|[Minecraft (beginner)](#peli-minecraft)|
-|11:00am|[Arcade (beginner)](#peli-arcade)|[Arcade (beginner)](#peli-arcade)|[Arcade (beginner)](#peli-arcade)|[Arcade (beginner)](#peli-arcade)|[Arcade (beginner)](#peli-arcade)|
+|09:00am|[micro:bit (beginner)](#peli-mbit)|[micro:bit (beginner)](#peli-mbit)|[micro:bit (beginner)](#peli-mbit)|[micro:bit (beginner)](#peli-mbit)|[micro:bit (beginner)](#peli-mbit) Cancelled 18th|
+|10:00am|[Minecraft (beginner)](#peli-minecraft)|[Minecraft (beginner)](#peli-minecraft)|[Minecraft (beginner)](#peli-minecraft)|[Minecraft (beginner)](#peli-minecraft)|[Minecraft (beginner)](#peli-minecraft) Cancelled 18th|
+|11:00am|[Arcade (beginner)](#peli-arcade)|[Arcade (beginner)](#peli-arcade)|[Arcade (beginner)](#peli-arcade)|[Arcade (beginner)](#peli-arcade)|[Arcade (beginner)](#peli-arcade) Cancelled 18th|
 |01:00pm|[Arcade (advanced)](#rsdj-arcade)|[Arcade (advanced)](#rsdj-arcade)|[Arcade (advanced)](#rsdj-arcade)|[Arcade (advanced)](#rsdj-arcade)|[Arcade (advanced)](#rsdj-arcade)|
 |02:00pm| | | | |[Adafruit CPX (beginner)](#jaq-cpx)|
+
+
+* Send us questions and feedback on our Forum [https://aka.ms/makecodeliveforum](https://aka.ms/makecodeliveforum)
+
 
 ### ~hint
 
