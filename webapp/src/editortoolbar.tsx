@@ -226,9 +226,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const { home, tutorialOptions, hideEditorFloats, collapseEditorTools, projectName, compiling, isSaving, simState, debugging, header } = this.props.parent.state;
-
-        if (home) return <div />; // Don't render if we're in the home screen
+        const { tutorialOptions, hideEditorFloats, collapseEditorTools, projectName, compiling, isSaving, simState, debugging, header } = this.props.parent.state;
 
         const targetTheme = pxt.appTarget.appTheme;
         const isController = pxt.shell.isControllerMode();
@@ -238,8 +236,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const simOpts = pxt.appTarget.simulator;
         const headless = simOpts.headless;
         const collapsed = (hideEditorFloats && headless) || collapseEditorTools;
-        const isEditor = this.props.parent.isBlocksEditor() || this.props.parent.isTextEditor();
-        if (!isEditor) return <div />;
 
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
         const ghid = header && pxt.github.parseRepoId(header.githubId);
