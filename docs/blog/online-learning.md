@@ -11,6 +11,15 @@ on how to learn coding using MakeCode editors. All streams will be recorded and 
 
 * Send us questions and feedback on our Forum [https://aka.ms/makecodeliveforum](https://aka.ms/makecodeliveforum)
 
+### ~ hint
+
+#### Streaming cancelled for Thursday 17th
+
+We are experiencing technical issues with our streaming and working on a solution. Unfortunately,
+we will not be able to stream activities today.
+
+### ~
+
 Click on any link in the table below for
 
 | Time (PST) | Monday | Tuesday | Wednesday | Thursday | Friday |
