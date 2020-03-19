@@ -761,8 +761,20 @@ function githubApiHandler(p: string) {
 }
 
 function pingApiHandlerAsync(p: string): Promise<any> {
+    const url = data.stripProtocol(p);
+    // special case favicon.ico
+    if (/\.ico$/.test(p)) {
+        const imgUrl = `${url}?v=${Math.random()}&origin=${encodeURIComponent(window.location.origin)}`;
+        const img = document.createElement("img")
+        return new Promise<boolean>((resolve, reject) => {
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            img.src = imgUrl;
+        });
+    }
+    // other request
     return pxt.Util.requestAsync({
-        url: data.stripProtocol(p),
+        url,
         method: "GET",
         allowHttpErrors: true
     }).then(r => r.statusCode === 200 || r.statusCode == 403 || r.statusCode == 400)
