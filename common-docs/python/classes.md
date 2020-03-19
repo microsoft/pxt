@@ -4,7 +4,7 @@ Classes in Python follow a definition format similar to other object-oriented la
 
 Let's take a look at a simple class-based example:
 
-```python
+```python-ignore
 class Greeter:
     greeting = ""
     def __init__(self, message):

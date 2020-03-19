@@ -163,6 +163,11 @@ svg {
     padding-bottom: 3em;
 }
 
+#docs .mainbody table {
+    display: block;
+    overflow-x: auto;
+}
+
 #accessibleMenu .ui.item.link {
     position: absolute;
     height: 4em;
@@ -213,6 +218,15 @@ svg {
     justify-content: space-between;
     align-items: center;
 }
+
+#docs h1, #docs h2,
+#docs h3, #docs h4,
+#docs h5, #docs h6 {
+    /* keep this aligned with top bar menu height;
+    add .5em to keep a small margin*/
+    scroll-margin-top: 4em;
+}
+
 /* first children are left & right div wrappers */
 .fixed.menu div {
     display:flex;

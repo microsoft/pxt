@@ -1,6 +1,7 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [Online Learning Resources](/blog/online-learning)
     * [MakeCode Python is here!](/blog/minecraft/python-release)
     * [MakeCode Arcade Released for General Availability!](/blog/arcade/general-release)
     * [MakeCode with GitHub](/blog/makecode-with-github)
