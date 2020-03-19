@@ -3,7 +3,7 @@
 Functions are the fundamental building block of programs. Here is the simplest
 way to make a function that adds two numbers:
 
-```python
+```python-ignore
 // Named function
 def add(x, y):
     return x + y
@@ -14,7 +14,7 @@ sum = add(1, 2)
 Functions can refer to variables outside of the function body.
 When they do so, they're said to `capture` these variables.
 
-```python
+```python-ignore
 z = 100
 
 def addToZ(x, y):
@@ -76,14 +76,14 @@ result4 = buildName("Bob", "Adams")         # ah, just right
 Default-initialized parameters that come after all required parameters are treated as optional, and just like optional parameters, can be omitted when calling their respective function.
 This means optional parameters and trailing default parameters will share commonality in their types, so both
 
-```python
+```python-ignore
 def buildName(firstName, lastName = None):
     # ...
 ```
 
 and
 
-```python
+```python-ignore
 def buildName(firstName, lastName = "Smith"):
     # ...
 ```
@@ -98,7 +98,7 @@ it at a later time. When an event happens, like a new input value or an elapsed 
 
 As an example, the `Thermal` class will check for changes in temperature and run a registered handler when the temperature drops to a set thershold:
 
-```python
+```python-ignore
 # the handler function when it's cold...
 def whenCold():
     print("It's cold!")
@@ -126,7 +126,7 @@ thermal.checkCold()
 
 Lamda functions serve as a kind of shortcut to return a result of an expression. A lamda is often saved to a variable and then used like a function to return the expression result:
 
-```python
+```python-ignore
 def square(x):
     return x * x
 
@@ -141,6 +141,6 @@ volume2 = cube(area(4, 3), 10)
 
 A lambda can also be used anonymously to directly return a result.
 
-```python
+```python-ignore
 print("area = " + str((lambda x, y: x * y)(3, 4)))
 ```
