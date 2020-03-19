@@ -88,7 +88,7 @@ namespace pxtblockly {
                 let backgroundColor = this.backgroundColour_;
                 if (value == this.getValue()) {
                     // This icon is selected, show it in a different colour
-                    backgroundColor = this.sourceBlock_.getColourTertiary();
+                    backgroundColor = (this.sourceBlock_ as Blockly.BlockSvg).getColourTertiary();
                     button.setAttribute('aria-selected', 'true');
                 }
                 button.style.backgroundColor = backgroundColor;
@@ -130,12 +130,12 @@ namespace pxtblockly {
             Blockly.DropDownDiv.showPositionedByBlock(
                 this, this.sourceBlock_, this.onHide_.bind(this));
 
-            if (this.sourceBlock_.isShadow()) {
-                this.savedPrimary_ = this.sourceBlock_.getColour();
-                this.sourceBlock_.setColour(this.sourceBlock_.getColourTertiary(),
-                    this.sourceBlock_.getColourSecondary(), this.sourceBlock_.getColourTertiary());
-            } else if (this.box_) {
-                this.box_.setAttribute('fill', this.sourceBlock_.getColourTertiary());
+            let source = this.sourceBlock_ as Blockly.BlockSvg;
+            this.savedPrimary_ = source?.getColour();
+            if (source?.isShadow()) {
+                source.setColour(source.getColourTertiary());
+            } else if (this.borderRect_) {
+                this.borderRect_.setAttribute('fill', source.getColourTertiary());
             }
         }
 
@@ -149,7 +149,6 @@ namespace pxtblockly {
             let value = e.target.getAttribute('data-value');
             if (!value) return;
             this.setValue(value);
-            this.setText(value);
             Blockly.DropDownDiv.hide();
         };
 
@@ -164,134 +163,12 @@ namespace pxtblockly {
             content.style.width = '';
             content.style.paddingRight = '';
 
-            if (this.sourceBlock_) {
-                if (this.sourceBlock_.isShadow()) {
-                    this.sourceBlock_.setColour(this.savedPrimary_,
-                        this.sourceBlock_.getColourSecondary(), this.sourceBlock_.getColourTertiary());
-                } else if (this.box_) {
-                    this.box_.setAttribute('fill', this.sourceBlock_.getColour());
-                }
+            let source = this.sourceBlock_ as Blockly.BlockSvg;
+            if (source?.isShadow()) {
+                this.sourceBlock_.setColour(this.savedPrimary_);
+            } else if (this.borderRect_) {
+                this.borderRect_.setAttribute('fill', this.savedPrimary_);
             }
-        };
-
-        /**
-         * Sets the text in this field.  Trigger a rerender of the source block.
-         * @param {?string} text New text.
-         */
-        setText(text: string) {
-            if (text === null || text === this.text_) {
-                // No change if null.
-                return;
-            }
-            this.text_ = text;
-            this.updateTextNode_();
-
-            if (this.imageJson_ && this.textElement_) {
-                // Update class for dropdown text.
-                // This class is reset every time updateTextNode_ is called.
-                this.textElement_.setAttribute('class',
-                    this.textElement_.getAttribute('class') + ' blocklyHidden'
-                );
-                this.imageElement_.parentNode.appendChild(this.arrow_);
-            } else if (this.textElement_) {
-                // Update class for dropdown text.
-                // This class is reset every time updateTextNode_ is called.
-                this.textElement_.setAttribute('class',
-                    this.textElement_.getAttribute('class') + ' blocklyDropdownText'
-                );
-                this.textElement_.parentNode.appendChild(this.arrow_);
-            }
-            const sourceBlock = this.sourceBlock_ as Blockly.BlockSvg;
-            if (sourceBlock && sourceBlock.rendered) {
-                sourceBlock.render();
-                sourceBlock.bumpNeighbours_();
-            }
-        };
-
-        /**
-         * Updates the width of the field. This calls getCachedWidth which won't cache
-         * the approximated width on IE/Microsoft Edge when `getComputedTextLength` fails. Once
-         * it eventually does succeed, the result will be cached.
-         **/
-        updateSize_() {
-            // Calculate width of field
-            let width = this.imageJson_.width + 5;
-
-            // Add padding to left and right of text.
-            if (this.EDITABLE) {
-                width += Blockly.BlockSvg.EDITABLE_FIELD_PADDING;
-            }
-
-            this.arrowY_ = this.imageJson_.height / 2;
-
-            // Adjust width for drop-down arrows.
-            this.arrowWidth_ = 0;
-            if (this.positionArrow) {
-                this.arrowWidth_ = this.positionArrow(width);
-                width += this.arrowWidth_;
-            }
-
-            // Add padding to any drawn box.
-            if (this.box_) {
-                width += 2 * Blockly.BlockSvg.BOX_FIELD_PADDING;
-            }
-
-            // Set width of the field.
-            this.size_.width = width;
-        };
-
-        /**
-         * Update the text node of this field to display the current text.
-         * @private
-         */
-        updateTextNode_() {
-            if (!this.textElement_ && !this.imageElement_) {
-                // Not rendered yet.
-                return;
-            }
-            let text = this.text_;
-            if (text.length > this.maxDisplayLength) {
-                // Truncate displayed string and add an ellipsis ('...').
-                text = text.substring(0, this.maxDisplayLength - 2) + '\u2026';
-                // Add special class for sizing font when truncated
-                this.textElement_.setAttribute('class', 'blocklyText blocklyTextTruncated');
-            } else {
-                this.textElement_.setAttribute('class', 'blocklyText');
-            }
-
-            // Empty the text element.
-            goog.dom.removeChildren(/** @type {!Element} */(this.textElement_));
-            goog.dom.removeNode(this.imageElement_);
-            this.imageElement_ = null;
-            if (this.imageJson_) {
-                // Image option is selected.
-                this.imageElement_ = Blockly.utils.dom.createSvgElement('image',
-                    {
-                        'y': 5, 'x': 8, 'height': this.imageJson_.height + 'px',
-                        'width': this.imageJson_.width + 'px'
-                    }, null);
-                this.imageElement_.setAttributeNS('http://www.w3.org/1999/xlink',
-                    'xlink:href', this.imageJson_.src);
-                this.size_.height = Number(this.imageJson_.height) + 10;
-
-                this.textElement_.parentNode.appendChild(this.imageElement_);
-            } else {
-                // Replace whitespace with non-breaking spaces so the text doesn't collapse.
-                text = text.replace(/\s/g, Blockly.Field.NBSP);
-                if (this.sourceBlock_.RTL && text) {
-                    // The SVG is LTR, force text to be RTL.
-                    text += '\u200F';
-                }
-                if (!text) {
-                    // Prevent the field from disappearing if empty.
-                    text = Blockly.Field.NBSP;
-                }
-                let textNode = document.createTextNode(text);
-                this.textElement_.appendChild(textNode);
-            }
-
-            // Cached width is obsolete.  Clear it.
-            this.size_.width = 0;
         };
     }
 }

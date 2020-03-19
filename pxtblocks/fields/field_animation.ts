@@ -58,7 +58,7 @@ namespace pxtblockly {
                 return;
             }
             // Build the DOM.
-            this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null);
+            this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null) as SVGGElement;
             if (!this.visible_) {
                 (this.fieldGroup_ as any).style.display = 'none';
             }
@@ -165,7 +165,7 @@ namespace pxtblockly {
 
             const icon = new svg.Text("\uf008")
                 .at(PADDING, 5 + (TOTAL_HEIGHT >> 1))
-                .fill(this.sourceBlock_.getColourSecondary())
+                .fill((this.sourceBlock_ as Blockly.BlockSvg).getColourSecondary())
                 .setClass("semanticIcon");
 
             this.fieldGroup_.appendChild(icon.el);

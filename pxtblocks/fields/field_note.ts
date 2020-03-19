@@ -228,13 +228,13 @@ namespace pxtblockly {
          * refresh the text to get back into a valid state.
          **/
         protected refreshText() {
-            this.setText(this.getText());
             this.forceRerender();
         }
 
         onHtmlInputChange_(e: any) {
             super.onHtmlInputChange_(e);
             Blockly.DropDownDiv.hideWithoutAnimation();
+            (this as any).htmlInput_.focus();
         }
 
         onFinishEditing_(text: string) {
@@ -364,12 +364,14 @@ namespace pxtblockly {
 
         private updateColor() {
             if (this.sourceBlock_.parentBlock_ && (this.sourceBlock_.isShadow() || hasOnlyOneField(this.sourceBlock_))) {
-                this.primaryColour = this.sourceBlock_.parentBlock_.getColour();
-                this.borderColour = this.sourceBlock_.parentBlock_.getColourTertiary();
+                let b = this.sourceBlock_.parentBlock_ as Blockly.BlockSvg;
+                this.primaryColour = b.getColour();
+                this.borderColour = b.getColourTertiary();
             }
             else {
-                this.primaryColour = this.sourceBlock_.getColourTertiary();
-                this.borderColour = this.sourceBlock_.getColourTertiary();
+                let b = this.sourceBlock_ as Blockly.BlockSvg;
+                this.primaryColour = b.getColourTertiary();
+                this.borderColour = b.getColourTertiary();
             }
         }
 
