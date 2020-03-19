@@ -111,28 +111,6 @@ Learn to develop games with Steve Isaacs, an ISTE outstanding teacher and PBS Le
 * [Minecraft:Education Edition](https://minecraft.makecode.com/online-learning)
 * [MakeCode Arcade](https://arcade.makecode.com/online-learning)
 
-### Microsoft Teams Assignments
-
-**Microsoft Teams** is a collaboration hub for Office 365 where Educators can organize student groups into classes with content, conversations, apps, and assignments all in one place.
-
-You can now create MakeCode programming assignments for your students by attaching a MakeCode project. Students can then open the MakeCode editor and complete the assignment without ever leaving Teams!
-
-* [Blog post about MakeCode Assignments](https://www.microsoft.com/en-us/education/products/teams/default.aspx)
-
-https://youtu.be/oBarPukXXXQ
-
-### Google Classroom
-
-You can use shared urls or download files from the MakeCode editor to create assigments in Google Classroom. See the tutorial video below.
-
-https://youtu.be/vDISKdJ3ynA
-
-### Canvas
-
-You can use shared urls or download files from the MakeCode editor to create assigments in Canvas. See the tutorial video below.
-
-https://youtu.be/r3T0nG_KuUM
-
 ## Online courses and resources
 
 ### MakeCode Arcade
