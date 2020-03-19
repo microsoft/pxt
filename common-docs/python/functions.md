@@ -4,7 +4,7 @@ Functions are the fundamental building block of programs. Here is the simplest
 way to make a function that adds two numbers:
 
 ```python-ignore
-// Named function
+# Named function
 def add(x, y):
     return x + y
 
