@@ -8,7 +8,7 @@ You can now create MakeCode programming assignments for your students by attachi
 
 ### #youtubeteams
 
-* [Blog post about MakeCode Assignments](https://www.microsoft.com/en-us/education/products/teams/default.aspx)
+* [Blog post about MakeCode Assignments](https://makecode.com/blog/teams/teams-assignments)
 
 https://youtu.be/oBarPukXXXQ
 
