@@ -423,6 +423,14 @@ describe("blockly compiler", function () {
         it("should narrow variable types when used as function call arguments", (done: () => void) => {
             blockTestAsync("function_call_inference").then(done, done);
         });
+
+        it("should handle return statements", (done: () => void) => {
+            blockTestAsync("return_statement").then(done, done);
+        });
+
+        it("should handle functions that return values", (done: () => void) => {
+            blockTestAsync("function_output").then(done, done);
+        });
     });
 
     describe("compiling special blocks", () => {
