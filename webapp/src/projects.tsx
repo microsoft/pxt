@@ -951,7 +951,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                                 href={`https://youtu.be/${youTubeId}`}
                                 refCallback={this.linkRef}
                                 target="_blank"
-                                text={lf("Play")}
+                                text={lf("Play Video")}
                                 className={`button attached approve large`}
                                 title={lf("Open YouTube video in new window")}
                             />
