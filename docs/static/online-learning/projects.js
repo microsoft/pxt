@@ -86,13 +86,13 @@ var _resources = [
     {
         "title": "Free Online Curriculum",
         "description": "MakeCode provides a great amount of free, online curriculum that is available for Educators to use.",
-        "url": "https://makecode.microbit.org/online-learning",
+        "url": "https://makecode.com/online-learning/resources",
         "img": "/static/online-learning/img/courses.jpg"
     },
     {
         "title": "MakeCode with Flipgrid",
         "description": "Flipgrid is an easy to use video platform that can be used for students to share their MakeCode projects with their teacher and classmates.  Use some of these MakeCode Flipgrid topics for your class!",
-        "url": "https://makecode.microbit.org/online-learning",
+        "url": "https://makecode.com/online-learning/flipgrid",
         "img": "/static/online-learning/img/flipgrid.png"
     }
 ];
