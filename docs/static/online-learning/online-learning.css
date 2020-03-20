@@ -1,0 +1,202 @@
+body, html {
+    height: 100%;
+    width: 100%;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Segoe UI", Arial, "HelveticaNeue-Light", sans-serif;
+    font-size: 16px;
+    background: #fefefe;
+}
+
+h1 {
+    line-height: 28px;
+    padding: 36px 0 4px;
+    font-weight: 600;
+}
+
+.hero {
+    overflow: hidden;
+}
+
+.banner {
+    width: 100%;
+    overflow: hidden;
+}
+.banner > img {
+    width: 100%;
+}
+
+.title {
+    color: #fff;
+    text-align: center;
+    margin-top: -20vw;
+    padding-bottom: 4rem;
+}
+
+.content {
+    height: 100%;
+    background-color: #fff;
+    margin: 0 auto;
+    padding: 0 2rem;
+    max-width: 50rem;
+}
+
+.segment {
+    margin: 4rem 0 0;
+}
+
+
+.jump {
+    display: flex;
+}
+
+.action {
+    flex: 1;
+    margin-right: 2rem;
+    color: #fff;
+    background-color: #aa278f;
+    text-align: center;
+    font-weight: 600;
+    line-height: 28px;
+    font-size: 24px;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    cursor: pointer;
+}
+.action:hover {
+    color: #fff;
+    background-color: #cbaccc;
+    text-decoration: none;
+}
+
+
+#schedule {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+#schedule > div {
+    display: flex;
+    flex-direction: row;
+}
+
+#schedule > div:nth-child(odd) {
+    background-color: #e6e6e6;
+}
+
+#schedule > div:first-child {
+    color: #fff;
+    background-color: #cbaccc;
+    font-weight: 600;
+}
+
+#schedule > div > div {
+    flex: 1;
+    text-align: center;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    padding: 1rem 0.75rem;
+    cursor: pointer;
+}
+
+.lesson {
+    display: flex;
+    margin: 1rem 0;
+}
+
+.lesson .imgWrapper {
+    flex: 0 0 8rem;
+    height: 6rem;
+    margin-right: 1rem;
+    overflow: hidden;
+}
+
+.lesson img {
+    height: 100%;
+}
+
+
+.cards,
+.banners {
+    display: flex;
+    margin-bottom: 2rem;
+}
+
+.cards > div {
+    flex: 1;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 0.5rem;
+    margin-right: 1rem;
+    overflow: hidden;
+}
+
+.cards > div:last-child {
+    margin-right: 0;
+}
+
+.cards > div a,
+.cards > div a:hover {
+    text-decoration: none;
+    color: #000;
+}
+
+.cards .imgWrapper {
+    width: 100%;
+    height: 10rem;
+    overflow: hidden;
+}
+
+.cards img {
+    width: 100%;
+}
+
+.cards .description {
+    padding: 1rem;
+}
+
+
+.banners {
+    flex-direction: column;
+    margin-top: 2rem;
+}
+
+.banners a {
+    display: flex;
+    flex-direction: row;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    margin-bottom: 4rem;
+    color: #000;
+    height: 12rem;
+}
+
+.banners > div:nth-child(even) a {
+    flex-direction: row-reverse;
+}
+
+.banners a:hover {
+    text-decoration: none;
+}
+
+.banners .imgWrapper {
+    flex: 1;
+    margin-right: 2rem;
+    overflow: hidden;
+}
+
+.banners .description {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.banners img {
+    width: 100%;
+}
