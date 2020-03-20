@@ -123,6 +123,10 @@ h1 {
     overflow: hidden;
 }
 
+.lesson .imgWrapper:hover {
+    opacity: 0.7
+}
+
 .lesson img {
     height: 100%;
 }
@@ -147,13 +151,24 @@ h1 {
     text-align: center;
     border: 1px solid #ddd;
     border-radius: 0.5rem;
-    margin-right: 1rem;
+    margin: 2px;
+    margin-right: calc(1rem + 2px);
     overflow: hidden;
+}
+
+.cards > div:hover{
+    border: 3px solid #000;
+    margin: 0px;
+    margin-right: 1rem;
 }
 
 .cards > div:last-child {
     margin-right: 0;
 }
+.cards > div:last-child:hover {
+    margin-right: -2px;
+}
+
 
 .cards > div > a {
     display: flex;
