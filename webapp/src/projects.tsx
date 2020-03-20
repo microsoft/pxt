@@ -729,7 +729,6 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
         this.handleDetailClick = this.handleDetailClick.bind(this);
         this.handleOpenForumUrlInEditor = this.handleOpenForumUrlInEditor.bind(this);
-        this.handleOpenYouTube = this.handleOpenYouTube.bind(this);
         this.linkRef = React.createRef<HTMLAnchorElement>();
     }
 
@@ -833,8 +832,8 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     protected getActionCard(text: string, type: string, onClick: any, autoFocus?: boolean, action?: pxt.CodeCardAction, key?: string): JSX.Element {
-        let editor = this.getActionEditor(type, action);
-        let title = this.getActionTitle(editor);
+        const editor = this.getActionEditor(type, action);
+        const title = this.getActionTitle(editor);
         return <div className={`card-action ui items ${editor || ""}`} key={key}>
             {this.getActionIcon(onClick, type, editor)}
             {title && <div className="card-action-title">{title}</div>}
@@ -891,12 +890,6 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             this.getData("ping:https://www.youtube.com/favicon.ico");
     }
 
-    handleOpenYouTube() {
-        pxt.tickEvent('projects.actions.youtube', undefined, { interactiveConsent: true });
-        const { youTubeId } = this.props;
-        window.open(`https://youtu.be/${youTubeId}`, `_blank`);
-    }
-
     componentDidMount() {
         // autofocus on linked action
         if (this.linkRef && this.linkRef.current) {
@@ -951,7 +944,18 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     }
                     {youTubeId && this.isYouTubeOnline() &&
                         // show youtube card
-                        this.getActionCard(lf("YouTube"), "", this.handleOpenYouTube)}
+                        <div className="card-action ui items youtube">
+                            <sui.Link role="button" className="link button attached" icon="youtube" href={`https://youtu.be/${youTubeId}`} target="_blank" tabIndex={-1} />
+                            <div className="card-action-title">YouTube</div>
+                            <sui.Link
+                                href={`https://youtu.be/${youTubeId}`}
+                                refCallback={this.linkRef}
+                                target="_blank"
+                                text={lf("Play")}
+                                className={`button attached approve large`}
+                                title={lf("Open YouTube video in new window")}
+                            />
+                        </div>}
                 </div>
             </div>
         </div>;
