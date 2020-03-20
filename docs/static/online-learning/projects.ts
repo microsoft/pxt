@@ -80,7 +80,8 @@ const _targets: Target[] = [
                 "title": "Chicken Rain",
                 "description": "Learn how to create a program that will rain chickens in Minecraft!  Tutorial available in Blocks, JavaScript or Python.",
                 "url": "https://minecraft.makecode.com/tutorials/chicken-rain",
-                "img": "/static/online-learning/img/chicken-rain.jpg"
+                "img": "/static/online-learning/img/chicken-rain.jpg",
+                "video": "https://youtu.be/QZxtiwWNNYM"
             },
             {
                 "title": "Flower Trail",
@@ -102,13 +103,13 @@ const _resources: Project[] = [
     {
         "title": "Free Online Curriculum",
         "description": "MakeCode provides a great amount of free, online curriculum that is available for Educators to use.",
-        "url": "https://makecode.microbit.org/online-learning",
+        "url": "https://makecode.com/online-learning/resources",
         "img": "/static/online-learning/img/courses.jpg"
     },
     {
         "title": "MakeCode with Flipgrid",
         "description": "Flipgrid is an easy to use video platform that can be used for students to share their MakeCode projects with their teacher and classmates.  Use some of these MakeCode Flipgrid topics for your class!",
-        "url": "https://makecode.microbit.org/online-learning",
+        "url": "https://makecode.com/online-learning/flipgrid",
         "img": "/static/online-learning/img/flipgrid.png"
     }
 ]
