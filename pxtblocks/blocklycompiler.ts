@@ -784,8 +784,10 @@ namespace pxt.blocks {
         const argsDeclaration = (b as Blockly.FunctionDefinitionBlock).getArguments().map(a => {
             return `${escapeVarName(a.name, e)}: ${a.type}`;
         });
+
+        const isRecursive = isFunctionRecursive(b);
         return [
-            mkText(`function ${name} (${argsDeclaration.join(", ")})`),
+            mkText(`function ${name} (${argsDeclaration.join(", ")})${isRecursive ? ": any" : ""}`),
             compileStatements(e, stmts)
         ];
     }
@@ -2536,5 +2538,19 @@ namespace pxt.blocks {
 
     function isFunctionDefinition(b: Blockly.Block) {
         return b.type === "procedures_defnoreturn" || b.type === "function_definition";
+    }
+
+    function isFunctionRecursive(b: Blockly.Block) {
+        const functionName = b.getField("function_name").getText();
+        const returns = b.getDescendants(false).filter(child => child.type === pxtc.TS_RETURN_STATEMENT_TYPE);
+
+        for (const r of returns) {
+            const childCalls = r.getDescendants(false).filter(child => child.type == "function_call_output");
+
+            if (childCalls.some(c => c.getField("function_name").getText() === functionName)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

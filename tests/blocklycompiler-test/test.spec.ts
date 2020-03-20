@@ -431,6 +431,10 @@ describe("blockly compiler", function () {
         it("should handle functions that return values", (done: () => void) => {
             blockTestAsync("function_output").then(done, done);
         });
+
+        it("should output a return type for recursive functions", (done: () => void) => {
+            blockTestAsync("function_recursion").then(done, done);
+        });
     });
 
     describe("compiling special blocks", () => {
