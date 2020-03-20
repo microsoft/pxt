@@ -37,7 +37,6 @@ h1 {
 }
 
 .content {
-    height: 100%;
     background-color: #fff;
     margin: 0 auto;
     padding: 0 2rem;
@@ -71,7 +70,7 @@ h1 {
 }
 .action:hover {
     color: #fff;
-    background-color: #cbaccc;
+    background-color: #cc81c3;
     text-decoration: none;
 }
 
@@ -94,7 +93,7 @@ h1 {
 
 #schedule > div:first-child {
     color: #fff;
-    background-color: #cbaccc;
+    background-color: #cc81c3;
     font-weight: 600;
 }
 
