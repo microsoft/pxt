@@ -704,6 +704,14 @@ namespace pxt.blocks {
                 block: {
                     FUNCTIONS_CALL_TITLE: Util.lf("call")
                 }
+            },
+            'function_call_output': {
+                name: Util.lf("call the function with a return value"),
+                tooltip: Util.lf("Call the user-defined function with a return value."),
+                url: 'types/function/call',
+                category: 'functions',
+                block: {
+                }
             }
         };
         _blockDefinitions[pxtc.ON_START_TYPE] = {

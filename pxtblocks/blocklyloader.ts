@@ -2378,6 +2378,7 @@ namespace pxt.blocks {
 
         msg.FUNCTIONS_CALL_TITLE = functionCall.block["FUNCTIONS_CALL_TITLE"];
         installBuiltinHelpInfo(functionCallId);
+        installBuiltinHelpInfo("function_call_output");
 
         const functionReturnId = "function_return";
         Blockly.Blocks[functionReturnId] = {
@@ -2417,20 +2418,6 @@ namespace pxt.blocks {
             }
         };
         installBuiltinHelpInfo(functionReturnId);
-
-
-        const callDefinition = Blockly.Blocks["function_call"]
-        Blockly.Blocks["function_call_output"] = {
-            ...callDefinition,
-            init: function() {
-                callDefinition.init.call(this);
-                this.setPreviousStatement(false);
-                this.setNextStatement(false);
-                this.setOutput(true, null);
-                this.setOutputShape(Blockly.OUTPUT_SHAPE_ROUND);
-            }
-        };
-
 
         Blockly.Procedures.flyoutCategory = function (workspace: Blockly.WorkspaceSvg) {
             let xmlList: HTMLElement[] = [];
