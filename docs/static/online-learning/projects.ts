@@ -80,7 +80,8 @@ const _targets: Target[] = [
                 "title": "Chicken Rain",
                 "description": "Learn how to create a program that will rain chickens in Minecraft!  Tutorial available in Blocks, JavaScript or Python.",
                 "url": "https://minecraft.makecode.com/tutorials/chicken-rain",
-                "img": "/static/online-learning/img/chicken-rain.jpg"
+                "img": "/static/online-learning/img/chicken-rain.jpg",
+                "video": "https://youtu.be/QZxtiwWNNYM"
             },
             {
                 "title": "Flower Trail",
