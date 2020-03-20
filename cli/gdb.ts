@@ -18,6 +18,8 @@ let bmpMode = false
 const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer | string> = Promise.promisify(child_process.exec)
 
 function getBMPSerialPortsAsync(): Promise<string[]> {
+    if (process.env["PXT_IGNORE_BMP"])
+        return Promise.resolve([])
     if (process.platform == "win32") {
         return execAsync("wmic PATH Win32_SerialPort get DeviceID, PNPDeviceID")
             .then((buf: Buffer) => {
