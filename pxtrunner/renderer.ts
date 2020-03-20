@@ -443,15 +443,16 @@ namespace pxt.runner {
             const symbolInfo = r.apiInfo.byQName[info.qName];
             if (!symbolInfo) return;
             let block = Blockly.Blocks[symbolInfo.attributes.blockId];
-            let xml = block && block.codeCard ? block.codeCard.blocksXml : undefined;
+            let xml = block?.codeCard?.blocksXml ?? undefined;
 
-            const blocksHtml = xml ? pxt.blocks.render(xml) : r.compileBlocks && r.compileBlocks.success ? r.blocksSvg : undefined;
+            const blocksHtml = xml ? pxt.blocks.render(xml) : r.compileBlocks?.success ? r.blocksSvg : undefined;
             const s = blocksHtml ? $(blocksHtml as HTMLElement) : undefined
             let sig = info.decl.getText().replace(/^export/, '');
             sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
             const js = $('<code class="lang-typescript highlight"/>').text(sig);
-            // TODO python
-            const py: JQuery = undefined;// $('<code class="lang-python highlight"/>').text(sig);
+
+            const pySig = pxt.appTarget?.appTheme?.python && sig.slice(0, -1).replace(/^function /, "def ").replace(/\?/g, "").replace(/void$/, "None");
+            const py: JQuery = pySig && $('<code class="lang-python highlight"/>').text(pySig);
             if (options.snippetReplaceParent) c = c.parent();
             // add an html widge that allows to translate the block
             if (pxt.Util.isTranslationMode()) {
