@@ -55,6 +55,13 @@ var _targets = [
         "description": "If your school is using Office 365, your account probably already works with Minecraft: Education Edition. If your Office 365 account does not work, Minecraft: Education Edition is free through June 2020 for anyone with an Office 365 Education sign-in. Read the announcement on how to enable it.",
         "projects": [
             {
+                "title": "Hour of Code",
+                "description": "A village needs your help to prevent the spread of a nearby forest fire. Use code to train the Agent to prevent fires!",
+                "url": "https://education.minecraft.net/hour-of-code/",
+                "img": "/static/online-learning/img/hour-of-code.png",
+                "video": "https://www.youtube.com/watch?v=94JX6ogZmm0"
+            },
+            {
                 "title": "Chicken Rain",
                 "description": "Learn how to create a program that will rain chickens in Minecraft!  Tutorial available in Blocks, JavaScript or Python.",
                 "url": "https://minecraft.makecode.com/tutorials/chicken-rain",
@@ -65,12 +72,6 @@ var _targets = [
                 "description": "Give your player magical fairy powers and lay out a trail of flowers as your player walks around in Minecraft.",
                 "url": "https://minecraft.makecode.com/tutorials/flower-trail",
                 "img": "/static/online-learning/img/flower-trail.png"
-            },
-            {
-                "title": "Agent Moves",
-                "description": "Learn how to programmatically control your Agent robot in Minecraft.",
-                "url": "https://minecraft.makecode.com/tutorials/agent-moves",
-                "img": "/static/online-learning/img/agent-moves.png"
             }
         ]
     }
@@ -79,19 +80,19 @@ var _resources = [
     {
         "title": "Assignments and Classroom Management",
         "description": "Use Microsoft Teams, Google Classroom, or Canvas to organize MakeCode lessons.",
-        "url": "https://makecode.com/blog/online-learning",
+        "url": "https://makecode.microbit.org/online-learning",
         "img": "/static/blog/teams/teams-admin.png"
     },
     {
         "title": "Free Online Curriculum",
         "description": "MakeCode provides a great amount of free, online curriculum that is available for Educators to use.",
-        "url": "https://makecode.com/blog/online-learning",
+        "url": "https://makecode.microbit.org/online-learning",
         "img": "/static/online-learning/img/courses.jpg"
     },
     {
         "title": "MakeCode with Flipgrid",
         "description": "Flipgrid is an easy to use video platform that can be used for students to share their MakeCode projects with their teacher and classmates.  Use some of these MakeCode Flipgrid topics for your class!",
-        "url": "https://makecode.com/blog/online-learning",
+        "url": "https://makecode.microbit.org/online-learning",
         "img": "/static/online-learning/img/flipgrid.png"
     }
 ];
