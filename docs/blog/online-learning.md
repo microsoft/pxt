@@ -50,7 +50,7 @@ Learn to code together with Peli and his children using the BBC micro:bit; no ha
 
 #### 10:00AM PST Mon-Fri - Minecraft EDU (Beginner) by MakeCode team #peli-minecraft
 
-Learn to code in Minecraft: Education Edition with Peli and his children
+Learn to code in Minecraft: Education Edition with Peli and his children.
 
 * Live stream at https://aka.ms/makecodeminecraftstream
 * Editor available in Minecraft Education Edition
@@ -62,7 +62,7 @@ Learn to code in Minecraft: Education Edition with Peli and his children
 
 #### 11:00AM PST Mon-Fri - Arcade (Beginnner) by MakeCode team #peli-arcade
 
-Learn to code retro arcade games with Peli and his children
+Learn to code retro arcade games with Peli and his children.
 
 * Live stream at https://aka.ms/makecodearcadestreambeginner
 * Editor https://arcade.makecode.com
@@ -74,7 +74,7 @@ Learn to code retro arcade games with Peli and his children
 
 #### 01:00PM PST Mon-Fri - Arcade (Advanced) by MakeCode team #rsdj-arcade
 
-Create new games (or recreate old ones) with a rotating cast of developers from the MakeCode team, including Richard, Shannon, Daryl, and Joey
+Create new games (or recreate old ones) with a rotating cast of developers from the MakeCode team, including Richard, Shannon, Daryl, and Joey.
 
 * Live stream at https://aka.ms/makecodearcadestream
 * Editor https://arcade.makecode.com
@@ -86,7 +86,7 @@ Create new games (or recreate old ones) with a rotating cast of developers from 
 
 #### 02:00PM PST Fri - Adafruit Circuit Playground Express Project by MakeCode Team #jaq-cpx
 
-Learn about physical computing and create fun projects with Jacqueline
+Learn about physical computing and create fun projects with Jacqueline.
 
 * Live stream at https://aka.ms/makecodecpxstream
 * Editor https://makecode.adafruit.com
@@ -98,36 +98,20 @@ Learn about physical computing and create fun projects with Jacqueline
 
 #### 09:00AM EST Monday - Arcade by [Steve Isaacs](https://twitter.com/mr_isaacs) #steve-arcade
 
-Learn to develop games with Steve Isaacs, an ISTE outstanding teacher and PBS Lead Digital Innovator
+Learn to develop games with Steve Isaacs, an ISTE outstanding teacher and PBS Lead Digital Innovator.
 
 * Twitch channel at https://www.twitch.tv/mr_isaacs
 * Editor https://arcade.makecode.com
 
 ### ~
 
-## Assignments and classroom management
+## Learn how to create assignments in Teams/Google Classroom/Canvas...
 
-### Microsoft Teams Assignments
+See the online learning page for your MakeCode editor.
 
-**Microsoft Teams** is a collaboration hub for Office 365 where Educators can organize student groups into classes with content, conversations, apps, and assignments all in one place.
-
-You can now create MakeCode programming assignments for your students by attaching a MakeCode project. Students can then open the MakeCode editor and complete the assignment without ever leaving Teams!
-
-* [Blog post about MakeCode Assignments](https://www.microsoft.com/en-us/education/products/teams/default.aspx)
-
-https://youtu.be/oBarPukXXXQ
-
-### Google Classroom
-
-You can use shared urls or download files from the MakeCode editor to create assigments in Google Classroom. See the tutorial video below.
-
-https://youtu.be/vDISKdJ3ynA
-
-### Canvas
-
-You can use shared urls or download files from the MakeCode editor to create assigments in Canvas. See the tutorial video below.
-
-https://youtu.be/r3T0nG_KuUM
+* [micro:bit](https://arcade.makecode.com/online-learning)
+* [Minecraft:Education Edition](https://minecraft.makecode.com/online-learning)
+* [MakeCode Arcade](https://arcade.makecode.com/online-learning)
 
 ## Online courses and resources
 
