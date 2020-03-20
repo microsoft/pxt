@@ -1,5 +1,31 @@
 var _targets = [
     {
+        "title": "MakeCode for the micro:bit",
+        "description": "Engage in making and physical computing with the micro:bit – a small programmable device with lights, buttons and sensors.  Even if you do don’t have a micro:bit at home, you can use MakeCode with the simulator.",
+        "projects": [
+            {
+                "title": "Flashing Heart",
+                "description": "This is a great tutorial to start if you’re new to the micro:bit.  Learn how to activate the lights and create your own designs!",
+                "url": "https://makecode.microbit.org/#tutorial:/projects/flashing-heart",
+                "img": "/static/online-learning/img/flashing-heart.png",
+                "video": "https://www.youtube.com/watch?v=NvEOKZ8wh9s"
+            },
+            {
+                "title": "Name Tag",
+                "description": "Turn your micro:bit into an electronic name tag!",
+                "url": "https://makecode.microbit.org/#tutorial:/projects/name-tag",
+                "img": "/static/online-learning/img/name-tag.png",
+                "video": "https://www.youtube.com/watch?v=xpRI5jjQ31E"
+            },
+            {
+                "title": "Rock Paper Scissors",
+                "description": "Make the Rock-Paper-Scissors game on your micro:bit and challenge your friends!",
+                "url": "https://makecode.microbit.org/#tutorial:/projects/rock-paper-scissors",
+                "img": "/static/online-learning/img/rock-paper-scissors.png"
+            }
+        ]
+    },
+    {
         "title": "MakeCode Arcade",
         "description": "MakeCode Arcade is a retro, 1980’s style arcade video game development platform where students can quickly and easily design their own game characters and build their own games in both Blocks and JavaScript.",
         "projects": [
@@ -7,7 +33,8 @@ var _targets = [
                 "title": "Chase the Pizza",
                 "description": "Get started creating a simple game to chase a piece of pizza around the screen and collect as many points as possible!",
                 "url": "https://arcade.makecode.com/#tutorial:/tutorials/chase-the-pizza",
-                "img": "/static/online-learning/img/chase-the-pizza.png"
+                "img": "/static/online-learning/img/chase-the-pizza.png",
+                "video": "https://www.youtube.com/watch?v=sgeHKw437oE"
             },
             {
                 "title": "Lemon Leak",
@@ -44,30 +71,6 @@ var _targets = [
                 "description": "Learn how to programmatically control your Agent robot in Minecraft.",
                 "url": "https://minecraft.makecode.com/tutorials/agent-moves",
                 "img": "/static/online-learning/img/agent-moves.png"
-            }
-        ]
-    },
-    {
-        "title": "MakeCode for the micro:bit",
-        "description": "Engage in making and physical computing with the micro:bit – a small programmable device with lights, buttons and sensors.  Even if you do don’t have a micro:bit at home, you can use MakeCode with the simulator.",
-        "projects": [
-            {
-                "title": "Flashing Heart",
-                "description": "This is a great tutorial to start if you’re new to the micro:bit.  Learn how to activate the lights and create your own designs!",
-                "url": "https://makecode.microbit.org/#tutorial:/projects/flashing-heart",
-                "img": "/static/online-learning/img/flashing-heart.png"
-            },
-            {
-                "title": "Name Tag",
-                "description": "Turn your micro:bit into an electronic name tag!",
-                "url": "https://makecode.microbit.org/#tutorial:/projects/name-tag",
-                "img": "/static/online-learning/img/name-tag.png"
-            },
-            {
-                "title": "Smiley Buttons",
-                "description": "Program the buttons on the micro:bit to display different images.",
-                "url": "https://makecode.microbit.org/#tutorial:/projects/smiley-buttons",
-                "img": "/static/online-learning/img/smiley-buttons.png"
             }
         ]
     }
@@ -137,6 +140,14 @@ function makeCardRow(items, className, header) {
         projectText.innerText = p.description;
         projectDescription.appendChild(projectText);
         link.appendChild(projectDescription);
+        if (p.video) {
+            var video = document.createElement("a");
+            video.className = "video button";
+            video.href = p.video;
+            video.target = "_blank";
+            video.innerText = "Watch Lesson";
+            link.appendChild(video);
+        }
         project.appendChild(link);
         projects.appendChild(project);
     }

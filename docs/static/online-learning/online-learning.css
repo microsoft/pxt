@@ -50,6 +50,20 @@ h1 {
     margin: 2rem 0;
 }
 
+.button {
+    color: #fff;
+    background-color: #aa278f;
+    cursor: pointer;
+    border-radius: 0.5rem;
+    font-weight: 600;
+}
+
+.button:hover {
+    color: #fff;
+    background-color: #cc81c3;
+    text-decoration: none;
+}
+
 
 .jump {
     display: flex;
@@ -58,20 +72,10 @@ h1 {
 .action {
     flex: 1;
     margin-right: 2rem;
-    color: #fff;
-    background-color: #aa278f;
     text-align: center;
-    font-weight: 600;
     line-height: 28px;
     font-size: 24px;
-    border-radius: 0.5rem;
     padding: 1rem;
-    cursor: pointer;
-}
-.action:hover {
-    color: #fff;
-    background-color: #cc81c3;
-    text-decoration: none;
 }
 
 
@@ -113,14 +117,22 @@ h1 {
 }
 
 .lesson .imgWrapper {
-    flex: 0 0 8rem;
-    height: 6rem;
+    flex: 0 0 9rem;
+    height: 7rem;
     margin-right: 1rem;
     overflow: hidden;
 }
 
 .lesson img {
     height: 100%;
+}
+
+.lesson h4 {
+    margin-bottom: 0.2rem;
+}
+.lesson .time {
+    margin-bottom: 0.8rem;
+    opacity: 0.5;
 }
 
 
@@ -143,8 +155,14 @@ h1 {
     margin-right: 0;
 }
 
-.cards > div a,
-.cards > div a:hover {
+.cards > div > a {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.cards > div > a,
+.cards > div > a:hover {
     text-decoration: none;
     color: #000;
 }
@@ -161,8 +179,14 @@ h1 {
 
 .cards .description {
     padding: 1rem;
+    margin-bottom: auto;
 }
 
+.cards .video {
+    font-size: 18px;
+    padding: 0.5rem 1rem;
+    margin: 0 1rem 1rem;
+}
 
 .banners {
     flex-direction: column;

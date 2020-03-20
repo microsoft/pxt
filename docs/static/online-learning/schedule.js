@@ -9,14 +9,6 @@ var Day;
 })(Day || (Day = {}));
 var lessons = [
     {
-        "title": "Arcade with Steve Isaacs",
-        "description": "Learn MakeCode Arcade game development with Mr. Isaacs, an ISTE outstanding teacher and PBS Lead Digital Innovator.",
-        "url": "https://aka.ms/makecodearcadestream",
-        "img": "/static/online-learning/img/arcade-2-stream.png",
-        "time": 6,
-        "days": [Day.Monday]
-    },
-    {
         "title": "Beginner micro:bit",
         "description": "Learn the basics of physical computing with the micro:bit!  Peli, a member of the MakeCode Team will take you through some beginner-level coding tutorials.",
         "url": "https://aka.ms/makecodemicrobitstream",
@@ -55,15 +47,24 @@ var lessons = [
         "img": "/static/online-learning/img/cpx-stream.png",
         "time": 14,
         "days": [Day.Friday]
+    },
+    {
+        "title": "Arcade with Steve Isaacs",
+        "description": "Learn MakeCode Arcade game development with Mr. Isaacs, an ISTE outstanding teacher and PBS Lead Digital Innovator.",
+        "url": "https://aka.ms/makecodearcadestreamcommunity",
+        "img": "/static/online-learning/img/arcade-2-stream.png",
+        "time": 6,
+        "days": [Day.Monday]
     }
-].sort(function (a, b) { return a.time < b.time ? -1 : 1; });
-makeSchedule();
+];
 makeLessons();
+makeSchedule();
 function makeSchedule() {
+    var sorted = lessons.sort(function (a, b) { return a.time < b.time ? -1 : 1; });
     var parent = document.getElementById("schedule");
     parent.appendChild(makeHeader());
-    for (var _i = 0, lessons_1 = lessons; _i < lessons_1.length; _i++) {
-        var lesson = lessons_1[_i];
+    for (var _i = 0, sorted_1 = sorted; _i < sorted_1.length; _i++) {
+        var lesson = sorted_1[_i];
         var row = document.createElement("div");
         var time = document.createElement("div");
         time.innerText = formatTime(lesson.time);
@@ -105,22 +106,27 @@ function formatTime(time) {
 }
 function makeLessons() {
     var parent = document.getElementById("lessons");
-    for (var _i = 0, lessons_2 = lessons; _i < lessons_2.length; _i++) {
-        var l = lessons_2[_i];
+    for (var _i = 0, lessons_1 = lessons; _i < lessons_1.length; _i++) {
+        var l = lessons_1[_i];
         var lesson = document.createElement("div");
         lesson.className = "lesson";
         var img = document.createElement("img");
         img.src = l.img;
-        var wrapper = document.createElement("div");
+        var wrapper = document.createElement("a");
         wrapper.className = "imgWrapper";
+        wrapper.href = l.url;
         wrapper.appendChild(img);
         lesson.appendChild(wrapper);
         var description = document.createElement("div");
         var title = document.createElement("h4");
         title.innerText = l.title;
+        var time = document.createElement("div");
+        time.innerText = formatTime(l.time);
+        time.className = "time";
         var text = document.createElement("div");
         text.innerText = l.description;
         description.appendChild(title);
+        description.appendChild(time);
         description.appendChild(text);
         lesson.appendChild(description);
         parent.appendChild(lesson);

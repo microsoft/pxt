@@ -18,14 +18,6 @@ interface Lesson {
 
 const lessons: Lesson[] = [
     {
-        "title": "Arcade with Steve Isaacs",
-        "description": "Learn MakeCode Arcade game development with Mr. Isaacs, an ISTE outstanding teacher and PBS Lead Digital Innovator.",
-        "url": "https://aka.ms/makecodearcadestream",
-        "img": "/static/online-learning/img/arcade-2-stream.png",
-        "time": 6,
-        "days": [Day.Monday]
-    },
-    {
         "title": "Beginner micro:bit",
         "description": "Learn the basics of physical computing with the micro:bit!  Peli, a member of the MakeCode Team will take you through some beginner-level coding tutorials.",
         "url": "https://aka.ms/makecodemicrobitstream",
@@ -64,16 +56,25 @@ const lessons: Lesson[] = [
         "img": "/static/online-learning/img/cpx-stream.png",
         "time": 14,
         "days": [Day.Friday]
+    },
+    {
+        "title": "Arcade with Steve Isaacs",
+        "description": "Learn MakeCode Arcade game development with Mr. Isaacs, an ISTE outstanding teacher and PBS Lead Digital Innovator.",
+        "url": "https://aka.ms/makecodearcadestreamcommunity",
+        "img": "/static/online-learning/img/arcade-2-stream.png",
+        "time": 6,
+        "days": [Day.Monday]
     }
-].sort((a, b) => a.time < b.time ? -1 : 1);
+]
 
-makeSchedule();
 makeLessons();
+makeSchedule();
 
 function makeSchedule() {
+    const sorted = lessons.sort((a, b) => a.time < b.time ? -1 : 1);
     const parent = document.getElementById("schedule");
     parent.appendChild(makeHeader())
-    for (const lesson of lessons) {
+    for (const lesson of sorted) {
         const row = document.createElement("div");
         const time = document.createElement("div");
         time.innerText = formatTime(lesson.time);
@@ -126,17 +127,22 @@ function makeLessons() {
 
         const img = document.createElement("img");
         img.src = l.img;
-        const wrapper = document.createElement("div");
+        const wrapper = document.createElement("a");
         wrapper.className = "imgWrapper";
+        wrapper.href = l.url;
         wrapper.appendChild(img);
         lesson.appendChild(wrapper);
-    
+
         const description = document.createElement("div");
         const title = document.createElement("h4");
         title.innerText = l.title;
+        const time = document.createElement("div");
+        time.innerText = formatTime(l.time);
+        time.className = "time";
         const text = document.createElement("div");
         text.innerText = l.description;
         description.appendChild(title);
+        description.appendChild(time);
         description.appendChild(text);
 
         lesson.appendChild(description);
