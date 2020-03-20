@@ -20,19 +20,19 @@ const _targets: Target[] = [
             {
                 "title": "Chase the Pizza",
                 "description": "Get started creating a simple game to chase a piece of pizza around the screen and collect as many points as possible!",
-                "url": "https://arcade.makecode.com/tutorials/chase-the-pizza",
+                "url": "https://arcade.makecode.com/#tutorial:/tutorials/chase-the-pizza",
                 "img": "/static/online-learning/img/chase-the-pizza.png"
             },
             {
                 "title": "Lemon Leak",
                 "description": "Stay away from the wild strawberries, or you’ll lose your juice!",
-                "url": "https://arcade.makecode.com/tutorials/lemon-leak",
+                "url": "https://arcade.makecode.com/#tutorial:/tutorials/lemon-leak",
                 "img": "/static/online-learning/img/lemon-leak.png"
             },
             {
                 "title": "Maze",
                 "description": "Learn the basics of how to create a simple maze game",
-                "url": "https://arcade.makecode.com/tutorials/maze",
+                "url": "https://arcade.makecode.com/#tutorial:/tutorials/maze",
                 "img": "/static/online-learning/img/maze.png"
             }
         ]
@@ -68,19 +68,19 @@ const _targets: Target[] = [
             {
                 "title": "Flashing Heart",
                 "description": "This is a great tutorial to start if you’re new to the micro:bit.  Learn how to activate the lights and create your own designs!",
-                "url": "https://makecode.microbit.org/projects/flashing-heart",
+                "url": "https://makecode.microbit.org/#tutorial:/projects/flashing-heart",
                 "img": "/static/online-learning/img/flashing-heart.png"
             },
             {
                 "title": "Name Tag",
                 "description": "Turn your micro:bit into an electronic name tag!",
-                "url": "https://makecode.microbit.org/projects/name-tag",
+                "url": "https://makecode.microbit.org/#tutorial:/projects/name-tag",
                 "img": "/static/online-learning/img/name-tag.png"
             },
             {
                 "title": "Smiley Buttons",
                 "description": "Program the buttons on the micro:bit to display different images.",
-                "url": "https://makecode.microbit.org/projects/smiley-buttons",
+                "url": "https://makecode.microbit.org/#tutorial:/projects/smiley-buttons",
                 "img": "/static/online-learning/img/smiley-buttons.png"
             }
         ]
@@ -91,20 +91,20 @@ const _resources: Project[] = [
     {
         "title": "Assignments and Classroom Management",
         "description": "Use Microsoft Teams, Google Classroom, or Canvas to organize MakeCode lessons.",
-        "url": "",
+        "url": "https://makecode.com/blog/online-learning",
         "img": "/static/blog/teams/teams-admin.png"
     },
     {
         "title": "Free Online Curriculum",
         "description": "MakeCode provides a great amount of free, online curriculum that is available for Educators to use.",
-        "url": "",
-        "img": "/static/blog/remote-learning/microbit-courses.jpg"
+        "url": "https://makecode.com/blog/online-learning",
+        "img": "/static/online-learning/img/courses.jpg"
     },
     {
         "title": "MakeCode with Flipgrid",
         "description": "Flipgrid is an easy to use video platform that can be used for students to share their MakeCode projects with their teacher and classmates.  Use some of these MakeCode Flipgrid topics for your class!",
-        "url": "",
-        "img": "/static/blog/remote-learning/arcade-courses.jpg"
+        "url": "https://makecode.com/blog/online-learning",
+        "img": "/static/online-learning/img/flipgrid.png"
     }
 ]
 

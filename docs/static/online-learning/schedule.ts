@@ -10,6 +10,7 @@ enum Day {
 interface Lesson {
     title: string;
     description: string;
+    url: string;
     img: string;
     time: number; // hour in PST, 24 hr clock
     days: Day[];
@@ -19,6 +20,7 @@ const lessons: Lesson[] = [
     {
         "title": "Arcade with Steve Isaacs",
         "description": "Learn MakeCode Arcade game development with Mr. Isaacs, an ISTE outstanding teacher and PBS Lead Digital Innovator.",
+        "url": "https://aka.ms/makecodearcadestream",
         "img": "/static/online-learning/img/arcade-2-stream.png",
         "time": 6,
         "days": [Day.Monday]
@@ -26,6 +28,7 @@ const lessons: Lesson[] = [
     {
         "title": "Beginner micro:bit",
         "description": "Learn the basics of physical computing with the micro:bit!  Peli, a member of the MakeCode Team will take you through some beginner-level coding tutorials.",
+        "url": "https://aka.ms/makecodemicrobitstream",
         "img": "/static/online-learning/img/microbit-stream.jpg",
         "time": 9,
         "days": [Day.All]
@@ -33,6 +36,7 @@ const lessons: Lesson[] = [
     {
         "title": "Beginner Minecraft",
         "description": "If you have access to Minecraft: Education Edition at home, learn how to programmatically spawn mobs, control robots, and build structures! Peli, a member of the MakeCode Team will take you through some beginner-level coding tutorials.",
+        "url": "https://aka.ms/makecodeminecraftstream",
         "img": "/static/online-learning/img/minecraft-stream.jpg",
         "time": 10,
         "days": [Day.All]
@@ -40,6 +44,7 @@ const lessons: Lesson[] = [
     {
         "title": "Beginner Arcade",
         "description": "Learn the basics of game development with Peli, a member of the MakeCode Team who will take you through some beginner-level coding tutorials.",
+        "url": "https://aka.ms/makecodearcadestreambeginner",
         "img": "/static/online-learning/img/arcade-2-stream.png",
         "time": 11,
         "days": [Day.All]
@@ -47,6 +52,7 @@ const lessons: Lesson[] = [
     {
         "title": "Advanced Arcade",
         "description": "Create new games (or recreate old ones) with a rotating cast of developers from the MakeCode team, including Richard, Shannon, Daryl, and Joey",
+        "url": "https://aka.ms/makecodearcadestream",
         "img": "/static/online-learning/img/arcade-stream.jpg",
         "time": 13,
         "days": [Day.All]
@@ -54,6 +60,7 @@ const lessons: Lesson[] = [
     {
         "title": "MakeCode in the Kitchen",
         "description": "Join Jacqueline, a MakeCode team member as she crafts and codes projects with the Adafruit Circuit Playground Express in her kitchen!",
+        "url": "https://aka.ms/makecodeadafruitstream",
         "img": "/static/online-learning/img/cpx-stream.png",
         "time": 14,
         "days": [Day.Friday]
@@ -75,9 +82,11 @@ function makeSchedule() {
         const isAll = lesson.days.indexOf(Day.All) >= 0;
         for (const day in Day) {
             if (day != Day.All) {
-                const cell = document.createElement("div");
+                const cell = document.createElement("a");
                 if (isAll || lesson.days.indexOf(Day[day]) >= 0) {
                     cell.innerText = lesson.title;
+                    cell.href = lesson.url;
+                    cell.target = "_blank";
                 }
                 row.appendChild(cell);
             }

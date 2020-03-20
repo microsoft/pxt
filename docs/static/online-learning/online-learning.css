@@ -98,6 +98,7 @@ h1 {
     font-weight: 600;
 }
 
+#schedule > div > a,
 #schedule > div > div {
     flex: 1;
     text-align: center;
@@ -172,8 +173,6 @@ h1 {
 .banners a {
     display: flex;
     flex-direction: row;
-    border-radius: 0.5rem;
-    overflow: hidden;
     margin-bottom: 4rem;
     color: #000;
     height: 12rem;
