@@ -42,6 +42,12 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
         this.observer = new IntersectionObserver(onIntersection, config);
     }
 
+    protected isYouTubeOnline(): boolean {
+        // check that youtube is reachable
+        return this.props.youTubeId &&
+            this.getData("ping:https://www.youtube.com/favicon.ico");
+    }
+
     componentDidMount() {
         const lazyImage = this.refs.lazyimage as HTMLImageElement;
         if (!lazyImage) return;
@@ -81,8 +87,6 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
             card.onClick(e);
         } : undefined;
 
-        // check that youtube is reachable
-        const youTubeOnline = card.youTubeId && this.getData("ping:https://www.youtube.com/favicon.ico");
         const imageUrl = card.imageUrl || (card.youTubeId ? `https://img.youtube.com/vi/${card.youTubeId}/0.jpg` : undefined);
 
         const cardDiv = <div className={`ui card ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`}
