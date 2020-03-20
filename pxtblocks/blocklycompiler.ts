@@ -2542,14 +2542,10 @@ namespace pxt.blocks {
 
     function isFunctionRecursive(b: Blockly.Block) {
         const functionName = b.getField("function_name").getText();
-        const returns = b.getDescendants(false).filter(child => child.type === pxtc.TS_RETURN_STATEMENT_TYPE);
+        const childCalls = b.getDescendants(false).filter(child => child.type == "function_call_output");
 
-        for (const r of returns) {
-            const childCalls = r.getDescendants(false).filter(child => child.type == "function_call_output");
-
-            if (childCalls.some(c => c.getField("function_name").getText() === functionName)) {
-                return true;
-            }
+        if (childCalls.some(c => c.getField("function_name").getText() === functionName)) {
+            return true;
         }
         return false;
     }
