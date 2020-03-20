@@ -42,12 +42,6 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
         this.observer = new IntersectionObserver(onIntersection, config);
     }
 
-    protected isYouTubeOnline(): boolean {
-        // check that youtube is reachable
-        return this.props.youTubeId &&
-            this.getData("ping:https://www.youtube.com/favicon.ico");
-    }
-
     componentDidMount() {
         const lazyImage = this.refs.lazyimage as HTMLImageElement;
         if (!lazyImage) return;

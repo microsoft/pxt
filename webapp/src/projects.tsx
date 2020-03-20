@@ -729,6 +729,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
         this.handleDetailClick = this.handleDetailClick.bind(this);
         this.handleOpenForumUrlInEditor = this.handleOpenForumUrlInEditor.bind(this);
+        this.handleOpenYouTube = this.handleOpenYouTube.bind(this);
         this.linkRef = React.createRef<HTMLAnchorElement>();
     }
 
@@ -869,6 +870,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     handleOpenForumUrlInEditor() {
+        pxt.tickEvent('projects.actions.forum', undefined, { interactiveConsent: true });
         const { url } = this.props;
         pxt.discourse.extractSharedIdFromPostUrl(url)
             .then(projectId => {
@@ -880,6 +882,19 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 }
             })
             .catch(core.handleNetworkError)
+    }
+
+    isYouTubeOnline(): boolean {
+        const { youTubeId } = this.props;
+        // check that youtube is reachable
+        return youTubeId &&
+            this.getData("ping:https://www.youtube.com/favicon.ico");
+    }
+
+    handleOpenYouTube() {
+        pxt.tickEvent('projects.actions.youtube', undefined, { interactiveConsent: true });
+        const { youTubeId } = this.props;
+        window.open(`https://youtu.be/${youTubeId}`, `_blank`);
     }
 
     componentDidMount() {
@@ -934,6 +949,9 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                         // TODO (shakao) migrate forumurl to otherAction json in md
                         this.getActionCard(lf("Open in Editor"), "example", this.handleOpenForumUrlInEditor)
                     }
+                    {youTubeId && this.isYouTubeOnline() &&
+                        // show youtube card
+                        this.getActionCard(lf("YouTube"), "", this.handleOpenYouTube)}
                 </div>
             </div>
         </div>;
