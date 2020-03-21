@@ -810,7 +810,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 break;
             case "template":
             default:
-                if (youTubeId) icon = "video camera";
+                if (youTubeId) icon = "youtube";
                 break;
         }
         return this.isLink() && type != "example" // TODO (shakao)  migrate forumurl to otherAction json in md
