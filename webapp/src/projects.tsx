@@ -942,7 +942,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                         // TODO (shakao) migrate forumurl to otherAction json in md
                         this.getActionCard(lf("Open in Editor"), "example", this.handleOpenForumUrlInEditor)
                     }
-                    { !cardType && youTubeId && this.isYouTubeOnline() &&
+                    {!cardType && youTubeId && this.isYouTubeOnline() &&
                         // show youtube card
                         <div className="card-action ui items youtube">
                             <sui.Link role="button" className="link button attached" icon="youtube" href={`https://youtu.be/${youTubeId}`} target="_blank" tabIndex={-1} />
