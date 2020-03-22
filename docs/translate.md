@@ -10,7 +10,7 @@ and you can volunteer to translate parts of the web site.
 
 #### Check the FAQ first
 
-Just need a quick answer to a tranlation question? You can check the [FAQ](#faq) first.
+Just need a quick answer to a translation question? You can check the [FAQ](#faq) first.
 
 ### ~
 

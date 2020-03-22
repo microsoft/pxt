@@ -28,7 +28,7 @@ The easiest way to share a tutorial is to first share the program. Then, use the
 
     https://[editor url]/#tutorial:[shared project url]
 
-* where ``editor url`` is the editor dmain, like ``makecode.microbit.org``
+* where ``editor url`` is the editor domain, like ``makecode.microbit.org``
 * where ``shared project url`` is the url give to you by MakeCode after sharing, ``https://makecode.com/_somefunnyletters``.
 
 The complete shared url is formatted like:
