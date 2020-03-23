@@ -3013,9 +3013,7 @@ export class ProjectView
     }
 
     showShareDialog(title?: string) {
-        const header = this.state.header;
-        if (header)
-            this.shareEditor.show(header, title);
+        this.shareEditor.show(title);
     }
 
     showLanguagePicker() {
