@@ -1755,7 +1755,7 @@ namespace ts.pxtc.service {
                     functionArgument = `(${functionSignature.parameters.map(p => p.name).join(', ')})`;
                 let n = fnName || "fn";
                 if (functionCount++ > 0) n += functionCount;
-                if (isArgument) // forever -> on_forever
+                if (isArgument && !/^on/i.test(n)) // forever -> on_forever
                     n = "on" + pxt.Util.capitalize(n);
                 n = snakify(n);
                 n = getUniqueName(n)
