@@ -1549,7 +1549,7 @@ namespace ts.pxtc.service {
                     if (type.objectFlags & ts.ObjectFlags.Anonymous) {
                         const sigs = checker.getSignaturesOfType(type, ts.SignatureKind.Call);
                         if (sigs && sigs.length) {
-                            return getFunctionString(sigs[0]);
+                            return getFunctionString(sigs[0], false);
                         }
                         return emitFn(name);
                     }
@@ -1607,7 +1607,7 @@ namespace ts.pxtc.service {
                     const tn = typeNode as ts.FunctionTypeNode;
                     let functionSignature = checker ? checker.getSignatureFromDeclaration(tn) : undefined;
                     if (functionSignature) {
-                        return getFunctionString(functionSignature);
+                        return getFunctionString(functionSignature, true);
                     }
                     return emitFn(name);
             }
@@ -1735,7 +1735,7 @@ namespace ts.pxtc.service {
             return i < 0 ? s : s.substring(0, i);
         }
 
-        function getFunctionString(functionSignature: ts.Signature) {
+        function getFunctionString(functionSignature: ts.Signature, isArgument: boolean) {
             let returnValue = "";
 
             let returnType = checker.getReturnTypeOfSignature(functionSignature);
@@ -1755,6 +1755,8 @@ namespace ts.pxtc.service {
                     functionArgument = `(${functionSignature.parameters.map(p => p.name).join(', ')})`;
                 let n = fnName || "fn";
                 if (functionCount++ > 0) n += functionCount;
+                if (isArgument) // forever -> on_forever
+                    n = "on" + pxt.Util.capitalize(n);
                 n = snakify(n);
                 n = getUniqueName(n)
                 preStmt += `def ${n}${functionArgument}:\n${PY_INDENT}${returnValue || "pass"}\n`;
