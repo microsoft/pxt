@@ -355,7 +355,13 @@ export function showImportUrlDialogAsync() {
     return core.confirmAsync({
         header: lf("Open project URL"),
         onLoaded: (el) => {
-            input = el.querySelectorAll('input')[0] as HTMLInputElement;
+            input = el.querySelector('input');
+            input.onkeydown = ev => {
+                if (ev.key === "Enter") {
+                    const confirm = el.querySelector('.button.approve') as HTMLButtonElement;
+                    confirm?.click();
+                }
+            }
         },
         jsx: <div className="ui form">
             <div className="ui icon violet message">
