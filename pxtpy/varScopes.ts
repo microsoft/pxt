@@ -35,13 +35,13 @@ namespace pxt.py {
             ts.SyntaxKind.CaretEqualsToken
         ]
         return ts.isBinaryExpression(s)
-            && !!AssignmentOperators.find(o => s.operatorToken.kind === o)
+            && AssignmentOperators.some(o => s.operatorToken.kind === o)
     }
     type VarUse = VarRead | VarAssign
     type VarRef = VarRead | VarDecl | VarAssign
     interface VarScope {
-        refs: VarRef[],
-        children: VarScope[],
+        readonly refs: VarRef[],
+        readonly children: VarScope[],
         owner: ts.FunctionLikeDeclaration | undefined
     }
     function computeVarScopes(node: ts.Node): VarScope {
