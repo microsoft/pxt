@@ -91,7 +91,9 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         });
     }
 
-    show(header: pxt.workspace.Header, title?: string) {
+    show(title?: string) {
+        const { header } = this.props.parent.state;
+        if (!header) return;
         // TODO investigate why edge does not render well
         // upon hiding dialog, the screen does not redraw properly
         const thumbnails = pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails
@@ -108,7 +110,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             sharingError: undefined,
             screenshotUri: undefined,
             qrCodeUri: undefined,
-            title
+            title,
+            projectName: header.name
         }, thumbnails ? (() => this.props.parent.startSimulator()) : undefined);
     }
 
