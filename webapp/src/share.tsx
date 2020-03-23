@@ -111,7 +111,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             screenshotUri: undefined,
             qrCodeUri: undefined,
             title,
-            projectName: header && header.name
+            projectName: header.name
         }, thumbnails ? (() => this.props.parent.startSimulator()) : undefined);
     }
 
