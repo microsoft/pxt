@@ -467,7 +467,7 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
                     {sui.helpIconLink("/github", lf("Learn more about GitHub"))}
                 </p>
                 <div className="ui field">
-                    <sui.Input type="url" value={repoName} onChange={onNameChanged} label={lf("Repository name")} placeholder={`pxt-my-gadget...`} class="fluid" error={nameErr} />
+                    <sui.Input type="url" autoFocus value={repoName} onChange={onNameChanged} label={lf("Repository name")} placeholder={`pxt-my-gadget...`} class="fluid" error={nameErr} />
                 </div>
                 <div className="ui field">
                     <sui.Input type="text" value={repoDescription} onChange={onDescriptionChanged} label={lf("Repository description")} placeholder={lf("MakeCode extension for my gadget")} class="fluid" />
