@@ -88,6 +88,8 @@ namespace pxt.github {
     }
 
     function useProxy() {
+        if (forceProxy)
+            return true;
         if (token)
             return false
         return hasProxy();
