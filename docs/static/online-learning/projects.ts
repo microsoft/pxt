@@ -56,7 +56,8 @@ const _targets: Target[] = [
                 "title": "Lemon Leak",
                 "description": "Stay away from the wild strawberries, or you’ll lose your juice!",
                 "url": "https://arcade.makecode.com/#tutorial:/tutorials/lemon-leak",
-                "img": "/static/online-learning/img/lemon-leak.png"
+                "img": "/static/online-learning/img/lemon-leak.png",
+                "video": "https://youtu.be/2vjLXenKamE"
             },
             {
                 "title": "Maze",
