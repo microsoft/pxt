@@ -134,8 +134,11 @@ function makeLessons() {
         lesson.appendChild(wrapper);
 
         const description = document.createElement("div");
-        const title = document.createElement("h4");
-        title.innerText = l.title;
+        const title = document.createElement("a");
+        title.href = l.url;
+        const header = document.createElement("h4");
+        header.innerText = l.title;
+        title.appendChild(header);
         const time = document.createElement("div");
         time.innerText = formatTime(l.time);
         time.className = "time";
