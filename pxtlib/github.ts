@@ -192,7 +192,7 @@ namespace pxt.github {
             if (hasProxy()) {
                 try {
                     return this.proxyLoadPackageAsync(repopath, tag).then(v => U.clone(v));
-                } catch(e) {
+                } catch (e) {
                     ghProxyHandleException(e);
                 }
             }
@@ -201,7 +201,7 @@ namespace pxt.github {
             return this.githubLoadPackageAsync(repopath, tag);
         }
 
-        private githubLoadPackageAsync(repopath:string, tag:string): Promise<CachedPackage> {
+        private githubLoadPackageAsync(repopath: string, tag: string): Promise<CachedPackage> {
             return tagToShaAsync(repopath, tag)
                 .then(sha => {
                     // cache lookup
@@ -801,13 +801,13 @@ namespace pxt.github {
         if (hasProxy()) {
             try {
                 return await proxyRepoAsync(rid, config);
-            } catch(e) {
+            } catch (e) {
                 ghProxyHandleException(e);
-            }    
+            }
         }
         // try github apis
         return ghGetJsonAsync("https://api.github.com/repos/" + rid.fullName)
-                .then((r: Repo) => mkRepo(r, config, rid.tag));
+            .then((r: Repo) => mkRepo(r, config, rid.tag));
     }
 
     function proxyRepoAsync(rid: ParsedRepo, config: pxt.PackagesConfig): Promise<GitRepo> {
