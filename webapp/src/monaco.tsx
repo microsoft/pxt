@@ -314,6 +314,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected flyout: MonacoFlyout;
     protected insertionSnippet: string;
     protected mobileKeyboardWidget: ShowKeyboardWidget;
+    protected pythonSourceMap: pxtc.SourceMapHelpers;
 
     private loadMonacoPromise: Promise<void>;
     private diagSnapshot: string[];
@@ -595,6 +596,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const tsName = this.currFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)
         return compiler.py2tsAsync()
             .then(res => {
+                if (res.sourceMap) {
+                    const mainPkg = pkg.mainEditorPkg();
+                    const tsFile = mainPkg.files["main.ts"].content
+                    const pyFile = mainPkg.files["main.py"].content
+                    this.pythonSourceMap = pxtc.BuildSourceMapHelpers(res.sourceMap, tsFile, pyFile)
+                }
+                else this.pythonSourceMap = null;
                 // TODO python use success
                 // any errors?
                 if (res.diagnostics && res.diagnostics.length)
@@ -795,6 +803,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.editorViewZones = [];
 
             this.setupFieldEditors();
+            this.editor.onMouseDown((e: monaco.editor.IEditorMouseEvent) => {
+                if (e.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
+                    return;
+                }
+                this.handleGutterClick(e);
+            });
 
             editor.onDidChangeModelContent(e => {
                 // Clear ranges because the model changed
@@ -1005,13 +1019,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 pxt.debug("Skipping unknown monaco field editor '" + name + "'");
             }
         })
-
-        this.editor.onMouseDown((e: monaco.editor.IEditorMouseEvent) => {
-            if (e.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
-                return;
-            }
-            this.handleGutterClick(e);
-        });
     }
 
     public closeFlyout() {
@@ -1113,6 +1120,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let editorArea = document.getElementById("monacoEditorArea");
         let editorDiv = document.getElementById("monacoEditorInner");
         editorArea.insertBefore(loading, editorDiv);
+
+        this.pythonSourceMap = null;
 
         return this.loadMonacoAsync()
             .then(() => {
@@ -1272,7 +1281,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[]): void {
         if (this.isDebugging()) {
             if (!this.breakpoints) {
-                this.breakpoints = new BreakpointCollection(breakpoints);
+                this.breakpoints = new BreakpointCollection(breakpoints, this.pythonSourceMap);
                 this.breakpoints.loadBreakpointsForFile(this.currFile, this.editor);
             }
 
@@ -1405,6 +1414,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         else if (!this.editor) {
             return false;
         }
+
+        if (brk && this.breakpoints && this.breakpoints.getLoadedBreakpoint(brk.breakpointId)) stmt = this.breakpoints.getLoadedBreakpoint(brk.breakpointId) || stmt;
 
         if (this.currFile.getTypeScriptName() !== stmt.fileName && this.isDebugging() && lookupFile(stmt.fileName)) {
             this.parent.setFile(lookupFile(stmt.fileName))
