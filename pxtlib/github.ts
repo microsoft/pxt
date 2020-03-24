@@ -78,6 +78,8 @@ namespace pxt.github {
     export let forceProxy = false;
 
     function hasProxy() {
+        if (forceProxy)
+            return true;
         if (U.isNodeJS)
             return false // bypass proxy for CLI
         if (pxt?.appTarget?.cloud?.noGithubProxy)
@@ -86,8 +88,6 @@ namespace pxt.github {
     }
 
     function useProxy() {
-        if (forceProxy)
-            return true;
         if (token)
             return false
         return hasProxy();
