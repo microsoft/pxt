@@ -598,9 +598,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             .then(res => {
                 if (res.sourceMap) {
                     const mainPkg = pkg.mainEditorPkg();
-                    const tsFile = mainPkg.files["main.ts"].content
-                    const pyFile = mainPkg.files["main.py"].content
-                    this.pythonSourceMap = pxtc.BuildSourceMapHelpers(res.sourceMap, tsFile, pyFile)
+                    const tsFile = mainPkg.files[this.currFile.getFileNameWithExtension("ts")]?.content;
+                    const pyFile = mainPkg.files[this.currFile.getFileNameWithExtension("py")]?.content;
+                    if (tsFile && pyFile) {
+                        this.pythonSourceMap = pxtc.BuildSourceMapHelpers(res.sourceMap, tsFile, pyFile);
+                    }
+                    else {
+                        this.pythonSourceMap = null;
+                    }
                 }
                 else this.pythonSourceMap = null;
                 // TODO python use success
@@ -1159,7 +1164,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (this.breakpoints) {
                     this.breakpoints.loadBreakpointsForFile(file, this.editor);
                     const loc = this.breakpoints.getLocationOfBreakpoint(this.highlightedBreakpoint);
-                    if (loc && loc.fileName === file.getTypeScriptName()) {
+                    if (loc && loc.fileName === file.getTextFileName()) {
                         this.highilightStatementCore(loc, true);
                     }
                 }
@@ -1415,9 +1420,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return false;
         }
 
-        if (brk && this.breakpoints && this.breakpoints.getLoadedBreakpoint(brk.breakpointId)) stmt = this.breakpoints.getLoadedBreakpoint(brk.breakpointId) || stmt;
+        if (brk && this.breakpoints && this.breakpoints.getLoadedBreakpoint(brk.breakpointId)) stmt = this.breakpoints.getLoadedBreakpoint(brk.breakpointId);
 
-        if (this.currFile.getTypeScriptName() !== stmt.fileName && this.isDebugging() && lookupFile(stmt.fileName)) {
+        if (this.currFile.getTextFileName() !== stmt.fileName && this.isDebugging() && lookupFile(stmt.fileName)) {
             this.parent.setFile(lookupFile(stmt.fileName))
         }
         else if (!this.highilightStatementCore(stmt, !!brk)) {
@@ -1705,7 +1710,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         this.highlightedBreakpoint = id;
 
-        if (this.currFile.getTypeScriptName() !== loc.fileName) {
+        if (this.currFile.getTextFileName() !== loc.fileName) {
             const mainPkg = pkg.mainEditorPkg()
             if (lookupFile(loc.fileName)) {
                 this.parent.setFile(lookupFile(loc.fileName))

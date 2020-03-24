@@ -96,9 +96,9 @@ export class BreakpointCollection implements monaco.IDisposable {
         if (!file) return;
 
         const isPython = file.getExtension() === "py";
-        let srcName = file.getTypeScriptName();
+        let srcName = file.getTextFileName();
 
-        if (isPython) srcName = srcName.replace(/\.py$/, ".ts");
+        if (isPython) srcName = file.getFileNameWithExtension("ts");
 
         let fileBreakpoints = this.fileToBreakpoint[srcName];
 
