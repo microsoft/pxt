@@ -43,7 +43,7 @@ var lessons = [
     {
         "title": "MakeCode in the Kitchen",
         "description": "Join Jacqueline, a MakeCode team member as she crafts and codes projects with the Adafruit Circuit Playground Express in her kitchen!",
-        "url": "https://aka.ms/makecodeadafruitstream",
+        "url": "https://aka.ms/makecodecpxstream",
         "img": "/static/online-learning/img/cpx-stream.png",
         "time": 14,
         "days": [Day.Friday]
@@ -51,10 +51,18 @@ var lessons = [
     {
         "title": "Arcade with Steve Isaacs",
         "description": "Learn MakeCode Arcade game development with Mr. Isaacs, an ISTE outstanding teacher and PBS Lead Digital Innovator.",
-        "url": "https://aka.ms/makecodearcadestreamcommunity",
+        "url": "https://www.twitch.tv/mr_isaacs/",
         "img": "/static/online-learning/img/arcade-2-stream.png",
         "time": 6,
         "days": [Day.Monday]
+    },
+    {
+        "title": "DreamSpace HomeSpace",
+        "description": "Join Microsoft Ireland in their HomeSpace tutorial series on your favourite MakeCode platforms: micro:bit, Arcade and Minecraft.",
+        "url": "https://aka.ms/dshomespace",
+        "img": "/static/online-learning/img/dreamspace-homespace.jpg",
+        "time": 6,
+        "days": [Day.Monday, Day.Wednesday, Day.Friday]
     }
 ];
 makeLessons();
@@ -118,8 +126,11 @@ function makeLessons() {
         wrapper.appendChild(img);
         lesson.appendChild(wrapper);
         var description = document.createElement("div");
-        var title = document.createElement("h4");
-        title.innerText = l.title;
+        var title = document.createElement("a");
+        title.href = l.url;
+        var header = document.createElement("h4");
+        header.innerText = l.title;
+        title.appendChild(header);
         var time = document.createElement("div");
         time.innerText = formatTime(l.time);
         time.className = "time";

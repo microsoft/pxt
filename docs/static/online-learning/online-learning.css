@@ -208,7 +208,7 @@ h1 {
     margin-top: 2rem;
 }
 
-.banners a {
+.banners > div > a {
     display: flex;
     flex-direction: row;
     margin-bottom: 4rem;
@@ -239,6 +239,10 @@ h1 {
 
 .banners img {
     width: 100%;
+}
+
+.banners .startLink {
+    margin-top: 1rem;
 }
 
 div#mixer {
