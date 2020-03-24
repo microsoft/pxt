@@ -121,7 +121,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             const fn = file.name.replace(/\.[a-z]+$/, '');
             const previewUrl = isTutorialMd
                 && `#tutorial:${header.id}:${fn}`;
-            const ghid = pxt.github.parseRepoId(header.githubId)
+            const ghid = usesGitHub && pxt.github.parseRepoId(header.githubId)
             const shareUrl = isTutorialMd && ghid
                 && pxt.appTarget.appTheme.embedUrl
                 && `${pxt.appTarget.appTheme.embedUrl}#tutorial:github:${ghid.fullName}/${fn}`

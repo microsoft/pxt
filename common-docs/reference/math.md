@@ -99,6 +99,40 @@ let minval = Math.min(0, 1);
 let maxval = Math.max(8, 2);
 ```
 
+## Round
+
+If a number has a fractional part, you can make the number change to be the closest, next integer value. This is called _rounding_. Rounding the number `6.78` will make it be `7` and rounding `9.3` will give you `9`. If a number has a fractional part greater than or equal to `0.5`, the number will round up to the next whole integer value with the higher value. Otherwise, it will round down to the next lowest integer value.
+
+For negative numbers, they round toward the absolute value (the absolute value of `-8` is `8`) of the number. So, `-5.23` rounds to `-5` and `-2.68` rounds to `-3`.
+
+```block
+let rounded = Math.round(5.5)
+```
+
+## Ceiling
+
+To make a number change to the next higher whole number (integer), get the number's _ceiling_ value. The ceiling value for `1.234` is `2` since that is the next higher whole number. For the negative number of `-3.63`, its ceiling is `-3` since that's the next higher whole number.
+
+```block
+let nextup = Math.ceil(8.435)
+```
+
+## Floor
+
+To make a number change to the next lower whole number (integer), get the number's _floor_ value. The floor value for `8.76` is `8` since that is the next lower whole number. For the negative number of `6.17`, its floor is `-7` since that's the next lower whole number.
+
+```block
+let nextdown = Math.floor(4.97)
+```
+
+## Truncate
+
+The fractional part of a number is removed by _truncating_ it. If a number has the value `54.234` its truncated value is `54`. Truncation works the same way for a negative number. The truncated value of `-34.913` is `-34`.
+
+```block
+let nonfraction = Math.trunc(87.23455)
+```
+
 ## Random value
 
 Make up any number from a minimum value to a some maximum value. If you want a random number up to

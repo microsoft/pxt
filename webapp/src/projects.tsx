@@ -810,7 +810,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 break;
             case "template":
             default:
-                if (youTubeId) icon = "video camera";
+                if (youTubeId) icon = "youtube";
                 break;
         }
         return this.isLink() && type != "example" // TODO (shakao)  migrate forumurl to otherAction json in md
@@ -832,8 +832,8 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     protected getActionCard(text: string, type: string, onClick: any, autoFocus?: boolean, action?: pxt.CodeCardAction, key?: string): JSX.Element {
-        let editor = this.getActionEditor(type, action);
-        let title = this.getActionTitle(editor);
+        const editor = this.getActionEditor(type, action);
+        const title = this.getActionTitle(editor);
         return <div className={`card-action ui items ${editor || ""}`} key={key}>
             {this.getActionIcon(onClick, type, editor)}
             {title && <div className="card-action-title">{title}</div>}
@@ -869,6 +869,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     handleOpenForumUrlInEditor() {
+        pxt.tickEvent('projects.actions.forum', undefined, { interactiveConsent: true });
         const { url } = this.props;
         pxt.discourse.extractSharedIdFromPostUrl(url)
             .then(projectId => {
@@ -882,6 +883,13 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             .catch(core.handleNetworkError)
     }
 
+    isYouTubeOnline(): boolean {
+        const { youTubeId } = this.props;
+        // check that youtube is reachable
+        return youTubeId &&
+            this.getData("ping:https://www.youtube.com/favicon.ico");
+    }
+
     componentDidMount() {
         // autofocus on linked action
         if (this.linkRef && this.linkRef.current) {
@@ -890,7 +898,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     renderCore() {
-        const { name, description, imageUrl, largeImageUrl, videoUrl,
+        const { name, description, largeImageUrl, videoUrl,
             youTubeId, buttonLabel, cardType, tags, otherActions } = this.props;
 
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
@@ -934,6 +942,20 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                         // TODO (shakao) migrate forumurl to otherAction json in md
                         this.getActionCard(lf("Open in Editor"), "example", this.handleOpenForumUrlInEditor)
                     }
+                    {!!cardType && youTubeId && this.isYouTubeOnline() &&
+                        // show youtube card
+                        <div className="card-action ui items youtube">
+                            <sui.Link role="button" className="link button attached" icon="youtube" href={`https://youtu.be/${youTubeId}`} target="_blank" tabIndex={-1} />
+                            <div className="card-action-title">YouTube</div>
+                            <sui.Link
+                                href={`https://youtu.be/${youTubeId}`}
+                                refCallback={this.linkRef}
+                                target="_blank"
+                                text={lf("Play Video")}
+                                className={`button attached approve large`}
+                                title={lf("Open YouTube video in new window")}
+                            />
+                        </div>}
                 </div>
             </div>
         </div>;
