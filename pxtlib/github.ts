@@ -193,7 +193,7 @@ namespace pxt.github {
             // try using github proxy first
             if (hasProxy()) {
                 try {
-                    return this.proxyLoadPackageAsync(repopath, tag).then(v => U.clone(v));
+                    return await this.proxyLoadPackageAsync(repopath, tag).then(v => U.clone(v));
                 } catch (e) {
                     ghProxyHandleException(e);
                 }
