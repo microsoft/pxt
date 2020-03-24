@@ -200,7 +200,7 @@ namespace pxt.github {
             }
 
             // try using github apis
-            return this.githubLoadPackageAsync(repopath, tag);
+            return await this.githubLoadPackageAsync(repopath, tag);
         }
 
         private githubLoadPackageAsync(repopath: string, tag: string): Promise<CachedPackage> {
@@ -808,8 +808,8 @@ namespace pxt.github {
             }
         }
         // try github apis
-        return ghGetJsonAsync("https://api.github.com/repos/" + rid.fullName)
-            .then((r: Repo) => mkRepo(r, config, rid.tag));
+        const r = await ghGetJsonAsync("https://api.github.com/repos/" + rid.fullName)
+        return mkRepo(r, config, rid.tag);
     }
 
     function proxyRepoAsync(rid: ParsedRepo, config: pxt.PackagesConfig): Promise<GitRepo> {
