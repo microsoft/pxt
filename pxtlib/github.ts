@@ -80,7 +80,7 @@ namespace pxt.github {
     function hasProxy() {
         if (U.isNodeJS)
             return false // bypass proxy for CLI
-        if (pxt.appTarget && pxt.appTarget.cloud && pxt.appTarget.cloud.noGithubProxy)
+        if (pxt?.appTarget?.cloud?.noGithubProxy)
             return false // target requests no proxy
         return true
     }
