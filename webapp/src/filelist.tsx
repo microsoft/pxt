@@ -124,7 +124,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             const ghid = usesGitHub && pxt.github.parseRepoId(header.githubId)
             const shareUrl = isTutorialMd && ghid
                 && pxt.appTarget.appTheme.embedUrl
-                && `${pxt.appTarget.appTheme.embedUrl}#tutorial:github:${ghid.fullName}/${fn}`
+                && `${window.location.origin}${window.location.pathname || ""}#tutorial:github:${ghid.fullName}/${fn}`
             const lang = pxt.Util.userLanguage();
             const localized = `_locales/${lang}/${file.name}`;
             const addLocale = isTutorialMd
