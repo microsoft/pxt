@@ -3470,16 +3470,16 @@ export class ProjectView
         this.setState({ greenScreen: greenScreenOn });
     }
 
-    toggleKeyboardAccessibility() {
-        const keyboardAccessibilityOn = !this.state.keyboardAccessibility;
-        if (keyboardAccessibilityOn) {
+    toggleAccessibleBlocks() {
+        const accessibleBlocksOn = !this.state.accessibleBlocks;
+        if (accessibleBlocksOn) {
             Blockly.navigation.enableKeyboardAccessibility();
         } else {
             Blockly.navigation.disableKeyboardAccessibility();
         }
 
-        pxt.tickEvent("app.keyboardaccessibility", { on: keyboardAccessibilityOn ? 1 : 0 });
-        this.setState({ keyboardAccessibility: keyboardAccessibilityOn });
+        pxt.tickEvent("app.accessibleblocks", { on: accessibleBlocksOn ? 1 : 0 });
+        this.setState({ accessibleBlocks: accessibleBlocksOn });
     }
 
 

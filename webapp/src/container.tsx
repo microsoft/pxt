@@ -95,14 +95,14 @@ class DocsMenuItem extends sui.StatelessUIElement<DocsMenuItemProps> {
 export interface SettingsMenuProps extends ISettingsProps {
     highContrast: boolean;
     greenScreen: boolean;
-    keyboardAccessibility: boolean;
+    accessibleBlocks: boolean;
 }
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface SettingsMenuState {
     highContrast?: boolean;
     greenScreen?: boolean;
-    keyboardAccessibility?: boolean;
+    accessibleBlocks?: boolean;
 }
 
 export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenuState> {
@@ -122,7 +122,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
-        this.toggleKeyboardAccessibility = this.toggleKeyboardAccessibility.bind(this);
+        this.toggleAccessibleBlocks = this.toggleAccessibleBlocks.bind(this);
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showShareDialog = this.showShareDialog.bind(this);
         this.pair = this.pair.bind(this);
@@ -190,9 +190,9 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.props.parent.toggleGreenScreen();
     }
 
-    toggleKeyboardAccessibility() {
-        pxt.tickEvent("menu.togglekeyboardaccessibility", undefined, { interactiveConsent: true });
-        this.props.parent.toggleKeyboardAccessibility();
+    toggleAccessibleBlocks() {
+        pxt.tickEvent("menu.toggleaccessibleblocks", undefined, { interactiveConsent: true });
+        this.props.parent.toggleAccessibleBlocks();
     }
 
     showResetDialog() {
@@ -241,8 +241,8 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         if (nextProps.greenScreen !== undefined) {
             newState.greenScreen = nextProps.greenScreen;
         }
-        if (nextProps.keyboardAccessibility !== undefined) {
-            newState.keyboardAccessibility = nextProps.keyboardAccessibility;
+        if (nextProps.accessibleBlocks !== undefined) {
+            newState.accessibleBlocks = nextProps.accessibleBlocks;
         }
         if (Object.keys(newState).length > 0) this.setState(newState)
     }
@@ -250,11 +250,11 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     shouldComponentUpdate(nextProps: SettingsMenuProps, nextState: SettingsMenuState, nextContext: any): boolean {
         return this.state.highContrast != nextState.highContrast
             || this.state.greenScreen != nextState.greenScreen
-            || this.state.keyboardAccessibility != nextState.keyboardAccessibility;
+            || this.state.accessibleBlocks != nextState.accessibleBlocks;
     }
 
     renderCore() {
-        const { highContrast, greenScreen, keyboardAccessibility } = this.state;
+        const { highContrast, greenScreen, accessibleBlocks } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const packages = pxt.appTarget.cloud && !!pxt.appTarget.cloud.packages;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
@@ -286,7 +286,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} /> : undefined}
-            {targetTheme.keyboardAccessibility ? <sui.Item role="menuitem" text={keyboardAccessibility ? lf("Keyboard Accessibility Off") : lf("Keyboard Accessibility On")} onClick={this.toggleKeyboardAccessibility} /> : undefined}
+            {targetTheme.accessibleBlocks ? <sui.Item role="menuitem" text={accessibleBlocks ? lf("Accessibile Blocks Off") : lf("Accessibile Blocks On")} onClick={this.toggleAccessibleBlocks} /> : undefined}
             {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} /> : undefined}
             {docItems && renderDocItems(this.props.parent, docItems, "ui mobile only inherit")}
             {githubUser ? <div className="ui divider"></div> : undefined}
@@ -510,7 +510,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const { debugging, home, header, highContrast, greenScreen, keyboardAccessibility, simState, tutorialOptions } = this.props.parent.state;
+        const { debugging, home, header, highContrast, greenScreen, accessibleBlocks, simState, tutorialOptions } = this.props.parent.state;
         if (home) return <div />; // Don't render if we're on the home screen
 
         const targetTheme = pxt.appTarget.appTheme;
@@ -581,7 +581,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
             <div className="right menu">
                 {debugging ? <sui.ButtonMenuItem className="exit-debugmode-btn" role="menuitem" icon="external" text={lf("Exit Debug Mode")} textClass="landscape only" onClick={this.toggleDebug} /> : undefined}
                 {docMenu ? <container.DocsMenu parent={this.props.parent} editor={editor} /> : undefined}
-                {sandbox || inTutorial || debugging ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} keyboardAccessibility={keyboardAccessibility} />}
+                {sandbox || inTutorial || debugging ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} accessibleBlocks={accessibleBlocks} />}
                 {showCloud ? <cloud.UserMenu parent={this.props.parent} /> : undefined}
                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} /> : undefined}
                 {inTutorial && tutorialReportId ? <sui.ButtonMenuItem className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report Abuse")} textClass="landscape only" onClick={this.showReportAbuse} /> : undefined}
