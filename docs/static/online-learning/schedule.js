@@ -11,7 +11,7 @@ var lessons = [
     {
         "title": "Beginner micro:bit",
         "description": "Learn the basics of physical computing with the micro:bit!  Peli, a member of the MakeCode Team will take you through some beginner-level coding tutorials.",
-        "url": "https://aka.ms/makecodemicrobitstream",
+        "url": "https://mixer.com/makecode",
         "img": "/static/online-learning/img/microbit-stream.jpg",
         "time": 9,
         "days": [Day.All]
@@ -19,7 +19,7 @@ var lessons = [
     {
         "title": "Beginner Minecraft",
         "description": "If you have access to Minecraft: Education Edition at home, learn how to programmatically spawn mobs, control robots, and build structures! Peli, a member of the MakeCode Team will take you through some beginner-level coding tutorials.",
-        "url": "https://aka.ms/makecodeminecraftstream",
+        "url": "https://mixer.com/makecode",
         "img": "/static/online-learning/img/minecraft-stream.jpg",
         "time": 10,
         "days": [Day.All]
@@ -27,7 +27,7 @@ var lessons = [
     {
         "title": "Beginner Arcade",
         "description": "Learn the basics of game development with Peli, a member of the MakeCode Team who will take you through some beginner-level coding tutorials.",
-        "url": "https://aka.ms/makecodearcadestreambeginner",
+        "url": "https://mixer.com/makecode",
         "img": "/static/online-learning/img/arcade-2-stream.png",
         "time": 11,
         "days": [Day.All]
@@ -35,7 +35,7 @@ var lessons = [
     {
         "title": "Advanced Arcade",
         "description": "Create new games (or recreate old ones) with a rotating cast of developers from the MakeCode team, including Richard, Shannon, Daryl, and Joey",
-        "url": "https://aka.ms/makecodearcadestream",
+        "url": "https://mixer.com/makecode",
         "img": "/static/online-learning/img/arcade-stream.jpg",
         "time": 13,
         "days": [Day.All]
@@ -43,7 +43,7 @@ var lessons = [
     {
         "title": "MakeCode in the Kitchen",
         "description": "Join Jacqueline, a MakeCode team member as she crafts and codes projects with the Adafruit Circuit Playground Express in her kitchen!",
-        "url": "https://aka.ms/makecodeadafruitstream",
+        "url": "https://mixer.com/makecode",
         "img": "/static/online-learning/img/cpx-stream.png",
         "time": 14,
         "days": [Day.Friday]
@@ -51,7 +51,7 @@ var lessons = [
     {
         "title": "Arcade with Steve Isaacs",
         "description": "Learn MakeCode Arcade game development with Mr. Isaacs, an ISTE outstanding teacher and PBS Lead Digital Innovator.",
-        "url": "https://aka.ms/makecodearcadestreamcommunity",
+        "url": "https://mixer.com/makecode",
         "img": "/static/online-learning/img/arcade-2-stream.png",
         "time": 6,
         "days": [Day.Monday]
