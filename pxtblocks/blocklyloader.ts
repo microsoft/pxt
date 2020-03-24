@@ -2378,6 +2378,46 @@ namespace pxt.blocks {
 
         msg.FUNCTIONS_CALL_TITLE = functionCall.block["FUNCTIONS_CALL_TITLE"];
         installBuiltinHelpInfo(functionCallId);
+        installBuiltinHelpInfo("function_call_output");
+
+        const functionReturnId = "function_return";
+        Blockly.Blocks[functionReturnId] = {
+            init: function() {
+                initReturnStatement(this);
+            },
+            onchange: function (event) {
+                const block = this as Blockly.Block;
+                if (!block.workspace || (block.workspace as Blockly.WorkspaceSvg).isFlyout) {
+                    // Block is deleted or is in a flyout.
+                    return;
+                }
+
+                const thisWasCreated =
+                    event.type === Blockly.Events.BLOCK_CREATE && event.ids.indexOf(block.id) != -1;
+                const thisWasDragged =
+                    event.type === Blockly.Events.END_DRAG && event.allNestedIds.indexOf(block.id) != -1;
+
+                if (thisWasCreated || thisWasDragged) {
+                    const rootBlock = block.getRootBlock();
+                    const isTopBlock = rootBlock.type === functionReturnId;
+
+                    if (isTopBlock || rootBlock.previousConnection != null) {
+                        // Statement is by itself on the workspace, or it is slotted into a
+                        // stack of statements that is not attached to a function or event. Let
+                        // it exist until it is connected to a function
+                        return;
+                    }
+
+                    if (rootBlock.type !== functionDefinitionId) {
+                        // Not a function block, so disconnect
+                        Blockly.Events.setGroup(event.group);
+                        block.previousConnection.disconnect();
+                        Blockly.Events.setGroup(false);
+                    }
+                }
+            }
+        };
+        installBuiltinHelpInfo(functionReturnId);
 
         Blockly.Procedures.flyoutCategory = function (workspace: Blockly.WorkspaceSvg) {
             let xmlList: HTMLElement[] = [];
@@ -2500,12 +2540,42 @@ namespace pxt.blocks {
         const oldFlyout = Blockly.Functions.flyoutCategory;
         Blockly.Functions.flyoutCategory = (workspace) => {
             const elems = oldFlyout(workspace);
+
+            if (elems.length > 1) {
+                let returnBlock = mkReturnStatementBlock();
+                // Insert after the "make a function" button
+                elems.splice(1, 0, returnBlock as HTMLElement);
+            }
+
+            const functionsWithReturn = Blockly.Functions.getAllFunctionDefinitionBlocks(workspace)
+                .filter(def => def.getDescendants(false).some(child => child.type === "function_return" && child.getInputTargetBlock("RETURN_VALUE")))
+                .map(def => def.getField("function_name").getText())
+
             const headingLabel = createFlyoutHeadingLabel(lf("Functions"),
                 pxt.toolbox.getNamespaceColor('functions'),
                 pxt.toolbox.getNamespaceIcon('functions'),
                 'blocklyFlyoutIconfunctions');
             elems.unshift(headingLabel);
-            return elems;
+
+            const res: Element[] = [];
+
+            for (const e of elems) {
+                res.push(e);
+                if (e.getAttribute("type") === "function_call") {
+                    const mutation = e.children.item(0);
+
+                    if (mutation) {
+                        const name = mutation.getAttribute("name");
+                        if (functionsWithReturn.some(n => n === name)) {
+                            const clone = e.cloneNode(true) as HTMLElement;
+                            clone.setAttribute("type", "function_call_output");
+                            res.push(clone);
+                        }
+                    }
+                }
+            }
+
+            return res;
         };
 
         // Configure function editor argument icons
@@ -2788,6 +2858,20 @@ namespace pxt.blocks {
         fieldBlock.appendChild(field);
 
         return fieldBlock;
+    }
+
+    function mkReturnStatementBlock() {
+        const block = document.createElement("block");
+        block.setAttribute("type", "function_return");
+
+        const value = document.createElement("value");
+        value.setAttribute("name", "RETURN_VALUE");
+        block.appendChild(value);
+
+        const shadow = mkFieldBlock("math_number", "NUM", "0", true);
+        value.appendChild(shadow);
+
+        return block;
     }
 
     let jresIconCache: Map<string> = {};
