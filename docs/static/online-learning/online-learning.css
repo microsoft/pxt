@@ -242,9 +242,10 @@ h1 {
 }
 
 div#mixer {
-    width: 100%;
+    width: calc(100% - 10rem);
+    margin: auto;
     height: 0;
-    padding-bottom: 56%; /* Change this till it fits the dimensions of your video */
+    padding-bottom: 45%; /* Change this till it fits the dimensions of your video */
     position: relative;
 }
 
