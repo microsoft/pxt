@@ -118,8 +118,11 @@ function makeLessons() {
         wrapper.appendChild(img);
         lesson.appendChild(wrapper);
         var description = document.createElement("div");
-        var title = document.createElement("h4");
-        title.innerText = l.title;
+        var title = document.createElement("a");
+        title.href = l.url;
+        var header = document.createElement("h4");
+        header.innerText = l.title;
+        title.appendChild(header);
         var time = document.createElement("div");
         time.innerText = formatTime(l.time);
         time.className = "time";

@@ -82,19 +82,22 @@ var _resources = [
         "title": "Assignments and Classroom Management",
         "description": "Use Microsoft Teams, Google Classroom, or Canvas to organize MakeCode lessons.",
         "url": "https://makecode.microbit.org/online-learning",
-        "img": "/static/blog/teams/teams-admin.png"
+        "img": "/static/blog/teams/teams-admin.png",
+        "action": "Get started 🡢"
     },
     {
         "title": "Free Online Curriculum",
         "description": "MakeCode provides a great amount of free, online curriculum that is available for Educators to use.",
         "url": "https://makecode.com/online-learning/resources",
-        "img": "/static/online-learning/img/courses.jpg"
+        "img": "/static/online-learning/img/courses.jpg",
+        "action": "Get started 🡢"
     },
     {
         "title": "MakeCode with Flipgrid",
         "description": "Flipgrid is an easy to use video platform that can be used for students to share their MakeCode projects with their teacher and classmates.  Use some of these MakeCode Flipgrid topics for your class!",
         "url": "https://makecode.com/online-learning/flipgrid",
-        "img": "/static/online-learning/img/flipgrid.png"
+        "img": "/static/online-learning/img/flipgrid.png",
+        "action": "Get started 🡢"
     }
 ];
 makeProjects();
@@ -149,6 +152,13 @@ function makeCardRow(items, className, header) {
             video.target = "_blank";
             video.innerText = "Watch Lesson";
             link.appendChild(video);
+        }
+        else if (p.action) {
+            var projectAction = document.createElement("a");
+            projectAction.href = p.url;
+            projectAction.className = "startLink";
+            projectAction.innerText = p.action;
+            projectDescription.appendChild(projectAction);
         }
         project.appendChild(link);
         projects.appendChild(project);
