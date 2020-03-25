@@ -154,7 +154,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
     handleOpenNewTab() {
         pxt.tickEvent("scriptmanager.newtab", undefined, { interactiveConsent: true });
         const header = this.getSelectedHeader();
-        this.props.parent.openDependentEditor(header);
+        this.props.parent.openNewTab(header, false);
     }
 
     handleDuplicate() {

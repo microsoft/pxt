@@ -326,7 +326,7 @@ namespace pxt.editor {
         pushScreenshotHandler(handler: (msg: ScreenshotData) => void): void;
         popScreenshotHandler(): void;
 
-        openDependentEditor(header: pxt.workspace.Header): void;
+        openNewTab(header: pxt.workspace.Header, dependent: boolean): void;
         createGitHubRepositoryAsync(): Promise<void>;
     }
 
