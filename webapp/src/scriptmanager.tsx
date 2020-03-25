@@ -341,10 +341,17 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             if (Object.keys(selected).length > 0) {
                 if (Object.keys(selected).length == 1) {
                     headerActions.push(<sui.Button key="edit" icon="edit outline" className="icon"
-                        text={lf("Open")} textClass="landscape only" title={lf("Open Project")} onClick={this.handleOpen} />);
+                        text={lf("Open")} textClass="landscape only" title={lf("Open Project")} onClick={this.handleOpen}>
+                        {openDependent && <div className="ui floating dropdown icon button">
+                            <i className="dropdown icon"></i>
+                            <div className="menu">
+                                <sui.Item key="editnew" icon="external alternate" className="icon"
+                                    text={lf("New Tab")} title={lf("Open Project in a new tab")} onClick={this.handleOpenNewTab} />
+                            </div>
+                        </div>}
+                    </sui.Button>);
                     if (openDependent)
-                        headerActions.push(<sui.Button key="editnew" icon="external alternate" className="icon"
-                            text={lf("New Tab")} textClass="landscape only" title={lf("Open Project in a new tab")} onClick={this.handleOpenNewTab} />);
+                        headerActions.push();
                     headerActions.push(<sui.Button key="clone" icon="clone outline" className="icon"
                         text={lf("Duplicate")} textClass="landscape only" title={lf("Duplicate Project")} onClick={this.handleDuplicate} />);
                 }
