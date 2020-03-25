@@ -45,7 +45,8 @@ export class File implements pxt.editor.IFile {
     }
 
     getFileNameWithExtension(ext: string) {
-        return this.getTextFileName().replace(this.getExtension(), ext);
+        const base = this.getTextFileName();
+        return base.substring(0, base.length - this.getExtension().length) + ext;
     }
 
     getExtension() {

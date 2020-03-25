@@ -1420,7 +1420,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return false;
         }
 
-        if (brk && this.breakpoints && this.breakpoints.getLoadedBreakpoint(brk.breakpointId)) stmt = this.breakpoints.getLoadedBreakpoint(brk.breakpointId);
+        if (brk && this.breakpoints?.getLoadedBreakpoint(brk.breakpointId)) stmt = this.breakpoints.getLoadedBreakpoint(brk.breakpointId);
 
         if (this.currFile.getTextFileName() !== stmt.fileName && this.isDebugging() && lookupFile(stmt.fileName)) {
             this.parent.setFile(lookupFile(stmt.fileName))
