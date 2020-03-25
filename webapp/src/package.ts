@@ -39,9 +39,14 @@ export class File implements pxt.editor.IFile {
         return this.epkg.getPkgId() + "/" + this.name
     }
 
-    getTypeScriptName() {
+    getTextFileName() {
         if (this.epkg.isTopLevel()) return this.name
         else return "pxt_modules/" + this.epkg.getPkgId() + "/" + this.name
+    }
+
+    getFileNameWithExtension(ext: string) {
+        const base = this.getTextFileName();
+        return base.substring(0, base.length - this.getExtension().length) + ext;
     }
 
     getExtension() {

@@ -124,7 +124,7 @@ namespace pxt.vs {
             lineNumbersMinChars: 3,
             formatOnPaste: true,
             folding: hasFieldEditors,
-            glyphMargin: hasFieldEditors,
+            glyphMargin: hasFieldEditors || pxt.appTarget.appTheme.debugger,
             minimap: {
                 enabled: false
             },
