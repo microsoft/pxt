@@ -64,7 +64,8 @@ const _targets: Target[] = [
                 "title": "Maze",
                 "description": "Learn the basics of how to create a simple maze game",
                 "url": "https://arcade.makecode.com/#tutorial:/tutorials/maze",
-                "img": "/static/online-learning/img/maze.png"
+                "img": "/static/online-learning/img/maze.png",
+                "video": "https://youtu.be/_sXUtLg7upA"
             }
         ]
     },
@@ -103,21 +104,21 @@ const _resources: Project[] = [
         "description": "Use Microsoft Teams, Google Classroom, or Canvas to organize MakeCode lessons.",
         "url": "https://makecode.microbit.org/online-learning",
         "img": "/static/blog/teams/teams-admin.png",
-        "action" : "Get started 🡢"
+        "action" : "Get started"
     },
     {
         "title": "Free Online Curriculum",
         "description": "MakeCode provides a great amount of free, online curriculum that is available for Educators to use.",
         "url": "https://makecode.com/online-learning/resources",
         "img": "/static/online-learning/img/courses.jpg",
-        "action" : "Get started 🡢"
+        "action" : "Get started"
     },
     {
         "title": "MakeCode with Flipgrid",
         "description": "Flipgrid is an easy to use video platform that can be used for students to share their MakeCode projects with their teacher and classmates.  Use some of these MakeCode Flipgrid topics for your class!",
         "url": "https://makecode.com/online-learning/flipgrid",
         "img": "/static/online-learning/img/flipgrid.png",
-        "action" : "Get started 🡢"
+        "action" : "Get started"
     }
 ]
 
