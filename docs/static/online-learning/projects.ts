@@ -37,7 +37,8 @@ const _targets: Target[] = [
                 "title": "Rock Paper Scissors",
                 "description": "Make the Rock-Paper-Scissors game on your micro:bit and challenge your friends!",
                 "url": "https://makecode.microbit.org/#tutorial:/projects/rock-paper-scissors",
-                "img": "/static/online-learning/img/rock-paper-scissors.png"
+                "img": "/static/online-learning/img/rock-paper-scissors.png",
+                "video": "https://youtu.be/94lLBB3b1kU"
             }
         ]
     },
