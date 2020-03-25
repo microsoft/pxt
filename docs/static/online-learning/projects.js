@@ -74,7 +74,8 @@ var _targets = [
                 "title": "Flower Trail",
                 "description": "Give your player magical fairy powers and lay out a trail of flowers as your player walks around in Minecraft.",
                 "url": "https://minecraft.makecode.com/tutorials/flower-trail",
-                "img": "/static/online-learning/img/flower-trail.png"
+                "img": "/static/online-learning/img/flower-trail.png",
+                "video": "https://youtu.be/Z4ec5_EjK3I"
             }
         ]
     }
