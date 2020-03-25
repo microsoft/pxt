@@ -211,11 +211,18 @@ h1 {
 .banners > div > a {
     display: flex;
     flex-direction: row;
-    margin-bottom: 4rem;
+    margin-bottom: 2rem;
     color: #000;
-    height: 12rem;
+    height: 14rem;
+    padding: 1rem;
 }
 
+.banners > div > a:hover {
+    background-color: #fcf6fb;
+    border: 0.1rem solid #eee;
+    border-radius: 0.5rem;
+    padding: 0.9rem;
+}
 .banners > div:nth-child(even) a {
     flex-direction: row-reverse;
 }
