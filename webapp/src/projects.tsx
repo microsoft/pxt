@@ -185,7 +185,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
             <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
                 <div className="ui heading">
-                    <div className="column " style={{ zIndex: 1 }}>
+                    <div className="column" style={{ zIndex: 1 }}>
                         {targetTheme.scriptManager ? <h2 role="button" className="ui header myproject-header" title={lf("View all projects")} tabIndex={0}
                             onClick={this.showScriptManager} onKeyDown={sui.fireClickOnEnter}>
                             {lf("My Projects")}
