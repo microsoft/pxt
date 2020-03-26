@@ -103,7 +103,8 @@ function gen() {
             }
 
             console.log(value)
-            fs.writeFileSync(`${__dirname}/../../docs/static/online-learning/${lesson.title}.ics`, value)
+            const fn = lesson.title.replace(/\s+/g, '').toLowerCase()
+            fs.writeFileSync(`${__dirname}/../../docs/static/online-learning/${fn}.ics`, value)
         })
     })
 }

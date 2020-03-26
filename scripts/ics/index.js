@@ -90,7 +90,8 @@ function gen() {
                 return;
             }
             console.log(value);
-            fs.writeFileSync(__dirname + "/" + lesson.title + ".ics", value);
+            var fn = lesson.title.replace(/\s+/g, '').toLowerCase();
+            fs.writeFileSync(__dirname + "/../../docs/static/online-learning/" + fn + ".ics", value);
         });
     });
 }

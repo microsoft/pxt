@@ -1,0 +1,22 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+CALSCALE:GREGORIAN
+PRODID:Microsoft MakeCode
+METHOD:PUBLISH
+X-PUBLISHED-TTL:PT1H
+BEGIN:VEVENT
+UID:62d42b66-2491-476d-aa94-11b2ca835c51
+SUMMARY:Beginner Minecraft
+DTSTAMP:20200326T011900Z
+DTSTART:20200326T170000Z
+DESCRIPTION:If you have access to Minecraft: Education Edition at home\, le
+	arn how to programmatically spawn mobs\, control robots\, and build struct
+	ures! Peli\, a member of the MakeCode Team will take you through some begi
+	nner-level coding tutorials.
+URL:https://mixer.com/MakeCode
+STATUS:CONFIRMED
+X-MICROSOFT-CDO-BUSYSTATUS:BUSY
+RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;INTERVAL=1
+DURATION:PT30M
+END:VEVENT
+END:VCALENDAR
