@@ -5,9 +5,9 @@ PRODID:Microsoft MakeCode
 METHOD:PUBLISH
 X-PUBLISHED-TTL:PT1H
 BEGIN:VEVENT
-UID:73a3ac31-8449-47cc-8e37-bf01990c5eb1
+UID:2ea51642-0eab-4ce6-b579-8581ada3c92c
 SUMMARY:Advanced Arcade
-DTSTAMP:20200326T030500Z
+DTSTAMP:20200326T030700Z
 DTSTART:20200325T200000Z
 DESCRIPTION:Create new games (or recreate old ones) with a rotating cast of
 	 developers from the MakeCode team\, including Richard\, Shannon\, Daryl\,

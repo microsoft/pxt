@@ -71,6 +71,7 @@ var lessons = [
         "url": "https://aka.ms/dshomespace",
         "img": "/static/online-learning/img/dreamspace-homespace.jpg",
         "time": 6,
+        "startDay": 30,
         "days": [Day.Monday, Day.Wednesday, Day.Friday]
     }
 ];

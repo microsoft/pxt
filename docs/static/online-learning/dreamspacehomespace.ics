@@ -5,10 +5,10 @@ PRODID:Microsoft MakeCode
 METHOD:PUBLISH
 X-PUBLISHED-TTL:PT1H
 BEGIN:VEVENT
-UID:5ad34103-3017-4235-b7c6-65f3d39ea03a
+UID:2e210187-8099-47df-b296-42b3427df1a4
 SUMMARY:DreamSpace HomeSpace
-DTSTAMP:20200326T030500Z
-DTSTART:20200328T130000Z
+DTSTAMP:20200326T030700Z
+DTSTART:20200330T130000Z
 DESCRIPTION:Join Microsoft Ireland in their HomeSpace tutorial series on yo
 	ur favourite MakeCode platforms: micro:bit\, Arcade and Minecraft.
 URL:https://aka.ms/dshomespace

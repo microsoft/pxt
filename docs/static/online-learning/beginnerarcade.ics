@@ -5,9 +5,9 @@ PRODID:Microsoft MakeCode
 METHOD:PUBLISH
 X-PUBLISHED-TTL:PT1H
 BEGIN:VEVENT
-UID:ef9a22dc-11be-448d-85be-512504f9d981
+UID:2f15ec1b-10a9-4bcc-81bb-1be6768038f4
 SUMMARY:Beginner Arcade
-DTSTAMP:20200326T030500Z
+DTSTAMP:20200326T030700Z
 DTSTART:20200325T180000Z
 DESCRIPTION:Learn the basics of game development with Peli\, a member of th
 	e MakeCode Team who will take you through some beginner-level coding tutor

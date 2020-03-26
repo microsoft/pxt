@@ -5,9 +5,9 @@ PRODID:Microsoft MakeCode
 METHOD:PUBLISH
 X-PUBLISHED-TTL:PT1H
 BEGIN:VEVENT
-UID:d287bb2b-2b19-4755-a217-d6e86cd3ece8
+UID:9e200086-7b9f-4137-88d0-0c2a739d46b7
 SUMMARY:Beginner micro:bit
-DTSTAMP:20200326T030500Z
+DTSTAMP:20200326T030700Z
 DTSTART:20200325T160000Z
 DESCRIPTION:Learn the basics of physical computing with the micro:bit!  Pel
 	i\, a member of the MakeCode Team will take you through some beginner-leve
