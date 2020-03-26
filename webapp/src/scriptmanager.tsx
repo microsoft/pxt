@@ -47,6 +47,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         this.handleDelete = this.handleDelete.bind(this);
         this.handleOpen = this.handleOpen.bind(this);
         this.handleOpenNewTab = this.handleOpenNewTab.bind(this);
+        this.handleOpenNewLinkedTab = this.handleOpenNewLinkedTab.bind(this);
         this.handleDuplicate = this.handleDuplicate.bind(this);
         this.handleSwitchView = this.handleSwitchView.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
@@ -155,6 +156,12 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         pxt.tickEvent("scriptmanager.newtab", undefined, { interactiveConsent: true });
         const header = this.getSelectedHeader();
         this.props.parent.openNewTab(header, false);
+    }
+
+    handleOpenNewLinkedTab() {
+        pxt.tickEvent("scriptmanager.newlinkedtab", undefined, { interactiveConsent: true });
+        const header = this.getSelectedHeader();
+        this.props.parent.openNewTab(header, true);
     }
 
     handleDuplicate() {
@@ -321,10 +328,11 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         const isSearching = false;
         const hasHeaders = !searchFor ? headers.length > 0 : true;
         const selectedAll = headers.length > 0 && headers.length == Object.keys(selected).length;
-        const openDependent = pxt.appTarget.appTheme.openProjectNewTab
-            && !pxt.BrowserUtils.isElectron()
+        const openNewTab = !pxt.BrowserUtils.isElectron()
             && !pxt.BrowserUtils.isUwpEdge()
-            && !pxt.BrowserUtils.isIOS()
+            && !pxt.BrowserUtils.isIOS();
+        const openDependent = openNewTab
+            && pxt.appTarget.appTheme.openProjectNewTab
             && !/nestededitorsim=1/.test(window.location.href); // don't nest dependent editors
 
         let headerActions: JSX.Element[];
@@ -340,13 +348,17 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             />);
             if (Object.keys(selected).length > 0) {
                 if (Object.keys(selected).length == 1) {
-                    headerActions.push(<div className="ui buttons"><sui.Button key="edit" icon="edit outline" className="icon"
-                        text={lf("Open")} textClass="landscape only" title={lf("Open Project")} onClick={this.handleOpen} />
-                        {openDependent &&
-                            <sui.DropdownMenu className="floating button" icon="dropdown">
-                                <sui.Item key="editnew" icon="external alternate" className="icon"
-                                    text={lf("New Tab")} title={lf("Open Project in a new tab")} onClick={this.handleOpenNewTab} />
-                            </sui.DropdownMenu>}
+                    const openBtn = <sui.Button key="edit" icon="edit outline" className="icon"
+                        text={lf("Open")} textClass="landscape only" title={lf("Open Project")} onClick={this.handleOpen} />;
+                    if (!openNewTab)
+                        headerActions.push(openBtn);
+                    else headerActions.push(<div className="ui buttons">{openBtn}
+                        <sui.DropdownMenu className="floating button" icon="dropdown">
+                            <sui.Item key="editnewtab" icon="external alternate" className="icon"
+                                text={lf("New Tab")} title={lf("Open Project in a new tab")} onClick={this.handleOpenNewTab} />
+                            {openDependent && <sui.Item key="editnewlinkedtab" icon="external alternate" className="icon"
+                                text={lf("New Connected Tab")} title={lf("Open Project in a new tab with a connected simulator")} onClick={this.handleOpenNewLinkedTab} />}
+                        </sui.DropdownMenu>
                     </div>);
                     if (openDependent)
                         headerActions.push();
