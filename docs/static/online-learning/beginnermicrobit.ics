@@ -5,13 +5,13 @@ PRODID:Microsoft MakeCode
 METHOD:PUBLISH
 X-PUBLISHED-TTL:PT1H
 BEGIN:VEVENT
-UID:5941c400-de48-4ed6-8bf0-96cab010f54d
-SUMMARY:Advanced Arcade
+UID:879f17ec-e746-4cc3-8385-10fd2814c79f
+SUMMARY:Beginner micro:bit
 DTSTAMP:20200326T012800Z
-DTSTART:20200326T200000Z
-DESCRIPTION:Create new games (or recreate old ones) with a rotating cast of
-	 developers from the MakeCode team\, including Richard\, Shannon\, Daryl\,
-	 and Joey
+DTSTART:20200326T160000Z
+DESCRIPTION:Learn the basics of physical computing with the micro:bit!  Pel
+	i\, a member of the MakeCode Team will take you through some beginner-leve
+	l coding tutorials.
 URL:https://mixer.com/MakeCode
 STATUS:CONFIRMED
 X-MICROSOFT-CDO-BUSYSTATUS:BUSY

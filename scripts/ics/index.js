@@ -90,7 +90,7 @@ function gen() {
                 return;
             }
             console.log(value);
-            var fn = lesson.title.replace(/\s+/g, '').toLowerCase();
+            var fn = lesson.title.replace(/[^a-z0-9]+/ig, '').toLowerCase();
             fs.writeFileSync(__dirname + "/../../docs/static/online-learning/" + fn + ".ics", value);
         });
     });

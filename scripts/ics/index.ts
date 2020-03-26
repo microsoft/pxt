@@ -79,6 +79,8 @@ const lessons: Lesson[] = [
     }
 ]
 
+// end schedule.ts
+
 function gen() {
     lessons.forEach(lesson => {
         const calevent = {
@@ -103,7 +105,7 @@ function gen() {
             }
 
             console.log(value)
-            const fn = lesson.title.replace(/\s+/g, '').toLowerCase()
+            const fn = lesson.title.replace(/[^a-z0-9]+/ig, '').toLowerCase()
             fs.writeFileSync(`${__dirname}/../../docs/static/online-learning/${fn}.ics`, value)
         })
     })

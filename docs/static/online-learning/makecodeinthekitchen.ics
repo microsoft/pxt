@@ -5,9 +5,9 @@ PRODID:Microsoft MakeCode
 METHOD:PUBLISH
 X-PUBLISHED-TTL:PT1H
 BEGIN:VEVENT
-UID:3ed7b9a5-9811-48d5-acc0-a8cdc275b86a
+UID:bf4a8e4f-eed0-48d3-90b8-996b1fbf30bc
 SUMMARY:MakeCode in the Kitchen
-DTSTAMP:20200326T011900Z
+DTSTAMP:20200326T012800Z
 DTSTART:20200326T210000Z
 DESCRIPTION:Join Jacqueline\, a MakeCode team member as she crafts and code
 	s projects with the Adafruit Circuit Playground Express in her kitchen!
