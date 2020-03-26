@@ -1,3 +1,7 @@
+const ics = require('ics')
+const fs = require('fs')
+
+// copied from docs/static/online-learning/schedule.ts
 enum Day {
     Monday = "Monday",
     Tuesday = "Tuesday",
@@ -13,8 +17,8 @@ interface Lesson {
     url: string;
     img: string;
     time: number; // hour in PST, 24 hr clock
-    days: Day[];
     startDay?: number;
+    days: Day[];
 }
 
 const lessons: Lesson[] = [
@@ -83,95 +87,35 @@ const lessons: Lesson[] = [
     }
 ]
 
-makeLessons();
-makeSchedule();
+// end schedule.ts
 
-function makeSchedule() {
-    const sorted = lessons.sort((a, b) => a.time < b.time ? -1 : 1);
-    const parent = document.getElementById("schedule");
-    parent.appendChild(makeHeader())
-    for (const lesson of sorted) {
-        const row = document.createElement("div");
-        const time = document.createElement("div");
-        time.innerText = formatTime(lesson.time);
-        row.appendChild(time);
+function gen() {
+    lessons.forEach(lesson => {
+        const calevent = {
+            start: [2020, 3, lesson.startDay || 28, lesson.time, 0],
+            duration: { minutes: 30 },
+            title: lesson.title,
+            description: lesson.description,
+            url: /^https:\/\/aka.ms\/makecode/.test(lesson.url)
+                ? "https://mixer.com/MakeCode" : lesson.url,
+            status: 'CONFIRMED',
+            busyStatus: 'BUSY',
+            productId: "Microsoft MakeCode",
+            recurrenceRule: lesson.days[0] == Day.All
+                ? "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;INTERVAL=1"
+                : `FREQ=WEEKLY;BYDAY=${lesson.days.map(d => d.slice(0, 2).toUpperCase()).join(',')};INTERVAL=1`
+        }
 
-        const isAll = lesson.days.indexOf(Day.All) >= 0;
-        for (const day in Day) {
-            if (day != Day.All) {
-                const cell = document.createElement("a");
-                if (isAll || lesson.days.indexOf(Day[day]) >= 0) {
-                    cell.innerText = lesson.title;
-                    cell.href = lesson.url;
-                    cell.target = "_blank";
-                }
-                row.appendChild(cell);
+        ics.createEvent(calevent, (error, value) => {
+            if (error) {
+                console.log(error)
+                return
             }
-        }
 
-        parent.appendChild(row);
-    }
+            console.log(value)
+            const fn = lesson.title.replace(/[^a-z0-9]+/ig, '').toLowerCase()
+            fs.writeFileSync(`${__dirname}/../../docs/static/online-learning/${fn}.ics`, value)
+        })
+    })
 }
-
-function makeHeader(): HTMLElement {
-    const header = document.createElement("div");
-    // time column
-    const timeCell = document.createElement("div");
-    timeCell.innerText = "Time";
-    header.appendChild(timeCell)
-    // days of week
-    for (const day in Day) {
-        if (day != Day.All) {
-            const cell = document.createElement("div");
-            cell.innerText = Day[day];
-            header.appendChild(cell)
-        }
-    }
-    return header;
-}
-
-function formatTime(time: number): string {
-    const EST = time + 3;
-    return `${time % 12 || 12} ${time < 12 ? "AM" : "PM"} PST / ${EST % 12 || 12} ${EST < 12 ? "AM" : "PM"} EST`;
-}
-
-function makeLessons() {
-    const parent = document.getElementById("lessons");
-    for (const l of lessons) {
-        const lesson = document.createElement("div");
-        lesson.className = "lesson";
-
-        const img = document.createElement("img");
-        img.src = l.img;
-        const wrapper = document.createElement("a");
-        wrapper.className = "imgWrapper";
-        wrapper.href = l.url;
-        wrapper.appendChild(img);
-        lesson.appendChild(wrapper);
-
-        const description = document.createElement("div");
-        const title = document.createElement("a");
-        title.href = l.url;
-        const header = document.createElement("h4");
-        header.innerText = l.title;
-        title.appendChild(header);
-        const time = document.createElement("div");
-        const ttime = document.createElement("span");
-        ttime.appendChild(document.createTextNode(formatTime(l.time)))
-        time.appendChild(ttime);
-        time.className = "time";
-        const text = document.createElement("div");
-        text.innerText = l.description;
-        const ics = document.createElement("a");
-        ics.href = "/static/online-learning/" + l.title.replace(/[^a-z0-9]+/ig, '').toLowerCase() + ".ics";
-        ics.text = "Add to calendar";
-        ics.className = "ics"        
-        time.appendChild(ics);
-        description.appendChild(title);
-        description.appendChild(time);
-        description.appendChild(text);
-
-        lesson.appendChild(description);
-        parent.appendChild(lesson);
-    }
-}
+gen();

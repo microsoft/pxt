@@ -132,10 +132,17 @@ function makeLessons() {
         header.innerText = l.title;
         title.appendChild(header);
         var time = document.createElement("div");
-        time.innerText = formatTime(l.time);
+        var ttime = document.createElement("span");
+        ttime.appendChild(document.createTextNode(formatTime(l.time)));
+        time.appendChild(ttime);
         time.className = "time";
         var text = document.createElement("div");
         text.innerText = l.description;
+        var ics = document.createElement("a");
+        ics.href = "/static/online-learning/" + l.title.replace(/[^a-z0-9]+/ig, '').toLowerCase() + ".ics";
+        ics.text = "Add to calendar";
+        ics.className = "ics";
+        time.appendChild(ics);
         description.appendChild(title);
         description.appendChild(time);
         description.appendChild(text);
