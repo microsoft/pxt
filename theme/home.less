@@ -71,6 +71,7 @@
         box-shadow: none;
         padding: 0rem;
         margin: 0;
+
         .ui.header {
             margin: 0;
             padding-left: @carouselArrowSize;
@@ -82,16 +83,22 @@
                 &:focus, &:hover {
                     color: fade(@homeHeaderColor, 80%);
                 }
+
+                > .view-all-button {
+                    padding-left: 0.5em;
+                    color: @primaryColor;
+                    font-size: 16px;
+                    font-weight: 500;
+                }
             }
         }
-        .ui.padded.grid.heading, .heading {
+        .heading {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+
             margin-bottom: -1rem !important;
             margin-top: 1rem !important;
-        }
-        .ui.padded.grid.heading .ui.header {
-            bottom: 0;
-            position: absolute;
-            vertical-align: bottom;
         }
         .column {
             padding: 0 !important;
@@ -161,7 +168,7 @@
             border-top-color: @homeSelectedCardBorderColor;
             border-width: 17px;
             margin-left: -17px;
-        }            
+        }
     }
 
     .detailview {
@@ -600,15 +607,6 @@
                 font-size: 30px;
             }
         }
-        .gallerysegment {
-            .ui.padded.grid.heading, .heading {
-                margin-bottom: -1rem !important;
-                margin-top: 0rem !important;
-            }
-            .ui.padded.grid.heading .ui.header {
-                font-size: 18px;
-            }
-        }
         .carouselcontainer {
             padding: 1.5rem @carouselArrowSizeMobile !important;
         }
@@ -710,22 +708,22 @@
                 top: 2rem;
                 left: 1rem;
                 width: 2rem;
-                height: 1.5rem;                
+                height: 1.5rem;
             }
-        }        
+        }
         .detailview.visible {
-            .column, 
-            .imagewrapper .image        
+            .column,
+            .imagewrapper .image
             {
                 height: 220px;
-            }        
+            }
         }
         .getting-started-segment {
             margin-top: -3.1rem!important;
             margin-bottom: 0rem!important;
             height: 168px;
         }
-    }    
+    }
 }
 
 
