@@ -328,11 +328,12 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         const isSearching = false;
         const hasHeaders = !searchFor ? headers.length > 0 : true;
         const selectedAll = headers.length > 0 && headers.length == Object.keys(selected).length;
-        const openNewTab = !pxt.BrowserUtils.isElectron()
+        const openNewTab = pxt.appTarget.appTheme.openProjectNewTab
+            && !pxt.BrowserUtils.isElectron()
             && !pxt.BrowserUtils.isUwpEdge()
             && !pxt.BrowserUtils.isIOS();
         const openDependent = openNewTab
-            && pxt.appTarget.appTheme.openProjectNewTab
+            && pxt.appTarget.appTheme.openProjectNewDependentTab
             && !/nestededitorsim=1/.test(window.location.href); // don't nest dependent editors
 
         let headerActions: JSX.Element[];
