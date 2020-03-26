@@ -14,6 +14,7 @@ interface Lesson {
     img: string;
     time: number; // hour in PST, 24 hr clock
     days: Day[];
+    startDay?: number;
 }
 
 const lessons: Lesson[] = [
@@ -23,6 +24,7 @@ const lessons: Lesson[] = [
         "url": "https://aka.ms/makecodemicrobitstream",
         "img": "/static/online-learning/img/microbit-stream.jpg",
         "time": 9,
+        "startDay": 25,
         "days": [Day.All]
     },
     {
@@ -31,6 +33,7 @@ const lessons: Lesson[] = [
         "url": "https://aka.ms/makecodeminecraftstream",
         "img": "/static/online-learning/img/minecraft-stream.jpg",
         "time": 10,
+        "startDay": 25,
         "days": [Day.All]
     },
     {
@@ -39,6 +42,7 @@ const lessons: Lesson[] = [
         "url": "https://aka.ms/makecodearcadestreambeginner",
         "img": "/static/online-learning/img/arcade-2-stream.png",
         "time": 11,
+        "startDay": 25,
         "days": [Day.All]
     },
     {
@@ -47,6 +51,7 @@ const lessons: Lesson[] = [
         "url": "https://aka.ms/makecodearcadestream",
         "img": "/static/online-learning/img/arcade-stream.jpg",
         "time": 13,
+        "startDay": 25,
         "days": [Day.All]
     },
     {
@@ -55,6 +60,7 @@ const lessons: Lesson[] = [
         "url": "https://aka.ms/makecodecpxstream",
         "img": "/static/online-learning/img/cpx-stream.png",
         "time": 14,
+        "startDay": 27,
         "days": [Day.Friday]
     },
     {
@@ -63,6 +69,7 @@ const lessons: Lesson[] = [
         "url": "https://www.twitch.tv/mr_isaacs/",
         "img": "/static/online-learning/img/arcade-2-stream.png",
         "time": 6,
+        "startDay": 30,
         "days": [Day.Monday]
     },
     {
@@ -71,6 +78,7 @@ const lessons: Lesson[] = [
         "url": "https://aka.ms/dshomespace",
         "img": "/static/online-learning/img/dreamspace-homespace.jpg",
         "time": 6,
+        "startDay": 30,
         "days": [Day.Monday, Day.Wednesday, Day.Friday]
     }
 ]
