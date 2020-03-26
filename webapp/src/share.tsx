@@ -326,12 +326,15 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         if (!/\/$/.test(shareUrl)) shareUrl += '/';
         let rootUrl = pxt.appTarget.appTheme.embedUrl
         if (!/\/$/.test(rootUrl)) rootUrl += '/';
-        const verPrefix = pxt.webConfig.verprefix || '';
+        const verPrefix = pxt.webConfig.verprefix
+                || pxt.webConfig.relprefix?.replace(/^\//, "").replace(/---$/, "")
+                || '';
 
         if (header) {
             if (ready) {
                 url = `${shareUrl}${pubId}`;
-                let editUrl = `${rootUrl}${verPrefix}#pub:${pubId}`;
+                const editUrl = `${rootUrl}${verPrefix}#pub:${pubId}`;
+
                 switch (mode) {
                     case ShareMode.Code:
                         embed = pxt.docs.codeEmbedUrl(`${rootUrl}${verPrefix}`, pubId);
@@ -343,7 +346,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                         let padding = '81.97%';
                         // TODO: parts aspect ratio
                         if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio).toPrecision(4) + '%';
-                        const runUrl = rootUrl + (pxt.webConfig.runUrl || `${verPrefix}--run`).replace(/^\//, '');
+                        const runUrl = rootUrl + (pxt.webConfig.runUrl || `${verPrefix}---run`).replace(/^\//, '');
                         embed = pxt.docs.runUrl(runUrl, padding, pubId);
                         break;
                     case ShareMode.Url:
