@@ -5,10 +5,10 @@ PRODID:Microsoft MakeCode
 METHOD:PUBLISH
 X-PUBLISHED-TTL:PT1H
 BEGIN:VEVENT
-UID:5afa89ed-bbbb-4cac-abd3-1e1d7fbb3205
+UID:edd6907f-0886-4cbb-b981-1a6711520171
 SUMMARY:Beginner Minecraft
-DTSTAMP:20200326T012800Z
-DTSTART:20200326T170000Z
+DTSTAMP:20200326T030500Z
+DTSTART:20200325T170000Z
 DESCRIPTION:If you have access to Minecraft: Education Edition at home\, le
 	arn how to programmatically spawn mobs\, control robots\, and build struct
 	ures! Peli\, a member of the MakeCode Team will take you through some begi

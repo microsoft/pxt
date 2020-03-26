@@ -142,6 +142,9 @@ h1 {
     margin-bottom: 0.8rem;
     opacity: 0.5;
 }
+.lesson .time a {
+    margin-left: 0.5rem;
+}
 
 
 .cards,

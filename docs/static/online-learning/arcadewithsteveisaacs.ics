@@ -5,10 +5,10 @@ PRODID:Microsoft MakeCode
 METHOD:PUBLISH
 X-PUBLISHED-TTL:PT1H
 BEGIN:VEVENT
-UID:49538424-e120-4f41-941e-ad13ffbba2b6
+UID:36070190-c5bc-4105-9f75-177260d13f16
 SUMMARY:Arcade with Steve Isaacs
-DTSTAMP:20200326T012800Z
-DTSTART:20200326T130000Z
+DTSTAMP:20200326T030500Z
+DTSTART:20200330T130000Z
 DESCRIPTION:Learn MakeCode Arcade game development with Mr. Isaacs\, an IST
 	E outstanding teacher and PBS Lead Digital Innovator.
 URL:https://www.twitch.tv/mr_isaacs/

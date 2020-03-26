@@ -17,6 +17,7 @@ interface Lesson {
     url: string;
     img: string;
     time: number; // hour in PST, 24 hr clock
+    startDay?: number;
     days: Day[];
 }
 
@@ -27,6 +28,7 @@ const lessons: Lesson[] = [
         "url": "https://aka.ms/makecodemicrobitstream",
         "img": "/static/online-learning/img/microbit-stream.jpg",
         "time": 9,
+        "startDay": 25,
         "days": [Day.All]
     },
     {
@@ -35,6 +37,7 @@ const lessons: Lesson[] = [
         "url": "https://aka.ms/makecodeminecraftstream",
         "img": "/static/online-learning/img/minecraft-stream.jpg",
         "time": 10,
+        "startDay": 25,
         "days": [Day.All]
     },
     {
@@ -43,6 +46,7 @@ const lessons: Lesson[] = [
         "url": "https://aka.ms/makecodearcadestreambeginner",
         "img": "/static/online-learning/img/arcade-2-stream.png",
         "time": 11,
+        "startDay": 25,
         "days": [Day.All]
     },
     {
@@ -51,6 +55,7 @@ const lessons: Lesson[] = [
         "url": "https://aka.ms/makecodearcadestream",
         "img": "/static/online-learning/img/arcade-stream.jpg",
         "time": 13,
+        "startDay": 25,
         "days": [Day.All]
     },
     {
@@ -59,6 +64,7 @@ const lessons: Lesson[] = [
         "url": "https://aka.ms/makecodecpxstream",
         "img": "/static/online-learning/img/cpx-stream.png",
         "time": 14,
+        "startDay": 27,
         "days": [Day.Friday]
     },
     {
@@ -67,6 +73,7 @@ const lessons: Lesson[] = [
         "url": "https://www.twitch.tv/mr_isaacs/",
         "img": "/static/online-learning/img/arcade-2-stream.png",
         "time": 6,
+        "startDay": 30,
         "days": [Day.Monday]
     },
     {
@@ -84,7 +91,7 @@ const lessons: Lesson[] = [
 function gen() {
     lessons.forEach(lesson => {
         const calevent = {
-            start: [2020, 3, 26, lesson.time, 0],
+            start: [2020, 3, lesson.startDay || 28, lesson.time, 0],
             duration: { minutes: 30 },
             title: lesson.title,
             description: lesson.description,
