@@ -137,7 +137,7 @@ function makeLessons() {
         var text = document.createElement("div");
         text.innerText = l.description;
         var ics = document.createElement("a");
-        ics.href = "./online-learning/" + l.title.replace(/[^a-z0-9]+/ig, '').toLowerCase() + ".ics";
+        ics.href = "/static/online-learning/" + l.title.replace(/[^a-z0-9]+/ig, '').toLowerCase() + ".ics";
         ics.text = "Add to calendar";
         ics.className = "ics";
         description.appendChild(title);
