@@ -190,7 +190,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                             onClick={this.showScriptManager} onKeyDown={sui.fireClickOnEnter}>
                             {lf("My Projects")}
                             <span className="view-all-button">
-                                {lf("View all")}
+                                {lf("View All")}
                             </span>
                         </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
                     </div>
