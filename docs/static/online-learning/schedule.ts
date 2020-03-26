@@ -166,7 +166,7 @@ function makeLessons() {
         ics.href = "/static/online-learning/" + l.title.replace(/[^a-z0-9]+/ig, '').toLowerCase() + ".ics";
         ics.text = "Add to calendar";
         ics.className = "ics"        
-        time.appendChild(ics);
+        //time.appendChild(ics);
         description.appendChild(title);
         description.appendChild(time);
         description.appendChild(text);
