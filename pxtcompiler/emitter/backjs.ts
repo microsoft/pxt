@@ -337,19 +337,26 @@ function ${id}(s) {
             let id = s.breakpointInfo.id
             let lbl: number;
             write(`s.lastBrkId = ${id};`)
-            if (bin.options.trace) {
+
+            if (bin.options.breakpoints) {
+                lbl = ++lblIdx
+                let brkCall = `return breakpoint(s, ${lbl}, ${id}, r0);`
+                if (s.breakpointInfo.isDebuggerStmt) {
+                    write(brkCall)
+                }
+                else {
+                    write(`if ((breakpoints[0] && isBreakFrame(s)) || breakpoints[${id}]) ${brkCall}`)
+                    if (bin.options.trace) {
+                        write(`else return trace(${id}, s, ${lbl}, ${proc.label()}.info);`)
+                    }
+                }
+            }
+            else if (bin.options.trace) {
                 lbl = ++lblIdx
                 write(`return trace(${id}, s, ${lbl}, ${proc.label()}.info);`)
             }
             else {
-                if (!bin.options.breakpoints)
-                    return;
-                lbl = ++lblIdx
-                let brkCall = `return breakpoint(s, ${lbl}, ${id}, r0);`
-                if (s.breakpointInfo.isDebuggerStmt)
-                    write(brkCall)
-                else
-                    write(`if ((breakpoints[0] && isBreakFrame(s)) || breakpoints[${id}]) ${brkCall}`)
+                return;
             }
             writeRaw(`  case ${lbl}:`)
         }

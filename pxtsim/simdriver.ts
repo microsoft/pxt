@@ -40,6 +40,7 @@ namespace pxsim {
 
     export interface SimulatorRunOptions {
         debug?: boolean;
+        trace?: boolean;
         boardDefinition?: pxsim.BoardDefinition;
         parts?: string[];
         fnArgs?: any;
@@ -85,6 +86,10 @@ namespace pxsim {
 
         isDebug() {
             return this._runOptions && !!this._runOptions.debug;
+        }
+
+        isTracing() {
+            return this._runOptions && !!this._runOptions.trace;
         }
 
         hasParts(): boolean {

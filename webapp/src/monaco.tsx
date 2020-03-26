@@ -1429,7 +1429,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return false;
         }
 
-        this.highlightedBreakpoint = brk.breakpointId;
+        this.highlightedBreakpoint = brk ? brk.breakpointId : undefined;
 
         if (brk && this.isDebugging() && this.debuggerToolbox) {
             this.debuggerToolbox.setBreakpoint(brk);
