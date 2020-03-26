@@ -184,17 +184,17 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             {showHeroBanner ?
                 <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
             <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
-                <div className="ui grid padded heading">
-                    <div className="column twelve wide" style={{ zIndex: 1 }}>
+                <div className="ui heading">
+                    <div className="column " style={{ zIndex: 1 }}>
                         {targetTheme.scriptManager ? <h2 role="button" className="ui header myproject-header" title={lf("View all projects")} tabIndex={0}
                             onClick={this.showScriptManager} onKeyDown={sui.fireClickOnEnter}>
                             {lf("My Projects")}
                             <span className="view-all-button">
                                 {lf("View all")}
                             </span>
-                        </h2> : <h2 className="ui header twelve wide">{lf("My Projects")}</h2>}
+                        </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
                     </div>
-                    <div className="column four wide right aligned" style={{ zIndex: 1 }}>
+                    <div className="column right aligned" style={{ zIndex: 1 }}>
                         {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
                             <sui.Button key="import" icon="upload" className="import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
                     </div>

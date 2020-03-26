@@ -71,6 +71,7 @@
         box-shadow: none;
         padding: 0rem;
         margin: 0;
+
         .ui.header {
             margin: 0;
             padding-left: @carouselArrowSize;
@@ -91,14 +92,13 @@
                 }
             }
         }
-        .ui.padded.grid.heading, .heading {
+        .heading {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+
             margin-bottom: -1rem !important;
             margin-top: 1rem !important;
-        }
-        .ui.padded.grid.heading .ui.header {
-            bottom: 0;
-            position: absolute;
-            vertical-align: bottom;
         }
         .column {
             padding: 0 !important;
