@@ -799,17 +799,27 @@ namespace pxt.runner {
         return render();
     }
 
-    function renderApiLinksAsync(options: ClientRenderOptions, replaceParent: boolean): Promise<void> {
+    function renderApisAsync(options: ClientRenderOptions, replaceParent: boolean): Promise<void> {
         const cls = options.apisClass;
         if (!cls) return Promise.resolve();
+
+        const apisEl = $('.' + options.apisClass);
+        if (!apisEl.length) return Promise.resolve();
 
         return decompileApiAsync(options)
             .then((r) => {
                 const info = r.compileBlocks.blocksInfo;
-
-                return renderNextSnippetAsync(cls, (c, r) => {
-
-                }, { package: options.package, aspectRatio: options.blocksAspectRatio });
+                const symbols = pxt.Util.values(info.apis.byQName);
+                apisEl.each((i, e) => {
+                    let c = $(e);
+                    const ul = $('<div />').addClass('ui cards');
+                    ul.attr("role", "listbox");
+                    const namespaces = pxt.Util.toDictionary(c.text().split('\n'), n => n); // list of namespace to list apis for.
+                    symbols.filter(symbol => !!namespaces[symbol.namespace])
+                        .forEach(symbol => addSymbolCardItem(ul, symbol));
+                    if (replaceParent) c = c.parent();
+                    c.replaceWith(ul)
+                })
             });
     }
 
@@ -1200,7 +1210,7 @@ namespace pxt.runner {
             .then(() => renderInlineBlocksAsync(options))
             .then(() => renderLinksAsync(options, options.linksClass, options.snippetReplaceParent, false))
             .then(() => renderLinksAsync(options, options.namespacesClass, options.snippetReplaceParent, true))
-            .then(() => renderApiLinksAsync(options, options.snippetReplaceParent))
+            .then(() => renderApisAsync(options, options.snippetReplaceParent))
             .then(() => renderSignaturesAsync(options))
             .then(() => renderSnippetsAsync(options))
             .then(() => renderBlocksAsync(options))
