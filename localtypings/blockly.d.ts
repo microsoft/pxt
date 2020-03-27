@@ -3765,6 +3765,12 @@ declare module Blockly {
      * @const {string}
      */
     var FUNCTION_CALL_BLOCK_TYPE: any /*missing*/;
+
+    /**
+     * The type of all procedure call blocks with return values.
+     * @const {string}
+     */
+    var FUNCTION_CALL_OUTPUT_BLOCK_TYPE: any /*missing*/;
 }
 
 
@@ -9460,7 +9466,7 @@ declare module Blockly.Functions {
      * Create a flyout, creates the DOM elements for the flyout, and initializes the flyout.
      * @param {!Blockly.Workspace} workspace The target and parent workspace for this flyout. The workspace's options will
      *     be used to create the flyout's inner workspace.
-     * @param {!Element} siblingNode The flyout is added after this reference node. 
+     * @param {!Element} siblingNode The flyout is added after this reference node.
      * @return {!Blockly.Flyout} The newly created flyout.
      */
     function createFlyout(workspace: Blockly.Workspace, siblingNode: Element): Blockly.Flyout;
@@ -17710,6 +17716,14 @@ declare module Blockly.blockRendering {
             drawStatementInput_(row: Blockly.blockRendering.Row): void;
     
             /**
+             * pxt-blockly Add steps for a collapsed stack of blocks
+             * @param {!Blockly.blockRendering.Row} row The row that this input
+             *     belongs to.
+             * @protected
+             */
+            drawCollapsedStack_(row: Blockly.blockRendering.Row): void;
+    
+            /**
              * Add steps for the right side of a row that does not have value or
              * statement input connections.
              * @param {!Blockly.blockRendering.Row} row The row to draw the
@@ -17975,6 +17989,14 @@ declare module Blockly.blockRendering {
              * @protected
              */
             addInput_(input: Blockly.Input, activeRow: Blockly.blockRendering.Row): void;
+    
+            /**
+             * Adds a collapsed row element for custom collapsed block rendering
+             * @param {!Blockly.blockRendering.Row} activeRow The row that is currently being
+             *     populated.
+             * @protected
+             */
+            addCollapsedRow_(activeRow: Blockly.blockRendering.Row): void;
     
             /**
              * Decide whether to start a new row between the two Blockly.Inputs.
@@ -19002,6 +19024,13 @@ declare module Blockly.blockRendering {
              * @type {boolean}
              */
             hasJaggedEdge: boolean;
+    
+            /**
+             * pxt-blockly Whether the row is a collapsed stack.
+             * @package
+             * @type {boolean}
+             */
+            isCollapsedStack: boolean;
     
             /**
              * The renderer's constant provider.

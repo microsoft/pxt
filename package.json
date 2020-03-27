@@ -84,7 +84,7 @@
   },
   "devDependencies": {
     "monaco-editor": "0.19.3",
-    "pxt-blockly": "3.0.2",
+    "pxt-blockly": "3.0.3",
     "react": "16.8.3",
     "react-dom": "16.11.0",
     "react-modal": "3.3.2",
