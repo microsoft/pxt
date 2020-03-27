@@ -665,10 +665,17 @@ namespace pxt.runner {
         return renderNextDiffAsync(cls);
     }
 
+    let decompileApiPromise: Promise<DecompileResult>;
+    function decompileApiAsync(options: ClientRenderOptions): Promise<DecompileResult> {
+        if (!decompileApiPromise)
+            decompileApiPromise = pxt.runner.decompileSnippetAsync('', options);
+        return decompileApiPromise;
+    }
+
     function renderNamespaces(options: ClientRenderOptions): Promise<void> {
         if (pxt.appTarget.id == "core") return Promise.resolve();
 
-        return pxt.runner.decompileSnippetAsync('', options)
+        return decompileApiAsync(options)
             .then((r) => {
                 let res: pxt.Map<string> = {};
                 const info = r.compileBlocks.blocksInfo;
@@ -790,6 +797,20 @@ namespace pxt.runner {
         }
 
         return render();
+    }
+
+    function renderApiLinksAsync(options: ClientRenderOptions, replaceParent: boolean): Promise<void> {
+        const cls = options.apisClass;
+        if (!cls) return Promise.resolve();
+
+        return decompileApiAsync(options)
+            .then((r) => {
+                const info = r.compileBlocks.blocksInfo;
+
+                return renderNextSnippetAsync(cls, (c, r) => {
+
+                }, { package: options.package, aspectRatio: options.blocksAspectRatio });
+            });
     }
 
     function renderLinksAsync(options: ClientRenderOptions, cls: string, replaceParent: boolean, ns: boolean): Promise<void> {
@@ -1170,6 +1191,7 @@ namespace pxt.runner {
             .then(() => renderInlineBlocksAsync(options))
             .then(() => renderLinksAsync(options, options.linksClass, options.snippetReplaceParent, false))
             .then(() => renderLinksAsync(options, options.namespacesClass, options.snippetReplaceParent, true))
+            .then(() => renderApiLinksAsync(options, options.snippetReplaceParent))
             .then(() => renderSignaturesAsync(options))
             .then(() => renderSnippetsAsync(options))
             .then(() => renderBlocksAsync(options))
