@@ -1468,7 +1468,7 @@ namespace pxt.blocks {
         msg.HELP = lf("Help");
 
         // inject hook to handle openings docs
-        (<any>Blockly).BlockSvg.prototype.showHelp_ = function () {
+        (<any>Blockly).BlockSvg.prototype.showHelp = function () {
             const url = goog.isFunction(this.helpUrl) ? this.helpUrl() : this.helpUrl;
             if (url) (pxt.blocks.openHelpUrl || window.open)(url);
         };
