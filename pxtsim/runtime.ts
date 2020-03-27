@@ -166,6 +166,14 @@ namespace pxsim {
             }
             return res;
         }
+
+        export function isLocalHost(): boolean {
+            try {
+                return typeof window !== "undefined"
+                    && /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href)
+                    && !/nolocalhost=1/.test(window.location.href);
+            } catch (e) { return false; }
+        }
     }
 
     export interface Map<T> {

@@ -960,9 +960,11 @@ function uploadCoreAsync(opts: UploadOptions) {
         "var pxtConfig = null": "var pxtConfig = @cfg@",
         "@defaultLocaleStrings@": defaultLocale ? "@commitCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
         "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : "",
+        "@cachedHexFilesEncoded@": encodeURLs(hexFiles),
         "@targetEditorJs@": targetEditorJs,
         "@targetFieldEditorsJs@": targetFieldEditorsJs,
-        "@targetImages@": targetImagesHashed.length ? targetImagesHashed.join('\n') : ''
+        "@targetImages@": targetImagesHashed.length ? targetImagesHashed.join('\n') : '',
+        "@targetImagesEncoded@": targetImagesHashed.length ? encodeURLs(targetImagesHashed) : ""
     }
 
     if (opts.localDir) {
@@ -972,6 +974,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "workerjs": opts.localDir + "worker.js",
             "monacoworkerjs": opts.localDir + "monacoworker.js",
             "gifworkerjs": opts.localDir + "gifjs/gif.worker.js",
+            "serviceworkerjs": opts.localDir + "serviceworker.js",
             "pxtVersion": pxtVersion(),
             "pxtRelId": "",
             "pxtCdnUrl": opts.localDir,
@@ -983,11 +986,16 @@ function uploadCoreAsync(opts: UploadOptions) {
             "targetUrl": "",
             "targetId": opts.target,
             "simUrl": opts.localDir + "simulator.html",
+            "simserviceworkerUrl": opts.localDir + "simulatorserviceworker.js",
+            "simworkerconfigUrl": opts.localDir + "workerConfig.js",
             "partsUrl": opts.localDir + "siminstructions.html",
             "runUrl": opts.localDir + "run.html",
             "docsUrl": opts.localDir + "docs.html",
             "isStatic": true,
         }
+        const targetImagePaths = targetImages.map(k =>
+            `${opts.localDir}${path.join('./docs', logos[k])}`);
+
         replacements = {
             "/embed.js": opts.localDir + "embed.js",
             "/cdn/": opts.localDir,
@@ -997,14 +1005,16 @@ function uploadCoreAsync(opts: UploadOptions) {
             "@monacoworkerjs@": `${opts.localDir}monacoworker.js`,
             "@gifworkerjs@": `${opts.localDir}gifjs/gif.worker.js`,
             "@workerjs@": `${opts.localDir}worker.js`,
+            "@serviceworkerjs@": `${opts.localDir}serviceworker.js`,
             "@timestamp@": `# ver ${new Date().toString()}`,
             "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),
             "@defaultLocaleStrings@": "",
             "@cachedHexFiles@": "",
+            "@cachedHexFilesEncoded@": "",
             "@targetEditorJs@": targetEditorJs ? `${opts.localDir}editor.js` : "",
             "@targetFieldEditorsJs@": targetFieldEditorsJs ? `${opts.localDir}fieldeditors.js` : "",
-            "@targetImages@": targetImages.length ? targetImages.map(k =>
-                `${opts.localDir}${path.join('./docs', logos[k])}`).join('\n') : ''
+            "@targetImages@": targetImages.length ? targetImagePaths.join('\n') : '',
+            "@targetImagesEncoded@": targetImages.length ? encodeURLs(targetImagePaths) : ''
         }
         if (!opts.noAppCache) {
             replacements["data-manifest=\"\""] = `manifest="${opts.localDir}release.manifest"`;
@@ -1020,13 +1030,20 @@ function uploadCoreAsync(opts: UploadOptions) {
         "codeembed.html",
         "release.manifest",
         "worker.js",
+        "serviceworker.js",
+        "simulatorserviceworker.js",
         "monacoworker.js",
         "simulator.html",
         "sim.manifest",
         "sim.webmanifest",
+        "workerConfig.js"
     ]
 
     nodeutil.mkdirP("built/uploadrepl")
+
+    function encodeURLs(urls: string[]) {
+        return urls.map(url => encodeURIComponent(url)).join(";")
+    }
 
     let uplReqs: Map<BlobReq> = {}
 
@@ -1069,7 +1086,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                     content = server.expandHtml(content)
                 }
 
-                if (/^sim/.test(fileName)) {
+                if (/^sim/.test(fileName) || /^workerConfig/.test(fileName)) {
                     // just force blobs for everything in simulator manifest
                     content = content.replace(/\/(cdn|sim)\//g, "/blb/")
                 }

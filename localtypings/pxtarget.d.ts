@@ -425,6 +425,12 @@ declare namespace pxt {
         sha: string;
         apis: ts.pxtc.ApisInfo;
     }
+
+    interface ServiceWorkerEvent {
+        type: "serviceworker";
+        state: "activated";
+        ref: string;
+    }
 }
 
 declare namespace pxt.editor {

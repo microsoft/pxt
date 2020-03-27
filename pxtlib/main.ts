@@ -372,6 +372,7 @@ namespace pxt {
         workerjs: string;  // "/beta---worker",
         monacoworkerjs: string; // "/beta---monacoworker",
         gifworkerjs: string; // /beta---gifworker",
+        serviceworkerjs: string; // /beta---serviceworker
         pxtVersion: string; // "?",
         pxtRelId: string; // "9e298e8784f1a1d6787428ec491baf1f7a53e8fa",
         pxtCdnUrl: string; // "https://pxt.azureedge.net/commit/9e2...e8fa/",
@@ -383,6 +384,8 @@ namespace pxt {
         targetRelId: string; // "9e298e8784f1a1d6787428ec491baf1f7a53e8fa",
         targetId: string; // "microbit",
         simUrl: string; // "https://trg-microbit.userpxt.io/beta---simulator"
+        simserviceworkerUrl: string; // https://trg-microbit.userpxt.io/beta---simserviceworker
+        simworkerconfigUrl: string; // https://trg-microbit.userpxt.io/beta---simworkerconfig
         partsUrl?: string; // /beta---parts
         runUrl?: string; // "/beta---run"
         docsUrl?: string; // "/beta---docs"
@@ -396,6 +399,7 @@ namespace pxt {
             workerjs: "/worker.js",
             monacoworkerjs: "/monacoworker.js",
             gifworkerjs: "/gifjs/gif.worker.js",
+            serviceworkerjs: "/serviceworker.js",
             pxtVersion: "local",
             pxtRelId: "",
             pxtCdnUrl: "/cdn/",
@@ -407,6 +411,8 @@ namespace pxt {
             targetRelId: "",
             targetId: appTarget ? appTarget.id : "",
             simUrl: "/sim/simulator.html",
+            simserviceworkerUrl: "/simulatorserviceworker.js",
+            simworkerconfigUrl: "/sim/workerConfig.js",
             partsUrl: "/sim/siminstructions.html"
         }
         return r
