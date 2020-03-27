@@ -810,7 +810,7 @@ namespace pxt.runner {
             .then((r) => {
                 const info = r.compileBlocks.blocksInfo;
                 const symbols = pxt.Util.values(info.apis.byQName)
-                    .filter(symbol => !symbol.attributes.hidden);
+                    .filter(symbol => !symbol.attributes.hidden && !/^__/.test(symbol.name));
                 apisEl.each((i, e) => {
                     let c = $(e);
                     const namespaces = pxt.Util.toDictionary(c.text().split('\n'), n => n); // list of namespace to list apis for.
