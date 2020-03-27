@@ -77,13 +77,17 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
     }
 
     protected getBlockClickHandler = (name: string) => {
-        pxt.tickEvent("monaco.toolbox.itemclick", undefined, { interactiveConsent: true });
-        return () => { this.setState({ selectedBlock: name != this.state.selectedBlock ? name : undefined }) };
+        return () => {
+            pxt.tickEvent("monaco.toolbox.itemclick", undefined, { interactiveConsent: true });
+            this.setState({ selectedBlock: name != this.state.selectedBlock ? name : undefined });
+        };
     }
 
     protected getBlockMouseOver = (name: string) => {
-        pxt.tickEvent("monaco.toolbox.itemmouseover", undefined, { interactiveConsent: true });
-        return () => { this.setState({ hoverBlock: name != this.state.hoverBlock ? name : undefined }) };
+        return () => {
+            pxt.tickEvent("monaco.toolbox.itemmouseover");
+            this.setState({ hoverBlock: name != this.state.hoverBlock ? name : undefined});
+        };
     }
 
     protected getBlockMouseOut = (name: string) => {
