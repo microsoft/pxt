@@ -803,7 +803,7 @@ namespace pxt.runner {
         const cls = options.apisClass;
         if (!cls) return Promise.resolve();
 
-        const apisEl = $('.' + options.apisClass);
+        const apisEl = $('.' + cls);
         if (!apisEl.length) return Promise.resolve();
 
         return decompileApiAsync(options)
