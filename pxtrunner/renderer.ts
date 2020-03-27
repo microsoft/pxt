@@ -22,6 +22,7 @@ namespace pxt.runner {
         simulatorClass?: string;
         linksClass?: string;
         namespacesClass?: string;
+        apisClass?: string;
         codeCardClass?: string;
         tutorial?: boolean;
         snippetReplaceParent?: boolean;
@@ -51,6 +52,7 @@ namespace pxt.runner {
             simulatorClass: 'lang-sim',
             linksClass: 'lang-cards',
             namespacesClass: 'lang-namespaces',
+            apisClass: 'lang-apis',
             codeCardClass: 'lang-codecard',
             packageClass: 'lang-package',
             projectClass: 'lang-project',
@@ -807,13 +809,15 @@ namespace pxt.runner {
                 ul.append(pxt.docs.codeCard.render(card, { hideHeader: true, shortName: true }));
             }
             stmts.forEach(stmt => {
-                let info = decompileCallInfo(stmt);
+                const kind = stmt.kind;
+                const info = decompileCallInfo(stmt);
                 if (info && r.apiInfo && r.apiInfo.byQName[info.qName]) {
-                    const attributes = r.apiInfo.byQName[info.qName].attributes;
+                    const symbol = r.apiInfo.byQName[info.qName];
+                    const attributes = symbol.attributes;
                     let block = Blockly.Blocks[attributes.blockId];
                     if (ns) {
-                        let ii = r.compileBlocks.blocksInfo.apis.byQName[info.qName];
-                        let nsi = r.compileBlocks.blocksInfo.apis.byQName[ii.namespace];
+                        const ii = symbol;
+                        const nsi = r.compileBlocks.blocksInfo.apis.byQName[ii.namespace];
                         addItem({
                             name: nsi.attributes.blockNamespace || nsi.name,
                             url: nsi.attributes.help || ("reference/" + (nsi.attributes.blockNamespace || nsi.name).toLowerCase()),
@@ -838,9 +842,9 @@ namespace pxt.runner {
                         })
                     }
                 } else
-                    switch (stmt.kind) {
-                        case ts.SyntaxKind.ExpressionStatement:
-                            let es = stmt as ts.ExpressionStatement;
+                    switch (kind) {
+                        case ts.SyntaxKind.ExpressionStatement: {
+                            const es = stmt as ts.ExpressionStatement;
                             switch (es.expression.kind) {
                                 case ts.SyntaxKind.TrueKeyword:
                                 case ts.SyntaxKind.FalseKeyword:
@@ -856,6 +860,7 @@ namespace pxt.runner {
                                     break;
                             }
                             break;
+                        }
                         case ts.SyntaxKind.IfStatement:
                             addItem({
                                 name: ns ? "Logic" : "if",
@@ -896,7 +901,7 @@ namespace pxt.runner {
                                 blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="continue_keyboard"></block></xml>'
                             });
                             break;
-                        case ts.SyntaxKind.ForStatement:
+                        case ts.SyntaxKind.ForStatement: {
                             let fs = stmt as ts.ForStatement;
                             // look for the 'repeat' loop style signature in the condition expression, explicitly: (let i = 0; i < X; i++)
                             // for loops will have the '<=' conditional.
@@ -921,6 +926,7 @@ namespace pxt.runner {
                                 });
                             }
                             break;
+                        }
                         case ts.SyntaxKind.VariableStatement:
                             addItem({
                                 name: ns ? "Variables" : "variable declaration",
@@ -930,7 +936,7 @@ namespace pxt.runner {
                             });
                             break;
                         default:
-                            pxt.debug(`card kind: ${stmt.kind}`)
+                            pxt.debug(`card kind: ${kind}`)
                     }
             })
 
