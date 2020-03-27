@@ -817,7 +817,7 @@ namespace pxt.runner {
                     const csymbols = symbols.filter(symbol => !!namespaces[symbol.namespace])
                     if (!csymbols.length) return;
                         
-                    const ul = $('<div />').addClass('ui items');
+                    const ul = $('<div />').addClass('ui divived items');
                     ul.attr("role", "listbox");
                     csymbols.forEach(symbol => addSymbolCardItem(ul, symbol, "item"));
                     if (replaceParent) c = c.parent();
