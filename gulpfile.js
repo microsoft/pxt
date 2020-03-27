@@ -19,7 +19,14 @@ const clean = () => rimraf("built").then(() => rimraf("temp"));
 const update = () => exec("git pull", true).then(() => exec("npm install", true))
 
 
+/** onlineline */
+const onlinelearning = () => {
+    const tasks = ["schedule", "projects"].map(fn =>
+        () => exec(`node node_modules/typescript/bin/tsc ./docs/static/online-learning/${fn}.ts`)
+    );
 
+    gulp.watch("./docs/static/online-learning/*.ts", gulp.series(...tasks));
+};
 /********************************************************
                     TypeScript build
 *********************************************************/
@@ -41,63 +48,63 @@ const cli = () => compileTsProject("cli", "built", true);
 const webapp = () => compileTsProject("webapp", "built/webapp", true);
 
 const pxtblockly = () => gulp.src([
-        "webapp/public/blockly/blockly_compressed.js",
-        "webapp/public/blockly/blocks_compressed.js",
-        "webapp/public/blockly/msg/js/en.js",
-        "built/pxtblocks.js"
-    ])
+    "webapp/public/blockly/blockly_compressed.js",
+    "webapp/public/blockly/blocks_compressed.js",
+    "webapp/public/blockly/msg/js/en.js",
+    "built/pxtblocks.js"
+])
     .pipe(concat("pxtblockly.js"))
     .pipe(gulp.dest("built"));
 
 const pxtapp = () => gulp.src([
-        "node_modules/lzma/src/lzma_worker-min.js",
-        "node_modules/dompurify/dist/purify.min.js",
-        "built/pxtlib.js",
-        "built/pxtwinrt.js",
-        "built/pxteditor.js",
-        "built/pxtsim.js"
-    ])
+    "node_modules/lzma/src/lzma_worker-min.js",
+    "node_modules/dompurify/dist/purify.min.js",
+    "built/pxtlib.js",
+    "built/pxtwinrt.js",
+    "built/pxteditor.js",
+    "built/pxtsim.js"
+])
     .pipe(concat("pxtapp.js"))
     .pipe(gulp.dest("built/web"));
 
 const pxtworker = () => gulp.src([
-        "pxtcompiler/ext-typescript/lib/typescript.js",
-        "node_modules/fuse.js/dist/fuse.min.js",
-        "node_modules/lzma/src/lzma_worker-min.js",
-        "node_modules/dompurify/dist/purify.min.js",
-        "built/pxtlib.js",
-        "built/pxtcompiler.js",
-        "built/pxtpy.js"
-    ])
+    "pxtcompiler/ext-typescript/lib/typescript.js",
+    "node_modules/fuse.js/dist/fuse.min.js",
+    "node_modules/lzma/src/lzma_worker-min.js",
+    "node_modules/dompurify/dist/purify.min.js",
+    "built/pxtlib.js",
+    "built/pxtcompiler.js",
+    "built/pxtpy.js"
+])
     .pipe(concat("pxtworker.js"))
-    .pipe(header(`"use strict";\n`,))
+    .pipe(header(`"use strict";\n`))
     .pipe(gulp.dest("built/web"));
 
 const pxtembed = () => gulp.src([
-        "pxtcompiler/ext-typescript/lib/typescript.js",
-        "node_modules/lzma/src/lzma_worker-min.js",
-        "node_modules/dompurify/dist/purify.min.js",
-        "built/pxtlib.js",
-        "built/pxtcompiler.js",
-        "built/pxtpy.js",
-        "built/pxtblockly.js",
-        "built/pxteditor.js",
-        "built/pxtsim.js",
-        "built/pxtrunner.js"
-    ])
+    "pxtcompiler/ext-typescript/lib/typescript.js",
+    "node_modules/lzma/src/lzma_worker-min.js",
+    "node_modules/dompurify/dist/purify.min.js",
+    "built/pxtlib.js",
+    "built/pxtcompiler.js",
+    "built/pxtpy.js",
+    "built/pxtblockly.js",
+    "built/pxteditor.js",
+    "built/pxtsim.js",
+    "built/pxtrunner.js"
+])
     .pipe(concat("pxtembed.js"))
     .pipe(gulp.dest("built/web"));
 
 const pxtjs = () => gulp.src([
-        "pxtcompiler/ext-typescript/lib/typescript.js",
-        "built/pxtlib.js",
-        "built/pxtcompiler.js",
-        "built/pxtpy.js",
-        "built/pxtsim.js",
-        "built/cli.js"
-    ])
+    "pxtcompiler/ext-typescript/lib/typescript.js",
+    "built/pxtlib.js",
+    "built/pxtcompiler.js",
+    "built/pxtpy.js",
+    "built/pxtsim.js",
+    "built/cli.js"
+])
     .pipe(concat("pxt.js"))
-    .pipe(header( `
+    .pipe(header(`
         "use strict";
         // make sure TypeScript doesn't overwrite our module.exports
         global.savedModuleExports = module.exports;
@@ -179,8 +186,8 @@ function compileTsProject(dirname, destination, useOutdir, filename) {
     let opts = useOutdir ? {
         outDir: path.resolve(destination)
     } : {
-        out: path.resolve(destination, path.basename(filename || dirname) + ".js")
-    };
+            out: path.resolve(destination, path.basename(filename || dirname) + ".js")
+        };
 
     let configPath = path.join(dirname, "tsconfig.json");
     let tsProject = ts.createProject(configPath, opts);
@@ -302,18 +309,18 @@ function runUglify() {
 *********************************************************/
 
 const semanticjs = () => gulp.src(ju.expand([
-        "node_modules/semantic-ui-less/definitions/globals",
-        "node_modules/semantic-ui-less/definitions/modules/accordion.js",
-        "node_modules/semantic-ui-less/definitions/modules/checkbox.js",
-        "node_modules/semantic-ui-less/definitions/modules/dimmer.js",
-        "node_modules/semantic-ui-less/definitions/modules/dropdown.js",
-        "node_modules/semantic-ui-less/definitions/modules/embed.js",
-        "node_modules/semantic-ui-less/definitions/modules/modal.js",
-        "node_modules/semantic-ui-less/definitions/modules/popup.js",
-        "node_modules/semantic-ui-less/definitions/modules/search.js",
-        "node_modules/semantic-ui-less/definitions/modules/sidebar.js",
-        "node_modules/semantic-ui-less/definitions/modules/transition.js",
-        "node_modules/semantic-ui-less/definitions/behaviors"],
+    "node_modules/semantic-ui-less/definitions/globals",
+    "node_modules/semantic-ui-less/definitions/modules/accordion.js",
+    "node_modules/semantic-ui-less/definitions/modules/checkbox.js",
+    "node_modules/semantic-ui-less/definitions/modules/dimmer.js",
+    "node_modules/semantic-ui-less/definitions/modules/dropdown.js",
+    "node_modules/semantic-ui-less/definitions/modules/embed.js",
+    "node_modules/semantic-ui-less/definitions/modules/modal.js",
+    "node_modules/semantic-ui-less/definitions/modules/popup.js",
+    "node_modules/semantic-ui-less/definitions/modules/search.js",
+    "node_modules/semantic-ui-less/definitions/modules/sidebar.js",
+    "node_modules/semantic-ui-less/definitions/modules/transition.js",
+    "node_modules/semantic-ui-less/definitions/behaviors"],
     ".js"))
     .pipe(concat("semantic.js"))
     .pipe(gulp.dest("built/web"));
@@ -338,7 +345,7 @@ const copyWebapp = () =>
         "built/pxtwinrt.js",
         "built/webapp/src/worker.js"
     ])
-    .pipe(gulp.dest("built/web"));
+        .pipe(gulp.dest("built/web"));
 
 const copySemanticFonts = () => gulp.src("node_modules/semantic-ui-less/themes/default/assets/fonts/*")
     .pipe(gulp.dest("built/web/fonts"))
@@ -412,15 +419,15 @@ const buildSVGIcons = () => {
 *********************************************************/
 
 const copyMonacoBase = () => gulp.src([
-        "node_modules/monaco-editor/min/vs/base/**/*",
-        "!**/codicon.ttf" // We use a different version of this font that's checked into pxt
-    ])
+    "node_modules/monaco-editor/min/vs/base/**/*",
+    "!**/codicon.ttf" // We use a different version of this font that's checked into pxt
+])
     .pipe(gulp.dest("webapp/public/vs/base"));
 
 const copyMonacoEditor = () => gulp.src([
-        "node_modules/monaco-editor/min/vs/editor/**/*",
-        "!**/editor.main.js"
-    ])
+    "node_modules/monaco-editor/min/vs/editor/**/*",
+    "!**/editor.main.js"
+])
     .pipe(gulp.dest("webapp/public/vs/editor"));
 
 const copyMonacoLoader = () => gulp.src("node_modules/monaco-editor/min/vs/loader.js")
@@ -478,9 +485,9 @@ const copyMonaco = gulp.series(gulp.parallel(
 *********************************************************/
 
 const copyBlocklyCompressed = () => gulp.src([
-        "node_modules/pxt-blockly/blocks_compressed.js",
-        "node_modules/pxt-blockly/blockly_compressed.js"
-    ])
+    "node_modules/pxt-blockly/blocks_compressed.js",
+    "node_modules/pxt-blockly/blockly_compressed.js"
+])
     .pipe(gulp.dest("webapp/public/blockly/"));
 
 const copyBlocklyEnJs = () => gulp.src("node_modules/pxt-blockly/msg/js/en.js")
@@ -501,10 +508,10 @@ const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyEnJs, copyBl
 *********************************************************/
 
 const lint = () => Promise.all(
-        ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
+    ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
         "pxtpy", "pxtrunner", "pxtsim", "pxtwinrt", "webapp",
         "docfiles/pxtweb"].map(dirname =>
-    exec(`node node_modules/tslint/bin/tslint --project ./${dirname}/tsconfig.json`, true)))
+            exec(`node node_modules/tslint/bin/tslint --project ./${dirname}/tsconfig.json`, true)))
     .then(() => console.log("linted"))
 
 const testdecompiler = testTask("decompile-test", "decompilerunner.js");
@@ -551,13 +558,13 @@ function testTask(testFolder, testFile) {
     const buildTs = () => compileTsProject("tests/" + testFolder, "built/tests", true);
 
     const buildTestRunner = () => gulp.src([
-            "pxtcompiler/ext-typescript/lib/typescript.js",
-            "built/pxtlib.js",
-            "built/pxtcompiler.js",
-            "built/pxtpy.js",
-            "built/pxtsim.js",
-            "built/tests/" + testFolder + "/" + testFile,
-        ])
+        "pxtcompiler/ext-typescript/lib/typescript.js",
+        "built/pxtlib.js",
+        "built/pxtcompiler.js",
+        "built/pxtpy.js",
+        "built/pxtsim.js",
+        "built/tests/" + testFolder + "/" + testFile,
+    ])
         .pipe(concat("runner.js"))
         .pipe(header(`
             "use strict";
@@ -620,6 +627,7 @@ exports.uglify = runUglify;
 exports.watch = initWatch;
 exports.watchCli = initWatchCli;
 exports.testlanguageservice = testlanguageservice;
+exports.onlinelearning = onlinelearning;
 
 console.log(`pxt build how to:`)
 console.log(`run "gulp watch" in pxt folder`)
