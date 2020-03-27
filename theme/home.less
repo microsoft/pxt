@@ -80,15 +80,21 @@
             &.myproject-header {
                 cursor: pointer;
                 outline: none;
+
                 &:focus, &:hover {
                     color: fade(@homeHeaderColor, 80%);
                 }
 
                 > .view-all-button {
-                    padding-left: 0.5em;
+                    margin-left: 0.5em;
                     color: @primaryColor;
                     font-size: 16px;
                     font-weight: 500;
+                    border-bottom: 1px solid fade(@primaryColor, 0%);
+                    transition: border-color 400ms ease;
+                    &:hover {
+                        border-color: @primaryColor;
+                    }
                 }
             }
         }
