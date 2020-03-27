@@ -812,11 +812,13 @@ namespace pxt.runner {
                 const symbols = pxt.Util.values(info.apis.byQName);
                 apisEl.each((i, e) => {
                     let c = $(e);
+                    const namespaces = pxt.Util.toDictionary(c.text().split('\n'), n => n); // list of namespace to list apis for.
+                    const csymbols = symbols.filter(symbol => !!namespaces[symbol.namespace])
+                    if (!csymbols.length) return;
+                        
                     const ul = $('<div />').addClass('ui cards');
                     ul.attr("role", "listbox");
-                    const namespaces = pxt.Util.toDictionary(c.text().split('\n'), n => n); // list of namespace to list apis for.
-                    symbols.filter(symbol => !!namespaces[symbol.namespace])
-                        .forEach(symbol => addSymbolCardItem(ul, symbol));
+                    csymbols.forEach(symbol => addSymbolCardItem(ul, symbol));
                     if (replaceParent) c = c.parent();
                     c.replaceWith(ul)
                 })
