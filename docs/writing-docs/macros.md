@@ -387,6 +387,14 @@ To render one or more code cards as JSON into cards, use **codecard**.
     }]
     ```
 
+### apis
+
+Render all blocks from a given set of namespaces as code cards.
+
+    ```apis
+    basic
+    ```
+
 ### ignore #ignore
 
 Append `-ignore` to any of the above to ignore a snippet in automated testing:

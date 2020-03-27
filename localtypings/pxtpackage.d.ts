@@ -127,6 +127,7 @@ declare namespace pxt {
         labelClass?: string;
         tags?: string[]; // tags shown in home screen, colors specified in theme
         tabIndex?: number;
+        style?: string; // "card" | "item" | undefined;
 
         color?: string; // one of semantic ui colors
         description?: string;
@@ -149,11 +150,6 @@ declare namespace pxt {
         otherActions?: CodeCardAction[];
 
         header?: string;
-        any?: number;
-        hardware?: number;
-        software?: number;
-        blocks?: number;
-        javascript?: number;
 
         tutorialStep?: number;
         tutorialLength?: number;
