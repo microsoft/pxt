@@ -816,7 +816,7 @@ namespace pxt.runner {
                     const namespaces = pxt.Util.toDictionary(c.text().split('\n'), n => n); // list of namespace to list apis for.
                     const csymbols = symbols.filter(symbol => !!namespaces[symbol.namespace])
                     if (!csymbols.length) return;
-                        
+
                     const ul = $('<div />').addClass('ui divived items');
                     ul.attr("role", "listbox");
                     csymbols.forEach(symbol => addSymbolCardItem(ul, symbol, "item"));
@@ -841,7 +841,7 @@ namespace pxt.runner {
         const card = block?.codeCard;
         if (card) {
             const ccard = U.clone(block.codeCard) as pxt.CodeCard;
-            if(cardStyle) ccard.style = cardStyle;
+            if (cardStyle) ccard.style = cardStyle;
             addCardItem(ul, ccard);
         }
         else {
