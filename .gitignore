@@ -2,6 +2,7 @@ templater.sh
 web/_temp
 webapp/public/blockly
 webapp/public/closure-library
+localtypings/blockly.d.ts
 node_modules
 *.sw?
 built

@@ -501,7 +501,10 @@ const copyBlocklyEnJson = () => gulp.src("node_modules/pxt-blockly/msg/json/en.j
 const copyBlocklyMedia = () => gulp.src("node_modules/pxt-blockly/media/*")
     .pipe(gulp.dest("webapp/public/blockly/media"))
 
-const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyEnJs, copyBlocklyEnJson, copyBlocklyMedia);
+const copyBlocklyTypings = () => gulp.src("node_modules/pxt-blockly/typings/blockly.d.ts")
+    .pipe(gulp.dest("localtypings/"))
+
+const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyEnJs, copyBlocklyEnJson, copyBlocklyMedia, copyBlocklyTypings);
 
 
 
@@ -589,6 +592,7 @@ function testTask(testFolder, testFile) {
 const buildAll = gulp.series(
     updatestrings,
     copyTypescriptServices,
+    copyBlocklyTypings,
     gulp.parallel(pxtlib, pxtweb),
     gulp.parallel(pxtcompiler, pxtsim, backendutils),
     gulp.parallel(pxtpy, gulp.series(copyBlockly, pxtblocks, pxtblockly)),
