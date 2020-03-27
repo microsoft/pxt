@@ -222,6 +222,18 @@
             .signature {
                 display: block;
             }
+
+            .blockHandle {
+                border-color: @white;
+                border-width: 4px 4px 4px 0px;
+                border-style: solid;
+            }
+        }
+        &.hover {
+            cursor: grab;
+            .blockHandle {
+                display: block;
+            }
         }
 
         .blockHandle {
@@ -230,9 +242,6 @@
             width: 2rem;
             right: -0.9rem;
             border-radius: 0 1rem 1rem 0;
-            border-color: @white;
-            border-width: 4px 4px 4px 0px;
-            border-style: solid;
             background: @monacoFlyoutColor;
 
             i.bars {
