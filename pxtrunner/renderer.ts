@@ -809,7 +809,8 @@ namespace pxt.runner {
         return decompileApiAsync(options)
             .then((r) => {
                 const info = r.compileBlocks.blocksInfo;
-                const symbols = pxt.Util.values(info.apis.byQName);
+                const symbols = pxt.Util.values(info.apis.byQName)
+                    .filter(symbol => !symbol.attributes.hidden);
                 apisEl.each((i, e) => {
                     let c = $(e);
                     const namespaces = pxt.Util.toDictionary(c.text().split('\n'), n => n); // list of namespace to list apis for.
@@ -836,7 +837,7 @@ namespace pxt.runner {
 
     function addSymbolCardItem(ul: JQuery, symbol: pxtc.SymbolInfo) {
         const attributes = symbol.attributes;
-        const block = Blockly.Blocks[attributes.blockId];
+        const block = !attributes.blockHidden && Blockly.Blocks[attributes.blockId];
         const card = block?.codeCard;
         if (card) {
             addCardItem(ul, U.clone(block.codeCard) as pxt.CodeCard);
