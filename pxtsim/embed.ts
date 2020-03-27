@@ -383,7 +383,9 @@ namespace pxsim {
     }
 
     function initServiceWorker() {
-        if ("serviceWorker" in navigator && window.location.href.indexOf("---simulator") !== -1) {
+        // pxsim is included in both the webapp and the simulator so we need to check if the ---simulator is
+        // present in the window location
+        if ("serviceWorker" in navigator && window.location.href.indexOf("---simulator") !== -1 && !U.isLocalHost()) {
             // We don't have access to the webconfig in pxtsim so we need to extract the ref from the URL
             const pathname = window.location.pathname;
             const ref = pathname.substring(1, pathname.indexOf("---"));
