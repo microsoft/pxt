@@ -10,10 +10,6 @@ namespace pxt.docs.codeCard {
     export function render(card: pxt.CodeCard, options: CodeCardRenderOptions = {}): HTMLElement {
         const repeat = pxt.Util.repeatMap;
         let color = card.color || "";
-        if (!color) {
-            if (card.hardware && !card.software) color = 'black';
-            else if (card.software && !card.hardware) color = 'teal';
-        }
         const url = card.url ? /^[^:]+:\/\//.test(card.url) ? card.url : ('/' + card.url.replace(/^\.?\/?/, ''))
             : card.youTubeId ? `https://youtu.be/${card.youTubeId}` : undefined;
         const link = !!url;
@@ -35,21 +31,15 @@ namespace pxt.docs.codeCard {
             return d;
         }
 
-        let r = div(null, 'ui card ' + (card.color || '') + (link ? ' link' : ''), link ? "a" : "div");
+        const style = card.style || "card";
+        let r = div(null, 'ui ' + style + ' ' + (card.color || '') + (link ? ' link' : ''), link ? "a" : "div");
 
         r.setAttribute("role", "option");
         r.setAttribute("aria-selected", "true");
 
         if (url) (r as HTMLAnchorElement).href = url;
-        if (!options.hideHeader && (card.header || card.blocks || card.javascript || card.hardware || card.software || card.any)) {
+        if (!options.hideHeader && card.header) {
             let h = div(r, "ui content " + (card.responsive ? " tall desktop only" : ""));
-            let hr = div(h, "right floated meta")
-            if (card.any) div(hr, "ui grey circular label tiny", "i", card.any > 0 ? card.any : "");
-            repeat(card.blocks, (k) => div(hr, "puzzle orange icon", "i"));
-            repeat(card.javascript, (k) => div(hr, "align left blue icon", "i"));
-            repeat(card.hardware, (k) => div(hr, "certificate black icon", "i"));
-            repeat(card.software, (k) => div(hr, "square teal icon", "i"));
-
             if (card.header) div(h, 'description', 'span', card.header);
         }
 
@@ -80,7 +70,8 @@ namespace pxt.docs.codeCard {
             img.appendChild(pre);
         }
 
-        const imgUrl = card.imageUrl || (card.youTubeId && `https://img.youtube.com/vi/${card.youTubeId}/0.jpg`)
+        const imgUrl = card.imageUrl || (card.youTubeId ? `https://img.youtube.com/vi/${card.youTubeId}/0.jpg` : undefined);
+
         if (imgUrl) {
             let imageWrapper = document.createElement("div") as HTMLDivElement;
             imageWrapper.className = "ui imagewrapper";

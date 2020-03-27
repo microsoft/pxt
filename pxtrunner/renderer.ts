@@ -817,9 +817,9 @@ namespace pxt.runner {
                     const csymbols = symbols.filter(symbol => !!namespaces[symbol.namespace])
                     if (!csymbols.length) return;
                         
-                    const ul = $('<div />').addClass('ui cards');
+                    const ul = $('<div />').addClass('ui items');
                     ul.attr("role", "listbox");
-                    csymbols.forEach(symbol => addSymbolCardItem(ul, symbol));
+                    csymbols.forEach(symbol => addSymbolCardItem(ul, symbol, "item"));
                     if (replaceParent) c = c.parent();
                     c.replaceWith(ul)
                 })
@@ -835,12 +835,14 @@ namespace pxt.runner {
         ul.append(pxt.docs.codeCard.render(card, { hideHeader: true, shortName: true }));
     }
 
-    function addSymbolCardItem(ul: JQuery, symbol: pxtc.SymbolInfo) {
+    function addSymbolCardItem(ul: JQuery, symbol: pxtc.SymbolInfo, cardStyle?: string) {
         const attributes = symbol.attributes;
         const block = !attributes.blockHidden && Blockly.Blocks[attributes.blockId];
         const card = block?.codeCard;
         if (card) {
-            addCardItem(ul, U.clone(block.codeCard) as pxt.CodeCard);
+            const ccard = U.clone(block.codeCard) as pxt.CodeCard;
+            if(cardStyle) ccard.style = cardStyle;
+            addCardItem(ul, ccard);
         }
         else {
             // default to text
@@ -848,7 +850,8 @@ namespace pxt.runner {
             addCardItem(ul, {
                 name: symbol.qName,
                 description: attributes.jsDoc,
-                url: attributes.help || undefined
+                url: attributes.help || undefined,
+                style: cardStyle
             })
         }
     }
