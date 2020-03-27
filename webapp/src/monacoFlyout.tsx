@@ -30,12 +30,14 @@ export interface MonacoFlyoutState {
     icon?: string;
     groups?: toolbox.GroupDefinition[];
     selectedBlock?: string;
+    hoverBlock?: string;
     hide?: boolean;
 }
 
 export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyoutState> {
     protected dragging: boolean = false;
     protected dragInfo: BlockDragInfo;
+    protected lastSelected: string;
 
     constructor(props: MonacoFlyoutProps) {
         super(props);
@@ -77,6 +79,15 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
     protected getBlockClickHandler = (name: string) => {
         pxt.tickEvent("monaco.toolbox.itemclick", undefined, { interactiveConsent: true });
         return () => { this.setState({ selectedBlock: name != this.state.selectedBlock ? name : undefined }) };
+    }
+
+    protected getBlockMouseOver = (name: string) => {
+        pxt.tickEvent("monaco.toolbox.itemmouseover", undefined, { interactiveConsent: true });
+        return () => { this.setState({ hoverBlock: name != this.state.hoverBlock ? name : undefined }) };
+    }
+
+    protected getBlockMouseOut = (name: string) => {
+        return () => { if (name == this.state.hoverBlock ) this.setState({ hoverBlock: undefined }) };
     }
 
     protected getBlockDragStartHandler = (block: toolbox.BlockDefinition, snippet: string, color: string) => {
@@ -265,13 +276,21 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
     }
 
     protected positionDragHandle(): void {
-        let handle = document.querySelector(".monacoBlock.expand .blockHandle") as HTMLDivElement;
-        if (handle) {
-            let parent = handle.parentElement;
+        let hoverHandle = document.querySelector(".monacoBlock.hover .blockHandle") as HTMLDivElement;
+        if (hoverHandle) {
+            let parent = hoverHandle.parentElement;
             let container = document.getElementById("monacoFlyoutWrapper");
-            handle.style.height = `${parent.clientHeight + (SELECTED_BORDER_WIDTH * 2)}px`;
-            handle.style.left = `${parent.clientWidth + SELECTED_BORDER_WIDTH - 1}px`;
-            handle.style.top = `${parent.offsetTop - container.scrollTop}px`;
+            hoverHandle.style.height = `${parent.clientHeight}px`;
+            hoverHandle.style.left = `${parent.clientWidth}px`;
+            hoverHandle.style.top = `${parent.offsetTop - container.scrollTop}px`;
+        }
+        let expandHandle = document.querySelector(".monacoBlock.expand .blockHandle") as HTMLDivElement;
+        if (expandHandle) {
+            let parent = expandHandle.parentElement;
+            let container = document.getElementById("monacoFlyoutWrapper");
+            expandHandle.style.height = `${parent.clientHeight + (SELECTED_BORDER_WIDTH * 2)}px`;
+            expandHandle.style.left = `${parent.clientWidth + SELECTED_BORDER_WIDTH - 1}px`;
+            expandHandle.style.top = `${parent.offsetTop - container.scrollTop}px`;
         }
     }
 
@@ -307,6 +326,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
 
         const qName = this.getQName(block) || this.getSnippetName(block);
         const selected = qName == this.state.selectedBlock;
+        const hover = qName == this.state.hoverBlock;
 
         const hasPointer = pxt.BrowserUtils.hasPointerEvents();
         const hasTouch = pxt.BrowserUtils.isTouchEnabled();
@@ -315,11 +335,13 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         const description = block.attributes.jsDoc.replace(/``/g, '"')
             .split("* @param", 1)[0] // drop any kind of parameter annotation
 
-        return <div className={`monacoBlock ${disabled ? "monacoDisabledBlock" : ""} ${selected ? "expand" : ""}`}
+        return <div className={`monacoBlock ${disabled ? "monacoDisabledBlock" : ""} ${selected ? "expand" : ""} ${hover ? "hover" : ""}`}
             style={this.getSelectedStyle()}
             title={block.attributes.jsDoc}
             key={`block_${qName}_${index}`} tabIndex={0} role="listitem"
             onClick={this.getBlockClickHandler(qName)}
+            onMouseOver={this.getBlockMouseOver(qName)}
+            onMouseOut={this.getBlockMouseOut(qName)}
             onKeyDown={this.getKeyDownHandler(block, snippet, isPython)}
             onPointerDown={hasPointer ? dragStartHandler : undefined}
             onMouseDown={!hasPointer ? dragStartHandler : undefined}
