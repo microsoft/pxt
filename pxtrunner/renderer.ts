@@ -813,6 +813,33 @@ namespace pxt.runner {
             });
     }
 
+    function addCardItem(ul: JQuery, card: pxt.CodeCard) {
+        if (!card) return;
+        const mC = /^\/(v\d+)/.exec(card.url);
+        const mP = /^\/(v\d+)/.exec(window.location.pathname);
+        const inEditor = /#doc/i.test(window.location.href);
+        if (card.url && !mC && mP && !inEditor) card.url = `/${mP[1]}/${card.url}`;
+        ul.append(pxt.docs.codeCard.render(card, { hideHeader: true, shortName: true }));
+    }
+
+    function addSymbolCardItem(ul: JQuery, symbol: pxtc.SymbolInfo) {
+        const attributes = symbol.attributes;
+        const block = Blockly.Blocks[attributes.blockId];
+        const card = block?.codeCard;
+        if (card) {
+            addCardItem(ul, U.clone(block.codeCard) as pxt.CodeCard);
+        }
+        else {
+            // default to text
+            // no block available here
+            addCardItem(ul, {
+                name: symbol.qName,
+                description: attributes.jsDoc,
+                url: attributes.help || undefined
+            })
+        }
+    }
+
     function renderLinksAsync(options: ClientRenderOptions, cls: string, replaceParent: boolean, ns: boolean): Promise<void> {
         return renderNextSnippetAsync(cls, (c, r) => {
             const cjs = r.compileProgram;
@@ -821,25 +848,17 @@ namespace pxt.runner {
             const stmts = file.statements.slice(0);
             const ul = $('<div />').addClass('ui cards');
             ul.attr("role", "listbox");
-            const addItem = (card: pxt.CodeCard) => {
-                if (!card) return;
-                const mC = /^\/(v\d+)/.exec(card.url);
-                const mP = /^\/(v\d+)/.exec(window.location.pathname);
-                const inEditor = /#doc/i.test(window.location.href);
-                if (card.url && !mC && mP && !inEditor) card.url = `/${mP[1]}/${card.url}`;
-                ul.append(pxt.docs.codeCard.render(card, { hideHeader: true, shortName: true }));
-            }
             stmts.forEach(stmt => {
                 const kind = stmt.kind;
                 const info = decompileCallInfo(stmt);
                 if (info && r.apiInfo && r.apiInfo.byQName[info.qName]) {
                     const symbol = r.apiInfo.byQName[info.qName];
                     const attributes = symbol.attributes;
-                    let block = Blockly.Blocks[attributes.blockId];
+                    const block = Blockly.Blocks[attributes.blockId];
                     if (ns) {
                         const ii = symbol;
                         const nsi = r.compileBlocks.blocksInfo.apis.byQName[ii.namespace];
-                        addItem({
+                        addCardItem(ul, {
                             name: nsi.attributes.blockNamespace || nsi.name,
                             url: nsi.attributes.help || ("reference/" + (nsi.attributes.blockNamespace || nsi.name).toLowerCase()),
                             description: nsi.attributes.jsDoc,
@@ -849,18 +868,8 @@ namespace pxt.runner {
                                     ? `<xml xmlns="http://www.w3.org/1999/xhtml"><block type="${attributes.blockId}"></block></xml>`
                                     : undefined
                         })
-                    } else if (block) {
-                        let card = U.clone(block.codeCard) as pxt.CodeCard;
-                        if (card) {
-                            addItem(card);
-                        }
                     } else {
-                        // no block available here
-                        addItem({
-                            name: info.qName,
-                            description: attributes.jsDoc,
-                            url: attributes.help || undefined
-                        })
+                        addSymbolCardItem(ul, symbol);
                     }
                 } else
                     switch (kind) {
@@ -869,7 +878,7 @@ namespace pxt.runner {
                             switch (es.expression.kind) {
                                 case ts.SyntaxKind.TrueKeyword:
                                 case ts.SyntaxKind.FalseKeyword:
-                                    addItem({
+                                    addCardItem(ul, {
                                         name: "Boolean",
                                         url: "blocks/logic/boolean",
                                         description: lf("True or false values"),
@@ -883,7 +892,7 @@ namespace pxt.runner {
                             break;
                         }
                         case ts.SyntaxKind.IfStatement:
-                            addItem({
+                            addCardItem(ul, {
                                 name: ns ? "Logic" : "if",
                                 url: "blocks/logic" + (ns ? "" : "/if"),
                                 description: ns ? lf("Logic operators and constants") : lf("Conditional statement"),
@@ -891,7 +900,7 @@ namespace pxt.runner {
                             });
                             break;
                         case ts.SyntaxKind.WhileStatement:
-                            addItem({
+                            addCardItem(ul, {
                                 name: ns ? "Loops" : "while",
                                 url: "blocks/loops" + (ns ? "" : "/while"),
                                 description: ns ? lf("Loops and repetition") : lf("Repeat code while a condition is true."),
@@ -899,7 +908,7 @@ namespace pxt.runner {
                             });
                             break;
                         case ts.SyntaxKind.ForOfStatement:
-                            addItem({
+                            addCardItem(ul, {
                                 name: ns ? "Loops" : "for of",
                                 url: "blocks/loops" + (ns ? "" : "/for-of"),
                                 description: ns ? lf("Loops and repetition") : lf("Repeat code for each item in a list."),
@@ -907,7 +916,7 @@ namespace pxt.runner {
                             });
                             break;
                         case ts.SyntaxKind.BreakStatement:
-                            addItem({
+                            addCardItem(ul, {
                                 name: ns ? "Loops" : "break",
                                 url: "blocks/loops" + (ns ? "" : "/break"),
                                 description: ns ? lf("Loops and repetition") : lf("Break out of the current loop."),
@@ -915,7 +924,7 @@ namespace pxt.runner {
                             });
                             break;
                         case ts.SyntaxKind.ContinueStatement:
-                            addItem({
+                            addCardItem(ul, {
                                 name: ns ? "Loops" : "continue",
                                 url: "blocks/loops" + (ns ? "" : "/continue"),
                                 description: ns ? lf("Loops and repetition") : lf("Skip iteration and continue the current loop."),
@@ -932,14 +941,14 @@ namespace pxt.runner {
                                     fs.condition.getChildAt(1).kind == ts.SyntaxKind.LessThanToken);
                             }
                             if (forloop) {
-                                addItem({
+                                addCardItem(ul, {
                                     name: ns ? "Loops" : "for",
                                     url: "blocks/loops" + (ns ? "" : "/for"),
                                     description: ns ? lf("Loops and repetition") : lf("Repeat code for a given number of times using an index."),
                                     blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_simple_for"></block></xml>'
                                 });
                             } else {
-                                addItem({
+                                addCardItem(ul, {
                                     name: ns ? "Loops" : "repeat",
                                     url: "blocks/loops" + (ns ? "" : "/repeat"),
                                     description: ns ? lf("Loops and repetition") : lf("Repeat code for a given number of times."),
@@ -949,7 +958,7 @@ namespace pxt.runner {
                             break;
                         }
                         case ts.SyntaxKind.VariableStatement:
-                            addItem({
+                            addCardItem(ul, {
                                 name: ns ? "Variables" : "variable declaration",
                                 url: "blocks/variables" + (ns ? "" : "/assign"),
                                 description: ns ? lf("Variables") : lf("Assign a value to a named variable."),
