@@ -2,7 +2,7 @@
 
 Declaring a variable is simply a matter of just assigning a value to a variable identifier:
 
-```python
+```python-ignore
 a = 10
 ```
 
@@ -11,7 +11,7 @@ a = 10
 When a variable is declared with an assignment, it uses what some call *lexical-scoping* or *block-scoping*.
 Block-scoped variables are not visible outside of their nearest containing block or `for`-loop.
 
-```python
+```python-ignore
 def f(inp):
     a = 100
 

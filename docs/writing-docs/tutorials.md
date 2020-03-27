@@ -413,7 +413,7 @@ Using ``python`` after the triple tick like this:
 ````
 ```python
 for i in range(100):
-    mobs.spawn(AnimalMob.CHICKEN, positions.create(0, 10, 0))
+    mobs.spawn(CHICKEN, positions.create(0, 10, 0))
 ```
 ````
 

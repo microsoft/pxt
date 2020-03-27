@@ -1,6 +1,6 @@
 # Public assignments
 
-This page describes a methodology to manage public assignments via GitHub. 
+This page describes how public assignments are managed via GitHub. 
 Each assignment is a **public repository** under the student's account.
 
 Let's illustrate the actions for a **homework** assignment.
@@ -16,4 +16,4 @@ they have made progress and to provide a meaningful description of the changes m
 
 ## Step 3: Teacher reviews the commit history
 
-The teacher can use the [MakeCode GitHub Explorer](https://makecode.com/github-explorer) to easily browse the repositories of a user. If needed the teacher can also review the entire history of the project on GitHub.
+The teacher can use the [MakeCode GitHub Explorer](https://makecode.com/github-explorer) to easily browse the repositories of a user. If needed, the teacher can also review the entire history of the project on GitHub.

@@ -151,6 +151,11 @@ namespace pxt.editor.experiments {
             {
                 id: "openProjectNewTab",
                 name: lf("Open in New Tab"),
+                description: lf("Open an editor in a new tab.")
+            },
+            {
+                id: "openProjectNewDependentTab",
+                name: lf("Open in New Connected Tab"),
                 description: lf("Open connected editors in different browser tabs.")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);

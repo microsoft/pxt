@@ -51,6 +51,7 @@ const pxtblockly = () => gulp.src([
 
 const pxtapp = () => gulp.src([
         "node_modules/lzma/src/lzma_worker-min.js",
+        "node_modules/dompurify/dist/purify.min.js",
         "built/pxtlib.js",
         "built/pxtwinrt.js",
         "built/pxteditor.js",
@@ -63,6 +64,7 @@ const pxtworker = () => gulp.src([
         "pxtcompiler/ext-typescript/lib/typescript.js",
         "node_modules/fuse.js/dist/fuse.min.js",
         "node_modules/lzma/src/lzma_worker-min.js",
+        "node_modules/dompurify/dist/purify.min.js",
         "built/pxtlib.js",
         "built/pxtcompiler.js",
         "built/pxtpy.js"
@@ -74,6 +76,7 @@ const pxtworker = () => gulp.src([
 const pxtembed = () => gulp.src([
         "pxtcompiler/ext-typescript/lib/typescript.js",
         "node_modules/lzma/src/lzma_worker-min.js",
+        "node_modules/dompurify/dist/purify.min.js",
         "built/pxtlib.js",
         "built/pxtcompiler.js",
         "built/pxtpy.js",
@@ -121,7 +124,7 @@ function initWatch() {
         targetjs,
         webapp,
         browserifyWebapp,
-        copyWebapp
+        gulp.parallel(semanticjs, copyJquery, copyWebapp, copyPlayground, copySemanticFonts, copyMonaco)
     ];
 
     gulp.watch("./pxtlib/**/*", gulp.series(...tasks));
@@ -131,7 +134,7 @@ function initWatch() {
     gulp.watch("./backendutils/**/*", gulp.series(backendutils, ...tasks.slice(2)));
 
     gulp.watch("./pxtpy/**/*", gulp.series(pxtpy, ...tasks.slice(3)));
-    gulp.watch("./pxtblockly/**/*", gulp.series(gulp.series(copyBlockly, pxtblocks, pxtblockly), ...tasks.slice(3)));
+    gulp.watch("./pxtblocks/**/*", gulp.series(gulp.series(copyBlockly, pxtblocks, pxtblockly), ...tasks.slice(3)));
 
     gulp.watch("./pxteditor/**/*", gulp.series(pxteditor, ...tasks.slice(4)));
 
@@ -488,8 +491,8 @@ const copyBlocklyEnJs = () => gulp.src("node_modules/pxt-blockly/msg/js/en.js")
 const copyBlocklyEnJson = () => gulp.src("node_modules/pxt-blockly/msg/json/en.json")
     .pipe(gulp.dest("webapp/public/blockly/msg/json/"));
 
-const copyBlocklyMedia = () => gulp.src("node_modules/pxt-blockly/media")
-    .pipe(gulp.dest("webapp/public/blockly/"))
+const copyBlocklyMedia = () => gulp.src("node_modules/pxt-blockly/media/*")
+    .pipe(gulp.dest("webapp/public/blockly/media"))
 
 const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyEnJs, copyBlocklyEnJson, copyBlocklyMedia);
 
@@ -514,6 +517,7 @@ const testpydecomp = testTask("pydecompile-test", "pydecompilerunner.js");
 const testpycomp = testTask("pyconverter-test", "pyconvertrunner.js");
 const testpytraces = testTask("runtime-trace-tests", "tracerunner.js");
 const testtutorials = testTask("tutorial-test", "tutorialrunner.js");
+const testlanguageservice = testTask("language-service", "languageservicerunner.js");
 
 const buildKarmaRunner = () => compileTsProject("tests/blocklycompiler-test", "built/tests/", true);
 const runKarma = () => {
@@ -541,6 +545,7 @@ const testAll = gulp.series(
     testpycomp,
     testpytraces,
     testtutorials,
+    testlanguageservice,
     karma
 )
 
@@ -616,6 +621,7 @@ exports.update = update;
 exports.uglify = runUglify;
 exports.watch = initWatch;
 exports.watchCli = initWatchCli;
+exports.testlanguageservice = testlanguageservice;
 
 console.log(`pxt build how to:`)
 console.log(`run "gulp watch" in pxt folder`)

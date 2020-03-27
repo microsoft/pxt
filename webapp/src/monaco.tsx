@@ -69,7 +69,8 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                     let name = this.python ? si.pyName : si.name;
                     let completionSnippet: string | undefined = undefined;
                     let isMultiLine = insertSnippet && insertSnippet.indexOf("\n") >= 0
-                    if (this.python && insertSnippet && isMultiLine) {
+
+                    if (this.python && insertSnippet && isMultiLine && pxt.blocks.hasHandler(si)) {
                         // For python, we want to replace the entire line because when creating
                         // new functions these need to be placed before the line the user was typing
                         // unlike with typescript where callbacks use lambdas.
@@ -94,10 +95,11 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         // if we're past the first ".", i.e. we're doing member completion, be sure to
                         // remove what precedes the "." in the full snippet.
                         // E.g. if the user is typing "mobs.", we want to complete with "spawn" (name) not "mobs.spawn" (qName)
-                        if (completions.isMemberCompletion
-                            && completionSnippet
-                            && completionSnippet.startsWith(qName)) {
-                            completionSnippet = completionSnippet.replace(qName, name)
+                        if (completions.isMemberCompletion && completionSnippet) {
+                            const nameStart = completionSnippet.indexOf(name);
+                            if (nameStart !== -1) {
+                                completionSnippet = completionSnippet.substr(nameStart)
+                            }
                         }
                     }
                     const label = completions.isMemberCompletion ? name : qName
@@ -312,6 +314,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected flyout: MonacoFlyout;
     protected insertionSnippet: string;
     protected mobileKeyboardWidget: ShowKeyboardWidget;
+    protected pythonSourceMap: pxtc.SourceMapHelpers;
 
     private loadMonacoPromise: Promise<void>;
     private diagSnapshot: string[];
@@ -593,6 +596,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const tsName = this.currFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)
         return compiler.py2tsAsync()
             .then(res => {
+                if (res.sourceMap) {
+                    const mainPkg = pkg.mainEditorPkg();
+                    const tsFile = mainPkg.files[this.currFile.getFileNameWithExtension("ts")]?.content;
+                    const pyFile = mainPkg.files[this.currFile.getFileNameWithExtension("py")]?.content;
+                    if (tsFile && pyFile) {
+                        this.pythonSourceMap = pxtc.BuildSourceMapHelpers(res.sourceMap, tsFile, pyFile);
+                    }
+                    else {
+                        this.pythonSourceMap = null;
+                    }
+                }
+                else this.pythonSourceMap = null;
                 // TODO python use success
                 // any errors?
                 if (res.diagnostics && res.diagnostics.length)
@@ -793,6 +808,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.editorViewZones = [];
 
             this.setupFieldEditors();
+            this.editor.onMouseDown((e: monaco.editor.IEditorMouseEvent) => {
+                if (e.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
+                    return;
+                }
+                this.handleGutterClick(e);
+            });
 
             editor.onDidChangeModelContent(e => {
                 // Clear ranges because the model changed
@@ -1003,13 +1024,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 pxt.debug("Skipping unknown monaco field editor '" + name + "'");
             }
         })
-
-        this.editor.onMouseDown((e: monaco.editor.IEditorMouseEvent) => {
-            if (e.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
-                return;
-            }
-            this.handleGutterClick(e);
-        });
     }
 
     public closeFlyout() {
@@ -1112,6 +1126,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let editorDiv = document.getElementById("monacoEditorInner");
         editorArea.insertBefore(loading, editorDiv);
 
+        this.pythonSourceMap = null;
+
         return this.loadMonacoAsync()
             .then(() => {
                 if (!this.editor) return Promise.resolve();
@@ -1148,7 +1164,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (this.breakpoints) {
                     this.breakpoints.loadBreakpointsForFile(file, this.editor);
                     const loc = this.breakpoints.getLocationOfBreakpoint(this.highlightedBreakpoint);
-                    if (loc && loc.fileName === file.getTypeScriptName()) {
+                    if (loc && loc.fileName === file.getTextFileName()) {
                         this.highilightStatementCore(loc, true);
                     }
                 }
@@ -1177,15 +1193,23 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         });
                         this.editorViewZones = [];
 
+                        const bannedCharactersRegex = /[\u{201c}\u{201d}\u{2018}\u{2019}]/u;
+
                         // Test for left and right quotes because ios safari will sometimes insert
                         // them automatically for the user. Convert them to normal quotes
-                        if (e.changes.some(change => /[\u{201c}\u{201d}\u{2018}\u{2019}]/u.test(change.text))) {
-                            this.editor.setValue(this.editor.getValue().replace(/\u{201c}|\u{201d}/gu, `"`).replace(/\u{2018}|\u{2019}/gu, `'`));
+                        if (e.changes.some(change => bannedCharactersRegex.test(change.text))) {
+                            const edits: monaco.editor.IIdentifiedSingleEditOperation[] = e.changes.filter(e => bannedCharactersRegex.test(e.text)).map(e => {
+                                const start = model.getPositionAt(e.rangeOffset);
+                                const end = model.getPositionAt(e.rangeOffset + e.text.length);
+                                return {
+                                    range: new monaco.Range(start.lineNumber, start.column, end.lineNumber, end.column),
+                                    text: e.text.replace(/\u{201c}|\u{201d}/gu, `"`).replace(/\u{2018}|\u{2019}/gu, `'`)
+                                }
+                            });
+
+                            this.editor.executeEdits("pxt", edits);
                         }
 
-                        if (!e.isRedoing && !e.isUndoing && !this.editor.getValue()) {
-                            this.editor.setValue(" ");
-                        }
                         this.updateDiagnostics();
                         this.changeCallback();
                         this.updateFieldEditors();
@@ -1262,7 +1286,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[]): void {
         if (this.isDebugging()) {
             if (!this.breakpoints) {
-                this.breakpoints = new BreakpointCollection(breakpoints);
+                this.breakpoints = new BreakpointCollection(breakpoints, this.pythonSourceMap);
                 this.breakpoints.loadBreakpointsForFile(this.currFile, this.editor);
             }
 
@@ -1396,14 +1420,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return false;
         }
 
-        if (this.currFile.getTypeScriptName() !== stmt.fileName && this.isDebugging() && lookupFile(stmt.fileName)) {
+        if (brk && this.breakpoints?.getLoadedBreakpoint(brk.breakpointId)) stmt = this.breakpoints.getLoadedBreakpoint(brk.breakpointId);
+
+        if (this.currFile.getTextFileName() !== stmt.fileName && this.isDebugging() && lookupFile(stmt.fileName)) {
             this.parent.setFile(lookupFile(stmt.fileName))
         }
         else if (!this.highilightStatementCore(stmt, !!brk)) {
             return false;
         }
 
-        this.highlightedBreakpoint = brk.breakpointId;
+        this.highlightedBreakpoint = brk ? brk.breakpointId : undefined;
 
         if (brk && this.isDebugging() && this.debuggerToolbox) {
             this.debuggerToolbox.setBreakpoint(brk);
@@ -1465,7 +1491,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             if (advanced) {
                 // More subcategory
-                setSubcategory(ns, 'more');
+                setSubcategory(ns, lf("more"));
             } else if (subcat) {
                 setSubcategory(ns, subcat);
             }
@@ -1576,7 +1602,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return blocks.filter((block => !(block.attributes.blockHidden || block.attributes.deprecated)
             && (block.name.indexOf('_') != 0)
             && ((!subns && !block.attributes.subcategory && !block.attributes.advanced)
-                || (subns && ((block.attributes.advanced && subns == 'more')
+                || (subns && ((block.attributes.advanced && subns == lf("more"))
                     || (block.attributes.subcategory && subns == block.attributes.subcategory))))));
     }
 
@@ -1684,7 +1710,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         this.highlightedBreakpoint = id;
 
-        if (this.currFile.getTypeScriptName() !== loc.fileName) {
+        if (this.currFile.getTextFileName() !== loc.fileName) {
             const mainPkg = pkg.mainEditorPkg()
             if (lookupFile(loc.fileName)) {
                 this.parent.setFile(lookupFile(loc.fileName))

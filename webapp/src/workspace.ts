@@ -413,20 +413,23 @@ export function renameAsync(h: Header, newName: string) {
 }
 
 export function duplicateAsync(h: Header, text: ScriptText, rename?: boolean): Promise<Header> {
-    let e = lookup(h.id)
+    const e = lookup(h.id)
     U.assert(e.header === h)
-    let h2 = U.flatClone(h)
+    const h2 = U.flatClone(h)
     e.header = h2
 
     h.id = U.guidGen()
     if (rename) {
         h.name = createDuplicateName(h);
-        let cfg = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig
+        const cfg = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig
         cfg.name = h.name
         text[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
     delete h._rev
     delete (h as any)._id
+    delete h.githubCurrent
+    delete h.githubId
+    delete h.githubTag
     return importAsync(h, text)
         .then(() => h)
 }
@@ -1036,15 +1039,16 @@ export function prepareConfigForGithub(content: string, createRelease?: boolean)
     const localDependencies = Object.keys(cfg.dependencies)
         .filter(d => /^(file|workspace):/.test(cfg.dependencies[d]));
     for (const d of localDependencies)
-        resolveDependencyAsync(d);
+        resolveDependency(d);
 
     return pxt.Package.stringifyConfig(cfg);
 
-    function resolveDependencyAsync(d: string) {
+    function resolveDependency(d: string) {
         const v = cfg.dependencies[d];
         const hid = v.substring(v.indexOf(':') + 1);
         const header = getHeader(hid);
-        if (header && !header.githubId) {
+        if (!header) return; // missing workspace dependency, maybe deleted
+        if (!header.githubId) {
             if (createRelease)
                 U.userError(lf("Dependency {0} is a local project.", d))
         } else {

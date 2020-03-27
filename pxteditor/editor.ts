@@ -81,6 +81,7 @@ namespace pxt.editor {
         highContrast?: boolean;
         print?: boolean;
         greenScreen?: boolean;
+        accessibleBlocks?: boolean;
 
         home?: boolean;
         hasError?: boolean;
@@ -165,6 +166,8 @@ namespace pxt.editor {
         initials?: string;
         photo?: string;
     }
+
+    export type Activity = "tutorial" | "recipe" | "example";
 
     export interface IProjectView {
         state: IAppState;
@@ -278,6 +281,7 @@ namespace pxt.editor {
 
         toggleHighContrast(): void;
         toggleGreenScreen(): void;
+        toggleAccessibleBlocks(): void;
         pair(): void;
         launchFullEditor(): void;
 
@@ -290,7 +294,7 @@ namespace pxt.editor {
 
         editor: IEditor;
 
-        startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editor?: string): void;
+        startActivity(activitity: Activity, path: string, title?: string, editor?: string): void;
         showLightbox(): void;
         hideLightbox(): void;
         showKeymap(show: boolean): void;
@@ -322,7 +326,7 @@ namespace pxt.editor {
         pushScreenshotHandler(handler: (msg: ScreenshotData) => void): void;
         popScreenshotHandler(): void;
 
-        openDependentEditor(header: pxt.workspace.Header): void;
+        openNewTab(header: pxt.workspace.Header, dependent: boolean): void;
         createGitHubRepositoryAsync(): Promise<void>;
     }
 

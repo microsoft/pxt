@@ -701,7 +701,7 @@ namespace ts.pxtc.service {
 
         getScriptSnapshot(fileName: string): IScriptSnapshot {
             let f = this.opts.fileSystem[fileName]
-            if (f)
+            if (f != null)
                 return ScriptSnapshot.fromString(f)
             else
                 return null
@@ -858,6 +858,8 @@ namespace ts.pxtc.service {
                 host.setFile(fileName, fileContent);
             }
 
+            const tsFilename = filenameWithExtension(fileName, "ts");
+
             const span: PosSpan = { startPos: wordStartPos, endPos: wordEndPos }
 
             const isPython = /\.py$/.test(fileName);
@@ -884,7 +886,6 @@ namespace ts.pxtc.service {
 
             let lastNl = src.lastIndexOf("\n", position)
             lastNl = Math.max(0, lastNl)
-            const cursorLine = src.substring(lastNl, position)
 
             if (dotIdx != -1)
                 complPosition = dotIdx
@@ -919,7 +920,7 @@ namespace ts.pxtc.service {
                 // update our language host
                 Object.keys(res.outfiles)
                     .forEach(k => {
-                        if (k.endsWith(".ts")) {
+                        if (k === tsFilename) {
                             host.setFile(k, res.outfiles[k])
                         }
                     })
@@ -927,7 +928,7 @@ namespace ts.pxtc.service {
                 // convert our location from python to typescript
                 if (res.sourceMap) {
                     const pySrc = src
-                    const tsSrc = res.outfiles["main.ts"]
+                    const tsSrc = res.outfiles[tsFilename]
                     const srcMap = pxtc.BuildSourceMapHelpers(res.sourceMap, tsSrc, pySrc)
 
                     const smallest = srcMap.py.smallestOverlap(span)
@@ -940,7 +941,7 @@ namespace ts.pxtc.service {
             }
 
             const prog = service.getProgram()
-            const tsAst = prog.getSourceFile("main.ts") // TODO: work for non-main files
+            const tsAst = prog.getSourceFile(tsFilename)
             const tc = prog.getTypeChecker()
             let isPropertyAccess = false;
 
@@ -948,13 +949,20 @@ namespace ts.pxtc.service {
                 const propertyAccessTarget = findInnerMostNodeAtPosition(tsAst, isPython ? tsPos : dotIdx - 1)
 
                 if (propertyAccessTarget) {
+                    let type: Type;
+
                     const symbol = tc.getSymbolAtLocation(propertyAccessTarget);
-
                     if (symbol) {
-                        const type = tc.getTypeOfSymbolAtLocation(symbol, propertyAccessTarget);
+                        type = tc.getTypeOfSymbolAtLocation(symbol, propertyAccessTarget);
+                    }
+                    else {
+                        type = tc.getTypeAtLocation(propertyAccessTarget);
+                    }
 
-                        if (type && type.symbol) {
-                            const qname = tc.getFullyQualifiedName(type.symbol);
+                    if (type) {
+                        const qname = type.symbol ? tc.getFullyQualifiedName(type.symbol) : getNameOfWidenedType(type, tc);
+
+                        if (qname) {
                             const props = type.getApparentProperties()
                                 .map(prop => qname + "." + prop.getName())
                                 .map(propQname => lastApiInfo.apis.byQName[propQname])
@@ -1541,7 +1549,7 @@ namespace ts.pxtc.service {
                     if (type.objectFlags & ts.ObjectFlags.Anonymous) {
                         const sigs = checker.getSignaturesOfType(type, ts.SignatureKind.Call);
                         if (sigs && sigs.length) {
-                            return getFunctionString(sigs[0]);
+                            return getFunctionString(sigs[0], false);
                         }
                         return emitFn(name);
                     }
@@ -1599,7 +1607,7 @@ namespace ts.pxtc.service {
                     const tn = typeNode as ts.FunctionTypeNode;
                     let functionSignature = checker ? checker.getSignatureFromDeclaration(tn) : undefined;
                     if (functionSignature) {
-                        return getFunctionString(functionSignature);
+                        return getFunctionString(functionSignature, true);
                     }
                     return emitFn(name);
             }
@@ -1727,7 +1735,7 @@ namespace ts.pxtc.service {
             return i < 0 ? s : s.substring(0, i);
         }
 
-        function getFunctionString(functionSignature: ts.Signature) {
+        function getFunctionString(functionSignature: ts.Signature, isArgument: boolean) {
             let returnValue = "";
 
             let returnType = checker.getReturnTypeOfSignature(functionSignature);
@@ -1747,6 +1755,8 @@ namespace ts.pxtc.service {
                     functionArgument = `(${functionSignature.parameters.map(p => p.name).join(', ')})`;
                 let n = fnName || "fn";
                 if (functionCount++ > 0) n += functionCount;
+                if (isArgument && !/^on/i.test(n)) // forever -> on_forever
+                    n = "on" + pxt.Util.capitalize(n);
                 n = snakify(n);
                 n = getUniqueName(n)
                 preStmt += `def ${n}${functionArgument}:\n${PY_INDENT}${returnValue || "pass"}\n`;
@@ -1866,11 +1876,33 @@ namespace ts.pxtc.service {
 
     function findInnerMostNodeAtPosition(n: Node, position: number): Node | null {
         for (let child of n.getChildren()) {
+            if (child.kind >= ts.SyntaxKind.FirstPunctuation && child.kind <= ts.SyntaxKind.LastPunctuation)
+                continue;
+
             let s = child.getStart()
             let e = child.getEnd()
             if (s <= position && position < e)
                 return findInnerMostNodeAtPosition(child, position)
         }
         return (n && n.kind === SK.SourceFile) ? null : n;
+    }
+
+    function getNameOfWidenedType(t: Type, tc: TypeChecker) {
+        if (t.flags & TypeFlags.NumberLiteral) {
+            return "number";
+        }
+        else if (t.flags & TypeFlags.StringLiteral) {
+            return "String";
+        }
+        else if (t.flags & TypeFlags.BooleanLiteral) {
+            return "boolean";
+        }
+
+        return tc.typeToString(t);
+    }
+
+    function filenameWithExtension(filename: string, extension: string) {
+        if (extension.charAt(0) === ".") extension = extension.substr(1);
+        return filename.substr(0, filename.lastIndexOf(".") + 1) + extension;
     }
 }

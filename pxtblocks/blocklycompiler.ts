@@ -191,6 +191,10 @@ namespace pxt.blocks {
         if (b.type == "variables_get")
             return find(lookup(e, b, b.getField("VAR").getText()).type);
 
+        if (b.type == "function_call_output")  {
+            return getReturnTypeOfFunctionCall(e, b);
+        }
+
         if (!b.outputConnection) {
             return ground(pUnit.type);
         }
@@ -251,6 +255,49 @@ namespace pxt.blocks {
         }
 
         return ground(check);
+    }
+
+    function getReturnTypeOfFunction(e: Environment, name: string) {
+        if (!e.userFunctionReturnValues[name]) {
+            const definition = Blockly.Functions.getDefinition(name, e.workspace);
+
+            const returnTypes: Point[] = [];
+            for (const child of definition.getDescendants(false)) {
+                if (child.type === "function_return") {
+                    attachPlaceholderIf(e, child, "RETURN_VALUE");
+                    returnTypes.push(returnType(e, getInputTargetBlock(child, "RETURN_VALUE")));
+                }
+            }
+
+            let res = mkPoint("void");
+
+            if (returnTypes.length) {
+                try {
+                    const unified = mkPoint(null);
+                    for (const point of returnTypes) {
+                        union(unified, point);
+                    }
+                    res = unified
+                }
+                catch (err) {
+                    e.diagnostics.push({
+                        blockId: definition.id,
+                        message: Util.lf("Function '{0}' has an invalid return type", name)
+                    });
+
+                    res = mkPoint("any")
+                }
+            }
+
+            e.userFunctionReturnValues[name] = res;
+        }
+
+        return e.userFunctionReturnValues[name];
+    }
+
+    function getReturnTypeOfFunctionCall(e: Environment, call: Blockly.Block) {
+        const name = call.getField("function_name").getText();
+        return getReturnTypeOfFunction(e, name);
     }
 
     // Basic type unification routine; easy, because there's no structural types.
@@ -328,7 +375,7 @@ namespace pxt.blocks {
     }
 
     function infer(allBlocks: Blockly.Block[], e: Environment, w: Blockly.Workspace) {
-        if (allBlocks) allBlocks.filter(b => !b.disabled).forEach((b: Blockly.Block) => {
+        if (allBlocks) allBlocks.filter(b => b.isEnabled()).forEach((b: Blockly.Block) => {
             try {
                 switch (b.type) {
                     case "math_op2":
@@ -424,10 +471,17 @@ namespace pxt.blocks {
                         handleGenericType(b, "LIST");
                         unionParam(e, b, "INDEX", ground(pNumber.type));
                         break;
+                    case 'function_definition':
+                        getReturnTypeOfFunction(e, b.getField("function_name",).getText());
+                        break;
                     case 'function_call':
+                    case 'function_call_output':
                         (b as Blockly.FunctionCallBlock).getArguments().forEach(arg => {
                             unionParam(e, b, arg.id, ground(arg.type));
                         });
+                        break;
+                    case pxtc.TS_RETURN_STATEMENT_TYPE:
+                        attachPlaceholderIf(e, b, "RETURN_VALUE");
                         break;
                     case pxtc.PAUSE_UNTIL_TYPE:
                         unionParam(e, b, "PREDICATE", pBoolean);
@@ -730,8 +784,10 @@ namespace pxt.blocks {
         const argsDeclaration = (b as Blockly.FunctionDefinitionBlock).getArguments().map(a => {
             return `${escapeVarName(a.name, e)}: ${a.type}`;
         });
+
+        const isRecursive = isFunctionRecursive(b);
         return [
-            mkText(`function ${name} (${argsDeclaration.join(", ")})`),
+            mkText(`function ${name} (${argsDeclaration.join(", ")})${isRecursive ? ": any" : ""}`),
             compileStatements(e, stmts)
         ];
     }
@@ -750,7 +806,7 @@ namespace pxt.blocks {
         return mkStmt(mkText(name + "()"));
     }
 
-    function compileFunctionCall(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
+    function compileFunctionCall(e: Environment, b: Blockly.Block, comments: string[], statement: boolean): JsNode {
         const name = escapeVarName(b.getField("function_name").getText(), e, true);
         const externalInputs = !b.getInputsInline();
         const args: BlockParameter[] = (b as Blockly.FunctionCallBlock).getArguments().map(a => {
@@ -761,7 +817,23 @@ namespace pxt.blocks {
         });
 
         const compiledArgs = args.map(a => compileArgument(e, b, a, comments));
-        return mkStmt(H.stdCall(name, compiledArgs, externalInputs));
+        const res = H.stdCall(name, compiledArgs, externalInputs)
+
+        if (statement) {
+            return mkStmt(res);
+        }
+        return res;
+    }
+
+    function compileReturnStatement(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
+        const expression = getInputTargetBlock(b, "RETURN_VALUE");
+
+        if (expression && expression.type != "placeholder") {
+            return mkStmt(mkText("return "), compileExpression(e, expression, comments));
+        }
+        else {
+            return mkStmt(mkText("return"));
+        }
     }
 
     function compileArgumentReporter(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
@@ -804,7 +876,7 @@ namespace pxt.blocks {
         e.stats[b.type] = (e.stats[b.type] || 0) + 1;
         maybeAddComment(b, comments);
         let expr: JsNode;
-        if (b.disabled || b.type == "placeholder") {
+        if (b.type == "placeholder" || !(b.isEnabled && b.isEnabled())) {
             const ret = find(returnType(e, b));
             if (ret.type === "Array") {
                 // FIXME: Can't use default type here because TS complains about
@@ -866,6 +938,8 @@ namespace pxt.blocks {
             case "argument_reporter_string":
             case "argument_reporter_custom":
                 expr = compileArgumentReporter(e, b, comments); break;
+            case "function_call_output":
+                expr = compileFunctionCall(e, b, comments, false); break;
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) {
@@ -895,6 +969,8 @@ namespace pxt.blocks {
     export interface Environment {
         workspace: Blockly.Workspace;
         stdCallTable: pxt.Map<StdFunc>;
+        userFunctionReturnValues: pxt.Map<Point>;
+        diagnostics: BlockDiagnostic[];
         errors: Blockly.Block[];
         renames: RenameMap;
         stats: pxt.Map<number>;
@@ -920,6 +996,8 @@ namespace pxt.blocks {
         return {
             workspace: w,
             stdCallTable: {},
+            userFunctionReturnValues: {},
+            diagnostics: [],
             errors: [],
             renames: {
                 oldToNew: {},
@@ -1392,7 +1470,10 @@ namespace pxt.blocks {
                 r = [compileProcedureCall(e, b, comments)];
                 break;
             case 'function_call':
-                r = [compileFunctionCall(e, b, comments)];
+                r = [compileFunctionCall(e, b, comments, true)];
+                break;
+            case pxtc.TS_RETURN_STATEMENT_TYPE:
+                r = [compileReturnStatement(e, b, comments)];
                 break;
             case ts.pxtc.ON_START_TYPE:
                 r = compileStartEvent(e, b).children;
@@ -1438,7 +1519,7 @@ namespace pxt.blocks {
         let firstBlock = b;
 
         while (b) {
-            if (!b.disabled) append(stmts, compileStatementBlock(e, b));
+            if (b.isEnabled()) append(stmts, compileStatementBlock(e, b));
             b = b.getNextBlock();
         }
 
@@ -1552,7 +1633,7 @@ namespace pxt.blocks {
                         imageLiteral: fn.attributes.imageLiteral,
                         imageLiteralColumns: fn.attributes.imageLiteralColumns,
                         imageLiteralRows: fn.attributes.imageLiteralRows,
-                        hasHandler: !!comp.handlerArgs.length || fn.parameters && fn.parameters.some(p => (p.type == "() => void" || p.type == "Action" || !!p.properties)),
+                        hasHandler: pxt.blocks.hasHandler(fn),
                         property: !fn.parameters,
                         isIdentity: fn.attributes.shim == "TD_ID"
                     }
@@ -1603,8 +1684,8 @@ namespace pxt.blocks {
             // update disable blocks
             updateDisabledBlocks(e, allBlocks, topblocks);
             // drop disabled blocks
-            allBlocks = allBlocks.filter(b => !b.disabled);
-            topblocks = topblocks.filter(b => !b.disabled);
+            allBlocks = allBlocks.filter(b => b.isEnabled());
+            topblocks = topblocks.filter(b => b.isEnabled());
             trackAllVariables(topblocks, e);
             infer(allBlocks, e, w);
 
@@ -1716,21 +1797,19 @@ namespace pxt.blocks {
 
             const leftoverVars = e.allVariables.filter(v => !v.alreadyDeclared).map(v => mkVariableDeclaration(v, blockInfo));
 
-            const diags: BlockDiagnostic[] = [];
-
             e.allVariables.filter(v => v.alreadyDeclared === BlockDeclarationType.Implicit && !v.isAssigned).forEach(v => {
                 const t = getConcreteType(v.type);
 
                 // The primitive types all get initializers set to default values, other types are set to null
                 if (t.type === "string" || t.type === "number" || t.type === "boolean" || isArrayType(t.type)) return;
 
-                diags.push({
+                e.diagnostics.push({
                     blockId: v.firstReference && v.firstReference.id,
                     message: lf("Variable '{0}' is never assigned", v.name)
                 });
             });
 
-            return [stmtsEnums.concat(leftoverVars.concat(stmtsMain)), diags];
+            return [stmtsEnums.concat(leftoverVars.concat(stmtsMain)), e.diagnostics];
         } catch (err) {
             let be: Blockly.Block = (err as any).block;
             if (be) {
@@ -2459,5 +2538,15 @@ namespace pxt.blocks {
 
     function isFunctionDefinition(b: Blockly.Block) {
         return b.type === "procedures_defnoreturn" || b.type === "function_definition";
+    }
+
+    function isFunctionRecursive(b: Blockly.Block) {
+        const functionName = b.getField("function_name").getText();
+        const childCalls = b.getDescendants(false).filter(child => child.type == "function_call_output");
+
+        if (childCalls.some(c => c.getField("function_name").getText() === functionName)) {
+            return true;
+        }
+        return false;
     }
 }

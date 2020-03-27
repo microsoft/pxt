@@ -118,8 +118,13 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 && usesGitHub
                 && /\.md$/.test(file.name)
                 && !/^_locales\//.test(file.name)
-            const openUrl = isTutorialMd
-                && `#tutorial:${header.id}:${file.name.replace(/\.[a-z]+$/, '')}`;
+            const fn = file.name.replace(/\.[a-z]+$/, '');
+            const previewUrl = isTutorialMd
+                && `#tutorial:${header.id}:${fn}`;
+            const ghid = usesGitHub && pxt.github.parseRepoId(header.githubId)
+            const shareUrl = isTutorialMd && ghid
+                && pxt.appTarget.appTheme.embedUrl
+                && `${window.location.origin}${window.location.pathname || ""}#tutorial:github:${ghid.fullName}/${fn}`
             const lang = pxt.Util.userLanguage();
             const localized = `_locales/${lang}/${file.name}`;
             const addLocale = isTutorialMd
@@ -139,7 +144,8 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     onItemLocalize={this.addLocalizedFile}
                     isActive={currentFile == file}
                     hasDelete={hasDelete}
-                    openUrl={openUrl}
+                    previewUrl={previewUrl}
+                    shareUrl={shareUrl}
                     addLocalizedFile={addLocale && localized}
                     className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                 >
@@ -342,7 +348,7 @@ namespace custom {
         return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only hidefullscreen`}>
             <div role="treeitem" aria-selected={showFiles} aria-expanded={showFiles} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
                 {lf("Explorer")}
-                <sui.Icon icon={`chevron ${showFiles ? "down" : "right"} icon`} />
+                <sui.Icon icon={`chevron ${showFiles ? "up" : "down"} icon`} />
                 {plus ? <sui.Button className="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={this.handleCustomBlocksClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
                 {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
             </div>
@@ -360,7 +366,8 @@ interface FileTreeItemProps {
     onErrorClick?: (meta: pkg.FileMeta) => void;
     isActive: boolean;
     hasDelete?: boolean;
-    openUrl?: string;
+    previewUrl?: string;
+    shareUrl?: string;
     addLocalizedFile?: string;
     className?: string;
 }
@@ -372,7 +379,8 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
         this.handleClick = this.handleClick.bind(this);
         this.handleRemove = this.handleRemove.bind(this);
         this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
-        this.handleOpen = this.handleOpen.bind(this);
+        this.handlePreview = this.handlePreview.bind(this);
+        this.handleShare = this.handleShare.bind(this);
         this.handleAddLocale = this.handleAddLocale.bind(this);
     }
 
@@ -390,14 +398,29 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
 
     handleRemove(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("explorer.file.remove");
-        this.props.onItemRemove(this.props.file);
+        e.preventDefault();
         e.stopPropagation();
+        this.props.onItemRemove(this.props.file);
     }
 
-    handleOpen(e: React.MouseEvent<HTMLElement>) {
-        pxt.tickEvent("explorer.file.open");
-        window.open(this.props.openUrl, "_blank");
+    handlePreview(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("explorer.file.preview");
+        e.preventDefault();
         e.stopPropagation();
+        window.open(this.props.previewUrl, "_blank");
+    }
+
+    handleShare(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("explorer.file.share");
+        e.preventDefault();
+        e.stopPropagation();
+        core.dialogAsync({
+            header: lf("Share this tutorial"),
+            body: lf("The URL will start the MakeCode editor in your tutorial."),
+            copyable: this.props.shareUrl,
+            hideCancel: true,
+            hasCloseIcon: true
+        })
     }
 
     handleAddLocale(e: React.MouseEvent<HTMLElement>) {
@@ -413,7 +436,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
     }
 
     renderCore() {
-        const { isActive, hasDelete, file, meta, openUrl, addLocalizedFile, className } = this.props;
+        const { isActive, hasDelete, file, meta, previewUrl, shareUrl, addLocalizedFile, className } = this.props;
 
         return <a
             onClick={this.handleClick}
@@ -429,7 +452,8 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
                 onClick={this.handleRemove}
                 onKeyDown={this.handleButtonKeydown} />}
             {meta && meta.numErrors ? <span className='ui label red button' role="button" title={lf("Go to error")}>{meta.numErrors}</span> : undefined}
-            {openUrl && <sui.Button className="button primary label" icon="external" title={lf("Preview")} onClick={this.handleOpen} onKeyDown={sui.fireClickOnEnter} />}
+            {shareUrl && <sui.Button className="button primary label" icon="share alternate" title={lf("Share")} onClick={this.handleShare} onKeyDown={sui.fireClickOnEnter} />}
+            {previewUrl && <sui.Button className="button primary label" icon="flask" title={lf("Preview")} onClick={this.handlePreview} onKeyDown={sui.fireClickOnEnter} />}
             {!!addLocalizedFile && <sui.Button className="primary label" icon="xicon globe"
                 title={lf("Add localized file")}
                 onClick={this.handleAddLocale}
@@ -485,7 +509,7 @@ class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
             aria-selected={isActive} aria-expanded={isActive}
             aria-label={lf("{0}, {1}", p.getPkgId(), isActive ? lf("expanded") : lf("collapsed"))}
             onClick={this.handleClick} tabIndex={0} onKeyDown={sui.fireClickOnEnter} {...rest}>
-            <sui.Icon icon={`chevron ${isActive ? "down" : "right"} icon`} />
+            <sui.Icon icon={`chevron ${isActive ? "up" : "down"} icon`} />
             {hasRefresh ? <sui.Button className="primary label" icon="refresh" title={lf("Refresh extension {0}", p.getPkgId())}
                 onClick={this.handleRefresh} onKeyDown={this.handleButtonKeydown} text={version || ''}></sui.Button> : undefined}
             {hasDelete ? <sui.Button className="primary label" icon="trash" title={lf("Delete extension {0}", p.getPkgId())}

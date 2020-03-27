@@ -11,6 +11,10 @@ declare namespace pxt {
         experimentName?: string;
         locales?: string[];
         shuffle?: GalleryShuffle;
+        // pings this url to determine if the gallery is available
+        // value @random@ will be expanded to a random string
+        // looks for 200, 403 error codes
+        testUrl?: string;
     }
     interface TargetConfig {
         packages?: PackagesConfig;
@@ -272,7 +276,7 @@ declare namespace pxt {
         invertedMonaco?: boolean; // if true: use the vs-dark monaco theme
         invertedGitHub?: boolean; // inverted github view
         lightToc?: boolean; // if true: do NOT use inverted style in docs toc
-        blocklyOptions?: Blockly.WorkspaceOptions; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
+        blocklyOptions?: Blockly.BlocklyOptions; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
         hideFlyoutHeadings?: boolean; // Hide the flyout headings at the top of the flyout when on a mobile device.
         monacoColors?: pxt.Map<string>; // Monaco theme colors, see https://code.visualstudio.com/docs/getstarted/theme-color-reference
         simAnimationEnter?: string; // Simulator enter animation
@@ -303,6 +307,7 @@ declare namespace pxt {
         extendEditor?: boolean; // whether a target specific editor.js is loaded
         extendFieldEditors?: boolean; // wether a target specific fieldeditors.js is loaded
         highContrast?: boolean; // simulator has a high contrast mode
+        accessibleBlocks?: boolean; // enable keyboard navigation in blockly
         print?: boolean; //Print blocks and text feature
         greenScreen?: boolean; // display webcam stream in background
         instructions?: boolean; // display make instructions
@@ -379,6 +384,7 @@ declare namespace pxt {
         hideHomeDetailsVideo?: boolean; // hide video/large image from details card
         tutorialBlocksDiff?: boolean; // automatically display diffs in tutorials
         openProjectNewTab?: boolean; // allow opening project in a new tab
+        openProjectNewDependentTab?: boolean; // allow opening project in a new tab -- connected
         tutorialExplicitHints?: boolean; // allow use explicit hints
     }
 

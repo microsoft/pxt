@@ -247,7 +247,6 @@ function setupBlocklyAsync() {
                 })
         })
     }
-    setupLangPicker();
     return promise;
 }
 
@@ -297,21 +296,54 @@ function languageOption(code) {
 }
 
 function setupLangPicker() {
-    var appTheme = pxt.appTarget.appTheme;
-    var initialLang = pxt.Util.normalizeLanguageCode(pxt.BrowserUtils.getCookieLang())[0];
-    var modalContainer = document.querySelector("#langmodal");
+    if (typeof ksRunnerReady === "undefined") {
+        // probably in pxt docs
+        removeLangPicker();
+        return;
+    }
+
+    ksRunnerReady(function () {
+        buildLangPicker();
+    });
+}
+
+function buildLangPicker() {
+    var appTheme = pxt && pxt.appTarget && pxt.appTarget.appTheme;
 
     if (appTheme && appTheme.availableLocales && appTheme.selectLanguage) {
+        var modalContainer = document.querySelector("#langmodal");
+        var initialLang = pxt && pxt.Util.normalizeLanguageCode(pxt.BrowserUtils.getCookieLang())[0];
         var localesContainer = document.querySelector("#availablelocales");
         appTheme.availableLocales.forEach(function(locale) {
             var card = languageOption(locale);
             localesContainer.appendChild(card);
         });
 
+        /**
+         * In addition to normal focus trap, need to explicitly hide these
+         * elements when the modal is open so screen readers do not allow user
+         * to escape modal while in scan mode.
+         *
+         * Ideally, aria-modal && role="dialog" should make the screen reader
+         * handle this (https://www.w3.org/TR/wai-aria-1.1/#aria-modal)
+         * but none seem to :)
+         **/
+        var identifiersToHide = [
+            "#docs",
+            "#top-bar",
+            "#side-menu"
+        ];
+
         modalContainer.className += `  ${appTheme.availableLocales.length > 4 ? "large" : "small"}`;
 
         $(modalContainer).modal({
             onShow: function() {
+                for (var id of identifiersToHide) {
+                    var divToHide = document.querySelector(id);
+                    if (divToHide)
+                        divToHide.setAttribute("aria-hidden", "true");
+                }
+
                 $(document).off("focusin.focusJail");
                 $(document).on("focusin.focusJail", function(event) {
                     if (event.target !== modalContainer && !$.contains(modalContainer, event.target)) {
@@ -320,6 +352,12 @@ function setupLangPicker() {
                 });
             },
             onHide: function() {
+                for (var id of identifiersToHide) {
+                    var divToHide = document.querySelector(id);
+                    if (divToHide)
+                        divToHide.removeAttribute("aria-hidden");
+                }
+
                 $(document).off("focusin.focusJail");
             }
         });
@@ -366,13 +404,18 @@ function setupLangPicker() {
         }
     } else {
         // remove the locale picker and modal if unavailable in this editor
-        document.querySelector("#langpicker").remove();
-        modalContainer.remove();
+        removeLangPicker();
     }
+}
+
+function removeLangPicker() {
+    document.querySelector("#langpicker").remove();
+    document.querySelector("#langmodal").remove();
 }
 
 $(document).ready(function () {
     setupSidebar();
     setupSemantic();
     renderSnippets();
+    setupLangPicker();
 });
