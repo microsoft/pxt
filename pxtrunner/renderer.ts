@@ -810,7 +810,7 @@ namespace pxt.runner {
             .then((r) => {
                 const info = r.compileBlocks.blocksInfo;
                 const symbols = pxt.Util.values(info.apis.byQName)
-                    .filter(symbol => !symbol.attributes.hidden && !/^__/.test(symbol.name));
+                    .filter(symbol => !symbol.attributes.hidden && !!symbol.attributes.jsDoc && !/^__/.test(symbol.name));
                 apisEl.each((i, e) => {
                     let c = $(e);
                     const namespaces = pxt.Util.toDictionary(c.text().split('\n'), n => n); // list of namespace to list apis for.
@@ -822,11 +822,6 @@ namespace pxt.runner {
                         const lcard = !l.attributes.blockHidden && Blockly.Blocks[l.attributes.blockId];
                         const rcard = !r.attributes.blockHidden && Blockly.Blocks[r.attributes.blockId]
                         if (!!lcard != !!rcard) return (lcard ? 1 : 0) - (rcard ? 1 : 0);
-
-                        // render apis with jsdoc
-                        const ldoc = l.attributes.jsDoc;
-                        const rdoc = r.attributes.jsDoc;
-                        if (!!ldoc != !!rdoc) return (ldoc ? 1 : 0) - (rdoc ? 1 : 0);
 
                         // sort alphabetically
                         return l.name.localeCompare(r.name);
