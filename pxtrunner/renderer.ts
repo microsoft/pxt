@@ -810,14 +810,24 @@ namespace pxt.runner {
             .then((r) => {
                 const info = r.compileBlocks.blocksInfo;
                 const symbols = pxt.Util.values(info.apis.byQName)
-                    .filter(symbol => !symbol.attributes.hidden && !/^__/.test(symbol.name));
+                    .filter(symbol => !symbol.attributes.hidden && !!symbol.attributes.jsDoc && !/^__/.test(symbol.name));
                 apisEl.each((i, e) => {
                     let c = $(e);
                     const namespaces = pxt.Util.toDictionary(c.text().split('\n'), n => n); // list of namespace to list apis for.
                     const csymbols = symbols.filter(symbol => !!namespaces[symbol.namespace])
                     if (!csymbols.length) return;
 
-                    const ul = $('<div />').addClass('ui divived items');
+                    csymbols.sort((l,r) => {
+                        // render cards first
+                        const lcard = !l.attributes.blockHidden && Blockly.Blocks[l.attributes.blockId];
+                        const rcard = !r.attributes.blockHidden && Blockly.Blocks[r.attributes.blockId]
+                        if (!!lcard != !!rcard) return -(lcard ? 1 : 0) + (rcard ? 1 : 0);
+
+                        // sort alphabetically
+                        return l.name.localeCompare(r.name);
+                    })
+
+                    const ul = $('<div />').addClass('ui divided items');
                     ul.attr("role", "listbox");
                     csymbols.forEach(symbol => addSymbolCardItem(ul, symbol, "item"));
                     if (replaceParent) c = c.parent();
