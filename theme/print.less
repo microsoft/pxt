@@ -33,7 +33,8 @@
     #docs {
         position: inherit !important; /* otherwise prints a single page */
 
-        .ui.segment, .ui.centered.card, .ui.content, iframe, .nobreak, pre, code, blockquote {
+        .ui.segment, .ui.centered.card, .ui.content, iframe, .nobreak, pre, code, blockquote,
+        .ui.item, .ui.card {
             page-break-inside: avoid;
         }
         h1, h2, h3, h4, h5, h6, img {
@@ -118,6 +119,12 @@
         stroke-width: 2px !important;
         stroke: black !important;
         fill: black !important;
+    }
+    .blocklyOutlinePath,
+    .blocklyFieldRect.blocklyDropdownRect {
+        stroke-width: 2px !important;
+        stroke: black !important;
+        fill: transparent !important;
     }
     /* comments */
     .blocklyCommentRect {
