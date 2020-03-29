@@ -823,6 +823,12 @@ namespace pxt.runner {
                         const rcard = !r.attributes.blockHidden && Blockly.Blocks[r.attributes.blockId]
                         if (!!lcard != !!rcard) return (lcard ? 1 : 0) - (rcard ? 1 : 0);
 
+                        // render apis with jsdoc
+                        const ldoc = l.attributes.jsDoc;
+                        const rdoc = r.attributes.jsDoc;
+                        if (!!ldoc != !!rdoc) return (ldoc ? 1 : 0) - (rdoc ? 1 : 0);
+
+                        // sort alphabetically
                         return l.name.localeCompare(r.name);
                     })
 
