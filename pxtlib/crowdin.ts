@@ -164,7 +164,7 @@ namespace pxt.crowdin {
             const errorData: {
                 success?: boolean;
                 error?: {
-                    code: number;                    
+                    code: number;
                 }
             } = Util.jsonTryParse(resp.text) || {};
 
