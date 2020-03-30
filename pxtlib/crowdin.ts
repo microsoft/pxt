@@ -161,7 +161,12 @@ namespace pxt.crowdin {
 
         function handleResponseAsync(resp: Util.HttpResponse) {
             const code = resp.statusCode;
-            const errorData: any = Util.jsonTryParse(resp.text) || {};
+            const errorData: {
+                success?: boolean;
+                error?: {
+                    code: number;                    
+                }
+            } = Util.jsonTryParse(resp.text) || {};
 
             pxt.debug(`upload result: ${code}`);
             if (code == 404 && errorData.error && errorData.error.code == 8) {
