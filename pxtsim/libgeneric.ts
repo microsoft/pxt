@@ -355,8 +355,8 @@ namespace pxsim {
             return s.length
         }
 
-        export function substr(s: string, start: number, length?: number) {
-            return (s.substr(start, length));
+        export function substr(s: string, start: number, len?: number) {
+            return (s.substr(start, len));
         }
 
         function inRange(s: string, i: number) {
@@ -585,23 +585,23 @@ namespace pxsim {
             return buf.data.length
         }
 
-        export function fill(buf: RefBuffer, value: number, offset: number = 0, length: number = -1) {
+        export function fill(buf: RefBuffer, value: number, offset: number = 0, len: number = -1) {
             if (offset < 0 || offset > buf.data.length)
                 return;
-            if (length < 0)
-                length = buf.data.length;
-            length = Math.min(length, buf.data.length - offset);
+            if (len < 0)
+                len = buf.data.length;
+            len = Math.min(len, buf.data.length - offset);
 
             checkWrite(buf)
-            buf.data.fill(value, offset, offset + length)
+            buf.data.fill(value, offset, offset + len)
         }
 
-        export function slice(buf: RefBuffer, offset: number, length: number) {
+        export function slice(buf: RefBuffer, offset: number, len: number) {
             offset = Math.min(buf.data.length, offset);
-            if (length < 0)
-                length = buf.data.length;
-            length = Math.min(length, buf.data.length - offset);
-            return new RefBuffer(buf.data.slice(offset, offset + length));
+            if (len < 0)
+                len = buf.data.length;
+            len = Math.min(len, buf.data.length - offset);
+            return new RefBuffer(buf.data.slice(offset, offset + len));
         }
 
         export function toHex(buf: RefBuffer): string {
@@ -683,20 +683,20 @@ namespace pxsim {
             }
         }
 
-        export function write(buf: RefBuffer, dstOffset: number, src: RefBuffer, srcOffset = 0, length = -1) {
-            if (length < 0)
-                length = src.data.length;
+        export function write(buf: RefBuffer, dstOffset: number, src: RefBuffer, srcOffset = 0, len = -1) {
+            if (len < 0)
+                len = src.data.length;
 
             if (srcOffset < 0 || dstOffset < 0 || dstOffset > buf.data.length)
                 return;
 
-            length = Math.min(src.data.length - srcOffset, buf.data.length - dstOffset);
+            len = Math.min(src.data.length - srcOffset, buf.data.length - dstOffset);
 
-            if (length < 0)
+            if (len < 0)
                 return;
 
             checkWrite(buf)
-            memmove(buf.data, dstOffset, src.data, srcOffset, length)
+            memmove(buf.data, dstOffset, src.data, srcOffset, len)
         }
     }
 }

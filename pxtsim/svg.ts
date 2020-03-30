@@ -7,7 +7,6 @@ namespace pxsim.svg {
         return 'data:image/svg+xml,' + encodeURI(xml);
     }
 
-    let pt: SVGPoint;
     export function cursorPoint(pt: SVGPoint, svg: SVGSVGElement, evt: MouseEvent): SVGPoint {
         // clientX and clientY are not defined in iOS safari
         pt.x = evt.clientX != null ? evt.clientX : evt.pageX;
@@ -43,7 +42,7 @@ namespace pxsim.svg {
         return el;
     }
 
-    export function mkPath(cls: string, data: string, title?: string): SVGPathElement {
+    export function mkPath(cls: string, data: string, pathTitle?: string): SVGPathElement {
         let p: any = { class: cls, d: data };
         if (title) p["title"] = title;
         let el = <SVGPathElement>svg.elt("path");
@@ -51,8 +50,8 @@ namespace pxsim.svg {
         return el;
     }
 
-    export function path(parent: Element, cls: string, data: string, title?: string): SVGPathElement {
-        let el = mkPath(cls, data, title);
+    export function path(parent: Element, cls: string, data: string, pathTitle?: string): SVGPathElement {
+        let el = mkPath(cls, data, pathTitle);
         parent.appendChild(el);
         return el;
     }

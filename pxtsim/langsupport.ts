@@ -349,16 +349,6 @@ namespace pxsim {
         }
     }
 
-
-    function num(v: any) {
-        return v;
-    }
-
-    function ref(v: any) {
-        if (v === undefined) return null;
-        return v;
-    }
-
     export function dumpLivePointers() {
         if (runtime) runtime.dumpLivePointers();
     }
@@ -412,6 +402,7 @@ namespace pxsim {
             return 0;
         }
 
+        /* tslint:disable-next-line:no-shadowed-variable */
         export function getConfig(key: number, defl: number) {
             let r = pxsim.getConfig(key)
             if (r == null) return defl

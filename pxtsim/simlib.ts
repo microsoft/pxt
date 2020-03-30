@@ -232,11 +232,11 @@ namespace pxsim {
             return undefined;
         }
 
-        export function mute(mute: boolean) {
-            _mute = mute;
+        export function mute(on: boolean) {
+            _mute = on;
             stopAll();
             const ctx = context();
-            if (!mute && ctx && ctx.state === "suspended")
+            if (!on && ctx && ctx.state === "suspended")
                 ctx.resume();
         }
 
@@ -472,10 +472,10 @@ namespace pxsim {
                 .then(() => ch.remove())
         }
 
-        export function tone(frequency: number, gain: number) {
+        export function tone(freq: number, gain: number) {
             if (_mute) return;
-            if (frequency <= 0) return;
-            _frequency = frequency;
+            if (freq <= 0) return;
+            _frequency = freq;
 
             let ctx = context();
             if (!ctx) return;
@@ -501,7 +501,7 @@ namespace pxsim {
                 return;
             }
 
-            _vco.frequency.value = frequency;
+            _vco.frequency.value = freq;
             _vca.gain.value = gain;
         }
 
@@ -670,11 +670,11 @@ namespace pxsim.visuals {
         let by = ay + ah + mm;
         setXY(b.el, bx, by);
         let edges = [ay, ay + ah, by, by + bh];
-        let w = mr + innerW + ml;
-        let h = mt + ah + mm + bh + mb;
+        let width = mr + innerW + ml;
+        let height = mt + ah + mm + bh + mb;
         let host = <SVGSVGElement>svg.elt("svg", {
             "version": "1.0",
-            "viewBox": `0 0 ${w} ${h}`,
+            "viewBox": `0 0 ${width} ${height}`,
             "class": `sim-bb`,
         });
         setWH(host, opts.maxWidth, opts.maxHeight);

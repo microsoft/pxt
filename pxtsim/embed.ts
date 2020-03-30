@@ -317,8 +317,8 @@ namespace pxsim {
                 });
         }
 
-        function mute(mute: boolean) {
-            AudioContextManager.mute(mute);
+        function mute(on: boolean) {
+            AudioContextManager.mute(on);
         }
 
         function stopSound() {
