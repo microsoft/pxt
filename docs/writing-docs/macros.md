@@ -423,3 +423,14 @@ You can use `typescript-valid` to showcase typescript that is **correct**:
     // You can include any TS in here, e.g. to showcase correct syntax
     callFunction();
     ```
+
+### @highlight
+
+The render will higlight the next line or block following a 
+comment with **@highlight**.
+
+    ```blocks
+    console.log(":)")
+    // @highlight
+    console.log(":(")
+    ```
