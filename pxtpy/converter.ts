@@ -347,26 +347,26 @@ namespace pxt.py {
         return ctx.currModule.name == "main" && !ctx.currFun && !ctx.currClass
     }
 
-    function addImport(a: AST, name: string, scope?: ScopeDef): SymbolInfo {
+    function addImport(a: AST, name: string): SymbolInfo {
         const sym = lookupGlobalSymbol(name)
         if (!sym)
             error(a, 9503, U.lf("No module named '{0}'", name))
         return sym!
     }
 
-    function defvar(n: string, opts: py.VarDescOptions, scope?: ScopeDef) {
-        if (!scope)
-            scope = currentScope()
-        let v = scope.vars[n]
+    function defvar(n: string, opts: py.VarDescOptions, current?: ScopeDef) {
+        if (!current)
+            current = currentScope()
+        let v = current.vars[n]
         if (!v) {
-            let pref = getFullName(scope)
+            let pref = getFullName(current)
             if (pref) pref += "."
             let qn = pref + n
-            if (isLocalScope(scope))
+            if (isLocalScope(current))
                 v = mkSymbol(SK.Variable, n)
             else
                 v = addSymbol(SK.Variable, qn)
-            scope.vars[n] = v
+            current.vars[n] = v
         }
         for (let k of Object.keys(opts)) {
             (v as any)[k] = (opts as any)[k]
@@ -425,7 +425,7 @@ namespace pxt.py {
             }
 
             if (U.startsWith(t.primType, "@fn") && t.typeArgs)
-                return "(" + t.typeArgs.slice(1).map(t => "_: " + t2s(t)).join(", ") + ") => " + t2s(t.typeArgs[0])
+                return "(" + t.typeArgs.slice(1).map(fnT => "_: " + t2s(fnT)).join(", ") + ") => " + t2s(t.typeArgs[0])
 
             return t.primType + suff("/P")
         }
@@ -601,8 +601,8 @@ namespace pxt.py {
         return sym
     }
 
-    function isLocalScope(scope: ScopeDef) {
-        let s: ScopeDef | undefined = scope
+    function isLocalScope(current: ScopeDef) {
+        let s: ScopeDef | undefined = current
         while (s) {
             if (s.kind == "FunctionDef")
                 return true
@@ -611,13 +611,13 @@ namespace pxt.py {
         return false
     }
 
-    function addSymbolFor(k: SK, n: py.Symbol, scope?: ScopeDef) {
+    function addSymbolFor(k: SK, n: py.Symbol, current?: ScopeDef) {
         if (!n.symInfo) {
             let qn = getFullName(n)
             if (U.endsWith(qn, ".__init__"))
                 qn = qn.slice(0, -9) + ".__constructor"
-            scope = scope || currentScope()
-            if (isLocalScope(scope))
+            current = current || currentScope()
+            if (isLocalScope(current))
                 n.symInfo = mkSymbol(k, qn)
             else
                 n.symInfo = addSymbol(k, qn)
@@ -625,7 +625,7 @@ namespace pxt.py {
             sym.pyAST = n
             if (!sym.pyName)
                 error(null, 9528, U.lf("Symbol '{0}' is missing pyName", sym.qName || sym.name))
-            scope.vars[sym.pyName!] = sym
+            current.vars[sym.pyName!] = sym
         }
         return n.symInfo
     }
@@ -679,8 +679,8 @@ namespace pxt.py {
         for (let ct of constructorTypes) {
             let f = getClassField(ct, n, checkOnly)
             if (f) {
-                let isModule = !!ct.moduleTypeMarker
-                if (isModule) {
+                let typeIsModule = !!ct.moduleTypeMarker
+                if (typeIsModule) {
                     if (f.isInstance)
                         error(null, 9505, U.lf("the field '{0}' of '{1}' is not static", n, ct.pyQName))
                 } else {
@@ -798,6 +798,7 @@ namespace pxt.py {
         }
     }
 
+    // TODO: should this just be currentScope?
     function scope(f: () => B.JsNode) {
         const prevCtx = U.flatClone(ctx)
         let r: B.JsNode;
@@ -1279,21 +1280,21 @@ namespace pxt.py {
                 stmts(n.body))
         },
         If: (n: py.If) => {
-            let innerIf = (n: py.If) => {
+            let innerIf = (node: py.If) => {
                 let nodes = [
                     B.mkText("if ("),
-                    expr(n.test),
+                    expr(node.test),
                     B.mkText(")"),
-                    stmts(n.body)
+                    stmts(node.body)
                 ]
-                if (n.orelse.length) {
+                if (node.orelse.length) {
                     nodes[nodes.length - 1].noFinalNewline = true
-                    if (n.orelse.length == 1 && n.orelse[0].kind == "If") {
+                    if (node.orelse.length == 1 && node.orelse[0].kind == "If") {
                         // else if
                         nodes.push(B.mkText(" else "))
-                        U.pushRange(nodes, innerIf(n.orelse[0] as py.If))
+                        U.pushRange(nodes, innerIf(node.orelse[0] as py.If))
                     } else {
-                        nodes.push(B.mkText(" else"), stmts(n.orelse))
+                        nodes.push(B.mkText(" else"), stmts(node.orelse))
                     }
                 }
                 return nodes
@@ -1324,7 +1325,7 @@ namespace pxt.py {
             }
 
             let cleanup: B.JsNode[] = []
-            let stmts = n.items.map((it, idx) => {
+            let builtStmts = n.items.map((it, idx) => {
                 let varName = "with" + idx
                 if (it.optional_vars) {
                     let id = getName(it.optional_vars)
@@ -1335,9 +1336,9 @@ namespace pxt.py {
                 return B.mkStmt(B.mkText("const " + varName + " = "),
                     B.mkInfix(expr(it.context_expr), ".", B.mkText("begin()")))
             })
-            U.pushRange(stmts, n.body.map(stmt))
-            U.pushRange(stmts, cleanup)
-            return B.mkBlock(stmts)
+            U.pushRange(builtStmts, n.body.map(stmt))
+            U.pushRange(builtStmts, cleanup)
+            return B.mkBlock(builtStmts)
         },
         Raise: (n: py.Raise) => {
             let ex = n.exc || n.cause
@@ -1596,12 +1597,12 @@ namespace pxt.py {
         }
         return B.mkStmt(B.mkText(pref), B.mkInfix(expr(target), "=", expr(value)))
 
-        function convertName(n: py.Name) {
+        function convertName(node: py.Name) {
             // TODO resuse with Name expr
-            markInfoNode(n, "identifierCompletion")
-            typeOf(n)
-            let v = lookupName(n)
-            return possibleDef(n, /*excludeLet*/true)
+            markInfoNode(node, "identifierCompletion")
+            typeOf(node)
+            let v = lookupName(node) // TODO why? side effects?
+            return possibleDef(node, /*excludeLet*/true)
         }
     }
 
@@ -1748,7 +1749,7 @@ namespace pxt.py {
             fmt.replace(/([^%]+)|(%[\d\.]*([a-zA-Z%]))/g,
                 (f: string, reg: string, f2: string, flet: string) => {
                     if (reg)
-                        res.push(B.mkText(reg.replace(/[`\\$]/g, f => "\\" + f)))
+                        res.push(B.mkText(reg.replace(/[`\\$]/g, comment => "\\" + comment)))
                     else {
                         let ee = elts.shift()
                         let et = ee ? expr(ee) : B.mkText("???")
@@ -2307,41 +2308,41 @@ namespace pxt.py {
         return B.mkStmt(B.mkGroup([B.mkText("let "), name, B.mkText(": " + type + ";")]));
     }
 
-    function findNonlocalDeclaration(name: string, scope: py.ScopeDef | undefined): py.ScopeDef | undefined {
-        if (!scope)
+    function findNonlocalDeclaration(name: string, current: py.ScopeDef | undefined): py.ScopeDef | undefined {
+        if (!current)
             return undefined
 
-        const symbolInfo = scope.vars && scope.vars[name];
+        const symbolInfo = current.vars && current.vars[name];
 
         if (symbolInfo && symbolInfo.modifier != VarModifier.NonLocal) {
-            return scope;
+            return current;
         }
         else {
-            return findNonlocalDeclaration(name, scope.parent);
+            return findNonlocalDeclaration(name, current.parent);
         }
     }
 
-    function collectHoistedDeclarations(scope: py.ScopeDef) {
+    function collectHoistedDeclarations(inputScope: py.ScopeDef) {
         const hoisted: B.JsNode[] = [];
         let current: SymbolInfo;
-        for (const varName of Object.keys(scope.vars)) {
-            current = scope.vars[varName];
+        for (const varName of Object.keys(inputScope.vars)) {
+            current = inputScope.vars[varName];
 
-            if (shouldHoist(current, scope)) {
+            if (shouldHoist(current, inputScope)) {
                 hoisted.push(declareVariable(current));
             }
         }
         return hoisted;
     }
 
-    function shouldHoist(sym: SymbolInfo, scope: py.ScopeDef): boolean {
+    function shouldHoist(sym: SymbolInfo, current: py.ScopeDef): boolean {
         let result =
             sym.kind === SK.Variable
             && !sym.isParam
             && sym.modifier === undefined
             && (sym.lastRefPos! > sym.forVariableEndPos!
                 || sym.firstRefPos! < sym.firstAssignPos!
-                || sym.firstAssignDepth! > scope.blockDepth!);
+                || sym.firstAssignDepth! > current.blockDepth!);
         return !!result
     }
 
@@ -2485,7 +2486,7 @@ namespace pxt.py {
                     let splits = i.id.split(":")
                     if (splits.length != 2)
                         return undefined
-                    let py = splits.map(i => parseInt(i))
+                    let py = splits.map(interval => parseInt(interval))
                     return {
                         py: {
                             startPos: py[0],
@@ -2660,8 +2661,8 @@ namespace pxt.py {
         };
     }
 
-    function isArrayType(expr: py.Expr) {
-        const t = find(typeOf(expr));
+    function isArrayType(inputExpr: py.Expr) {
+        const t = find(typeOf(inputExpr));
 
         return t && t.primType === "@array";
     }

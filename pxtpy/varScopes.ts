@@ -204,7 +204,7 @@ namespace pxt.py {
         const nextGlobals = globals || locals
         const nextNonlocals = globals ? [...nonlocals, locals] : []
         const children = s.children
-            .map(s => computeVarUsage(s, nextGlobals, nextNonlocals))
+            .map(childS => computeVarUsage(childS, nextGlobals, nextNonlocals))
         return {
             globalUsage,
             nonlocalUsage,
@@ -248,7 +248,7 @@ namespace pxt.py {
                 .map(toId)
                 .filter(i => !!i)
                 .map(i => i as ts.Identifier)
-                .reduce((p, n) => p.find(r => r.text === n.text) ? p : [...p, n], [] as ts.Identifier[])
+                .reduce((p, node) => p.find(r => r.text === node.text) ? p : [...p, node], [] as ts.Identifier[])
         }
 
         function walk(s: VarUsages) {
@@ -267,9 +267,9 @@ namespace pxt.py {
         return `${i.kind}:${i.varName}`
     }
     function toStringVarScopes(s: VarScope): string {
-        function internalToStringVarScopes(s: VarScope): string[] {
-            const refs = s.refs.map(toStringVarRef).join(", ")
-            const children = s.children
+        function internalToStringVarScopes(internalScope: VarScope): string[] {
+            const refs = internalScope.refs.map(toStringVarRef).join(", ")
+            const children = internalScope.children
                 .map(internalToStringVarScopes)
                 .map(c => c.map(indent1))
                 .map(c => ["{", ...c, "}"])
@@ -282,12 +282,12 @@ namespace pxt.py {
         return internalToStringVarScopes(s).join("\n")
     }
     function toStringVarUsage(s: VarUsages): string {
-        function internalToStringVarUsage(s: VarUsages): string[] {
-            const gs = s.globalUsage.map(toStringVarRef).join(', ')
-            const ns = s.nonlocalUsage.map(toStringVarRef).join(', ')
-            const ls = s.localUsage.map(toStringVarRef).join(', ')
-            const es = s.environmentUsage.map(toStringVarRef).join(', ')
-            const children = s.children
+        function internalToStringVarUsage(internalScope: VarUsages): string[] {
+            const gs = internalScope.globalUsage.map(toStringVarRef).join(', ')
+            const ns = internalScope.nonlocalUsage.map(toStringVarRef).join(', ')
+            const ls = internalScope.localUsage.map(toStringVarRef).join(', ')
+            const es = internalScope.environmentUsage.map(toStringVarRef).join(', ')
+            const children = internalScope.children
                 .map(internalToStringVarUsage)
                 .map(c => c.map(indent1))
                 .map(c => ["{", ...c, "}"])

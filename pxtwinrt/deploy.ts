@@ -15,7 +15,7 @@ namespace pxt.winrt {
             return pxt.winrt.promisify(
                 folder.createFileAsync(firmware, Windows.Storage.CreationCollisionOption.replaceExisting)
                     .then(file => Windows.Storage.FileIO.writeTextAsync(file, r))
-            ).then(r => { }).catch(e => {
+            ).then(_ => { }).catch(e => {
                 pxt.debug(`failed to write ${firmware} to ${folder.displayName} - ${e}`)
             })
         }
@@ -26,7 +26,7 @@ namespace pxt.winrt {
                 let pdf = df.map(writeAsync);
                 let all = Promise.join(...pdf)
                 return all;
-            }).then(r => { });
+            }).then(_ => { });
     }
 
     export function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {

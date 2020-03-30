@@ -25,11 +25,11 @@ namespace pxt.storage {
 
     class LocalStorage implements IStorage {
 
-        constructor(private storageId: string) {
+        constructor(private id: string) {
         }
 
         targetKey(key: string): string {
-            return this.storageId + '/' + key;
+            return this.id + '/' + key;
         }
 
         removeItem(key: string) {
