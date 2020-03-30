@@ -64,15 +64,6 @@ const lessons: Lesson[] = [
         "days": [Day.Friday]
     },
     {
-        "title": "Arcade with Steve Isaacs",
-        "description": "Learn MakeCode Arcade game development with Mr. Isaacs, an ISTE outstanding teacher and PBS Lead Digital Innovator.",
-        "url": "https://www.twitch.tv/mr_isaacs/",
-        "img": "/static/online-learning/img/arcade-2-stream.png",
-        "time": 6,
-        "startDay": 30,
-        "days": [Day.Monday]
-    },
-    {
         "title": "DreamSpace HomeSpace",
         "description": "Join Microsoft Ireland in their HomeSpace tutorial series on your favourite MakeCode platforms: micro:bit, Arcade and Minecraft.",
         "url": "https://aka.ms/dshomespace",
