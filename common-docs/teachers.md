@@ -11,27 +11,27 @@ If you want to include examples of code in printed materials, there are two good
 In the editor, you can print the current project you are working with by clicking the cogwheel in the top right corner and selecting `Print`.
 This will produce a view of the code from your project that is printer friendly.
 
-![Animation showing how to print](/common-docs/static/teachers/how-to-print.gif)
+![Animation showing how to print](/static/teachers/how-to-print.gif)
 
 ### Snapshot
 
 You can save a ``.png`` file with an image of all the blocks in your current projects using the ``Snapshot`` feature.
 Right click on the Workspace (press and hold on touch devices) and select **Snapshot**.
 
-![Animation showing how to take a snapshot](/common-docs/static/teachers/how-to-snapshot.gif)
+![Animation showing how to take a snapshot](/static/teachers/how-to-snapshot.gif)
 
 ## Sharing
 
 You can create links to share your project using the ``Share`` button in the top left corner of the editor.
 
-![Animation showing how to share a project](/common-docs/static/teachers/how-to-share.gif)
+![Animation showing how to share a project](/static/teachers/how-to-share.gif)
 
 ### Embed
 
 If you have a class website that supports adding ``HTML`` elements to web pages,
 you can embed the simulator, code, or the full editor from the share screen.
 
-![Animation showing how to embed a project](/common-docs/static/teachers/how-to-embed.gif)
+![Animation showing how to embed a project](/static/teachers/how-to-embed.gif)
 
 ## Tutorials
 
