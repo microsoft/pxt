@@ -382,7 +382,8 @@ declare namespace pxt {
         githubCompiledJs?: boolean; // commit binary.js in commit when creating a github release,
         blocksCollapsing?: boolean; // collapse/uncollapse functions/event in blocks
         hideHomeDetailsVideo?: boolean; // hide video/large image from details card
-        tutorialBlocksDiff?: boolean; // automatically display diffs in tutorials
+        tutorialBlocksDiff?: boolean; // automatically display blocks diffs in tutorials
+        tutorialTextDiff?: boolean; // automatically display text diffs in tutorials
         openProjectNewTab?: boolean; // allow opening project in a new tab
         openProjectNewDependentTab?: boolean; // allow opening project in a new tab -- connected
         tutorialExplicitHints?: boolean; // allow use explicit hints
