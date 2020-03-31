@@ -192,6 +192,7 @@ namespace ts.pxtc.Util {
         return fmt_va(lfmt, args);
     }
 
+    /* tslint:disable-next-line:no-shadowed-variable */
     export function lf(format: string, ...args: any[]): string {
         return lf_va(format, args);
     }

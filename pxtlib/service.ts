@@ -168,9 +168,9 @@ namespace ts.pxtc {
         const allOverlaps = (i: PosSpan, lang: "ts" | "py") => {
             const { startPos, endPos } = i
             return sourceMap
-                .filter(i => {
+                .filter(interval => {
                     // O(n), can we and should we do better?
-                    return i[lang].startPos <= startPos && endPos <= i[lang].endPos
+                    return interval[lang].startPos <= startPos && endPos <= interval[lang].endPos
                 })
         }
         const smallestOverlap = (i: PosSpan, lang: "ts" | "py"): SourceInterval | undefined => {
@@ -816,7 +816,7 @@ namespace ts.pxtc {
         res.jsDoc = ""
         cmt = cmt.replace(/\/\*\*([^]*?)\*\//g, (full: string, doccmt: string) => {
             doccmt = doccmt.replace(/\n\s*(\*\s*)?/g, "\n")
-            doccmt = doccmt.replace(/^\s*@param\s+(\w+)\s+(.*)$/mg, (full: string, name: string, desc: string) => {
+            doccmt = doccmt.replace(/^\s*@param\s+(\w+)\s+(.*)$/mg, (_: string, name: string, desc: string) => {
                 res.paramHelp[name] = desc
                 if (!res.paramDefl[name]) {
                     // these don't add to res.explicitDefaults

@@ -79,7 +79,7 @@ namespace ts.pxtc.Util {
         }
     }
 
-    export function codalHash16(s: string): number {
+    export function codalHash16(str: string): number {
         // same hashing as https://github.com/lancaster-university/codal-core/blob/c1fe7a4c619683a50d47cb0c19d15b8ff3bd16a1/source/drivers/PearsonHash.cpp#L26
         const hashTable = [
             251, 175, 119, 215, 81, 14, 79, 191, 103, 49, 181, 143, 186, 157, 0,
@@ -128,8 +128,8 @@ namespace ts.pxtc.Util {
         }
 
 
-        if (!s) return 0;
-        return hashN(s, 2);
+        if (!str) return 0;
+        return hashN(str, 2);
     }
 
     export function bufferSerial(buffers: pxt.Map<string>, data: string = "", source: string = "?", maxBufLen: number = 255) {
@@ -305,15 +305,15 @@ namespace ts.pxtc.Util {
     // { a: { b: 1 }, c: 2} => { "a.b": 1, c: 2 }
     export function jsonFlatten(v: any) {
         let res: pxt.Map<any> = {}
-        let loop = (pref: string, v: any) => {
-            if (v !== null && typeof v == "object") {
-                assert(!Array.isArray(v))
+        let loop = (pref: string, obj: any) => {
+            if (obj !== null && typeof obj == "object") {
+                assert(!Array.isArray(obj))
                 if (pref) pref += "."
-                for (let k of Object.keys(v)) {
-                    loop(pref + k, v[k])
+                for (let k of Object.keys(obj)) {
+                    loop(pref + k, obj[k])
                 }
             } else {
-                res[pref] = v
+                res[pref] = obj
             }
         }
         loop("", v)
@@ -367,6 +367,7 @@ namespace ts.pxtc.Util {
         return str.slice(0, prefix.length) == prefix
     }
 
+    /* tslint:disable-next-line:no-shadowed-variable */
     export function contains(str: string, contains: string) {
         if (str.length < contains.length) return false
         if (contains.length == 0) return true
@@ -523,9 +524,9 @@ namespace ts.pxtc.Util {
     }
 
     export function timeSince(time: number) {
-        let now = Date.now();
+        let currentTime = Date.now();
         time *= 1000;
-        let diff = (now - time) / 1000;
+        let diff = (currentTime - time) / 1000;
         if (isNaN(diff)) return ""
 
         if (diff < -30) {
@@ -1337,12 +1338,12 @@ namespace ts.pxtc.BrowserImpl {
 
         let chunkLen = 16 * 4;
 
-        function addBuf(buf: Uint8Array) {
-            let end = buf.length - (chunkLen - 1)
+        function addBuf(buffer: Uint8Array) {
+            let end = buffer.length - (chunkLen - 1)
             for (let i = 0; i < end; i += chunkLen) {
                 for (let j = 0; j < 16; j++) {
                     let off = (j << 2) + i
-                    work[j] = (buf[off] << 24) | (buf[off + 1] << 16) | (buf[off + 2] << 8) | buf[off + 3]
+                    work[j] = (buffer[off] << 24) | (buffer[off + 1] << 16) | (buffer[off + 2] << 8) | buffer[off + 3]
                 }
                 sha256round(h, work)
             }

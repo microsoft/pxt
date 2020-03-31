@@ -3,7 +3,6 @@
 namespace pxt {
     declare var require: any;
 
-    let lzmaPromise: Promise<any>;
     function getLzmaAsync() {
         let lzmaPromise: Promise<any>;
         if (!lzmaPromise) {
@@ -112,7 +111,7 @@ namespace pxt.cpp {
                 else {
                     s = s.trim()
                         .replace(/^\s*/mg, indent)
-                        .replace(/^(\s*)\*/mg, (f, s) => s + " *")
+                        .replace(/^(\s*)\*/mg, (_, str) => str + " *")
                     text += s + "\n"
                 }
             },
@@ -834,12 +833,12 @@ namespace pxt.cpp {
                     } else if (currSettings[settingName] === settingValue) {
                         // OK
                     } else if (!pkg.parent.config.yotta || !pkg.parent.config.yotta.ignoreConflicts) {
-                        let err = new PkgConflictError(lf("conflict on yotta setting {0} between extensions {1} and {2}",
+                        let outputErr = new PkgConflictError(lf("conflict on yotta setting {0} between extensions {1} and {2}",
                             settingName, pkg.id, prev.id))
-                        err.pkg0 = prev
-                        err.pkg1 = pkg
-                        err.settingName = settingName
-                        throw err;
+                        outputErr.pkg0 = prev
+                        outputErr.pkg1 = pkg
+                        outputErr.settingName = settingName
+                        throw outputErr;
                     }
                 }
             }
@@ -880,8 +879,8 @@ namespace pxt.cpp {
                     U.assert(!seenMain)
                 }
                 // Generally, headers need to be processed before sources, as they contain definitions
-                // (in particular of enums, which are needed to decide if we're doing conversions for 
-                // function arguments). This can still fail if one header uses another and they are 
+                // (in particular of enums, which are needed to decide if we're doing conversions for
+                // function arguments). This can still fail if one header uses another and they are
                 // listed in invalid order...
                 const isHeaderFn = (fn: string) => U.endsWith(fn, ".h")
                 const ext = ".cpp"
@@ -1310,7 +1309,7 @@ namespace pxt.hexloader {
                                                 resolve(U.httpGetTextAsync(hexurl + ".hex"))
                                             }
                                         },
-                                            e => {
+                                            _ => {
                                                 setTimeout(tryGet, 1000)
                                                 return null
                                             })

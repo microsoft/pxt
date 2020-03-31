@@ -508,8 +508,8 @@ namespace pxt.docs {
             const relative = new RegExp('^[/#]').test(href);
             const target = !relative ? '_blank' : '';
             if (relative && d.versionPath) href = `/${d.versionPath}${href}`;
-            const html = linkRenderer.call(renderer, href, title, text);
-            return html.replace(/^<a /, `<a ${target ? `target="${target}"` : ''} rel="nofollow noopener" `);
+            const renderedHtml = linkRenderer.call(renderer, href, title, text);
+            return renderedHtml.replace(/^<a /, `<a ${target ? `target="${target}"` : ''} rel="nofollow noopener" `);
         };
 
         let sanitizer = requireDOMSanitizer();
@@ -540,7 +540,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
             for (let ent of links) {
                 let m = ent.rx.exec(lnk)
                 if (m) {
-                    return ent.cmd.replace(/\$(\d+)/g, (f, k) => {
+                    return ent.cmd.replace(/\$(\d+)/g, (_, k) => {
                         return m[parseInt(k)] || ""
                     }) + "\n"
                 }
@@ -568,8 +568,9 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
 
         let endBox = ""
         let boxSize = 0;
-        function appendEndBox(size: number, box: string, html: string): string {
-            let r = html;
+        // TODO: look at this again, box is currently unused but mutates endBox above
+        function appendEndBox(size: number, box: string, htmlSoFar: string): string {
+            let r = htmlSoFar;
             if (size <= boxSize) {
                 r = endBox + r;
                 endBox = "";
@@ -861,10 +862,11 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         if (!summaryMD)
             return null
 
-        const markedInstance = pxt.docs.requireMarked();
+        // TODO should this just use namespace scoped markedInstance at top of file?
+        const internalMarkedInstance = pxt.docs.requireMarked();
         const sanitizer = requireDOMSanitizer();
         const options = {
-            renderer: new markedInstance.Renderer(),
+            renderer: new internalMarkedInstance.Renderer(),
             gfm: true,
             tables: false,
             breaks: false,
@@ -879,7 +881,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         let currentStack: pxt.TOCMenuEntry[] = [];
         currentStack.push(dummy);
 
-        let tokens = markedInstance.lexer(summaryMD, options);
+        let tokens = internalMarkedInstance.lexer(summaryMD, options);
         let wasListStart = false
         tokens.forEach((token: any) => {
             switch (token.type) {

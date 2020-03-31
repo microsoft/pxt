@@ -594,7 +594,7 @@ namespace pxt {
                         }
                         return Promise.resolve()
                     } else {
-                        let mod = new Package(id, ver, from.parent, from)
+                        mod = new Package(id, ver, from.parent, from)
                         if (isCpp)
                             mod.cppOnly = true
                         from.parent.deps[id] = mod
@@ -881,34 +881,34 @@ namespace pxt {
             }
 
             const fillExtInfoAsync = async (variant: string) => {
-                let ext: pxtc.ExtensionInfo
+                let extInfo: pxtc.ExtensionInfo
 
                 if (variant)
                     pxt.setAppTargetVariant(variant, { temporary: true })
 
                 try {
-                    ext = cpp.getExtensionInfo(this)
+                    extInfo = cpp.getExtensionInfo(this)
                     if (!variant) {
-                        if (ext.shimsDTS) generateFile("shims.d.ts", ext.shimsDTS)
-                        if (ext.enumsDTS) generateFile("enums.d.ts", ext.enumsDTS)
+                        if (extInfo.shimsDTS) generateFile("shims.d.ts", extInfo.shimsDTS)
+                        if (extInfo.enumsDTS) generateFile("enums.d.ts", extInfo.enumsDTS)
                     }
 
-                    const inf = target.isNative ? await this.host().getHexInfoAsync(ext) : null
+                    const inf = target.isNative ? await this.host().getHexInfoAsync(extInfo) : null
 
-                    ext = U.flatClone(ext)
+                    extInfo = U.flatClone(extInfo)
                     if (!target.keepCppFiles) {
-                        delete ext.compileData;
-                        delete ext.generatedFiles;
-                        delete ext.extensionFiles;
+                        delete extInfo.compileData;
+                        delete extInfo.generatedFiles;
+                        delete extInfo.extensionFiles;
                     }
-                    ext.hexinfo = inf
+                    extInfo.hexinfo = inf
 
                 } finally {
                     if (variant)
                         pxt.setAppTargetVariant(null, { temporary: true })
                 }
 
-                return ext
+                return extInfo
             }
 
             await this.loadAsync()

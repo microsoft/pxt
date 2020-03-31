@@ -65,12 +65,12 @@ namespace pxt {
 
             let r = ""
             for (let i = 0; i < cmd.length; ++i) {
-                let ch = cmd.charAt(i)
-                if (ch == '}' || ch == '#' || ch == '$') {
+                let c = cmd.charAt(i)
+                if (c == '}' || c == '#' || c == '$') {
                     r += '}'
-                    r += String.fromCharCode(ch.charCodeAt(0) ^ 0x20)
+                    r += String.fromCharCode(c.charCodeAt(0) ^ 0x20)
                 } else {
-                    r += ch
+                    r += c
                 }
             }
             let ch = 0
@@ -93,9 +93,9 @@ namespace pxt {
                 } else if (ch == '*') {
                     ++i
                     let rep = resp.charCodeAt(i) - 29
-                    let ch = r.charAt(r.length - 1)
+                    let prevCh = r.charAt(r.length - 1)
                     while (rep-- > 0)
-                        r += ch
+                        r += prevCh
                 } else if (ch == '#') {
                     let checksum = resp.slice(i + 1, i + 3)
                     if (checksum.length == 2) {
@@ -208,7 +208,7 @@ namespace pxt {
                 .then(() => this.sendRCmdAsync("swdp_scan"))
                 .then(r => {
                     this.targetInfo = r
-                    return this.sendCmdAsync("vAttach;1", r => r[0] == "T")
+                    return this.sendCmdAsync("vAttach;1", resp => resp[0] == "T")
                 })
                 .then(() => { })
         }

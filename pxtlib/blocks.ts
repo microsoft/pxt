@@ -189,7 +189,7 @@ namespace pxt.blocks {
                         res.handlerArgs.push({
                             name: arg.name,
                             type: arg.type,
-                            inBlockDef: defParameters ? defParameters.some(def => def.ref && def.name === arg.name) : false
+                            inBlockDef: defParameters ? defParameters.some(defParam => defParam.ref && defParam.name === arg.name) : false
                         });
                     })
                 }

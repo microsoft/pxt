@@ -100,7 +100,7 @@ namespace ts.pxtc.assembler {
                                 stack = (v / this.ei.wordSize());
                         }
                     } else if (enc.isRegList) {
-                        // register lists are ARM-specific - this code not used in AVR 
+                        // register lists are ARM-specific - this code not used in AVR
                         if (actual != "{") return emitErr("expecting {", actual);
                         v = 0;
                         while (tokens[j] != "}") {
@@ -133,7 +133,7 @@ namespace ts.pxtc.assembler {
                                 if (ln.bin.finalEmit)
                                     return emitErr("unknown label", actual)
                                 else
-                                    // just need some value when we are 
+                                    // just need some value when we are
                                     // doing some pass other than finalEmit
                                     v = 8; // needs to be divisible by 4 etc
                             }
@@ -187,7 +187,7 @@ namespace ts.pxtc.assembler {
     export class Line {
         public type: string;
         public lineNo: number;
-        public words: string[]; // the tokens in this line 
+        public words: string[]; // the tokens in this line
         public scope: string;
         public location: number;
         public instruction: Instruction;
@@ -285,7 +285,7 @@ namespace ts.pxtc.assembler {
             return this.location() + this.baseOffset;
         }
 
-        // parsing of an "integer", well actually much more than 
+        // parsing of an "integer", well actually much more than
         // just that
         public parseOneInt(s: string): number {
             if (!s)
@@ -476,7 +476,7 @@ namespace ts.pxtc.assembler {
         }
 
         private emitString(l: string, utf16 = false) {
-            function byteAt(s: string, i: number) { return (s.charCodeAt(i) || 0) & 0xff }
+            function byteAt(str: string, i: number) { return (str.charCodeAt(i) || 0) & 0xff }
 
             let m = /^\s*([\w\.]+\s*:\s*)?.\w+\s+(".*")\s*$/.exec(l)
             let s: string;
@@ -838,12 +838,12 @@ namespace ts.pxtc.assembler {
         }
 
         public buildLine(tx: string, lst: Line[]) {
-            let mkLine = (tx: string) => {
-                let l = new Line(this, tx);
-                l.scope = this.scope;
-                l.lineNo = this.currLineNo;
-                lst.push(l)
-                return l;
+            let mkLine = (t: string) => {
+                let line = new Line(this, t);
+                line.scope = this.scope;
+                line.lineNo = this.currLineNo;
+                lst.push(line)
+                return line;
             }
 
             let l = mkLine(tx);
@@ -1111,7 +1111,7 @@ namespace ts.pxtc.assembler {
     export interface Encoder {
         name: string;
         pretty: string;
-        // given a value, check it is the right number of bits and 
+        // given a value, check it is the right number of bits and
         // translate the value to the proper set of bits
         encode: (v: number) => number;
         isRegister: boolean;
@@ -1286,7 +1286,7 @@ namespace ts.pxtc.assembler {
     function parseString(s: string) {
         s = s.replace(/\\\\/g, "\\B")           // don't get confused by double backslash
             .replace(/\\(['\?])/g, (f, q) => q) // these are not valid in JSON yet valid in C
-            .replace(/\\[z0]/g, "\u0000")      // \0 is valid in C 
+            .replace(/\\[z0]/g, "\u0000")      // \0 is valid in C
             .replace(/\\x([0-9a-f][0-9a-f])/gi, (f, h) => "\\u00" + h)
             .replace(/\\B/g, "\\\\") // undo anti-confusion above
         try {
