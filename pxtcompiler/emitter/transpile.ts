@@ -82,8 +82,7 @@ namespace ts.pxtc.transpile {
         let equiv = tryGetCachedTranspile(from, fromTxt)
         if (equiv && equiv.outfiles[mainName(to)] && !force) {
             // return from cache
-            let res = makeSuccess(equiv)
-            return res
+            return makeSuccess(equiv);
         }
 
         // not found in cache, do the compile

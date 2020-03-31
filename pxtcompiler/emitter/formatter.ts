@@ -431,19 +431,19 @@ namespace ts.pxtc {
         }
     }
 
-    function delimitStmts(tokens: Token[], inStmtCtx: boolean, ctxToken: Token = null): Stmt[] {
+    function delimitStmts(tokensToAdd: Token[], inStmtCtx: boolean, ctxToken: Token = null): Stmt[] {
         let res: Stmt[] = []
         let i = 0;
         let currCtxToken: Token;
         let didBlock = false;
 
-        tokens = tokens.concat([mkEOF()])
+        tokensToAdd = tokensToAdd.concat([mkEOF()])
 
-        while (tokens[i].kind != TokenKind.EOF) {
+        while (tokensToAdd[i].kind != TokenKind.EOF) {
             let stmtBeg = i
             skipToStmtEnd();
-            Util.assert(i > stmtBeg, `Error at ${tokens[i].text}`)
-            addStatement(tokens.slice(stmtBeg, i))
+            Util.assert(i > stmtBeg, `Error at ${tokensToAdd[i].text}`)
+            addStatement(tokensToAdd.slice(stmtBeg, i))
         }
 
         return res
@@ -478,14 +478,14 @@ namespace ts.pxtc {
 
         function injectBlocks(tokens: Token[]) {
             let output: Token[] = []
-            let i = 0;
-            while (i < tokens.length) {
-                if (tokens[i].blockSpanLength) {
-                    let inner = tokens.slice(i, i + tokens[i].blockSpanLength)
+            let ind = 0;
+            while (ind < tokens.length) {
+                if (tokens[ind].blockSpanLength) {
+                    let inner = tokens.slice(ind, ind + tokens[ind].blockSpanLength)
                     let isVirtual = !!inner[0].blockSpanIsVirtual
                     delete inner[0].blockSpanLength
                     delete inner[0].blockSpanIsVirtual
-                    i += inner.length
+                    ind += inner.length
                     inner = injectBlocks(inner)
                     if (isVirtual) {
                         output.push(mkVirtualTree(inner))
@@ -494,7 +494,7 @@ namespace ts.pxtc {
                         output.push(mkBlock(trimWhitespace(inner)))
                     }
                 } else {
-                    output.push(tokens[i++])
+                    output.push(tokens[ind++])
                 }
             }
             return output
@@ -510,7 +510,7 @@ namespace ts.pxtc {
         function nextNonWs(stopOnNewLine = false) {
             while (true) {
                 i++;
-                switch (tokens[i].kind) {
+                switch (tokensToAdd[i].kind) {
                     case TokenKind.Whitespace:
                     case TokenKind.CommentBlock:
                     case TokenKind.CommentLine:
@@ -525,18 +525,18 @@ namespace ts.pxtc {
         }
 
         function skipOptionalNewLine() {
-            while (tokens[i].kind == TokenKind.Whitespace) { i++; }
-            if (tokens[i].kind == TokenKind.NewLine) i++;
+            while (tokensToAdd[i].kind == TokenKind.Whitespace) { i++; }
+            if (tokensToAdd[i].kind == TokenKind.NewLine) i++;
         }
 
         function skipUntilBlock() {
             while (true) {
                 i++;
-                switch (tokens[i].kind) {
+                switch (tokensToAdd[i].kind) {
                     case TokenKind.EOF:
                         return;
                     case TokenKind.Tree:
-                        if (tokens[i].synKind == SK.OpenBraceToken) {
+                        if (tokensToAdd[i].synKind == SK.OpenBraceToken) {
                             i--;
                             expectBlock();
                             return;
@@ -547,10 +547,10 @@ namespace ts.pxtc {
         }
 
         function handleBlock() {
-            Util.assert(tokens[i].synKind == SK.OpenBraceToken)
-            let tree = tokens[i] as TreeToken
+            Util.assert(tokensToAdd[i].synKind == SK.OpenBraceToken)
+            let tree = tokensToAdd[i] as TreeToken
             Util.assert(tree.kind == TokenKind.Tree)
-            let blk = tokens[i] as BlockToken
+            let blk = tokensToAdd[i] as BlockToken
             blk.stmts = delimitStmts(tree.children, true, currCtxToken)
             delete tree.children
             blk.kind = TokenKind.Block
@@ -561,18 +561,18 @@ namespace ts.pxtc {
         function expectBlock() {
             let begIdx = i + 1
             nextNonWs()
-            if (tokens[i].synKind == SK.OpenBraceToken) {
+            if (tokensToAdd[i].synKind == SK.OpenBraceToken) {
                 handleBlock()
                 skipOptionalNewLine();
             } else {
                 skipToStmtEnd();
-                tokens[begIdx].blockSpanLength = i - begIdx
+                tokensToAdd[begIdx].blockSpanLength = i - begIdx
             }
         }
 
         function skipToStmtEnd() {
             while (true) {
-                let t = tokens[i]
+                let t = tokensToAdd[i]
                 let bkp = i
 
                 currCtxToken = t
@@ -589,17 +589,17 @@ namespace ts.pxtc {
 
                 if (t.synKind == SK.EqualsGreaterThanToken) {
                     nextNonWs()
-                    if (tokens[i].synKind == SK.OpenBraceToken) {
+                    if (tokensToAdd[i].synKind == SK.OpenBraceToken) {
                         handleBlock();
                         continue;
                     } else {
                         let begIdx = i
                         skipToStmtEnd()
                         let j = i
-                        while (tokens[j].kind == TokenKind.NewLine)
+                        while (tokensToAdd[j].kind == TokenKind.NewLine)
                             j--;
-                        tokens[begIdx].blockSpanLength = j - begIdx
-                        tokens[begIdx].blockSpanIsVirtual = true
+                        tokensToAdd[begIdx].blockSpanLength = j - begIdx
+                        tokensToAdd[begIdx].blockSpanIsVirtual = true
                         return
                     }
                 }
@@ -608,7 +608,7 @@ namespace ts.pxtc {
                     let begIdx = i
                     // an infix operator at the end of the line prevents the newline from ending the statement
                     nextNonWs()
-                    if (isExprEnd(tokens[i])) {
+                    if (isExprEnd(tokensToAdd[i])) {
                         // unless next line starts with something statement-like
                         i = begIdx
                     } else {
@@ -618,7 +618,7 @@ namespace ts.pxtc {
 
                 if (inStmtCtx && t.kind == TokenKind.NewLine) {
                     nextNonWs();
-                    t = tokens[i]
+                    t = tokensToAdd[i]
                     // if we get a infix operator other than +/- after newline, it's a continuation
                     if (infixOperatorPrecedence(t.synKind) && t.synKind != SK.PlusToken && t.synKind != SK.MinusToken) {
                         continue;
@@ -630,9 +630,9 @@ namespace ts.pxtc {
 
                 if (t.synKind == SK.OpenBraceToken && ctxToken && ctxToken.synKind == SK.ClassKeyword) {
                     let jj = i - 1;
-                    while (jj >= 0 && tokens[jj].kind == TokenKind.Whitespace)
+                    while (jj >= 0 && tokensToAdd[jj].kind == TokenKind.Whitespace)
                         jj--;
-                    if (jj < 0 || tokens[jj].synKind != SK.EqualsToken) {
+                    if (jj < 0 || tokensToAdd[jj].synKind != SK.EqualsToken) {
                         i--;
                         expectBlock(); // method body
                         return;
@@ -647,7 +647,7 @@ namespace ts.pxtc {
                     case SK.IfKeyword:
                     case SK.CatchKeyword:
                         nextNonWs();
-                        if (tokens[i].synKind == SK.OpenParenToken) {
+                        if (tokensToAdd[i].synKind == SK.OpenParenToken) {
                             expectBlock();
                         } else {
                             continue; // just continue until new line
@@ -658,7 +658,7 @@ namespace ts.pxtc {
                         expectBlock();
                         i--;
                         nextNonWs();
-                        if (tokens[i].synKind == SK.WhileKeyword) {
+                        if (tokensToAdd[i].synKind == SK.WhileKeyword) {
                             i++;
                             continue;
                         } else {
@@ -667,7 +667,7 @@ namespace ts.pxtc {
 
                     case SK.ElseKeyword:
                         nextNonWs();
-                        if (tokens[i].synKind == SK.IfKeyword) {
+                        if (tokensToAdd[i].synKind == SK.IfKeyword) {
                             continue; // 'else if' - keep scanning
                         } else {
                             i = bkp;

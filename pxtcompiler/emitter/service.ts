@@ -46,8 +46,8 @@ namespace ts.pxtc {
         if (s.lastIndexOf("_") > 0)
             return s
 
-        const isUpper = (i: number) => s[i] != lo[i]
-        const isLower = (i: number) => s[i] != up[i]
+        const isUpper = (c: number) => s[c] != lo[c]
+        const isLower = (c: number) => s[c] != up[c]
         //const isDigit = (i: number) => /\d/.test(s[i])
 
         let r = ""
@@ -226,9 +226,9 @@ namespace ts.pxtc {
 
             let src = getSourceFileOfNode(stmt)
             if (src) {
-                let m = /^pxt_modules\/([^\/]+)/.exec(src.fileName)
-                if (m)
-                    pkg = m[1]
+                let inModules = /^pxt_modules\/([^\/]+)/.exec(src.fileName)
+                if (inModules)
+                    pkg = inModules[1]
             }
 
             let extendsTypes: string[] = undefined
@@ -268,7 +268,6 @@ namespace ts.pxtc {
                     let desc = attributes.paramHelp[n] || ""
                     let minVal = attributes.paramMin && attributes.paramMin[n];
                     let maxVal = attributes.paramMax && attributes.paramMax[n];
-                    let m = /\beg\.?:\s*(.+)/.exec(desc)
                     let props: PropertyDesc[];
                     let parameters: PropertyDesc[];
                     if (p.type && p.type.kind === SK.FunctionType) {
@@ -281,7 +280,7 @@ namespace ts.pxtc {
                             });
                         }
                         else {
-                            parameters = callbackParameters.map((sym, i) => {
+                            parameters = callbackParameters.map(sym => {
                                 return {
                                     name: sym.getName(),
                                     type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(sym, p), undefined, TypeFormatFlags.UseFullyQualifiedType)
@@ -295,8 +294,8 @@ namespace ts.pxtc {
 
                     if (attributes.block && attributes.paramShadowOptions) {
                         const argNames: string[] = []
-                        attributes.block.replace(/%(\w+)/g, (f, n) => {
-                            argNames.push(n)
+                        attributes.block.replace(/%(\w+)/g, (_, name) => {
+                            argNames.push(name)
                             return ""
                         });
                         if (attributes.paramShadowOptions[argNames[i]]) {
@@ -448,8 +447,7 @@ namespace ts.pxtc {
     let symbolKindWeight: pxt.Map<number>;
     export function compareSymbols(l: SymbolInfo, r: SymbolInfo): number {
         function cmpr(toValue: (s: SymbolInfo) => number) {
-            const c = -toValue(l) + toValue(r)
-            return c
+            return -toValue(l) + toValue(r)
         }
 
         // favor symbols with blocks
@@ -984,11 +982,11 @@ namespace ts.pxtc.service {
 
                 function findArgIdx() {
                     // does our cursor syntax node trivially map to an argument?
-                    let paramIdx = call.arguments
+                    let argIdx = call.arguments
                         .map(a => a === innerMost)
                         .indexOf(true)
-                    if (paramIdx >= 0)
-                        return paramIdx
+                    if (argIdx >= 0)
+                        return argIdx
 
                     // is our cursor within the argument range?
                     const inRange = call.arguments.pos <= tsPos && tsPos < call.end
@@ -1000,17 +998,17 @@ namespace ts.pxtc.service {
                         return 0
 
                     // then find which argument we're refering to
-                    paramIdx = 0;
+                    argIdx = 0;
                     for (let a of call.arguments) {
                         if (a.end <= tsPos)
-                            paramIdx++
+                            argIdx++
                         else
                             break
                     }
                     if (!call.arguments.hasTrailingComma)
-                        paramIdx = Math.max(0, paramIdx - 1)
+                        argIdx = Math.max(0, argIdx - 1)
 
-                    return paramIdx
+                    return argIdx
                 }
 
                 // which argument are we ?
@@ -1216,12 +1214,12 @@ namespace ts.pxtc.service {
                     if (blockDef.operators) {
                         for (const op in blockDef.operators) {
                             const opValues = blockDef.operators[op];
-                            opValues.forEach(v => builtinItems.push({
+                            opValues.forEach(opValue => builtinItems.push({
                                 id,
                                 name: blockDef.name,
-                                jsdoc: typeof blockDef.tooltip === "string" ? <string>blockDef.tooltip : (<pxt.Map<string>>blockDef.tooltip)[v],
-                                block: v,
-                                field: [op, v],
+                                jsdoc: typeof blockDef.tooltip === "string" ? <string>blockDef.tooltip : (<pxt.Map<string>>blockDef.tooltip)[opValue],
+                                block: opValue,
+                                field: [op, opValue],
                                 builtinBlock: true
                             }));
                         }
@@ -1404,8 +1402,8 @@ namespace ts.pxtc.service {
                 const enumType = tc.getTypeOfSymbolAtLocation(asTsEnum, location)
                 const mems = getEnumMembers(enumType)
                 const enumValQNames = mems.map(e => enumMemberToQName(tc, e))
-                const symbols = enumValQNames.map(n => lastApiInfo.apis.byQName[n])
-                enumVals = [...enumVals, ...symbols]
+                const enumSymbols = enumValQNames.map(n => lastApiInfo.apis.byQName[n])
+                enumVals = [...enumVals, ...enumSymbols]
             }
         }
 
@@ -1537,24 +1535,24 @@ namespace ts.pxtc.service {
                 return attrs.paramDefl[name];
             }
 
-            function getDefaultValueOfType(type: ts.Type): string | null {
+            function getDefaultValueOfType(t: ts.Type): string | null {
                 // TODO: generalize this to handle more types
-                if (type.symbol && type.symbol.flags & SymbolFlags.Enum) {
-                    return getDefaultEnumValue(type, python);
+                if (t.symbol && t.symbol.flags & SymbolFlags.Enum) {
+                    return getDefaultEnumValue(t, python);
                 }
-                if (isObjectType(type)) {
-                    const typeSymbol = apis.byQName[checker.getFullyQualifiedName(type.symbol)];
+                if (isObjectType(t)) {
+                    const typeSymbol = apis.byQName[checker.getFullyQualifiedName(t.symbol)];
                     const snip = typeSymbol && typeSymbol.attributes && (python ? typeSymbol.attributes.pySnippet : typeSymbol.attributes.snippet);
                     if (snip) return snip;
-                    if (type.objectFlags & ts.ObjectFlags.Anonymous) {
-                        const sigs = checker.getSignaturesOfType(type, ts.SignatureKind.Call);
+                    if (t.objectFlags & ts.ObjectFlags.Anonymous) {
+                        const sigs = checker.getSignaturesOfType(t, ts.SignatureKind.Call);
                         if (sigs && sigs.length) {
                             return getFunctionString(sigs[0], false);
                         }
                         return emitFn(name);
                     }
                 }
-                if (type.flags & ts.TypeFlags.NumberLike) {
+                if (t.flags & ts.TypeFlags.NumberLike) {
                     return "0";
                 }
                 return null

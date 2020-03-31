@@ -204,8 +204,8 @@ namespace ts.pxtc.ir {
         }
     }
 
-    function nodeToString(n: Node) {
-        return str(n)
+    function nodeToString(node: Node) {
+        return str(node)
         function str(n: Node): string {
             if (n.isExpr()) {
                 let e = n as Expr
@@ -254,16 +254,16 @@ namespace ts.pxtc.ir {
                     default: throw oops();
                 }
             } else {
-                let stmt = n as Stmt
-                let inner = stmt.expr ? str(stmt.expr) : "{null}"
-                switch (stmt.stmtKind) {
+                let asStmt = n as Stmt
+                let inner = asStmt.expr ? str(asStmt.expr) : "{null}"
+                switch (asStmt.stmtKind) {
                     case ir.SK.Expr:
                         return "    " + inner + "\n"
                     case ir.SK.Jmp:
-                        let fin = `goto ${stmt.lblName}\n`
-                        switch (stmt.jmpMode) {
+                        let fin = `goto ${asStmt.lblName}\n`
+                        switch (asStmt.jmpMode) {
                             case JmpMode.Always:
-                                if (stmt.expr)
+                                if (asStmt.expr)
                                     return `    { JMPVALUE := ${inner} } ${fin}`
                                 else return "    " + fin
                             case JmpMode.IfZero:
@@ -275,9 +275,9 @@ namespace ts.pxtc.ir {
                     case ir.SK.StackEmpty:
                         return "    ;\n"
                     case ir.SK.Breakpoint:
-                        return "    // brk " + (stmt.breakpointInfo.id) + "\n"
+                        return "    // brk " + (asStmt.breakpointInfo.id) + "\n"
                     case ir.SK.Label:
-                        return stmt.lblName + ":\n"
+                        return asStmt.lblName + ":\n"
                     default: throw oops();
                 }
 
@@ -424,12 +424,12 @@ namespace ts.pxtc.ir {
         const cantInline = 1000000
         const inner = () => {
             if (!e.args) return 0
-            let inner = 0
+            let weight = 0
             for (let ee of e.args)
-                inner += inlineWeight(ee)
+                weight += inlineWeight(ee)
             if (e.mask && e.mask.conversions)
-                inner += e.mask.conversions.length * 4
-            return inner
+                weight += e.mask.conversions.length * 4
+            return weight
         }
         switch (e.exprKind) {
             case EK.NumberLiteral:
@@ -547,8 +547,8 @@ namespace ts.pxtc.ir {
             return `\nPROC ${getDeclName(this.action)}\n${this.body.map(s => s.toString()).join("")}\n`
         }
 
-        emit(stmt: Stmt) {
-            this.body.push(stmt)
+        emit(statement: Stmt) {
+            this.body.push(statement)
         }
 
         emitExpr(expr: Expr) {

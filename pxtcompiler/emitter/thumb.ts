@@ -1,7 +1,7 @@
 /* Docs:
  *
  * Thumb 16-bit Instruction Set Quick Reference Card
- *   http://infocenter.arm.com/help/topic/com.arm.doc.qrc0006e/QRC0006_UAL16.pdf 
+ *   http://infocenter.arm.com/help/topic/com.arm.doc.qrc0006e/QRC0006_UAL16.pdf
  *
  * ARMv6-M Architecture Reference Manual (bit encoding of instructions)
  *   http://ecee.colorado.edu/ecen3000/labs/lab3/files/DDI0419C_arm_architecture_v6m_reference_manual.pdf
@@ -356,11 +356,11 @@ namespace ts.pxtc.thumb {
             // +/-8 bytes is because the code size can slightly change due to .balign directives
             // inserted by literal generation code; see https://github.com/Microsoft/pxt-adafruit/issues/514
             // Most likely 4 would be enough, but we play it safe
-            function fits(enc: assembler.Encoder, ln: assembler.Line) {
+            function fits(enc: assembler.Encoder, line: assembler.Line) {
                 return (
-                    enc.encode(ln.numArgs[0] + 8) != null &&
-                    enc.encode(ln.numArgs[0] - 8) != null &&
-                    enc.encode(ln.numArgs[0]) != null
+                    enc.encode(line.numArgs[0] + 8) != null &&
+                    enc.encode(line.numArgs[0] - 8) != null &&
+                    enc.encode(line.numArgs[0]) != null
                 )
             }
 

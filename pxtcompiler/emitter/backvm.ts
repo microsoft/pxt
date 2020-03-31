@@ -7,6 +7,7 @@ namespace ts.pxtc {
     const vmCallMap: pxt.Map<string> = {
     }
 
+    // TODO these two functions unused?
     function shimToVM(shimName: string) {
         return shimName
     }
@@ -215,11 +216,11 @@ _start_${name}:
             `    .word ${d.key}, ${d.value}  ; ${d.name}=${d.value}`).join("\n")
             + "\n    .word 0, 0")
 
-        let s = ctx.opcodes.map(s => s == null ? "" : s).join("\x00") + "\x00"
+        let builtOpcodes = ctx.opcodes.map(s => s == null ? "" : s).join("\x00") + "\x00"
         let opcm = ""
-        while (s) {
-            let pref = s.slice(0, 64)
-            s = s.slice(64)
+        while (builtOpcodes) {
+            let pref = builtOpcodes.slice(0, 64)
+            builtOpcodes = builtOpcodes.slice(64)
             if (pref.length & 1)
                 pref += "\x00"
             opcm += ".hex " + U.toHex(U.stringToUint8Array(pref)) + "\n"
@@ -236,9 +237,9 @@ _start_${name}:
 
         if (pxt.options.debug) {
             let pc = res.thumbFile.peepCounts
-            let keys = Object.keys(pc)
-            keys.sort((a, b) => pc[b] - pc[a])
-            for (let k of keys.slice(0, 50)) {
+            let pcKeys = Object.keys(pc)
+            pcKeys.sort((a, b) => pc[b] - pc[a])
+            for (let k of pcKeys.slice(0, 50)) {
                 console.log(`${k}  ${pc[k]}`)
             }
         }

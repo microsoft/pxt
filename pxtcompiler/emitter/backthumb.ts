@@ -211,7 +211,7 @@ ${lbl}:`
         }
 
         arithmetic() {
-            let r = ""
+            let result = ""
 
             const boxedOp = (op: string) => {
                 let r = ".boxed:\n"
@@ -228,7 +228,7 @@ ${lbl}:`
             }
 
             const checkInts = (op: string) => {
-                r += `
+                result += `
 _numops_${op}:
     @scope _numops_${op}
     lsls r2, r0, #31
@@ -239,13 +239,13 @@ _numops_${op}:
             }
 
             const finishOp = (op: string) => {
-                r += `    blx lr\n`
-                r += boxedOp(`bl numops::${op}`)
+                result += `    blx lr\n`
+                result += boxedOp(`bl numops::${op}`)
             }
 
             for (let op of ["adds", "subs"]) {
                 checkInts(op)
-                r += `
+                result += `
     subs r2, r1, #1
     ${op} r2, r0, r2
     bvs .boxed
@@ -256,35 +256,35 @@ _numops_${op}:
 
             for (let op of ["ands", "orrs", "eors"]) {
                 checkInts(op)
-                r += `    ${op} r0, r1\n`
+                result += `    ${op} r0, r1\n`
                 if (op == "eors")
-                    r += `    adds r0, r0, #1\n`
+                    result += `    adds r0, r0, #1\n`
                 finishOp(op)
             }
 
             for (let op of ["lsls", "lsrs", "asrs"]) {
                 checkInts(op)
-                r += `
+                result += `
     ; r3 := (r1 >> 1) & 0x1f
     lsls r3, r1, #26
     lsrs r3, r3, #27
 `
                 if (op == "asrs")
-                    r += `
+                    result += `
     asrs r0, r3
     movs r2, #1
     orrs r0, r2
 `
                 else {
                     if (op == "lsrs")
-                        r += `
+                        result += `
     asrs r2, r0, #1
     lsrs r2, r3
     lsrs r3, r2, #30
     bne .boxed
 `
                     else
-                        r += `
+                        result += `
     asrs r2, r0, #1
     lsls r2, r3
     lsrs r3, r2, #30
@@ -293,7 +293,7 @@ _numops_${op}:
     bne .boxed
 .ok:
 `
-                    r += `
+                    result += `
     lsls r0, r2, #1
     adds r0, r0, #1
 `
@@ -304,7 +304,7 @@ _numops_${op}:
 
 
 
-            r += `
+            result += `
 @scope _numops_toInt
 _numops_toInt:
     asrs r0, r0, #1
@@ -329,7 +329,7 @@ _numops_fromInt:
             for (let op of Object.keys(thumbCmpMap)) {
                 op = op.replace(/.*::/, "")
                 // this make sure to set the Z flag correctly
-                r += `
+                result += `
 .section code
 _cmp_${op}:
     lsls r2, r0, #31
@@ -348,37 +348,37 @@ _cmp_${op}:
                 // the cmp isn't really needed, given how toBoolDecr() is compiled,
                 // but better not rely on it
                 // Also, cmp isn't needed when ref-counting (it ends with movs r0, r4)
-                r += boxedOp(`
+                result += boxedOp(`
                         bl numops::${op}
                         bl numops::toBoolDecr
                         cmp r0, #0`)
             }
 
-            return r
+            return result
         }
 
-        emit_int(v: number, reg: string) {
+        emit_int(int: number, reg: string) {
             let movWritten = false
 
             function writeMov(v: number) {
                 assert(0 <= v && v <= 255)
-                let result = ""
+                let r = ""
                 if (movWritten) {
                     if (v)
-                        result = `adds ${reg}, #${v}\n`
+                        r = `adds ${reg}, #${v}\n`
                 } else
-                    result = `movs ${reg}, #${v}\n`
+                    r = `movs ${reg}, #${v}\n`
                 movWritten = true
-                return result
+                return r
             }
 
             function shift(v = 8) {
                 return `lsls ${reg}, ${reg}, #${v}\n`
             }
 
-            assert(v != null);
+            assert(int != null);
 
-            let n = Math.floor(v)
+            let n = Math.floor(int)
             let isNeg = false
             if (n < 0) {
                 isNeg = true
@@ -427,7 +427,7 @@ _cmp_${op}:
 
             if (result.split("\n").length > 3 + 1) {
                 // more than 3 instructions? replace with LDR at PC-relative address
-                return `ldlit ${reg}, ${Math.floor(v)}\n`
+                return `ldlit ${reg}, ${Math.floor(int)}\n`
             }
 
             return result

@@ -127,7 +127,7 @@ namespace pxt.elf {
         U.memcpy(resBuf, 0, info.template)
         U.memcpy(resBuf, info.imageFileStart, program)
 
-        let ph: ProgramHeader = {
+        let programHeader: ProgramHeader = {
             _filepos: info.phOffset,
             type: PHT.LOAD,
             offset: info.imageFileStart,
@@ -138,7 +138,7 @@ namespace pxt.elf {
             flags: PHF.R | PHF.X,
             align: pageSize
         }
-        savePH(resBuf, ph)
+        savePH(resBuf, programHeader)
 
         return resBuf
 
