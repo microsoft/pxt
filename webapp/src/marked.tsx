@@ -1,3 +1,4 @@
+/// <reference path='../../localtypings/dompurify.d.ts' />
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -113,7 +114,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
         // Set markdown options
         marked.setOptions({
-            sanitize: true
+            sanitize: true,
+            sanitizer: pxt.docs.requireDOMSanitizer()
         })
 
         // Render the markdown and add it to the content div
