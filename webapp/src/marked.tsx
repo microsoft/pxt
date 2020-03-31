@@ -171,7 +171,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 const code = langBlock.textContent;
                 const { fileA: oldXml, fileB: newXml } = pxt.diff.split(code);
 
-                promises.push(this.cachedRenderLangSnippetAsync(langBlock, code =>
+                promises.push(this.cachedRenderLangSnippetAsync(langBlock, _ =>
                     pxt.BrowserUtils.loadBlocklyAsync()
                         .then(() => {
                             const diff = pxt.blocks.diffXml(oldXml, newXml, blocksDiffOptions);
@@ -188,7 +188,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 const { fileA: oldSrc, fileB: newSrc } = pxt.diff.split(code);
 
 
-                promises.push(this.cachedRenderLangSnippetAsync(langBlock, code =>
+                promises.push(this.cachedRenderLangSnippetAsync(langBlock, _ =>
                     pxt.BrowserUtils.loadBlocklyAsync()
                         .then(() => compiler.getBlocksAsync())
                         .then(blocksInfo => Promise.mapSeries([oldSrc, newSrc], src =>

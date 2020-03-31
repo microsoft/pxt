@@ -179,9 +179,9 @@ function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptio
         .timeout(20000)
         .catch((e) => {
             return hidbridge.disconnectWrapperAsync()
-                .catch((e) => {
+                .catch(err => {
                     // Best effort disconnect; at this point we don't even know the state of the device
-                    pxt.reportException(e);
+                    pxt.reportException(err);
                 })
                 .then(() => {
                     return core.confirmAsync({

@@ -75,8 +75,8 @@ function setAsync(h: Header, prevVersion: pxt.workspace.Version, text?: ScriptTe
     let savedText = U.flatClone(text || {})
 
     return apiAsync("pkg/" + h.path, pkg)
-        .then((pkg: pxt.FsPkg) => {
-            //mergeFsPkg(pkg)
+        .then((p: pxt.FsPkg) => {
+            //mergeFsPkg(p)
             return savedText
         })
 }

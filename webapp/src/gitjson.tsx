@@ -454,8 +454,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             message: this.state.description,
             blocksScreenshotAsync: () => this.props.parent.blocksScreenshotAsync(1),
             blocksDiffScreenshotAsync: () => {
-                const f = pkg.mainEditorPkg().sortedFiles().find(f => f.name == "main.blocks");
-                const diff = pxt.blocks.diffXml(f.baseGitContent, f.content);
+                const blocksFile = pkg.mainEditorPkg().sortedFiles().find(f => f.name == "main.blocks");
+                const diff = pxt.blocks.diffXml(blocksFile.baseGitContent, blocksFile.content);
                 if (diff && diff.ws)
                     return pxt.blocks.layout.toPngAsync(diff.ws, 1);
                 return Promise.resolve(undefined);
@@ -535,10 +535,10 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             /*
                         `
             ![${lf("A rendered view of the blocks")}](https://github.com/${gh.fullName}/raw/${gh.tag}/.github/makecode/blocks.png)
-            
+
             ${lf("This image shows the blocks code from the last commit in this pull request.")}
             ${lf("This image may take a few minutes to refresh.")}
-            
+
             `
             */
             const id = await pxt.github.createPRFromBranchAsync(gh.fullName, "master", gh.tag, title, msg);
@@ -794,7 +794,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
             // the xml payload needs to be decompiled
             diffJSX = <div className="ui basic segment">{lf("Your blocks were updated. Go back to the editor to view the changes.")}</div>
         } else {
-            // if the xml is completed reconstructed, 
+            // if the xml is completed reconstructed,
             // bail off to decompiled diffs
             let markdown: string;
             if (f.tsEditorFile &&
@@ -1432,8 +1432,8 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
                                         onClick={e => {
                                             e.stopPropagation();
                                             pxt.tickEvent("github.history.selectcommit", undefined, { interactiveConsent: true })
-                                            const { selectedCommit } = this.state;
-                                            this.setState({ selectedCommit: commit == selectedCommit ? undefined : commit })
+                                            const { selectedCommit: previouslySelectedCommit } = this.state;
+                                            this.setState({ selectedCommit: commit == previouslySelectedCommit ? undefined : commit })
                                         }}
                                         commit={commit}
                                         parent={parent}

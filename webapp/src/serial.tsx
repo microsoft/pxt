@@ -158,16 +158,16 @@ export class Editor extends srceditor.Editor {
         if (sim != this.isSim) return;
 
         // clean up input
-        const data = smsg.data || ""
+        const msgData = smsg.data || ""
         const source = smsg.id || "?"
         const receivedTime = smsg.receivedTime || Util.now()
 
-        this.appendRawData(data);
+        this.appendRawData(msgData);
         const niceSource = this.mapSource(source);
 
 
         // chunk into lines
-        const lines = this.chunkDataIntoLines(data)
+        const lines = this.chunkDataIntoLines(msgData)
 
         // process each line
         for (const line of lines) {
@@ -216,8 +216,8 @@ export class Editor extends srceditor.Editor {
         this.appendConsoleEntry(line)
     }
 
-    appendRawData(data: string) {
-        this.rawDataBuffer += data;
+    appendRawData(rawData: string) {
+        this.rawDataBuffer += rawData;
         if (this.rawDataBuffer.length > this.maxBufferLength) {
             this.rawDataBuffer.slice(this.rawDataBuffer.length / 4);
         }
@@ -250,10 +250,10 @@ export class Editor extends srceditor.Editor {
             })
     }
 
-    chunkDataIntoLines(data: string): string[] {
+    chunkDataIntoLines(inp: string): string[] {
         let lines: string[] = []
-        for (let i = 0; i < data.length; ++i) {
-            const ch = data[i]
+        for (let i = 0; i < inp.length; ++i) {
+            const ch = inp[i]
             this.serialInputDataBuffer += ch
             if (ch !== "\n" && this.serialInputDataBuffer.length < this.maxSerialInputDataLength) {
                 continue
@@ -397,7 +397,7 @@ export class Editor extends srceditor.Editor {
             const lines: { name: string; line: number[][]; }[] = [];
             Object.keys(chart.datas).forEach(k => lines.push({ name: k, line: chart.datas[k] }));
             const datas = lines.map(line => line.line);
-            const nl = datas.length > 0 ? datas.map(data => data.length).reduce((l, c) => Math.max(l, c)) : 0;
+            const nl = datas.length > 0 ? datas.map(d => d.length).reduce((l, c) => Math.max(l, c)) : 0;
             // if all lines have same timestamp, condense output
             let isCSV = this.isCSV(nl, datas);
             if (isCSV) {
@@ -405,14 +405,14 @@ export class Editor extends srceditor.Editor {
                 csv[0] = csv[0] ? csv[0] + sep + h : h;
                 for (let i = 0; i < nl; ++i) {
                     const t = (datas[0][i][0] - datas[0][0][0]) / 1000;
-                    const da = t + sep + datas.map(data => data[i][1]).join(sep) + sep;
+                    const da = t + sep + datas.map(d => d[i][1]).join(sep) + sep;
                     csv[i + 1] = csv[i + 1] ? csv[i + 1] + sep + da : da;
                 }
             } else {
                 let h = lines.map(line => `time (${chart.source})${sep}${line.name}`).join(sep);
                 csv[0] = csv[0] ? csv[0] + sep + h : h;
                 for (let i = 0; i < nl; ++i) {
-                    const da = datas.map(data => i < data.length ? `${(data[i][0] - data[0][0]) / 1000}${sep}${data[i][1]}` : sep).join(sep);
+                    const da = datas.map(d => i < d.length ? `${(d[i][0] - d[0][0]) / 1000}${sep}${d[i][1]}` : sep).join(sep);
                     csv[i + 1] = csv[i + 1] ? csv[i + 1] + sep + da : da;
                 }
             }
@@ -545,7 +545,7 @@ class Chart {
                 strokeStyle: serialTheme && serialTheme.gridStrokeStyle || '#fff'
             },
             tooltip: true,
-            tooltipFormatter: (ts, data) => this.tooltip(ts, data)
+            tooltipFormatter: (ts, d) => this.tooltip(ts, d)
         }
         this.lineColors = lineColors;
         this.chartIdx = chartIdx;
@@ -558,8 +558,8 @@ class Chart {
         this.rootElement.appendChild(this.makeCanvas())
     }
 
-    tooltip(timestamp: number, data: { series: TimeSeries, index: number, value: number }[]): string {
-        return data.map(n => {
+    tooltip(timestamp: number, toShow: { series: TimeSeries, index: number, value: number }[]): string {
+        return toShow.map(n => {
             const name = (n.series as any).timeSeries.__name;
             return `<span>${name ? name + ': ' : ''}${n.value}</span>`;
         }).join('<br/>');
@@ -618,11 +618,11 @@ class Chart {
             this.label.innerText = this.variable || '';
         }
         // store data
-        const data = this.datas[name];
-        data.push([timestamp, value]);
+        const nameData = this.datas[name];
+        nameData.push([timestamp, value]);
         // remove a third of the card
-        if (data.length > maxEntriesPerChart)
-            data.splice(0, data.length / 4);
+        if (nameData.length > maxEntriesPerChart)
+            nameData.splice(0, nameData.length / 4);
     }
 
     start() {
@@ -636,12 +636,12 @@ class Chart {
 
 export class ResourceImporter implements pxt.editor.IResourceImporter {
     public id: "console";
-    public canImport(data: File): boolean {
-        return data.type == "text/plain";
+    public canImport(file: File): boolean {
+        return file.type == "text/plain";
     }
 
-    public importAsync(project: pxt.editor.IProjectView, data: File): Promise<void> {
-        return ts.pxtc.Util.fileReadAsTextAsync(data)
+    public importAsync(project: pxt.editor.IProjectView, file: File): Promise<void> {
+        return ts.pxtc.Util.fileReadAsTextAsync(file)
             .then(txt => {
                 if (!txt) {
                     core.errorNotification(lf("Ooops, could not read file"));
@@ -656,7 +656,7 @@ export class ResourceImporter implements pxt.editor.IResourceImporter {
                     return {
                         type: "serial",
                         data: line + "\n",
-                        id: data.name,
+                        id: file.name,
                         receivedTime: t ? parseFloat(t[1]) : undefined
                     } as pxsim.SimulatorSerialMessage;
                 })

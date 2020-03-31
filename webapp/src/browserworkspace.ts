@@ -51,8 +51,8 @@ function migratePrefixesAsync(): Promise<void> {
             };
 
             return previousHeaders.getAllAsync()
-                .then((previousHeaders: pxt.workspace.Header[]) => {
-                    return Promise.map(previousHeaders, (h) => copyProject(h));
+                .then((prevHeaders: pxt.workspace.Header[]) => {
+                    return Promise.map(prevHeaders, (h) => copyProject(h));
                 })
                 .then(() => { });
         });
@@ -76,17 +76,17 @@ function setAsync(h: Header, prevVer: any, text?: ScriptText) {
     return setCoreAsync(headers, texts, h, prevVer, text);
 }
 
-function setCoreAsync(headers: db.Table, texts: db.Table, h: Header, prevVer: any, text?: ScriptText) {
+function setCoreAsync(tableHeaders: db.Table, tableTexts: db.Table, h: Header, prevVer: any, scriptText?: ScriptText) {
     let retrev = ""
-    return (!text ? Promise.resolve() :
-        texts.setAsync({
+    return (!scriptText ? Promise.resolve() :
+        tableTexts.setAsync({
             id: h.id,
-            files: text,
+            files: scriptText,
             _rev: prevVer
         }).then(rev => {
             retrev = rev
         }))
-        .then(() => headers.setAsync(h))
+        .then(() => tableHeaders.setAsync(h))
         .then(rev => {
             h._rev = rev
             return retrev

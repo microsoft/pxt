@@ -178,7 +178,7 @@ function bindPointerEvents(el: HTMLElement, target: GestureTarget) {
     el.addEventListener("pointerdown", ev => {
         if (state) state.end();
 
-        state = new GestureState(target, clientCoord(ev), isRightClick(ev));
+        state = new GestureState(target, clientCoord(ev), evIsRightClick(ev));
         ev.preventDefault();
     });
 
@@ -209,7 +209,7 @@ function bindMouseEvents(el: HTMLElement, target: GestureTarget) {
     el.addEventListener("mousedown", ev => {
         if (state) state.end();
 
-        state = new GestureState(target, clientCoord(ev), isRightClick(ev));
+        state = new GestureState(target, clientCoord(ev), evIsRightClick(ev));
     });
 
     el.addEventListener("mousemove", ev => {
@@ -242,7 +242,7 @@ function bindTouchEvents(el: HTMLElement, target: GestureTarget) {
         if (state) state.end();
 
         touchIdentifier = ev.changedTouches[0].identifier;
-        state = new GestureState(target, ev.changedTouches[0], isRightClick(ev));
+        state = new GestureState(target, ev.changedTouches[0], evIsRightClick(ev));
     });
 
     el.addEventListener("touchmove", ev => {
@@ -279,7 +279,7 @@ function getTouch(ev: TouchEvent, identifier: number) {
     return undefined;
 }
 
-function isRightClick(ev: MouseEvent | PointerEvent | TouchEvent) {
+function evIsRightClick(ev: MouseEvent | PointerEvent | TouchEvent) {
     if ((ev as MouseEvent | PointerEvent).button > 0) return true;
     return false;
 }

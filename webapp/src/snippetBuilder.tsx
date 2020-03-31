@@ -70,7 +70,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     }
 
     /**
-     * Creates a hashmap with answerToken keys and the default value pair as 
+     * Creates a hashmap with answerToken keys and the default value pair as
      * provided by our config file.
      */
     buildDefaults() {
@@ -170,7 +170,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     }
 
     /**
-     * Takes in ts output and highlights the currently edited block 
+     * Takes in ts output and highlights the currently edited block
      */
     highlightEditedBlocks(tsOutput: string[]) {
         const highlightString = '// @highlight';
@@ -206,7 +206,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     }
 
     /**
-     * 
+     *
      * This attaches three backticks to the front followed by an output type (blocks, lang)
      * The current output is then tokenized and three backticks are appended to the end of the string.
      */
@@ -214,12 +214,12 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         const { config, tsOutput } = this.state;
 
         // Attaches starting and ending line based on output type
-        let md = `\`\`\`${config.outputType}\n`;
-        md += this.replaceTokens(this.highlightEditedBlocks(tsOutput));
-        md += `\n\`\`\``;
+        let mdOutput = `\`\`\`${config.outputType}\n`;
+        mdOutput += this.replaceTokens(this.highlightEditedBlocks(tsOutput));
+        mdOutput += `\n\`\`\``;
         // Removes whitespace
         // TODO(jb) md.replace(/\s/g, '_'); - This would ensure that no breaking values are introduced to the typescript. Ideally we would ensure typescript is valid before attempting to compile it.
-        this.setState({ mdOutput: md });
+        this.setState({ mdOutput });
     }, 300, false);
 
     hide() {
@@ -257,7 +257,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
 
     /**
      * Takes the output from state, runs replace tokens, decompiles the resulting typescript
-     * and outputs the result as a Blockly xmlDOM. This then uses appendDomToWorkspace to attach 
+     * and outputs the result as a Blockly xmlDOM. This then uses appendDomToWorkspace to attach
      * our xmlDOM to the mainWorkspaces passed to the component.
      */
     injectBlocksToWorkspace() {
@@ -305,8 +305,8 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                 function merge(pair: { newB: Element, exB: Blockly.Block }) {
                     let { newB, exB } = pair;
                     const firstChild = pxt.blocks.findRootBlock(newB)
-                    const toAttach = Blockly.Xml.domToBlock(firstChild, mainWorkspace);
-                    exB.getInput("HANDLER").connection.connect(toAttach.previousConnection);
+                    const toConnect = Blockly.Xml.domToBlock(firstChild, mainWorkspace);
+                    exB.getInput("HANDLER").connection.connect(toConnect.previousConnection);
                 }
                 toMerge.forEach(merge)
 

@@ -738,9 +738,9 @@ export function allBuiltinBlocks() {
         blockXml: `<block type="pxt-on-start"></block>`
     };
     // Add pause until built in block
-    const pauseUntil = getPauseUntil();
-    if (pauseUntil) {
-        builtinBlockCache[pxtc.PAUSE_UNTIL_TYPE] = pauseUntil;
+    const pauseUntilBlock = getPauseUntil();
+    if (pauseUntilBlock) {
+        builtinBlockCache[pxtc.PAUSE_UNTIL_TYPE] = pauseUntilBlock;
     }
     return builtinBlockCache;
 }

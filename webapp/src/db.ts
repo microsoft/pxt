@@ -98,8 +98,8 @@ export class Table {
                 // clean up translation and try again
                 return pxt.BrowserUtils.clearTranslationDbAsync()
                     .then(() => this.setAsyncNoRetry(obj))
-                    .catch(e => {
-                        pxt.reportException(e);
+                    .catch(err => {
+                        pxt.reportException(err);
                         pxt.log(`table: we are out of space...`)
                         return undefined;
                     })
@@ -136,7 +136,7 @@ class GithubDb implements pxt.github.IGithubDb {
                         return this.table.forceSetAsync({
                             id,
                             config
-                        }).then(() => config, e => config);
+                        }).then(() => config, _ => config);
                     })
             } // not found
         );
@@ -159,7 +159,7 @@ class GithubDb implements pxt.github.IGithubDb {
                         return this.table.forceSetAsync({
                             id,
                             package: p
-                        }).then(() => p, e => p);
+                        }).then(() => p, _ => p);
                     })
             } // not found
         );

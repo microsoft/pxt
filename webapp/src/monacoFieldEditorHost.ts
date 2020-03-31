@@ -388,7 +388,7 @@ export function computeRanges(model: monaco.editor.ITextModel, offSide: boolean,
     let line = model.getLineCount() + 1;
     previousRegions.push({ indent: -1, endAbove: line, line }); // sentinel, to make sure there's at least one entry
 
-    for (let line = model.getLineCount(); line > 0; line--) {
+    for (line = model.getLineCount(); line > 0; line--) {
         let lineContent = model.getLineContent(line);
         let indent = computeIndentLevel(lineContent, tabSize);
         let previous = previousRegions[previousRegions.length - 1];

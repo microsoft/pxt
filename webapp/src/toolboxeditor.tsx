@@ -124,7 +124,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
         const namespaces = filterNamespaces(this.getNamespaces()
             .map(ns => [ns, that.getNamespaceAttrs(ns)] as [string, pxtc.CommentAttrs]));
 
-        function createSubCategories(parent: [string, pxtc.CommentAttrs], names: string[], isAdvanced?: boolean): toolbox.ToolboxCategory[] {
+        function createSubCategories(parent: [string, pxtc.CommentAttrs], names: string[], categoryIsAdvanced?: boolean): toolbox.ToolboxCategory[] {
             return names.map(subns => {
                 const ns = parent[0];
                 const md = parent[1];
@@ -145,12 +145,12 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                     groupHelp: md.groupHelp,
                     labelLineWidth: md.labelLineWidth,
                     blocks: blocks,
-                    advanced: isAdvanced
+                    advanced: categoryIsAdvanced
                 }
             }).filter(subns => !!subns);
         }
 
-        function createCategories(names: [string, pxtc.CommentAttrs][], isAdvanced?: boolean): toolbox.ToolboxCategory[] {
+        function createCategories(names: [string, pxtc.CommentAttrs][], categoryIsAdvanced?: boolean): toolbox.ToolboxCategory[] {
             return names
                 .sort(([, md1], [, md2]) => {
                     // sort by fn weight
@@ -169,7 +169,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                     let subcategories: toolbox.ToolboxCategory[];
 
                     if ((md.subcategories && md.subcategories.length) || that.subcategoryMap[ns]) {
-                        subcategories = createSubCategories([ns, md], md.subcategories || Object.keys(that.subcategoryMap[ns]), isAdvanced);
+                        subcategories = createSubCategories([ns, md], md.subcategories || Object.keys(that.subcategoryMap[ns]), categoryIsAdvanced);
                     }
 
                     const hasBlocks = blocks.length || hasExtensionButtons || hasCustomClick || (subcategories && subcategories.length);
@@ -193,7 +193,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                         labelLineWidth: md.labelLineWidth,
                         blocks: blocks,
                         subcategories: subcategories,
-                        advanced: isAdvanced
+                        advanced: categoryIsAdvanced
                     };
 
                     // Apply specific builtin customizations

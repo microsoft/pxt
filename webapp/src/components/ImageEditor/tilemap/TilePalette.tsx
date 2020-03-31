@@ -1,3 +1,4 @@
+/* tslint:disable:no-shadowed-variable */
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { ImageEditorStore, TilemapState, TileCategory, TileDrawingMode, GalleryTile } from '../store/imageReducer';
