@@ -161,22 +161,27 @@ namespace pxt.crowdin {
 
         function handleResponseAsync(resp: Util.HttpResponse) {
             const code = resp.statusCode;
-            const data: any = Util.jsonTryParse(resp.text) || {};
+            const errorData: {
+                success?: boolean;
+                error?: {
+                    code: number;
+                }
+            } = Util.jsonTryParse(resp.text) || {};
 
             pxt.debug(`upload result: ${code}`);
-            if (code == 404 && data.error && data.error.code == 8) {
+            if (code == 404 && errorData.error && errorData.error.code == 8) {
                 pxt.log(`create new translation file: ${filename}`)
                 return uploadAsync("add-file", {})
             }
-            else if (code == 404 && data.error && data.error.code == 17) {
+            else if (code == 404 && errorData.error && errorData.error.code == 17) {
                 return createDirectoryAsync(branch, prj, key, filename.replace(/\/[^\/]+$/, ""), incr)
                     .then(() => startAsync())
-            } else if (!data.success && data.error && data.error.code == 53) {
+            } else if (!errorData.success && errorData.error && errorData.error.code == 53) {
                 // file is being updated
                 pxt.log(`${filename} being updated, waiting 5s and retry...`)
                 return Promise.delay(5000) // wait 5s and try again
                     .then(() => uploadTranslationAsync(branch, prj, key, filename, data));
-            } else if (code == 200 || data.success) {
+            } else if (code == 200 || errorData.success) {
                 // something crowdin reports 500 with success=true
                 return Promise.resolve()
             } else {

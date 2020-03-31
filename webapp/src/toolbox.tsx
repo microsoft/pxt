@@ -612,7 +612,7 @@ export interface TreeRowProps {
 export class TreeRow extends data.Component<TreeRowProps, {}> {
 
     private treeRow: HTMLElement;
-    private animationDelay: number = 0.25;
+    private animationDelay: number = 0.15;
 
     constructor(props: TreeRowProps) {
         super(props);

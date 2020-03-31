@@ -62,7 +62,7 @@ namespace pxt.blocks.layout {
             return svg;
 
         const div = document.createElement("div") as HTMLDivElement;
-        div.className = "blocks-svg-list"
+        div.className = `blocks-svg-list ${ws.getInjectionDiv().className}`
 
         function extract(
             parentClass: string,
