@@ -5346,7 +5346,7 @@ export interface SnippetInfo {
 
 export function getSnippets(source: string): SnippetInfo[] {
     let snippets: SnippetInfo[] = []
-    let re = /^`{3}\s*([\S]+)?\s*\n([\s\S]+?)\n`{3}\s*?$/gm;
+    let re = /^`{3} *([\S]+)?\s*\n([\s\S]+?)\n`{3}\s*?$/gm;
     let index = 0
     source.replace(re, (match, type, code) => {
         snippets.push({
