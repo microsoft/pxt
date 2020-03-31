@@ -197,15 +197,15 @@ namespace pxt.blocks {
 
             field.setAttribute("name", fieldName);
 
-            let value: Text;
+            let fieldValue: Text;
             if (p.type == "boolean") {
-                value = document.createTextNode((defaultValue || typeInfo.defaultValue).toUpperCase())
+                fieldValue = document.createTextNode((defaultValue || typeInfo.defaultValue).toUpperCase())
             }
             else {
-                value = document.createTextNode(defaultValue || typeInfo.defaultValue)
+                fieldValue = document.createTextNode(defaultValue || typeInfo.defaultValue)
             }
 
-            field.appendChild(value);
+            field.appendChild(fieldValue);
         }
         else if (defaultValue) {
             const field = document.createElement("field");
@@ -1046,9 +1046,10 @@ namespace pxt.blocks {
         let old = block.init;
         if (!old) return;
 
+        // TODO: block below seems like intention to handle scoping w/ function declaration vs anonymous
+        // was this needed, is there a bug here? Seems fine at a glance
         block.init = function () {
             old.call(this);
-            let block = this;
             setHelpResources(this, id, name, tooltip, url, colour, colourSecondary, colourTertiary);
         }
     }
@@ -2049,8 +2050,8 @@ namespace pxt.blocks {
             button.setAttribute('text', lf("Make a Variable..."));
             button.setAttribute('callbackKey', 'CREATE_VARIABLE');
 
-            workspace.registerButtonCallback('CREATE_VARIABLE', function (button) {
-                Blockly.Variables.createVariable(button.getTargetWorkspace());
+            workspace.registerButtonCallback('CREATE_VARIABLE', function (btn) {
+                Blockly.Variables.createVariable(btn.getTargetWorkspace());
             });
 
             xmlList.push(button);
@@ -2474,7 +2475,7 @@ namespace pxt.blocks {
                 workspace.centerOnBlock(newBlock.id);
             }
 
-            workspace.registerButtonCallback('CREATE_FUNCTION', function (button) {
+            workspace.registerButtonCallback('CREATE_FUNCTION', function () {
                 let promptAndCheckWithAlert = (defaultName: string) => {
                     Blockly.prompt(newFunctionTitle, defaultName, function (newFunc) {
                         pxt.tickEvent('blocks.makeafunction');

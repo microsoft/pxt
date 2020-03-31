@@ -335,7 +335,7 @@ namespace pxt.blocks.layout {
                             // ignore load error
                             pxt.debug(`svg render: failed to load ${href}`)
                         }))
-                    .then(href => { image.setAttributeNS(XLINK_NAMESPACE, "href", href); })
+                    .then(evaluatedHref => { image.setAttributeNS(XLINK_NAMESPACE, "href", evaluatedHref); })
             });
         return Promise.all(p).then(() => { })
     }

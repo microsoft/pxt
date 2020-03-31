@@ -1,15 +1,11 @@
 namespace pxt.docs.codeCard {
 
-    const repeat = pxt.Util.repeatMap;
-
     export interface CodeCardRenderOptions {
         hideHeader?: boolean;
         shortName?: boolean;
     }
 
     export function render(card: pxt.CodeCard, options: CodeCardRenderOptions = {}): HTMLElement {
-        const repeat = pxt.Util.repeatMap;
-        let color = card.color || "";
         const url = card.url ? /^[^:]+:\/\//.test(card.url) ? card.url : ('/' + card.url.replace(/^\.?\/?/, ''))
             : card.youTubeId ? `https://youtu.be/${card.youTubeId}` : undefined;
         const link = !!url;
