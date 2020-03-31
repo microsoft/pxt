@@ -288,15 +288,15 @@ function cleanCrowdinAsync(prj: string, key: string, dir: string): Promise<void>
         })
 }
 
-function statsCrowdinAsync(prj: string, key: string, preferredLang?: string): Promise<void> {
-    pxt.log(`collecting crowdin stats for ${prj} ${preferredLang ? `for language ${preferredLang}` : `all languages`}`);
+function statsCrowdinAsync(project: string, crowdinKey: string, preferredLang?: string): Promise<void> {
+    pxt.log(`collecting crowdin stats for ${project} ${preferredLang ? `for language ${preferredLang}` : `all languages`}`);
     console.log(`context\t language\t translated%\t approved%\t phrases\t translated\t approved`)
 
     const fn = `crowdinstats.csv`;
     let headers = 'sep=\t\r\n';
     headers += `id\t file\t language\t phrases\t translated\t approved\r\n`;
     nodeutil.writeFileSync(fn, headers, { encoding: "utf8" });
-    return pxt.crowdin.projectInfoAsync(prj, key)
+    return pxt.crowdin.projectInfoAsync(project, crowdinKey)
         .then(info => {
             if (!info) throw new Error("info failed")
             let languages = info.languages;
@@ -304,7 +304,7 @@ function statsCrowdinAsync(prj: string, key: string, preferredLang?: string): Pr
             languages = languages.filter(l => l.code != ts.pxtc.Util.TRANSLATION_LOCALE);
             if (preferredLang)
                 languages = languages.filter(lang => lang.code.toLowerCase() == preferredLang.toLowerCase());
-            return Promise.all(languages.map(lang => langStatsCrowdinAsync(prj, key, lang.code)))
+            return Promise.all(languages.map(lang => langStatsCrowdinAsync(project, crowdinKey, lang.code)))
         }).then(() => {
             console.log(`stats written to ${fn}`)
         })

@@ -228,22 +228,22 @@ export class CommandParser {
         for (const flag in c.flags) {
             const def = c.flags[flag];
             if (def.deprecated) continue;
-            let usage = dash(flag);
+            let fixedFlag = dash(flag);
             if (def.aliases && def.aliases.length) {
-                usage += " " + def.aliases.map(dash).join(" ");
+                fixedFlag += " " + def.aliases.map(dash).join(" ");
             }
 
             if (def.argument) {
                 if (def.possibleValues && def.possibleValues.length) {
-                    usage += ` <${def.possibleValues.join("|")}>`;
+                    fixedFlag += ` <${def.possibleValues.join("|")}>`;
                 }
                 else {
-                    usage += def.type && def.type === "number" ? " <number>" : " <value>"
+                    fixedFlag += def.type && def.type === "number" ? " <number>" : " <value>"
                 }
             }
 
-            maxWidth = Math.max(maxWidth, usage.length);
-            flagNames.push(usage);
+            maxWidth = Math.max(maxWidth, fixedFlag.length);
+            flagNames.push(fixedFlag);
             flagDescriptions.push(def.description);
         }
 

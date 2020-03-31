@@ -84,11 +84,11 @@ class SerialIO implements pxt.TCPIO {
                 this.fd = fd
                 const id = ++this.id
                 const buf = Buffer.alloc(128)
-                const loop = () => fs.read(fd, buf, 0, buf.length, null, (err, nb, buf) => {
+                const loop = () => fs.read(fd, buf, 0, buf.length, null, (err, nb, bufParam) => {
                     if (this.id != id)
                         return
                     if (nb > 0) {
-                        let bb = buf.slice(0, nb)
+                        let bb = bufParam.slice(0, nb)
                         if (this.trace)
                             pxt.log("R:" + bb.toString("utf8"))
                         if (this.onData)
@@ -261,10 +261,10 @@ function findAddr(symbolName: string, opt = false) {
             if (m) bss = m[1]
             m = /0x0000000([0-9a-f]+)(\s+([:\w]+)\s*(= .*)?)?/.exec(line)
             if (m) {
-                let addr = parseInt(m[1], 16)
-                if (m[3]) addrCache[m[3]] = addr
+                let builtAddr = parseInt(m[1], 16)
+                if (m[3]) addrCache[m[3]] = builtAddr
                 if (bss) {
-                    addrCache[bss] = addr
+                    addrCache[bss] = builtAddr
                     bss = ""
                 }
             }
@@ -507,10 +507,10 @@ export async function dumpheapAsync(filename?: string) {
             let classification = classifyCPP(block, blockSize)
             if (U.startsWith(classification, "Fiber/"))
                 fiberSize += blockSize * 4
-            let mark = `[${isFree ? "F" : "U"}:${blockSize * 4} / ${classification}]`
-            if (!cnts[mark])
-                cnts[mark] = 0
-            cnts[mark] += blockSize * 4
+            let gcMark = `[${isFree ? "F" : "U"}:${blockSize * 4} / ${classification}]`
+            if (!cnts[gcMark])
+                cnts[gcMark] = 0
+            cnts[gcMark] += blockSize * 4
 
             if (isFree)
                 totalFreeBlock += blockSize;
@@ -537,27 +537,28 @@ export async function dumpheapAsync(filename?: string) {
     let inIface = false
     let classInfo: ClassInfo
     for (let line of fs.readFileSync("built/binary.asm", "utf8").split(/\n/)) {
-        let m = /(\w+)__C\d+_VT:/.exec(line)
-        if (m) currClass = m[1]
-        m = /\w+__C\d+_IfaceVT:/.exec(line)
-        if (m) inIface = true
-        m = /(\d+)\s+;\s+class-id/.exec(line)
-        if (currClass && m) {
+        // TODO don't mutate res, name each one
+        let regexRes = /(\w+)__C\d+_VT:/.exec(line)
+        if (regexRes) currClass = regexRes[1]
+        regexRes = /\w+__C\d+_IfaceVT:/.exec(line)
+        if (regexRes) inIface = true
+        regexRes = /(\d+)\s+;\s+class-id/.exec(line)
+        if (currClass && regexRes) {
             classInfo = {
                 name: currClass,
                 fields: []
             }
-            classMap[m[1]] = classInfo
+            classMap[regexRes[1]] = classInfo
             currClass = ""
         }
 
         if (inIface) {
-            m = /\.short \d+, (\d+) ; (.*)/.exec(line)
-            if (m) {
-                if (m[2] == "the end") {
+            regexRes = /\.short \d+, (\d+) ; (.*)/.exec(line)
+            if (regexRes) {
+                if (regexRes[2] == "the end") {
                     inIface = false
-                } else if (m[1] != "0") {
-                    classInfo.fields.push(m[2])
+                } else if (regexRes[1] != "0") {
+                    classInfo.fields.push(regexRes[2])
                 }
             }
         }
