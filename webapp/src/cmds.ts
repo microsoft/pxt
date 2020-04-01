@@ -4,7 +4,7 @@ import * as electron from "./electron";
 import * as pkg from "./package";
 import * as hidbridge from "./hidbridge";
 import * as webusb from "./webusb";
-import * as compiler from "./compiler";
+import * as data from "./data";
 import Cloud = pxt.Cloud;
 
 let tryPairedDevice = false;
@@ -291,7 +291,10 @@ export function setWebUSBPaired(enabled: boolean) {
     if (tryPairedDevice === enabled) return;
     tryPairedDevice = enabled;
     init();
+    data.invalidate("usb:paired");
 }
+
+data.mountVirtualApi("usb:paired", { getSync: () => tryPairedDevice })
 
 function checkWebUSBThenDownloadAsync(resp: pxtc.CompileResult) {
     return pxt.usb.isPairedAsync().then(paired => {

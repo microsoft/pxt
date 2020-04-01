@@ -151,6 +151,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         this.props.parent.pair();
     }
 
+    protected onDisconnectClick = () => {
+        // TODO
+    }
+
     protected getCompileButton(view: View, collapsed?: boolean): JSX.Element[] {
         const targetTheme = pxt.appTarget.appTheme;
         const { compiling, isSaving } = this.props.parent.state;
@@ -159,8 +163,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const downloadText = targetTheme.useUploadMessage ? lf("Upload") : lf("Download");
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
         const showPairUSBDevice = pxt.usb.isEnabled;
+        const usbPaired = showPairUSBDevice && !!this.getData("usb:paired");
 
         let downloadButtonClasses = boards ? "left attached " : "";
+        let downloadButtonIcon = usbPaired ? "usb" : "ellipsis";
         let hwIconClasses = "";
         let displayRight = false;
         if (isSaving) {
@@ -196,9 +202,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
         if (boards || showPairUSBDevice) {
             el.push(
-                <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`ellipsis horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
+                <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
                     {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
-                    {showPairUSBDevice && <sui.Item role="meniuitem" icon="usb" text={lf("Pair device")} tabIndex={-1} onClick={this.onPairClick} />}
+                    {showPairUSBDevice && !usbPaired && <sui.Item role="meniuitem" icon="usb" text={lf("Pair device")} tabIndex={-1} onClick={this.onPairClick} />}
+                    {showPairUSBDevice && usbPaired && <sui.Item role="meniuitem" icon="usb" text={lf("Disconnect device")} tabIndex={-1} onClick={this.onDisconnectClick} />}
                     <sui.Item role="menuitem" icon="download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />
                 </sui.DropdownMenu>
             )
