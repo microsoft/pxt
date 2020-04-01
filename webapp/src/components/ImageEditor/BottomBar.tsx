@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { connect } from 'react-redux';
-import { ImageEditorStore } from './store/imageReducer';
+import { ImageEditorStore, AnimationState, TilemapState } from './store/imageReducer';
 import { dispatchChangeImageDimensions, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchToggleAspectRatioLocked, dispatchChangeZoom, dispatchToggleOnionSkinEnabled} from './actions/dispatch';
 import { IconButton } from "./Button";
 
@@ -11,6 +11,7 @@ export interface BottomBarProps {
     imageDimensions: [number, number];
     cursorLocation: [number, number];
 
+    resizeDisabled: boolean;
     hasUndo: boolean;
     hasRedo: boolean;
 
@@ -23,6 +24,8 @@ export interface BottomBarProps {
     dispatchToggleOnionSkinEnabled: () => void;
 
     singleFrame?: boolean;
+
+    onDoneClick?: () => void;
 }
 
 export interface BottomBarState {
@@ -48,8 +51,9 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
             onionSkinEnabled,
             dispatchToggleAspectRatioLocked,
             dispatchToggleOnionSkinEnabled,
-            dispatchChangeZoom,
-            singleFrame
+            resizeDisabled,
+            singleFrame,
+            onDoneClick
         } = this.props;
 
         const width = this.state.width == null ? imageDimensions[0] : this.state.width;
@@ -57,28 +61,32 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
 
         return (
             <div className="image-editor-bottombar">
-                <div className="image-editor-resize">
-                    <input className="image-editor-input"
-                        title={lf("Image Width")}
-                        value={width}
-                        onChange={this.handleWidthChange}
-                        onBlur={this.handleDimensionalBlur}
-                    />
+                { !resizeDisabled &&
+                    <div className="image-editor-resize">
+                        <input className="image-editor-input"
+                            title={lf("Image Width")}
+                            value={width}
+                            onChange={this.handleWidthChange}
+                            onBlur={this.handleDimensionalBlur}
+                            onKeyDown={this.handleDimensionalKeydown}
+                        />
 
-                    <IconButton
-                        onClick={dispatchToggleAspectRatioLocked}
-                        iconClass={aspectRatioLocked ? "ms-Icon ms-Icon--Lock" : "ms-Icon ms-Icon--Unlock"}
-                        title={aspectRatioLocked ? lf("Unlock Aspect Ratio") : lf("Lock Aspect Ratio")}
-                        toggle={!aspectRatioLocked}
-                    />
+                        <IconButton
+                            onClick={dispatchToggleAspectRatioLocked}
+                            iconClass={aspectRatioLocked ? "ms-Icon ms-Icon--Lock" : "ms-Icon ms-Icon--Unlock"}
+                            title={aspectRatioLocked ? lf("Unlock Aspect Ratio") : lf("Lock Aspect Ratio")}
+                            toggle={!aspectRatioLocked}
+                        />
 
-                    <input className="image-editor-input"
-                        title={lf("Image Height")}
-                        value={height}
-                        onChange={this.handleHeightChange}
-                        onBlur={this.handleDimensionalBlur}
-                    />
-                </div>
+                        <input className="image-editor-input"
+                            title={lf("Image Height")}
+                            value={height}
+                            onChange={this.handleHeightChange}
+                            onBlur={this.handleDimensionalBlur}
+                            onKeyDown={this.handleDimensionalKeydown}
+                        />
+                    </div>
+                }
                 { !singleFrame && <div className="image-editor-seperator"/> }
                 { !singleFrame && <div>
                     <IconButton
@@ -88,7 +96,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                         toggle={!onionSkinEnabled}
                     />
                 </div> }
-                { cursorLocation && <div className="image-editor-seperator"/> }
+                { cursorLocation && !resizeDisabled && <div className="image-editor-seperator"/> }
                 <div className="image-editor-coordinate-preview">
                     {cursorLocation && `${cursorLocation[0]}, ${cursorLocation[1]}`}
                 </div>
@@ -120,6 +128,12 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                         title={lf("Zoom In")}
                         toggle={true}
                     />
+                </div>
+                <div role="button"
+                    className={`image-editor-confirm`}
+                    title={lf("Done")}
+                    onClick={onDoneClick}>
+                        {lf("Done")}
                 </div>
             </div>
         );
@@ -165,8 +179,8 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
         const widthVal = parseInt(this.state.width);
         const heightVal = parseInt(this.state.height);
 
-        const width = isNaN(widthVal) ? imageDimensions[0] : Math.min(Math.max(widthVal, 1), 999);
-        const height = isNaN(heightVal) ? imageDimensions[1] : Math.min(Math.max(heightVal, 1), 999);
+        const width = isNaN(widthVal) ? imageDimensions[0] : Math.min(Math.max(widthVal, 1), 512);
+        const height = isNaN(heightVal) ? imageDimensions[1] : Math.min(Math.max(heightVal, 1), 512);
 
         if (width !== imageDimensions[0] || height !== imageDimensions[1]) {
             dispatchChangeImageDimensions([width, height]);
@@ -178,6 +192,13 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
         });
     }
 
+    protected handleDimensionalKeydown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        const charCode = (typeof event.which == "number") ? event.which : event.keyCode
+        if (charCode === 13) {
+            event.currentTarget.blur();
+        }
+    }
+
     protected zoomIn = () => {
         this.props.dispatchChangeZoom(1)
     }
@@ -187,16 +208,17 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
     }
 }
 
-function mapStateToProps({ present: state, past, future, editor }: ImageEditorStore, ownProps: any) {
+function mapStateToProps({store: { present: state, past, future }, editor}: ImageEditorStore, ownProps: any) {
     if (!state) return {};
 
-    const bitmap = state.frames[state.currentFrame].bitmap;
+    const bitmap = editor.isTilemap ? (state as TilemapState).tilemap.bitmap : (state as AnimationState).frames[(state as AnimationState).currentFrame].bitmap;
 
     return {
         imageDimensions: [ bitmap.width, bitmap.height ],
         aspectRatioLocked: state.aspectRatioLocked,
         onionSkinEnabled: editor.onionSkinEnabled,
         cursorLocation: editor.cursorLocation,
+        resizeDisabled: editor.resizeDisabled,
         hasUndo: !!past.length,
         hasRedo: !!future.length
     };

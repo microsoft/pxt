@@ -26,6 +26,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
         this.setFile = this.setFile.bind(this);
         this.removeFile = this.removeFile.bind(this);
+        this.addLocalizedFile = this.addLocalizedFile.bind(this);
         this.removePkg = this.removePkg.bind(this);
         this.updatePkg = this.updatePkg.bind(this);
         this.togglePkg = this.togglePkg.bind(this);
@@ -70,6 +71,10 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         this.props.parent.removeFile(f);
     }
 
+    private addLocalizedFile(f: pkg.File, localizedF: string) {
+        return this.props.parent.updateFileAsync(localizedF, f.content, true);
+    }
+
     private updatePkg(p: pkg.EditorPackage) {
         pkg.mainEditorPkg().updateDepAsync(p.getPkgId())
             .then(() => this.props.parent.reloadHeaderAsync())
@@ -84,21 +89,64 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     private filesOf(pkg: pkg.EditorPackage): JSX.Element[] {
         const { currentFile } = this.state;
-        const deleteFiles = pkg.getPkgId() == "this";
-        return pkg.sortedFiles().map(file => {
+        const header = this.props.parent.state.header;
+        const topPkg = pkg.isTopLevel();
+        const deleteFiles = topPkg && !pxt.shell.isReadOnly();
+        const langRestrictions = pkg.getLanguageRestrictions();
+        let files = pkg.sortedFiles();
+
+        if (topPkg) {
+            files = files.filter(f => {
+                switch (langRestrictions) {
+                    case pxt.editor.LanguageRestriction.JavaScriptOnly:
+                        return !/\.(blocks|py)$/.test(f.name);
+                    case pxt.editor.LanguageRestriction.PythonOnly:
+                        return !/\.(blocks|ts)$/.test(f.name);
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        return files.map(file => {
             const meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
             // we keep this disabled, until implemented for cloud syncing
             // makse no sense for local saves - the star just blinks for half second after every change
             const showStar = false // !meta.isSaved
+            const usesGitHub = !!header && !!header.githubId;
+            const isTutorialMd = topPkg
+                && usesGitHub
+                && /\.md$/.test(file.name)
+                && !/^_locales\//.test(file.name)
+            const fn = file.name.replace(/\.[a-z]+$/, '');
+            const previewUrl = isTutorialMd
+                && `#tutorial:${header.id}:${fn}`;
+            const ghid = usesGitHub && pxt.github.parseRepoId(header.githubId)
+            const shareUrl = isTutorialMd && ghid
+                && pxt.appTarget.appTheme.embedUrl
+                && `${window.location.origin}${window.location.pathname || ""}#tutorial:github:${ghid.fullName}/${fn}`
+            const lang = pxt.Util.userLanguage();
+            const localized = `_locales/${lang}/${file.name}`;
+            const addLocale = isTutorialMd
+                && pxt.Util.userLanguage() !== (pxt.appTarget.appTheme.defaultLocale || "en")
+                && !files.some(f => f.name == localized);
+            const hasDelete = deleteFiles
+                && file.name != pxt.CONFIG_NAME
+                && (usesGitHub || file.name != "main.ts");
+
             return (
-                <FileTreeItem key={file.getName()}
+                <FileTreeItem key={"file" + file.getName()}
                     file={file}
                     meta={meta}
                     onItemClick={this.setFile}
                     onItemRemove={this.removeFile}
                     onErrorClick={this.navigateToError}
+                    onItemLocalize={this.addLocalizedFile}
                     isActive={currentFile == file}
-                    hasDelete={deleteFiles && !/^(main\.ts|pxt\.json)$/.test(file.name)}
+                    hasDelete={hasDelete}
+                    previewUrl={previewUrl}
+                    shareUrl={shareUrl}
+                    addLocalizedFile={addLocale && localized}
                     className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                 >
                     {file.name}
@@ -174,34 +222,68 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             },
             body: lf("Please provide a name for your new file.")
         }).then(str => {
-            str = str || ""
-            str = str.trim()
-            str = str.replace(/\.[tj]s$/, "")
-            str = str.trim()
-            let ext = "ts"
-            let comment = "//"
-            if (pxt.U.endsWith(str, ".py")) {
-                str = str.slice(0, str.length - 3)
-                ext = "py"
-                comment = "#"
-            }
-            if (pxt.U.endsWith(str, ".md")) {
-                str = str.slice(0, str.length - 3)
-                ext = "md"
-                comment = ">"
-            }
             if (!str)
                 return Promise.resolve()
-            if (!validRx.test(str)) {
+            str = str.replace(/\s+/g, "");
+
+            const indLastPeriod = str.lastIndexOf(".");
+            let name = str;
+            let givenExt: string;
+            if (indLastPeriod != -1) {
+                name = str.slice(0, indLastPeriod);
+                givenExt = str.slice(indLastPeriod + 1).toLowerCase();
+            }
+
+            const pkgCfg = pkg.mainPkg && pkg.mainPkg.config
+            const languageRestriction = pkgCfg && pkgCfg.languageRestriction;
+
+            let ext = 'ts';
+            let comment = "//";
+
+            if (languageRestriction === pxt.editor.LanguageRestriction.PythonOnly) {
+                ext = "py";
+                comment = "#";
+            }
+
+            if (givenExt) {
+                switch (givenExt) {
+                    case "js": case "ts":
+                        break;
+                    case "py":
+                        if (languageRestriction !== pxt.editor.LanguageRestriction.JavaScriptOnly) {
+                            ext = "py";
+                            comment = "#";
+                        }
+                        break;
+                    case "md":
+                        ext = "md";
+                        comment = ">";
+                        break;
+                    default:
+                        // not a valid extension; leave it as it was and append def extension
+                        name = str;
+                }
+            }
+
+            if (!name)
+                return Promise.resolve()
+
+            if (!validRx.test(name)) {
                 core.warningNotification(lf("Invalid file name"))
                 return Promise.resolve()
             }
-            str += "." + ext
-            if (pkg.mainEditorPkg().sortedFiles().some(f => f.name == str)) {
+
+            const fileName = `${name}.${ext}`;
+            if (pkg.mainEditorPkg().sortedFiles().some(f => f.name == fileName)) {
                 core.warningNotification(lf("File already exists"))
                 return Promise.resolve()
             }
-            return this.props.parent.updateFileAsync(str, comment + " " + pxt.U.lf("Add your code here") + "\n", true)
+            return this.props.parent.updateFileAsync(
+                fileName,
+                `${comment} ${pxt.U.lf("Add your code here")}
+`,
+                true
+            );
         }).done()
     }
 
@@ -261,12 +343,12 @@ namespace custom {
         const showFiles = !!this.props.parent.state.showFiles;
         const targetTheme = pxt.appTarget.appTheme;
         const mainPkg = pkg.mainEditorPkg()
-        const plus = showFiles && !mainPkg.files[customFile]
+        const plus = showFiles && !pxt.shell.isReadOnly() && !mainPkg.files[customFile]
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + mainPkg.getPkgId());
         return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only hidefullscreen`}>
             <div role="treeitem" aria-selected={showFiles} aria-expanded={showFiles} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
                 {lf("Explorer")}
-                <sui.Icon icon={`chevron ${showFiles ? "down" : "right"} icon`} />
+                <sui.Icon icon={`chevron ${showFiles ? "up" : "down"} icon`} />
                 {plus ? <sui.Button className="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={this.handleCustomBlocksClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
                 {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
             </div>
@@ -275,14 +357,19 @@ namespace custom {
     }
 }
 
-interface FileTreeItemProps extends React.DetailedHTMLProps<React.AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement> {
+interface FileTreeItemProps {
     file: pkg.File;
     meta: pkg.FileMeta;
     onItemClick: (fn: pkg.File) => void;
     onItemRemove: (fn: pkg.File) => void;
+    onItemLocalize: (fn: pkg.File, localizedf: string) => void;
     onErrorClick?: (meta: pkg.FileMeta) => void;
     isActive: boolean;
     hasDelete?: boolean;
+    previewUrl?: string;
+    shareUrl?: string;
+    addLocalizedFile?: string;
+    className?: string;
 }
 
 class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
@@ -292,6 +379,9 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
         this.handleClick = this.handleClick.bind(this);
         this.handleRemove = this.handleRemove.bind(this);
         this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
+        this.handlePreview = this.handlePreview.bind(this);
+        this.handleShare = this.handleShare.bind(this);
+        this.handleAddLocale = this.handleAddLocale.bind(this);
     }
 
     handleClick(e: React.MouseEvent<HTMLElement>) {
@@ -307,7 +397,37 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
     }
 
     handleRemove(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("explorer.file.remove");
+        e.preventDefault();
+        e.stopPropagation();
         this.props.onItemRemove(this.props.file);
+    }
+
+    handlePreview(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("explorer.file.preview");
+        e.preventDefault();
+        e.stopPropagation();
+        window.open(this.props.previewUrl, "_blank");
+    }
+
+    handleShare(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("explorer.file.share");
+        e.preventDefault();
+        e.stopPropagation();
+        core.dialogAsync({
+            header: lf("Share this tutorial"),
+            body: lf("The URL will start the MakeCode editor in your tutorial."),
+            copyable: this.props.shareUrl,
+            hideCancel: true,
+            hasCloseIcon: true
+        })
+    }
+
+    handleAddLocale(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("explorer.file.addlocale");
+        const { addLocalizedFile, onItemLocalize } = this.props;
+        if (onItemLocalize && addLocalizedFile)
+            onItemLocalize(this.props.file, addLocalizedFile);
         e.stopPropagation();
     }
 
@@ -316,8 +436,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
     }
 
     renderCore() {
-        const { onClick, onItemClick, onItemRemove, onErrorClick, // keep these to avoid warnings with ...rest
-            isActive, hasDelete, file, meta, ...rest } = this.props;
+        const { isActive, hasDelete, file, meta, previewUrl, shareUrl, addLocalizedFile, className } = this.props;
 
         return <a
             onClick={this.handleClick}
@@ -326,14 +445,19 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
             aria-selected={isActive}
             aria-label={isActive ? lf("{0}, it is the current opened file in the JavaScript editor", file.name) : file.name}
             onKeyDown={sui.fireClickOnEnter}
-            {...rest}>
+            className={className}>
             {this.props.children}
-
-            {hasDelete ? <sui.Button className="primary label" icon="trash"
+            {hasDelete && <sui.Button className="primary label" icon="trash"
                 title={lf("Delete file {0}", file.name)}
                 onClick={this.handleRemove}
-                onKeyDown={this.handleButtonKeydown} /> : ''}
+                onKeyDown={this.handleButtonKeydown} />}
             {meta && meta.numErrors ? <span className='ui label red button' role="button" title={lf("Go to error")}>{meta.numErrors}</span> : undefined}
+            {shareUrl && <sui.Button className="button primary label" icon="share alternate" title={lf("Share")} onClick={this.handleShare} onKeyDown={sui.fireClickOnEnter} />}
+            {previewUrl && <sui.Button className="button primary label" icon="flask" title={lf("Preview")} onClick={this.handlePreview} onKeyDown={sui.fireClickOnEnter} />}
+            {!!addLocalizedFile && <sui.Button className="primary label" icon="xicon globe"
+                title={lf("Add localized file")}
+                onClick={this.handleAddLocale}
+                onKeyDown={this.handleButtonKeydown} />}
         </a>
     }
 }
@@ -385,7 +509,7 @@ class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
             aria-selected={isActive} aria-expanded={isActive}
             aria-label={lf("{0}, {1}", p.getPkgId(), isActive ? lf("expanded") : lf("collapsed"))}
             onClick={this.handleClick} tabIndex={0} onKeyDown={sui.fireClickOnEnter} {...rest}>
-            <sui.Icon icon={`chevron ${isActive ? "down" : "right"} icon`} />
+            <sui.Icon icon={`chevron ${isActive ? "up" : "down"} icon`} />
             {hasRefresh ? <sui.Button className="primary label" icon="refresh" title={lf("Refresh extension {0}", p.getPkgId())}
                 onClick={this.handleRefresh} onKeyDown={this.handleButtonKeydown} text={version || ''}></sui.Button> : undefined}
             {hasDelete ? <sui.Button className="primary label" icon="trash" title={lf("Delete extension {0}", p.getPkgId())}

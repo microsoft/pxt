@@ -1,4 +1,3 @@
-/// <reference path="./testBlocks/blockCombine.ts" />
 
 let gsTest = bc.createTest();
 

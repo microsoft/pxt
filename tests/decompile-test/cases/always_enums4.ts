@@ -1,5 +1,3 @@
-/// <reference path="./testBlocks/basic.ts" />
-
 let x = testNamespace.createTestClass(5);
 
 x.testMethodWithEnum(TestEnum.testValue2)

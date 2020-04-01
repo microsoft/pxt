@@ -16,6 +16,8 @@
         "sourceMap": false
     },
     "files": [
-        "formatrunner.ts"
+        "formatrunner.ts",
+        "../common/testUtils.ts",
+        "../common/testHost.ts"
     ]
 }

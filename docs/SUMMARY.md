@@ -4,6 +4,7 @@
 
 * [About MakeCode](/about)
 * [Blog](/blog)
+* [Online Learning](/online-learning)
 * [Contact Us](/contact)
 * [Technical Docs](/docs)
     * [JS Editor Features](/js/editor)

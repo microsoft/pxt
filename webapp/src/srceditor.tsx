@@ -85,7 +85,7 @@ export class Editor implements pxt.editor.IEditor {
     setScale(scale: number) { }
 
     closeFlyout() { }
-
+    clearCaches() { }
     /*******************************
      loadFile
     *******************************/

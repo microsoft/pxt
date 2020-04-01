@@ -141,6 +141,15 @@ default semantic
 }
 .setDocsAvatarUrl();
 
+@blocksIconUrl: "../docs/static/icons/blocks.svg";
+@blocksIcon: data-uri(@blocksIconUrl);
+@pyIconUrl: "../docs/static/icons/py.svg";
+@pyIcon: data-uri(@pyIconUrl);
+@jsIconUrl: "../docs/static/icons/js.svg";
+@jsIcon: data-uri(@jsIconUrl);
+
+@logoFilter: invert(23%) sepia(91%) saturate(1957%) hue-rotate(290deg) brightness(83%) contrast(94%);
+
 /*-------------------
    Menu
 --------------------*/
@@ -148,6 +157,7 @@ default semantic
 @mainMenuBackground: @white;
 @mainMenuInvertedBackground: @black;
 @mainMenuTutorialBackground: @orange;
+@mainMenuTutorialButtons: @mainMenuTutorialBackground;
 
 @mainMenuHeight: 4.0rem;
 @mobileMenuHeight: 3.5rem;
@@ -234,6 +244,7 @@ default semantic
 @diffInvertedRemovedBackground:#ff5050;
 @diffInvertedAddedBackground: #10a010;
 @diffInvertedMarkerBackground: #666;
+@diffInvertedUnchangedBackground: #1e1e1e;
 @diffInvertedMarkerColor: #ccc;
 @diffLineNumberColor: rgba(27, 31, 35, .3);
 @diffInvertedLineNumberColor: #ddd;
@@ -242,6 +253,10 @@ default semantic
 @diffAddedTokenBackground: darken(@diffAddedBackground, @diffTokenDarkenRatio);
 @diffInvertedRemovedTokenBackground:darken(@diffInvertedRemovedBackground, @diffTokenDarkenRatio);
 @diffInvertedAddedTokenBackground: darken(@diffInvertedAddedBackground, @diffTokenDarkenRatio);
+@diffUpdateAddedBackground: #fcfc90;
+@diffUpdateAddedTokenBackground: darken(@diffUpdateAddedBackground, @diffTokenDarkenRatio);
+@diffUpdateInlineAddedOutline: 1px solid #ccc;
+
 @conflictBorderColor: orange;
 @conflictHeaderBackgroundColor: lighten(@conflictBorderColor, 30);
 @conflictHeaderColor: black;
@@ -273,8 +288,10 @@ default semantic
 @flyoutLabelColor: white;
 @blocklyFlyoutColor: @grey;
 @blocklyFlyoutColorOpacity: 0.9;
-@monacoFlyoutColor: fade(@blocklyFlyoutColor, 90%);
 @blocklyFlyoutButtonColor: @primaryColor;
+@monacoFlyoutColor: fade(@blocklyFlyoutColor, 90%);
+@monacoFlyoutBorderColor: fade(@flyoutLabelColor, 40%);
+@monacoFlyoutText: fade(@flyoutLabelColor, 70%);
 
 /*-------------------
    Home
@@ -302,6 +319,8 @@ default semantic
 @homeDetailViewColor: @homeCardColor;
 @homeDetailCloseColor: white;
 @homeDetailCloseBackground: @grey;
+@homeDetailCardActionBackground: darken(@homeDetailViewBackground, 10%);
+@homeInvertedDetailCardActionBackground: lighten(@homeScreenBackground, 10%);
 
 /*-------------------
    Tutorial

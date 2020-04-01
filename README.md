@@ -2,7 +2,7 @@
 
 * [Try out the editors in your browser...](https://makecode.com)
 
-[![Build Status](https://travis-ci.org/microsoft/pxt.svg?branch=master)](https://travis-ci.org/microsoft/pxt) 
+[![Build Status](https://travis-ci.org/microsoft/pxt.svg?branch=master)](https://travis-ci.org/microsoft/pxt)
 [![Community Discord](https://img.shields.io/discord/448979533891371018.svg)](https://aka.ms/makecodecommunity)
 
 Microsoft MakeCode is based on the open source project [Microsoft Programming Experience Toolkit (PXT)](https://github.com/microsoft/pxt). ``Microsoft MakeCode`` is the name in the user-facing editors, ``PXT`` is used in all the GitHub sources.
@@ -58,7 +58,7 @@ If you run `npm i` afterwards (in either the target or pxt), you might need to r
 
 ## Build
 
-First, install [Node](https://nodejs.org/en/): minimum version 8. 
+First, install [Node](https://nodejs.org/en/): minimum version 8.
 
 To build the PXT command line tools:
 
@@ -77,6 +77,19 @@ After this you can run `pxt` from anywhere within the build tree.
 
 To start the local web server, run `pxt serve` from within the root
 of an app target (e.g. pxt-microbit). PXT will open the editor in your default web browser.
+
+If you are developing against pxt, you can run `gulp watch` from within the root of the
+pxt repository to watch for changes and rebuild.
+
+```
+gulp watch
+```
+
+If you are working on the CLI exclusively,
+
+```
+gulp watchCli
+```
 
 ### Icons
 

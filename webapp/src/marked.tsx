@@ -1,14 +1,20 @@
+/// <reference path='../../localtypings/dompurify.d.ts' />
 
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as marked from "marked";
+import * as compiler from "./compiler"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 interface MarkedContentProps extends ISettingsProps {
     markdown: string;
     className?: string;
+    // do not emit segment around snippets
+    unboxSnippets?: boolean;
+    blocksDiffOptions?: pxt.blocks.DiffOptions;
+    textDiffOptions?: pxt.diff.RenderOptions;
+    onDidRender?: () => void;
 }
 
 interface MarkedContentState {
@@ -18,7 +24,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
     // Local cache for images, cleared when we create a new project.
     // Stores code => data-uri image of decompiled result
-    private static blockSnippetCache: pxt.Map<string> = {};
+    private static blockSnippetCache: pxt.Map<string | HTMLElement> = {};
     public static clearBlockSnippetCache() {
         this.blockSnippetCache = {};
     }
@@ -41,29 +47,62 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     }
 
     private startRenderLangSnippet(langBlock: HTMLElement): HTMLDivElement {
+        const { unboxSnippets } = this.props;
         const preBlock = langBlock.parentElement as HTMLPreElement; // pre parent of the code
         const parentBlock = preBlock.parentElement as HTMLDivElement; // parent containing all text
 
         const wrapperDiv = document.createElement('div');
-        wrapperDiv.className = 'ui segment raised loading';
+        wrapperDiv.className = `ui ${unboxSnippets ? "" : "segment raised "}loading codewidget`;
         parentBlock.insertBefore(wrapperDiv, preBlock);
         parentBlock.removeChild(preBlock);
 
         return wrapperDiv;
     }
 
-    private finishRenderLangSnippet(wrapperDiv: HTMLDivElement, code: string) {
-        const preDiv = document.createElement('pre') as HTMLPreElement;
-        preDiv.textContent = code;
-        pxt.tutorial.highlight(preDiv);
-        wrapperDiv.appendChild(preDiv);
+    private finishRenderLangSnippet(wrapperDiv: HTMLDivElement, code: string | HTMLElement) {
+        if (typeof code === "string") {
+            let codeDiv = document.createElement('code') as HTMLElement
+            codeDiv.className = "hljs"
+            codeDiv.textContent = code;
+            pxt.tutorial.highlight(codeDiv);
+            code = codeDiv;
+        }
+        wrapperDiv.appendChild(code);
         pxsim.U.removeClass(wrapperDiv, 'loading');
     }
 
-    private renderSnippets(content: HTMLElement) {
-        const { parent } = this.props;
+    private cachedRenderLangSnippetAsync(langBlock: HTMLElement, renderer: (code: string) => Promise<string | HTMLElement>): Promise<void> {
+        const code = langBlock.textContent;
+        const wrapperDiv = this.startRenderLangSnippet(langBlock);
+        if (MarkedContent.blockSnippetCache[code]) {
+            this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[code]);
+            return undefined;
+        } else {
+            return renderer(code)
+                .then(renderedCode => {
+                    MarkedContent.blockSnippetCache[code] = renderedCode;
+                    this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[code]);
+                }).catch(e => {
+                    pxt.reportException(e);
+                    this.finishRenderLangSnippet(wrapperDiv, lf("Something changed."))
+                })
+        }
+    }
 
-        pxt.Util.toArray(content.querySelectorAll(`code.lang-typescript`))
+    private renderSnippets(content: HTMLElement) {
+        const { parent, unboxSnippets, onDidRender, blocksDiffOptions, textDiffOptions } = this.props;
+
+        let promises: Promise<void>[] = [];
+
+        pxt.Util.toArray(content.querySelectorAll(`img`))
+            .forEach((imgBlock: HTMLImageElement) => {
+                promises.push(new Promise<void>((resolve, reject) => {
+                    imgBlock.addEventListener("load", () => resolve(), false);
+                    imgBlock.addEventListener("error", () => resolve(), false);
+                }))
+            });
+
+        pxt.Util.toArray(content.querySelectorAll(`code.lang-typescript,code.lang-python`))
             .forEach((langBlock: HTMLElement) => {
                 const code = langBlock.textContent;
                 const wrapperDiv = this.startRenderLangSnippet(langBlock);
@@ -72,106 +111,173 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-spy`))
             .forEach((langBlock: HTMLElement) => {
-                const code = langBlock.textContent;
-                const wrapperDiv = this.startRenderLangSnippet(langBlock);
-                if (MarkedContent.blockSnippetCache[code]) {
-                    this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[code]);
-                } else {
+                promises.push(this.cachedRenderLangSnippetAsync(langBlock, code =>
                     parent.renderPythonAsync({
                         type: "pxteditor",
                         action: "renderpython", ts: code
-                    }).done(resp => {
-                        MarkedContent.blockSnippetCache[code] = resp.python;
-                        this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[code]);
+                    }).then(resp => resp.python)
+                ));
+            });
+
+        pxt.Util.toArray(content.querySelectorAll(`code.lang-diffspy`))
+            .forEach((langBlock: HTMLElement) => {
+                promises.push(this.cachedRenderLangSnippetAsync(langBlock, code => {
+                    const { fileA, fileB } = pxt.diff.split(code);
+                    return Promise.mapSeries([fileA, fileB],
+                        src => parent.renderPythonAsync({
+                            type: "pxteditor",
+                            action: "renderpython", ts: src
+                        }).then(resp => resp.python))
+                        .then(parts => {
+                            const el = pxt.diff.render(parts[0], parts[1], textDiffOptions || {
+                                hideLineNumbers: true,
+                                hideMarkerLine: true,
+                                hideMarker: true,
+                                hideRemoved: true,
+                                update: true,
+                                ignoreWhitespace: true
+                            });
+                            return el;
+                        });
+                }));
+            });
+
+        pxt.Util.toArray(content.querySelectorAll(`code.lang-diff,code.lang-diffpython`))
+            .forEach((langBlock: HTMLElement) => {
+                promises.push(this.cachedRenderLangSnippetAsync(langBlock, code => {
+                    const { fileA, fileB } = pxt.diff.split(code);
+                    const el = pxt.diff.render(fileA, fileB, textDiffOptions || {
+                        hideLineNumbers: true,
+                        hideMarkerLine: true,
+                        hideMarker: true,
+                        hideRemoved: true,
+                        update: true,
+                        ignoreWhitespace: true
                     });
-                }
+                    return Promise.resolve(el);
+                }))
             });
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-blocks`))
-            .forEach((langBlock: HTMLElement) => {
-                // Can't use innerHTML here because it escapes certain characters (e.g. < and >)
-                // Also can't use innerText because IE strips out the newlines from the code
-                // textContent seems to work in all browsers and return the "pure" text
-                const code = langBlock.textContent;
+            .forEach((langBlock: HTMLElement) => renderBlock(langBlock, false));
+        pxt.Util.toArray(content.querySelectorAll(`code.lang-block`)) // snippet mode
+            .forEach((langBlock: HTMLElement) => renderBlock(langBlock, true));
 
-                const wrapperDiv = document.createElement('div');
-                pxsim.U.clear(langBlock);
-                langBlock.appendChild(wrapperDiv);
-                wrapperDiv.className = 'ui segment raised loading';
-                if (MarkedContent.blockSnippetCache[code]) {
-                    // Use cache
-                    const doc = Blockly.utils.xml.textToDomDocument(pxt.blocks.layout.serializeSvgString(MarkedContent.blockSnippetCache[code]));
-                    wrapperDiv.appendChild(doc.documentElement);
-                    pxsim.U.removeClass(wrapperDiv, 'loading');
-                } else {
-                    parent.renderBlocksAsync({
-                        type: "pxteditor",
-                        action: "renderblocks", ts: code
-                    })
-                        .done(resp => {
-                            const svg = resp.svg;
-                            if (svg) {
-                                const viewBox = svg.getAttribute('viewBox').split(' ').map(parseFloat);
-                                const width = viewBox[2];
-                                let height = viewBox[3];
-                                if (width > 480 || height > 128)
-                                    height = (height * 0.8) | 0;
-                                svg.setAttribute('height', `${height}px`);
-                                // SVG serialization is broken on IE (SVG namespace issue), don't cache on IE
-                                if (!pxt.BrowserUtils.isIE()) MarkedContent.blockSnippetCache[code] = Blockly.Xml.domToText(svg);
-                                wrapperDiv.appendChild(svg);
-                                pxsim.U.removeClass(wrapperDiv, 'loading');
-                            } else {
-                                // An error occured, show alternate message
-                                const textDiv = document.createElement('span');
-                                textDiv.textContent = lf("Oops, something went wrong trying to render this block snippet.");
-                                wrapperDiv.appendChild(textDiv);
-                                pxsim.U.removeClass(wrapperDiv, 'loading');
-                            }
-                        })
-                }
-            })
         pxt.Util.toArray(content.querySelectorAll(`code.lang-diffblocksxml`))
             .forEach((langBlock: HTMLElement) => {
                 // Can't use innerHTML here because it escapes certain characters (e.g. < and >)
                 // Also can't use innerText because IE strips out the newlines from the code
                 // textContent seems to work in all browsers and return the "pure" text
                 const code = langBlock.textContent;
-                const xml = langBlock.textContent.split(/-{10,}/);
-                const oldXml = xml[0];
-                const newXml = xml[1];
+                const { fileA: oldXml, fileB: newXml } = pxt.diff.split(code);
 
-                const wrapperDiv = document.createElement('div');
-                pxsim.U.clear(langBlock);
-                langBlock.appendChild(wrapperDiv);
-
-                pxt.BrowserUtils.loadBlocklyAsync()
-                    .then(() => {
-                        const diff = pxt.blocks.diffXml(oldXml, newXml);
-                        const svg = diff.svg;
-                        if (svg) {
-                            if (svg.tagName == "SVG") { // splitsvg
-                                const viewBox = svg.getAttribute('viewBox').split(' ').map(parseFloat);
-                                const width = viewBox[2];
-                                let height = viewBox[3];
-                                if (width > 480 || height > 128)
-                                    height = (height * 0.8) | 0;
-                                svg.setAttribute('height', `${height}px`);
-                            }
-                            // SVG serialization is broken on IE (SVG namespace issue), don't cache on IE
-                            if (!pxt.BrowserUtils.isIE()) MarkedContent.blockSnippetCache[code] = Blockly.Xml.domToText(svg);
-                            wrapperDiv.appendChild(svg);
-                            pxsim.U.removeClass(wrapperDiv, 'loading');
-                        } else {
-                            // An error occured, show alternate message
-                            const textDiv = document.createElement('div');
-                            textDiv.className = "ui basic segment";
-                            textDiv.textContent = diff.message || lf("No changes.");
-                            wrapperDiv.appendChild(textDiv);
-                            pxsim.U.removeClass(wrapperDiv, 'loading');
-                        }
-                    });
+                promises.push(this.cachedRenderLangSnippetAsync(langBlock, code =>
+                    pxt.BrowserUtils.loadBlocklyAsync()
+                        .then(() => {
+                            const diff = pxt.blocks.diffXml(oldXml, newXml, blocksDiffOptions);
+                            return wrapBlockDiff(diff);
+                        })));
             });
+
+        pxt.Util.toArray(content.querySelectorAll(`code.lang-diffblocks`))
+            .forEach((langBlock: HTMLElement) => {
+                // Can't use innerHTML here because it escapes certain characters (e.g. < and >)
+                // Also can't use innerText because IE strips out the newlines from the code
+                // textContent seems to work in all browsers and return the "pure" text
+                const code = langBlock.textContent;
+                const { fileA: oldSrc, fileB: newSrc } = pxt.diff.split(code);
+
+
+                promises.push(this.cachedRenderLangSnippetAsync(langBlock, code =>
+                    pxt.BrowserUtils.loadBlocklyAsync()
+                        .then(() => compiler.getBlocksAsync())
+                        .then(blocksInfo => Promise.mapSeries([oldSrc, newSrc], src =>
+                            compiler.decompileBlocksSnippetAsync(src, blocksInfo))
+                        )
+                        .then((resps) => pxt.blocks.decompiledDiffAsync(oldSrc, resps[0], newSrc, resps[1], blocksDiffOptions || {
+                            hideDeletedTopBlocks: true,
+                            hideDeletedBlocks: true
+                        }))
+                        .then(diff => wrapBlockDiff(diff))
+                ));
+            });
+
+        promises = promises.filter(p => !!p);
+        if (promises.length && onDidRender)
+            Promise.all(promises)
+                .then(() => {
+                    pxt.log(`markdowcontent: forcing update after async rendering`)
+                    onDidRender();
+                });
+
+        function wrapBlockDiff(diff: pxt.blocks.DiffResult): HTMLElement {
+            const svg = diff.svg;
+            if (svg) {
+                if (svg.tagName == "SVG") { // splitsvg
+                    const viewBox = svg.getAttribute('viewBox').split(' ').map(parseFloat);
+                    const width = viewBox[2];
+                    let height = viewBox[3];
+                    if (width > 480 || height > 128)
+                        height = (height * 0.8) | 0;
+                    svg.setAttribute('height', `${height}px`);
+                }
+                return svg as HTMLElement;
+            } else {
+                // An error occured, show alternate message
+                const textDiv = document.createElement('div');
+                textDiv.className = "ui basic segment";
+                textDiv.textContent = diff.message || lf("No changes.");
+                return textDiv;
+            }
+        }
+
+        function renderBlock(langBlock: HTMLElement, snippetMode: boolean) {
+            // Can't use innerHTML here because it escapes certain characters (e.g. < and >)
+            // Also can't use innerText because IE strips out the newlines from the code
+            // textContent seems to work in all browsers and return the "pure" text
+            const code = langBlock.textContent;
+
+            const wrapperDiv = document.createElement('div');
+            pxsim.U.clear(langBlock);
+            langBlock.appendChild(wrapperDiv);
+            wrapperDiv.className = `ui ${unboxSnippets ? "" : "segment raised "} loading`;
+            const req: pxt.editor.EditorMessageRenderBlocksRequest = {
+                type: "pxteditor",
+                action: "renderblocks",
+                ts: code,
+                snippetMode
+            };
+            const reqid = JSON.stringify(req);
+            if (MarkedContent.blockSnippetCache[reqid]) {
+                // Use cache
+                const workspaceXml = MarkedContent.blockSnippetCache[reqid] as string;
+                const doc = Blockly.utils.xml.textToDomDocument(pxt.blocks.layout.serializeSvgString(workspaceXml));
+                wrapperDiv.appendChild(doc.documentElement);
+                pxsim.U.removeClass(wrapperDiv, 'loading');
+            } else {
+                promises.push(parent.renderBlocksAsync(req).then(resp => {
+                    const svg = resp.svg;
+                    if (svg) {
+                        const viewBox = svg.getAttribute('viewBox').split(' ').map(parseFloat);
+                        const width = viewBox[2];
+                        let height = viewBox[3];
+                        if (width > 480 || height > 128)
+                            height = (height * 0.8) | 0;
+                        svg.setAttribute('height', `${height}px`);
+                        // SVG serialization is broken on IE (SVG namespace issue), don't cache on IE
+                        if (!pxt.BrowserUtils.isIE()) MarkedContent.blockSnippetCache[reqid] = Blockly.Xml.domToText(svg);
+                        wrapperDiv.appendChild(svg);
+                        pxsim.U.removeClass(wrapperDiv, 'loading');
+                    } else {
+                        // An error occured, show alternate message
+                        const textDiv = document.createElement('span');
+                        textDiv.textContent = lf("Oops, something went wrong trying to render this block snippet.");
+                        wrapperDiv.appendChild(textDiv);
+                        pxsim.U.removeClass(wrapperDiv, 'loading');
+                    }
+                }));
+            }
+        }
     }
 
     private renderInlineBlocks(content: HTMLElement) {
@@ -198,7 +304,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
     private renderOthers(content: HTMLElement) {
         // remove package blocks
-        pxt.Util.toArray(content.querySelectorAll(`.lang-package,.lang-config`))
+        pxt.Util.toArray(content.querySelectorAll(`.lang-package,.lang-config,.lang-apis`))
             .forEach((langBlock: HTMLElement) => {
                 langBlock.parentNode.removeChild(langBlock);
             });
@@ -218,13 +324,20 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         // Set markdown options
         marked.setOptions({
             renderer: renderer,
-            sanitize: true
+            sanitize: true,
+            sanitizer: pxt.docs.requireDOMSanitizer()
         })
+
+        // preemptively remove script tags, although they'll be escaped anyway
+        // prevents ugly <script ...> rendering in docs
+        markdown = markdown.replace(/<\s*script[^>]*>.*<\/\s*script\s*>/g, '');
 
         // Render the markdown and add it to the content div
         /* tslint:disable:no-inner-html (marked content is already sanitized) */
         content.innerHTML = marked(markdown);
         /* tslint:enable:no-inner-html */
+
+        //
 
         // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed
         this.renderInlineBlocks(content);

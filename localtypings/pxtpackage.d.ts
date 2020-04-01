@@ -24,6 +24,12 @@ declare namespace pxt {
         height: number;
     }
 
+    interface CodeCardAction {
+        url: string,
+        editor?: CodeCardEditorType;
+        cardType?: CodeCardType;
+    }
+
     /**
      * The schema for the pxt.json package files
      */
@@ -44,13 +50,16 @@ declare namespace pxt {
         simFiles?: string[];
         testFiles?: string[];
         preferredEditor?: string; // tsprj, blocksprj, pyprj
+        languageRestriction?: pxt.editor.LanguageRestriction; // language restrictions that have been placed on the package
         testDependencies?: pxt.Map<string>;
         cppDependencies?: pxt.Map<string>;
         public?: boolean;
+        partial?: boolean; // true if project is not compileable on its own (eg base)
         binaryonly?: boolean;
         platformio?: PlatformIOConfig;
         compileServiceVariant?: string;
         palette?: string[];
+        paletteNames?: string[];
         screenSize?: Size;
         yotta?: YottaConfig;
         npmDependencies?: Map<string>;
@@ -73,6 +82,7 @@ declare namespace pxt {
         snippetBuilders?: SnippetConfig[];
         experimentalHw?: boolean;
         requiredCategories?: string[]; // ensure that those block categories are visible
+        supportedTargets?: string[]; // a hint about targets in which this extension is supported
     }
 
     interface PackageExtension {
@@ -117,6 +127,7 @@ declare namespace pxt {
         labelClass?: string;
         tags?: string[]; // tags shown in home screen, colors specified in theme
         tabIndex?: number;
+        style?: string; // "card" | "item" | undefined;
 
         color?: string; // one of semantic ui colors
         description?: string;
@@ -125,6 +136,7 @@ declare namespace pxt {
         typeScript?: string;
         imageUrl?: string;
         largeImageUrl?: string;
+        videoUrl?: string;
         youTubeId?: string;
         buttonLabel?: string;
         time?: number;
@@ -135,13 +147,9 @@ declare namespace pxt {
         responsive?: boolean;
         cardType?: CodeCardType;
         editor?: CodeCardEditorType;
+        otherActions?: CodeCardAction[];
 
         header?: string;
-        any?: number;
-        hardware?: number;
-        software?: number;
-        blocks?: number;
-        javascript?: number;
 
         tutorialStep?: number;
         tutorialLength?: number;
@@ -180,7 +188,7 @@ declare namespace pxt {
         questions: SnippetQuestions[];
     }
 
-    type SnippetAnswerTypes = 'number' | 'text' | 'dropdown' | 'spriteEditor' | 'yesno' | string; // TODO(jb) Should include custom answer types for number, enums, string, image
+    type SnippetAnswerTypes = 'number' | 'text' | 'variableName' | 'dropdown' | 'spriteEditor' | 'yesno' | string; // TODO(jb) Should include custom answer types for number, enums, string, image
 
     interface SnippetGoToOptions {
         question?: number;

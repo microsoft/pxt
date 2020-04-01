@@ -35,6 +35,7 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
             return core.confirmAsync({
                 header: lf("About"),
                 hideCancel: true,
+                hasCloseIcon: true,
                 agreeLbl: lf("Ok"),
                 agreeClass: "positive",
                 buttons,
@@ -331,42 +332,6 @@ class WizardMenu extends sui.StatelessUIElement<WizardMenuProps> {
     }
 }
 
-export function showCommitDialogAsync(repo: string) {
-    let input: HTMLInputElement;
-    const deflMsg = lf("Updates.")
-    let bump = false
-    const setBump = (v: boolean) => {
-        bump = !!v
-    }
-    return core.confirmAsync({
-        header: lf("Commit to {0}", repo),
-        agreeLbl: lf("Commit"),
-        onLoaded: (el) => {
-            input = el.querySelectorAll('input')[0] as HTMLInputElement;
-        },
-        jsx: <div className="ui form">
-            <div className="ui field">
-                <label id="selectUrlToOpenLabel">{lf("Describe your changes.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder={deflMsg} className="ui blue fluid"></input>
-            </div>
-            <div className="ui field">
-                <sui.PlainCheckbox
-                    label={lf("Publish to users (bump)")}
-                    onChange={setBump} />
-            </div>
-        </div>,
-    }).then(res => {
-        if (res) {
-            pxt.tickEvent("app.commit.ok");
-            return {
-                msg: input.value || deflMsg,
-                bump
-            }
-        }
-        return undefined;
-    })
-}
-
 export function showPRDialogAsync(repo: string, prURL: string): Promise<void> {
     return core.confirmAsync({
         header: lf("Commit conflict in {0}", repo),
@@ -387,10 +352,19 @@ export function showPRDialogAsync(repo: string, prURL: string): Promise<void> {
 export function showImportUrlDialogAsync() {
     let input: HTMLInputElement;
     const shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
+
     return core.confirmAsync({
         header: lf("Open project URL"),
+        hasCloseIcon: true,
+        hideCancel: true,
         onLoaded: (el) => {
-            input = el.querySelectorAll('input')[0] as HTMLInputElement;
+            input = el.querySelector('input');
+            input.onkeydown = ev => {
+                if (ev.key === "Enter") {
+                    const confirm = el.querySelector('.button.approve') as HTMLButtonElement;
+                    confirm?.click();
+                }
+            }
         },
         jsx: <div className="ui form">
             <div className="ui icon violet message">
@@ -451,7 +425,6 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
     if (name) {
         name = name.toLocaleLowerCase().replace(/\s+/g, '-');
         name = name.replace(/[^\w\-]/g, '');
-        if (!/^pxt-/.test(name)) name = 'pxt-' + name;
     }
 
     let repoName: string = name || "";
@@ -497,19 +470,19 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
         header: lf("Create GitHub repository"),
         jsxd: () => {
             const nameErr = repoNameError();
-            return <div className="ui form">
+            return <div className={`ui form`}>
                 <p>
                     {lf("Host your code on GitHub and work together with friends.")}
                     {sui.helpIconLink("/github", lf("Learn more about GitHub"))}
                 </p>
                 <div className="ui field">
-                    <sui.Input type="url" value={repoName} onChange={onNameChanged} label={lf("Repository name")} placeholder={`pxt-my-gadget...`} class="fluid" error={nameErr} />
+                    <sui.Input type="url" autoFocus value={repoName} onChange={onNameChanged} label={lf("Repository name")} placeholder={`pxt-my-gadget...`} class="fluid" error={nameErr} />
                 </div>
                 <div className="ui field">
                     <sui.Input type="text" value={repoDescription} onChange={onDescriptionChanged} label={lf("Repository description")} placeholder={lf("MakeCode extension for my gadget")} class="fluid" />
                 </div>
                 <div className="ui field">
-                    <select className="ui dropdown" onChange={onPublicChanged}>
+                    <select className={`ui dropdown`} onChange={onPublicChanged}>
                         <option aria-selected={repoPublic} value="true">{lf("Public repository, anyone can look at your code.")}</option>
                         <option aria-selected={!repoPublic} value="false">{lf("Private repository, your code is only visible to you.")}</option>
                     </select>
@@ -521,6 +494,7 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
             pxt.tickEvent("github.create.cancel");
         else {
             if (!repoNameError()) {
+                repoDescription = repoDescription || lf("A MakeCode project")
                 core.showLoading("creategithub", lf("creating {0} repository...", repoName))
                 return pxt.github.createRepoAsync(repoName, repoDescription.trim(), !repoPublic)
                     .finally(() => core.hideLoading("creategithub"))
@@ -552,13 +526,11 @@ export function showImportGithubDialogAsync() {
         res = "NEW"
         core.hideDialog()
     }
-    core.showLoading("githublist", lf("Getting repo list..."))
+    core.showLoading("githublist", lf("searching GitHub repositories..."))
     return pxt.github.listUserReposAsync()
         .finally(() => core.hideLoading("githublist"))
         .then(repos => {
-            let isPXT = (r: pxt.github.GitRepo) => /pxt|makecode/.test(r.name)
-            return repos.filter(isPXT).concat(repos.filter(r => !isPXT(r)))
-                .map(r => ({
+            return repos.map(r => ({
                     name: r.fullName,
                     description: r.description,
                     updatedAt: r.updatedAt,
@@ -571,6 +543,8 @@ export function showImportGithubDialogAsync() {
         .then(repos => core.confirmAsync({
             header: lf("Clone or create your own GitHub repo"),
             hideAgree: true,
+            hideCancel: true,
+            hasCloseIcon: true,
             /* tslint:disable:react-a11y-anchors */
             jsx: <div className="ui form">
                 <div className="ui relaxed divided list" role="menu">
@@ -628,6 +602,8 @@ export function showImportFileDialogAsync(options?: pxt.editor.ImportFileOptions
     }
     return core.confirmAsync({
         header: lf("Open {0} file", exts.join(lf(" or "))),
+        hasCloseIcon: true,
+        hideCancel: true,
         onLoaded: (el) => {
             input = el.querySelectorAll('input')[0] as HTMLInputElement;
         },
@@ -663,6 +639,8 @@ export function showReportAbuseAsync(pubId?: string) {
     const shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
     core.confirmAsync({
         header: lf("Report Abuse"),
+        hideCancel: true,
+        hasCloseIcon: true,
         onLoaded: (el) => {
             urlInput = el.querySelectorAll('input')[0] as HTMLInputElement;
             reasonInput = el.querySelectorAll('textarea')[0] as HTMLTextAreaElement;

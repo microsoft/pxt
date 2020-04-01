@@ -1,0 +1,22 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="function_definition">
+<mutation name="doSomething" >
+</mutation>
+<statement name="STACK">
+<block type="function_return">
+<value name="RETURN_VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+</block>
+</statement>
+</block>
+<block type="device_forever">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation numlines="1" error="Return statements can only be used within top-level function declarations" line0="return" />
+</block>
+</statement>
+</block>
+</xml>

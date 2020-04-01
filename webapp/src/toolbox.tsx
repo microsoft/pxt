@@ -23,6 +23,7 @@ export const enum CategoryNameID {
 export interface BlockDefinition {
     qName?: string;
     name: string;
+    pyQName?: string;
     pyName?: string;
     namespace?: string;
     type?: string;
@@ -45,11 +46,21 @@ export interface BlockDefinition {
         group?: string;
         subcategory?: string;
         topblockWeight?: number;
+        help?: string;
+        _def?: pxtc.ParsedBlockDef;
     };
     retType?: string;
     blockXml?: string;
     builtinBlock?: boolean;
     builtinField?: [string, string];
+    parameters?: pxtc.ParameterDesc[];
+}
+
+export interface GroupDefinition {
+    name: string;
+    icon?: string;
+    hasHelp?: boolean;
+    blocks: BlockDefinition[];
 }
 
 export interface ButtonDefinition {
@@ -116,7 +127,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
         this.setSelection = this.setSelection.bind(this);
         this.advancedClicked = this.advancedClicked.bind(this);
-        this.recipesClicked = this.recipesClicked.bind(this);
         this.recoverToolbox = this.recoverToolbox.bind(this);
     }
 
@@ -274,12 +284,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.showAdvanced();
     }
 
-    recipesClicked() {
-        const { editorname } = this.props;
-        pxt.tickEvent(`${editorname}.recipes`);
-        this.props.parent.parent.showRecipesDialog();
-    }
-
     showAdvanced() {
         const { parent } = this.props;
         if (this.selectedItem && this.selectedItem.props.treeRow
@@ -410,8 +414,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
         this.items = this.getAllCategoriesList();
 
-        const hasRecipes = !!theme.recipes && !inTutorial && this.items.length > 0;
-
         const searchTreeRow = ToolboxSearch.getSearchTreeRow();
         const topBlocksTreeRow = {
             nameid: 'topblocks',
@@ -428,6 +430,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         ])
 
         let index = 0;
+        let topRowIndex = 0; // index of top-level rows for animation
         return <div ref={this.handleRootElementRef} className={classes} id={`${editorname}EditorToolbox`}>
             <ToolboxStyle categories={this.items} />
             {showSearchBox ? <ToolboxSearch ref="searchbox" parent={parent} toolbox={this} editorname={editorname} /> : undefined}
@@ -436,15 +439,14 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                     {hasSearch ? <CategoryItem key={"search"} toolbox={this} index={index++} selected={selectedItem == "search"} treeRow={searchTreeRow} onCategoryClick={this.setSelection} /> : undefined}
                     {hasTopBlocks ? <CategoryItem key={"topblocks"} toolbox={this} selected={selectedItem == "topblocks"} treeRow={topBlocksTreeRow} onCategoryClick={this.setSelection} /> : undefined}
                     {nonAdvancedCategories.map((treeRow) => (
-                        <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection}>
+                        <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection} topRowIndex={topRowIndex++}>
                             {treeRow.subcategories ? treeRow.subcategories.map((subTreeRow) => (
                                 <CategoryItem key={subTreeRow.nameid + subTreeRow.subns} index={index++} toolbox={this} selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)} treeRow={subTreeRow} onCategoryClick={this.setSelection} />
                             )) : undefined}
                         </CategoryItem>
                     ))}
-                    {hasAdvanced || hasRecipes ? <TreeSeparator key="advancedseparator" /> : undefined}
-                    {hasRecipes ? <CategoryItem toolbox={this} treeRow={{ nameid: "", name: pxt.toolbox.recipesTitle(), color: pxt.toolbox.getNamespaceColor('recipes'), icon: pxt.toolbox.getNamespaceIcon('recipes') }} onCategoryClick={this.recipesClicked} /> : undefined}
-                    {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ nameid: "", name: pxt.toolbox.advancedTitle(), color: pxt.toolbox.getNamespaceColor('advanced'), icon: pxt.toolbox.getNamespaceIcon(showAdvanced ? 'advancedexpanded' : 'advancedcollapsed') }} onCategoryClick={this.advancedClicked} /> : undefined}
+                    {hasAdvanced ? <TreeSeparator key="advancedseparator" /> : undefined}
+                    {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ nameid: "", name: pxt.toolbox.advancedTitle(), color: pxt.toolbox.getNamespaceColor('advanced'), icon: pxt.toolbox.getNamespaceIcon(showAdvanced ? 'advancedexpanded' : 'advancedcollapsed') }} onCategoryClick={this.advancedClicked} topRowIndex={topRowIndex++} /> : undefined}
                     {showAdvanced ? advancedCategories.map((treeRow) => (
                         <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection}>
                             {treeRow.subcategories ? treeRow.subcategories.map((subTreeRow) => (
@@ -463,6 +465,7 @@ export interface CategoryItemProps extends TreeRowProps {
     childrenVisible?: boolean;
     onCategoryClick?: (treeRow: ToolboxCategory, index: number) => void;
     index?: number;
+    topRowIndex?: number;
 }
 
 export interface CategoryItemState {
@@ -603,11 +606,13 @@ export interface TreeRowProps {
     onKeyDown?: (e: React.KeyboardEvent<any>) => void;
     selected?: boolean;
     isRtl?: boolean;
+    topRowIndex?: number;
 }
 
 export class TreeRow extends data.Component<TreeRowProps, {}> {
 
     private treeRow: HTMLElement;
+    private animationDelay: number = 0.15;
 
     constructor(props: TreeRowProps) {
         super(props);
@@ -657,7 +662,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
     }
 
     renderCore() {
-        const { selected, onClick, onKeyDown, isRtl } = this.props;
+        const { selected, onClick, onKeyDown, isRtl, topRowIndex } = this.props;
         const { nameid, subns, name, icon } = this.props.treeRow;
         const appTheme = pxt.appTarget.appTheme;
         const metaColor = this.getMetaColor();
@@ -684,6 +689,9 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
                 treeRowStyle.borderRight = border;
             } else {
                 treeRowStyle.borderLeft = border;
+            }
+            if (topRowIndex) {
+                treeRowStyle.animationDelay = `${topRowIndex * this.animationDelay}s`;
             }
         }
 
@@ -881,7 +889,7 @@ export class ToolboxTrashIcon extends data.Component<ToolboxTrashIconProps, {}> 
         let style: any = { opacity: 0, display: 'none' };
         if (this.props.flyoutOnly) {
             let flyout = document.querySelector('.blocklyFlyout');
-            if (flyout ) {
+            if (flyout) {
                 style["left"] = (flyout.clientWidth / 2);
                 style["transform"] = "translateX(-45%)";
             }

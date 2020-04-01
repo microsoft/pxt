@@ -1,0 +1,39 @@
+{
+    "editor": "blocksprj",
+    "title": "Diff tutorial",
+    "steps": [
+        {
+            "contentMd": "bla",
+            "headerContentMd": "bla"
+        },
+        {
+            "contentMd": "bla\n\n```blocks\nlet x = 0\n```",
+            "headerContentMd": "bla",
+            "hintContentMd": "```blocks\nlet x = 0\n```"
+        },
+        {
+            "contentMd": "bla\n\n```blocks\nlet x = 0\nlet y = 0\n```",
+            "headerContentMd": "bla",
+            "hintContentMd": "```blocks\nlet x = 0\nlet y = 0\n```"
+        },
+        {
+            "contentMd": "bla",
+            "headerContentMd": "bla"
+        },
+        {
+            "contentMd": "bla\n\n```blocks\nlet x = 0\nlet y = 0\nlet z = 0\nlet a = 0\n```",
+            "headerContentMd": "bla",
+            "hintContentMd": "```blocks\nlet x = 0\nlet y = 0\nlet z = 0\nlet a = 0\n```"
+        },
+        {
+            "contentMd": "bla\n\n```blocks\nlet x = 0\nlet y = 0\nlet z = 0\nlet a = 0\nlet b = 0\n```",
+            "headerContentMd": "bla",
+            "resetDiff": true,
+            "hintContentMd": "```blocks\nlet x = 0\nlet y = 0\nlet z = 0\nlet a = 0\nlet b = 0\n```"
+        }
+    ],
+    "activities": null,
+    "code": "\n{\nlet k = 0\n}\n\n{\nlet x = 0\n}\n\n{\nlet x = 0\nlet y = 0\n}\n\n{\nlet x = 0\nlet y = 0\nlet z = 0\n}\n\n{\nlet x = 0\nlet y = 0\nlet z = 0\nlet a = 0\n}\n\n{\nlet x = 0\nlet y = 0\nlet z = 0\nlet a = 0\nlet b = 0\n}\n",
+    "templateCode": "let k = 0",
+    "metadata": {}
+}

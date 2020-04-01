@@ -387,7 +387,7 @@ function updateCodalBuildAsync() {
     let cs = pxt.appTarget.compileService
     return codalGitAsync("checkout", cs.gittag)
         .then(
-            () => /^v\d+/.test(cs.gittag) ? Promise.resolve() : codalGitAsync("pull"),
+            () => /v\d+/.test(cs.gittag) ? Promise.resolve() : codalGitAsync("pull"),
             e =>
                 codalGitAsync("checkout", "master")
                     .then(() => codalGitAsync("pull")))

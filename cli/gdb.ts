@@ -18,6 +18,8 @@ let bmpMode = false
 const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer | string> = Promise.promisify(child_process.exec)
 
 function getBMPSerialPortsAsync(): Promise<string[]> {
+    if (process.env["PXT_IGNORE_BMP"])
+        return Promise.resolve([])
     if (process.platform == "win32") {
         return execAsync("wmic PATH Win32_SerialPort get DeviceID, PNPDeviceID")
             .then((buf: Buffer) => {
@@ -135,7 +137,7 @@ function fatal(msg: string) {
     U.userError(msg)
 }
 
-function getOpenOcdPath(cmds = "") {
+function getOpenOcdPath(cmds = "", showLog = false) {
     function latest(tool: string) {
         let dir = path.join(pkgDir, "tools/", tool, "/")
         if (!fs.existsSync(dir)) fatal(dir + " doesn't exists; " + tool + " not installed in Arduino?")
@@ -207,15 +209,10 @@ gdb_memory_map disable
 $_TARGETNAME configure -event gdb-attach {
     echo "Halting target"
     halt
-}
-
-$_TARGETNAME configure -event gdb-detach {
-    echo "Resetting target"
-    reset
 }`
 
     fs.writeFileSync("built/debug.cfg", `
-log_output built/openocd.log
+${showLog ? "" : "log_output built/openocd.log"}
 ${script}
 ${cmds}
 `)
@@ -307,10 +304,54 @@ async function initGdbServerAsync() {
     })
 }
 
-async function getMemoryAsync(addr: number, bytes: number) {
+async function flashAsync() {
+    const r = pxtc.UF2.toBin(fs.readFileSync("built/binary.uf2"))
+    fs.writeFileSync("built/binary.bin", r.buf)
+    let toolPaths = getOpenOcdPath(`
+        program built/binary.bin ${r.start} verify reset exit
+    `, true)
+    let oargs = toolPaths.args
+    await nodeutil.spawnAsync({
+        cmd: oargs[0],
+        args: oargs.slice(1)
+    })
+}
+
+async function resetAsync(bootMode: boolean) {
+    let bi = getBootInfo()
+    if (gdbServer) {
+        if (bootMode && bi.addr)
+            await gdbServer.write32Async(bi.addr, bi.boot)
+        await gdbServer.sendCmdAsync("R00", null)
+    } else {
+        let cmd = "init\nhalt\n"
+        if (bootMode && bi.addr) {
+            cmd += `set M(0) ${bi.boot}\narray2mem M 32 ${bi.addr} 1\n`
+        }
+        cmd += `reset run\nshutdown`
+        let toolPaths = getOpenOcdPath(cmd, true)
+        let oargs = toolPaths.args
+        await nodeutil.spawnAsync({
+            cmd: oargs[0],
+            args: oargs.slice(1)
+        })
+    }
+}
+
+async function getMemoryAsync(addr: number, bytes: number): Promise<Buffer> {
     if (gdbServer) {
         return gdbServer.readMemAsync(addr, bytes)
             .then((b: Uint8Array) => Buffer.from(b))
+    }
+
+    const maxMem = 32 * 1024
+
+    if (bytes > maxMem) {
+        let bufs: Buffer[] = []
+        for (let ptr = 0; ptr < bytes; ptr += maxMem) {
+            bufs.push(await getMemoryAsync(addr + ptr, Math.min(maxMem, bytes - ptr)))
+        }
+        return Buffer.concat(bufs)
     }
 
     let toolPaths = getOpenOcdPath(`
@@ -366,13 +407,38 @@ function VAR_BLOCK_WORDS(vt: number) {
     return (((vt) << 12) >> (12 + 2))
 }
 
-export async function dumpheapAsync() {
+export async function dumpMemAsync(args: string[]) {
     await initGdbServerAsync()
 
     let memStart = findAddr("_sdata", true) || findAddr("__data_start__")
+    memStart &= ~0xffff
+    let memEnd = findAddr("_estack", true) || findAddr("__StackTop")
+
+    if (!isNaN(parseInt(args[0]))) {
+        memStart = parseInt(args[0])
+        memEnd = parseInt(args[1])
+        args.shift()
+        args.shift()
+    }
+
+    console.log(`memory: ${hex(memStart)} - ${hex(memEnd)}`)
+
+    let mem = await getMemoryAsync(memStart, memEnd - memStart)
+    fs.writeFileSync(args[0], mem)
+}
+
+export async function dumpheapAsync(filename?: string) {
+    let memStart = findAddr("_sdata", true) || findAddr("__data_start__")
     let memEnd = findAddr("_estack", true) || findAddr("__StackTop")
     console.log(`memory: ${hex(memStart)} - ${hex(memEnd)}`)
-    let mem = await getMemoryAsync(memStart, memEnd - memStart)
+    let mem: Buffer
+    if (filename) {
+        const buf = fs.readFileSync(filename)
+        mem = buf.slice(memStart & 0xffff)
+    } else {
+        await initGdbServerAsync()
+        mem = await getMemoryAsync(memStart, memEnd - memStart)
+    }
     let heapDesc = findAddr("heap")
     let m = /\.bss\.heap\s+0x000000[a-f0-9]+\s+0x([a-f0-9]+)/.exec(getMap())
     let heapSz = 8
@@ -509,6 +575,15 @@ export async function dumpheapAsync() {
     const string_cons_vt = findAddr("pxt::string_cons_vt")
     const string_skiplist16_vt = findAddr("pxt::string_skiplist16_vt")
 
+    const PNG: any = require("pngjs").PNG;
+    const visWidth = 256
+    const visHeight = 256
+    const heapVis = new PNG({ width: visWidth, height: visHeight })
+    const visData: Uint8Array = heapVis.data
+
+    for (let i = 0; i < visWidth * visHeight * 4; ++i)
+        visData[i] = 0xff
+
     /*
     struct VTable {
         uint16_t numbytes;
@@ -531,7 +606,9 @@ export async function dumpheapAsync() {
             let category = ""
             let addWords = 0
             fields = {}
+            let color = 0x000000
             if (vtable & FREE_MASK) {
+                color = 0x00ff00
                 category = "free"
                 numbytes = VAR_BLOCK_WORDS(vtable) << 2
                 maxFree = Math.max(numbytes, maxFree)
@@ -665,9 +742,28 @@ export async function dumpheapAsync() {
             objects[obj.addr] = obj
             byCategory[category] += (addWords + numwords) * 4
             numByCategory[category]++
+
+            for (let i = 0; i < numwords; ++i) {
+                const j = (objPtr & 0xffffff) + i * 4
+                if (category == "free") {
+                    const mask = Math.min(i / 1, 255) | 0
+                    color = (mask << 16) | 0x00ff00
+                }
+                visData[j] = (color >> 16) & 0xff
+                visData[j + 1] = (color >> 8) & 0xff
+                visData[j + 2] = (color >> 0) & 0xff
+                visData[j + 3] = 0xff // alpha
+            }
+
             objPtr += numwords * 4
         }
     }
+
+    heapVis.pack()
+        .pipe(fs.createWriteStream('heap.png'))
+        .on('finish', function () {
+            console.log('Written heap.png!');
+        });
 
     let cats = Object.keys(byCategory)
     cats.sort((a, b) => byCategory[b] - byCategory[a])
@@ -854,14 +950,10 @@ export async function hwAsync(cmds: string[]) {
     switch (cmds[0]) {
         case "rst":
         case "reset":
-            await gdbServer.sendCmdAsync("R00", null)
+            await resetAsync(false)
             break
         case "boot":
-            let bi = getBootInfo()
-            if (bi.addr) {
-                await gdbServer.write32Async(bi.addr, bi.boot)
-            }
-            await gdbServer.sendCmdAsync("R00", null)
+            await resetAsync(true)
             break
         case "log":
         case "dmesg":
@@ -882,6 +974,12 @@ function getBootInfo() {
         r.addr = 0x20000000 + ramSize - 4
         r.app = 0xf02669ef
         r.boot = 0xf01669ef
+    }
+
+    if (/nrf52/.test(pxt.appTarget.compile.openocdScript)) {
+        r.addr = 0x20007F7C
+        r.app = 0x4ee5677e
+        r.boot = 0x5A1AD5
     }
 
     return r
@@ -909,6 +1007,11 @@ export async function startAsync(gdbArgs: string[]) {
     let mapsrc = ""
     if (/docker/.test(buildengine.thisBuild.buildPath)) {
         mapsrc = "set substitute-path /src " + buildengine.thisBuild.buildPath
+    }
+
+    if (gdbArgs[0] == "flash") {
+        await flashAsync()
+        return
     }
 
     let toolPaths = getOpenOcdPath()

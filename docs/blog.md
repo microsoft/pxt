@@ -1,5 +1,44 @@
 # Microsoft MakeCode Blog
 
+## [Online Learning Resources](/blog/online-learning)
+
+March 10th, 2020
+
+Many schools have closed or might soon close to help prevent the spread of illness. Both educators and students may need to find ways to promote and continue learning without a classroom. 
+To help families, **the MakeCode team will be live streaming coding lessons**.
+We thought that it might be helpful to again highlight the learning resources we have with MakeCode that support online learning.
+**[Continue reading this blog post](/blog/online-learning)**
+
+## [MakeCode Python is here!](/blog/minecraft/python-release)
+
+February 19th, 2020 by [Jaqster](https://github.com/jaqster)
+
+Microsoft MakeCode already supports Blocks and the JavaScript programming language, and now we’re happy to also announce support for Python!
+**[Continue reading this blog post](/blog/minecraft/python-release)**
+
+## [MakeCode Arcade Released for General Availability!](/blog/arcade/general-release)
+
+January 6th, 2020 by [Jaqster](https://github.com/jaqster)
+
+Ringing in the New Year with a New Release! The MakeCode team is very happy and proud to announce that MakeCode Arcade has been officially released for general availability today!
+**[Continue reading this blog post](/blog/arcade/general-release)**
+
+## [MakeCode with GitHub](/blog/makecode-with-github)
+
+December 19th, 2019 by [Pelikhan](https://github.com/pelikhan)
+
+The latest episode of our GitHub intergration - streamlining the hosting of code
+in GitHub inside of MakeCode!
+**[Continue reading this blog post](/blog/makecode-with-github)**
+
+## [Minecraft Hour of Code](/blog/minecraft/hour-of-code-2019)
+
+December 2nd, 2019 by [Jaqster](https://github.com/jaqster)
+
+If you’ve ever thought about using Minecraft for teaching and learning, but haven’t taken
+the plunge yet, this is a great time to try it out!
+**[Continue reading this blog post](/blog/minecraft/hour-of-code-2019)**
+
 ## [Translations in Context](/blog/translations-in-context)
 
 October 17th, 2019 by [pelikhan](https://github.com/pelikhan)

@@ -14,7 +14,7 @@ TEST_RUNNER_NAME=$2
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PXT_DIR=$DIR/../..
 PXT_BUILD="$PXT_DIR/built"
-RUNNER_IN="$PXT_DIR/node_modules/typescript/lib/typescript.js $PXT_BUILD/pxtlib.js $PXT_BUILD/pxtcompiler.js $PXT_BUILD/pxtpy.js $PXT_BUILD/pxtsim.js $PXT_BUILD/tests/$TEST_FOLDER/$TEST_RUNNER_NAME.js"
+RUNNER_IN="$PXT_DIR/pxtcompiler/ext-typescript/lib/typescript.js $PXT_BUILD/pxtlib.js $PXT_BUILD/pxtcompiler.js $PXT_BUILD/pxtpy.js $PXT_BUILD/pxtsim.js $PXT_BUILD/tests/$TEST_FOLDER/$TEST_RUNNER_NAME.js"
 RUNNER="$PXT_BUILD/tests/$TEST_FOLDER/runner.js"
 
 if ! [ -x "$(command -v fswatch)" ]; then

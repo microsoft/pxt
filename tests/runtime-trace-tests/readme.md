@@ -41,7 +41,7 @@ The chain of tests that are run on each .py file:
 Notice how each test step localizes problems. Also, these tests don't depend on checked-in baselines or asserts, don't care about the syntax that ts2py and py2ts output since this may change over time, and can be written in either .py or .ts depending on which is most appropriate but both .ts and .py files will test each of {STS, py2ts, ts2py}.
 
 ## Adding a test
-Simply add a .ts or .py file to tests/runtime-trace-tests/cases/ that exhibits the behavior you want to test. 
+Simply add a .ts or .py file to tests/runtime-trace-tests/cases/ that exhibits the behavior you want to test.
 
 ### Example: mutating loop variable semantics
 For example, to ensure that ts2py correctly handles for loops where the loop variable is mutated during the loop, you could add a .ts file with:
@@ -51,7 +51,7 @@ for (let i = 0; i < 5; i++) {
     console.log(i)
 }
 ```
-Then run `jake testtraces`.
+Then run `gulp testtraces`.
 At the time of this writing, this test will fail on step #4 mentioned above because ts2py converts the file to:
 ```
 for i in range(5):

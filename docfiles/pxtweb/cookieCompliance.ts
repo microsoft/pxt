@@ -70,6 +70,96 @@ namespace pxt {
     let eventLogger: TelemetryQueue<string, Map<string>, Map<number>>;
     let exceptionLogger: TelemetryQueue<any, string, Map<string>>;
 
+    // performance measuring, added here because this is amongst the first (typescript) code ever executed
+    export namespace perf {
+        export let startTimeMs: number;
+        export let stats: {
+            // name, start, duration
+            durations: [string, number, number][],
+            // name, event
+            milestones: [string, number][]
+        } = {
+            durations: [],
+            milestones: []
+        }
+        export let perfReportLogged = false
+        export function splitMs(): number {
+            return Math.round(performance.now() - startTimeMs)
+        }
+        export function prettyStr(ms: number): string {
+            ms = Math.round(ms)
+            let r_ms = ms % 1000
+            let s = Math.floor(ms / 1000)
+            let r_s = s % 60
+            let m = Math.floor(s / 60)
+            if (m > 0)
+                return `${m}m${r_s}s`
+            else if (s > 5)
+                return `${s}s`
+            else if (s > 0)
+                return `${s}s${r_ms}ms`
+            else
+                return `${ms}ms`
+        }
+        export function splitStr(): string {
+            return prettyStr(splitMs())
+        }
+
+        export function recordMilestone(msg: string, time: number = splitMs()) {
+            stats.milestones.push([msg, time])
+        }
+        export function init() {
+            performance.measure("measure from the start of navigation to now")
+            let navStartMeasure = performance.getEntriesByType("measure")[0]
+            startTimeMs = navStartMeasure.startTime
+            // startTimeMs = performance.timing.navigationStart
+        }
+        export function measureStart(name: string) {
+            performance.mark(`${name} start`)
+        }
+        export function measureEnd(name: string) {
+            if (performance.getEntriesByName(`${name} start`).length) {
+                performance.mark(`${name} end`)
+                performance.measure(`${name} elapsed`, `${name} start`, `${name} end`)
+                let e = performance.getEntriesByName(`${name} elapsed`, "measure")
+                if (e && e.length === 1) {
+                    let measure = e[0]
+                    let durMs = measure.duration
+                    if (durMs > 10) {
+                        stats.durations.push([name, measure.startTime, durMs])
+                    }
+                }
+                performance.clearMarks(`${name} start`)
+                performance.clearMarks(`${name} end`)
+                performance.clearMeasures(`${name} elapsed`)
+            }
+        }
+        export function report() {
+            let report = `performance report:\n`
+            for (let [msg, time] of stats.milestones) {
+                let pretty = prettyStr(time)
+                report += `\t\t${msg} @ ${pretty}\n`
+            }
+            report += `\n`
+            for (let [msg, start, duration] of stats.durations) {
+                if (duration > 50) {
+                    let pretty = prettyStr(duration)
+                    report += `\t\t${msg} took ~ ${pretty}`
+                    if (duration > 1000) {
+                        report += ` (${prettyStr(start)} - ${prettyStr(start + duration)})`
+                    }
+                    report += `\n`
+                }
+            }
+            console.log(report)
+            perfReportLogged = true
+        }
+        (function () {
+            init()
+            recordMilestone("first JS running")
+        })()
+    }
+
     export function initAnalyticsAsync() {
         if (isNativeApp() || shouldHideCookieBanner()) {
             initializeAppInsightsInternal(true);
@@ -143,7 +233,7 @@ namespace pxt {
         // Warning: app.tsx overwrites the hash after reading the language so this needs
         // to be called before that happens
         const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-        return mlang ? mlang[2] : ((navigator as any).userLanguage || navigator.language);
+        return (mlang ? mlang[2] : ((navigator as any).userLanguage || navigator.language)) || "en";
     }
 
     function getCookieBannerAsync(domain: string, locale: string, cb: Callback<CookieBannerInfo>) {

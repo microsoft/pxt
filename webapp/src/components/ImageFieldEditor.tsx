@@ -13,17 +13,13 @@ export interface ImageFieldEditorState {
     galleryFilter?: string;
 }
 
-interface GalleryItem {
-    qName: string;
-    src: string;
-    alt: string;
-    tags: string[];
-}
+export type ImageType = pxt.sprite.Bitmap | pxt.sprite.ImageState;
 
-export class ImageFieldEditor extends React.Component<ImageFieldEditorProps, ImageFieldEditorState> implements FieldEditorComponent {
+export class ImageFieldEditor<U extends ImageType> extends React.Component<ImageFieldEditorProps, ImageFieldEditorState> implements FieldEditorComponent<U> {
     protected blocksInfo: pxtc.BlocksInfo;
     protected ref: ImageEditor;
     protected closeEditor: () => void;
+    protected options: any;
 
     constructor(props: ImageFieldEditorProps) {
         super(props);
@@ -48,18 +44,12 @@ export class ImageFieldEditor extends React.Component<ImageFieldEditorProps, Ima
                 </div>
             </div>
             <div className="image-editor-gallery-content">
-                <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} />
+                <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} />
                 <ImageEditorGallery
-                    items={this.blocksInfo && getGalleryItems(this.blocksInfo, "Image")}
+                    items={this.blocksInfo && pxt.sprite.getGalleryItems(this.blocksInfo, "Image")}
                     hidden={!this.state.galleryVisible}
                     filterString={this.state.galleryFilter}
                     onItemSelected={this.onGalleryItemSelect} />
-                {!this.state.galleryVisible && <button
-                    className={`image-editor-confirm ui small button ${this.props.singleFrame ? "" : "animation"}`}
-                    title={lf("Done")}
-                    onClick={this.onDoneClick}>
-                        {lf("Done")}
-                </button>}
             </div>
         </div>
     }
@@ -73,13 +63,19 @@ export class ImageFieldEditor extends React.Component<ImageFieldEditorProps, Ima
         tickImageEditorEvent("image-editor-hidden");
     }
 
-    init(value: string, close: () => void, options?: any) {
+    init(value: U, close: () => void, options?: any) {
         this.closeEditor = close;
+        this.options = options;
         if (this.props.singleFrame) {
-            this.initSingleFrame(value, options);
+            let bitmap = value as pxt.sprite.Bitmap;
+            if (bitmap.height == 0 || bitmap.width == 0) {
+                // Default to 16 x 16 if image is empty
+                bitmap = new pxt.sprite.Bitmap(16, 16);
+            }
+            this.initSingleFrame(bitmap, options);
         }
         else {
-            this.initAnimation(value, options);
+            this.initAnimation(value as any, options);
         }
 
         if (options) {
@@ -95,9 +91,9 @@ export class ImageFieldEditor extends React.Component<ImageFieldEditorProps, Ima
 
     getValue() {
         if (this.ref) {
-            return this.props.singleFrame ? this.ref.getCurrentFrame() : (this.ref.getAllFrames() + this.ref.getInterval());
+            return (this.props.singleFrame ? this.ref.getCurrentFrame() : this.ref.getAnimation()) as U;
         }
-        return "";
+        return null;
     }
 
     getPersistentData() {
@@ -111,6 +107,10 @@ export class ImageFieldEditor extends React.Component<ImageFieldEditorProps, Ima
     restorePersistentData(oldValue: any) {
         if (this.ref) {
             this.ref.restorePersistentData(oldValue);
+
+            if (this.options && this.options.disableResize) {
+                this.ref.disableResize();
+            }
         }
     }
 
@@ -120,27 +120,27 @@ export class ImageFieldEditor extends React.Component<ImageFieldEditorProps, Ima
         }
     }
 
-    protected initSingleFrame(value: string, options?: any) {
-        let bitmap = pxt.sprite.imageLiteralToBitmap(value);
+    protected initSingleFrame(value: pxt.sprite.Bitmap, options?: any) {
+        this.ref.initSingleFrame(value);
 
-        if (bitmap.width === 0 || bitmap.height === 0) {
-            bitmap = new pxt.sprite.Bitmap(options.initWidth || 16, options.initHeight || 16)
+        if (options.disableResize) {
+            this.ref.disableResize();
         }
-
-        this.ref.initSingleFrame(bitmap);
     }
 
-    protected initAnimation(value: string, options?: any) {
-        const frameString = value.substring(0, value.lastIndexOf("]") + 1);
-        const intervalString = value.substring(frameString.length);
-
-        let frames = parseImageArrayString(frameString);
-
-        if (!frames || !frames.length || frames[0].width === 0 && frames[0].height === 0) {
-            frames = [new pxt.sprite.Bitmap(options.initWidth || 16, options.initHeight || 16)];
+    protected initAnimation(value: pxt.sprite.AnimationData, options?: any) {
+        if (!value) {
+            value = {
+                frames: [new pxt.sprite.Bitmap(16, 16).data()],
+                interval: 100
+            };
         }
 
-        this.ref.initAnimation(frames, Number(intervalString));
+        this.ref.initAnimation(value.frames.map(b => pxt.sprite.Bitmap.fromData(b)), value.interval);
+
+        if (options.disableResize) {
+            this.ref.disableResize();
+        }
     }
 
     protected toggleGallery = () => {
@@ -155,9 +155,9 @@ export class ImageFieldEditor extends React.Component<ImageFieldEditorProps, Ima
         });
     }
 
-    protected onGalleryItemSelect = (item: GalleryItem) => {
+    protected onGalleryItemSelect = (item: pxt.sprite.GalleryItem) => {
         if (this.ref) {
-            this.ref.setCurrentFrame(getBitmap(this.blocksInfo, item.qName));
+            this.ref.setCurrentFrame(pxt.sprite.getBitmap(this.blocksInfo, item.qName));
         }
 
         tickImageEditorEvent("gallery-selection");
@@ -173,9 +173,9 @@ export class ImageFieldEditor extends React.Component<ImageFieldEditorProps, Ima
 }
 
 interface ImageEditorGalleryProps {
-    items?: GalleryItem[];
+    items?: pxt.sprite.GalleryItem[];
     hidden: boolean;
-    onItemSelected: (item: GalleryItem) => void;
+    onItemSelected: (item: pxt.sprite.GalleryItem) => void;
     filterString?: string;
 }
 
@@ -186,7 +186,7 @@ class ImageEditorGallery extends React.Component<ImageEditorGalleryProps, {}> {
         let { items, hidden, filterString } = this.props;
 
         if (filterString) {
-            items = filterItems(items, filterString.split(" "));
+            items = pxt.sprite.filterItems(items, filterString.split(" "));
         }
 
         return <div className={`image-editor-gallery ${items && !hidden ? "visible" : ""}`}>
@@ -211,7 +211,7 @@ class ImageEditorGallery extends React.Component<ImageEditorGalleryProps, {}> {
                 let { items, onItemSelected, filterString, hidden } = this.props;
 
                 if (filterString) {
-                    items = filterItems(items, filterString.split(" "));
+                    items = pxt.sprite.filterItems(items, filterString.split(" "));
                 }
 
                 if (!hidden && items && items[index]) {
@@ -222,126 +222,6 @@ class ImageEditorGallery extends React.Component<ImageEditorGalleryProps, {}> {
 
         return this.handlers[index];
     }
-}
-
-function getBitmap(blocksInfo: pxtc.BlocksInfo, qName: string) {
-    const sym = blocksInfo.apis.byQName[qName];
-    const jresURL = sym.attributes.jresURL;
-    let data = atob(jresURL.slice(jresURL.indexOf(",") + 1))
-    let magic = data.charCodeAt(0);
-    let w = data.charCodeAt(1);
-    let h = data.charCodeAt(2);
-
-    if (magic === 0x87) {
-        magic = 0xe0 | data.charCodeAt(1);
-        w = data.charCodeAt(2) | (data.charCodeAt(3) << 8);
-        h = data.charCodeAt(4) | (data.charCodeAt(5) << 8);
-        data = data.slice(4);
-    }
-
-    const out = new pxt.sprite.Bitmap(w, h);
-
-    let index = 4
-    if (magic === 0xe1) {
-        // Monochrome
-        let mask = 0x01
-        let v = data.charCodeAt(index++)
-        for (let x = 0; x < w; ++x) {
-            for (let y = 0; y < h; ++y) {
-                out.set(x, y, (v & mask) ? 1 : 0);
-                mask <<= 1
-                if (mask == 0x100) {
-                    mask = 0x01
-                    v = data.charCodeAt(index++)
-                }
-            }
-        }
-    }
-    else {
-        // Color
-        for (let x = 0; x < w; x++) {
-            for (let y = 0; y < h; y += 2) {
-                let v = data.charCodeAt(index++)
-                out.set(x, y, v & 0xf);
-                if (y != h - 1) {
-                    out.set(x, y + 1, (v >> 4) & 0xf);
-                }
-            }
-            while (index & 3) index++
-        }
-    }
-
-    return out;
-}
-
-function filterItems(target: GalleryItem[], tags: string[]) {
-    tags = tags
-        .filter(el => !!el)
-        .map(el => el.toLowerCase());
-    const includeTags = tags
-        .filter(tag => tag.indexOf("!") !== 0);
-    const excludeTags = tags
-        .filter(tag => tag.indexOf("!") === 0 && tag.length > 1)
-        .map(tag => tag.substring(1));
-
-    return target.filter(el => checkInclude(el) && checkExclude(el));
-
-    function checkInclude(item: GalleryItem) {
-        return includeTags.every(filterTag => {
-            const optFilterTag = `?${filterTag}`;
-            return item.tags.some(tag =>
-                tag === filterTag || tag === optFilterTag
-            )
-        });
-    }
-
-    function checkExclude(item: GalleryItem) {
-        return excludeTags.every(filterTag =>
-            !item.tags.some(tag => tag === filterTag)
-        );
-    }
-}
-
-function getGalleryItems(blocksInfo: pxtc.BlocksInfo, qName: string): GalleryItem[] {
-    const syms = getFixedInstanceDropdownValues(blocksInfo.apis, qName);
-    generateIcons(syms);
-
-    return syms.map(sym => {
-        const splitTags = (sym.attributes.tags || "")
-            .toLowerCase()
-            .split(" ")
-            .filter(el => !!el);
-
-        return {
-            qName: sym.qName,
-            src: sym.attributes.iconURL,
-            alt: sym.qName,
-            tags: splitTags
-        };
-    });
-}
-
-function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string) {
-    return pxt.Util.values(apis.byQName).filter(sym => sym.kind === pxtc.SymbolKind.Variable
-        && sym.attributes.fixedInstance
-        && isSubtype(apis, sym.retType, qName));
-}
-
-function isSubtype(apis: pxtc.ApisInfo, specific: string, general: string) {
-    if (specific == general) return true
-    let inf = apis.byQName[specific]
-    if (inf && inf.extendsTypes)
-        return inf.extendsTypes.indexOf(general) >= 0
-    return false
-}
-
-function generateIcons(instanceSymbols: pxtc.SymbolInfo[]) {
-    const imgConv = new pxt.ImageConverter();
-    instanceSymbols.forEach(v => {
-        if (v.attributes.jresURL && !v.attributes.iconURL && v.attributes.jresURL.indexOf("data:image/x-mkcd-f") == 0) {
-            v.attributes.iconURL = imgConv.convert(v.attributes.jresURL)
-        }
-    });
 }
 
 function tickImageEditorEvent(event: string) {

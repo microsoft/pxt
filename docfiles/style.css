@@ -94,7 +94,11 @@ code.lang-cards::before,
 code.lang-namespaces::before,
 code.lang-codecard::before,
 code.lang-shadow::before,
-code.lang-spy::before
+code.lang-spy::before,
+code.lang-diff::before,
+code.lang-diffspy::before,
+code.lang-diffblocks::before,
+code.lang-apis::before
 {
     content:"...";
     position: absolute;
@@ -111,7 +115,11 @@ code.lang-cards,
 code.lang-namespaces,
 code.lang-codecard,
 code.lang-shadow,
-code.lang-spy
+code.lang-spy,
+code.lang-diff,
+code.lang-diffspy,
+code.lang-diffblocks,
+code.lang-apis
 {
     background-color: rgba(0,0,0,0.04);
     color:transparent;
@@ -155,6 +163,11 @@ svg {
 .mainbody {
     margin-top: 2em;
     padding-bottom: 3em;
+}
+
+#docs .mainbody table {
+    display: block;
+    overflow-x: auto;
 }
 
 #accessibleMenu .ui.item.link {
@@ -207,6 +220,15 @@ svg {
     justify-content: space-between;
     align-items: center;
 }
+
+#docs h1, #docs h2,
+#docs h3, #docs h4,
+#docs h5, #docs h6 {
+    /* keep this aligned with top bar menu height;
+    add .5em to keep a small margin*/
+    scroll-margin-top: 4em;
+}
+
 /* first children are left & right div wrappers */
 .fixed.menu div {
     display:flex;
@@ -331,6 +353,30 @@ svg {
 
 .showmobile {
     display: none;
+}
+
+.docs.footer.inverted a.item {
+    color: rgba(114, 163, 211, 1.0);
+}
+.docs.footer.inverted a.item i.icon {
+    color: rgba(255, 255, 255, .6);
+}
+
+.docs.footer.inverted a.item:hover i.icon,
+.docs.footer.inverted a.item:focus i.icon {
+    color: rgba(255, 255, 255, 0.8);
+}
+.docs.footer.inverted .divider {
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.docs.footer.inverted .ui.divided.horizontal.list > .item:not(:first-child) {
+    border-left: 1px solid rgba(255, 255, 255, .4);
+}
+
+.docs.footer.inverted span.item {
+    color: rgba(255, 255, 255, .6);
 }
 
 @media only screen and (max-width: 1144px) {

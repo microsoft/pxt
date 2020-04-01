@@ -88,8 +88,8 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                 closeOnDocumentClick
                 closeOnEscape
             >
-                <div className="group">
-                    <div className="ui cards centered" role="listbox">
+                <div id="langmodal">
+                    <div id="availablelocales" className="ui cards centered" role="listbox">
                         {languageList.map(langId => {
                             const lang = pxt.Util.allLanguages[langId];
                             return <LanguageCard
@@ -103,13 +103,12 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                             }
                         )}
                     </div>
+                    {targetTheme.crowdinProject ?
+                        <div className="ui" id="langmodalfooter">
+                            <sui.Link aria-label={lf("How do I add a new language?")} href="/translate" text={lf("How do I add a new language?")} target="_blank" />
+                            {!pxt.BrowserUtils.isIE() && <sui.Button aria-label={lf("Translate the editor")} onClick={this.translateEditor} text={lf("Translate the editor")} /> }
+                        </div> : undefined}
                 </div>
-                <br/>
-                {targetTheme.crowdinProject ?
-                    <div className="ui">
-                        {!pxt.BrowserUtils.isIE() ? <sui.Button aria-label={lf("Translate the editor")} onClick={this.translateEditor} text={lf("Translate the editor")} /> : undefined }
-                        <sui.Link className="button" role="button" aria-label={lf("Learn about translations")} href="/translate" text={lf("Learn about translations")} target="_blank" />
-                    </div> : undefined}
             </sui.Modal>
         );
     }
@@ -137,7 +136,7 @@ class LanguageCard extends sui.StatelessUIElement<LanguageCardProps> {
 
     renderCore() {
         const { name, ariaLabel, description } = this.props;
-        return <codecard.CodeCardView className={`card-selected`}
+        return <codecard.CodeCardView className={`card-selected langoption`}
             name={name}
             ariaLabel={ariaLabel}
             role="link"

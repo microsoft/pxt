@@ -1,4 +1,3 @@
-/// <reference path="./testBlocks/enums.ts" />
 
 enum EnumWithStart {
     G,

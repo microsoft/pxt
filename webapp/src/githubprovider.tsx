@@ -15,6 +15,8 @@ export class GithubProvider extends cloudsync.ProviderBase {
     logout() {
         pxt.github.token = undefined;
         super.logout();
+
+        window.location.href = "https://github.com/logout";
     }
 
     hasSync(): boolean {
@@ -30,26 +32,92 @@ export class GithubProvider extends cloudsync.ProviderBase {
     }
 
     loginAsync(redirect?: boolean, silent?: boolean): Promise<cloudsync.ProviderLoginResponse> {
+        return this.routedLoginAsync(undefined);
+    }
+
+    routedLoginAsync(route: string) {
         this.loginCheck()
         let p = Promise.resolve();
         if (!this.token()) {
-            // auth flow
-            const cl = pxt.appTarget && pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders && pxt.appTarget.cloud.cloudProviders[this.name];
-            if (cl)
-                p = p.then(() => this.oauthLoginAsync());
-            else
-                p = p.then(() => this.showGithubLoginAsync());
+            p = p.then(() => this.showLoginAsync(route));
         }
         return p.then(() => { return { accessToken: this.token() } as cloudsync.ProviderLoginResponse; });
-
     }
 
-    private oauthLoginAsync(): Promise<void> {
-        core.showLoading("ghlogin", lf("Logging you in to GitHub..."))
+    private showLoginAsync(route: string): Promise<void> {
+        pxt.tickEvent("github.login.dialog");
+        // auth flow if github provider is prsent
+        const oAuthSupported = pxt.appTarget
+            && pxt.appTarget.cloud
+            && pxt.appTarget.cloud.cloudProviders
+            && !!pxt.appTarget.cloud.cloudProviders[this.name];
+
+        let useToken = !oAuthSupported;
+        let form: HTMLElement;
+        return core.confirmAsync({
+            header: lf("Sign in with GitHub"),
+            hideCancel: true,
+            hasCloseIcon: true,
+            helpUrl: "/github",
+            agreeLbl: lf("Sign in"),
+            onLoaded: (el) => {
+                form = el;
+            },
+            jsxd: () => <div className="ui form">
+                <p>{lf("You need to sign in with GitHub to use this feature.")}</p>
+                <p>{lf("You can host your code on GitHub and collaborate with friends on projects.")}</p>
+                {!useToken && <p className="ui small">
+                    {lf("Looking to use a Developer token instead?")}
+                    <sui.Link className="link" text={lf("Click here")} onClick={showToken} />
+                </p>}
+                {useToken && <ol>
+                    <li>
+                        {lf("Navigate to: ")}
+                        <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer">
+                            {lf("GitHub token generation page")}
+                        </a>
+                    </li>
+                    <li>
+                        {lf("Put something like 'MakeCode {0}' in description", pxt.appTarget.name)}
+                    </li>
+                    <li>
+                        {lf("Select either '{0}' or '{1}' scope, depending which repos you want to edit from here", "repo", "public_repo")}
+                    </li>
+                    <li>
+                        {lf("Click generate token, copy it, and paste it below.")}
+                    </li>
+                </ol>}
+                {useToken && <div className="ui field">
+                    <label id="selectUrlToOpenLabel">{lf("Paste GitHub token here:")}</label>
+                    <input type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder="0123abcd..." className="ui blue fluid"></input>
+                </div>}
+            </div>,
+        }).then(res => {
+            if (!res) {
+                pxt.tickEvent("github.login.cancel");
+                return Promise.resolve()
+            } else {
+                if (useToken) {
+                    const input = form.querySelectorAll('input')[0] as HTMLInputElement;
+                    const hextoken = input.value.trim();
+                    return this.saveAndValidateTokenAsync(hextoken);
+                }
+                else {
+                    return this.oauthRedirectAsync(route);
+                }
+            }
+        })
+
+        function showToken() {
+            useToken = true;
+            core.forceUpdate();
+        }
+    }
+
+    private oauthRedirectAsync(route: string): Promise<void> {
+        core.showLoading("ghlogin", lf("Signing you into GitHub..."))
+        const state = cloudsync.setOauth(this.name, route ? `#github:${route}` : undefined);
         const self = window.location.href.replace(/#.*/, "")
-        const state = ts.pxtc.Util.guidGen();
-        pxt.storage.setLocal("oauthState", state)
-        pxt.storage.setLocal("oauthType", this.name)
         const login = pxt.Cloud.getServiceUrl() +
             "/oauth/login?state=" + state +
             "&response_type=token&client_id=gh-token&redirect_uri=" +
@@ -82,54 +150,6 @@ export class GithubProvider extends cloudsync.ProviderBase {
     setNewToken(token: string) {
         super.setNewToken(token);
         pxt.github.token = token;
-    }
-
-    private showGithubLoginAsync() {
-        pxt.tickEvent("github.token.dialog");
-        let input: HTMLInputElement;
-        return core.confirmAsync({
-            header: lf("Sign in to GitHub"),
-            hideCancel: true,
-            hasCloseIcon: true,
-            helpUrl: "/github/token",
-            onLoaded: (el) => {
-                input = el.querySelectorAll('input')[0] as HTMLInputElement;
-            },
-            jsx: <div className="ui form">
-                <p>{lf("Host your code on GitHub and work together with friends on projects.")}
-                    {sui.helpIconLink("/github", lf("Learn more about GitHub"))}</p>
-                <p>{lf("You will need a GitHub token:")}</p>
-                <ol>
-                    <li>
-                        {lf("Navigate to: ")}
-                        <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer">
-                            {lf("GitHub token generation page")}
-                        </a>
-                    </li>
-                    <li>
-                        {lf("Put something like 'MakeCode {0}' in description", pxt.appTarget.name)}
-                    </li>
-                    <li>
-                        {lf("Select either '{0}' or '{1}' scope, depending which repos you want to edit from here", "repo", "public_repo")}
-                    </li>
-                    <li>
-                        {lf("Click generate token, copy it, and paste it below.")}
-                    </li>
-                </ol>
-                <div className="ui field">
-                    <label id="selectUrlToOpenLabel">{lf("Paste GitHub token here:")}</label>
-                    <input type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder="0123abcd..." className="ui blue fluid"></input>
-                </div>
-            </div>,
-        }).then(res => {
-            if (!res) {
-                pxt.tickEvent("github.token.cancel");
-                return Promise.resolve()
-            } else {
-                const hextoken = input.value.trim();
-                return this.saveAndValidateTokenAsync(hextoken);
-            }
-        })
     }
 
     private saveAndValidateTokenAsync(hextoken: string): Promise<void> {
@@ -172,7 +192,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
 
     async createRepositoryAsync(projectName: string, header: pxt.workspace.Header): Promise<boolean> {
         pxt.tickEvent("github.filelist.create.start");
-        await this.loginAsync();
+        await this.routedLoginAsync(`create-repository:${header.id}`)
         if (!this.token()) {
             pxt.tickEvent("github.filelist.create.notoken");
             return false;

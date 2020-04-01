@@ -3,14 +3,14 @@
 namespace pxt.editor {
     const fieldEditorId = "image-editor";
 
-    export class MonacoReactFieldEditor implements MonacoFieldEditor {
+    export class MonacoReactFieldEditor<U> implements MonacoFieldEditor {
         private resolver: (edit: TextEdit) => void;
         private rejecter: (err?: any) => void;
 
         protected fileType: pxt.editor.FileType;
         protected editrange: monaco.Range;
         protected host: MonacoFieldEditorHost;
-        protected fv: pxt.react.FieldEditorView;
+        protected fv: pxt.react.FieldEditorView<U>;
 
         getId() {
             return fieldEditorId;
@@ -52,12 +52,12 @@ namespace pxt.editor {
             this.onClosed();
         }
 
-        protected textToValue(text: string): any {
-            return text
+        protected textToValue(text: string): U {
+            return null
         }
 
-        protected resultToText(result: string): string {
-            return result;
+        protected resultToText(result: U): string {
+            return result + "";
         }
 
         protected getFieldEditorId() {

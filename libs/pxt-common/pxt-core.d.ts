@@ -82,7 +82,7 @@ interface Array<T> {
       */
     //% helper=arrayJoin weight=40
     join(sep?: string): string;
-    
+
     /**
       * Tests whether at least one element in the array passes the test implemented by the provided function.
       * @param callbackfn A function that accepts up to two arguments. The some method calls the callbackfn function one time for each element in the array.
@@ -96,7 +96,7 @@ interface Array<T> {
       */
     //% helper=arrayEvery weight=40
     every(callbackfn: (value: T, index: number) => boolean): boolean;
-    
+
     /**
       * Sort the elements of an array in place and returns the array. The sort is not necessarily stable.
       * @param specifies a function that defines the sort order. If omitted, the array is sorted according to the prmitive type
@@ -117,7 +117,7 @@ interface Array<T> {
       */
     //% helper=arrayForEach weight=40
     forEach(callbackfn: (value: T, index: number) => void): void;
-    
+
     /**
       * Return the elements of an array that meet the condition specified in a callback function.
       * @param callbackfn A function that accepts up to two arguments. The filter method calls the callbackfn function one time for each element in the array.
@@ -130,10 +130,10 @@ interface Array<T> {
       */
     //% helper=arrayFill weight=39
     fill(value: T, start?: number, end?: number): T[];
-    
+
     /**
      * Returns the value of the first element in the array that satisfies the provided testing function. Otherwise undefined is returned.
-     * @param callbackfn 
+     * @param callbackfn
      */
     //% helper=arrayFind weight=40
     find(callbackfn: (value: T, index: number) => boolean): T;
@@ -250,6 +250,26 @@ declare interface String {
     substr(start: number, length?: number): string;
 
     /**
+     * Return the current string with the first occurence of toReplace
+     * replaced with the replacer
+     * @param toReplace the substring to replace in the current string
+     * @param replacer either the string that replaces toReplace in the current string,
+     *                or a function that accepts the substring and returns the replacement string.
+     */
+    //% helper=stringReplace
+    replace(toReplace: string, replacer: string | ((sub: string) => string)): string;
+
+    /**
+     * Return the current string with each occurence of toReplace
+     * replaced with the replacer
+     * @param toReplace the substring to replace in the current string
+     * @param replacer either the string that replaces toReplace in the current string,
+     *                or a function that accepts the substring and returns the replacement string.
+     */
+    //% helper=stringReplaceAll
+    replaceAll(toReplace: string, replacer: string | ((sub: string) => string)): string;
+
+    /**
      * Return a substring of the current string.
      * @param start first character index; can be negative from counting from the end, eg:0
      * @param end one-past-last character index
@@ -287,8 +307,8 @@ declare interface String {
 
     /**
      * Splits the string according to the separators
-     * @param separator 
-     * @param limit 
+     * @param separator
+     * @param limit
      */
     //% helper=stringSplit
     //% help=text/split

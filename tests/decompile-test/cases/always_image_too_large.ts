@@ -1,4 +1,3 @@
-/// <reference path="./testBlocks/mb.ts" />
 let item = images.createBigImage(`
     . . . . .   . . . . .   . . . . .
     . # # # .   . # # # .   . # # # .

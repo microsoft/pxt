@@ -6,6 +6,14 @@ The default language is currently always English.
 Our translations are managed by Crowdin, a translation management platform. It is free to join
 and you can volunteer to translate parts of the web site.
 
+### ~ hint
+
+#### Check the FAQ first
+
+Just need a quick answer to a translation question? You can check the [FAQ](#faq) first.
+
+### ~
+
 ## Crowdin project
 
 The Crowdin translation project below contains both the resources and menu items from @homeurl@.
@@ -268,7 +276,7 @@ Also, the language will only be available in the editor's language selection if 
 
 ### Tutorials
 
-Tutorials are markdown pages that follow a very specific format. This is so that the tutorial engine can read the individual sections and build a proper list of steps for them. Be aware that there are some macros that are unique to tutorials and you should not translate them. These are:
+Tutorials are markdown pages that follow a very specific format. This is so that the tutorial engine can read the individual sections and build a proper list of steps for them. Be aware that there are some macros that are unique to tutorials and you should not translate them. Some of these are:
 
 * ``@fullscreen``
 * ``@unplugged``
@@ -280,3 +288,25 @@ Tutorials are markdown pages that follow a very specific format. This is so that
 * Do not reorder parameters
 * Maintain the same order and spacing of all ``|`` and ``%variable`` names in the block text
 > Note: If the order of the ``%variable`` names reads poorly in the translated language, it's possible change the order if there are no ``|`` symbols and you use ``$`` instead of ``%`` as a prefix for the variable.
+
+## FAQ
+
+Here are answers to some common questions about localization and translation in Crowdin.
+
+### Do I translate those names with special characters in the block strings?
+
+No, leave the words connected to `$`, `%`, `=`, etc. untranslated. These are parameter names and need to remain as they are. Also, the `|` is a separator character and is NOT translated. In this example, two untranslated strings in Crowdin appear like this:
+
+```
+serial|redirect to|TX %tx|RX %rx|at baud rate %rate
+serial set rx buffer size to $size
+serial|write buffer %buffer=serial_readbuffer
+```
+
+Here, you can translate `serial`, `redirect to`, `set`, `buffer`, `write`, `size`, and `to`.
+
+The words `%tx`, `%rx`, `%rate` `$size`, and `%buffer=serialbuffer` stay the same and are NOT translated.
+
+### What about the text inside the '{ }'
+
+The text inside `{ }` such as `{0:s}` and `{id:name}` is left alone and NOT translated.

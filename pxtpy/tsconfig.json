@@ -18,6 +18,7 @@
         "types": [
             "fuse",
             "bluebird"
-        ]
+        ],
+        "incremental": true
     }
 }

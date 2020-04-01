@@ -179,7 +179,7 @@ namespace ts.pxtc.Util {
             return new Promise<string>((resolve, reject) => {
                 let reader = new FileReader();
                 reader.onerror = (ev) => resolve(null);
-                reader.onload = (ev) => resolve(reader.result);
+                reader.onload = (ev) => resolve(reader.result as string);
                 reader.readAsText(f);
             });
         }
@@ -862,13 +862,14 @@ namespace ts.pxtc.Util {
         // hitting the cloud
         function downloadFromCloudAsync(strings?: pxt.Map<string>) {
             pxt.debug(`downloading translations for ${lang} ${filename} ${branch || ""}`);
+            let host = pxt.BrowserUtils.isLocalHost() || pxt.webConfig.isStatic ? "https://makecode.com/api/" : ""
             // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
-            let url = `${pxt.BrowserUtils.isLocalHost() || pxt.webConfig.isStatic ? "https://makecode.com" : ""}/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
+            let url = `${host}translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
             if (branch) url += '&branch=' + encodeURIComponent(branch);
             const headers: pxt.Map<string> = {};
-            if (etag) headers["If-None-Match"] = etag;
-            return requestAsync({ url, headers }).then(resp => {
-                // if 304, translation not changed, skipe
+            if (etag && !pxt.Cloud.useCdnApi()) headers["If-None-Match"] = etag;
+            return (host ? requestAsync : pxt.Cloud.apiRequestWithCdnAsync)({ url, headers }).then(resp => {
+                // if 304, translation not changed, skip
                 if (resp.statusCode == 304 || resp.statusCode == 200) {
                     // store etag and translations
                     etag = resp.headers["etag"] as string || "";
@@ -910,10 +911,15 @@ namespace ts.pxtc.Util {
         localizedName: string;
     }
 
+    // "lang-code": { englishName: "", localizedName: ""},
+    // Crowdin code: https://support.crowdin.com/api/language-codes/
+    // English name and localized name: https://en.wikipedia.org/wiki/List_of_language_names
     export const allLanguages: pxt.Map<Language> = {
         "af": { englishName: "Afrikaans", localizedName: "Afrikaans" },
         "ar": { englishName: "Arabic", localizedName: "العربية" },
+        "az": { englishName: "Azerbaijani", localizedName: "آذربایجان دیلی" },
         "bg": { englishName: "Bulgarian", localizedName: "български" },
+        "bn": { englishName: "Bengali", localizedName: "বাংলা" },
         "ca": { englishName: "Catalan", localizedName: "Català" },
         "cs": { englishName: "Czech", localizedName: "Čeština" },
         "da": { englishName: "Danish", localizedName: "Dansk" },
@@ -922,9 +928,13 @@ namespace ts.pxtc.Util {
         "en": { englishName: "English", localizedName: "English" },
         "es-ES": { englishName: "Spanish (Spain)", localizedName: "Español (España)" },
         "es-MX": { englishName: "Spanish (Mexico)", localizedName: "Español (México)" },
+        "et": { englishName: "Estonian", localizedName: "Eesti" },
+        "eu": { englishName: "Basque", localizedName: "Euskara" },
+        "fa": { englishName: "Persian", localizedName: "فارسی" },
         "fi": { englishName: "Finnish", localizedName: "Suomi" },
         "fr": { englishName: "French", localizedName: "Français" },
         "fr-CA": { englishName: "French (Canada)", localizedName: "Français (Canada)" },
+        "gu-IN": { englishName: "Gujarati", localizedName: "ગુજરાતી" },
         "he": { englishName: "Hebrew", localizedName: "עברית" },
         "hr": { englishName: "Croatian", localizedName: "Hrvatski" },
         "hu": { englishName: "Hungarian", localizedName: "Magyar" },
@@ -933,11 +943,19 @@ namespace ts.pxtc.Util {
         "is": { englishName: "Icelandic", localizedName: "Íslenska" },
         "it": { englishName: "Italian", localizedName: "Italiano" },
         "ja": { englishName: "Japanese", localizedName: "日本語" },
+        "kab": { englishName: "Kabyle", localizedName: "شئعم" },
         "ko": { englishName: "Korean", localizedName: "한국어" },
+        "kmr": { englishName: "Kurmanji (Kurdish)", localizedName: "کورمانجی‎" },
+        "kn": { englishName: "Kannada", localizedName: "ಕನ್ನಡ" },
         "lt": { englishName: "Lithuanian", localizedName: "Lietuvių" },
+        "lv": { englishName: "Latvian", localizedName: "Latviešu" },
+        "ml-IN": { englishName: "Malayalam", localizedName: "മലയാളം" },
+        "mr": { englishName: "Marathi", localizedName: "मराठी" },
         "nl": { englishName: "Dutch", localizedName: "Nederlands" },
         "no": { englishName: "Norwegian", localizedName: "Norsk" },
         "nb": { englishName: "Norwegian Bokmal", localizedName: "Norsk bokmål" },
+        "nn-NO": { englishName: "Norwegian Nynorsk", localizedName: "Norsk nynorsk" },
+        "pa-IN": { englishName: "Punjabi", localizedName: "ਪੰਜਾਬੀ" },
         "pl": { englishName: "Polish", localizedName: "Polski" },
         "pt-BR": { englishName: "Portuguese (Brazil)", localizedName: "Português (Brasil)" },
         "pt-PT": { englishName: "Portuguese (Portugal)", localizedName: "Português (Portugal)" },
@@ -947,10 +965,16 @@ namespace ts.pxtc.Util {
         "sk": { englishName: "Slovak", localizedName: "Slovenčina" },
         "sl": { englishName: "Slovenian", localizedName: "Slovenski" },
         "sr": { englishName: "Serbian", localizedName: "Srpski" },
+        "su": { englishName: "Sundanese", localizedName: "ᮘᮞ ᮞᮥᮔ᮪ᮓ" },
         "sv-SE": { englishName: "Swedish (Sweden)", localizedName: "Svenska (Sverige)" },
         "ta": { englishName: "Tamil", localizedName: "தமிழ்" },
+        "te": { englishName: "Telugu", localizedName: "తెలుగు" },
+        "th": { englishName: "Thai", localizedName: "ภาษาไทย" },
+        "tl": { englishName: "Tagalog", localizedName: "ᜏᜒᜃᜅ᜔ ᜆᜄᜎᜓᜄ᜔" },
         "tr": { englishName: "Turkish", localizedName: "Türkçe" },
         "uk": { englishName: "Ukrainian", localizedName: "Українська" },
+        "ur-IN": { englishName: "Urdu (India)", localizedName: "اردو (ہندوستان)" },
+        "ur-PK": { englishName: "Urdu (Pakistan)", localizedName: "اردو (پاکستان)" },
         "vi": { englishName: "Vietnamese", localizedName: "Tiếng việt" },
         "zh-CN": { englishName: "Chinese (Simplified)", localizedName: "简体中文" },
         "zh-TW": { englishName: "Chinese (Traditional)", localizedName: "繁体中文" },

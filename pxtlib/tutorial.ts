@@ -10,10 +10,43 @@ namespace pxt.tutorial {
             return undefined; // error parsing steps
 
         // collect code and infer editor
+        const { code, templateCode, editor, language } = computeBodyMetadata(body);
+
+        if (!metadata.noDiffs
+            && (
+                (editor == pxt.BLOCKS_PROJECT_NAME && pxt.appTarget.appTheme.tutorialBlocksDiff)  //blocks enabled always
+                || (editor != pxt.BLOCKS_PROJECT_NAME && pxt.appTarget.appTheme.tutorialTextDiff) // text enabled always
+            )
+        )
+            diffify(steps, activities);
+
+        // strip hidden snippets
+        steps.forEach(step => {
+            step.contentMd = stripHiddenSnippets(step.contentMd)
+            step.headerContentMd = stripHiddenSnippets(step.headerContentMd)
+            step.hintContentMd = stripHiddenSnippets(step.hintContentMd);
+        });
+
+        return {
+            editor,
+            title,
+            steps,
+            activities,
+            code,
+            templateCode,
+            metadata,
+            language
+        };
+    }
+
+    function computeBodyMetadata(body: string) {
+        // collect code and infer editor
         let editor: string = undefined;
-        const regex = /```(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template)?\s*\n([\s\S]*?)\n```/gmi;
+        const regex = /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python)?\s*\n([\s\S]*?)\n```/gmi;
         let code = '';
         let templateCode: string;
+        let language: string;
+        let idx = 0;
         // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
         body
             .replace(/((?!.)\s)+/g, "\n")
@@ -26,8 +59,11 @@ namespace pxt.tutorial {
                             return undefined;
                         break;
                     case "spy":
+                    case "python":
                         if (!checkTutorialEditor(pxt.PYTHON_PROJECT_NAME))
                             return undefined;
+                        if (m1 == "python")
+                            language = m1;
                         break;
                     case "typescript":
                     case "ts":
@@ -40,19 +76,15 @@ namespace pxt.tutorial {
                         templateCode = m2;
                         break;
                 }
-                code += "\n { \n " + m2 + "\n } \n";
+                code += `\n${m1 == "python"
+                    ? "def __wrapper_" + idx + "():\n" + m2.replace(/^/gm, "    ")
+                    : "{\n" + m2 + "\n}"}\n`;
+                idx++
                 return "";
             });
-
-        return <pxt.tutorial.TutorialInfo>{
-            editor: editor || pxt.BLOCKS_PROJECT_NAME,
-            title: title,
-            steps: steps,
-            activities: activities,
-            code,
-            templateCode,
-            metadata
-        };
+        // default to blocks
+        editor = editor || pxt.BLOCKS_PROJECT_NAME
+        return { code, templateCode, editor, language }
 
         function checkTutorialEditor(expected: string) {
             if (editor && editor != expected) {
@@ -65,13 +97,69 @@ namespace pxt.tutorial {
         }
     }
 
+    function diffify(steps: TutorialStepInfo[], activities: TutorialActivityInfo[]) {
+        // convert typescript snippets into diff snippets
+        let lastSrc: string = undefined;
+        steps.forEach((step, stepi) => {
+            // reset diff on each activity or when requested
+            if (step.resetDiff
+                || (activities && activities.find(activity => activity.step == stepi)))
+                lastSrc = undefined;
+            // extract typescript snippet from hint or content
+            if (step.hintContentMd) {
+                const s = convertSnippetToDiff(step.hintContentMd);
+                if (s && s != step.hintContentMd) {
+                    step.hintContentMd = s;
+                    return;
+                }
+            }
+            if (step.headerContentMd) {
+                const s = convertSnippetToDiff(step.headerContentMd);
+                if (s && s != step.headerContentMd) {
+                    step.headerContentMd = s;
+                    return;
+                }
+            }
+        })
+
+        function convertSnippetToDiff(src: string): string {
+            const diffClasses: pxt.Map<string> = {
+                "typescript": "diff",
+                "spy": "diffspy",
+                "blocks": "diffblocks",
+                "python": "diff"
+            }
+            const highlightRx = /\s*(\/\/|#)\s*@highlight/gm;
+
+            if (!src) return src;
+            return src
+                .replace(/```(typescript|spy|python|blocks|ghost|template)((?:.|[\r\n])+)```/, function (m, type, code) {
+                    const fileA = lastSrc;
+
+                    const hidden = /^(template|ghost)$/.test(type);
+                    const hasHighlight = highlightRx.test(code);
+                    code = code.replace(/^\n+/, '').replace(/\n+$/, ''); // always trim lines
+                    if (hasHighlight) code = code.replace(highlightRx, '');
+
+                    lastSrc = code;
+                    if (!fileA || hasHighlight || hidden)
+                        return m; // leave unchanged or reuse highlight info
+                    else
+                        return `\`\`\`${diffClasses[type]}
+${fileA}
+----------
+${code}
+\`\`\``
+                })
+        }
+    }
+
     function parseTutorialTitle(tutorialmd: string): string {
         let title = tutorialmd.match(/^#[^#](.*)$/mi);
         return title && title.length > 1 ? title[1] : null;
     }
 
-    function parseTutorialMarkdown(tutorialmd: string, metadata: TutorialMetadata): {steps: TutorialStepInfo[], activities: TutorialActivityInfo[]} {
-        tutorialmd = stripHiddenSnippets(tutorialmd);
+    function parseTutorialMarkdown(tutorialmd: string, metadata: TutorialMetadata): { steps: TutorialStepInfo[], activities: TutorialActivityInfo[] } {
         if (metadata && metadata.activities) {
             // tutorial with "## ACTIVITY", "### STEP" syntax
             return parseTutorialActivities(tutorialmd, metadata);
@@ -82,15 +170,15 @@ namespace pxt.tutorial {
             // old: "### STEP" syntax (no activity header guaranteed)
             if (!steps || steps.length < 1) steps = parseTutorialSteps(tutorialmd, _h3Regex, metadata);
 
-            return {steps: steps, activities: null};
+            return { steps: steps, activities: null };
         }
     }
 
-    function parseTutorialActivities(markdown: string, metadata: TutorialMetadata):  {steps: TutorialStepInfo[], activities: TutorialActivityInfo[]} {
+    function parseTutorialActivities(markdown: string, metadata: TutorialMetadata): { steps: TutorialStepInfo[], activities: TutorialActivityInfo[] } {
         let stepInfo: TutorialStepInfo[] = [];
         let activityInfo: TutorialActivityInfo[] = [];
 
-        markdown.replace(_h2Regex, function(match, name, activity) {
+        markdown.replace(_h2Regex, function (match, name, activity) {
             let i = activityInfo.length;
             activityInfo.push({
                 name: name || lf("Activity {0}", i),
@@ -107,7 +195,7 @@ namespace pxt.tutorial {
             return "";
         })
 
-        return {steps: stepInfo, activities: activityInfo};
+        return { steps: stepInfo, activities: activityInfo };
     }
 
     function parseTutorialSteps(markdown: string, regex?: RegExp, metadata?: TutorialMetadata): TutorialStepInfo[] {
@@ -117,16 +205,21 @@ namespace pxt.tutorial {
         let stepInfo: TutorialStepInfo[] = [];
         markdown.replace(stepRegex, function (match, flags, step) {
             step = step.trim();
-            let {header, hint} = parseTutorialHint(step, metadata && metadata.explicitHints);
+            let { header, hint } = parseTutorialHint(step, metadata && metadata.explicitHints);
             let info: TutorialStepInfo = {
-                fullscreen: /@(fullscreen|unplugged)/.test(flags),
-                unplugged: /@unplugged/.test(flags),
-                tutorialCompleted: /@tutorialCompleted/.test(flags),
                 contentMd: step,
-                headerContentMd: header,
-                hintContentMd: hint,
-                hasHint: hint && hint.length > 0
+                headerContentMd: header
             }
+            if (/@(fullscreen|unplugged)/.test(flags))
+                info.fullscreen = true;
+            if (/@unplugged/.test(flags))
+                info.unplugged = true;
+            if (/@tutorialCompleted/.test(flags))
+                info.tutorialCompleted = true;
+            if (/@resetDiff/.test(flags))
+                info.resetDiff = true;
+            if (hint)
+                info.hintContentMd = hint;
             stepInfo.push(info);
             return "";
         });
@@ -139,8 +232,12 @@ namespace pxt.tutorial {
         return stepInfo;
     }
 
-    function parseTutorialHint(step: string, explicitHints?: boolean): {header: string, hint: string} {
+    function parseTutorialHint(step: string, explicitHints?: boolean): { header: string, hint: string } {
+        // remove hidden code sections
+        step = stripHiddenSnippets(step);
+
         let header = step, hint;
+
         if (explicitHints) {
             // hint is explicitly set with hint syntax "#### ~ tutorialhint" and terminates at the next heading
             const hintTextRegex = /#+ ~ tutorialhint([\s\S]*)/i;
@@ -158,12 +255,12 @@ namespace pxt.tutorial {
             }
         }
 
-        return {header: header, hint: hint};
+        return { header, hint };
     }
 
     /* Remove hidden snippets from text */
     function stripHiddenSnippets(str: string): string {
-        if (!str) return null;
+        if (!str) return str;
         const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template)\s*\n([\s\S]*?)\n```/gmi;
         return str.replace(hiddenSnippetRegex, '').trim();
     }
@@ -172,9 +269,9 @@ namespace pxt.tutorial {
         Parses metadata at the beginning of tutorial markown. Metadata is a key-value
         pair in the format: `### @KEY VALUE`
     */
-    function parseTutorialMetadata(tutorialmd: string): {metadata: TutorialMetadata, body: string} {
+    function parseTutorialMetadata(tutorialmd: string): { metadata: TutorialMetadata, body: string } {
         const metadataRegex = /### @(\S+) ([ \S]+)/gi;
-        const m: any = {};
+        const m: pxt.Map<any> = {};
 
         const body = tutorialmd.replace(metadataRegex, function (f, k, v) {
             try {
@@ -185,11 +282,16 @@ namespace pxt.tutorial {
 
             return "";
         });
+        const metadata = (m as TutorialMetadata);
+        if (metadata.explicitHints !== undefined
+            && pxt.appTarget.appTheme
+            && pxt.appTarget.appTheme.tutorialExplicitHints)
+            metadata.explicitHints = true;
 
-        return { metadata: (m as TutorialMetadata), body};
+        return { metadata, body };
     }
 
-    export function highlight(pre: HTMLPreElement): void {
+    export function highlight(pre: HTMLElement): void {
         let text = pre.textContent;
         if (!/@highlight/.test(text)) // shortcut, nothing to do
             return;
@@ -202,6 +304,8 @@ namespace pxt.tutorial {
         pre.textContent = ""; // clear up and rebuild
         const lines = text.split('\n');
         for (let i = 0; i < lines.length; ++i) {
+            if (i > 0 && i < lines.length)
+                pre.appendChild(document.createTextNode("\n"))
             let line = lines[i];
             if (/@highlight/.test(line)) {
                 // highlight next line
@@ -213,8 +317,35 @@ namespace pxt.tutorial {
                     pre.appendChild(span);
                 }
             } else {
-                pre.appendChild(document.createTextNode(line + '\n'));
+                pre.appendChild(document.createTextNode(line));
             }
         }
     }
+
+    export function getTutorialOptions(md: string, tutorialId: string, filename: string, reportId: string, recipe: boolean): { options: pxt.tutorial.TutorialOptions, editor: string } {
+        const tutorialInfo = pxt.tutorial.parseTutorial(md);
+        if (!tutorialInfo)
+            throw new Error(lf("Invalid tutorial format"));
+
+        const tutorialOptions: pxt.tutorial.TutorialOptions = {
+            tutorial: tutorialId,
+            tutorialName: tutorialInfo.title || filename,
+            tutorialReportId: reportId,
+            tutorialStep: 0,
+            tutorialReady: true,
+            tutorialHintCounter: 0,
+            tutorialStepInfo: tutorialInfo.steps,
+            tutorialActivityInfo: tutorialInfo.activities,
+            tutorialMd: md,
+            tutorialCode: tutorialInfo.code,
+            tutorialRecipe: !!recipe,
+            templateCode: tutorialInfo.templateCode,
+            autoexpandStep: true,
+            metadata: tutorialInfo.metadata,
+            language: tutorialInfo.language
+        };
+
+        return { options: tutorialOptions, editor: tutorialInfo.editor };
+    }
+
 }

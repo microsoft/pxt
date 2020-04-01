@@ -7,11 +7,8 @@
 <field name="BOOL">TRUE</field>
 </shadow>
 </value>
-<data>0</data>
+<comment pinned="false">More</comment>
 </block>
 </statement>
 </block>
-<comment h="120" w="480" data="0">
-&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62; More
-</comment>
 </xml>

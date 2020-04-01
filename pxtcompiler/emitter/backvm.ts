@@ -115,7 +115,7 @@ ${info.id}_IfaceVT:
     /* tslint:disable:no-trailing-whitespace */
     export function vmEmit(bin: Binary, opts: CompileOptions) {
         let vmsource = `; VM start
-${hex.hexPrelude()}
+${hexfile.hexPrelude()}
 `
 
         const ctx: EmitCtx = {
@@ -161,7 +161,7 @@ _start_${name}:
                 ; magic - \\0 added by assembler
                 .string "\\nPXT64\\n"
                 .hex 5471fe2b5e213768 ; magic
-                .hex ${hex.hexTemplateHash()} ; hex template hash
+                .hex ${hexfile.hexTemplateHash()} ; hex template hash
                 .hex 0000000000000000 ; @SRCHASH@
                 .word ${bin.globalsWords}   ; num. globals
                 .word ${bin.nonPtrGlobals} ; non-ptr globals
@@ -274,6 +274,9 @@ _start_${name}:
 
         const immMax = (1 << 23) - 1
 
+        if (pxt.options.debug)
+            console.log("EMIT", proc.toString())
+
         emitAll()
         resText = ""
         for (let t of alltmps) t.currUses = 0
@@ -365,7 +368,7 @@ _start_${name}:
         }
 
         function callRT(name: string) {
-            const inf = hex.lookupFunc(name)
+            const inf = hexfile.lookupFunc(name)
             if (!inf) U.oops("missing function: " + name)
             let id = ctx.opcodeMap[inf.name]
             if (id == null) {
@@ -608,15 +611,17 @@ _start_${name}:
                 write(`callind ${nargs}`)
             } else if (calledProcId.ifaceIndex != null) {
                 let idx = calledProcId.ifaceIndex + " ; ." + bin.ifaceMembers[calledProcId.ifaceIndex]
-                if (/Set/.test(calledProcId.mapMethod)) {
+                if (calledProcId.isSet) {
                     write(`callset ${idx}`)
                     U.assert(nargs == 2)
-                }
-                else if (/Get/.test(calledProcId.mapMethod)) {
+                } else if (calledProcId.noArgs) {
+                    // TODO implementation of op_callget needs to auto-bind if needed
                     write(`callget ${idx}`)
                     U.assert(nargs == 1)
-                } else
+                } else {
+                    // TODO impl of op_calliface needs to call getter and then the lambda if needed
                     write(`calliface ${nargs}, ${idx}`)
+                }
             } else if (calledProcId.virtualIndex != null) {
                 U.oops()
             } else {

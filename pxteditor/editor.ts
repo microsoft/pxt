@@ -52,6 +52,7 @@ namespace pxt.editor {
 
         tutorialOptions?: pxt.tutorial.TutorialOptions;
         lightbox?: boolean;
+        keymap?: boolean;
 
         simState?: SimState;
         autoRun?: boolean;
@@ -75,10 +76,12 @@ namespace pxt.editor {
         debugging?: boolean;
         bannerVisible?: boolean;
         pokeUserComponent?: string;
+        flashHint?: boolean;
 
         highContrast?: boolean;
         print?: boolean;
         greenScreen?: boolean;
+        accessibleBlocks?: boolean;
 
         home?: boolean;
         hasError?: boolean;
@@ -101,7 +104,8 @@ namespace pxt.editor {
         temporary?: boolean;
         tutorial?: pxt.tutorial.TutorialOptions;
         dependencies?: pxt.Map<string>;
-        tsOnly?: boolean;
+        tsOnly?: boolean; // DEPRECATED: use LanguageRestriction.NoBlocks or LanguageRestriction.JavaScriptOnly instead
+        languageRestriction?: LanguageRestriction;
         preferredEditor?: string; // preferred editor to open, pxt.BLOCKS_PROJECT_NAME, ...
         extensionUnderTest?: string; // workspace id of the extension under test
     }
@@ -111,6 +115,7 @@ namespace pxt.editor {
         path: string;
         loadBlocks?: boolean;
         prj?: ProjectTemplate;
+        preferredEditor?: string;
     }
 
     export interface ProjectFilters {
@@ -162,6 +167,8 @@ namespace pxt.editor {
         photo?: string;
     }
 
+    export type Activity = "tutorial" | "recipe" | "example";
+
     export interface IProjectView {
         state: IAppState;
         setState(st: IAppState): void;
@@ -191,7 +198,7 @@ namespace pxt.editor {
 
         exportAsync(): Promise<string>;
 
-        newEmptyProject(name?: string, documentation?: string): void;
+        newEmptyProject(name?: string, documentation?: string, preferredEditor?: string): void;
         newProject(options?: ProjectCreationOptions): void;
         createProjectAsync(options: ProjectCreationOptions): Promise<void>;
         importExampleAsync(options: ExampleImportOptions): Promise<void>;
@@ -225,6 +232,7 @@ namespace pxt.editor {
         showTutorialHint(): void;
         pokeUserActivity(): void;
         stopPokeUserActivity(): void;
+        clearUserPoke(): void;
 
         anonymousPublishAsync(screenshotUri?: string): Promise<string>;
 
@@ -273,6 +281,7 @@ namespace pxt.editor {
 
         toggleHighContrast(): void;
         toggleGreenScreen(): void;
+        toggleAccessibleBlocks(): void;
         launchFullEditor(): void;
 
         canPair(): boolean;
@@ -287,9 +296,11 @@ namespace pxt.editor {
 
         editor: IEditor;
 
-        startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean): void;
+        startActivity(activitity: Activity, path: string, title?: string, editor?: string): void;
         showLightbox(): void;
         hideLightbox(): void;
+        showKeymap(show: boolean): void;
+        toggleKeymap(): void;
 
         showReportAbuse(): void;
         showLanguagePicker(): void;
@@ -302,19 +313,23 @@ namespace pxt.editor {
 
         showResetDialog(): void;
         showExitAndSaveDialog(): void;
-        showChooseHwDialog(): void;
+        showChooseHwDialog(skipDownload?: boolean): void;
         showExperimentsDialog(): void;
-        showRecipesDialog(): void;
 
         showPackageDialog(): void;
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
+        checkForHwVariant(): boolean;
+        pair(): Promise<void>;
 
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
 
-        askForProjectNameAsync(): Promise<string>;
+        askForProjectCreationOptionsAsync(): Promise<ProjectCreationOptions>;
 
         pushScreenshotHandler(handler: (msg: ScreenshotData) => void): void;
         popScreenshotHandler(): void;
+
+        openNewTab(header: pxt.workspace.Header, dependent: boolean): void;
+        createGitHubRepositoryAsync(): Promise<void>;
     }
 
     export interface IHexFileImporter {

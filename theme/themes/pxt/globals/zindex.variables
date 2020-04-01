@@ -37,10 +37,15 @@
 @gridPickerZIndex: @blocklyWidgetDivZIndex+1; /* Needs to be above the @blocklyWidgetDivZIndex */
 @gridPickerTooltipZIndex: (@dimmerZIndex)-5; /* Just below dimmer */
 
+/* Note Picker */
+@noteEditorWhiteKey: 1000;
+@noteEditorBlackKey: 1001;
+
 /* Monaco */
 @monacoFlyoutZIndex: @blocklyFlyoutZIndex; /* Same as blockly Flyout */
 @monacoInnerZIndex: @menuBarZIndex+1; /* Above menu bar */
 @monacoHintsZIndex: @monacoInnerZIndex; /* parameter hints */
+@monacoSuggestZIndex: @monacoHintsZIndex + 1; /* above hints */
 
 /* Editor toolbar */
 @editorToolsZIndex: @blocklyToolboxZIndex+1; /* Above the blockly toolbox but under the drag surface */
@@ -48,7 +53,7 @@
 @editorLogoZIndex: ((@blocklyFlyoutZIndex)-1); /* Should be below the flyouts blocklyFlyout and @monacoFlyoutZIndex */
 
 /* Tutorial */
-@tutorialCardZIndex: @simulatorZIndex+1;
+@tutorialCardZIndex: @simulatorZIndex+2;
 @tutorialLightboxCardZIndex: @tutorialCardZIndex+1;
 
 /* Extension frames */

@@ -13,7 +13,6 @@
 <statement name="HANDLER">
 <block type="typescript_statement">
 <mutation declaredvars="x" numlines="1" error="Unsupported syntax kind for output expression block&#58; NewExpression" line0="let x &#61; new game.Sprite&#40;&#41;&#59;" />
-<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;classHandlerParameter.ts&#34; &#47;&#62;</comment>
 </block>
 </statement>
 </block>

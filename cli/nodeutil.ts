@@ -290,7 +290,7 @@ export function readJson(fn: string) {
 }
 
 export function readPkgConfig(dir: string) {
-    pxt.debug("readPkgConfig in " + dir)
+    //pxt.debug("readPkgConfig in " + dir)
     const fn = path.join(dir, pxt.CONFIG_NAME)
     const js: pxt.PackageConfig = readJson(fn)
 
@@ -593,6 +593,13 @@ export function lazyRequire(name: string, install = false): any {
         pxt.log(`package "${name}" failed to load, run "pxt npminstallnative" to install native depencencies`)
     return r;
     /* tslint:enable:non-literal-require */
+}
+
+export function stringify(content: any) {
+    if (process.env["PXT_ENV"] === "production") {
+        return JSON.stringify(content);
+    }
+    return JSON.stringify(content, null, 4);
 }
 
 init();

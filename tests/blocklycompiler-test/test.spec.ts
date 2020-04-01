@@ -38,6 +38,7 @@ pxt.webConfig = {
     workerjs: WEB_PREFIX + "/blb/worker.js",
     monacoworkerjs: undefined,
     gifworkerjs: undefined,
+    serviceworkerjs: undefined,
     pxtVersion: undefined,
     pxtRelId: undefined,
     pxtCdnUrl: undefined,
@@ -49,6 +50,8 @@ pxt.webConfig = {
     targetUrl: undefined,
     targetId: undefined,
     simUrl: undefined,
+    simserviceworkerUrl: undefined,
+    simworkerconfigUrl: undefined,
     partsUrl: undefined,
     runUrl: undefined,
     docsUrl: undefined,
@@ -144,7 +147,7 @@ class BlocklyCompilerTestHost implements pxt.Host {
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
-        return pxt.hex.getHexInfoAsync(this, extInfo)
+        return pxt.hexloader.getHexInfoAsync(this, extInfo)
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {
@@ -278,6 +281,10 @@ describe("blockly compiler", function () {
 
         it("should not declare lists as strings when using the length block", (done: () => void) => {
             blockTestAsync("lists_length_with_for_of").then(done, done);
+        });
+
+        it("should not declare strings as stris when using for each string block", (done: () => void) => {
+            blockTestAsync("for_each_string").then(done, done);
         });
 
         it("should handle empty array blocks", (done: () => void) => {
@@ -419,6 +426,18 @@ describe("blockly compiler", function () {
         it("should narrow variable types when used as function call arguments", (done: () => void) => {
             blockTestAsync("function_call_inference").then(done, done);
         });
+
+        it("should handle return statements", (done: () => void) => {
+            blockTestAsync("return_statement").then(done, done);
+        });
+
+        it("should handle functions that return values", (done: () => void) => {
+            blockTestAsync("function_output").then(done, done);
+        });
+
+        it("should output a return type for recursive functions", (done: () => void) => {
+            blockTestAsync("function_recursion").then(done, done);
+        });
     });
 
     describe("compiling special blocks", () => {
@@ -436,6 +455,10 @@ describe("blockly compiler", function () {
 
         it("should set the right check for primitive draggable parameters in blockly loader", done => {
             blockTestAsync("draggable_primitive_reporter").then(done, done);
+        });
+
+        it("should convert enums to constants when emitAsConstant is set", done => {
+            blockTestAsync("enum_constants").then(done, done);
         });
     });
 

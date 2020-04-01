@@ -53,13 +53,6 @@ mountVirtualApi("gallery", {
     expirationTime: p => 3600 * 1000
 })
 
-mountVirtualApi("td-cloud", {
-    getAsync: p =>
-        Util.httpGetJsonAsync("https://www.touchdevelop.com/api/" + stripProtocol(p))
-            .catch(core.handleNetworkError),
-    expirationTime: p => 60 * 1000,
-})
-
 mountVirtualApi("gh-search", {
     getAsync: query => pxt.targetConfigAsync()
         .then(config => pxt.github.searchAsync(stripProtocol(query), config ? config.packages : undefined))
@@ -71,6 +64,17 @@ mountVirtualApi("gh-search", {
 mountVirtualApi("gh-pkgcfg", {
     getAsync: query =>
         pxt.github.pkgConfigAsync(stripProtocol(query)).catch(core.handleNetworkError),
+    expirationTime: p => 60 * 1000,
+    isOffline: () => !Cloud.isOnline(),
+})
+
+// gh-commits:repo#sha
+mountVirtualApi("gh-commits", {
+    getAsync: query => {
+        const p = stripProtocol(query);
+        const [ repo, sha ] = p.split('#', 2)
+        return pxt.github.getCommitsAsync(repo, sha)
+    },
     expirationTime: p => 60 * 1000,
     isOffline: () => !Cloud.isOnline(),
 })
@@ -122,7 +126,7 @@ function unsubscribe(component: AnyComponent) {
 
 function expired(ce: CacheEntry) {
     if (!ce.api.expirationTime)
-        return ce.data != null;
+        return !ce.lastRefresh; // needs to be refreshed at least once
     return ce.data == null || (Date.now() - ce.lastRefresh) > ce.api.expirationTime(ce.path)
 }
 
@@ -187,7 +191,7 @@ function queue(ce: CacheEntry) {
 
     let final = (res: any) => {
         ce.data = res
-        ce.lastRefresh = Date.now()
+        ce.lastRefresh = pxt.Util.now()
         ce.queued = false
         notify(ce)
     }
@@ -221,6 +225,7 @@ function getCached(component: AnyComponent, path: string): DataFetchResult<any> 
             status: FetchStatus.Complete
         }
 
+    // cache async values
     let fetchRes: DataFetchResult<any> = {
         data: r.data,
         status: FetchStatus.Complete
@@ -277,6 +282,11 @@ export function invalidate(prefix: string) {
                 ce.api.onInvalidated();
         }
     })
+}
+
+export function invalidateHeader(prefix: string, hd: pxt.workspace.Header) {
+    if (hd)
+        invalidate(prefix + ':' + hd.id);
 }
 
 export function getAsync(path: string) {

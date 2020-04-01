@@ -15,7 +15,7 @@ namespace ts.pxtc.Util {
         }
     }
 
-    export function flatClone<T>(obj: T): T {
+    export function flatClone<T extends Object>(obj: T): T {
         if (obj == null) return null
         let r: any = {}
         Object.keys(obj).forEach((k) => { r[k] = (obj as any)[k] })
@@ -30,6 +30,11 @@ namespace ts.pxtc.Util {
     export function htmlEscape(_input: string) {
         if (!_input) return _input; // null, undefined, empty string test
         return _input.replace(/([^\w .!?\-$])/g, c => "&#" + c.charCodeAt(0) + ";");
+    }
+
+    export function htmlUnescape(_input: string) {
+        if (!_input) return _input; // null, undefined, empty string test
+        return _input.replace(/(&#\d+;)/g, c => String.fromCharCode(Number(c.substr(2, c.length - 3))));
     }
 
     export function jsStringQuote(s: string) {
@@ -224,6 +229,7 @@ namespace ts.pxtc.Util {
     }
 
     export function setEditorLanguagePref(lang: string): void {
+        if (lang.match(/prj$/)) lang = lang.replace(/prj$/, "")
         localStorage.setItem("editorlangpref", lang);
     }
 

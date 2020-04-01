@@ -3,20 +3,15 @@
     "title": "Description",
     "steps": [
         {
-            "fullscreen": false,
-            "unplugged": false,
-            "tutorialCompleted": false,
             "contentMd": "Step one instructions",
             "headerContentMd": "Step one instructions"
         },
         {
-            "fullscreen": false,
-            "unplugged": false,
-            "tutorialCompleted": false,
             "contentMd": "Step two instructions",
             "headerContentMd": "Step two instructions"
         }
     ],
     "activities": null,
-    "code": ""
+    "code": "",
+    "metadata": {}
 }

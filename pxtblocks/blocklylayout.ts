@@ -17,7 +17,7 @@ namespace pxt.blocks.layout {
         const oldDom = Blockly.Xml.workspaceToDom(oldWs, true);
         const newDom = Blockly.Xml.workspaceToDom(newWs, true);
         Util.toArray(oldDom.childNodes)
-            .filter(n => n.nodeType == Node.ELEMENT_NODE && n.localName == "block" && (<Element>n).getAttribute("disabled") == "true")
+            .filter((n: ChildNode) => n.nodeType == Node.ELEMENT_NODE && (n as Element).localName == "block" && (<Element>n).getAttribute("disabled") == "true")
             .forEach(n => newDom.appendChild(newDom.ownerDocument.importNode(n, true)));
         const updatedXml = Blockly.Xml.domToText(newDom);
         return updatedXml;
@@ -26,7 +26,7 @@ namespace pxt.blocks.layout {
     function alignBlocks(blockInfo: ts.pxtc.BlocksInfo, oldWs: Blockly.Workspace, newWs: Blockly.Workspace) {
         let env: pxt.blocks.Environment;
         let newBlocks: pxt.Map<Blockly.Block[]>; // support for multiple events with similar name
-        oldWs.getTopBlocks(false).filter(ob => !ob.disabled)
+        oldWs.getTopBlocks(false).filter(ob => ob.isEnabled())
             .forEach(ob => {
                 const otp = ob.xy_;
                 if (otp && otp.x != 0 && otp.y != 0) {
@@ -62,7 +62,7 @@ namespace pxt.blocks.layout {
             return svg;
 
         const div = document.createElement("div") as HTMLDivElement;
-        div.className = "blocks-svg-list"
+        div.className = `blocks-svg-list ${ws.getInjectionDiv().className}`
 
         function extract(
             parentClass: string,
@@ -75,7 +75,7 @@ namespace pxt.blocks.layout {
             // collect all blocks
             const parentSvg = svgclone.querySelector(`g.blocklyWorkspace > g.${parentClass}`) as SVGGElement;
             const otherSvg = svgclone.querySelector(`g.blocklyWorkspace > g.${otherClass}`) as SVGGElement;
-            const blocksSvg = Util.toArray(parentSvg.querySelectorAll(`g.blocklyWorkspace > g.${parentClass} > g`));
+            const blocksSvg = Util.toArray(parentSvg.querySelectorAll(`g.blocklyWorkspace > g.${parentClass} > g[data-id]`));
             const blockSvg = blocksSvg.splice(blocki, 1)[0];
             if (!blockSvg) {
                 // seems like no blocks were generated
@@ -139,7 +139,7 @@ namespace pxt.blocks.layout {
     export function flow(ws: Blockly.WorkspaceSvg, opts?: FlowOptions) {
         if (opts) {
             if (opts.useViewWidth) {
-                const metrics = ws.getMetrics();
+                const metrics = ws.getMetrics() as Blockly.Metrics;
 
                 // Only use the width if in portrait, otherwise the blocks are too spread out
                 if (metrics.viewHeight > metrics.viewWidth) {
@@ -309,12 +309,13 @@ namespace pxt.blocks.layout {
     function expandImagesAsync(xsg: Document): Promise<void> {
         if (!imageXLinkCache) imageXLinkCache = {};
 
-        const images = xsg.getElementsByTagName("image") as NodeListOf<Element>;
+        const images = xsg.getElementsByTagName("image")
         const p = pxt.Util.toArray(images)
             .filter(image => {
                 const href = image.getAttributeNS(XLINK_NAMESPACE, "href");
                 return href && !/^data:/.test(href);
             })
+            .map(img => img as unknown as HTMLImageElement)
             .map((image: HTMLImageElement) => {
                 const href = image.getAttributeNS(XLINK_NAMESPACE, "href");
                 let dataUri = imageXLinkCache[href];
@@ -323,9 +324,11 @@ namespace pxt.blocks.layout {
                         .then((img: HTMLImageElement) => {
                             const cvs = document.createElement("canvas") as HTMLCanvasElement;
                             const ctx = cvs.getContext("2d");
-                            cvs.width = img.width;
-                            cvs.height = img.height;
-                            ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, cvs.width, cvs.height);
+                            let w = img.width
+                            let h = img.height
+                            cvs.width = w;
+                            cvs.height = h;
+                            ctx.drawImage(img, 0, 0, w, h, 0, 0, cvs.width, cvs.height);
                             imageXLinkCache[href] = dataUri = cvs.toDataURL("image/png");
                             return dataUri;
                         }).catch(e => {
@@ -343,9 +346,10 @@ namespace pxt.blocks.layout {
 
         if (!BrowserUtils.isEdge()) return Promise.resolve();
 
-        const images = xsg.getElementsByTagName("image") as NodeListOf<Element>;
+        const images = xsg.getElementsByTagName("image")
         const p = pxt.Util.toArray(images)
             .filter(image => /^data:image\/svg\+xml/.test(image.getAttributeNS(XLINK_NAMESPACE, "href")))
+            .map(img => img as unknown as HTMLImageElement)
             .map((image: HTMLImageElement) => {
                 const svgUri = image.getAttributeNS(XLINK_NAMESPACE, "href");
                 const width = parseInt(image.getAttribute("width").replace(/[^0-9]/g, ""));
@@ -419,7 +423,7 @@ namespace pxt.blocks.layout {
             }
             const f = formattable(block);
 
-            if (!onStart && !block.disabled && block.type === pxtc.ON_START_TYPE) { // there might be duplicate on-start blocks
+            if (!onStart && block.isEnabled() && block.type === pxtc.ON_START_TYPE) { // there might be duplicate on-start blocks
                 onStart = f;
             }
             else {

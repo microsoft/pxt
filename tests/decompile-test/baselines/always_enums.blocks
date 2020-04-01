@@ -18,7 +18,6 @@
 <mutation numlines="1" error="Enum arguments may only be literal property access expressions" line0="testNamespace.enumArgument&#40;i&#41;&#59;" />
 </block>
 </statement>
-<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
 </block>
 </statement>
 </block>
