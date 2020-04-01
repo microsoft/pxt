@@ -312,7 +312,7 @@ namespace pxt.github {
     export interface CreateCommitReq {
         message: string;
         parents: string[]; // shas
-        tree: string; // sha		
+        tree: string; // sha
     }
 
     function ghPostAsync(path: string, data: any, headers?: any, method?: string) {
@@ -659,7 +659,7 @@ namespace pxt.github {
                     node.default_branch = node.defaultBranchRef.name;
                     const pxtJson = pxt.Package.parseAndValidConfig(node.pxtjson && node.pxtjson.text);
                     const readme = node.readme && node.readme.text;
-                    // needs to have a valid pxt.json file                    
+                    // needs to have a valid pxt.json file
                     if (!pxtJson) return false;
                     // new style of supported annontation
                     if (pxtJson.supportedTargets)
@@ -802,7 +802,7 @@ namespace pxt.github {
         // always try proxy first
         if (hasProxy()) {
             try {
-                return await proxyRepoAsync(rid, config);
+                return await proxyRepoAsync(rid, status);
             } catch (e) {
                 ghProxyHandleException(e);
             }
@@ -812,7 +812,7 @@ namespace pxt.github {
         return mkRepo(r, config, rid.tag);
     }
 
-    function proxyRepoAsync(rid: ParsedRepo, config: pxt.PackagesConfig): Promise<GitRepo> {
+    function proxyRepoAsync(rid: ParsedRepo, status: GitRepoStatus): Promise<GitRepo> {
         // always use proxy
         return ghProxyJsonAsync(`${rid.fullName}`)
             .then(meta => {
@@ -986,7 +986,7 @@ namespace pxt.github {
 
     /**
      * Executes a GraphQL query against GitHub v4 api
-     * @param query 
+     * @param query
      */
     export function ghGraphQLQueryAsync(query: string): Promise<any> {
         const payload = JSON.stringify({
@@ -1003,8 +1003,8 @@ namespace pxt.github {
 
     /**
      * Finds the first PR associated with a branch
-     * @param reponame 
-     * @param headName 
+     * @param reponame
+     * @param headName
      */
     export function findPRNumberforBranchAsync(reponame: string, headName: string): Promise<PullRequest> {
         const repoId = parseRepoId(reponame);
