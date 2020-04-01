@@ -159,7 +159,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const downloadText = targetTheme.useUploadMessage ? lf("Upload") : lf("Download");
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
         const showPairUSBDevice = pxt.usb.isEnabled;
-        const usbPaired = showPairUSBDevice && !!this.getData("usb-paired");
+        const usbPaired = showPairUSBDevice && !!this.getData("usb:paired");
 
         let downloadButtonClasses = boards ? "left attached " : "";
         let downloadButtonIcon = usbPaired ? "usb" : "ellipsis";
@@ -191,7 +191,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         el.push(<EditorToolbarButton key="downloadbutton" role="menuitem" icon={downloadIcon} className={`primary download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={this.compile} view='computer' />)
 
         const deviceName = pxt.hwName || pxt.appTarget.appTheme.boardNickname || lf("device");
-        const tooltip = pxt.hwName || lf("Click to select hardware")
+        const tooltip = usbPaired ? lf(`Connected to ${deviceName}`) : (pxt.hwName || lf("Click to select hardware"))
 
         const hardwareMenuText = view == View.Mobile ? lf("Hardware") : lf("Choose hardware");
         const downloadMenuText = view == View.Mobile ? (pxt.hwName || lf("Download")) : lf("Download to {0}", deviceName);
@@ -199,9 +199,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         if (boards || showPairUSBDevice) {
             el.push(
                 <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
-                    {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
                     {showPairUSBDevice && <sui.Item role="meniuitem" icon="usb" text={lf("Pair device")} tabIndex={-1} onClick={this.onPairClick} />}
-                    <sui.Item role="menuitem" icon="download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />
+                    {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
+                    {boards && <sui.Item role="menuitem" icon="download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />}
                 </sui.DropdownMenu>
             )
         }
