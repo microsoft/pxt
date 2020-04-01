@@ -151,10 +151,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         this.props.parent.pair();
     }
 
-    protected onDisconnectClick = () => {
-        // TODO
-    }
-
     protected getCompileButton(view: View, collapsed?: boolean): JSX.Element[] {
         const targetTheme = pxt.appTarget.appTheme;
         const { compiling, isSaving } = this.props.parent.state;
@@ -204,8 +200,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             el.push(
                 <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
                     {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
-                    {showPairUSBDevice && !usbPaired && <sui.Item role="meniuitem" icon="usb" text={lf("Pair device")} tabIndex={-1} onClick={this.onPairClick} />}
-                    {showPairUSBDevice && usbPaired && <sui.Item role="meniuitem" icon="usb" text={lf("Disconnect device")} tabIndex={-1} onClick={this.onDisconnectClick} />}
+                    {showPairUSBDevice && <sui.Item role="meniuitem" icon="usb" text={lf("Pair device")} tabIndex={-1} onClick={this.onPairClick} />}
                     <sui.Item role="menuitem" icon="download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />
                 </sui.DropdownMenu>
             )
