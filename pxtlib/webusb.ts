@@ -421,6 +421,9 @@ namespace pxt.usb {
     }
 
     export function isAvailable() {
+        if (pxt.BrowserUtils.isElectron())
+            return false;
+
         if (!!(navigator as any).usb) {
             // Windows versions:
             // 5.1 - XP, 6.0 - Vista, 6.1 - Win7, 6.2 - Win8, 6.3 - Win8.1, 10.0 - Win10
