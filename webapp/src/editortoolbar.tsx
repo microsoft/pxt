@@ -190,7 +190,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         let el = [];
         el.push(<EditorToolbarButton key="downloadbutton" role="menuitem" icon={downloadIcon} className={`primary download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={this.compile} view='computer' />)
 
-        const deviceName = pxt.hwName || lf("device");
+        const deviceName = pxt.hwName || pxt.appTarget.appTheme.boardNickname || lf("device");
         const tooltip = pxt.hwName || lf("Click to select hardware")
 
         const hardwareMenuText = view == View.Mobile ? lf("Hardware") : lf("Choose hardware");
