@@ -2190,7 +2190,7 @@ export class ProjectView
         return pxt.usb.isEnabled || pxt.webBluetooth.hasPartialFlash();
     }
 
-    pair() {
+    pair(): void {
         pair.pairAsync().done();
     }
 
