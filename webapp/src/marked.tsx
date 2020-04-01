@@ -324,7 +324,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         // always popout external links
         const linkRenderer = renderer.link;
         renderer.link = function (href: string, title: string, text: string) {
-            const relative = new RegExp('^[/#]').test(href);
+            const relative = /^[\/#]/.test(href);
             const target = !relative ? '_blank' : '';
             const html = linkRenderer.call(renderer, href, title, text);
             return html.replace(/^<a /, `<a ${target ? `target="${target}"` : ''} rel="nofollow noopener" `);
