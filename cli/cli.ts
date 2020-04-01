@@ -4143,11 +4143,11 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = f
             }
 
             if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
-                pxt.log("pre-compiling apisInfo for Python")
+                pxt.debug("pre-compiling apisInfo for Python")
                 pxt.prepPythonOptions(opts)
                 if (process.env["PXT_SAVE_APISINFO"])
                     fs.writeFileSync("built/apisinfo.json", nodeutil.stringify(opts.apisInfo))
-                pxt.log("done pre-compiling apisInfo for Python")
+                pxt.debug("done pre-compiling apisInfo for Python")
             }
 
             return opts;
