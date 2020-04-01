@@ -387,6 +387,8 @@ export class ProjectView
     openPython(giveFocusOnLoading = true) {
         if (this.updatingEditorFile) return; // already transitioning
 
+        this.setState({ tracing: false });
+
         if (this.isPythonActive()) {
             if (this.state.embedSimView) {
                 this.setState({ embedSimView: false });

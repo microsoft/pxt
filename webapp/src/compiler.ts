@@ -213,12 +213,14 @@ function compileCoreAsync(opts: pxtc.CompileOptions): Promise<pxtc.CompileResult
     return workerOpAsync("compile", { options: opts })
 }
 
-export function py2tsAsync(): Promise<pxtc.transpile.TranspileResult> {
+export function py2tsAsync(force = false): Promise<pxtc.transpile.TranspileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     return waitForFirstTypecheckAsync()
         .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
         .then(opts => {
             opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+            if (force) opts.forceTranspile = true;
+
             return workerOpAsync("py2ts", { options: opts })
         })
 }

@@ -799,6 +799,7 @@ declare namespace ts.pxtc {
         skipPxtModulesEmit?: boolean; // skip re-emit of pxt_modules/*
 
         syntaxInfo?: SyntaxInfo;
+        forceTranspile?: boolean;
 
         // decompiler only
         alwaysDecompileOnStart?: boolean;

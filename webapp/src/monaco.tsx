@@ -587,27 +587,24 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     saveToTypeScriptAsync() {
         if (this.fileType == pxt.editor.FileType.Python)
-            return this.convertPythonToTypeScriptAsync();
+            return this.convertPythonToTypeScriptAsync(this.isDebugging() || this.parent.state.tracing);
         return Promise.resolve(undefined)
     }
 
-    convertPythonToTypeScriptAsync(): Promise<string> {
+    convertPythonToTypeScriptAsync(force = false): Promise<string> {
         if (!this.currFile) return Promise.resolve(undefined);
         const tsName = this.currFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)
-        return compiler.py2tsAsync()
+        return compiler.py2tsAsync(force)
             .then(res => {
                 if (res.sourceMap) {
                     const mainPkg = pkg.mainEditorPkg();
-                    const tsFile = mainPkg.files[this.currFile.getFileNameWithExtension("ts")]?.content;
+                    const tsFile = res.outfiles[tsName];
                     const pyFile = mainPkg.files[this.currFile.getFileNameWithExtension("py")]?.content;
                     if (tsFile && pyFile) {
                         this.pythonSourceMap = pxtc.BuildSourceMapHelpers(res.sourceMap, tsFile, pyFile);
                     }
-                    else {
-                        this.pythonSourceMap = null;
-                    }
+                    else this.pythonSourceMap = null;
                 }
-                else this.pythonSourceMap = null;
                 // TODO python use success
                 // any errors?
                 if (res.diagnostics && res.diagnostics.length)
