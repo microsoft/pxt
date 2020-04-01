@@ -126,12 +126,12 @@ namespace pxt.BrowserUtils {
         return isPxtElectron() || isIpcRenderer();
     }
 
-    export function isLocalHost(): boolean {
+    export function isLocalHost(ignoreFlags?: boolean): boolean {
         try {
             return typeof window !== "undefined"
                 && /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href)
-                && !/nolocalhost=1/.test(window.location.href)
-                && !(pxt.webConfig && pxt.webConfig.isStatic);
+                && (ignoreFlags || !/nolocalhost=1/.test(window.location.href))
+                && !(pxt?.webConfig?.isStatic);
         } catch (e) { return false; }
     }
 

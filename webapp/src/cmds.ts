@@ -7,6 +7,7 @@ import * as webusb from "./webusb";
 import * as data from "./data";
 import Cloud = pxt.Cloud;
 
+let extensionResult: pxt.editor.ExtensionResult;
 let tryPairedDevice = false;
 
 function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {
@@ -217,6 +218,49 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     return deploy()
 }
 
+export function setExtensionResult(res: pxt.editor.ExtensionResult) {
+    extensionResult = res;
+    applyExtensionResult();
+}
+
+function applyExtensionResult() {
+    const res = extensionResult;
+    if (!res) return;
+
+    if (res.deployAsync) {
+        pxt.debug(`\tadded custom deploy core async`);
+        pxt.commands.deployCoreAsync = res.deployAsync;
+    }
+    if (res.saveOnlyAsync) {
+        pxt.debug(`\tadded custom save only async`);
+        pxt.commands.saveOnlyAsync = res.saveOnlyAsync;
+    }
+    if (res.saveProjectAsync) {
+        pxt.debug(`\tadded custom save project async`);
+        pxt.commands.saveProjectAsync = res.saveProjectAsync;
+    }
+    if (res.showUploadInstructionsAsync) {
+        pxt.debug(`\tadded custom upload instructions async`);
+        pxt.commands.showUploadInstructionsAsync = res.showUploadInstructionsAsync;
+    }
+    if (res.patchCompileResultAsync) {
+        pxt.debug(`\tadded build patch`);
+        pxt.commands.patchCompileResultAsync = res.patchCompileResultAsync;
+    }
+    if (res.blocklyPatch) {
+        pxt.debug(`\tadded blockly patch`);
+        pxt.blocks.extensionBlocklyPatch = res.blocklyPatch;
+    }
+    if (res.webUsbPairDialogAsync) {
+        pxt.debug(`\tadded webusb pair dialog`);
+        pxt.commands.webUsbPairDialogAsync = res.webUsbPairDialogAsync;
+    }
+    if (res.onTutorialCompleted) {
+        pxt.debug(`\tadded tutorial completed`);
+        pxt.commands.onTutorialCompleted = res.onTutorialCompleted;
+    }
+}
+
 export function init(): void {
     pxt.onAppTargetChanged = () => {
         pxt.debug('app target changed')
@@ -285,6 +329,8 @@ export function init(): void {
         pxt.debug(`deploy: browser`);
         pxt.commands.deployFallbackAsync = shouldUseWebUSB ? checkWebUSBThenDownloadAsync : browserDownloadDeployCoreAsync;
     }
+
+    applyExtensionResult();
 }
 
 export function setWebUSBPaired(enabled: boolean) {
