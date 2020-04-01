@@ -139,7 +139,7 @@ namespace pxtblockly {
             const bg = new svg.Rect()
                 .at(PADDING, PADDING)
                 .size(BG_WIDTH, BG_WIDTH)
-                .fill("#dedede")
+                .setClass("blocklySpriteField")
                 .stroke("#898989", 1)
                 .corner(4);
 
