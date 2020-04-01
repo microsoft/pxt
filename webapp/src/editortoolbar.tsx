@@ -158,7 +158,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const downloadIcon = targetTheme.downloadIcon || "download";
         const downloadText = targetTheme.useUploadMessage ? lf("Upload") : lf("Download");
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
-        const showPairUSBDevice = pxt.usb.isEnabled && !pxt.BrowserUtils.isElectron();
+        const showPairUSBDevice = pxt.usb.isEnabled;
 
         let downloadButtonClasses = boards ? "left attached " : "";
         let hwIconClasses = "";
