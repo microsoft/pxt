@@ -160,8 +160,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
         const showPairUSBDevice = pxt.usb.isEnabled;
         const usbPaired = showPairUSBDevice && !!this.getData("usb:paired");
+        const hasMenu = boards || showPairUSBDevice;
 
-        let downloadButtonClasses = boards ? "left attached " : "";
+        let downloadButtonClasses = hasMenu ? "left attached " : "";
         let downloadButtonIcon = usbPaired ? "usb" : "ellipsis";
         let hwIconClasses = "";
         let displayRight = false;
@@ -196,12 +197,12 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const hardwareMenuText = view == View.Mobile ? lf("Hardware") : lf("Choose hardware");
         const downloadMenuText = view == View.Mobile ? (pxt.hwName || lf("Download")) : lf("Download to {0}", deviceName);
 
-        if (boards || showPairUSBDevice) {
+        if (hasMenu) {
             el.push(
                 <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
                     {showPairUSBDevice && <sui.Item role="meniuitem" icon="usb" text={lf("Pair device")} tabIndex={-1} onClick={this.onPairClick} />}
                     {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
-                    {boards && <sui.Item role="menuitem" icon="download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />}
+                    <sui.Item role="menuitem" icon="download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />
                 </sui.DropdownMenu>
             )
         }
