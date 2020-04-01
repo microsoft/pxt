@@ -4136,7 +4136,7 @@ function initExtensionsAsync(): Promise<void> {
                     monacoToolbox.overrideToolbox(res.toolboxOptions.monacoToolbox);
                 }
             }
-            pxt.commands.setExtensionResult(res);
+            cmds.setExtensionResult(res);
         });
 }
 
