@@ -337,10 +337,10 @@ export function setWebUSBPaired(enabled: boolean) {
     if (tryPairedDevice === enabled) return;
     tryPairedDevice = enabled;
     init();
-    data.invalidate("usb:paired");
+    data.invalidate("usb-paired");
 }
 
-data.mountVirtualApi("usb:paired", { getSync: () => tryPairedDevice })
+data.mountVirtualApi("usb-paired", { getSync: () => tryPairedDevice })
 
 function checkWebUSBThenDownloadAsync(resp: pxtc.CompileResult) {
     return pxt.usb.isPairedAsync().then(paired => {

@@ -159,7 +159,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const downloadText = targetTheme.useUploadMessage ? lf("Upload") : lf("Download");
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
         const showPairUSBDevice = pxt.usb.isEnabled;
-        const usbPaired = showPairUSBDevice && !!this.getData("usb:paired");
+        const usbPaired = showPairUSBDevice && !!this.getData("usb-paired");
 
         let downloadButtonClasses = boards ? "left attached " : "";
         let downloadButtonIcon = usbPaired ? "usb" : "ellipsis";
