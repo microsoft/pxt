@@ -4125,26 +4125,6 @@ function initExtensionsAsync(): Promise<void> {
                     theEditor.resourceImporters.push(fi);
                 });
             }
-            if (res.deployAsync) {
-                pxt.debug(`\tadded custom deploy core async`);
-                pxt.commands.deployCoreAsync = res.deployAsync;
-            }
-            if (res.saveOnlyAsync) {
-                pxt.debug(`\tadded custom save only async`);
-                pxt.commands.saveOnlyAsync = res.saveOnlyAsync;
-            }
-            if (res.saveProjectAsync) {
-                pxt.debug(`\tadded custom save project async`);
-                pxt.commands.saveProjectAsync = res.saveProjectAsync;
-            }
-            if (res.showUploadInstructionsAsync) {
-                pxt.debug(`\tadded custom upload instructions async`);
-                pxt.commands.showUploadInstructionsAsync = res.showUploadInstructionsAsync;
-            }
-            if (res.patchCompileResultAsync) {
-                pxt.debug(`\tadded build patch`);
-                pxt.commands.patchCompileResultAsync = res.patchCompileResultAsync;
-            }
             if (res.beforeCompile) {
                 theEditor.beforeCompile = res.beforeCompile;
             }
@@ -4156,15 +4136,7 @@ function initExtensionsAsync(): Promise<void> {
                     monacoToolbox.overrideToolbox(res.toolboxOptions.monacoToolbox);
                 }
             }
-            if (res.blocklyPatch) {
-                pxt.blocks.extensionBlocklyPatch = res.blocklyPatch;
-            }
-            if (res.webUsbPairDialogAsync) {
-                pxt.commands.webUsbPairDialogAsync = res.webUsbPairDialogAsync;
-            }
-            if (res.onTutorialCompleted) {
-                pxt.commands.onTutorialCompleted = res.onTutorialCompleted;
-            }
+            pxt.commands.setExtensionResult(res);
         });
 }
 
