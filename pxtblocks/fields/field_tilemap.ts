@@ -160,8 +160,7 @@ namespace pxtblockly {
             const bg = new svg.Rect()
                 .at(PADDING, PADDING)
                 .size(BG_WIDTH, BG_WIDTH)
-                .fill("#dedede")
-                .stroke("#898989", 1)
+                .setClass("blocklyTilemapField")
                 .corner(4);
 
             this.fieldGroup_.appendChild(bg.el);
