@@ -147,6 +147,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         this.compile();
     }
 
+    protected onPairClick = () => {
+        this.props.parent.pair();
+    }
+
     protected getCompileButton(view: View, collapsed?: boolean): JSX.Element[] {
         const targetTheme = pxt.appTarget.appTheme;
         const { compiling, isSaving } = this.props.parent.state;
@@ -154,6 +158,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const downloadIcon = targetTheme.downloadIcon || "download";
         const downloadText = targetTheme.useUploadMessage ? lf("Upload") : lf("Download");
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
+        const showPairUSBDevice = pxt.usb.isEnabled && !pxt.BrowserUtils.isElectron();
 
         let downloadButtonClasses = boards ? "left attached " : "";
         let hwIconClasses = "";
@@ -189,10 +194,11 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const hardwareMenuText = view == View.Mobile ? lf("Hardware") : lf("Choose hardware");
         const downloadMenuText = view == View.Mobile ? (pxt.hwName || lf("Download")) : lf("Download to {0}", deviceName);
 
-        if (boards) {
+        if (boards || showPairUSBDevice) {
             el.push(
                 <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`ellipsis horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
-                    <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />
+                    {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
+                    {showPairUSBDevice && <sui.Item role="meniuitem" icon="usb" text={lf("Pair device")} tabIndex={-1} onClick={this.onPairClick} />}
                     <sui.Item role="menuitem" icon="download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />
                 </sui.DropdownMenu>
             )
