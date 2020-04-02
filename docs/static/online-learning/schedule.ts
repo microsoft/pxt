@@ -46,15 +46,6 @@ const lessons: Lesson[] = [
         "days": [Day.All]
     },
     {
-        "title": "Advanced Arcade",
-        "description": "Create new games (or recreate old ones) with a rotating cast of developers from the MakeCode team, including Richard, Shannon, Daryl, and Joey",
-        "url": "https://aka.ms/makecodearcadestream",
-        "img": "/static/online-learning/img/arcade-stream.jpg",
-        "time": 13,
-        "startDay": 25,
-        "days": [Day.All]
-    },
-    {
         "title": "Digital All-Stars",
         "description": "Join your favorite all-star athletes as they use MakeCode Arcade to code games with you at home!",
         "url": "https://aka.ms/makecodeDASstream",
@@ -62,6 +53,15 @@ const lessons: Lesson[] = [
         "time": 12,
         "startDay": 2,
         "days": [Day.Thursday]
+    },
+    {
+        "title": "Advanced Arcade",
+        "description": "Create new games (or recreate old ones) with a rotating cast of developers from the MakeCode team, including Richard, Shannon, Daryl, and Joey",
+        "url": "https://aka.ms/makecodearcadestream",
+        "img": "/static/online-learning/img/arcade-stream.jpg",
+        "time": 13,
+        "startDay": 25,
+        "days": [Day.All]
     },
     {
         "title": "MakeCode in the Kitchen",
