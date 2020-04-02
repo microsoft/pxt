@@ -159,15 +159,17 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
     fetchLocalRepositories(): pxt.workspace.Header[] {
         if (this.state.mode != ScriptSearchMode.Extensions) return [];
-        const query = this.state.searchFor;
+        let query = this.state.searchFor;
         const { header } = this.props.parent.state;
 
         let r = workspace.getHeaders()
             .filter(h => !!h.githubId);
         if (header)
             r = r.filter(h => h.id != header.id) // don't self-reference
-        if (query)
-            r = r.filter(h => h.name.toLowerCase().indexOf(query.toLowerCase()) > -1) // search filter
+        if (query) {
+            query = query.toLocaleLowerCase();
+            r = r.filter(h => h.name.toLocaleLowerCase().indexOf(query) > -1) // search filter
+        }
         return r;
     }
 
