@@ -374,25 +374,24 @@ namespace pxt.usb {
     export function isPairedAsync(): Promise<boolean> {
         if (!isEnabled) return Promise.resolve(false);
 
-        return getDeviceAsync()
-            .then((dev) => {
-                return true;
-            })
-            .catch(() => {
-                return false;
-            });
+        return tryGetDeviceAsync().then(dev => !!dev);
+    }
+
+    function tryGetDeviceAsync(): Promise<USBDevice> {
+        return ((navigator as any).usb.getDevices() as Promise<USBDevice[]>)
+            .then<USBDevice>((devs: USBDevice[]) => devs && devs[0]);
     }
 
     function getDeviceAsync(): Promise<USBDevice> {
-        return ((navigator as any).usb.getDevices() as Promise<USBDevice[]>)
-            .then<USBDevice>((devs: USBDevice[]) => {
-                if (!devs || !devs.length) {
+        return tryGetDeviceAsync()
+            .then(dev => {
+                if (!dev) {
                     let err: any = new Error(U.lf("No USB device selected or connected; try pairing!"))
                     err.isUserError = true
                     err.type = "devicenotfound"
                     throw err;
                 }
-                return devs[0]
+                return dev
             })
     }
 
