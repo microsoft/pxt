@@ -343,7 +343,7 @@ export function setWebUSBPaired(enabled: boolean) {
 function handleUSBApi(r: string) {
     const p = data.stripProtocol(r);
     if (p == "paired")
-        return tryPairedDevice;
+        return pxt.usb.isPairedAsync()
     return undefined;
 }
 data.mountVirtualApi("usb", { getSync: handleUSBApi });
@@ -353,6 +353,8 @@ function checkWebUSBThenDownloadAsync(resp: pxtc.CompileResult) {
         if (paired) {
             setWebUSBPaired(true);
             return hidDeployCoreAsync(resp);
+        } else {
+            data.invalidate("usb:paired");
         }
         return browserDownloadDeployCoreAsync(resp);
     });
