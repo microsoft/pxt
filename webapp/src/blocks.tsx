@@ -1641,7 +1641,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const debugging = !!this.parent.state.debugging;
         const blocks = this.editor.getAllBlocks();
         blocks.forEach(block => {
-            if (block.nextConnection && block.previousConnection) {
+            if (block.previousConnection) {
                 block.enableBreakpoint(debugging);
             }
         });
