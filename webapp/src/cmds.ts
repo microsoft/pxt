@@ -344,18 +344,22 @@ function handleUSBApi(r: string) {
     const p = data.stripProtocol(r);
     if (p == "paired")
         return pxt.usb.isPairedAsync()
-    return undefined;
+    return Promise.resolve(false);
 }
-data.mountVirtualApi("usb", { getSync: handleUSBApi });
+data.mountVirtualApi("usb", {
+    getAsync: handleUSBApi,
+    expirationTime: p => 5000
+});
 
 function checkWebUSBThenDownloadAsync(resp: pxtc.CompileResult) {
-    return pxt.usb.isPairedAsync().then(paired => {
-        if (paired) {
-            setWebUSBPaired(true);
-            return hidDeployCoreAsync(resp);
-        } else {
-            data.invalidate("usb:paired");
-        }
-        return browserDownloadDeployCoreAsync(resp);
-    });
+    return pxt.usb.isPairedAsync()
+        .then(paired => {
+            if (paired) {
+                setWebUSBPaired(true);
+                return hidDeployCoreAsync(resp);
+            } else {
+                data.invalidate("usb:paired");
+            }
+            return browserDownloadDeployCoreAsync(resp);
+        });
 }

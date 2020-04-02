@@ -373,8 +373,8 @@ namespace pxt.usb {
 
     export function isPairedAsync(): Promise<boolean> {
         if (!isEnabled) return Promise.resolve(false);
-
-        return tryGetDeviceAsync().then(dev => !!dev);
+        return tryGetDeviceAsync()
+            .then(dev => !!dev);
     }
 
     function tryGetDeviceAsync(): Promise<USBDevice> {
