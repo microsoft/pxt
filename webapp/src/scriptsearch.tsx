@@ -163,7 +163,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const { header } = this.props.parent.state;
 
         let r = workspace.getHeaders()
-            .filter(h => !!h.githubId && !h.isDeleted);
+            .filter(h => !!h.githubId);
         if (header)
             r = r.filter(h => h.id != header.id) // don't self-reference
         if (query)
