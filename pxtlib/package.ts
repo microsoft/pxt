@@ -526,7 +526,7 @@ namespace pxt {
 
             let initPromise = Promise.resolve()
 
-            if (this.level == 0)
+            if (this.level == 0 && !pxt.appTarget.multiVariants)
                 pxt.setAppTargetVariant(null)
 
             this.isLoaded = true;
