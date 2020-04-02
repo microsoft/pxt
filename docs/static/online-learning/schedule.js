@@ -46,7 +46,7 @@ var lessons = [
     },
     {
         "title": "Digital All-Stars",
-        "description": "Microsoft Stores is proud to host a MakeCode stream with all-star athletes passionate about technology and connecting with their communities. This week, join Brandon McManus from the Denver Broncos as he helps you build your very own football arcade game with Microsoft MakeCode Arcade!",
+        "description": "Join your favorite all-star athletes as they use MakeCode Arcade to code games with you at home!",
         "url": "https://aka.ms/makecodeDASstream",
         "img": "/static/online-learning/img/all-stars.png",
         "time": 12,
