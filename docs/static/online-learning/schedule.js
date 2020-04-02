@@ -40,9 +40,18 @@ var lessons = [
         "description": "Create new games (or recreate old ones) with a rotating cast of developers from the MakeCode team, including Richard, Shannon, Daryl, and Joey",
         "url": "https://aka.ms/makecodearcadestream",
         "img": "/static/online-learning/img/arcade-stream.jpg",
-        "time": 13,
+        "time": 1,
         "startDay": 25,
         "days": [Day.All]
+    },
+    {
+        "title": "Digital All-Stars",
+        "description": "Microsoft Stores is proud to host a MakeCode stream with all-star athletes passionate about technology and connecting with their communities. This week, join Brandon McManus from the Denver Broncos as he helps you build your very own football arcade game with Microsoft MakeCode Arcade!",
+        "url": "https://aka.ms/makecodeDASstream",
+        "img": "/static/online-learning/img/football.png",
+        "time": 12,
+        "startDay": 2,
+        "days": [Day.Thursday]
     },
     {
         "title": "MakeCode in the Kitchen",

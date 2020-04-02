@@ -55,6 +55,15 @@ const lessons: Lesson[] = [
         "days": [Day.All]
     },
     {
+        "title": "Digital All-Stars",
+        "description": "Microsoft Stores is proud to host a MakeCode stream with all-star athletes passionate about technology and connecting with their communities. This week, join Brandon McManus from the Denver Broncos as he helps you build your very own football arcade game with Microsoft MakeCode Arcade!",
+        "url": "https://aka.ms/makecodeDASstream",
+        "img": "/static/online-learning/img/football.png",
+        "time": 12,
+        "startDay": 2,
+        "days": [Day.Thursday]
+    },
+    {
         "title": "MakeCode in the Kitchen",
         "description": "Join Jacqueline, a MakeCode team member as she crafts and codes projects with the Adafruit Circuit Playground Express in her kitchen!",
         "url": "https://aka.ms/makecodecpxstream",
