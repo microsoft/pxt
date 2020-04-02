@@ -79,11 +79,12 @@ h1 {
 }
 
 
-#schedule {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    margin: 1.5rem 0 2rem;
+div#news {
+    border: 2px solid #eee;
+    border-radius: 5px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    background-color: #fafafa;
 }
 
 #schedule > div {
