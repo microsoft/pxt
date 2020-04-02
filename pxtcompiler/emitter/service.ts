@@ -1624,9 +1624,10 @@ namespace ts.pxtc.service {
             return python ? "None" : "null";
         }
 
-        const args = decl.parameters ? decl.parameters
-            .filter(param => !param.initializer && !param.questionToken)
-            .map(getParameterDefault) : [];
+        const includedParameters = decl.parameters ? decl.parameters
+        .filter(param => !param.initializer && !param.questionToken) : []
+
+        const args = includedParameters.map(getParameterDefault)
 
         let snippetPrefix = fn.namespace;
         let isInstance = false;
@@ -1757,6 +1758,21 @@ namespace ts.pxtc.service {
                 if (functionCount++ > 0) n += functionCount;
                 if (isArgument && !/^on/i.test(n)) // forever -> on_forever
                     n = "on" + pxt.Util.capitalize(n);
+
+
+                // This is replicating the name hint behavior in the pydecompiler. We put the default
+                // enum value at the end of the function name
+                const enumParams = includedParameters.filter(p => {
+                    const t = checker && checker.getTypeAtLocation(p);
+                    return !!(t && t.symbol && t.symbol.flags & SymbolFlags.Enum)
+                }).map(p => {
+                    const str = getParameterDefault(p).toLowerCase();
+                    const index = str.lastIndexOf(".");
+                    return index !== -1 ? str.substr(index + 1) : str;
+                }).join("_");
+
+                if (enumParams) n += "_" + enumParams;
+
                 n = snakify(n);
                 n = getUniqueName(n)
                 preStmt += `def ${n}${functionArgument}:\n${PY_INDENT}${returnValue || "pass"}\n`;
