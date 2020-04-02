@@ -270,7 +270,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
         // Electron does not currently support webusb
         const githubUser = !readOnly && !isController && this.getData("github:user") as pxt.editor.UserInfo;
-        const showPairDevice = pxt.usb.isEnabled && !pxt.BrowserUtils.isElectron();
+        const showPairDevice = pxt.usb.isEnabled;
 
         const showCenterDivider = targetTheme.selectLanguage || targetTheme.highContrast || showGreenScreen || githubUser;
 

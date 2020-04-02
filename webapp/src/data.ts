@@ -198,8 +198,10 @@ function queue(ce: CacheEntry) {
 
     if (ce.api.isSync)
         final(ce.api.getSync(ce.path))
-    else
-        ce.api.getAsync(ce.path).done(final)
+    else {
+        const p = ce.api.getAsync(ce.path);
+        p.done(final)
+    }
 }
 
 function lookup(path: string) {

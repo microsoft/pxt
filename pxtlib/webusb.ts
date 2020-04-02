@@ -373,26 +373,25 @@ namespace pxt.usb {
 
     export function isPairedAsync(): Promise<boolean> {
         if (!isEnabled) return Promise.resolve(false);
+        return tryGetDeviceAsync()
+            .then(dev => !!dev);
+    }
 
-        return getDeviceAsync()
-            .then((dev) => {
-                return true;
-            })
-            .catch(() => {
-                return false;
-            });
+    function tryGetDeviceAsync(): Promise<USBDevice> {
+        return ((navigator as any).usb.getDevices() as Promise<USBDevice[]>)
+            .then<USBDevice>((devs: USBDevice[]) => devs && devs[0]);
     }
 
     function getDeviceAsync(): Promise<USBDevice> {
-        return ((navigator as any).usb.getDevices() as Promise<USBDevice[]>)
-            .then<USBDevice>((devs: USBDevice[]) => {
-                if (!devs || !devs.length) {
+        return tryGetDeviceAsync()
+            .then(dev => {
+                if (!dev) {
                     let err: any = new Error(U.lf("No USB device selected or connected; try pairing!"))
                     err.isUserError = true
                     err.type = "devicenotfound"
                     throw err;
                 }
-                return devs[0]
+                return dev
             })
     }
 
@@ -421,6 +420,9 @@ namespace pxt.usb {
     }
 
     export function isAvailable() {
+        if (pxt.BrowserUtils.isElectron())
+            return false;
+
         if (!!(navigator as any).usb) {
             // Windows versions:
             // 5.1 - XP, 6.0 - Vista, 6.1 - Win7, 6.2 - Win8, 6.3 - Win8.1, 10.0 - Win10
