@@ -343,12 +343,11 @@ export function setWebUSBPaired(enabled: boolean) {
 function handleUSBApi(r: string) {
     const p = data.stripProtocol(r);
     if (p == "paired")
-        return pxt.usb.isPairedAsync()
+        return tryPairedDevice;
     return Promise.resolve(false);
 }
 data.mountVirtualApi("usb", {
-    getAsync: handleUSBApi,
-    expirationTime: p => 5000
+    getSync: handleUSBApi
 });
 
 function checkWebUSBThenDownloadAsync(resp: pxtc.CompileResult) {
