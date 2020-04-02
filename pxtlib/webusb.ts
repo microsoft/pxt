@@ -83,6 +83,43 @@ namespace pxt.usb {
         packetSize: number;
     }
 
+    export interface USBControlTransferParameters {
+        requestType: USBRequestType;
+        recipient: USBRecipient;
+        request: number;
+        value: number;
+        index: number;
+    }
+
+    export interface USBInTransferResult {
+        data: { buffer: ArrayBuffer; };
+        status: USBTransferStatus;
+    }
+
+    export interface USBOutTransferResult {
+        bytesWritten: number;
+        status: USBTransferStatus;
+    }
+
+    export interface USBIsochronousInTransferPacket {
+        data: DataView;
+        status: USBTransferStatus;
+    }
+
+    export interface USBIsochronousInTransferResult {
+        data: DataView;
+        packets: USBIsochronousInTransferPacket[];
+    }
+
+    export interface USBIsochronousOutTransferPacket {
+        bytesWritten: number;
+        status: USBTransferStatus;
+    }
+
+    export interface USBIsochronousOutTransferResult {
+        packets: USBIsochronousOutTransferPacket[];
+    }
+
     export interface USBDevice {
         vendorId: number; // VID.*
         productId: number; // 589
@@ -323,43 +360,6 @@ namespace pxt.usb {
                         this.readLoop()
                 })
         }
-    }
-
-    export interface USBControlTransferParameters {
-        requestType: USBRequestType;
-        recipient: USBRecipient;
-        request: number;
-        value: number;
-        index: number;
-    }
-
-    export interface USBInTransferResult {
-        data: { buffer: ArrayBuffer; };
-        status: USBTransferStatus;
-    }
-
-    export interface USBOutTransferResult {
-        bytesWritten: number;
-        status: USBTransferStatus;
-    }
-
-    export interface USBIsochronousInTransferPacket {
-        data: DataView;
-        status: USBTransferStatus;
-    }
-
-    export interface USBIsochronousInTransferResult {
-        data: DataView;
-        packets: USBIsochronousInTransferPacket[];
-    }
-
-    export interface USBIsochronousOutTransferPacket {
-        bytesWritten: number;
-        status: USBTransferStatus;
-    }
-
-    export interface USBIsochronousOutTransferResult {
-        packets: USBIsochronousOutTransferPacket[];
     }
 
     export function pairAsync(): Promise<void> {
