@@ -1625,7 +1625,7 @@ namespace ts.pxtc.service {
         }
 
         const includedParameters = decl.parameters ? decl.parameters
-        .filter(param => !param.initializer && !param.questionToken) : []
+            .filter(param => !param.initializer && !param.questionToken) : []
 
         const args = includedParameters.map(getParameterDefault)
 
