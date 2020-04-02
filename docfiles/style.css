@@ -191,6 +191,7 @@ svg {
     position: absolute;
     /* match with menu bar height */
     top: 3.5em;
+    min-height: calc(100vh - 3.5em);
     -webkit-box-flex: 1;
 
     -webkit-flex: 1 1 auto;
