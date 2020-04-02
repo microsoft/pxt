@@ -58,7 +58,7 @@ const lessons: Lesson[] = [
         "title": "Digital All-Stars",
         "description": "Microsoft Stores is proud to host a MakeCode stream with all-star athletes passionate about technology and connecting with their communities. This week, join Brandon McManus from the Denver Broncos as he helps you build your very own football arcade game with Microsoft MakeCode Arcade!",
         "url": "https://aka.ms/makecodeDASstream",
-        "img": "/static/online-learning/img/football.png",
+        "img": "/static/online-learning/img/all-stars.png",
         "time": 12,
         "startDay": 2,
         "days": [Day.Thursday]
