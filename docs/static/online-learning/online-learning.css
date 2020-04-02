@@ -87,6 +87,13 @@ div#news {
     background-color: #fafafa;
 }
 
+#schedule {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: 1.5rem 0 2rem;
+}
+
 #schedule > div {
     display: flex;
     flex-direction: row;
