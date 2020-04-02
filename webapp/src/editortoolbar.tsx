@@ -200,7 +200,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         if (hasMenu) {
             el.push(
                 <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
-                    {showPairUSBDevice && <sui.Item role="meniuitem" icon="usb" text={lf("Pair device")} tabIndex={-1} onClick={this.onPairClick} />}
+                    {showPairUSBDevice && <sui.Item role="menuitem" icon="usb" text={lf("Pair device")} tabIndex={-1} onClick={this.onPairClick} />}
                     {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
                     <sui.Item role="menuitem" icon="download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />
                 </sui.DropdownMenu>
