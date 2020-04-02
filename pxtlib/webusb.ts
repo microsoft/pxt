@@ -160,6 +160,7 @@ namespace pxt.usb {
     }
 
     class HID implements HF2.PacketIO {
+        dev: USBDevice;
         ready = false;
         iface: USBInterface;
         altIface: USBAlternateInterface;
@@ -170,11 +171,17 @@ namespace pxt.usb {
         onError = (e: Error) => { };
         onEvent = (v: Uint8Array) => { };
 
-        constructor(public dev: USBDevice) {
+        constructor() {
             (navigator as any).usb.addEventListener('disconnect', (event: any) => {
                 if (event.device == this.dev) {
                     this.log("Device disconnected")
                     this.clearDev()
+                }
+            });
+            (navigator as any).usb.addEventListener('connect', (event: any) => {
+                const newdev = event.device as USBDevice;
+                if (!this.dev) {
+                    this.connectAsync(newdev).done();
                 }
             });
         }
@@ -213,11 +220,13 @@ namespace pxt.usb {
             this.log("reconnect")
             return this.disconnectAsync()
                 .then(getDeviceAsync)
-                .then(dev => {
-                    this.log("got device: " + dev.manufacturerName + " " + dev.productName)
-                    this.dev = dev
-                    return this.initAsync()
-                })
+                .then(dev => this.connectAsync(dev));
+        }
+
+        private connectAsync(dev: USBDevice) {
+            this.log("got device: " + dev.manufacturerName + " " + dev.productName)
+            this.dev = dev;
+            return this.initAsync()
         }
 
         sendPacketAsync(pkt: Uint8Array) {
@@ -362,6 +371,10 @@ namespace pxt.usb {
         }
     }
 
+    export function isConnected(): boolean {
+        return _hid && !!_hid.dev && !!_hid.ready;
+    }
+
     export function pairAsync(): Promise<void> {
         return ((navigator as any).usb.requestDevice({
             filters: filters
@@ -377,7 +390,7 @@ namespace pxt.usb {
             .then(dev => !!dev);
     }
 
-    function tryGetDeviceAsync(): Promise<USBDevice> {
+    export function tryGetDeviceAsync(): Promise<USBDevice> {
         return ((navigator as any).usb.getDevices() as Promise<USBDevice[]>)
             .then<USBDevice>((devs: USBDevice[]) => devs && devs[0]);
     }
@@ -395,21 +408,11 @@ namespace pxt.usb {
             })
     }
 
-    let getDevPromise: Promise<HF2.PacketIO>
-    export function mkPacketIOAsync() {
-        if (!getDevPromise)
-            getDevPromise = getDeviceAsync()
-                .then(dev => {
-                    let h = new HID(dev)
-                    return h.initAsync()
-                        .then(() => h)
-                })
-                .catch(e => {
-                    getDevPromise = null
-                    return Promise.reject(e)
-                })
-
-        return getDevPromise
+    let _hid: HID;
+    export function mkPacketIOAsync(): Promise<HF2.PacketIO> {
+        if (!_hid)
+            _hid = new HID();
+        return Promise.resolve(_hid);
     }
 
     export let isEnabled = false

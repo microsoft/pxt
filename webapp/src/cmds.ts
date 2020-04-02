@@ -343,7 +343,7 @@ export function setWebUSBPaired(enabled: boolean) {
 function handleUSBApi(r: string) {
     const p = data.stripProtocol(r);
     if (p == "paired")
-        return tryPairedDevice;
+        return pxt.usb.isConnected();
     return Promise.resolve(false);
 }
 data.mountVirtualApi("usb", {

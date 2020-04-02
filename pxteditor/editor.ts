@@ -282,7 +282,7 @@ namespace pxt.editor {
         toggleHighContrast(): void;
         toggleGreenScreen(): void;
         toggleAccessibleBlocks(): void;
-        pair(): void;
+        pairAsync(autoConnect: boolean): Promise<void>;
         launchFullEditor(): void;
 
         settings: EditorSettings;
@@ -317,7 +317,7 @@ namespace pxt.editor {
         showPackageDialog(): void;
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
         checkForHwVariant(): boolean;
-        pair(): Promise<void>;
+        pairAsync(autoConnect: boolean): Promise<void>;
 
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
 
