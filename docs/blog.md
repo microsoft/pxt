@@ -1,5 +1,9 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode Arcade One Room Game Jam](/blog/arcade/game-jam-2)
+
+April 1st, 2020
+
 ## [Online Learning Resources](/blog/online-learning)
 
 March 10th, 2020
