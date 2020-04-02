@@ -2860,7 +2860,7 @@ namespace pxt.blocks {
         return fieldBlock;
     }
 
-    function mkReturnStatementBlock() {
+    export function mkReturnStatementBlock() {
         const block = document.createElement("block");
         block.setAttribute("type", "function_return");
 

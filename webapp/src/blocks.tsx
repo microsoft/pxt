@@ -1500,6 +1500,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return undefined;
         }
         if (block.builtinBlock) {
+            // function_return is conditionally added to the toolbox, so it needs a special case
+            if (block.attributes.blockId === "function_return") {
+                return [pxt.blocks.mkReturnStatementBlock()];
+            }
             // Find the block XML for this built in block.
             const builtin = snippets.allBuiltinBlocks()[block.attributes.blockId];
             if (builtin && builtin.blockXml && block.builtinField && block.builtinField.length == 2) {
