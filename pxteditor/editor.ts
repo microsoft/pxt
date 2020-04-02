@@ -282,7 +282,6 @@ namespace pxt.editor {
         toggleHighContrast(): void;
         toggleGreenScreen(): void;
         toggleAccessibleBlocks(): void;
-        pairAsync(autoConnect: boolean): Promise<void>;
         launchFullEditor(): void;
 
         settings: EditorSettings;
