@@ -16,7 +16,6 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 interface ProjectsState {
-    searchFor?: string;
     visible?: boolean;
     selectedCategory?: string;
     selectedIndex?: number;
@@ -43,7 +42,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ProjectsState, nextContext: any): boolean {
         return this.state.visible != nextState.visible
-            || this.state.searchFor != nextState.searchFor
             || this.state.selectedCategory != nextState.selectedCategory
             || this.state.selectedIndex != nextState.selectedIndex;
     }
