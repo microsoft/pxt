@@ -50,7 +50,7 @@
             var left = document.getElementById("left");
             var right = document.getElementById("right");
             var divider = document.getElementById("divider");
-            var localhost = /localhost=1/.test(window.location.href)
+            var localhost = window.location.hostname == "localhost";
             var editor = pxtConfig ? pxtConfig.relprefix : '/';
             var flags = "?nestededitorsim=1&editorlayout=ide&nosandbox=1";
             var ratio = .5;
