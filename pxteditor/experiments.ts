@@ -157,6 +157,11 @@ namespace pxt.editor.experiments {
                 id: "openProjectNewDependentTab",
                 name: lf("Open in New Connected Tab"),
                 description: lf("Open connected editors in different browser tabs.")
+            },
+            {
+                id: "accessibleBlocks",
+                name: lf("Block Keyboard Accessibility"),
+                description: lf("Use keyboard controls to move and modify blocks.")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }

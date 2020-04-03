@@ -203,8 +203,14 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
             // Hide flyout
             this.closeFlyout();
+            if (parent.parent.state?.accessibleBlocks) {
+                Blockly.navigation.setState(Blockly.navigation.STATE_WS);
+            }
         } else {
             let handled = false;
+            if (parent.parent.state?.accessibleBlocks) {
+                Blockly.navigation.setState(Blockly.navigation.STATE_TOOLBOX);
+            }
             if (customClick) {
                 handled = customClick(parent);
                 if (handled) return;
@@ -518,31 +524,48 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
     }
 
     handleKeyDown(e: React.KeyboardEvent<HTMLElement>) {
-        const { toolbox, childrenVisible } = this.props;
+        const { toolbox } = this.props;
         const isRtl = Util.isUserLanguageRtl();
 
+        const accessibleBlocksEnabled = (Blockly.getMainWorkspace() as any).keyboardAccessibilityMode;
+        const blocklyNavigationState = (Blockly.navigation as any).currentState_ as number;
+        const keyMap: { [key: string]: number } = {
+            "DOWN": accessibleBlocksEnabled ? 83 : 40, // 'S' || down arrow
+            "UP": accessibleBlocksEnabled ? 87 : 38, // 'W' || up arrow
+            "LEFT": accessibleBlocksEnabled ? 65 : 37, // 'A' || left arrow
+            "RIGHT": accessibleBlocksEnabled ? 68 : 39 // 'D' || right arrow
+        }
+
         const charCode = core.keyCodeFromEvent(e);
-        if (charCode == 40) { //  DOWN
-            this.nextItem();
-        } else if (charCode == 38) { // UP
-            this.previousItem();
-        } else if ((charCode == 39 && !isRtl) || (charCode == 37 && isRtl)) { // (LEFT & LTR) || (RIGHT & RTL)
-            // Focus inside flyout
-            toolbox.moveFocusToFlyout();
-        } else if (charCode == 27) { // ESCAPE
-            // Close the flyout
-            toolbox.closeFlyout();
-        } else if (charCode == core.ENTER_KEY || charCode == core.SPACE_KEY) {
-            sui.fireClickOnEnter.call(this, e);
-        } else if (charCode == core.TAB_KEY
-            || charCode == 37 /* Left arrow key */
-            || charCode == 39 /* Left arrow key */
-            || charCode == 17 /* Ctrl Key */
-            || charCode == 16 /* Shift Key */
-            || charCode == 91 /* Cmd Key */) {
-            // Escape tab and shift key
-        } else {
-            toolbox.setSearch();
+        if (!accessibleBlocksEnabled || blocklyNavigationState != 1) {
+            if (charCode == keyMap["DOWN"]) {
+                this.nextItem();
+            } else if (charCode == keyMap["UP"]) {
+                this.previousItem();
+            } else if ((charCode == keyMap["RIGHT"] && !isRtl)
+                || (charCode == keyMap["LEFT"] && isRtl)) {
+                // Focus inside flyout
+                toolbox.moveFocusToFlyout();
+            } else if (charCode == 27) { // ESCAPE
+                // Close the flyout
+                toolbox.closeFlyout();
+            } else if (charCode == core.ENTER_KEY || charCode == core.SPACE_KEY) {
+                sui.fireClickOnEnter.call(this, e);
+            } else if (charCode == core.TAB_KEY
+                || charCode == 37 /* Left arrow key */
+                || charCode == 39 /* Left arrow key */
+                || charCode == 17 /* Ctrl Key */
+                || charCode == 16 /* Shift Key */
+                || charCode == 91 /* Cmd Key */) {
+                // Escape tab and shift key
+            } else if (!accessibleBlocksEnabled) {
+                toolbox.setSearch();
+            }
+        } else if (accessibleBlocksEnabled && blocklyNavigationState == 1
+            && ((charCode == keyMap["LEFT"] && !isRtl)
+            || (charCode == keyMap["RIGHT"] && isRtl))) {
+            this.focusElement();
+            e.stopPropagation();
         }
     }
 
