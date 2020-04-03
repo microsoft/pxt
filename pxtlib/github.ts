@@ -713,10 +713,7 @@ namespace pxt.github {
             const rep = await ghGetJsonAsync(`https://api.github.com/repos/${repo}`);
             if (rep && !rep.homepage) {
                 try {
-                    await ghPostAsync(`https://api.github.com/repos/${repo}`,
-                        {
-                            "homepage": url
-                        }, undefined, "PATCH");
+                    await ghPostAsync(`https://api.github.com/repos/${repo}`, { "homepage": url }, undefined, "PATCH");
                 } catch (e) {
                     // just ignore if fail to update the homepage
                     pxt.tickEvent("github.homepage.error");
