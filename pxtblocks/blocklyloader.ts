@@ -1548,6 +1548,30 @@ namespace pxt.blocks {
             }
             options.push(formatCodeOption);
 
+            if (pxt.appTarget.appTheme.blocksCollapsing) {
+                const collapseAllOption = {
+                    text: lf("Collapse Blocks"),
+                    enabled: true,
+                    callback: () => {
+                        pxt.tickEvent("blocks.context.collapse", undefined, { interactiveConsent: true });
+                        pxt.blocks.layout.setCollapsedAll(this, true);
+                        pxt.blocks.layout.flow(this, { useViewWidth: true });
+                    }
+                }
+                options.push(collapseAllOption);
+
+                const expandAllOption = {
+                    text: lf("Expand Blocks"),
+                    enabled: true,
+                    callback: () => {
+                        pxt.tickEvent("blocks.context.expand", undefined, { interactiveConsent: true });
+                        pxt.blocks.layout.setCollapsedAll(this, false);
+                        pxt.blocks.layout.flow(this, { useViewWidth: true });
+                    }
+                }
+                options.push(expandAllOption);
+            }
+
             if (pxt.blocks.layout.screenshotEnabled()) {
                 const screenshotOption = {
                     text: lf("Snapshot"),
@@ -2382,7 +2406,7 @@ namespace pxt.blocks {
 
         const functionReturnId = "function_return";
         Blockly.Blocks[functionReturnId] = {
-            init: function() {
+            init: function () {
                 initReturnStatement(this);
             },
             onchange: function (event) {
