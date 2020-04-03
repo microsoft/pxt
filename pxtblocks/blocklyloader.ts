@@ -1554,11 +1554,22 @@ namespace pxt.blocks {
                     enabled: true,
                     callback: () => {
                         pxt.tickEvent("blocks.context.collapse", undefined, { interactiveConsent: true });
-                        pxt.blocks.layout.collapseAll(this);
+                        pxt.blocks.layout.setCollapsedAll(this, true);
                         pxt.blocks.layout.flow(this, { useViewWidth: true });
                     }
                 }
                 options.push(collapseAllOption);
+
+                const expandAllOption = {
+                    text: lf("Expand All"),
+                    enabled: true,
+                    callback: () => {
+                        pxt.tickEvent("blocks.context.expand", undefined, { interactiveConsent: true });
+                        pxt.blocks.layout.setCollapsedAll(this, false);
+                        pxt.blocks.layout.flow(this, { useViewWidth: true });
+                    }
+                }
+                options.push(expandAllOption);
             }
 
             if (pxt.blocks.layout.screenshotEnabled()) {
