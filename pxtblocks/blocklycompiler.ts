@@ -261,31 +261,36 @@ namespace pxt.blocks {
         if (!e.userFunctionReturnValues[name]) {
             const definition = Blockly.Functions.getDefinition(name, e.workspace);
 
-            const returnTypes: Point[] = [];
-            for (const child of definition.getDescendants(false)) {
-                if (child.type === "function_return") {
-                    attachPlaceholderIf(e, child, "RETURN_VALUE");
-                    returnTypes.push(returnType(e, getInputTargetBlock(child, "RETURN_VALUE")));
-                }
-            }
-
             let res = mkPoint("void");
 
-            if (returnTypes.length) {
-                try {
-                    const unified = mkPoint(null);
-                    for (const point of returnTypes) {
-                        union(unified, point);
+            if (isFunctionRecursive(definition, true)) {
+                res = mkPoint("any");
+            }
+            else {
+                const returnTypes: Point[] = [];
+                for (const child of definition.getDescendants(false)) {
+                    if (child.type === "function_return") {
+                        attachPlaceholderIf(e, child, "RETURN_VALUE");
+                        returnTypes.push(returnType(e, getInputTargetBlock(child, "RETURN_VALUE")));
                     }
-                    res = unified
                 }
-                catch (err) {
-                    e.diagnostics.push({
-                        blockId: definition.id,
-                        message: Util.lf("Function '{0}' has an invalid return type", name)
-                    });
 
-                    res = mkPoint("any")
+                if (returnTypes.length) {
+                    try {
+                        const unified = mkPoint(null);
+                        for (const point of returnTypes) {
+                            union(unified, point);
+                        }
+                        res = unified
+                    }
+                    catch (err) {
+                        e.diagnostics.push({
+                            blockId: definition.id,
+                            message: Util.lf("Function '{0}' has an invalid return type", name)
+                        });
+
+                        res = mkPoint("any")
+                    }
                 }
             }
 
@@ -349,7 +354,7 @@ namespace pxt.blocks {
             getInputTargetBlock(b, "VAR") : b;
     }
 
-    function getInputTargetBlock(b: Blockly.Block, n: string) {
+    function getInputTargetBlock(b: Blockly.Block, n: string): Blockly.Block {
         const res = b.getInputTargetBlock(n);
 
         if (!res) {
@@ -785,7 +790,7 @@ namespace pxt.blocks {
             return `${escapeVarName(a.name, e)}: ${a.type}`;
         });
 
-        const isRecursive = isFunctionRecursive(b);
+        const isRecursive = isFunctionRecursive(b, false);
         return [
             mkText(`function ${name} (${argsDeclaration.join(", ")})${isRecursive ? ": any" : ""}`),
             compileStatements(e, stmts)
@@ -2540,13 +2545,47 @@ namespace pxt.blocks {
         return b.type === "procedures_defnoreturn" || b.type === "function_definition";
     }
 
-    function isFunctionRecursive(b: Blockly.Block) {
-        const functionName = b.getField("function_name").getText();
-        const childCalls = b.getDescendants(false).filter(child => child.type == "function_call_output");
+    function getFunctionName(functionBlock: Blockly.Block) {
+        return functionBlock.getField("function_name").getText();
+    }
 
-        if (childCalls.some(c => c.getField("function_name").getText() === functionName)) {
-            return true;
+    // @param strict - if true, only return true if there is a return statement
+    // somewhere in the call graph that returns a call to this function. If false,
+    // return true if the function is called as an expression anywhere in the call
+    // graph
+    function isFunctionRecursive(b: Blockly.Block, strict: boolean) {
+        const functionName = getFunctionName(b)
+        const visited: pxt.Map<boolean> = {};
+
+        return checkForCallRecursive(b);
+
+        function checkForCallRecursive(functionDefinition: Blockly.Block) {
+            let calls: Blockly.Block[];
+
+            if (strict) {
+                calls = functionDefinition.getDescendants(false)
+                    .filter(child => child.type == "function_return")
+                    .map(returnStatement => getInputTargetBlock(returnStatement, "RETURN_VALUE"))
+                    .filter(returnValue => returnValue && returnValue.type === "function_call_output")
+            }
+            else {
+                calls = functionDefinition.getDescendants(false).filter(child => child.type == "function_call_output");
+            }
+
+            for (const call of calls) {
+                const callName = getFunctionName(call);
+
+                if (callName === functionName) return true;
+
+                if (visited[callName]) continue;
+                visited[callName] = true;
+
+                if (checkForCallRecursive(Blockly.Functions.getDefinition(callName, call.workspace))) {
+                    return true;
+                }
+            }
+
+            return false;
         }
-        return false;
     }
 }
