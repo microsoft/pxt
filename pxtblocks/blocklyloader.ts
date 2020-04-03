@@ -1550,7 +1550,7 @@ namespace pxt.blocks {
 
             if (pxt.appTarget.appTheme.blocksCollapsing) {
                 const collapseAllOption = {
-                    text: lf("Collapse All"),
+                    text: lf("Collapse Blocks"),
                     enabled: true,
                     callback: () => {
                         pxt.tickEvent("blocks.context.collapse", undefined, { interactiveConsent: true });
@@ -1561,7 +1561,7 @@ namespace pxt.blocks {
                 options.push(collapseAllOption);
 
                 const expandAllOption = {
-                    text: lf("Expand All"),
+                    text: lf("Expand Blocks"),
                     enabled: true,
                     callback: () => {
                         pxt.tickEvent("blocks.context.expand", undefined, { interactiveConsent: true });
