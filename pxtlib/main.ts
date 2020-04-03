@@ -389,6 +389,7 @@ namespace pxt {
         partsUrl?: string; // /beta---parts
         runUrl?: string; // "/beta---run"
         docsUrl?: string; // "/beta---docs"
+        multiUrl?: string; // "/beta---multi"
         isStatic?: boolean;
         verprefix?: string; // "v1"
     }
