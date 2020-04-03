@@ -39,7 +39,7 @@ gem 'github-pages', group: :jekyll_plugins`,
             "README.md": `
 ---
 
----                
+---
                 > ${lf("Open this page at {0}",
                 "[https://@REPOOWNER@.github.io/@REPONAME@/](https://@REPOOWNER@.github.io/@REPONAME@/)"
             )}
