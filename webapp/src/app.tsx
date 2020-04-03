@@ -3495,17 +3495,18 @@ export class ProjectView
     }
 
     toggleAccessibleBlocks() {
-        const accessibleBlocksOn = !this.state.accessibleBlocks;
-        if (accessibleBlocksOn) {
+        this.setAccessibleBlocks(!this.state.accessibleBlocks);
+    }
+
+    setAccessibleBlocks(enabled: boolean) {
+        if (enabled) {
             Blockly.navigation.enableKeyboardAccessibility();
         } else {
             Blockly.navigation.disableKeyboardAccessibility();
         }
-
-        pxt.tickEvent("app.accessibleblocks", { on: accessibleBlocksOn ? 1 : 0 });
-        this.setState({ accessibleBlocks: accessibleBlocksOn });
+        this.setState({ accessibleBlocks: enabled });
+        pxt.tickEvent("app.accessibleblocks", { on: enabled ? 1 : 0 });
     }
-
 
     setBannerVisible(b: boolean) {
         this.setState({ bannerVisible: b });

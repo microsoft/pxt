@@ -900,9 +900,8 @@ namespace pxt.cpp {
                             U.userError(lf("C++ file {0} is missing in extension {1}.", fn, pkg.config.name))
                         fileName = fullName
 
-                        // parseCpp() will remove doc comments, to prevent excessive recompilation
-                        // pxt.debug("Parse C++: " + fullName)
                         parseCpp(src, isHeader)
+                        src = src.replace(/^\s*/mg, "") // shrink the files
                         res.extensionFiles[sourcePath + fullName] = src
 
                         if (pkg.level == 0)

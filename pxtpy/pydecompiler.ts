@@ -967,9 +967,8 @@ namespace pxt.py {
                     break
                 allWords = newWords
             }
-            // 3. if there is only one word, add "on_" prefix
-            if (allWords.length == 1)
-                allWords = ["on", allWords[0]]
+            // 3. add an "on_" prefix
+            allWords = ["on", ...allWords]
 
             return allWords.join("_")
             function dedupWords(words: string[]): string[] {
