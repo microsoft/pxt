@@ -51,7 +51,7 @@
             var right = document.getElementById("right");
             var divider = document.getElementById("divider");
             var localhost = window.location.hostname == "localhost";
-            var editor = pxtConfig ? pxtConfig.relprefix : '/';
+            var editor = (pxtConfig ? pxtConfig.relprefix : '/').replace(/-*$/, '');
             var flags = "?nestededitorsim=1&editorlayout=ide&nosandbox=1";
             var ratio = .5;
             var dividerWidth = 6;
