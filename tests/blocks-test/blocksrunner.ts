@@ -42,6 +42,7 @@ pxt.webConfig = {
     partsUrl: undefined,
     runUrl: undefined,
     docsUrl: undefined,
+    multiUrl: undefined,
     isStatic: undefined,
 };
 
