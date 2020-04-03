@@ -38,7 +38,7 @@ const newslist: NewsList = {
                 "Microsoft Stores is proud to host a MakeCode stream with all-star ",
                 "athletes passionate about technology and connecting with their communities. ",
                 "This week, join <a href='https://www.instagram.com/thekidmcmanus/'>Brandon McManus</a> ",
-                "from the Denver Broncos as he helps you build your very own football arcade game with ",
+                "from the Denver Broncos as he helps you build your very own maze game with ",
                 "Microsoft MakeCode Arcade!"
             ]
         }
