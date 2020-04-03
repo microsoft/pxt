@@ -711,11 +711,14 @@ namespace pxt.github {
         if (url) {
             // check if the repo already has a web site
             const rep = await ghGetJsonAsync(`https://api.github.com/repos/${repo}`);
-            if (rep && !rep.homepage)
-                await ghPostAsync(`https://api.github.com/repos/${repo}`,
-                    {
-                        "homepage": url
-                    }, undefined, "PATCH");
+            if (rep && !rep.homepage) {
+                try {
+                    await ghPostAsync(`https://api.github.com/repos/${repo}`, { "homepage": url }, undefined, "PATCH");
+                } catch (e) {
+                    // just ignore if fail to update the homepage
+                    pxt.tickEvent("github.homepage.error");
+                }
+            }
         }
     }
 
