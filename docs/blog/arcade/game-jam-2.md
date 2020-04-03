@@ -25,23 +25,23 @@ It's the annual game of Aqua Ball in Fishville, and you're up against the reigni
 Totally tubular! Rack up combo points by riding the waves as long as possible in shaqattack8's Wave Jumper. Grab a friend and try out multiplayer mode for an extra challenge.
 
 ### Clicking Button Simulator by o_danny
-[![Clicking Button Simulator](/static/blog/arcade/game-jam/one-room/)](https://arcade.makecode.com/98143-93052-87735-45035)
+[![Clicking Button Simulator](/static/blog/arcade/game-jam/one-room/clickingbutton.png)](https://arcade.makecode.com/98143-93052-87735-45035)
 richard 
 
 ### Gigantic Castle by reyhanpanci256
-[![Gigantic Castle](/static/blog/arcade/game-jam/one-room/)](https://arcade.makecode.com/99246-16626-78826-85418)
+[![Gigantic Castle](/static/blog/arcade/game-jam/one-room/giganticcastle.png)](https://arcade.makecode.com/99246-16626-78826-85418)
 richard
 
 ### Space Mechanic by TWIB Productions
-[![Space Mechanic](/static/blog/arcade/game-jam/one-room/)](https://arcade.makecode.com/10414-32474-22732-83822)
+[![Space Mechanic](/static/blog/arcade/game-jam/one-room/spacemechanic.png)](https://arcade.makecode.com/10414-32474-22732-83822)
 richard 
 
-### Xtron by mosowoo
-[![Xtron](/static/blog/arcade/game-jam/one-room/)](https://arcade.makecode.com/77255-08805-62216-65351)
+### XTRON by mosowoo
+[![XTRON](/static/blog/arcade/game-jam/one-room/xtron.png)](https://arcade.makecode.com/77255-08805-62216-65351)
 richard
 
 ### Chase the sound (turn volume up) by felixtsu
-[![Chase the Sound](/static/blog/arcade/game-jam/one-room/)](https://arcade.makecode.com/99812-60519-79814-16674)
+[![Chase the Sound](/static/blog/arcade/game-jam/one-room/chasethesound.png)](https://arcade.makecode.com/99812-60519-79814-16674)
 richard
 
 Head over to the [official game jam page](https://itch.io/jam/makecode-arcade-game-jam-2/entries) to see the full list of submissions!
