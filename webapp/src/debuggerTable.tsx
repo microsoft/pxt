@@ -2,7 +2,7 @@ import * as React from "react";
 
 export interface DebuggerTableProps {
     header: string;
-    frozen?: boolean;
+    placeholderText?: string;
 }
 
 export class DebuggerTable extends React.Component<DebuggerTableProps> {
@@ -11,7 +11,12 @@ export class DebuggerTable extends React.Component<DebuggerTableProps> {
             <div className="ui variableTableHeader">
                 {this.props.header}
             </div>
-            <div className={`ui segment debugvariables ${this.props.frozen ? "frozen" : ""} ui collapsing basic striped table`}>
+            { this.props.placeholderText &&
+                <div className="ui variableTablePlaceholder">
+                    { this.props.placeholderText }
+                </div>
+            }
+            <div className={`ui segment debugvariables collapsing basic striped table`}>
                 {this.props.children}
             </div>
         </div>

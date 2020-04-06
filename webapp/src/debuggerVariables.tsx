@@ -86,8 +86,17 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             variables = stackFrames[this.props.activeFrame].variables.concat(variables);
         }
 
-        return <DebuggerTable header={variableTableHeader} frozen={frozen}>
-            {this.renderVars(variables)}
+        let placeholderText: string;
+
+        if (frozen) {
+            placeholderText = lf("Code is running...");
+        }
+        else if (!variables.length) {
+            placeholderText = lf("No variables to show");
+        }
+
+        return <DebuggerTable header={variableTableHeader} placeholderText={placeholderText}>
+            { !placeholderText && this.renderVars(variables) }
         </DebuggerTable>
     }
 
