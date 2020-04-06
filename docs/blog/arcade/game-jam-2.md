@@ -43,7 +43,9 @@ richard
 
 ### XTRON by mosowoo
 [![XTRON](/static/blog/arcade/game-jam/one-room/xtron.png)](https://arcade.makecode.com/77255-08805-62216-65351)
-richard
+In XTRON, you navigate the world by throwing a teleporter around.
+By "you", we are of course referring to one of the cutest characters that has starred in a game made in MakeCode Arcade.
+Make sure you press the up and down buttons to trigger some awesome animations!
 
 ### Chase the sound (turn volume up) by felixtsu
 [![Chase the Sound](/static/blog/arcade/game-jam/one-room/chasethesound.png)](https://arcade.makecode.com/99812-60519-79814-16674)
