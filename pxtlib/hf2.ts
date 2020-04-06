@@ -40,6 +40,7 @@ namespace pxt.HF2 {
 
     export interface PacketIO {
         sendPacketAsync(pkt: Uint8Array): Promise<void>;
+        onConnectionChanged: () => void;
         onData: (v: Uint8Array) => void;
         onError: (e: Error) => void;
         onEvent: (v: Uint8Array) => void;

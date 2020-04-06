@@ -182,6 +182,7 @@ export class HidIO implements HF2.PacketIO {
     dev: any;
     private path: string;
 
+    onConnectionChanged = () => { };
     onData = (v: Uint8Array) => { };
     onEvent = (v: Uint8Array) => { };
     onError = (e: Error) => { };
@@ -207,6 +208,11 @@ export class HidIO implements HF2.PacketIO {
             this.onData(new Uint8Array(v))
         })
         this.dev.on("error", (v: Error) => this.onError(v))
+        this.onConnectionChanged();
+    }
+
+    isConnected(): boolean {
+        return !!this.dev;
     }
 
     sendPacketAsync(pkt: Uint8Array): Promise<void> {
@@ -232,7 +238,7 @@ export class HidIO implements HF2.PacketIO {
         // see https://github.com/node-hid/node-hid/issues/61
         this.dev.removeAllListeners("data");
         this.dev.removeAllListeners("error");
-        let pkt = new Uint8Array([0x48])
+        const pkt = new Uint8Array([0x48])
         this.sendPacketAsync(pkt).catch(e => { })
         return Promise.delay(100)
             .then(() => {
@@ -240,6 +246,7 @@ export class HidIO implements HF2.PacketIO {
                     this.dev.close()
                     this.dev = null
                 }
+                this.onConnectionChanged();
             })
     }
 

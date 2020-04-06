@@ -1,5 +1,6 @@
 import Cloud = pxt.Cloud;
 import U = pxt.Util;
+import * as data from "./data";
 
 let iface: pxt.worker.Iface
 
@@ -71,6 +72,7 @@ export function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {
 pxt.HF2.mkPacketIOAsync = mkBridgeAsync;
 
 class BridgeIO implements pxt.HF2.PacketIO {
+    onConnectionChanged  = () => {};
     onData = (v: Uint8Array) => { };
     onEvent = (v: Uint8Array) => { };
     onError = (e: Error) => { };
@@ -173,9 +175,12 @@ function hf2Async() {
     return pxt.HF2.mkPacketIOAsync()
         .then(h => {
             hf2Wrapper = new pxt.HF2.Wrapper(h);
-            if (serialHandler) {
-                hf2Wrapper.onSerial = serialHandler;
+            hf2Wrapper.io.onConnectionChanged = () => {
+                pxt.log(`hid ${hf2Wrapper.io.isConnected() ? 'connected' : 'disconnected'}`)
+                data.invalidate("hid:*");
             }
+            if (serialHandler)
+                hf2Wrapper.onSerial = serialHandler;
             return hf2Wrapper.reconnectAsync(true)
                 .then(() => hf2Wrapper)
         })
@@ -183,15 +188,13 @@ function hf2Async() {
 
 export function configureHidSerial(serialCb: (buf: Uint8Array, isStderr: boolean) => void): void {
     serialHandler = serialCb;
-    if (hf2Wrapper) {
+    if (hf2Wrapper)
         hf2Wrapper.onSerial = serialHandler;
-    }
 }
 
 export function disconnectWrapperAsync(): Promise<void> {
-    if (hf2Wrapper) {
+    if (hf2Wrapper)
         return hf2Wrapper.disconnectAsync();
-    }
     return Promise.resolve();
 }
 
@@ -214,3 +217,17 @@ export function initAsync(force = false) {
         })
         .then(() => wrapper);
 }
+
+function handleHIDApi(r: string) {
+    const p = data.stripProtocol(r);
+    switch(p) {
+        case "connected":
+            return hf2Wrapper && hf2Wrapper.io.isConnected();
+        case "icon":
+            return "usb";
+    }
+    return Promise.resolve(false);
+}
+data.mountVirtualApi("hid", {
+    getSync: handleHIDApi
+});

@@ -5,6 +5,7 @@ type WHID = Windows.Devices.HumanInterfaceDevice.HidDevice;
 
 namespace pxt.winrt {
     export class WindowsRuntimeIO implements pxt.HF2.PacketIO {
+        onConnectionChanged = () => { };
         onData = (v: Uint8Array) => { };
         onEvent = (v: Uint8Array) => { };
         onError = (e: Error) => { };
@@ -34,7 +35,10 @@ namespace pxt.winrt {
             if (this.dev) {
                 const d = this.dev;
                 delete this.dev;
-                d.close();
+                try {
+                    d.close();
+                } catch (e) { }
+                this.onConnectionChanged();
             }
             return Promise.resolve();
         }
@@ -111,6 +115,7 @@ namespace pxt.winrt {
                         }
                         this.onData(new Uint8Array(values));
                     });
+                    this.onConnectionChanged();
                     return Promise.resolve();
                 })
                 .catch((e) => {
@@ -202,6 +207,6 @@ namespace pxt.winrt {
             });
             watchers.push(watcher);
         });
-        watchers.filter(w => !w.status).forEach((w) =>  w.start());
+        watchers.filter(w => !w.status).forEach((w) => w.start());
     }
 }

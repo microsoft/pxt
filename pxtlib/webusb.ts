@@ -167,6 +167,7 @@ namespace pxt.usb {
         epIn: USBEndpoint;
         epOut: USBEndpoint;
         readLoopStarted = false;
+        onConnectionChanged = () => { };
         onData = (v: Uint8Array) => { };
         onError = (e: Error) => { };
         onEvent = (v: Uint8Array) => { };
@@ -187,9 +188,12 @@ namespace pxt.usb {
         }
 
         private clearDev() {
-            this.dev = null
-            this.epIn = null
-            this.epOut = null
+            if (this.dev) {
+                this.dev = null
+                this.epIn = null
+                this.epOut = null
+                this.onConnectionChanged();    
+            }
         }
 
         error(msg: string) {
@@ -371,12 +375,9 @@ namespace pxt.usb {
                     this.ready = true
                     if (this.epIn || isHF2)
                         this.readLoop()
+                    this.onConnectionChanged();
                 })
         }
-    }
-
-    export function isConnected(): boolean {
-        return _hid && !!_hid.dev && !!_hid.ready;
     }
 
     export function pairAsync(): Promise<void> {
