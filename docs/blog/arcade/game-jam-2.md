@@ -26,7 +26,9 @@ Totally tubular! Rack up combo points by riding the waves as long as possible in
 
 ### Clicking Button Simulator by o_danny
 [![Clicking Button Simulator](/static/blog/arcade/game-jam/one-room/clickingbutton.png)](https://arcade.makecode.com/98143-93052-87735-45035)
-richard 
+What!? I have to click this button *one thousand* times?
+Fear not, o_danny's game has more going on than you might think.
+We don't want to spoil anything, so give it a shot!
 
 ### Gigantic Castle by reyhanpanci256
 [![Gigantic Castle](/static/blog/arcade/game-jam/one-room/giganticcastle.png)](https://arcade.makecode.com/99246-16626-78826-85418)
