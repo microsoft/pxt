@@ -51,6 +51,7 @@ Make sure you press the up and down buttons to trigger some awesome animations!
 
 ### Chase the sound (turn volume up) by felixtsu
 [![Chase the Sound](/static/blog/arcade/game-jam/one-room/chasethesound.png)](https://arcade.makecode.com/99812-60519-79814-16674)
-richard
+Turn your volume up for this one!
+Chase the Sound combines a great audio mechanic with a mysterious narrative to build a lot of ambiance into a game with a single repeating room.
 
 Head over to the [official game jam page](https://itch.io/jam/makecode-arcade-game-jam-2/entries) to see the full list of submissions!
