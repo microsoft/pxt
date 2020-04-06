@@ -26,22 +26,32 @@ Totally tubular! Rack up combo points by riding the waves as long as possible in
 
 ### Clicking Button Simulator by o_danny
 [![Clicking Button Simulator](/static/blog/arcade/game-jam/one-room/clickingbutton.png)](https://arcade.makecode.com/98143-93052-87735-45035)
-richard 
+What!? I have to click this button *one thousand* times?
+Fear not, o_danny's game has more going on than you might think.
+We don't want to spoil anything, so give it a shot!
 
 ### Gigantic Castle by reyhanpanci256
 [![Gigantic Castle](/static/blog/arcade/game-jam/one-room/giganticcastle.png)](https://arcade.makecode.com/99246-16626-78826-85418)
-richard
+Gigantic Castle is an action platformer with multiple ways to play.
+Choose between two different paths as you navigate a castle stocked with terrifying ghosts, monsters, spikes, and potted plants.
+This game is a great example of level-design done well!
+reyhanpanci is a frequent contributor on the [MakeCode Forum](forum.makecode.com), make sure you check out their other games!
 
 ### Space Mechanic by TWIB Productions
 [![Space Mechanic](/static/blog/arcade/game-jam/one-room/spacemechanic.png)](https://arcade.makecode.com/10414-32474-22732-83822)
-richard 
+Space Mechanic is a game about doing a job.
+A repetitive, tedious, menial job with a lot of space ships.
+It's the attention to detail that really sells the experience of this game and makes it a world worth visiting!
 
 ### XTRON by mosowoo
 [![XTRON](/static/blog/arcade/game-jam/one-room/xtron.png)](https://arcade.makecode.com/77255-08805-62216-65351)
-richard
+In XTRON, you navigate the world by throwing a teleporter around.
+By "you", we are of course referring to one of the cutest characters that has starred in a game made in MakeCode Arcade.
+Make sure you press the up and down buttons to trigger some awesome animations!
 
 ### Chase the sound (turn volume up) by felixtsu
 [![Chase the Sound](/static/blog/arcade/game-jam/one-room/chasethesound.png)](https://arcade.makecode.com/99812-60519-79814-16674)
-richard
+Turn your volume up for this one!
+Chase the Sound combines a great audio mechanic with a mysterious narrative to build a lot of ambiance into a game with a single repeating room.
 
 Head over to the [official game jam page](https://itch.io/jam/makecode-arcade-game-jam-2/entries) to see the full list of submissions!
