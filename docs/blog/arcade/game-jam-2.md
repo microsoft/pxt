@@ -32,7 +32,10 @@ We don't want to spoil anything, so give it a shot!
 
 ### Gigantic Castle by reyhanpanci256
 [![Gigantic Castle](/static/blog/arcade/game-jam/one-room/giganticcastle.png)](https://arcade.makecode.com/99246-16626-78826-85418)
-richard
+Gigantic Castle is an action platformer with multiple ways to play.
+Choose between two different paths as you navigate a castle stocked with terrifying ghosts, monsters, spikes, and potted plants.
+This game is a great example of level-design done well!
+reyhanpanci is a frequent contributor on the [MakeCode Forum](forum.makecode.com), make sure you check out their other games!
 
 ### Space Mechanic by TWIB Productions
 [![Space Mechanic](/static/blog/arcade/game-jam/one-room/spacemechanic.png)](https://arcade.makecode.com/10414-32474-22732-83822)
