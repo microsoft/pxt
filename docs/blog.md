@@ -4,7 +4,7 @@
 
 April 7th, 2020
 
-Submissions from the second MakeCode Arcade game jam are in, and we've been delighted and amazed by the creativity and craft on display in these games! Check out some of our favorite entries from the jam.
+Submissions from the second MakeCode Arcade game jam are in. We've been delighted and amazed by the creativity and craft on display in these games! Check out some of our favorite entries from the jam.
 
 **[Continue reading this blog post](/blog/arcade/game-jam-2)**
 
