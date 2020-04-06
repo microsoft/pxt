@@ -39,7 +39,9 @@ reyhanpanci is a frequent contributor on the [MakeCode Forum](forum.makecode.com
 
 ### Space Mechanic by TWIB Productions
 [![Space Mechanic](/static/blog/arcade/game-jam/one-room/spacemechanic.png)](https://arcade.makecode.com/10414-32474-22732-83822)
-richard 
+Space Mechanic is a game about doing a job.
+A repetitive, tedious, menial job with a lot of space ships.
+It's the attention to detail that really sells the experience of this game and makes it a world worth visiting!
 
 ### XTRON by mosowoo
 [![XTRON](/static/blog/arcade/game-jam/one-room/xtron.png)](https://arcade.makecode.com/77255-08805-62216-65351)
