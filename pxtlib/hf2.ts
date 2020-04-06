@@ -46,6 +46,7 @@ namespace pxt.HF2 {
         error(msg: string): any;
         reconnectAsync(): Promise<void>;
         disconnectAsync(): Promise<void>;
+        isConnected(): boolean;
         isSwitchingToBootloader?: () => void;
 
         // these are implemneted by HID-bridge

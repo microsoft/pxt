@@ -76,10 +76,15 @@ class BridgeIO implements pxt.HF2.PacketIO {
     onError = (e: Error) => { };
     onSerial = (v: Uint8Array, isErr: boolean) => { };
     public dev: HidDevice;
+    private connected: boolean;
 
     constructor(public rawMode = false) {
         if (rawMode)
             this.onEvent = v => this.onData(v)
+    }
+
+    isConnected(): boolean {
+        return !!this.dev && this.connected;
     }
 
     onOOB(v: OOB) {
@@ -101,6 +106,7 @@ class BridgeIO implements pxt.HF2.PacketIO {
     }
 
     error(msg: string) {
+        this.connected = false;
         throw new HIDError(U.lf("USB/HID error on device {0} ({1})", this.dev.product, msg))
     }
 
@@ -109,6 +115,7 @@ class BridgeIO implements pxt.HF2.PacketIO {
     }
 
     disconnectAsync(): Promise<void> {
+        this.connected = false;
         return iface.opAsync("disconnect", {
             path: this.dev.path
         })
@@ -133,6 +140,7 @@ class BridgeIO implements pxt.HF2.PacketIO {
     }
 
     initAsync(): Promise<void> {
+        this.connected = false;
         return iface.opAsync("list", {})
             .then((devs0: any) => {
                 let devs = devs0.devices as HidDevice[]
@@ -151,35 +159,38 @@ class BridgeIO implements pxt.HF2.PacketIO {
                 path: this.dev.path,
                 raw: this.rawMode,
             }))
+            .then(() => {
+                this.connected = true;
+            })
     }
 }
 
-let uf2Wrapper: pxt.HF2.Wrapper;
+let hf2Wrapper: pxt.HF2.Wrapper;
 let initPromise: Promise<pxt.HF2.Wrapper>;
 let serialHandler: (buf: Uint8Array, isStderr: boolean) => void;
 
 function hf2Async() {
     return pxt.HF2.mkPacketIOAsync()
         .then(h => {
-            uf2Wrapper = new pxt.HF2.Wrapper(h);
+            hf2Wrapper = new pxt.HF2.Wrapper(h);
             if (serialHandler) {
-                uf2Wrapper.onSerial = serialHandler;
+                hf2Wrapper.onSerial = serialHandler;
             }
-            return uf2Wrapper.reconnectAsync(true)
-                .then(() => uf2Wrapper)
+            return hf2Wrapper.reconnectAsync(true)
+                .then(() => hf2Wrapper)
         })
 }
 
 export function configureHidSerial(serialCb: (buf: Uint8Array, isStderr: boolean) => void): void {
     serialHandler = serialCb;
-    if (uf2Wrapper) {
-        uf2Wrapper.onSerial = serialHandler;
+    if (hf2Wrapper) {
+        hf2Wrapper.onSerial = serialHandler;
     }
 }
 
 export function disconnectWrapperAsync(): Promise<void> {
-    if (uf2Wrapper) {
-        return uf2Wrapper.disconnectAsync();
+    if (hf2Wrapper) {
+        return hf2Wrapper.disconnectAsync();
     }
     return Promise.resolve();
 }

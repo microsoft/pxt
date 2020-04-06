@@ -223,6 +223,10 @@ namespace pxt.usb {
                 .then(dev => this.connectAsync(dev));
         }
 
+        isConnected(): boolean {
+            return !!this.dev && this.ready;
+        }
+
         private connectAsync(dev: USBDevice) {
             this.log("got device: " + dev.manufacturerName + " " + dev.productName)
             this.dev = dev;

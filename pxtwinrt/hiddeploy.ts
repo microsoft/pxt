@@ -17,13 +17,17 @@ namespace pxt.winrt {
             throw new Error(U.lf("USB/HID error ({0})", msg))
         }
 
+        isConnected(): boolean {
+            return !!this.dev;
+        }
+
         reconnectAsync(): Promise<void> {
             return this.disconnectAsync()
                 .then(() => this.initAsync());
         }
 
         isSwitchingToBootloader() {
-            isSwitchingToBootloader();
+            return false;
         }
 
         disconnectAsync(): Promise<void> {
