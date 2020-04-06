@@ -134,7 +134,12 @@ namespace pxt.blocks.layout {
             y += block.getHeightWidth().height
             y += emPixels; //buffer
         })
-    };
+    }
+
+    export function setCollapsedAll(ws: Blockly.WorkspaceSvg, collapsed: boolean) {
+        ws.getTopBlocks(false)
+            .forEach(b => b.setCollapsed(collapsed));
+    }
 
     export function flow(ws: Blockly.WorkspaceSvg, opts?: FlowOptions) {
         if (opts) {

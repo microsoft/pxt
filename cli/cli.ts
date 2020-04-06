@@ -991,6 +991,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "partsUrl": opts.localDir + "siminstructions.html",
             "runUrl": opts.localDir + "run.html",
             "docsUrl": opts.localDir + "docs.html",
+            "multiUrl": opts.localDir + "multi.html",
             "isStatic": true,
         }
         const targetImagePaths = targetImages.map(k =>

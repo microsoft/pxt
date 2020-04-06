@@ -3,12 +3,15 @@
 <head>
     <title>MakeCode Multi Editor</title>
     <style>
+        html, body {
+            overscroll-behavior: none;
+        }
         iframe {
             position: absolute;
             width: calc(50% - 0.15rem);
-            height: calc(100% - 1rem);
+            height: 100%;
             bottom: 0;
-            top: 1rem;
+            top: 0;
             border: none;
         }
 
@@ -29,58 +32,29 @@
             height: 100%;
             left: calc(50% - 0.15rem);
             right: calc(50% + 0.15rem);
-            background: #999;
+            background: #bbb;
             top: 0rem;
-        }
-
-        select {
-            position: absolute;
-            width: calc(50% - 0.15rem);
-            height: 1rem;
-            top: 0rem;
-        }
-
-        #selectleft {
-            left: 0;
-            right: calc(50% + 0.15rem);
-        }
-
-        #selectright {
-            right: 0;
-            left: cal(50% - 0.15rem);
         }
     </style>
 </head>
 
 <body>
-    <select id="selectleft">
-        <option value="https://makecode.microbit.org/beta">micro:bit (beta)</option>
-        <option value="https://makecode.adafruit.com/beta">Adafruit Circuit Playground Express (beta)</option>
-        <option value="https://arcade.makecode.com/beta">Arcade (beta)</option>
-        <option value="https://makecode.calliope.cc/beta">Calliope (beta)</option>
-        <option value="https://maker.makecode.com/beta">Maker (beta)</option>
-    </select>
-    <select id="selectright">
-        <option value="https://makecode.microbit.org/beta">micro:bit (beta)</option>
-        <option value="https://makecode.adafruit.com/beta">Adafruit Circuit Playground Express (beta)</option>
-        <option value="https://arcade.makecode.com/beta">Arcade (beta)</option>
-        <option value="https://makecode.calliope.cc/beta">Calliope (beta)</option>
-        <option value="https://maker.makecode.com/beta">Maker (beta)</option>
-    </select>
     <iframe id="left" allow="usb"></iframe>
     <div id="divider"></div>
     <iframe id="right" allow="usb"></iframe>
     <script>
         (function () {
+            // This line gets patched up by the cloud
+            var pxtConfig = null;
+
             var left = document.getElementById("left");
             var right = document.getElementById("right");
-            var selectLeft = document.getElementById("selectleft");
-            var selectRight = document.getElementById("selectright");
             var divider = document.getElementById("divider");
-            var localhost = /localhost=1/.test(window.location.href)
+            var localhost = window.location.hostname == "localhost";
+            var editor = (pxtConfig ? pxtConfig.relprefix : '/').replace(/-*$/, '');
             var flags = "?nestededitorsim=1&editorlayout=ide&nosandbox=1";
             var ratio = .5;
-            var dividerWidth = 6;
+            var dividerWidth = 14;
 
             window.onmessage = function (msg) {
                 var data = msg.data;
@@ -92,36 +66,30 @@
                             return ifrm.contentWindow !== source;
                         })
                         .forEach(function (ifrm) {
-                            ifrm.contentWindow.postMessage(data, "*")
+                            ifrm.contentWindow.postMessage(data, window.location.origin)
                         });
                 }
             };
 
-            function updateSrc(ifrm, select) {
+            function updateSrc(ifrm) {
                 if (localhost) {
                     ifrm.src = "/index.html" + flags;
                 } else {
-                    ifrm.src = select.value + flags;
+                    ifrm.src = editor + flags;
                 }
             }
-
-            selectLeft.onchange = function () { updateSrc(left, selectLeft); }
-            selectRight.onchange = function () { updateSrc(right, selectRight); }
-            updateSrc(left, selectLeft);
-            updateSrc(right, selectRight);
+            updateSrc(left);
+            updateSrc(right);
 
             function setWidths() {
                 var t = document.body.clientWidth;
                 var n = Math.floor(t * ratio);
                 var i = Math.max(t - n - dividerWidth, 4);
                 left.style.width = n + "px";
-                selectLeft.style.width = n + "px";
                 divider.style.left = n + "px";
                 divider.style.width = dividerWidth + "px";
                 right.style.left = n + dividerWidth + "px";
                 right.style.width = i + "px";
-                selectRight.style.left = n + dividerWidth + "px";
-                selectRight.style.width = i + "px";
             }
             function startDrag() {
                 left.style.visibility = "hidden";

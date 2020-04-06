@@ -17,6 +17,34 @@ interface Lesson {
     startDay?: number;
 }
 
+interface NewsItem {
+    headline: string;
+    url: string;
+    description: string[];
+}
+
+interface NewsList {
+    title: string;
+    items: NewsItem[];
+}
+
+const newslist: NewsList = {
+    "title": "New live streams!",
+    "items": [
+        {
+            "headline": "Digital All-Stars is now streaming!",
+            "url": "https://aka.ms/makecodeDASstream",
+            "description": [
+                "Microsoft Stores is proud to host a MakeCode stream with all-star ",
+                "athletes passionate about technology and connecting with their communities. ",
+                "This week, join <a href='https://www.instagram.com/thekidmcmanus/'>Brandon McManus</a> ",
+                "from the Denver Broncos as he helps you build your very own maze game with ",
+                "Microsoft MakeCode Arcade!"
+            ]
+        }
+    ]
+};
+
 const lessons: Lesson[] = [
     {
         "title": "Beginner micro:bit",
@@ -83,8 +111,32 @@ const lessons: Lesson[] = [
     }
 ]
 
+makeNewsList();
 makeLessons();
 makeSchedule();
+
+function makeNewsList() {
+    if (newslist.items.length == 0) {
+        return;
+    }
+    const newsContainer = document.createElement("div");
+    newsContainer.innerHTML = "<h3>" + newslist.title + "</h3>";
+    for (const newsItem of newslist.items) {
+        const streamlink = document.createElement("a")
+        streamlink.href = newsItem.url;
+        streamlink.text = newsItem.headline;
+        const headline = document.createElement("h4");
+        headline.appendChild(streamlink);
+        newsContainer.appendChild(headline);
+        const newsinfo = document.createElement("p");
+        for (const newsline of newsItem.description) {
+            newsinfo.innerHTML += newsline;
+        }
+        newsContainer.appendChild(newsinfo);
+    }
+    const newsDiv = document.getElementById("news");
+    newsDiv.appendChild(newsContainer);
+}
 
 function makeSchedule() {
     const sorted = lessons.sort((a, b) => a.time < b.time ? -1 : 1);

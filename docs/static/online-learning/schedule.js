@@ -7,6 +7,22 @@ var Day;
     Day["Friday"] = "Friday";
     Day["All"] = "All";
 })(Day || (Day = {}));
+var newslist = {
+    "title": "New live streams!",
+    "items": [
+        {
+            "headline": "Digital All-Stars is now streaming!",
+            "url": "https://aka.ms/makecodeDASstream",
+            "description": [
+                "Microsoft Stores is proud to host a MakeCode stream with all-star ",
+                "athletes passionate about technology and connecting with their communities. ",
+                "This week, join <a href='https://www.instagram.com/thekidmcmanus/'>Brandon McManus</a> ",
+                "from the Denver Broncos as he helps you build your very own maze game with ",
+                "Microsoft MakeCode Arcade!"
+            ]
+        }
+    ]
+};
 var lessons = [
     {
         "title": "Beginner micro:bit",
@@ -72,8 +88,33 @@ var lessons = [
         "days": [Day.Monday, Day.Wednesday, Day.Friday]
     }
 ];
+makeNewsList();
 makeLessons();
 makeSchedule();
+function makeNewsList() {
+    if (newslist.items.length == 0) {
+        return;
+    }
+    var newsContainer = document.createElement("div");
+    newsContainer.innerHTML = "<h3>" + newslist.title + "</h3>";
+    for (var _i = 0, _a = newslist.items; _i < _a.length; _i++) {
+        var newsItem = _a[_i];
+        var streamlink = document.createElement("a");
+        streamlink.href = newsItem.url;
+        streamlink.text = newsItem.headline;
+        var headline = document.createElement("h4");
+        headline.appendChild(streamlink);
+        newsContainer.appendChild(headline);
+        var newsinfo = document.createElement("p");
+        for (var _b = 0, _c = newsItem.description; _b < _c.length; _b++) {
+            var newsline = _c[_b];
+            newsinfo.innerHTML += newsline;
+        }
+        newsContainer.appendChild(newsinfo);
+    }
+    var newsDiv = document.getElementById("news");
+    newsDiv.appendChild(newsContainer);
+}
 function makeSchedule() {
     var sorted = lessons.sort(function (a, b) { return a.time < b.time ? -1 : 1; });
     var parent = document.getElementById("schedule");
