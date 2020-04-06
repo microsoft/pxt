@@ -1,6 +1,6 @@
 # MakeCode Arcade Game Jam
 
-![Arcade Game Jam banner](TODO)
+![Arcade One Room Game Jam banner](/static/blog/arcade/game-jam/game-jam-2.gif)
 
 Over the last few weeks you may have seen us posting about the MakeCode Arcade One Room Game Jam on Twitter, or talking about it on our livestreams. Well, submissions are in, and we've been delighted and amazed by the creativity and craft on display in these games! Participants were asked to make a game using exactly one tilemap, that takes place in "one room". Here are some of our favorites from the jam:
 
