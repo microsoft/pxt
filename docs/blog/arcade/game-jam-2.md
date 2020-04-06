@@ -2,7 +2,7 @@
 
 ![Arcade One Room Game Jam banner](/static/blog/arcade/game-jam/game-jam-2.gif)
 
-Over the last few weeks you may have seen us posting about the MakeCode Arcade One Room Game Jam on Twitter, or talking about it on our livestreams. Well, submissions are in, and we've been delighted and amazed by the creativity and craft on display in these games! Participants were asked to make a game using exactly one tilemap, that takes place in "one room". Here are some of our favorites from the jam:
+Over the last few weeks you may have seen us posting about the MakeCode Arcade One Room Game Jam on Twitter, or talking about it on our livestreams. Well, submissions are in and we've been delighted and amazed by the creativity and craft on display in these games! Participants were asked to make a game that takes place in "one room", using exactly one tilemap. Here are some of our favorites from the jam:
 
 ### NineCarpets by phillowcompiler
 [![NineCarpets](/static/blog/arcade/game-jam/one-room/ninecarpets.png)](https://arcade.makecode.com/81707-47949-81798-72867)
@@ -14,11 +14,11 @@ You are the only line of defense between a deadly meteor shower and your base. S
 
 ### Guerrein by Alejandro
 [![Guerrein](/static/blog/arcade/game-jam/one-room/guerrein.png)](https://arcade.makecode.com/29746-46301-89977-97050)
-Protect the earth! Play as a space warrior defending the earth from invading robots in Alejandro's Guerrein. Survive for as long as you can, and collect coins while protecting the planet.
+Protect the earth! Play as a space warrior defending the earth from invading robots in Alejandro's Guerrein. Survive for as long as you can and collect coins while protecting the planet.
 
 ### Aqua Ball by Perryw101
 [![Aqua Ball](/static/blog/arcade/game-jam/one-room/aquaball.png)](https://arcade.makecode.com/00907-50718-83595-32559)
-It's the annual game of Aqua Ball in Fishville, and you're up against the reigning champ. Perryw101's Aqua Ball stars Goldson, an underdog, trying to take down The Shark, an Aqua Ball champion who may have some dirty tricks up their sleeve.
+It's the annual game of Aqua Ball in Fishville and you're up against the reigning champ. Perryw101's Aqua Ball stars Goldson, an underdog, trying to take down The Shark. The Shark is an Aqua Ball champion who may have some dirty tricks up their sleeve.
 
 ### Wave Jumper by shaqattack8
 [![Wave Jumper](/static/blog/arcade/game-jam/one-room/wavejumper.png)](https://arcade.makecode.com/15157-22582-17393-73487)
