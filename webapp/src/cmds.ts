@@ -148,7 +148,7 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
     if (!resp.success)
         return browserDownloadDeployCoreAsync(resp);
     core.infoNotification(lf("Downloading..."));
-    return pxt.HF2.initAsync()
+    return pxt.packetio.initAsync()
         .then(dev => dev.reflashAsync(resp))
         .catch((e) => {
             const troubleshootDoc = pxt.appTarget && pxt.appTarget.appTheme && pxt.appTarget.appTheme.appFlashingTroubleshoot;
@@ -177,7 +177,7 @@ function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptio
     return hidDeployCoreAsync(r, d)
         .timeout(20000)
         .catch((e) => {
-            return pxt.HF2.disconnectWrapperAsync()
+            return pxt.packetio.disconnectWrapperAsync()
                 .catch((e) => {
                     // Best effort disconnect; at this point we don't even know the state of the device
                     pxt.reportException(e);
@@ -295,7 +295,7 @@ export function init(): void {
     } else if (pxt.winrt.isWinRT()) { // windows app
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
             pxt.debug(`deploy: winrt`);
-            pxt.winrt.initWinrtHid(() => pxt.HF2.initAsync(true).then(() => { }), () => pxt.HF2.disconnectWrapperAsync());
+            pxt.winrt.initWinrtHid(() => pxt.packetio.initAsync(true).then(() => { }), () => pxt.packetio.disconnectWrapperAsync());
             pxt.packetio.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
             pxt.commands.deployFallbackAsync = winrtDeployCoreAsync;
         } else {
@@ -357,7 +357,7 @@ function handleHF2Api(r: string) {
     const p = data.stripProtocol(r);
     switch(p) {
         case "connected":
-            return pxt.HF2.isConnected();
+            return pxt.packetio.isConnected();
         case "icon":
             return "usb";
     }

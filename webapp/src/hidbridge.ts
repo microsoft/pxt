@@ -59,7 +59,7 @@ export function shouldUse() {
     return serial && serial.useHF2 && (pxt.BrowserUtils.isLocalHost() && !!Cloud.localToken || pxt.winrt.isWinRT());
 }
 
-export function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {
+export function mkBridgeAsync(): Promise<pxt.packetio.PacketIO> {
     init()
     let raw = false
     if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID)
@@ -69,7 +69,7 @@ export function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {
         .then(() => b);
 }
 
-class BridgeIO implements pxt.HF2.PacketIO {
+class BridgeIO implements pxt.packetio.PacketIO {
     onConnectionChanged  = () => {};
     onData = (v: Uint8Array) => { };
     onEvent = (v: Uint8Array) => { };
@@ -95,7 +95,7 @@ class BridgeIO implements pxt.HF2.PacketIO {
         }
     }
 
-    talksAsync(cmds: pxt.HF2.TalkArgs[]): Promise<Uint8Array[]> {
+    talksAsync(cmds: pxt.packetio.TalkArgs[]): Promise<Uint8Array[]> {
         return iface.opAsync("talk", {
             path: this.dev.path,
             cmds: cmds.map(c => ({ cmd: c.cmd, data: c.data ? U.toHex(c.data) : "" }))

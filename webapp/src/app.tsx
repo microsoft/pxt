@@ -2260,7 +2260,7 @@ export class ProjectView
             && pxt.appTarget.appTheme
             && pxt.appTarget.appTheme.checkForHwVariantWebUSB
             && this.checkWebUSBVariant) {
-            pxt.HF2.initAsync(true)
+            pxt.packetio.initAsync(true)
                 .then(wr => {
                     if (wr.familyID) {
                         for (let v of variants) {
@@ -2823,7 +2823,7 @@ export class ProjectView
             pxt.HWDBG.postMessage = (msg) => simulator.driver.handleHwDebuggerMsg(msg)
             return Promise.join<any>(
                 compiler.compileAsync({ debug: true, native: true }),
-                pxt.HF2.initAsync()
+                pxt.packetio.initAsync()
             ).then(vals => pxt.HWDBG.startDebugAsync(vals[0], vals[1]))
         })
     }
@@ -4281,7 +4281,7 @@ document.addEventListener("DOMContentLoaded", () => {
             render(); // this sets theEditor
             if (state)
                 theEditor.setState({ editorState: state });
-            initHF2();
+            initPacketIO();
             initSerial();
             initHashchange();
             socketbridge.tryInit();
