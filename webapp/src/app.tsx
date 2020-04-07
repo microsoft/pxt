@@ -38,6 +38,7 @@ import * as make from "./make";
 import * as blocklyToolbox from "./blocksSnippets";
 import * as monacoToolbox from "./monacoSnippets";
 import * as greenscreen from "./greenscreen";
+import * as accessibleblocks from "./accessibleblocks";
 import * as socketbridge from "./socketbridge";
 import * as webusb from "./webusb";
 import * as keymap from "./keymap";
@@ -3614,7 +3615,7 @@ export class ProjectView
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
-        const { lightbox, greenScreen } = this.state;
+        const { lightbox, greenScreen, accessibleBlocks } = this.state;
         const flyoutOnly = this.state.editorState && this.state.editorState.hasCategories === false;
 
         const { hideEditorToolbar, transparentEditorToolbar } = targetTheme;
@@ -3687,6 +3688,7 @@ export class ProjectView
         return (
             <div id='root' className={rootClasses}>
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
+                {accessibleBlocks && <accessibleblocks.AccessibleBlocksInfo />}
                 {hideMenuBar || inHome ? undefined :
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast} /> : undefined}

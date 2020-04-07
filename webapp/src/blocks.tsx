@@ -405,7 +405,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private initAccessibleBlocks() {
         const enabled = pxt.appTarget.appTheme?.accessibleBlocks;
-        this.parent.setAccessibleBlocks(enabled);
         // Append listener to open toolbox on 'T' key if accessible blocks is enabled
         if (enabled) {
             document.querySelector("#blocksEditor").addEventListener("keydown", this.handleKeyDown)
