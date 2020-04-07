@@ -69,9 +69,9 @@ function parseInt(text: string, radix?: number): number {
             ++start;
     }
 
-    const secondChar = text[start + 1];
     if ((!radix || radix == 16)
-        && "0" === text[start] && (secondChar === "x" || secondChar === "X")) {
+            && "0" === text[start]
+            && ("x" === text[start + 1] || "X" === text[start + 1])) {
         radix = 16;
         start += 2;
     } else if (!radix) {
