@@ -179,29 +179,21 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         };
         return core.promptAsync(opts).then(res => {
             if (res === null) return Promise.resolve(false); // null means cancelled, empty string means ok (but no value entered)
-            let files: pxt.Map<string>;
             return workspace.getTextAsync(header.id)
                 .then(text => {
-                    files = text;
                     // Duplicate the existing header
-                    return workspace.duplicateAsync(header, text, false);
+                    return workspace.duplicateAsync(header, text, res);
                 })
-                .then((clonedHeader) => {
+                .then(clonedHeader => {
                     // If we're cloud synced, update the cloudSync flag
                     if (this.props.parent.cloudSync()) clonedHeader.cloudSync = true;
 
-                    // Update the name of the new header
-                    clonedHeader.name = res;
                     delete clonedHeader.blobId
                     delete clonedHeader.blobVersion
                     delete clonedHeader.blobCurrent
-                    // Set the name in the pxt.json (config)
-                    let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
-                    cfg.name = clonedHeader.name
-                    files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
-                    return clonedHeader;
+
+                    return workspace.saveAsync(clonedHeader);
                 })
-                .then((clonedHeader) => workspace.saveAsync(clonedHeader, files))
                 .then(() => {
                     data.invalidate("headers:");
                     data.invalidate(`headers:${this.state.searchFor}`);
