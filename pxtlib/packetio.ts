@@ -38,13 +38,13 @@ namespace pxt.packetio {
     export let mkPacketIOAsync: () => Promise<PacketIO>;
     export let mkPacketIOWrapper: (io: PacketIO) => PacketIOWrapper;
 
-    let hf2Wrapper: PacketIOWrapper;
+    let wrapper: PacketIOWrapper;
     let initPromise: Promise<PacketIOWrapper>;
     let onConnectionChangedHandler: () => void = () => { };
     let onSerialHandler: (buf: Uint8Array, isStderr: boolean) => void;
 
     export function isConnected() {
-        return hf2Wrapper && hf2Wrapper.io.isConnected();
+        return wrapper && wrapper.io.isConnected();
     }
 
     export function configureEvents(
@@ -53,49 +53,50 @@ namespace pxt.packetio {
     ): void {
         onConnectionChangedHandler = onConnectionChanged;
         onSerialHandler = onSerial;
-        if (hf2Wrapper) {
-            hf2Wrapper.io.onConnectionChanged = onConnectionChangedHandler;
-            hf2Wrapper.onSerial = onSerialHandler;
+        if (wrapper) {
+            wrapper.io.onConnectionChanged = onConnectionChangedHandler;
+            wrapper.onSerial = onSerialHandler;
         }
     }
 
     export function disconnectWrapperAsync(): Promise<void> {
-        if (hf2Wrapper)
-            return hf2Wrapper.disconnectAsync();
+        pxt.log(`packetio: disconnect`)
+        if (wrapper)
+            return wrapper.disconnectAsync();
         return Promise.resolve();
     }
 
-    export function initAsync(force = false) {
-        if (!initPromise) {
-            initPromise = hf2Async()
-                .catch(err => {
-                    initPromise = null
-                    return Promise.reject(err)
-                })
-        }
+    function wrapperAsync() {
+        if (wrapper)
+            return Promise.resolve(wrapper);
 
-        let wrapper: PacketIOWrapper;
-        return initPromise
-            .then((w) => {
-                wrapper = w;
-                if (force) {
-                    return wrapper.reconnectAsync();
-                }
-                return Promise.resolve();
+        pxt.log(`packetio: new wrapper`)
+        return mkPacketIOAsync()
+            .then(io => {
+                io.onConnectionChanged = onConnectionChangedHandler;
+                wrapper = mkPacketIOWrapper(io);
+                if (onSerialHandler)
+                    wrapper.onSerial = onSerialHandler;
+                return wrapper.reconnectAsync(true)
+                    .then(() => wrapper)
+                    .catch(e => {
+                        pxt.reportException(e);
+                        wrapper = undefined
+                    })
             })
-            .then(() => wrapper);
+    }
 
-
-        function hf2Async() {
-            return mkPacketIOAsync()
-                .then(io => {
-                    io.onConnectionChanged = onConnectionChangedHandler;
-                    hf2Wrapper = mkPacketIOWrapper(io);
-                    if (onSerialHandler)
-                        hf2Wrapper.onSerial = onSerialHandler;
-                    return hf2Wrapper.reconnectAsync(true)
-                        .then(() => hf2Wrapper)
-                })
+    export function initAsync(force = false) {
+        pxt.log(`packetio: init ${force ? "(force)" : ""}`)
+        if (!initPromise) {
+            let p = Promise.resolve();
+            if (force)
+                p = p.then(() => disconnectWrapperAsync());
+            initPromise = p.then(() => {
+                wrapper = undefined;
+                return wrapperAsync();
+            }).finally(() => { initPromise = undefined })
         }
+        return initPromise;
     }
 }

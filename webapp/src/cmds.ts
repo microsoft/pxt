@@ -341,7 +341,7 @@ export function init(): void {
         pxt.commands.deployCoreAsync = webusb.webUsbDeployCoreAsync;
     } else if (shouldUseWebUSB && tryPairedDevice) {
         log(`deploy: webusb, paired once`);
-        pxt.commands.deployCoreAsync = checkWebUSBThenDownloadAsync;
+        pxt.commands.deployCoreAsync = webusb.webUsbDeployCoreAsync;
     } else if (hidbridge.shouldUse()) {
         log(`deploy: hid`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
@@ -360,17 +360,6 @@ export function setWebUSBPaired(enabled: boolean) {
     if (tryPairedDevice === enabled) return;
     tryPairedDevice = enabled;
     init();
-}
-
-function checkWebUSBThenDownloadAsync(resp: pxtc.CompileResult) {
-    return pxt.usb.isPairedAsync()
-        .then(paired => {
-            if (paired) {
-                setWebUSBPaired(true);
-                return hidDeployCoreAsync(resp);
-            }
-            return browserDownloadDeployCoreAsync(resp);
-        });
 }
 
 function handlePacketIOApi(r: string) {
