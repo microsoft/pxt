@@ -356,7 +356,7 @@ export function init(): void {
     applyExtensionResult();
 }
 
-export function disconnectAsync() {
+export function disconnectAsync(): Promise<void> {
     return pxt.packetio.disconnectAsync()
         .finally(() => {
             setWebUSBPaired(false);            

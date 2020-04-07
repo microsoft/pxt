@@ -2197,8 +2197,8 @@ export class ProjectView
     }
 
     disconnectAsync(): Promise<void> {
-        return pxt.commands.disconnectAsync()
-            .done(() => core.infoNotification("Device disconnected"));
+        return cmds.disconnectAsync()
+            .then(() => core.infoNotification("Device disconnected"));
     }
 
     async pairAsync(autoConnect: boolean): Promise<void> {
