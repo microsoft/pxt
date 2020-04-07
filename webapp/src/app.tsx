@@ -2185,14 +2185,22 @@ export class ProjectView
             );
     }
 
+    private async connectAsync() {
+        try {
+            cmds.setWebUSBPaired(true);
+            const wrapper = await pxt.packetio.initAsync();
+            await wrapper.reconnectAsync();
+            core.infoNotification(lf("Device paired! Try downloading now."))
+        } catch (err) {
+            core.errorNotification(lf("Failed to pair the device: {0}", err.message))
+        }
+    }
+
     async pairAsync(autoConnect: boolean): Promise<void> {
         if (autoConnect) {
             const dev = await pxt.usb.tryGetDeviceAsync();
-            if (dev) {                
-                cmds.setWebUSBPaired(true);
-                const wrapper = await pxt.packetio.initAsync();
-                await wrapper.reconnectAsync();
-                core.infoNotification(lf("Device connected! Try downloading now."));
+            if (dev) {     
+                this.connectAsync();           
                 return;
             }
         }
@@ -2201,14 +2209,8 @@ export class ProjectView
         if (pxt.commands.webUsbPairDialogAsync)
             res = await pxt.commands.webUsbPairDialogAsync(core.confirmAsync);
         if (res) {
-            try {
-                pxt.usb.pairAsync()
-                cmds.setWebUSBPaired(true);
-                await pxt.packetio.initAsync()
-                core.infoNotification(lf("Device paired! Try downloading now."))
-            } catch (err) {
-                core.errorNotification(lf("Failed to pair the device: {0}", err.message))
-            }
+            pxt.usb.pairAsync()
+            this.connectAsync();
         }
     }
 
