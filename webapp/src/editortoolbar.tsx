@@ -159,8 +159,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const downloadText = targetTheme.useUploadMessage ? lf("Upload") : lf("Download");
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
         const showPairUSBDevice = pxt.usb.isEnabled;
-        const hidConnected = showPairUSBDevice && !!this.getData("hid:connected");
-        const hidIcon = hidConnected && this.getData("hid:icon") as string;
+        const hidConnected = showPairUSBDevice && !!this.getData("hf2:connected");
+        const hidIcon = hidConnected && this.getData("hf2:icon") as string;
         const hasMenu = boards || showPairUSBDevice;
 
         let downloadButtonClasses = hasMenu ? "left attached " : "";

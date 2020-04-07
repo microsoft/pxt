@@ -56,8 +56,37 @@ namespace pxt.HF2 {
         onSerial?: (v: Uint8Array, isErr: boolean) => void;
     }
 
-    export let mkPacketIOAsync: () => Promise<pxt.HF2.PacketIO>
+    export let onConnectionChanged: () => void = () => {};
+    let packetIOFactory: () => Promise<pxt.HF2.PacketIO>;
+    let packetIOPromise: Promise<pxt.HF2.PacketIO>;
+    let packetIO: pxt.HF2.PacketIO;
+    export function mkPacketIOAsync(): Promise<pxt.HF2.PacketIO> {
+        if (packetIOPromise)
+            return packetIOPromise;            
 
+        packetIO = undefined;
+        return packetIOPromise = packetIOFactory()
+            .then(io => {
+                packetIOPromise = undefined;
+                packetIO = io;
+                if(packetIO)
+                    packetIO.onConnectionChanged = onConnectionChanged;
+                return packetIO;
+            })
+            .catch(e => {
+                packetIOPromise = undefined;
+                packetIO = undefined;
+                throw e;
+            })
+    }
+    export function setPacketIOFactory(factory: () => Promise<pxt.HF2.PacketIO>) {
+        packetIOFactory = factory;
+        // TODO: concurrent setPacketIOFactory
+    }
+    export function isPacketIOConnected() {
+        return packetIO && packetIO.isConnected();
+    }
+ 
     // see https://github.com/microsoft/uf2/blob/master/hf2.md for full spec
     export const HF2_CMD_BININFO = 0x0001 // no arguments
     export const HF2_MODE_BOOTLOADER = 0x01

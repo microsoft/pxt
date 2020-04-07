@@ -385,7 +385,7 @@ namespace pxt.usb {
             filters: filters
         }) as Promise<USBDevice>).then(dev => {
             // try connecting to it
-            return mkPacketIOAsync()
+            return pxt.usb.mkPacketIOAsync()
         }).then(io => io.reconnectAsync())
     }
 

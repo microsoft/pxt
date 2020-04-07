@@ -69,7 +69,7 @@ export function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {
         .then(() => b);
 }
 
-pxt.HF2.mkPacketIOAsync = mkBridgeAsync;
+pxt.HF2.setPacketIOFactory(mkBridgeAsync);
 
 class BridgeIO implements pxt.HF2.PacketIO {
     onConnectionChanged  = () => {};
@@ -175,10 +175,6 @@ function hf2Async() {
     return pxt.HF2.mkPacketIOAsync()
         .then(h => {
             hf2Wrapper = new pxt.HF2.Wrapper(h);
-            hf2Wrapper.io.onConnectionChanged = () => {
-                pxt.log(`hid ${hf2Wrapper.io.isConnected() ? 'connected' : 'disconnected'}`)
-                data.invalidate("hid:*");
-            }
             if (serialHandler)
                 hf2Wrapper.onSerial = serialHandler;
             return hf2Wrapper.reconnectAsync(true)
@@ -217,17 +213,3 @@ export function initAsync(force = false) {
         })
         .then(() => wrapper);
 }
-
-function handleHIDApi(r: string) {
-    const p = data.stripProtocol(r);
-    switch(p) {
-        case "connected":
-            return hf2Wrapper && hf2Wrapper.io.isConnected();
-        case "icon":
-            return "usb";
-    }
-    return Promise.resolve(false);
-}
-data.mountVirtualApi("hid", {
-    getSync: handleHIDApi
-});
