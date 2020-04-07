@@ -286,11 +286,15 @@ export function init(): void {
         init()
     }
     pxt.packetio.mkPacketIOWrapper = pxt.HF2.mkPacketIOWrapper;
+
+    // reset commands to browser
+    pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
     pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
     pxt.commands.showUploadInstructionsAsync = showUploadInstructionsAsync;
-    const forceHexDownload = /forceHexDownload/i.test(window.location.href);
+    // used by CLI pxt.commands.deployFallbackAsync = undefined;
 
+    // check if webUSB is available and usable
     if (pxt.usb.isAvailable() && pxt.appTarget.compile.webUSB) {
         log(`enabled webusb`);
         pxt.usb.setEnabled(true);
@@ -301,30 +305,30 @@ export function init(): void {
         pxt.packetio.mkPacketIOAsync = hidbridge.mkBridgeAsync;
     }
 
-    const shouldUseWebUSB = pxt.usb.isEnabled && pxt.appTarget.compile.useUF2;
-    if (isNativeHost()) {
-        log(`webkit deploy/save`);
-        pxt.commands.deployFallbackAsync = nativeHostDeployCoreAsync;
+    const forceBrowserDownload = /force(Hex)?(Browser)?Download/i.test(window.location.href);
+    const shouldUseWebUSB = pxt.usb.isEnabled && pxt.appTarget.compile.webUSB;
+    if (forceBrowserDownload || pxt.appTarget.serial.noDeploy) {
+        log(`deploy: force browser download`);
+        // commands are ready
+    } else if (isNativeHost()) {
+        log(`deploy: webkit deploy/save`);
+        pxt.commands.deployCoreAsync = nativeHostDeployCoreAsync;
         pxt.commands.saveOnlyAsync = nativeHostSaveCoreAsync;
-    } else if (shouldUseWebUSB && pxt.appTarget.appTheme.autoWebUSBDownload) {
-        log(`webusb deploy`);
-        pxt.commands.deployFallbackAsync = webusb.webUsbDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // windows app
-        log(`winrt`)
+        log(`deploy: winrt`)
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
             log(`winrt deploy`);
             pxt.winrt.initWinrtHid(() => pxt.packetio.initAsync(true).then(() => { }), () => pxt.packetio.disconnectWrapperAsync());
             pxt.packetio.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
-            pxt.commands.deployFallbackAsync = winrtDeployCoreAsync;
+            pxt.commands.deployCoreAsync = winrtDeployCoreAsync;
         } else {
             // If we're not using HF2, then the target is using their own deploy logic in extension.ts, so don't use
             // the wrapper callbacks
             log(`winrt + custom deploy`);
             pxt.winrt.initWinrtHid(null, null);
-            if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID) {
+            if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID)
                 pxt.packetio.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
-            }
-            pxt.commands.deployFallbackAsync = pxt.winrt.driveDeployCoreAsync;
+            pxt.commands.deployCoreAsync = pxt.winrt.driveDeployCoreAsync;
         }
         pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
         pxt.commands.saveOnlyAsync = winrtSaveAsync;
@@ -332,15 +336,21 @@ export function init(): void {
         log(`deploy: electron`);
         pxt.commands.deployCoreAsync = electron.driveDeployAsync;
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
-    } else if ((tryPairedDevice && shouldUseWebUSB) || !shouldUseWebUSB && hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {
+    } else if (shouldUseWebUSB && pxt.appTarget.appTheme.autoWebUSBDownload) {
+        log(`deploy: webusb auto deploy`);
+        pxt.commands.deployCoreAsync = webusb.webUsbDeployCoreAsync;
+    } else if (shouldUseWebUSB && tryPairedDevice) {
+        log(`deploy: webusb, paired once`);
+        pxt.commands.deployCoreAsync = checkWebUSBThenDownloadAsync;
+    } else if (hidbridge.shouldUse()) {
         log(`deploy: hid`);
-        pxt.commands.deployFallbackAsync = hidDeployCoreAsync;
-    } else if (pxt.BrowserUtils.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
+        pxt.commands.deployCoreAsync = hidDeployCoreAsync;
+    } else if (pxt.BrowserUtils.isLocalHost() && Cloud.localToken) { // local node.js
         log(`deploy: localhost`);
-        pxt.commands.deployFallbackAsync = localhostDeployCoreAsync;
+        pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
     } else { // in browser
-        log(`deploy: browser`);
-        pxt.commands.deployFallbackAsync = shouldUseWebUSB ? checkWebUSBThenDownloadAsync : browserDownloadDeployCoreAsync;
+        log(`deploy: browser only`);
+        // commands are ready
     }
 
     applyExtensionResult();
