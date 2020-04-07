@@ -77,17 +77,38 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
 
     renderCore() {
         const { globalFrame, stackFrames, frozen } = this.state;
+        const { activeFrame, breakpoint } = this.props;
         const variableTableHeader = lf("Variables");
         let variables = globalFrame.variables;
 
         // Add in the local variables.
         // TODO: Handle callstack
-        if (stackFrames && stackFrames.length && this.props.activeFrame !== undefined) {
-            variables = stackFrames[this.props.activeFrame].variables.concat(variables);
+        if (stackFrames && stackFrames.length && activeFrame !== undefined) {
+            variables = stackFrames[activeFrame].variables.concat(variables);
         }
 
-        return <DebuggerTable header={variableTableHeader} frozen={frozen}>
-            {this.renderVars(variables)}
+        let placeholderText: string;
+
+        if (frozen) {
+            placeholderText = lf("Code is running...");
+        }
+        else if (!variables.length && !breakpoint?.exceptionMessage) {
+            placeholderText = lf("No variables to show");
+        }
+
+        const tableRows = placeholderText ? [] : this.renderVars(variables);
+
+        if (breakpoint?.exceptionMessage && !frozen) {
+            tableRows.unshift(<DebuggerTableRow
+                leftText={lf("Exception:")}
+                leftClass="exception"
+                rightText={truncateLength(breakpoint.exceptionMessage)}
+                rightTitle={breakpoint.exceptionMessage}
+            />);
+        }
+
+        return <DebuggerTable header={variableTableHeader} placeholderText={placeholderText}>
+            { tableRows }
         </DebuggerTable>
     }
 
