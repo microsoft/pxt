@@ -140,7 +140,7 @@ export function hf2ConnectAsync(path: string, raw = false) {
     return h.reconnectAsync(true).then(() => h)
 }
 
-export function mkWebUSBOrHidPacketIOAsync(): Promise<pxt.HF2.PacketIO> {
+export function mkWebUSBOrHidPacketIOAsync(): Promise<pxt.packetio.PacketIO> {
     if (useWebUSB())
         return hf2ConnectAsync("")
     return Promise.resolve()
@@ -150,7 +150,7 @@ export function mkWebUSBOrHidPacketIOAsync(): Promise<pxt.HF2.PacketIO> {
         })
 }
 
-pxt.HF2.mkPacketIOAsync = mkWebUSBOrHidPacketIOAsync;
+pxt.packetio.mkPacketIOAsync = mkWebUSBOrHidPacketIOAsync;
 
 let hf2Dev: Promise<HF2.Wrapper>
 export function initAsync(path: string = null): Promise<HF2.Wrapper> {
@@ -178,7 +178,7 @@ export class HIDError extends Error {
     }
 }
 
-export class HidIO implements HF2.PacketIO {
+export class HidIO implements pxt.packetio.PacketIO {
     dev: any;
     private path: string;
 

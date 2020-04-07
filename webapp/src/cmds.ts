@@ -272,11 +272,11 @@ export function init(): void {
     if (pxt.usb.isAvailable() && pxt.appTarget.compile.webUSB) {
         pxt.debug(`enabled webusb`);
         pxt.usb.setEnabled(true);
-        pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync;
+        pxt.packetio.mkPacketIOAsync = pxt.usb.mkPacketIOAsync;
     } else {
         pxt.debug(`disabled webusb`);
         pxt.usb.setEnabled(false);
-        pxt.HF2.mkPacketIOAsync = hidbridge.mkBridgeAsync;
+        pxt.packetio.mkPacketIOAsync = hidbridge.mkBridgeAsync;
     }
 
     const shouldUseWebUSB = pxt.usb.isEnabled && pxt.appTarget.compile.useUF2;
@@ -291,7 +291,7 @@ export function init(): void {
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
             pxt.debug(`deploy: winrt`);
             pxt.winrt.initWinrtHid(() => pxt.HF2.initAsync(true).then(() => { }), () => pxt.HF2.disconnectWrapperAsync());
-            pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
+            pxt.packetio.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
             pxt.commands.deployFallbackAsync = winrtDeployCoreAsync;
         } else {
             // If we're not using HF2, then the target is using their own deploy logic in extension.ts, so don't use
@@ -299,7 +299,7 @@ export function init(): void {
             pxt.debug(`deploy: winrt + custom deploy`);
             pxt.winrt.initWinrtHid(null, null);
             if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID) {
-                pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
+                pxt.packetio.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
             }
             pxt.commands.deployFallbackAsync = pxt.winrt.driveDeployCoreAsync;
         }

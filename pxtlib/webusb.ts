@@ -159,7 +159,7 @@ namespace pxt.usb {
         reset(): Promise<void>;
     }
 
-    class HID implements HF2.PacketIO {
+    class HID implements pxt.packetio.PacketIO {
         dev: USBDevice;
         ready = false;
         iface: USBInterface;
@@ -415,7 +415,7 @@ namespace pxt.usb {
     }
 
     let _hid: HID;
-    export function mkPacketIOAsync(): Promise<HF2.PacketIO> {
+    export function mkPacketIOAsync(): Promise<pxt.packetio.PacketIO> {
         if (!_hid)
             _hid = new HID();
         return Promise.resolve(_hid);

@@ -3780,8 +3780,8 @@ function initLogin() {
     parseLocalToken();
 }
 
-function initHF2() {
-    pxt.HF2.configureHF2Events(
+function initPacketIO() {
+    pxt.packetio.configureEvents(
         () => data.invalidate("hf2:*"),
         (buf, isErr) => {
         const data = Util.fromUTF8(Util.uint8ArrayToString(buf))
