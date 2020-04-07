@@ -11,7 +11,7 @@
 }
 
 .ui.menu.fixed {
-    position: absolute;   
+    position: absolute;
 }
 
 .menubar .ui.menu {
@@ -58,6 +58,17 @@
     }
 }
 
+@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
+    .menubar .ui.menu {
+        height: @thinMenuHeight !important;
+        min-height: @thinMenuHeight !important;
+    }
+    .menubar .accessibleMenu .ui.item.link {
+        height: @thinMenuHeight !important;
+        min-height: @thinMenuHeight !important;
+    }
+}
+
 .ui.inverted.menu .active.item {
     background: rgba(255, 255, 255, 0.30);
 }
@@ -72,4 +83,8 @@
 /* Tutorial mode */
 .tutorial .ui.inverted.menu {
     background: @mainMenuTutorialBackground !important;
+}
+
+.debugger .ui.inverted.menu {
+    background: @DebuggerBackgroundPrimaryColor !important;
 }

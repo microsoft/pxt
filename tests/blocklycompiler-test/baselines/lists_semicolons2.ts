@@ -1,2 +1,6 @@
 let item = ""
-item = [""][0]
+if (true) {
+    item = [""][0]
+} else {
+    item = item
+}

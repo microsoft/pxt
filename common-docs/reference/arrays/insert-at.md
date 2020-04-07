@@ -25,11 +25,12 @@ myNumbers.insertAt(3, 2);
 Make a ordered array that has the numbers from a jumbled an array in order of lowest to highest.
 
 ```blocks
-let jumbled = [4, 5, 2, 1, 6, 9, 0, 3, 8, 7];
-let ordered = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+let removed = 0
+let jumbled = [4, 5, 2, 1, 6, 9, 0, 3, 8, 7]
+let ordered = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 for (let item of jumbled) {
-    ordered.insertAt(item, item);
-    ordered.removeAt(item + 1);
+    ordered.insertAt(item, item)
+    removed = ordered.removeAt(item + 1)
 }
 ```
 

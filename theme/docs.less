@@ -11,25 +11,38 @@
 @docsHeadingColor: @docsTextColor;
 
 /* Link color */
-@docsLinkColor: #4183c4;
+@docsLinkColor: #3977b4;
 
 /* Code segment */
-@docsSegementBackgroundColor: #f7f7f7;
-@docsSegementBackgroundColorValid: #edf9ef;
-@docsSegementBackgroundColorInvalid: #fbf3f4;
+@docsSegmentBackgroundColor: #f7f7f7;
+@docsSegmentBackgroundColorValid: #edf9ef;
+@docsSegmentBackgroundColorInvalid: #fbf3f4;
 
 /* Card */
 @docsCardBackgroundColor: white;
 @docsCardColor: @docsTextColor;
 @docsCardHeaderColor: @docsTextColor;
 @docsCardContentColor: @docsTextColor;
-@docsCardImageBackgroundColor: rgba(0,0,0,.05);
+@docsCardImageBackgroundColor: rgba(0, 0, 0, .05);
 
 @docsCardBorderColor: #e9eef2;
 @docsCardHoverBorderColor: #1dacf4;
 
+#docs .footer,
+.ui.menu.fixed.docs,
 #docs {
-    background-color: @docsBackgroundColor;
+    background: hsl(@docsHue, 25%, 85%);
+    &.inverted {
+        background: hsl(@docsHue, 15%, 20%);
+    }
+}
+
+.docs.ui.menu.sidebar {
+    border: none;
+    border-right: 1px solid rgba(34,36,38,.15);
+}
+
+#docs {
     font-family: @docsPageFont !important;
     color: @docsTextColor;
     * {
@@ -39,12 +52,29 @@
         -webkit-touch-callout: none;
         -webkit-font-smoothing: antialiased;
     }
+    #maincontent {
+        background-color: @docsBackgroundColor;
+    }
     h1, h2, h3, h4, h5, h6 {
         font-family: @docsHeaderFont !important;
         color: @docsHeadingColor;
     }
     h1 {
         margin-bottom: .85em;
+    }
+    h2 {
+        margin-top: 1.5em;
+        margin-bottom: .75em;
+
+        &:not(:first-child) {
+            padding-top: 1.5em;
+            border-top: 2px solid fade(@docsHeadingColor, 15%);
+        }
+        &+h2 {
+            padding-top: 0 !important;
+            margin-top: -.75em !important;
+            border-top: none !important;
+        }
     }
     /* Text color */
     p, ul li {
@@ -62,19 +92,35 @@
     span.docs, text.blocklyText {
         -webkit-font-smoothing: auto !important;
     }
+    /* Language Picker */
+    #langpicker > i {
+        color: @docsLinkColor;
+        text-decoration: none;
+        margin-right: 4px;
+    }
     /* Code segments */
     .mainbody .ui.segment, pre {
-        background: @docsSegementBackgroundColor !important;
+        background: @docsSegmentBackgroundColor !important;
         border-radius: 0 !important;
         border: 0 !important;
         margin-bottom: 1.275em;
         box-shadow: none;
+        tab-size: 4;
+
+        .subheading {
+            text-align: right;
+            border-top: 1px solid fade(@docsTextColor, 50%);
+            color: fade(@docsTextColor, 70%);
+            margin-top: 1em;
+            padding-top: .5em;
+            text-transform: uppercase;
+        }
     }
-    .mainbody div.codewidget.valid, code.valid{
-        background: @docsSegementBackgroundColorValid !important;
+    .mainbody div.codewidget.valid, code.valid {
+        background: @docsSegmentBackgroundColorValid !important;
     }
-    .mainbody div.codewidget.invalid, code.invalid{
-        background: @docsSegementBackgroundColorInvalid !important;
+    .mainbody div.codewidget.invalid, code.invalid {
+        background: @docsSegmentBackgroundColorInvalid !important;
     }
 
     .mainbody div.codewidget.valid, .mainbody div.codewidget.invalid {
@@ -99,8 +145,23 @@
         margin-left: 4em;
         margin-bottom: 1em;
     }
-    code.lang-typescript {
+    code.lang-typescript, code.lang-python {
         overflow-wrap: break-word;
+    }
+    .codesnippet {
+        padding-top: 1em;
+
+        .ui.tabular.menu {
+            border: none;
+            margin-bottom: -1.5em;
+            padding-bottom: 0;
+
+            .item:hover, .item:focus {
+                border-radius: 2px;
+                outline: none;
+                background: @docsSegmentBackgroundColor;
+            }
+        }
     }
     /* Cards */
     .ui.card {
@@ -119,46 +180,17 @@
         .content .ui.description {
             color: @docsCardContentColor;
         }
-    }
-    .ui.card:hover {
-        border: 2px solid @docsCardHoverBorderColor;
+
+        &:hover, &:focus {
+            border: 2px solid @docsCardHoverBorderColor;
+        }
     }
 
     /* Breadcrumb */
     .ui.breadcrumb .divider {
         color: black;
     }
-    /* TOC */
-    .toc .inverted .item.title a.header {
-        margin-right: 1em;
-    }
-    .toc .inverted .item a.header {
-        color: white;
-    }
-    .toc a.item {
-        color: black;
-        padding: 10px 15px !important;
-    }
-    .toc .inverted a.item {
-        color: rgba(255, 255, 255, 1);
-    }
 
-    .toc a.item:hover {
-        text-decoration: @linkHoverUnderline;
-    }
-
-    .toc .inverted .item.search {
-        margin: -.92857143em -1.14285714em;
-    }
-
-    .toc .item.search input {
-        border-radius: 0;
-    }
-
-    .tocmenu .menu {
-        padding-left: 20px;
-        font-family: @docsPageFont;
-    }
     /* Buttons */
     .ui.primary.button p {
         color: white;
@@ -184,6 +216,233 @@
     }
     table tr:nth-child(2n) {
         background-color: #f8f8f8;
+    }
+
+    /* Warning Message Box */
+    .ui.warning.message > .content:before {
+        content: '\f05a';
+    }
+
+    /* Alert Message Box */
+    .ui.negative.message > .content:before {
+        content: '\f071';
+    }
+
+    /* Tip Message Box */
+    .ui.positive.message > .content:before {
+        content: '\f058';
+    }
+
+    /* Hint Message Box */
+    .ui.info.message > .content:before {
+        content: '\f15c';
+    }
+
+    /* message boxes */
+
+    .ui.message {
+        &.info, &.positive, &.negative, &.warning {
+            padding: 2em;
+
+            > .content:before {
+                font-family: Icons;
+                font-size: 1.3em;
+                vertical-align: top;
+            }
+
+            > .content > h4 {
+                display: inline;
+                margin-left: 1em;
+                font-weight: 500;
+
+                scroll-margin-top: 6em;
+            }
+        }
+    }
+
+    .footer {
+        margin-left: 0;
+        margin-right: 0;
+        margin-top: 3em;
+        margin-bottom: 0;
+
+        a.item {
+            color: rgb(22, 83, 130, 1.0);
+
+            i.icon {
+                width: auto;
+                padding: 0 .25em !important;
+                color: rgba(0, 0, 0, .6);
+            }
+
+            &:hover, &:focus {
+                i.icon {
+                    color: rgba(0, 0, 0, 0.8);
+                }
+            }
+        }
+
+        .divider {
+            border-top: 1px solid rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .ui.divided.horizontal.list > .item:not(:first-child) {
+            border-left: 1px solid rgba(0, 0, 0, .4);
+        }
+
+        span.item {
+            color: rgba(0, 0, 0, .6);
+        }
+
+        span.item, img {
+            vertical-align: middle;
+        }
+
+        &> .ui.container {
+            margin: 0 auto;
+            padding: 2em 0;
+        }
+
+        .poweredBy .item {
+            padding-right: .5em;
+        }
+        &.inverted {
+            a.item {
+                color: rgba(114, 163, 211, 1.0);
+
+                i.icon {
+                    color: rgba(255, 255, 255, .6);
+                }
+
+                &:hover, &:focus {
+                    i.icon {
+                        color: rgba(255, 255, 255, 0.8);
+                    }
+                }
+            }
+            .divider {
+                border-top: 1px solid rgba(255, 255, 255, 0.3);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .ui.divided.horizontal.list > .item:not(:first-child) {
+                border-left: 1px solid rgba(255, 255, 255, .4);
+            }
+
+            span.item {
+                color: rgba(255, 255, 255, .6);
+            }
+        }
+    }
+
+    /** youtube / video embed: don't give negative margin**/
+    .ui.grid {
+        margin: 0;
+    }
+
+    /* sidedocs tutorials (text-based) */
+    &.editorlang-text {
+        pre {
+            overflow-x: scroll;
+            font-size: 0.875em;
+        }
+
+        pre > code {
+            white-space: pre;
+        }
+
+        .mainbody .ui.segment {
+            padding: 0;
+        }
+    }
+}
+
+.ui.sidebar.menu.docs {
+    background: #EFEFEF;
+    padding-left: 0.5em;
+
+    /* Sidebar TOC */
+    .item:before {
+        content: none;
+        width: 0;
+        height: 0;
+    }
+    .item,
+    .accordion .title {
+        padding: 0.8rem;
+        padding-left: 1rem;
+        display: flex;
+        flex-direction: row;
+    }
+    .item {
+        padding-left: 1.25em;
+    }
+    .active.item {
+        color: hsla(0,0%,0%,.9) !important;
+    }
+    .content {
+        border-left: 1px solid hsla(@docsHue, 45%, 40%, 0.3);
+    }
+    .accordion.item {
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    .accordion.item .title .icon {
+        font-size: 0.8em;
+        font-weight: 700;
+        width: 1rem;
+        transform: translateY(0.1rem);
+    }
+    .content {
+        padding-top: 0;
+    }
+    .accordion.item .title.active .icon {
+        transform: translateY(0.1rem) rotate(90deg);
+    }
+    .accordion.item .title {
+        display: flex;
+        padding-left: 0;
+    }
+    .accordion.item {
+        margin: 0;
+    }
+    a.item.active {
+        background-color: hsla(0,0%,0%,.05);
+    }
+    a.item,
+    .accordion .title {
+        &:hover, &:focus {
+            background-color: hsla(0,0%,0%,.1);
+        }
+    }
+    a {
+        color: hsla(0,0%,0%,.9);
+    }
+    .icon {
+        color: hsl(@docsHue, 45%, 40%);
+    }
+    a:hover,
+    a:focus,
+    .title:hover a,
+    .title:focus a {
+        text-decoration: none;
+        color: hsl(@docsHue, 35%, 30%)
+    }
+    &.vertical .item:before {
+        /* remove gray divider lines */
+        content: none;
+    }
+    /* indented content
+        Note: we're annoyingly specific with these selectors
+        because we need to override Semantic's default behavior
+    */
+    .accordion.item .content:not(.style),
+    .accordion.item .accordion .title~.content:not(.ui),
+    .accordion.item .title~.content:not(.ui) {
+        padding: 0 0 0 0.25rem;
+        margin: 0 0 0 0.5rem;
     }
 }
 

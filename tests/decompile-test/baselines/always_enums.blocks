@@ -9,18 +9,8 @@
 </value>
 <value name="TO">
 <shadow type="math_whole_number"><field name="NUM">0</field></shadow>
-<block type="math_arithmetic">
-<field name="OP">MINUS</field>
-<value name="A">
-<shadow type="math_number">
-<field name="NUM">4</field>
-</shadow>
-</value>
-<value name="B">
-<shadow type="math_number">
-<field name="NUM">1</field>
-</shadow>
-</value>
+<block type="math_number">
+<field name="NUM">3</field>
 </block>
 </value>
 <statement name="DO">
@@ -28,7 +18,6 @@
 <mutation numlines="1" error="Enum arguments may only be literal property access expressions" line0="testNamespace.enumArgument&#40;i&#41;&#59;" />
 </block>
 </statement>
-<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
 </block>
 </statement>
 </block>

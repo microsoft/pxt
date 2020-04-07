@@ -1,0 +1,19 @@
+{
+    "editor": "blocksprj",
+    "title": "Description",
+    "steps": [
+        {
+            "contentMd": "Step one instructions",
+            "headerContentMd": "Step one instructions"
+        },
+        {
+            "contentMd": "Step two instructions",
+            "headerContentMd": "Step two instructions"
+        }
+    ],
+    "activities": null,
+    "code": "",
+    "metadata": {
+        "description": "Tutorial descriptions are not displayed"
+    }
+}

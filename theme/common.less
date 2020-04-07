@@ -32,6 +32,10 @@ body {
   min-width: 0;
 }
 
+pre {
+    tab-size: 4;
+}
+
 /* Main Layout */
 #allcontent {
     height: 100%;
@@ -62,7 +66,7 @@ body {
     top: @mainMenuHeight;
 }
 
-.hideMenuBar #filelist,
+.hideMenuBar:not(.headless) #filelist,
     .hideMenuBar #maineditor,
     .hideMenuBar #sidedocs {
     top: 0 !important;
@@ -97,6 +101,7 @@ body {
 @editorToolsHeight: 10rem;
 @editorToolsCollapsedHeight: 4.7rem;
 @editorToolsCollapsedMobileHeight: 3.4rem;
+@editorToolsThinHeight: 3rem;
 #editortools {
     position: fixed;
     top: auto;
@@ -118,11 +123,22 @@ body {
 }
 
 .hideEditorToolbar #blocksArea,
-    .hideEditorToolbar #monacoEditor,
-    .hideEditorToolbar #pxtJsonEditor,
-    .hideEditorToolbar #serialEditor,
-    .hideEditorToolbar #filelist {
+.hideEditorToolbar #monacoEditor,
+.hideEditorToolbar #pxtJsonEditor,
+.hideEditorToolbar #serialEditor,
+.hideEditorToolbar #githubEditor,
+.hideEditorToolbar #filelist {
     bottom: 0rem !important;
+}
+
+#filelistOverlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    cursor: pointer;
 }
 
 /* File list / Simulator layout */
@@ -161,6 +177,10 @@ body {
     background-color: @simulatorBackground;
 }
 
+#editortools .download-button.icon-and-text {
+    text-align: center;
+}
+
 .transparentEditorTools #downloadArea {
     background-color: transparent !important;
 }
@@ -188,6 +208,24 @@ body {
     text-align: center;
 }
 
+.simulator .ui.embed .icon.xicon::before {
+    transform: translateX(-77%) translateY(-120%);
+    transition: opacity .25s ease,color .25s ease;
+}
+
+.simulator .ui.embed .icon.xicon::after {
+    background: rgba(0,0,0,.3);
+    transition: opacity .25s ease;
+}
+
+.simulator .ui.embed .icon.xicon:hover:before {
+    color: @green;
+}
+
+.simulator .ui.embed .icon.xicon:hover:after {
+    opacity: 0.6;
+}
+
 /* Simulator */
 div.simframe {
     border:none;
@@ -209,6 +247,13 @@ div.simframe > iframe {
 }
 
 /* Menu */
+// The classname .menubar is also used by monaco. This rule just negates the clashing
+// values
+#root > .menubar,
+#homescreen > .home > .menubar {
+    height: unset;
+    overflow: unset;
+}
 .menubar .ui.menu .item.editor-menuitem {
     padding: 0;
 }
@@ -226,6 +271,10 @@ div.simframe > iframe {
     width: 140px;
     z-index: 2;
 }
+.menubar .ui.menu.fixed #editordropdown .item {
+    border-radius: 0 !important;
+}
+
 .menubar .ui.menu.fixed .ui.item.editor-menuitem .item.link:hover {
     background: none;
 }
@@ -258,10 +307,44 @@ div.simframe > iframe {
     box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
     background: @editorToggleColor !important;
 }
-.active.item.javascript-menuitem ~ .toggle {
+.active.item.javascript-menuitem ~ .toggle,
+.active.item.python-menuitem ~ .toggle {
     margin-left: 140px !important;
     box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
     background: @editorToggleColor !important;
+}
+
+#editortoggle .active.item.javascript-menuitem ~ .toggle.hasdropdown,
+#editortoggle .active.item.python-menuitem ~ .toggle.hasdropdown  {
+    border-top-right-radius: 0px!important;
+    border-bottom-right-radius: 0px!important;
+}
+#editortoggle > .link {
+    justify-content: center;
+}
+
+#editordropdown {
+    width: auto;
+    border-top-left-radius: 0px!important;
+    border-bottom-left-radius: 0px!important;
+}
+#editordropdown .menu > .item {
+    width: 184px;
+    opacity: 1;
+}
+#editordropdown .menu > .item.selected:after {
+    content: '✔';
+    float: right;
+}
+
+#root:not(.hc) #editordropdown {
+    .menu > .item.selected {
+        background: none;
+        color: @mainMenuInvertedBackground !important;
+    }
+    &.active, #mainmenu #editordropdown.active:focus {
+        background-color: @editorToggleColor!important;
+    }
 }
 
 /* Help card */
@@ -291,9 +374,9 @@ div.simframe > iframe {
 }
 
 .ui.item.logo img {
-    max-height: 1.6rem;
     margin-left: 1rem;
     margin-right: 1rem;
+    height: 1.6rem;
 }
 
 /* Powered by Microsoft logo*/
@@ -340,6 +423,10 @@ div.simframe > iframe {
     overflow-y: hidden;
 }
 
+.ui.card .extra.content a.learnmore {
+    color: @lightTextColor;
+}
+
 /* Popup message */
 #msg {
     position: absolute;
@@ -361,9 +448,21 @@ div.simframe > iframe {
 /* Button Colors */
 .ui.button.editortools-btn {
     &:extend(.ui.grey.button all);
+
+    /* Fixes an error in some webkit browsers where icons get repositioned on hover */
+    position: relative;
+}
+
+.ui.button.big-play-button,
+.ui.button.hw-button,
+.ui.button.hw-button > .icon.caret {
+    /* Fixes an error in some webkit browsers where icons get repositioned on hover */
+    position: relative;
 }
 
 /* Icon and text */
+.ui.item.link.dbg-btn > .icon-and-text.icon ~ .ui.text,
+.ui.item.link > .icon-and-text.icon ~ .ui.text.exit-debugmode-btn,
 .ui.item.icon > .icon-and-text.icon ~ .ui.text,
 .ui.button.icon > .icon-and-text.icon ~ .ui.text {
     margin-left: 0.5em !important;
@@ -372,6 +471,52 @@ div.simframe > iframe {
 /* Beta */
 .ui.label.betalabel {
     padding: 0.3em;
+}
+
+/* Collapse/expand button for simulator, sidedocs */
+#computertogglesim,
+#mobiletogglesim,
+#sidedocstoggle {
+    position: absolute;
+    border-top-left-radius: 100px;
+    border-bottom-left-radius: 100px;
+    top: 40%;
+    height: 20%;
+    padding: 0;
+    margin: 0;
+    background: @grey;
+    box-shadow: none!important;
+    transition: none;
+    opacity: 0.8;
+
+    &:hover,
+    &:focus {
+      opacity: 1;
+    }
+}
+#computertogglesim,
+#sidedocstoggle {
+    z-index: @sidedocZIndex;
+}
+#mobiletogglesim {
+    z-index: @blocklyToolboxZIndex;
+}
+
+// Factor in 4rem height of top bar
+#mobiletogglesim,
+#computertogglesim {
+    left: -21px;
+    top: calc(~'40% - 2.4rem');
+    height: calc(~'20% + 0.8rem');
+}
+
+.collapsedEditorTools #computertogglesim,
+.collapsedEditorTools #mobiletogglesim {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: 100px;
+    border-bottom-right-radius: 100px;
+    left: -21px;
 }
 
 /*******************************
@@ -500,6 +645,17 @@ Avatar
 }
 
 /* Simulator effects */
+@keyframes glow {
+    to {
+         outline-color: yellow;
+    }
+}
+
+.glow > div {
+    outline: 3px solid transparent;
+    animation: glow 0.3s infinite alternate;
+    transition: outline 0.3s linear;
+}
 
 .grayscale {
     -moz-filter: grayscale(1);
@@ -548,6 +704,10 @@ Field editors
     color: white;
     background-color: #00aced;
 }
+.social-icons a.discourse {
+    color: white;
+    background-color: @primaryColor;
+}
 
 /*******************************
         Layout Variables
@@ -583,7 +743,7 @@ p.ui.font.small {
 
 @media only screen and (min-width: @largeMonitorBreakpoint) and (min-height:30em) {
     .ui.widedesktop.only {
-        display:inherit !important;
+        display:unset !important;
     }
     .ui.widedesktop.hide {
         display:none !important;
@@ -613,26 +773,32 @@ p.ui.font.small {
 /* Tablet only */
 @media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
     .ui.tablet.only {
-        display:inherit !important;
+        display:unset !important;
+    }
+    .collapse-button.ui.tablet.only {
+        display:inherit !important; // fix for simulator toggle, IE11 does not have "unset"
     }
 }
 
 /* Mobile + Tablet */
 @media only screen and (max-width: @largestTabletScreen) {
-    #root.sandbox .active.item.sim-menuitem ~ .toggle {
-        margin-left: 0 !important;
-        box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
-    }
-    #root.sandbox .active.item.blocks-menuitem ~ .toggle {
-        margin-left: 40px !important;
-        box-shadow: 2px 0px 0px rgba(0,0,0,0.1), -2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
-    }
-    #root.sandbox .active.item.javascript-menuitem ~ .toggle {
-        margin-left: 80px !important;
-        box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
+    #root.sandbox:not(.headless) {
+        .active.item.sim-menuitem ~ .toggle {
+            margin-left: 0 !important;
+            box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
+            background: @editorToggleColor !important;
+        }
+        .active.item.blocks-menuitem ~ .toggle {
+            margin-left: 40px !important;
+            box-shadow: 2px 0px 0px rgba(0,0,0,0.1), -2px 0px 0px rgba(0,0,0,0.1) !important;
+            background: @editorToggleColor !important;
+        }
+        .active.item.javascript-menuitem ~ .toggle,
+        .active.item.python-menuitem ~ .toggle {
+            margin-left: 80px !important;
+            box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
+            background: @editorToggleColor !important;
+        }
     }
 
     .simView #boardview {
@@ -640,9 +806,16 @@ p.ui.font.small {
     }
 
     .ui.portrait.only {
-        display:inherit !important;
+        display:unset !important;
     }
     .ui.portrait.hide {
+        display:none !important;
+    }
+    .collapse-button.ui.computer.only {
+        display:none !important; // hide desktop simulator toggle
+    }
+
+    .hideEditorToolbar #filelist {
         display:none !important;
     }
 }
@@ -650,6 +823,9 @@ p.ui.font.small {
 /* Mobile only */
 @media only screen and (max-width: @largestMobileScreen) {
     .ui.mobile.only {
+        display:unset !important;
+    }
+    .ui.mobile.only.inherit {
         display:inherit !important;
     }
     .ui.mobile.hide {
@@ -658,15 +834,174 @@ p.ui.font.small {
 }
 
 /* Scren heights */
-@media only screen and (max-height: @tallEditorBreakpoint) {
+/** Thin **/
+@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
     .ui.tall.only {
         display:none !important;
+    }
+    .simView #boardview {
+        padding-top: @thinMenuHeight;
     }
 }
 @media only screen and (min-height: @thinEditorBreakpoint) {
     .ui.thin.only {
         display:none !important;
     }
+}
+
+/*******************************
+        fuyllscreensim
+*******************************/
+.fullscreensim {
+    /* Full screen */
+    #filelist {
+        position: fixed;
+        z-index: @fullscreenZIndex;
+        top:0 !important;
+        left:0 !important;
+        bottom:0 !important;
+        right:0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100%;
+        min-width: 100%;
+        height:100% !important;
+    }
+    #filelistOverlay {
+        display: none;
+    }
+    #boardview {
+        position: relative;
+        height:100%;
+        background-color: white;
+        padding-top: 1rem;
+        padding-bottom: 4.5rem;
+        padding-left: 0rem;
+        padding-right: 0rem;
+
+        background-color: @fullscreenBackgroundGradientStart;
+        background: @fullscreenBackgroundGradientStart; /* For browsers that do not support gradients */
+        background: -webkit-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Safari 5.1 to 6.0 */
+        background: -o-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Opera 11.1 to 12.0 */
+        background: -moz-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Firefox 3.6 to 15 */
+        background: linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* Standard syntax */
+    }
+    #simulator .hidefullscreen,
+    .menubar .ui.item:not(.logo),
+    #maineditor,
+    #editortools,
+    #serialPreview {
+        display: none !important;
+        z-index: -10 !important;
+    }
+    .sandboxfooter {
+        z-index: @sandboxFooterZIndex;
+        bottom: 1rem;
+    }
+    #mainmenu {
+        background: transparent !important;
+    }
+    #filelist .simtoolbar {
+        position: fixed;
+        bottom: 1rem;
+        left: auto;
+        right: auto;
+        display: block !important;
+    }
+    #simulators {
+        position: relative;
+        padding: 3rem 1rem 3rem;
+        width: 100%;
+        height: 100%;
+    }
+    div.simframe {
+        position:relative;
+        width: 50%;
+        height: 100%;
+        float: left;
+        padding-bottom: 0 !important;
+    }
+    div.simframe > iframe {
+        position:relative;
+        max-width: 90%;
+    }
+    div.simframe:only-child {
+        width: 100%;
+    }
+    div.simframe:only-child > iframe {
+        max-width: 100%;
+    }
+    .simtoolbar .ui.button {
+        font-size: 1.7rem;
+    }
+    div.simframe:not(:first-child) {
+        display: unset;
+    }
+}
+
+/***********************************
+   Headless Simtoolbar (Minecraft)
+************************************/
+
+#root.headless {
+    #filelist {
+        display: block;
+        bottom: 0 !important;
+    }
+
+    #filelist .simtoolbar.item {
+        margin: 1rem 0;
+    }
+
+    i.green.icon {
+        color: rgba(0,0,0,.6)!important;
+    }
+}
+
+#root.headless.collapsedEditorTools {
+    #filelist {
+        position: absolute;
+        width: auto;
+        top: auto;
+        left: 5rem;
+        background: none transparent;
+        min-width: inherit;
+        max-width: inherit;
+    }
+
+    #boardview, .filemenu {
+        display: none;
+    }
+}
+
+#root.headless:not(.collapsedEditorTools) {
+    #filelist {
+        left: 0;
+        z-index: 40;
+    }
+}
+
+#root.headless.transparentEditorTools {
+    #editortools {
+        left: auto;
+        height: 5.7rem;
+        margin-right: 1rem;
+    }
+
+    #editortools #downloadArea,
+    #editortools > div > div > .ui.grid > .column.left {
+        display: none;
+    }
+
+    @media only screen and (max-width: @largestTabletScreen) {
+        #editortools > div > div > .ui.grid > .column.right {
+            width: 100%!important;
+        }
+    }
+}
+
+#projectNameArea input {
+    font-size: 0.95rem;
 }
 
 /*******************************
@@ -700,6 +1035,19 @@ p.ui.font.small {
         .includePoweredByLogos(); // set the @poweredBySmall variable
         background-image: @poweredBySmall;
     }
+    #root.headless.transparentEditorTools {
+        #editortools {
+            margin-bottom: 1.5rem;
+        }
+    }
+    .ui.button.hw-button > .icon.ellipsis {
+        left: -1px;
+        position: relative;
+    }
+    .collapsedEditorTools .hw-button:hover:after {
+        transform: translateX(0%)!important;
+        left: -2rem;
+    }
 }
 
 /* Mobile */
@@ -713,91 +1061,48 @@ p.ui.font.small {
         .includePoweredByLogos(); // set the @poweredBySmall variable
         background-image: @poweredBySmall;
     }
+    .hw-button:hover:after {
+        transform: translateX(-100%)!important;
+        left: 3rem;
+    }
+    .collapsedEditorTools .hw-button:hover:after {
+        transform: translateX(0%)!important;
+        left: -2rem;
+    }
 }
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
 @media only screen and (min-width: @computerBreakpoint) {
-    .collapsedEditorTools #filelist {
+    .collapsedEditorTools:not(.headless) #filelist {
+        min-width: 21px;
+        width: 21px;
+        padding: 0;
+    }
+
+    .collapsedEditorTools:not(.headless) #filelist > * {
         display: none;
     }
+
     .collapsedEditorTools #downloadArea {
         background: @editorToolsBackground;
     }
-    .collapsedEditorTools #maineditor {
+
+    .collapsedEditorTools:not(.headless) #maineditor {
+        left: 21px;
+    }
+
+    .collapsedEditorTools.headless #maineditor {
         left: 0;
     }
 
-    /* Full screen */
-    .fullscreensim #filelist {
-        position: fixed;
-        z-index: @fullscreenZIndex;
-        top:0;
-        left:0;
-        bottom:0;
-        right:0;
-        padding: 0;
-        max-width: 100%;
-        min-width: 100%;
-        height:100%;
+    #editortools {
+        z-index: @simulatorZIndex + 1;
     }
-    .fullscreensim #boardview {
-        position: relative;
-        height:100%;
-        background-color: white;
-        padding: @mainMenuHeight;
-        padding-left: calc(2*@mainMenuHeight);
-        padding-right: calc(2*@mainMenuHeight);
 
-        background-color: @fullscreenBackgroundGradientStart;
-        background: @fullscreenBackgroundGradientStart; /* For browsers that do not support gradients */
-        background: -webkit-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Safari 5.1 to 6.0 */
-        background: -o-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Opera 11.1 to 12.0 */
-        background: -moz-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Firefox 3.6 to 15 */
-        background: linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* Standard syntax */
-    }
-    .fullscreensim #simulator .hidefullscreen,
-        .fullscreensim .menubar .ui.item:not(.logo),
-        .fullscreensim #maineditor,
-        .fullscreensim #editortools,
-        .fullscreensim #serialPreview {
-        display: none !important;
-        z-index: -10 !important;
-    }
-    .fullscreensim .sandboxfooter {
-        z-index: @sandboxFooterZIndex;
-        bottom: 1rem;
-    }
-    .fullscreensim #mainmenu {
-        background: transparent !important;
-    }
-    .fullscreensim #filelist .simtoolbar {
-        position: fixed;
-        bottom: 1rem;
-        left: auto;
-        right: auto;
-    }
-    .fullscreensim #simulators {
+    .ui.button.hw-button > .icon.ellipsis {
+        left: -1px;
+        top: 4px;
         position: relative;
-        padding: 3rem;
-        width: 100%;
-        height: 100%;
-    }
-    .fullscreensim div.simframe {
-        position:relative;
-        width: 50%;
-        height: 100%;
-        float: left;
-        padding-bottom: 0 !important;
-    }
-    .fullscreensim div.simframe > iframe {
-        position:relative;
-        max-width: 90%;
-    }
-    .fullscreensim div.simframe:only-child {
-        width: 100%;
-    }
-    .fullscreensim div.simframe:only-child > iframe {
-        max-width: 100%;
     }
 }
 
@@ -841,13 +1146,64 @@ p.ui.font.small {
         position:absolute;
         padding: 0;
         margin: 1em;
-        bottom:0rem !important;
-        left:4rem !important;
-        top:auto;
-        width:auto;
+        bottom: 4rem !important;
+        top: auto;
+        width: auto;
         min-width: inherit;
         max-width: inherit;
         background: transparent !important;
+        overflow: visible;
+    }
+    .collapsedEditorTools #filelist {
+        display: none;
+    }
+    #filelistOverlay {
+        display: block;
+        top: auto;
+        left: 4rem; /* match left pos of #boardview */
+        bottom: -3rem;
+        width: 10rem; /* match width of div.simframe */
+        height: 9rem;
+    }
+    #root:not(.fullscreensim):not(.headless):not(.sandbox) {
+        #boardview {
+            position: absolute;
+            left: 4rem;
+            width: 10rem;
+        }
+        #filelist .simtoolbar {
+            margin: 0.5em 0;
+        }
+        #filelist .simtoolbar > div:not(:first-child),
+        #filelist .simtoolbar > .buttons > .button {
+            display: none;
+        }
+        #filelist .simtoolbar > .buttons > .play-button,
+        #filelist .simtoolbar > .buttons > .restart-button {
+            display: block;
+        }
+        #filelist .simtoolbar > div:first-child {
+            flex-direction: column;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        #filelist .simtoolbar > div:first-child > button {
+            border-radius: 0;
+            font-size: .92857143rem;
+        }
+        #editortools .left .buttons:first-child {
+            position: absolute;
+            bottom: 0;
+        }
+    }
+    #root.headless {
+        #filelist {
+            left: 5rem!important;
+            z-index: 42!important;
+        }
+    }
+    #root.collapsedEditorTools #editortools .left .buttons:first-child {
+        bottom: auto!important; // undo bottom positioning for collapsed toolbar
     }
     #maineditor {
         left: 0;
@@ -868,6 +1224,12 @@ p.ui.font.small {
     .hideEditorFloats #editortools {
         height: @editorToolsCollapsedHeight;
     }
+    .hideEditorFloats.transparentEditorTools #editortools > div > div > .ui.grid {
+        margin: auto;
+    }
+    .hideEditorFloats.transparentEditorTools #editorToolbarArea {
+        padding-top: 0;
+    }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor, .hideEditorFloats #msg {
         bottom: @editorToolsCollapsedHeight;
     }
@@ -882,7 +1244,27 @@ p.ui.font.small {
         padding-bottom: 81.96% !important;
     }
     div.simframe:not(:first-child) {
-        display:none !important;
+        display:none;
+    }
+    #simulators {
+        flex-direction: row;
+        display: flex !important;
+    }
+    /* Simulator Toggle Button */
+    #mobiletogglesim,
+    .collapsedEditorTools #mobiletogglesim {
+        border-top-right-radius: 100px;
+        border-top-left-radius: 100px;
+        border-bottom-right-radius: 0;
+        border-bottom-left-radius: 0;
+        top: auto;
+        left: 40%;
+        width: 20%;
+        height: auto;
+        bottom: 10rem;
+    }
+    .collapsedEditorTools #mobiletogglesim {
+        bottom: 4.7rem;
     }
     /* Hide floating editors */
     .hideEditorFloats .editorFloat {
@@ -902,7 +1284,8 @@ p.ui.font.small {
         width: 40px;
         height: 38px;
     }
-    .active.item.javascript-menuitem ~ .toggle {
+    .active.item.javascript-menuitem ~ .toggle,
+    .active.item.python-menuitem ~ .toggle {
         margin-left: 40px !important;
     }
     /* Top Menu */
@@ -924,6 +1307,26 @@ p.ui.font.small {
     }
     .ui.mini.image {
         display: block !important;
+    }
+
+    /* Python/JS dropdown */
+    #editordropdown .menu > .item.selected:after {
+        position: absolute;
+        left: 1em;
+    }
+    #root #editordropdown .menu .item {
+        width: auto;
+    }
+    #root #editordropdown .menu .item .text {
+        display: inline-block!important;
+    }
+}
+
+/* Thin view, likely zoomed in; view toggle needs to drop to the bottom to make sure it's accessible  */
+@media only screen and (max-height: 450px) {
+    #mobiletogglesim.collapse-button.toggle-hide {
+        z-index: @editorToolsZIndex + 1;
+        bottom: 0 !important;
     }
 }
 
@@ -960,6 +1363,49 @@ p.ui.font.small {
         .ui.logo.brand,
         .ui.logo.organization {
             display: none !important;
+        }
+    }
+    .fullscreensim .simtoolbar .ui.button {
+        font-size: 1rem;
+    }
+    .collapsedEditorTools #mobiletogglesim {
+        bottom: 3.4rem;
+    }
+
+    #editortools .hw-button:before,
+    #editortools .hw-button:after {
+        display: none
+    }
+}
+
+
+@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestTabletScreen) {
+    /* Top Menu */
+    #maineditor {
+        top: @thinMenuHeight;
+    }
+    #filelist {
+        top: @thinMenuHeight;
+        padding: 0.5rem 1.5rem;
+    }
+    #editortools {
+        height: @editorToolsThinHeight;
+    }
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #filelist {
+        bottom: @editorToolsThinHeight;
+    }
+    #editortools .ui.button {
+        padding: .5em;
+    }
+    #downloadArea {
+        padding-top: 0;
+    }
+    #editorToolbarArea, #projectNameArea {
+        padding-top: 0.5rem;
+        font-size: 0.8em;
+
+        input {
+            padding: 0.35rem;
         }
     }
 }
@@ -1050,6 +1496,11 @@ p.ui.font.small {
     max-width: 100%;
 }
 
+/* ui embed overrides */
+div.simframe.ui.embed {
+    background: transparent;
+}
+
 .sandbox {
     #simulators, #simulator, #editortools {
         display: none;
@@ -1060,24 +1511,52 @@ p.ui.font.small {
         left: 0;
     }
 
+    /* Not needed in triple toggle view */
+    #filelistOverlay {
+        display: none;
+    }
+
+    #simulators {
+        flex-direction: row;
+        display: flex !important;
+    }
+
+    div.simframe:not(:first-child) {
+        display: inherit;
+    }
+
     #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #editortools, #msg {
         bottom: 1.5rem !important;
     }
 
-    .active.item.sim-menuitem ~ .toggle {
+    &:not(.headless) .active.item.sim-menuitem ~ .toggle {
         margin-left: 0 !important;
         box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
         background: @editorToggleColor !important;
     }
-    .active.item.blocks-menuitem ~ .toggle {
+    &:not(.headless) .active.item.blocks-menuitem ~ .toggle {
         margin-left: 140px !important;
         box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
         background: @editorToggleColor !important;
     }
-    .active.item.javascript-menuitem ~ .toggle {
+    &:not(.headless) .active.item.javascript-menuitem ~ .toggle,
+    &:not(.headless) .active.item.python-menuitem ~ .toggle {
         margin-left: 280px !important;
         box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
         background: @editorToggleColor !important;
+    }
+
+    .one-language {
+        .active.item.javascript-menuitem ~ .toggle,
+        .active.item.python-menuitem ~ .toggle {
+            margin-left: 0px !important;
+        }
+    }
+    &:not(.headless) .one-language {
+        .active.item.javascript-menuitem ~ .toggle,
+        .active.item.python-menuitem ~ .toggle {
+            margin-left: 140px !important;
+        }
     }
 }
 
@@ -1105,5 +1584,81 @@ p.ui.font.small {
 
         flex-direction: row !important;
         margin-bottom: 1em !important;
+    }
+}
+
+img.pixelart {
+    image-rendering: auto;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+}
+
+
+/** language modal **/
+#langmodal {
+    #availablelocales .langoption .header {
+        color: #4c4ca6;
+    }
+
+    #langmodalfooter {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 2em;
+    }
+}
+
+#blocks-editor-field-div {
+    position: absolute;
+    z-index: @blocklyDropdownDivZIndex;
+}
+
+.blocks-editor-field-overlay {
+    position: absolute;
+    z-index: @blocklyWidgetDivZIndex;
+    background-color: rgba(0, 0, 0, 0.4)
+}
+
+a.ui.link {
+    cursor: pointer;
+}
+
+p > a.ui.link {
+    margin-left: 0.5rem;
+}
+
+p.ui.tiny {
+    font-size: 80%;
+}
+p.ui.small {
+    font-size: 90%;
+}
+
+.expandable-menu {
+    > .menu-header {
+        text-decoration: none;
+        cursor: pointer;
+        :hover {
+            text-decoration: none;
+        }
+    }
+
+    > .expanded-items {
+        padding: .5em 1.5em;
+    }
+}
+
+select.ui.dropdown {
+    &:focus, &:active {
+        outline: 1px dotted #212121;
+        outline: 5px auto -webkit-focus-ring-color;
+    }
+
+    font-family: @pageFont;
+}
+
+.newproject {
+    .expandable-menu {
+        font-size: 12px !important;
     }
 }

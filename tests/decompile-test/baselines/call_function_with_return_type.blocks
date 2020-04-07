@@ -1,16 +1,31 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="function_definition">
+<mutation name="getStuff" >
+</mutation>
+<statement name="STACK">
+<block type="function_return">
+<value name="RETURN_VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="text">
+<field name="TEXT">Unknown</field>
+</block>
+</value>
+</block>
+</statement>
+</block>
 <block type="pxt-on-start">
 <statement name="HANDLER">
-<block type="typescript_statement">
-<mutation declaredvars="test" numlines="1" line0="let test &#61; getStuff&#40;&#41;&#59;" />
-<next>
-<block type="typescript_statement">
-<mutation numlines="1" line0="getStuff&#40;&#41;&#59;" />
-<next>
-<block type="typescript_statement">
-<mutation numlines="3" line0="function getStuff&#40;&#41;&#58; string &#123;" line1="    return &#34;Unknown&#34;&#59;" line2="&#125;" />
+<block type="variables_set">
+<field name="VAR">test</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="function_call_output">
+<mutation name="getStuff" />
 </block>
-</next>
+</value>
+<next>
+<block type="function_call">
+<mutation name="getStuff" />
 </block>
 </next>
 </block>

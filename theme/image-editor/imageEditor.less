@@ -1,0 +1,230 @@
+@import 'bottomBar';
+@import 'button';
+@import 'cursorSizes';
+@import 'fabric-icons-inline';
+@import 'imageCanvas';
+@import 'sideBar';
+@import 'timeline';
+@import 'topBar';
+@import 'dropdown';
+@import 'tilePalette';
+@import 'toggle';
+@import 'pivot';
+@import 'alert';
+
+:root {
+    --editor-bg-color: #1e1e1e;
+
+    --sidebar-bg-color: #252526;
+    --sidebar-header-bg-color: #3c3c3c;
+    --sidebar-header-text-color: #cccccc;
+
+    --editing-tools-bg-color: #333333;
+    --sidebar-icon-inactive-color: #adadad;
+    --sidebar-icon-active-color: #ffffff;
+    --sidebar-label-color: #adadad;
+
+    --navigator-viewport-color: #ff0000;
+    --wall-color: #e95153;
+
+    --map-button-bg-color: #3c3c3c;
+    --map-button-icon-color: #cccccc;
+
+    --eyedropper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cstyle type='text/css'%3E.icon-canvas-transparent%7Bopacity:0;fill:%23F6F6F6;%7D .icon-vs-out%7Bfill:%23F6F6F6;%7D .icon-vs-bg%7Bfill:%23424242;%7D%3C/style%3E%3Cpath class='icon-canvas-transparent' d='M16 15.978h-16v-16h16v16z' id='canvas'/%3E%3Cpath class='icon-vs-out' d='M15.241 4.652l-1.481 1.481.835.835-3.085 3.085-.762-.762-5.168 5.17-3.596 1.539-1.959-1.959 1.349-3.742 5.19-5.191-.645-.646 3.085-3.085.835.835 1.481-1.481c.431-.431 1-.678 1.616-.731h.461c.661.054 1.298.331 1.77.802 1.082 1.084 1.114 2.81.074 3.85z' id='outline'/%3E%3Cpath class='icon-vs-bg' d='M9.467 7.932l.612.613-5.071 5.072-2.795 1.198-1.032-1.032 1.057-2.936 5.072-5.072.585.585v.003l-4.356 4.356 1.569 1.569 4.355-4.356h.004zm4.995-6.422c-.667-.664-1.777-.729-2.435-.072l-2.188 2.189-.836-.835-.174.174-1.497 1.497 4.177 4.177 1.671-1.671-.835-.835 2.189-2.189c.658-.658.592-1.768-.072-2.435z' id='iconBg'/%3E%3C/svg%3E") 2 16, copy;
+  }
+
+.image-editor-outer {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.image-editor-outer .image-editor-outer {
+    position: absolute;
+    top: 0;
+}
+
+.image-editor {
+    // position: absolute;
+    width: 100%;
+    height: 100%;
+    // top: 200px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+
+    background-color: var(--editor-bg-color);
+}
+
+.image-editor .image-editor {
+    position: absolute;
+}
+
+.image-editor-content {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    flex-shrink: 1;
+    height: 100%;
+}
+
+.image-editor-label {
+    color: var(--sidebar-label-color);
+    font-family: "Roboto Mono", monospace;
+}
+
+.image-editor-wrapper {
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.gallery-editor-header {
+    height: 3rem;
+    background-color: #4B7BEC;
+    border: 2px solid #4067b3;
+    border-bottom: none;
+}
+
+.image-editor-gallery-content {
+    flex-grow: 1;
+    overflow: hidden;
+    position: relative;
+    height: 100%;
+}
+
+.gallery-editor-toggle {
+    display: flex;
+    flex-direction: row;
+    position: relative;
+
+    height: 2.25rem;
+    line-height: 2.25rem;
+
+    background-color: #4572cf;
+    border: 2px solid #4067b3;
+    border-radius: 5px;
+    width: 13rem;
+    margin-top: 0.25rem;
+
+    margin-left: auto;
+    margin-right: auto;
+    cursor: pointer;
+}
+
+
+.gallery-editor-toggle.right {
+    .gallery-editor-toggle-handle {
+        transform: translateX(6.25rem);
+    }
+    .gallery-editor-toggle-right {
+        color: #4B7BEC;
+    }
+}
+
+.gallery-editor-toggle.left {
+    .gallery-editor-toggle-left {
+        color: #4B7BEC;
+    }
+}
+
+// Microsoft Edge has a bug related to relative z-indices that prevents the handle
+// from appearing below the text, so instead we make the handle transparent and have the text
+// show through
+.gallery-editor-toggle.edge {
+    .gallery-editor-toggle-label, .gallery-editor-toggle-label-right, .gallery-editor-toggle-label-left {
+        color: #ffffff;
+        z-index: auto;
+    }
+    .gallery-editor-toggle-handle {
+        opacity: 0.3;
+    }
+}
+
+.gallery-editor-toggle-label {
+    flex-grow: 1;
+    text-align: center;
+    color: #ffffff;
+    z-index: 1;
+    transition: color 0.3s;
+    user-select: none;
+}
+
+.gallery-editor-toggle-handle {
+    width: 6.5rem;
+    height: 2rem;
+    background-color: white;
+    border-radius: 5px;
+    position: absolute;
+    left: 0;
+
+    transform: translateX(0);
+    transition: transform 0.3s;
+}
+
+.image-editor-gallery {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+
+    top: 0;
+
+    margin-top: -100%;
+    transition: margin 0.3s, visibility 0.3s;
+
+    background-color: var(--editor-bg-color);
+    overflow-y: scroll;
+
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+    justify-content: center;
+
+    visibility: hidden;
+}
+
+.image-editor-gallery.visible {
+    margin-top: 0;
+    visibility: visible;
+}
+
+.image-editor-gallery .sprite-gallery-button {
+    margin: 1px;
+    border-radius: 0px;
+    width: ~"calc(20% - 2px)";
+    max-width: 120px;
+}
+
+.image-editor-confirm {
+    display: flex;
+    align-items: center;
+    padding: 0 2rem;
+    background-color: @green;
+    color: @white;
+    cursor: pointer;
+}
+
+.image-editor-confirm:hover {
+    background-color: darken(@green, 5%);
+}
+
+.image-editor-confirm:active {
+    background-color: darken(@green, 10%);
+}
+
+.image-editor.editing-tile {
+    .image-editor-content, .image-editor-topbar, .image-editor-bottombar {
+        display: none;
+    }
+}
+
+:root {
+    --editor-height: 31rem;
+}

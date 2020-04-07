@@ -25,8 +25,9 @@ namespace pxtblockly {
          * @constructor
          */
         constructor(value_: any, params: FieldTurnRatioOptions, opt_validator?: Function) {
-            super(String(value_), '-100', '100', null, '10', 'TurnRatio', opt_validator);
+            super(String(value_), '-200', '200', '1', '10', 'TurnRatio', opt_validator);
             this.params = params;
+            (this as any).sliderColor_ = '#a8aaa8';
         }
 
         static HALF = 80;
@@ -35,7 +36,7 @@ namespace pxtblockly {
 
         createLabelDom_(labelText: string) {
             let labelContainer = document.createElement('div');
-            let svg = Blockly.utils.createSvgElement('svg', {
+            let svg = Blockly.utils.dom.createSvgElement('svg', {
                 'xmlns': 'http://www.w3.org/2000/svg',
                 'xmlns:html': 'http://www.w3.org/1999/xhtml',
                 'xmlns:xlink': 'http://www.w3.org/1999/xlink',
@@ -43,15 +44,15 @@ namespace pxtblockly {
                 'height': (FieldTurnRatio.HALF + FieldTurnRatio.HANDLE_RADIUS + 10) + 'px',
                 'width': (FieldTurnRatio.HALF * 2) + 'px'
             }, labelContainer);
-            let defs = Blockly.utils.createSvgElement('defs', {}, svg);
-            let marker = Blockly.utils.createSvgElement('marker', {
+            let defs = Blockly.utils.dom.createSvgElement('defs', {}, svg);
+            let marker = Blockly.utils.dom.createSvgElement('marker', {
                 'id': 'head',
                 'orient': "auto",
                 'markerWidth': '2',
                 'markerHeight': '4',
                 'refX': '0.1', 'refY': '1.5'
             }, defs);
-            let markerPath = Blockly.utils.createSvgElement('path', {
+            let markerPath = Blockly.utils.dom.createSvgElement('path', {
                 'd': 'M0,0 V3 L1.5,1.5 Z',
                 'fill': '#f12a21'
             }, marker);
@@ -61,12 +62,12 @@ namespace pxtblockly {
                 'style': 'font-size: 50px',
                 'class': 'sim-text inverted number'
             }) as SVGTextElement;
-            this.path_ = Blockly.utils.createSvgElement('path', {
+            this.path_ = Blockly.utils.dom.createSvgElement('path', {
                 'x1': FieldTurnRatio.HALF,
                 'y1': FieldTurnRatio.HALF,
                 'marker-end': 'url(#head)',
                 'style': 'fill: none; stroke: #f12a21; stroke-width: 10'
-            }, svg);
+            }, svg) as SVGPathElement;
             this.updateGraph_();
             let readout = document.createElement('span');
             readout.setAttribute('class', 'blocklyFieldSliderReadout');
@@ -77,25 +78,22 @@ namespace pxtblockly {
             if (!this.path_) {
                 return;
             }
-            let v = goog.math.clamp(parseFloat(this.getText()), -100, 100);
-            if (isNaN(v)) {
-                v = 0;
+            let v = goog.math.clamp(this.getValue() || 0, -200, 200);
+            const x = v / 100;
+            const nx = Math.max(-1, Math.min(1, x));
+            const theta = Math.max(nx) * Math.PI / 2;
+            const r = FieldTurnRatio.RADIUS - 6;
+            let cx = FieldTurnRatio.HALF;
+            const cy = FieldTurnRatio.HALF - 22;
+            if (Math.abs(x) > 1) {
+                cx -= (x - (x > 0 ? 1 : -1)) * r / 2; // move center of circle
             }
-
-            const x = goog.math.clamp(parseFloat(this.getText()), -100, 100) / 100;
-            const theta = x * Math.PI / 2;
-            const cx = FieldTurnRatio.HALF;
-            const cy = FieldTurnRatio.HALF - 14;
-            const gamma = Math.PI - 2 * theta;
-            const r = FieldTurnRatio.RADIUS;
-            const alpha = 0.2 + Math.abs(x) * 0.5;
-            const x1 = 0;
+            const alpha = 0.2 + Math.abs(nx) * 0.5;
             const y1 = r * alpha;
             const y2 = r * Math.sin(Math.PI / 2 - theta);
             const x2 = r * Math.cos(Math.PI / 2 - theta);
             const y3 = y2 - r * alpha * Math.cos(2 * theta);
             const x3 = x2 - r * alpha * Math.sin(2 * theta);
-
 
             const d = `M ${cx} ${cy} C ${cx} ${cy - y1} ${cx + x3} ${cy - y3} ${cx + x2} ${cy - y2}`;
             this.path_.setAttribute('d', d);

@@ -9,16 +9,16 @@ namespace pxtblockly {
         private params: any;
 
         private state_: boolean;
-        private checkElement_: any;
+        private checkElement_: SVGElement;
 
-        private toggleThumb_: any;
+        private toggleThumb_: SVGElement;
 
-        protected CURSOR = 'pointer';
+        public CURSOR = 'pointer';
 
         private type_: string;
 
         constructor(state: string, params: Blockly.FieldCustomOptions, opt_validator?: Function) {
-            super(state, opt_validator);
+            super(state, undefined, undefined, undefined, opt_validator);
             this.params = params;
             this.setValue(state);
             this.addArgType('toggle');
@@ -30,15 +30,16 @@ namespace pxtblockly {
                 // Field has already been initialized once.
                 return;
             }
+
             // Build the DOM.
-            this.fieldGroup_ = Blockly.utils.createSvgElement('g', {}, null);
+            this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null) as SVGGElement;
             if (!this.visible_) {
                 (this.fieldGroup_ as any).style.display = 'none';
             }
             // Add an attribute to cassify the type of field.
             if ((this as any).getArgTypes() !== null) {
                 if (this.sourceBlock_.isShadow()) {
-                    this.sourceBlock_.svgGroup_.setAttribute('data-argument-type',
+                    (this.sourceBlock_ as any).svgGroup_.setAttribute('data-argument-type',
                         (this as any).getArgTypes());
                 } else {
                     // Fields without a shadow wrapper, like square dropdowns.
@@ -47,12 +48,12 @@ namespace pxtblockly {
             }
             // Adjust X to be flipped for RTL. Position is relative to horizontal start of source block.
             const size = this.getSize();
-            this.checkElement_ = Blockly.utils.createSvgElement('g',
+            this.checkElement_ = Blockly.utils.dom.createSvgElement('g',
                 {
                     'class': `blocklyToggle ${this.state_ ? 'blocklyToggleOnBreakpoint' : 'blocklyToggleOffBreakpoint'}`,
                     'transform': `translate(8, ${size.height / 2})`,
                 }, this.fieldGroup_);
-            this.toggleThumb_ = Blockly.utils.createSvgElement('polygon',
+            this.toggleThumb_ = Blockly.utils.dom.createSvgElement('polygon',
                 {
                     'class': 'blocklyToggleRect',
                     'points': '50,5 100,5 125,30 125,80 100,105 50,105 25,80 25,30'
@@ -61,17 +62,17 @@ namespace pxtblockly {
 
             let fieldX = (this.sourceBlock_.RTL) ? -size.width / 2 : size.width / 2;
             /** @type {!Element} */
-            this.textElement_ = Blockly.utils.createSvgElement('text',
+            this.textElement_ = Blockly.utils.dom.createSvgElement('text',
                 {
                     'class': 'blocklyText',
                     'x': fieldX,
                     'dy': '0.6ex',
                     'y': size.height / 2
                 },
-                this.fieldGroup_);
+                this.fieldGroup_) as SVGTextElement;
 
             this.updateEditable();
-            this.sourceBlock_.getSvgRoot().appendChild(this.fieldGroup_);
+            (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(this.fieldGroup_);
 
             this.switchToggle(this.state_);
             this.setValue(this.getValue());
@@ -84,9 +85,8 @@ namespace pxtblockly {
                     (this as any).onMouseDown_);
         }
 
-        updateWidth() {
+        updateSize_() {
             this.size_.width = 30;
-            this.arrowWidth_ = 0;
         }
 
         /**
@@ -117,29 +117,29 @@ namespace pxtblockly {
 
         switchToggle(newState: boolean) {
             if (this.checkElement_) {
-                this.updateWidth();
+                this.updateSize_();
                 if (newState) {
-                    pxtblockly.svg.addClass(this.checkElement_, 'blocklyToggleOnBreakpoint');
-                    pxtblockly.svg.removeClass(this.checkElement_, 'blocklyToggleOffBreakpoint');
+                    pxt.BrowserUtils.addClass(this.checkElement_, 'blocklyToggleOnBreakpoint');
+                    pxt.BrowserUtils.removeClass(this.checkElement_, 'blocklyToggleOffBreakpoint');
                 } else {
-                    pxtblockly.svg.removeClass(this.checkElement_, 'blocklyToggleOnBreakpoint');
-                    pxtblockly.svg.addClass(this.checkElement_, 'blocklyToggleOffBreakpoint');
+                    pxt.BrowserUtils.removeClass(this.checkElement_, 'blocklyToggleOnBreakpoint');
+                    pxt.BrowserUtils.addClass(this.checkElement_, 'blocklyToggleOffBreakpoint');
                 }
                 this.checkElement_.setAttribute('transform', `translate(-7, -1) scale(0.3)`);
             }
         }
 
-        updateTextNode_() {
-            super.updateTextNode_();
+        updateDisplay_(newValue: string) {
+            super.updateDisplay_(newValue);
             if (this.textElement_)
-                pxtblockly.svg.addClass(this.textElement_ as SVGElement, 'blocklyToggleText');
+                pxt.BrowserUtils.addClass(this.textElement_ as SVGElement, 'blocklyToggleText');
         }
 
         render_() {
             if (this.visible_ && this.textElement_) {
                 // Replace the text.
                 goog.dom.removeChildren(/** @type {!Element} */(this.textElement_));
-                this.updateWidth();
+                this.updateSize_();
             }
         }
 

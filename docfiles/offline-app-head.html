@@ -1,0 +1,449 @@
+    <meta charset="UTF-8">
+    <title>@targetname@ Offline App</title>
+    <meta name="Description" content="A @targetname@ offline app" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" data-rtl="/blb/rtlsemantic.css" href="/doccdn/semantic.css" />
+    <link rel="stylesheet" href="/docfiles/style.css" />
+    <link rel="stylesheet" href="/docfiles/target.css" />
+
+    <script src="/doccdn/jquery.js" type="text/javascript"></script>
+    <script src="/doccdn/semantic.js" type="text/javascript"></script>
+    <script src="/docfiles/target.js" type="text/javascript"></script>
+
+    <style>
+        @targetstyle@
+    </style>
+    <style>
+        p.item {
+            color: rgba(0, 0, 0, 0.4);
+        }
+
+        .topbar {
+            background: rgb(170, 39, 143) !important;
+        }
+
+        .ui.inverted.content {
+            /* background: #00a5c8; */
+            background: #2a7af3;
+        }
+
+        .content.segment {
+            min-height: 80%;
+        }
+
+        .content .welcomeheader {
+            font-weight: 300;
+            font-size: 1.5rem;
+        }
+
+        .footer.segment {
+            padding: 5em 0em;
+        }
+
+        .image.left {
+            padding-left: 2em;
+        }
+
+        .image.right {
+            padding-right: 2em;
+            float: right;
+        }
+
+        .segments {
+            max-width: 60%;
+        }
+
+        .segments.terms-container {
+            margin-top: 5em;
+        }
+
+        .terms-container .segment {
+            background-color: rgb(250, 250, 250);
+        }
+
+        #legal-segment {
+            background:white;
+            height: 18rem;
+            overflow-y: scroll;            
+        }
+        .welcomeheader {
+            text-transform: uppercase;
+        }
+
+        @media only screen and (max-width: 800px) {
+            .grid .column .image {
+                display: none;
+            }
+
+            .segments {
+                max-width: 95%;
+            }
+        }
+    </style>
+
+    <!-- Auto-generated styles for the license terms -->
+    <style type="text/css">
+        .terms ol {
+            margin: 0;
+            padding: 0
+        }
+
+        .terms table td,
+        .terms table th {
+            padding: 0
+        }
+
+        .c2 {
+            margin-left: 22.5pt;
+            padding-top: 6pt;
+            text-indent: -18pt;
+            padding-bottom: 6pt;
+            line-height: 1.15;
+            orphans: 2;
+            widows: 2;
+            text-align: left
+        }
+
+        .c8 {
+            margin-left: 40.5pt;
+            padding-top: 6pt;
+            text-indent: -18pt;
+            padding-bottom: 6pt;
+            line-height: 1.15;
+            orphans: 2;
+            widows: 2;
+            text-align: left
+        }
+
+        .c15 {
+            padding-top: 0pt;
+            padding-bottom: 12pt;
+            line-height: 1.15;
+            orphans: 2;
+            widows: 2;
+            text-align: left;
+            height: 11pt
+        }
+
+        .c7 {
+            padding-top: 0pt;
+            padding-bottom: 0pt;
+            line-height: 1.15;
+            orphans: 2;
+            widows: 2;
+            text-align: left;
+            height: 11pt
+        }
+
+        .c0 {
+            margin-left: 23pt;
+            padding-top: 6pt;
+            padding-bottom: 6pt;
+            line-height: 1.15;
+            orphans: 2;
+            widows: 2;
+            text-align: left
+        }
+
+        .c10 {
+            margin-left: 40.5pt;
+            padding-top: 6pt;
+            padding-bottom: 6pt;
+            line-height: 1.15;
+            orphans: 2;
+            widows: 2;
+            text-align: left
+        }
+
+        .c6 {
+            margin-left: 40.5pt;
+            padding-top: 0pt;
+            padding-bottom: 0pt;
+            line-height: 1.15;
+            orphans: 2;
+            widows: 2;
+            text-align: left
+        }
+
+        .c20 {
+            padding-top: 0pt;
+            padding-bottom: 0pt;
+            line-height: 1.15;
+            orphans: 2;
+            widows: 2;
+            text-align: center
+        }
+
+        .c4 {
+            color: #000000;
+            font-weight: 700;
+            text-decoration: none;
+            vertical-align: baseline;
+            font-family: "Arial";
+            font-style: normal;
+            text-transform: uppercase;
+        }
+
+        .c11 {
+            padding-top: 0pt;
+            padding-bottom: 0pt;
+            line-height: 1.15;
+            orphans: 2;
+            widows: 2;
+            text-align: left
+        }
+
+        .c12 {
+            padding-top: 6pt;
+            padding-bottom: 6pt;
+            line-height: 1.15;
+            orphans: 2;
+            widows: 2;
+            text-align: left
+        }
+
+        .c3 {
+            color: #000000;
+            font-weight: 400;
+            text-decoration: none;
+            vertical-align: baseline;
+            font-family: "Arial";
+            font-style: normal
+        }
+
+        .c16 {
+            padding-top: 0pt;
+            padding-bottom: 12pt;
+            line-height: 1.15;
+            orphans: 2;
+            widows: 2;
+            text-align: left
+        }
+
+        .c13 {
+            color: #000000;
+            text-decoration: none;
+            vertical-align: baseline;
+            font-family: "Arial";
+            font-style: italic
+        }
+
+        .c14 {
+            text-decoration-skip-ink: none;
+            -webkit-text-decoration-skip: none;
+            color: #1155cc;
+            text-decoration: underline
+        }
+
+        .c17 {
+            background-color: #ffffff;
+            max-width: 540pt;
+            padding: 36pt 36pt 36pt 36pt
+        }
+
+        .c18 {
+            text-decoration-skip-ink: none;
+            -webkit-text-decoration-skip: none;
+            text-decoration: underline
+        }
+
+        .c9 {
+            color: inherit;
+            text-decoration: inherit
+        }
+
+        .c5 {
+            font-weight: 700
+        }
+
+        .c1 {
+            font-size: 10pt
+        }
+
+        .c19 {
+            font-size: 11pt
+        }
+
+        .terms .title {
+            padding-top: 0pt;
+            color: #000000;
+            font-size: 26pt;
+            padding-bottom: 3pt;
+            font-family: "Arial";
+            line-height: 1.15;
+            page-break-after: avoid;
+            orphans: 2;
+            widows: 2;
+            text-align: left
+        }
+
+        .terms .subtitle {
+            padding-top: 0pt;
+            color: #666666;
+            font-size: 15pt;
+            padding-bottom: 16pt;
+            font-family: "Arial";
+            line-height: 1.15;
+            page-break-after: avoid;
+            orphans: 2;
+            widows: 2;
+            text-align: left
+        }
+
+        .terms li {
+            color: #000000;
+            font-size: 11pt;
+            font-family: "Arial"
+        }
+
+        .terms p {
+            margin: 0;
+            color: #000000;
+            font-size: 11pt;
+            font-family: "Arial"
+        }
+
+        .terms h1 {
+            padding-top: 20pt;
+            color: #000000;
+            font-size: 20pt;
+            padding-bottom: 6pt;
+            font-family: "Arial";
+            line-height: 1.15;
+            page-break-after: avoid;
+            orphans: 2;
+            widows: 2;
+            text-align: left
+        }
+
+        .terms h2 {
+            padding-top: 18pt;
+            color: #000000;
+            font-size: 16pt;
+            padding-bottom: 6pt;
+            font-family: "Arial";
+            line-height: 1.15;
+            page-break-after: avoid;
+            orphans: 2;
+            widows: 2;
+            text-align: left
+        }
+
+        .terms h3 {
+            padding-top: 16pt;
+            color: #434343;
+            font-size: 14pt;
+            padding-bottom: 4pt;
+            font-family: "Arial";
+            line-height: 1.15;
+            page-break-after: avoid;
+            orphans: 2;
+            widows: 2;
+            text-align: left
+        }
+
+        .terms h4 {
+            padding-top: 14pt;
+            color: #666666;
+            font-size: 12pt;
+            padding-bottom: 4pt;
+            font-family: "Arial";
+            line-height: 1.15;
+            page-break-after: avoid;
+            orphans: 2;
+            widows: 2;
+            text-align: left
+        }
+
+        .terms h5 {
+            padding-top: 12pt;
+            color: #666666;
+            font-size: 11pt;
+            padding-bottom: 4pt;
+            font-family: "Arial";
+            line-height: 1.15;
+            page-break-after: avoid;
+            orphans: 2;
+            widows: 2;
+            text-align: left
+        }
+
+        .terms h6 {
+            padding-top: 12pt;
+            color: #666666;
+            font-size: 11pt;
+            padding-bottom: 4pt;
+            font-family: "Arial";
+            line-height: 1.15;
+            page-break-after: avoid;
+            font-style: italic;
+            orphans: 2;
+            widows: 2;
+            text-align: left
+        }
+    </style>
+
+    <script>
+        var electronLatestVersion = "";
+        function tickEvent(id, data) {
+            if (!pxt.aiTrackEvent) return;
+            if (!data) pxt.aiTrackEvent(id);
+            else {
+                var props = {};
+                var measures = {};
+                for (var k in data)
+                    if (typeof data[k] == "string") props[k] = data[k];
+                    else measures[k] = data[k];
+                pxt.aiTrackEvent(id, props, measures);
+            }
+        }
+
+        function agreeCheckboxChanged() {
+            $("#agree-checkbox").attr("disabled", "true");
+            showDownloads();
+        }
+
+        function hideLoader() {
+            $("#loader").remove();            
+        }
+
+        function showAgree() {
+            $("#agree-segment").removeClass("hidden");
+            $("#read-segment").removeClass("hidden");
+            $("#legal-segment").removeClass("hidden");
+}
+
+        function showNoDownloads() {
+            $("#no-download-segment").removeClass("hidden");
+            $("#read-segment").addClass("hidden");
+            $("#legal-segment").addClass("hidden");
+        }
+
+        function showDownloads() {
+            $("#download-win64").attr("href", "https://makecode.com/api/release/@targetid@/" + electronLatestVersion + "/win64");
+            $("#download-mac64").attr("href", "https://makecode.com/api/release/@targetid@/" + electronLatestVersion + "/mac64");
+            $("#download-segment").removeClass("hidden");
+        }
+        function downloadWin64() {
+            tickEvent("offlineapp.download", { "target": "@targetid@", "platform": "win64" });
+        }
+        function downloadMac64() {
+            tickEvent("offlineapp.download", { "target": "@targetid@", "platform": "mac64" });
+        }
+        $(function () {
+            $.getJSON("https://makecode.com/api/config/@targetid@/targetconfig")
+                .then(function (data) {
+                    hideLoader();
+                    if (data && data.electronManifest && data.electronManifest.latest) {
+                        electronLatestVersion = data.electronManifest.latest;
+                        showAgree();
+                    } else {
+                        showNoDownloads();
+                    }
+                })
+                .catch(function () {
+                    hideLoader();
+                    showNoDownloads();
+                })
+        });
+    </script>

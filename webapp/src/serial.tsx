@@ -17,9 +17,9 @@ export class Editor extends srceditor.Editor {
     charts: Chart[] = []
     chartIdx: number = 0
     sourceMap: pxt.Map<string> = {}
-    consoleBuffer: string = ""
+    serialInputDataBuffer: string = ""
+    maxSerialInputDataLength: number = 255;
     isSim: boolean = true
-    maxConsoleLineLength: number = 255;
     maxConsoleEntries: number = 500;
     active: boolean = true
     rawDataBuffer: string = ""
@@ -157,6 +157,7 @@ export class Editor extends srceditor.Editor {
         const sim = !!smsg.sim
         if (sim != this.isSim) return;
 
+        // clean up input
         const data = smsg.data || ""
         const source = smsg.id || "?"
         const receivedTime = smsg.receivedTime || Util.now()
@@ -164,10 +165,21 @@ export class Editor extends srceditor.Editor {
         this.appendRawData(data);
         const niceSource = this.mapSource(source);
 
+
+        // chunk into lines
+        const lines = this.chunkDataIntoLines(data)
+
+        // process each line
+        for (const line of lines) {
+            this.processMessageLine(line, niceSource, receivedTime);
+        }
+    }
+
+    processMessageLine(line: string, niceSource: string, receivedTime: number) {
         // packet payload as json
-        if (/^\s*\{[^}]+\}\s*$/.test(data)) {
+        if (/^\s*\{[^}]+\}\s*$/.test(line)) {
             try {
-                const json = JSON.parse(data);
+                const json = JSON.parse(line);
                 const t = parseInt(json["t"]);
                 const s = this.mapSource(json["s"]);
                 const n = json["n"] || "";
@@ -178,20 +190,20 @@ export class Editor extends srceditor.Editor {
             catch (e) { } // invalid js
         }
         // is this a CSV data entry
-        else if (/^\s*(-?\d+(\.\d*)?(e[\+\-]\d+)?)(\s*,\s*(-?\d+(\.\d*)?(e[\+\-]\d+)?))+\s*,?\s*$/.test(data)) {
-            data.split(/\s*,\s*/).map(s => parseFloat(s))
+        else if (/^\s*(-?\d+(\.\d*)?(e[\+\-]\d+)?)(\s*,\s*(-?\d+(\.\d*)?(e[\+\-]\d+)?))+\s*,?\s*$/.test(line)) {
+            line.split(/\s*,\s*/).map(s => parseFloat(s))
                 .filter(d => !isNaN(d))
                 .forEach((d, i) => {
                     const variable = "data." + (this.csvHeaders[i] || i);
                     this.appendGraphEntry(niceSource, variable, d, receivedTime);
                 })
             // is this a CSV header entry
-        } else if (/^\s*[\s\w]+(\s*,\s*[\w\s]+)+\s*,?\s*$/.test(data)) {
-            this.csvHeaders = data.split(/\s*,\s*/).map(h => h.trim());
+        } else if (/^\s*[\s\w]+(\s*,\s*[\w\s]+)+\s*,?\s*$/.test(line)) {
+            this.csvHeaders = line.split(/\s*,\s*/).map(h => h.trim());
         }
         else {
             // is this a key-value pair, or just a number?
-            const m = /^\s*(([^:]+):)?\s*(-?\d+(\.\d*)?(e[\+\-]\d+)?)/i.exec(data);
+            const m = /^\s*(([^:]+):)?\s*(-?\d+(\.\d*)?(e[\+\-]\d+)?)/i.exec(line);
             if (m) {
                 const variable = m[2] || '';
                 const nvalue = parseFloat(m[3]);
@@ -201,7 +213,7 @@ export class Editor extends srceditor.Editor {
             }
         }
 
-        this.appendConsoleEntry(data)
+        this.appendConsoleEntry(line)
     }
 
     appendRawData(data: string) {
@@ -229,58 +241,77 @@ export class Editor extends srceditor.Editor {
                     this.chartIdx++;
                     this.charts.push(homeChart)
                     this.chartRoot.appendChild(homeChart.getElement());
+                    pxt.BrowserUtils.removeClass(this.chartRoot, "nochart");
+                    if (this.consoleRoot) {
+                        pxt.BrowserUtils.removeClass(this.consoleRoot, "nochart");
+                    }
                 }
                 homeChart.addPoint(variable, nvalue, receivedTime)
             })
     }
 
-    appendConsoleEntry(data: string) {
+    chunkDataIntoLines(data: string): string[] {
+        let lines: string[] = []
         for (let i = 0; i < data.length; ++i) {
-            let ch = data[i]
-            this.consoleBuffer += ch
-            if (ch !== "\n" && this.consoleBuffer.length < this.maxConsoleLineLength) {
+            const ch = data[i]
+            this.serialInputDataBuffer += ch
+            if (ch !== "\n" && this.serialInputDataBuffer.length < this.maxSerialInputDataLength) {
                 continue
             }
             if (ch === "\n") {
                 // remove trailing white space
-                this.consoleBuffer = this.consoleBuffer.replace(/\s+$/, '');
+                this.serialInputDataBuffer = this.serialInputDataBuffer.replace(/\s+$/, '');
                 // if anything remaining...
-                if (this.consoleBuffer.length) {
-                    let lastEntry = this.consoleRoot.lastChild
-                    let newEntry = document.createElement("div")
-                    if (lastEntry && lastEntry.lastChild.textContent == this.consoleBuffer) {
-                        if (lastEntry.childNodes.length == 2) {
-                            //Matches already-collapsed entry
-                            let count = parseInt(lastEntry.firstChild.textContent)
-                            lastEntry.firstChild.textContent = (count + 1).toString()
-                        } else {
-                            //Make a new collapsed entry with count = 2
-                            let newLabel = document.createElement("a")
-                            newLabel.className = "ui horizontal label"
-                            newLabel.textContent = "2"
-                            lastEntry.insertBefore(newLabel, lastEntry.lastChild)
-                        }
-                    } else {
-                        //Make a new non-collapsed entry
-                        newEntry.appendChild(document.createTextNode(this.consoleBuffer))
-                        this.consoleRoot.appendChild(newEntry)
-                    }
+                if (this.serialInputDataBuffer.length) {
+                    lines.push(this.serialInputDataBuffer)
                 }
             } else {
-                //Buffer is full
-                //Make a new entry with <span>, not <div>
-                let newEntry = document.createElement("span")
-                newEntry.appendChild(document.createTextNode(this.consoleBuffer))
+                lines.push(this.serialInputDataBuffer)
+            }
+            this.serialInputDataBuffer = ""
+        }
+        return lines
+    }
+
+    appendConsoleEntry(line: string) {
+        if (line.length >= this.maxSerialInputDataLength) {
+            //Buffer was full, this is a big chunk of data
+            //Make a new entry with <span>, not <div>
+            let newEntry = document.createElement("span")
+            newEntry.appendChild(document.createTextNode(line))
+            this.consoleRoot.appendChild(newEntry)
+        }
+        else {
+            let lastEntry = this.consoleRoot.lastChild
+            let newEntry = document.createElement("div")
+            if (lastEntry && lastEntry.lastChild.textContent == line) {
+                if (lastEntry.childNodes.length == 2) {
+                    //Matches already-collapsed entry
+                    let count = parseInt(lastEntry.firstChild.textContent)
+                    lastEntry.firstChild.textContent = (count + 1).toString()
+                } else {
+                    //Make a new collapsed entry with count = 2
+                    let newLabel = document.createElement("a")
+                    newLabel.className = "ui horizontal label"
+                    newLabel.textContent = "2"
+                    lastEntry.insertBefore(newLabel, lastEntry.lastChild)
+                }
+            } else {
+                //Make a new non-collapsed entry
+                newEntry.appendChild(document.createTextNode(line))
                 this.consoleRoot.appendChild(newEntry)
             }
-            this.consoleBuffer = ""
-            this.consoleRoot.scrollTop = this.consoleRoot.scrollHeight
-            while (this.consoleRoot.childElementCount > this.maxConsoleEntries) {
-                this.consoleRoot.removeChild(this.consoleRoot.firstChild)
+        }
+        this.consoleRoot.scrollTop = this.consoleRoot.scrollHeight
+        while (this.consoleRoot.childElementCount > this.maxConsoleEntries) {
+            this.consoleRoot.removeChild(this.consoleRoot.firstChild)
+        }
+        if (this.consoleRoot && this.consoleRoot.childElementCount > 0) {
+            if (this.chartRoot) {
+                pxt.BrowserUtils.removeClass(this.chartRoot, "noconsole");
             }
-            if (this.consoleRoot && this.consoleRoot.childElementCount > 0) {
-                if (this.chartRoot) this.chartRoot.classList.remove("noconsole");
-                if (this.consoleRoot) this.consoleRoot.classList.remove("noconsole");
+            if (this.consoleRoot) {
+                pxt.BrowserUtils.removeClass(this.consoleRoot, "noconsole");
             }
         }
     }
@@ -312,14 +343,16 @@ export class Editor extends srceditor.Editor {
     clear() {
         if (this.chartRoot) {
             this.clearNode(this.chartRoot);
-            this.chartRoot.classList.add("noconsole")
+            pxt.BrowserUtils.addClass(this.chartRoot, "noconsole");
+            pxt.BrowserUtils.addClass(this.chartRoot, "nochart");
         }
         if (this.consoleRoot) {
             this.clearNode(this.consoleRoot);
-            this.consoleRoot.classList.add("noconsole")
+            pxt.BrowserUtils.addClass(this.consoleRoot, "noconsole");
+            pxt.BrowserUtils.addClass(this.consoleRoot, "nochart");
         }
         this.charts = []
-        this.consoleBuffer = ""
+        this.serialInputDataBuffer = ""
         this.rawDataBuffer = ""
         this.savedMessageQueue = []
         this.sourceMap = {}
@@ -396,7 +429,11 @@ export class Editor extends srceditor.Editor {
     downloadRaw() {
         core.infoNotification(lf("Exporting text...."));
         const time = new Date(Date.now()).toString().replace(/[^\d]+/g, '-').replace(/(^-|-$)/g, '');
-        pxt.commands.browserDownloadAsync(Util.toUTF8(this.rawDataBuffer), pxt.appTarget.id + '-' + lf("{id:csvfilename}console") + '-' + time + ".txt", "text/plain")
+        let buf = this.rawDataBuffer;
+        // ensure \r\n newlines for windows <10
+        if (pxt.BrowserUtils.isWindows())
+            buf = buf.replace(/[^\r]\n/g, '\r\n');
+        pxt.commands.browserDownloadAsync(Util.toUTF8(buf), pxt.appTarget.id + '-' + lf("{id:csvfilename}console") + '-' + time + ".txt", "text/plain")
     }
 
     goBack() {
@@ -429,6 +466,9 @@ export class Editor extends srceditor.Editor {
                         </div>
                     </div>
                     <div className="rightHeader">
+                        <sui.Button title={lf("Copy text")} className="ui icon button editorExport" ariaLabel={lf("Copy text")} onClick={this.downloadRaw}>
+                            <sui.Icon icon="copy" />
+                        </sui.Button>
                         <sui.Button title={lf("Export data")} className="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={this.downloadCSV}>
                             <sui.Icon icon="download" />
                         </sui.Button>
@@ -437,13 +477,6 @@ export class Editor extends srceditor.Editor {
                     </div>
                 </div>
                 <div id="serialCharts" ref={this.handleChartRootRef}></div>
-                <div id="consoleHeader" className="ui serialHeader">
-                    <div className="rightHeader">
-                        <sui.Button title={lf("Copy text")} className="ui icon button editorExport" ariaLabel={lf("Copy text")} onClick={this.downloadRaw}>
-                            <sui.Icon icon="copy" />
-                        </sui.Button>
-                    </div>
-                </div>
                 <div id="serialConsole" ref={this.handleConsoleRootRef}></div>
             </div>
         )

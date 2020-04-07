@@ -52,7 +52,7 @@ export class Editor extends srceditor.Editor {
             return;
         }
         const f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
-        f.setContentAsync(JSON.stringify(this.config, null, 4) + "\n").then(() => {
+        f.setContentAsync(pxt.Package.stringifyConfig(c)).then(() => {
             pkg.mainPkg.config.name = c.name;
             this.parent.setState({ projectName: c.name });
             this.parent.forceUpdate()
@@ -71,25 +71,42 @@ export class Editor extends srceditor.Editor {
         this.parent.forceUpdate();
     }
 
+    private optionaldepConfig() {
+        // will contain all flatton configs
+        let cfg: any = {};
+        // look at all config coming dependencies
+        pkg.mainPkg.sortedDeps()
+            .filter(dep => dep.config && dep.config.yotta && dep.config.yotta.optionalConfig)
+            .forEach(dep => Util.jsonMergeFrom(cfg, dep.config.yotta.optionalConfig));
+        return cfg;
+    }
+
     isUserConfigActive(uc: pxt.CompilationConfig) {
-        const cfg = Util.jsonFlatten(this.config.yotta ? this.config.yotta.config : {});
+        let cfg = this.optionaldepConfig();
+        if (this.config.yotta && this.config.yotta.config)
+            Util.jsonMergeFrom(cfg, this.config.yotta.config);
+        // flatten configs
+        cfg = Util.jsonFlatten(cfg);
+
         const ucfg = Util.jsonFlatten(uc.config);
         return !Object.keys(ucfg).some(k => ucfg[k] === null ? !!cfg[k] : cfg[k] !== ucfg[k]);
     }
 
     applyUserConfig(uc: pxt.CompilationConfig) {
-        const cfg = Util.jsonFlatten(this.config.yotta ? this.config.yotta.config : {});
-        const ucfg = Util.jsonFlatten(uc.config);
+        const depcfg = Util.jsonFlatten(this.optionaldepConfig());
+        const prjcfg = Util.jsonFlatten(this.config.yotta ? this.config.yotta.config : {});
+        const usercfg = Util.jsonFlatten(uc.config);
         if (this.isUserConfigActive(uc)) {
-            Object.keys(ucfg).forEach(k => delete cfg[k]);
+            Object.keys(usercfg).forEach(k => {
+                delete prjcfg[k];
+            });
         } else {
-            Object.keys(ucfg).forEach(k => cfg[k] = ucfg[k]);
+            Object.keys(usercfg).forEach(k => prjcfg[k] = usercfg[k]);
         }
         // update cfg
-        if (Object.keys(cfg).length) {
+        if (Object.keys(prjcfg).length) {
             if (!this.config.yotta) this.config.yotta = {};
-            Object.keys(cfg).filter(k => cfg[k] === null).forEach(k => delete cfg[k]);
-            this.config.yotta.config = Util.jsonUnFlatten(cfg);
+            this.config.yotta.config = Util.jsonUnFlatten(prjcfg);
         } else {
             if (this.config.yotta) {
                 delete this.config.yotta.config;
@@ -105,33 +122,14 @@ export class Editor extends srceditor.Editor {
         this.nameInput = c;
     }
 
-    display() {
+    display(): JSX.Element {
+        if (!this.isVisible) return undefined;
+
         const c = this.config;
         let userConfigs: pxt.CompilationConfig[] = [];
         pkg.allEditorPkgs().map(ep => ep.getKsPkg())
             .filter(dep => !!dep && dep.isLoaded && !!dep.config && !!dep.config.yotta && !!dep.config.yotta.userConfigs)
             .forEach(dep => userConfigs = userConfigs.concat(dep.config.yotta.userConfigs));
-
-        const gitJsonText = pkg.mainEditorPkg().getAllFiles()[pxt.github.GIT_JSON]
-        const gitJson = JSON.parse(gitJsonText || "{}") as pxt.github.GitJson
-        let gitLink = ""
-        let gitDesc = ""
-        let gitVer = "???"
-        let gitVerLink = "#"
-
-        if (gitJson.repo) {
-            const parsed = pxt.github.parseRepoId(gitJson.repo)
-            gitLink = "https://github.com/" + parsed.fullName
-            gitDesc = parsed.fullName
-            if (parsed.tag && parsed.tag != "master") {
-                gitLink += "/tree/" + parsed.tag
-                gitDesc += "#" + parsed.tag
-            }
-            if (gitJson.commit) {
-                gitVer = gitJson.commit.tag || gitJson.commit.sha.slice(0, 8)
-                gitVerLink = "https://github.com/" + parsed.fullName + "/commit/" + gitJson.commit.sha
-            }
-        }
 
         return (
             <div className="ui content">
@@ -152,17 +150,6 @@ export class Editor extends srceditor.Editor {
                             isUserConfigActive={this.isUserConfigActive}
                             applyUserConfig={this.applyUserConfig} />
                     )}
-                    {!gitLink ? undefined :
-                        <p>
-                            {lf("Source repository: ")}
-                            <a target="_blank" href={gitLink} rel="noopener noreferrer">
-                                {gitDesc}
-                            </a>
-                            {lf("; version ")}
-                            <a target="_blank" href={gitVerLink} rel="noopener noreferrer">
-                                {gitVer}
-                            </a>
-                        </p>}
                     <sui.Field>
                         <sui.Button text={lf("Save")} className={`green ${this.isSaving ? 'disabled' : ''}`} onClick={this.save} />
                         <sui.Button text={lf("Edit Settings As text")} onClick={this.editSettingsText} />
@@ -182,7 +169,7 @@ export class Editor extends srceditor.Editor {
     }
 
     getCurrentSource() {
-        return JSON.stringify(this.config, null, 4) + "\n"
+        return pxt.Package.stringifyConfig(this.config);
     }
 
     acceptsFile(file: pkg.File) {
@@ -249,7 +236,7 @@ class UserConfigCheckbox extends data.Component<UserConfigCheckboxProps, {}> {
 
         return <sui.Checkbox
             key={`userconfig-${uc.description}`}
-            inputLabel={uc.description}
+            inputLabel={pxt.Util.rlf(uc.description)}
             checked={isChecked}
             onChange={this.applyUserConfig} />
     }

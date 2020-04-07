@@ -14,7 +14,7 @@ The more we learned, the more we felt this was going to be an amazing partnershi
 
 ## New Projects
 
-We created an initial set of seven fun and easy [projects]((https://makecode.adafruit.com/projects/cartoon-network) that you can make with inexpensive materials and your Circuit Playground Express:
+We created an initial set of seven fun and easy [projects](https://makecode.adafruit.com/projects/cartoon-network) that you can make with inexpensive materials and your Circuit Playground Express:
 
 ![Cartoon Network project page](/static/blog/adafruit/cn-projects/cn-project-page.jpg)
 

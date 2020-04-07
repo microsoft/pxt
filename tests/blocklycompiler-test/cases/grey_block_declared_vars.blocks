@@ -1,0 +1,26 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+  <variables>
+    <variable type="" id="W.2P]#B272LxpUZ)6pPb">x</variable>
+  </variables>
+  <block type="pxt-on-start" x="0" y="0">
+    <statement name="HANDLER">
+      <block type="typescript_statement" editable="false">
+        <mutation line0="let x = !!false ? 0 : 1;" numlines="1" declaredvars="x"></mutation>
+        <field name="LINE0">let x = !!false ? 0 : 1;</field>
+        <next>
+          <block type="variables_set">
+            <field name="VAR" id="W.2P]#B272LxpUZ)6pPb" variabletype="">x</field>
+            <value name="VALUE">
+              <shadow type="math_number" id="Y{!~XPPozpwVea/R6Uz2">
+                <field name="NUM">0</field>
+              </shadow>
+              <block type="variables_get">
+                <field name="VAR" id="W.2P]#B272LxpUZ)6pPb" variabletype="">x</field>
+              </block>
+            </value>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>

@@ -14,6 +14,16 @@ preferably under the MIT License.
 
 ## Editors
 
+### Maker
+
+![Maker editor screenshot](/static/targets/maker/screenshot.png)
+
+An editor for maker-oriented microcontrollers, that typically require breadboarding. For 
+more information, see:
+
+* [Editor](https://maker.makecode.com)
+* [GitHub](https://github.com/microsoft/pxt-maker)
+
 ### ARcadia: Marker-based augment reality
 
 ![ARcadia screenshot](/static/targets/ar/screenshot.png)
@@ -47,16 +57,6 @@ more information, see:
 * [Editor](https://jcspec.github.io/BuildUFace)
 * [GitHub](https://github.com/JCSPEC/BuildUFace)
 
-### Maker
-
-![Maker editor screenshot](/static/targets/maker/screenshot.png)
-
-An editor for maker-oriented microcontrollers, that typically require breadboarding. For 
-more information, see:
-
-* [Editor](https://maker.makecode.com)
-* [GitHub](https://github.com/Microsoft/pxt-maker)
-
 ### Holiday Card
 
 ![Holiday editor screenshot](/static/targets/holiday/screenshot.png)
@@ -71,10 +71,10 @@ MakeCode's support for embedding the MakeCode editor inside of a web app. For mo
 
 A small wrapper around the **Johnny-Five** library.
 
-* [GitHub](https://github.com/Microsoft/pxt-johnny-five)
+* [GitHub](https://github.com/microsoft/pxt-johnny-five)
 
 ## Documentation
 
 * [Create your own editor](/target-creation)
-* [Contribute](https://github.com/Microsoft/pxt)
+* [Contribute](https://github.com/microsoft/pxt)
 * [Join the MakeCode Discord](http://aka.ms/makecodecommunity)

@@ -17,6 +17,9 @@
         @import "./semantic.css";
         @import "./blockly.css";
         
+        svg {
+            margin: 1rem;
+        }
         pre {
             white-space: pre-wrap;
         }
@@ -112,27 +115,214 @@
             
         ksRunnerReady(function() {
             pxt.docs.requireMarked = function() { return marked; }
-            pxt.runner.renderAsync({
-                snippetClass: 'lang-blocks',
-                signatureClass: 'lang-sig',
-                blocksClass:'lang-block',
-                blocksXmlClass: 'lang-blocksxml',
-                simulatorClass:'lang-sim',
-                linksClass: 'lang-links',
-                projectClass: 'lang-project',
-                namespacesClass: 'lang-namespaces',
-                codeCardClass: 'lang-codecard',
-                packageClass: 'lang-package',
-                simulator: true,
-                hex: true,
-                hexName: 'test',
-                snippetReplaceParent: true,
-            }).done(function() {
+            pxt.runner.renderAsync(pxt.runner.defaultClientRenderOptions()).done(function() {
                // next()                
             });                        
         })
     </script>
-<pre>
+  <pre>
+    <code id="diff" class="lang-diff">
+a;
+b;
+c;
+let x = 0;
+d;
+-------------------
+b;
+c;
+let y = 0;
+d;
+</code>
+  </pre>
+<!--       
+        <pre>
+                <code id="diffblocks" class='lang-diffblocksxml'>
+                    &lt;xml xmlns="http://www.w3.org/1999/xhtml"&gt;
+                      &lt;variables&gt;&lt;/variables&gt;
+                      &lt;block type="pxt-on-start" id="=B;Y}wwyy?hy{X1/I;XO" x="0" y="0"&gt;
+                        &lt;statement name="HANDLER"&gt;
+                          &lt;block type="device_show_leds" id="kq`o^}4kwzWl44Kmc*3%"&gt;
+                            &lt;field name="LEDS"&gt;`
+                            # . . . . 
+                            . # . . . 
+                            . . # . . 
+                            . . . # . 
+                            . . . . #
+                            `
+                            &lt;/field&gt;
+                            &lt;next&gt;
+                              &lt;block type="basic_show_icon" id="/3f]1h+~bowwioM2r?J="&gt;
+                                &lt;field name="i"&gt;IconNames.Heart&lt;/field&gt;
+                                &lt;next&gt;
+                                  &lt;block type="device_show_number" id="p:ED[gV{_AI+9aF%xVHE"&gt;
+                                    &lt;value name="number"&gt;
+                                      &lt;shadow type="math_number" id="_HFw*V~e;D]7J)0g7mc3"&gt;
+                                        &lt;field name="NUM"&gt;0&lt;/field&gt;
+                                      &lt;/shadow&gt;
+                                    &lt;/value&gt;
+                                    &lt;next&gt;
+                                      &lt;block type="device_show_number" id="sJJtdwS6;1PeiM804v[S"&gt;
+                                        &lt;value name="number"&gt;
+                                          &lt;shadow type="math_number" id="atwC4v[?lGk5]Jxezs,1"&gt;
+                                            &lt;field name="NUM"&gt;1&lt;/field&gt;
+                                          &lt;/shadow&gt;
+                                        &lt;/value&gt;
+                                        &lt;next&gt;
+                                          &lt;block type="device_show_number" id="2B%FrJXH?`f5AbEM^X0|"&gt;
+                                            &lt;value name="number"&gt;
+                                              &lt;shadow type="math_number" id="DCR^L{=f`Bb-d9w=KcgX"&gt;
+                                                &lt;field name="NUM"&gt;2&lt;/field&gt;
+                                              &lt;/shadow&gt;
+                                            &lt;/value&gt;
+                                          &lt;/block&gt;
+                                        &lt;/next&gt;
+                                      &lt;/block&gt;
+                                    &lt;/next&gt;
+                                  &lt;/block&gt;
+                                &lt;/next&gt;
+                              &lt;/block&gt;
+                            &lt;/next&gt;
+                          &lt;/block&gt;
+                        &lt;/statement&gt;
+                      &lt;/block&gt;
+                      &lt;block type="device_button_event" id="9Bmu/@KH)PHW:Ia=6Yh," x="440" y="28"&gt;
+                        &lt;field name="NAME"&gt;Button.A&lt;/field&gt;
+                        &lt;statement name="HANDLER"&gt;
+                          &lt;block type="device_show_leds" id="+NPyk{X1l%4t0)7LDiLS"&gt;
+                            &lt;field name="LEDS"&gt;`
+                            . . . . # 
+                            . . . # . 
+                            . . # . . 
+                            . # . . . 
+                            # . . . .
+                            `
+                            &lt;/field&gt;
+                          &lt;/block&gt;
+                        &lt;/statement&gt;
+                      &lt;/block&gt;
+                      &lt;block type="device_forever" id="a$YR.vHeaB1:}@FRU|n3" x="262" y="395"&gt;
+                        &lt;statement name="HANDLER"&gt;
+                          &lt;block type="device_led_toggle" id="!ZA@!]H7-OkNgK;}X5+)"&gt;
+                            &lt;value name="x"&gt;
+                              &lt;shadow type="math_number_minmax" id="YktlDqfQ4nsg:5=H^/:j"&gt;
+                                &lt;mutation min="0" max="4" label="X" precision="1"&gt;&lt;/mutation&gt;
+                                &lt;field name="SLIDER"&gt;0&lt;/field&gt;
+                              &lt;/shadow&gt;
+                            &lt;/value&gt;
+                            &lt;value name="y"&gt;
+                              &lt;shadow type="math_number_minmax" id="q80HUvEG(9r!,!CsNy}u"&gt;
+                                &lt;mutation min="0" max="4" label="Y" precision="1"&gt;&lt;/mutation&gt;
+                                &lt;field name="SLIDER"&gt;0&lt;/field&gt;
+                              &lt;/shadow&gt;
+                            &lt;/value&gt;
+                          &lt;/block&gt;
+                        &lt;/statement&gt;
+                      &lt;/block&gt;
+                      &lt;block type="radio_on_number_drag" id="8d(YCx_f@8_YP0ys,Ey1" x="269" y="580"&gt;
+                        &lt;value name="HANDLER_DRAG_PARAM_receivedNumber"&gt;
+                          &lt;shadow type="argument_reporter_number" id="[/~!@}n57-u]p[%loG@I"&gt;
+                            &lt;field name="VALUE"&gt;receivedNumber&lt;/field&gt;
+                          &lt;/shadow&gt;
+                        &lt;/value&gt;
+                      &lt;/block&gt;
+                    &lt;/xml&gt;
+-------------------
+&lt;xml xmlns="http://www.w3.org/1999/xhtml"&gt;
+  &lt;variables&gt;&lt;/variables&gt;
+  &lt;block type="pxt-on-start" id="=B;Y}wwyy?hy{X1/I;XO" x="0" y="0"&gt;
+    &lt;statement name="HANDLER"&gt;
+      &lt;block type="device_show_leds" id="kq`o^}4kwzWl44Kmc*3%"&gt;
+        &lt;field name="LEDS"&gt;`
+        # . . . . 
+        . # . . . 
+        . . # . . 
+        . . . # . 
+        . . . . #
+        `
+        &lt;/field&gt;
+        &lt;next&gt;
+          &lt;block type="basic_show_icon" id="/3f]1h+~bowwioM2r?J="&gt;
+            &lt;field name="i"&gt;IconNames.Heart&lt;/field&gt;
+            &lt;next&gt;
+              &lt;block type="device_show_number" id="p:ED[gV{_AI+9aF%xVHE"&gt;
+                &lt;value name="number"&gt;
+                  &lt;shadow type="math_number" id="_HFw*V~e;D]7J)0g7mc3"&gt;
+                    &lt;field name="NUM"&gt;0&lt;/field&gt;
+                  &lt;/shadow&gt;
+                &lt;/value&gt;
+                &lt;next&gt;
+                  &lt;block type="device_show_number" id="sJJtdwS6;1PeiM804v[S"&gt;
+                    &lt;value name="number"&gt;
+                      &lt;shadow type="math_number" id="atwC4v[?lGk5]Jxezs,1"&gt;
+                        &lt;field name="NUM"&gt;1&lt;/field&gt;
+                      &lt;/shadow&gt;
+                    &lt;/value&gt;
+                    &lt;next&gt;
+                      &lt;block type="device_show_number" id="2B%FrJXH?`f5AbEM^X0|"&gt;
+                        &lt;value name="number"&gt;
+                          &lt;shadow type="math_number" id="DCR^L{=f`Bb-d9w=KcgX"&gt;
+                            &lt;field name="NUM"&gt;0&lt;/field&gt;
+                          &lt;/shadow&gt;
+                        &lt;/value&gt;
+                      &lt;/block&gt;
+                    &lt;/next&gt;
+                  &lt;/block&gt;
+                &lt;/next&gt;
+              &lt;/block&gt;
+            &lt;/next&gt;
+          &lt;/block&gt;
+        &lt;/next&gt;
+      &lt;/block&gt;
+    &lt;/statement&gt;
+  &lt;/block&gt;
+  &lt;block type="device_button_event" id="9Bmu/@KH)PHW:Ia=6Yh," x="440" y="28"&gt;
+    &lt;field name="NAME"&gt;Button.A&lt;/field&gt;
+    &lt;statement name="HANDLER"&gt;
+      &lt;block type="device_show_leds" id="+NPyk{X1l%4t0)7LDiLS"&gt;
+        &lt;field name="LEDS"&gt;`
+        . . . . # 
+        . . . # . 
+        . . . # . 
+        . # . . . 
+        # . . . .
+        `
+        &lt;/field&gt;
+      &lt;/block&gt;
+    &lt;/statement&gt;
+  &lt;/block&gt;
+  &lt;block type="device_forever" id="a$YR.vHeaB1:}@FRU|n3" x="262" y="395"&gt;
+    &lt;statement name="HANDLER"&gt;
+      &lt;block type="device_led_toggle" id="!ZA@!]H7-OkNgK;}X5+)"&gt;
+        &lt;value name="x"&gt;
+          &lt;shadow type="math_number_minmax" id="YktlDqfQ4nsg:5=H^/:j"&gt;
+            &lt;mutation min="0" max="4" label="X" precision="1"&gt;&lt;/mutation&gt;
+            &lt;field name="SLIDER"&gt;1&lt;/field&gt;
+          &lt;/shadow&gt;
+        &lt;/value&gt;
+        &lt;value name="y"&gt;
+          &lt;shadow type="math_number_minmax" id="q80HUvEG(9r!,!CsNy}u"&gt;
+            &lt;mutation min="0" max="4" label="Y" precision="1"&gt;&lt;/mutation&gt;
+            &lt;field name="SLIDER"&gt;0&lt;/field&gt;
+          &lt;/shadow&gt;
+        &lt;/value&gt;
+      &lt;/block&gt;
+    &lt;/statement&gt;
+  &lt;/block&gt;
+  &lt;block type="device_forever" id="`BJkKANVxrgUY,iMFHIz" x="379" y="592"&gt;
+    &lt;statement name="HANDLER"&gt;
+      &lt;block type="device_show_number" id="jFOZ*OYShlF!eQI/a3sV"&gt;
+        &lt;value name="number"&gt;
+          &lt;shadow type="math_number" id="j!!~|4Y6Vpwaw#v,,n#r"&gt;
+            &lt;field name="NUM"&gt;0&lt;/field&gt;
+          &lt;/shadow&gt;
+        &lt;/value&gt;
+      &lt;/block&gt;
+    &lt;/statement&gt;
+  &lt;/block&gt;
+&lt;/xml&gt;
+                <code>
+                </pre>    
+                
 <code class='lang-project'>
 tqnxfpkndd
 </code>
@@ -142,7 +332,7 @@ tqnxfpkndd
 https://makecode.microbit.org/tqnxfpkndd
 <code>
 </pre>    
-<!--   <pre class='lang-sig'>
+<pre class='lang-sig'>
 images.createImage(`
 . . # . .
 . # # # .

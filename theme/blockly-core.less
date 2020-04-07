@@ -4,6 +4,7 @@
 @import 'themes/pxt/globals/site.variables';
 @import 'fieldeditors';
 @import 'spriteeditor.less';
+@import 'melodyeditor.less';
 
 /*******************************
         Blockly SVG
@@ -77,6 +78,12 @@ text.blocklyText.blocklyItalicizedText {
 text.blocklyText.blocklyBoldItalicizedText {
     font-weight: bold;
     font-style: italic;
+}
+
+text.semanticIcon {
+    fill: #fff;
+    font-family: "Icons";
+    font-size: 19px;
 }
 
 
@@ -153,6 +160,11 @@ div.blocklyWidgetDiv {
     z-index: @blocklyWidgetDivZIndex;
 }
 
+div.blocklyWidgetDiv.functioneditor {
+    /* The Blockly widget should appear above the function editor  */
+    z-index: @blocklyWidgetDivFunctionEditorZIndex;
+}
+
 div.blocklyDropDownDiv {
     z-index: @blocklyDropdownDivZIndex;
 }
@@ -166,6 +178,10 @@ div.blocklyTooltipDiv {
     overflow-wrap: break-word;
 }
 
+div.blocklyTooltipDiv .ui.card .content .description {
+    /* override semantic, tooltip text should always be visible*/
+    display: inline;
+}
 
 /* Blockly Slider field */
 
@@ -182,6 +198,14 @@ text.blocklyCheckbox {
     fill: #ff3030 !important;
     text-shadow: 0px 0px 6px #f00;
     font-size: 17pt !important;
+}
+
+/* (arcade only) Sets the correct background color for the sprite image field */
+.pxt-renderer .blocklyEditableText > rect.blocklySpriteField,
+.pxt-renderer .blocklyEditableText > rect.blocklyTilemapField {
+    fill: #dedede;
+    stroke: #898989;
+    stroke-width: 1;
 }
 
 
@@ -204,6 +228,12 @@ text.blocklyCheckbox {
     fill-opacity: 0.5;
 }
 
+
+.blocklyDisabled {
+    .blocklyNonEditableText .blocklyBlockBackground {
+        fill-opacity: 0.1 !important;
+    }
+}
 
 /*******************************
         Scrollbars
@@ -251,6 +281,11 @@ text.blocklyCheckbox {
 
 .blocklyCommentForeignObject {
     overflow: hidden;
+}
+
+.blocklyMinimalBody {
+    position: static; // override default 'position: fixed' for comment <body> element
+    border: 1px solid #FAF6BD; // match comment color
 }
 
 /*******************************

@@ -3,6 +3,4 @@ enum EnumWithStart {
     B,
     C
 }
-
-let x = 0
-x = EnumWithStart.A
+let x = EnumWithStart.A

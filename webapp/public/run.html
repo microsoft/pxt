@@ -86,7 +86,7 @@
     <div id='loading' style='font-size: 25px; font-family:monospace; margin: 20% auto; width: 200px;'>
         loading...
     </div>
-    <div id="simulators">
+    <div id="simulators" className="simulator">
     </div>
     <footer id="footer" style="display:none;">
     </footer>
@@ -103,7 +103,6 @@
         (function () {
         var loading = document.getElementById('loading');
         var id = /id(?:[:=])([^&?]+)/i.exec(window.location.href);
-        var code = /code(?:[:=])([^&?]+)/i.exec(window.location.href);
         var localToken = /local_token(?:[:=])([^&?]+)/i.exec(window.location.href);
         var hex = !!/hex(?:[:=])1/i.exec(window.location.href);
         var footer = !/nofooter(?:[:=])1/i.exec(window.location.href);
@@ -112,6 +111,19 @@
         var highContrast = !!/hc(?:[:=])1/i.exec(window.location.href);
         var light = !!/light(?:[:=])1/i.exec(window.location.href);
         var fullScreen = !!/fullscreen(?:[:=])1/i.exec(window.location.href);
+        var deps = /deps(?:[:=])([^&?]+)/i.exec(window.location.href);
+
+        var codeFromSrc = /code(?:[:=])([^&?]+)/i.exec(window.location.href);
+        var codeFromData = undefined;
+        try {
+            codeFromData = window.frameElement ? window.frameElement.getAttribute('data-code') : undefined;
+        } catch (e) {
+            /**
+             *  Internet Explorer 11 and Microsoft Edge throw an exception when checking 
+             *  if the frame element exists when the iframe is on a different origin
+             */
+        }
+        var code = codeFromData || (codeFromSrc ? codeFromSrc[1] : undefined);
 
         if (!id && !code && !debugSim) {
             console.error("missing id or code");
@@ -162,10 +174,11 @@
             else if (!debugSim) {
                 var options = {
                     id: id ? id[1] : undefined,
-                    code: code ? decodeURIComponent(code[1]) : undefined,
+                    code: code ? decodeURIComponent(code) : undefined,
                     highContrast: highContrast,
                     light: light,
-                    fullScreen: fullScreen
+                    fullScreen: fullScreen,
+                    dependencies: deps ? decodeURIComponent(deps[1]).split(",") : undefined
                 };
                 console.log('simulating script')
                 pxt.runner.simulateAsync(sims, options).done(function() {

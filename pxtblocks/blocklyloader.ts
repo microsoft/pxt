@@ -2,6 +2,19 @@
 /// <reference path="../built/pxtlib.d.ts" />
 
 namespace pxt.blocks {
+    export let promptTranslateBlock: (blockId: string, blockTranslationIds: string[]) => void;
+
+    export interface GrayBlock extends Blockly.Block {
+        setPythonEnabled(enabled: boolean): void;
+    }
+
+    export interface GrayBlockStatement extends GrayBlock {
+        domToMutation(xmlElement: Element): void;
+        mutationToDom(): Element;
+
+        getLines: () => string[];
+        declaredVariables: string;
+    }
 
     const typeDefaults: Map<{ field: string, block: string, defaultValue: string }> = {
         "string": {
@@ -30,11 +43,39 @@ namespace pxt.blocks {
     export const optionalDummyInputPrefix = "0_optional_dummy";
     export const optionalInputWithFieldPrefix = "0_optional_field";
 
-    // Matches arrays and tuple types
-    const arrayTypeRegex = /^(?:Array<.+>)|(?:.+\[\])|(?:\[.+\])$/;
-    export function isArrayType(type: string) {
-        return arrayTypeRegex.test(type);
+    // Matches arrays
+    export function isArrayType(type: string): string {
+        const arrayTypeRegex = /^(?:Array<(.+)>)|(?:(.+)\[\])|(?:\[.+\])$/;
+        let parsed = arrayTypeRegex.exec(type);
+        if (parsed) {
+            // Is an array, returns what type it is an array of
+            if (parsed[1]) {
+                // Is an array with form Array<type>
+                return parsed[1];
+            } else {
+                // Is an array with form type[]
+                return parsed[2];
+            }
+        } else {
+            // Not an array
+            return undefined;
+        }
     }
+
+    // Matches tuples
+    export function isTupleType(type: string): string[] {
+        const tupleTypeRegex = /^\[(.+)\]$/;
+        let parsed = tupleTypeRegex.exec(type);
+        if (parsed) {
+            // Returns an array containing the types of the tuple
+            return parsed[1].split(/,\s*/);
+        } else {
+            // Not a tuple
+            return undefined;
+        }
+    }
+
+    const primitiveTypeRegex = /^(string|number|boolean)$/;
 
     type NamedField = { field: Blockly.Field, name?: string };
 
@@ -63,6 +104,9 @@ namespace pxt.blocks {
         "variables_change": true,
         "device_while": true
     }
+
+    // Cached block info from the last inject operation
+    let cachedBlockInfo: pxtc.BlocksInfo;
 
     // blocks cached
     interface CachedBlock {
@@ -97,18 +141,46 @@ namespace pxt.blocks {
         }
 
         const isVariable = shadowId == "variables_get";
+        const isText = shadowId == "text";
 
         const value = document.createElement("value");
         value.setAttribute("name", p.definitionName);
 
-        const shadow = document.createElement(isVariable ? "block" : "shadow");
+        const isArray = isArrayType(p.type);
+
+        const shadow = document.createElement(isVariable || isArray ? "block" : "shadow");
+
         value.appendChild(shadow);
 
-        const typeInfo = typeDefaults[p.type];
+        const typeInfo = typeDefaults[isArray || p.type];
 
-        shadow.setAttribute("type", shadowId || typeInfo && typeInfo.block || p.type);
+        shadow.setAttribute("type", shadowId || (isArray ? 'lists_create_with' : typeInfo && typeInfo.block || p.type));
         shadow.setAttribute("colour", (Blockly as any).Colours.textField);
 
+        if (isArray) {
+            // if an array of booleans, numbers, or strings
+            if (typeInfo && !shadowId) {
+                let fieldValues: string[];
+
+                switch (isArray) {
+                    case "number":
+                        fieldValues = ["1", "2", "3"];
+                        break;
+                    case "string":
+                        fieldValues = ["a", "b", "c"];
+                        break;
+                    case "boolean":
+                        fieldValues = ["FALSE", "FALSE", "FALSE"];
+                        break;
+                }
+                buildArrayShadow(shadow, typeInfo.block, typeInfo.field, fieldValues);
+                return value;
+            }
+            else if (shadowId && defaultValue) {
+                buildArrayShadow(shadow, defaultValue);
+                return value;
+            }
+        }
         if (typeInfo && (!shadowId || typeInfo.block === shadowId || shadowId === "math_number_minmax")) {
             const field = document.createElement("field");
             shadow.appendChild(field);
@@ -141,6 +213,10 @@ namespace pxt.blocks {
 
             if (isVariable) {
                 field.setAttribute("name", "VAR");
+                shadow.appendChild(field);
+            }
+            else if (isText) {
+                field.setAttribute("name", "TEXT");
                 shadow.appendChild(field);
             }
             else if (shadowId) {
@@ -182,6 +258,30 @@ namespace pxt.blocks {
         return value;
     }
 
+    function buildArrayShadow(shadow: Element, blockType: string, fieldName?: string, fieldValues?: string[]) {
+        const itemCount = fieldValues ? fieldValues.length : 2;
+        const mut = document.createElement('mutation');
+        mut.setAttribute("items", "" + itemCount);
+        shadow.appendChild(mut);
+
+        for (let i = 0; i < itemCount; i++) {
+            const innerValue = document.createElement("value");
+            innerValue.setAttribute("name", "ADD" + i);
+            const innerShadow = document.createElement("shadow");
+            innerShadow.setAttribute("type", blockType);
+            if (fieldName) {
+                const field = document.createElement("field");
+                field.setAttribute("name", fieldName);
+                if (fieldValues) {
+                    field.appendChild(document.createTextNode(fieldValues[i]));
+                }
+                innerShadow.appendChild(field);
+            }
+            innerValue.appendChild(innerShadow);
+            shadow.appendChild(innerValue);
+        }
+    }
+
     export function createFlyoutHeadingLabel(name: string, color?: string, icon?: string, iconClass?: string) {
         const headingLabel = createFlyoutLabel(name, pxt.toolbox.convertColor(color), icon, iconClass);
         headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
@@ -195,14 +295,14 @@ namespace pxt.blocks {
         if (labelLineWidth) groupLabel.setAttribute('web-line-width', labelLineWidth);
         if (helpCallback) {
             groupLabel.setAttribute('web-help-button', 'true');
-            groupLabel.setAttribute('callbackkey', helpCallback);
+            groupLabel.setAttribute('callbackKey', helpCallback);
         }
         return groupLabel;
     }
 
     function createFlyoutLabel(name: string, color?: string, icon?: string, iconClass?: string): HTMLElement {
         // Add the Heading label
-        let headingLabel = goog.dom.createDom('label') as HTMLElement;
+        let headingLabel = Blockly.utils.xml.createElement('label') as HTMLElement;
         headingLabel.setAttribute('text', name);
         if (color) {
             headingLabel.setAttribute('web-icon-color', pxt.toolbox.convertColor(color));
@@ -219,10 +319,10 @@ namespace pxt.blocks {
         return headingLabel;
     }
 
-    export function createFlyoutButton(callbackkey: string, label: string) {
-        let button = goog.dom.createDom('button') as Element;
+    export function createFlyoutButton(callbackKey: string, label: string) {
+        let button = Blockly.utils.xml.createElement('button') as Element;
         button.setAttribute('text', label);
-        button.setAttribute('callbackkey', callbackkey);
+        button.setAttribute('callbackKey', callbackKey);
         return button;
     }
 
@@ -242,7 +342,10 @@ namespace pxt.blocks {
         }
         if (fn.parameters) {
             comp.parameters.filter(pr => !pr.isOptional &&
-                (/^(string|number|boolean)$/.test(pr.type) || pr.shadowBlockId || pr.defaultValue))
+                (primitiveTypeRegex.test(pr.type)
+                    || primitiveTypeRegex.test(isArrayType(pr.type))
+                    || pr.shadowBlockId
+                    || pr.defaultValue))
                 .forEach(pr => {
                     block.appendChild(createShadowValue(info, pr));
                 })
@@ -299,6 +402,10 @@ namespace pxt.blocks {
     }
 
     export function injectBlocks(blockInfo: pxtc.BlocksInfo): pxtc.SymbolInfo[] {
+        cachedBlockInfo = blockInfo;
+
+        Blockly.pxtBlocklyUtils.whitelistDraggableBlockTypes(blockInfo.blocks.filter(fn => fn.attributes.duplicateShadowOnDrag).map(fn => fn.attributes.blockId));
+
         // inject Blockly with all block definitions
         return blockInfo.blocks
             .map(fn => {
@@ -340,6 +447,21 @@ namespace pxt.blocks {
             block: {
                 codeCard: mkCard(fn, blockXml),
                 init: function () { initBlock(this, info, fn, comp) }
+            }
+        }
+
+        if (pxt.Util.isTranslationMode()
+            && pxt.blocks.promptTranslateBlock) {
+            cachedBlock.block.customContextMenu = (options: any[]) => {
+                if (fn.attributes.translationId) {
+                    options.push({
+                        enabled: true,
+                        text: lf("Translate this block"),
+                        callback: function () {
+                            pxt.blocks.promptTranslateBlock(id, [fn.attributes.translationId]);
+                        }
+                    })
+                }
             }
         }
 
@@ -417,7 +539,7 @@ namespace pxt.blocks {
             block.setHelpUrl(`/pkg/${fn.pkg}#${encodeURIComponent(anchor.join('-'))}`)
         }
 
-        block.setColour(color, fn.attributes.colorSecondary, fn.attributes.colorTertiary);
+        block.setColour(color);
         let blockShape = Blockly.OUTPUT_SHAPE_ROUND;
         if (fn.retType == "boolean")
             blockShape = Blockly.OUTPUT_SHAPE_HEXAGONAL;
@@ -453,7 +575,7 @@ namespace pxt.blocks {
                 comp.handlerArgs.filter(a => !a.inBlockDef).forEach(arg => {
                     const i = block.appendValueInput("HANDLER_DRAG_PARAM_" + arg.name);
                     if (fn.attributes.draggableParameters == "reporter") {
-                        i.setCheck(arg.type);
+                        i.setCheck(getBlocklyCheckForType(arg.type, info));
                     } else {
                         i.setCheck("Variable");
                     }
@@ -473,7 +595,9 @@ namespace pxt.blocks {
                     input.fieldRow.forEach((fieldRow: Blockly.FieldCustom) => {
                         if (fieldRow.isFieldCustom_ && fieldRow.saveOptions) {
                             const getOptions = fieldRow.saveOptions();
-                            el.setAttribute(`customfield`, JSON.stringify(getOptions));
+                            if (getOptions) {
+                                el.setAttribute(`customfield`, JSON.stringify(getOptions));
+                            }
                         }
                     })
                 })
@@ -484,15 +608,19 @@ namespace pxt.blocks {
                     input.fieldRow.forEach((fieldRow: Blockly.FieldCustom) => {
                         if (fieldRow.isFieldCustom_ && fieldRow.restoreOptions) {
                             const options = JSON.parse(saved.getAttribute(`customfield`));
-                            fieldRow.restoreOptions(options);
+                            if (options) {
+                                fieldRow.restoreOptions(options);
+                            }
                         }
                     })
                 })
             }
         });
         if (fn.attributes.imageLiteral) {
+            const columns = (fn.attributes.imageLiteralColumns || 5) * fn.attributes.imageLiteral;
+            const rows = fn.attributes.imageLiteralRows || 5;
             let ri = block.appendDummyInput();
-            ri.appendField(new pxtblockly.FieldMatrix("", { columns: fn.attributes.imageLiteral * 5 }), "LEDS");
+            ri.appendField(new pxtblockly.FieldMatrix("", { columns, rows }), "LEDS");
         }
 
         if (fn.attributes.inlineInputMode === "external") {
@@ -508,39 +636,18 @@ namespace pxt.blocks {
         const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void" || pr.type == "Action")[0] : undefined;
         if (body || hasHandler) {
             block.appendStatementInput("HANDLER")
-                .setCheck("null");
+                .setCheck(null);
             block.setInputsInline(true);
         }
 
-        switch (fn.retType) {
-            case "number": block.setOutput(true, "Number"); break;
-            case "string": block.setOutput(true, "String"); break;
-            case "boolean": block.setOutput(true, "Boolean"); break;
-            case "void": break; // do nothing
-            //TODO
-            default:
-                if (fn.retType !== "T") {
-                    const opt_check = isArrayType(fn.retType) ? ["Array"] : [];
-
-                    const si_r = info.apis.byQName[fn.retType];
-                    if (si_r && si_r.extendsTypes && 0 < si_r.extendsTypes.length) {
-                        opt_check.push(...si_r.extendsTypes);
-                    } else {
-                        opt_check.push(fn.retType);
-                    }
-
-                    block.setOutput(true, opt_check);
-                } else {
-                    block.setOutput(true);
-                }
-        }
+        setOutputCheck(block, fn.retType, info);
 
         // hook up/down if return value is void
         const hasHandlers = hasArrowFunction(fn);
         block.setPreviousStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
         block.setNextStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
 
-        block.setTooltip(fn.attributes.jsDoc);
+        block.setTooltip(/^__/.test(fn.namespace) ? "" : fn.attributes.jsDoc);
         function buildBlockFromDef(def: pxtc.ParsedBlockDef, expanded = false) {
             let anonIndex = 0;
             let firstParam = !expanded && !!comp.thisParameter;
@@ -548,7 +655,7 @@ namespace pxt.blocks {
             const inputs = splitInputs(def);
             const imgConv = new ImageConverter()
 
-            if (fn.attributes.shim === "ENUM_GET") {
+            if (fn.attributes.shim === "ENUM_GET" || fn.attributes.shim === "KIND_GET") {
                 if (comp.parameters.length > 1 || comp.thisParameter) {
                     console.warn(`Enum blocks may only have 1 parameter but ${fn.attributes.blockId} has ${comp.parameters.length}`);
                     return;
@@ -576,19 +683,26 @@ namespace pxt.blocks {
                         });
                         return;
                     }
+                    else if (fn.attributes.shim === "KIND_GET") {
+                        fields.push({
+                            name: "MEMBER",
+                            field: new pxtblockly.FieldKind(info.kindsByName[fn.attributes.kindNamespace || fn.attributes.blockNamespace || fn.namespace])
+                        });
+                        return;
+                    }
                     else {
                         // find argument
                         let pr = getParameterFromDef(part, comp, firstParam);
 
                         firstParam = false;
                         if (!pr) {
-                            console.error("block " + fn.attributes.blockId + ": unkown parameter " + part.name + (part.ref ? ` (${part.ref})` : ""));
+                            console.error("block " + fn.attributes.blockId + ": unknown parameter " + part.name + (part.ref ? ` (${part.ref})` : ""));
                             return;
                         }
 
                         if (isHandlerArg(pr)) {
                             inputName = "HANDLER_DRAG_PARAM_" + pr.name;
-                            inputCheck = fn.attributes.draggableParameters === "reporter" ? pr.type : "Variable";
+                            inputCheck = fn.attributes.draggableParameters === "reporter" ? getBlocklyCheckForType(pr.type, info) : "Variable";
                             return;
                         }
 
@@ -689,25 +803,13 @@ namespace pxt.blocks {
                             inputName = defName;
                             if (instance && part.name === "this") {
                                 inputCheck = pr.type;
-                            } else if (pr.type == "number") {
-                                if (pr.shadowBlockId && pr.shadowBlockId == "value") {
-                                    inputName = undefined;
-                                    fields.push(namedField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), defName));
-                                }
-                                else {
-                                    inputCheck = "Number"
-                                }
-                            } else if (pr.type == "boolean") {
-                                inputCheck = "Boolean"
-                            } else if (pr.type == "string") {
-                                if (pr.shadowOptions && pr.shadowOptions.toString) {
-                                    inputCheck = undefined;
-                                }
-                                else {
-                                    inputCheck = "String"
-                                }
+                            } else if (pr.type == "number" && pr.shadowBlockId && pr.shadowBlockId == "value") {
+                                inputName = undefined;
+                                fields.push(namedField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), defName));
+                            } else if (pr.type == "string" && pr.shadowOptions && pr.shadowOptions.toString) {
+                                inputCheck = null;
                             } else {
-                                inputCheck = pr.type == "T" ? undefined : (isArrayType(pr.type) ? ["Array", pr.type] : pr.type);
+                                inputCheck = getBlocklyCheckForType(pr.type, info);
                             }
                         }
                     }
@@ -787,7 +889,6 @@ namespace pxt.blocks {
      */
     export function initialize(blockInfo: pxtc.BlocksInfo) {
         init();
-        initTooltip(blockInfo);
         initJresIcons(blockInfo);
     }
 
@@ -800,7 +901,8 @@ namespace pxt.blocks {
         goog.require('Blockly.Blocks');
 
         Blockly.FieldCheckbox.CHECK_CHAR = '■';
-        Blockly.BlockSvg.START_HAT = !!pxt.appTarget.appTheme.blockHats;
+
+        (<any>Blockly).Constants.ADD_START_HATS = !!pxt.appTarget.appTheme.blockHats;
 
         initFieldEditors();
         initContextMenu();
@@ -815,18 +917,85 @@ namespace pxt.blocks {
         initDrag();
         initDebugger();
         initComments();
+        initTooltip();
 
         // PXT is in charge of disabling, don't record undo for disabled events
-        (Blockly.Block as any).prototype.setDisabled = function (disabled: any) {
-            if (this.disabled != disabled) {
+        (Blockly.Block as any).prototype.setEnabled = function (enabled: any) {
+            if (this.disabled == enabled) {
                 let oldRecordUndo = (Blockly as any).Events.recordUndo;
                 (Blockly as any).Events.recordUndo = false;
                 Blockly.Events.fire(new Blockly.Events.BlockChange(
-                    this, 'disabled', null, this.disabled, disabled));
+                    this, 'disabled', null, this.disabled, !enabled));
                 (Blockly as any).Events.recordUndo = oldRecordUndo;
-                this.disabled = disabled;
+                this.disabled = !enabled;
             }
         };
+    }
+
+    /**
+     * Converts a TypeScript type into an array of type checks for Blockly inputs/outputs. Use
+     * with block.setOutput() and input.setCheck().
+     *
+     * @returns An array of checks if the type is valid, undefined if there are no valid checks
+     *      (e.g. type is void), and null if all checks should be accepted (e.g. type is generic)
+     */
+    function getBlocklyCheckForType(type: string, info: pxtc.BlocksInfo) {
+        const types = type.split(/\s*\|\s*/);
+        const output = [];
+        for (const subtype of types) {
+            switch (subtype) {
+                // Blockly capitalizes primitive types for its builtin math/string/logic blocks
+                case "number":
+                    output.push("Number");
+                    break;
+                case "string":
+                    output.push("String");
+                    break;
+                case "boolean":
+                    output.push("Boolean");
+                    break;
+                case "T":
+                // The type is generic, so accept any checks. This is mostly used with functions that
+                // get values from arrays. This could be improved if we ever add proper type
+                // inference for generic types
+                case "any":
+                    return null;
+                case "void":
+                    return undefined;
+                default:
+                    // We add "Array" to the front for array types so that they can be connected
+                    // to the blocks that accept any array (e.g. length, push, pop, etc)
+                    if (isArrayType(subtype)) {
+                        if (types.length > 1) {
+                            // type inference will potentially break non-trivial arrays in intersections
+                            // until we have better type handling in blocks,
+                            // so escape and allow any block to be dropped in.
+                            return null;
+                        } else {
+                            output.push("Array");
+                        }
+                    }
+
+                    // Blockly has no concept of inheritance, so we need to add all
+                    // super classes to the check array
+                    const si_r = info.apis.byQName[subtype];
+                    if (si_r && si_r.extendsTypes && 0 < si_r.extendsTypes.length) {
+                        output.push(...si_r.extendsTypes);
+                    } else {
+                        output.push(subtype);
+                    }
+            }
+        }
+
+        return output;
+    }
+
+    function setOutputCheck(block: Blockly.Block, retType: string, info: pxtc.BlocksInfo) {
+        const check = getBlocklyCheckForType(retType, info);
+
+        if (check || check === null) {
+            block.setOutput(true, check);
+        }
     }
 
     function setBuiltinHelpInfo(block: any, id: string) {
@@ -855,6 +1024,21 @@ namespace pxt.blocks {
             blocksXml: xml ? (`<xml xmlns="http://www.w3.org/1999/xhtml">` + (cleanOuterHTML(xml) || `<block type="${id}"></block>`) + "</xml>") : undefined,
             url: url
         };
+        if (pxt.Util.isTranslationMode()
+            && pxt.blocks.promptTranslateBlock) {
+            block.customContextMenu = (options: any[]) => {
+                const blockd = pxt.blocks.getBlockDefinition(block.type);
+                if (blockd && blockd.translationIds) {
+                    options.push({
+                        enabled: true,
+                        text: lf("Translate this block"),
+                        callback: function () {
+                            pxt.blocks.promptTranslateBlock(id, blockd.translationIds);
+                        }
+                    })
+                }
+            };
+        }
     }
 
     export function installHelpResources(id: string, name: string, tooltip: any, url: string, colour: string, colourSecondary?: string, colourTertiary?: string) {
@@ -872,7 +1056,7 @@ namespace pxt.blocks {
     export let openHelpUrl: (url: string) => void;
 
     function initLists() {
-        const msg: any = Blockly.Msg;
+        const msg = Blockly.Msg;
 
         // lists_create_with
         const listsCreateWithId = "lists_create_with";
@@ -911,7 +1095,7 @@ namespace pxt.blocks {
     }
 
     function initLoops() {
-        const msg: any = Blockly.Msg;
+        const msg = Blockly.Msg;
 
         // controls_repeat_ext
         const controlsRepeatExtId = "controls_repeat_ext";
@@ -1009,6 +1193,7 @@ namespace pxt.blocks {
                 if (Blockly.Names.equals(oldName, varField.getText())) {
 
                     varField.setText(newName);
+                    varField.setValue(newName);
                 }
             },
             /**
@@ -1096,6 +1281,7 @@ namespace pxt.blocks {
                 if (Blockly.Names.equals(oldName, varField.getText())) {
 
                     varField.setText(newName);
+                    varField.setValue(newName);
                 }
             },
             /**
@@ -1117,10 +1303,87 @@ namespace pxt.blocks {
                 }
             }
         };
+
+        // break statement
+        const breakBlockDef = pxt.blocks.getBlockDefinition(ts.pxtc.TS_BREAK_TYPE);
+        Blockly.Blocks[pxtc.TS_BREAK_TYPE] = {
+            init: function () {
+                const color = pxt.toolbox.getNamespaceColor('loops');
+
+                this.jsonInit({
+                    "message0": breakBlockDef.block["message0"],
+                    "inputsInline": true,
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": color
+                });
+
+                setHelpResources(this,
+                    ts.pxtc.TS_BREAK_TYPE,
+                    breakBlockDef.name,
+                    breakBlockDef.tooltip,
+                    breakBlockDef.url,
+                    color,
+                    undefined/*colourSecondary*/,
+                    undefined/*colourTertiary*/,
+                    false/*undeletable*/
+                );
+            }
+        }
+
+        // continue statement
+        const continueBlockDef = pxt.blocks.getBlockDefinition(ts.pxtc.TS_CONTINUE_TYPE);
+        Blockly.Blocks[pxtc.TS_CONTINUE_TYPE] = {
+            init: function () {
+                const color = pxt.toolbox.getNamespaceColor('loops');
+
+                this.jsonInit({
+                    "message0": continueBlockDef.block["message0"],
+                    "inputsInline": true,
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": color
+                });
+
+                setHelpResources(this,
+                    ts.pxtc.TS_CONTINUE_TYPE,
+                    continueBlockDef.name,
+                    continueBlockDef.tooltip,
+                    continueBlockDef.url,
+                    color,
+                    undefined/*colourSecondary*/,
+                    undefined/*colourTertiary*/,
+                    false/*undeletable*/
+                );
+            }
+        }
+
+        const collapsedColor = "#cccccc";
+        Blockly.Blocks[pxtc.COLLAPSED_BLOCK] = {
+            init: function () {
+                this.jsonInit({
+                    "message0": "...",
+                    "inputsInline": true,
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": collapsedColor
+                })
+                setHelpResources(this,
+                    ts.pxtc.COLLAPSED_BLOCK,
+                    "...",
+                    lf("a few blocks"),
+                    undefined,
+                    collapsedColor,
+                    undefined/*colourSecondary*/,
+                    undefined/*colourTertiary*/,
+                    false/*undeletable*/
+                );
+            }
+        }
     }
 
     export let onShowContextMenu: (workspace: Blockly.Workspace,
-        items: Blockly.ContextMenu.MenuItem[]) => void = undefined;
+        items: Blockly.ContextMenu.Option[]) => void = undefined;
 
     /**
      * The following patch to blockly is to add the Trash icon on top of the toolbox,
@@ -1142,7 +1405,8 @@ namespace pxt.blocks {
         const blockDrag = (<any>Blockly).BlockDragger.prototype.dragBlock;
         (<any>Blockly).BlockDragger.prototype.dragBlock = function (e: any, currentDragDeltaXY: any) {
             const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLElement;
-            const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement;
+            const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement
+                || document.getElementsByClassName('blocklyFlyout')[0] as HTMLElement;
             const trashIcon = document.getElementById("blocklyTrashIcon");
             if (blocklyTreeRoot && trashIcon) {
                 const distance = calculateDistance(blocklyTreeRoot.getBoundingClientRect(), e.clientX);
@@ -1150,14 +1414,16 @@ namespace pxt.blocks {
                     const opacity = distance / 200;
                     trashIcon.style.opacity = `${1 - opacity}`;
                     trashIcon.style.display = 'block';
-                    blocklyTreeRoot.style.opacity = `${opacity}`;
-                    if (distance < 50) {
-                        blocklyToolboxDiv.classList.add('blocklyToolboxDeleting');
+                    if (blocklyToolboxDiv) {
+                        blocklyTreeRoot.style.opacity = `${opacity}`;
+                        if (distance < 50) {
+                            pxt.BrowserUtils.addClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
+                        }
                     }
                 } else {
                     trashIcon.style.display = 'none';
                     blocklyTreeRoot.style.opacity = '1';
-                    blocklyToolboxDiv.classList.remove('blocklyToolboxDeleting');
+                    if (blocklyToolboxDiv) pxt.BrowserUtils.removeClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
                 }
             }
             return blockDrag.call(this, e, currentDragDeltaXY);
@@ -1173,19 +1439,20 @@ namespace pxt.blocks {
         (<any>Blockly).BlockDragger.prototype.endBlockDrag = function (e: any, currentDragDeltaXY: any) {
             blockEndDrag.call(this, e, currentDragDeltaXY);
             const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLElement;
-            const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement;
+            const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement
+                || document.getElementsByClassName('blocklyFlyout')[0] as HTMLElement;
             const trashIcon = document.getElementById("blocklyTrashIcon");
             if (trashIcon && blocklyTreeRoot) {
                 trashIcon.style.display = 'none';
                 blocklyTreeRoot.style.opacity = '1';
-                blocklyToolboxDiv.classList.remove('blocklyToolboxDeleting');
+                if (blocklyToolboxDiv) pxt.BrowserUtils.removeClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
             }
         }
     }
 
     function initContextMenu() {
         // Translate the context menu for blocks.
-        let msg: any = Blockly.Msg;
+        const msg = Blockly.Msg;
         msg.DUPLICATE_BLOCK = lf("{id:block}Duplicate");
         msg.REMOVE_COMMENT = lf("Remove Comment");
         msg.ADD_COMMENT = lf("Add Comment");
@@ -1201,37 +1468,35 @@ namespace pxt.blocks {
         msg.HELP = lf("Help");
 
         // inject hook to handle openings docs
-        (<any>Blockly).BlockSvg.prototype.showHelp_ = function () {
+        (<any>Blockly).BlockSvg.prototype.showHelp = function () {
             const url = goog.isFunction(this.helpUrl) ? this.helpUrl() : this.helpUrl;
             if (url) (pxt.blocks.openHelpUrl || window.open)(url);
         };
 
-        /**
-         * Show the context menu for the workspace.
-         * @param {!Event} e Mouse event.
-         * @private
-         */
-        (<any>Blockly).WorkspaceSvg.prototype.showContextMenu_ = function (e: any) {
+        // Use Blockly hook to customize context menu
+        (<any>Blockly).WorkspaceSvg.prototype.configureContextMenu = function (options: Blockly.ContextMenu.Option[]) {
             if (this.options.readOnly || this.isFlyout) {
                 return;
             }
-            let menuOptions: Blockly.ContextMenu.MenuItem[] = [];
-            let topBlocks = this.getTopBlocks();
-            let topComments = this.getTopComments();
+            // Store workspace comment option
+            const commentOption = options.find(el => el.text.toLowerCase().includes("comment"));
+
+            // Clear default Blockly options
+            options.length = 0;
+            let topBlocks = this.getTopBlocks(true);
             let eventGroup = Blockly.utils.genUid();
+            let topComments = this.getTopComments();
             let ws = this;
 
             // Option to add a workspace comment.
             if (this.options.comments && !BrowserUtils.isIE()) {
-                menuOptions.push((Blockly.ContextMenu as any).workspaceCommentOption(ws, e));
+                options.push(commentOption);
             }
 
-            // Add a little animation to deleting.
-            const DELAY = 10;
 
             // Option to delete all blocks.
             // Count the number of blocks that are deletable.
-            let deleteList = Blockly.WorkspaceSvg.buildDeleteList_(topBlocks);
+            let deleteList = (Blockly.WorkspaceSvg as any).buildDeleteList_(topBlocks);
             let deleteCount = 0;
             for (let i = 0; i < deleteList.length; i++) {
                 if (!deleteList[i].isShadow()) {
@@ -1239,6 +1504,8 @@ namespace pxt.blocks {
                 }
             }
 
+            // Add a little animation to deleting.
+            const DELAY = 10;
             function deleteNext() {
                 (<any>Blockly).Events.setGroup(eventGroup);
                 let block = deleteList.shift();
@@ -1256,7 +1523,7 @@ namespace pxt.blocks {
             const deleteOption = {
                 text: deleteCount == 1 ? msg.DELETE_BLOCK : msg.DELETE_ALL_BLOCKS,
                 enabled: deleteCount > 0,
-                callback: function () {
+                callback: () => {
                     pxt.tickEvent("blocks.context.delete", undefined, { interactiveConsent: true });
                     if (deleteCount < 2) {
                         deleteNext();
@@ -1268,8 +1535,8 @@ namespace pxt.blocks {
                         });
                     }
                 }
-            };
-            menuOptions.push(deleteOption);
+            }
+            options.push(deleteOption);
 
             const formatCodeOption = {
                 text: lf("Format Code"),
@@ -1279,11 +1546,35 @@ namespace pxt.blocks {
                     pxt.blocks.layout.flow(this, { useViewWidth: true });
                 }
             }
-            menuOptions.push(formatCodeOption);
+            options.push(formatCodeOption);
+
+            if (pxt.appTarget.appTheme.blocksCollapsing) {
+                const collapseAllOption = {
+                    text: lf("Collapse Blocks"),
+                    enabled: true,
+                    callback: () => {
+                        pxt.tickEvent("blocks.context.collapse", undefined, { interactiveConsent: true });
+                        pxt.blocks.layout.setCollapsedAll(this, true);
+                        pxt.blocks.layout.flow(this, { useViewWidth: true });
+                    }
+                }
+                options.push(collapseAllOption);
+
+                const expandAllOption = {
+                    text: lf("Expand Blocks"),
+                    enabled: true,
+                    callback: () => {
+                        pxt.tickEvent("blocks.context.expand", undefined, { interactiveConsent: true });
+                        pxt.blocks.layout.setCollapsedAll(this, false);
+                        pxt.blocks.layout.flow(this, { useViewWidth: true });
+                    }
+                }
+                options.push(expandAllOption);
+            }
 
             if (pxt.blocks.layout.screenshotEnabled()) {
                 const screenshotOption = {
-                    text: lf("Download Screenshot"),
+                    text: lf("Snapshot"),
                     enabled: topBlocks.length > 0 || topComments.length > 0,
                     callback: () => {
                         pxt.tickEvent("blocks.context.screenshot", undefined, { interactiveConsent: true });
@@ -1295,61 +1586,14 @@ namespace pxt.blocks {
                                     uri,
                                     `${pxt.appTarget.nickname || pxt.appTarget.id}-${lf("screenshot")}.png`);
                             });
-                    }
-                };
-                menuOptions.push(screenshotOption);
+                    },
+                }
+                options.push(screenshotOption);
             }
 
             // custom options...
             if (onShowContextMenu)
-                onShowContextMenu(this, menuOptions);
-
-            Blockly.ContextMenu.show(e, menuOptions, this.RTL);
-        };
-
-        // We override Blockly's category mouse event handler so that only one
-        // category can be expanded at a time. Also prevent categories from toggling
-        // once openend.
-        Blockly.Toolbox.TreeNode.prototype.onClick_ = function (a: Event) {
-            // Expand icon.
-            const that = <Blockly.Toolbox.TreeNode>this;
-
-            if (!that.isSelected()) {
-                // Collapse the currently selected node and its parent nodes
-                collapseSubcategories(that.getTree().getSelectedItem(), that);
-            }
-
-            if (that.hasChildren() && that.isUserCollapsible_) {
-                if (that.isSelected()) {
-                    collapseSubcategories(that.getTree().getSelectedItem(), that);
-                    that.getTree().setSelectedItem(null);
-                } else {
-                    that.setExpanded(true);
-                    that.select();
-                }
-            } else if (that.isSelected()) {
-                that.getTree().setSelectedItem(null);
-            } else {
-                that.select();
-            }
-
-            that.updateRow()
-        }
-
-        // We also must override this handler to handle the case where no category is selected (e.g. clicking outside the toolbox)
-        const oldSetSelectedItem = Blockly.Toolbox.TreeControl.prototype.setSelectedItem;
-        let editor = this;
-        Blockly.Toolbox.TreeControl.prototype.setSelectedItem = function (a: Blockly.Toolbox.TreeNode) {
-            const that = <Blockly.Toolbox.TreeControl>this;
-            let toolbox = (that as any).toolbox_;
-            if (a == that.selectedItem_ || a == toolbox.tree_) {
-                return;
-            }
-            let oldSelectedItem = that.selectedItem_;
-            oldSetSelectedItem.call(that, a);
-            if (a === null) {
-                collapseSubcategories(oldSelectedItem);
-            }
+                onShowContextMenu(this, options);
         };
 
         // Get rid of bumping behavior
@@ -1389,42 +1633,72 @@ namespace pxt.blocks {
 
         Blockly.Blocks[pxtc.TS_STATEMENT_TYPE] = {
             init: function () {
-                let that: Blockly.Block = this;
+                let that: GrayBlockStatement = this;
                 that.setColour("#717171")
                 that.setPreviousStatement(true);
                 that.setNextStatement(true);
                 that.setInputsInline(false);
 
-                this.domToMutation = (element: Element) => {
+                let pythonMode: boolean;
+                let lines: string[];
+
+                that.domToMutation = (element: Element) => {
                     const n = parseInt(element.getAttribute("numlines"));
-                    this.declaredVariables = element.getAttribute("declaredvars");
+                    that.declaredVariables = element.getAttribute("declaredvars");
+
+                    lines = [];
                     for (let i = 0; i < n; i++) {
                         const line = element.getAttribute("line" + i);
-                        that.appendDummyInput().appendField(line, "LINE" + i);
+                        lines.push(line);
                     }
+
+                    // Add the initial TS inputs
+                    that.setPythonEnabled(false);
                 };
 
-                this.mutationToDom = () => {
+                that.mutationToDom = () => {
                     let mutation = document.createElement("mutation");
-                    let i = 0;
 
-                    while (true) {
-                        const val = that.getFieldValue("LINE" + i);
-                        if (val === null) {
-                            break;
-                        }
-
-                        mutation.setAttribute("line" + i, val);
-                        i++;
+                    if (lines) {
+                        lines.forEach((line, index) => mutation.setAttribute("line" + index, line));
+                        mutation.setAttribute("numlines", lines.length.toString());
                     }
 
-                    mutation.setAttribute("numlines", i.toString());
-                    if (this.declaredVariables) {
+                    if (that.declaredVariables) {
                         mutation.setAttribute("declaredvars", this.declaredVariables);
                     }
 
                     return mutation;
                 };
+
+                // Consumed by the webapp
+                that.setPythonEnabled = (enabled: boolean) => {
+                    if (pythonMode === enabled) return;
+
+                    // Remove all inputs
+                    while (that.inputList.length) {
+                        that.removeInput(that.inputList[0].name);
+                    }
+
+                    pythonMode = enabled;
+                    if (enabled) {
+                        // This field must be named LINE0 because otherwise Blockly will crash
+                        // when trying to make an insertion marker. All insertion marker blocks
+                        // need to have the same fields as the real block, and this field will
+                        // always be created by domToMutation regardless of TS or Python mode
+                        that.appendDummyInput().appendField(Util.lf("<python code>"), "LINE0")
+                        that.setTooltip(lf("A Python statement that could not be converted to blocks"));
+                    }
+                    else {
+                        lines.forEach((line, index) => {
+                            that.appendDummyInput().appendField(line, "LINE" + index);
+                        });
+                        that.setTooltip(lf("A JavaScript statement that could not be converted to blocks"));
+                    }
+                }
+
+                // Consumed by BlocklyCompiler
+                that.getLines = () => lines;
 
                 that.setEditable(false);
 
@@ -1440,13 +1714,24 @@ namespace pxt.blocks {
 
         Blockly.Blocks[pxtc.TS_OUTPUT_TYPE] = {
             init: function () {
-                let that: Blockly.Block = this;
+                let that: GrayBlock = this;
                 that.setColour("#717171")
                 that.setPreviousStatement(false);
                 that.setNextStatement(false);
                 that.setOutput(true);
                 that.setEditable(false);
                 that.appendDummyInput().appendField(new pxtblockly.FieldTsExpression(""), "EXPRESSION");
+
+                that.setPythonEnabled = (enabled: boolean) => {
+                    (that.getField("EXPRESSION") as pxtblockly.FieldTsExpression).setPythonEnabled(enabled);
+
+                    if (enabled) {
+                        that.setTooltip(lf("A Python expression that could not be converted to blocks"));
+                    }
+                    else {
+                        that.setTooltip(lf("A JavaScript expression that could not be converted to blocks"));
+                    }
+                }
 
                 setHelpResources(that,
                     pxtc.TS_OUTPUT_TYPE,
@@ -1511,7 +1796,7 @@ namespace pxt.blocks {
                         {
                             "type": "input_value",
                             "name": "LIST",
-                            "check": "Array"
+                            "check": ["Array", "String"]
                         }
                     ],
                     "previousStatement": null,
@@ -1736,7 +2021,7 @@ namespace pxt.blocks {
         })
 
         // builtin math_arithmetic
-        const msg: any = Blockly.Msg;
+        const msg = Blockly.Msg;
         const mathArithmeticId = "math_arithmetic";
         const mathArithmeticDef = pxt.blocks.getBlockDefinition(mathArithmeticId);
         const mathArithmeticTooltips = <Map<string>>mathArithmeticDef.tooltip;
@@ -1773,7 +2058,7 @@ namespace pxt.blocks {
         (Blockly.FieldVariable.prototype as any).getVariableTypes_ = () => [""];
 
         let varname = lf("{id:var}item");
-        Blockly.Variables.flyoutCategory = function (workspace) {
+        Blockly.Variables.flyoutCategory = function (workspace: Blockly.WorkspaceSvg) {
             let xmlList: HTMLElement[] = [];
 
             if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
@@ -1784,9 +2069,9 @@ namespace pxt.blocks {
                 xmlList.push(headingLabel);
             }
 
-            let button = goog.dom.createDom('button') as HTMLElement;
+            let button = document.createElement('button') as HTMLElement;
             button.setAttribute('text', lf("Make a Variable..."));
-            button.setAttribute('callbackkey', 'CREATE_VARIABLE');
+            button.setAttribute('callbackKey', 'CREATE_VARIABLE');
 
             workspace.registerButtonCallback('CREATE_VARIABLE', function (button) {
                 Blockly.Variables.createVariable(button.getTargetWorkspace());
@@ -1794,7 +2079,7 @@ namespace pxt.blocks {
 
             xmlList.push(button);
 
-            let blockList = Blockly.Variables.flyoutCategoryBlocks(workspace);
+            let blockList = Blockly.Variables.flyoutCategoryBlocks(workspace) as HTMLElement[];
             xmlList = xmlList.concat(blockList);
             return xmlList;
         };
@@ -1874,7 +2159,7 @@ namespace pxt.blocks {
         };
 
         // builtin variables_get
-        const msg: any = Blockly.Msg;
+        const msg = Blockly.Msg;
         const variablesGetId = "variables_get";
         const variablesGetDef = pxt.blocks.getBlockDefinition(variablesGetId);
         msg.VARIABLES_GET_CREATE_SET = variablesGetDef.block["VARIABLES_GET_CREATE_SET"];
@@ -1887,6 +2172,7 @@ namespace pxt.blocks {
         msg.RENAME_VARIABLE = lf("Rename variable...");
         msg.DELETE_VARIABLE = lf("Delete the \"%1\" variable");
         msg.DELETE_VARIABLE_CONFIRMATION = lf("Delete %1 uses of the \"%2\" variable?");
+        msg.NEW_VARIABLE_DROPDOWN = lf("New variable...");
 
         // builtin variables_set
         const variablesSetId = "variables_set";
@@ -1927,20 +2213,35 @@ namespace pxt.blocks {
 
         // New variable dialog
         msg.NEW_VARIABLE_TITLE = lf("New variable name:");
+
+        // Rename variable dialog
+        msg.RENAME_VARIABLE_TITLE = lf("Rename all '%1' variables to:");
     }
 
     function initFunctions() {
-        const msg: any = Blockly.Msg;
+        const msg = Blockly.Msg;
+
+        // New functions implementation messages
+        msg.FUNCTION_CREATE_NEW = lf("Make a Function...");
+        msg.FUNCTION_WARNING_DUPLICATE_ARG = lf("Functions cannot use the same argument name more than once.");
+        msg.FUNCTION_WARNING_ARG_NAME_IS_FUNCTION_NAME = lf("Argument names must not be the same as the function name.");
+        msg.FUNCTION_WARNING_EMPTY_NAME = lf("Function and argument names cannot be empty.");
+        msg.FUNCTIONS_DEFAULT_FUNCTION_NAME = lf("doSomething");
+        msg.FUNCTIONS_DEFAULT_BOOLEAN_ARG_NAME = lf("bool");
+        msg.FUNCTIONS_DEFAULT_STRING_ARG_NAME = lf("text");
+        msg.FUNCTIONS_DEFAULT_NUMBER_ARG_NAME = lf("num");
+        msg.FUNCTIONS_DEFAULT_CUSTOM_ARG_NAME = lf("arg");
+        msg.PROCEDURES_HUE = pxt.toolbox.getNamespaceColor("functions");
+        msg.REPORTERS_HUE = pxt.toolbox.getNamespaceColor("variables");
 
         // builtin procedures_defnoreturn
         const proceduresDefId = "procedures_defnoreturn";
         const proceduresDef = pxt.blocks.getBlockDefinition(proceduresDefId);
 
         msg.PROCEDURES_DEFNORETURN_TITLE = proceduresDef.block["PROCEDURES_DEFNORETURN_TITLE"];
-        msg.PROCEDURE_ALREADY_EXISTS = proceduresDef.block["PROCEDURE_ALREADY_EXISTS"];
-        msg.PROCEDURES_HUE = pxt.toolbox.getNamespaceColor("variables");
+        (msg as any).PROCEDURE_ALREADY_EXISTS = proceduresDef.block["PROCEDURE_ALREADY_EXISTS"];
 
-        Blockly.Blocks['procedures_defnoreturn'].init = function () {
+        (Blockly.Blocks['procedures_defnoreturn']).init = function () {
             let nameField = new Blockly.FieldTextInput('',
                 (Blockly as any).Procedures.rename);
             //nameField.setSpellcheck(false); //TODO
@@ -1961,12 +2262,11 @@ namespace pxt.blocks {
         const proceduresCallId = "procedures_callnoreturn";
         const proceduresCallDef = pxt.blocks.getBlockDefinition(proceduresCallId);
 
-        msg.PROCEDURES_CALLRETURN_TOOLTIP = proceduresDef.tooltip;
+        msg.PROCEDURES_CALLRETURN_TOOLTIP = proceduresDef.tooltip.toString();
 
         Blockly.Blocks['procedures_callnoreturn'] = {
             init: function () {
                 let nameField = new pxtblockly.FieldProcedure('');
-                nameField.setSourceBlock(this);
                 this.appendDummyInput('TOPROW')
                     .appendField(proceduresCallDef.block['PROCEDURES_CALLNORETURN_TITLE'])
                     .appendField(nameField, 'NAME');
@@ -2031,15 +2331,15 @@ namespace pxt.blocks {
                          *   </block>
                          * </xml>
                          */
-                        let xml = goog.dom.createDom('xml');
-                        let block = goog.dom.createDom('block');
+                        let xml = Blockly.utils.xml.createElement('xml');
+                        let block = Blockly.utils.xml.createElement('block');
                         block.setAttribute('type', this.defType_);
                         let xy = this.getRelativeToSurfaceXY();
                         let x = xy.x + (Blockly as any).SNAP_RADIUS * (this.RTL ? -1 : 1);
                         let y = xy.y + (Blockly as any).SNAP_RADIUS * 2;
                         block.setAttribute('x', x);
                         block.setAttribute('y', y);
-                        let field = goog.dom.createDom('field');
+                        let field = Blockly.utils.xml.createElement('field');
                         field.setAttribute('name', 'NAME');
                         field.appendChild(document.createTextNode(this.getProcedureCall()));
                         block.appendChild(field);
@@ -2080,7 +2380,7 @@ namespace pxt.blocks {
                 let name = this.getProcedureCall();
                 let workspace = this.workspace;
                 option.callback = function () {
-                    let def = Blockly.Procedures.getDefinition(name, workspace);
+                    let def = Blockly.Procedures.getDefinition(name, workspace) as Blockly.BlockSvg;
                     if (def) def.select();
                 };
                 options.push(option);
@@ -2089,7 +2389,61 @@ namespace pxt.blocks {
         }
         installBuiltinHelpInfo(proceduresCallId);
 
-        Blockly.Procedures.flyoutCategory = function (workspace: Blockly.Workspace) {
+        // New functions implementation function_definition
+        const functionDefinitionId = "function_definition";
+        const functionDefinition = pxt.blocks.getBlockDefinition(functionDefinitionId);
+
+        msg.FUNCTIONS_EDIT_OPTION = functionDefinition.block["FUNCTIONS_EDIT_OPTION"];
+        installBuiltinHelpInfo(functionDefinitionId);
+
+        // New functions implementation function_call
+        const functionCallId = "function_call";
+        const functionCall = pxt.blocks.getBlockDefinition(functionCallId);
+
+        msg.FUNCTIONS_CALL_TITLE = functionCall.block["FUNCTIONS_CALL_TITLE"];
+        installBuiltinHelpInfo(functionCallId);
+        installBuiltinHelpInfo("function_call_output");
+
+        const functionReturnId = "function_return";
+        Blockly.Blocks[functionReturnId] = {
+            init: function () {
+                initReturnStatement(this);
+            },
+            onchange: function (event) {
+                const block = this as Blockly.Block;
+                if (!block.workspace || (block.workspace as Blockly.WorkspaceSvg).isFlyout) {
+                    // Block is deleted or is in a flyout.
+                    return;
+                }
+
+                const thisWasCreated =
+                    event.type === Blockly.Events.BLOCK_CREATE && event.ids.indexOf(block.id) != -1;
+                const thisWasDragged =
+                    event.type === Blockly.Events.END_DRAG && event.allNestedIds.indexOf(block.id) != -1;
+
+                if (thisWasCreated || thisWasDragged) {
+                    const rootBlock = block.getRootBlock();
+                    const isTopBlock = rootBlock.type === functionReturnId;
+
+                    if (isTopBlock || rootBlock.previousConnection != null) {
+                        // Statement is by itself on the workspace, or it is slotted into a
+                        // stack of statements that is not attached to a function or event. Let
+                        // it exist until it is connected to a function
+                        return;
+                    }
+
+                    if (rootBlock.type !== functionDefinitionId) {
+                        // Not a function block, so disconnect
+                        Blockly.Events.setGroup(event.group);
+                        block.previousConnection.disconnect();
+                        Blockly.Events.setGroup(false);
+                    }
+                }
+            }
+        };
+        installBuiltinHelpInfo(functionReturnId);
+
+        Blockly.Procedures.flyoutCategory = function (workspace: Blockly.WorkspaceSvg) {
             let xmlList: HTMLElement[] = [];
 
             if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
@@ -2105,9 +2459,9 @@ namespace pxt.blocks {
             const newFunctionTitle = lf("New function name:");
 
             // Add the "Make a function" button
-            let button = goog.dom.createDom('button');
+            let button = Blockly.utils.xml.createElement('button');
             button.setAttribute('text', newFunction);
-            button.setAttribute('callbackkey', 'CREATE_FUNCTION');
+            button.setAttribute('callbackKey', 'CREATE_FUNCTION');
 
             let createFunction = (name: string) => {
                 /**
@@ -2125,12 +2479,12 @@ namespace pxt.blocks {
                     x = xy.x + (Blockly as any).SNAP_RADIUS * (topBlock.RTL ? -1 : 1);
                     y = xy.y + (Blockly as any).SNAP_RADIUS * 2;
                 }
-                let xml = goog.dom.createDom('xml');
-                let block = goog.dom.createDom('block');
+                let xml = Blockly.utils.xml.createElement('xml');
+                let block = Blockly.utils.xml.createElement('block');
                 block.setAttribute('type', 'procedures_defnoreturn');
                 block.setAttribute('x', String(x));
                 block.setAttribute('y', String(y));
-                let field = goog.dom.createDom('field');
+                let field = Blockly.utils.xml.createElement('field');
                 field.setAttribute('name', 'NAME');
                 field.appendChild(document.createTextNode(name));
                 block.appendChild(field);
@@ -2138,7 +2492,7 @@ namespace pxt.blocks {
                 let newBlockIds = pxt.blocks.domToWorkspaceNoEvents(xml, workspace);
                 // Close flyout and highlight block
                 Blockly.hideChaff();
-                let newBlock = workspace.getBlockById(newBlockIds[0]);
+                let newBlock = workspace.getBlockById(newBlockIds[0]) as Blockly.BlockSvg;
                 newBlock.select();
                 // Center on the new block so we know where it is
                 workspace.centerOnBlock(newBlock.id);
@@ -2147,6 +2501,7 @@ namespace pxt.blocks {
             workspace.registerButtonCallback('CREATE_FUNCTION', function (button) {
                 let promptAndCheckWithAlert = (defaultName: string) => {
                     Blockly.prompt(newFunctionTitle, defaultName, function (newFunc) {
+                        pxt.tickEvent('blocks.makeafunction');
                         // Merge runs of whitespace.  Strip leading and trailing whitespace.
                         // Beyond this, all names are legal.
                         if (newFunc) {
@@ -2165,7 +2520,7 @@ namespace pxt.blocks {
                                     });
                             }
                             else if (!Blockly.Procedures.isLegalName_(newFunc, workspace)) {
-                                Blockly.alert((Blockly as any).Msg.PROCEDURE_ALREADY_EXISTS.replace('%1',
+                                Blockly.alert((Blockly.Msg as any).PROCEDURE_ALREADY_EXISTS.replace('%1',
                                     newFunc.toLowerCase()),
                                     function () {
                                         promptAndCheckWithAlert(newFunc);  // Recurse
@@ -2188,7 +2543,7 @@ namespace pxt.blocks {
                     // <block type="procedures_callnoreturn" gap="16">
                     //   <field name="NAME">name</field>
                     // </block>
-                    let block = goog.dom.createDom('block');
+                    let block = Blockly.utils.xml.createElement('block');
                     block.setAttribute('type', templateName);
                     block.setAttribute('gap', '16');
                     block.setAttribute('colour', pxt.toolbox.getNamespaceColor('functions'));
@@ -2204,10 +2559,85 @@ namespace pxt.blocks {
 
             return xmlList;
         }
+
+        // Patch new functions flyout to add the heading
+        const oldFlyout = Blockly.Functions.flyoutCategory;
+        Blockly.Functions.flyoutCategory = (workspace) => {
+            const elems = oldFlyout(workspace);
+
+            if (elems.length > 1) {
+                let returnBlock = mkReturnStatementBlock();
+                // Insert after the "make a function" button
+                elems.splice(1, 0, returnBlock as HTMLElement);
+            }
+
+            const functionsWithReturn = Blockly.Functions.getAllFunctionDefinitionBlocks(workspace)
+                .filter(def => def.getDescendants(false).some(child => child.type === "function_return" && child.getInputTargetBlock("RETURN_VALUE")))
+                .map(def => def.getField("function_name").getText())
+
+            const headingLabel = createFlyoutHeadingLabel(lf("Functions"),
+                pxt.toolbox.getNamespaceColor('functions'),
+                pxt.toolbox.getNamespaceIcon('functions'),
+                'blocklyFlyoutIconfunctions');
+            elems.unshift(headingLabel);
+
+            const res: Element[] = [];
+
+            for (const e of elems) {
+                res.push(e);
+                if (e.getAttribute("type") === "function_call") {
+                    const mutation = e.children.item(0);
+
+                    if (mutation) {
+                        const name = mutation.getAttribute("name");
+                        if (functionsWithReturn.some(n => n === name)) {
+                            const clone = e.cloneNode(true) as HTMLElement;
+                            clone.setAttribute("type", "function_call_output");
+                            res.push(clone);
+                        }
+                    }
+                }
+            }
+
+            return res;
+        };
+
+        // Configure function editor argument icons
+        const iconsMap: pxt.Map<string> = {
+            number: pxt.blocks.defaultIconForArgType("number"),
+            boolean: pxt.blocks.defaultIconForArgType("boolean"),
+            string: pxt.blocks.defaultIconForArgType("string")
+        };
+        const customNames: pxsim.Map<string> = {};
+
+        const functionOptions = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions;
+        if (functionOptions && functionOptions.extraFunctionEditorTypes) {
+            functionOptions.extraFunctionEditorTypes.forEach(t => {
+                iconsMap[t.typeName] = t.icon || pxt.blocks.defaultIconForArgType();
+
+                if (t.defaultName) {
+                    customNames[t.typeName] = t.defaultName;
+                }
+            });
+        }
+        Blockly.PXTBlockly.FunctionUtils.argumentIcons = iconsMap;
+        Blockly.PXTBlockly.FunctionUtils.argumentDefaultNames = customNames;
+
+        if (Blockly.Blocks["argument_reporter_custom"]) {
+            // The logic for setting the output check relies on the internals of PXT
+            // too much to be refactored into pxt-blockly, so we need to monkey patch
+            // it here
+            (Blockly.Blocks["argument_reporter_custom"]).domToMutation = function (xmlElement: Element) {
+                const typeName = xmlElement.getAttribute('typename');
+                this.typeName_ = typeName;
+
+                setOutputCheck(this, typeName, cachedBlockInfo);
+            };
+        }
     }
 
     function initLogic() {
-        const msg: any = Blockly.Msg;
+        const msg = Blockly.Msg;
 
         // builtin controls_if
         const controlsIfId = "controls_if";
@@ -2268,7 +2698,7 @@ namespace pxt.blocks {
             (Blockly as any).Colours.textField);
 
         // builtin text_length
-        const msg: any = Blockly.Msg;
+        const msg = Blockly.Msg;
         const textLengthId = "text_length";
         const textLengthDef = pxt.blocks.getBlockDefinition(textLengthId);
         msg.TEXT_LENGTH_TITLE = textLengthDef.block["TEXT_LENGTH_TITLE"];
@@ -2325,10 +2755,10 @@ namespace pxt.blocks {
     }
 
     function initComments() {
-        (Blockly.Msg as any).WORKSPACE_COMMENT_DEFAULT_TEXT = '';
+        Blockly.Msg.WORKSPACE_COMMENT_DEFAULT_TEXT = '';
     }
 
-    function initTooltip(blockInfo: pxtc.BlocksInfo) {
+    function initTooltip() {
 
         const renderTip = (el: any) => {
             if (el.disabled)
@@ -2339,66 +2769,69 @@ namespace pxt.blocks {
             }
             return tip;
         }
-        // TODO: update this when pulling new blockly
+
         /**
-         * Create the tooltip and show it.
+         * Override Blockly tooltip rendering with our own.
+         * TODO shakao check if tooltip can be modified in a cleaner way
          * @private
          */
-        Blockly.Tooltip.show_ = function () {
-            Blockly.Tooltip.poisonedElement_ = Blockly.Tooltip.element_;
+        (Blockly.Tooltip as any).show_ = function () {
+            const BlocklyTooltip = Blockly.Tooltip as any;
+            BlocklyTooltip.poisonedElement_ = BlocklyTooltip.element_;
             if (!Blockly.Tooltip.DIV) {
                 return;
             }
             // Erase all existing text.
             goog.dom.removeChildren(/** @type {!Element} */(Blockly.Tooltip.DIV));
             // Get the new text.
-            const card = Blockly.Tooltip.element_.codeCard as pxt.CodeCard;
+            const card = BlocklyTooltip.element_.codeCard as pxt.CodeCard;
 
             function render() {
-                let rtl = Blockly.Tooltip.element_.RTL;
+                let rtl = BlocklyTooltip.element_.RTL;
                 let windowSize = goog.dom.getViewportSize();
                 // Display the tooltip.
-                Blockly.Tooltip.DIV.style.direction = rtl ? 'rtl' : 'ltr';
-                Blockly.Tooltip.DIV.style.display = 'block';
+                let tooltip = Blockly.Tooltip.DIV as HTMLElement;
+                tooltip.style.direction = rtl ? 'rtl' : 'ltr';
+                tooltip.style.display = 'block';
                 Blockly.Tooltip.visible = true;
                 // Move the tooltip to just below the cursor.
-                let anchorX = Blockly.Tooltip.lastX_;
+                let anchorX = BlocklyTooltip.lastX_;
                 if (rtl) {
-                    anchorX -= Blockly.Tooltip.OFFSET_X + Blockly.Tooltip.DIV.offsetWidth;
+                    anchorX -= Blockly.Tooltip.OFFSET_X + tooltip.offsetWidth;
                 } else {
                     anchorX += Blockly.Tooltip.OFFSET_X;
                 }
-                let anchorY = Blockly.Tooltip.lastY_ + Blockly.Tooltip.OFFSET_Y;
+                let anchorY = BlocklyTooltip.lastY_ + Blockly.Tooltip.OFFSET_Y;
 
-                if (anchorY + Blockly.Tooltip.DIV.offsetHeight >
+                if (anchorY + tooltip.offsetHeight >
                     windowSize.height + window.scrollY) {
                     // Falling off the bottom of the screen; shift the tooltip up.
-                    anchorY -= Blockly.Tooltip.DIV.offsetHeight + 2 * Blockly.Tooltip.OFFSET_Y;
+                    anchorY -= tooltip.offsetHeight + 2 * Blockly.Tooltip.OFFSET_Y;
                 }
                 if (rtl) {
                     // Prevent falling off left edge in RTL mode.
                     anchorX = Math.max(Blockly.Tooltip.MARGINS - window.scrollX, anchorX);
                 } else {
-                    if (anchorX + Blockly.Tooltip.DIV.offsetWidth >
+                    if (anchorX + tooltip.offsetWidth >
                         windowSize.width + window.scrollX - 2 * Blockly.Tooltip.MARGINS) {
                         // Falling off the right edge of the screen;
                         // clamp the tooltip on the edge.
-                        anchorX = windowSize.width - Blockly.Tooltip.DIV.offsetWidth -
+                        anchorX = windowSize.width - tooltip.offsetWidth -
                             2 * Blockly.Tooltip.MARGINS;
                     }
                 }
-                Blockly.Tooltip.DIV.style.top = anchorY + 'px';
-                Blockly.Tooltip.DIV.style.left = anchorX + 'px';
+                tooltip.style.top = anchorY + 'px';
+                tooltip.style.left = anchorX + 'px';
             }
             if (card) {
                 const cardEl = pxt.docs.codeCard.render({
-                    header: renderTip(Blockly.Tooltip.element_)
+                    header: renderTip(BlocklyTooltip.element_)
                 })
                 Blockly.Tooltip.DIV.appendChild(cardEl);
                 render();
             } else {
-                let tip = renderTip(Blockly.Tooltip.element_);
-                tip = Blockly.utils.wrap(tip, Blockly.Tooltip.LIMIT);
+                let tip = renderTip(BlocklyTooltip.element_);
+                tip = Blockly.utils._string.wrap(tip, Blockly.Tooltip.LIMIT);
                 // Create new text, line by line.
                 let lines = tip.split('\n');
                 for (let i = 0; i < lines.length; i++) {
@@ -2414,28 +2847,6 @@ namespace pxt.blocks {
     function removeBlock(fn: pxtc.SymbolInfo) {
         delete Blockly.Blocks[fn.attributes.blockId];
         delete cachedBlocks[fn.attributes.blockId];
-    }
-
-    function categoryElement(tb: Element, nameid: string): Element {
-        return tb ? getFirstChildWithAttr(tb, "category", "nameid", nameid.toLowerCase()) : undefined;
-    }
-
-    function collapseSubcategories(cat: Blockly.Toolbox.TreeNode, child?: Blockly.Toolbox.TreeNode) {
-        while (cat) {
-            if (cat.isUserCollapsible_ && cat.getTree() && cat != child && (!child || !isChild(child, cat))) {
-                cat.setExpanded(false);
-                cat.updateRow();
-            }
-            cat = cat.getParent();
-        }
-    }
-
-    function isChild(child: Blockly.Toolbox.TreeNode, parent: Blockly.Toolbox.TreeNode): boolean {
-        const myParent = child.getParent();
-        if (myParent) {
-            return myParent === parent || isChild(myParent, parent);
-        }
-        return false;
     }
 
     /**
@@ -2473,6 +2884,20 @@ namespace pxt.blocks {
         return fieldBlock;
     }
 
+    export function mkReturnStatementBlock() {
+        const block = document.createElement("block");
+        block.setAttribute("type", "function_return");
+
+        const value = document.createElement("value");
+        value.setAttribute("name", "RETURN_VALUE");
+        block.appendChild(value);
+
+        const shadow = mkFieldBlock("math_number", "NUM", "0", true);
+        value.appendChild(shadow);
+
+        return block;
+    }
+
     let jresIconCache: Map<string> = {};
     function iconToFieldImage(id: string): Blockly.FieldImage {
         let url = jresIconCache[id];
@@ -2480,7 +2905,7 @@ namespace pxt.blocks {
             pxt.log(`missing jres icon ${id}`)
             return undefined;
         }
-        return new Blockly.FieldImage(url, 40, 40, Util.isUserLanguageRtl(), '');
+        return new Blockly.FieldImage(url, 40, 40, '', null, Util.isUserLanguageRtl());
     }
 
     function initJresIcons(blockInfo: pxtc.BlocksInfo) {
@@ -2532,7 +2957,7 @@ namespace pxt.blocks {
     }
 
     function getEnumDropdownValues(apis: pxtc.ApisInfo, enumName: string) {
-        return pxt.Util.values(apis.byQName).filter(sym => sym.namespace === enumName);
+        return pxt.Util.values(apis.byQName).filter(sym => sym.namespace === enumName && !sym.attributes.blockHidden);
     }
 
     export function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string) {
@@ -2595,6 +3020,7 @@ namespace pxt.blocks {
             (varField as any).initModel();
             const model = (varField as any).getVariable();
             model.name = newName;
+            varField.setText(newName);
             varField.setValue(model.getId());
         }
     }

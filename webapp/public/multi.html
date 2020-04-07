@@ -1,0 +1,132 @@
+<html>
+
+<head>
+    <title>MakeCode Multi Editor</title>
+    <style>
+        html, body {
+            overscroll-behavior: none;
+        }
+        iframe {
+            position: absolute;
+            width: calc(50% - 0.15rem);
+            height: 100%;
+            bottom: 0;
+            top: 0;
+            border: none;
+        }
+
+        #left {
+            left: 0;
+            right: calc(50% - 0.15rem);
+        }
+
+        #right {
+            right: 0;
+            left: calc(50% + 0.15rem);
+        }
+
+        #divider {
+            position: absolute;
+            width: 0.3rem;
+            cursor: col-resize;
+            height: 100%;
+            left: calc(50% - 0.15rem);
+            right: calc(50% + 0.15rem);
+            background: #bbb;
+            top: 0rem;
+        }
+    </style>
+</head>
+
+<body>
+    <iframe id="left" allow="usb"></iframe>
+    <div id="divider"></div>
+    <iframe id="right" allow="usb"></iframe>
+    <script>
+        (function () {
+            // This line gets patched up by the cloud
+            var pxtConfig = null;
+
+            var left = document.getElementById("left");
+            var right = document.getElementById("right");
+            var divider = document.getElementById("divider");
+            var localhost = window.location.hostname == "localhost";
+            var editor = (pxtConfig ? pxtConfig.relprefix : '/').replace(/-*$/, '');
+            var flags = "?nestededitorsim=1&editorlayout=ide&nosandbox=1";
+            var ratio = .5;
+            var dividerWidth = 14;
+
+            window.onmessage = function (msg) {
+                var data = msg.data;
+                var source = msg.source;
+                if (!!data.broadcast) {
+                    data.outer = true;
+                    [left, right]
+                        .filter(function (ifrm) {
+                            return ifrm.contentWindow !== source;
+                        })
+                        .forEach(function (ifrm) {
+                            ifrm.contentWindow.postMessage(data, window.location.origin)
+                        });
+                }
+            };
+
+            function updateSrc(ifrm) {
+                if (localhost) {
+                    ifrm.src = "/index.html" + flags;
+                } else {
+                    ifrm.src = editor + flags;
+                }
+            }
+            updateSrc(left);
+            updateSrc(right);
+
+            function setWidths() {
+                var t = document.body.clientWidth;
+                var n = Math.floor(t * ratio);
+                var i = Math.max(t - n - dividerWidth, 4);
+                left.style.width = n + "px";
+                divider.style.left = n + "px";
+                divider.style.width = dividerWidth + "px";
+                right.style.left = n + dividerWidth + "px";
+                right.style.width = i + "px";
+            }
+            function startDrag() {
+                left.style.visibility = "hidden";
+                right.style.visibility = "hidden";
+                var n = divider.onmouseover;
+                var t = divider.onmouseout;
+                divider.onmouseover = null;
+                divider.onmouseout = null;
+                document.body.onmousemove = function (n) {
+                    n || (n = window.event);
+                    ratio = (n.clientX - dividerWidth / 2) / document.body.clientWidth;
+                    ratio < .1 && (ratio = .1);
+                    ratio > .9 && (ratio = .9);
+                    setWidths();
+                }
+                document.body.onmouseup = function () {
+                    document.body.onmousemove = null;
+                    document.body.onmouseup = null;
+                    left.style.visibility = "inherit";
+                    right.style.visibility = "inherit";
+                    divider.onmouseover = n;
+                    divider.onmouseout = t;
+                }
+            }
+            window.onresize = setWidths;
+            setWidths();
+            divider.onmouseover = function () {
+                document.body.style.cursor = "w-resize";
+                divider.onmousedown = startDrag;
+            }
+            divider.onmouseout = function () {
+                document.body.style.cursor = "default";
+                divider.onmousedown = null;
+            }
+        })();        
+    </script>
+    <!-- @include tracking.html -->
+</body>
+
+</html>

@@ -170,7 +170,7 @@ namespace pxt.webBluetooth {
                     this.txCharacteristic.addEventListener('characteristicvaluechanged', this.handleValueChanged);
                     return this.txCharacteristic.startNotifications()
                 }).then(() => {
-                    pxt.tickEvent(`webble.${this.id}.connected`);
+                    pxt.tickEvent(`webble.connected`, {id : this.id});
                 });
         }
 

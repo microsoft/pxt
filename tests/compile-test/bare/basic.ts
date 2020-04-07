@@ -8,6 +8,12 @@ namespace control {
     }
 }
 
+namespace console {
+    export function log(s: string) {
+        control.__log(s + "\n")
+    }
+}
+
 //% async
 //% shim=basic::pause
 function pause(ms: number): void {}

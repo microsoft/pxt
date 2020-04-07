@@ -284,15 +284,15 @@ namespace pxsim.visuals {
     function mkBBLabel(cx: number, cy: number, size: number, rotation: number, txt: string, group: string, extraClasses?: string[]): GridLabel {
         //lbl
         let el = mkTxt(cx, cy, size, rotation, txt);
-        svg.addClass(el, "sim-bb-label");
+        pxsim.U.addClass(el, "sim-bb-label");
         if (extraClasses)
-            extraClasses.forEach(c => svg.addClass(el, c));
+            extraClasses.forEach(c => pxsim.U.addClass(el, c));
 
         //hover lbl
         let hoverEl = mkTxt(cx, cy, size * PIN_LBL_HOVER_SCALAR, rotation, txt);
-        svg.addClass(hoverEl, "sim-bb-label-hover");
+        pxsim.U.addClass(hoverEl, "sim-bb-label-hover");
         if (extraClasses)
-            extraClasses.forEach(c => svg.addClass(hoverEl, c));
+            extraClasses.forEach(c => pxsim.U.addClass(hoverEl, c));
 
         let lbl = { el: el, hoverEl: hoverEl, txt: txt, group: group };
         return lbl;
@@ -322,7 +322,7 @@ namespace pxsim.visuals {
             this.buildDom();
 
             if (opts.wireframe)
-                svg.addClass(this.bb, "sim-bb-outline");
+                pxsim.U.addClass(this.bb, "sim-bb-outline");
         }
 
         public hide() {
@@ -604,8 +604,8 @@ namespace pxsim.visuals {
                 let g = <SVGGElement>svg.elt("g");
                 return g;
             });
-            groups.forEach(g => svg.addClass(g, "sim-bb-pin-group"));
-            groups.forEach((g, i) => svg.addClass(g, `group-${allGrpNms[i]}`));
+            groups.forEach(g => pxsim.U.addClass(g, "sim-bb-pin-group"));
+            groups.forEach((g, i) => pxsim.U.addClass(g, `group-${allGrpNms[i]}`));
             let grpNmToGroup: Map<SVGGElement> = {};
             allGrpNms.forEach((g, i) => grpNmToGroup[g] = groups[i]);
             //group pins and add connecting wire
@@ -626,7 +626,7 @@ namespace pxsim.visuals {
                 let width = Math.max(maxX - minX, 0.0001/*rects with no width aren't displayed*/);
                 let height = Math.max(maxY - minY, 0.0001);
                 svg.hydrate(wire, { x: minX, y: minY, width: width, height: height });
-                svg.addClass(wire, "sim-bb-group-wire")
+                pxsim.U.addClass(wire, "sim-bb-group-wire")
                 let g = grpNmToGroup[grpNm];
                 g.appendChild(wire);
             });
@@ -665,8 +665,8 @@ namespace pxsim.visuals {
             let { cx, cy } = pin;
             let lbls = this.rowColToLbls[row][col];
             const highlightLbl = (lbl: GridLabel) => {
-                svg.addClass(lbl.el, "highlight");
-                svg.addClass(lbl.hoverEl, "highlight");
+                pxsim.U.addClass(lbl.el, "highlight");
+                pxsim.U.addClass(lbl.hoverEl, "highlight");
             };
             lbls.forEach(highlightLbl);
         }

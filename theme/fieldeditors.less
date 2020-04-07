@@ -9,59 +9,73 @@
 
 @blocklyLightTextColor: #fff;
 @blocklyDarkTextColor: #575E75;
+@fieldNoteSelectedColor: yellowgreen;
 
 ////// Note Editor Field ////////
-.blocklyDropDownContent .blocklyPianoDiv {
-    position: relative
-}
+.blocklyDropDownContent {
+    .blocklyPianoDiv {
+        position: relative;
+        touch-action: none;
+    }
 
-.blocklyDropDownContent .blocklyNote {
-    border: solid 0.5px;
-    cursor: pointer;
-    display: inline-block;
-    position: absolute;
-    top: 0px;
-    border-bottom-left-radius: 3px;
-    border-bottom-right-radius: 3px;
-}
+    .blocklyNote {
+        border: solid 0.5px;
+        cursor: pointer;
+        display: inline-block;
+        position: absolute;
+        top: 0px;
+        border-bottom-left-radius: 3px;
+        border-bottom-right-radius: 3px;
+        background-color: white;
+        z-index: @noteEditorWhiteKey;
+    }
 
-.blocklyDropDownContent .blocklyNote:hover {
-    background-color: yellow !important
-}
+    .blocklyNote.black {
+        background-color: black;
+        z-index: @noteEditorBlackKey;
+    }
 
-.blocklyDropDownContent .blocklyNoteLabel {
-    border: solid 0.5px;
-    color: white;
-    display: inline-block;
-    line-height: normal;
-    position: absolute;
-    text-align: center;
-    font-family: @blocklyFont;
-    font-size: 12pt;
-}
+    .blocklyNote:hover {
+        background-color: yellow !important;
+    }
 
-.blocklyDropDownContent .blocklyNotePrevNext {
-    border: solid 0.5px;
-    border-top: 0;
-    cursor: pointer;
-    color: white;
-    display: inline-block;
-    font-weight: bold;
-    line-height: normal;
-    position: absolute;
-    text-align: center;
-}
+    .blocklyNote.selected {
+        background-color: @fieldNoteSelectedColor !important;
+    }
 
-.blocklyDropdownTextLabel {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    width: 70px;
-    display: inline-block;
-    color: white;
-    font-size: 12px;
-}
+    .blocklyNoteLabel {
+        border: solid 0.5px;
+        color: white;
+        display: inline-block;
+        line-height: normal;
+        position: absolute;
+        text-align: center;
+        font-family: @blocklyFont;
+        font-size: 12pt;
+    }
 
+    .blocklyNotePrevNext {
+        border: solid 0.5px;
+        border-top: 0;
+        cursor: pointer;
+        color: white;
+        display: inline-block;
+        font-weight: bold;
+        line-height: normal;
+        position: absolute;
+        text-align: center;
+    }
+
+    .blocklyDropdownTextLabel {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        width: 70px;
+        display: inline-block;
+        color: white;
+        font-size: 12px;
+    }
+}
 ////// Grid Picker Editor Field ////////
 .blocklyGridPickerTooltip {
     z-index: @gridPickerZIndex;
@@ -72,7 +86,7 @@
     box-shadow: 0px 0px 8px 1px rgba(0, 0, 0, .3)
 }
 
-.blocklyWidgetDiv .blocklyGridPickerRow {	
+.blocklyWidgetDiv .blocklyGridPickerRow {
     display: table-row;
 }
 
@@ -103,6 +117,7 @@
 .blocklyWidgetDiv .blocklyGridPickerMenu .goog-menuitem {
     background: white;
     cursor: pointer;
+    min-width: unset;
 }
 
 .blocklyWidgetDiv .blocklyGridPickerMenu .goog-menuitem-highlight, .blocklyWidgetDiv .blocklyGridPickerMenu .goog-menuitem-hover {
@@ -201,8 +216,8 @@
     stroke: #fff;
     stroke-width: 12px !important;
     stroke-opacity: 1;
-    stroke-linecap: round; 
-    stroke-opacity: 1;   
+    stroke-linecap: round;
+    stroke-opacity: 1;
     cursor: pointer;
 }
 .blocklyToggle.blocklyToggleOffBreakpoint polygon {
@@ -220,7 +235,7 @@
 }
 
 ////// RGB Color picker ////////
-.blocklyDropDownDiv .rgbColorPicker .goog-palette-colorswatch {
+.blocklyDropDownDiv .rgbColorPicker > tr > td {
     height: 40px;
     width: 40px;
 }
@@ -242,21 +257,39 @@
     background-color: rgba(0, 0, 0, 0.55);
     z-index: 993;
 }
- #custom-content .blocklyCanvasOverlayDiv {
-    position: absolute;
+
+.blocklyCanvasOverlayOuter {
+    padding: 0.5rem;
+    margin: 0.1rem;
+    background: #249ca3;
+    border: solid 2px #249ca3;
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+    border-bottom-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.blocklyCanvasOverlayDiv {
     cursor: none;
     background-color: rgba(255, 255, 255, 0.9);
     z-index: 10000;
-     .cross-x, .cross-y {
+    position: relative;
+    overflow: hidden;
+    border: solid 5px #333333;
+
+    clip-path: polygon(0% 4px, 4px 0%, calc(100% - 2px) 0%, 100% 4px,
+    100% calc(100% - 2px), calc(100% - 2px) 100%, 4px 100%, 0 calc(100% - 2px));
+
+    .cross-x, .cross-y {
         background-color: #575E75;
         position: absolute;
     }
-     .cross-x {
+    .cross-x {
         width: 100%;
         height: 2px;
         z-index: 10;
     }
-    
+
     .cross-y {
         width: 2px;
         height: 100%;
@@ -266,6 +299,7 @@
         position: absolute;
         color: #575E75;
         font-size: 100%;
+        white-space: nowrap;
     }
 }
 

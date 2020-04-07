@@ -10,11 +10,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Microsoft/pxt.git"
+    "url": "git+https://github.com/microsoft/pxt.git"
   },
   "author": "",
   "license": "MIT",
-  "homepage": "https://github.com/Microsoft/pxt#readme",
+  "homepage": "https://github.com/microsoft/pxt#readme",
   "files": [
     "README.md",
     "cli.js",

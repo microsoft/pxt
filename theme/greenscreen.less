@@ -45,6 +45,14 @@
         box-shadow: 1px 1px #000;
     }
 
+    .blocklyBlockBackground {
+        stroke-width: 2px;
+    }
+
+    .blocklyBlockBackground[fill="@{greenScreenBlockColor}"] {
+        fill: @greenScreenGreen !important;
+    }
+
     .pxtToolbox:not(.invertedToolbox) {
         .blocklyTreeRow:not(.blocklyTreeSelected) {
             background: white;

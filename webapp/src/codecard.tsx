@@ -59,16 +59,16 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
     renderCore() {
         const card = this.props
         let color = card.color || "";
-        if (!color) {
-            if (card.hardware && !card.software) color = 'black';
-            else if (card.software && !card.hardware) color = 'teal';
-        }
         const renderMd = (md: string) => md.replace(/`/g, '');
         const url = card.url ? /^[^:]+:\/\//.test(card.url) ? card.url : ('/' + card.url.replace(/^\.?\/?/, ''))
             : undefined;
         const sideUrl = url && /^\//.test(url) ? "#doc:" + url : url;
         const className = card.className;
         const cardType = card.cardType;
+        const tutorialDone = card.tutorialLength == card.tutorialStep + 1;
+        const ariaLabel = card.ariaLabel || card.title || card.shortName || card.name;
+
+        const descriptions = card && card.description && card.description.split("\n");
 
         const clickHandler = card.onClick ? (e: any) => {
             if (e.target && e.target.tagName == "A")
@@ -79,47 +79,48 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
 
         const imageUrl = card.imageUrl || (card.youTubeId ? `https://img.youtube.com/vi/${card.youTubeId}/0.jpg` : undefined);
 
-        const cardDiv = <div className={`ui card ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`}
-            role={card.role} aria-selected={card.role === "option" ? "true" : undefined} aria-label={card.ariaLabel || card.title} title={card.title}
+        const style = card.style || "card"
+        const cardDiv = <div className={`ui ${style} ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`}
+            role={card.role} aria-selected={card.role === "option" ? "true" : undefined} aria-label={ariaLabel} title={card.title}
             onClick={clickHandler} tabIndex={card.onClick ? card.tabIndex || 0 : null} onKeyDown={card.onClick ? sui.fireClickOnEnter : null}>
-            {card.header || card.blocks || card.javascript || card.hardware || card.software || card.any ?
+            {card.header ?
                 <div key="header" className={"ui content " + (card.responsive ? " tall desktop only" : "")}>
-                    <div className="right floated meta">
-                        {card.any ? (<sui.Icon key="costany" icon="ui grey circular label tiny">{card.any > 0 ? card.any : null} </sui.Icon>) : null}
-                        {repeat(card.blocks, (k) => <sui.Icon key={"costblocks" + k} icon="puzzle orange" />)}
-                        {repeat(card.javascript, (k) => <sui.Icon key={"costjs" + k} icon="align left blue" />)}
-                        {repeat(card.hardware, (k) => <sui.Icon key={"costhardware" + k} icon="certificate black" />)}
-                        {repeat(card.software, (k) => <sui.Icon key={"costsoftware" + k} icon="square teal" />)}
-                    </div>
                     {card.header}
                 </div> : null}
             {card.label || card.labelIcon || card.blocksXml || card.typeScript || imageUrl || cardType == "file" ? <div className={"ui image"}>
                 {card.label || card.labelIcon ?
                     <label role={card.onLabelClicked ? 'button' : undefined} onClick={card.onLabelClicked}
-                        className={`ui ${card.labelClass ? card.labelClass : "orange right ribbon"} label`}>
-                    {card.labelIcon ? <sui.Icon icon={card.labelIcon} /> : card.label}</label> : undefined}
+                        className={`ui ${card.labelClass ? card.labelClass : "orange right ribbon"} label`}
+                        aria-label={`${ariaLabel} ${card.onLabelClicked ? "button" : "label"}`}
+                    >
+                        {card.labelIcon ? <sui.Icon icon={card.labelIcon} /> : card.label}
+                    </label> : undefined}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : undefined}
-                {card.cardType != "file" && imageUrl ? <div className="ui imagewrapper">
+                {card.cardType != "file" && imageUrl ? <div className="ui imagewrapper" aria-hidden={true} role="presentation">
                     <div className={`ui cardimage`} data-src={imageUrl} ref="lazyimage" />
                 </div> : undefined}
                 {card.cardType == "file" && !imageUrl ? <div className="ui fileimage" /> : undefined}
                 {card.cardType == "file" && imageUrl ? <div className="ui fileimage" data-src={imageUrl} ref="lazyimage" /> : undefined}
             </div> : undefined}
             {card.icon || card.iconContent ?
-                <div className="ui imagewrapper"><div className={`ui button massive fluid ${card.iconColor} ${card.iconContent ? "iconcontent" : ""}`}>
+                <div className="ui imagewrapper" aria-hidden={true} role="presentation"><div className={`ui button massive fluid ${card.iconColor} ${card.iconContent ? "iconcontent" : ""}`}>
                     {card.icon ? <sui.Icon icon={`${'icon ' + card.icon}`} /> : undefined}
                     {card.iconContent || undefined}
                 </div></div> : undefined}
-            {card.shortName || card.name || card.description ?
+            {(card.shortName || card.name || descriptions) ?
                 <div className="content">
                     {card.shortName || card.name ? <div className="header">{card.shortName || card.name}</div> : null}
-                    {card.description ? <div className="description tall">{renderMd(card.description)}</div> : null}
+                    {descriptions && descriptions.map((element, index) => {
+                            return <div key={`line${index}`} className={`description tall ${card.icon || card.iconContent || card.imageUrl ? "" : "long"}`}>{renderMd(element)}</div>
+                        })
+                    }
                 </div> : undefined}
             {card.time ? <div className="meta">
+                {card.tutorialLength ? <span className={`ui tutorial-progress ${tutorialDone ? "green" : "orange"} left floated label`}><i className={`${tutorialDone ? "trophy" : "circle"} icon`}></i>&nbsp;{lf("{0}/{1}", (card.tutorialStep || 0) + 1, card.tutorialLength)}</span> : undefined}
                 {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span> : null}
             </div> : undefined}
             {card.extracontent || card.learnMoreUrl || card.buyUrl || card.feedbackUrl ?
-                <div className="ui extra content widedesktop only">
+                <div className="ui extra content mobile hide">
                     {card.extracontent}
                     {card.buyUrl ?
                         <a className="learnmore left floated" href={card.buyUrl}

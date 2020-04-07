@@ -9,9 +9,8 @@
         High Contrast
 *******************************/
 
-@selected: #10C8CD;
+@selected: yellow;
 @disabled: #3ff23f;
-@hcYellow: yellow;
 
 /* Messages */
 #msg .hc {
@@ -30,14 +29,14 @@
 @HCmainMenuTextColor: black;
 @HCmainMenuInverseTextColor: white;
 
-@HCblocklyToolboxColor: white;
-@HCblocklyTreeLabelColor: black;
+@HCblocklyToolboxColor: black;
+@HCblocklyTreeLabelColor: white;
 @HCblocklyTreeLabelSelectedColor: white;
 
 @HCeditorToolsBackground: black;
 
-@HCbuttonBackground: white;
-@HCbuttonTextColor: black;
+@HCbackground: black;
+@HCtextColor: white;
 
 @HChomeScreenBackground: black;
 
@@ -48,46 +47,79 @@
 
     /* Focus */
 
-    *[tabindex='0']:focus,
-    *[tabindex*='d1']:focus,
-    *[tabindex*='d2']:focus, /* Takes items with a defined tabIndex from 0 to 29. */
-    *[role='menuitem']:focus,
-    a:not([tabindex='-1']):focus,
-    input:not([tabindex='-1']):focus,
-    button:not([tabindex='-1']):focus {
-        outline: 2px solid @selected !important;
-    }
-
-    @media all and (pointer:coarse) { /* If touch screen */
-        *[tabindex='0']:focus,
-        *[tabindex*='d1']:focus,
-        *[tabindex*='d2']:focus,
-        *[role='menuitem']:focus,
-        a:not([tabindex='-1']):focus,
-        input:not([tabindex='-1']):focus,
-        button:not([tabindex='-1']):focus {
-            outline: 1px solid transparent !important;
+    *[tabindex='0'],
+    *[tabindex*='d1'],
+    *[tabindex*='d2'], /* Takes items with a defined tabIndex from 0 to 29. */
+    *[role='menuitem'],
+    a:not([tabindex='-1']),
+    input:not([tabindex='-1']),
+    button:not([tabindex='-1']),
+    #monacoEditor .blocklyTreeRow,
+    #monacoEditor .monacoDraggableBlock {
+        &:focus, &:hover {
+            outline: 2px solid @selected !important;
         }
     }
 
-    .blocklyWidgetDiv *:focus,
-    .blocklySVG *:focus,
-    .monaco-editor *:focus,
-    #monacoEditor *:focus {
-        outline: none !important;
+    p {
+        color: @HCtextColor !important;
+        background-color: @HCbackground !important;
     }
 
-    .blocklyTreeRoot:focus {
-        outline: none !important;
+    #tutorialcard .prevbutton,
+    #tutorialcard .nextbutton {
+        &:hover, &:focus {
+            > i, > span, > i.orange {
+                color: @HCtextColor !important;
+            }
+        }
     }
 
-    /* Blockly toolbox */
+    @media all and (pointer:coarse) { /* If touch screen */
+        *[tabindex='0'],
+        *[tabindex*='d1'],
+        *[tabindex*='d2'],
+        *[role='menuitem'],
+        a:not([tabindex='-1']),
+        input:not([tabindex='-1']),
+        button:not([tabindex='-1']),
+        #monacoEditor .blocklyTreeRow,
+        #monacoEditor .monacoDraggableBlock {
+            &:focus, &:hover {
+                outline: 1px solid transparent !important;
+            }
+        }
+    }
+
+    .blocklyWidgetDiv *,
+    .blocklySVG *,
+    .monaco-editor *,
+    #monacoEditor *,
+    .blocklyTreeRoot {
+        &:focus, &:hover {
+            outline: none !important;
+        }
+    }
+
+    /* Toolbox */
     .pxtToolbox:not(.invertedToolbox) {
         span.blocklyTreeLabel {
             color: @HCblocklyTreeLabelColor;
         }
         .blocklyTreeSelected span.blocklyTreeLabel {
             color: @HCblocklyTreeLabelSelectedColor;
+        }
+        .blocklyTreeRow:not(.blocklyTreeSelected):hover,
+        .blocklyTreeRow:not(.blocklyTreeSelected):focus {
+            background-color: lighten(@HCblocklyToolboxColor, 25.0);
+        }
+    }
+
+    #monacoEditor .monacoDraggableBlock {
+        background: none !important;
+
+        span.argName {
+            border: 1px solid rgba(255, 255, 255, .7);
         }
     }
 
@@ -96,11 +128,18 @@
         fill: @HCblocklySvgColor !important;
         fill-opacity: 1 !important;
         stroke-width: 4px;
-        stroke: white;
+        stroke: @HCblocklyTreeLabelColor;
     }
     .monacoFlyout {
         background: @HCblocklySvgColor !important;
-        border-right: 4px solid white !important;
+        border-right: 4px solid @HCtextColor !important;
+
+        .monacoBlock {
+            color: @HCtextColor !important;
+        }
+        .blockHandle {
+            background: @HCblocklySvgColor !important;
+        }
     }
 
     /* Main editor areas */
@@ -125,7 +164,7 @@
 
     .blocklyToolboxDiv, .monacoToolboxDiv {
         background: @HCblocklyToolboxColor !important;
-        border-right: 0px !important;
+        border-right: 1px solid @HCblocklyTreeLabelColor !important;
     }
     .blocklyPath {
         stroke-width: 3px;
@@ -137,41 +176,60 @@
         color: @selected !important;
     }
 
+    .menu .ui.label.betalabel {
+        color: @HCbackground !important;
+    }
+
     #mainmenu:not(.inverted), #homemenu:not(.inverted) {
         background-color: @HCmainMenuBackground !important;
         color: @HCmainMenuTextColor !important;
-        border-bottom: 4px solid white;
+        border-bottom: 4px solid @HCtextColor;
 
         .ui.item {
             color: @HCmainMenuTextColor;
         }
         .item.editor-menuitem .ui.grid {
-            border: 1px solid black !important;
+            border: 1px solid @HCbackground !important;
         }
     }
     #mainmenu.inverted, #homemenu.inverted {
         background-color: @HCmainMenuTextColor !important;
         color: @HCmainMenuBackground !important;
-        border-bottom: 4px solid white;
+        border-bottom: 4px solid @HCtextColor;
 
         .ui.item {
             color: @HCmainMenuBackground;
         }
         .item.editor-menuitem .ui.grid {
-            border: 1px solid white !important;
+            border: 1px solid @HCtextColor !important;
         }
     }
 
     /* Editor switch toggle */
     .menubar .ui.menu.fixed .item.editor-menuitem .ui.grid {
-        background: black !important;
+        background: @HCbackground !important;
         .item:not(.active) {
             opacity: 1 !important;
             color: @HCmainMenuInverseTextColor !important;
         }
         .item.active {
-            background: white !important;
+            background: @HCtextColor !important;
             color: @HCmainMenuTextColor !important;
+        }
+
+        .dropdown, .dropdown:hover {
+            .selected i, .selected span {
+                color: @HCmainMenuTextColor !important;
+            }
+        }
+
+        .dropdown.active:hover:not(.visible) i {
+            color: @HCmainMenuTextColor !important;
+        }
+
+        .dropdown:focus:not(.visible) i,
+        .dropdown.active:focus:not(.visible) i {
+            color: @HCtextColor !important;
         }
     }
 
@@ -180,26 +238,26 @@
         background: @HCeditorToolsBackground !important;
     }
     #editortools {
-        border-top: 4px solid white;
+        border-top: 4px solid @HCtextColor;
     }
 
     /* Buttons */
     .ui.button {
-        background: @HCbuttonBackground !important;
-        color: @HCbuttonTextColor !important;
-        border: 1px solid @HCbuttonTextColor !important;
+        background: @HCbackground !important;
+        color: @HCtextColor !important;
+        border: 1px solid @HCtextColor !important;
 
-        &:focus {
-            color: @selected !important;
+        &:focus, &:hover {
+            color: @HCtextColor !important;
             border-color: @selected !important;
 
             i, span {
-                color: @selected !important;
+                color: @HCtextColor !important;
             }
         }
 
         .inverted.icon {
-            color: @HCbuttonTextColor !important;
+            color: @HCtextColor !important;
         }
     }
 
@@ -212,51 +270,139 @@
         }
     }
 
-    /* Inputs */
-    .ui.input input {
-        background: white !important;
-        color: black !important;
-        border: 1px solid black !important;
+    .filemenu .ui.button,
+    .header-close .ui.button {
+        &:focus, &:hover {
+            color: @selected !important;
+            i, span {
+                color: @selected !important;
+            }
+        }
     }
-    input::placeholder {
-        color: @selected !important;
+
+    /* Inputs */
+    .ui.input input,
+    .ui.input .input {
+        background: @HCbackground !important;
+        color: @HCtextColor !important;
+        border: 1px solid @HCtextColor !important;
+    }
+    .ui.form {
+        .field>label {
+            color: @HCtextColor !important;
+        }
+        input,
+        textarea,
+        .ui.secondary.segment {
+            background: @HCbackground !important;
+            color: @HCtextColor !important;
+            border: 1px solid @HCtextColor !important;
+        }
+    }
+
+    input,
+    .input,
+    .ui.form {
+        ::placeholder {
+            color: darken(@HCtextColor, 20.0) !important;
+        }
+
+        ::selection {
+            color: @HCbackground !important;
+            background: @HCtextColor !important;
+        }
+    }
+
+    .ui.header {
+        color: @HCtextColor !important;
     }
 
     /* Home screen */
     .projectsdialog, .projectsdialog .tabsegment {
         background: @HChomeScreenBackground !important;
-        color: white !important;
-        border-color: white !important;
+        color: @HCtextColor !important;
+        border-color: @HCtextColor !important;
 
         .header {
             opacity: 1 !important;
-            color: white;
+            color: @HCtextColor;
         }
 
         .homefooter a {
-            color: white !important
+            color: @HCtextColor !important
         }
+    }
+
+    .projectsdialog {
+        .gallerysegment {
+            .ui.header {
+                &.myproject-header {
+                    &:focus, &:hover {
+                        text-decoration: underline;
+                        color: @HCtextColor;
+                    }
+                }
+            }
+        }
+        .detailview {
+            .closeIcon .remove.icon {
+                background-color: @HCbackground;
+            }
+            .header {
+                color: @HCtextColor;
+            }
+            .ui.grid {
+                background-color: @HChomeScreenBackground;
+                border-width: 2px 0;
+                border-color: @HCtextColor;
+                border-style: solid;
+            }
+            .actions {
+                .card-action {
+                    border: 2px solid @HCtextColor;
+                    .button.attached i {
+                        opacity: 1;
+                        color: @HCtextColor;
+                    }
+                }
+                .card-action-title {
+                    color: @HCtextColor;
+                }
+            }
+        }
+    }
+
+    .ui.form .content .description {
+        color: @HCtextColor;
+    }
+
+    .ui.table {
+        th, tr, i,
+        th.positive, tr.postive {
+            color: @HCtextColor !important;
+            background: @HCbackground !important;
+        }
+    }
+
+    .carouselarrow {
+        background: @HCbackground;
+        color: @HCtextColor;
+        border: 2px solid @HCtextColor !important;
     }
 
     /* Cards */
     .card {
-        background: black !important;
-        border: 2px solid white !important;
+        background: @HCbackground !important;
+        border: 2px solid @HCtextColor !important;
         border-radius: initial !important;
         box-shadow: initial !important;
 
         .header, .description, .meta {
-            color: white !important;
+            color: @HCtextColor !important;
         }
 
-        &:hover {
-            .header, .description, .meta {
-                color: @hcYellow !important;
-            }
-        }
-
-        &:focus {
-            .header, .description, .meta {
+        &:focus, &:hover {
+            .header, .meta, .description {
                 color: @selected !important;
             }
         }
@@ -264,74 +410,91 @@
         .ui.orange.labels .label, .ui.orange.label {
             background: @disabled !important;
             border-color: @disabled !important;
-            color: black !important;
+            color: @HCbackground !important;
         }
     }
 
     /* File menu */
     .filemenu {
         .item, .ui.button {
-            background: black !important;
-            color: white !important;
-            border: 1px solid white !important;
+            background: @HCbackground !important;
+            color: @HCtextColor !important;
+            border: 1px solid @HCtextColor !important;
         }
-        .item:focus, .item.active {
-            background: @selected !important;
+        .item:focus {
+            border-color: @selected !important;
 
             span {
-                color: black !important;
+                color: @HCbackground !important;
             }
         }
     }
 
     /* PxtJson */
     #maineditor {
-        border-left: 1px solid white !important;
+        border-left: 1px solid @HCtextColor !important;
+        background: @HCbackground;
+
+        .ui.segment {
+            border: 1px solid @HCtextColor;
+            background: @HCbackground;
+            color: @HCtextColor;
+
+            .ui.toggle.checkbox {
+                label {
+                    color: @HCtextColor !important;
+                }
+
+                .box:before, label:before {
+                    border: 1px solid @HCtextColor;
+                }
+            }
+        }
     }
 
     /* Serial editor */
 
     #serialPreview div {
-        color: white;
+        color: @HCtextColor;
     }
 
     #serialCharts .ui.segment {
-        background-color: #fff;
+        background-color: @HCtextColor;
     }
 
     #serialEditor {
-        background-color: #000;
+        background-color: @HCbackground;
     }
 
     #serialHeader .ui.header {
-        color: black;
+        color: @HCbackground;
     }
 
     #serialConsole {
-        background-color: #000;
-        color: #fff;
-        border-color: #fff;
+        background-color: @HCbackground;
+        color: @HCtextColor;
+        border-color: @HCtextColor;
     }
 
     #serialPreview .label {
-        border: 10px solid #fff !important;
+        border: 10px solid @HCtextColor !important;
         &:hover {
-            border-color: darken(#fff, 10.0) !important;
+            border-color: darken(@HCtextColor, 10.0) !important;
         }
     }
 
     .ui.button.labeled.icon.editorBack {
-        background: white !important;
+        background: @HCtextColor !important;
     }
 
     /* Hyperlinks */
     a {
-        color: @selected !important;
+        color: @HCtextColor !important;
     }
 
     #sidedocsbar {
         a {
-            color: black !important;
+            color: @HCbackground !important;
 
             &:focus {
                 color: @selected !important;
@@ -344,84 +507,113 @@
     }
 
     /* Dropdown */
-    .ui.menu .ui.dropdown .menu {
-        border: 1px solid white !important;
+    .ui.menu .ui.dropdown .menu,
+    #editortools .ui.dropdown .menu {
+        border: 1px solid @HCtextColor !important;
     }
 
-    .ui.menu .ui.dropdown .menu, .ui.menu .ui.dropdown .menu > .item {
-        background: white !important;
-        color: black !important;
+    .ui.menu .ui.dropdown .menu,
+    .ui.menu .ui.dropdown .menu > .item,
+    #editortools .ui.dropdown .menu,
+    #editortools .ui.dropdown .menu > .item {
+        background: @HCbackground !important;
+        color: @HCtextColor !important;
 
         &:focus {
-            color: @selected !important;
+            color: @HCtextColor !important;
             font-weight: normal !important;
 
             i, span {
-                color: @selected !important;
+                color: @HCtextColor !important;
                 font-weight: normal !important;
             }
         }
     }
 
-    .ui.menu .ui.dropdown .menu > .divider {
-        background: black !important;
-        border-top: 1px solid white !important;
+    .ui.menu .ui.dropdown .menu > .divider,
+    #editortools .ui.dropdown .menu > .divider {
+        background: @HCbackground !important;
+        border-top: 1px solid @HCtextColor !important;
+    }
+
+    #editordropdown .menu > .item:not(.active) {
+        background: transparent !important;
     }
 
     /* Tab list in Modals*/
-    .ui.secondary.menu > .item:not(.active), .ui.secondary.pointing.menu > .item:not(.active), .ui.secondary.inverted.menu .link.item:not(.active) {
-        color: black !important;
-        border: 1px solid white !important;
+    .ui.secondary.menu > .item,
+    .ui.secondary.pointing.menu > .item,
+    .ui.secondary.inverted.menu .link.item {
+        color: @HCtextColor !important;
+        border: 1px solid @HCtextColor !important;
     }
 
     .ui.secondary.menu > .item.active, .ui.secondary.menu > .item.active:hover,
     .ui.secondary.pointing.menu > .item.active, .ui.secondary.pointing.menu > .item.active:hover {
-        color: @selected !important;
         border: 2px solid @selected !important;
         border-radius: initial !important;
         box-shadow: initial !important;
     }
 
     /* Tutorial */
-    .ui.message {
-        background-color: black !important;
-        color: white !important;
+    .ui.tutorialsegment {
+        background-color: @HCbackground !important;
+        color: @HCtextColor !important;
 
         .tutorialmessage {
-            outline: 1px solid white !important;
             border: none !important;
 
             &:focus {
                 color: @selected !important;
             }
+
+        }
+
+        .tooltip, .tooltip:before {
+            background-color: @HCbackground;
+            border: 2px solid @HCtextColor;
+            color: @HCtextColor;
+        }
+
+        .tooltip:before {
+            border-color: @HCtextColor transparent transparent @HCtextColor !important;
+        }
+
+        .tutorialhint {
+            border-color: @HCtextColor;
+            background-color: @HCbackground;
+            color: @HCtextColor;
+
+            &:before {
+                border-right-color: @HCtextColor;
+            }
         }
     }
 
     .ui.label {
-        background-color: black !important;
-        border: 2px solid white !important;
+        background-color: @HCbackground !important;
+        border: 2px solid @HCtextColor !important;
     }
 
     .ui.blue.labels .label, .ui.blue.label {
-        background-color: @selected !important;
         border-color: @selected !important;
     }
 
 
     /* Modals */
     .ui.modal {
-        border: 2px solid black !important;
+        border: 2px solid @HCbackground !important;
         border-radius: initial !important;
         box-shadow: initial !important;
 
         > .closeIcon .close {
-            color: black !important;
+            color: @HCtextColor !important;
         }
     }
 
     .ui.modal, .ui.modal > .header, .ui.modal > .content, .ui.modal > .actions, .ui.modal > .segment {
-        background: white !important;
-        color: black !important;
+        background: @HCbackground !important;
+        color: @HCtextColor !important;
     }
 
     /* Accessible menu */
@@ -430,6 +622,20 @@
             color: @HCaccessibleMenuColor !important;
             background: @HCaccessibleMenuBackground !important;
         }
+    }
+
+    [data-tooltip]:after,
+    [data-tooltip]:before {
+        color: @HCtextColor!important;
+        background-color: @HCbackground!important;
+    }
+
+    [data-tooltip]:after {
+        border: 1px solid @HCtextColor!important;
+    }
+
+    [data-tooltip]:before {
+        box-shadow: 1px 1px 0 0 @HCtextColor!important;
     }
 }
 

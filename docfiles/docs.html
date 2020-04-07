@@ -1,11 +1,22 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#" xmlns:fb="http://www.facebook.com/2008/fbml">
+<html lang="@locale@" xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#"
+	xmlns:fb="http://www.facebook.com/2008/fbml">
 
 <head>
 	<meta charset="UTF-8">
 	<title>@name@</title>
 	<meta name="Description" content="@description@" />
 
+	<!-- @ifdef incontexttranslations -->
+	<script type="text/javascript">
+		var _jipt = [];
+		_jipt.push(['project', '@crowdinproject@']);
+		_jipt.push(['escape', function () {
+			window.location.href = window.location.href.replace(/[$\?]translate=1/, '');
+		}]);
+	</script>
+	<script type="text/javascript" src="//cdn.crowdin.com/jipt/jipt.js"></script>
+	<!-- @endif -->
 	<!-- @include meta.html -->
 	<!-- @include head.html -->
 
@@ -13,16 +24,13 @@
 
 <body id='root' class='root'>
 
-	<div id="accessibleMenu" class="ui accessibleMenu borderless fixed menu" role="menubar">
+	<div id="accessibleMenu" class="ui accessibleMenu borderless fixed menu docs" role="menubar">
 		@accMenu@
 	</div>
-
 
 	<!-- @include tocheader.html -->
 
 	<div id="docs" class="pusher">
-
-		<!-- @include toc.html -->
 
 		<div class="article" id="maincontent">
 			<div class="article-inner">
@@ -30,18 +38,23 @@
 				<!-- @include header.html -->
 
 				<div class="main ui container fluid mainbody">
-					@printBtn@ @body@
+					<button id="printbtn" class="circular ui icon right floated button hideprint hidemobile"
+						title="Print" aria-label="Print">
+						<i class="icon print"></i>
+					</button>
+					@body@
 					<div class="hideprint">@github@</div>
 				</div>
 
-				<!-- @include footer.html -->
 			</div>
+
+			<!-- @include footer.html -->
 
 		</div>
 
 	</div>
 
-
+    <!-- @include langpicker.html -->
 	<!-- @include macros.html -->
 	<!-- @include tracking.html -->
 

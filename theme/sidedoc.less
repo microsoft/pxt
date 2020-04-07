@@ -34,24 +34,8 @@
 
 /* Side docs toggle button */
 #sidedocstoggle {
-  position: absolute;
-  border-top-left-radius: 100px;
-  border-bottom-left-radius: 100px;
   right: 0;
-  top: 40%;
-  bottom: 40%;
-  height: 20%;
-  z-index: @sidedocZIndex;
-  padding: 0;
-  margin: 0;
-  background: grey;
-  box-shadow: none !important;
-  transition: none;
-
-  &:hover,
-  &:focus {
-    background: #5A5A5A;
-  }
+  left: auto;
 }
 
 .sideDocs #sidedocs {
@@ -89,17 +73,6 @@
    transition: right 0.5s, opacity 0.5s linear;
 }
 
-/* Show chevron icon on hover when collapsed */
-#sidedocstoggle > i.icon.hover {
-    display: none;
-}
-#root:not(.sideDocs) #sidedocstoggle.ui.button:hover > i.icon {
-    display: none !important;
-}
-#root:not(.sideDocs) #sidedocstoggle.ui.button:hover > i.icon.hover {
-    display: inherit !important;
-}
-
 .sideDocs #sidedocsbar {
     top: 1rem;
     z-index: @sidedocZIndex+1;
@@ -110,9 +83,31 @@
   font-size: @h3;
 }
 
+/* Sidedocs in Monaco editor */
+.sideDocs.editorlang-text {
+    #sidedocs {
+        width: 50%!important;
+        min-width: 18rem;
+    }
+
+    #sidedocsframe, #sidedocsframe-wrapper {
+        width: 100%!important;
+    }
+
+    #sidedocstoggle {
+        right: calc(~'50% - 0.5rem')!important;
+    }
+
+    @media only screen and (max-width: 36rem) {
+        #sidedocstoggle {
+            right: 17rem!important;
+        }
+    }
+}
+
 /* Large Monitor */
 @media only screen and (min-width: @largeMonitorBreakpoint) {
-    .sideDocs #sidedocs, #sidedocsframe, .sideDocs #sidedocsframe-wrapper {
+    .sideDocs #sidedocs, .sideDocs #sidedocsframe, .sideDocs #sidedocsframe-wrapper {
         width: @sideBarWidthLarge !important;
     }
     .sideDocs #sidedocstoggle {
@@ -157,10 +152,20 @@
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-    .sideDocs #sidedocs, #sidedocsframe, .sideDocs #sidedocsframe-wrapper {
+    .sideDocs #sidedocs, .sideDocs #sidedocsframe, .sideDocs #sidedocsframe-wrapper {
         width: @sideBarWidthSmall !important;
     }
     .sideDocs #sidedocstoggle {
         right: @sideBarWidthSmall !important;
+    }
+}
+
+@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
+    .sideDocs #sidedocs {
+        top: calc(@thinMenuHeight + 1rem);
+        padding-bottom: calc(@thinMenuHeight + @editorToolsHeight + 2rem);
+    }
+    .sideDocs.collapsedEditorTools #sidedocs, .sideDocs.hideEditorFloats #sidedocs {
+        padding-bottom: calc(@thinMenuHeight + @editorToolsCollapsedHeight + 2rem);
     }
 }

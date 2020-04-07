@@ -1,0 +1,94 @@
+/*******************************
+        Keymap
+*******************************/
+.keymap {
+    position: absolute;
+    display: flex;
+    left: 0;
+    margin: 0 3rem;
+    padding: 1rem;
+    width: calc(~'100% - 6rem');
+    background-color: @white;
+    border-radius: 0.25rem;
+    opacity: 0.95;
+    border: 1px solid @teal;
+    z-index: 1;
+}
+
+.keymap .close {
+    position: absolute;
+    right: 1rem;
+    margin: 0;
+    color: @white;
+    cursor: pointer;
+}
+
+.keymap > div {
+    margin-right: 1rem;
+    flex: 1;
+}
+
+.keymap > div:last-child {
+    margin-right: 0;
+}
+
+.keymap-title {
+    display: inline-block;
+    width: 100%;
+    margin: 0 0.25rem 0.25rem;
+    text-transform: capitalize;
+    font-weight: 600;
+}
+
+.keymap-key {
+    display: inline-block;
+    height: 2rem;
+    margin: 0.25rem;
+    padding: 0 0.75rem;
+    line-height: 2rem;
+    border: 1px solid darken(@teal, 10%);
+    border-radius: 0.25rem;
+    background-color: @teal;
+    color: @white;
+    text-transform: uppercase;
+}
+
+.keymap-name {
+    display: inline-block;
+    margin-left: 0.75rem;
+    text-transform: lowercase;
+}
+
+.keymap-name:first-letter {
+    text-transform: uppercase;
+}
+
+
+.keymap.above,
+.fullscreensim .keymap {
+    top: 2rem;
+
+    .close {
+        color: @teal;
+    }
+}
+
+.fullscreensim .keymap {
+    left: 50%;
+    top: 50%;
+    width: 22rem;
+    margin: 0;
+    transform: translateX(-50%) translateY(-50%);
+}
+
+@media only screen and (max-width: @largestSmallMonitor) {
+    #root:not(.fullscreensim) {
+        .keymap-button {
+            display: none;
+        }
+
+        .mute-button {
+            border-radius: 0.2rem;
+        }
+    }
+}

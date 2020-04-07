@@ -1,68 +1,27 @@
 /// <reference path="./monacoFieldEditor.ts" />
+/// <reference path="./field_react.ts" />
 
 namespace pxt.editor {
     const fieldEditorId = "image-editor";
 
-    export class MonacoSpriteEditor implements MonacoFieldEditor {
-        private resolver: (edit: TextEdit) => void;
-        private rejecter: (err?: any) => void;
-
-        protected editor: pxtsprite.SpriteEditor;
-        protected editrange: monaco.Range;
-
-        getId() {
-            return fieldEditorId;
+    export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.sprite.Bitmap> {
+        protected textToValue(text: string): pxt.sprite.Bitmap {
+            return pxt.sprite.imageLiteralToBitmap(text);
         }
 
-        showEditorAsync(editrange: monaco.Range, host: MonacoFieldEditorHost): Promise<TextEdit> {
-            this.editrange = editrange;
-            const contentDiv = host.contentDiv();
-            const state = pxtsprite.imageLiteralToBitmap(host.getText(editrange));
-
-            this.editor = new pxtsprite.SpriteEditor(state, host.blocksInfo(), false);
-            this.editor.render(contentDiv);
-            this.editor.rePaint();
-            this.editor.setActiveColor(1, true);
-            this.editor.setSizePresets([
-                [8, 8],
-                [16, 16],
-                [32, 32],
-                [10, 8]
-            ]);
-
-            contentDiv.style.height = (this.editor.outerHeight() + 3) + "px";
-            contentDiv.style.width = (this.editor.outerWidth() + 3) + "px";
-            contentDiv.style.overflow = "hidden";
-            addClass(contentDiv, "sprite-editor-dropdown-bg");
-            addClass(contentDiv.parentElement, "sprite-editor-dropdown");
-
-            this.editor.addKeyListeners();
-            this.editor.onClose(() => this.onClosed());
-            this.editor.layout();
-            return new Promise((resolve, reject) => {
-                this.resolver = resolve;
-                this.rejecter = reject;
-            });
+        protected resultToText(result: pxt.sprite.Bitmap): string {
+            return pxt.sprite.bitmapToImageLiteral(result, "typescript");
         }
 
-        onClosed() {
-            if (this.resolver) {
-                this.resolver({
-                    range: this.editrange,
-                    replacement: pxtsprite.bitmapToImageLiteral(this.editor.bitmap())
-                });
-
-                this.editor.removeKeyListeners();
-
-                this.editor = undefined;
-                this.editrange = undefined;
-                this.resolver = undefined;
-                this.rejecter = undefined;
-            }
+        protected getFieldEditorId() {
+            return "image-editor";
         }
-
-        dispose() {
-            this.onClosed();
+        protected getOptions(): any {
+            return {
+                initWidth: 16,
+                initHeight: 16,
+                blocksInfo: this.host.blocksInfo()
+            };
         }
     }
 
@@ -72,18 +31,14 @@ namespace pxt.editor {
         glyphCssClass: "sprite-editor-glyph sprite-focus-hover",
         heightInPixels: 510,
         matcher: {
-            searchString: "img`(?:[ a-fA-F0-9\\.]|\\n)+`",
+            // match both JS and python
+            searchString: "img\\s*(?:`|\\(\"\"\")(?:[ a-fA-F0-9\\.]|\\n)*\\s*(?:`|\"\"\"\\))",
             isRegex: true,
             matchCase: true,
             matchWholeWord: false
         },
         proto: MonacoSpriteEditor
     };
-
-    function addClass(el: Element, className: string) {
-        if (el.hasAttribute("class")) el.setAttribute("class", el.getAttribute("class") + " " + className);
-        else el.setAttribute("class", className);
-    }
 
     registerMonacoFieldEditor(fieldEditorId, spriteEditorDefinition);
 }

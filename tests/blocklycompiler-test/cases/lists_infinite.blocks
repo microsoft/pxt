@@ -1,1 +1,47 @@
-<xml><block type="pxt-on-start" id="YhBqc[:E#~dk0-.JHVXF" x="21" y="60"><statement name="HANDLER"><block type="variables_set" id="Hm)Y(P5QtPw2t1t@gb/#"><field name="VAR">item</field><value name="VALUE"><shadow type="math_number"><field name="NUM">0</field></shadow><block type="lists_index_get" id="xQEpF!vsPhgVi001EO@r"><value name="INDEX"><shadow type="math_number" id="SnV0.bOo;ZMiFDu;,CwY"><field name="NUM">0</field></shadow></value></block></value></block></statement></block></xml>
+<xml xmlns="http://www.w3.org/1999/xhtml">
+  <variables>
+    <variable type="" id="ds}{O/N_u*0fV1eCJn~P">item</variable>
+  </variables>
+  <block type="pxt-on-start" x="0" y="0">
+    <statement name="HANDLER">
+      <block type="controls_if">
+        <mutation else="1"></mutation>
+        <value name="IF0">
+          <shadow type="logic_boolean">
+            <field name="BOOL">TRUE</field>
+          </shadow>
+        </value>
+        <statement name="DO0">
+          <block type="variables_set">
+            <field name="VAR" id="ds}{O/N_u*0fV1eCJn~P" variabletype="">item</field>
+            <value name="VALUE">
+              <shadow xmlns="" type="math_number">
+                <field name="NUM">0</field>
+              </shadow>
+              <block type="lists_index_get">
+                <value name="INDEX">
+                  <shadow type="math_number">
+                    <field name="NUM">0</field>
+                  </shadow>
+                </value>
+              </block>
+            </value>
+          </block>
+        </statement>
+        <statement name="ELSE">
+          <block type="variables_set">
+            <field name="VAR" id="ds}{O/N_u*0fV1eCJn~P" variabletype="">item</field>
+            <value name="VALUE">
+              <shadow type="math_number" id="vG,/RtWosnV_IAA*CyU#">
+                <field name="NUM">0</field>
+              </shadow>
+              <block type="variables_get">
+                <field name="VAR" id="ds}{O/N_u*0fV1eCJn~P" variabletype="">item</field>
+              </block>
+            </value>
+          </block>
+        </statement>
+      </block>
+    </statement>
+  </block>
+</xml>

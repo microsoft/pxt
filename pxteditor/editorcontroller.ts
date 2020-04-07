@@ -43,14 +43,21 @@ namespace pxt.editor {
         | "closeflyout"
         | "newproject"
         | "importproject"
+        | "importtutorial"
         | "proxytosim" // EditorMessageSimulatorMessageProxyRequest
         | "undo"
         | "redo"
         | "renderblocks"
+        | "renderpython"
         | "setscale"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
-        | "settracestate" // EditorMessageSetTraceStateRequest
+        | "togglehighcontrast"
+        | "togglegreenscreen"
+        | "settracestate" // 
+
+        | "print" // print code
+        | "pair" // pair device
 
         | "workspacesync" // EditorWorspaceSyncRequest
         | "workspacereset"
@@ -60,6 +67,7 @@ namespace pxt.editor {
 
         | "event"
         | "simevent"
+        | "info" // return info data`
 
         // package extension messasges
         | ExtInitializeType
@@ -164,15 +172,34 @@ namespace pxt.editor {
         searchBar?: boolean;
     }
 
+    export interface EditorMessageImportTutorialRequest extends EditorMessageRequest {
+        action: "importtutorial";
+        // markdown to load
+        markdown: string;
+    }
+
     export interface EditorMessageRenderBlocksRequest extends EditorMessageRequest {
         action: "renderblocks";
         // typescript code to render
         ts: string;
+        // rendering options
+        snippetMode?: boolean;
+        layout?: pxt.blocks.BlockLayout;
     }
 
     export interface EditorMessageRenderBlocksResponse {
-        mime: "application/svg+xml";
-        data: string;
+        svg: SVGSVGElement;
+        xml: Promise<any>;
+    }
+
+    export interface EditorMessageRenderPythonRequest extends EditorMessageRequest {
+        action: "renderpython";
+        // typescript code to render
+        ts: string;
+    }
+
+    export interface EditorMessageRenderPythonResponse {
+        python: string;
     }
 
     export interface EditorSimulatorEvent extends EditorMessageRequest {
@@ -196,6 +223,12 @@ namespace pxt.editor {
         enabled: boolean;
         // interval speed for the execution trace
         intervalSpeed?: number;
+    }
+
+    export interface InfoMessage {
+        versions: pxt.TargetVersions;
+        locale: string;
+        availableLocales?: string[];
     }
 
     export interface PackageExtensionData {
@@ -232,7 +265,7 @@ namespace pxt.editor {
      */
     export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) {
         const allowEditorMessages = (pxt.appTarget.appTheme.allowParentController || pxt.shell.isControllerMode())
-                                    && pxt.BrowserUtils.isIFrame();
+            && pxt.BrowserUtils.isIFrame();
         const allowExtensionMessages = pxt.appTarget.appTheme.allowPackageExtensions;
         const allowSimTelemetry = pxt.appTarget.appTheme.allowSimulatorTelemetry;
 
@@ -277,6 +310,7 @@ namespace pxt.editor {
                             pxt.debug(`pxteditor: ${req.action}`);
                             switch (req.action.toLowerCase()) {
                                 case "switchjavascript": return Promise.resolve().then(() => projectView.openJavaScript());
+                                case "switchpython": return Promise.resolve().then(() => projectView.openPython());
                                 case "switchblocks": return Promise.resolve().then(() => projectView.openBlocks());
                                 case "startsimulator": return Promise.resolve().then(() => projectView.startSimulator());
                                 case "restartsimulator": return Promise.resolve().then(() => projectView.restartSimulator());
@@ -318,6 +352,11 @@ namespace pxt.editor {
                                             searchBar: load.searchBar
                                         }));
                                 }
+                                case "importtutorial": {
+                                    const load = data as EditorMessageImportTutorialRequest;
+                                    return Promise.resolve()
+                                        .then(() => projectView.importTutorialAsync(load.markdown));
+                                }
                                 case "proxytosim": {
                                     const simmsg = data as EditorMessageSimulatorMessageProxyRequest;
                                     return Promise.resolve()
@@ -327,10 +366,18 @@ namespace pxt.editor {
                                     const rendermsg = data as EditorMessageRenderBlocksRequest;
                                     return Promise.resolve()
                                         .then(() => projectView.renderBlocksAsync(rendermsg))
-                                        .then((r: any) => {
+                                        .then(r => {
                                             return r.xml.then((svg: any) => {
                                                 resp = svg.xml;
                                             })
+                                        });
+                                }
+                                case "renderpython": {
+                                    const rendermsg = data as EditorMessageRenderPythonRequest;
+                                    return Promise.resolve()
+                                        .then(() => projectView.renderPythonAsync(rendermsg))
+                                        .then(r => {
+                                            resp = r.python;
                                         });
                                 }
                                 case "toggletrace": {
@@ -342,6 +389,32 @@ namespace pxt.editor {
                                     const trcmsg = data as EditorMessageSetTraceStateRequest;
                                     return Promise.resolve()
                                         .then(() => projectView.setTrace(trcmsg.enabled, trcmsg.intervalSpeed));
+                                }
+                                case "togglehighcontrast": {
+                                    return Promise.resolve()
+                                        .then(() => projectView.toggleHighContrast());
+                                }
+                                case "togglegreenscreen": {
+                                    return Promise.resolve()
+                                        .then(() => projectView.toggleGreenScreen());
+                                }
+                                case "print": {
+                                    return Promise.resolve()
+                                        .then(() => projectView.printCode());
+                                }
+                                case "pair": {
+                                    return Promise.resolve()
+                                        .then(() => projectView.pair());
+                                }
+                                case "info": {
+                                    return Promise.resolve()
+                                        .then(() => {
+                                            resp = <editor.InfoMessage>{
+                                                versions: pxt.appTarget.versions,
+                                                locale: ts.pxtc.Util.userLanguage(),
+                                                availableLocales: pxt.appTarget.appTheme.availableLocales
+                                            }
+                                        });
                                 }
                             }
                             return Promise.resolve();

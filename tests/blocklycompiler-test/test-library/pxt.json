@@ -4,7 +4,9 @@
     "files": [
         "actionEvent.ts",
         "enums.ts",
+        "mbit.ts",
         "expandableBlocks.ts",
+        "spritekind.ts",
         "toStringArgs.ts"
     ],
     "public": true,

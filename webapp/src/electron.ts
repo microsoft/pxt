@@ -30,7 +30,6 @@ export function initElectron(projectView: ProjectView): void {
         } else {
             pxt.tickEvent("electron.drivedeploy.failure");
             const err = new Error("electron drive deploy failed");
-            pxt.reportException(err)
             deployingDeferred.reject(err);
         }
     });
@@ -52,6 +51,8 @@ export function initElectron(projectView: ProjectView): void {
         }
 
         switch (status) {
+            case pxt.electron.UpdateStatus.UpdateAvailable:
+                // Downloading update in background; nothing to do
             case pxt.electron.UpdateStatus.Ok:
                 // No update available; nothing to do
                 return;

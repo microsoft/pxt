@@ -83,68 +83,146 @@ namespace pxsim {
         }
     }
 
-    export function dumpHeap(v: any, heap: Map<any>): Variables {
-        function valToJSON(v: any) {
-            switch (typeof v) {
-                case "string":
-                case "number":
-                case "boolean":
-                    return v;
-                case "function":
-                    return { text: "(function)" }
-                case "undefined":
-                    return null;
-                case "object":
-                    if (!v) return null;
-                    if (v instanceof RefObject) {
-                        heap[(v as RefObject).id] = v;
-                        return {
-                            id: (v as RefObject).id,
-                            preview: RefObject.toDebugString(v)
-                        }
+    function valToJSON(v: any, heap: Map<any>) {
+        switch (typeof v) {
+            case "string":
+            case "number":
+            case "boolean":
+                return v;
+            case "function":
+                return {
+                    text: "(function)",
+                    type: "function",
+                }
+            case "undefined":
+                return null;
+            case "object":
+                if (!v) return null;
+                if (v instanceof RefObject) {
+                    if (heap) heap[(v as RefObject).id] = v;
+                    let preview = RefObject.toDebugString(v);
+                    let type = preview.startsWith('[') ? "array" : preview;
+                    return {
+                        id: (v as RefObject).id,
+                        preview: preview,
+                        hasFields: (v as any).fields !== null || preview.startsWith('['),
+                        type: type,
                     }
-                    return { text: "(object)" }
-                default:
-                    throw new Error();
-            }
+                }
+                if (v._width && v._height) {
+                    return {
+                        text: v._width + 'x' + v._height,
+                        type: "image",
+                    }
+                }
+                return {
+                    text: "(object)",
+                    type: "object",
+                }
+            default:
+                throw new Error();
         }
-        function frameVars(frame: any) {
+    }
+
+    export function dumpHeap(v: any, heap: Map<any>, fields?: string[], filters?: string[]): Variables {
+        function frameVars(frame: any, fields?: string[]) {
             const r: Variables = {}
             for (let k of Object.keys(frame)) {
                 // skip members starting with __
-                if (!/^__/.test(k) && /___\d+$/.test(k)) {
-                    r[k.replace(/___\d+$/, '')] = valToJSON(frame[k])
+                if (!/^__/.test(k) && /___\d+$/.test(k) && (!filters || filters.indexOf(k) !== -1)) {
+                    r[k.replace(/___\d+$/, '')] = valToJSON(frame[k], heap)
                 }
+            }
+            if (frame.fields && fields) {
+                // Fields of an object.
+                for (let k of fields) {
+                    k = k.substring(k.lastIndexOf(".") + 1);
+                    r[k] = valToJSON(evalGetter(frame.vtable.iface[k], frame), heap);
+                }
+            }
+            if (frame.fields) {
+                for (let k of Object.keys(frame.fields).filter(field => !field.startsWith('_'))) {
+                    r[k.replace(/___\d+$/, '')] = valToJSON(frame.fields[k], heap)
+                }
+            } else if (Array.isArray(frame.data)) {
+                // This is an Array.
+                (frame.data as any[]).forEach((element, index) => {
+                    r[index] = valToJSON(element, heap);
+                });
             }
             return r
         }
 
-        return frameVars(v);
+        return frameVars(v, fields);
     }
 
-    export function getBreakpointMsg(s: pxsim.StackFrame, brkId: number): { msg: DebuggerBreakpointMessage, heap: Map<any> } {
+    function evalGetter(fn: LabelFn, target: RefObject) {
+        // This function evaluates a getter, and we assume it doesn't have any side effects.
+        let parentFrame: any = {
+        };
+
+        // We create a dummy stack frame
+        let stackFrame: any = {
+            pc: 0,
+            arg0: target,
+            fn,
+            parent: parentFrame
+        };
+
+        // And we evaluate the getter
+        while (stackFrame.fn) {
+            stackFrame = stackFrame.fn(stackFrame as any);
+        }
+
+        return stackFrame.retval;
+    }
+
+    export function getBreakpointMsg(s: pxsim.StackFrame, brkId: number, userGlobals?: string[]): { msg: DebuggerBreakpointMessage, heap: Map<any> } {
         const heap: pxsim.Map<any> = {};
 
         const msg: DebuggerBreakpointMessage = {
             type: "debugger",
             subtype: "breakpoint",
             breakpointId: brkId,
-            globals: dumpHeap(runtime.globals, heap),
+            globals: dumpHeap(runtime.globals, heap, undefined, userGlobals),
             stackframes: [],
         }
 
         while (s != null) {
-            let info = s.fn ? (s.fn as any).info : null
+            let info = getInfoForFrame(s, heap);
             if (info)
-                msg.stackframes.push({
-                    locals: dumpHeap(s, heap),
-                    funcInfo: info,
-                    breakpointId: s.lastBrkId
-                })
+                msg.stackframes.push(info)
             s = s.parent
         }
 
         return { msg, heap };
+    }
+
+    function getInfoForFrame(s: pxsim.StackFrame, heap: any): StackFrameInfo {
+        let info = s.fn ? (s.fn as any).info : null
+        if (info) {
+            let argInfo: FunctionArgumentsInfo = {
+                thisParam: valToJSON((s as any).argL, heap),
+                params: []
+            };
+
+            if (info.argumentNames) {
+                const args = info.argumentNames as string[];
+                argInfo.params = args.map((paramName, index) => ({
+                    name: paramName,
+                    value: valToJSON((s as any)["arg" + index], heap)
+                }));
+            }
+
+            return {
+                locals: dumpHeap(s, heap),
+                funcInfo: info,
+                breakpointId: s.lastBrkId,
+                arguments: argInfo
+            };
+        }
+
+        return undefined;
     }
 
 
@@ -338,7 +416,8 @@ namespace pxsim {
                 case SimulatorState.Stopped:
                     this.sendEvent(new protocol.TerminatedEvent())
                     break;
-                case SimulatorState.Unloaded:
+                //case SimulatorState.Unloaded:
+                //case SimulatorState.Pending:
                 default:
             }
         }

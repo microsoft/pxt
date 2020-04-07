@@ -56,12 +56,12 @@ namespace pxt.svgUtil {
         }
 
         appendClass(className: string): this {
-            addClass(this.el, className);
+            pxt.BrowserUtils.addClass(this.el, className);
             return this;
         }
 
         removeClass(className: string): void {
-            removeClass(this.el, className);
+            pxt.BrowserUtils.removeClass(this.el, className);
         }
 
         title(text: string) {
@@ -689,16 +689,6 @@ namespace pxt.svgUtil {
             case LengthUnit.percent: return value + "%";
             default: return value.toString();
         }
-    }
-
-    function addClass(el: SVGElement, cls: string) {
-        if (el.classList) el.classList.add(cls);
-        else if (el.className.baseVal.indexOf(cls) < 0) el.className.baseVal += ' ' + cls;
-    }
-
-    function removeClass(el: SVGElement, cls: string) {
-        if (el.classList) el.classList.remove(cls);
-        else el.className.baseVal = el.className.baseVal.replace(cls, '').replace(/\s{2,}/, ' ');
     }
 }
 

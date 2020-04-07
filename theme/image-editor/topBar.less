@@ -1,0 +1,51 @@
+.image-editor-topbar {
+    display: flex;
+    flex-direction: row;
+    height: 2rem;
+    background-color: var(--sidebar-bg-color);
+    flex-shrink: 0;
+}
+
+.image-editor-topbar > div .image-editor-button {
+    margin-top: 0;
+    margin-left: 0;
+}
+
+.image-editor-topbar > div {
+    display: flex;
+    flex-direction: row;
+}
+
+.image-editor-topbar > div:not(.image-editor-seperator) {
+    height: 100%;
+}
+
+.image-editor-interval-label {
+    padding-top: 0.35rem;
+}
+
+.image-editor-interval .image-editor-input {
+    max-width: 2.5rem;
+}
+
+.image-editor-topbar-button, .image-editor-topbar-button .image-editor-label, .image-editor-topbar-button .image-editor-button {
+    color: var(--sidebar-icon-inactive-color);
+    transition: color 0.1s;
+}
+
+.image-editor-topbar-button:hover, .image-editor-topbar-button:hover .image-editor-label, .image-editor-topbar-button:hover .image-editor-button {
+    color: var(--sidebar-icon-active-color);
+}
+
+.timeline-controls {
+    width: 6.5em;
+}
+
+.spacer {
+    flex-grow: 1;
+}
+
+.cursor-group {
+    padding-left: 0.25rem;
+    width: 5rem;
+}

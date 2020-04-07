@@ -1,0 +1,169 @@
+/* Import all components */
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+@import (reference) "semantic.less";
+
+.ui.button.editortools-btn.editortools-github-btn {
+    margin-left: 0.25rem;
+}
+
+/* Mobile only */
+@media only screen and (max-width: @largestMobileScreen) {
+    .ui.button.editortools-btn.editortools-github-btn {
+        margin-left: 0;
+    }
+}
+
+#githubEditor {
+    background-color: @githubBackgroundColor;
+    color: @githubTextColor;
+    overflow-x: hidden;
+    overflow-y: auto;
+    #githubArea {
+        height: 90%;
+        padding: 1rem;
+
+        .ui.link {
+            cursor: pointer;
+        }
+
+        .ui.message span.ui.link {
+            margin-left: 0.25rem;
+            text-decoration: underline;
+        }
+
+        .inline-help {
+            margin-left: 2rem;
+        }
+
+        .ui.divider {
+            margin-bottom: 5px;
+        }
+
+        .ui.segment.diff {
+            padding: 0;
+        }
+
+        .ui.segments {
+            margin: 1rem 0;
+        }
+
+        .diffheader>span {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .diffheader .ui.button {
+            float: right;
+            margin-top: -0.5em;
+        }
+
+        .ui.segment.diff svg {
+            margin: 1rem;
+            max-width: calc(100% - 2rem);
+        }
+
+        .ui.segments.filediff {
+            background: @diffSegmentBackgroundColor;        
+        }
+
+        .legend > span:not(:first-child) {
+            margin-left: 1.5rem;
+        }
+
+        .legend span.icon {
+            width: 0.8rem;
+            height: 0.8rem;
+            display: inline-block;
+            border-radius: 2px;
+            margin-right: 0.25rem;
+        }
+
+        .legend span.added.icon {
+            background: linear-gradient(45deg, orange , yellow, green, cyan, blue, violet);
+        }
+
+        .legend span.deleted.icon {
+            background-color: #d0d04e;
+            background-image: linear-gradient(45deg, #bbbbbb 25%, transparent 25%, transparent 75%, #bbbbbb 75%, #bbbbbb),
+            linear-gradient(-45deg, #bbbbbb 25%, transparent 25%, transparent 75%, #bbbbbb 75%, #bbbbbb);
+            background-size: 4px 4px;
+        }
+
+        .legend span.notchanged.icon {
+            background: #d0d0d0;
+        }
+
+        .repo-branch {
+            opacity: 0.4;
+            cursor: pointer;
+        }
+
+        .join {
+            text-align: center;
+        }
+
+        .create-pr {
+            float: right;
+        }
+    }
+}
+
+// inverted style
+.inverted-theme {
+    #githubEditor {
+        color: @githubInvertedTextColor;
+        .ui.transparent.segment {
+            border: 1px solid @mainMenuInvertedBackground;
+        }
+        .ui.basic.button > .ui.text,
+        .ui.header {
+            color: @githubInvertedTextColor !important;
+        }
+        .ui.items>.link.item {
+            .meta, .description {
+                color: @githubInvertedTextColor !important;
+            }
+        }
+        .diffheader {
+            background: @mainMenuInvertedBackground !important;
+        }
+        table.diffview {
+            .change code {
+                color: @githubInvertedTextColor !important;
+            }
+
+            .diff-added {
+                background: @diffInvertedAddedBackground !important;
+        
+                .ch-added {
+                    background: @diffInvertedAddedTokenBackground !important;
+                }
+            }
+        
+            .diff-removed {
+                background: @diffInvertedRemovedBackground !important;
+        
+                .ch-removed {
+                    background: @diffInvertedRemovedTokenBackground !important;
+                }
+            }
+
+            .diff-unchanged {
+                background: @diffInvertedUnchangedBackground !important;
+            }
+        
+            .line-a,
+            .line-b {
+                color: @diffInvertedLineNumberColor !important;
+            } 
+
+            .diff-marker {
+                background: @diffInvertedMarkerBackground !important;
+                color: @diffInvertedMarkerColor !important;
+            }
+        }
+    }
+}

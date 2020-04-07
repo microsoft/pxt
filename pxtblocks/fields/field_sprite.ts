@@ -5,7 +5,7 @@ namespace pxtblockly {
     import svg = pxt.svgUtil;
 
     export interface FieldSpriteEditorOptions {
-        // Format is semicolon separated pairs, e.g. "width,height;width,height;..."
+        // Deprecated
         sizes: string;
 
         // Index of initial color (defaults to 1)
@@ -13,13 +13,18 @@ namespace pxtblockly {
 
         initWidth: string;
         initHeight: string;
+
+        disableResize: string;
+
+        filter?: string;
     }
 
     interface ParsedSpriteEditorOptions {
-        sizes: [number, number][];
         initColor: number;
         initWidth: number;
         initHeight: number;
+        disableResize: boolean;
+        filter?: string;
     }
 
     // 32 is specifically chosen so that we can scale the images for the default
@@ -32,12 +37,13 @@ namespace pxtblockly {
 
     export class FieldSpriteEditor extends Blockly.Field implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
+        public SERIALIZABLE = true;
 
         private params: ParsedSpriteEditorOptions;
         private blocksInfo: pxtc.BlocksInfo;
-        private editor: pxtsprite.SpriteEditor;
-        private state: pxtsprite.Bitmap;
+        private state: pxt.sprite.Bitmap;
         private lightMode: boolean;
+        private undoRedoState: any;
 
         constructor(text: string, params: any, validator?: Function) {
             super(text, validator);
@@ -47,7 +53,7 @@ namespace pxtblockly {
             this.blocksInfo = params.blocksInfo;
 
             if (!this.state) {
-                this.state = new pxtsprite.Bitmap(this.params.initWidth, this.params.initHeight);
+                this.state = new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
             }
         }
 
@@ -57,82 +63,52 @@ namespace pxtblockly {
                 return;
             }
             // Build the DOM.
-            this.fieldGroup_ = Blockly.utils.createSvgElement('g', {}, null);
+            this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null) as SVGGElement;
             if (!this.visible_) {
                 (this.fieldGroup_ as any).style.display = 'none';
             }
 
             if (!this.state) {
-                this.state = new pxtsprite.Bitmap(this.params.initWidth, this.params.initHeight);
+                this.state = new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
             }
 
             this.redrawPreview();
 
             this.updateEditable();
-            this.sourceBlock_.getSvgRoot().appendChild(this.fieldGroup_);
+            (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(this.fieldGroup_);
 
             // Force a render.
             this.render_();
             (this as any).mouseDownWrapper_ = Blockly.bindEventWithChecks_((this as any).getClickTarget_(), "mousedown", this, (this as any).onMouseDown_)
         }
 
-        /**
-         * Show the inline free-text editor on top of the text.
-         * @private
-         */
         showEditor_() {
-            const windowSize = goog.dom.getViewportSize();
-            const scrollOffset = goog.style.getViewportPageOffset(document);
+            (this.params as any).blocksInfo = this.blocksInfo;
+            const fv = pxt.react.getFieldEditorView("image-editor", this.state, this.params);
 
-            // If there is an existing drop-down someone else owns, hide it immediately and clear it.
-            Blockly.DropDownDiv.hideWithoutAnimation();
-            Blockly.DropDownDiv.clearContent();
-
-            let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
-
-            this.editor = new pxtsprite.SpriteEditor(this.state, this.blocksInfo, this.lightMode);
-            this.editor.render(contentDiv);
-            this.editor.rePaint();
-
-            this.editor.onClose(() => {
-                Blockly.DropDownDiv.hideIfOwner(this);
-            });
-
-            this.editor.setActiveColor(this.params.initColor, true);
-            if (!this.params.sizes.some(s => s[0] === this.state.width && s[1] === this.state.height)) {
-                this.params.sizes.push([this.state.width, this.state.height]);
+            if (this.undoRedoState) {
+                fv.restorePersistentData(this.undoRedoState);
             }
-            this.editor.setSizePresets(this.params.sizes);
 
-            goog.style.setHeight(contentDiv, this.editor.outerHeight() + 1);
-            goog.style.setWidth(contentDiv, this.editor.outerWidth() + 1);
-            goog.style.setStyle(contentDiv, "overflow", "hidden");
-            goog.style.setStyle(contentDiv, "max-height", "500px");
-            goog.dom.classlist.add(contentDiv.parentElement, "sprite-editor-dropdown")
+            fv.onHide(() => {
+                const result = fv.getResult();
 
-            Blockly.DropDownDiv.setColour("#2c3e50", "#2c3e50");
-            Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => {
-                this.state = this.editor.bitmap();
-                this.redrawPreview();
-                if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
-                    Blockly.Events.fire(new Blockly.Events.BlockChange(
-                        this.sourceBlock_, 'field', this.name, this.text_, this.getText()));
+                if (result) {
+                    const old = this.getValue();
+
+                    this.state = result;
+                    this.redrawPreview();
+
+                    this.undoRedoState = fv.getPersistentData();
+
+                    if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
+                        Blockly.Events.fire(new Blockly.Events.BlockChange(
+                            this.sourceBlock_, 'field', this.name, old, this.getValue()));
+                    }
                 }
-
-                goog.style.setHeight(contentDiv, null);
-                goog.style.setWidth(contentDiv, null);
-                goog.style.setStyle(contentDiv, "overflow", null);
-                goog.style.setStyle(contentDiv, "max-height", null);
-                (goog.dom.classlist as any).remove(contentDiv.parentElement, "sprite-editor-dropdown");
-                this.editor.removeKeyListeners();
             });
 
-            this.editor.addKeyListeners();
-            this.editor.layout();
-        }
-
-        private isInFlyout() {
-            return (this.sourceBlock_.workspace.getParentSvg() as SVGElement).className.baseVal == "blocklyFlyout";
+            fv.show();
         }
 
         render_() {
@@ -141,21 +117,19 @@ namespace pxtblockly {
             this.size_.width = TOTAL_WIDTH;
         }
 
-        getText() {
-            if (!this.state) {
-                return "img``";
-            }
-            return pxtsprite.bitmapToImageLiteral(this.state);
+        getValue() {
+            return pxt.sprite.bitmapToImageLiteral(this.state, pxt.editor.FileType.TypeScript);
         }
 
-        setText(newText: string) {
-            if (newText == null) {
+        doValueUpdate_(newValue: string) {
+            if (newValue == null) {
                 return;
             }
-            this.parseBitmap(newText);
+            this.value_ = newValue;
+            this.parseBitmap(newValue);
             this.redrawPreview();
 
-            super.setText(newText);
+            super.doValueUpdate_(newValue);
         }
 
         private redrawPreview() {
@@ -165,14 +139,14 @@ namespace pxtblockly {
             const bg = new svg.Rect()
                 .at(PADDING, PADDING)
                 .size(BG_WIDTH, BG_WIDTH)
-                .fill("#dedede")
+                .setClass("blocklySpriteField")
                 .stroke("#898989", 1)
                 .corner(4);
 
             this.fieldGroup_.appendChild(bg.el);
 
             if (this.state) {
-                const data = this.renderPreview();
+                const data = bitmapToImageURI(this.state, PREVIEW_WIDTH, this.lightMode);
                 const img = new svg.Image()
                     .src(data)
                     .at(PADDING + BG_PADDING, PADDING + BG_PADDING)
@@ -182,80 +156,28 @@ namespace pxtblockly {
         }
 
         private parseBitmap(newText: string) {
-            const bmp = pxtsprite.imageLiteralToBitmap(newText);
+            const bmp = pxt.sprite.imageLiteralToBitmap(newText);
 
             // Ignore invalid bitmaps
             if (bmp && bmp.width && bmp.height) {
                 this.state = bmp;
             }
         }
-
-        /**
-         * Scales the image to 32x32 and returns a data uri. In light mode the preview
-         * is drawn with no transparency (alpha is filled with background color)
-         */
-        private renderPreview() {
-            const colors = pxt.appTarget.runtime.palette.slice(1);
-            const canvas = document.createElement("canvas");
-            canvas.width = PREVIEW_WIDTH;
-            canvas.height = PREVIEW_WIDTH;
-
-            // Works well for all of our default sizes, does not work well if the size is not
-            // a multiple of 2 or is greater than 32 (i.e. from the decompiler)
-            const cellSize = Math.min(PREVIEW_WIDTH / this.state.width, PREVIEW_WIDTH / this.state.height);
-
-            // Center the image if it isn't square
-            const xOffset = Math.max(Math.floor((PREVIEW_WIDTH * (1 - (this.state.width / this.state.height))) / 2), 0);
-            const yOffset = Math.max(Math.floor((PREVIEW_WIDTH * (1 - (this.state.height / this.state.width))) / 2), 0);
-
-            let context: CanvasRenderingContext2D;
-            if (this.lightMode) {
-                context = canvas.getContext("2d", { alpha: false });
-                context.fillStyle = "#dedede";
-                context.fillRect(0, 0, PREVIEW_WIDTH, PREVIEW_WIDTH);
-            }
-            else {
-                context = canvas.getContext("2d");
-            }
-
-            for (let c = 0; c < this.state.width; c++) {
-                for (let r = 0; r < this.state.height; r++) {
-                    const color = this.state.get(c, r);
-
-                    if (color) {
-                        context.fillStyle = colors[color - 1];
-                        context.fillRect(xOffset + c * cellSize, yOffset + r * cellSize, cellSize, cellSize);
-                    }
-                    else if (this.lightMode) {
-                        context.fillStyle = "#dedede";
-                        context.fillRect(xOffset + c * cellSize, yOffset + r * cellSize, cellSize, cellSize);
-                    }
-                }
-            }
-
-            return canvas.toDataURL();
-        }
     }
 
     function parseFieldOptions(opts: FieldSpriteEditorOptions) {
         const parsed: ParsedSpriteEditorOptions = {
-            sizes: [
-                [8, 8],
-                [8, 16],
-                [16, 16],
-                [16, 32],
-                [32, 32],
-            ],
             initColor: 1,
             initWidth: 16,
             initHeight: 16,
+            disableResize: false,
         };
 
         if (!opts) {
             return parsed;
         }
 
-        if (opts.sizes != null) {
+        if (opts.sizes) {
             const pairs = opts.sizes.split(";");
             const sizes: [number, number][] = [];
             for (let i = 0; i < pairs.length; i++) {
@@ -280,10 +202,17 @@ namespace pxtblockly {
                 sizes.push([width, height]);
             }
             if (sizes.length > 0) {
-                parsed.sizes = sizes;
                 parsed.initWidth = sizes[0][0];
                 parsed.initHeight = sizes[0][1];
             }
+        }
+
+        if (opts.filter) {
+            parsed.filter = opts.filter;
+        }
+
+        if (opts.disableResize) {
+            parsed.disableResize = opts.disableResize.toLowerCase() === "true" || opts.disableResize === "1";
         }
 
         parsed.initColor = withDefault(opts.initColor, parsed.initColor);

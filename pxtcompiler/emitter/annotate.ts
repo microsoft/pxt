@@ -16,7 +16,7 @@ namespace ts.pxtc {
         const oldTarget = pxtc.target;
         pxtc.target = compileTarget;
 
-        let src = program.getSourceFiles().filter(f => Util.endsWith(f.fileName, entryPoint))[0];
+        let src = program.getSourceFiles().filter(f => f.fileName === entryPoint)[0];
         let checker = program.getTypeChecker();
 
         recurse(src);
@@ -38,6 +38,16 @@ namespace ts.pxtc {
                     case SyntaxKind.BinaryExpression:
                         annotateBinaryExpression(child as ts.BinaryExpression);
                         break;
+                    case SyntaxKind.Identifier:
+                        const decl: Declaration = getDecl(child);
+                        if (decl && decl.getSourceFile().fileName !== "main.ts" && decl.kind == SyntaxKind.VariableDeclaration) {
+                            const info = pxtInfo(child);
+                            info.flags |= PxtNodeFlags.IsGlobalIdentifier;
+                            if (!info.commentAttrs) {
+                                info.commentAttrs = parseComments(decl);
+                            }
+                        }
+                        break;
 
                 }
 
@@ -54,7 +64,10 @@ namespace ts.pxtc {
 
             if (node.operatorToken.kind == SK.PlusToken || node.operatorToken.kind == SK.PlusEqualsToken) {
                 if (isStringType(lt) || (isStringType(rt) && node.operatorToken.kind == SK.PlusToken)) {
-                    (node as any).exprInfo = { leftType: checker.typeToString(lt), rightType: checker.typeToString(rt) } as BinaryExpressionInfo;
+                    pxtInfo(node).exprInfo = {
+                        leftType: checker.typeToString(lt),
+                        rightType: checker.typeToString(rt)
+                    }
                 }
             }
 
@@ -126,12 +139,11 @@ namespace ts.pxtc {
 
             let callInfo: CallInfo = {
                 decl,
-                qName: decl ? getFullName(checker, decl.symbol) : "?",
+                qName: decl ? getNodeFullName(checker, decl) : "?",
                 args: args,
                 isExpression: hasRet
             };
-
-            (node as any).callInfo = callInfo;
+            pxtInfo(node).callInfo = callInfo;
         }
 
         function getDecl(node: Node): Declaration {
@@ -155,9 +167,9 @@ namespace ts.pxtc {
                 decl = {
                     kind: SK.PropertySignature,
                     symbol: { isBogusSymbol: true, name: namedNode.name.getText() },
-                    isBogusFunction: true,
                     name: namedNode.name,
                 } as any
+                pxtInfo(decl).flags |= PxtNodeFlags.IsBogusFunction
             }
 
             return decl
@@ -165,8 +177,9 @@ namespace ts.pxtc {
 
         function typeOf(node: Node) {
             let r: Type;
-            if ((node as any).typeOverride)
-                return (node as any).typeOverride as Type
+            const info = pxtInfo(node)
+            if (info.typeCache)
+                return info.typeCache
             if (isExpression(node))
                 r = checker.getContextualType(<Expression>node)
             if (!r) {

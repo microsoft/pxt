@@ -99,7 +99,7 @@ namespace pxsim.visuals {
         let c1: [number, number] = [x1, y1 + yLen * smooth];
         let c2: [number, number] = [x2, y2 - yLen * smooth];
         let w = <SVGPathElement>svg.mkPath("sim-bb-wire", `M${coordStr(p1)} C${coordStr(c1)} ${coordStr(c2)} ${coordStr(p2)}`);
-        svg.addClass(w, `wire-stroke-${clrClass}`);
+        pxsim.U.addClass(w, `wire-stroke-${clrClass}`);
         return w;
     }
     function mkWirePartSeg(p1: [number, number], p2: [number, number], clr: string): visuals.SVGAndSize<SVGPathElement> {
@@ -117,7 +117,7 @@ namespace pxsim.visuals {
     function mkWireSeg(p1: [number, number], p2: [number, number], clrClass: string): SVGPathElement {
         const coordStr = (xy: [number, number]): string => { return `${xy[0]}, ${xy[1]}` };
         let w = <SVGPathElement>svg.mkPath("sim-bb-wire", `M${coordStr(p1)} L${coordStr(p2)}`);
-        svg.addClass(w, `wire-stroke-${clrClass}`);
+        pxsim.U.addClass(w, `wire-stroke-${clrClass}`);
         return w;
     }
     function mkBBJumperEnd(p: [number, number], clrClass: string): SVGElement {
@@ -127,7 +127,7 @@ namespace pxsim.visuals {
         let y = p[1];
         let r = WIRE_WIDTH / 2 + endW / 2;
         svg.hydrate(w, { cx: x, cy: y, r: r, class: "sim-bb-wire-end" });
-        svg.addClass(w, `wire-fill-${clrClass}`);
+        pxsim.U.addClass(w, `wire-fill-${clrClass}`);
         (<any>w).style["stroke-width"] = `${endW}px`;
         return w;
     }
@@ -335,7 +335,7 @@ namespace pxsim.visuals {
                     midSeg = mkWireSeg(offP1, offP2, clrClass);
                     midSegHover = mkWireSeg(offP1, offP2, clrClass);
                 }
-                svg.addClass(midSegHover, "sim-bb-wire-hover");
+                pxsim.U.addClass(midSegHover, "sim-bb-wire-hover");
                 g.appendChild(offSeg1);
                 wires.push(offSeg1);
                 g.appendChild(offSeg2);
@@ -346,7 +346,7 @@ namespace pxsim.visuals {
                 wires.push(midSegHover);
                 //set hover mechanism
                 let wireIdClass = `sim-bb-wire-id-${wireId}`;
-                const setId = (e: SVGElement) => svg.addClass(e, wireIdClass);
+                const setId = (e: SVGElement) => pxsim.U.addClass(e, wireIdClass);
                 setId(endG);
                 setId(midSegHover);
                 this.styleEl.textContent += `
@@ -422,7 +422,7 @@ namespace pxsim.visuals {
                     midSeg = mkWireSeg(offP1, pin2, clrClass);
                     midSegHover = mkWireSeg(offP1, pin2, clrClass);
                 }
-                svg.addClass(midSegHover, "sim-bb-wire-hover");
+                pxsim.U.addClass(midSegHover, "sim-bb-wire-hover");
                 g.appendChild(offSeg1);
                 wires.push(offSeg1);
                 // g.appendChild(offSeg2);
@@ -433,7 +433,7 @@ namespace pxsim.visuals {
                 //wires.push(midSegHover);
                 //set hover mechanism
                 let wireIdClass = `sim-bb-wire-id-${wireId}`;
-                const setId = (e: SVGElement) => svg.addClass(e, wireIdClass);
+                const setId = (e: SVGElement) => pxsim.U.addClass(e, wireIdClass);
                 setId(endG);
                 setId(midSegHover);
                 this.styleEl.textContent += `
@@ -455,6 +455,12 @@ namespace pxsim.visuals {
             this.styleEl.textContent += colorCSS;
 
             return { endG: endG, end1: end1, end2: end2, wires: wires };
+        }
+
+        public checkWire(start: Loc, end: Loc): boolean {
+            let startLoc = this.getLocCoord(start);
+            let endLoc = this.getLocCoord(end);
+            return !!startLoc && !!endLoc;
         }
 
         public addWire(start: Loc, end: Loc, color: string): Wire {

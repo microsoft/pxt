@@ -1,4 +1,4 @@
-// See https://github.com/Microsoft/TouchDevelop-backend/blob/master/docs/streams.md
+// See https://github.com/microsoft/TouchDevelop-backend/blob/master/docs/streams.md
 namespace pxt.streams {
     export interface JsonStreamField {
         name: string;

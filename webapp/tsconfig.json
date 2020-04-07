@@ -16,8 +16,20 @@
         "emitDecoratorMetadata": true,
         "declaration": false,
         "preserveConstEnums": true,
-        "lib": ["dom", "dom.iterable", "scripthost", "es6"],
-        "types": ["react", "react-dom", "bluebird"]
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "scripthost",
+            "es6"
+        ],
+        "types": [
+            "react",
+            "react-dom",
+            "bluebird"
+        ],
+        "incremental": false
     },
-    "exclude": [ "node_modules" ]
+    "exclude": [
+        "node_modules"
+    ]
 }

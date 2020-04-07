@@ -1,6 +1,8 @@
-export function setupDragAndDrop(r: HTMLElement, filter: (file: File) => boolean, dragged: (files: File[]) => void) {
-    let dragAndDrop = document && document.createElement && 'draggable' in document.createElement('span');
-
+export function setupDragAndDrop(r: HTMLElement,
+    filter: (file: File) => boolean,
+    dragged: (files: File[]) => void,
+    draggedUri: (uri: string) => void
+) {
     r.addEventListener('paste', function (e: ClipboardEvent) {
         if (e.clipboardData) {
             // has file?
@@ -25,7 +27,7 @@ export function setupDragAndDrop(r: HTMLElement, filter: (file: File) => boolean
         let types = e.dataTransfer.types;
         let found = false;
         for (let i = 0; i < types.length; ++i)
-            if (types[i] == "Files")
+            if (types[i] == "Files" || types[i] == "text/uri-list")
                 found = true;
         if (found) {
             if (e.preventDefault) e.preventDefault(); // Necessary. Allows us to drop.
@@ -40,6 +42,14 @@ export function setupDragAndDrop(r: HTMLElement, filter: (file: File) => boolean
             e.stopPropagation(); // Stops some browsers from redirecting.
             e.preventDefault();
             dragged(files);
+        }
+        else if (e.dataTransfer.types.indexOf('text/uri-list') > -1) {
+            const imgUri = e.dataTransfer.getData('text/uri-list');
+            if (imgUri) {
+                e.stopPropagation(); // Stops some browsers from redirecting.
+                e.preventDefault();
+                draggedUri(imgUri);
+            }
         }
         return false;
     }, false);

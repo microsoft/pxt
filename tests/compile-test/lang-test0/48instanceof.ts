@@ -32,7 +32,8 @@ namespace InstanceOf {
         testNot(null)
         testNot(1)
         testNot(1.5)
-        testNot(1.5 + 0.3)
+        let z3 = 0.3
+        testNot(1.5 + z3)
         testNot("ell")
         testNot("ell" + "world")
         testNot({});

@@ -1,0 +1,28 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="variables_set">
+<field name="VAR">a</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="bc_create_test">
+</block>
+</value>
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" error="No call info found" line0="a.data &#61; 5&#59;" />
+<next>
+<block type="device_show_number">
+<value name="number">
+<block type="typescript_expression">
+<field name="EXPRESSION">a.data</field>
+</block>
+</value>
+</block>
+</next>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

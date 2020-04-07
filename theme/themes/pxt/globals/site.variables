@@ -6,7 +6,8 @@
 *******************************/
 
 @primaryColor: @pink;
-@secondaryColor: @grey;
+@secondaryColor: rgba(0, 0, 0, 0.55);
+@docsHue: 257;
 
 @red:#A80000;
 @orange:#D83B01;
@@ -14,7 +15,6 @@
 @green:#107C10;
 @teal:#008272;
 @blue:#0078D7;
-@violet:#B4009E;
 @purple:#5C2D91;
 @pink:#E2008C;
 @brown:#00BCF2;
@@ -23,7 +23,7 @@
 
 @greenTextColor: darken(@green, 5);
 
-@lightTextColor              : rgba(0, 0, 0, 0.68);
+@lightTextColor              : darken(@secondaryColor, 15%);
 @invertedUnselectedTextColor : rgba(255, 255, 255, 0.8);
 
 @pageBackground: #ffffff;
@@ -45,14 +45,23 @@
    Links
 --------------------*/
 
-@linkColor           : #4183c4;
+@linkColor           : #3977b4;
 @linkHoverUnderline  : underline;
 
 /*-------------------
    Breakpoints
 --------------------*/
 
+@tabletBreakpoint: 814px; // iPhone X landscape is 812px;
 /*
+default semantic
+@mobileBreakpoint            : 320px;
+@tabletBreakpoint            : 768px;
+@computerBreakpoint          : 992px;
+@largeMonitorBreakpoint      : 1200px;
+@widescreenMonitorBreakpoint : 1920px;
+
+// experiment
 @mobileBreakpoint            : unit( (63 * @emSize), px);
 @tabletBreakpoint            : unit( (79 * @emSize), px);
 @computerBreakpoint          : unit( (91 * @emSize), px);
@@ -109,6 +118,9 @@
 @githubFileLogoUrl: "../docs/static/githubfilelogo.svg";
 @githubFileLogo: data-uri(@githubFileLogoUrl);
 
+@testFileLogoUrl: "../docs/static/testfilelogo.svg";
+@testFileLogo: data-uri(@testFileLogoUrl);
+
 @loaderImageUrl: "../docs/static/loader.svg";
 @loaderImage: data-uri(@loaderImageUrl);
 
@@ -129,6 +141,15 @@
 }
 .setDocsAvatarUrl();
 
+@blocksIconUrl: "../docs/static/icons/blocks.svg";
+@blocksIcon: data-uri(@blocksIconUrl);
+@pyIconUrl: "../docs/static/icons/py.svg";
+@pyIcon: data-uri(@pyIconUrl);
+@jsIconUrl: "../docs/static/icons/js.svg";
+@jsIcon: data-uri(@jsIconUrl);
+
+@logoFilter: invert(23%) sepia(91%) saturate(1957%) hue-rotate(290deg) brightness(83%) contrast(94%);
+
 /*-------------------
    Menu
 --------------------*/
@@ -136,10 +157,12 @@
 @mainMenuBackground: @white;
 @mainMenuInvertedBackground: @black;
 @mainMenuTutorialBackground: @orange;
+@mainMenuTutorialButtons: @mainMenuTutorialBackground;
 
 @mainMenuHeight: 4.0rem;
 @mobileMenuHeight: 3.5rem;
 @sandboxMobileMenuHeight: 3.0rem;
+@thinMenuHeight: 3rem;
 
 @tutorialSelectedMenuColor: @primaryColor;
 @editorToggleColor: white;
@@ -208,6 +231,37 @@
 @serialConsoleBackground: @simulatorBackground;
 
 /*-------------------
+   Github Diff editor
+--------------------*/
+@githubBackgroundColor: @serialBackgroundColor;
+@githubTextColor: @darkTextColor;
+@githubInvertedTextColor: white;
+@diffSegmentBackgroundColor: @pageBackground;
+@diffRemovedBackground:#ffeef0;
+@diffAddedBackground: #e6ffed;
+@diffMarkerBackground: #f1f8ff;
+@diffMarkerColor: rgba(27,31,35,.7);
+@diffInvertedRemovedBackground:#ff5050;
+@diffInvertedAddedBackground: #10a010;
+@diffInvertedMarkerBackground: #666;
+@diffInvertedUnchangedBackground: #1e1e1e;
+@diffInvertedMarkerColor: #ccc;
+@diffLineNumberColor: rgba(27, 31, 35, .3);
+@diffInvertedLineNumberColor: #ddd;
+@diffTokenDarkenRatio: 10%;
+@diffRemovedTokenBackground:darken(@diffRemovedBackground, @diffTokenDarkenRatio);
+@diffAddedTokenBackground: darken(@diffAddedBackground, @diffTokenDarkenRatio);
+@diffInvertedRemovedTokenBackground:darken(@diffInvertedRemovedBackground, @diffTokenDarkenRatio);
+@diffInvertedAddedTokenBackground: darken(@diffInvertedAddedBackground, @diffTokenDarkenRatio);
+@diffUpdateAddedBackground: #fcfc90;
+@diffUpdateAddedTokenBackground: darken(@diffUpdateAddedBackground, @diffTokenDarkenRatio);
+@diffUpdateInlineAddedOutline: 1px solid #ccc;
+
+@conflictBorderColor: orange;
+@conflictHeaderBackgroundColor: lighten(@conflictBorderColor, 30);
+@conflictHeaderColor: black;
+
+/*-------------------
    Blockly
 --------------------*/
 
@@ -234,8 +288,10 @@
 @flyoutLabelColor: white;
 @blocklyFlyoutColor: @grey;
 @blocklyFlyoutColorOpacity: 0.9;
-@monacoFlyoutColor: fade(@blocklyFlyoutColor, 90%);
 @blocklyFlyoutButtonColor: @primaryColor;
+@monacoFlyoutColor: fade(@blocklyFlyoutColor, 90%);
+@monacoFlyoutBorderColor: fade(@flyoutLabelColor, 40%);
+@monacoFlyoutText: fade(@flyoutLabelColor, 70%);
 
 /*-------------------
    Home
@@ -263,6 +319,8 @@
 @homeDetailViewColor: @homeCardColor;
 @homeDetailCloseColor: white;
 @homeDetailCloseBackground: @grey;
+@homeDetailCardActionBackground: darken(@homeDetailViewBackground, 10%);
+@homeInvertedDetailCardActionBackground: lighten(@homeScreenBackground, 10%);
 
 /*-------------------
    Tutorial
@@ -284,3 +342,25 @@
     Greenscreen
 -------------------*/
 @greenScreenColor: #00ff00;
+@greenScreenBlockColor: #107c10; // loops category typically uses green
+                                   // keep in sync with pxtarget blocks color changes
+@greenScreenGreen: #005d51; // a green that does not get erased by chromekey 
+
+
+
+/*-------------------
+    Debugger
+-------------------*/
+// TODO: Chance this for the color we want for variables in the debugger.
+@debugNumberVariable: darkorchid;
+@debugStringVariable: coral;
+@debugBooleanVariable: darkturquoise;
+@debugArrayVariable: #663905;
+@debugSpriteVariable: blue;
+
+@debugVariableOdd: #fafafa;
+@debugVariableEven: #f0f0f0;
+@debugVariableFrozen: #eee;
+
+@DebuggerBackgroundPrimaryColor: #e67e22;
+@DebuggerBackgroundSecondaryColor: lightgreen;

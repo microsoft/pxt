@@ -1,0 +1,22 @@
+{
+    "editor": "blocksprj",
+    "title": "Tutorial Completed ",
+    "steps": [
+        {
+            "contentMd": "Let's get started!",
+            "headerContentMd": "Let's get started!"
+        },
+        {
+            "contentMd": "The tutorial finishes at this step",
+            "headerContentMd": "The tutorial finishes at this step",
+            "tutorialCompleted": true
+        },
+        {
+            "contentMd": "There may be steps afterwards",
+            "headerContentMd": "There may be steps afterwards"
+        }
+    ],
+    "activities": null,
+    "code": "",
+    "metadata": {}
+}

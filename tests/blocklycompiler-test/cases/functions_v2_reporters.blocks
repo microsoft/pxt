@@ -1,0 +1,67 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+  <variables>
+    <variable type="" id="QF~P5JVbssG9wyGWcn*;">tmp</variable>
+  </variables>
+  <block type="function_definition" x="-530" y="-30">
+    <mutation name="foo_all" functionid="x7Y7=Y-HUjuNRm{*[;%k">
+      <arg name="num" id="MIt^:K7o02RBKp6H0ERe" type="number"></arg>
+      <arg name="text" id="*`htzUJy#9ba3:Y25n.H" type="string"></arg>
+      <arg name="bool" id="52p6=^M6*=mKFFv8#As_" type="boolean"></arg>
+    </mutation>
+    <field name="function_title">function</field>
+    <field name="function_name">foo_all</field>
+    <comment pinned="false" h="120" w="160">Describe this function...</comment>
+    <value name="MIt^:K7o02RBKp6H0ERe">
+      <shadow type="argument_reporter_number">
+        <field name="VALUE">num</field>
+      </shadow>
+    </value>
+    <value name="*`htzUJy#9ba3:Y25n.H">
+      <shadow type="argument_reporter_string">
+        <field name="VALUE">text</field>
+      </shadow>
+    </value>
+    <value name="52p6=^M6*=mKFFv8#As_">
+      <shadow type="argument_reporter_boolean">
+        <field name="VALUE">bool</field>
+      </shadow>
+    </value>
+    <statement name="STACK">
+      <block type="variables_set">
+        <field name="VAR" id="QF~P5JVbssG9wyGWcn*;" variabletype="">tmp</field>
+        <value name="VALUE">
+          <shadow type="math_number" id="WH58FOg[Ne]!_wYx5NpD">
+            <field name="NUM">0</field>
+          </shadow>
+          <block type="text_join">
+            <mutation items="3"></mutation>
+            <value name="ADD0">
+              <shadow type="text" id="Z8?w}|+l._GK/V-iMoZ.">
+                <field name="TEXT">Hello</field>
+              </shadow>
+              <block type="argument_reporter_number">
+                <field name="VALUE">num</field>
+              </block>
+            </value>
+            <value name="ADD1">
+              <shadow type="text" id="EnLJwqcX_E[;rfwQXcmq">
+                <field name="TEXT">World</field>
+              </shadow>
+              <block type="argument_reporter_string">
+                <field name="VALUE">text</field>
+              </block>
+            </value>
+            <value name="ADD2">
+              <shadow type="text" id="R%S4_9tt+.Qn*N]9/WR{">
+                <field name="TEXT"></field>
+              </shadow>
+              <block type="argument_reporter_boolean">
+                <field name="VALUE">bool</field>
+              </block>
+            </value>
+          </block>
+        </value>
+      </block>
+    </statement>
+  </block>
+</xml>

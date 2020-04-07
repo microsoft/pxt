@@ -1,0 +1,1 @@
+let x = SpriteKind.Player

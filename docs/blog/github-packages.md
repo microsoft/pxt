@@ -1,8 +1,12 @@
-# GitHub package authoring
+# GitHub Extensions authoring
 
 **Posted on August 1, 2018 by [mmoskal](https://github.com/mmoskal)**
 
 ## ~ hint
+
+**Update**: Read part 3 at [MakeCode with GitHub](/blog/makecode-with-github).
+
+**Update**: Read part 2 at [GitHub Extensions Reloaded](/blog/github-extensions-episode-2).
 
 **Update**: This feature is now documented in [GitHub extension authoring](/extensions/github-authoring).
 

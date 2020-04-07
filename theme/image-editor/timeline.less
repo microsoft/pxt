@@ -1,0 +1,147 @@
+.image-editor-timeline {
+    width: 7rem;
+    background-color: var(--editing-tools-bg-color);
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.image-editor-timeline-frame {
+    border: 1px var(--sidebar-icon-inactive-color) solid;
+    color: var(--sidebar-icon-inactive-color);
+
+    border-radius: 0.25rem;
+    width: 6rem;
+    height: 6rem;
+    margin: 0.4rem;
+
+    transition: border 0.2s, color 0.2s, background-color 0.2s;
+    overflow: hidden;
+    position: relative;
+}
+
+.image-editor-timeline-frame.active {
+    cursor: grab;
+    border-color: var(--sidebar-icon-active-color);
+}
+
+.image-editor-timeline-preview {
+    width: 100%;
+
+    /* Don't ask... */
+    min-height: 7rem;
+    max-height: 7rem;
+
+    background-color: #3d3d3d;
+}
+
+.image-editor-timeline-frame:hover {
+    color: var(--sidebar-icon-active-color);
+    border: 1px var(--sidebar-icon-active-color) solid;
+}
+
+.image-editor-timeline-frame.collapsed {
+    text-align: center;
+    height: 2rem;
+    line-height: 2rem;
+}
+
+.timeline-frame-outer {
+    width: 100%;
+    height: 100%;
+    display: flex;
+}
+
+.timeline-frame-outer.portrait {
+    flex-direction: row;
+}
+
+.timeline-frame-outer.portrait canvas {
+    height: 100%;
+}
+
+.timeline-frame-outer.landscape {
+    flex-direction: column;
+}
+
+.timeline-frame-outer.landscape canvas {
+    width: 100%;
+}
+
+.timeline-frame-spacer {
+    flex-grow: 1;
+}
+
+.timeline-frame-outer canvas {
+    image-rendering: optimizeSpeed;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+    image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
+}
+
+.image-editor-timeline-frames-outer {
+    flex-grow: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+.image-editor-timeline-frames.scrolling {
+    cursor: grabbing;
+}
+
+.image-editor-timeline-framess.scrolling .image-editor-timeline-frame {
+    cursor: grabbing;
+}
+
+.timeline-frame-actions {
+    display: flex;
+    flex-direction: row;
+    background-color: #333333;
+    border-top: var(--sidebar-icon-active-color) 1px solid;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 2rem;
+}
+
+
+.timeline-frame-actions .image-editor-button {
+    /* color: #000000; */
+    flex-grow: 1;
+    margin: 0;
+}
+
+.image-editor-timeline-frame.dragging {
+    position: absolute;
+    left: 0;
+    top: -9999px;
+    background-color: #3d3d3d;
+}
+
+.image-editor-timeline-frame.drop-marker {
+    border: 1px var(--sidebar-icon-active-color) dotted;
+    background-color: #aeaeae;
+}
+
+/* .timeline-frame-actions */
+
+
+/* CSS fixes for Edge rendering issue with position: relative */
+.edge {
+    .image-editor-timeline-frame,
+    .image-editor-timeline-frames-outer,
+    .timeline-frame-actions {
+        position: static;
+    }
+
+    .timeline-frame-outer canvas {
+        height: 6rem;
+    }
+
+    .timeline-frame-actions {
+        margin-top: -2rem;
+    }
+}

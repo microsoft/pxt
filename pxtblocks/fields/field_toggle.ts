@@ -8,16 +8,16 @@ namespace pxtblockly {
         private params: any;
 
         private state_: boolean;
-        private checkElement_: any;
+        private checkElement_: SVGElement;
 
-        private toggleThumb_: any;
+        private toggleThumb_: SVGElement;
 
-        protected CURSOR = 'pointer';
+        public CURSOR = 'pointer';
 
         private type_: string;
 
         constructor(state: string, params: Blockly.FieldCustomOptions, opt_validator?: Function) {
-            super(state, opt_validator);
+            super(state, undefined, undefined, undefined, opt_validator);
             this.params = params;
             this.setValue(state);
             this.addArgType('toggle');
@@ -30,14 +30,14 @@ namespace pxtblockly {
                 return;
             }
             // Build the DOM.
-            this.fieldGroup_ = Blockly.utils.createSvgElement('g', {}, null);
+            this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null) as SVGGElement;
             if (!this.visible_) {
                 (this.fieldGroup_ as any).style.display = 'none';
             }
             // Add an attribute to cassify the type of field.
             if ((this as any).getArgTypes() !== null) {
                 if (this.sourceBlock_.isShadow()) {
-                    this.sourceBlock_.svgGroup_.setAttribute('data-argument-type',
+                    (this.sourceBlock_ as any).svgGroup_.setAttribute('data-argument-type',
                         (this as any).getArgTypes());
                 } else {
                     // Fields without a shadow wrapper, like square dropdowns.
@@ -47,28 +47,28 @@ namespace pxtblockly {
             // If not in a shadow block, and has more than one input, draw a box.
             if (!this.sourceBlock_.isShadow()
                 && (this.sourceBlock_.inputList && this.sourceBlock_.inputList.length > 1)) {
-                this.box_ = Blockly.utils.createSvgElement('rect', {
+                this.borderRect_ = Blockly.utils.dom.createSvgElement('rect', {
                     'rx': (Blockly as any).BlockSvg.CORNER_RADIUS,
                     'ry': (Blockly as any).BlockSvg.CORNER_RADIUS,
                     'x': 0,
                     'y': 0,
                     'width': this.size_.width,
                     'height': this.size_.height,
-                    'fill': (Blockly as any).Colours.textField,
-                    'stroke': this.sourceBlock_.getColourTertiary()
-                });
-                this.fieldGroup_.insertBefore(this.box_, this.textElement_);
+                    'fill': (this.sourceBlock_ as Blockly.BlockSvg).getColour(),
+                    'stroke': (this.sourceBlock_ as Blockly.BlockSvg).getColourTertiary()
+                }, null) as SVGRectElement;
+                this.fieldGroup_.insertBefore(this.borderRect_, this.textElement_);
             }
             // Adjust X to be flipped for RTL. Position is relative to horizontal start of source block.
             const size = this.getSize();
-            this.checkElement_ = Blockly.utils.createSvgElement('g',
+            this.checkElement_ = Blockly.utils.dom.createSvgElement('g',
                 {
                     'class': `blocklyToggle ${this.state_ ? 'blocklyToggleOn' : 'blocklyToggleOff'}`,
                     'transform': `translate(8, ${size.height / 2})`,
                 }, this.fieldGroup_);
             switch (this.getOutputShape()) {
                 case Blockly.OUTPUT_SHAPE_HEXAGONAL:
-                    this.toggleThumb_ = Blockly.utils.createSvgElement('polygon',
+                    this.toggleThumb_ = Blockly.utils.dom.createSvgElement('polygon',
                         {
                             'class': 'blocklyToggleRect',
                             'points': '-7,-14 -21,0 -7,14 7,14 21,0 7,-14',
@@ -77,7 +77,7 @@ namespace pxtblockly {
                         this.checkElement_);
                     break;
                 case Blockly.OUTPUT_SHAPE_ROUND:
-                    this.toggleThumb_ = Blockly.utils.createSvgElement('rect',
+                    this.toggleThumb_ = Blockly.utils.dom.createSvgElement('rect',
                         {
                             'class': 'blocklyToggleCircle',
                             'x': -6, 'y': -14, 'height': 28,
@@ -87,7 +87,7 @@ namespace pxtblockly {
                         this.checkElement_);
                     break;
                 case Blockly.OUTPUT_SHAPE_SQUARE:
-                    this.toggleThumb_ = Blockly.utils.createSvgElement('rect',
+                    this.toggleThumb_ = Blockly.utils.dom.createSvgElement('rect',
                         {
                             'class': 'blocklyToggleRect',
                             'x': -6, 'y': -14, 'height': 28,
@@ -100,17 +100,19 @@ namespace pxtblockly {
 
             let fieldX = (this.sourceBlock_.RTL) ? -size.width / 2 : size.width / 2;
             /** @type {!Element} */
-            this.textElement_ = Blockly.utils.createSvgElement('text',
+            this.textElement_ = Blockly.utils.dom.createSvgElement('text',
                 {
                     'class': 'blocklyText',
                     'x': fieldX,
                     'dy': '0.6ex',
                     'y': size.height / 2
                 },
-                this.fieldGroup_);
+                this.fieldGroup_) as SVGTextElement;
 
             this.updateEditable();
-            this.sourceBlock_.getSvgRoot().appendChild(this.fieldGroup_);
+            const svgRoot = (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot();
+            svgRoot.appendChild(this.fieldGroup_);
+            svgRoot.querySelector(".blocklyBlockBackground").setAttribute('fill', (this.sourceBlock_ as Blockly.BlockSvg).getColourTertiary())
 
             this.switchToggle(this.state_);
             this.setValue(this.getValue());
@@ -135,9 +137,7 @@ namespace pxtblockly {
             return lf("False");
         }
 
-        updateWidth() {
-            const innerWidth = this.getInnerWidth();
-            const halfInnerWidth = innerWidth / 2;
+        updateSize_() {
             switch (this.getOutputShape()) {
                 case Blockly.OUTPUT_SHAPE_ROUND:
                     this.size_.width = this.getInnerWidth() * 2 - 7; break;
@@ -146,7 +146,6 @@ namespace pxtblockly {
                 case Blockly.OUTPUT_SHAPE_SQUARE:
                     this.size_.width = 9 + this.getInnerWidth() * 2; break;
             }
-            this.arrowWidth_ = 0;
         }
 
         getInnerWidth() {
@@ -161,6 +160,19 @@ namespace pxtblockly {
             return this.sourceBlock_.isShadow() ? this.sourceBlock_.getOutputShape() : Blockly.OUTPUT_SHAPE_SQUARE;
         }
 
+        doClassValidation_(newBool: string) {
+            return typeof this.fromVal(newBool) == "boolean" ? newBool : "false";
+        }
+
+        applyColour() {
+            let color = (this.sourceBlock_ as Blockly.BlockSvg).getColourTertiary();
+            if (this.borderRect_) {
+                this.borderRect_.setAttribute('stroke', color);
+            } else {
+                (this.sourceBlock_ as any).pathObject.svgPath.setAttribute('fill', color);
+            }
+        };
+
         /**
          * Return 'TRUE' if the toggle is ON, 'FALSE' otherwise.
          * @return {string} Current state.
@@ -174,7 +186,7 @@ namespace pxtblockly {
          * unchecks otherwise.
          * @param {string|boolean} newBool New state.
          */
-        setValue(newBool: string) {
+        doValueUpdate_(newBool: string) {
             let newState = this.fromVal(newBool);
             if (this.state_ !== newState) {
                 if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
@@ -184,22 +196,21 @@ namespace pxtblockly {
                 this.state_ = newState;
 
                 this.switchToggle(this.state_);
-
-                this.setText(this.getDisplayText_());
+                this.isDirty_ = true;
             }
         }
 
         switchToggle(newState: boolean) {
             if (this.checkElement_) {
-                this.updateWidth();
+                this.updateSize_();
                 const size = this.getSize();
                 const innerWidth = this.getInnerWidth();
                 if (newState) {
-                    pxtblockly.svg.addClass(this.checkElement_, 'blocklyToggleOn');
-                    pxtblockly.svg.removeClass(this.checkElement_, 'blocklyToggleOff');
+                    pxt.BrowserUtils.addClass(this.checkElement_, 'blocklyToggleOn');
+                    pxt.BrowserUtils.removeClass(this.checkElement_, 'blocklyToggleOff');
                 } else {
-                    pxtblockly.svg.removeClass(this.checkElement_, 'blocklyToggleOn');
-                    pxtblockly.svg.addClass(this.checkElement_, 'blocklyToggleOff');
+                    pxt.BrowserUtils.removeClass(this.checkElement_, 'blocklyToggleOn');
+                    pxt.BrowserUtils.addClass(this.checkElement_, 'blocklyToggleOff');
                 }
                 const outputShape = this.getOutputShape();
                 let width = 0, halfWidth = 0;
@@ -210,17 +221,17 @@ namespace pxtblockly {
                         halfWidth = width / 2;
                         let quarterWidth = halfWidth / 2;
                         // TODO: the left padding calculation is a hack, we should calculate left padding based on width (generic case)
-                        leftPadding = this.getMaxLength() > 3 ? -4 : 1;
+                        leftPadding = this.getMaxLength() > 3 ? -10 : 1;
                         rightPadding = -quarterWidth;
                         const topLeftPoint = -quarterWidth;
-                        const bottomRightPoint = quarterWidth;
+                        const bottomRightPoint = halfWidth;
                         this.toggleThumb_.setAttribute('points', `${topLeftPoint},-14 ${topLeftPoint - 14},0 ${topLeftPoint},14 ${bottomRightPoint},14 ${bottomRightPoint + 14},0 ${bottomRightPoint},-14`);
                         break;
                     case Blockly.OUTPUT_SHAPE_ROUND:
                     case Blockly.OUTPUT_SHAPE_SQUARE:
                         width = 5 + innerWidth;
                         halfWidth = width / 2;
-                        this.toggleThumb_.setAttribute('width', width);
+                        this.toggleThumb_.setAttribute('width', "" + width);
                         this.toggleThumb_.setAttribute('x', `-${halfWidth}`);
                         leftPadding = rightPadding = outputShape == Blockly.OUTPUT_SHAPE_SQUARE ? 2 : -6;
                         break;
@@ -229,35 +240,28 @@ namespace pxtblockly {
             }
         }
 
-        updateTextNode_() {
-            super.updateTextNode_();
-            if (this.textElement_)
-                pxtblockly.svg.addClass(this.textElement_ as SVGElement, 'blocklyToggleText');
-        }
-
         render_() {
             if (this.visible_ && this.textElement_) {
                 // Replace the text.
                 goog.dom.removeChildren(/** @type {!Element} */(this.textElement_));
                 let textNode = document.createTextNode(this.getDisplayText_());
                 this.textElement_.appendChild(textNode);
-                pxtblockly.svg.addClass(this.textElement_ as SVGElement, 'blocklyToggleText');
-                this.updateWidth();
+                pxt.BrowserUtils.addClass(this.textElement_ as SVGElement, 'blocklyToggleText');
+                this.updateSize_();
 
                 // Update text centering, based on newly calculated width.
-                let halfWidth = this.size_.width / 2;
-                let centerTextX = this.state_ ? halfWidth + halfWidth / 2 : halfWidth / 2;
+                let width = this.size_.width;
+                let centerTextX = this.state_ ? (width + width / 8) : width / 2;
 
                 // Apply new text element x position.
-                let width = Blockly.Field.getCachedWidth(this.textElement_);
                 let newX = centerTextX - width / 2;
                 this.textElement_.setAttribute('x', `${newX}`);
             }
 
             // Update any drawn box to the correct width and height.
-            if (this.box_) {
-                this.box_.setAttribute('width', `${this.size_.width}`);
-                this.box_.setAttribute('height', `${this.size_.height}`);
+            if (this.borderRect_) {
+                this.borderRect_.setAttribute('width', `${this.size_.width}`);
+                this.borderRect_.setAttribute('height', `${this.size_.height}`);
             }
         }
 

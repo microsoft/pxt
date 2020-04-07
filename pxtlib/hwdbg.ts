@@ -178,6 +178,7 @@ namespace pxt.HWDBG {
             let bp = findPrevBrkp(currAddr)
             let info = U.clone(bp) as any as pxtc.FunctionLocationInfo
             info.functionName = pi.name
+            info.argumentNames = pi.args && pi.args.map(a => a.name);
             msg.stackframes.push({
                 locals: {},
                 funcInfo: info,

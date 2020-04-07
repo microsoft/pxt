@@ -276,7 +276,7 @@ If you don't have write access to the repo you are translating (i.e. you created
 #### 2. Create a pull request in the extension repo
 
 - Go to the GitHub website and navigate to the extension repo
->    For example for pxt-neopixel: https://github.com/Microsoft/pxt-neopixel
+>    For example for pxt-neopixel: https://github.com/microsoft/pxt-neopixel
 - Click **Pull requests** in the top bar
 
 ![](/static/images/gh-pull-request.png)

@@ -1,16 +1,34 @@
 namespace pxt.crowdin {
     export const KEY_VARIABLE = "CROWDIN_KEY";
+    export let testMode = false;
+    export const TEST_KEY = "!!!testmode!!!";
+
+    export function setTestMode() {
+        pxt.crowdin.testMode = true;
+        pxt.log(`CROWDIN TEST MODE - files will NOT be uploaded`);
+    }
+
+    function multipartPostAsync(key: string, uri: string, data: any = {}, filename: string = null, filecontents: string = null): Promise<ts.pxtc.Util.HttpResponse> {
+        if (testMode || key == TEST_KEY) {
+            const resp = {
+                success: true
+            }
+            return Promise.resolve({ statusCode: 200, headers: {}, text: JSON.stringify(resp), json: resp })
+        }
+        return Util.multipartPostAsync(uri, data, filename, filecontents);
+    }
 
     function apiUri(branch: string, prj: string, key: string, cmd: string, args?: Map<string>) {
         Util.assert(!!prj && !!key && !!cmd);
         const apiRoot = "https://api.crowdin.com/api/project/" + prj + "/";
-        let suff = "?key=" + key;
-        if (branch) {
-            if (!args) args = {};
+        args = args || {};
+        if (testMode)
+            delete args["key"]; // ensure no key is passed in test mode
+        else
+            args["key"] = key;
+        if (branch)
             args["branch"] = branch;
-        }
-        if (args) suff += "&" + Object.keys(args).map(k => `${k}=${encodeURIComponent(args[k])}`).join("&");
-        return apiRoot + cmd + suff;
+        return apiRoot + cmd + "?" + Object.keys(args).map(k => `${k}=${encodeURIComponent(args[k])}`).join("&");
     }
 
     export interface CrowdinFileInfo {
@@ -45,7 +63,9 @@ namespace pxt.crowdin {
             const info = JSON.parse(respText) as CrowdinProjectInfo;
             if (!info) throw new Error("info failed")
 
-            const todo = info.languages;
+            let todo = info.languages.filter(l => l.code != "en");
+            if (pxt.appTarget && pxt.appTarget.appTheme && pxt.appTarget.appTheme.availableLocales)
+                todo = todo.filter(l => pxt.appTarget.appTheme.availableLocales.indexOf(l.code) > -1);
             pxt.log('languages: ' + todo.map(l => l.code).join(', '));
             const nextFile = (): Promise<void> => {
                 const item = todo.pop();
@@ -86,7 +106,7 @@ namespace pxt.crowdin {
         name = normalizeFileName(name);
         pxt.debug(`create directory ${branch || ""}/${name}`)
         if (!incr) incr = mkIncr(name);
-        return Util.multipartPostAsync(apiUri(branch, prj, key, "add-directory"), { json: "true", name: name })
+        return multipartPostAsync(key, apiUri(branch, prj, key, "add-directory"), { json: "true", name: name })
             .then(resp => {
                 pxt.debug(`crowdin resp: ${resp.statusCode}`)
                 // 400 returned by folder already exists
@@ -135,46 +155,57 @@ namespace pxt.crowdin {
             opts["json"] = "";
             opts["escape_quotes"] = "0";
             incr();
-            return Util.multipartPostAsync(apiUri(branch, prj, key, op), opts, filename, data)
+            return multipartPostAsync(key, apiUri(branch, prj, key, op), opts, filename, data)
                 .then(resp => handleResponseAsync(resp))
         }
 
         function handleResponseAsync(resp: Util.HttpResponse) {
             const code = resp.statusCode;
-            const data: any = JSON.parse(resp.text);
+            const errorData: {
+                success?: boolean;
+                error?: {
+                    code: number;
+                }
+            } = Util.jsonTryParse(resp.text) || {};
 
             pxt.debug(`upload result: ${code}`);
-            if (code == 404 && data.error.code == 8) {
+            if (code == 404 && errorData.error && errorData.error.code == 8) {
                 pxt.log(`create new translation file: ${filename}`)
                 return uploadAsync("add-file", {})
             }
-            else if (code == 404 && data.error.code == 17) {
+            else if (code == 404 && errorData.error && errorData.error.code == 17) {
                 return createDirectoryAsync(branch, prj, key, filename.replace(/\/[^\/]+$/, ""), incr)
                     .then(() => startAsync())
-            } else if (code == 200) {
+            } else if (!errorData.success && errorData.error && errorData.error.code == 53) {
+                // file is being updated
+                pxt.log(`${filename} being updated, waiting 5s and retry...`)
+                return Promise.delay(5000) // wait 5s and try again
+                    .then(() => uploadTranslationAsync(branch, prj, key, filename, data));
+            } else if (code == 200 || errorData.success) {
+                // something crowdin reports 500 with success=true
                 return Promise.resolve()
             } else {
-                throw new Error(`Error, upload translation: ${filename}, ${resp}, ${JSON.stringify(data)}`)
+                throw new Error(`Error, upload translation: ${filename}, ${code}, ${resp.text}`)
             }
         }
 
         return startAsync();
     }
 
-    function flatten(allFiles: CrowdinFileInfo[], files: CrowdinFileInfo, parentDir: string, branch?: string) {
-        const n = files.name;
+    function flatten(allFiles: CrowdinFileInfo[], node: CrowdinFileInfo, parentDir: string, branch?: string) {
+        const n = node.name;
         const d = parentDir ? parentDir + "/" + n : n;
-        files.fullName = d;
-        files.branch = branch || "";
-        switch (files.node_type) {
+        node.fullName = d;
+        node.branch = branch || "";
+        switch (node.node_type) {
             case "file":
-                allFiles.push(files);
+                allFiles.push(node);
                 break;
             case "directory":
-                (files.files || []).forEach(f => flatten(allFiles, f, d));
+                (node.files || []).forEach(f => flatten(allFiles, f, d, branch));
                 break;
             case "branch":
-                (files.files || []).forEach(f => flatten(allFiles, f, parentDir, files.name));
+                (node.files || []).forEach(f => flatten(allFiles, f, parentDir, node.name));
                 break;
         }
     }
@@ -253,5 +284,26 @@ namespace pxt.crowdin {
                 const allFiles = filterAndFlattenFiles(info.files);
                 return allFiles;
             });
+    }
+
+    export function inContextLoadAsync(text: string): Promise<string> {
+        const node = document.createElement("input") as HTMLInputElement;
+        node.type = "text";
+        node.setAttribute("class", "hidden");
+        node.value = text;
+        let p = new Promise<string>((resolve, reject) => {
+            const observer = new MutationObserver(() => {
+                if (text == node.value)
+                    return;
+                const r = Util.rlf(node.value); // get rid of {id}...
+                node.remove();
+                observer.disconnect();
+                resolve(r);
+            });
+            observer.observe(node, { attributes: true });
+        })
+        document.body.appendChild(node);
+
+        return p;
     }
 }

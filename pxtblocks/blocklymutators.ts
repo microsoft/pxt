@@ -156,8 +156,8 @@ namespace pxt.blocks {
         }
 
         // Should be set to modify a block after a mutator dialog is updated
-        public compose(topBlock: Blockly.Block): void {
-            const allBlocks = topBlock.getDescendants().map(subBlock => {
+        public compose(topBlock: Blockly.BlockSvg): void {
+            const allBlocks = topBlock.getDescendants(false).map(subBlock => {
                 return {
                     type: subBlock.type,
                     name: subBlock.inputList[0].name
@@ -169,9 +169,9 @@ namespace pxt.blocks {
         }
 
         // Should be set to initialize the workspace inside a mutator dialog and return the top block
-        public decompose(workspace: Blockly.Workspace): Blockly.Block {
+        public decompose(workspace: Blockly.WorkspaceSvg): Blockly.Block {
             // Initialize flyout workspace's top block and add sub-blocks based on visible parameters
-            const topBlock = workspace.newBlock(this.topBlockType);
+            const topBlock = workspace.newBlock(this.topBlockType) as Blockly.BlockSvg;
             topBlock.initSvg();
 
             for (const input of topBlock.inputList) {
@@ -179,7 +179,7 @@ namespace pxt.blocks {
                     let currentConnection = input.connection;
 
                     this.getVisibleBlockTypes().forEach(sub => {
-                        const subBlock = workspace.newBlock(sub);
+                        const subBlock = workspace.newBlock(sub) as Blockly.BlockSvg;
                         subBlock.initSvg();
                         currentConnection.connect(subBlock.previousConnection);
                         currentConnection = subBlock.nextConnection;
@@ -433,7 +433,7 @@ namespace pxt.blocks {
             if (Util.listsEqual(this.currentlyVisible, this.parameters)) {
                 return;
             }
-            const dummyInput = this.block.inputList.filter(i => i.name === MutatorHelper.mutatedVariableInputName)[0];
+            const dummyInput = this.block.inputList.find(i => i.name === MutatorHelper.mutatedVariableInputName);
 
             if (this.prefix && this.currentlyVisible.length === 0) {
                 dummyInput.appendField(this.prefix, DestructuringMutator.prefixLabel);
@@ -550,11 +550,11 @@ namespace pxt.blocks {
             const input = this.block.appendValueInput(ArrayMutator.valueInputPrefix + index).setCheck("Number");
 
             if (isNewField) {
-                const valueBlock = this.block.workspace.newBlock("math_number");
+                const valueBlock = this.block.workspace.newBlock("math_number") as Blockly.BlockSvg;
                 valueBlock.initSvg();
                 valueBlock.setShadow(true);
                 input.connection.connect(valueBlock.outputConnection);
-                this.block.workspace.render();
+                (this.block.workspace as Blockly.WorkspaceSvg).render();
                 this.count++;
             }
         }

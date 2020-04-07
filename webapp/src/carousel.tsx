@@ -83,12 +83,13 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
 
     public renderCore() {
         const { rightDisabled, leftDisabled } = this.state;
+        const isRTL = pxt.Util.isUserLanguageRtl();
 
         return <div className="ui carouselouter">
-            <span role="button" className={"carouselarrow left aligned" + (leftDisabled ? " arrowdisabled" : "")} aria-label={lf("See previous")}
-                tabIndex={leftDisabled ? -1 : 0} onClick={this.onLeftArrowClick} onKeyDown={sui.fireClickOnEnter} ref={this.handleArrowRefs}>
-                <sui.Icon icon="circle angle left" />
-            </span>
+            {!leftDisabled && <span role="button" className={"carouselarrow left aligned"} tabIndex={0}
+                aria-label={lf("See previous")} onClick={this.onLeftArrowClick} onKeyDown={sui.fireClickOnEnter} ref={this.handleArrowRefs}>
+                <sui.Icon icon={"circle angle " + (!isRTL ? "left" : "right")} />
+            </span>}
             <div className="carouselcontainer" ref={this.handleContainerRef}>
                 <div className="carouselbody" ref={this.handleDragSurfaceRef}>
                     {
@@ -99,10 +100,10 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
                     }
                 </div>
             </div>
-            <span role="button" className={"carouselarrow right aligned" + (rightDisabled ? " arrowdisabled" : "")} aria-label={lf("See more")}
-                tabIndex={rightDisabled ? -1 : 0} onClick={this.onRightArrowClick} onKeyDown={sui.fireClickOnEnter} ref={this.handleArrowRefs}>
-                <sui.Icon icon="circle angle right" />
-            </span>
+            {!rightDisabled && <span role="button" className={"carouselarrow right aligned"} tabIndex={0}
+                aria-label={lf("See more")} onClick={this.onRightArrowClick} onKeyDown={sui.fireClickOnEnter} ref={this.handleArrowRefs}>
+                <sui.Icon icon={"circle angle " + (!pxt.Util.isUserLanguageRtl() ? "right" : "left")} />
+            </span>}
         </div>
     }
 
@@ -116,6 +117,7 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
 
     private onArrowClick(left: boolean) {
         const prevIndex = this.index;
+        const prevScroll = this.container.scrollLeft;
         this.setIndex(left ? this.index - this.actualPageLength : this.index + this.actualPageLength);
         if (left) {
             // Focus right most
@@ -126,6 +128,9 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
             const nextElement = this.index > prevIndex + this.actualPageLength ? this.index : prevIndex + this.actualPageLength;
             if (this.childrenElements[nextElement]) (this.childrenElements[nextElement].firstChild as HTMLElement).focus();
         }
+
+        // Undo any scrolling caused by focus()
+        this.container.scrollLeft = prevScroll;
     }
 
     public componentDidMount() {
@@ -409,7 +414,7 @@ function getX(event: MouseEvent | TouchEvent | PointerEvent) {
 
 function getY(event: MouseEvent | TouchEvent | PointerEvent) {
     if ("screenY" in event) {
-        return (event as MouseEvent).screenX;
+        return (event as MouseEvent).screenY;
     }
     else {
         return (event as TouchEvent).changedTouches[0].screenY

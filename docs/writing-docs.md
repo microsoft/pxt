@@ -8,7 +8,7 @@ MakeCode provides an integrated solution to build documentation.
 * **reusable** documentation pages can be shared and specialized between targets. It allows to provide a core documentation for the language while specializing the examples.
 * **integrated** step by step tutorials or sidebar hosted docs allow to surface information within the editor without having to switch to a different browser tab
 
-This page was written using this documentation system, check it out at https://github.com/Microsoft/pxt/blob/master/docs/writing-docs.md.
+This page was written using this documentation system, check it out at https://github.com/microsoft/pxt/blob/master/docs/writing-docs.md.
 
 ## Reference
 
@@ -16,4 +16,5 @@ This page was written using this documentation system, check it out at https://g
 * [Anchors](/writing-docs/anchors)
 * [Routing](/writing-docs/routing)
 * [Tutorials](/writing-docs/tutorials)
+* [User Tutorials](/writing-docs/user-tutorials)
 * [Testing](/writing-docs/testing)

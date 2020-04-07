@@ -2,6 +2,7 @@ import * as workspace from "./workspace";
 import * as data from "./data";
 import * as core from "./core";
 import * as db from "./db";
+import * as compiler from "./compiler";
 
 import Util = pxt.Util;
 
@@ -15,7 +16,6 @@ let extWeight: pxt.Map<number> = {
 }
 
 export function setupAppTarget(trgbundle: pxt.TargetBundle) {
-    //if (!trgbundle.appTheme) trgbundle.appTheme = {};
     pxt.setAppTarget(trgbundle)
 }
 
@@ -26,20 +26,27 @@ export class File implements pxt.editor.IFile {
     numDiagnosticsOverride: number;
     filters: pxt.editor.ProjectFilters;
     forceChangeCallback: ((from: string, to: string) => void);
+    virtual: boolean;
+    baseGitContent: string;
 
     constructor(public epkg: EditorPackage, public name: string, public content: string) { }
 
     isReadonly() {
-        return !this.epkg.header
+        return !this.epkg.header;
     }
 
     getName() {
         return this.epkg.getPkgId() + "/" + this.name
     }
 
-    getTypeScriptName() {
+    getTextFileName() {
         if (this.epkg.isTopLevel()) return this.name
         else return "pxt_modules/" + this.epkg.getPkgId() + "/" + this.name
+    }
+
+    getFileNameWithExtension(ext: string) {
+        const base = this.getTextFileName();
+        return base.substring(0, base.length - this.getExtension().length) + ext;
     }
 
     getExtension() {
@@ -48,19 +55,30 @@ export class File implements pxt.editor.IFile {
         return ""
     }
 
-    static tsFileNameRx = /\.ts$/;
-    static blocksFileNameRx = /\.blocks$/;
-    getVirtualFileName(): string {
-        if (File.blocksFileNameRx.test(this.name))
-            return this.name.replace(File.blocksFileNameRx, '.ts');
-        if (File.tsFileNameRx.test(this.name))
-            return this.name.replace(File.tsFileNameRx, '.blocks');
-        return undefined;
+    getVirtualFileName(forPrj: string): string {
+        const ext = this.name.replace(/.*\./, "");
+        const basename = ext ? this.name.slice(0, -ext.length - 1) : this.name;
+        const isExtOk = /^blocks|py|ts$/.test(ext);
+        if (!isExtOk) return undefined;
+
+        switch (forPrj) {
+            case pxt.BLOCKS_PROJECT_NAME:
+                return basename + ".blocks";
+            case pxt.JAVASCRIPT_PROJECT_NAME:
+                return basename + ".ts";
+            case pxt.PYTHON_PROJECT_NAME:
+                return basename + ".py";
+            default:
+                pxt.U.oops();
+                return undefined;
+        }
     }
 
     weight() {
         if (/^main\./.test(this.name))
             return 5;
+        if (/^_locales\//.test(this.name))
+            return 500;
         if (extWeight.hasOwnProperty(this.getExtension()))
             return extWeight[this.getExtension()]
         return 60;
@@ -73,6 +91,13 @@ export class File implements pxt.editor.IFile {
 
     private updateStatus() {
         data.invalidate("open-meta:" + this.getName())
+    }
+
+    setBaseGitContent(newContent: string) {
+        if (newContent != this.baseGitContent) {
+            this.baseGitContent = newContent
+            this.updateStatus()
+        }
     }
 
     setContentAsync(newContent: string, force?: boolean) {
@@ -90,6 +115,8 @@ export class File implements pxt.editor.IFile {
                         this.updateStatus();
                     }
                     if (force && this.forceChangeCallback) this.forceChangeCallback(prevContent, newContent);
+                    if (this.name == pxt.github.GIT_JSON)
+                        this.epkg.updateGitJsonCache()
                 })
         } else {
             this.updateStatus();
@@ -100,6 +127,16 @@ export class File implements pxt.editor.IFile {
     setForceChangeCallback(callback: (from: string, to: string) => void) {
         this.forceChangeCallback = callback;
     }
+
+    /**
+     * Content prepared for github publishing
+     */
+    publishedContent(): string {
+        let c = this.content;
+        if (this.name == pxt.CONFIG_NAME)
+            c = workspace.prepareConfigForGithub(c);
+        return c;
+    }
 }
 
 export class EditorPackage {
@@ -108,6 +145,8 @@ export class EditorPackage {
     onupdate = () => { };
     saveScheduled = false;
     savingNow = 0;
+    private simState: pxt.Map<any>;
+    private simStateSaveScheduled = false;
 
     id: string;
     outputPkg: EditorPackage;
@@ -118,8 +157,50 @@ export class EditorPackage {
             this.header = workspace.getHeader(ksPkg.verArgument())
     }
 
+    getSimState() {
+        if (!this.simState) {
+            if (!this.files[pxt.SIMSTATE_JSON])
+                this.setFile(pxt.SIMSTATE_JSON, "{}")
+            const f = this.files[pxt.SIMSTATE_JSON]
+            try {
+                this.simState = JSON.parse(f.content)
+            } catch {
+                this.simState = {}
+            }
+        }
+        return this.simState
+    }
+
+    setSimState(k: string, v: any) {
+        const state = this.getSimState()
+        if (state[k] == v)
+            return
+        if (v == null)
+            delete state[k]
+        else
+            state[k] = v
+        if (!this.simStateSaveScheduled) {
+            this.simStateSaveScheduled = true
+            setTimeout(() => {
+                this.simStateSaveScheduled = false
+                if (!this.simState)
+                    return
+                const f = this.files[pxt.SIMSTATE_JSON]
+                if (!f)
+                    return
+                f.setContentAsync(JSON.stringify(this.simState)).done()
+            }, 2000)
+        }
+    }
+
     getTopHeader() {
         return this.topPkg.header;
+    }
+
+    getLanguageRestrictions() {
+        const ksPkg = this.topPkg.ksPkg;
+        const cfg = ksPkg && ksPkg.config;
+        return cfg && cfg.languageRestriction;
     }
 
     afterMainLoadAsync() {
@@ -193,7 +274,8 @@ export class EditorPackage {
             try {
                 let cfg = <pxt.PackageConfig>JSON.parse(cfgFile.content)
                 update(cfg);
-                return cfgFile.setContentAsync(JSON.stringify(cfg, null, 4) + "\n")
+                return cfgFile.setContentAsync(pxt.Package.stringifyConfig(cfg))
+                    .then(() => this.ksPkg.loadConfig())
             } catch (e) { }
         }
 
@@ -234,8 +316,9 @@ export class EditorPackage {
         return this.ksPkg && this.ksPkg.level == 0;
     }
 
-    setFile(n: string, v: string) {
+    setFile(n: string, v: string, virtual?: boolean) {
         let f = new File(this, n, v)
+        if (virtual) f.virtual = true;
         this.files[n] = f
         data.invalidate("open-meta:")
         return f
@@ -244,18 +327,42 @@ export class EditorPackage {
     removeFileAsync(n: string) {
         delete this.files[n];
         data.invalidate("open-meta:")
-        return this.updateConfigAsync(cfg => cfg.files = cfg.files.filter(f => f != n))
+        return this.updateConfigAsync(cfg => {
+            cfg.files = cfg.files.filter(f => f != n)
+            if (cfg.testFiles)
+                cfg.testFiles = cfg.testFiles.filter(f => f != n)
+        })
     }
 
-    setContentAsync(n: string, v: string) {
+    setContentAsync(n: string, v: string): Promise<void> {
         let f = this.files[n];
-        if (!f) f = this.setFile(n, v);
-        return f.setContentAsync(v);
+        let p = Promise.resolve();
+        if (!f) {
+            f = this.setFile(n, v);
+            p = p.then(() => this.updateConfigAsync(cfg => cfg.files.indexOf(n) < 0 ? cfg.files.push(n) : 0))
+            p.then(() => this.savePkgAsync())
+        }
+        return p.then(() => f.setContentAsync(v));
+    }
+
+    updateGitJsonCache() {
+        const gj = this.files[pxt.github.GIT_JSON]
+        if (gj) {
+            const gjc: pxt.github.GitJson = JSON.parse(gj.content)
+            if (gjc.commit) {
+                for (let treeEnt of gjc.commit.tree.tree) {
+                    const f = this.files[treeEnt.path]
+                    if (f && treeEnt.blobContent != null)
+                        f.setBaseGitContent(treeEnt.blobContent)
+                }
+            }
+        }
     }
 
     setFiles(files: pxt.Map<string>) {
         this.files = Util.mapMap(files, (k, v) => new File(this, k, v))
         data.invalidate("open-meta:")
+        this.updateGitJsonCache()
     }
 
     private updateStatus() {
@@ -284,7 +391,7 @@ export class EditorPackage {
         }, 5000)
     }
 
-    getAllFiles() {
+    getAllFiles(): pxt.Map<string> {
         let r = Util.mapMap(this.files, (k, f) => f.content)
         delete r[pxt.SERIAL_EDITOR_FILE]
         return r
@@ -305,10 +412,10 @@ export class EditorPackage {
             .then(() => immediate ? this.savePkgAsync() : this.scheduleSave())
     }
 
-    sortedFiles() {
+    sortedFiles(): File[] {
         let lst = Util.values(this.files)
         if (!pxt.options.debug)
-            lst = lst.filter(f => f.name != pxt.github.GIT_JSON)
+            lst = lst.filter(f => f.name != pxt.github.GIT_JSON && f.name != pxt.SIMSTATE_JSON && f.name != pxt.SERIAL_EDITOR_FILE)
         lst.sort((a, b) => a.weight() - b.weight() || Util.strcmp(a.name, b.name))
         return lst
     }
@@ -331,6 +438,7 @@ export class EditorPackage {
         let res: EditorPackage[] = []
         for (let k of depkeys) {
             if (/---/.test(k)) continue
+            if (deps[k].cppOnly) continue
             res.push(getEditorPkg(deps[k]))
         }
         if (this.assetsPkg)
@@ -344,6 +452,7 @@ export class EditorPackage {
     }
 
     lookupFile(name: string) {
+        if (name.indexOf("pxt_modules/") === 0) name = name.slice(12);
         return this.filterFiles(f => f.getName() == name)[0]
     }
 }
@@ -369,7 +478,7 @@ class Host
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
-        return pxt.hex.getHexInfoAsync(this, extInfo).catch(core.handleNetworkError);
+        return pxt.hexloader.getHexInfoAsync(this, extInfo).catch(core.handleNetworkError);
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {
@@ -387,18 +496,26 @@ class Host
             .then(v => v.val, e => null)
     }
 
-    downloadPackageAsync(pkg: pxt.Package) {
+    downloadPackageAsync(pkg: pxt.Package): Promise<void> {
         let proto = pkg.verProtocol()
         let epkg = getEditorPkg(pkg)
 
         let fromWorkspaceAsync = (arg: string) =>
             workspace.getTextAsync(arg)
                 .then(scr => {
-                    epkg.setFiles(scr)
+                    if (!epkg.isTopLevel() && !scr) {
+                        pkg.configureAsInvalidPackage(`cannot find '${arg}' in the workspace.`);
+                        return Promise.resolve();
+                    }
+                    if (!scr) // this should not happen;
+                        return Promise.reject(new Error(`Cannot find text for package '${arg}' in the workspace.`));
                     if (epkg.isTopLevel() && epkg.header)
                         return workspace.recomputeHeaderFlagsAsync(epkg.header, scr)
-                    else
+                            .then(() => epkg.setFiles(scr))
+                    else {
+                        epkg.setFiles(scr)
                         return Promise.resolve()
+                    }
                 })
 
         if (proto == "pub") {
@@ -412,11 +529,23 @@ class Host
             return fromWorkspaceAsync(pkg.verArgument())
         } else if (proto == "file") {
             let arg = pkg.verArgument()
-            if (arg[0] == ".") arg = resolvePath(pkg.parent.verArgument() + "/" + arg)
+            if (arg[0] == ".") {
+                arg = resolvePath(pkg.parent.verArgument() + "/" + arg)
+            }
             return fromWorkspaceAsync(arg)
         } else if (proto == "embed") {
             epkg.setFiles(pxt.getEmbeddedScript(pkg.verArgument()))
             return Promise.resolve()
+        } else if (proto == "pkg") {
+            const filesSrc = mainPkg.readFile(pkg.verArgument().replace(/^\.\//, ''));
+            const files = ts.pxtc.Util.jsonTryParse(filesSrc);
+            if (files)
+                epkg.setFiles(files);
+            else pxt.log(`failed to resolve ${pkg.version()}`);
+            return Promise.resolve();
+        } else if (proto == "invalid") {
+            pxt.log(`skipping invalid pkg ${pkg.id}`);
+            return Promise.resolve();
         } else {
             return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
         }
@@ -481,9 +610,13 @@ export function loadPkgAsync(id: string, targetVersion?: string) {
 
     return theHost.downloadPackageAsync(mainPkg)
         .catch(core.handleNetworkError)
-        .then(() => JSON.parse(theHost.readFile(mainPkg, pxt.CONFIG_NAME)) as pxt.PackageConfig)
+        .then(() => ts.pxtc.Util.jsonTryParse(theHost.readFile(mainPkg, pxt.CONFIG_NAME)) as pxt.PackageConfig)
         .then(config => {
-            if (!config) throw new Error(lf("invalid pxt.json file"));
+            if (!config) {
+                mainPkg.configureAsInvalidPackage(lf("invalid pxt.json file"));
+                return mainEditorPkg().afterMainLoadAsync();
+            }
+
             return mainPkg.installAllAsync(targetVersion)
                 .then(() => mainEditorPkg().afterMainLoadAsync());
         })
@@ -494,6 +627,8 @@ export interface FileMeta {
     isReadonly: boolean;
     isSaved: boolean;
     numErrors: number;
+    isGitModified: boolean;
+    diagnostics?: pxtc.KsDiagnostic[];
 }
 
 /*
@@ -502,17 +637,22 @@ export interface FileMeta {
 data.mountVirtualApi("open-meta", {
     getSync: p => {
         p = data.stripProtocol(p)
-        let f = getEditorPkg(mainPkg).lookupFile(p)
+        const pk = mainEditorPkg()
+        const f = pk.lookupFile(p)
         if (!f) return {}
+        const hasGit = !!(pk.header && pk.header.githubId && f.epkg == pk)
 
-        let fs: FileMeta = {
+        const fs: FileMeta = {
             isReadonly: f.isReadonly(),
             isSaved: f.inSyncWithEditor && f.inSyncWithDisk,
-            numErrors: f.numDiagnosticsOverride
+            numErrors: f.numDiagnosticsOverride,
+            isGitModified: hasGit && f.baseGitContent != f.publishedContent()
         }
 
-        if (fs.numErrors == null)
+        if (fs.numErrors == null) {
             fs.numErrors = f.diagnostics ? f.diagnostics.length : 0
+            fs.diagnostics = f.diagnostics;
+        }
 
         return fs
     },
@@ -520,6 +660,7 @@ data.mountVirtualApi("open-meta", {
 
 export interface PackageMeta {
     numErrors: number;
+    diagnostics?: pxtc.KsDiagnostic[];
 }
 
 /*
@@ -528,28 +669,113 @@ export interface PackageMeta {
 data.mountVirtualApi("open-pkg-meta", {
     getSync: p => {
         p = data.stripProtocol(p)
-        let f = allEditorPkgs().filter(pkg => pkg.getPkgId() == p)[0];
+        const f = allEditorPkgs().filter(pkg => pkg.getPkgId() == p)[0];
         if (!f || f.getPkgId() == "built")
             return {}
 
         const files = f.sortedFiles();
-        const numErrors = files.reduce((n, file) => n + (file.numDiagnosticsOverride
+        let numErrors = files.reduce((n, file) => n + (file.numDiagnosticsOverride
             || (file.diagnostics ? file.diagnostics.length : 0)
             || 0), 0);
-        return <PackageMeta>{
+        const ks = f.getKsPkg();
+        if (ks && ks.invalid())
+            numErrors++;
+        const r = <PackageMeta>{
             numErrors
         }
+        if (numErrors) {
+            r.diagnostics = [];
+            files.filter(f => !!f.diagnostics).forEach(f => r.diagnostics.concat(f.diagnostics));
+        }
+        return r;
     }
 })
+
+export interface PackageGitStatus {
+    id?: string;
+    modified?: boolean;
+}
+
+/*
+    pkg-git-status:<guid>
+*/
+data.mountVirtualApi("pkg-git-status", {
+    getSync: p => {
+        p = data.stripProtocol(p)
+        const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
+        const r: PackageGitStatus = {};
+        if (f) {
+            r.id = f.getPkgId() == "this" && f.header && f.header.githubId;
+            if (r.id) {
+                const files = f.sortedFiles();
+                r.modified = !!files.find(f => f.baseGitContent != f.publishedContent());
+            }
+        }
+        return r;
+    }
+})
+
+export function invalidatePullStatus(hd: pxt.workspace.Header) {
+    data.invalidateHeader("pkg-git-pull-status", hd)
+}
+
+data.mountVirtualApi("pkg-git-pull-status", {
+    getAsync: p => {
+        p = data.stripProtocol(p)
+        const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
+        const ghid = f.getPkgId() == "this" && f.header && f.header.githubId;
+        if (!ghid) return Promise.resolve(workspace.PullStatus.NoSourceControl)
+        return workspace.pullAsync(f.header, true)
+            .catch(e => workspace.PullStatus.NoSourceControl);
+    },
+    expirationTime: p => 3600 * 1000
+})
+
+data.mountVirtualApi("pkg-git-pr", {
+    getAsync: p => {
+        const missing = <pxt.github.PullRequest>{
+            number: -1
+        };
+        p = data.stripProtocol(p)
+        const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
+        const header = f.header;
+        const ghid = f.getPkgId() == "this" && header && header.githubId;
+        if (!ghid) return Promise.resolve(missing);
+        const parsed = pxt.github.parseRepoId(ghid);
+        if (!parsed || !parsed.tag || parsed.tag == "master") return Promise.resolve(missing);
+        return pxt.github.findPRNumberforBranchAsync(parsed.fullName, parsed.tag)
+            .catch(e => missing);
+    },
+    expirationTime: p => 3600 * 1000
+})
+
+export function invalidatePagesStatus(hd: pxt.workspace.Header) {
+    data.invalidateHeader("pkg-git-pages", hd)
+}
+
+data.mountVirtualApi("pkg-git-pages", {
+    getAsync: p => {
+        p = data.stripProtocol(p)
+        const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
+        const header = f.header;
+        const ghid = f.getPkgId() == "this" && header && header.githubId;
+        if (!ghid) return Promise.resolve(undefined);
+        const parsed = pxt.github.parseRepoId(ghid);
+        if (!parsed) return Promise.resolve(undefined);
+        return pxt.github.getPagesStatusAsync(parsed.fullName)
+            .catch(e => undefined);
+    },
+    expirationTime: p => 3600 * 1000
+})
+
 
 // pkg-status:<guid>
 data.mountVirtualApi("pkg-status", {
     getSync: p => {
         p = data.stripProtocol(p)
-        let ep = allEditorPkgs().filter(pkg => pkg.header && pkg.header.id == p)[0]
+        const ep = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p)
         if (ep)
             return ep.savingNow ? "saving" : ""
         return ""
     },
 })
-

@@ -1,5 +1,35 @@
 type Action = () => void;
 
+/**
+ * Constant representing Not-A-Number.
+ */
+const NaN = 0 / 0
+
+/**
+ * Constant representing positive infinity.
+ */
+const Infinity = 1 / 0
+
+function isNaN(x: number) {
+    x = +x // convert to number
+    return x !== x
+}
+
+namespace Number {
+    /**
+     * Check if a given value is of type Number and it is a NaN.
+     */
+    export function isNaN(x: any): boolean {
+        return typeof x == "number" && x !== x
+    }
+}
+
+/**
+ * A dictionary from string key to string values
+ */
+interface StringMap {
+    [index: string]: string;
+}
 
 /**
   * Convert a string to an integer.
@@ -110,13 +140,17 @@ namespace helpers {
         return arr.removeAt(0);
     }
 
-    export function arrayJoin<T>(arr: T[], sep: string): string {
+    export function arrayJoin<T>(arr: T[], sep?: string): string {
+        if (sep === undefined || sep === null) {
+            sep = ",";
+        }
+
         let r = "";
         let len = arr.length // caching this seems to match V8
         for (let i = 0; i < len; ++i) {
             if (i > 0 && sep)
                 r += sep;
-            r += arr[i] || "";
+            r += (arr[i] === undefined || arr[i] === null) ? "" : arr[i];
         }
         return r;
     }
@@ -157,11 +191,23 @@ namespace helpers {
     }
 
     export function arraySort<T>(arr: T[], callbackfn?: (value1: T, value2: T) => number): T[] {
-        if (!callbackfn) {
-            //TODO: support native strings and number sorting
-            /* callbackfn = function (value1: string, value2: string) : number {
-                return value1.compare(value2);
-                }*/
+        if (!callbackfn && arr.length > 1) {
+            callbackfn = (a, b) => {
+                // default is sort as if the element were a string, with null < undefined
+                const aIsUndef = a === undefined;
+                const bIsUndef = b === undefined;
+                if (aIsUndef && bIsUndef) return 0;
+                else if (aIsUndef) return 1;
+                else if (bIsUndef) return -1;
+
+                const aIsNull = a === null;
+                const bIsNull = b === null;
+                if (aIsNull && bIsNull) return 0;
+                else if (aIsNull) return 1;
+                else if (bIsNull) return -1;
+
+                return (a + "").compare(b + "");
+            }
         }
         return sortHelper(arr, callbackfn);
     }
@@ -236,29 +282,79 @@ namespace helpers {
         return out;
     }
 
-    export function arraySlice<T>(arr: T[], start: number, end: number): T[] {
+    export function arraySlice<T>(arr: T[], start?: number, end?: number): T[] {
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice
         const res: T[] = [];
         const len = arr.length;
 
-        if (start < 0) {
+        if (start === undefined)
+            start = 0;
+        else if (start < 0)
             start = Math.max(len + start, 0);
-        }
 
-        if (end < 0) {
+        if (start > len)
+            return res;
+
+        if (end === undefined)
+            end = len;
+        else if (end < 0)
             end = len + end;
-        }
 
-        const sliceLength = end - start;
+        if (end > len)
+            end = len;
 
-        for (let i = 0; i < sliceLength; ++i) {
-            const index = i + start;
-            if (index >= len) {
-                break;
-            }
-            res.push(arr[index]);
+        for (let i = start; i < end; ++i) {
+            res.push(arr[i]);
         }
         return res;
     }
+
+    export function stringReplace(s: string, toReplace: string, replacer: string | ((sub: string) => string)) {
+        toReplace = toReplace + "";
+        const ind = s.indexOf(toReplace);
+        if (ind == -1)
+            return s;
+
+        const begin = s.slice(0, ind);
+        const end = s.slice(ind + toReplace.length);
+
+        if (typeof replacer == "string" || !replacer) {
+            return begin + replacer + end;
+        } else {
+            return begin + replacer(toReplace) + end;
+        }
+    }
+
+    export function stringReplaceAll(s: string, toReplace: string, replacer: string | ((sub: string) => string)) {
+        toReplace = toReplace + "";
+        const split = s.split(toReplace);
+        const empty = toReplace.isEmpty();
+
+        let output = (empty ? applyReplace(toReplace, replacer) : "");
+
+        if (split.length) {
+            output += split[0];
+        }
+
+        for (let i = 1; i < split.length; ++i) {
+            output += applyReplace(toReplace, replacer) + split[i];
+        }
+
+        if (!s.isEmpty() && empty) {
+            output += applyReplace(toReplace, replacer);
+        }
+
+        return output;
+
+        function applyReplace(r: string, replacer: string | ((sub: string) => string)): string {
+            if (typeof replacer == "string" || !replacer) {
+                return replacer as string;
+            } else {
+                return replacer(r);
+            }
+        }
+    }
+
 
     export function stringSlice(s: string, start: number, end?: number): string {
         const len = s.length;
@@ -276,6 +372,22 @@ namespace helpers {
         }
 
         return s.substr(start, end - start);
+    }
+
+    // TODO move to PXT
+    // also note this doesn't handle unicode, but neither does JS (there's toLocaleLowerCase())
+    export function stringToLowerCase(s: string): string {
+        let r = ""
+        let prev = 0
+        for (let i = 0; i < s.length; i++) {
+            const c = s.charCodeAt(i)
+            if (65 <= c && c <= 90) {
+                r += s.slice(prev, i) + String.fromCharCode(c + 32)
+                prev = i + 1
+            }
+        }
+        r += s.slice(prev)
+        return r
     }
 
     export function stringSplit(S: string, separator?: string, limit?: number): string[] {
@@ -366,6 +478,11 @@ namespace helpers {
             default:
                 return false;
         }
+    }
+
+    export function stringEmpty(S: string): boolean {
+        return !S;
+
     }
 }
 
@@ -489,6 +606,17 @@ namespace __internal {
     }
 
     /**
+     * A shim to render a boolean as a win/lose toggle
+     */
+    //% shim=TD_ID blockHidden=1
+    //% blockId=toggleWinLose block="%win"
+    //% win.fieldEditor=togglewinlose
+    //% win.fieldOptions.decompileLiterals=true
+    export function __winLose(win: boolean): boolean {
+        return win;
+    }
+
+    /**
      * Get the color wheel field editor
      * @param color color, eg: #ff0000
      */
@@ -560,7 +688,7 @@ namespace __internal {
     //% blockId=protractorPicker block="%angle"
     //% shim=TD_ID
     //% angle.fieldEditor=protractor
-    //% angle.fieldOptions.decompileLiterals=1    
+    //% angle.fieldOptions.decompileLiterals=1
     //% colorSecondary="#FFFFFF"
     //% blockHidden=1
     export function __protractor(angle: number) {
@@ -575,7 +703,7 @@ namespace __internal {
     //% blockHidden=true shim=TD_ID
     //% colorSecondary="#FFFFFF"
     //% ms.fieldEditor="numberdropdown" ms.fieldOptions.decompileLiterals=true
-    //% ms.fieldOptions.data='[["100 ms", 100], ["200 ms", 200], ["500 ms", 500], ["1 second", 1000], ["2 seconds", 2000]]'
+    //% ms.fieldOptions.data='[["100 ms", 100], ["200 ms", 200], ["500 ms", 500], ["1 second", 1000], ["2 seconds", 2000], ["5 seconds", 5000]]'
     export function __timePicker(ms: number): number {
         return ms;
     }

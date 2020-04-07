@@ -1,0 +1,31 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="test_number_argument">
+<value name="arg">
+<block type="typescript_expression">
+<field name="EXPRESSION">someConstant</field>
+</block>
+</value>
+<next>
+<block type="test_number_argument">
+<value name="arg">
+<block type="typescript_expression">
+<field name="EXPRESSION">someNonConstant</field>
+</block>
+</value>
+<next>
+<block type="test_string_argument">
+<value name="arg">
+<block type="typescript_expression">
+<field name="EXPRESSION">someString</field>
+</block>
+</value>
+</block>
+</next>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

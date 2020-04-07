@@ -20,7 +20,9 @@
     transition-timing-function: ease-in;
 }
 
-.blocklyToolboxDiv text, .monacoToolboxDiv text {
+.blocklyToolboxDiv text,
+.monacoToolboxDiv text,
+span.blocklyTreeIcon {
     user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
@@ -34,6 +36,14 @@
 
 .monacoToolboxDiv.invisible {
     display: none !important;
+}
+
+.debugger .blocklyToolboxDiv {
+    width: 20%;
+}
+
+.debugger .blocklyToolbox, .debuggerToolbox {
+    height: 100%;
 }
 
 /*******************************
@@ -143,6 +153,12 @@ span.blocklyTreeLabel, text.blocklyText {
     color: @trashIconColor;
 }
 
+.flyoutOnly #blocklyTrashIcon {
+    top: auto;
+    bottom: 5%;
+    left: 10rem;
+}
+
 .blocklyToolboxDelete .blocklyTreeLabel {
     cursor: url("<<<PATH>>>/handdelete.cur") auto;
 }
@@ -171,7 +187,6 @@ span.blocklyTreeIcon {
     height: 100%;
     display: none;
     vertical-align: middle;
-    user-select: none;
 }
 
 div.blocklyTreeIcon span {
@@ -183,6 +198,23 @@ div.blocklyTreeIcon span {
 }
 .blocklyFlyoutLabelIcon.blocklyFlyoutIconfunctions {
     font-family: xicon !important;
+}
+
+/*******************************
+      Toolbox Animation
+*******************************/
+#monacoEditorToolbox {
+    .blocklyTreeRoot > div > div > .blocklyTreeRow {
+        animation: gliss 0.6s ease-in-out;
+    }
+}
+@keyframes gliss {
+    50% { border-left-width: 1.5rem; }
+}
+@keyframes glisssmall {
+    0% { width: 50px; }
+    50% { border-left-width: 1rem; }
+    100% { width: 50px; }
 }
 
 /*******************************
@@ -214,7 +246,7 @@ div.blocklyTreeIcon span {
         line-height: @blocklyRowHeightWide;
         min-height: @blocklyRowHeightWide;
     }
-    #blocklyTrashIcon {
+    #root:not(.flyoutOnly) #blocklyTrashIcon {
         width: @blocklyRowWidthWide;
     }
 }
@@ -232,7 +264,7 @@ div.blocklyTreeIcon span {
         line-height: @blocklyRowHeightComputer;
         min-height: @blocklyRowHeightComputer;
     }
-    #blocklyTrashIcon {
+    #root:not(.flyoutOnly) #blocklyTrashIcon {
         width: @blocklyRowWidthComputer;
     }
 }
@@ -251,7 +283,7 @@ div.blocklyTreeIcon span {
         line-height: @blocklyRowHeightTablet;
         min-height: @blocklyRowHeightTablet;
     }
-    #blocklyTrashIcon {
+    #root:not(.flyoutOnly) #blocklyTrashIcon {
         width: @blocklyRowWidthTablet;
     }
     div.blocklyTreeRoot div div div div div.blocklyTreeRow {
@@ -272,8 +304,13 @@ div.blocklyTreeIcon span {
         line-height: @blocklyRowHeightMobile;
         min-height: @blocklyRowHeightMobile;
     }
-    #blocklyTrashIcon {
+    #root:not(.flyoutOnly) #blocklyTrashIcon {
         width: @blocklyRowWidthMobile;
+    }
+    #monacoEditorToolbox {
+        .blocklyTreeRoot > div > div > .blocklyTreeRow {
+            animation: glisssmall 0.6s ease-in-out;
+        }
     }
 }
 
@@ -318,7 +355,7 @@ div.blocklyTreeIcon span {
         border-left-width: 8px !important;
     }
     /* Blockly trash icon */
-    #blocklyTrashIcon {
+    #root:not(.flyoutOnly) #blocklyTrashIcon {
         font-size: 3rem;
     }
     /* Hide the blockly toolbox search */

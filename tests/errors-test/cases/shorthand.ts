@@ -1,2 +1,2 @@
 let y = 3
-let x = { y } // TS9264
+let x = { y } // now supported

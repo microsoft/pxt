@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+	<title>Online Learning with MakeCode</title>
+	<link rel="stylesheet" href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css" type="text/css">
+	<link rel="stylesheet" href="/static/online-learning/online-learning.css">
+</head>
+
+<body>
+	<div class="hero">
+		<div class="banner"><img src="/static/images/hero.png" /></div>
+		<h1 class="title">Online Learning with MakeCode</div>
+	</div>
+	<div class="content">
+		<div class="segment">
+			<p>
+				With many schools closed due to COVID-19, we know that parents and educators 
+				are looking for online learning resources for students.  We’ve compiled a 
+				list of helpful resources that students can access to continue their computing 
+				education outside the classroom.
+			</p>
+			<div class="jump">
+				<a class="action button" href="#streams">
+					<i class="icon users"></i>
+					Live Classes
+				</a>
+				<a class="action button" href="#projects">
+					<i class="icon lightbulb alternate"></i>
+					Projects
+				</a>
+				<a class="action button" href="#resources">
+					<i class="icon book"></i>
+					Resources
+				</a>
+			</div>
+		</div>
+		<div class="segment">
+			<a name="streams"></a>
+			<h2>Live Video Streaming</h2>
+			<p>
+				Members of the Microsoft MakeCode team and community will be recording live 
+				video streams daily to walk students through different MakeCode tutorials and 
+				projects. 
+				All videos will be <strong><a href="https://mixer.com/MakeCode">live streamed on Mixer</a></strong>
+				and available for viewing later in the <a href="https://youtube.com/microsoftmakecode">MakeCode YouTube Channel</a>.
+			</p>
+			<div id="news"></div>
+			<div id="mixer">
+				<iframe allowfullscreen="true" src="https://mixer.com/embed/player/makecode?disableLowLatency=1"></iframe>
+			</div>
+			<h3>Schedule</h3>
+			<div id="schedule"></div>
+			<h3>Available Streams</h3>
+			<div id="lessons"></div>
+		</div>
+		<div class="segment">
+			<a name="projects"></a>
+			<h2>Online Tutorials and Projects</h2>
+			<p>
+				There are many different free self-paced tutorials and projects students can 
+				complete on their own.  Here are a few examples.
+			</p>
+			<div id="projects"></div>
+		</div>
+		<div class="segment">
+			<a name="resources"></a>
+			<h2>Educator Resources</h2>
+			<p>
+				If you are an Educator doing remote learning with your students, here are 
+				some computing education resources and information that may help you.
+			</p>
+			<div id="resources"></div>
+		</div>
+	</div>
+
+    <!-- @include tracking.html -->
+	<!-- @include thin-footer.html -->
+
+	<script src="/static/online-learning/schedule.js"></script>
+	<script src="/static/online-learning/projects.js"></script>
+
+</body>
+
+</html>

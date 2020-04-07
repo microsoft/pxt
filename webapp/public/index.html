@@ -5,6 +5,27 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <meta name="viewport" content="width=device-width,height=device-height,user-scalable=no,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
+    <script type="text/javascript">
+    if(/[&?]translate=1/.test(window.location.href)) {
+		var _jipt = [];
+        _jipt.push(['project', 'kindscript']);
+        _jipt.push(['escape', function() {
+            window.location.href = window.location.href.replace(/[$\?]translate=1/, '');
+        }]);
+        _jipt.push(['before_dom_insert', function(text, node, attribute) {
+            if (text)
+                text = text.replace(/^\{(id|loc):[^\}]+\}/g, '');
+            return text;
+        }]);
+        // inject crowdin
+        (function _() {
+            var s = document.createElement("script");
+            s.setAttribute("type", "text/javascript");
+            s.setAttribute("src", "//cdn.crowdin.com/jipt/jipt.js");
+            document.head.insertBefore(s, document.head.firstElementChild);
+        })();
+    }
+	</script>
 
     <!-- @include appmeta.html -->
 
@@ -17,6 +38,8 @@
     </div>
 
     <div id='custom-content'>
+    </div>
+    <div id='blocks-editor-field-div'>
     </div>
 
     <div id="allcontent">
@@ -66,21 +89,22 @@
         window.MonacoPaths = {
             "vs/loader": "/blb/vs/loader.js",
             "vs/base/worker/workerMain": "/blb/vs/base/worker/workerMain.js",
-            "vs/basic-languages/src/bat": "/blb/vs/basic-languages/src/bat.js",
-            "vs/basic-languages/src/cpp": "/blb/vs/basic-languages/src/cpp.js",
+            "vs/basic-languages/bat/bat": "/blb/vs/basic-languages/bat/bat.js",
+            "vs/basic-languages/cpp/cpp": "/blb/vs/basic-languages/cpp/cpp.js",
+            "vs/basic-languages/markdown/markdown": "/blb/vs/basic-languages/markdown/markdown.js",
+            "vs/basic-languages/python/python": "/blb/vs/basic-languages/python/python.js",
             "vs/editor/editor.main.css": "/blb/vs/editor/editor.main.css",
             "vs/editor/editor.main": "/blb/vs/editor/editor.main.js",
             "vs/editor/editor.main.nls": "/blb/vs/editor/editor.main.nls.js",
             "vs/language/json/jsonMode": "/blb/vs/language/json/jsonMode.js",
             "vs/language/json/jsonWorker": "/blb/vs/language/json/jsonWorker.js",
-            "vs/language/typescript/lib/typescriptServices": "/blb/vs/language/typescript/lib/typescriptServices.js",
-            "vs/language/typescript/src/mode": "/blb/vs/language/typescript/src/mode.js",
-            "vs/language/typescript/src/worker": "/blb/vs/language/typescript/src/worker.js",
             "lzma/lzma_worker-min.js": "/blb/lzma/lzma_worker-min.js",
             "smoothie/smoothie_compressed.js": "/blb/smoothie/smoothie_compressed.js",
             "pxtblockly.js": "/blb/pxtblockly.js",
             "blockly.css": "/blb/blockly.css",
-            "rtlblockly.css": "/blb/rtlblockly.css"
+            "rtlblockly.css": "/blb/rtlblockly.css",
+            "gifjs/gif.js": "/blb/gifjs/gif.js",
+            "qrcode/qrcode.min.js": "/blb/qrcode/qrcode.min.js"
         }
     </script>
 </body>

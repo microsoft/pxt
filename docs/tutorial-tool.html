@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+	<link rel="stylesheet" href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css" type="text/css">
+	<link data-name="vs/editor/editor.main" rel="stylesheet"
+		href="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.css">
+	<link rel="stylesheet" href="/static/tutorial-tool/tutorial.css">
+</head>
+
+<body>
+	<nav class="ui menu inverted fixed borderless">
+		<div class="menu left">
+			<div class="ui item">
+				MakeCode Tutorial Editor
+			</div>
+		</div>
+
+		<div class="menu right">
+			<a href="/writing-docs/tutorials" target="_blank" class="ui item">
+				Tutorial Docs
+			</a>
+		</div>
+	</nav>
+
+	<div class="content">
+		<div>
+			<div class="ui left action input">
+			<button class="ui small primary labelled icon button" id="run-button">
+					<i class="play icon"></i>				
+				Run</button>
+				<select id="endpoint-select" class="ui dropdown"></select>
+			</div>
+			<div class="ui left action input">
+				<button class="ui small labelled icon button" id="share-button">
+					<i class="share alternate icon"></i>
+					Share</button>
+				<input readonly id="share-output" placeholder="shared url..." />
+			</div>
+		</div>
+		<div class="editor-row">
+			<div id="monaco-editor">
+				<div id="container" style="border:1px solid grey"></div>
+			</div>
+			<div id="makecode-editor" style="border:1px solid grey"></div>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="https://pxt.azureedge.net/blob/795d8506c80a04f5ca26f577a8d6152e2fa3e7a6/doccdn/pxtweb.js"></script>
+    <!-- @include tracking.html -->
+	<!-- @include thin-footer.html -->
+
+	<script>var require = { paths: { 'vs': 'https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs' } };</script>
+	<script src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/loader.js"></script>
+	<script
+		src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.nls.js"></script>
+	<script
+		src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.js"></script>
+	<script src="/static/tutorial-tool/tutorial.js"></script>
+
+</body>
+
+</html>

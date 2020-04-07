@@ -53,6 +53,18 @@ function testForOf() {
     }
     assert(sum == 55, "fo7")
 
+
+    let f = []
+    glb1 = 0
+    for (const q of [1, 12]) {
+        f.push(() => {
+            glb1 += q
+        })
+    }
+    f[0]()
+    f[1]()
+    assert(glb1 == 13, "foc")
+
     msg("for of done")
 }
 

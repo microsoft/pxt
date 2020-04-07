@@ -1,21 +1,25 @@
 <aside id=button class=box>
-   <a class="ui primary button docbutton" href="@ARGS@">@BODY@</a>
+    <a class="ui primary button docbutton" href="@ARGS@">@BODY@</a>
 </aside>
 
 <aside id=vimeo>
-<div class="ui two column stackable grid container">
-<div class="column">
-    <div class="ui embed mdvid" data-source="vimeo" data-id="@ARGS@" data-placeholder="/thumbnail/1024/vimeo/@ARGS@" data-icon="video play">
+    <div class="ui two column stackable grid container">
+        <div class="column">
+            <div class="ui embed mdvid" data-source="vimeo" data-id="@ARGS@"
+                data-placeholder="/thumbnail/1024/vimeo/@ARGS@" data-icon="video play">
+            </div>
+        </div>
     </div>
-</div></div>
 </aside>
 
 <aside id=youtube>
-<div class="ui grid">
-<div class="ten wide column">
-    <div class="ui embed mdvid" data-source="youtube" data-id="@ARGS@" data-placeholder="https://img.youtube.com/vi/@ARGS@/0.jpg">
+    <div class="ui grid">
+        <div class="ten wide column">
+            <div class="ui embed mdvid" data-source="youtube" data-id="@ARGS@"
+                data-placeholder="https://img.youtube.com/vi/@ARGS@/0.jpg">
+            </div>
+        </div>
     </div>
-</div></div>
 </aside>
 
 <aside id=section>
@@ -39,6 +43,38 @@
 
 <aside id=hint class=box>
     <div class="ui info message">
+        <div class="content">
+            @BODY@
+        </div>
+    </div>
+</aside>
+
+<aside id=tutorialhint class=box>
+    <div class="ui hint message">
+        <div class="content">
+            @BODY@
+        </div>
+    </div>
+</aside>
+
+<aside id=reminder class=box>
+    <div class="ui warning message">
+        <div class="content">
+            @BODY@
+        </div>
+    </div>
+</aside>
+
+<aside id=alert class=box>
+    <div class="ui negative message">
+        <div class="content">
+            @BODY@
+        </div>
+    </div>
+</aside>
+
+<aside id=tip class=box>
+    <div class="ui positive message">
         <div class="content">
             @BODY@
         </div>
@@ -74,26 +110,6 @@
     <div class="divider"></div>
 </aside>
 
-<aside id=top-dropdown class=menu>
-    <nav div class="ui simple dropdown item" title="@TITLE@">
-        @NAME@
-        <i class="dropdown icon"></i>
-        <div class="menu">
-            @ITEMS@
-        </div>
-    </nav>
-</aside>
-
-<aside id=inner-dropdown class=menu>
-    <nav class="item" title="@TITLE@">
-        <i class="dropdown icon"></i> @NAME@
-        <div class="menu">
-            @ITEMS@
-        </div>
-    </nav>
-</aside>
-
-
 <!-- TOC in the sidebar -->
 <aside id=item class=toc>
     <a class="item @ACTIVE@" href="@LINK@" role="menuitem">@NAME@</a>
@@ -103,27 +119,54 @@
     <div class="divider"></div>
 </aside>
 
-<aside id=top-dropdown class=toc>
-    <div class="item" title="@TITLE@">
-        <a class="header @ACTIVE@" href="@LINK@" role="menu">@NAME@</a>
-        <div class="menu">
+<aside id=toc-dropdown class=toc>
+    <div class="ui @tocclass@ accordion item visible" role="tree" title="@TITLE@">
+        <div class="@ACTIVE@ title">
+            <i class="right chevron icon"></i>
+            <a class="header" role="treeitem" aria-expanded="@EXPANDED@" href="@LINK@">@NAME@</a>
+        </div>
+        <div class="@ACTIVE@ content">
             @ITEMS@
         </div>
     </div>
 </aside>
 
-<aside id=top-dropdown-noheading class=toc>
-    <div class="item" title="@TITLE@">
-        <div class="menu">
+<aside id=toc-dropdown-noLink class=toc>
+    <div class="ui @tocclass@ accordion item visible" role="tree" title="@TITLE@">
+        <div class="@ACTIVE@ title">
+            <i class="right chevron icon"></i>
+            <a class="header" role="treeitem" aria-expanded="@EXPANDED@">@NAME@</a>
+        </div>
+        <div class="@ACTIVE@ content">
             @ITEMS@
         </div>
     </div>
+</aside>
+
+<aside id=toc-dropdown-noHeading class=toc>
+</aside>
+
+<!-- TODO: duplicates of above for compatability with docsrender.ts;
+    remove with pxtlib/docsrender.ts TOC TODOs after cloud bump. -->
+<aside id=top-dropdown class=toc>
+    <div class="ui @tocclass@ accordion item visible" role="tree" title="@TITLE@">
+        <div class="@ACTIVE@ title">
+            <i class="right chevron icon"></i>
+            <a class="header" role="treeitem" aria-expanded="@EXPANDED@" href="@LINK@">@NAME@</a>
+        </div>
+        <div class="@ACTIVE@ content">
+            @ITEMS@
+        </div>
+    </div>
+</aside>
+
+<aside id=top-dropdown-noHeading class=toc>
 </aside>
 
 <aside id=inner-dropdown class=toc>
     <div class="ui @tocclass@ accordion item visible" role="tree" title="@TITLE@">
         <div class="@ACTIVE@ title">
-            <i class="dropdown icon"></i>
+            <i class="right chevron icon"></i>
             <a class="header" role="treeitem" aria-expanded="@EXPANDED@" href="@LINK@">@NAME@</a>
         </div>
         <div class="@ACTIVE@ content">
@@ -133,9 +176,9 @@
 </aside>
 
 <aside id=nested-dropdown class=toc>
-    <div class="@tocclass@ accordion item visible" title="@TITLE@">
+    <div class="ui @tocclass@ accordion item visible" role="tree" title="@TITLE@">
         <div class="@ACTIVE@ title">
-            <i class="dropdown icon"></i>
+            <i class="right chevron icon"></i>
             <a class="header" role="treeitem" aria-expanded="@EXPANDED@" href="@LINK@">@NAME@</a>
         </div>
         <div class="@ACTIVE@ content">

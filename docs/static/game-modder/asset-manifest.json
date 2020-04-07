@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/static/game-modder/static/css/main.bfb22948.chunk.css",
+    "main.js": "/static/game-modder/static/js/main.3b636953.chunk.js",
+    "main.js.map": "/static/game-modder/static/js/main.3b636953.chunk.js.map",
+    "runtime~main.js": "/static/game-modder/static/js/runtime~main.ed37a638.js",
+    "runtime~main.js.map": "/static/game-modder/static/js/runtime~main.ed37a638.js.map",
+    "static/js/2.7b15abf0.chunk.js": "/static/game-modder/static/js/2.7b15abf0.chunk.js",
+    "static/js/2.7b15abf0.chunk.js.map": "/static/game-modder/static/js/2.7b15abf0.chunk.js.map",
+    "index.html": "/static/game-modder/index.html",
+    "precache-manifest.a48a4268ecae376241efa366c2c4b284.js": "/static/game-modder/precache-manifest.a48a4268ecae376241efa366c2c4b284.js",
+    "service-worker.js": "/static/game-modder/service-worker.js",
+    "static/css/main.bfb22948.chunk.css.map": "/static/game-modder/static/css/main.bfb22948.chunk.css.map"
+  }
+}

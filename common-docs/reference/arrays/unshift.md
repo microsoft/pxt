@@ -11,7 +11,8 @@ then you _unshift_ it into the array. You do it like this:
 
 ```block
 let thoseNumbers = [1, 2, 3];
-thoseNumbers.unshift(0);
+let head = 0;
+head = thoseNumbers.unshift(0);
 ```
 
 ## Parameters
@@ -23,20 +24,22 @@ thoseNumbers.unshift(0);
 Make an array that simulates a train. Place the parts of the train in the right order.
 
 ```blocks
+let count = 0
+let part = ""
 let train: string[] = []
 let parts = ["flatcar", "boxcar", "tanker", "engine", "flatcar", "caboose", "boxcar"]
 while (parts.length > 0) {
-    let part = parts.shift()
+    part = parts.shift()
     if (parts.length > 1) {
         if (part == "engine") {
             parts.push(part)
         } else if (part == "caboose") {
             train.push(part)
         } else {
-            train.unshift(part);
+            count = train.unshift(part)
         }
     } else {
-        train.unshift(part);
+        count = train.unshift(part)
     }
 }
 ```

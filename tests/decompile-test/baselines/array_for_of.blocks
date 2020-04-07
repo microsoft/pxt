@@ -15,12 +15,16 @@
 </block>
 </value>
 <next>
-<block type="controls_for_of">
-<field name="VAR">a</field>
+<block type="pxt_controls_for_of">
 <value name="LIST">
 <block type="variables_get">
 <field name="VAR">x</field>
 </block>
+</value>
+<value name="VAR">
+<shadow type="variables_get_reporter">
+<field name="VAR">a</field>
+</shadow>
 </value>
 <statement name="DO">
 <block type="variables_change">
@@ -33,8 +37,7 @@
 </block>
 </statement>
 <next>
-<block type="controls_for_of">
-<field name="VAR">b</field>
+<block type="pxt_controls_for_of">
 <value name="LIST">
 <block type="lists_create_with">
 <mutation items="1" />
@@ -44,6 +47,11 @@
 </shadow>
 </value>
 </block>
+</value>
+<value name="VAR">
+<shadow type="variables_get_reporter">
+<field name="VAR">b</field>
+</shadow>
 </value>
 <statement name="DO">
 </statement>

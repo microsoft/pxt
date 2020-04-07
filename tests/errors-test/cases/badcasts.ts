@@ -3,7 +3,7 @@ class BazParent {
 }
 
 class Baz extends BazParent {
-    a: number;
+    a: number; // TS9279
 }
 
 class UnrelatedToBaz {

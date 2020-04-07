@@ -1,0 +1,23 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="shadow_template2">
+<value name="img">
+<shadow type="imageeditor2"/>
+<block type="typescript_expression">
+<field name="EXPRESSION">img&#96;1234&#96;</field>
+</block>
+</value>
+<next>
+<block type="shadow_template2">
+<value name="img">
+<shadow type="imageeditor2">
+<field name="img">1234</field>
+</shadow>
+</value>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

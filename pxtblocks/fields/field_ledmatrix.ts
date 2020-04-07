@@ -21,6 +21,7 @@ namespace pxtblockly {
         private static TAB = "        ";
 
         public isFieldCustom_ = true;
+        public SERIALIZABLE = true;
 
         private params: any;
         private onColor = "#FFFFFF";
@@ -78,48 +79,50 @@ namespace pxtblockly {
         }
 
         private initMatrix() {
-            this.elt = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" id="field-matrix" />`);
+            if (!this.sourceBlock_.isInsertionMarker()) {
+                this.elt = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" id="field-matrix" />`);
 
-            // Initialize the matrix that holds the state
-            for (let i = 0; i < this.matrixWidth; i++) {
-                this.cellState.push([])
-                this.cells.push([]);
-                for (let j = 0; j < this.matrixHeight; j++) {
-                    this.cellState[i].push(false);
-                }
-            }
-
-            this.restoreStateFromString();
-
-            // Create the cells of the matrix that is displayed
-            for (let i = 0; i < this.matrixWidth; i++) {
-                for (let j = 0; j < this.matrixHeight; j++) {
-                    this.createCell(i, j);
-                }
-            }
-
-            this.updateValue();
-
-            if (this.xAxisLabel !== LabelMode.None) {
-                const y = this.matrixHeight * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_VERTICAL_MARGIN * 2 + FieldMatrix.BOTTOM_MARGIN
-                const xAxis = pxsim.svg.child(this.elt, "g", { transform: `translate(${0} ${y})` });
+                // Initialize the matrix that holds the state
                 for (let i = 0; i < this.matrixWidth; i++) {
-                    const x = this.getYAxisWidth() + i * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_HORIZONTAL_MARGIN) + FieldMatrix.CELL_WIDTH / 2 + FieldMatrix.CELL_HORIZONTAL_MARGIN / 2;
-                    const lbl = pxsim.svg.child(xAxis, "text", { x, class: "blocklyText" })
-                    lbl.textContent = this.getLabel(i, this.xAxisLabel);
+                    this.cellState.push([])
+                    this.cells.push([]);
+                    for (let j = 0; j < this.matrixHeight; j++) {
+                        this.cellState[i].push(false);
+                    }
                 }
-            }
 
-            if (this.yAxisLabel !== LabelMode.None) {
-                const yAxis = pxsim.svg.child(this.elt, "g", {});
-                for (let i = 0; i < this.matrixHeight; i++) {
-                    const y = i * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_WIDTH / 2 + FieldMatrix.CELL_VERTICAL_MARGIN * 2;
-                    const lbl = pxsim.svg.child(yAxis, "text", { x: 0, y, class: "blocklyText" })
-                    lbl.textContent = this.getLabel(i, this.yAxisLabel);
+                this.restoreStateFromString();
+
+                // Create the cells of the matrix that is displayed
+                for (let i = 0; i < this.matrixWidth; i++) {
+                    for (let j = 0; j < this.matrixHeight; j++) {
+                        this.createCell(i, j);
+                    }
                 }
-            }
 
-            this.fieldGroup_.appendChild(this.elt);
+                this.updateValue();
+
+                if (this.xAxisLabel !== LabelMode.None) {
+                    const y = this.matrixHeight * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_VERTICAL_MARGIN * 2 + FieldMatrix.BOTTOM_MARGIN
+                    const xAxis = pxsim.svg.child(this.elt, "g", { transform: `translate(${0} ${y})` });
+                    for (let i = 0; i < this.matrixWidth; i++) {
+                        const x = this.getYAxisWidth() + i * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_HORIZONTAL_MARGIN) + FieldMatrix.CELL_WIDTH / 2 + FieldMatrix.CELL_HORIZONTAL_MARGIN / 2;
+                        const lbl = pxsim.svg.child(xAxis, "text", { x, class: "blocklyText" })
+                        lbl.textContent = this.getLabel(i, this.xAxisLabel);
+                    }
+                }
+
+                if (this.yAxisLabel !== LabelMode.None) {
+                    const yAxis = pxsim.svg.child(this.elt, "g", {});
+                    for (let i = 0; i < this.matrixHeight; i++) {
+                        const y = i * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_WIDTH / 2 + FieldMatrix.CELL_VERTICAL_MARGIN * 2;
+                        const lbl = pxsim.svg.child(yAxis, "text", { x: 0, y, class: "blocklyText" })
+                        lbl.textContent = this.getLabel(i, this.yAxisLabel);
+                    }
+                }
+
+                this.fieldGroup_.replaceChild(this.elt, this.fieldGroup_.firstChild);
+            }
         }
 
         private getLabel(index: number, mode: LabelMode) {
@@ -137,8 +140,9 @@ namespace pxtblockly {
         }
 
         private clearLedDragHandler = (ev: MouseEvent) => {
-            pxsim.pointerEvents.down.forEach(evid => this.sourceBlock_.getSvgRoot().removeEventListener(evid, this.dontHandleMouseEvent_));
-            this.sourceBlock_.getSvgRoot().removeEventListener(pxsim.pointerEvents.move, this.dontHandleMouseEvent_);
+            const svgRoot = (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot();
+            pxsim.pointerEvents.down.forEach(evid => svgRoot.removeEventListener(evid, this.dontHandleMouseEvent_));
+            svgRoot.removeEventListener(pxsim.pointerEvents.move, this.dontHandleMouseEvent_);
             document.removeEventListener(pxsim.pointerEvents.up, this.clearLedDragHandler);
             document.removeEventListener(pxsim.pointerEvents.leave, this.clearLedDragHandler);
 
@@ -168,15 +172,16 @@ namespace pxtblockly {
             if ((this.sourceBlock_.workspace as any).isFlyout) return;
 
             pxsim.pointerEvents.down.forEach(evid => cellRect.addEventListener(evid, (ev: MouseEvent) => {
+                const svgRoot = (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot();
                 this.currentDragState_ = !this.cellState[x][y];
 
                 // select and hide chaff
                 Blockly.hideChaff();
-                this.sourceBlock_.select();
+                (this.sourceBlock_ as Blockly.BlockSvg).select();
 
                 this.toggleRect(x, y);
-                pxsim.pointerEvents.down.forEach(evid => this.sourceBlock_.getSvgRoot().addEventListener(evid, this.dontHandleMouseEvent_));
-                this.sourceBlock_.getSvgRoot().addEventListener(pxsim.pointerEvents.move, this.dontHandleMouseEvent_);
+                pxsim.pointerEvents.down.forEach(evid => svgRoot.addEventListener(evid, this.dontHandleMouseEvent_));
+                svgRoot.addEventListener(pxsim.pointerEvents.move, this.dontHandleMouseEvent_);
 
                 document.addEventListener(pxsim.pointerEvents.up, this.clearLedDragHandler);
                 document.addEventListener(pxsim.pointerEvents.leave, this.clearLedDragHandler);
@@ -231,7 +236,7 @@ namespace pxtblockly {
         }
 
         setValue(newValue: string | number, restoreState = true) {
-            super.setValue(newValue);
+            super.setValue(String(newValue));
             if (this.elt) {
                 if (restoreState) this.restoreStateFromString();
 
@@ -262,13 +267,13 @@ namespace pxtblockly {
         // The return value of this function is inserted in the code
         getValue() {
             // getText() returns the value that is set by calls to setValue()
-            let text = removeQuotes(this.getText());
+            let text = removeQuotes(this.value_);
             return `\`\n${FieldMatrix.TAB}${text}\n${FieldMatrix.TAB}\``;
         }
 
         // Restores the block state from the text value of the field
         private restoreStateFromString() {
-            let r = this.getText();
+            let r = this.value_ as string;
             if (r) {
                 const rows = r.split("\n").filter(r => rowRegex.test(r));
 
@@ -325,7 +330,7 @@ namespace pxtblockly {
     const allQuotes = ["'", '"', "`"];
 
     function removeQuotes(str: string) {
-        str = str.trim();
+        str = (str || "").trim();
         const start = str.charAt(0);
         if (start === str.charAt(str.length - 1) && allQuotes.indexOf(start) !== -1) {
             return str.substr(1, str.length - 2).trim();

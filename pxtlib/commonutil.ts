@@ -15,7 +15,7 @@ namespace ts.pxtc.Util {
         }
     }
 
-    export function flatClone<T>(obj: T): T {
+    export function flatClone<T extends Object>(obj: T): T {
         if (obj == null) return null
         let r: any = {}
         Object.keys(obj).forEach((k) => { r[k] = (obj as any)[k] })
@@ -30,6 +30,11 @@ namespace ts.pxtc.Util {
     export function htmlEscape(_input: string) {
         if (!_input) return _input; // null, undefined, empty string test
         return _input.replace(/([^\w .!?\-$])/g, c => "&#" + c.charCodeAt(0) + ";");
+    }
+
+    export function htmlUnescape(_input: string) {
+        if (!_input) return _input; // null, undefined, empty string test
+        return _input.replace(/(&#\d+;)/g, c => String.fromCharCode(Number(c.substr(2, c.length - 3))));
     }
 
     export function jsStringQuote(s: string) {
@@ -49,8 +54,8 @@ namespace ts.pxtc.Util {
     let _localizeLang: string = "en";
     let _localizeStrings: pxt.Map<string> = {};
     let _translationsCache: pxt.Map<pxt.Map<string>> = {};
-    let _didSetlocalizations = false;
-    let _didReportLocalizationsNotSet = false;
+    //let _didSetlocalizations = false;
+    //let _didReportLocalizationsNotSet = false;
     export let localizeLive = false;
 
     /**
@@ -65,12 +70,27 @@ namespace ts.pxtc.Util {
     export function userLanguage(): string {
         return _localizeLang;
     }
+
+    export function normalizeLanguageCode(code: string): string[] {
+        const langParts = /^(\w{2})-(\w{2}$)/i.exec(code);
+        if (langParts && langParts[1] && langParts[2]) {
+            return [`${langParts[1].toLowerCase()}-${langParts[2].toUpperCase()}`, langParts[1].toLowerCase()];
+        } else {
+            return [(code || "en").toLowerCase()];
+        }
+    }
+
     export function setUserLanguage(localizeLang: string) {
-        _localizeLang = localizeLang;
+        _localizeLang = normalizeLanguageCode(localizeLang)[0];
     }
 
     export function isUserLanguageRtl(): boolean {
         return /^ar|dv|fa|ha|he|ks|ku|ps|ur|yi/i.test(_localizeLang);
+    }
+
+    export const TRANSLATION_LOCALE = "pxt";
+    export function isTranslationMode(): boolean {
+        return userLanguage() == TRANSLATION_LOCALE;
     }
 
     export function _localize(s: string) {
@@ -90,7 +110,7 @@ namespace ts.pxtc.Util {
     }
 
     export function setLocalizedStrings(strs: pxt.Map<string>) {
-        _didSetlocalizations = true;
+        //_didSetlocalizations = true;
         _localizeStrings = strs;
     }
 
@@ -167,7 +187,7 @@ namespace ts.pxtc.Util {
             lfmt = lfmt.replace(/\{\d+:s\}/g, "")
         }
 
-        lfmt = lfmt.replace(/\{(id|loc):[^\}]+\}/g, '');
+        lfmt = lfmt.replace(/^\{(id|loc):[^\}]+\}/g, '');
 
         return fmt_va(lfmt, args);
     }
@@ -198,6 +218,62 @@ namespace ts.pxtc.Util {
         let e = new Error(msg);
         (<any>e).isUserError = true;
         throw e
+    }
+
+    export function isPyLangPref(): boolean {
+        return localStorage.getItem("editorlangpref") == "py";
+    }
+
+    export function getEditorLanguagePref(): string {
+        return localStorage.getItem("editorlangpref");
+    }
+
+    export function setEditorLanguagePref(lang: string): void {
+        if (lang.match(/prj$/)) lang = lang.replace(/prj$/, "")
+        localStorage.setItem("editorlangpref", lang);
+    }
+
+    // small deep equals for primitives, objects, arrays. returns error message
+    export function deq(a: any, b: any): string {
+        if (a === b) return null;
+        if (!a || !b) return "Null value";
+
+        if (typeof a == 'object' && typeof b == 'object') {
+            if (Array.isArray(a)) {
+                if (!Array.isArray(b)) {
+                    return "Expected array";
+                }
+
+                if (a.length != b.length) {
+                    return "Expected array of length " + a.length + ", got " + b.length;
+                }
+
+                for (let i = 0; i < a.length; i++) {
+                    if (deq(a[i], b[i]) != null) {
+                        return "Expected array value " + a[i] + " got " + b[i];
+                    }
+                }
+                return null;
+            }
+
+            let ak = Object.keys(a);
+            let bk = Object.keys(a);
+            if (ak.length != bk.length) {
+                return "Expected " + ak.length + " keys, got " + bk.length;
+            }
+
+            for (let i = 0; i < ak.length; i++) {
+                if (!Object.prototype.hasOwnProperty.call(b, ak[i])) {
+                    return "Missing key " + ak[i];
+                } else if (deq(a[ak[i]], b[ak[i]]) != null) {
+                    return "Expected value of " + ak[i] + " to be " + a[ak[i]] + ", got " + b[ak[i]];
+                }
+            }
+
+            return null;
+        }
+
+        return "Unable to compare " + a + ", " + b;
     }
 }
 

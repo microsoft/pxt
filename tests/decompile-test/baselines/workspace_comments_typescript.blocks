@@ -1,11 +1,12 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
-<block type="pxt-on-start">
-<statement name="HANDLER">
-<block type="typescript_statement">
-<mutation numlines="6" error="Functions with parameters not supported in blocks" line0="function doSomething&#40;arg&#58; number&#41; &#123;" line1="    &#47;&#42;&#42;" line2="     &#42; This is not" line3="     &#42;&#47;" line4="    let x &#61; 0&#59;" line5="&#125;" />
+<block type="function_definition">
+<mutation name="doSomething" >
+<arg name="arg" type="number" />
+</mutation>
 <data>0</data>
-</block>
+<statement name="STACK">
 </statement>
+<comment pinned="false">This is not</comment>
 </block>
 <comment h="120" w="270" data="0">
 This is a workspace comment

@@ -13,6 +13,7 @@
         typeScript?: string;
         imageUrl?: string;
         youTubeId?: string;
+        buttonLabel?: string;
         time?: number;
         url?: string;
         responsive?: boolean;

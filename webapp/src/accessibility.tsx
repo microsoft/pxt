@@ -23,6 +23,7 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
         }
 
         this.openJavaScript = this.openJavaScript.bind(this);
+        this.openPython = this.openPython.bind(this);
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
         this.goHome = this.goHome.bind(this);
@@ -31,6 +32,11 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
     openJavaScript() {
         pxt.tickEvent("accmenu.editor.openJS", undefined, { interactiveConsent: true });
         this.props.parent.openJavaScript();
+    }
+
+    openPython() {
+        pxt.tickEvent("accmenu.editor.openPY", undefined, { interactiveConsent: true });
+        this.props.parent.openPython();
     }
 
     showLanguagePicker() {
@@ -67,6 +73,7 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
 
         return <div className="ui accessibleMenu borderless fixed menu" role="menubar">
             <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon js" text={lf("Skip to JavaScript editor")} onClick={this.openJavaScript} />
+            {targetTheme.python ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon python" text={lf("Skip to Python editor")} onClick={this.openPython} /> : undefined}
             {targetTheme.selectLanguage ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language")} onClick={this.showLanguagePicker} /> : undefined}
             {targetTheme.highContrast ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} /> : undefined}
             {hasHome ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="home" text={lf("Go Home")} onClick={this.goHome} /> : undefined}

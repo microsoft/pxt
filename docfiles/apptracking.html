@@ -14,7 +14,7 @@
         window.appInsights=appInsights;
         appInsights.queue.push(function () {
             appInsights.context.addTelemetryInitializer(function (envelope) {
-                if (typeof pxtConfig === "undefined") return;
+                if (typeof pxtConfig === "undefined" || !pxtConfig) return;
                 var telemetryItem = envelope.data.baseData;
                 telemetryItem.properties = telemetryItem.properties || {};
                 telemetryItem.properties["target"] = pxtConfig.targetId;

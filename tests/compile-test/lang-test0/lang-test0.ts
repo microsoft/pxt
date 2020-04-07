@@ -5,14 +5,11 @@
 // Do not use anything besides pause, control.runInBackground, console.log
 //
 
-pause(2000)
+// pause(2000)
 
 function msg(s: string): void {
-    control.__log(s)
-    control.__log("\n")
+    console.log(s)
     control.dmesg(s)
-    //serial.writeString(s)
-    //serial.writeString("\n")
     //pause(50);
 }
 

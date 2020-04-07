@@ -12,7 +12,8 @@ namespace pxt.toolbox {
         search: '#000',
         debug: '#e03030',
         default: '#dddddd',
-        topblocks: '#aa8f00'
+        topblocks: '#aa8f00',
+        recipes: '#717171'
     }
 
     export const blockIcons: Map<number | string> = {
@@ -30,10 +31,10 @@ namespace pxt.toolbox {
         search: '\uf002',
         debug: '\uf111',
         default: '\uf12e',
-        topblocks: '\uf005'
+        topblocks: '\uf005',
+        recipes: '\uf0eb'
     }
 
-    let toolboxStyle: HTMLStyleElement;
     let toolboxStyleBuffer: string = '';
     export function appendToolboxIconCss(className: string, i: string): void {
         if (toolboxStyleBuffer.indexOf(className) > -1) return;
@@ -82,11 +83,13 @@ namespace pxt.toolbox {
 
     export function advancedTitle() { return Util.lf("{id:category}Advanced"); }
     export function addPackageTitle() { return Util.lf("{id:category}Extensions"); }
+    export function recipesTitle() { return Util.lf("{id:category}Tutorials"); }
 
     /**
      * Convert blockly hue to rgb
      */
     export function convertColor(colour: string): string {
+        colour = parseHex(colour); // convert from 0x hex encoding if necessary
         const hue = parseInt(colour);
         if (!isNaN(hue)) {
             return hueToRgb(hue);
@@ -160,6 +163,12 @@ namespace pxt.toolbox {
     function componentToHex(c: number) {
         const hex = c.toString(16);
         return hex.length == 1 ? "0" + hex : hex;
+    }
+
+    function parseHex(s: string) {
+        if (!s) return "#000000";
+        if (s.substring(0, 2) == "0x") return "#" + s.substring(2);
+        return s;
     }
 
     export function fadeColor(hex: string, luminosity: number, lighten: boolean): string {

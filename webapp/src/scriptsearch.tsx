@@ -9,7 +9,6 @@ import * as core from "./core";
 import * as codecard from "./codecard";
 import * as electron from "./electron";
 import * as workspace from "./workspace";
-import * as dialogs from "./dialogs";
 import { SearchInput } from "./components/searchInput";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
@@ -50,6 +49,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         this.installGh = this.installGh.bind(this);
         this.addLocal = this.addLocal.bind(this);
         this.toggleExperiment = this.toggleExperiment.bind(this);
+        this.importExtensionFile = this.importExtensionFile.bind(this);
     }
 
     private hide() {
@@ -157,10 +157,20 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         return res;
     }
 
-    fetchLocal(): pxt.workspace.Header[] {
+    fetchLocalRepositories(): pxt.workspace.Header[] {
         if (this.state.mode != ScriptSearchMode.Extensions) return [];
-        return workspace.getHeaders()
-            .filter(h => !!h.githubId)
+        let query = this.state.searchFor;
+        const { header } = this.props.parent.state;
+
+        let r = workspace.getHeaders()
+            .filter(h => !!h.githubId);
+        if (header)
+            r = r.filter(h => h.id != header.id) // don't self-reference
+        if (query) {
+            query = query.toLocaleLowerCase();
+            r = r.filter(h => h.name.toLocaleLowerCase().indexOf(query) > -1) // search filter
+        }
+        return r;
     }
 
     fetchBundled(): pxt.PackageConfig[] {
@@ -172,8 +182,9 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const features = this.state.features;
         return Object.keys(bundled).filter(k => !/prj$/.test(k))
             .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig)
+            .filter(pk => !pk.hidden)
             .filter(pk => !query || pk.name.toLowerCase().indexOf(query.toLowerCase()) > -1) // search filter
-            .filter(pk => boards || !pkg.mainPkg.deps[pk.name]) // don't show package already referenced in extensions
+            .filter(pk => boards || !pkg.mainPkg.deps[pk.name] || pkg.mainPkg.deps[pk.name].cppOnly) // don't show package already referenced in extensions
             .filter(pk => !/---/.test(pk.name)) //filter any package with ---, these are part of common-packages such as core---linux or music---pwm
             .filter(pk => boards == !!pk.core) // show core in "boards" mode
             .filter(pk => !features || features.every(f => pk.features && pk.features.indexOf(f) > -1)); // ensure features are supported
@@ -335,6 +346,12 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         this.forceUpdate();
     }
 
+    importExtensionFile() {
+        pxt.tickEvent("extensions.import", undefined, { interactiveConsent: true });
+        this.hide();
+        this.props.parent.showImportFileDialog({ extension: true });
+    }
+
     renderCore() {
         const { mode, closeIcon, visible, searchFor, experimentsState } = this.state;
 
@@ -342,9 +359,19 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const bundles = this.fetchBundled();
         const ghdata = this.fetchGhData();
         const urldata = this.fetchUrlData();
-        const local = this.fetchLocal();
+        const local = this.fetchLocalRepositories();
         const experiments = this.fetchExperiments();
         const isSearching = searchFor && (ghdata.status === data.FetchStatus.Pending || urldata.status === data.FetchStatus.Pending);
+        const disableFileAccessinMaciOs = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
+        const showImportFile = mode == ScriptSearchMode.Extensions
+            && pxt.appTarget.appTheme.importExtensionFiles
+            && !disableFileAccessinMaciOs
+            && !searchFor;
+        // inject beta at end of / or /#
+        // also excludes http://localhost:port/index.html
+        const betaUrl = window.location.href.replace(/\/(#|$|\?)/, "/beta$1")
+        const showOpenBeta = mode == ScriptSearchMode.Experiments
+            && betaUrl != window.location.href; // don't show beta button in beta
 
         const compareConfig = (a: pxt.PackageConfig, b: pxt.PackageConfig) => {
             // core first
@@ -358,8 +385,10 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 return abeta ? 1 : -1;
 
             // use weight if core packages
-            if (a.core && b.core && a.weight != b.weight)
-                return -(a.weight || 0) + (b.weight || 0);
+            const aweight = a.weight === undefined ? 50 : a.weight;
+            const bweight = b.weight === undefined ? 50 : b.weight;
+            if (aweight != bweight)
+                return -aweight + bweight;
 
             // alphabetical sort
             return pxt.Util.strcmp(a.name, b.name)
@@ -397,7 +426,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 description={description}>
                 <div className="ui">
                     {mode == ScriptSearchMode.Experiments ?
-                        <div className="ui message">
+                        <div className="ui message info">
                             <div className="header">{lf("WARNING: EXPERIMENTAL FEATURES AHEAD!")}</div>
                             {lf("Try out these features and tell us what you think!")}
                         </div> : undefined}
@@ -432,6 +461,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     scr={scr}
                                     onCardClick={this.addLocal}
                                     label={lf("Local")}
+                                    title={lf("Local GitHub extension")}
+                                    labelClass="blue right ribbon"
                                     role="link"
                                 />
                             )}
@@ -440,7 +471,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     key={'bundled' + scr.name}
                                     name={scr.name}
                                     description={scr.description}
-                                    url={"/" + scr.installedVersion}
                                     imageUrl={scr.icon}
                                     scr={scr}
                                     onCardClick={this.addBundle}
@@ -491,6 +521,28 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     feedbackUrl={experiment.feedbackUrl}
                                 />
                             )}
+                            {showImportFile && <codecard.CodeCardView
+                                ariaLabel={lf("Open files from your computer")}
+                                role="button"
+                                key={'import'}
+                                icon="upload ui cardimage"
+                                iconColor="secondary"
+                                name={lf("Import File...")}
+                                description={lf("Open files from your computer")}
+                                onClick={this.importExtensionFile}
+                            />}
+                            {showOpenBeta && <codecard.CodeCardView
+                                ariaLabel={lf("Open the next version of the editor")}
+                                role="button"
+                                key={'beta'}
+                                icon="lab ui cardimage"
+                                iconColor="secondary"
+                                name={lf("Beta Editor")}
+                                label={lf("Beta")}
+                                labelClass="red right ribbon"
+                                description={lf("Open the next version of the editor")}
+                                url={betaUrl}
+                            />}
                         </div>
                     }
                     {isEmpty() ?
@@ -506,7 +558,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                         <div className="header">{lf("Experiments changed")}</div>
                         {lf("The editor will reload when leaving this page.")}
                     </div> : undefined}
-                {mode == ScriptSearchMode.Extensions ? dialogs.githubFooter(lf("Want to create your own extension?"), this.hide) : undefined}
             </sui.Modal>
         );
     }

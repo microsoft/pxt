@@ -1,0 +1,151 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+    <variables>
+    </variables>
+    <block type="function_definition" x="0" y="20">
+      <mutation name="foo_noarg" functionid="04${N/TaNy7|CG0u.s!r"></mutation>
+      <field name="function_title">function</field>
+      <field name="function_name">foo_noarg</field>
+      <comment pinned="false" h="120" w="160">Describe this function...</comment>
+    </block>
+    <block type="pxt-on-start" x="410" y="10">
+      <statement name="HANDLER">
+        <block type="function_call">
+          <mutation name="foo_noarg" functionid="04${N/TaNy7|CG0u.s!r"></mutation>
+          <field name="function_title">call</field>
+          <field name="function_name">foo_noarg</field>
+          <next>
+            <block type="function_call">
+              <mutation name="foo_num" functionid="Di9:A}f%mIK!SgSI/0bc">
+                <arg name="num" id="1bM[RZi[ST=*OhVG#%uM" type="number"></arg>
+              </mutation>
+              <field name="function_title">call</field>
+              <field name="function_name">foo_num</field>
+              <value name="1bM[RZi[ST=*OhVG#%uM">
+                <shadow type="math_number">
+                  <field name="NUM">1</field>
+                </shadow>
+              </value>
+              <next>
+                <block type="function_call">
+                  <mutation name="foo_string" functionid=";a:2ZOir$PxUqqv0})eE">
+                    <arg name="text" id="$E]$H$rl@/?/|$Bou|Av" type="string"></arg>
+                  </mutation>
+                  <field name="function_title">call</field>
+                  <field name="function_name">foo_string</field>
+                  <value name="$E]$H$rl@/?/|$Bou|Av">
+                    <shadow type="text">
+                      <field name="TEXT">abc</field>
+                    </shadow>
+                  </value>
+                  <next>
+                    <block type="function_call">
+                      <mutation name="foo_bool" functionid="vP}bsbJuPwc#~nVi?%wP">
+                        <arg name="bool" id="K7p$06t[%64{J[5^5/PC" type="boolean"></arg>
+                      </mutation>
+                      <field name="function_title">call</field>
+                      <field name="function_name">foo_bool</field>
+                      <value name="K7p$06t[%64{J[5^5/PC">
+                        <shadow type="logic_boolean">
+                          <field name="BOOL">TRUE</field>
+                        </shadow>
+                      </value>
+                      <next>
+                        <block type="function_call">
+                          <mutation name="foo_all" functionid="lAi$Jq,fmnGK!2Gp0bf}">
+                            <arg name="num" id="^wA-])1h!]|EX3ta8niu" type="number"></arg>
+                            <arg name="text" id="r_K0U=l_H]yJCWIyC_l-" type="string"></arg>
+                            <arg name="bool" id="m+b5wl03vA7?pZq,9`lp" type="boolean"></arg>
+                          </mutation>
+                          <field name="function_title">call</field>
+                          <field name="function_name">foo_all</field>
+                          <value name="^wA-])1h!]|EX3ta8niu">
+                            <shadow type="math_number">
+                              <field name="NUM">1</field>
+                            </shadow>
+                          </value>
+                          <value name="r_K0U=l_H]yJCWIyC_l-">
+                            <shadow type="text">
+                              <field name="TEXT">abc</field>
+                            </shadow>
+                          </value>
+                          <value name="m+b5wl03vA7?pZq,9`lp">
+                            <shadow type="logic_boolean">
+                              <field name="BOOL">TRUE</field>
+                            </shadow>
+                          </value>
+                        </block>
+                      </next>
+                    </block>
+                  </next>
+                </block>
+              </next>
+            </block>
+          </next>
+        </block>
+      </statement>
+    </block>
+    <block type="function_definition" x="10" y="170">
+      <mutation name="foo_num" functionid="Di9:A}f%mIK!SgSI/0bc">
+        <arg name="num" id="1bM[RZi[ST=*OhVG#%uM" type="number"></arg>
+      </mutation>
+      <field name="function_title">function</field>
+      <field name="function_name">foo_num</field>
+      <comment pinned="false" h="120" w="160">Describe this function...</comment>
+      <value name="1bM[RZi[ST=*OhVG#%uM">
+        <shadow type="argument_reporter_number">
+          <field name="VALUE">num</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="function_definition" x="10" y="310">
+      <mutation name="foo_string" functionid=";a:2ZOir$PxUqqv0})eE">
+        <arg name="text" id="$E]$H$rl@/?/|$Bou|Av" type="string"></arg>
+      </mutation>
+      <field name="function_title">function</field>
+      <field name="function_name">foo_string</field>
+      <comment pinned="false" h="120" w="160">Describe this function...</comment>
+      <value name="$E]$H$rl@/?/|$Bou|Av">
+        <shadow type="argument_reporter_string">
+          <field name="VALUE">text</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="function_definition" x="10" y="470">
+      <mutation name="foo_bool" functionid="vP}bsbJuPwc#~nVi?%wP">
+        <arg name="bool" id="K7p$06t[%64{J[5^5/PC" type="boolean"></arg>
+      </mutation>
+      <field name="function_title">function</field>
+      <field name="function_name">foo_bool</field>
+      <comment pinned="false" h="120" w="160">Describe this function...</comment>
+      <value name="K7p$06t[%64{J[5^5/PC">
+        <shadow type="argument_reporter_boolean">
+          <field name="VALUE">bool</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="function_definition" x="10" y="630">
+      <mutation name="foo_all" functionid="lAi$Jq,fmnGK!2Gp0bf}">
+        <arg name="num" id="^wA-])1h!]|EX3ta8niu" type="number"></arg>
+        <arg name="text" id="r_K0U=l_H]yJCWIyC_l-" type="string"></arg>
+        <arg name="bool" id="m+b5wl03vA7?pZq,9`lp" type="boolean"></arg>
+      </mutation>
+      <field name="function_title">function</field>
+      <field name="function_name">foo_all</field>
+      <comment pinned="false" h="120" w="160">Describe this function...</comment>
+      <value name="^wA-])1h!]|EX3ta8niu">
+        <shadow type="argument_reporter_number">
+          <field name="VALUE">num</field>
+        </shadow>
+      </value>
+      <value name="r_K0U=l_H]yJCWIyC_l-">
+        <shadow type="argument_reporter_string">
+          <field name="VALUE">text</field>
+        </shadow>
+      </value>
+      <value name="m+b5wl03vA7?pZq,9`lp">
+        <shadow type="argument_reporter_boolean">
+          <field name="VALUE">bool</field>
+        </shadow>
+      </value>
+    </block>
+  </xml>

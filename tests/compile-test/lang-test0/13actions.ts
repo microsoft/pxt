@@ -106,9 +106,18 @@ function testActionSave(): void {
     action = null;
 }
 
+function testLoopScope() {
+    for (let i = 0; i < 3; ++i) {
+        let val: number
+        assert(val === undefined, "loopscope");
+        val = i
+    }
+}
+
 inBg();
 testAction(1);
 testAction(7);
 testIter();
 testActionSave();
 testFunDecl();
+testLoopScope();

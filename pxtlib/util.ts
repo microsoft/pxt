@@ -148,6 +148,17 @@ namespace ts.pxtc.Util {
         }
     }
 
+    export function blobReadAsDataURL(blob: Blob): Promise<string> {
+        if (!blob) return Promise.resolve(undefined);
+
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(<string>reader.result);
+            reader.onerror = e => reject(e);
+            reader.readAsDataURL(blob);
+        });
+    }
+
     export function fileReadAsBufferAsync(f: File): Promise<Uint8Array> { // ArrayBuffer
         if (!f)
             return Promise.resolve<Uint8Array>(null);
@@ -168,7 +179,7 @@ namespace ts.pxtc.Util {
             return new Promise<string>((resolve, reject) => {
                 let reader = new FileReader();
                 reader.onerror = (ev) => resolve(null);
-                reader.onload = (ev) => resolve(reader.result);
+                reader.onload = (ev) => resolve(reader.result as string);
                 reader.readAsText(f);
             });
         }
@@ -224,9 +235,14 @@ namespace ts.pxtc.Util {
         return Object.keys(m || {}).map(k => m[k])
     }
 
-    export function pushRange<T>(trg: T[], src: T[]): void {
+    export function pushRange<T>(trg: T[], src: ArrayLike<T>): void {
         for (let i = 0; i < src.length; ++i)
             trg.push(src[i])
+    }
+
+    // TS gets lost in type inference when this is passed an array
+    export function concatArrayLike<T>(arrays: ArrayLike<ArrayLike<T>>): T[] {
+        return concat(arrays as any)
     }
 
     export function concat<T>(arrays: T[][]): T[] {
@@ -260,6 +276,14 @@ namespace ts.pxtc.Util {
             ptr += c.length
         }
         return r
+    }
+
+    export function jsonTryParse(s: string): any {
+        try {
+            return JSON.parse(s);
+        } catch (e) {
+            return undefined;
+        }
     }
 
     export function jsonMergeFrom(trg: any, src: any) {
@@ -398,6 +422,12 @@ namespace ts.pxtc.Util {
         return r
     }
 
+    export function toSet<T>(arr: T[], f: (t: T) => string): pxt.Map<boolean> {
+        let r: pxt.Map<boolean> = {}
+        arr.forEach(e => { r[f(e)] = true })
+        return r
+    }
+
     export interface ArrayLike<T> {
         [index: number]: T;
         length: number;
@@ -456,6 +486,7 @@ namespace ts.pxtc.Util {
             clearTimeout(timeout);
             timeout = setTimeout(later, wait);
             if (callNow) func.apply(context, args);
+            return timeout;
         };
     }
 
@@ -772,6 +803,20 @@ namespace ts.pxtc.Util {
         return Math.round(now() / 1000)
     }
 
+    // node.js overrides this to use process.cpuUsage()
+    export let cpuUs = (): number => {
+        // current time in microseconds
+        const perf = typeof performance != "undefined" ?
+            performance.now.bind(performance) ||
+            (performance as any).moznow.bind(performance) ||
+            (performance as any).msNow.bind(performance) ||
+            (performance as any).webkitNow.bind(performance) ||
+            (performance as any).oNow.bind(performance) :
+            Date.now;
+        cpuUs = () => perf() * 1000;
+        return cpuUs();
+    }
+
     export function getMime(filename: string) {
         let m = /\.([a-zA-Z0-9]+)$/.exec(filename)
         if (m)
@@ -817,13 +862,14 @@ namespace ts.pxtc.Util {
         // hitting the cloud
         function downloadFromCloudAsync(strings?: pxt.Map<string>) {
             pxt.debug(`downloading translations for ${lang} ${filename} ${branch || ""}`);
+            let host = pxt.BrowserUtils.isLocalHost() || pxt.webConfig.isStatic ? "https://makecode.com/api/" : ""
             // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
-            let url = `${pxt.BrowserUtils.isLocalHost() || pxt.webConfig.isStatic ? "https://makecode.com" : ""}/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
+            let url = `${host}translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
             if (branch) url += '&branch=' + encodeURIComponent(branch);
             const headers: pxt.Map<string> = {};
-            if (etag) headers["If-None-Match"] = etag;
-            return requestAsync({ url, headers }).then(resp => {
-                // if 304, translation not changed, skipe
+            if (etag && !pxt.Cloud.useCdnApi()) headers["If-None-Match"] = etag;
+            return (host ? requestAsync : pxt.Cloud.apiRequestWithCdnAsync)({ url, headers }).then(resp => {
+                // if 304, translation not changed, skip
                 if (resp.statusCode == 304 || resp.statusCode == 200) {
                     // store etag and translations
                     etag = resp.headers["etag"] as string || "";
@@ -857,26 +903,111 @@ namespace ts.pxtc.Util {
 
     }
 
-    export function normalizeLanguageCode(code: string): string {
-        const langParts = /^(\w{2})-(\w{2}$)/i.exec(code);
-        if (langParts && langParts[1] && langParts[2]) {
-            return `${langParts[1].toLowerCase()}-${langParts[2].toUpperCase()}`;
-        } else {
-            return code.toLowerCase();
-        }
+    export const pxtLangCookieId = "PXT_LANG";
+    export const langCookieExpirationDays = 30;
+
+    export interface Language {
+        englishName: string;
+        localizedName: string;
     }
 
+    // "lang-code": { englishName: "", localizedName: ""},
+    // Crowdin code: https://support.crowdin.com/api/language-codes/
+    // English name and localized name: https://en.wikipedia.org/wiki/List_of_language_names
+    export const allLanguages: pxt.Map<Language> = {
+        "af": { englishName: "Afrikaans", localizedName: "Afrikaans" },
+        "ar": { englishName: "Arabic", localizedName: "العربية" },
+        "az": { englishName: "Azerbaijani", localizedName: "آذربایجان دیلی" },
+        "bg": { englishName: "Bulgarian", localizedName: "български" },
+        "bn": { englishName: "Bengali", localizedName: "বাংলা" },
+        "ca": { englishName: "Catalan", localizedName: "Català" },
+        "cs": { englishName: "Czech", localizedName: "Čeština" },
+        "da": { englishName: "Danish", localizedName: "Dansk" },
+        "de": { englishName: "German", localizedName: "Deutsch" },
+        "el": { englishName: "Greek", localizedName: "Ελληνικά" },
+        "en": { englishName: "English", localizedName: "English" },
+        "es-ES": { englishName: "Spanish (Spain)", localizedName: "Español (España)" },
+        "es-MX": { englishName: "Spanish (Mexico)", localizedName: "Español (México)" },
+        "et": { englishName: "Estonian", localizedName: "Eesti" },
+        "eu": { englishName: "Basque", localizedName: "Euskara" },
+        "fa": { englishName: "Persian", localizedName: "فارسی" },
+        "fi": { englishName: "Finnish", localizedName: "Suomi" },
+        "fr": { englishName: "French", localizedName: "Français" },
+        "fr-CA": { englishName: "French (Canada)", localizedName: "Français (Canada)" },
+        "gu-IN": { englishName: "Gujarati", localizedName: "ગુજરાતી" },
+        "he": { englishName: "Hebrew", localizedName: "עברית" },
+        "hr": { englishName: "Croatian", localizedName: "Hrvatski" },
+        "hu": { englishName: "Hungarian", localizedName: "Magyar" },
+        "hy-AM": { englishName: "Armenian (Armenia)", localizedName: "Հայերէն (Հայաստան)" },
+        "id": { englishName: "Indonesian", localizedName: "Bahasa Indonesia" },
+        "is": { englishName: "Icelandic", localizedName: "Íslenska" },
+        "it": { englishName: "Italian", localizedName: "Italiano" },
+        "ja": { englishName: "Japanese", localizedName: "日本語" },
+        "kab": { englishName: "Kabyle", localizedName: "شئعم" },
+        "ko": { englishName: "Korean", localizedName: "한국어" },
+        "kmr": { englishName: "Kurmanji (Kurdish)", localizedName: "کورمانجی‎" },
+        "kn": { englishName: "Kannada", localizedName: "ಕನ್ನಡ" },
+        "lt": { englishName: "Lithuanian", localizedName: "Lietuvių" },
+        "lv": { englishName: "Latvian", localizedName: "Latviešu" },
+        "ml-IN": { englishName: "Malayalam", localizedName: "മലയാളം" },
+        "mr": { englishName: "Marathi", localizedName: "मराठी" },
+        "nl": { englishName: "Dutch", localizedName: "Nederlands" },
+        "no": { englishName: "Norwegian", localizedName: "Norsk" },
+        "nb": { englishName: "Norwegian Bokmal", localizedName: "Norsk bokmål" },
+        "nn-NO": { englishName: "Norwegian Nynorsk", localizedName: "Norsk nynorsk" },
+        "pa-IN": { englishName: "Punjabi", localizedName: "ਪੰਜਾਬੀ" },
+        "pl": { englishName: "Polish", localizedName: "Polski" },
+        "pt-BR": { englishName: "Portuguese (Brazil)", localizedName: "Português (Brasil)" },
+        "pt-PT": { englishName: "Portuguese (Portugal)", localizedName: "Português (Portugal)" },
+        "ro": { englishName: "Romanian", localizedName: "Română" },
+        "ru": { englishName: "Russian", localizedName: "Русский" },
+        "si-LK": { englishName: "Sinhala (Sri Lanka)", localizedName: "සිංහල (ශ්රී ලංකා)" },
+        "sk": { englishName: "Slovak", localizedName: "Slovenčina" },
+        "sl": { englishName: "Slovenian", localizedName: "Slovenski" },
+        "sr": { englishName: "Serbian", localizedName: "Srpski" },
+        "su": { englishName: "Sundanese", localizedName: "ᮘᮞ ᮞᮥᮔ᮪ᮓ" },
+        "sv-SE": { englishName: "Swedish (Sweden)", localizedName: "Svenska (Sverige)" },
+        "ta": { englishName: "Tamil", localizedName: "தமிழ்" },
+        "te": { englishName: "Telugu", localizedName: "తెలుగు" },
+        "th": { englishName: "Thai", localizedName: "ภาษาไทย" },
+        "tl": { englishName: "Tagalog", localizedName: "ᜏᜒᜃᜅ᜔ ᜆᜄᜎᜓᜄ᜔" },
+        "tr": { englishName: "Turkish", localizedName: "Türkçe" },
+        "uk": { englishName: "Ukrainian", localizedName: "Українська" },
+        "ur-IN": { englishName: "Urdu (India)", localizedName: "اردو (ہندوستان)" },
+        "ur-PK": { englishName: "Urdu (Pakistan)", localizedName: "اردو (پاکستان)" },
+        "vi": { englishName: "Vietnamese", localizedName: "Tiếng việt" },
+        "zh-CN": { englishName: "Chinese (Simplified)", localizedName: "简体中文" },
+        "zh-TW": { englishName: "Chinese (Traditional)", localizedName: "繁体中文" },
+    };
+
     export function isLocaleEnabled(code: string): boolean {
-        code = normalizeLanguageCode(code);
-        return pxt.appTarget.appTheme && pxt.appTarget.appTheme.availableLocales && pxt.appTarget.appTheme.availableLocales.indexOf(code) > -1;
+        let [lang, baseLang] = normalizeLanguageCode(code);
+        let appTheme = pxt.appTarget.appTheme;
+        if (appTheme && appTheme.availableLocales) {
+            if (appTheme.availableLocales.indexOf(lang) > -1) {
+                return true;
+            }
+            //check for base language if we didn't find the full language. Example: nl for nl-NL
+            if (baseLang && appTheme.availableLocales.indexOf(baseLang) > -1) {
+                return true;
+            }
+        }
+        return false;
     }
 
     export function updateLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<void> {
-        code = normalizeLanguageCode(code);
-        if (code === userLanguage() || (!isLocaleEnabled(code) && !force))
+        code = normalizeLanguageCode(code)[0];
+        if (code === "en-US")
+            code = "en"; // special case for built-in language
+        if (code === userLanguage() || (!isLocaleEnabled(code) && !force)) {
+            pxt.debug(`loc: ${code} (using built-in)`)
             return Promise.resolve();
+        }
 
-        return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, live)
+        pxt.debug(`loc: ${code}`);
+        return downloadTranslationsAsync(targetId, baseUrl, code,
+            pxtBranch, targetBranch, live,
+            ts.pxtc.Util.TranslationsKind.Editor)
             .then((translations) => {
                 if (translations) {
                     setUserLanguage(code);
@@ -885,32 +1016,52 @@ namespace ts.pxtc.Util {
                         localizeLive = true;
                     }
                 }
-                return Promise.resolve();
+
+                // Download api translations
+                return !live ? ts.pxtc.Util.downloadTranslationsAsync(
+                    targetId, baseUrl, code,
+                    pxtBranch, targetBranch, live,
+                    ts.pxtc.Util.TranslationsKind.Apis)
+                    .then(trs => {
+                        if (trs)
+                            ts.pxtc.apiLocalizationStrings = trs;
+                    }) : Promise.resolve();
             });
     }
 
-    export function downloadSimulatorLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<pxt.Map<string>> {
-        code = normalizeLanguageCode(code);
-        if (code === userLanguage() || (!isLocaleEnabled(code) && !force))
-            return Promise.resolve<pxt.Map<string>>(undefined);
-
-        return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, live)
+    export enum TranslationsKind {
+        Editor,
+        Sim,
+        Apis
     }
 
-    export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<pxt.Map<string>> {
-        code = normalizeLanguageCode(code);
-        let translationsCacheId = `${code}/${live}`;
+    export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live: boolean, translationKind?: TranslationsKind): Promise<pxt.Map<string>> {
+        translationKind = translationKind || TranslationsKind.Editor;
+        code = normalizeLanguageCode(code)[0];
+        if (code === "en-US" || code === "en") // shortcut
+            return Promise.resolve(undefined);
+
+        let translationsCacheId = `${code}/${live}/${translationKind}`;
         if (translationsCache()[translationsCacheId]) {
             return Promise.resolve(translationsCache()[translationsCacheId]);
         }
 
-        const stringFiles: { branch: string, path: string }[] = [
-            { branch: pxtBranch, path: "strings.json" },
-            { branch: targetBranch, path: targetId + "/target-strings.json" },
-            { branch: targetBranch, path: targetId + "/sim-strings.json" }
-        ];
+        let stringFiles: { branch: string, staticName: string, path: string }[];
+        switch (translationKind) {
+            case TranslationsKind.Editor:
+                stringFiles = [
+                    { branch: pxtBranch, staticName: "strings.json", path: "strings.json" },
+                    { branch: targetBranch, staticName: "target-strings.json", path: targetId + "/target-strings.json" },
+                ];
+                break;
+            case TranslationsKind.Sim:
+                stringFiles = [{ branch: targetBranch, staticName: "sim-strings.json", path: targetId + "/sim-strings.json" }];
+                break;
+            case TranslationsKind.Apis:
+                stringFiles = [{ branch: targetBranch, staticName: "bundled-strings.json", path: targetId + "/bundled-strings.json" }];
+                break;
+        }
         let translations: pxt.Map<string>;
-
         function mergeTranslations(tr: pxt.Map<string>) {
             if (!tr) return;
             if (!translations) {
@@ -940,21 +1091,25 @@ namespace ts.pxtc.Util {
                 if (errorCount === stringFiles.length || !translations) {
                     // Retry with non-live translations by setting live to false
                     pxt.tickEvent("translations.livetranslationsfailed");
-                    return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, false);
+                    return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, false, translationKind);
                 }
 
                 return Promise.resolve(translations);
             });
         } else {
-            return Util.httpGetJsonAsync(baseUrl + "locales/" + code + "/strings.json")
-                .then(tr => {
-                    if (tr) {
-                        translations = tr;
-                        translationsCache()[translationsCacheId] = translations;
-                    }
-                }, e => {
-                    console.error('failed to load localizations')
-                })
+            return Promise.all(stringFiles.map(p =>
+                Util.httpGetJsonAsync(`${baseUrl}locales/${code}/${p.staticName}`)
+                    .catch(e => undefined))
+            ).then(resps => {
+                let tr: pxt.Map<string> = {};
+                resps.forEach(res => pxt.Util.jsonMergeFrom(tr, res));
+                if (Object.keys(tr).length) {
+                    translations = tr;
+                    translationsCache()[translationsCacheId] = translations;
+                }
+            }, e => {
+                console.error('failed to load localizations')
+            })
                 .then(() => translations);
         }
     }

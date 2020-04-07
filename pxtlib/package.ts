@@ -4,7 +4,53 @@
 /// <reference path="util.ts"/>
 
 namespace pxt {
+    const CONFIG_FIELDS_ORDER = [
+        "name",
+        "version",
+        "description",
+        "license",
+        "dependencies",
+        "files",
+        "testFiles",
+        "testDependencies",
+        "public",
+        "targetVersions",
+        "supportedTargets",
+        "preferredEditor",
+        "languageRestriction",
+        "additionalFilePath",
+        "additionalFilePaths"
+    ]
+
     export class Package {
+
+        static stringifyConfig(config: pxt.PackageConfig): string {
+            // reorg fields
+            const configMap: Map<string> = config as any
+            const newCfg: any = {}
+            for (const f of CONFIG_FIELDS_ORDER) {
+                if (configMap.hasOwnProperty(f))
+                    newCfg[f] = configMap[f]
+            }
+            for (const f of Object.keys(configMap)) {
+                if (!newCfg.hasOwnProperty(f))
+                    newCfg[f] = configMap[f]
+            }
+
+            // github adds a newline when web editing
+            return JSON.stringify(newCfg, null, 4) + "\n"
+        }
+
+        static parseAndValidConfig(configStr: string): pxt.PackageConfig {
+            const json = Util.jsonTryParse(configStr) as pxt.PackageConfig;
+            return json
+                && json.name !== undefined && typeof json.name === "string"
+                // && json.version && typeof json.version === "string", default to 0.0.0
+                && json.files && Array.isArray(json.files) && json.files.every(f => typeof f === "string")
+                && json.dependencies && Object.keys(json.dependencies).every(k => typeof json.dependencies[k] === "string")
+                && json;
+        }
+
         static getConfigAsync(pkgTargetVersion: string, id: string, fullVers: string): Promise<pxt.PackageConfig> {
             return Promise.resolve().then(() => {
                 if (pxt.github.isGithubId(fullVers)) {
@@ -30,10 +76,12 @@ namespace pxt {
 
         public addedBy: Package[];
         public config: PackageConfig;
-        public level = -1;
+        public level = -1; // main package = 0, first children = 1, etc
         public isLoaded = false;
         private resolvedVersion: string;
         public ignoreTests = false;
+        public cppOnly = false;
+        public installedVersion: string; // resolve version
 
         constructor(public id: string, public _verspec: string, public parent: MainPackage, addedBy: Package) {
             if (addedBy) {
@@ -41,6 +89,10 @@ namespace pxt {
             }
 
             this.addedBy = [addedBy];
+        }
+
+        invalid(): boolean {
+            return /^invalid:/.test(this.version());
         }
 
         version() {
@@ -68,7 +120,7 @@ namespace pxt {
         }
 
         commonDownloadAsync(): Promise<Map<string>> {
-            let proto = this.verProtocol()
+            const proto = this.verProtocol()
             if (proto == "pub") {
                 return Cloud.downloadScriptFilesAsync(this.verArgument())
             } else if (proto == "github") {
@@ -76,16 +128,27 @@ namespace pxt {
                     .then(config => pxt.github.downloadPackageAsync(this.verArgument(), config))
                     .then(resp => resp.files)
             } else if (proto == "embed") {
-                let resp = pxt.getEmbeddedScript(this.verArgument())
+                const resp = pxt.getEmbeddedScript(this.verArgument())
                 return Promise.resolve(resp)
-            } else
-                return Promise.resolve(null as Map<string>)
+            } else if (proto == "pkg") {
+                // the package source is serialized in a file in the package itself
+                const pkgFilesSrc = this.readFile(this.verArgument());
+                const pkgFilesJson = ts.pxtc.Util.jsonTryParse(pkgFilesSrc) as Map<string>;
+                if (!pkgFilesJson)
+                    pxt.log(`unable to find ${this.verArgument()}`)
+                return Promise.resolve(pkgFilesJson)
+            } else return Promise.resolve(null as Map<string>)
         }
 
         host() { return this.parent._host }
 
         readFile(fn: string) {
             return this.host().readFile(this, fn)
+        }
+
+        readGitJson(): pxt.github.GitJson {
+            const gitJsonText = this.readFile(pxt.github.GIT_JSON);
+            return pxt.Util.jsonTryParse(gitJsonText) as pxt.github.GitJson;
         }
 
         resolveDep(id: string) {
@@ -97,15 +160,48 @@ namespace pxt {
         saveConfig() {
             const cfg = U.clone(this.config)
             delete cfg.additionalFilePaths
-            const text = JSON.stringify(cfg, null, 4)
+            const text = pxt.Package.stringifyConfig(cfg);
             this.host().writeFile(this, pxt.CONFIG_NAME, text)
+        }
+
+        setPreferredEditor(editor: string) {
+            if (this.config.preferredEditor != editor) {
+                this.config.preferredEditor = editor
+                this.saveConfig()
+            }
+        }
+
+        getPreferredEditor() {
+            let editor = this.config.preferredEditor
+            if (!editor) {
+                // older editors do not have this field set so we need to apply our
+                // language resolution logic here
+                // note that the preferredEditor field will be set automatically on the first save
+
+                // 1. no main.blocks in project, open javascript
+                const hasMainBlocks = this.getFiles().indexOf("main.blocks") >= 0;
+                if (!hasMainBlocks)
+                    return pxt.JAVASCRIPT_PROJECT_NAME;
+
+                // 2. if main.blocks is empty and main.ts is non-empty
+                //    open typescript
+                // https://github.com/microsoft/pxt/blob/master/webapp/src/app.tsx#L1032
+                const mainBlocks = this.readFile("main.blocks");
+                const mainTs = this.readFile("main.ts");
+                if (!mainBlocks && mainTs)
+                    return pxt.JAVASCRIPT_PROJECT_NAME;
+
+                // 3. default ot blocks
+                return pxt.BLOCKS_PROJECT_NAME;
+            }
+            return editor
         }
 
         parseJRes(allres: Map<JRes> = {}) {
             for (const f of this.getFiles()) {
                 if (U.endsWith(f, ".jres")) {
                     let js: Map<JRes> = JSON.parse(this.readFile(f))
-                    let base = js["*"]
+                    let base: JRes = js["*"] || {} as any
                     for (let k of Object.keys(js)) {
                         if (k == "*") continue
                         let v = js[k]
@@ -142,34 +238,44 @@ namespace pxt {
             if (getEmbeddedScript(this.id)) {
                 this.resolvedVersion = v = "embed:" + this.id
             } else if (!v || v == "*") {
-                U.userError(lf("version not specified for {0}", this.id))
+                // don't hard crash, instead ignore dependency
+                // U.userError(lf("version not specified for {0}", this.id))
+                this.configureAsInvalidPackage(lf("version not specified for {0}", this.id));
+                v = this._verspec;
             }
             return Promise.resolve(v)
         }
 
         private downloadAsync() {
-            let kindCfg = ""
             return this.resolveVersionAsync()
                 .then(verNo => {
-                    if (!/^embed:/.test(verNo) &&
-                        this.config && this.config.installedVersion == verNo)
+                    if (this.invalid()) {
+                        pxt.debug(`skip download of invalid package ${this.id}`);
+                        return undefined;
+                    }
+                    if (!/^embed:/.test(verNo) && this.installedVersion == verNo)
                         return undefined;
                     pxt.debug('downloading ' + verNo)
                     return this.host().downloadPackageAsync(this)
                         .then(() => {
-                            const confStr = this.readFile(pxt.CONFIG_NAME)
-                            if (!confStr)
-                                U.userError(`extension ${this.id} is missing ${pxt.CONFIG_NAME}`)
-                            this.parseConfig(confStr);
-                            if (this.level != 0)
-                                this.config.installedVersion = this.version()
-                            this.saveConfig()
-                        })
-                        .then(() => {
+                            this.loadConfig();
                             pxt.debug(`installed ${this.id} /${verNo}`)
                         })
 
                 })
+        }
+
+        loadConfig() {
+            if (this.level != 0 && this.invalid())
+                return; // don't try load invalid dependency
+
+            const confStr = this.readFile(pxt.CONFIG_NAME)
+            if (!confStr)
+                U.userError(`extension ${this.id} is missing ${pxt.CONFIG_NAME}`)
+            this.parseConfig(confStr);
+            if (this.level != 0)
+                this.installedVersion = this.version()
+            this.saveConfig()
         }
 
         protected validateConfig() {
@@ -177,9 +283,10 @@ namespace pxt {
                 U.userError("Missing dependencies in config of: " + this.id)
             if (!Array.isArray(this.config.files))
                 U.userError("Missing files in config of: " + this.id)
-            if (typeof this.config.name != "string" || !this.config.name ||
-                (this.config.public && !/^[a-z][a-z0-9\-_]+$/i.test(this.config.name)))
-                U.userError("Invalid extension name: " + this.config.name)
+            if (typeof this.config.name != "string" || !this.config.name)
+                this.config.name = lf("Untitled");
+            // don't be so uptight about project names,
+            // handle invalid names downstream
             if (this.config.targetVersions
                 && this.config.targetVersions.target
                 && semver.majorCmp(this.config.targetVersions.target, appTarget.versions.target) > 0)
@@ -329,9 +436,24 @@ namespace pxt {
                 });
         }
 
+        public configureAsInvalidPackage(reason: string) {
+            pxt.log(`invalid package ${this.id}: ${reason}`);
+            this._verspec = "invalid:" + this.id;
+            this.config = <PackageConfig>{
+                name: this.id,
+                description: reason,
+                dependencies: {},
+                files: []
+            }
+        }
+
         private parseConfig(cfgSrc: string, targetVersion?: string) {
-            const cfg = <PackageConfig>JSON.parse(cfgSrc);
-            this.config = cfg;
+            try {
+                const cfg = <PackageConfig>JSON.parse(cfgSrc);
+                this.config = cfg;
+            } catch (e) {
+                this.configureAsInvalidPackage(lf("Syntax error in pxt.json"));
+            }
 
             const currentConfig = JSON.stringify(this.config);
             for (const dep in this.config.dependencies) {
@@ -360,7 +482,10 @@ namespace pxt {
 
             // find all core packages in target
             const corePackages = Object.keys(this.config.dependencies)
-                .filter(dep => !!dep && (<pxt.PackageConfig>JSON.parse((pxt.appTarget.bundledpkgs[dep] || {})[pxt.CONFIG_NAME] || "{}").core));
+                .filter(dep => !!dep && (
+                    dep == pxt.BLOCKS_PROJECT_NAME || dep == pxt.JAVASCRIPT_PROJECT_NAME ||
+                    (<pxt.PackageConfig>JSON.parse((pxt.appTarget.bundledpkgs[dep] || {})[pxt.CONFIG_NAME] || "{}").core)
+                ));
             // no core package? add the first one
             if (corePackages.length == 0) {
                 const allCorePkgs = pxt.Package.corePackages();
@@ -378,13 +503,20 @@ namespace pxt {
             }
         }
 
-        dependencies(): pxt.Map<string> {
+        dependencies(includeCpp = false): pxt.Map<string> {
             if (!this.config) return {};
 
             const dependencies = Util.clone(this.config.dependencies || {});
             // add test dependencies if nedeed
             if (this.level == 0 && this.config.testDependencies) {
-                Util.jsonMergeFrom(dependencies, this.config.testDependencies);
+                // only add testDepdencies that can be resolved
+                Util.iterMap(this.config.testDependencies, (k, v) => {
+                    if (v != "*" || pxt.appTarget.bundledpkgs[k])
+                        dependencies[k] = v;
+                })
+            }
+            if (includeCpp && this.config.cppDependencies) {
+                Util.jsonMergeFrom(dependencies, this.config.cppDependencies);
             }
             return dependencies;
         }
@@ -394,7 +526,7 @@ namespace pxt {
 
             let initPromise = Promise.resolve()
 
-            if (this.level == 0)
+            if (this.level == 0 && !pxt.appTarget.multiVariants)
                 pxt.setAppTargetVariant(null)
 
             this.isLoaded = true;
@@ -439,34 +571,48 @@ namespace pxt {
                 })
             }
 
-            const loadDepsRecursive = (deps: Map<string>) => {
-                return U.mapStringMapAsync(deps, (id, ver) => {
+
+            const loadDepsRecursive = (deps: pxt.Map<string>, from: Package, isCpp = false) => {
+                return U.mapStringMapAsync(deps || from.dependencies(isCpp), (id, ver) => {
                     if (id == "hw" && pxt.hwVariant)
                         id = "hw---" + pxt.hwVariant
-                    let mod = this.resolveDep(id)
+                    let mod = from.resolveDep(id)
                     ver = ver || "*"
                     if (mod) {
+                        if (mod.invalid()) {
+                            // failed to resolve dependency, ignore
+                            mod.level = Math.min(mod.level, from.level + 1)
+                            mod.addedBy.push(from)
+                            return Promise.resolve();
+                        }
+
                         if (mod._verspec != ver && !/^file:/.test(mod._verspec) && !/^file:/.test(ver))
                             U.userError("Version spec mismatch on " + id)
-                        mod.level = Math.min(mod.level, this.level + 1)
-                        mod.addedBy.push(this)
+                        if (!isCpp) {
+                            mod.level = Math.min(mod.level, from.level + 1)
+                            mod.addedBy.push(from)
+                        }
                         return Promise.resolve()
                     } else {
-                        mod = new Package(id, ver, this.parent, this)
-                        this.parent.deps[id] = mod
+                        let mod = new Package(id, ver, from.parent, from)
+                        if (isCpp)
+                            mod.cppOnly = true
+                        from.parent.deps[id] = mod
                         // we can have "core---nrf52" to be used instead of "core" in other packages
-                        this.parent.deps[id.replace(/---.*/, "")] = mod
+                        from.parent.deps[id.replace(/---.*/, "")] = mod
                         return mod.loadAsync(isInstall)
                     }
                 })
             }
 
             return initPromise
-                .then(() => loadDepsRecursive(this.dependencies()))
+                .then(() => loadDepsRecursive(null, this))
                 .then(() => {
                     // get paletter config loading deps, so the more higher level packages take precedence
-                    if (this.config.palette && appTarget.runtime)
-                        appTarget.runtime.palette = U.clone(this.config.palette)
+                    if (this.config.palette && appTarget.runtime) {
+                        appTarget.runtime.palette = U.clone(this.config.palette);
+                        if (this.config.paletteNames) appTarget.runtime.paletteNames = this.config.paletteNames;
+                    }
                     // get screen size loading deps, so the more higher level packages take precedence
                     if (this.config.screenSize && appTarget.runtime)
                         appTarget.runtime.screenSize = U.clone(this.config.screenSize);
@@ -478,8 +624,7 @@ namespace pxt {
 
                         const missingPackages = this.getMissingPackages(this.config, mainTs);
                         let didAddPackages = false;
-                        let addPackagesPromise = Promise.resolve();
-                        Object.keys(missingPackages).reduce((addPackagesPromise, missing) => {
+                        return Object.keys(missingPackages).reduce((addPackagesPromise, missing) => {
                             return addPackagesPromise
                                 .then(() => this.findConflictsAsync(missing, missingPackages[missing]))
                                 .then((conflicts) => {
@@ -494,7 +639,7 @@ namespace pxt {
                                         this.config.dependencies[missing] = "*"
                                         const addDependency: Map<string> = {};
                                         addDependency[missing] = missingPackages[missing];
-                                        return loadDepsRecursive(addDependency);
+                                        return loadDepsRecursive(addDependency, this);
                                     }
                                 });
                         }, Promise.resolve(null))
@@ -508,7 +653,15 @@ namespace pxt {
                     }
                     return Promise.resolve(null);
                 })
-                .then(() => null);
+                .then<any>(() => {
+                    if (this.level != 0)
+                        return Promise.resolve()
+                    return Promise.all(U.values(this.parent.deps).map(pkg =>
+                        loadDepsRecursive(null, pkg, true)))
+                })
+                .then(() => {
+                    pxt.debug(`  installed ${this.id}`)
+                });
         }
 
         getFiles() {
@@ -536,12 +689,14 @@ namespace pxt {
             const r: Map<string> = {};
             const theme = pxt.appTarget.appTheme || {};
 
+            if (this.config.skipLocalization)
+                return Promise.resolve(r);
+
             // live loc of bundled packages
             if (pxt.Util.localizeLive && this.id != "this" && pxt.appTarget.bundledpkgs[this.id]) {
                 pxt.debug(`loading live translations for ${this.id}`)
-                const code = pxt.Util.userLanguage();
                 return Promise.all(filenames.map(
-                    fn => pxt.Util.downloadLiveTranslationsAsync(code, `${targetId}/${fn}-strings.json`, theme.crowdinBranch)
+                    fn => pxt.Util.downloadLiveTranslationsAsync(lang, `${targetId}/${fn}-strings.json`, theme.crowdinBranch)
                         .then(tr => {
                             if (tr && Object.keys(tr).length) {
                                 Util.jsonMergeFrom(r, tr);
@@ -567,12 +722,16 @@ namespace pxt {
 
         bundledStringsForFile(lang: string, filename: string): Map<string> {
             let r: Map<string> = {};
+
+            let [initialLang, baseLang] = pxt.Util.normalizeLanguageCode(lang);
             const files = this.config.files;
-            let fn = `_locales/${lang.toLowerCase()}/${filename}-strings.json`;
-            if (files.indexOf(fn) > -1)
+
+            let fn = `_locales/${initialLang}/${filename}-strings.json`;
+            if (files.indexOf(fn) > -1) {
                 r = JSON.parse(this.readFile(fn)) as Map<string>;
-            if (lang.length > 2) {
-                fn = `_locales/${lang.substring(0, 2).toLowerCase()}/${filename}-strings.json`;
+            }
+            else if (baseLang) {
+                fn = `_locales/${baseLang}/${filename}-strings.json`;
                 if (files.indexOf(fn) > -1)
                     r = JSON.parse(this.readFile(fn)) as Map<string>;
             }
@@ -597,17 +756,20 @@ namespace pxt {
             return this.loadAsync(true, targetVersion);
         }
 
-        sortedDeps() {
+        sortedDeps(includeCpp = false) {
             let visited: Map<boolean> = {}
             let ids: string[] = []
-            let rec = (p: Package) => {
+            const weight = (p: Package) =>
+                p.config ? Object.keys(p.config.cppDependencies || {}).length : 0
+            const rec = (p: Package) => {
                 if (!p || U.lookup(visited, p.id)) return;
                 visited[p.id] = true;
 
-                const dependencies = p.dependencies();
-                const deps = Object.keys(dependencies);
-                deps.sort((a, b) => U.strcmp(a, b))
-                deps.forEach(id => rec(this.resolveDep(id)))
+                const depNames = Object.keys(p.dependencies(includeCpp))
+                const deps = depNames.map(id => this.resolveDep(id))
+                // packages with more cppDependencies (core---* most likely) come first
+                deps.sort((a, b) => weight(b) - weight(a) || U.strcmp(a.id, b.id))
+                deps.forEach(rec)
                 ids.push(p.id)
             }
             rec(this)
@@ -642,7 +804,7 @@ namespace pxt {
                 });
         }
 
-        getTargetOptions(): CompileTarget {
+        getTargetOptions(): pxtc.CompileTarget {
             let res = U.clone(appTarget.compile)
             U.assert(!!res)
             return res
@@ -667,12 +829,44 @@ namespace pxt {
             return this._jres
         }
 
-        getCompileOptionsAsync(target: CompileTarget = this.getTargetOptions()): Promise<pxtc.CompileOptions> {
+        // undefined == uncached
+        // null == cached but no hit
+        // array == means something go found...
+        private _resolvedBannedCategories: string[];
+        resolveBannedCategories(): string[] {
+            if (this._resolvedBannedCategories !== undefined)
+                return this._resolvedBannedCategories; // cache hit
+
+            let bannedCategories: string[] = [];
+            if (pxt.appTarget && pxt.appTarget.runtime
+                && pxt.appTarget.runtime.bannedCategories
+                && pxt.appTarget.runtime.bannedCategories.length) {
+                bannedCategories = pxt.appTarget.runtime.bannedCategories.slice();
+                // scan for unbanned categories
+                Object.keys(this.deps)
+                    .map(dep => this.deps[dep])
+                    .filter(dep => !!dep)
+                    .map(pk => pxt.Util.jsonTryParse(pk.readFile(pxt.CONFIG_NAME)) as pxt.PackageConfig)
+                    .filter(config => config && config.requiredCategories)
+                    .forEach(config => config.requiredCategories.forEach(rc => {
+                        const i = bannedCategories.indexOf(rc);
+                        if (i > -1)
+                            bannedCategories.splice(i, 1);
+                    }));
+                this._resolvedBannedCategories = bannedCategories;
+            }
+
+            this._resolvedBannedCategories = bannedCategories;
+            if (!this._resolvedBannedCategories.length)
+                this._resolvedBannedCategories = null;
+            return this._resolvedBannedCategories;
+        }
+
+        async getCompileOptionsAsync(target: pxtc.CompileTarget = this.getTargetOptions()): Promise<pxtc.CompileOptions> {
             let opts: pxtc.CompileOptions = {
                 sourceFiles: [],
                 fileSystem: {},
                 target: target,
-                hexinfo: { hex: [] },
                 name: this.config ? this.config.name : ""
             }
 
@@ -686,120 +880,165 @@ namespace pxt {
                 }
             }
 
-            return this.loadAsync()
-                .then(() => {
-                    pxt.debug(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
-                    let ext = cpp.getExtensionInfo(this)
-                    if (ext.shimsDTS) generateFile("shims.d.ts", ext.shimsDTS)
-                    if (ext.enumsDTS) generateFile("enums.d.ts", ext.enumsDTS)
-                    return (target.isNative
-                        ? this.host().getHexInfoAsync(ext)
-                        : Promise.resolve<pxtc.HexInfo>(null))
-                        .then(inf => {
-                            ext = U.flatClone(ext)
-                            delete ext.compileData;
-                            delete ext.generatedFiles;
-                            delete ext.extensionFiles;
-                            opts.extinfo = ext
-                            opts.hexinfo = inf
-                        })
-                })
-                .then(() => this.config.binaryonly || appTarget.compile.shortPointers || !opts.target.isNative ? null : this.filesToBePublishedAsync(true))
-                .then(files => {
-                    if (files) {
-                        const headerString = JSON.stringify({
-                            name: this.config.name,
-                            comment: this.config.description,
-                            status: "unpublished",
-                            scriptId: this.config.installedVersion,
-                            cloudId: pxt.CLOUD_ID + appTarget.id,
-                            editor: target.preferredEditor ? target.preferredEditor : (U.lookup(files, "main.blocks") ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME),
-                            targetVersions: pxt.appTarget.versions
-                        })
-                        const programText = JSON.stringify(files)
-                        return lzmaCompressAsync(headerString + programText)
-                            .then(buf => {
-                                if (buf) {
-                                    opts.embedMeta = JSON.stringify({
-                                        compression: "LZMA",
-                                        headerSize: headerString.length,
-                                        textSize: programText.length,
-                                        name: this.config.name,
-                                        eURL: pxt.appTarget.appTheme.embedUrl,
-                                        eVER: pxt.appTarget.versions ? pxt.appTarget.versions.target : "",
-                                        pxtTarget: appTarget.id,
-                                    })
-                                    opts.embedBlob = ts.pxtc.encodeBase64(U.uint8ArrayToString(buf))
-                                }
-                            });
-                    } else {
-                        return Promise.resolve()
+            const fillExtInfoAsync = async (variant: string) => {
+                let ext: pxtc.ExtensionInfo
+
+                if (variant)
+                    pxt.setAppTargetVariant(variant, { temporary: true })
+
+                try {
+                    ext = cpp.getExtensionInfo(this)
+                    if (!variant) {
+                        if (ext.shimsDTS) generateFile("shims.d.ts", ext.shimsDTS)
+                        if (ext.enumsDTS) generateFile("enums.d.ts", ext.enumsDTS)
                     }
+
+                    const inf = target.isNative ? await this.host().getHexInfoAsync(ext) : null
+
+                    ext = U.flatClone(ext)
+                    if (!target.keepCppFiles) {
+                        delete ext.compileData;
+                        delete ext.generatedFiles;
+                        delete ext.extensionFiles;
+                    }
+                    ext.hexinfo = inf
+
+                } finally {
+                    if (variant)
+                        pxt.setAppTargetVariant(null, { temporary: true })
+                }
+
+                return ext
+            }
+
+            await this.loadAsync()
+
+            opts.bannedCategories = this.resolveBannedCategories();
+            opts.target.preferredEditor = this.getPreferredEditor()
+            pxt.debug(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
+
+            let variants = pxt.appTarget.multiVariants
+            if (!variants || pxt.appTargetVariant) {
+                variants = [pxt.appTargetVariant || ""]
+            }
+
+            let ext: pxtc.ExtensionInfo = null
+            for (let v of variants) {
+                if (ext)
+                    pxt.debug(`building for ${v}`)
+                const curr = await fillExtInfoAsync(ext ? v : null)
+                curr.appVariant = v
+                curr.outputPrefix = variants.length == 1 || !v ? "" : v + "-"
+                if (ext) {
+                    ext.otherMultiVariants.push(curr)
+                } else {
+                    ext = curr
+                    ext.otherMultiVariants = []
+                }
+            }
+            opts.extinfo = ext
+
+            const noFileEmbed = appTarget.compile.shortPointers ||
+                appTarget.compile.nativeType == "vm" ||
+                this.config.binaryonly ||
+                !opts.target.isNative
+
+            if (!noFileEmbed) {
+                const files = await this.filesToBePublishedAsync(true)
+                const headerString = JSON.stringify({
+                    name: this.config.name,
+                    comment: this.config.description,
+                    status: "unpublished",
+                    scriptId: this.installedVersion,
+                    cloudId: pxt.CLOUD_ID + appTarget.id,
+                    editor: this.getPreferredEditor(),
+                    targetVersions: pxt.appTarget.versions
                 })
-                .then(() => {
-                    for (const pkg of this.sortedDeps()) {
-                        for (const f of pkg.getFiles()) {
-                            if (/\.(ts|asm)$/.test(f)) {
-                                let sn = f
-                                if (pkg.level > 0)
-                                    sn = "pxt_modules/" + pkg.id + "/" + f
-                                opts.sourceFiles.push(sn)
-                                opts.fileSystem[sn] = pkg.readFile(f)
-                            }
+                const programText = JSON.stringify(files)
+                const buf = await lzmaCompressAsync(headerString + programText)
+                if (buf) {
+                    opts.embedMeta = JSON.stringify({
+                        compression: "LZMA",
+                        headerSize: headerString.length,
+                        textSize: programText.length,
+                        name: this.config.name,
+                        eURL: pxt.appTarget.appTheme.embedUrl,
+                        eVER: pxt.appTarget.versions ? pxt.appTarget.versions.target : "",
+                        pxtTarget: appTarget.id,
+                    })
+                    opts.embedBlob = ts.pxtc.encodeBase64(U.uint8ArrayToString(buf))
+                }
+            }
+
+            for (const pkg of this.sortedDeps()) {
+                for (const f of pkg.getFiles()) {
+                    if (/\.(ts|asm|py)$/.test(f)) {
+                        let sn = f
+                        if (pkg.level > 0)
+                            sn = "pxt_modules/" + pkg.id + "/" + f
+                        opts.sourceFiles.push(sn)
+                        opts.fileSystem[sn] = pkg.readFile(f)
+                    }
+                }
+            }
+            opts.jres = this.getJRes()
+            const functionOpts = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions;
+            opts.allowedArgumentTypes = functionOpts && functionOpts.extraFunctionEditorTypes && functionOpts.extraFunctionEditorTypes.map(info => info.typeName).concat("number", "boolean", "string");
+            return opts;
+        }
+
+        private prepareConfigToBePublished(): pxt.PackageConfig {
+            const cfg = U.clone(this.config)
+            delete (<any>cfg).installedVersion // cleanup old pxt.json files
+            delete cfg.additionalFilePath
+            delete cfg.additionalFilePaths
+            if (!cfg.targetVersions) cfg.targetVersions = Util.clone(pxt.appTarget.versions);
+            U.iterMap(cfg.dependencies, (k, v) => {
+                if (!v || /^(file|workspace):/.test(v)) {
+                    v = "*"
+                    try {
+                        const d = this.resolveDep(k)
+                        const gitjson = d.readGitJson();
+                        if (gitjson && gitjson.repo) {
+                            let parsed = pxt.github.parseRepoId(gitjson.repo)
+                            parsed.tag = gitjson.commit.tag || gitjson.commit.sha
+                            v = pxt.github.stringifyRepo(parsed)
                         }
-                    }
-                    opts.jres = this.getJRes()
-                    return opts;
-                })
+                    } catch (e) { }
+                    cfg.dependencies[k] = v
+                }
+            })
+            return cfg;
         }
 
         filesToBePublishedAsync(allowPrivate = false) {
-            let files: Map<string> = {};
-
+            const files: Map<string> = {};
             return this.loadAsync()
                 .then(() => {
                     if (!allowPrivate && !this.config.public)
                         U.userError('Only packages with "public":true can be published')
-                    let cfg = U.clone(this.config)
-                    delete cfg.installedVersion
-                    delete cfg.additionalFilePath
-                    delete cfg.additionalFilePaths
-                    if (!cfg.targetVersions) cfg.targetVersions = pxt.appTarget.versions;
-                    U.iterMap(cfg.dependencies, (k, v) => {
-                        if (!v || /^file:/.test(v) || /^workspace:/.test(v)) {
-                            v = "*"
-                            try {
-                                let d = this.resolveDep(k)
-                                let gitjson = JSON.parse(d.readFile(pxt.github.GIT_JSON) || "{}") as pxt.github.GitJson
-                                if (gitjson.repo) {
-                                    let parsed = pxt.github.parseRepoId(gitjson.repo)
-                                    parsed.tag = gitjson.commit.tag || gitjson.commit.sha
-                                    v = pxt.github.stringifyRepo(parsed)
-                                }
-                            } catch (e) { }
-                            cfg.dependencies[k] = v
-                        }
-                    })
-                    files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+                    const cfg = this.prepareConfigToBePublished();
+                    files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
                     for (let f of this.getFiles()) {
+                        // already stored
+                        if (f == pxt.CONFIG_NAME) continue;
                         let str = this.readFile(f)
                         if (str == null)
                             U.userError("referenced file missing: " + f)
                         files[f] = str
                     }
-
                     return U.sortObjectFields(files)
                 })
         }
 
-        saveToJsonAsync(editor?: string): Promise<pxt.cpp.HexFile> {
+        saveToJsonAsync(): Promise<pxt.cpp.HexFile> {
             return this.filesToBePublishedAsync(true)
                 .then(files => {
                     const project: pxt.cpp.HexFile = {
                         meta: {
                             cloudId: pxt.CLOUD_ID + pxt.appTarget.id,
                             targetVersions: pxt.appTarget.versions,
-                            editor: editor || pxt.BLOCKS_PROJECT_NAME,
+                            editor: this.getPreferredEditor(),
                             name: this.config.name
                         },
                         source: JSON.stringify(files, null, 2)
@@ -808,8 +1047,8 @@ namespace pxt {
                 });
         }
 
-        compressToFileAsync(editor?: string): Promise<Uint8Array> {
-            return this.saveToJsonAsync(editor)
+        compressToFileAsync(): Promise<Uint8Array> {
+            return this.saveToJsonAsync()
                 .then(project => pxt.lzmaCompressAsync(JSON.stringify(project, null, 2)));
         }
 

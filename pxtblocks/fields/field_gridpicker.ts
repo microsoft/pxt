@@ -34,7 +34,7 @@ namespace pxtblockly {
 
         private tooltipConfig_: FieldGridPickerToolTipConfig;
 
-        private tooltip_: HTMLElement;
+        private gridTooltip_: HTMLElement;
         private firstItem_: HTMLElement;
 
         private hasSearchBar_: boolean;
@@ -85,15 +85,15 @@ namespace pxtblockly {
         }
 
         private createTooltip_() {
-            if (this.tooltip_) return;
+            if (this.gridTooltip_) return;
 
             // Create tooltip
-            this.tooltip_ = document.createElement('div');
-            this.tooltip_.className = 'goog-tooltip blocklyGridPickerTooltip';
-            this.tooltip_.style.position = 'absolute';
-            this.tooltip_.style.display = 'none';
-            this.tooltip_.style.visibility = 'hidden';
-            document.body.appendChild(this.tooltip_);
+            this.gridTooltip_ = document.createElement('div');
+            this.gridTooltip_.className = 'goog-tooltip blocklyGridPickerTooltip';
+            this.gridTooltip_.style.position = 'absolute';
+            this.gridTooltip_.style.display = 'none';
+            this.gridTooltip_.style.visibility = 'hidden';
+            document.body.appendChild(this.gridTooltip_);
         }
 
         /**
@@ -150,8 +150,8 @@ namespace pxtblockly {
                 if (value == this.getValue()) {
                     // This option is selected
                     menuItem.setAttribute('aria-selected', 'true');
-                    Blockly.utils.addClass(menuItem, 'goog-option-selected');
-                    backgroundColour = this.sourceBlock_.getColourTertiary();
+                    pxt.BrowserUtils.addClass(menuItem, 'goog-option-selected');
+                    backgroundColour = (this.sourceBlock_ as Blockly.BlockSvg).getColourTertiary();
 
                     // Save so we can scroll to it later
                     this.selectedItemDom = menuItem;
@@ -194,29 +194,29 @@ namespace pxtblockly {
 
                     Blockly.bindEvent_(menuItem, 'mousemove', this, (e: MouseEvent) => {
                         if (hasImages) {
-                            this.tooltip_.style.top = `${e.clientY + yOffset}px`;
-                            this.tooltip_.style.left = `${e.clientX + xOffset}px`;
+                            this.gridTooltip_.style.top = `${e.clientY + yOffset}px`;
+                            this.gridTooltip_.style.left = `${e.clientX + xOffset}px`;
                             // Set tooltip text
                             const touchTarget = document.elementFromPoint(e.clientX, e.clientY);
                             const title = (touchTarget as any).title || (touchTarget as any).alt;
-                            this.tooltip_.textContent = title;
+                            this.gridTooltip_.textContent = title;
                             // Show the tooltip
-                            this.tooltip_.style.visibility = title ? 'visible' : 'hidden';
-                            this.tooltip_.style.display = title ? '' : 'none';
+                            this.gridTooltip_.style.visibility = title ? 'visible' : 'hidden';
+                            this.gridTooltip_.style.display = title ? '' : 'none';
                         }
 
-                        Blockly.utils.addClass(menuItem, 'goog-menuitem-highlight');
+                        pxt.BrowserUtils.addClass(menuItem, 'goog-menuitem-highlight');
                         tableContainer.setAttribute('aria-activedescendant', menuItem.id);
                     });
 
                     Blockly.bindEvent_(menuItem, 'mouseout', this, (e: MouseEvent) => {
                         if (hasImages) {
                             // Hide the tooltip
-                            this.tooltip_.style.visibility = 'hidden';
-                            this.tooltip_.style.display = 'none';
+                            this.gridTooltip_.style.visibility = 'hidden';
+                            this.gridTooltip_.style.display = 'none';
                         }
 
-                        Blockly.utils.removeClass(menuItem, 'goog-menuitem-highlight');
+                        pxt.BrowserUtils.removeClass(menuItem, 'goog-menuitem-highlight');
                         tableContainer.removeAttribute('aria-activedescendant');
                     });
                 } else {
@@ -232,10 +232,10 @@ namespace pxtblockly {
                                 // Clear all current hovers.
                                 const currentHovers = tableContainer.getElementsByClassName('goog-menuitem-highlight');
                                 for (let i = 0; i < currentHovers.length; i++) {
-                                    Blockly.utils.removeClass(currentHovers[i], 'goog-menuitem-highlight');
+                                    pxt.BrowserUtils.removeClass(currentHovers[i] as HTMLElement, 'goog-menuitem-highlight');
                                 }
                                 // Set hover on current item
-                                Blockly.utils.addClass(menuItem, 'goog-menuitem-highlight');
+                                pxt.BrowserUtils.addClass(menuItem, 'goog-menuitem-highlight');
 
                                 this.updateSelectedBar_(content, value);
                             }
@@ -290,40 +290,9 @@ namespace pxtblockly {
             return !this.hideRect_ ? !this.sourceBlock_.isShadow() : false;
         }
 
-        /**
-         * Set the language-neutral value for this dropdown menu.
-         * We have to override this from field.js because the grid picker needs to redraw the selected item's image.
-         * @param {string} newValue New value to set.
-         */
-        public setValue(newValue: string) {
-            if (newValue === null || newValue === this.value_) {
-                return;  // No change if null.
-            }
-            if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
-                Blockly.Events.fire(new Blockly.Events.BlockChange(
-                    this.sourceBlock_, 'field', this.name, this.value_, newValue));
-            }
-            this.value_ = newValue;
-            // Look up and display the human-readable text.
-            let options = this.getOptions();
-            for (let i = 0; i < options.length; i++) {
-                // Options are tuples of human-readable text and language-neutral values.
-                if ((options[i] as any)[1] == newValue) {
-                    let content = (options[i] as any)[0];
-                    if (typeof content == 'object') {
-                        this.imageJson_ = content;
-                        this.setText(content.alt); // Use setText() because it handles displaying image selection
-                    } else {
-                        this.imageJson_ = null;
-                        this.setText(content); // Use setText() because it handles displaying image selection
-                    }
-                    return;
-                }
-            }
-            // Value not found.  Add it, maybe it will become valid once set
-            // (like variable names).
-            this.setText(newValue); // Use setText() because it handles displaying image selection
-        };
+        doClassValidation_(newValue: string) {
+            return newValue;
+        }
 
         /**
          * Closes the gridpicker.
@@ -352,8 +321,8 @@ namespace pxtblockly {
                     let rowLength = menuItemsDom[row].childNodes.length
                     for (let col = 0; col < rowLength; ++col) {
                         const menuItem = menuItemsDom[row].childNodes[col] as HTMLElement
-                        menuItem.classList.remove("goog-menuitem-highlight")
-                        menuItem.classList.remove("goog-option-selected")
+                        pxt.BrowserUtils.removeClass(menuItem, "goog-menuitem-highlight");
+                        pxt.BrowserUtils.removeClass(menuItem, "goog-option-selected");
                     }
                 }
                 let firstItem = menuItemsDom[0].childNodes[0] as HTMLElement;
@@ -446,7 +415,7 @@ namespace pxtblockly {
         }
 
         private getAnchorDimensions_() {
-            const boundingBox = this.getScaledBBox_();
+            const boundingBox = this.getScaledBBox() as any;
             if (this.sourceBlock_.RTL) {
                 boundingBox.right += Blockly.FieldDropdown.CHECKMARK_OVERHANG;
             } else {
@@ -536,8 +505,8 @@ namespace pxtblockly {
                     this.highlightAndScrollSelected(tableContainer, scrollContainer)
                 }
                 // Hide the tooltip
-                this.tooltip_.style.visibility = 'hidden';
-                this.tooltip_.style.display = 'none';
+                this.gridTooltip_.style.visibility = 'hidden';
+                this.gridTooltip_.style.display = 'none';
             }, 300, false));
 
             // Select the first item if the enter key is pressed
@@ -670,141 +639,14 @@ namespace pxtblockly {
          * @private
          */
         private disposeTooltip() {
-            if (this.tooltip_) {
-                pxsim.U.remove(this.tooltip_);
-                this.tooltip_ = null;
+            if (this.gridTooltip_) {
+                pxsim.U.remove(this.gridTooltip_);
+                this.gridTooltip_ = null;
             }
         }
 
         private onClose_() {
             this.disposeTooltip();
         }
-
-        /**
-         * Sets the text in this field.  Trigger a rerender of the source block.
-         * @param {?string} text New text.
-         */
-        setText(text: string) {
-            if (text === null || text === this.text_) {
-                // No change if null.
-                return;
-            }
-            this.text_ = text;
-            this.updateTextNode_();
-
-            if (this.imageJson_ && this.textElement_) {
-                // Update class for dropdown text.
-                // This class is reset every time updateTextNode_ is called.
-                this.textElement_.setAttribute('class',
-                    this.textElement_.getAttribute('class') + ' blocklyHidden'
-                );
-                this.imageElement_.parentNode.appendChild(this.arrow_);
-            } else if (this.textElement_) {
-                // Update class for dropdown text.
-                // This class is reset every time updateTextNode_ is called.
-                this.textElement_.setAttribute('class',
-                    this.textElement_.getAttribute('class') + ' blocklyDropdownText'
-                );
-                this.textElement_.parentNode.appendChild(this.arrow_);
-            }
-            if (this.sourceBlock_ && this.sourceBlock_.rendered) {
-                this.sourceBlock_.render();
-                this.sourceBlock_.bumpNeighbours_();
-            }
-        };
-
-        /**
-         * Updates the width of the field. This calls getCachedWidth which won't cache
-         * the approximated width on IE/Microsoft Edge when `getComputedTextLength` fails. Once
-         * it eventually does succeed, the result will be cached.
-         **/
-        updateWidth() {
-            let width: number;
-            if (this.imageJson_) {
-                width = this.imageJson_.width + 5;
-                this.arrowY_ = this.imageJson_.height / 2;
-            } else {
-                // Calculate width of field
-                width = Blockly.Field.getCachedWidth(this.textElement_);
-            }
-
-            // Add padding to left and right of text.
-            if (this.EDITABLE) {
-                width += Blockly.BlockSvg.EDITABLE_FIELD_PADDING;
-            }
-
-            // Adjust width for drop-down arrows.
-            this.arrowWidth_ = 0;
-            if (this.positionArrow) {
-                this.arrowWidth_ = this.positionArrow(width);
-                width += this.arrowWidth_;
-            }
-
-            // Add padding to any drawn box.
-            if (this.box_) {
-                width += 2 * Blockly.BlockSvg.BOX_FIELD_PADDING;
-            }
-
-            // Set width of the field.
-            this.size_.width = width;
-        };
-
-        /**
-         * Update the text node of this field to display the current text.
-         * @private
-         */
-        updateTextNode_() {
-            if (!this.textElement_ && !this.imageElement_) {
-                // Not rendered yet.
-                return;
-            }
-            let text = this.text_;
-            if (text.length > this.maxDisplayLength) {
-                // Truncate displayed string and add an ellipsis ('...').
-                text = text.substring(0, this.maxDisplayLength - 2) + '\u2026';
-                // Add special class for sizing font when truncated
-                this.textElement_.setAttribute('class', 'blocklyText blocklyTextTruncated');
-            } else {
-                this.textElement_.setAttribute('class', 'blocklyText');
-            }
-
-            // Empty the text element.
-            goog.dom.removeChildren(/** @type {!Element} */(this.textElement_));
-            goog.dom.removeNode(this.imageElement_);
-            this.imageElement_ = null;
-            if (this.imageJson_) {
-                // Image option is selected.
-                this.imageElement_ = Blockly.utils.createSvgElement('image',
-                    {
-                        'y': 5, 'x': 8, 'height': this.imageJson_.height + 'px',
-                        'width': this.imageJson_.width + 'px', cursor: 'pointer'
-                    });
-                this.imageElement_.setAttributeNS('http://www.w3.org/1999/xlink',
-                    'xlink:href', this.imageJson_.src);
-                this.size_.height = Number(this.imageJson_.height) + 10;
-                if (this.sourceBlock_.RTL)
-                    this.imageElement_.setAttribute('transform',
-                        'translate(' + this.arrowWidth_ + ', 0)'
-                    );
-
-                this.textElement_.parentNode.appendChild(this.imageElement_);
-            } else {
-                // Replace whitespace with non-breaking spaces so the text doesn't collapse.
-                text = text.replace(/\s/g, Blockly.Field.NBSP);
-                if (this.sourceBlock_.RTL && text) {
-                    // The SVG is LTR, force text to be RTL.
-                    text += '\u200F';
-                }
-                if (!text) {
-                    // Prevent the field from disappearing if empty.
-                    text = Blockly.Field.NBSP;
-                }
-                let textNode = document.createTextNode(text);
-                this.textElement_.appendChild(textNode);
-            }
-
-            // Cached width is obsolete.  Clear it.
-            this.size_.width = 0;
-        };
     }
 }

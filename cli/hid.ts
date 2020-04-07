@@ -2,20 +2,31 @@ import HF2 = pxt.HF2
 import U = pxt.U
 import * as nodeutil from './nodeutil';
 
+const PXT_USE_HID = !!process.env["PXT_USE_HID"];
+
 function useWebUSB() {
     return !!pxt.appTarget.compile.webUSB
 }
 
 let HID: any = undefined;
-function requireHID(install?: boolean): any {
-    if (useWebUSB())
-        return true
-    if (HID) return HID;
-    return HID = nodeutil.lazyRequire("node-hid", install);
+function requireHID(install?: boolean): boolean {
+    if (!PXT_USE_HID) return false;
+    if (useWebUSB()) {
+        // in node.js, we need "webusb" package
+        if (pxt.Util.isNodeJS)
+            return !!nodeutil.lazyRequire("webusb", install);
+        // in the browser, check that USB is defined
+        return pxt.usb.isAvailable();
+    }
+    else {
+        if (!HID)
+            HID = nodeutil.lazyRequire("node-hid", install);
+        return !!HID;
+    }
 }
 
 export function isInstalled(install?: boolean): boolean {
-    return !!requireHID(!!install);
+    return requireHID(!!install);
 }
 
 export interface HidDevice {
@@ -29,7 +40,7 @@ export interface HidDevice {
 }
 
 export function listAsync() {
-    if (!requireHID(true))
+    if (!isInstalled(true))
         return Promise.resolve();
     return getHF2DevicesAsync()
         .then(devices => {
@@ -39,7 +50,7 @@ export function listAsync() {
 }
 
 export function serialAsync() {
-    if (!requireHID(true))
+    if (!isInstalled(true))
         return Promise.resolve();
     return initAsync()
         .then(d => {
@@ -67,7 +78,7 @@ export function deviceInfo(h: HidDevice) {
 }
 
 function getHF2Devices(): HidDevice[] {
-    if (!requireHID(false))
+    if (!isInstalled(false))
         return [];
     let devices = HID.devices() as HidDevice[]
     for (let d of devices) {
@@ -122,7 +133,7 @@ export function hf2ConnectAsync(path: string, raw = false) {
     }
 
 
-    if (!requireHID(true)) return Promise.resolve(undefined);
+    if (!isInstalled(true)) return Promise.resolve(undefined);
     // in .then() to make sure we catch errors
     let h = new HF2.Wrapper(new HidIO(path))
     h.rawMode = raw
@@ -154,7 +165,7 @@ export function connectSerial(w: HF2.Wrapper) {
         w.sendSerialAsync(new Uint8Array(buf)).done()
     })
     w.onSerial = (arr, iserr) => {
-        let buf = new Buffer(arr)
+        let buf = Buffer.from(arr)
         if (iserr) process.stderr.write(buf)
         else process.stdout.write(buf)
     }
@@ -180,7 +191,7 @@ export class HidIO implements HF2.PacketIO {
     }
 
     private connect() {
-        U.assert(requireHID(false))
+        U.assert(isInstalled(false))
         if (this.requestedPath == null) {
             let devs = getHF2Devices()
             if (devs.length == 0)
@@ -199,7 +210,7 @@ export class HidIO implements HF2.PacketIO {
     }
 
     sendPacketAsync(pkt: Uint8Array): Promise<void> {
-        //console.log("SEND: " + new Buffer(pkt).toString("hex"))
+        //console.log("SEND: " + Buffer.from(pkt).toString("hex"))
         return Promise.resolve()
             .then(() => {
                 let lst = [0]

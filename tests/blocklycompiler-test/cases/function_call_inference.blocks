@@ -1,0 +1,87 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+  <variables>
+    <variable type="" id="I~jOxQyX!eaQL5[Tn-o#">mySprite</variable>
+    <variable type="" id="-BBx.:2/jXmNae~r3~4n">item</variable>
+    <variable type="" id="K}NbL1wSn3d3GSDkVj$k">mSprite</variable>
+    <variable type="" id="H*n9Yr8$nimIy2KY7uqY">mNum</variable>
+    <variable type="" id="AEOZJFyaCa$JK7^(D+-2">mBool</variable>
+    <variable type="" id="p[I+-x!40b0Cn:.7/Xu/">mText</variable>
+  </variables>
+  <block type="pxt-on-start" x="0" y="0">
+    <statement name="HANDLER">
+      <block type="function_call">
+        <mutation name="doSomething" functionid="30f|XZ~e~KfIJHg~d[@o">
+          <arg name="mySprite" id="DfLmgIfD;[5_TGCiK.yE" type="Sprite"></arg>
+          <arg name="text" id="[tRtk`diuVv6i3M]|]d1" type="string"></arg>
+          <arg name="bool" id="*aslVdQj[DY3s0~1tlBN" type="boolean"></arg>
+          <arg name="num" id="|ZE7|JsA{GZmdVgI;5:*" type="number"></arg>
+        </mutation>
+        <field name="function_title">call</field>
+        <field name="function_name">doSomething</field>
+        <value name="DfLmgIfD;[5_TGCiK.yE">
+          <shadow type="variables_get" id="ay}@kK94RK~9PFz;#SRb">
+            <field name="VAR" id="I~jOxQyX!eaQL5[Tn-o#" variabletype="">mySprite</field>
+          </shadow>
+          <block type="variables_get">
+            <field name="VAR" id="K}NbL1wSn3d3GSDkVj$k" variabletype="">mSprite</field>
+          </block>
+        </value>
+        <value name="[tRtk`diuVv6i3M]|]d1">
+          <shadow type="text" id="Wc/]Tpgt7[$arEVQuJQd">
+            <field name="TEXT">abc</field>
+          </shadow>
+          <block type="variables_get">
+            <field name="VAR" id="p[I+-x!40b0Cn:.7/Xu/" variabletype="">mText</field>
+          </block>
+        </value>
+        <value name="*aslVdQj[DY3s0~1tlBN">
+          <shadow type="logic_boolean" id="FHBr}Z:+P`sO?NF!T;?.">
+            <field name="BOOL">TRUE</field>
+          </shadow>
+          <block type="variables_get">
+            <field name="VAR" id="AEOZJFyaCa$JK7^(D+-2" variabletype="">mBool</field>
+          </block>
+        </value>
+        <value name="|ZE7|JsA{GZmdVgI;5:*">
+          <shadow type="math_number" id="rT$@+AtGNLtAY(-5/V^)">
+            <field name="NUM">1</field>
+          </shadow>
+          <block type="variables_get">
+            <field name="VAR" id="H*n9Yr8$nimIy2KY7uqY" variabletype="">mNum</field>
+          </block>
+        </value>
+      </block>
+    </statement>
+  </block>
+  <block type="function_definition" x="10" y="190">
+    <mutation name="doSomething" functionid="30f|XZ~e~KfIJHg~d[@o">
+      <arg name="mySprite" id="DfLmgIfD;[5_TGCiK.yE" type="Sprite"></arg>
+      <arg name="text" id="[tRtk`diuVv6i3M]|]d1" type="string"></arg>
+      <arg name="bool" id="*aslVdQj[DY3s0~1tlBN" type="boolean"></arg>
+      <arg name="num" id="|ZE7|JsA{GZmdVgI;5:*" type="number"></arg>
+    </mutation>
+    <field name="function_title">function</field>
+    <field name="function_name">doSomething</field>
+    <value name="DfLmgIfD;[5_TGCiK.yE">
+      <shadow type="argument_reporter_custom">
+        <mutation typename="Sprite"></mutation>
+        <field name="VALUE">mySprite</field>
+      </shadow>
+    </value>
+    <value name="[tRtk`diuVv6i3M]|]d1">
+      <shadow type="argument_reporter_string">
+        <field name="VALUE">text</field>
+      </shadow>
+    </value>
+    <value name="*aslVdQj[DY3s0~1tlBN">
+      <shadow type="argument_reporter_boolean">
+        <field name="VALUE">bool</field>
+      </shadow>
+    </value>
+    <value name="|ZE7|JsA{GZmdVgI;5:*">
+      <shadow type="argument_reporter_number">
+        <field name="VALUE">num</field>
+      </shadow>
+    </value>
+  </block>
+</xml>

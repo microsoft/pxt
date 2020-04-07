@@ -1,0 +1,35 @@
+/**
+* All things related to coloring text-based tokens
+**/
+code.hljs {
+    white-space: pre-wrap;
+    padding: 0 !important;
+
+    span.highlight-line {
+        font-weight: bold;
+        white-space: pre-wrap;
+        background: @highlightLineBackground;
+        display: inline-block;
+        padding: 0.5rem;
+        margin-left: -0.5rem;
+        color: @highlightLineColor;
+
+        .hljs-string, .hljs-meta-string {
+            color: @highlightLineStringColor;
+        }
+        .hljs-class {
+            color: @highlightLineClassColor;
+        }
+        .hljs-number {
+            color: @highlightLineNumberColor;
+        }
+        .hljs-keyword {
+            color: @highlightLineKeywordColor;
+        }
+    }
+}
+
+// don't double pad
+.ui.segment.codewidget > code.hjls {
+    margin: 0;
+}

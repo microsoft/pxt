@@ -12,6 +12,8 @@ namespace pxt {
         RefCollection = 6,
         RefRefLocal = 7,
         RefMap = 8,
+        RefMImage = 9, // microbit-specific
+        MMap = 10, // linux, mostly ev3
         User0 = 16,
     }
 }
@@ -54,7 +56,7 @@ namespace pxt.HF2 {
 
     export let mkPacketIOAsync: () => Promise<pxt.HF2.PacketIO>
 
-    // see https://github.com/Microsoft/uf2/blob/master/hf2.md for full spec
+    // see https://github.com/microsoft/uf2/blob/master/hf2.md for full spec
     export const HF2_CMD_BININFO = 0x0001 // no arguments
     export const HF2_MODE_BOOTLOADER = 0x01
     export const HF2_MODE_USERSPACE = 0x02
@@ -551,12 +553,12 @@ namespace pxt.HF2 {
     }
 
     export type ReadAsync = (addr: number, len: number) => Promise<ArrayLike<number>>
-    function readChecksumBlockAsync(readWordsAsync: ReadAsync): Promise<pxtc.hex.ChecksumBlock> {
+    function readChecksumBlockAsync(readWordsAsync: ReadAsync): Promise<pxtc.ChecksumBlock> {
         if (!pxt.appTarget.compile.flashChecksumAddr)
-            return Promise.resolve(null as pxtc.hex.ChecksumBlock)
+            return Promise.resolve(null as pxtc.ChecksumBlock)
         return readWordsAsync(pxt.appTarget.compile.flashChecksumAddr, 12)
             .then(buf => {
-                let blk = pxtc.hex.parseChecksumBlock(buf)
+                let blk = pxtc.parseChecksumBlock(buf)
                 if (!blk)
                     return null
                 return readWordsAsync(blk.endMarkerPos, 1)
@@ -574,7 +576,7 @@ namespace pxt.HF2 {
         if (!pxt.appTarget.compile.flashChecksumAddr)
             return Promise.resolve(blocks)
         let blBuf = pxtc.UF2.readBytes(blocks, pxt.appTarget.compile.flashChecksumAddr, 12 * 4)
-        let blChk = pxtc.hex.parseChecksumBlock(blBuf)
+        let blChk = pxtc.parseChecksumBlock(blBuf)
         if (!blChk)
             return Promise.resolve(blocks)
         return readChecksumBlockAsync(readWordsAsync)

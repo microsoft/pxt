@@ -98,6 +98,7 @@ namespace pxt.blocks {
 
         // remove spaces before after pipe
         nb = nb.replace(/\s*\|\s*/g, '|');
+
         return nb;
     }
 
@@ -167,12 +168,12 @@ namespace pxt.blocks {
                     }
 
                     const defName = def ? def.name : (bInfo ? bInfo.params[defIndex++] : p.name);
-                    const isVar = (def && def.shadowBlockId) === "variables_get";
+                    const isVarOrArray = def && (def.shadowBlockId === "variables_get" || def.shadowBlockId == "lists_create_with");
 
                     (res.parameters as BlockParameter[]).push({
                         actualName: p.name,
                         type: p.type,
-                        defaultValue: isVar ? (def.varName || p.default) : p.default,
+                        defaultValue: isVarOrArray ? (def.varName || p.default) : p.default,
                         definitionName: defName,
                         shadowBlockId: def && def.shadowBlockId,
                         isOptional: defParameters ? defParameters.indexOf(def) >= optionalStart : false,
@@ -218,6 +219,15 @@ namespace pxt.blocks {
         }
     }
 
+    export function hasHandler(fn: pxtc.SymbolInfo) {
+        return fn.parameters && fn.parameters.some(p => (
+            p.type == "() => void" ||
+            p.type == "Action" ||
+            !!p.properties?.length ||
+            !!p.handlerParameters?.length
+        ));
+    }
+
     /**
      * Returns which Blockly block type to use for an argument reporter based
      * on the specified TypeScript type.
@@ -232,6 +242,19 @@ namespace pxt.blocks {
         }
 
         return reporterType;
+    }
+
+    export function defaultIconForArgType(typeName: string = "") {
+        switch (typeName) {
+            case "number":
+                return "calculator";
+            case "string":
+                return "text width";
+            case "boolean":
+                return "random";
+            default:
+                return "align justify"
+        }
     }
 
     export interface FieldDescription {
@@ -263,6 +286,7 @@ namespace pxt.blocks {
         block?: Map<string>;
         blockTextSearch?: string; // Which block text to use for searching; if undefined, search uses all texts in BlockDefinition.block, joined with space
         tooltipSearch?: string; // Which tooltip to use for searching; if undefined, search uses all tooltips in BlockDefinition.tooltip, joined with space
+        translationIds?: string[];
     }
 
     let _blockDefinitions: Map<BlockDefinition>;
@@ -652,6 +676,42 @@ namespace pxt.blocks {
                 block: {
                     PROCEDURES_CALLNORETURN_TITLE: Util.lf("call function")
                 }
+            },
+            'function_return': {
+                name: Util.lf("return a value from within a function"),
+                tooltip: Util.lf("Return a value from within a user-defined function."),
+                url: 'types/function/return',
+                category: 'functions',
+                block: {
+                    message_with_value: Util.lf("return %1"),
+                    message_no_value: Util.lf("return")
+                }
+            },
+            'function_definition': {
+                name: Util.lf("define the function"),
+                tooltip: Util.lf("Create a function."),
+                url: 'types/function/define',
+                category: 'functions',
+                block: {
+                    FUNCTIONS_EDIT_OPTION: Util.lf("Edit Function")
+                }
+            },
+            'function_call': {
+                name: Util.lf("call the function"),
+                tooltip: Util.lf("Call the user-defined function."),
+                url: 'types/function/call',
+                category: 'functions',
+                block: {
+                    FUNCTIONS_CALL_TITLE: Util.lf("call")
+                }
+            },
+            'function_call_output': {
+                name: Util.lf("call the function with a return value"),
+                tooltip: Util.lf("Call the user-defined function with a return value."),
+                url: 'types/function/call',
+                category: 'functions',
+                block: {
+                }
             }
         };
         _blockDefinitions[pxtc.ON_START_TYPE] = {
@@ -672,5 +732,39 @@ namespace pxt.blocks {
                 message0: Util.lf("pause until %1")
             }
         };
+        _blockDefinitions[pxtc.TS_BREAK_TYPE] = {
+            name: Util.lf("break"),
+            tooltip: Util.lf("Break out of the current loop or switch"),
+            url: '/blocks/loops/break',
+            category: 'loops',
+            block: {
+                message0: Util.lf("break")
+            }
+        }
+        _blockDefinitions[pxtc.TS_CONTINUE_TYPE] = {
+            name: Util.lf("continue"),
+            tooltip: Util.lf("Skip current iteration and continues with the next iteration in the loop"),
+            url: '/blocks/loops/continue',
+            category: 'loops',
+            block: {
+                message0: Util.lf("continue")
+            }
+        }
+
+        if (pxt.Util.isTranslationMode()) {
+            const msg = Blockly.Msg as any;
+            Util.values(_blockDefinitions).filter(b => b.block).forEach(b => {
+                const keys = Object.keys(b.block);
+                b.translationIds = Util.values(b.block);
+                keys.forEach(k => pxt.crowdin.inContextLoadAsync(b.block[k])
+                    .done(r => {
+                        b.block[k] = r;
+                        // override builtin blockly namespace strings
+                        if (/^[A-Z_]+$/.test(k))
+                            msg[k] = r;
+                    })
+                )
+            })
+        }
     }
 }

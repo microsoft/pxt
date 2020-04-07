@@ -6,27 +6,30 @@ import * as compiler from "./compiler";
 export abstract class ToolboxEditor extends srceditor.Editor {
 
     protected blockInfo: pxtc.BlocksInfo;
+    protected blockGroupsCache: pxt.Map<toolbox.GroupDefinition[]>;
+    protected blockIdMap: pxt.Map<string[]>;
 
     private searchSubset: pxt.Map<boolean | string>;
 
     protected toolbox: toolbox.Toolbox;
-    protected extensions: pxt.PackageConfig[];
+    protected extensions: pxt.Package[];
 
     abstract getBlocksForCategory(ns: string, subns?: string): toolbox.BlockDefinition[];
 
-    protected shouldShowBlock(blockId: string, ns: string) {
+    protected shouldShowBlock(blockId: string, ns: string, shadow?: boolean) {
         const filters = this.parent.state.editorState && this.parent.state.editorState.filters;
         if (filters) {
-            const blockFilter = filters.blocks && filters.blocks[blockId];
+            // block-level filters should not apply to shadow blocks (nested)
+            const blockFilter = filters.blocks && (filters.blocks[blockId] || (this.blockIdMap && this.blockIdMap[blockId]?.some(id => filters.blocks[id])));
             const categoryFilter = filters.namespaces && filters.namespaces[ns];
             // First try block filters
-            if (blockFilter != undefined && blockFilter == pxt.editor.FilterState.Hidden) return false;
+            if (blockFilter != undefined && blockFilter == pxt.editor.FilterState.Hidden && !shadow) return false;
             if (blockFilter != undefined) return true;
             // Check if category is hidden
             if (categoryFilter != undefined && categoryFilter == pxt.editor.FilterState.Hidden) return false;
             if (categoryFilter != undefined) return true;
             // Check default filter state
-            if (filters.defaultState != undefined && filters.defaultState == pxt.editor.FilterState.Hidden) return false;
+            if (filters.defaultState != undefined && filters.defaultState == pxt.editor.FilterState.Hidden && !shadow) return false;
         }
         return true;
     }
@@ -42,6 +45,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                 (!filters.namespaces || filters.namespaces["variables"] !== pxt.editor.FilterState.Disabled)) {
                 return true;
             } else if (ns === "functions" && (!filters.blocks ||
+                filters.blocks["function_definition"] ||
                 filters.blocks["procedures_defnoreturn"] ||
                 filters.blocks["procedures_callnoreturn"]) &&
                 (!filters.namespaces || filters.namespaces["functions"] !== pxt.editor.FilterState.Disabled)) {
@@ -95,8 +99,10 @@ export abstract class ToolboxEditor extends srceditor.Editor {
             });
     }
 
-    protected clearCaches() {
+    clearCaches() {
+        super.clearCaches();
         this.searchSubset = undefined;
+        this.blockGroupsCache = undefined;
     }
 
     abstract getBuiltinCategory(ns: string): toolbox.ToolboxCategory;
@@ -205,6 +211,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     }
 
     abstract showFlyout(treeRow: toolbox.ToolboxCategory): void;
+    abstract hideFlyout(): void;
     moveFocusToFlyout() { }
 
     protected abstract showFlyoutHeadingLabel(ns: string, name: string, subns: string, icon: string, color: string): void;
@@ -212,10 +219,11 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     protected abstract showFlyoutBlocks(ns: string, color: string, blocks: toolbox.BlockDefinition[]): void;
 
     abstractShowFlyout(treeRow: toolbox.ToolboxCategory): boolean {
-        const { nameid: ns, name, subns, icon, color, groups, groupIcons, groupHelp, labelLineWidth, blocks } = treeRow;
+        const { nameid: ns, name, subns, icon, color, labelLineWidth, blocks } = treeRow;
+        const inTutorial = this.parent.state.tutorialOptions
+            && !!this.parent.state.tutorialOptions.tutorial;
 
-        let fns = blocks;
-        if (!fns || !fns.length) return false;
+        if (!blocks || !blocks.length) return false;
 
         if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
             // Add the Heading label
@@ -223,67 +231,21 @@ export abstract class ToolboxEditor extends srceditor.Editor {
         }
 
         // Organize and rearrange methods into groups
-        let blockGroups: pxt.Map<toolbox.BlockDefinition[]> = {}
-        let sortedGroups: string[] = [];
-        if (groups) sortedGroups = groups;
+        let blockGroups = this.getBlockGroups(treeRow);
 
-        // Create a dict of group icon pairs
-        let groupIconsDict: { [group: string]: string } = {}
-        if (groups && groupIcons) {
-            let groupIconsList = groupIcons;
-            for (let i = 0; i < sortedGroups.length; i++) {
-                let groupIcon = groupIconsList[i];
-                groupIconsDict[sortedGroups[i]] = groupIcon || '';
+        // Add labels and insert the blocks into the flyout
+        for (let i = 0; i < blockGroups.length; ++i) {
+            let group = blockGroups[i];
+            // Check if there are any blocks in that group
+            if (!group.blocks || !group.blocks.length) continue;
+
+            // Add the group label
+            if (group.name != pxt.DEFAULT_GROUP_NAME && !inTutorial && blockGroups.length != 1) {
+                this.showFlyoutGroupLabel(group.name, group.icon, labelLineWidth, group.hasHelp ? "help" : "");
             }
-        }
 
-        // Create a dict of group help callback pairs
-        let groupHelpDict: { [group: string]: string } = {}
-        if (groups && groupHelp) {
-            let groupHelpCallbackList = groupHelp;
-            for (let i = 0; i < sortedGroups.length; i++) {
-                let helpCallback = groupHelpCallbackList[i];
-                groupHelpDict[sortedGroups[i]] = helpCallback || '';
-            }
-        }
-
-        // Organize the blocks into the different groups
-        for (let bi = 0; bi < fns.length; ++bi) {
-            let blk = fns[bi];
-            let group = blk.attributes.group || 'other';
-            if (!blockGroups[group]) blockGroups[group] = [];
-            blockGroups[group].push(blk);
-        }
-
-        const groupLength = Object.keys(blockGroups).length;
-        if (groupLength > 1) {
-            // Add any missing groups to the sorted groups list
-            Object.keys(blockGroups).sort().forEach(group => {
-                if (sortedGroups.indexOf(group) == -1) {
-                    sortedGroups.push(group);
-                }
-            })
-
-            // Add labels and insert the blocks into the flyout
-            for (let bg = 0; bg < sortedGroups.length; ++bg) {
-                let group = sortedGroups[bg];
-                // Check if there are any blocks in that group
-                if (!blockGroups[group] || !blockGroups[group].length) continue;
-
-                // Add the group label
-                if (group != 'other') {
-                    this.showFlyoutGroupLabel(group, groupIconsDict[group], labelLineWidth, groupHelpDict[group]);
-                }
-
-                // Add the blocks in that group
-                if (blockGroups[group]) {
-                    this.showFlyoutBlocks(ns, color, blockGroups[group]);
-                }
-            }
-        } else if (groupLength == 1) {
-            Object.keys(blockGroups).forEach(blockGroup => {
-                this.showFlyoutBlocks(ns, color, blockGroups[blockGroup]);
-            })
+            // Add the blocks in that group
+            this.showFlyoutBlocks(ns, color, group.blocks);
         }
 
         return true;
@@ -319,7 +281,8 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     getNamespaces() {
         const namespaces: string[] = [];
         // Add extension namespaces if not already in
-        this.extensions.forEach(config => {
+        this.extensions.forEach(p => {
+            const config = p.config;
             const name = config.name;
             const namespace = config.extension.namespace || name;
             if (!this.extensionsMap[namespace]) this.extensionsMap[namespace] = config;
@@ -338,5 +301,51 @@ export abstract class ToolboxEditor extends srceditor.Editor {
             const w2 = fn2.attributes.topblockWeight || fn2.attributes.weight || 50;
             return w2 >= w1 ? 1 : -1;
         });
+    }
+
+    getBlockGroups(treeRow: toolbox.ToolboxCategory): toolbox.GroupDefinition[] {
+        const ns = treeRow.nameid + (treeRow.subns || "");
+        if (!this.blockGroupsCache) this.blockGroupsCache = {}
+        if (!this.blockGroupsCache[ns]) {
+            const {groups, groupIcons, groupHelp, blocks } = treeRow;
+
+            // Parse full list of groups from block attributes
+            let parsedGroups = groups || [];
+            blocks.forEach(b => {
+                let g = (b.attributes && b.attributes.group) || pxt.DEFAULT_GROUP_NAME;
+                if (parsedGroups.indexOf(g) < 0) parsedGroups.push(g);
+            })
+
+            // Organize and rearrange methods into groups
+            let blockGroups: toolbox.GroupDefinition[] = [];
+            if (parsedGroups) {
+                for (let i = 0; i < parsedGroups.length; i++) {
+                    let name = parsedGroups[i];
+                    let groupBlocks =  blocks.filter(b => (b.attributes.group || pxt.DEFAULT_GROUP_NAME) == name)
+                    .sort((f1, f2) => {
+                        // sort by fn weight
+                        const w2 = (f2.attributes.weight || 50) + (f2.attributes.advanced ? 0 : 1000);
+                        const w1 = (f1.attributes.weight || 50) + (f1.attributes.advanced ? 0 : 1000);
+                        return w2 > w1 ? 1 : -1;
+                    })
+                    if (groupBlocks && groupBlocks.length > 0) {
+                        blockGroups.push({
+                            name,
+                            icon: (groupIcons && groupIcons[i]) || '',
+                            hasHelp: groupHelp && !!groupHelp[i],
+                            blocks: groupBlocks
+                        });
+                    }
+                }
+            }
+            // Only cache if there are no filters
+            if (!this.parent.state?.editorState?.filters) {
+                this.blockGroupsCache[ns] = blockGroups;
+            } else {
+                return blockGroups;
+            }
+        }
+
+        return this.blockGroupsCache[ns];
     }
 }

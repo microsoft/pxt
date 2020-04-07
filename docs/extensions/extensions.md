@@ -2,7 +2,13 @@
 
 An editor extension may have an associated editor extension hosted in the Github Pages section of the repo.
 
-* [pxt-neoanim](https://github.com/Microsoft/pxt-neoanim) is an example of specialized NeoPixel animation editor.
+## ~ hint
+
+A lot of the plumbing has been done for you in this React-based template...
+
+* [pxt-react-extension-template](https://github.com/microsoft/pxt-react-extension-template/generate) -- a React template to create an extension
+
+## ~
 
 ## Configuration
 
@@ -52,7 +58,7 @@ window.addEventListener("message", function(ev) {
 
 When the user presses the editor extension button:
 
-* The GitHub pages site is loaded in an &lt;iframe&gt; with an extension id in the hashmark, e.g. https://microsoft.github.io/pxt-neoanim/#extid for the extension https://github.com/Microsoft/pxt-neoanim.
+* The GitHub pages site is loaded in an &lt;iframe&gt; with an extension id in the hashmark, e.g. https://microsoft.github.io/pxt-neoanim/#extid for the extension https://github.com/microsoft/pxt-neoanim.
 
 ### ~ hint
 

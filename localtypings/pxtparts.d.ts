@@ -44,7 +44,8 @@ declare namespace pxsim {
         gpioPinBlocks?: string[][], // not used
         gpioPinMap: { [pin: string]: string },
         groundPins: string[],
-        threeVoltPins: string[],
+        threeVoltPins?: string[],
+        fiveVoltPins?: string[],
         attachPowerOnRight?: boolean,
         onboardComponents?: string[],
         pinStyles?: { [pin: string]: PinStyle },
@@ -178,13 +179,26 @@ declare namespace pxsim {
     export interface DebuggerBreakpointMessage extends DebuggerMessage {
         breakpointId: number;
         globals: Variables;
-        stackframes: {
-            locals: Variables;
-            funcInfo: any; // pxtc.FunctionLocationInfo
-            breakpointId: number;
-        }[];
+        stackframes: StackFrameInfo[];
         exceptionMessage?: string;
         exceptionStack?: string;
+    }
+
+    export interface StackFrameInfo {
+        locals: Variables;
+        funcInfo: any; // pxtc.FunctionLocationInfo
+        breakpointId: number;
+        arguments?: FunctionArgumentsInfo;
+    }
+
+    export interface FunctionArgumentsInfo {
+        thisParam: any;
+        params: FunctionArgument[];
+    }
+
+    export interface FunctionArgument {
+        name: string;
+        value: any;
     }
 
     // subtype=trace
@@ -208,6 +222,7 @@ declare namespace pxsim {
 
     export interface VariablesRequestMessage extends DebuggerMessage {
         variablesReference: string;
+        fields?: string[]
     }
 
     export interface VariablesMessage extends DebuggerMessage {

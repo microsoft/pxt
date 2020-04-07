@@ -1,0 +1,110 @@
+
+table.diffview {
+    border: 0px;
+    border-spacing: 0px;
+    border-collapse: collapse;
+    width: 100%;
+
+    tr td, tr th {
+        border: none !important;
+        padding: 0 !important;
+    }
+
+    .change code {
+        white-space: pre-wrap;
+    }
+
+    .diff-added {
+        background: @diffAddedBackground !important;
+
+        .ch-added {
+            background: @diffAddedTokenBackground;
+            font-weight: bold;
+        }
+    }
+
+    .diff-removed {
+        background: @diffRemovedBackground;
+
+        .ch-removed {
+            background: @diffRemovedTokenBackground;
+        }
+    }
+
+    .diff-marker {
+        background: @diffMarkerBackground;
+        color: @diffMarkerColor
+    }
+
+    .diff-marker td {
+        padding-left: 1em;
+    }
+
+    tr.conflict {
+        border-left: 2px solid @conflictBorderColor;
+        border-right: 2px solid @conflictBorderColor;
+    }
+    tr.conflict.header {
+        border-top: 2px solid @conflictBorderColor;
+        border-bottom: 2px solid @conflictBorderColor;
+        background-color: @conflictHeaderBackgroundColor;
+    }
+    tr.conflict.header td {
+        color: @conflictHeaderColor;
+    }
+    tr.conflict td.ui {
+        padding-left: 0.5rem;
+        padding-top: 0.5rem;
+    }
+
+    tr.conflict.footer {
+        border-bottom: 2px solid @conflictBorderColor;
+    }
+
+    .line-a,
+    .line-b {
+        width: 3em;
+        text-align: right;
+        color: @diffLineNumberColor;
+    }
+
+    .marker {
+        width: 2.5em;
+        text-align: center;
+    }
+
+    .change {
+        text-align: left;
+    }
+
+    .diff-added .line-b:before,
+    .diff-removed .line-a:before,
+    .diff-unchanged .line-a:before,
+    .diff-unchanged .line-b:before {
+        content: attr(data-content);
+    }
+
+    .marker:before {
+        content: attr(data-content);
+    }
+}
+
+table.diffview.update {
+    .diff-added {
+        background: @diffUpdateAddedBackground !important;
+    
+        .ch-added {
+            background: @diffUpdateAddedTokenBackground;
+            outline: @diffUpdateInlineAddedOutline;
+            font-weight: bold;
+        }
+    }
+}
+
+@media only print {
+    table.diffview.update {
+        .diff-added {
+            outline: 1px solid black;
+        }
+    }
+}

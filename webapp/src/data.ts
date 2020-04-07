@@ -30,7 +30,6 @@ export interface DataFetchResult<T> {
 }
 
 const virtualApis: pxt.Map<VirtualApi> = {}
-let targetConfig: pxt.TargetConfig = undefined;
 
 mountVirtualApi("cloud", {
     getAsync: p => Cloud.privateGetAsync(stripProtocol(p)).catch(core.handleNetworkError),
@@ -54,13 +53,6 @@ mountVirtualApi("gallery", {
     expirationTime: p => 3600 * 1000
 })
 
-mountVirtualApi("td-cloud", {
-    getAsync: p =>
-        Util.httpGetJsonAsync("https://www.touchdevelop.com/api/" + stripProtocol(p))
-            .catch(core.handleNetworkError),
-    expirationTime: p => 60 * 1000,
-})
-
 mountVirtualApi("gh-search", {
     getAsync: query => pxt.targetConfigAsync()
         .then(config => pxt.github.searchAsync(stripProtocol(query), config ? config.packages : undefined))
@@ -72,6 +64,17 @@ mountVirtualApi("gh-search", {
 mountVirtualApi("gh-pkgcfg", {
     getAsync: query =>
         pxt.github.pkgConfigAsync(stripProtocol(query)).catch(core.handleNetworkError),
+    expirationTime: p => 60 * 1000,
+    isOffline: () => !Cloud.isOnline(),
+})
+
+// gh-commits:repo#sha
+mountVirtualApi("gh-commits", {
+    getAsync: query => {
+        const p = stripProtocol(query);
+        const [ repo, sha ] = p.split('#', 2)
+        return pxt.github.getCommitsAsync(repo, sha)
+    },
     expirationTime: p => 60 * 1000,
     isOffline: () => !Cloud.isOnline(),
 })
@@ -123,7 +126,7 @@ function unsubscribe(component: AnyComponent) {
 
 function expired(ce: CacheEntry) {
     if (!ce.api.expirationTime)
-        return ce.data != null;
+        return !ce.lastRefresh; // needs to be refreshed at least once
     return ce.data == null || (Date.now() - ce.lastRefresh) > ce.api.expirationTime(ce.path)
 }
 
@@ -188,15 +191,17 @@ function queue(ce: CacheEntry) {
 
     let final = (res: any) => {
         ce.data = res
-        ce.lastRefresh = Date.now()
+        ce.lastRefresh = pxt.Util.now()
         ce.queued = false
         notify(ce)
     }
 
     if (ce.api.isSync)
         final(ce.api.getSync(ce.path))
-    else
-        ce.api.getAsync(ce.path).done(final)
+    else {
+        const p = ce.api.getAsync(ce.path);
+        p.done(final)
+    }
 }
 
 function lookup(path: string) {
@@ -222,6 +227,7 @@ function getCached(component: AnyComponent, path: string): DataFetchResult<any> 
             status: FetchStatus.Complete
         }
 
+    // cache async values
     let fetchRes: DataFetchResult<any> = {
         data: r.data,
         status: FetchStatus.Complete
@@ -280,6 +286,11 @@ export function invalidate(prefix: string) {
     })
 }
 
+export function invalidateHeader(prefix: string, hd: pxt.workspace.Header) {
+    if (hd)
+        invalidate(prefix + ':' + hd.id);
+}
+
 export function getAsync(path: string) {
     let ce = lookup(path)
 
@@ -320,6 +331,18 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
         return getCached(this, path)
     }
 
+    hasCloud(): boolean {
+        return !!this.getData("sync:hascloud");
+    }
+
+    hasSync(): boolean {
+        return !!this.getData("sync:hassync")
+    }
+
+    getUser(): pxt.editor.UserInfo {
+        return this.getData("sync:user");
+    }
+
     componentWillUnmount(): void {
         unsubscribe(this)
     }
@@ -336,6 +359,14 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
         unsubscribe(this)
         this.renderCoreOk = true;
         return this.renderCore();
+    }
+
+    setStateAsync<K extends keyof TState>(state: Pick<TState, K>): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.setState(state, () => {
+                resolve();
+            })
+        })
     }
 }
 

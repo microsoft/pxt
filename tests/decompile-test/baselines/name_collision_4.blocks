@@ -8,7 +8,7 @@
 </value>
 <statement name="HANDLER">
 <block type="variables_set">
-<field name="VAR">y</field>
+<field name="VAR">x2</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">1</field>
@@ -16,7 +16,7 @@
 </value>
 <next>
 <block type="variables_set">
-<field name="VAR">y</field>
+<field name="VAR">x2</field>
 <value name="VALUE">
 <shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
@@ -24,7 +24,7 @@
 <value name="A">
 <shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="variables_get">
-<field name="VAR">y</field>
+<field name="VAR">x2</field>
 </block>
 </value>
 <value name="B">
@@ -58,7 +58,6 @@
 </value>
 </block>
 </next>
-<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
 </block>
 </statement>
 </block>

@@ -21,8 +21,20 @@
         overflow: hidden !important;
     }
 
+    /* bigger fonts */
+    body {
+        color: #000 !important; /* explicit colors */
+        background: #fff !important;        
+        font-size: 12pt;
+        line-height: 1.3;
+        position: inherit !important;
+    }        
+    
     #docs {
-        .ui.segment, .ui.centered.card, .ui.content, iframe, .nobreak, pre, code, blockquote {
+        position: inherit !important; /* otherwise prints a single page */
+
+        .ui.segment, .ui.centered.card, .ui.content, iframe, .nobreak, pre, code, blockquote,
+        .ui.item, .ui.card {
             page-break-inside: avoid;
         }
         h1, h2, h3, h4, h5, h6, img {
@@ -31,13 +43,6 @@
         }
         ul, ol, dl {
             page-break-before: avoid !important;
-        }
-        /* bigger fonts */
-        body {
-            color: #000 !important; /* explicit colors */
-            background: #fff !important;        
-            font-size: 12pt;
-            line-height: 1.3;
         }
         /* hide videos */
         div.ui.embed.mdvid {
@@ -91,45 +96,60 @@
     /* page margins */
     @page {
         margin-top: 2cm;
-        margin-left: 2.5cm;
-        margin-right: 2.5cm;
+        margin-left: 2cm;
+        margin-right: 2cm;
         margin-bottom: 2cm;
     }
 
     /** blockly **/
-    .blocklyPath {
-        stroke-width: 3px !important;
-        stroke: black !important;
-        fill: white !important;
+    svg, .pxt-renderer {
+        .blocklyPath {
+            stroke-width: 3px !important;
+            stroke: black !important;
+            fill: white !important;
+        }
+        .blocklyBlockBackground, .blocklyLedOff {
+            stroke-width: 2px !important;
+            stroke: black !important;
+            fill: white !important;
+        }
+        .blocklyText, .blocklyDropdownText {
+            fill: black !important;
+        }
+        .blocklyLedOn {
+            stroke-width: 2px !important;
+            stroke: black !important;
+            fill: black !important;
+        }
+        .blocklyOutlinePath,
+        .blocklyFieldRect.blocklyDropdownRect {
+            stroke-width: 2px !important;
+            stroke: black !important;
+            fill: transparent !important;
+        }
+        /* comments */
+        .blocklyCommentRect {
+            fill: white !important;
+            stroke: black !important;
+        }
+        .blocklyCommentTextarea {
+            overflow: hidden !important;
+        }
+        .blocklyCommentTarget, .blocklyCommentHandleTarget, .blocklyResizeSE {
+            display: none !important;
+        }
+        .blocklyToggleRect {
+            fill: white !important;
+        }
+        .blocklyText.blocklyToggleText {
+            fill: black !important;
+        }
     }
-    .blocklyBlockBackground, .blocklyLedOff {
-        stroke-width: 2px !important;
-        stroke: black !important;
-        fill: white !important;        
-    }
-    .blocklyText, .blocklyDropdownText {
-        fill: black !important;
-    }
-    .blocklyLedOn {
-        stroke-width: 2px !important;
-        stroke: black !important;
-        fill: black !important;
-    }
-    /* comments */
-    .blocklyCommentRect {
-        fill: white !important;
-        stroke: black !important;
-    }
-    .blocklyCommentTextarea {
-        overflow: hidden !important;
-    }
-    .blocklyCommentTarget, .blocklyCommentHandleTarget, .blocklyResizeSE {
-        display: none !important;
-    }
-    .blocklyToggleRect {
-        fill: white !important;
-    }
-    .blocklyText.blocklyToggleText {
-        fill: black !important;
+
+    .codesnippet {
+        padding-top: 0;
+        .ui.segment {
+            padding: 0 0 0 1em !important;
+        }
     }
 }

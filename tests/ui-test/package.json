@@ -1,0 +1,26 @@
+{
+  "name": "pxt-ui-test",
+  "version": "1.0.0",
+  "description": "Selenium ui test for Micro:bit",
+  "main": "Main.js",
+  "scripts": {
+    "test": "node_modules/.bin/mocha ./src/index.js --require @babel/register --require @babel/polyfill --timeout 100000"
+  },
+  "type": "module",
+  "author": "Helen Ma",
+  "license": "MIT",
+  "dependencies": {
+    "chromedriver": "^2.46.0",
+    "dateformat": "^3.0.3",
+    "selenium-webdriver": "^4.0.0-alpha.1"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.4.4",
+    "@babel/core": "^7.4.5",
+    "@babel/polyfill": "^7.4.4",
+    "@babel/preset-env": "^7.4.5",
+    "@babel/preset-es2015": "^7.0.0-beta.53",
+    "@babel/register": "^7.4.4",
+    "mocha": "^6.1.4"
+  }
+}

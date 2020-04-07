@@ -126,11 +126,12 @@ namespace pxt.BrowserUtils {
         return isPxtElectron() || isIpcRenderer();
     }
 
-    export function isLocalHost(): boolean {
+    export function isLocalHost(ignoreFlags?: boolean): boolean {
         try {
-            return /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href)
-                && !/nolocalhost=1/.test(window.location.href)
-                && !(pxt.webConfig && pxt.webConfig.isStatic);
+            return typeof window !== "undefined"
+                && /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href)
+                && (ignoreFlags || !/nolocalhost=1/.test(window.location.href))
+                && !(pxt?.webConfig?.isStatic);
         } catch (e) { return false; }
     }
 
@@ -208,6 +209,7 @@ namespace pxt.BrowserUtils {
 
     let hasLoggedBrowser = false
 
+    // Note that IE11 is no longer supported in any target. Redirect handled in docfiles/pxtweb/browserRedirect.ts
     export function isBrowserSupported(): boolean {
         if (!navigator) {
             return true; //All browsers define this, but we can't make any predictions if it isn't defined, so assume the best
@@ -216,6 +218,13 @@ namespace pxt.BrowserUtils {
         // allow bots in general
         if (/bot|crawler|spider|crawling/i.test(navigator.userAgent))
             return true;
+
+        // Check target theme to see if this browser is supported
+        const unsupportedBrowsers = pxt.appTarget?.unsupportedBrowsers
+            || (window as any).pxtTargetBundle?.unsupportedBrowsers as BrowserOptions[];
+        if (unsupportedBrowsers?.some(b => b.id == browser())) {
+            return false
+        }
 
         // testing browser versions
         const versionString = browserVersion();
@@ -226,8 +235,7 @@ namespace pxt.BrowserUtils {
         const isRecentEdge = isEdge();
         const isRecentSafari = isSafari() && v >= 9;
         const isRecentOpera = (isOpera() && isChrome()) && v >= 21;
-        const isRecentIE = isIE() && v >= 11;
-        const isModernBrowser = isRecentChrome || isRecentFirefox || isRecentEdge || isRecentSafari || isRecentOpera || isRecentIE
+        const isModernBrowser = isRecentChrome || isRecentFirefox || isRecentEdge || isRecentSafari || isRecentOpera
 
         //In the future this should check for the availability of features, such
         //as web workers
@@ -244,7 +252,7 @@ namespace pxt.BrowserUtils {
         if (!hasLoggedBrowser) {
             pxt.log(`Browser: ${browser()} ${versionString} on ${os()}`)
             if (!isSupported) {
-                pxt.tickEvent(`browser.unsupported.${navigator.userAgent}`)
+                pxt.tickEvent("browser.unsupported", { useragent: navigator.userAgent })
             }
             hasLoggedBrowser = true
         }
@@ -254,10 +262,13 @@ namespace pxt.BrowserUtils {
     export function devicePixelRatio(): number {
         if (typeof window === "undefined" || !window.screen) return 1;
 
-        if (window.screen.systemXDPI !== undefined
-            && window.screen.logicalXDPI !== undefined
-            && window.screen.systemXDPI > window.screen.logicalXDPI) {
-            return window.screen.systemXDPI / window.screen.logicalXDPI;
+        // these are IE specific
+        const sysXDPI = (window.screen as any).systemXDPI
+        const logicalXDPI = (window.screen as any).logicalXDPI
+        if (sysXDPI !== undefined
+            && logicalXDPI !== undefined
+            && sysXDPI > logicalXDPI) {
+            return sysXDPI / logicalXDPI;
         }
         else if (window && window.devicePixelRatio !== undefined) {
             return window.devicePixelRatio;
@@ -364,7 +375,7 @@ namespace pxt.BrowserUtils {
     }
 
     export function loadImageAsync(data: string): Promise<HTMLImageElement> {
-        const img = document.createElement("img") as HTMLImageElement;
+        const img = document.createElement("img")
         return new Promise<HTMLImageElement>((resolve, reject) => {
             img.onload = () => resolve(img);
             img.onerror = () => resolve(undefined);
@@ -373,7 +384,30 @@ namespace pxt.BrowserUtils {
         });
     }
 
-    function resolveCdnUrl(path: string): string {
+    export function loadCanvasAsync(url: string): Promise<HTMLCanvasElement> {
+        return loadImageAsync(url)
+            .then(img => {
+                const canvas = document.createElement("canvas")
+                canvas.width = img.width
+                canvas.height = img.height
+                const ctx = canvas.getContext("2d")
+                ctx.drawImage(img, 0, 0);
+                return canvas;
+            })
+    }
+
+    export function imageDataToPNG(img: ImageData): string {
+        if (!img) return undefined;
+
+        const canvas = document.createElement("canvas")
+        canvas.width = img.width
+        canvas.height = img.height
+        const ctx = canvas.getContext("2d")
+        ctx.putImageData(img, 0, 0);
+        return canvas.toDataURL("image/png");
+    }
+
+    export function resolveCdnUrl(path: string): string {
         // don't expand full urls
         if (/^https?:\/\//i.test(path))
             return path;
@@ -414,18 +448,27 @@ namespace pxt.BrowserUtils {
         });
     }
 
+    let loadScriptPromises: pxt.Map<Promise<void>> = {};
     export function loadScriptAsync(path: string): Promise<void> {
         const url = resolveCdnUrl(path);
-        pxt.debug(`script: loading ${url}`);
-        return new Promise<void>((resolve, reject) => {
-            const script = document.createElement('script');
-            script.type = 'text/javascript';
-            script.src = url;
-            script.async = true;
-            script.addEventListener('load', () => resolve());
-            script.addEventListener('error', (e) => reject(e));
-            document.body.appendChild(script);
-        });
+        let p = loadScriptPromises[url];
+        if (!p) {
+            p = loadScriptPromises[url] = new Promise<void>((resolve, reject) => {
+                pxt.debug(`script: loading ${url}`);
+                const script = document.createElement('script');
+                script.type = 'text/javascript';
+                script.addEventListener('load', () => resolve());
+                script.addEventListener('error', (e) => {
+                    // might have had connection issue, allow to try later
+                    delete loadScriptPromises[url];
+                    reject(e);
+                });
+                script.src = url;
+                script.async = true;
+                document.body.appendChild(script);
+            });
+        }
+        return p;
     }
 
     export function loadAjaxAsync(url: string): Promise<string> {
@@ -486,7 +529,7 @@ namespace pxt.BrowserUtils {
         // RTL languages
         if (Util.isUserLanguageRtl()) {
             pxt.debug("rtl layout");
-            document.body.classList.add("rtl");
+            pxt.BrowserUtils.addClass(document.body, "rtl");
             document.body.style.direction = "rtl";
 
             // replace semantic.css with rtlsemantic.css
@@ -621,16 +664,16 @@ namespace pxt.BrowserUtils {
         getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry> {
             return Promise.resolve(this.get(lang, filename, branch));
         }
-        set(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string) {
+        set(lang: string, filename: string, branch: string, etag: string, time: number, strings?: pxt.Map<string>, md?: string) {
             this.translations[this.key(lang, filename, branch)] = {
                 etag,
-                time: Date.now() + 24 * 60 * 60 * 1000, // in-memory expiration is 24h
+                time,
                 strings,
                 md
             }
         }
         setAsync(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void> {
-            this.set(lang, filename, branch, etag, strings);
+            this.set(lang, filename, branch, etag, Util.now(), strings);
             return Promise.resolve();
         }
         clearAsync() {
@@ -775,7 +818,7 @@ namespace pxt.BrowserUtils {
                     const db = r.result as IDBDatabase;
                     db.createObjectStore(IndexedDbTranslationDb.TABLE, { keyPath: IndexedDbTranslationDb.KEYPATH });
                 }, () => {
-                    // quota exceeeded, nuke db
+                    // quota exceeeded, delete db
                     clearTranslationDbAsync().catch(e => { });
                 });
                 return idbWrapper.openAsync()
@@ -805,7 +848,7 @@ namespace pxt.BrowserUtils {
                 .then((res) => {
                     if (res) {
                         // store in-memory so that we don't try to download again
-                        this.mem.set(lang, filename, branch, res.etag, res.strings);
+                        this.mem.set(lang, filename, branch, res.etag, res.time, res.strings);
                         return Promise.resolve(res);
                     }
                     return Promise.resolve(undefined);
@@ -817,14 +860,17 @@ namespace pxt.BrowserUtils {
         setAsync(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void> {
             lang = (lang || "en-US").toLowerCase(); // normalize locale
             const id = this.mem.key(lang, filename, branch);
-            this.mem.set(lang, filename, branch, etag, strings, md);
+            let time = Util.now();
+            this.mem.set(lang, filename, branch, etag, time, strings, md);
 
-            if (strings)
+            if (strings) {
                 Object.keys(strings).filter(k => !strings[k]).forEach(k => delete strings[k]);
+            }
+
             const entry: ITranslationDbEntry = {
                 id,
                 etag,
-                time: Date.now(),
+                time,
                 strings,
                 md
             }
@@ -848,6 +894,8 @@ namespace pxt.BrowserUtils {
     // wired up in the app to store translations in pouchdb. MAY BE UNDEFINED!
     let _translationDbPromise: Promise<ITranslationDb>;
     export function translationDbAsync(): Promise<ITranslationDb> {
+        if (pxt.Util.isNodeJS)
+            return Promise.resolve(new MemTranslationDb());
         // try indexed db
         if (!_translationDbPromise)
             _translationDbPromise = IndexedDbTranslationDb.createAsync()
@@ -883,27 +931,70 @@ namespace pxt.BrowserUtils {
         leave: string
     }
 
-    export const pointerEvents: IPointerEvents = hasPointerEvents() ? {
-        up: "pointerup",
-        down: ["pointerdown"],
-        move: "pointermove",
-        enter: "pointerenter",
-        leave: "pointerleave"
-    } : isTouchEnabled() ?
-            {
+    export const pointerEvents: IPointerEvents = (() => {
+        if (hasPointerEvents()) {
+            return {
+                up: "pointerup",
+                down: ["pointerdown"],
+                move: "pointermove",
+                enter: "pointerenter",
+                leave: "pointerleave"
+            }
+        } else if (isTouchEnabled()) {
+            return {
                 up: "mouseup",
                 down: ["mousedown", "touchstart"],
                 move: "touchmove",
                 enter: "touchenter",
                 leave: "touchend"
-            } :
-            {
+            }
+        } else {
+            return {
                 up: "mouseup",
                 down: ["mousedown"],
                 move: "mousemove",
                 enter: "mouseenter",
                 leave: "mouseleave"
-            };
+            }
+        }
+    })();
+
+    export function getPageX(event: any) {
+        if ("pageX" in event) {
+            return (event as MouseEvent).pageX;
+        }
+        else {
+            return (event as TouchEvent).changedTouches[0].pageX;
+        }
+    }
+
+    export function getPageY(event: any) {
+        if ("pageY" in event) {
+            return (event as MouseEvent).pageY;
+        }
+        else {
+            return (event as TouchEvent).changedTouches[0].pageY;
+        }
+    }
+
+    export function getClientX(event: any) {
+        if ("clientX" in event) {
+            return (event as MouseEvent).clientX;
+        }
+        else {
+            return (event as TouchEvent).changedTouches[0].clientX;
+        }
+    }
+
+    export function getClientY(event: any) {
+        if ("clientY" in event) {
+            return (event as MouseEvent).clientY;
+        }
+        else {
+            return (event as TouchEvent).changedTouches[0].clientY;
+        }
+    }
+
     export function popupWindow(url: string, title: string, popUpWidth: number, popUpHeight: number) {
         try {
             const winLeft = window.screenLeft ? window.screenLeft : window.screenX;
@@ -923,6 +1014,73 @@ namespace pxt.BrowserUtils {
             // Error opening popup
             pxt.tickEvent('pxt.popupError', { url: url, msg: e.message });
             return null;
+        }
+    }
+
+    // Keep these helpers unified with pxtsim/runtime.ts
+    export function containsClass(el: SVGElement | HTMLElement, classes: string) {
+        return splitClasses(classes).every(cls => containsSingleClass(el, cls));
+
+        function containsSingleClass(el: SVGElement | HTMLElement, cls: string) {
+            if (el.classList) {
+                return el.classList.contains(cls);
+            } else {
+                const classes = (el.className + "").split(/\s+/);
+                return !(classes.indexOf(cls) < 0);
+            }
+        }
+    }
+
+    export function addClass(el: SVGElement | HTMLElement, classes: string) {
+        splitClasses(classes).forEach(cls => addSingleClass(el, cls));
+
+        function addSingleClass(el: SVGElement | HTMLElement, cls: string) {
+            if (el.classList) {
+                el.classList.add(cls);
+            } else {
+                const classes = (el.className + "").split(/\s+/);
+                if (classes.indexOf(cls) < 0) {
+                    el.className.baseVal += " " + cls;
+                }
+            }
+        }
+    }
+
+    export function removeClass(el: SVGElement | HTMLElement, classes: string) {
+        splitClasses(classes).forEach(cls => removeSingleClass(el, cls));
+
+        function removeSingleClass(el: SVGElement | HTMLElement, cls: string) {
+            if (el.classList) {
+                el.classList.remove(cls);
+            } else {
+                el.className.baseVal = (el.className + "")
+                    .split(/\s+/)
+                    .filter(c => c != cls)
+                    .join(" ");
+            }
+        }
+    }
+
+    function splitClasses(classes: string) {
+        return classes.split(/\s+/).filter(s => !!s);
+    }
+
+    export function getCookieLang() {
+        const cookiePropRegex = new RegExp(`${pxt.Util.escapeForRegex(pxt.Util.pxtLangCookieId)}=(.*?)(?:;|$)`)
+        const cookieValue = cookiePropRegex.exec(document.cookie);
+        return cookieValue && cookieValue[1] || null;
+    }
+
+    export function setCookieLang(langId: string, docs = false) {
+        if (!pxt.Util.allLanguages[langId]) {
+            return;
+        }
+
+        if (langId !== getCookieLang()) {
+            pxt.tickEvent(`menu.lang.setcookielang`, { lang: langId, docs: `${docs}` });
+            const expiration = new Date();
+            expiration.setTime(expiration.getTime() + (pxt.Util.langCookieExpirationDays * 24 * 60 * 60 * 1000));
+            document.cookie = `${pxt.Util.pxtLangCookieId}=${langId}; expires=${expiration.toUTCString()}; path=/`;
         }
     }
 }

@@ -71,9 +71,41 @@ namespace pxt.blocks {
             public link: Point,
             public type: string,
             public parentType?: Point,
-            public childType?: Point
-
+            public childType?: Point,
+            public isArrayType?: boolean
         ) { }
+    }
+
+    export interface Scope {
+        parent?: Scope;
+        firstStatement: Blockly.Block;
+        declaredVars: Map<VarInfo>;
+        referencedVars: number[];
+        assignedVars: number[];
+        children: Scope[];
+    }
+
+    export enum BlockDeclarationType {
+        None = 0,
+        Argument,
+        Assigned,
+        Implicit
+    }
+
+    export interface BlockDiagnostic {
+        blockId: string;
+        message: string;
+    }
+
+    export interface VarInfo {
+        name: string;
+        id: number;
+
+        escapedName?: string;
+        type?: Point;
+        alreadyDeclared?: BlockDeclarationType;
+        firstReference?: Blockly.Block;
+        isAssigned?: boolean;
     }
 
     function find(p: Point): Point {
@@ -104,7 +136,7 @@ namespace pxt.blocks {
             _p1.parentType = null;
             union(pt, _p2.parentType);
         }
-        else if (_p1.parentType && !_p2.parentType) {
+        else if (_p1.parentType && !_p2.parentType && !_p2.type) {
             _p2.parentType = _p1.parentType;
         }
 
@@ -113,13 +145,14 @@ namespace pxt.blocks {
 
         p1.link = _p2;
         _p1.link = _p2;
+        _p1.isArrayType = _p2.isArrayType;
         p1.type = null;
         p2.type = t;
     }
 
     // Ground types.
-    function mkPoint(t: string): Point {
-        return new Point(null, t);
+    function mkPoint(t: string, isArrayType = false): Point {
+        return new Point(null, t, null, null, isArrayType);
     }
     const pNumber = mkPoint("number");
     const pBoolean = mkPoint("boolean");
@@ -156,7 +189,11 @@ namespace pxt.blocks {
             return find((<any>b).p);
 
         if (b.type == "variables_get")
-            return find(lookup(e, escapeVarName(b.getField("VAR").getText(), e)).type);
+            return find(lookup(e, b, b.getField("VAR").getText()).type);
+
+        if (b.type == "function_call_output")  {
+            return getReturnTypeOfFunctionCall(e, b);
+        }
 
         if (!b.outputConnection) {
             return ground(pUnit.type);
@@ -187,7 +224,9 @@ namespace pxt.blocks {
                     }
                 }
             }
-            return tp || ground("Array");
+
+            if (tp) tp.isArrayType = true;
+            return tp || mkPoint(null, true);
         }
         else if (check === "T") {
             const func = e.stdCallTable[b.type];
@@ -196,10 +235,10 @@ namespace pxt.blocks {
                 let parentInput: Blockly.Input;
 
                 if (isArrayGet) {
-                    parentInput = b.inputList.filter(i => i.name === "LIST")[0];
+                    parentInput = b.inputList.find(i => i.name === "LIST");
                 }
                 else {
-                    parentInput = b.inputList.filter(i => i.name === func.comp.thisParameter.definitionName)[0];
+                    parentInput = b.inputList.find(i => i.name === func.comp.thisParameter.definitionName);
                 }
 
                 if (parentInput.connection && parentInput.connection.targetBlock()) {
@@ -207,7 +246,7 @@ namespace pxt.blocks {
                     if (parentType.childType) {
                         return parentType.childType;
                     }
-                    const p = isArrayType(parentType.type) ? mkPoint(parentType.type.substr(-2)) : mkPoint(null);
+                    const p = isArrayType(parentType.type) ? mkPoint(parentType.type.substr(0, parentType.type.length - 2)) : mkPoint(null);
                     genericLink(parentType, p);
                     return p;
                 }
@@ -216,6 +255,54 @@ namespace pxt.blocks {
         }
 
         return ground(check);
+    }
+
+    function getReturnTypeOfFunction(e: Environment, name: string) {
+        if (!e.userFunctionReturnValues[name]) {
+            const definition = Blockly.Functions.getDefinition(name, e.workspace);
+
+            let res = mkPoint("void");
+
+            if (isFunctionRecursive(definition, true)) {
+                res = mkPoint("any");
+            }
+            else {
+                const returnTypes: Point[] = [];
+                for (const child of definition.getDescendants(false)) {
+                    if (child.type === "function_return") {
+                        attachPlaceholderIf(e, child, "RETURN_VALUE");
+                        returnTypes.push(returnType(e, getInputTargetBlock(child, "RETURN_VALUE")));
+                    }
+                }
+
+                if (returnTypes.length) {
+                    try {
+                        const unified = mkPoint(null);
+                        for (const point of returnTypes) {
+                            union(unified, point);
+                        }
+                        res = unified
+                    }
+                    catch (err) {
+                        e.diagnostics.push({
+                            blockId: definition.id,
+                            message: Util.lf("Function '{0}' has an invalid return type", name)
+                        });
+
+                        res = mkPoint("any")
+                    }
+                }
+            }
+
+            e.userFunctionReturnValues[name] = res;
+        }
+
+        return e.userFunctionReturnValues[name];
+    }
+
+    function getReturnTypeOfFunctionCall(e: Environment, call: Blockly.Block) {
+        const name = call.getField("function_name").getText();
+        return getReturnTypeOfFunction(e, name);
     }
 
     // Basic type unification routine; easy, because there's no structural types.
@@ -267,7 +354,7 @@ namespace pxt.blocks {
             getInputTargetBlock(b, "VAR") : b;
     }
 
-    function getInputTargetBlock(b: Blockly.Block, n: string) {
+    function getInputTargetBlock(b: Blockly.Block, n: string): Blockly.Block {
         const res = b.getInputTargetBlock(n);
 
         if (!res) {
@@ -292,8 +379,8 @@ namespace pxt.blocks {
         }
     }
 
-    function infer(e: Environment, w: Blockly.Workspace) {
-        if (w) w.getAllBlocks().filter(b => !b.disabled).forEach((b: Blockly.Block) => {
+    function infer(allBlocks: Blockly.Block[], e: Environment, w: Blockly.Workspace) {
+        if (allBlocks) allBlocks.filter(b => b.isEnabled()).forEach((b: Blockly.Block) => {
             try {
                 switch (b.type) {
                     case "math_op2":
@@ -351,15 +438,13 @@ namespace pxt.blocks {
                         break;
                     case "pxt_controls_for_of":
                     case "controls_for_of":
-                        unionParam(e, b, "LIST", ground("Array"));
                         const listTp = returnType(e, getInputTargetBlock(b, "LIST"));
-                        const elementTp = lookup(e, escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e)).type;
+                        const elementTp = lookup(e, b, getLoopVariableField(b).getField("VAR").getText()).type;
                         genericLink(listTp, elementTp);
                         break;
                     case "variables_set":
                     case "variables_change":
-                        let x = escapeVarName(b.getField("VAR").getText(), e);
-                        let p1 = lookup(e, x).type;
+                        let p1 = lookup(e, b, b.getField("VAR").getText()).type;
                         attachPlaceholderIf(e, b, "VALUE");
                         let rhs = getInputTargetBlock(b, "VALUE");
                         if (rhs) {
@@ -391,18 +476,30 @@ namespace pxt.blocks {
                         handleGenericType(b, "LIST");
                         unionParam(e, b, "INDEX", ground(pNumber.type));
                         break;
+                    case 'function_definition':
+                        getReturnTypeOfFunction(e, b.getField("function_name",).getText());
+                        break;
+                    case 'function_call':
+                    case 'function_call_output':
+                        (b as Blockly.FunctionCallBlock).getArguments().forEach(arg => {
+                            unionParam(e, b, arg.id, ground(arg.type));
+                        });
+                        break;
+                    case pxtc.TS_RETURN_STATEMENT_TYPE:
+                        attachPlaceholderIf(e, b, "RETURN_VALUE");
+                        break;
                     case pxtc.PAUSE_UNTIL_TYPE:
                         unionParam(e, b, "PREDICATE", pBoolean);
                         break;
                     default:
                         if (b.type in e.stdCallTable) {
                             const call = e.stdCallTable[b.type];
-                            if (call.attrs.shim === "ENUM_GET") return;
+                            if (call.attrs.shim === "ENUM_GET" || call.attrs.shim === "KIND_GET") return;
                             visibleParams(call, countOptionals(b)).forEach((p, i) => {
                                 const isInstance = call.isExtensionMethod && i === 0;
                                 if (p.definitionName && !b.getFieldValue(p.definitionName)) {
-                                    let i = b.inputList.filter((i: Blockly.Input) => i.name == p.definitionName)[0];
-                                    if (i.connection && i.connection.check_) {
+                                    let i = b.inputList.find((i: Blockly.Input) => i.name == p.definitionName);
+                                    if (i && i.connection && i.connection.check_) {
                                         if (isInstance && connectionCheck(i) === "Array") {
                                             let gen = handleGenericType(b, p.definitionName);
                                             if (gen) {
@@ -436,9 +533,9 @@ namespace pxt.blocks {
 
         // Last pass: if some variable has no type (because it was never used or
         // assigned to), just unify it with int...
-        e.bindings.forEach((b: Binding) => {
-            if (getConcreteType(b.type).type == null)
-                union(b.type, ground(pNumber.type));
+        e.allVariables.forEach((v: VarInfo) => {
+            if (getConcreteType(v.type).type == null)
+                union(v.type, ground(v.type.isArrayType ? "number[]" : pNumber.type));
         });
 
         function connectionCheck(i: Blockly.Input) {
@@ -467,16 +564,19 @@ namespace pxt.blocks {
         if (p.childType) {
             union(p.childType, c);
         }
-        else {
+        else if (!p.type) {
             p.childType = c;
         }
 
         if (c.parentType) {
             union(c.parentType, p);
         }
-        else {
+        else if (!c.type) {
             c.parentType = p;
         }
+
+        if (isArrayType(p.type))
+            p.isArrayType = true;
     }
 
     function getConcreteType(point: Point, found: Point[] = []) {
@@ -487,7 +587,11 @@ namespace pxt.blocks {
                 if (t.parentType) {
                     const parent = getConcreteType(t.parentType, found);
                     if (parent.type && parent.type !== "Array") {
-                        t.type = parent.type.substr(0, parent.type.length - 2);
+                        if (isArrayType(parent.type)) {
+                            t.type = parent.type.substr(0, parent.type.length - 2);
+                        } else {
+                            t.type = parent.type;
+                        }
                         return t;
                     }
                 }
@@ -679,6 +783,20 @@ namespace pxt.blocks {
         return H.mathCall(op, args);
     }
 
+    function compileFunctionDefinition(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
+        const name = escapeVarName(b.getField("function_name").getText(), e, true);
+        const stmts = getInputTargetBlock(b, "STACK");
+        const argsDeclaration = (b as Blockly.FunctionDefinitionBlock).getArguments().map(a => {
+            return `${escapeVarName(a.name, e)}: ${a.type}`;
+        });
+
+        const isRecursive = isFunctionRecursive(b, false);
+        return [
+            mkText(`function ${name} (${argsDeclaration.join(", ")})${isRecursive ? ": any" : ""}`),
+            compileStatements(e, stmts)
+        ];
+    }
+
     function compileProcedure(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
         const name = escapeVarName(b.getFieldValue("NAME"), e, true);
         const stmts = getInputTargetBlock(b, "STACK");
@@ -691,6 +809,36 @@ namespace pxt.blocks {
     function compileProcedureCall(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         const name = escapeVarName(b.getFieldValue("NAME"), e, true);
         return mkStmt(mkText(name + "()"));
+    }
+
+    function compileFunctionCall(e: Environment, b: Blockly.Block, comments: string[], statement: boolean): JsNode {
+        const name = escapeVarName(b.getField("function_name").getText(), e, true);
+        const externalInputs = !b.getInputsInline();
+        const args: BlockParameter[] = (b as Blockly.FunctionCallBlock).getArguments().map(a => {
+            return {
+                actualName: a.name,
+                definitionName: a.id
+            };
+        });
+
+        const compiledArgs = args.map(a => compileArgument(e, b, a, comments));
+        const res = H.stdCall(name, compiledArgs, externalInputs)
+
+        if (statement) {
+            return mkStmt(res);
+        }
+        return res;
+    }
+
+    function compileReturnStatement(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
+        const expression = getInputTargetBlock(b, "RETURN_VALUE");
+
+        if (expression && expression.type != "placeholder") {
+            return mkStmt(mkText("return "), compileExpression(e, expression, comments));
+        }
+        else {
+            return mkStmt(mkText("return"));
+        }
     }
 
     function compileArgumentReporter(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
@@ -709,7 +857,7 @@ namespace pxt.blocks {
             t = find(t);
         }
 
-        if (isArrayType(t.type)) {
+        if (isArrayType(t.type) || t.isArrayType) {
             return mkText("[]");
         }
 
@@ -733,7 +881,7 @@ namespace pxt.blocks {
         e.stats[b.type] = (e.stats[b.type] || 0) + 1;
         maybeAddComment(b, comments);
         let expr: JsNode;
-        if (b.disabled || b.type == "placeholder") {
+        if (b.type == "placeholder" || !(b.isEnabled && b.isEnabled())) {
             const ret = find(returnType(e, b));
             if (ret.type === "Array") {
                 // FIXME: Can't use default type here because TS complains about
@@ -795,11 +943,13 @@ namespace pxt.blocks {
             case "argument_reporter_string":
             case "argument_reporter_custom":
                 expr = compileArgumentReporter(e, b, comments); break;
+            case "function_call_output":
+                expr = compileFunctionCall(e, b, comments, false); break;
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) {
                     if (call.imageLiteral)
-                        expr = compileImage(e, b, call.imageLiteral, call.namespace, call.f,
+                        expr = compileImage(e, b, call.imageLiteral, call.imageLiteralColumns, call.imageLiteralRows, call.namespace, call.f,
                             visibleParams(call, countOptionals(b)).map(ar => compileArgument(e, b, ar, comments)))
                     else
                         expr = compileStdCall(e, b, call, comments);
@@ -823,12 +973,18 @@ namespace pxt.blocks {
 
     export interface Environment {
         workspace: Blockly.Workspace;
-        bindings: Binding[];
         stdCallTable: pxt.Map<StdFunc>;
+        userFunctionReturnValues: pxt.Map<Point>;
+        diagnostics: BlockDiagnostic[];
         errors: Blockly.Block[];
         renames: RenameMap;
         stats: pxt.Map<number>;
         enums: pxtc.EnumInfo[];
+        kinds: pxtc.KindInfo[];
+        idToScope: pxt.Map<Scope>;
+        blockDeclarations: pxt.Map<VarInfo[]>;
+        blocksInfo: pxtc.BlocksInfo;
+        allVariables: VarInfo[];
     }
 
     export interface RenameMap {
@@ -837,57 +993,16 @@ namespace pxt.blocks {
         oldToNewFunctions: Map<string>;
     }
 
-    export enum VarUsage {
-        Unknown,
-        Read,
-        Assign
-    }
-
-    export interface Binding {
-        name: string;
-        type: Point;
-        declaredInLocalScope: number;
-        assigned?: VarUsage; // records the first usage of this variable (read/assign)
-        mustBeGlobal?: boolean;
-    }
-
-    function isCompiledAsLocalVariable(b: Binding) {
-        return b.declaredInLocalScope && !b.mustBeGlobal;
-    }
-
-    function extend(e: Environment, x: string, t: string): Environment {
-        assert(lookup(e, x) == null);
-        return {
-            workspace: e.workspace,
-            bindings: [{ name: x, type: ground(t), declaredInLocalScope: 0 }].concat(e.bindings),
-            stdCallTable: e.stdCallTable,
-            errors: e.errors,
-            renames: e.renames,
-            stats: e.stats,
-            enums: e.enums
-        };
-    }
-
-    function lookup(e: Environment, n: string): Binding {
-        for (let i = 0; i < e.bindings.length; ++i)
-            if (e.bindings[i].name == n)
-                return e.bindings[i];
-        return null;
-    }
-
-    function fresh(e: Environment, s: string): string {
-        let i = 0;
-        let unique = s;
-        while (lookup(e, unique) != null)
-            unique = s + i++;
-        return unique;
+    function lookup(e: Environment, b: Blockly.Block, name: string): VarInfo {
+        return getVarInfo(name, e.idToScope[b.id]);
     }
 
     function emptyEnv(w: Blockly.Workspace): Environment {
         return {
             workspace: w,
-            bindings: [],
             stdCallTable: {},
+            userFunctionReturnValues: {},
+            diagnostics: [],
             errors: [],
             renames: {
                 oldToNew: {},
@@ -895,7 +1010,12 @@ namespace pxt.blocks {
                 oldToNewFunctions: {}
             },
             stats: {},
-            enums: []
+            enums: [],
+            kinds: [],
+            idToScope: {},
+            blockDeclarations: {},
+            allVariables: [],
+            blocksInfo: null
         }
     };
 
@@ -933,23 +1053,21 @@ namespace pxt.blocks {
     }
 
     function compileControlsFor(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
-        let bVar = escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e);
         let bTo = getInputTargetBlock(b, "TO");
         let bDo = getInputTargetBlock(b, "DO");
         let bBy = getInputTargetBlock(b, "BY");
         let bFrom = getInputTargetBlock(b, "FROM");
         let incOne = !bBy || (bBy.type.match(/^math_number/) && extractNumber(bBy) == 1)
 
-        let binding = lookup(e, bVar);
-        assert(binding.declaredInLocalScope > 0);
+        let binding = lookup(e, b, getLoopVariableField(b).getField("VAR").getText());
 
         return [
-            mkText("for (let " + bVar + " = "),
+            mkText("for (let " + binding.escapedName + " = "),
             bFrom ? compileExpression(e, bFrom, comments) : mkText("0"),
             mkText("; "),
-            mkInfix(mkText(bVar), "<=", compileExpression(e, bTo, comments)),
+            mkInfix(mkText(binding.escapedName), "<=", compileExpression(e, bTo, comments)),
             mkText("; "),
-            incOne ? mkText(bVar + "++") : mkInfix(mkText(bVar), "+=", compileExpression(e, bBy, comments)),
+            incOne ? mkText(binding.escapedName + "++") : mkInfix(mkText(binding.escapedName), "+=", compileExpression(e, bBy, comments)),
             mkText(")"),
             compileStatements(e, bDo)
         ]
@@ -958,10 +1076,12 @@ namespace pxt.blocks {
     function compileControlsRepeat(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
         let bound = compileExpression(e, getInputTargetBlock(b, "TIMES"), comments);
         let body = compileStatements(e, getInputTargetBlock(b, "DO"));
-        let valid = (x: string) => !lookup(e, x)
-        let name = "i";
-        for (let i = 0; !valid(name); i++)
-            name = "i" + i;
+        let valid = (x: string) => !lookup(e, b, x);
+
+        let name = "index";
+        // Start at 2 because index0 and index1 are bad names
+        for (let i = 2; !valid(name); i++)
+            name = "index" + i;
         return [
             mkText("for (let " + name + " = 0; "),
             mkInfix(mkText(name), "<", bound),
@@ -982,15 +1102,13 @@ namespace pxt.blocks {
     }
 
     function compileControlsForOf(e: Environment, b: Blockly.Block, comments: string[]) {
-        let bVar = escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e);
         let bOf = getInputTargetBlock(b, "LIST");
         let bDo = getInputTargetBlock(b, "DO");
 
-        let binding = lookup(e, bVar);
-        assert(binding.declaredInLocalScope > 0);
+        let binding = lookup(e, b, getLoopVariableField(b).getField("VAR").getText());
 
         return [
-            mkText("for (let " + bVar + " of "),
+            mkText("for (let " + binding.escapedName + " of "),
             compileExpression(e, bOf, comments),
             mkText(")"),
             compileStatements(e, bDo)
@@ -1030,62 +1148,88 @@ namespace pxt.blocks {
 
         if (isFunction) {
             e.renames.oldToNewFunctions[name] = n;
+            e.renames.takenNames[n] = true;
         }
         else {
             e.renames.oldToNew[name] = n;
         }
-        e.renames.takenNames[n] = true;
         return n;
     }
 
     function compileVariableGet(e: Environment, b: Blockly.Block): JsNode {
-        let name = escapeVarName(b.getField("VAR").getText(), e);
-        let binding = lookup(e, name);
-        if (!binding.assigned)
-            binding.assigned = VarUsage.Read;
+        const name = b.getField("VAR").getText();
+        let binding = lookup(e, b, name);
+        if (!binding) // trying to compile a disabled block with a bogus variable
+            return mkText(name);
+
+        if (!binding.firstReference) binding.firstReference = b;
+
         assert(binding != null && binding.type != null);
-        return mkText(name);
+        return mkText(binding.escapedName);
     }
 
     function compileSet(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
-        let bVar = escapeVarName(b.getField("VAR").getText(), e);
         let bExpr = getInputTargetBlock(b, "VALUE");
-        let binding = lookup(e, bVar);
-        let isDef = false
-        if (!binding.assigned)
-            if (b.getSurroundParent()) {
-                // need to define this variable in the top-scope
-                binding.assigned = VarUsage.Read
-            } else {
-                binding.assigned = VarUsage.Assign;
-                isDef = true
-            }
+        let binding = lookup(e, b, b.getField("VAR").getText());
+
+        const currentScope = e.idToScope[b.id];
+        let isDef = currentScope.declaredVars[binding.name] === binding && !binding.firstReference && !binding.alreadyDeclared;
+
+        if (isDef) {
+            // Check the expression of the set block to determine if it references itself and needs
+            // to be hoisted
+            forEachChildExpression(b, child => {
+                if (child.type === "variables_get") {
+                    let childBinding = lookup(e, child, child.getField("VAR").getText());
+                    if (childBinding === binding) isDef = false;
+                }
+            }, true);
+        }
+
         let expr = compileExpression(e, bExpr, comments);
+
+        let bindString = binding.escapedName + " = ";
+
+        binding.isAssigned = true;
+
+        if (isDef) {
+            binding.alreadyDeclared = BlockDeclarationType.Assigned;
+            const declaredType = getConcreteType(binding.type);
+
+            bindString = `let ${binding.escapedName} = `;
+
+            if (declaredType) {
+                const expressionType = getConcreteType(returnType(e, bExpr));
+                if (declaredType.type !== expressionType.type) {
+                    bindString = `let ${binding.escapedName}: ${declaredType.type} = `;
+                }
+            }
+        }
+        else if (!binding.firstReference) {
+            binding.firstReference = b;
+        }
+
         return mkStmt(
-            mkText(isDef ? "let " : ""),
-            mkText(bVar + " = "),
+            mkText(bindString),
             expr)
     }
 
     function compileChange(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
-        let bVar = escapeVarName(b.getField("VAR").getText(), e);
         let bExpr = getInputTargetBlock(b, "VALUE");
-        let binding = lookup(e, bVar);
-        if (!binding.assigned)
-            binding.assigned = VarUsage.Read;
+        let binding = lookup(e, b, b.getField("VAR").getText());
         let expr = compileExpression(e, bExpr, comments);
-        let ref = mkText(bVar);
+        let ref = mkText(binding.escapedName);
         return mkStmt(mkInfix(ref, "+=", expr))
     }
 
-    function eventArgs(call: StdFunc, b: Blockly.Block): string[] {
-        return visibleParams(call, countOptionals(b)).map(ar => ar.definitionName).filter(ar => !!ar);
+    function eventArgs(call: StdFunc, b: Blockly.Block): BlockParameter[] {
+        return visibleParams(call, countOptionals(b)).filter(ar => !!ar.definitionName);
     }
 
     function compileCall(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         const call = e.stdCallTable[b.type];
         if (call.imageLiteral)
-            return mkStmt(compileImage(e, b, call.imageLiteral, call.namespace, call.f, visibleParams(call, countOptionals(b)).map(ar => compileArgument(e, b, ar, comments))))
+            return mkStmt(compileImage(e, b, call.imageLiteral, call.imageLiteralColumns, call.imageLiteralRows, call.namespace, call.f, visibleParams(call, countOptionals(b)).map(ar => compileArgument(e, b, ar, comments))))
         else if (call.hasHandler)
             return compileEvent(e, b, call, eventArgs(call, b), call.namespace, comments)
         else
@@ -1098,6 +1242,19 @@ namespace pxt.blocks {
             if (b.getField(p.definitionName) instanceof pxtblockly.FieldTextInput) {
                 return H.mkStringLiteral(f);
             }
+
+            // For some enums in pxt-minecraft, we emit the members as constants that are defined in
+            // libs/core. For example, Blocks.GoldBlock is emitted as GOLD_BLOCK
+            const type = e.blocksInfo.apis.byQName[p.type];
+            if (type && type.attributes.emitAsConstant) {
+                for (const symbolName of Object.keys(e.blocksInfo.apis.byQName)) {
+                    const symbol = e.blocksInfo.apis.byQName[symbolName];
+                    if (symbol && symbol.attributes && symbol.attributes.enumIdentity === f) {
+                        return mkText(symbolName);
+                    }
+                }
+            }
+
             return mkText(f);
         }
         else {
@@ -1112,7 +1269,7 @@ namespace pxt.blocks {
             }
 
             if (p.shadowOptions && p.shadowOptions.toString && returnType(e, target) !== pString) {
-                return H.mkSimpleCall("+", [H.mkStringLiteral(""), compileExpression(e, target, comments)]);
+                return H.mkSimpleCall("+", [H.mkStringLiteral(""), H.mkParenthesizedExpression(compileExpression(e, target, comments))]);
             }
 
             return compileExpression(e, target, comments)
@@ -1128,6 +1285,10 @@ namespace pxt.blocks {
             const enumName = func.attrs.enumName;
             const enumMember = b.getFieldValue("MEMBER").replace(/^\d+/, "");
             return H.mkPropertyAccess(enumMember, mkText(enumName));
+        }
+        else if (func.attrs.shim === "KIND_GET") {
+            const info = e.kinds.filter(k => k.blockId === func.attrs.blockId)[0];
+            return H.mkPropertyAccess(b.getFieldValue("MEMBER"), mkText(info.name));
         }
         else {
             args = visibleParams(func, countOptionals(b)).map((p, i) => compileArgument(e, b, p, comments, func.isExtensionMethod && i === 0 && !func.isExpression));
@@ -1188,14 +1349,6 @@ namespace pxt.blocks {
             return mkStmt(H.mkCall(f, args.concat([callback]), false));
     }
 
-    function compileArg(e: Environment, b: Blockly.Block, arg: string, comments: string[]): JsNode {
-        // b.getFieldValue may be string, numbers
-        const argb = getInputTargetBlock(b, arg);
-        if (argb) return compileExpression(e, argb, comments);
-        if (b.getField(arg) instanceof pxtblockly.FieldTextInput) return H.mkStringLiteral(b.getFieldValue(arg));
-        return mkText(b.getFieldValue(arg))
-    }
-
     function compileStartEvent(e: Environment, b: Blockly.Block): JsNode {
         const bBody = getInputTargetBlock(b, "HANDLER");
         const body = compileStatements(e, bBody);
@@ -1207,8 +1360,8 @@ namespace pxt.blocks {
         return body;
     }
 
-    function compileEvent(e: Environment, b: Blockly.Block, stdfun: StdFunc, args: string[], ns: string, comments: string[]): JsNode {
-        const compiledArgs: JsNode[] = args.map(arg => compileArg(e, b, arg, comments));
+    function compileEvent(e: Environment, b: Blockly.Block, stdfun: StdFunc, args: BlockParameter[], ns: string, comments: string[]): JsNode {
+        const compiledArgs: JsNode[] = args.map(arg => compileArgument(e, b, arg, comments));
         const bBody = getInputTargetBlock(b, "HANDLER");
         const body = compileStatements(e, bBody);
 
@@ -1233,11 +1386,11 @@ namespace pxt.blocks {
         return !!(b as MutatingBlock).mutation;
     }
 
-    function compileImage(e: Environment, b: Blockly.Block, frames: number, n: string, f: string, args?: JsNode[]): JsNode {
+    function compileImage(e: Environment, b: Blockly.Block, frames: number, columns: number, rows: number, n: string, f: string, args?: JsNode[]): JsNode {
         args = args === undefined ? [] : args;
         let state = "\n";
-        let rows = 5;
-        let columns = frames * 5;
+        rows = rows || 5;
+        columns = (columns || 5) * frames;
         let leds = b.getFieldValue("LEDS");
         leds = leds.replace(/[ `\n]+/g, '');
         for (let i = 0; i < rows; ++i) {
@@ -1271,6 +1424,8 @@ namespace pxt.blocks {
         isExtensionMethod?: boolean;
         isExpression?: boolean;
         imageLiteral?: number;
+        imageLiteralColumns?: number;
+        imageLiteralRows?: number;
         hasHandler?: boolean;
         property?: boolean;
         namespace?: string;
@@ -1313,8 +1468,17 @@ namespace pxt.blocks {
             case 'procedures_defnoreturn':
                 r = compileProcedure(e, b, comments);
                 break;
+            case 'function_definition':
+                r = compileFunctionDefinition(e, b, comments);
+                break
             case 'procedures_callnoreturn':
                 r = [compileProcedureCall(e, b, comments)];
+                break;
+            case 'function_call':
+                r = [compileFunctionCall(e, b, comments, true)];
+                break;
+            case pxtc.TS_RETURN_STATEMENT_TYPE:
+                r = [compileReturnStatement(e, b, comments)];
                 break;
             case ts.pxtc.ON_START_TYPE:
                 r = compileStartEvent(e, b).children;
@@ -1327,6 +1491,12 @@ namespace pxt.blocks {
                 break;
             case pxtc.TS_DEBUGGER_TYPE:
                 r = compileDebuggeStatementBlock(e, b);
+                break;
+            case pxtc.TS_BREAK_TYPE:
+                r = compileBreakStatementBlock(e, b);
+                break;
+            case pxtc.TS_CONTINUE_TYPE:
+                r = compileContinueStatementBlock(e, b);
                 break;
             default:
                 let call = e.stdCallTable[b.type];
@@ -1351,51 +1521,24 @@ namespace pxt.blocks {
 
     function compileStatements(e: Environment, b: Blockly.Block): JsNode {
         let stmts: JsNode[] = [];
+        let firstBlock = b;
+
         while (b) {
-            if (!b.disabled) append(stmts, compileStatementBlock(e, b));
+            if (b.isEnabled()) append(stmts, compileStatementBlock(e, b));
             b = b.getNextBlock();
+        }
+
+        if (firstBlock && e.blockDeclarations[firstBlock.id]) {
+            e.blockDeclarations[firstBlock.id].filter(v => !v.alreadyDeclared).forEach(varInfo => {
+                stmts.unshift(mkVariableDeclaration(varInfo, e.blocksInfo));
+                varInfo.alreadyDeclared = BlockDeclarationType.Implicit;
+            });
         }
         return mkBlock(stmts);
     }
 
     function compileTypescriptBlock(e: Environment, b: Blockly.Block) {
-        let res: JsNode[] = [];
-        let i = 0;
-
-        while (true) {
-            const value = b.getFieldValue("LINE" + i);
-            i++;
-
-            if (value !== null) {
-                res.push(mkText(value + "\n"));
-
-                const declaredVars: string = (b as any).declaredVariables
-                if (declaredVars) {
-                    const varNames = declaredVars.split(",");
-                    varNames.forEach(n => {
-                        const existing = lookup(e, n);
-                        if (existing) {
-                            existing.assigned = VarUsage.Assign;
-                            existing.mustBeGlobal = false;
-                        }
-                        else {
-                            e.bindings.push({
-                                name: n,
-                                type: mkPoint(null),
-                                assigned: VarUsage.Assign,
-                                declaredInLocalScope: 1,
-                                mustBeGlobal: false
-                            });
-                        }
-                    })
-                }
-            }
-            else {
-                break;
-            }
-        }
-
-        return res;
+        return (b as GrayBlockStatement).getLines().map(line => mkText(line + "\n"));
     }
 
     function compileDebuggeStatementBlock(e: Environment, b: Blockly.Block) {
@@ -1405,6 +1548,14 @@ namespace pxt.blocks {
             ]
         }
         return [];
+    }
+
+    function compileBreakStatementBlock(e: Environment, b: Blockly.Block) {
+        return [mkText("break;\n")]
+    }
+
+    function compileContinueStatementBlock(e: Environment, b: Blockly.Block) {
+        return [mkText("continue;\n")]
     }
 
     function prefixWithSemicolon(n: JsNode) {
@@ -1419,7 +1570,7 @@ namespace pxt.blocks {
 
         const ns = options.namespace;
         const name = options.callName || "pauseUntil";
-        const arg = compileArg(e, b, "PREDICATE", comments);
+        const arg = compileArgument(e, b, { definitionName: "PREDICATE", actualName: "PREDICATE" }, comments);
         const lambda = [mkGroup([mkText("() => "), arg])];
 
         if (ns) {
@@ -1435,9 +1586,10 @@ namespace pxt.blocks {
     // - All variables have been assigned an initial [Point] in the union-find.
     // - Variables have been marked to indicate if they are compatible with the
     //   TouchDevelop for-loop model.
-    export function mkEnv(w: Blockly.Workspace, blockInfo?: pxtc.BlocksInfo, skipVariables?: boolean): Environment {
+    export function mkEnv(w: Blockly.Workspace, blockInfo?: pxtc.BlocksInfo): Environment {
         // The to-be-returned environment.
         let e = emptyEnv(w);
+        e.blocksInfo = blockInfo;
 
         // append functions in stdcalltable
         if (blockInfo) {
@@ -1445,7 +1597,11 @@ namespace pxt.blocks {
             // so add them to the taken names to avoid collision
             Object.keys(blockInfo.apis.byQName).forEach(name => {
                 const info = blockInfo.apis.byQName[name];
-                if (info.kind === pxtc.SymbolKind.Enum || info.kind === pxtc.SymbolKind.Function || info.kind === pxtc.SymbolKind.Module) {
+                // Note: the check for info.pkg filters out functions defined in the user's project.
+                // Otherwise, after the first compile the function will be renamed because it conflicts
+                // with itself. You can still get collisions if you attempt to define a function with
+                // the same name as a function defined in another file in the user's project (e.g. custom.ts)
+                if (info.pkg && (info.kind === pxtc.SymbolKind.Enum || info.kind === pxtc.SymbolKind.Function || info.kind === pxtc.SymbolKind.Module || info.kind === pxtc.SymbolKind.Variable)) {
                     e.renames.takenNames[info.qName] = true;
                 }
             });
@@ -1454,10 +1610,18 @@ namespace pxt.blocks {
                 Object.keys(blockInfo.enumsByName).forEach(k => e.enums.push(blockInfo.enumsByName[k]));
             }
 
+            if (blockInfo.kindsByName) {
+                Object.keys(blockInfo.kindsByName).forEach(k => e.kinds.push(blockInfo.kindsByName[k]));
+            }
+
             blockInfo.blocks
                 .forEach(fn => {
                     if (e.stdCallTable[fn.attributes.blockId]) {
-                        pxt.reportError("blocks", "function already defined", { "details": fn.attributes.blockId });
+                        pxt.reportError("blocks", "function already defined", {
+                            "details": fn.attributes.blockId,
+                            "qualifiedName": fn.qName,
+                            "packageName": fn.pkg,
+                        });
                         return;
                     }
                     e.renames.takenNames[fn.namespace] = true;
@@ -1472,104 +1636,20 @@ namespace pxt.blocks {
                         isExtensionMethod: instance,
                         isExpression: fn.retType && fn.retType !== "void",
                         imageLiteral: fn.attributes.imageLiteral,
-                        hasHandler: !!comp.handlerArgs.length || fn.parameters && fn.parameters.some(p => (p.type == "() => void" || p.type == "Action" || !!p.properties)),
+                        imageLiteralColumns: fn.attributes.imageLiteralColumns,
+                        imageLiteralRows: fn.attributes.imageLiteralRows,
+                        hasHandler: pxt.blocks.hasHandler(fn),
                         property: !fn.parameters,
                         isIdentity: fn.attributes.shim == "TD_ID"
                     }
-                })
-        }
-
-        if (skipVariables) return e;
-
-        const loopBlocks = ["controls_for", "controls_simple_for", "controls_for_of", "pxt_controls_for", "pxt_controls_for_of"];
-
-        const variableIsScoped = (b: Blockly.Block, name: string): boolean => {
-            if (!b)
-                return false;
-            else if (loopBlocks.filter(l => l == b.type).length > 0
-                && escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e) == name)
-                return true;
-            else if (isMutatingBlock(b) && b.mutation.isDeclaredByMutation(name))
-                return true;
-            else if (Blockly.Functions.isFunctionArgumentReporter(b))
-                return true;
-
-            let stdFunc = e.stdCallTable[b.type];
-
-            if (stdFunc && stdFunc.comp.handlerArgs.length) {
-                let foundIt = false;
-                const names = getEscapedCBParameters(b, stdFunc, e);
-                names.forEach(varName => {
-                    if (foundIt) return;
-                    if (varName === name) {
-                        foundIt = true;
-                    }
-                })
-                if (foundIt) {
-                    return true;
-                }
-            }
-
-            return variableIsScoped(b.getSurroundParent(), name);
-        };
-
-        function trackLocalDeclaration(name: string, type: string) {
-            // It's ok for two loops to share the same variable.
-            if (lookup(e, name) == null)
-                e = extend(e, name, type);
-            lookup(e, name).declaredInLocalScope++;
-            // If multiple loops share the same
-            // variable, that means there's potential race conditions in concurrent
-            // code, so faithfully compile this as a global variable.
-            if (lookup(e, name).declaredInLocalScope > 1)
-                lookup(e, name).mustBeGlobal = true;
-        }
-
-        // collect local variables.
-        if (w) w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
-            if (loopBlocks.filter(l => l == b.type).length > 0) {
-                let x = escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e);
-                if (b.type == "controls_for_of") {
-                    trackLocalDeclaration(x, null);
-                }
-                else {
-                    trackLocalDeclaration(x, pNumber.type);
-                }
-            }
-            else if (isMutatingBlock(b)) {
-                const declarations = b.mutation.getDeclaredVariables();
-                if (declarations) {
-                    Object.keys(declarations).forEach(varName => {
-                        trackLocalDeclaration(escapeVarName(varName, e), declarations[varName]);
-                    });
-                }
-            }
-
-            let stdFunc = e.stdCallTable[b.type];
-            if (stdFunc && stdFunc.comp.handlerArgs.length) {
-                const names = getEscapedCBParameters(b, stdFunc, e);
-                names.forEach((varName, index) => {
-                    if (varName != null) {
-                        trackLocalDeclaration(escapeVarName(varName, e), stdFunc.comp.handlerArgs[index].type);
-                    }
                 });
-            }
-        });
 
-        // determine for-loop compatibility: for each get or
-        // set block, 1) make sure that the variable is bound, then 2) mark the variable if needed.
-        if (w) w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
-            if (b.type == "variables_get" || b.type == "variables_set" || b.type == "variables_change") {
-                let x = escapeVarName(b.getField("VAR").getText(), e);
-                if (lookup(e, x) == null)
-                    e = extend(e, x, null);
-
-                let binding = lookup(e, x);
-                if (binding.declaredInLocalScope && !variableIsScoped(b, x))
-                    // loop index is read outside the loop.
-                    binding.mustBeGlobal = true;
-            }
-        });
+            w.getTopBlocks(false).filter(isFunctionDefinition).forEach(b => {
+                // Add functions to the rename map to prevent name collisions with variables
+                const name = b.type === "procedures_defnoreturn" ? b.getFieldValue("NAME") : b.getField("function_name").getText();
+                escapeVarName(name, e, true);
+            });
+        }
 
         return e;
     }
@@ -1577,7 +1657,7 @@ namespace pxt.blocks {
     export function compileBlockAsync(b: Blockly.Block, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
         const w = b.workspace;
         const e = mkEnv(w, blockInfo);
-        infer(e, w);
+        infer(w && w.getAllBlocks(), e, w);
         const compiled = compileStatementBlock(e, b)
         removeAllPlaceholders();
         return tdASTtoTS(e, compiled);
@@ -1588,30 +1668,38 @@ namespace pxt.blocks {
             return 0;
         }
         const api = e.stdCallTable[b.type];
-        if (api && api.attrs.afterOnStart) {
-            return 1;
-        }
-        else {
-            return -1;
-        }
+        const key = callKey(e, b);
+        const hash = 1 + ts.pxtc.Util.codalHash16(key);
+        if (api && api.attrs.afterOnStart)
+            return hash;
+        else
+            return -hash;
     }
 
-    function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): JsNode[] {
+    function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): [JsNode[], BlockDiagnostic[]] {
         try {
-            infer(e, w);
+            // all compiled top level blocks are events
+            let allBlocks = w.getAllBlocks();
+            // the top blocks are storted by blockly
+            let topblocks = w.getTopBlocks(true);
+            // reorder remaining events by names (top blocks still contains disabled blocks)
+            topblocks = topblocks.sort((a, b) => {
+                return eventWeight(a, e) - eventWeight(b, e)
+            });
+            // update disable blocks
+            updateDisabledBlocks(e, allBlocks, topblocks);
+            // drop disabled blocks
+            allBlocks = allBlocks.filter(b => b.isEnabled());
+            topblocks = topblocks.filter(b => b.isEnabled());
+            trackAllVariables(topblocks, e);
+            infer(allBlocks, e, w);
 
             const stmtsMain: JsNode[] = [];
 
-            // all compiled top level blocks are events
-            const topblocks = w.getTopBlocks(true).sort((a, b) => {
-                return eventWeight(a, e) - eventWeight(b, e)
-            });
-
-            updateDisabledBlocks(e, w.getAllBlocks(), topblocks);
-
             // compile workspace comments, add them to the top
-            const topComments = w.getTopComments(true)
-            const commentMap = groupWorkspaceComments(topblocks, topComments);
+            const topComments = w.getTopComments(true);
+            const commentMap = groupWorkspaceComments(topblocks as Blockly.BlockSvg[],
+                topComments as Blockly.WorkspaceCommentSvg[]);
 
             commentMap.orphans.forEach(comment => append(stmtsMain, compileWorkspaceComment(comment).children));
 
@@ -1624,7 +1712,7 @@ namespace pxt.blocks {
                 if (b.type == ts.pxtc.ON_START_TYPE)
                     append(stmtsMain, compileStartEvent(e, b).children);
                 else {
-                    const compiled = compileStatements(e, b)
+                    const compiled = mkBlock(compileStatementBlock(e, b));
                     if (compiled.type == NT.Block)
                         append(stmtsMain, compiled.children);
                     else stmtsMain.push(compiled)
@@ -1681,37 +1769,52 @@ namespace pxt.blocks {
                 }
             });
 
-            // All variables in this script are compiled as locals within main unless loop or previsouly assigned
-            const stmtsVariables = e.bindings.filter(b => !isCompiledAsLocalVariable(b) && b.assigned != VarUsage.Assign)
-                .map(b => {
-                    const t = getConcreteType(b.type);
-                    let defl: JsNode;
+            e.kinds.forEach(info => {
+                const models = w.getVariablesOfType("KIND_" + info.name);
+                if (models && models.length) {
+                    const userDefined = models.map(m => m.name).filter(n => info.initialMembers.indexOf(n) === -1);
 
-                    if (t.type === "Array") {
-                        defl = mkText("[]");
+                    if (userDefined.length) {
+                        stmtsEnums.push(mkGroup([
+                            mkText(`namespace ${info.name}`),
+                            mkBlock(userDefined.map(varName => mkStmt(mkText(`export const ${varName} = ${info.name}.${info.createFunctionName}()`))))
+                        ]));
                     }
-                    else {
-                        defl = defaultValueForType(t);
-                    }
+                }
+            });
 
-                    let tp = ""
-                    if (defl.op == "null" || defl.op == "[]") {
-                        let tpname = t.type
-                        // If the type is "Array" or null[] it means that we failed to narrow the type of array.
-                        // Best we can do is just default to number[]
-                        if (tpname === "Array" || tpname === "null[]") {
-                            tpname = "number[]";
-                        }
-                        let tpinfo = blockInfo.apis.byQName[tpname]
-                        if (tpinfo && tpinfo.attributes.autoCreate)
-                            defl = mkText(tpinfo.attributes.autoCreate + "()")
-                        else
-                            tp = ": " + tpname
-                    }
-                    return mkStmt(mkText("let " + b.name + tp + " = "), defl)
+            const tiles = pxtblockly.getAllTilesetTiles(w);
+            if (tiles.length) {
+                const tilesetFieldEditorIdentity = pxt.appTarget.runtime && pxt.appTarget.runtime.tilesetFieldEditorIdentity;
+
+                stmtsEnums.push(mkGroup([
+                    mkText(`namespace ${pxt.sprite.TILE_NAMESPACE}`),
+                    mkBlock(tiles.map(
+                        t => mkGroup(
+                            [
+                                mkStmt(mkText(tilesetFieldEditorIdentity ? `//% blockIdentity=${tilesetFieldEditorIdentity}` : "")),
+                                mkStmt(mkText(`export const ${pxt.sprite.TILE_PREFIX}${t.projectId} = ${pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(t.data), "typescript")}`))
+                            ]
+                        )
+                    ))
+                ]));
+            }
+
+            const leftoverVars = e.allVariables.filter(v => !v.alreadyDeclared).map(v => mkVariableDeclaration(v, blockInfo));
+
+            e.allVariables.filter(v => v.alreadyDeclared === BlockDeclarationType.Implicit && !v.isAssigned).forEach(v => {
+                const t = getConcreteType(v.type);
+
+                // The primitive types all get initializers set to default values, other types are set to null
+                if (t.type === "string" || t.type === "number" || t.type === "boolean" || isArrayType(t.type)) return;
+
+                e.diagnostics.push({
+                    blockId: v.firstReference && v.firstReference.id,
+                    message: lf("Variable '{0}' is never assigned", v.name)
                 });
+            });
 
-            return stmtsEnums.concat(stmtsVariables.concat(stmtsMain));
+            return [stmtsEnums.concat(leftoverVars.concat(stmtsMain)), e.diagnostics];
         } catch (err) {
             let be: Blockly.Block = (err as any).block;
             if (be) {
@@ -1725,17 +1828,19 @@ namespace pxt.blocks {
             removeAllPlaceholders();
         }
 
-        return [] // unreachable
+        return [null, null] // unreachable
     }
 
     export function callKey(e: Environment, b: Blockly.Block): string {
         if (b.type == ts.pxtc.ON_START_TYPE)
             return JSON.stringify({ name: ts.pxtc.ON_START_TYPE });
+        else if (b.type == ts.pxtc.FUNCTION_DEFINITION_TYPE)
+            return JSON.stringify({ type: "function", name: b.getFieldValue("function_name") });
 
         const call = e.stdCallTable[b.type];
         if (call) {
             // detect if same event is registered already
-            const compiledArgs = eventArgs(call, b).map(arg => compileArg(e, b, arg, []));
+            const compiledArgs = eventArgs(call, b).map(arg => compileArgument(e, b, arg, []));
             const key = JSON.stringify({ name: call.f, ns: call.namespace, compiledArgs })
                 .replace(/"id"\s*:\s*"[^"]+"/g, ''); // remove blockly ids
             return key;
@@ -1746,7 +1851,7 @@ namespace pxt.blocks {
 
     function updateDisabledBlocks(e: Environment, allBlocks: Blockly.Block[], topBlocks: Blockly.Block[]) {
         // unset disabled
-        allBlocks.forEach(b => b.setDisabled(false));
+        allBlocks.forEach(b => b.setEnabled(true));
 
         // update top blocks
         const events: Map<Blockly.Block> = {};
@@ -1755,9 +1860,9 @@ namespace pxt.blocks {
             const otherEvent = events[key];
             if (otherEvent) {
                 // another block is already registered
-                block.setDisabled(true);
+                block.setEnabled(false);
             } else {
-                block.setDisabled(false);
+                block.setEnabled(true);
                 events[key] = block;
             }
         }
@@ -1767,7 +1872,7 @@ namespace pxt.blocks {
             // multiple calls allowed
             if (b.type == ts.pxtc.ON_START_TYPE)
                 flagDuplicate(ts.pxtc.ON_START_TYPE, b);
-            else if (b.type === "procedures_defnoreturn" || call && call.attrs.blockAllowMultiple && !call.attrs.handlerStatement) return;
+            else if (isFunctionDefinition(b) || call && call.attrs.blockAllowMultiple && !call.attrs.handlerStatement) return;
             // is this an event?
             else if (call && call.hasHandler && !call.attrs.handlerStatement) {
                 // compute key that identifies event call
@@ -1778,7 +1883,7 @@ namespace pxt.blocks {
                 // all non-events are disabled
                 let t = b;
                 while (t) {
-                    t.setDisabled(true);
+                    t.setEnabled(false);
                     t = t.getNextBlock();
                 }
             }
@@ -1787,19 +1892,43 @@ namespace pxt.blocks {
 
     export interface BlockCompilationResult {
         source: string;
-        sourceMap: SourceInterval[];
+        sourceMap: BlockSourceInterval[];
         stats: pxt.Map<number>;
+        diagnostics: BlockDiagnostic[];
     }
 
-    export function findBlockId(sourceMap: SourceInterval[], loc: { start: number; length: number; }): string {
+    export function findBlockIdByPosition(sourceMap: BlockSourceInterval[], loc: { start: number; length: number; }): string {
         if (!loc) return undefined;
-        let bestChunk: SourceInterval;
+        let bestChunk: BlockSourceInterval;
         let bestChunkLength: number;
+        // look for smallest chunk containing the block
         for (let i = 0; i < sourceMap.length; ++i) {
             let chunk = sourceMap[i];
-            if (chunk.start <= loc.start && chunk.end > loc.start + loc.length && (!bestChunk || bestChunkLength > chunk.end - chunk.start)) {
+            if (chunk.startPos <= loc.start
+                    && chunk.endPos >= loc.start + loc.length
+                    && (!bestChunk || bestChunkLength > chunk.endPos - chunk.startPos)) {
                 bestChunk = chunk;
-                bestChunkLength = chunk.end - chunk.start;
+                bestChunkLength = chunk.endPos - chunk.startPos;
+            }
+        }
+        if (bestChunk) {
+            return bestChunk.id;
+        }
+        return undefined;
+    }
+
+    export function findBlockIdByLine(sourceMap: BlockSourceInterval[], loc: { start: number; length: number; }): string {
+        if (!loc) return undefined;
+        let bestChunk: BlockSourceInterval;
+        let bestChunkLength: number;
+        // look for smallest chunk containing the block
+        for (let i = 0; i < sourceMap.length; ++i) {
+            let chunk = sourceMap[i];
+            if (chunk.startLine <= loc.start
+                    && chunk.endLine > loc.start + loc.length
+                    && (!bestChunk || bestChunkLength > chunk.endLine - chunk.startLine)) {
+                bestChunk = chunk;
+                bestChunkLength = chunk.endLine - chunk.startLine;
             }
         }
         if (bestChunk) {
@@ -1810,12 +1939,12 @@ namespace pxt.blocks {
 
     export function compileAsync(b: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
         const e = mkEnv(b, blockInfo);
-        const nodes = compileWorkspace(e, b, blockInfo);
-        const result = tdASTtoTS(e, nodes);
+        const [nodes, diags] = compileWorkspace(e, b, blockInfo);
+        const result = tdASTtoTS(e, nodes, diags);
         return result;
     }
 
-    function tdASTtoTS(env: Environment, app: JsNode[]): Promise<BlockCompilationResult> {
+    function tdASTtoTS(env: Environment, app: JsNode[], diags?: BlockDiagnostic[]): Promise<BlockCompilationResult> {
         let res = flattenNode(app)
 
         // Note: the result of format is not used!
@@ -1824,7 +1953,8 @@ namespace pxt.blocks {
             return {
                 source: res.output,
                 sourceMap: res.sourceMap,
-                stats: env.stats
+                stats: env.stats,
+                diagnostics: diags || []
             };
         })
 
@@ -1886,11 +2016,32 @@ namespace pxt.blocks {
         }
     }
 
-    function endsWith(text: string, suffix: string) {
-        if (text.length < suffix.length) {
-            return false;
+    function mkVariableDeclaration(v: VarInfo, blockInfo: pxtc.BlocksInfo) {
+        const t = getConcreteType(v.type);
+        let defl: JsNode;
+
+        if (t.type === "Array") {
+            defl = mkText("[]");
         }
-        return text.substr(text.length - suffix.length) === suffix;
+        else {
+            defl = defaultValueForType(t);
+        }
+
+        let tp = ""
+        if (defl.op == "null" || defl.op == "[]") {
+            let tpname = t.type
+            // If the type is "Array" or null[] it means that we failed to narrow the type of array.
+            // Best we can do is just default to number[]
+            if (tpname === "Array" || tpname === "null[]") {
+                tpname = "number[]";
+            }
+            let tpinfo = blockInfo.apis.byQName[tpname]
+            if (tpinfo && tpinfo.attributes.autoCreate)
+                defl = mkText(tpinfo.attributes.autoCreate + "()")
+            else
+                tp = ": " + tpname
+        }
+        return mkStmt(mkText("let " + v.escapedName + tp + " = "), defl)
     }
 
     function countOptionals(b: Blockly.Block) {
@@ -1923,8 +2074,12 @@ namespace pxt.blocks {
         return res;
     }
 
-    function getEscapedCBParameters(b: Blockly.Block, stdfun: StdFunc, e: Environment) {
-        let handlerArgs: string[] = [];
+    function getEscapedCBParameters(b: Blockly.Block, stdfun: StdFunc, e: Environment): string[] {
+        return getCBParameters(b, stdfun).map(binding => lookup(e, b, binding[0]).escapedName);
+    }
+
+    function getCBParameters(b: Blockly.Block, stdfun: StdFunc): [string, Point][] {
+        let handlerArgs: [string, Point][] = [];
         if (stdfun.attrs.draggableParameters) {
             for (let i = 0; i < stdfun.comp.handlerArgs.length; i++) {
                 const arg = stdfun.comp.handlerArgs[i];
@@ -1938,7 +2093,7 @@ namespace pxt.blocks {
                 }
 
                 if (varName !== null) {
-                    handlerArgs.push(escapeVarName(varName, e));
+                    handlerArgs.push([varName, mkPoint(arg.type)]);
                 }
                 else {
                     break;
@@ -1951,7 +2106,7 @@ namespace pxt.blocks {
                 const varField = b.getField("HANDLER_" + arg.name);
                 const varName = varField && varField.getText();
                 if (varName !== null) {
-                    handlerArgs.push(escapeVarName(varName, e));
+                    handlerArgs.push([varName, mkPoint(arg.type)]);
                 }
                 else {
                     break;
@@ -1969,7 +2124,7 @@ namespace pxt.blocks {
         height: number;
     }
 
-    function groupWorkspaceComments(blocks: Blockly.Block[], comments: Blockly.WorkspaceComment[]) {
+    function groupWorkspaceComments(blocks: Blockly.BlockSvg[], comments: Blockly.WorkspaceCommentSvg[]) {
         if (!blocks.length || blocks.some(b => !b.rendered)) {
             return {
                 orphans: comments,
@@ -1981,8 +2136,8 @@ namespace pxt.blocks {
             const size = block.getHeightWidth();
             return {
                 id: block.id,
-                x: bounds.topLeft.x,
-                y: bounds.topLeft.y,
+                x: bounds.left,
+                y: bounds.top,
                 width: size.width,
                 height: size.height
             }
@@ -1998,8 +2153,8 @@ namespace pxt.blocks {
             const bounds = comment.getBoundingRectangle();
             const size = comment.getHeightWidth();
 
-            const x = bounds.topLeft.x;
-            const y = bounds.topLeft.y;
+            const x = bounds.left;
+            const y = bounds.top;
 
             let parent: Rect;
 
@@ -2026,6 +2181,355 @@ namespace pxt.blocks {
         return map;
     }
 
+    function referencedWithinScope(scope: Scope, varID: number) {
+        if (scope.referencedVars.indexOf(varID) !== -1) {
+            return true;
+        }
+        else {
+            for (const child of scope.children) {
+                if (referencedWithinScope(child, varID)) return true;
+            }
+        }
+        return false;
+    }
+
+    function assignedWithinScope(scope: Scope, varID: number) {
+        if (scope.assignedVars.indexOf(varID) !== -1) {
+            return true;
+        }
+        else {
+            for (const child of scope.children) {
+                if (assignedWithinScope(child, varID)) return true;
+            }
+        }
+        return false;
+    }
+
+    function escapeVariables(current: Scope, e: Environment) {
+        for (const varName of Object.keys(current.declaredVars)) {
+            const info = current.declaredVars[varName];
+            if (!info.escapedName) info.escapedName = escapeVarName(varName);
+        }
+
+        current.children.forEach(c => escapeVariables(c, e));
+
+
+        function escapeVarName(name: string): string {
+            if (!name) return '_';
+
+            let n = ts.pxtc.escapeIdentifier(name);
+
+            if (e.renames.takenNames[n] || nameIsTaken(n, current)) {
+                let i = 2;
+
+                while (e.renames.takenNames[n + i] || nameIsTaken(n + i, current)) {
+                    i++;
+                }
+
+                n += i;
+            }
+
+            return n;
+        }
+
+        function nameIsTaken(name: string, scope: Scope): boolean {
+            if (scope) {
+                for (const varName of Object.keys(scope.declaredVars)) {
+                    const info = scope.declaredVars[varName];
+                    if (info.name !== info.escapedName && info.escapedName === name) return true;
+                }
+                return nameIsTaken(name, scope.parent);
+            }
+
+            return false;
+        }
+    }
+
+
+    function findCommonScope(current: Scope, varID: number): Scope {
+        let ref: Scope;
+
+        if (current.referencedVars.indexOf(varID) !== -1) {
+            return current;
+        }
+
+        for (const child of current.children) {
+            if (referencedWithinScope(child, varID)) {
+                if (assignedWithinScope(child, varID)) {
+                    return current;
+                }
+                if (!ref) {
+                    ref = child;
+                }
+                else {
+                    return current;
+                }
+            }
+        }
+
+        return ref ? findCommonScope(ref, varID) : undefined;
+    }
+
+    function trackAllVariables(topBlocks: Blockly.Block[], e: Environment) {
+        let id = 1;
+        let topScope: Scope;
+
+        // First, look for on-start
+        topBlocks.forEach(block => {
+            if (block.type === ts.pxtc.ON_START_TYPE) {
+                const firstStatement = block.getInputTargetBlock("HANDLER");
+                if (firstStatement) {
+                    topScope = {
+                        firstStatement: firstStatement,
+                        declaredVars: {},
+                        referencedVars: [],
+                        children: [],
+                        assignedVars: []
+                    }
+                    trackVariables(firstStatement, topScope, e);
+                }
+            }
+        });
+
+        // If we didn't find on-start, then create an empty top scope
+        if (!topScope) {
+            topScope = {
+                firstStatement: null,
+                declaredVars: {},
+                referencedVars: [],
+                children: [],
+                assignedVars: []
+            }
+        }
+
+        topBlocks.forEach(block => {
+            if (block.type === ts.pxtc.ON_START_TYPE) {
+                return;
+            }
+            trackVariables(block, topScope, e);
+        });
+
+        Object.keys(topScope.declaredVars).forEach(varName => {
+            const varID = topScope.declaredVars[varName];
+            delete topScope.declaredVars[varName];
+            const declaringScope = findCommonScope(topScope, varID.id) || topScope;
+            declaringScope.declaredVars[varName] = varID;
+        })
+
+        markDeclarationLocations(topScope, e);
+        escapeVariables(topScope, e);
+
+        return topScope;
+
+        function trackVariables(block: Blockly.Block, currentScope: Scope, e: Environment) {
+            e.idToScope[block.id] = currentScope;
+
+            if (block.type === "variables_get") {
+                const name = block.getField("VAR").getText();
+                const info = findOrDeclareVariable(name, currentScope);
+                currentScope.referencedVars.push(info.id);
+            }
+            else if (block.type === "variables_set" || block.type === "variables_change") {
+                const name = block.getField("VAR").getText();
+                const info = findOrDeclareVariable(name, currentScope);
+                currentScope.assignedVars.push(info.id);
+                currentScope.referencedVars.push(info.id);
+            }
+            else if (block.type === pxtc.TS_STATEMENT_TYPE) {
+                const declaredVars: string = (block as GrayBlockStatement).declaredVariables
+                if (declaredVars) {
+                    const varNames = declaredVars.split(",");
+                    varNames.forEach(vName => {
+                        const info = findOrDeclareVariable(vName, currentScope);
+                        info.alreadyDeclared = BlockDeclarationType.Argument;
+                    });
+                }
+            }
+
+            if (hasStatementInput(block)) {
+                const vars: VarInfo[] = getDeclaredVariables(block, e).map(binding => {
+                    return {
+                        name: binding[0],
+                        type: binding[1],
+                        id: id++
+                    }
+                });
+
+
+                let parentScope = currentScope;
+                if (vars.length) {
+                    // We need to create a scope for this block, and then a scope
+                    // for each statement input (in case there are multiple)
+
+                    parentScope = {
+                        parent: currentScope,
+                        firstStatement: block,
+                        declaredVars: {},
+                        referencedVars: [],
+                        assignedVars: [],
+                        children: []
+                    };
+
+                    vars.forEach(v => {
+                        v.alreadyDeclared = BlockDeclarationType.Assigned;
+                        parentScope.declaredVars[v.name] = v;
+                    });
+
+                    e.idToScope[block.id] = parentScope;
+                }
+
+
+                if (currentScope !== parentScope) {
+                    currentScope.children.push(parentScope);
+                }
+
+                forEachChildExpression(block, child => {
+                    trackVariables(child, parentScope, e);
+                });
+
+                forEachStatementInput(block, connectedBlock => {
+                    const newScope: Scope = {
+                        parent: parentScope,
+                        firstStatement: connectedBlock,
+                        declaredVars: {},
+                        referencedVars: [],
+                        assignedVars: [],
+                        children: []
+                    };
+                    parentScope.children.push(newScope);
+                    trackVariables(connectedBlock, newScope, e);
+                });
+            }
+            else {
+                forEachChildExpression(block, child => {
+                    trackVariables(child, currentScope, e);
+                });
+            }
+
+            if (block.nextConnection && block.nextConnection.targetBlock()) {
+                trackVariables(block.nextConnection.targetBlock(), currentScope, e);
+            }
+        }
+
+        function findOrDeclareVariable(name: string, scope: Scope): VarInfo {
+            if (scope.declaredVars[name]) {
+                return scope.declaredVars[name];
+            }
+            else if (scope.parent) {
+                return findOrDeclareVariable(name, scope.parent);
+            }
+            else {
+                // Declare it in the top scope
+                scope.declaredVars[name] = {
+                    name,
+                    type: mkPoint(null),
+                    id: id++
+                };
+                return scope.declaredVars[name];
+            }
+        }
+    }
+
+    function getVarInfo(name: string, scope: Scope): VarInfo {
+        if (scope && scope.declaredVars[name]) {
+            return scope.declaredVars[name];
+        }
+        else if (scope && scope.parent) {
+            return getVarInfo(name, scope.parent);
+        }
+        else {
+            return null;
+        }
+    }
+
+
+    function hasStatementInput(block: Blockly.Block) {
+        return block.inputList.some(i => i.type === Blockly.NEXT_STATEMENT);
+    }
+
+    function getDeclaredVariables(block: Blockly.Block, e: Environment): [string, Point][] {
+        switch (block.type) {
+            case 'pxt_controls_for':
+            case 'controls_simple_for':
+                return [[getLoopVariableField(block).getField("VAR").getText(), pNumber]];
+            case 'pxt_controls_for_of':
+            case 'controls_for_of':
+                return [[getLoopVariableField(block).getField("VAR").getText(), mkPoint(null)]];
+            default:
+                break;
+        }
+
+        if (isMutatingBlock(block)) {
+            const declarations = block.mutation.getDeclaredVariables();
+            if (declarations) {
+                return Object.keys(declarations).map(varName => [varName, mkPoint(declarations[varName])] as [string, Point]);
+            }
+        }
+
+        let stdFunc = e.stdCallTable[block.type];
+        if (stdFunc && stdFunc.comp.handlerArgs.length) {
+            return getCBParameters(block, stdFunc);
+        }
+
+        return [];
+    }
+
+    function forEachChildExpression(block: Blockly.Block, cb: (block: Blockly.Block) => void, recursive = false) {
+        block.inputList.filter(i => i.type === Blockly.INPUT_VALUE).forEach(i => {
+            if (i.connection && i.connection.targetBlock()) {
+                cb(i.connection.targetBlock());
+                if (recursive) {
+                    forEachChildExpression(i.connection.targetBlock(), cb, recursive);
+                }
+            }
+        });
+    }
+
+    function forEachStatementInput(block: Blockly.Block, cb: (block: Blockly.Block) => void) {
+        block.inputList.filter(i => i.type === Blockly.NEXT_STATEMENT).forEach(i => {
+            if (i.connection && i.connection.targetBlock()) {
+                cb(i.connection.targetBlock());
+            }
+        })
+    }
+
+    function printScope(scope: Scope, depth = 0) {
+        const declared = Object.keys(scope.declaredVars).map(k => `${k}(${scope.declaredVars[k].id})`).join(",");
+        const referenced = scope.referencedVars.join(", ");
+        console.log(`${mkIndent(depth)}SCOPE: ${scope.firstStatement ? scope.firstStatement.type : "TOP-LEVEL"}`)
+        if (declared.length) {
+            console.log(`${mkIndent(depth)}DECS: ${declared}`)
+        }
+        // console.log(`${mkIndent(depth)}REFS: ${referenced}`)
+        scope.children.forEach(s => printScope(s, depth + 1));
+    }
+
+    function mkIndent(depth: number) {
+        let res = "";
+        for (let i = 0; i < depth; i++) {
+            res += "    ";
+        }
+        return res;
+    }
+
+    function markDeclarationLocations(scope: Scope, e: Environment) {
+        const declared = Object.keys(scope.declaredVars);
+        if (declared.length) {
+            const decls = declared.map(name => scope.declaredVars[name]);
+
+            if (scope.firstStatement) {
+                // If we can't find a better place to declare the variable, we'll declare
+                // it before the first statement in the code block so we need to keep
+                // track of the blocks ids
+                e.blockDeclarations[scope.firstStatement.id] = decls.concat(e.blockDeclarations[scope.firstStatement.id] || []);
+            }
+
+            decls.forEach(d => e.allVariables.push(d));
+        }
+
+        scope.children.forEach(child => markDeclarationLocations(child, e));
+    }
+
 
     function doesIntersect(x: number, y: number, width: number, height: number, other: Rect) {
         const xOverlap = between(x, other.x, other.x + other.width) || between(other.x, x, x + width);
@@ -2034,6 +2538,54 @@ namespace pxt.blocks {
 
         function between(val: number, lower: number, upper: number) {
             return val >= lower && val <= upper;
+        }
+    }
+
+    function isFunctionDefinition(b: Blockly.Block) {
+        return b.type === "procedures_defnoreturn" || b.type === "function_definition";
+    }
+
+    function getFunctionName(functionBlock: Blockly.Block) {
+        return functionBlock.getField("function_name").getText();
+    }
+
+    // @param strict - if true, only return true if there is a return statement
+    // somewhere in the call graph that returns a call to this function. If false,
+    // return true if the function is called as an expression anywhere in the call
+    // graph
+    function isFunctionRecursive(b: Blockly.Block, strict: boolean) {
+        const functionName = getFunctionName(b)
+        const visited: pxt.Map<boolean> = {};
+
+        return checkForCallRecursive(b);
+
+        function checkForCallRecursive(functionDefinition: Blockly.Block) {
+            let calls: Blockly.Block[];
+
+            if (strict) {
+                calls = functionDefinition.getDescendants(false)
+                    .filter(child => child.type == "function_return")
+                    .map(returnStatement => getInputTargetBlock(returnStatement, "RETURN_VALUE"))
+                    .filter(returnValue => returnValue && returnValue.type === "function_call_output")
+            }
+            else {
+                calls = functionDefinition.getDescendants(false).filter(child => child.type == "function_call_output");
+            }
+
+            for (const call of calls) {
+                const callName = getFunctionName(call);
+
+                if (callName === functionName) return true;
+
+                if (visited[callName]) continue;
+                visited[callName] = true;
+
+                if (checkForCallRecursive(Blockly.Functions.getDefinition(callName, call.workspace))) {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

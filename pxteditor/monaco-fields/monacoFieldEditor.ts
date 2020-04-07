@@ -14,7 +14,7 @@ namespace pxt.editor {
 
     export interface MonacoFieldEditor {
         getId(): string;
-        showEditorAsync(editrange: monaco.Range, host: MonacoFieldEditorHost): Promise<TextEdit>;
+        showEditorAsync(fileType: FileType, editrange: monaco.Range, host: MonacoFieldEditorHost): Promise<TextEdit>;
         onClosed(): void;
         dispose(): void;
     }

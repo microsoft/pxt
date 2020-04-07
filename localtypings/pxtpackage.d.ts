@@ -1,6 +1,7 @@
 declare namespace pxt {
 
-    type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw";
+    type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw" | "forumUrl";
+    type CodeCardEditorType = "blocks" | "js" | "py";
 
     interface Map<T> {
         [index: string]: T;
@@ -8,6 +9,8 @@ declare namespace pxt {
 
     interface TargetVersions {
         target: string;
+        targetId?: string;
+        targetWebsite?: string;
         pxt?: string;
         pxtCrowdinBranch?: string;
         targetCrowdinBranch?: string;
@@ -21,13 +24,19 @@ declare namespace pxt {
         height: number;
     }
 
+    interface CodeCardAction {
+        url: string,
+        editor?: CodeCardEditorType;
+        cardType?: CodeCardType;
+    }
+
     /**
      * The schema for the pxt.json package files
      */
     interface PackageConfig {
         name: string;
         version?: string;
-        installedVersion?: string;
+        // installedVersion?: string; moved to Package class
         // url to icon -- support for built-in packages only
         icon?: string;
         // semver description for support target version
@@ -40,12 +49,17 @@ declare namespace pxt {
         files: string[];
         simFiles?: string[];
         testFiles?: string[];
+        preferredEditor?: string; // tsprj, blocksprj, pyprj
+        languageRestriction?: pxt.editor.LanguageRestriction; // language restrictions that have been placed on the package
         testDependencies?: pxt.Map<string>;
+        cppDependencies?: pxt.Map<string>;
         public?: boolean;
+        partial?: boolean; // true if project is not compileable on its own (eg base)
         binaryonly?: boolean;
         platformio?: PlatformIOConfig;
         compileServiceVariant?: string;
         palette?: string[];
+        paletteNames?: string[];
         screenSize?: Size;
         yotta?: YottaConfig;
         npmDependencies?: Map<string>;
@@ -63,6 +77,12 @@ declare namespace pxt {
             excludePrefix?: string[];
         };
         features?: string[];
+        hidden?: boolean; // hide package from package selection dialog
+        skipLocalization?: boolean;
+        snippetBuilders?: SnippetConfig[];
+        experimentalHw?: boolean;
+        requiredCategories?: string[]; // ensure that those block categories are visible
+        supportedTargets?: string[]; // a hint about targets in which this extension is supported
     }
 
     interface PackageExtension {
@@ -107,6 +127,7 @@ declare namespace pxt {
         labelClass?: string;
         tags?: string[]; // tags shown in home screen, colors specified in theme
         tabIndex?: number;
+        style?: string; // "card" | "item" | undefined;
 
         color?: string; // one of semantic ui colors
         description?: string;
@@ -115,7 +136,9 @@ declare namespace pxt {
         typeScript?: string;
         imageUrl?: string;
         largeImageUrl?: string;
+        videoUrl?: string;
         youTubeId?: string;
+        buttonLabel?: string;
         time?: number;
         url?: string;
         learnMoreUrl?: string;
@@ -123,13 +146,13 @@ declare namespace pxt {
         feedbackUrl?: string;
         responsive?: boolean;
         cardType?: CodeCardType;
+        editor?: CodeCardEditorType;
+        otherActions?: CodeCardAction[];
 
         header?: string;
-        any?: number;
-        hardware?: number;
-        software?: number;
-        blocks?: number;
-        javascript?: number;
+
+        tutorialStep?: number;
+        tutorialLength?: number;
 
         icon?: string;
         iconContent?: string; // Text instead of icon name
@@ -140,6 +163,7 @@ declare namespace pxt {
 
         target?: string;
         className?: string;
+        variant?: string;
     }
 
     interface JRes {
@@ -149,5 +173,91 @@ declare namespace pxt {
         icon?: string; // URL (usually data-URI) for the icon
         namespace?: string; // used to construct id
         mimeType: string;
+    }
+
+    type SnippetOutputType = 'blocks'
+    type SnippetOutputBehavior = /*assumed default*/'merge' | 'replace'
+    interface SnippetConfig {
+        name: string;
+        namespace: string;
+        group?: string;
+        label: string;
+        outputType: SnippetOutputType;
+        outputBehavior?: SnippetOutputBehavior;
+        initialOutput?: string;
+        questions: SnippetQuestions[];
+    }
+
+    type SnippetAnswerTypes = 'number' | 'text' | 'variableName' | 'dropdown' | 'spriteEditor' | 'yesno' | string; // TODO(jb) Should include custom answer types for number, enums, string, image
+
+    interface SnippetGoToOptions {
+        question?: number;
+        validate?: SnippetValidate;
+        parameters?: SnippetParameters[]; // Answer token with corresponding question
+    }
+
+    interface SnippetOutputOptions {
+        type: 'error' | 'hint';
+        output: string;
+    }
+
+    interface SnippetParameters {
+        token?: string;
+        answer?: string;
+        question: number;
+    }
+
+    interface SnippetInputAnswerSingular {
+        answerToken: string;
+        defaultAnswer: SnippetAnswerTypes;
+    }
+
+    interface SnippetInputAnswerPlural {
+        answerTokens: string[];
+        defaultAnswers: SnippetAnswerTypes[];
+    }
+
+    interface SnippetInputOtherType {
+        type: string;
+    }
+
+    interface SnippetInputNumberType {
+        type: 'number' | 'positionPicker';
+        max?: number;
+        min?: number;
+    }
+
+    interface SnippetInputDropdownType {
+        type: "dropdown";
+        options: pxt.Map<string>;
+    }
+
+    interface SnippetInputYesNoType {
+        type: "yesno";
+    }
+
+    type SnippetQuestionInput = { label?: string; }
+        & (SnippetInputAnswerSingular | SnippetInputAnswerPlural)
+        & (SnippetInputOtherType | SnippetInputNumberType | SnippetInputDropdownType | SnippetInputYesNoType)
+
+    interface SnippetValidateRegex {
+        token: string;
+        regex: string;
+        match?: SnippetParameters;
+        noMatch?: SnippetParameters;
+    }
+
+    interface SnippetValidate {
+        regex?: SnippetValidateRegex;
+    }
+
+    interface SnippetQuestions {
+        title: string;
+        output?: string;
+        outputConditionalOnAnswer?: string;
+        errorMessage?: string;
+        goto?: SnippetGoToOptions;
+        inputs: SnippetQuestionInput[];
+        hint?: string;
     }
 }

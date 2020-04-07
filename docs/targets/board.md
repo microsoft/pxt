@@ -10,6 +10,7 @@ It is important to store all the state within the board instance as PXT will reu
         gpioPinMap: { [pin: string]: string },
         groundPins: string[],
         threeVoltPins: string[],
+        fiveVoltPins: string[],
         attachPowerOnRight?: boolean,
         onboardComponents?: string[]
         marginWhenBreadboarding?: [number, number, number, number],

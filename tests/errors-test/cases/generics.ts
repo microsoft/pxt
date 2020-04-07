@@ -4,4 +4,4 @@ function id<T>(x: T): T { // Now supported
     return x
 }
 
-let x = id // TS9232
+let x = id // now supported

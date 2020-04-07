@@ -1,0 +1,57 @@
+{
+    "editor": "blocksprj",
+    "title": "Tutorial title",
+    "steps": [
+        {
+            "fullscreen": true,
+            "unplugged": true,
+            "tutorialCompleted": false,
+            "contentMd": "Introduction text\n![Image text](/image/url.gif)",
+            "headerContentMd": "Introduction text",
+            "hintContentMd": "![Image text](/image/url.gif)",
+            "hasHint": true,
+            "activity": 0
+        },
+        {
+            "fullscreen": true,
+            "unplugged": false,
+            "tutorialCompleted": false,
+            "contentMd": "Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.\n\n```blocks\nlet x = 1;\nlet y = x + 2;\n```\n\nTry checking the blue drawer for the correct block.",
+            "headerContentMd": "Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.",
+            "hintContentMd": "```blocks\nlet x = 1;\nlet y = x + 2;\n```\n\nTry checking the blue drawer for the correct block.",
+            "hasHint": true,
+            "activity": 1
+        },
+        {
+            "fullscreen": false,
+            "unplugged": false,
+            "tutorialCompleted": false,
+            "contentMd": "Step two text",
+            "headerContentMd": "Step two text",
+            "activity": 1
+        },
+        {
+            "fullscreen": false,
+            "unplugged": false,
+            "tutorialCompleted": false,
+            "contentMd": "Click ``|Download|`` to transfer your code in your unknown macro!",
+            "headerContentMd": "Click ``|Download|`` to transfer your code in your unknown macro!",
+            "activity": 2
+        }
+    ],
+    "activities": [
+        {
+            "name": "Introduction",
+            "step": 0
+        },
+        {
+            "name": "Activity 1",
+            "step": 1
+        },
+        {
+            "name": "Download",
+            "step": 3
+        }
+    ],
+    "code": "\n { \n let x = 1;\nlet y = x + 2;\n } \n"
+}

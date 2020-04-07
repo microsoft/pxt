@@ -1,0 +1,18 @@
+{
+    "editor": "blocksprj",
+    "title": "Getting started",
+    "steps": [
+        {
+            "contentMd": "Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.\n\n```blocks\nbasic.showString(\"Micro!\")\n```",
+            "headerContentMd": "Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.",
+            "fullscreen": true,
+            "unplugged": true,
+            "hintContentMd": "```blocks\nbasic.showString(\"Micro!\")\n```"
+        }
+    ],
+    "activities": null,
+    "code": "\n{\nbasic.showString(\"Micro!\")\n}\n",
+    "metadata": {
+        "noDiffs": true
+    }
+}

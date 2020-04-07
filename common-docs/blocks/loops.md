@@ -11,4 +11,7 @@ for(let value of [""]) {}
 
 ## See also #seealso
 
-[for](/blocks/loops/for), [while](/blocks/loops/while), [repeat](/blocks/loops/repeat)
+[for](/blocks/loops/for), 
+[while](/blocks/loops/while), 
+[repeat](/blocks/loops/repeat), 
+[for of](/blocks/loops/for-of),

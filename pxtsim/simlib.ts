@@ -21,15 +21,25 @@ namespace pxsim {
         return res;
     }
 
-    export class EventBusGeneric<T> {
-        private queues: Map<EventQueue<T>> = {};
+    export class EventBus {
+        private queues: Map<EventQueue> = {};
         private notifyID: number;
         private notifyOneID: number;
+        private schedulerID: number;
+        private idleEventID: number;
         private lastEventValue: string | number;
         private lastEventTimestampUs: number;
         private backgroundHandlerFlag: boolean = false;
 
         public nextNotifyEvent = 1024;
+
+        constructor(
+            private runtime: Runtime,
+            private valueToArgs?: EventValueToActionArgs
+        ) {
+            this.schedulerID = 15; // DEVICE_ID_SCHEDULER
+            this.idleEventID = 2; // DEVICE_SCHEDULER_EVT_IDLE
+        }
 
         public setBackgroundHandlerFlag() {
             this.backgroundHandlerFlag = true;
@@ -40,17 +50,23 @@ namespace pxsim {
             this.notifyOneID = notifyOneID;
         }
 
-        constructor(private runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
-
-        private start(id: number | string, evid: number | string, create: boolean, background: boolean) {
-            let k = (background ? "back:" : "") + id + ":" + evid;
-            let queue = this.queues[k];
-            if (!queue) queue = this.queues[k] = new EventQueue<T>(this.runtime, this.valueToArgs);
-            return queue;
+        public setIdle(schedulerID: number, idleEventID: number) {
+            this.schedulerID = schedulerID;
+            this.idleEventID = idleEventID;
         }
 
-        listen(id: number | string, evid: number | string, handler: RefAction) {
-            let q = this.start(id, evid, true, this.backgroundHandlerFlag);
+        private start(id: EventIDType, evid: EventIDType, background: boolean, create: boolean = false) {
+            let key = (background ? "back" : "fore") + ":" + id + ":" + evid
+            if (!this.queues[key] && create) this.queues[key] = new EventQueue(this.runtime, this.valueToArgs);
+            return this.queues[key];
+        }
+
+        listen(id: EventIDType, evid: EventIDType, handler: RefAction) {
+            // special handle for idle, start the idle timeout
+            if (id == this.schedulerID && evid == this.idleEventID)
+                this.runtime.startIdle();
+
+            let q = this.start(id, evid, this.backgroundHandlerFlag, true);
             if (this.backgroundHandlerFlag)
                 q.addHandler(handler);
             else
@@ -61,32 +77,47 @@ namespace pxsim {
         removeBackgroundHandler(handler: RefAction) {
             Object.keys(this.queues).forEach((k: string) => {
                 if (k.startsWith("back:"))
-                    this.queues[k].removeHandler(handler);
+                    this.queues[k].removeHandler(handler)
             });
         }
 
-        queue(id: number | string, evid: number | string, value: T = null) {
+        // this handles ANY (0) semantics for id and evid
+        private getQueues(id: EventIDType, evid: EventIDType, bg: boolean) {
+            let ret = [this.start(0, 0, bg)]
+            if (id == 0 && evid == 0)
+                return ret
+            if (evid)
+                ret.push(this.start(0, evid, bg))
+            if (id)
+                ret.push(this.start(id, 0, bg))
+            if (id && evid)
+                ret.push(this.start(id, evid, bg))
+            return ret
+        }
+
+        queue(id: EventIDType, evid: EventIDType, value: EventIDType = null) {
+            if (runtime.pausedOnBreakpoint) return;
             // special handling for notify one
             const notifyOne = this.notifyID && this.notifyOneID && id == this.notifyOneID;
             if (notifyOne)
                 id = this.notifyID;
-            let qBackground = this.start(id, evid, false, true);
-            let qForeground = this.start(id, evid, false, false);
-            if (qBackground || qForeground) {
-                this.lastEventValue = evid;
-                this.lastEventTimestampUs = U.perfNowUs();
-                let promise: Promise<void> = Promise.resolve();
-                if (qBackground)
-                    promise = qBackground.push(value, notifyOne);
-                // do the foreground handler after the background handlers
-                if (qForeground)
-                    promise.then(() => { qForeground.push(value, notifyOne) })
-            }
+            let queues = this.getQueues(id, evid, true).concat(this.getQueues(id, evid, false))
+            this.lastEventValue = evid;
+            this.lastEventTimestampUs = U.perfNowUs();
+            Promise.each(queues, (q) => {
+                if (q) return q.push(value, notifyOne);
+                else return Promise.resolve()
+            })
+        }
+
+        queueIdle() {
+            if (this.schedulerID && this.idleEventID)
+                this.queue(this.schedulerID, this.idleEventID);
         }
 
         // only for foreground handlers
         wait(id: number | string, evid: number | string, cb: (value?: any) => void) {
-            let q = this.start(id, evid, true, false);
+            let q = this.start(id, evid, false, true);
             q.addAwaiter(cb);
         }
 
@@ -97,12 +128,6 @@ namespace pxsim {
         getLastEventTime() {
             return 0xffffffff & (this.lastEventTimestampUs - runtime.startTimeUs);
         }
-    }
-
-    export class EventBus extends EventBusGeneric<number> {
-        // queue(id: number | string, evid: number | string, value: number = 0) {
-        //     super.queue(id, evid, value);
-        // }
     }
 
     export interface AnimationOptions {
@@ -210,6 +235,9 @@ namespace pxsim {
         export function mute(mute: boolean) {
             _mute = mute;
             stopAll();
+            const ctx = context();
+            if (!mute && ctx && ctx.state === "suspended")
+                ctx.resume();
         }
 
         function stopTone() {
@@ -234,22 +262,8 @@ namespace pxsim {
         }
 
         const waveForms: OscillatorType[] = [null, "triangle", "sawtooth", "sine"]
-        let metallicBuffer: AudioBuffer
         let noiseBuffer: AudioBuffer
         let squareBuffer: AudioBuffer[] = []
-
-        function getMetallicBuffer() {
-            if (!metallicBuffer) {
-                const bufferSize = 1024;
-                metallicBuffer = context().createBuffer(1, bufferSize, context().sampleRate);
-                const output = metallicBuffer.getChannelData(0);
-
-                for (let i = 0; i < bufferSize; i++) {
-                    output[i] = (((i * 7919) & 1023) / 512.0) - 1.0;
-                }
-            }
-            return metallicBuffer
-        }
 
         function getNoiseBuffer() {
             if (!noiseBuffer) {
@@ -285,8 +299,7 @@ namespace pxsim {
         #define SW_TRIANGLE 1
         #define SW_SAWTOOTH 2
         #define SW_SINE 3 // TODO remove it? it takes space
-        #define SW_NOISE 4
-        #define SW_REAL_NOISE 5
+        #define SW_NOISE 5
         #define SW_SQUARE_10 11
         #define SW_SQUARE_50 15
         */
@@ -313,9 +326,7 @@ namespace pxsim {
             }
 
             let buffer: AudioBuffer
-            if (waveFormIdx == 4)
-                buffer = getMetallicBuffer()
-            else if (waveFormIdx == 5)
+            if (waveFormIdx == 5)
                 buffer = getNoiseBuffer()
             else if (11 <= waveFormIdx && waveFormIdx <= 15)
                 buffer = getSquareBuffer((waveFormIdx - 10) * 10)
@@ -352,12 +363,26 @@ namespace pxsim {
             }
         }
 
-        function muteAllChannels() {
+        let instrStopId = 1
+        export function muteAllChannels() {
+            instrStopId++
             while (channels.length)
                 channels[0].remove()
         }
 
+        export function queuePlayInstructions(when: number, b: RefBuffer) {
+            const prevStop = instrStopId
+            Promise.delay(when)
+                .then(() => {
+                    if (prevStop != instrStopId)
+                        return Promise.resolve()
+                    return playInstructionsAsync(b)
+                })
+                .done()
+        }
+
         export function playInstructionsAsync(b: RefBuffer) {
+            const prevStop = instrStopId
             let ctx = context();
 
             let idx = 0
@@ -370,7 +395,8 @@ namespace pxsim {
                 channels[0].remove()
             channels.push(ch)
 
-            const scaleVol = (n: number) => (n / 1024) * 2
+            /** Square waves are perceved as much louder than other sounds, so scale it down a bit to make it less jarring **/
+            const scaleVol = (n: number, isSqWave?: boolean) => (n / 1024) / 2 * (isSqWave ? .7 : 1);
 
             const finish = () => {
                 ch.mute()
@@ -384,13 +410,17 @@ namespace pxsim {
                     return Promise.delay(timeOff).then(finish)
 
                 const soundWaveIdx = b.data[idx]
-                const flags = b.data[idx + 1]
                 const freq = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 2)
                 const duration = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 4)
                 const startVol = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 6)
                 const endVol = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 8)
+                const endFreq = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 10)
 
-                if (!ctx)
+                const isSquareWave = 11 <= soundWaveIdx && soundWaveIdx <= 15;
+                const scaledStart = scaleVol(startVol, isSquareWave);
+                const scaledEnd = scaleVol(endVol, isSquareWave);
+
+                if (!ctx || prevStop != instrStopId)
                     return Promise.delay(duration)
 
                 if (currWave != soundWaveIdx || currFreq != freq) {
@@ -410,18 +440,30 @@ namespace pxsim {
                     currWave = soundWaveIdx
                     currFreq = freq
                     ch.gain = ctx.createGain()
-                    ch.gain.gain.value = scaleVol(startVol)
+                    ch.gain.gain.value = scaledStart;
+
+                    if (endFreq != freq) {
+                        if ((ch.generator as any).frequency != undefined) {
+                            // If generator is an OscillatorNode
+                            const param = (ch.generator as any).frequency as AudioParam;
+                            param.linearRampToValueAtTime(endFreq, ctx.currentTime + ((timeOff + duration) / 1000));
+                        } else if ((ch.generator as any).playbackRate != undefined) {
+                            // If generator is an AudioBufferSourceNode
+                            const param = (ch.generator as any).playbackRate as AudioParam;
+                            param.linearRampToValueAtTime(endFreq / (context().sampleRate / 1024), ctx.currentTime + ((timeOff + duration) / 1000));
+                        }
+                    }
 
                     ch.generator.connect(ch.gain)
                     ch.gain.connect(ctx.destination);
                     ch.generator.start();
                 }
 
-                idx += 10
+                idx += 12
 
-                ch.gain.gain.setValueAtTime(scaleVol(startVol), ctx.currentTime + (timeOff / 1000))
+                ch.gain.gain.setValueAtTime(scaledStart, ctx.currentTime + (timeOff / 1000))
                 timeOff += duration
-                ch.gain.gain.linearRampToValueAtTime(scaleVol(endVol), ctx.currentTime + (timeOff / 1000))
+                ch.gain.gain.linearRampToValueAtTime(scaledEnd, ctx.currentTime + (timeOff / 1000))
 
                 return loopAsync()
             }
@@ -707,7 +749,7 @@ namespace pxsim.visuals {
             style: `font-size:${size}px;`,
             transform: `translate(${cx} ${cy}) rotate(${rot}) translate(${xOff} ${yOff})`
         });
-        svg.addClass(el, "noselect");
+        pxsim.U.addClass(el, "noselect");
         el.textContent = txt;
         return el;
     }

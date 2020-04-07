@@ -1,0 +1,31 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="function_definition">
+<mutation name="getBool" >
+</mutation>
+<statement name="STACK">
+<block type="function_return">
+<value name="RETURN_VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="logic_boolean">
+<field name="BOOL">TRUE</field>
+</block>
+</value>
+</block>
+</statement>
+</block>
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="controls_if">
+<mutation elseif="0" else="0" />
+<value name="IF0">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="function_call_output">
+<mutation name="getBool" />
+</block>
+</value>
+<statement name="DO0">
+</statement>
+</block>
+</statement>
+</block>
+</xml>

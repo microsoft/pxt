@@ -4,5 +4,4 @@ enum PlainOldEnum {
     C
 }
 
-let x = 0
-x = PlainOldEnum.A
+let x = PlainOldEnum.A

@@ -3,6 +3,4 @@ enum EnumOfFlags {
     B = 5,
     C
 }
-
-let x = 0
-x = EnumOfFlags.A
+let x = EnumOfFlags.A

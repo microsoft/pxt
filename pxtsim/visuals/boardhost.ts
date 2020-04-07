@@ -99,6 +99,8 @@ namespace pxsim.visuals {
                 else {
                     this.addAll(allocRes);
                     if (!allocRes.requiresBreadboard && !opts.forceBreadboardRender)
+                        useBreadboardView = false;
+                    else if (allocRes.hideBreadboard && this.breadboard)
                         this.breadboard.hide();
                 }
             }
@@ -140,16 +142,54 @@ namespace pxsim.visuals {
             //TODO: move to wiring.ts
             //underboard wires
             wire.wires.forEach(e => {
-                svg.addClass(e, "highlight");
+                pxsim.U.addClass(e, "highlight");
                 (<any>e).style["visibility"] = "visible";
             });
 
             //un greyed out
-            svg.addClass(wire.endG, "highlight");
+            pxsim.U.addClass(wire.endG, "highlight");
         }
 
         public getView(): SVGElement {
             return this.view;
+        }
+
+        public screenshotAsync(width?: number): Promise<ImageData> {
+            const svg = this.view.cloneNode(true) as SVGSVGElement;
+            svg.setAttribute('width', this.view.width.baseVal.value + "");
+            svg.setAttribute('height', this.view.height.baseVal.value + "");
+            const xml = new XMLSerializer().serializeToString(svg);
+            const data = "data:image/svg+xml,"
+                + encodeURIComponent(xml.replace(/\s+/g, ' ').replace(/"/g, "'"));
+
+            return new Promise((resolve, reject) => {
+                const img = document.createElement("img");
+                img.onload = () => {
+                    const cvs = document.createElement("canvas");
+                    cvs.width = img.width;
+                    cvs.height = img.height;
+
+                    // check if a width or a height was specified
+                    if (width > 0) {
+                        cvs.width = width;
+                        cvs.height = (img.height * width / img.width) | 0;
+                    } else if (cvs.width < 200) {
+                        cvs.width *= 2;
+                        cvs.height *= 2;
+                    } else if (cvs.width > 480) {
+                        cvs.width /= 2;
+                        cvs.height /= 2;
+                    }
+                    const ctx = cvs.getContext("2d");
+                    ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
+                    resolve(ctx.getImageData(0, 0, cvs.width, cvs.height));
+                };
+                img.onerror = e => {
+                    console.log(e);
+                    resolve(undefined);
+                }
+                img.src = data;
+            })
         }
 
         private updateState() {
@@ -224,24 +264,31 @@ namespace pxsim.visuals {
             part.moveToCoord(coord);
             let getCmpClass = (type: string) => `sim-${type}-cmp`;
             let cls = getCmpClass(partInst.name);
-            svg.addClass(part.element, cls);
-            svg.addClass(part.element, "sim-cmp");
+            pxsim.U.addClass(part.element, cls);
+            pxsim.U.addClass(part.element, "sim-cmp");
             part.updateTheme();
             part.updateState();
             return part;
         }
+
         public addWire(inst: WireInst): Wire {
             return this.wireFactory.addWire(inst.start, inst.end, inst.color);
         }
+
         public addAll(allocRes: AllocatorResult) {
             allocRes.partsAndWires.forEach(pAndWs => {
+                const wires = pAndWs.wires;
+                const wiresOk = wires && wires.every(w => this.wireFactory.checkWire(w.start, w.end));
+                if (wiresOk) // try to add all the wires
+                    wires.forEach(w => allocRes.wires.push(this.addWire(w)));
                 let part = pAndWs.part;
-                if (part)
-                    this.addPart(part)
-                let wires = pAndWs.wires;
-                if (wires)
-                    wires.forEach(w => this.addWire(w));
-            })
+                if (part && (!wires || wiresOk))
+                    allocRes.parts.push(this.addPart(part));
+            });
+
+            // at least one wire
+            allocRes.requiresBreadboard = !!allocRes.wires.length
+                || !!allocRes.parts.length;
         }
     }
 }

@@ -4,12 +4,9 @@ import * as http from 'http';
 import * as url from 'url';
 import * as querystring from 'querystring';
 import * as nodeutil from './nodeutil';
-import * as child_process from 'child_process';
-import * as os from 'os';
-import * as util from 'util';
 import * as hid from './hid';
-import * as serial from './serial';
 import * as net from 'net';
+import * as crowdin from './crowdin';
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -40,8 +37,10 @@ function setupRootDir() {
         "built/web",
         path.join(nodeutil.targetDir, "built"),
         path.join(nodeutil.targetDir, "sim/public"),
+        path.join(nodeutil.targetDir, "node_modules", `pxt-${pxt.appTarget.id}-sim`, "public"),
         path.join(nodeutil.pxtCoreDir, "built/web"),
-        path.join(nodeutil.pxtCoreDir, "webapp/public")
+        path.join(nodeutil.pxtCoreDir, "webapp/public"),
+        path.join(nodeutil.pxtCoreDir, "common-docs")
     ]
     docsDir = path.join(root, "docs")
     packagedDir = path.join(root, "built/packaged")
@@ -62,6 +61,7 @@ const statAsync = Promise.promisify(fs.stat)
 const readdirAsync = Promise.promisify(fs.readdir)
 const readFileAsync = Promise.promisify(fs.readFile)
 const writeFileAsync: any = Promise.promisify(fs.writeFile)
+const unlinkAsync: any = Promise.promisify(fs.unlink)
 
 function existsAsync(fn: string): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
@@ -113,7 +113,7 @@ async function readPkgAsync(logicalDirname: string, fileContents = false): Promi
         files: []
     };
 
-    for (let fn of pxt.allPkgFiles(cfg).concat([pxt.github.GIT_JSON])) {
+    for (let fn of pxt.allPkgFiles(cfg).concat([pxt.github.GIT_JSON, pxt.SIMSTATE_JSON])) {
         let st = await statOptAsync(path.join(dirname, fn))
         let ff: FsFile = {
             name: fn,
@@ -121,6 +121,9 @@ async function readPkgAsync(logicalDirname: string, fileContents = false): Promi
         }
 
         let thisFileContents = st && fileContents
+
+        if (!st && fn == pxt.SIMSTATE_JSON)
+            continue
 
         if (fn == pxt.github.GIT_JSON) {
             // skip .git.json altogether if missing
@@ -163,7 +166,7 @@ function writeScreenshotAsync(logicalDirname: string, screenshotUri: string, ico
         const data = m[2];
         const fn = path.join(dirname, name + "." + ext);
         console.log(`writing ${fn}`)
-        return writeFileAsync(fn, new Buffer(data, 'base64'));
+        return writeFileAsync(fn, Buffer.from(data, 'base64'));
     }
 
     return Promise.all([
@@ -176,7 +179,7 @@ function writePkgAssetAsync(logicalDirname: string, data: any) {
     const dirname = path.join(userProjectsDir, logicalDirname, "assets")
 
     nodeutil.mkdirP(dirname)
-    return writeFileAsync(dirname + "/" + data.name, new Buffer(data.data, data.encoding || "base64"))
+    return writeFileAsync(dirname + "/" + data.name, Buffer.from(data.data, data.encoding || "base64"))
         .then(() => ({
             name: data.name
         }))
@@ -192,18 +195,20 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
             .then(buf => {
                 if (f.name == pxt.CONFIG_NAME) {
                     try {
-                        let cfg: pxt.PackageConfig = JSON.parse(f.content)
-                        if (!cfg.name) {
-                            console.log("Trying to save invalid JSON config")
+                        if (!pxt.Package.parseAndValidConfig(f.content)) {
+                            pxt.log("Trying to save invalid JSON config")
+                            pxt.debug(f.content);
                             throwError(410)
                         }
                     } catch (e) {
-                        console.log("Trying to save invalid format JSON config")
+                        pxt.log("Trying to save invalid format JSON config")
+                        pxt.log(e)
+                        pxt.debug(f.content);
                         throwError(410)
                     }
                 }
                 if (buf.toString("utf8") !== f.prevContent) {
-                    console.log(`merge error for ${f.name}: previous content changed...`);
+                    pxt.log(`merge error for ${f.name}: previous content changed...`);
                     throwError(409)
                 }
             }, err => { }))
@@ -212,7 +217,8 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
             let d = f.name.replace(/\/[^\/]*$/, "")
             if (d != f.name)
                 nodeutil.mkdirP(path.join(dirname, d))
-            return writeFileAsync(path.join(dirname, f.name), f.content)
+            const fn = path.join(dirname, f.name)
+            return f.content == null ? unlinkAsync(fn) : writeFileAsync(fn, f.content)
         }))
         .then(() => {
             if (data.header)
@@ -278,7 +284,6 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
     const filename = path.resolve(path.join(userProjectsDir, innerPath))
     const meth = req.method.toUpperCase()
     const cmd = meth + " " + elts[1]
-
     const readJsonAsync = () =>
         nodeutil.readResAsync(req)
             .then(buf => JSON.parse(buf.toString("utf8")))
@@ -308,9 +313,9 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
             .then(d => writePkgAssetAsync(innerPath, d))
     else if (cmd == "GET pkgasset")
         return readAssetsAsync(innerPath)
-    else if (cmd == "POST deploy" && pxt.commands.deployCoreAsync)
+    else if (cmd == "POST deploy" && pxt.commands.hasDeployFn())
         return readJsonAsync()
-            .then(pxt.commands.deployCoreAsync)
+            .then(pxt.commands.deployAsync)
             .then((boardCount) => {
                 return {
                     boardCount: boardCount
@@ -332,7 +337,9 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
             });
     else if (cmd == "GET md" && pxt.appTarget.id + "/" == innerPath.slice(0, pxt.appTarget.id.length + 1)) {
         // innerpath start with targetid
-        return Promise.resolve(readMd(innerPath.slice(pxt.appTarget.id.length + 1)))
+        return readMdAsync(
+            innerPath.slice(pxt.appTarget.id.length + 1),
+            opts["lang"] as string);
     }
     else if (cmd == "GET config" && new RegExp(`${pxt.appTarget.id}\/targetconfig(\/v[0-9.]+)?$`).test(innerPath)) {
         // target config
@@ -351,14 +358,13 @@ export function lookupDocFile(name: string) {
     return null
 }
 
-export function expandHtml(html: string) {
+export function expandHtml(html: string, params?: pxt.Map<string>) {
     let theme = U.flatClone(pxt.appTarget.appTheme)
     html = expandDocTemplateCore(html)
-    let params: pxt.Map<string> = {
-        name: pxt.appTarget.appTheme.title,
-        description: pxt.appTarget.appTheme.description,
-        locale: pxt.appTarget.appTheme.defaultLocale || "en"
-    };
+    params = params || {};
+    params["name"] = params["name"] || pxt.appTarget.appTheme.title;
+    params["description"] = params["description"] || pxt.appTarget.appTheme.description;
+    params["locale"] = params["locale"] || pxt.appTarget.appTheme.defaultLocale || "en"
 
     // page overrides
     let m = /<title>([^<>@]*)<\/title>/.exec(html)
@@ -600,7 +606,7 @@ function initSocketServer(wsPort: number, hostname: string) {
                                 })
 
                             case "send":
-                                sock.write(new Buffer(msg.arg.data, msg.arg.encoding || "utf8"))
+                                sock.write(Buffer.from(msg.arg.data, msg.arg.encoding || "utf8"))
                                 return {}
                             default: // unknown message
                                 pxt.log(`unknown tcp message ${msg.op}`)
@@ -732,17 +738,7 @@ function sendSerialMsg(msg: string) {
 }
 
 function initSerialMonitor() {
-    serial.monitorSerial(function (info, buffer) {
-        //console.log(`data received: ${buffer.length} bytes`);
-        if (wsSerialClients.length == 0) return;
-        // send it to ws clients
-        let msg = JSON.stringify({
-            type: 'serial',
-            id: info.pnpId,
-            data: buffer.toString('utf8')
-        })
-        sendSerialMsg(msg)
-    })
+    // TODO HID
 }
 
 export interface ServeOptions {
@@ -779,8 +775,27 @@ function certificateTestAsync(): Promise<string> {
 function scriptPageTestAsync(id: string) {
     return Cloud.privateGetAsync(id)
         .then((info: Cloud.JsonScript) => {
+            // if running against old cloud, infer 'thumb' field
+            // can be removed after new cloud deployment
+            if (info.thumb !== undefined)
+                return info
+            return Cloud.privateGetTextAsync(id + "/thumb")
+                .then(_ => {
+                    info.thumb = true
+                    return info
+                }, _ => {
+                    info.thumb = false
+                    return info
+                })
+        })
+        .then((info: Cloud.JsonScript) => {
+            let infoA = info as any
+            infoA.cardLogo = info.thumb
+                ? Cloud.apiRoot + id + "/thumb"
+                : pxt.appTarget.appTheme.thumbLogo || pxt.appTarget.appTheme.cardLogo
             let html = pxt.docs.renderMarkdown({
-                template: expandDocFileTemplate("script.html"),
+                template: expandDocFileTemplate(pxt.appTarget.appTheme.leanShare
+                    ? "leanscript.html" : "script.html"),
                 markdown: "",
                 theme: pxt.appTarget.appTheme,
                 pubinfo: info as any,
@@ -819,10 +834,16 @@ function pkgPageTestAsync(id: string) {
         })
 }
 
-function readMd(pathname: string): string {
-    const content = nodeutil.resolveMd(root, pathname);
-    if (content) return content;
-    return `# Not found ${pathname}\nChecked:\n` + [docsDir].concat(dirs).concat(nodeutil.lastResolveMdDirs).map(s => "* ``" + s + "``\n").join("")
+function readMdAsync(pathname: string, lang: string): Promise<string> {
+    if (!lang || lang == "en") {
+        const content = nodeutil.resolveMd(root, pathname);
+        if (content) return Promise.resolve(content);
+        return Promise.resolve(`# Not found ${pathname}\nChecked:\n` + [docsDir].concat(dirs).concat(nodeutil.lastResolveMdDirs).map(s => "* ``" + s + "``\n").join(""));
+    } else {
+        // ask makecode cloud for translations
+        const mdpath = pathname.replace(/^\//, '');
+        return pxt.Cloud.markdownAsync(mdpath, lang);
+    }
 }
 
 function resolveTOC(pathname: string): pxt.TOCMenuEntry[] {
@@ -848,6 +869,21 @@ function resolveTOC(pathname: string): pxt.TOCMenuEntry[] {
     // not found
     pxt.log(`SUMMARY.md not found`)
     return undefined;
+}
+
+const compiledCache: pxt.Map<string> = {}
+export async function compileScriptAsync(id: string) {
+    if (compiledCache[id])
+        return compiledCache[id]
+    const scrText = await Cloud.privateGetAsync(id + "/text")
+    const res = await pxt.simpleCompileAsync(scrText, {})
+    let r = ""
+    if (res.errors)
+        r = `throw new Error(${JSON.stringify(res.errors)})`
+    else
+        r = res.outfiles["binary.js"]
+    compiledCache[id] = r
+    return r
 }
 
 export function serveAsync(options: ServeOptions) {
@@ -897,9 +933,19 @@ export function serveAsync(options: ServeOptions) {
         }
 
         let pathname = decodeURI(url.parse(req.url).pathname);
+        const opts: pxt.Map<string | string[]> = querystring.parse(url.parse(req.url).query);
+        const htmlParams: pxt.Map<string> = {};
+        if (opts["lang"] || opts["forcelang"])
+            htmlParams["locale"] = (opts["lang"] as string || opts["forcelang"] as string);
 
         if (pathname == "/") {
             res.writeHead(301, { location: '/index.html' })
+            res.end()
+            return
+        }
+
+        if (pathname == "/oauth-redirect") {
+            res.writeHead(301, { location: '/oauth-redirect.html' })
             res.end()
             return
         }
@@ -915,6 +961,17 @@ export function serveAsync(options: ServeOptions) {
                 res.setHeader("Location", trg)
                 error(302, "Redir: " + trg)
                 return
+            }
+
+            if (/^\d\d\d[\d\-]*$/.test(elts[1]) && elts[2] == "js") {
+                return compileScriptAsync(elts[1])
+                    .then(data => {
+                        res.writeHead(200, { 'Content-Type': 'application/javascript' })
+                        res.end(data)
+                    }, err => {
+                        error(500)
+                        console.log(err.stack)
+                    })
             }
 
             if (!isAuthorizedLocalRequest(req)) {
@@ -981,6 +1038,11 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
+        if (pathname == "/--multi") {
+            sendFile(path.join(publicDir, 'multi.html'));
+            return
+        }
+
         if (/\/-[-]*docs.*$/.test(pathname)) {
             sendFile(path.join(publicDir, 'docs.html'));
             return
@@ -1030,9 +1092,21 @@ export function serveAsync(options: ServeOptions) {
         for (let dir of dd) {
             let filename = path.resolve(path.join(dir, pathname))
             if (nodeutil.fileExistsSync(filename)) {
-                sendFile(filename)
+                if (/\.html$/.test(filename)) {
+                    let html = expandHtml(fs.readFileSync(filename, "utf8"), htmlParams)
+                    sendHtml(html)
+                } else {
+                    sendFile(filename)
+                }
                 return;
             }
+        }
+
+        if (/simulator\.html/.test(pathname)) {
+            // Special handling for missing simulator: redirect to the live sim
+            res.writeHead(302, { location: `https://trg-${pxt.appTarget.id}.userpxt.io/---simulator` });
+            res.end();
+            return;
         }
 
         // redirect
@@ -1056,7 +1130,7 @@ export function serveAsync(options: ServeOptions) {
 
         if (webFile) {
             if (/\.html$/.test(webFile)) {
-                let html = expandHtml(fs.readFileSync(webFile, "utf8"))
+                let html = expandHtml(fs.readFileSync(webFile, "utf8"), htmlParams)
                 sendHtml(html)
             } else {
                 sendFile(webFile)
@@ -1064,18 +1138,28 @@ export function serveAsync(options: ServeOptions) {
         } else {
             const m = /^\/(v\d+)(.*)/.exec(pathname);
             if (m) pathname = m[2];
-            const md = readMd(pathname);
-            const mdopts = <pxt.docs.RenderOptions>{
-                template: expandDocFileTemplate("docs.html"),
-                markdown: md,
-                theme: pxt.appTarget.appTheme,
-                filepath: pathname,
-                TOC: resolveTOC(pathname)
-            };
-            let html = pxt.docs.renderMarkdown(mdopts)
-            sendHtml(html, U.startsWith(md, "# Not found") ? 404 : 200)
+            const lang = (opts["translate"] && ts.pxtc.Util.TRANSLATION_LOCALE)
+                || opts["lang"] as string
+                || opts["forcelang"] as string;
+            readMdAsync(pathname, lang)
+                .then(md => {
+                    const mdopts = <pxt.docs.RenderOptions>{
+                        template: expandDocFileTemplate("docs.html"),
+                        markdown: md,
+                        theme: pxt.appTarget.appTheme,
+                        filepath: pathname,
+                        TOC: resolveTOC(pathname),
+                        pubinfo: {
+                            locale: lang,
+                            crowdinproject: pxt.appTarget.appTheme.crowdinProject
+                        }
+                    };
+                    if (opts["translate"])
+                        mdopts.pubinfo["incontexttranslations"] = "1";
+                    const html = pxt.docs.renderMarkdown(mdopts)
+                    sendHtml(html, U.startsWith(md, "# Not found") ? 404 : 200)
+                });
         }
-
         return
     });
 

@@ -4,7 +4,37 @@ import * as util from 'util';
 
 import U = pxt.Util;
 
+/*
+Purpose:
+    UploadRefs uploads git objects (commits, trees, blobs) to cloud storage for
+    retrieval when serving our web apps or docs. The cloud also has logic to
+    request (from github) git objects and store them in the cloud however the
+    server can run out of memory (which should be fixable) when we're uploading lots of objects
+    so this CLI command is useful when uploading large amounts of git objects.
+
+TODOs (updated 8/14/2019 by Daryl & Michal)
+- Upload tree & file objects first: currently this code uploads 
+  all commits first and then the associated "tree" and blob objects.
+  The issue with this is that the cloud checks for the exists of a
+  commit object and assumes if it exists that all the associated tree
+  objects have already been uploaded. So if "uploadRefs" gets interrupted,
+  the git cache could be in an inconsitent state where commits are uploaded
+  but not all of the necessary data is present. To fix the broken state, we
+  simply need to let uploadRefs run to completion, but it'd be better to not
+  allow this inconsitency in the first place by uploading commits last.
+- Handle network interruptions: when running "pxt uploadrefs", we occassionally
+  get "INTERNAL ERROR: Error: socket hang up" errors which can leave things in a
+  bad state (see above.) We should have retry logic built in.
+- Add commandline switches for:
+    - Traverse parent commits. By default uploadRefs will not follow the parents of a
+      commit, but there may be times where this is useful (it could save the server extra
+      work).
+    - Start from a specific commit. If uploadRefs gets interrupted it would save a lot
+      of time if we could pass a certain commit to resume from.
+*/
+
 export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
+    pxt.log(`uploading refs starting from ${id} in ${repoUrl} to ${pxt.Cloud.apiRoot}`);
     let gitCatFile: child_process.ChildProcess
     let gitCatFileBuf = new U.PromiseBuffer<Buffer>()
 
@@ -16,29 +46,27 @@ export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
     let repoPath = ''
 
     startGitCatFile()
-    gitCatFile.stdin.write(id + "\n")
-
     let visited: SMap<boolean> = {};
     let toCheck: string[] = [];
 
     await processCommit(id);
 
-    await checkHash(undefined, true);
+    await uploadMissingObjects(undefined, true);
 
     await refreshRefs(id, repoUrl);
 
     killGitCatFile();
     process.exit(0);
 
-    async function processCommit(id: string) {
+    async function processCommit(id: string, uploadParents = false) {
         if (visited[id]) return;
         visited[id] = true;
-        await checkHash(id);
+        await uploadMissingObjects(id);
         //console.log('commit: ' + id);
         let obj = await getGitObjectAsync(id);
         if (obj.type != "commit")
             throw new Error("bad type")
-        if (obj.commit.parents) {
+        if (uploadParents && obj.commit.parents) {
             // Iterate through every parent and parse the commit.
             for (let parent of obj.commit.parents) {
                 await processCommit(parent);
@@ -58,7 +86,7 @@ export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
     async function processTreeEntry(mode: string, id: string) {
         if (visited[id]) return;
         visited[id] = true;
-        await checkHash(id);
+        await uploadMissingObjects(id);
         if (mode.indexOf('1') != 0) {
             let obj = await getGitObjectAsync(id);
             if (obj.type == 'tree') {
@@ -105,7 +133,7 @@ export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
         gitCatFile.kill();
     }
 
-    async function checkHash(id: string, force?: boolean) {
+    async function uploadMissingObjects(id: string, force?: boolean) {
         if (id) toCheck.push(id);
         if (toCheck.length > 50 || force) {
             let hashes = toCheck;

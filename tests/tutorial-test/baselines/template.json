@@ -1,0 +1,22 @@
+{
+    "editor": "blocksprj",
+    "title": "Template blocks",
+    "steps": [
+        {
+            "contentMd": "Let's get started!",
+            "headerContentMd": "Let's get started!",
+            "fullscreen": true,
+            "unplugged": true
+        },
+        {
+            "contentMd": "The template blocks appear in the workspace at the start of the tutorials",
+            "headerContentMd": "The template blocks appear in the workspace at the start of the tutorials"
+        }
+    ],
+    "activities": null,
+    "code": "\n{\nbasic.forever(() => {\n    basic.showString(\"MICRO\");\n});\n}\n",
+    "templateCode": "basic.forever(() => {\n    basic.showString(\"MICRO\");\n});",
+    "metadata": {
+        "noDiffs": true
+    }
+}

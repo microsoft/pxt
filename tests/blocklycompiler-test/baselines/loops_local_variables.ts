@@ -1,8 +1,8 @@
-let i = 0
 let index = 0
-for (let i0 = 0; i0 < 4; i0++) {
+let i = 0
+for (let index2 = 0; index2 < 4; index2++) {
     i = 0
-    for (let i0 = 0; i0 < 4; i0++) {
+    for (let index2 = 0; index2 < 4; index2++) {
         index = 0
     }
 }

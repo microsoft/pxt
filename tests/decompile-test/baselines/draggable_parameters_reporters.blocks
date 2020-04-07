@@ -17,13 +17,12 @@
 </value>
 <value name="HANDLER_DRAG_PARAM_f">
 <shadow type="argument_reporter_custom">
-<mutation typename="TestClass" />
+<mutation typename="testNamespace.TestClass" />
 <field name="VALUE">f</field>
 </shadow>
 </value>
 <statement name="HANDLER">
 </statement>
-<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
 </block>
 <block type="test_handler_arguments4">
 <value name="HANDLER_DRAG_PARAM_c">
@@ -43,7 +42,7 @@
 </value>
 <value name="HANDLER_DRAG_PARAM_f">
 <shadow type="argument_reporter_custom">
-<mutation typename="TestClass" />
+<mutation typename="testNamespace.TestClass" />
 <field name="VALUE">doing</field>
 </shadow>
 </value>
@@ -68,7 +67,7 @@
 </value>
 <value name="HANDLER_DRAG_PARAM_f">
 <shadow type="argument_reporter_custom">
-<mutation typename="TestClass" />
+<mutation typename="testNamespace.TestClass" />
 <field name="VALUE">f</field>
 </shadow>
 </value>
@@ -93,7 +92,7 @@
 </value>
 <value name="HANDLER_DRAG_PARAM_f">
 <shadow type="argument_reporter_custom">
-<mutation typename="TestClass" />
+<mutation typename="testNamespace.TestClass" />
 <field name="VALUE">f</field>
 </shadow>
 </value>

@@ -21,9 +21,6 @@ namespace pxtblockly {
         public isFieldCustom_ = true;
 
         protected colour_: string;
-
-        private colorPicker_: goog.ui.ColorPicker;
-        private className_: string;
         private valueMode_: FieldColourValueMode = "rgb";
 
         constructor(text: string, params: FieldColourNumberOptions, opt_validator?: Function) {
@@ -34,12 +31,36 @@ namespace pxtblockly {
             else if (pxt.appTarget.runtime && pxt.appTarget.runtime.palette) {
                 let p = pxt.Util.clone(pxt.appTarget.runtime.palette);
                 p[0] = "#dedede";
-                this.setColours(p);
+                let t;
+                if (pxt.appTarget.runtime.paletteNames) {
+                    t = pxt.Util.clone(pxt.appTarget.runtime.paletteNames);
+                    t[0] = lf("transparent");
+                }
+                this.setColours(p, t);
             }
+
+            // Set to first color in palette (for toolbox)
+            this.setValue(this.getColours_()[0]);
 
             if (params.columns) this.setColumns(parseInt(params.columns));
             if (params.className) this.className_ = params.className;
             if (params.valueMode) this.valueMode_ = params.valueMode;
+        }
+
+        /**
+         * @override
+         */
+        applyColour() {
+            if (this.borderRect_) {
+                this.borderRect_.style.fill = this.value_;
+            } else if (this.sourceBlock_) {
+                (this.sourceBlock_ as any)?.pathObject?.svgPath?.setAttribute('fill', this.value_);
+                (this.sourceBlock_ as any)?.pathObject?.svgPath?.setAttribute('stroke', '#fff');
+            }
+        };
+
+        doClassValidation_(colour: string) {
+            return "string" != typeof colour ? null : parseColour(colour, this.getColours_());
         }
 
         /**
@@ -48,64 +69,96 @@ namespace pxtblockly {
          * @return {string} Current colour in '#rrggbb' format.
          */
         getValue(opt_asHex?: boolean) {
-            if (opt_asHex) return this.colour_;
+            if (opt_asHex) return this.value_;
             switch (this.valueMode_) {
                 case "hex":
-                    return `"${this.colour_}"`;
+                    return `"${this.value_}"`;
                 case "rgb":
-                    if (this.colour_.indexOf('#') > -1) {
-                        return `0x${this.colour_.replace(/^#/, '')}`;
+                    if (this.value_.indexOf('#') > -1) {
+                        return `0x${this.value_.replace(/^#/, '')}`;
                     }
                     else {
-                        return this.colour_;
+                        return this.value_;
                     }
                 case "index":
-                    return this.getColours_().indexOf(this.colour_).toString();
+                    if (!this.value_) return "-1";
+                    const allColours = this.getColours_();
+                    for (let i = 0; i < allColours.length; i++) {
+                        if (this.value_.toUpperCase() === allColours[i].toUpperCase()) {
+                            return i + "";
+                        }
+                    }
             }
-            return this.colour_;
+            return this.value_;
         }
 
         /**
          * Set the colour.
          * @param {string} colour The new colour in '#rrggbb' format.
          */
-        setValue(colour: string) {
-            if (colour.indexOf('0x') > -1) {
-                colour = `#${colour.substr(2)}`;
-            }
-            else if (this.valueMode_ === "index") {
-                const allColors = this.getColours_();
-                if (allColors.indexOf(colour) === -1) {
-                    // Might be the index and not the color
-                    const i = parseInt(colour);
-                    if (!isNaN(i) && i >= 0 && i < allColors.length) {
-                        colour = allColors[i];
-                    }
-                    else {
-                        colour = allColors[0];
-                    }
-                }
-            }
-
-            if (this.sourceBlock_ && Blockly.Events.isEnabled() &&
-                this.colour_ != colour) {
-                Blockly.Events.fire(new (Blockly as any).Events.BlockChange(
-                    this.sourceBlock_, 'field', this.name, this.colour_, colour));
-            }
-            this.colour_ = colour;
-            if (this.sourceBlock_) {
-                this.sourceBlock_.setColour(colour, colour, colour);
-            }
+        doValueUpdate_(colour: string) {
+            this.value_ = parseColour(colour, this.getColours_());
+            this.applyColour();
         }
 
         showEditor_() {
             super.showEditor_();
-            if (this.className_ && this.colorPicker_)
-                Blockly.utils.addClass((this.colorPicker_.getElement()), this.className_);
+            if (this.className_ && this.picker_)
+                pxt.BrowserUtils.addClass(this.picker_ as HTMLElement, this.className_);
         }
 
         getColours_(): string[] {
-            return (this as any).colours_;
+            return this.colours_;
         }
+    }
+
+    function parseColour(colour: string, allColours: string[]) {
+        if (colour) {
+            const enumSplit = /Colors\.([a-zA-Z]+)/.exec(colour);
+            const hexSplit = /(0x|#)([0-9a-fA-F]+)/.exec(colour);
+
+            if (enumSplit) {
+                switch (enumSplit[1].toLocaleLowerCase()) {
+                    case "red": return "#FF0000";
+                    case "orange": return "#FF7F00";
+                    case "yellow": return "#FFFF00";
+                    case "green": return "#00FF00";
+                    case "blue": return "#0000FF";
+                    case "indigo": return "#4B0082";
+                    case "violet": return "#8A2BE2";
+                    case "purple": return "#A033E5";
+                    case "pink": return "#FF007F";
+                    case "white": return "#FFFFFF";
+                    case "black": return "#000000";
+                    default: return colour;
+                }
+            } else if (hexSplit) {
+                const hexLiteralNumber = hexSplit[2];
+
+                if (hexLiteralNumber.length === 3) {
+                    // if shorthand color, return standard hex triple
+                    let output = "#";
+                    for (let i = 0; i < hexLiteralNumber.length; i++) {
+                        const digit = hexLiteralNumber.charAt(i);
+                        output += digit + digit;
+                    }
+                    return output;
+                } else if (hexLiteralNumber.length === 6) {
+                    return "#" + hexLiteralNumber;
+                }
+            }
+
+            if (allColours) {
+                const parsedAsInt = parseInt(colour);
+
+                // Might be the index and not the color
+                if (!isNaN(parsedAsInt) && allColours[parsedAsInt] != undefined) {
+                    return allColours[parsedAsInt];
+                } else {
+                    return allColours[0];
+                }
+            }
+        }
+        return colour;
     }
 }

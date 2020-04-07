@@ -2,15 +2,81 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
+			"name": "serve",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/built/pxt.js",
+			"stopOnEntry": false,
+			"args": [
+				"serve",
+				"--rebundle"
+			],
+			"cwd": "${workspaceRoot}/../pxt-microbit",
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "development"
+			},
+			"console": "integratedTerminal",
+			"sourceMaps": false,
+			"outFiles": []
+		},
+		{
+			"name": "rebundle",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/built/pxt.js",
+			"stopOnEntry": false,
+			"args": [
+				"rebundle"
+			],
+			"cwd": "${workspaceRoot}/../pxt-arcade",
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "development"
+			},
+			"console": "integratedTerminal",
+			"sourceMaps": false,
+			"outFiles": []
+		},
+		{
 			"name": "checkdocs",
 			"type": "node",
 			"request": "launch",
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
 			"args": [
-				"checkdocs"
+				"checkdocs",
+				"--re", 
+				"adafruit"
 			],
-			"cwd": "${workspaceRoot}/../pxt-microbit",
+			"cwd": "${workspaceRoot}/../pxt-maker",
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "development"
+			},
+			"console": "integratedTerminal",
+			"sourceMaps": false,
+			"outFiles": []
+		},
+		{
+			"name": "pybuild",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/built/pxt.js",
+			"stopOnEntry": false,
+			"args": [
+				"build"
+			],
+			"cwd": "${workspaceRoot}/../pxt-arcade/projects/py",
 			"runtimeExecutable": null,
 			"runtimeArgs": [
 				"--nolazy"

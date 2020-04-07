@@ -5,7 +5,7 @@ supported by Block-based and JavaScript editing. Examples of targets are:
 
 * https://makecode.adafruit.com (sources at https://github.com/microsoft/pxt-adafruit)
 * https://maker.makecode.com (sources at https://github.com/microsoft/pxt-maker)
-* http://microsoft.github.io/pxt-sample/ (sources at https://github.com/microsoft/pxt-sample)
+* https://microsoft.github.io/pxt-sample/ (sources at https://github.com/microsoft/pxt-sample)
 
 We assume that the reader is familiar with Node.JS, NPM, JavaScript and/or C++. If you haven't done so yet, 
 install Node.JS and the **PXT** command line
@@ -131,7 +131,7 @@ Whenever possible, `/blob/` URLs should be used, since they only change when the
 This allows for faster app updates.
 
 For an example, compare https://makecode.microbit.org/---manifest
-and https://github.com/Microsoft/pxt/blob/master/webapp/public/release.manifest
+and https://github.com/microsoft/pxt/blob/master/webapp/public/release.manifest
 
 Generally, PXT will rewrite URLs starting with `/cdn/` to `/commit/...` and ones starting
 with `/blb/` to `/blob/...`. This happens in manifest and HTML files, as well as some JavaScript
