@@ -41,7 +41,6 @@ export class AccessibleBlocksInfo extends data.Component<{}, AccessibleBlocksInf
                     {lf("See the official Blockly Documentation for additional detail")}
                 </a></strong>
             </div>
-            
         </sui.Modal>
     }
 }
