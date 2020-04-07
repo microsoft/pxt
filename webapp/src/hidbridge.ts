@@ -70,7 +70,7 @@ export function mkBridgeAsync(): Promise<pxt.packetio.PacketIO> {
 }
 
 class BridgeIO implements pxt.packetio.PacketIO {
-    onConnectionChanged  = () => {};
+    onConnectionChanged = () => { };
     onData = (v: Uint8Array) => { };
     onEvent = (v: Uint8Array) => { };
     onError = (e: Error) => { };
@@ -81,6 +81,10 @@ class BridgeIO implements pxt.packetio.PacketIO {
     constructor(public rawMode = false) {
         if (rawMode)
             this.onEvent = v => this.onData(v)
+    }
+
+    disposeAsync(): Promise<void> {
+        return Promise.resolve();
     }
 
     isConnected(): boolean {

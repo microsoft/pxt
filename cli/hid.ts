@@ -216,6 +216,10 @@ export class HidIO implements pxt.packetio.PacketIO {
             this.onConnectionChanged();
     }
 
+    disposeAsync(): Promise<void> {
+        return Promise.resolve();
+    }
+
     isConnected(): boolean {
         return !!this.dev;
     }
@@ -248,8 +252,9 @@ export class HidIO implements pxt.packetio.PacketIO {
         return Promise.delay(100)
             .then(() => {
                 if (this.dev) {
-                    this.dev.close()
-                    this.dev = null
+                    const d = this.dev;
+                    delete this.dev;
+                    d.close()
                 }
                 if (this.onConnectionChanged)
                     this.onConnectionChanged();

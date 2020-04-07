@@ -14,6 +14,10 @@ namespace pxt.winrt {
         constructor() {
         }
 
+        disposeAsync(): Promise<void> {
+            return Promise.resolve();
+        }
+
         error(msg: string) {
             throw new Error(U.lf("USB/HID error ({0})", msg))
         }

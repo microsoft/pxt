@@ -176,8 +176,14 @@ namespace pxt.usb {
             this.handleUSBConnected = this.handleUSBConnected.bind(this);
             this.handleUSBDisconnected = this.handleUSBDisconnected.bind(this);
 
-            (navigator as any).usb.addEventListener('disconnect', this.handleUSBDisconnected);
-            (navigator as any).usb.addEventListener('connect', this.handleUSBConnected);
+            (navigator as any).usb.addEventListener('disconnect', this.handleUSBDisconnected, false);
+            (navigator as any).usb.addEventListener('connect', this.handleUSBConnected, false);
+        }
+
+        disposeAsync(): Promise<void> {
+            (navigator as any).usb.removeEventListener('disconnect', this.handleUSBDisconnected);
+            (navigator as any).usb.removeEventListener('connect', this.handleUSBConnected);
+            return Promise.resolve();            
         }
 
         private handleUSBDisconnected(event: any) {

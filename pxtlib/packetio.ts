@@ -27,6 +27,8 @@ namespace pxt.packetio {
         disconnectAsync(): Promise<void>;
         isConnected(): boolean;
         isSwitchingToBootloader?: () => void;
+        // release any native resource before being released
+        disposeAsync(): Promise<void>;
 
         // these are implemneted by HID-bridge
         talksAsync?(cmds: TalkArgs[]): Promise<Uint8Array[]>;
@@ -52,6 +54,7 @@ namespace pxt.packetio {
         let p = Promise.resolve();
         if (wrapper) {
             p = p.then(() => wrapper.disconnectAsync())
+                .then(() => wrapper.io.disposeAsync())
                 .catch(e => {
                     // swallow execeptions
                     pxt.reportException(e);
