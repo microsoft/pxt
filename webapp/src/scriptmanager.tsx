@@ -178,12 +178,9 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             size: "tiny"
         };
         return core.promptAsync(opts).then(res => {
-            if (res === null) return Promise.resolve(false); // null means cancelled, empty string means ok (but no value entered)
+            if (res === null) return Promise.resolve(false); // null means cancelled
             return workspace.getTextAsync(header.id)
-                .then(text => {
-                    // Duplicate the existing header
-                    return workspace.duplicateAsync(header, text, res);
-                })
+                .then(text => workspace.duplicateAsync(header, text, res))
                 .then(clonedHeader => {
                     // If we're cloud synced, update the cloudSync flag
                     if (this.props.parent.cloudSync()) clonedHeader.cloudSync = true;
