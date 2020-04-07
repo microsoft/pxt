@@ -319,8 +319,6 @@ declare interface String {
     /**
      * Return a substring of the current string with whitespace removed from both ends
      */
-    //% helper=stringTrim
-    //% blockId="string_trim" blockNamespace="text"
     trim(): string;
 
     /**
