@@ -356,6 +356,13 @@ export function init(): void {
     applyExtensionResult();
 }
 
+export function disconnectAsync() {
+    return pxt.packetio.disconnectAsync()
+        .finally(() => {
+            setWebUSBPaired(false);            
+        })
+}
+
 export function setWebUSBPaired(enabled: boolean) {
     if (tryPairedDevice === enabled) return;
     tryPairedDevice = enabled;
@@ -364,7 +371,6 @@ export function setWebUSBPaired(enabled: boolean) {
 
 function handlePacketIOApi(r: string) {
     const p = data.stripProtocol(r);
-    log(`packetio api ${p}`)
     switch(p) {
         case "connected":
             return pxt.packetio.isConnected();

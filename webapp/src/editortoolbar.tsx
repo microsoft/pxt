@@ -152,7 +152,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     protected onDisconnectClick = () => {
-        pxt.packetio.disconnectAsync();
+        this.props.parent.disconnectAsync();
     }
 
     protected getCompileButton(view: View, collapsed?: boolean): JSX.Element[] {

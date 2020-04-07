@@ -2196,6 +2196,11 @@ export class ProjectView
             });
     }
 
+    disconnectAsync(): Promise<void> {
+        return pxt.commands.disconnectAsync()
+            .done(() => core.infoNotification("Device disconnected"));
+    }
+
     async pairAsync(autoConnect: boolean): Promise<void> {
         if (autoConnect) {
             const dev = await pxt.usb.tryGetDeviceAsync();
