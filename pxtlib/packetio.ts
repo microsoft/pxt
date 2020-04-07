@@ -81,7 +81,7 @@ namespace pxt.packetio {
         }
     }
 
-    function wrapperAsync() {
+    function wrapperAsync(): Promise<PacketIOWrapper> {
         if (wrapper)
             return Promise.resolve(wrapper);
 
@@ -92,16 +92,11 @@ namespace pxt.packetio {
                 wrapper = mkPacketIOWrapper(io);
                 if (onSerialHandler)
                     wrapper.onSerial = onSerialHandler;
-                return wrapper.reconnectAsync()
-                    .then(() => wrapper)
-                    .catch(e => {
-                        pxt.reportException(e);
-                        wrapper = undefined
-                    })
+                return wrapper;
             })
     }
 
-    export function initAsync(force = false) {
+    export function initAsync(force = false): Promise<PacketIOWrapper> {
         pxt.log(`packetio: init ${force ? "(force)" : ""}`)
         if (!initPromise) {
             let p = Promise.resolve();

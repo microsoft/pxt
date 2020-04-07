@@ -269,8 +269,6 @@ namespace pxt.HF2 {
             this.resetState()
             log(`reconnect raw=${this.rawMode}`);
 
-            if (this.io.isConnected()) 
-                return Promise.resolve();
             return this.io.reconnectAsync()
                 .then(() => this.initAsync())
                 .catch(e => {
@@ -407,7 +405,8 @@ namespace pxt.HF2 {
             U.assert(pxt.appTarget.compile.useUF2);
             const f = resp.outfiles[pxtc.BINARY_UF2]
             const blocks = pxtc.UF2.parseFile(pxt.Util.stringToUint8Array(atob(f)))        
-            return this.flashAsync(blocks)
+            return this.io.reconnectAsync()
+                .then(() => this.flashAsync(blocks))
                 .then(() => Promise.delay(100))
                 .then(() => this.reconnectAsync())
         }

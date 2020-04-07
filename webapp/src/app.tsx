@@ -2188,8 +2188,8 @@ export class ProjectView
     private connectAsync() {
         cmds.setWebUSBPaired(true);
         return pxt.packetio.initAsync()
-            .then(wrapper => wrapper.reconnectAsync())
-            .then(() => core.infoNotification(lf("Device connected! Try downloading now.")))
+        .then(wrapper => wrapper.reconnectAsync())
+        .then(() => core.infoNotification(lf("Device connected! Try downloading now.")))
             .catch((err) => {
                 pxt.reportException(err);
                 core.errorNotification(lf("Connection error: {0}", err.message))
