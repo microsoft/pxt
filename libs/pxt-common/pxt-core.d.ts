@@ -323,7 +323,7 @@ declare interface String {
     //% blockId="string_trim" blockNamespace="text"
     trim(): string;
 
-    /*
+    /**
      * Converts the string to lower case characters.
      */
     //% helper=stringToLowerCase

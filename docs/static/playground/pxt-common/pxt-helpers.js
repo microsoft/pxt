@@ -43,15 +43,20 @@ interface StringMap {
 //% text.defl="123"
 //% blockHidden=1
 function parseInt(text: string, radix?: number): number {
-    if (!text) return 0;
+    if (!text || (radix != null && (radix < 2 || radix > 36)))
+        return NaN;
 
     let start = 0;
     while (start < text.length && helpers.isWhitespace(text.charCodeAt(start)))
-        ++start
+        ++start;
 
-    if (start === text.length || radix < 2 || radix > 36) return 0;
-    const numberOffset = '0'.charCodeAt(0);
-    const letterOffset = 'a'.charCodeAt(0);
+    if (start === text.length)
+        return NaN;
+
+    const numberOffset = 48; // 0
+    const numCount = 10;
+    const letterOffset = 97; // a
+    const letterCount = 26;
     const lowerCaseMask = 0x20;
     let output = 0;
 
@@ -59,12 +64,14 @@ function parseInt(text: string, radix?: number): number {
     switch (text.charAt(start)) {
         case "-":
             sign = -1;
+            // fallthrough
         case "+":
             ++start;
     }
 
-    const prefix = text.slice(start, start + 2);
-    if ((!radix || radix == 16) && (prefix === "0x" || prefix === "0X")) {
+    const secondChar = text[start + 1];
+    if ((!radix || radix == 16)
+        && "0" === text[start] && (secondChar === "x" || secondChar === "X")) {
         radix = 16;
         start += 2;
     } else if (!radix) {
@@ -75,10 +82,10 @@ function parseInt(text: string, radix?: number): number {
         const code = text.charCodeAt(i) | lowerCaseMask;
         let val: number = undefined;
 
-        if (code >= numberOffset && code < numberOffset + 10)
+        if (code >= numberOffset && code < numberOffset + numCount)
             val = code - numberOffset;
-        else if (code >= letterOffset && code < letterOffset + 26)
-            val = 10 + code - letterOffset;
+        else if (code >= letterOffset && code < letterOffset + letterCount)
+            val = numCount + code - letterOffset;
 
         if (val == undefined || val >= radix)
             break;
@@ -456,9 +463,7 @@ namespace helpers {
 
         while (end > start && isWhitespace(s.charCodeAt(end)))
             --end;
-
-        return s.substr(start, end - start + 1);
-
+        return s.slice(start, end + 1);
     }
 
     export function isWhitespace(c: number): boolean {
