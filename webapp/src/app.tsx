@@ -2260,7 +2260,7 @@ export class ProjectView
             && pxt.appTarget.appTheme
             && pxt.appTarget.appTheme.checkForHwVariantWebUSB
             && this.checkWebUSBVariant) {
-            hidbridge.initAsync(true)
+            pxt.HF2.initAsync(true)
                 .then(wr => {
                     if (wr.familyID) {
                         for (let v of variants) {
@@ -2823,7 +2823,7 @@ export class ProjectView
             pxt.HWDBG.postMessage = (msg) => simulator.driver.handleHwDebuggerMsg(msg)
             return Promise.join<any>(
                 compiler.compileAsync({ debug: true, native: true }),
-                hidbridge.initAsync()
+                pxt.HF2.initAsync()
             ).then(vals => pxt.HWDBG.startDebugAsync(vals[0], vals[1]))
         })
     }
@@ -3780,6 +3780,20 @@ function initLogin() {
     parseLocalToken();
 }
 
+function initHF2() {
+    pxt.HF2.configureHF2Events(
+        () => data.invalidate("hf2:*"),
+        (buf, isErr) => {
+        const data = Util.fromUTF8(Util.uint8ArrayToString(buf))
+        //pxt.debug('serial: ' + data)
+        window.postMessage({
+            type: 'serial',
+            id: 'n/a', // TODO
+            data
+        }, "*")
+    });
+}
+
 function initSerial() {
     const isHF2WinRTSerial = pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && pxt.winrt.isWinRT();
     const isValidLocalhostSerial = pxt.appTarget.serial && pxt.BrowserUtils.isLocalHost() && !!Cloud.localToken;
@@ -3787,18 +3801,8 @@ function initSerial() {
     if (!isHF2WinRTSerial && !isValidLocalhostSerial && !pxt.usb.isEnabled)
         return;
 
-    if (hidbridge.shouldUse() || pxt.usb.isEnabled) {
-        hidbridge.configureHidSerial((buf, isErr) => {
-            let data = Util.fromUTF8(Util.uint8ArrayToString(buf))
-            //pxt.debug('serial: ' + data)
-            window.postMessage({
-                type: 'serial',
-                id: 'n/a', // TODO
-                data
-            }, "*")
-        });
+    if (hidbridge.shouldUse() || pxt.usb.isEnabled)
         return;
-    }
 
     pxt.debug('initializing serial pipe');
     let ws = new WebSocket(`ws://localhost:${pxt.options.wsPort}/${Cloud.localToken}/serial`);
@@ -4277,6 +4281,7 @@ document.addEventListener("DOMContentLoaded", () => {
             render(); // this sets theEditor
             if (state)
                 theEditor.setState({ editorState: state });
+            initHF2();
             initSerial();
             initHashchange();
             socketbridge.tryInit();

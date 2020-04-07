@@ -69,8 +69,6 @@ export function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {
         .then(() => b);
 }
 
-pxt.HF2.setPacketIOFactory(mkBridgeAsync);
-
 class BridgeIO implements pxt.HF2.PacketIO {
     onConnectionChanged  = () => {};
     onData = (v: Uint8Array) => { };
@@ -165,51 +163,4 @@ class BridgeIO implements pxt.HF2.PacketIO {
                 this.connected = true;
             })
     }
-}
-
-let hf2Wrapper: pxt.HF2.Wrapper;
-let initPromise: Promise<pxt.HF2.Wrapper>;
-let serialHandler: (buf: Uint8Array, isStderr: boolean) => void;
-
-function hf2Async() {
-    return pxt.HF2.mkPacketIOAsync()
-        .then(h => {
-            hf2Wrapper = new pxt.HF2.Wrapper(h);
-            if (serialHandler)
-                hf2Wrapper.onSerial = serialHandler;
-            return hf2Wrapper.reconnectAsync(true)
-                .then(() => hf2Wrapper)
-        })
-}
-
-export function configureHidSerial(serialCb: (buf: Uint8Array, isStderr: boolean) => void): void {
-    serialHandler = serialCb;
-    if (hf2Wrapper)
-        hf2Wrapper.onSerial = serialHandler;
-}
-
-export function disconnectWrapperAsync(): Promise<void> {
-    if (hf2Wrapper)
-        return hf2Wrapper.disconnectAsync();
-    return Promise.resolve();
-}
-
-export function initAsync(force = false) {
-    if (!initPromise) {
-        initPromise = hf2Async()
-            .catch(err => {
-                initPromise = null
-                return Promise.reject(err)
-            })
-    }
-    let wrapper: pxt.HF2.Wrapper;
-    return initPromise
-        .then((w) => {
-            wrapper = w;
-            if (force) {
-                return wrapper.reconnectAsync();
-            }
-            return Promise.resolve();
-        })
-        .then(() => wrapper);
 }

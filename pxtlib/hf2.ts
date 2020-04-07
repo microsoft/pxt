@@ -38,6 +38,20 @@ namespace pxt.HF2 {
         data?: Uint8Array;
     }
 
+    export interface PacketIOWrapper {
+        readonly io: PacketIO;
+
+        familyID: number;
+
+        onConnectionChanged: () => void;
+        onSerial: (buf: Uint8Array, isStderr: boolean) => void;
+
+        reconnectAsync(first?: boolean): Promise<void>;
+        disconnectAsync(): Promise<void>;
+        //flashAsync(resp: pxtc.CompileResult): Promise<void>;
+        //talkAsync(cmd: number, data?: Uint8Array): Promise<Uint8Array>;
+    }
+
     export interface PacketIO {
         sendPacketAsync(pkt: Uint8Array): Promise<void>;
         onConnectionChanged: () => void;
@@ -53,40 +67,10 @@ namespace pxt.HF2 {
         // these are implemneted by HID-bridge
         talksAsync?(cmds: TalkArgs[]): Promise<Uint8Array[]>;
         sendSerialAsync?(buf: Uint8Array, useStdErr: boolean): Promise<void>;
+
         onSerial?: (v: Uint8Array, isErr: boolean) => void;
     }
 
-    export let onConnectionChanged: () => void = () => {};
-    let packetIOFactory: () => Promise<pxt.HF2.PacketIO>;
-    let packetIOPromise: Promise<pxt.HF2.PacketIO>;
-    let packetIO: pxt.HF2.PacketIO;
-    export function mkPacketIOAsync(): Promise<pxt.HF2.PacketIO> {
-        if (packetIOPromise)
-            return packetIOPromise;            
-
-        packetIO = undefined;
-        return packetIOPromise = packetIOFactory()
-            .then(io => {
-                packetIOPromise = undefined;
-                packetIO = io;
-                if(packetIO)
-                    packetIO.onConnectionChanged = onConnectionChanged;
-                return packetIO;
-            })
-            .catch(e => {
-                packetIOPromise = undefined;
-                packetIO = undefined;
-                throw e;
-            })
-    }
-    export function setPacketIOFactory(factory: () => Promise<pxt.HF2.PacketIO>) {
-        packetIOFactory = factory;
-        // TODO: concurrent setPacketIOFactory
-    }
-    export function isPacketIOConnected() {
-        return packetIO && packetIO.isConnected();
-    }
- 
     // see https://github.com/microsoft/uf2/blob/master/hf2.md for full spec
     export const HF2_CMD_BININFO = 0x0001 // no arguments
     export const HF2_MODE_BOOTLOADER = 0x01
@@ -205,8 +189,6 @@ namespace pxt.HF2 {
         return res
     }
 
-
-
     export interface BootloaderInfo {
         Header: string;
         Parsed: {
@@ -229,9 +211,9 @@ namespace pxt.HF2 {
             pxt.debug("HF2: " + msg)
     }
 
-    export class Wrapper {
+    export class Wrapper implements PacketIOWrapper {
         private cmdSeq = U.randomUint32();
-        constructor(public io: PacketIO) {
+        constructor(public readonly io: PacketIO) {
             let frames: Uint8Array[] = []
             io.onSerial = (b, e) => this.onSerial(b, e)
             io.onData = buf => {
@@ -304,6 +286,7 @@ namespace pxt.HF2 {
         msgs = new U.PromiseBuffer<Uint8Array>()
         eventHandlers: pxt.Map<(buf: Uint8Array) => void> = {}
 
+        onConnectionChanged = () => { };
         onSerial = (buf: Uint8Array, isStderr: boolean) => { };
 
         private resetState() {
@@ -634,4 +617,70 @@ namespace pxt.HF2 {
                         unchangedAddr(b.targetAddr + b.payloadSize - 1)))
             })
     }
+
+    export let mkPacketIOAsync: () => Promise<pxt.HF2.PacketIO>;
+    export let mkPacketIOWrapper: (io: pxt.HF2.PacketIO) => pxt.HF2.PacketIOWrapper
+        = (io) => new Wrapper(io);
+    let hf2Wrapper: pxt.HF2.PacketIOWrapper;
+    let initPromise: Promise<pxt.HF2.PacketIOWrapper>;
+    let onConnectionChangedHandler: () => void = () => { };
+    let onSerialHandler: (buf: Uint8Array, isStderr: boolean) => void;
+
+    export function isConnected() {
+        return hf2Wrapper && hf2Wrapper.io.isConnected();
+    }
+
+    export function configureHF2Events(
+        onConnectionChanged: () => void,
+        onSerial: (buf: Uint8Array, isStderr: boolean) => void
+    ): void {
+        onConnectionChangedHandler = onConnectionChanged;
+        onSerialHandler = onSerial;
+        if (hf2Wrapper) {
+            hf2Wrapper.onConnectionChanged = onConnectionChangedHandler;
+            hf2Wrapper.onSerial = onSerialHandler;
+        }
+    }
+
+    export function disconnectWrapperAsync(): Promise<void> {
+        if (hf2Wrapper)
+            return hf2Wrapper.disconnectAsync();
+        return Promise.resolve();
+    }
+
+    export function initAsync(force = false) {
+        if (!initPromise) {
+            initPromise = hf2Async()
+                .catch(err => {
+                    initPromise = null
+                    return Promise.reject(err)
+                })
+        }
+
+        let wrapper: pxt.HF2.PacketIOWrapper;
+        return initPromise
+            .then((w) => {
+                wrapper = w;
+                if (force) {
+                    return wrapper.reconnectAsync();
+                }
+                return Promise.resolve();
+            })
+            .then(() => wrapper);
+
+
+        function hf2Async() {
+            return pxt.HF2.mkPacketIOAsync()
+                .then(io => {
+                    hf2Wrapper = mkPacketIOWrapper(io);
+                    if (onConnectionChangedHandler)
+                        hf2Wrapper.onConnectionChanged = onConnectionChangedHandler;
+                    if (onSerialHandler)
+                        hf2Wrapper.onSerial = onSerialHandler;
+                    return hf2Wrapper.reconnectAsync(true)
+                        .then(() => hf2Wrapper)
+                })
+        }
+    }
+
 }

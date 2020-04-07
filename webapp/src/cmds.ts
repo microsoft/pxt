@@ -150,7 +150,7 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
     core.infoNotification(lf("Downloading..."));
     let f = resp.outfiles[pxtc.BINARY_UF2]
     let blocks = pxtc.UF2.parseFile(pxt.Util.stringToUint8Array(atob(f)))
-    return hidbridge.initAsync()
+    return pxt.HF2.initAsync()
         .then(dev => dev.reflashAsync(blocks))
         .catch((e) => {
             const troubleshootDoc = pxt.appTarget && pxt.appTarget.appTheme && pxt.appTarget.appTheme.appFlashingTroubleshoot;
@@ -179,7 +179,7 @@ function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptio
     return hidDeployCoreAsync(r, d)
         .timeout(20000)
         .catch((e) => {
-            return hidbridge.disconnectWrapperAsync()
+            return pxt.HF2.disconnectWrapperAsync()
                 .catch((e) => {
                     // Best effort disconnect; at this point we don't even know the state of the device
                     pxt.reportException(e);
@@ -266,7 +266,6 @@ export function init(): void {
         pxt.debug('app target changed')
         init()
     }
-    pxt.HF2.onConnectionChanged = () => data.invalidate("hf2:*");
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
     pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
     pxt.commands.showUploadInstructionsAsync = showUploadInstructionsAsync;
@@ -275,11 +274,11 @@ export function init(): void {
     if (pxt.usb.isAvailable() && pxt.appTarget.compile.webUSB) {
         pxt.debug(`enabled webusb`);
         pxt.usb.setEnabled(true);
-        pxt.HF2.setPacketIOFactory(pxt.usb.mkPacketIOAsync);
+        pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync;
     } else {
         pxt.debug(`disabled webusb`);
         pxt.usb.setEnabled(false);
-        pxt.HF2.setPacketIOFactory(hidbridge.mkBridgeAsync);
+        pxt.HF2.mkPacketIOAsync = hidbridge.mkBridgeAsync;
     }
 
     const shouldUseWebUSB = pxt.usb.isEnabled && pxt.appTarget.compile.useUF2;
@@ -293,8 +292,8 @@ export function init(): void {
     } else if (pxt.winrt.isWinRT()) { // windows app
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
             pxt.debug(`deploy: winrt`);
-            pxt.winrt.initWinrtHid(() => hidbridge.initAsync(true).then(() => { }), () => hidbridge.disconnectWrapperAsync());
-            pxt.HF2.setPacketIOFactory(pxt.winrt.mkPacketIOAsync);
+            pxt.winrt.initWinrtHid(() => pxt.HF2.initAsync(true).then(() => { }), () => pxt.HF2.disconnectWrapperAsync());
+            pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
             pxt.commands.deployFallbackAsync = winrtDeployCoreAsync;
         } else {
             // If we're not using HF2, then the target is using their own deploy logic in extension.ts, so don't use
@@ -302,7 +301,7 @@ export function init(): void {
             pxt.debug(`deploy: winrt + custom deploy`);
             pxt.winrt.initWinrtHid(null, null);
             if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID) {
-                pxt.HF2.setPacketIOFactory(pxt.winrt.mkPacketIOAsync);
+                pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
             }
             pxt.commands.deployFallbackAsync = pxt.winrt.driveDeployCoreAsync;
         }
@@ -355,7 +354,7 @@ function handleHF2Api(r: string) {
     const p = data.stripProtocol(r);
     switch(p) {
         case "connected":
-            return pxt.HF2.isPacketIOConnected();
+            return pxt.HF2.isConnected();
         case "icon":
             return "usb";
     }
