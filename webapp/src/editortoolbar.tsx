@@ -159,12 +159,12 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const downloadText = targetTheme.useUploadMessage ? lf("Upload") : lf("Download");
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
         const showPairUSBDevice = pxt.usb.isEnabled;
-        const hidConnected = showPairUSBDevice && !!this.getData("hf2:connected");
-        const hidIcon = hidConnected && this.getData("hf2:icon") as string;
+        const packetioConnected = !!this.getData("packetio:connected");
+        const packetioIcon = packetioConnected && this.getData("packetio:icon") as string;
         const hasMenu = boards || showPairUSBDevice;
 
         let downloadButtonClasses = hasMenu ? "left attached " : "";
-        let downloadButtonIcon = hidIcon || "ellipsis";
+        let downloadButtonIcon = packetioIcon || "ellipsis";
         let hwIconClasses = "";
         let displayRight = false;
         if (isSaving) {
@@ -193,7 +193,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         el.push(<EditorToolbarButton key="downloadbutton" role="menuitem" icon={downloadIcon} className={`primary download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={this.compile} view='computer' />)
 
         const deviceName = pxt.hwName || pxt.appTarget.appTheme.boardNickname || lf("device");
-        const tooltip = pxt.hwName || (hidConnected && lf("Connected to {0}", deviceName)) || (boards ? lf("Click to select hardware") : lf("Click for one-click downloads."));
+        const tooltip = pxt.hwName || (packetioConnected && lf("Connected to {0}", deviceName)) || (boards ? lf("Click to select hardware") : lf("Click for one-click downloads."));
 
         const hardwareMenuText = view == View.Mobile ? lf("Hardware") : lf("Choose hardware");
         const downloadMenuText = view == View.Mobile ? (pxt.hwName || lf("Download")) : lf("Download to {0}", deviceName);

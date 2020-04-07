@@ -247,7 +247,6 @@ namespace pxt.HF2 {
         msgs = new U.PromiseBuffer<Uint8Array>()
         eventHandlers: pxt.Map<(buf: Uint8Array) => void> = {}
 
-        onConnectionChanged = () => { };
         onSerial = (buf: Uint8Array, isStderr: boolean) => { };
 
         private resetState() {

@@ -208,7 +208,8 @@ export class HidIO implements pxt.packetio.PacketIO {
             this.onData(new Uint8Array(v))
         })
         this.dev.on("error", (v: Error) => this.onError(v))
-        this.onConnectionChanged();
+        if (this.onConnectionChanged)
+            this.onConnectionChanged();
     }
 
     isConnected(): boolean {
@@ -246,7 +247,8 @@ export class HidIO implements pxt.packetio.PacketIO {
                     this.dev.close()
                     this.dev = null
                 }
-                this.onConnectionChanged();
+                if (this.onConnectionChanged)
+                    this.onConnectionChanged();
             })
     }
 

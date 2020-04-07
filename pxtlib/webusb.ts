@@ -193,7 +193,8 @@ namespace pxt.usb {
                 this.dev = null
                 this.epIn = null
                 this.epOut = null
-                this.onConnectionChanged();    
+                if (this.onConnectionChanged)
+                    this.onConnectionChanged();    
             }
         }
 
@@ -375,8 +376,9 @@ namespace pxt.usb {
                     this.log("device ready")
                     this.ready = true
                     if (this.epIn || isHF2)
-                        this.readLoop()
-                    this.onConnectionChanged();
+                        this.readLoop();
+                    if (this.onConnectionChanged)
+                        this.onConnectionChanged();
                 })
         }
     }

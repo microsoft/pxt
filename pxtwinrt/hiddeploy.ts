@@ -38,7 +38,8 @@ namespace pxt.winrt {
                 try {
                     d.close();
                 } catch (e) { }
-                this.onConnectionChanged();
+                if(this.onConnectionChanged)
+                    this.onConnectionChanged();
             }
             return Promise.resolve();
         }
@@ -115,7 +116,8 @@ namespace pxt.winrt {
                         }
                         this.onData(new Uint8Array(values));
                     });
-                    this.onConnectionChanged();
+                    if (this.onConnectionChanged)
+                        this.onConnectionChanged();
                     return Promise.resolve();
                 })
                 .catch((e) => {

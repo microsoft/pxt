@@ -3782,7 +3782,7 @@ function initLogin() {
 
 function initPacketIO() {
     pxt.packetio.configureEvents(
-        () => data.invalidate("hf2:*"),
+        () => data.invalidate("packetio:*"),
         (buf, isErr) => {
         const data = Util.fromUTF8(Util.uint8ArrayToString(buf))
         //pxt.debug('serial: ' + data)

@@ -118,6 +118,9 @@ class BridgeIO implements pxt.packetio.PacketIO {
         this.connected = false;
         return iface.opAsync("disconnect", {
             path: this.dev.path
+        }).finally(() => {
+            if (this.onConnectionChanged)
+                this.onConnectionChanged;
         })
     }
 
@@ -161,6 +164,8 @@ class BridgeIO implements pxt.packetio.PacketIO {
             }))
             .then(() => {
                 this.connected = true;
+                if (this.onConnectionChanged)
+                    this.onConnectionChanged();
             })
     }
 }

@@ -373,7 +373,7 @@ function checkWebUSBThenDownloadAsync(resp: pxtc.CompileResult) {
         });
 }
 
-function handleHF2Api(r: string) {
+function handlePacketIOApi(r: string) {
     const p = data.stripProtocol(r);
     switch(p) {
         case "connected":
@@ -383,6 +383,6 @@ function handleHF2Api(r: string) {
     }
     return false;
 }
-data.mountVirtualApi("hf2", {
-    getSync: handleHF2Api
+data.mountVirtualApi("packetio", {
+    getSync: handlePacketIOApi
 });

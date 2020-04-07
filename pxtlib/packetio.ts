@@ -9,7 +9,6 @@ namespace pxt.packetio {
 
         familyID: number;
 
-        onConnectionChanged: () => void;
         onSerial: (buf: Uint8Array, isStderr: boolean) => void;
 
         reconnectAsync(first?: boolean): Promise<void>;
@@ -55,7 +54,7 @@ namespace pxt.packetio {
         onConnectionChangedHandler = onConnectionChanged;
         onSerialHandler = onSerial;
         if (hf2Wrapper) {
-            hf2Wrapper.onConnectionChanged = onConnectionChangedHandler;
+            hf2Wrapper.io.onConnectionChanged = onConnectionChangedHandler;
             hf2Wrapper.onSerial = onSerialHandler;
         }
     }
@@ -90,9 +89,8 @@ namespace pxt.packetio {
         function hf2Async() {
             return mkPacketIOAsync()
                 .then(io => {
+                    io.onConnectionChanged = onConnectionChangedHandler;
                     hf2Wrapper = mkPacketIOWrapper(io);
-                    if (onConnectionChangedHandler)
-                        hf2Wrapper.onConnectionChanged = onConnectionChangedHandler;
                     if (onSerialHandler)
                         hf2Wrapper.onSerial = onSerialHandler;
                     return hf2Wrapper.reconnectAsync(true)
