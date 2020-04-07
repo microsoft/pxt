@@ -493,7 +493,7 @@ function cloudSyncAsync(): Promise<void> {
     async function resolveConflictAsync(header: Header, cloudHeader: FileInfo) {
         // rename current script
         let text = await ws.getTextAsync(header.id)
-        let newHd = await ws.duplicateAsync(header, text, true)
+        let newHd = await ws.duplicateAsync(header, text)
         header.blobId = null
         header.blobVersion = null
         header.blobCurrent = false
