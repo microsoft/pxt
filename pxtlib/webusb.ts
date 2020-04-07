@@ -175,14 +175,14 @@ namespace pxt.usb {
         constructor() {
             (navigator as any).usb.addEventListener('disconnect', (event: any) => {
                 if (event.device == this.dev) {
-                    this.log("Device disconnected")
+                    this.log("device disconnected")
                     this.clearDev()
                 }
             });
             (navigator as any).usb.addEventListener('connect', (event: any) => {
                 const newdev = event.device as USBDevice;
                 if (!this.dev) {
-                    this.log("Device connected")
+                    this.log("device connected")
                     this.connectAsync(newdev).done();
                 }
             });
@@ -203,14 +203,12 @@ namespace pxt.usb {
         }
 
         log(msg: string) {
-            msg = "WebUSB: " + msg
-            pxt.log(msg)
-            //pxt.debug(msg)
+            pxt.log("webusb: " + msg)
         }
 
         disconnectAsync() {
-            if (!this.dev) return Promise.resolve()
             this.ready = false
+            if (!this.dev) return Promise.resolve()
             this.log("close device")
             return this.dev.close()
                 .catch(e => {
@@ -224,6 +222,8 @@ namespace pxt.usb {
 
         reconnectAsync() {
             this.log("reconnect")
+            if (this.isConnected())
+                return Promise.resolve(); // already connected                
             return this.disconnectAsync()
                 .then(getDeviceAsync)
                 .then(dev => this.connectAsync(dev));

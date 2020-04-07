@@ -184,7 +184,7 @@ function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptio
     return hidDeployCoreAsync(r, d)
         .timeout(20000)
         .catch((e) => {
-            return pxt.packetio.disconnectWrapperAsync()
+            return pxt.packetio.disconnectAsync()
                 .catch((e) => {
                     // Best effort disconnect; at this point we don't even know the state of the device
                     pxt.reportException(e);
@@ -318,7 +318,7 @@ export function init(): void {
         log(`deploy: winrt`)
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
             log(`winrt deploy`);
-            pxt.winrt.initWinrtHid(() => pxt.packetio.initAsync(true).then(() => { }), () => pxt.packetio.disconnectWrapperAsync());
+            pxt.winrt.initWinrtHid(() => pxt.packetio.initAsync(true).then(() => { }), () => pxt.packetio.disconnectAsync());
             pxt.packetio.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
             pxt.commands.deployCoreAsync = winrtDeployCoreAsync;
         } else {
@@ -364,6 +364,7 @@ export function setWebUSBPaired(enabled: boolean) {
 
 function handlePacketIOApi(r: string) {
     const p = data.stripProtocol(r);
+    log(`packetio api ${p}`)
     switch(p) {
         case "connected":
             return pxt.packetio.isConnected();

@@ -47,6 +47,25 @@ namespace pxt.packetio {
         return wrapper && wrapper.io.isConnected();
     }
 
+    export function disconnectAsync(): Promise<void> {
+        log('disconnect')
+        let p = Promise.resolve();
+        if (wrapper) {
+            p = p.then(() => wrapper.disconnectAsync())
+                .catch(e => {
+                    // swallow execeptions
+                    pxt.reportException(e);
+                })
+                .finally(() => { 
+                    initPromise = undefined; // dubious
+                    wrapper = undefined; 
+                });
+        }
+        if (onConnectionChangedHandler)
+            p = p.then(() => onConnectionChangedHandler());
+        return p;
+    }
+
     export function configureEvents(
         onConnectionChanged: () => void,
         onSerial: (buf: Uint8Array, isStderr: boolean) => void
@@ -57,13 +76,6 @@ namespace pxt.packetio {
             wrapper.io.onConnectionChanged = onConnectionChangedHandler;
             wrapper.onSerial = onSerialHandler;
         }
-    }
-
-    export function disconnectWrapperAsync(): Promise<void> {
-        pxt.log(`packetio: disconnect`)
-        if (wrapper)
-            return wrapper.disconnectAsync();
-        return Promise.resolve();
     }
 
     function wrapperAsync() {
@@ -91,7 +103,7 @@ namespace pxt.packetio {
         if (!initPromise) {
             let p = Promise.resolve();
             if (force)
-                p = p.then(() => disconnectWrapperAsync());
+                p = p.then(() => disconnectAsync());
             initPromise = p.then(() => {
                 wrapper = undefined;
                 return wrapperAsync();
