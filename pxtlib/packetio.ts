@@ -11,7 +11,7 @@ namespace pxt.packetio {
 
         onSerial: (buf: Uint8Array, isStderr: boolean) => void;
 
-        reconnectAsync(first?: boolean): Promise<void>;
+        reconnectAsync(): Promise<void>;
         disconnectAsync(): Promise<void>;
         reflashAsync(resp: pxtc.CompileResult): Promise<void>;
     }
@@ -77,7 +77,7 @@ namespace pxt.packetio {
                 wrapper = mkPacketIOWrapper(io);
                 if (onSerialHandler)
                     wrapper.onSerial = onSerialHandler;
-                return wrapper.reconnectAsync(true)
+                return wrapper.reconnectAsync()
                     .then(() => wrapper)
                     .catch(e => {
                         pxt.reportException(e);

@@ -265,10 +265,12 @@ namespace pxt.HF2 {
             this.eventHandlers[id + ""] = f
         }
 
-        reconnectAsync(first = false): Promise<void> {
+        reconnectAsync(): Promise<void> {
             this.resetState()
-            if (first) return this.initAsync()
             log(`reconnect raw=${this.rawMode}`);
+
+            if (this.io.isConnected()) 
+                return Promise.resolve();
             return this.io.reconnectAsync()
                 .then(() => this.initAsync())
                 .catch(e => {

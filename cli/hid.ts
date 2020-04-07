@@ -137,7 +137,7 @@ export function hf2ConnectAsync(path: string, raw = false) {
     // in .then() to make sure we catch errors
     let h = new HF2.Wrapper(new HidIO(path))
     h.rawMode = raw
-    return h.reconnectAsync(true).then(() => h)
+    return h.reconnectAsync().then(() => h)
 }
 
 export function mkWebUSBOrHidPacketIOAsync(): Promise<pxt.packetio.PacketIO> {

@@ -2188,10 +2188,12 @@ export class ProjectView
     async pairAsync(autoConnect: boolean): Promise<void> {
         if (autoConnect) {
             const dev = await pxt.usb.tryGetDeviceAsync();
-            if (dev) {
+            if (dev) {                
                 cmds.setWebUSBPaired(true);
-                core.infoNotification(lf("Device connected! Try downloading now."))
-                return
+                const wrapper = await pxt.packetio.initAsync();
+                await wrapper.reconnectAsync();
+                core.infoNotification(lf("Device connected! Try downloading now."));
+                return;
             }
         }
 
@@ -2202,6 +2204,7 @@ export class ProjectView
             try {
                 pxt.usb.pairAsync()
                 cmds.setWebUSBPaired(true);
+                await pxt.packetio.initAsync()
                 core.infoNotification(lf("Device paired! Try downloading now."))
             } catch (err) {
                 core.errorNotification(lf("Failed to pair the device: {0}", err.message))
@@ -3781,8 +3784,12 @@ function initLogin() {
 }
 
 function initPacketIO() {
+    pxt.log(`packetio: hook events`)
     pxt.packetio.configureEvents(
-        () => data.invalidate("packetio:*"),
+        () => {
+            pxt.log(`packetio: connected changed`)
+            data.invalidate("packetio:*")
+        },
         (buf, isErr) => {
         const data = Util.fromUTF8(Util.uint8ArrayToString(buf))
         //pxt.debug('serial: ' + data)
