@@ -418,6 +418,7 @@ namespace pxt.usb {
 
     let _hid: HID;
     export function mkPacketIOAsync(): Promise<pxt.packetio.PacketIO> {
+        pxt.log(`packetio: mk webusb`)
         if (!_hid)
             _hid = new HID();
         return Promise.resolve(_hid);

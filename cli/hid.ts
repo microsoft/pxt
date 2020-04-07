@@ -141,8 +141,12 @@ export function hf2ConnectAsync(path: string, raw = false) {
 }
 
 export function mkWebUSBOrHidPacketIOAsync(): Promise<pxt.packetio.PacketIO> {
-    if (useWebUSB())
+    if (useWebUSB()) {
+        pxt.log(`packetio: mk cli webusb`)
         return hf2ConnectAsync("")
+    }
+
+    pxt.log(`packetio: mk cli hidio`)
     return Promise.resolve()
         .then(() => {
             // in .then() to make sure we catch errors
