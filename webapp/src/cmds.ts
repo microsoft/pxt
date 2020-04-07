@@ -148,10 +148,8 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
     if (!resp.success)
         return browserDownloadDeployCoreAsync(resp);
     core.infoNotification(lf("Downloading..."));
-    let f = resp.outfiles[pxtc.BINARY_UF2]
-    let blocks = pxtc.UF2.parseFile(pxt.Util.stringToUint8Array(atob(f)))
     return pxt.HF2.initAsync()
-        .then(dev => dev.reflashAsync(blocks))
+        .then(dev => dev.reflashAsync(resp))
         .catch((e) => {
             const troubleshootDoc = pxt.appTarget && pxt.appTarget.appTheme && pxt.appTarget.appTheme.appFlashingTroubleshoot;
             if (e.type === "repairbootloader") {

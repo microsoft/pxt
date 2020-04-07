@@ -48,8 +48,7 @@ namespace pxt.HF2 {
 
         reconnectAsync(first?: boolean): Promise<void>;
         disconnectAsync(): Promise<void>;
-        //flashAsync(resp: pxtc.CompileResult): Promise<void>;
-        //talkAsync(cmd: number, data?: Uint8Array): Promise<Uint8Array>;
+        reflashAsync(resp: pxtc.CompileResult): Promise<void>;
     }
 
     export interface PacketIO {
@@ -440,8 +439,11 @@ namespace pxt.HF2 {
                 })
         }
 
-        reflashAsync(blocks: pxtc.UF2.Block[]) {
+        reflashAsync(resp: pxtc.CompileResult): Promise<void> {
             log(`reflash`)
+            U.assert(pxt.appTarget.compile.useUF2);
+            const f = resp.outfiles[pxtc.BINARY_UF2]
+            const blocks = pxtc.UF2.parseFile(pxt.Util.stringToUint8Array(atob(f)))        
             return this.flashAsync(blocks)
                 .then(() => Promise.delay(100))
                 .then(() => this.reconnectAsync())
