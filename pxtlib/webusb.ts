@@ -174,8 +174,9 @@ namespace pxt.usb {
 
         constructor() {
             (navigator as any).usb.addEventListener('disconnect', (event: any) => {
+                this.log("device disconnected")
                 if (event.device == this.dev) {
-                    this.log("device disconnected")
+                    this.log("clear device")
                     this.clearDev()
                 }
             });
@@ -222,8 +223,6 @@ namespace pxt.usb {
 
         reconnectAsync() {
             this.log("reconnect")
-            if (this.isConnected())
-                return Promise.resolve(); // already connected                
             return this.disconnectAsync()
                 .then(getDeviceAsync)
                 .then(dev => this.connectAsync(dev));
@@ -418,7 +417,7 @@ namespace pxt.usb {
 
     let _hid: HID;
     export function mkPacketIOAsync(): Promise<pxt.packetio.PacketIO> {
-        pxt.log(`packetio: mk webusb`)
+        pxt.log(`packetio: mk webusb io`)
         if (!_hid)
             _hid = new HID();
         return Promise.resolve(_hid);
