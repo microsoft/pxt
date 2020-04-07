@@ -182,6 +182,7 @@ namespace pxt.usb {
             (navigator as any).usb.addEventListener('connect', (event: any) => {
                 const newdev = event.device as USBDevice;
                 if (!this.dev) {
+                    this.log("Device connected")
                     this.connectAsync(newdev).done();
                 }
             });
