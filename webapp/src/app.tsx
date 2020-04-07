@@ -662,6 +662,10 @@ export class ProjectView
                 pxt.debug(`sim: don't restart when entering console view`)
                 return;
             }
+            if (this.state.debugging || this.state.tracing) {
+                pxt.debug(`sim: don't restart when debugging or tracing`)
+                return;
+            }
             this.runSimulator({ debug: !!this.state.debugging, background: true });
         },
         1000, true);
