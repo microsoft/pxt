@@ -2185,15 +2185,15 @@ export class ProjectView
             );
     }
 
-    private async connectAsync() {
-        try {
-            cmds.setWebUSBPaired(true);
-            const wrapper = await pxt.packetio.initAsync();
-            await wrapper.reconnectAsync();
-            core.infoNotification(lf("Device paired! Try downloading now."))
-        } catch (err) {
-            core.errorNotification(lf("Failed to pair the device: {0}", err.message))
-        }
+    private connectAsync() {
+        cmds.setWebUSBPaired(true);
+        return pxt.packetio.initAsync()
+            .then(wrapper => wrapper.reconnectAsync())
+            .then(() => core.infoNotification(lf("Device connected! Try downloading now.")))
+            .catch((err) => {
+                pxt.reportException(err);
+                core.errorNotification(lf("Connection error: {0}", err.message))
+            });
     }
 
     async pairAsync(autoConnect: boolean): Promise<void> {
