@@ -413,20 +413,19 @@ export function renameAsync(h: Header, newName: string) {
 }
 
 export function duplicateAsync(h: Header, text: ScriptText, newName?: string): Promise<Header> {
+    if (!newName)
+        newName = createDuplicateName(h);
     const e = lookup(h.id)
     U.assert(e.header === h)
     const h2 = U.flatClone(h)
     e.header = h2
 
+    const dupText = U.flatClone(text);
     h.id = U.guidGen()
-    let dupText = text;
-    if (newName) {
-        dupText = U.flatClone(text);
-        h.name = newName;
-        const cfg = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-        cfg.name = h.name;
-        dupText[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
-    }
+    h.name = newName;
+    const cfg = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+    cfg.name = h.name;
+    dupText[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
 
     delete h._rev;
     delete (h as any)._id;
