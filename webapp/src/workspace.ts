@@ -423,15 +423,16 @@ export function duplicateAsync(h: Header, text: ScriptText, newName?: string): P
     if (newName) {
         dupText = U.flatClone(text);
         h.name = newName;
-        const cfg = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig
-        cfg.name = h.name
+        const cfg = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+        cfg.name = h.name;
         dupText[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
-    delete h._rev
-    delete (h as any)._id
-    delete h.githubCurrent
-    delete h.githubId
-    delete h.githubTag
+
+    delete h._rev;
+    delete (h as any)._id;
+    delete h.githubCurrent;
+    delete h.githubId;
+    delete h.githubTag;
 
     return importAsync(h, dupText)
         .then(() => h)

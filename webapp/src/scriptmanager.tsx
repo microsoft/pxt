@@ -178,7 +178,8 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             size: "tiny"
         };
         return core.promptAsync(opts).then(res => {
-            if (res === null) return Promise.resolve(false); // null means cancelled
+            if (res === null)
+                return false; // null means cancelled
             return workspace.getTextAsync(header.id)
                 .then(text => workspace.duplicateAsync(header, text, res))
                 .then(clonedHeader => {
