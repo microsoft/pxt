@@ -530,7 +530,9 @@ namespace pxt.HF2 {
 
     }
 
-    pxt.packetio.mkPacketIOWrapper = io => new Wrapper(io);
+    export function mkPacketIOWrapper(io: pxt.packetio.PacketIO): pxt.packetio.PacketIOWrapper {
+        return new Wrapper(io);
+    }
 
     export type ReadAsync = (addr: number, len: number) => Promise<ArrayLike<number>>
     function readChecksumBlockAsync(readWordsAsync: ReadAsync): Promise<pxtc.ChecksumBlock> {

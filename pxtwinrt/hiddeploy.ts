@@ -4,7 +4,7 @@
 type WHID = Windows.Devices.HumanInterfaceDevice.HidDevice;
 
 namespace pxt.winrt {
-    export class WindowsRuntimeIO implements pxt.HF2.PacketIO {
+    export class WindowsRuntimeIO implements pxt.packetio.PacketIO {
         onConnectionChanged = () => { };
         onData = (v: Uint8Array) => { };
         onEvent = (v: Uint8Array) => { };
@@ -135,7 +135,7 @@ namespace pxt.winrt {
     }
 
     export let packetIO: WindowsRuntimeIO = undefined;
-    export function mkPacketIOAsync(): Promise<pxt.HF2.PacketIO> {
+    export function mkPacketIOAsync(): Promise<pxt.packetio.PacketIO> {
         pxt.U.assert(!packetIO);
         packetIO = new WindowsRuntimeIO();
         return packetIO.initAsync()

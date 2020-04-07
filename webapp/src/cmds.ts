@@ -225,6 +225,10 @@ function applyExtensionResult() {
     const res = extensionResult;
     if (!res) return;
 
+    if (res.mkPacketIOWrapper) {
+        pxt.debug(`\tadded mkPacketIOWrapper`)
+        pxt.packetio.mkPacketIOWrapper = res.mkPacketIOWrapper;
+    }
     if (res.deployAsync) {
         pxt.debug(`\tadded custom deploy core async`);
         pxt.commands.deployCoreAsync = res.deployAsync;
@@ -264,6 +268,7 @@ export function init(): void {
         pxt.debug('app target changed')
         init()
     }
+    pxt.packetio.mkPacketIOWrapper = pxt.HF2.mkPacketIOWrapper;
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
     pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
     pxt.commands.showUploadInstructionsAsync = showUploadInstructionsAsync;
