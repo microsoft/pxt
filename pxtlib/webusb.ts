@@ -173,8 +173,8 @@ namespace pxt.usb {
         onEvent = (v: Uint8Array) => { };
 
         constructor() {
-            this.handleUSBConnected.bind(this);
-            this.handleUSBDisconnected.bind(this);
+            this.handleUSBConnected = this.handleUSBConnected.bind(this);
+            this.handleUSBDisconnected = this.handleUSBDisconnected.bind(this);
 
             (navigator as any).usb.addEventListener('disconnect', this.handleUSBDisconnected);
             (navigator as any).usb.addEventListener('connect', this.handleUSBConnected);
@@ -191,7 +191,7 @@ namespace pxt.usb {
             const newdev = event.device as USBDevice;
             if (!this.dev) {
                 this.log("device connected")
-                this.connectAsync(newdev).done();
+                this.connectAsync(newdev);
             }
         }
 
@@ -239,7 +239,7 @@ namespace pxt.usb {
         }
 
         private connectAsync(dev: USBDevice) {
-            this.log("got device: " + dev.manufacturerName + " " + dev.productName)
+            this.log("connect device: " + dev.manufacturerName + " " + dev.productName)
             this.dev = dev;
             return this.initAsync()
         }
@@ -333,7 +333,7 @@ namespace pxt.usb {
                 .then(final)
         }
 
-        initAsync() {
+        initAsync(): Promise<void> {
             if (!this.dev)
                 return Promise.reject(new Error("Disconnected"))
             let dev = this.dev
