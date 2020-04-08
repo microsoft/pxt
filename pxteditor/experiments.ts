@@ -160,8 +160,8 @@ namespace pxt.editor.experiments {
             },
             {
                 id: "accessibleBlocks",
-                name: lf("Block Keyboard Accessibility"),
-                description: lf("Use keyboard controls to move and modify blocks.")
+                name: lf("Accessible Blocks"),
+                description: lf("Use the WASD keys to move and modify blocks.")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }

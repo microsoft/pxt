@@ -106,7 +106,11 @@ export interface ToolboxState {
     searchBlocks?: pxtc.service.SearchInfo[]; // block ids
 
     hasError?: boolean;
+
+    shouldAnimate?: boolean;
 }
+
+const MONACO_EDITOR_NAME: string = "monaco";
 
 export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
@@ -122,7 +126,8 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
             categories: [],
             visible: false,
             loading: false,
-            showAdvanced: false
+            showAdvanced: false,
+            shouldAnimate: !Util.getToolboxAnimation()
         }
 
         this.setSelection = this.setSelection.bind(this);
@@ -254,6 +259,18 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         parent.moveFocusToFlyout();
     }
 
+    componentWillReceiveProps(props: ToolboxProps) {
+        // if leaving monaco, mark toolbox animation as shown. also
+        // handles full screen sim, where we hide the toolbox via css
+        // without re-rendering, which will trigger the animation again
+        if ((this.props.editorname == MONACO_EDITOR_NAME && props.editorname != MONACO_EDITOR_NAME)
+            || (props.editorname == MONACO_EDITOR_NAME && props.parent.parent.state.fullscreen)
+            && this.state.shouldAnimate) {
+            Util.setToolboxAnimation();
+            this.setState({ shouldAnimate: false });
+        }
+    }
+
     componentDidUpdate(prevProps: ToolboxProps, prevState: ToolboxState) {
         if (prevState.visible != this.state.visible
             || prevState.loading != this.state.loading
@@ -277,6 +294,12 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
         // Update error state
         this.setState({ hasError: true });
+    }
+
+    componentWillUnmount() {
+        if (this.props.editorname == MONACO_EDITOR_NAME) {
+            Util.setToolboxAnimation();
+        }
     }
 
     recoverToolbox() {
@@ -445,7 +468,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                     {hasSearch ? <CategoryItem key={"search"} toolbox={this} index={index++} selected={selectedItem == "search"} treeRow={searchTreeRow} onCategoryClick={this.setSelection} /> : undefined}
                     {hasTopBlocks ? <CategoryItem key={"topblocks"} toolbox={this} selected={selectedItem == "topblocks"} treeRow={topBlocksTreeRow} onCategoryClick={this.setSelection} /> : undefined}
                     {nonAdvancedCategories.map((treeRow) => (
-                        <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection} topRowIndex={topRowIndex++}>
+                        <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection} topRowIndex={topRowIndex++} shouldAnimate={this.state.shouldAnimate}>
                             {treeRow.subcategories ? treeRow.subcategories.map((subTreeRow) => (
                                 <CategoryItem key={subTreeRow.nameid + subTreeRow.subns} index={index++} toolbox={this} selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)} treeRow={subTreeRow} onCategoryClick={this.setSelection} />
                             )) : undefined}
@@ -630,11 +653,13 @@ export interface TreeRowProps {
     selected?: boolean;
     isRtl?: boolean;
     topRowIndex?: number;
+    shouldAnimate?: boolean;
 }
 
 export class TreeRow extends data.Component<TreeRowProps, {}> {
 
     private treeRow: HTMLElement;
+    private baseAnimationDelay: number = 1;
     private animationDelay: number = 0.15;
 
     constructor(props: TreeRowProps) {
@@ -713,8 +738,9 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
             } else {
                 treeRowStyle.borderLeft = border;
             }
-            if (topRowIndex) {
-                treeRowStyle.animationDelay = `${topRowIndex * this.animationDelay}s`;
+            if (topRowIndex && this.props.shouldAnimate) {
+                treeRowStyle.animationDelay = `${(topRowIndex * this.animationDelay) + this.baseAnimationDelay}s`;
+                treeRowClass += ' blocklyTreeAnimate';
             }
         }
 

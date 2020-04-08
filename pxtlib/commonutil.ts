@@ -233,6 +233,14 @@ namespace ts.pxtc.Util {
         localStorage.setItem("editorlangpref", lang);
     }
 
+    export function getToolboxAnimation(): string {
+        return localStorage.getItem("toolboxanimation");
+    }
+
+    export function setToolboxAnimation(): void {
+        localStorage.setItem("toolboxanimation", "1");
+    }
+
     // small deep equals for primitives, objects, arrays. returns error message
     export function deq(a: any, b: any): string {
         if (a === b) return null;
