@@ -2220,7 +2220,7 @@ export class ProjectView
             res = await pxt.commands.webUsbPairDialogAsync(core.confirmAsync);
         if (res) {
             pxt.usb.pairAsync()
-            this.connectAsync();
+                .then(() => this.connectAsync());
         }
     }
 
