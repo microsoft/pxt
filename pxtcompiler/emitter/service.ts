@@ -1207,6 +1207,33 @@ namespace ts.pxtc.service {
                 return Object.keys(tooltipOrBlock).map(k => (<pxt.Map<string>>tooltipOrBlock)[k]).join(" ");
             };
 
+            // Fill default parameters in block string
+            const computeBlockString = (symbol: SymbolInfo): string => {
+                let block = symbol.attributes.block;
+                if (symbol.attributes?.paramDefl) {
+                    const paramDefl = symbol.attributes.paramDefl;
+                    for (let param in paramDefl) {
+                        if (block.indexOf(`%${param}`) >= 0) {
+                            block = block.replace(`%${param}`, paramDefl[param]);
+                        } else if (!parseInt(paramDefl[param])) {
+                            // If default param name is not found, and value is not a number
+                            // append to the end of the block string
+                            block = block + " " + paramDefl[param];
+                        }
+                    }
+                }
+                return block;
+            }
+
+            // Join parameter jsdoc into a string
+            const computeParameterString = (symbol: SymbolInfo): string => {
+                const paramHelp = symbol.attributes?.paramHelp;
+                if (paramHelp) {
+                    Object.keys(paramHelp).map(p => paramHelp[p]).join(" ");
+                }
+                return "";
+            }
+
             if (!builtinItems) {
                 builtinItems = [];
                 blockDefinitions = pxt.blocks.blockDefinitions();
@@ -1272,10 +1299,11 @@ namespace ts.pxtc.service {
                         qName: s.qName,
                         name: s.name,
                         namespace: s.namespace,
-                        block: s.attributes.block,
+                        block: computeBlockString(s),
+                        params: computeParameterString(s),
                         jsdoc: s.attributes.jsDoc,
                         localizedCategory: tbSubset && typeof tbSubset[s.attributes.blockId] === "string"
-                            ? tbSubset[s.attributes.blockId] as string : undefined
+                            ? tbSubset[s.attributes.blockId] as string : undefined,
                     };
                     return mappedSi;
                 });
@@ -1308,6 +1336,7 @@ namespace ts.pxtc.service {
                         { name: 'namespace', weight: 0.1 },
                         { name: 'localizedCategory', weight: 0.1 },
                         { name: 'block', weight: 0.4375 },
+                        { name: 'params', weight: 0.0625 },
                         { name: 'jsdoc', weight: 0.0625 }
                     ],
                     sortFn: function (a: any, b: any): number {
