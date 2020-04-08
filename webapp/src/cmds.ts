@@ -159,30 +159,35 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
     function deployAsync(): Promise<void> {
         return pxt.packetio.initAsync(isRetry)
             .then(dev => dev.reflashAsync(resp)
+                .then(() => dev.disconnectAsync())
                 .then(() => dev.reconnectAsync()))
             .catch((e) => {
                 pxt.reportException(e)
                 if (e.type === "repairbootloader") {
                     return pairBootloaderAsync()
                         .then(() => hidDeployCoreAsync(resp))
-                }
-                else if (e.type === "devicenotfound") {
+                } else if (e.message === "timeout") {
+                    pxt.tickEvent("hid.flash.timeout");
+                } else if (e.type === "devicenotfound") {
                     pxt.tickEvent("hid.flash.devicenotfound");
                     const troubleshootDoc = pxt.appTarget?.appTheme?.appFlashingTroubleshoot;
                     if (d)
                         return d.reportDeviceNotFoundAsync(troubleshootDoc, resp);
-                    else {
-                        return Promise.resolve();
-                    }
                 } else {
                     pxt.tickEvent("hid.flash.error");
-                    if (!isRetry) {
-                        log(`retry deploy`);
-                        isRetry = true;
-                        return deployAsync();
-                    }
-                    return pxt.commands.saveOnlyAsync(resp);
+                    if (d) d.reportError(e.message);
                 }
+
+                // disconnect and try again
+                if (!isRetry) {
+                    log(`retry deploy`);
+                    isRetry = true;
+                    return deployAsync();
+                }
+
+                // default, save file
+                core.errorNotification(lf("Oops, something went wrong while downloading."))
+                return pxt.commands.saveOnlyAsync(resp);
             });
     }
 }
