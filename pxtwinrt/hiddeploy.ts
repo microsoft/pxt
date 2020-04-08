@@ -5,6 +5,7 @@ type WHID = Windows.Devices.HumanInterfaceDevice.HidDevice;
 
 namespace pxt.winrt {
     export class WindowsRuntimeIO implements pxt.packetio.PacketIO {
+        onDeviceConnectionChanged = (connect: boolean) => { };
         onConnectionChanged = () => { };
         onData = (v: Uint8Array) => { };
         onEvent = (v: Uint8Array) => { };

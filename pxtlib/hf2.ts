@@ -176,6 +176,9 @@ namespace pxt.HF2 {
         private cmdSeq = U.randomUint32();
         constructor(public readonly io: pxt.packetio.PacketIO) {
             let frames: Uint8Array[] = []
+            io.onDeviceConnectionChanged = connect => 
+                this.disconnectAsync()
+                    .then(() => connect && this.reconnectAsync());
             io.onSerial = (b, e) => this.onSerial(b, e)
             io.onData = buf => {
                 let tp = buf[0] & HF2_FLAG_MASK

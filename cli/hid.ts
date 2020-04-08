@@ -186,6 +186,7 @@ export class HidIO implements pxt.packetio.PacketIO {
     dev: any;
     private path: string;
 
+    onDeviceConnectionChanged = (connect: boolean) => { };
     onConnectionChanged = () => { };
     onData = (v: Uint8Array) => { };
     onEvent = (v: Uint8Array) => { };

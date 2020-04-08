@@ -18,6 +18,7 @@ namespace pxt.packetio {
 
     export interface PacketIO {
         sendPacketAsync(pkt: Uint8Array): Promise<void>;
+        onDeviceConnectionChanged: (connect: boolean) => void;
         onConnectionChanged: () => void;
         onData: (v: Uint8Array) => void;
         onError: (e: Error) => void;

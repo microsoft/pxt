@@ -167,6 +167,7 @@ namespace pxt.usb {
         epIn: USBEndpoint;
         epOut: USBEndpoint;
         readLoopStarted = false;
+        onDeviceConnectionChanged = (connect: boolean) => { };
         onConnectionChanged = () => { };
         onData = (v: Uint8Array) => { };
         onError = (e: Error) => { };
@@ -190,14 +191,17 @@ namespace pxt.usb {
             this.log("device disconnected")
             if (event.device == this.dev) {
                 this.log("clear device")
-                this.clearDev()
+                this.clearDev();
+                if (this.onDeviceConnectionChanged)
+                    this.onDeviceConnectionChanged(false);
             }
         }
         private handleUSBConnected(event: any) {
             const newdev = event.device as USBDevice;
             if (!this.dev) {
                 this.log("device connected")
-                this.connectAsync(newdev);
+                if (this.onDeviceConnectionChanged)
+                    this.onDeviceConnectionChanged(true);
             }
         }
 
