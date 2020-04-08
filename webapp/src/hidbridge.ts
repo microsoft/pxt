@@ -123,7 +123,7 @@ class BridgeIO implements pxt.packetio.PacketIO {
             path: this.dev.path
         }).finally(() => {
             if (this.onConnectionChanged)
-                this.onConnectionChanged;
+                this.onConnectionChanged();
         })
     }
 
