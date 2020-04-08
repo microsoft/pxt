@@ -184,7 +184,7 @@ namespace pxt.usb {
         disposeAsync(): Promise<void> {
             (navigator as any).usb.removeEventListener('disconnect', this.handleUSBDisconnected);
             (navigator as any).usb.removeEventListener('connect', this.handleUSBConnected);
-            return Promise.resolve();            
+            return Promise.resolve();
         }
 
         private handleUSBDisconnected(event: any) {

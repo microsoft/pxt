@@ -176,7 +176,7 @@ namespace pxt.HF2 {
         private cmdSeq = U.randomUint32();
         constructor(public readonly io: pxt.packetio.PacketIO) {
             let frames: Uint8Array[] = []
-            io.onDeviceConnectionChanged = connect => 
+            io.onDeviceConnectionChanged = connect =>
                 this.disconnectAsync()
                     .then(() => connect && this.reconnectAsync());
             io.onSerial = (b, e) => this.onSerial(b, e)
@@ -407,7 +407,7 @@ namespace pxt.HF2 {
             log(`reflash`)
             U.assert(pxt.appTarget.compile.useUF2);
             const f = resp.outfiles[pxtc.BINARY_UF2]
-            const blocks = pxtc.UF2.parseFile(pxt.Util.stringToUint8Array(atob(f)))        
+            const blocks = pxtc.UF2.parseFile(pxt.Util.stringToUint8Array(atob(f)))
             return this.io.reconnectAsync()
                 .then(() => this.flashAsync(blocks))
                 .then(() => Promise.delay(100))
