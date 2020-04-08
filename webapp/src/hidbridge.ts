@@ -13,7 +13,6 @@ interface HidDevice {
     release: number; // 0x4201
 }
 
-
 export class HIDError extends Error {
     constructor(msg: string) {
         super(msg)
