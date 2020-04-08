@@ -147,27 +147,43 @@ function nativeHostSaveCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 }
 
 export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.DeployOptions): Promise<void> {
-    pxt.tickEvent(`hid.deploy`);    
+    pxt.tickEvent(`hid.deploy`);
     log(`hid deploy`)
     // error message handled in browser download
     if (!resp.success)
         return browserDownloadDeployCoreAsync(resp);
     core.infoNotification(lf("Downloading..."));
-    return pxt.packetio.initAsync()
-        .then(dev => dev.reflashAsync(resp))
-        .catch((e) => {
-            if (e.type === "repairbootloader") {
-                return pairBootloaderAsync()
-                    .then(() => hidDeployCoreAsync(resp))
-            }
-            if (e.type === "devicenotfound" && d.reportDeviceNotFoundAsync) {
-                pxt.tickEvent("hid.flash.devicenotfound");
-                const troubleshootDoc = pxt.appTarget?.appTheme?.appFlashingTroubleshoot;
-                return d.reportDeviceNotFoundAsync(troubleshootDoc, resp);
-            } else {
-                return pxt.commands.saveOnlyAsync(resp);
-            }
-        });
+    let isRetry = false;
+    return deployAsync();
+
+    function deployAsync(): Promise<void> {
+        return pxt.packetio.initAsync(isRetry)
+            .then(dev => dev.reflashAsync(resp))
+            .catch((e) => {
+                pxt.reportException(e)
+                if (e.type === "repairbootloader") {
+                    return pairBootloaderAsync()
+                        .then(() => hidDeployCoreAsync(resp))
+                }
+                else if (e.type === "devicenotfound") {
+                    pxt.tickEvent("hid.flash.devicenotfound");
+                    const troubleshootDoc = pxt.appTarget?.appTheme?.appFlashingTroubleshoot;
+                    if (d)
+                        return d.reportDeviceNotFoundAsync(troubleshootDoc, resp);
+                    else {
+                        return Promise.resolve();
+                    }
+                } else {
+                    pxt.tickEvent("hid.flash.error");
+                    if (!isRetry) {
+                        log(`retry deploy`);
+                        isRetry = true;
+                        return deployAsync();
+                    }
+                    return pxt.commands.saveOnlyAsync(resp);
+                }
+            });
+    }
 }
 
 function pairBootloaderAsync(): Promise<void> {
@@ -359,7 +375,7 @@ export function init(): void {
 export function disconnectAsync(): Promise<void> {
     return pxt.packetio.disconnectAsync()
         .finally(() => {
-            setWebUSBPaired(false);            
+            setWebUSBPaired(false);
         })
 }
 
@@ -371,7 +387,7 @@ export function setWebUSBPaired(enabled: boolean) {
 
 function handlePacketIOApi(r: string) {
     const p = data.stripProtocol(r);
-    switch(p) {
+    switch (p) {
         case "connected":
             return pxt.packetio.isConnected();
         case "icon":
