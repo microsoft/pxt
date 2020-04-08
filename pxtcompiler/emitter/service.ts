@@ -1209,20 +1209,32 @@ namespace ts.pxtc.service {
 
             // Fill default parameters in block string
             const computeBlockString = (symbol: SymbolInfo): string => {
-                let block = symbol.attributes.block;
-                if (symbol.attributes?.paramDefl) {
-                    const paramDefl = symbol.attributes.paramDefl;
-                    for (let param in paramDefl) {
-                        if (block.indexOf(`%${param}`) >= 0) {
-                            block = block.replace(`%${param}`, paramDefl[param]);
-                        } else if (!parseInt(paramDefl[param])) {
-                            // If default param name is not found, and value is not a number
-                            // append to the end of the block string
-                            block = block + " " + paramDefl[param];
+                if (symbol.attributes?.paramDefl && symbol.attributes?._def) {
+                    let block = [];
+                    const blockDef = symbol.attributes._def;
+                    const paramDefl = Object.assign({}, symbol.attributes.paramDefl);
+
+                    // Construct block string from parsed blockdef
+                    for (let part of blockDef.parts) {
+                        switch (part.kind) {
+                            case "label":
+                                block.push(part.text);
+                                break;
+                            case "param":
+                                block.push(paramDefl[part.name] || part.name);
+                                delete paramDefl[part.name];
+                                break;
                         }
                     }
+
+                    // Append values we don't find to the end of the string
+                    for (let param in paramDefl) {
+                        block.push(paramDefl[param]);
+                    }
+
+                    return block.join(" ");
                 }
-                return block;
+                return symbol.attributes.block;
             }
 
             // Join parameter jsdoc into a string
