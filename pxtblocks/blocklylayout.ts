@@ -138,7 +138,8 @@ namespace pxt.blocks.layout {
 
     export function setCollapsedAll(ws: Blockly.WorkspaceSvg, collapsed: boolean) {
         ws.getTopBlocks(false)
-            .forEach(b => { if (b.isEnabled()) b.setCollapsed(collapsed) });
+            .filter(b => b.isEnabled())
+            .forEach(b => b.setCollapsed(collapsed));
     }
 
     export function flow(ws: Blockly.WorkspaceSvg, opts?: FlowOptions) {
