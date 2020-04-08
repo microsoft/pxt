@@ -160,7 +160,9 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
         return pxt.packetio.initAsync(isRetry)
             .then(dev => dev.reflashAsync(resp)
                 .then(() => dev.disconnectAsync())
-                .then(() => dev.reconnectAsync()))
+                .then(() => dev.reconnectAsync())
+            )
+            .timeout(25000, "timeout")
             .catch((e) => {
                 pxt.reportException(e)
                 if (e.type === "repairbootloader") {
