@@ -205,14 +205,15 @@ export class ProjectView
     }
 
     shouldShowHomeScreen() {
-        const hash = parseHash();
+        // TODO: check if it is safe to just call global hash here? that is set in domcontentloaded
+        const internalHash = parseHash();
         const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
         // Only show the start screen if there are no initial projects requested
         // (e.g. from the URL hash or from WinRT activation arguments)
         const skipStartScreen = pxt.appTarget.appTheme.allowParentController
             || pxt.shell.isControllerMode()
             || /^#editor/.test(window.location.hash);
-        return !isSandbox && !skipStartScreen && !isProjectRelatedHash(hash);
+        return !isSandbox && !skipStartScreen && !isProjectRelatedHash(internalHash);
     }
 
     updateVisibility() {
@@ -869,9 +870,9 @@ export class ProjectView
                     this.editor.setViewState(this.state.editorPosition);
                     this.setState({ editorPosition: undefined })
                 } else {
-                    const e = this.settings.fileHistory.find(e => e.id == this.state.header.id && e.name == this.editorFile.getName())
-                    if (e)
-                        this.editor.setViewState(e.pos)
+                    const fileHistoryEntry = this.settings.fileHistory.find(e => e.id == this.state.header.id && e.name == this.editorFile.getName())
+                    if (fileHistoryEntry)
+                        this.editor.setViewState(fileHistoryEntry.pos)
                 }
 
                 container.SideDocs.notify({
@@ -1218,12 +1219,12 @@ export class ProjectView
                 if (pkg.mainPkg.config.preferredEditor)
                     h.editor = pkg.mainPkg.config.preferredEditor
                 let file = main.getMainFile();
-                const e = h.editor != pxt.BLOCKS_PROJECT_NAME && this.settings.fileHistory.filter(e => e.id == h.id)[0]
-                if (e)
-                    file = main.lookupFile(e.name) || file
+                const fileHistory = h.editor != pxt.BLOCKS_PROJECT_NAME && this.settings.fileHistory.filter(e => e.id == h.id)[0]
+                if (fileHistory)
+                    file = main.lookupFile(fileHistory.name) || file
 
                 // no history entry, and there is a virtual file for the current file in the language recorded in the header
-                if ((!e && h.editor && file.getVirtualFileName(h.editor)))
+                if ((!fileHistory && h.editor && file.getVirtualFileName(h.editor)))
                     file = main.lookupFile("this/" + file.getVirtualFileName(h.editor)) || file;
 
                 if (pxt.editor.isBlocks(file) && !file.content) {
@@ -1250,9 +1251,9 @@ export class ProjectView
                 }
 
                 pkg.mainPkg.getCompileOptionsAsync()
-                    .catch(e => {
-                        if (e instanceof pxt.cpp.PkgConflictError) {
-                            const confl = e as pxt.cpp.PkgConflictError
+                    .catch(err => {
+                        if (err instanceof pxt.cpp.PkgConflictError) {
+                            const confl = err as pxt.cpp.PkgConflictError
                             const remove = (lib: pxt.Package) => ({
                                 label: lf("Remove {0}", lib.id),
                                 class: "pink", // don't make them red and scary
@@ -1391,20 +1392,20 @@ export class ProjectView
 
     hexFileImporters: pxt.editor.IHexFileImporter[] = [{
         id: "default",
-        canImport: data => data.meta.cloudId == "ks/" + pxt.appTarget.id || data.meta.cloudId == pxt.CLOUD_ID + pxt.appTarget.id // match on targetid
-            || (Util.startsWith(data.meta.cloudId, pxt.CLOUD_ID + pxt.appTarget.id)) // trying to load white-label file into main target
+        canImport: hexData => hexData.meta.cloudId == "ks/" + pxt.appTarget.id || hexData.meta.cloudId == pxt.CLOUD_ID + pxt.appTarget.id // match on targetid
+            || (Util.startsWith(hexData.meta.cloudId, pxt.CLOUD_ID + pxt.appTarget.id)) // trying to load white-label file into main target
         ,
-        importAsync: (project, data) => {
+        importAsync: (project, hexData) => {
             let h: pxt.workspace.InstallHeader = {
                 target: pxt.appTarget.id,
-                targetVersion: data.meta.targetVersions ? data.meta.targetVersions.target : undefined,
-                editor: data.meta.editor,
-                name: data.meta.name,
+                targetVersion: hexData.meta.targetVersions ? hexData.meta.targetVersions.target : undefined,
+                editor: hexData.meta.editor,
+                name: hexData.meta.name,
                 meta: {},
                 pubId: "",
                 pubCurrent: false
             };
-            const files = JSON.parse(data.source) as pxt.Map<string>;
+            const files = JSON.parse(hexData.source) as pxt.Map<string>;
             // we cannot load the workspace until we've loaded the project
             return workspace.installAsync(h, files)
                 .then(hd => this.loadHeaderAsync(hd, null));
@@ -1454,8 +1455,8 @@ export class ProjectView
             Promise.resolve(pxt.U.uint8ArrayToString(buf)) :
             pxt.lzmaDecompressAsync(buf))
             .then(contents => {
-                let data = JSON.parse(contents) as pxt.cpp.HexFile;
-                this.importHex(data, options);
+                let hexData = JSON.parse(contents) as pxt.cpp.HexFile;
+                this.importHex(hexData, options);
             }).catch(e => {
                 core.warningNotification(lf("Sorry, we could not import this project."))
                 this.openHome();
@@ -1465,7 +1466,7 @@ export class ProjectView
     importHexFile(file: File, options?: pxt.editor.ImportFileOptions) {
         if (!file) return;
         pxt.cpp.unpackSourceFromHexFileAsync(file)
-            .then(data => this.importHex(data, options))
+            .then(hexData => this.importHex(hexData, options))
             .catch(e => {
                 pxt.reportException(e);
                 core.warningNotification(lf("Sorry, we could not recognize this file."))
@@ -1511,7 +1512,7 @@ export class ProjectView
     importPNGBuffer(buf: ArrayBuffer) {
         screenshot.decodeBlobAsync("data:image/png;base64," +
             btoa(pxt.Util.uint8ArrayToString(new Uint8Array(buf))))
-            .then(buf => this.importProjectCoreAsync(buf));
+            .then(hexbuf => this.importProjectCoreAsync(hexbuf));
     }
 
     importAssetFile(file: File) {
@@ -1523,10 +1524,10 @@ export class ProjectView
             .done()
     }
 
-    importHex(data: pxt.cpp.HexFile, options?: pxt.editor.ImportFileOptions) {
-        if (!data || !data.meta) {
-            if (data && (data as any)[pxt.CONFIG_NAME]) {
-                data = cloudsync.reconstructMeta(data as any)
+    importHex(hexData: pxt.cpp.HexFile, options?: pxt.editor.ImportFileOptions) {
+        if (!hexData || !hexData.meta) {
+            if (hexData && (hexData as any)[pxt.CONFIG_NAME]) {
+                hexData = cloudsync.reconstructMeta(hexData as any)
             } else {
                 core.warningNotification(lf("Sorry, we could not recognize this file."))
                 if (options && options.openHomeIfFailed) this.openHome();
@@ -1534,13 +1535,13 @@ export class ProjectView
             }
         }
 
-        if (typeof data.source == "object") {
-            (data as any).source = JSON.stringify(data.source)
+        if (typeof hexData.source == "object") {
+            (hexData as any).source = JSON.stringify(hexData.source)
         }
 
         // intercept newer files early
-        if (this.hexFileImporters.some(fi => fi.id == "default" && fi.canImport(data))) {
-            const checkAsync = this.tryCheckTargetVersionAsync(data.meta.targetVersions && data.meta.targetVersions.target);
+        if (this.hexFileImporters.some(fi => fi.id == "default" && fi.canImport(hexData))) {
+            const checkAsync = this.tryCheckTargetVersionAsync(hexData.meta.targetVersions && hexData.meta.targetVersions.target);
             if (checkAsync) {
                 checkAsync.done(() => {
                     if (options && options.openHomeIfFailed) this.newProject();
@@ -1551,16 +1552,16 @@ export class ProjectView
 
         if (options && options.extension) {
             pxt.tickEvent("import.extension");
-            const files = ts.pxtc.Util.jsonTryParse(data.source);
+            const files = ts.pxtc.Util.jsonTryParse(hexData.source);
             if (files) {
-                const n = data.meta.name;
-                const fn = `${data.meta.name}.json`;
+                const n = hexData.meta.name;
+                const fn = `${hexData.meta.name}.json`;
                 // insert file into package
                 const mpkg = pkg.mainEditorPkg();
                 if (mpkg) {
                     pxt.debug(`adding ${fn} to package`);
                     // save file
-                    mpkg.setContentAsync(fn, data.source)
+                    mpkg.setContentAsync(fn, hexData.source)
                         .then(() => mpkg.updateConfigAsync(cfg => {
                             if (!cfg.dependencies)
                                 cfg.dependencies = {};
@@ -1573,13 +1574,13 @@ export class ProjectView
             return;
         }
 
-        const importer = this.hexFileImporters.filter(fi => fi.canImport(data))[0];
+        const importer = this.hexFileImporters.filter(fi => fi.canImport(hexData))[0];
         if (importer) {
             pxt.tickEvent("import", { id: importer.id });
             core.hideDialog();
             core.showLoading("importhex", lf("loading project..."))
             pxt.editor.initEditorExtensionsAsync()
-                .then(() => importer.importAsync(this, data)
+                .then(() => importer.importAsync(this, hexData)
                     .done(() => core.hideLoading("importhex"), e => {
                         pxt.reportException(e, { importer: importer.id });
                         core.hideLoading("importhex");
@@ -3063,9 +3064,9 @@ export class ProjectView
             .then(url => {
                 if (url === "NEW") {
                     dialogs.showCreateGithubRepoDialogAsync()
-                        .then(url => {
-                            if (url) {
-                                importGithubProject(url);
+                        .then(repoUrl => {
+                            if (repoUrl) {
+                                importGithubProject(repoUrl);
                             }
                         })
                 } else if (url) {
@@ -3264,13 +3265,13 @@ export class ProjectView
             return md;
         }
 
-        function resolveMarkdown(ghid: pxt.github.ParsedRepo, files: pxt.Map<string>, fileName?: string): string {
+        function resolveMarkdown( parsedRepo: pxt.github.ParsedRepo, files: pxt.Map<string>, fileName?: string): string {
             const pxtJson = pxt.Package.parseAndValidConfig(files["pxt.json"]);
             // if there is any .ts file in the tutorial repo,
             // add as a dependency itself
             if (pxtJson.files.find(f => /\.ts$/.test(f))) {
                 dependencies = {}
-                dependencies[ghid.project] = pxt.github.toGithubDependencyPath(ghid);
+                dependencies[parsedRepo.project] = pxt.github.toGithubDependencyPath( parsedRepo);
             }
             else {// just use dependencies from the tutorial
                 pxt.Util.jsonMergeFrom(dependencies, pxtJson.dependencies);
@@ -3278,7 +3279,7 @@ export class ProjectView
             filename = pxtJson.name || lf("Untitled");
             autoChooseBoard = false;
             // if non-default language, find localized file if any
-            const mfn = (fileName || ghid.fileName || "README") + ".md";
+            const mfn = (fileName ||  parsedRepo.fileName || "README") + ".md";
 
             let md: string = undefined;
             const [initialLang, baseLang] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
@@ -3351,15 +3352,15 @@ export class ProjectView
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
 
         // clear tutorial field
-        const tutorial = this.state.header.tutorial;
-        if (tutorial) {
+        const headerTut = this.state.header.tutorial;
+        if (headerTut) {
             // don't keep track of completion for microtutorials
             if (this.state.tutorialOptions && this.state.tutorialOptions.tutorialRecipe)
                 this.state.header.tutorialCompleted = undefined;
             else
                 this.state.header.tutorialCompleted = {
-                    id: tutorial.tutorial,
-                    steps: tutorial.tutorialStepInfo.length
+                    id: headerTut.tutorial,
+                    steps: headerTut.tutorialStepInfo.length
                 }
             this.state.header.tutorial = undefined;
         }
@@ -3392,8 +3393,7 @@ export class ProjectView
     exitTutorial(removeProject?: boolean) {
         pxt.tickEvent("tutorial.exit");
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
-        const tutorial = this.state.header && this.state.header.tutorial;
-        const stayInEditor = tutorial && !!tutorial.tutorialRecipe;
+        const stayInEditor = !!this.state.header?.tutorial?.tutorialRecipe;
 
         this.exitTutorialAsync(removeProject)
             .finally(() => {
@@ -3789,12 +3789,12 @@ function initSerial() {
 
     if (hidbridge.shouldUse() || pxt.usb.isEnabled) {
         hidbridge.configureHidSerial((buf, isErr) => {
-            let data = Util.fromUTF8(Util.uint8ArrayToString(buf))
+            let bufData = Util.fromUTF8(Util.uint8ArrayToString(buf))
             //pxt.debug('serial: ' + data)
             window.postMessage({
                 type: 'serial',
                 id: 'n/a', // TODO
-                data
+                data: bufData
             }, "*")
         });
         return;
@@ -3890,21 +3890,21 @@ function parseHash(): { cmd: string; arg: string } {
     return { cmd: '', arg: '' };
 }
 
-function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boolean {
-    if (!hash) return false;
+function handleHash(urlHash: { cmd: string; arg: string }, loading: boolean): boolean {
+    if (!urlHash) return false;
     let editor = theEditor;
     if (!editor) return false;
 
-    if (isProjectRelatedHash(hash)) editor.setState({ home: false });
+    if (isProjectRelatedHash(urlHash)) editor.setState({ home: false });
 
-    switch (hash.cmd) {
+    switch (urlHash.cmd) {
         case "doc":
             pxt.tickEvent("hash.doc")
-            editor.setSideDoc(hash.arg, editor.editor === editor.blocksEditor);
+            editor.setSideDoc(urlHash.arg, editor.editor === editor.blocksEditor);
             break;
         case "follow":
             pxt.tickEvent("hash.follow")
-            editor.newEmptyProject(undefined, hash.arg);
+            editor.newEmptyProject(undefined, urlHash.arg);
             return true;
         case "newproject": // shortcut to create a new blocks proj
             pxt.tickEvent("hash.newproject")
@@ -3923,7 +3923,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             return true;
         case "testproject": {// create new project that references the given extension
             pxt.tickEvent("hash.testproject");
-            const hid = hash.arg;
+            const hid = urlHash.arg;
             const header = workspace.getHeader(hid);
             if (header) {
                 const existing = workspace.getHeaders().filter(hd => hd.extensionUnderTest == header.id)[0];
@@ -3951,15 +3951,15 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         case "tutorial":
         case "example":
         case "recipe": {
-            pxt.tickEvent("hash." + hash.cmd)
-            let tutorialPath = hash.arg;
+            pxt.tickEvent("hash." + urlHash.cmd)
+            let tutorialPath = urlHash.arg;
             let editorProjectName: string = undefined;
             if (/^(js|py):/.test(tutorialPath)) {
                 editorProjectName = /^py:/.test(tutorialPath)
                     ? pxt.PYTHON_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME;
                 tutorialPath = tutorialPath.substr(tutorialPath.indexOf(':') + 1)
             }
-            editor.startActivity(hash.cmd, tutorialPath, undefined, editorProjectName);
+            editor.startActivity(urlHash.cmd, tutorialPath, undefined, editorProjectName);
             pxt.BrowserUtils.changeHash("editor");
             return true;
         }
@@ -3971,22 +3971,22 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         case "sandbox":
         case "pub":
         case "edit": // load a published proj, eg: #pub:27750-32291-62442-22749
-            pxt.tickEvent("hash." + hash.cmd);
+            pxt.tickEvent("hash." + urlHash.cmd);
             pxt.BrowserUtils.changeHash("");
-            if (/^(github:|https:\/\/github\.com\/)/.test(hash.arg))
-                importGithubProject(hash.arg);
+            if (/^(github:|https:\/\/github\.com\/)/.test(urlHash.arg))
+                importGithubProject(urlHash.arg);
             else
-                loadHeaderBySharedId(hash.arg);
+                loadHeaderBySharedId(urlHash.arg);
             return true;
         case "header":
-            pxt.tickEvent("hash." + hash.cmd);
+            pxt.tickEvent("hash." + urlHash.cmd);
             pxt.BrowserUtils.changeHash("");
-            editor.loadHeaderAsync(workspace.getHeader(hash.arg)).done();
+            editor.loadHeaderAsync(workspace.getHeader(urlHash.arg)).done();
             return true;
         case "sandboxproject":
         case "project":
-            pxt.tickEvent("hash." + hash.cmd);
-            const fileContents = Util.stringToUint8Array(atob(hash.arg));
+            pxt.tickEvent("hash." + urlHash.cmd);
+            const fileContents = Util.stringToUint8Array(atob(urlHash.arg));
             pxt.BrowserUtils.changeHash("");
             core.showLoading("loadingproject", lf("loading project..."));
             editor.importProjectFromFileAsync(fileContents)
@@ -3998,8 +3998,8 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         case "github": {
             // #github:owner/user --> import
             // #github:create-repository:headerid --> create repo
-            const repoid = pxt.github.parseRepoId(hash.arg);
-            const [ghCmd, ghArg] = hash.arg.split(':', 2);
+            const repoid = pxt.github.parseRepoId(urlHash.arg);
+            const [ghCmd, ghArg] = urlHash.arg.split(':', 2);
             if (ghCmd == "create-repository") {
                 // #github:create-repository:HEADERID
                 pxt.BrowserUtils.changeHash("");
@@ -4012,7 +4012,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
                 }
             } else if (repoid) {
                 pxt.BrowserUtils.changeHash("");
-                importGithubProject(hash.arg, true);
+                importGithubProject(urlHash.arg, true);
                 return true;
             }
             break;
@@ -4023,11 +4023,11 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
 }
 
 // Determines whether the hash argument affects the starting project
-function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
-    if (!hash) {
+function isProjectRelatedHash(urlHash: { cmd: string; arg: string }): boolean {
+    if (!urlHash) {
         return false;
     }
-    switch (hash.cmd) {
+    switch (urlHash.cmd) {
         case "follow":
         case "newproject":
         case "newjavascript":
@@ -4356,9 +4356,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (ev.data.__proxy == "parent") {
             pxt.debug("received parent proxy message" + ev.data);
             delete ev.data.__proxy;
-            const ipcRenderer = (window as any).ipcRenderer;
-            if (ipcRenderer)
-                ipcRenderer.sendToHost("sendToApp", ev.data);
+            const currIpcRenderer = (window as any).ipcRenderer;
+            if (currIpcRenderer)
+                currIpcRenderer.sendToHost("sendToApp", ev.data);
             else if (window.parent && window != window.parent)
                 window.parent.postMessage(ev.data, "*");
             return;

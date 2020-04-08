@@ -90,9 +90,9 @@ function readAssetsAsync(logicalDirname: string): Promise<any> {
     /* tslint:enable:no-http-string */
     return readdirAsync(dirname)
         .catch(err => [])
-        .then(res => Promise.map(res, fn => statAsync(path.join(dirname, fn)).then(res => ({
+        .then(dir => Promise.map(dir, fn => statAsync(path.join(dirname, fn)).then(dirStat => ({
             name: fn,
-            size: res.size,
+            size: dirStat.size,
             url: pref + fn
         }))))
         .then(res => ({
@@ -132,8 +132,8 @@ async function readPkgAsync(logicalDirname: string, fileContents = false): Promi
         }
 
         if (thisFileContents) {
-            let buf = await readFileAsync(path.join(dirname, fn))
-            ff.content = buf.toString("utf8")
+            let fileBuff = await readFileAsync(path.join(dirname, fn))
+            ff.content = fileBuff.toString("utf8")
         }
 
         r.files.push(ff)
@@ -326,14 +326,14 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
             .then(d => writeScreenshotAsync(innerPath, d.screenshot, d.icon));
     else if (cmd == "GET compile")
         return getCachedHexAsync(innerPath)
-            .then((res) => {
-                if (!res) {
+            .then((cachedHex) => {
+                if (!cachedHex) {
                     return {
                         notInOfflineCache: true
                     };
                 }
 
-                return res;
+                return cachedHex;
             });
     else if (cmd == "GET md" && pxt.appTarget.id + "/" == innerPath.slice(0, pxt.appTarget.id.length + 1)) {
         // innerpath start with targetid

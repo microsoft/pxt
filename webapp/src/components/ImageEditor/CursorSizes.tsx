@@ -1,3 +1,4 @@
+/* tslint:disable:no-shadowed-variable */
 import * as React from 'react';
 import { ImageEditorStore, CursorSize } from './store/imageReducer';
 import { dispatchChangeCursorSize } from './actions/dispatch';

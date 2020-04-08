@@ -42,12 +42,12 @@ function lookup(id: string) {
     return allScripts.find(x => x.header.id == id || x.header.path == id);
 }
 
-export function gitsha(data: string, encoding: "utf-8" | "base64" = "utf-8") {
+export function gitsha(blob: string, encoding: "utf-8" | "base64" = "utf-8") {
     if (encoding == "base64") {
-        const d = atob(data);
+        const d = atob(blob);
         return (sha1("blob " + d.length + "\u0000" + d) + "")
     } else
-        return (sha1("blob " + U.toUTF8(data).length + "\u0000" + data) + "")
+        return (sha1("blob " + U.toUTF8(blob).length + "\u0000" + blob) + "")
 }
 
 export function copyProjectToLegacyEditor(header: Header, majorVersion: number): Promise<Header> {
@@ -447,10 +447,10 @@ export function createDuplicateName(h: Header) {
     return reducedName + " #" + n;
 }
 
-export function saveScreenshotAsync(h: Header, data: string, icon: string) {
+export function saveScreenshotAsync(h: Header, screenshot: string, icon: string) {
     checkHeaderSession(h);
     return impl.saveScreenshotAsync
-        ? impl.saveScreenshotAsync(h, data, icon)
+        ? impl.saveScreenshotAsync(h, screenshot, icon)
         : Promise.resolve();
 }
 
@@ -694,27 +694,27 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     }
 
     async function addToTree(path: string, content: string): Promise<string> {
-        const data = {
+        const toAdd = {
             content: content,
             encoding: "utf-8"
         } as pxt.github.CreateBlobReq;
         if (path == pxt.CONFIG_NAME)
-            data.content = prepareConfigForGithub(data.content, !!options.createRelease);
+            toAdd.content = prepareConfigForGithub(toAdd.content, !!options.createRelease);
         const m = /^data:([^;]+);base64,/.exec(content);
         if (m) {
-            data.encoding = "base64";
-            data.content = content.substr(m[0].length);
+            toAdd.encoding = "base64";
+            toAdd.content = content.substr(m[0].length);
         }
-        const sha = gitsha(data.content, data.encoding)
+        const sha = gitsha(toAdd.content, toAdd.encoding)
         const ex = pxt.github.lookupFile(gitjson.commit, path)
         let res: string;
         if (!ex || ex.sha != sha) {
             // look for unfinished merges
-            if (data.encoding == "utf-8" &&
-                pxt.diff.hasMergeConflictMarker(data.content))
+            if (toAdd.encoding == "utf-8" &&
+                pxt.diff.hasMergeConflictMarker(toAdd.content))
                 throw mergeConflictMarkerError();
-            res = await pxt.github.createObjectAsync(parsed.fullName, "blob", data)
-            if (data.encoding == "utf-8")
+            res = await pxt.github.createObjectAsync(parsed.fullName, "blob", toAdd)
+            if (toAdd.encoding == "utf-8")
                 U.assert(res == sha, `sha not matching ${res} != ${sha}`)
             treeUpdate.tree.push({
                 "path": path,
@@ -1316,9 +1316,9 @@ export function loadedAsync() {
     return Promise.resolve()
 }
 
-export function saveAssetAsync(id: string, filename: string, data: Uint8Array): Promise<void> {
+export function saveAssetAsync(id: string, filename: string, asset: Uint8Array): Promise<void> {
     if (impl.saveAssetAsync)
-        return impl.saveAssetAsync(id, filename, data)
+        return impl.saveAssetAsync(id, filename, asset)
     else
         return Promise.reject(new Error(lf("Assets not supported here.")))
 }

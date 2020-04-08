@@ -409,7 +409,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const screenshotDisabled = actionLoading || recordingState != ShareRecordingState.None;
         const screenshotText = this.loanedSimulator && targetTheme.simScreenshotKey
             ? lf("Take Screenshot (shortcut: {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
-        const screenshot = targetTheme.simScreenshot;
+        const canScreenshot = targetTheme.simScreenshot;
         const gif = !light && !!targetTheme.simGif;
         const isGifRecording = recordingState == ShareRecordingState.GifRecording;
         const isGifRendering = recordingState == ShareRecordingState.GifRendering;
@@ -459,7 +459,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                             <label></label>
                             <div className="ui buttons landscape only">
                                 <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} disabled={screenshotDisabled} />
-                                {screenshot ? <sui.Button icon="camera" title={screenshotText} ariaLabel={screenshotText} onClick={this.handleScreenshotClick} disabled={screenshotDisabled} /> : undefined}
+                                {canScreenshot ? <sui.Button icon="camera" title={screenshotText} ariaLabel={screenshotText} onClick={this.handleScreenshotClick} disabled={screenshotDisabled} /> : undefined}
                                 {gif ? <sui.Button icon={gifIcon} title={gifTitle} loading={gifLoading} onClick={this.handleRecordClick} disabled={gifDisabled} /> : undefined}
                             </div>
                             {screenshotUri || screenshotMessage ?

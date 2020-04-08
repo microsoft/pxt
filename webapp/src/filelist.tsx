@@ -87,13 +87,13 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             this.props.parent.navigateToError(diag);
     }
 
-    private filesOf(pkg: pkg.EditorPackage): JSX.Element[] {
+    private filesOf(p: pkg.EditorPackage): JSX.Element[] {
         const { currentFile } = this.state;
         const header = this.props.parent.state.header;
-        const topPkg = pkg.isTopLevel();
+        const topPkg = p.isTopLevel();
         const deleteFiles = topPkg && !pxt.shell.isReadOnly();
-        const langRestrictions = pkg.getLanguageRestrictions();
-        let files = pkg.sortedFiles();
+        const langRestrictions = p.getLanguageRestrictions();
+        let files = p.sortedFiles();
 
         if (topPkg) {
             files = files.filter(f => {
@@ -147,7 +147,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     previewUrl={previewUrl}
                     shareUrl={shareUrl}
                     addLocalizedFile={addLocale && localized}
-                    className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
+                    className={(currentFile == file ? "active " : "") + (p.isTopLevel() ? "" : "nested ") + "item"}
                 >
                     {file.name}
                     {showStar ? "*" : ""}
@@ -182,8 +182,8 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         </PackgeTreeItem>]
     }
 
-    private packageContainsFile(pkg: pkg.EditorPackage, f: pxt.editor.IFile) {
-        return pkg.sortedFiles().filter(file => file == f).length > 0;
+    private packageContainsFile(p: pkg.EditorPackage, f: pxt.editor.IFile) {
+        return p.sortedFiles().filter(file => file == f).length > 0;
     }
 
     private togglePkg(p: pkg.EditorPackage) {

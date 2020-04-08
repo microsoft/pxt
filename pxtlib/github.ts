@@ -515,9 +515,9 @@ namespace pxt.github {
             return Promise.resolve(r.object.sha)
         else if (r.object.type == "tag")
             return ghGetJsonAsync(r.object.url)
-                .then((r: GHRef) =>
-                    r.object.type == "commit" ? r.object.sha :
-                        Promise.reject(new Error("Bad type (2nd order) " + r.object.type)))
+                .then((cmtRef: GHRef) =>
+                    cmtRef.object.type == "commit" ? cmtRef.object.sha :
+                        Promise.reject(new Error("Bad type (2nd order) " + cmtRef.object.type)))
         else
             return Promise.reject(new Error("Bad type " + r.object.type))
     }

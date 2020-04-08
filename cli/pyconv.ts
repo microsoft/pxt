@@ -14,6 +14,7 @@ namespace py {
         arrayType?: Type;
     }
 
+    /* tslint:disable-next-line:no-shadowed-variable */
     export interface Type extends TypeOptions {
         tid: number;
     }
@@ -412,7 +413,7 @@ namespace py {
     }
     export interface Constant extends Expr {
         kind: "Constant";
-        value: any; // ??? 
+        value: any; // ???
     }
 
     // the following expression can appear in assignment context
@@ -470,7 +471,7 @@ def to_json(val):
         for attr_name in dir(val):
             if not attr_name.startswith("_"):
                 js[attr_name] = to_json(getattr(val, attr_name))
-        return js    
+        return js
     if isinstance(val, (bytearray, bytes)):
         return [x for x in val]
     raise Exception("unhandled: %s (type %s)" % (val, type(val)))
@@ -530,13 +531,13 @@ function lookupSymbol(name: string): py.Symbol {
         let par = moduleAst[parts.slice(0, last).join(".")]
         let ename = parts[last]
         if (par) {
-            for (let stmt of par.body) {
-                if (stmt.kind == "ClassDef" || stmt.kind == "FunctionDef") {
-                    if ((stmt as py.FunctionDef).name == ename)
-                        return stmt as py.FunctionDef
+            for (let statement of par.body) {
+                if (statement.kind == "ClassDef" || statement.kind == "FunctionDef") {
+                    if ((statement as py.FunctionDef).name == ename)
+                        return statement as py.FunctionDef
                 }
-                if (stmt.kind == "Assign") {
-                    let assignment = stmt as py.Assign
+                if (statement.kind == "Assign") {
+                    let assignment = statement as py.Assign
                     if (assignment.targets.length == 1 && getName(assignment.targets[0]) == ename) {
                         return assignment
                     }
@@ -1198,21 +1199,21 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
             stmts(n.body))
     },
     If: (n: py.If) => {
-        let innerIf = (n: py.If) => {
+        let innerIf = (innerN: py.If) => {
             let nodes = [
                 B.mkText("if ("),
-                expr(n.test),
+                expr(innerN.test),
                 B.mkText(")"),
-                stmts(n.body)
+                stmts(innerN.body)
             ]
-            if (n.orelse.length) {
+            if (innerN.orelse.length) {
                 nodes[nodes.length - 1].noFinalNewline = true
-                if (n.orelse.length == 1 && n.orelse[0].kind == "If") {
+                if (innerN.orelse.length == 1 && innerN.orelse[0].kind == "If") {
                     // else if
                     nodes.push(B.mkText(" else "))
-                    U.pushRange(nodes, innerIf(n.orelse[0] as py.If))
+                    U.pushRange(nodes, innerIf(innerN.orelse[0] as py.If))
                 } else {
-                    nodes.push(B.mkText(" else"), stmts(n.orelse))
+                    nodes.push(B.mkText(" else"), stmts(innerN.orelse))
                 }
             }
             return nodes
@@ -1239,7 +1240,7 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         }
 
         let cleanup: B.JsNode[] = []
-        let stmts = n.items.map((it, idx) => {
+        let withStmts = n.items.map((it, idx) => {
             let varName = "with" + idx
             if (it.optional_vars) {
                 let id = getName(it.optional_vars)
@@ -1251,9 +1252,9 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
             return B.mkStmt(B.mkText("const " + varName + " = "),
                 B.mkInfix(expr(it.context_expr), ".", B.mkText("begin()")))
         })
-        U.pushRange(stmts, n.body.map(stmt))
-        U.pushRange(stmts, cleanup)
-        return B.mkBlock(stmts)
+        U.pushRange(withStmts, n.body.map(stmt))
+        U.pushRange(withStmts, cleanup)
+        return B.mkBlock(withStmts)
     },
     Raise: (n: py.Raise) => {
         let ex = n.exc || n.cause
@@ -1475,7 +1476,7 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
             elts = elts.slice()
             let res = [B.mkText("`")]
             fmt.replace(/([^%]+)|(%[\d\.]*([a-zA-Z%]))/g,
-                (f: string, reg: string, f2: string, flet: string) => {
+                (_: string, reg: string, f2: string, flet: string) => {
                     if (reg)
                         res.push(B.mkText(reg.replace(/[`\\$]/g, f => "\\" + f)))
                     else {
@@ -1712,9 +1713,9 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
                     let s = "?"
                     if (a.type == B.NT.Prefix && a.children.length == 0)
                         s = a.op
-                    let n = parseFloat(s)
-                    if (!isNaN(n)) {
-                        return B.mkText((over.scale * n) + "")
+                    let float = parseFloat(s)
+                    if (!isNaN(float)) {
+                        return B.mkText((over.scale * float) + "")
                     } else {
                         return B.mkInfix(a, "*", B.mkText(over.scale + ""))
                     }
@@ -2036,9 +2037,9 @@ export function convertAsync(fns: string[], useInternal = false) {
     pxt.log(`files (${pkgFilesKeys.length}):\n   ${pkgFilesKeys.join('\n   ')}`);
 
     return parseWithPythonAsync(pkgFilesKeys)
-        .then(js => {
+        .then(parsedJs => {
             moduleAst = {}
-            U.iterMap(js, (fn: string, js: py.Module) => {
+            U.iterMap(parsedJs, (fn: string, js: py.Module) => {
                 let mname = pkgFiles[fn]
                 js.name = mname
                 js.source = fs.readFileSync(fn, "utf8").split(/\r?\n/)
@@ -2047,7 +2048,7 @@ export function convertAsync(fns: string[], useInternal = false) {
 
             for (let i = 0; i < 5; ++i) {
                 currIteration = i
-                U.iterMap(js, (fn: string, js: any) => {
+                U.iterMap(parsedJs, (fn: string, js: any) => {
                     pxt.log(`converting ${fn}`);
                     try {
                         toTS(js)
@@ -2057,10 +2058,10 @@ export function convertAsync(fns: string[], useInternal = false) {
                 })
             }
 
-            let files: pxt.Map<string> = {}
+            let outputFiles: pxt.Map<string> = {}
 
             currIteration = 1000
-            U.iterMap(js, (fn: string, js: py.Module) => {
+            U.iterMap(parsedJs, (fn: string, js: py.Module) => {
                 if (primFiles[fn]) {
                     pxt.debug(`converting ${fn}`)
                     let s = "//\n// *** " + fn + " ***\n//\n\n"
@@ -2070,13 +2071,13 @@ export function convertAsync(fns: string[], useInternal = false) {
                     let res = B.flattenNode(nodes)
                     s += res.output
                     let fn2 = js.name.replace(/\..*/, "") + ".ts"
-                    files[fn2] = (files[fn2] || "") + s
+                    outputFiles[fn2] = (outputFiles[fn2] || "") + s
                 } else {
                     pxt.debug(`skipping ${fn}`)
                 }
             })
 
-            U.iterMap(files, (fn, s) => {
+            U.iterMap(outputFiles, (fn, s) => {
                 pxt.log("*** write " + fn)
                 fs.writeFileSync(fn, s)
             })

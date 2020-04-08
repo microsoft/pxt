@@ -283,16 +283,16 @@ namespace pxsim.util {
         const fParts = getNormalizedParts(fromDir);
         const tParts = getNormalizedParts(toFile);
 
-        let i = 0;
-        while (fParts[i] === tParts[i]) {
-            i++;
-            if (i === fParts.length || i === tParts.length) {
+        let lastMatchedIndex = 0;
+        while (fParts[lastMatchedIndex] === tParts[lastMatchedIndex]) {
+            lastMatchedIndex++;
+            if (lastMatchedIndex === fParts.length || lastMatchedIndex === tParts.length) {
                 break;
             }
         }
 
-        const fRemainder = fParts.slice(i);
-        const tRemainder = tParts.slice(i);
+        const fRemainder = fParts.slice(lastMatchedIndex);
+        const tRemainder = tParts.slice(lastMatchedIndex);
         for (let i = 0; i < fRemainder.length; i++) {
             tRemainder.unshift("..");
         }

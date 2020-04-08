@@ -82,9 +82,9 @@ namespace pxt.diff {
         const trace: UArray[] = []
         let endpoint: number = null
         for (let D = 0; D <= diffLen; D++) {
-            const V = trace.length ? trace[trace.length - 1].slice(0) : new ctor(2 * diffLen + 1)
-            trace.push(V)
-            endpoint = computeFor(D, V)
+            const subV = trace.length ? trace[trace.length - 1].slice(0) : new ctor(2 * diffLen + 1)
+            trace.push(subV)
+            endpoint = computeFor(D, subV)
             if (endpoint != null)
                 break
         }
@@ -92,18 +92,18 @@ namespace pxt.diff {
         const diff: string[] = []
         let k = endpoint
         for (let D = trace.length - 1; D >= 0; D--) {
-            const V = trace[D]
+            const subV = trace[D]
             let x = 0
             let nextK = 0
-            if (k == -D || (k != D && V[MAX + k - 1] < V[MAX + k + 1])) {
+            if (k == -D || (k != D && subV[MAX + k - 1] < subV[MAX + k + 1])) {
                 nextK = k + 1
-                x = V[MAX + nextK]
+                x = subV[MAX + nextK]
             } else {
                 nextK = k - 1
-                x = V[MAX + nextK] + 1
+                x = subV[MAX + nextK] + 1
             }
             let y = x - k
-            const snakeLen = V[MAX + k] - x
+            const snakeLen = subV[MAX + k] - x
             for (let i = snakeLen - 1; i >= 0; --i)
                 diff.push("  " + b[y + i])
 
@@ -170,7 +170,9 @@ namespace pxt.diff {
 
         return shortDiff
 
+        /* tslint:disable-next-line:no-shadowed-variable */
         function computeFor(D: number, V: UArray) {
+            /* tslint:disable-next-line:no-shadowed-variable */
             for (let k = -D; k <= D; k += 2) {
                 let x = 0
                 if (k == -D || (k != D && V[MAX + k - 1] < V[MAX + k + 1]))
@@ -254,11 +256,11 @@ namespace pxt.diff {
 
         return { merged: r.join("\n"), numConflicts }
 
-        function computeMatch(fileA: string) {
-            const da = compute(fileO, fileA, { context: Infinity })
+        function computeMatch(file: string) {
+            const da = compute(fileO, file, { context: Infinity })
             if (!da)
                 return undefined;
-            const ma: number[] = []
+            const outputMatches: number[] = []
 
             let aidx = 0
             let oidx = 0
@@ -268,10 +270,10 @@ namespace pxt.diff {
                 if (l[0] == "+") {
                     aidx++
                 } else if (l[0] == "-") {
-                    ma[oidx] = null
+                    outputMatches[oidx] = null
                     oidx++
                 } else if (l[0] == " ") {
-                    ma[oidx] = aidx
+                    outputMatches[oidx] = aidx
                     aidx++
                     oidx++
                 } else {
@@ -279,9 +281,9 @@ namespace pxt.diff {
                 }
             }
 
-            ma.push(aidx + 1) // terminator
+            outputMatches.push(aidx + 1) // terminator
 
-            return ma
+            return outputMatches
         }
     }
 
@@ -511,7 +513,7 @@ namespace pxt.diff {
         delete jsonO.installedVersion;
         delete jsonB.installedVersion;
 
-        const r: any = {} as pxt.PackageConfig;
+        const pkgConfig: any = {} as pxt.PackageConfig;
 
         const keys = pxt.U.unique(Object.keys(jsonO).concat(Object.keys(jsonA)).concat(Object.keys(jsonB)), l => l);
         for (const key of keys) {
@@ -522,28 +524,28 @@ namespace pxt.diff {
             const svB = JSON.stringify(vB);
             if (svA == svB) { // same serialized keys
                 if (vA !== undefined)
-                    r[key] = vA;
+                    pkgConfig[key] = vA;
             } else {
                 switch (key) {
                     case "name":
-                        r[key] = mergeName(vA, vO, vB);
+                        pkgConfig[key] = mergeName(vA, vO, vB);
                         break;
                     case "version": // pick highest version
-                        r[key] = pxt.semver.strcmp(vA, vB) > 0 ? vA : vB;
+                        pkgConfig[key] = pxt.semver.strcmp(vA, vB) > 0 ? vA : vB;
                         break;
                     case "languageRestriction":
                     case "preferredEditor":
-                        r[key] = vA; // keep current one
+                        pkgConfig[key] = vA; // keep current one
                         break;
                     case "public":
-                        r[key] = vA && vB;
+                        pkgConfig[key] = vA && vB;
                         break;
                     case "files":
                     case "testFiles": {// merge file arrays
                         const m = mergeFiles(vA || [], vO || [], vB || []);
                         if (!m)
                             return undefined;
-                        r[key] = m.length ? m : undefined;
+                        pkgConfig[key] = m.length ? m : undefined;
                         break;
                     }
                     case "dependencies":
@@ -551,12 +553,12 @@ namespace pxt.diff {
                         const m = mergeDependencies(vA || {}, vO || {}, vB || {});
                         if (Object.keys(m).length)
                             return undefined;
-                        r[key] = m;
+                        pkgConfig[key] = m;
                         break;
                     }
                     case "description":
-                        if (vA && !vB) r[key] = vA; // new description
-                        else if (!vA && vB) r[key] = vB;
+                        if (vA && !vB) pkgConfig[key] = vA; // new description
+                        else if (!vA && vB) pkgConfig[key] = vB;
                         else return undefined;
                         break;
                     default:
@@ -564,7 +566,7 @@ namespace pxt.diff {
                 }
             }
         }
-        return pxt.Package.stringifyConfig(r);
+        return pxt.Package.stringifyConfig(pkgConfig);
 
         function mergeName(fA: string, fO: string, fB: string): string {
             if (fA == fO) return fB;

@@ -71,14 +71,14 @@ namespace ts.pxtc {
                 sys.exit(ExitStatus.DiagnosticsPresent_OutputsSkipped);
                 return undefined;
             }
-            const configParseResult = parseJsonConfigFileContent(configObject, sys, dir, commandLine.options, configFileName);
-            if (configParseResult.errors.length > 0) {
-                reportDiagnostics(configParseResult.errors);
+            const configResult = parseJsonConfigFileContent(configObject, sys, dir, commandLine.options, configFileName);
+            if (configResult.errors.length > 0) {
+                reportDiagnostics(configResult.errors);
                 sys.exit(ExitStatus.DiagnosticsPresent_OutputsSkipped);
                 return undefined;
             }
 
-            return configParseResult;
+            return configResult;
         }
     }
 

@@ -40,7 +40,7 @@ namespace ts.pxtc {
     // Assumptions:
     // - registers can hold a pointer (data or code)
     // - special registers include: sp
-    // - fixed registers are r0, r1, r2, r3, r5, r6 
+    // - fixed registers are r0, r1, r2, r3, r5, r6
     //   - r0 is the current value (from expression evaluation)
     //   - registers for runtime calls (r0, r1,r2,r3)
     //   - r5 is for captured locals in lambda
@@ -54,7 +54,7 @@ namespace ts.pxtc {
     export abstract class AssemblerSnippets {
         nop() { return "TBD(nop)" }
         reg_gets_imm(reg: string, imm: number) { return "TBD(reg_gets_imm)" }
-        // Registers are stored on the stack in numerical order 
+        // Registers are stored on the stack in numerical order
         proc_setup(numlocals: number, main?: boolean) { return "TBD(proc_setup)" }
         push_fixed(reg: string[]) { return "TBD(push_fixed)" }
         push_local(reg: string) { return "TBD(push_local)" }
@@ -496,8 +496,8 @@ ${baseLabel}_nochk:
                         this.write(this.t.load_reg_src_off("r7", "r6", "#0"))
                         this.write(this.t.load_reg_src_off(reg, "r7", off, false, false, inf))
                     } else {
-                        let [src, imm, idx] = this.cellref(cell)
-                        this.write(this.t.load_reg_src_off(reg, src, imm, idx))
+                        let [src, imm, index] = this.cellref(cell)
+                        this.write(this.t.load_reg_src_off(reg, src, imm, index))
                     }
                     break;
                 default: oops();
@@ -544,7 +544,7 @@ ${baseLabel}_nochk:
                 case ir.EK.SharedDef:
                     return this.emitSharedDef(e)
                 case ir.EK.Sequence:
-                    e.args.forEach(e => this.emitExpr(e))
+                    e.args.forEach(expr => this.emitExpr(expr))
                     return this.clearStack()
                 case ir.EK.InstanceOf:
                     this.emitExpr(e.args[0])

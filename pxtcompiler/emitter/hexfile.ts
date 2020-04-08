@@ -98,7 +98,7 @@ namespace ts.pxtc {
 
             for (let f of asmSources) {
                 let src = opts.fileSystem[f]
-                src.replace(/^\s*(\w+):/mg, (f, lbl) => {
+                src.replace(/^\s*(\w+):/mg, (_, lbl) => {
                     asmLabels[lbl] = true
                     return ""
                 })
@@ -212,7 +212,7 @@ namespace ts.pxtc {
                 return
             }
 
-            let i = 0;
+            let ind = 0;
             let upperAddr = "0000"
             let lastAddr = 0
             let lastIdx = 0
@@ -254,29 +254,29 @@ namespace ts.pxtc {
                 }
             }
 
-            for (; i < hexlines.length; ++i) {
-                let m = /:02000004(....)/.exec(hexlines[i])
+            for (; ind < hexlines.length; ++ind) {
+                let m = /:02000004(....)/.exec(hexlines[ind])
                 if (m) {
                     upperAddr = m[1]
                 }
-                m = /^:..(....)00/.exec(hexlines[i])
+                m = /^:..(....)00/.exec(hexlines[ind])
                 if (m) {
                     let newAddr = parseInt(upperAddr + m[1], 16)
                     if (opts.flashUsableEnd && newAddr >= opts.flashUsableEnd)
                         hitEnd()
-                    lastIdx = i
+                    lastIdx = ind
                     lastAddr = newAddr
                 }
 
-                if (/^:00000001/.test(hexlines[i]))
+                if (/^:00000001/.test(hexlines[ind]))
                     hitEnd()
 
                 // random magic number, which marks the beginning of the array of function pointers in the .hex file
                 // it is defined in pxt-microbit-core
-                m = /^:10....000108010842424242010801083ED8E98D/.exec(hexlines[i])
+                m = /^:10....000108010842424242010801083ED8E98D/.exec(hexlines[ind])
                 if (m) {
                     ctx.jmpStartAddr = lastAddr
-                    ctx.jmpStartIdx = i
+                    ctx.jmpStartIdx = ind
                 }
             }
 
@@ -329,6 +329,7 @@ namespace ts.pxtc {
             }
         }
 
+        /* tslint:disable-next-line:no-shadowed-variable */
         export function validateShim(funname: string, shimName: string, attrs: CommentAttrs,
             hasRet: boolean, argIsNumber: boolean[]) {
             if (shimName == "TD_ID" || shimName == "TD_NOOP" || shimName == "ENUM_GET")
@@ -535,11 +536,11 @@ namespace ts.pxtc {
 
             let ptr = 0
 
-            function nextLine(buf: number[], addr: number) {
-                let bytes = [0x10, (addr >> 8) & 0xff, addr & 0xff, 0]
+            function nextLine(b: number[], address: number) {
+                let bytes = [0x10, (address >> 8) & 0xff, address & 0xff, 0]
                 for (let j = 0; j < 8; ++j) {
-                    bytes.push((buf[ptr] || 0) & 0xff)
-                    bytes.push((buf[ptr] || 0) >>> 8)
+                    bytes.push((b[ptr] || 0) & 0xff)
+                    bytes.push((b[ptr] || 0) >>> 8)
                     ptr++
                 }
                 return bytes
@@ -620,11 +621,11 @@ namespace ts.pxtc {
             if (bin.packedSource) {
                 if (uf2) {
                     addr = (uf2.currPtr + 0x1000) & ~0xff
-                    let buf = new Uint8Array(256)
-                    for (let ptr = 0; ptr < bin.packedSource.length; ptr += 256) {
+                    let outBuf = new Uint8Array(256)
+                    for (let srcPtr = 0; srcPtr < bin.packedSource.length; srcPtr += 256) {
                         for (let i = 0; i < 256; ++i)
-                            buf[i] = bin.packedSource.charCodeAt(ptr + i)
-                        UF2.writeBytes(uf2, addr, buf, UF2.UF2_FLAG_NOFLASH)
+                            outBuf[i] = bin.packedSource.charCodeAt(srcPtr + i)
+                        UF2.writeBytes(uf2, addr, outBuf, UF2.UF2_FLAG_NOFLASH)
                         addr += 256
                     }
                 } else {
@@ -649,9 +650,9 @@ namespace ts.pxtc {
 
     export function hexDump(bytes: ArrayLike<number>, startOffset = 0) {
         function toHex(n: number, len = 8) {
-            let r = n.toString(16)
-            while (r.length < len) r = "0" + r
-            return r
+            let output = n.toString(16)
+            while (output.length < len) output = "0" + output
+            return output
         }
         let r = ""
         for (let i = 0; i < bytes.length; i += 16) {

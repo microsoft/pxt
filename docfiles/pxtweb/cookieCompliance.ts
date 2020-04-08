@@ -135,23 +135,23 @@ namespace pxt {
             }
         }
         export function report() {
-            let report = `performance report:\n`
+            let output = `performance report:\n`
             for (let [msg, time] of stats.milestones) {
                 let pretty = prettyStr(time)
-                report += `\t\t${msg} @ ${pretty}\n`
+                output += `\t\t${msg} @ ${pretty}\n`
             }
-            report += `\n`
+            output += `\n`
             for (let [msg, start, duration] of stats.durations) {
                 if (duration > 50) {
                     let pretty = prettyStr(duration)
-                    report += `\t\t${msg} took ~ ${pretty}`
+                    output += `\t\t${msg} took ~ ${pretty}`
                     if (duration > 1000) {
-                        report += ` (${prettyStr(start)} - ${prettyStr(start + duration)})`
+                        output += ` (${prettyStr(start)} - ${prettyStr(start + duration)})`
                     }
-                    report += `\n`
+                    output += `\n`
                 }
             }
-            console.log(report)
+            console.log(output)
             perfReportLogged = true
         }
         (function () {

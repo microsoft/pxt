@@ -251,8 +251,8 @@ namespace pxt.HF2 {
                     this.reconnectAsync()
                         .then(() => {
                             this.autoReconnect = true
-                        }, err => {
-                            log("reconnect error: " + err.message)
+                        }, e => {
+                            log("reconnect error: " + e.message)
                         })
                 }
                 //this.msgs.pushError(err)
@@ -410,13 +410,13 @@ namespace pxt.HF2 {
                 .then(() => this.talkAsync(HF2_CMD_START_FLASH)
                     .then(() => { }, err =>
                         this.talkAsync(HF2_CMD_RESET_INTO_BOOTLOADER)
-                            .then(() => { }, err => { })
+                            .then(() => { }, () => { })
                             .then(() =>
                                 this.reconnectAsync()
-                                    .catch(err => {
-                                        if (err.type === "devicenotfound")
-                                            err.type = "repairbootloader"
-                                        throw err
+                                    .catch(e => {
+                                        if (e.type === "devicenotfound")
+                                            e.type = "repairbootloader"
+                                        throw e
                                     }))
                     ))
                 .then(() => this.initAsync())

@@ -260,8 +260,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             needsLayout = needsLayout || (tpX == 10 && tpY == 10);
         });
         let blockPositions: { left: number, top: number }[] = [];
-        (this.editor.getTopBlocks(false) as Blockly.BlockSvg[]).forEach(b => {
-            const bounds = b.getBoundingRectangle()
+        (this.editor.getTopBlocks(false) as Blockly.BlockSvg[]).forEach(bSvg => {
+            const bounds = bSvg.getBoundingRectangle()
             if (minX === undefined || bounds.left < minX) {
                 minX = bounds.left;
             }
@@ -981,11 +981,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         blocklyOptions.renderer = "pxt";
         if (!hasCategories) this.showCategories = false;
         // If we're using categories, show the category toolbox, otherwise show the flyout toolbox
-        const toolbox = hasCategories ?
+        const bToolbox = hasCategories ?
             document.getElementById('blocklyToolboxDefinitionCategory')
             : document.getElementById('blocklyToolboxDefinitionFlyout');
         blocklyOptions['toolbox'] = blocklyOptions.toolbox != undefined ?
-            blocklyOptions.toolbox : blocklyOptions.readOnly ? undefined : toolbox;
+            blocklyOptions.toolbox : blocklyOptions.readOnly ? undefined : bToolbox;
         return blocklyOptions;
     }
 
@@ -1463,9 +1463,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const isFlyoutUpToDate = cachedBlocksHash === currentBlocksHash && !!cachedBlocksHash
 
             const mkFlyout = () => {
-                const workspace = this.editor.toolbox_.workspace_ as Blockly.WorkspaceSvg
+                const bWorkspace = this.editor.toolbox_.workspace_ as Blockly.WorkspaceSvg
                 const oldSvg = oldFlyout.svgGroup_;
-                const flyout = Blockly.Functions.createFlyout(workspace, oldSvg)
+                const flyout = Blockly.Functions.createFlyout(bWorkspace, oldSvg)
                 return flyout as Blockly.VerticalFlyout;
             }
 
@@ -1539,7 +1539,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     ////////////          Block methods           /////////////
     ///////////////////////////////////////////////////////////
 
-    private getBlockXml(block: toolbox.BlockDefinition, ignoregap?: boolean, shadow?: boolean): Element[] {
+    private getBlockXml(block: toolbox.BlockDefinition, ignoregap?: boolean, isShadow?: boolean): Element[] {
         const that = this;
         let blockXml: Element;
         // Check if the block is built in, ignore it as it's already defined in snippets
@@ -1605,7 +1605,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         mutatedBlocks.push(mutatedBlock);
                     });
                     return mutatedBlocks;
-                } else if (fn.attributes.blockSetVariable != undefined && fn.retType && !shadow) {
+                } else if (fn.attributes.blockSetVariable != undefined && fn.retType && !isShadow) {
                     // if requested, wrap block into a "set variable block"
                     const rawName = fn.attributes.blockSetVariable;
 
@@ -1668,9 +1668,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return [blockXml];
         function shouldShowBlock(fn: pxtc.SymbolInfo) {
             if (fn.attributes.debug && !pxt.options.debug) return false;
-            if (!shadow && (fn.attributes.deprecated || fn.attributes.blockHidden)) return false;
+            if (!isShadow && (fn.attributes.deprecated || fn.attributes.blockHidden)) return false;
             let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-            return that.shouldShowBlock(fn.attributes.blockId, ns, shadow);
+            return that.shouldShowBlock(fn.attributes.blockId, ns, isShadow);
         }
 
         function variableIsAssigned(name: string, editor: Blockly.WorkspaceSvg) {

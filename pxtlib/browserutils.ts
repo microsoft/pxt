@@ -1004,12 +1004,12 @@ namespace pxt.BrowserUtils {
             const left = ((width / 2) - (popUpWidth / 2)) + winLeft;
             const top = ((height / 2) - (popUpHeight / 2)) + winTop;
 
-            const popupWindow = window.open(url, title, "width=" + popUpWidth + ", height=" + popUpHeight + ", top=" + top + ", left=" + left);
-            if (popupWindow.focus) {
-                popupWindow.focus();
+            const popup = window.open(url, title, "width=" + popUpWidth + ", height=" + popUpHeight + ", top=" + top + ", left=" + left);
+            if (popup.focus) {
+                popup.focus();
             }
 
-            return popupWindow;
+            return popup;
         } catch (e) {
             // Error opening popup
             pxt.tickEvent('pxt.popupError', { url: url, msg: e.message });
@@ -1018,36 +1018,36 @@ namespace pxt.BrowserUtils {
     }
 
     // Keep these helpers unified with pxtsim/runtime.ts
-    export function containsClass(el: SVGElement | HTMLElement, classes: string) {
-        return splitClasses(classes).every(cls => containsSingleClass(el, cls));
+    export function containsClass(element: SVGElement | HTMLElement, classes: string) {
+        return splitClasses(classes).every(cls => containsSingleClass(element, cls));
 
         function containsSingleClass(el: SVGElement | HTMLElement, cls: string) {
             if (el.classList) {
                 return el.classList.contains(cls);
             } else {
-                const classes = (el.className + "").split(/\s+/);
-                return !(classes.indexOf(cls) < 0);
+                const allClasses = (el.className + "").split(/\s+/);
+                return !(allClasses.indexOf(cls) < 0);
             }
         }
     }
 
-    export function addClass(el: SVGElement | HTMLElement, classes: string) {
-        splitClasses(classes).forEach(cls => addSingleClass(el, cls));
+    export function addClass(element: SVGElement | HTMLElement, classes: string) {
+        splitClasses(classes).forEach(cls => addSingleClass(element, cls));
 
         function addSingleClass(el: SVGElement | HTMLElement, cls: string) {
             if (el.classList) {
                 el.classList.add(cls);
             } else {
-                const classes = (el.className + "").split(/\s+/);
-                if (classes.indexOf(cls) < 0) {
+                const allClasses = (el.className + "").split(/\s+/);
+                if (allClasses.indexOf(cls) < 0) {
                     el.className.baseVal += " " + cls;
                 }
             }
         }
     }
 
-    export function removeClass(el: SVGElement | HTMLElement, classes: string) {
-        splitClasses(classes).forEach(cls => removeSingleClass(el, cls));
+    export function removeClass(element: SVGElement | HTMLElement, classes: string) {
+        splitClasses(classes).forEach(cls => removeSingleClass(element, cls));
 
         function removeSingleClass(el: SVGElement | HTMLElement, cls: string) {
             if (el.classList) {

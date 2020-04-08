@@ -284,8 +284,8 @@ namespace pxt.usb {
                     return dev.selectConfiguration(1)
                 })
                 .then(() => {
-                    let matchesFilters = (iface: USBInterface) => {
-                        let a0 = iface.alternates[0]
+                    let matchesFilters = (usbIface: USBInterface) => {
+                        let a0 = usbIface.alternates[0]
                         for (let f of filters) {
                             if (f.classCode == null || a0.interfaceClass === f.classCode) {
                                 if (f.subclassCode == null || a0.interfaceSubclass === f.subclassCode) {

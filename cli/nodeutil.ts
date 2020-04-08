@@ -228,16 +228,16 @@ function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.Ht
                 g = tmp;
             }
 
-            resolve(readResAsync(g).then(buf => {
+            resolve(readResAsync(g).then(resBuf => {
                 let text: string = null
                 try {
-                    text = buf.toString("utf8")
+                    text = resBuf.toString("utf8")
                 } catch (e) {
                 }
                 let resp: Util.HttpResponse = {
                     statusCode: res.statusCode,
                     headers: res.headers,
-                    buffer: buf,
+                    buffer: resBuf,
                     text: text
                 }
                 return resp;
@@ -281,8 +281,8 @@ function init() {
     (global as any).atob = (str: string) => Buffer.from(str, "base64").toString("binary");
 }
 
-export function sanitizePath(path: string) {
-    return path.replace(/[^\w@\/]/g, "-").replace(/^\/+/, "")
+export function sanitizePath(filePath: string) {
+    return filePath.replace(/[^\w@\/]/g, "-").replace(/^\/+/, "")
 }
 
 export function readJson(fn: string) {
@@ -326,8 +326,8 @@ export function getPxtTarget(): pxt.TargetBundle {
     return raw
 }
 
-export function pathToPtr(path: string) {
-    return "ptr-" + sanitizePath(path.replace(/^ptr-/, "")).replace(/[^\w@]/g, "-")
+export function pathToPtr(filePath: string) {
+    return "ptr-" + sanitizePath(filePath.replace(/^ptr-/, "")).replace(/[^\w@]/g, "-")
 }
 
 export function mkdirP(thePath: string) {

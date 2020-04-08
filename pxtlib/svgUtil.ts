@@ -116,7 +116,7 @@ namespace pxt.svgUtil {
             return g;
         }
 
-        appendChild<T extends SVGElement>(child: BaseElement<T>): void {
+        appendChild(child: BaseElement<T>): void {
             this.el.appendChild(child.el);
         }
 

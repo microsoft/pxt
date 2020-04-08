@@ -49,8 +49,8 @@ export class Keymap extends data.Component<ISettingsProps, KeymapState> {
                     {
                         Object.keys(col.map).map( (el, j) => {
                             return <div key={j}>
-                                {col.map[el].map( (key, j) => {
-                                    return <div className="keymap-key" key={j}>{key}</div>
+                                {col.map[el].map( (key, k) => {
+                                    return <div className="keymap-key" key={k}>{key}</div>
                                 })}
                                 <span className="keymap-name">{el}</span>
                             </div>

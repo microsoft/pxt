@@ -49,7 +49,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         const exts = this.manager.streamingExtensions();
         if (!exts || !exts.length) return;
 
-        const data = smsg.data || ""
+        const msgData = smsg.data || ""
         const source = smsg.id || "?"
 
         // called by app when a serial entry is read
@@ -61,7 +61,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 body: {
                     source,
                     sim: smsg.sim,
-                    data
+                    data: msgData
                 }
             } as pxt.editor.ConsoleEvent);
         })

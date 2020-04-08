@@ -88,10 +88,7 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
         functionEditorWorkspace.centerOnBlock(functionBeingEdited.id);
 
         functionEditorWorkspace.addChangeListener(() => {
-            const { functionBeingEdited } = this.state;
-            if (functionBeingEdited) {
-                functionBeingEdited.updateFunctionSignature();
-            }
+            this.state?.functionBeingEdited?.updateFunctionSignature();
         });
 
         this.setState({

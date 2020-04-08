@@ -180,7 +180,7 @@ namespace pxtblockly {
                 (this.sourceBlock_ as Blockly.BlockSvg).select();
 
                 this.toggleRect(x, y);
-                pxsim.pointerEvents.down.forEach(evid => svgRoot.addEventListener(evid, this.dontHandleMouseEvent_));
+                pxsim.pointerEvents.down.forEach(downEvId => svgRoot.addEventListener(downEvId, this.dontHandleMouseEvent_));
                 svgRoot.addEventListener(pxsim.pointerEvents.move, this.dontHandleMouseEvent_);
 
                 document.addEventListener(pxsim.pointerEvents.up, this.clearLedDragHandler);
@@ -275,7 +275,7 @@ namespace pxtblockly {
         private restoreStateFromString() {
             let r = this.value_ as string;
             if (r) {
-                const rows = r.split("\n").filter(r => rowRegex.test(r));
+                const rows = r.split("\n").filter(row => rowRegex.test(row));
 
                 for (let y = 0; y < rows.length && y < this.matrixHeight; y++) {
                     let x = 0;

@@ -179,9 +179,9 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
                 x: x ? this.unScalePointX(newValue) : pos.x,
                 y: !x ? this.unScalePointY(newValue) : pos.y,
             }, () => {
-                const pos = this.getScaledPoints();
-                if (x) onChange(input.answerTokens[0])(pos.x.toString());
-                if (!x) onChange(input.answerTokens[1])(pos.y.toString());
+                const scaledPoints = this.getScaledPoints();
+                if (x) onChange(input.answerTokens[0])(scaledPoints.x.toString());
+                if (!x) onChange(input.answerTokens[1])(scaledPoints.y.toString());
 
                 this.setState({
                     dotVisible: true,

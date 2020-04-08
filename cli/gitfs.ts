@@ -13,7 +13,7 @@ Purpose:
     so this CLI command is useful when uploading large amounts of git objects.
 
 TODOs (updated 8/14/2019 by Daryl & Michal)
-- Upload tree & file objects first: currently this code uploads 
+- Upload tree & file objects first: currently this code uploads
   all commits first and then the associated "tree" and blob objects.
   The issue with this is that the cloud checks for the exists of a
   commit object and assumes if it exists that all the associated tree
@@ -33,8 +33,8 @@ TODOs (updated 8/14/2019 by Daryl & Michal)
       of time if we could pass a certain commit to resume from.
 */
 
-export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
-    pxt.log(`uploading refs starting from ${id} in ${repoUrl} to ${pxt.Cloud.apiRoot}`);
+export async function uploadRefs(initialCommitId: string, repoUrl: string): Promise<void> {
+    pxt.log(`uploading refs starting from ${initialCommitId} in ${repoUrl} to ${pxt.Cloud.apiRoot}`);
     let gitCatFile: child_process.ChildProcess
     let gitCatFileBuf = new U.PromiseBuffer<Buffer>()
 
@@ -49,11 +49,11 @@ export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
     let visited: SMap<boolean> = {};
     let toCheck: string[] = [];
 
-    await processCommit(id);
+    await processCommit(initialCommitId);
 
     await uploadMissingObjects(undefined, true);
 
-    await refreshRefs(id, repoUrl);
+    await refreshRefs(initialCommitId);
 
     killGitCatFile();
     process.exit(0);
@@ -164,7 +164,7 @@ export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
         }
     }
 
-    async function refreshRefs(id: string, repoUrl: string) {
+    async function refreshRefs(id: string) {
         console.log("Updating refs");
         const data = {
             HEAD: id,

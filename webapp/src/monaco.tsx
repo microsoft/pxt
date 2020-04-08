@@ -106,10 +106,10 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                     const documentation = pxt.Util.rlf(si.attributes.jsDoc);
                     const block = pxt.Util.rlf(si.attributes.block);
 
-                    const word = model.getWordAtPosition(position);
+                    const wordAtPos = model.getWordAtPosition(position);
                     const range: monaco.IRange = {
                         startLineNumber: position.lineNumber,
-                        startColumn: word ? word.startColumn : position.column,
+                        startColumn: wordAtPos ? wordAtPos.startColumn : position.column,
                         endColumn: position.column,
                         endLineNumber: position.lineNumber
                     }
@@ -432,14 +432,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         .then(resp => {
                             if (resp.success) {
                                 return compiler.decompileAsync(tsFile, blocksInfo, oldWorkspace, blockFile)
-                                    .then(resp => {
-                                        if (!resp.success) {
-                                            this.currFile.diagnostics = resp.diagnostics;
+                                    .then(decompileResp => {
+                                        if (!decompileResp.success) {
+                                            this.currFile.diagnostics = decompileResp.diagnostics;
                                             let tooLarge = false;
-                                            resp.diagnostics.forEach(d => tooLarge = (tooLarge || d.code === 9266 /* error code when script is too large */));
+                                            decompileResp.diagnostics.forEach(d => tooLarge = (tooLarge || d.code === 9266 /* error code when script is too large */));
                                             return failedAsync(blockFile, tooLarge);
                                         }
-                                        xml = resp.outfiles[blockFile];
+                                        xml = decompileResp.outfiles[blockFile];
                                         Util.assert(!!xml);
                                         return mainPkg.setContentAsync(blockFile, xml)
                                             .then(() => this.parent.setFile(mainPkg.files[blockFile]));
@@ -769,8 +769,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     this.forceDiagnosticsUpdate();
                 }
                 // Update widgets
-                const toolbox = document.getElementById('monacoToolboxDiv');
-                if (toolbox) toolbox.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
+                const monacoToolbox = document.getElementById('monacoToolboxDiv');
+                if (monacoToolbox) monacoToolbox.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
             })
 
             const monacoEditorInner = document.getElementById('monacoEditorInner');
@@ -1140,7 +1140,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.editor.updateOptions({ readOnly: readOnly });
 
                 let proto = "pkg:" + file.getName();
-                let model = monaco.editor.getModels().filter((model) => model.uri.toString() == proto)[0];
+                let model = monaco.editor.getModels().find((textModel) => textModel.uri.toString() == proto);
                 if (!model) model = monaco.editor.createModel(pkg.mainPkg.readFile(file.getName()), mode, monaco.Uri.parse(proto));
                 if (model) this.editor.setModel(model);
 
@@ -1195,12 +1195,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         // Test for left and right quotes because ios safari will sometimes insert
                         // them automatically for the user. Convert them to normal quotes
                         if (e.changes.some(change => bannedCharactersRegex.test(change.text))) {
-                            const edits: monaco.editor.IIdentifiedSingleEditOperation[] = e.changes.filter(e => bannedCharactersRegex.test(e.text)).map(e => {
-                                const start = model.getPositionAt(e.rangeOffset);
-                                const end = model.getPositionAt(e.rangeOffset + e.text.length);
+                            const edits: monaco.editor.IIdentifiedSingleEditOperation[] = e.changes.filter(change => bannedCharactersRegex.test(change.text)).map(change => {
+                                const start = model.getPositionAt(change.rangeOffset);
+                                const end = model.getPositionAt(change.rangeOffset + change.text.length);
                                 return {
                                     range: new monaco.Range(start.lineNumber, start.column, end.lineNumber, end.column),
-                                    text: e.text.replace(/\u{201c}|\u{201d}/gu, `"`).replace(/\u{2018}|\u{2019}/gu, `'`)
+                                    text: change.text.replace(/\u{201c}|\u{201d}/gu, `"`).replace(/\u{2018}|\u{2019}/gu, `'`)
                                 }
                             });
 

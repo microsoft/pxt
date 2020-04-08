@@ -398,8 +398,8 @@ namespace pxt.blocks {
             b.setInputsInline(true);
         }
 
-        function setReturnValue(mutation: Element, hasReturnValue: boolean) {
-            mutation.setAttribute("no_return_value", hasReturnValue ? "false" : "true")
+        function setReturnValue(mutation: Element, mutationHasReturnValue: boolean) {
+            mutation.setAttribute("no_return_value", mutationHasReturnValue ? "false" : "true")
         }
 
         function hasReturnValue(mutation: Element) {

@@ -124,36 +124,32 @@ namespace pxsim {
         }
     }
 
-    export function dumpHeap(v: any, heap: Map<any>, fields?: string[], filters?: string[]): Variables {
-        function frameVars(frame: any, fields?: string[]) {
-            const r: Variables = {}
-            for (let k of Object.keys(frame)) {
-                // skip members starting with __
-                if (!/^__/.test(k) && /___\d+$/.test(k) && (!filters || filters.indexOf(k) !== -1)) {
-                    r[k.replace(/___\d+$/, '')] = valToJSON(frame[k], heap)
-                }
+    export function dumpHeap(frame: any, heap: Map<any>, fields?: string[], filters?: string[]): Variables {
+        const r: Variables = {}
+        for (let k of Object.keys(frame)) {
+            // skip members starting with __
+            if (!/^__/.test(k) && /___\d+$/.test(k) && (!filters || filters.indexOf(k) !== -1)) {
+                r[k.replace(/___\d+$/, '')] = valToJSON(frame[k], heap)
             }
-            if (frame.fields && fields) {
-                // Fields of an object.
-                for (let k of fields) {
-                    k = k.substring(k.lastIndexOf(".") + 1);
-                    r[k] = valToJSON(evalGetter(frame.vtable.iface[k], frame), heap);
-                }
-            }
-            if (frame.fields) {
-                for (let k of Object.keys(frame.fields).filter(field => !field.startsWith('_'))) {
-                    r[k.replace(/___\d+$/, '')] = valToJSON(frame.fields[k], heap)
-                }
-            } else if (Array.isArray(frame.data)) {
-                // This is an Array.
-                (frame.data as any[]).forEach((element, index) => {
-                    r[index] = valToJSON(element, heap);
-                });
-            }
-            return r
         }
-
-        return frameVars(v, fields);
+        if (frame.fields && fields) {
+            // Fields of an object.
+            for (let k of fields) {
+                k = k.substring(k.lastIndexOf(".") + 1);
+                r[k] = valToJSON(evalGetter(frame.vtable.iface[k], frame), heap);
+            }
+        }
+        if (frame.fields) {
+            for (let k of Object.keys(frame.fields).filter(field => !field.startsWith('_'))) {
+                r[k.replace(/___\d+$/, '')] = valToJSON(frame.fields[k], heap)
+            }
+        } else if (Array.isArray(frame.data)) {
+            // This is an Array.
+            (frame.data as any[]).forEach((element, index) => {
+                r[index] = valToJSON(element, heap);
+            });
+        }
+        return r;
     }
 
     function evalGetter(fn: LabelFn, target: RefObject) {

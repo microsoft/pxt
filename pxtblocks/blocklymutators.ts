@@ -44,10 +44,10 @@ namespace pxt.blocks {
         isDeclaredByMutation(varName: string): boolean;
     }
 
-
     export namespace MutatorTypes {
         export const ObjectDestructuringMutator = "objectdestructuring";
         export const RestParameterMutator = "restparameter";
+        /* tslint:disable-next-line:no-shadowed-variable */
         export const DefaultInstanceMutator = "defaultinstance";
     }
 

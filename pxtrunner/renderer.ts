@@ -126,7 +126,7 @@ namespace pxt.runner {
             let nextnext = next.nextSibling; // before we hoist it from the tree
             if (next.nodeType == Node.TEXT_NODE) {
                 text = (next as Text).textContent;
-                const inewline = text.indexOf('\n');
+                inewline = text.indexOf('\n');
                 if (inewline < 0) {
                     span.appendChild(next);
                     next = nextnext;
@@ -353,11 +353,11 @@ namespace pxt.runner {
                     }
 
                     // filter out any blockly definitions from the svg that would be duplicates on the page
-                    r.blocksSvg.querySelectorAll("defs *").forEach(el => {
-                        if (existingFilters[el.id]) {
-                            el.remove();
+                    r.blocksSvg.querySelectorAll("defs *").forEach(svgEl => {
+                        if (existingFilters[svgEl.id]) {
+                            svgEl.remove();
                         } else {
-                            existingFilters[el.id] = true;
+                            existingFilters[svgEl.id] = true;
                         }
                     });
                     render(el, r);
@@ -499,7 +499,7 @@ namespace pxt.runner {
 
     function renderBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
         if (!opts.blocksXmlClass) return Promise.resolve();
-        const cls = opts.blocksXmlClass;
+        const { blocksXmlClass } = opts;
         function renderNextXmlAsync(cls: string,
             render: (container: JQuery, r: pxt.runner.DecompileResult) => void,
             options?: pxt.blocks.BlocksRenderOptions): Promise<void> {
@@ -521,7 +521,7 @@ namespace pxt.runner {
                 })
         }
 
-        return renderNextXmlAsync(cls, (c, r) => {
+        return renderNextXmlAsync(blocksXmlClass, (c, r) => {
             const s = r.blocksSvg;
             if (opts.snippetReplaceParent) c = c.parent();
             const segment = $('<div class="ui segment codewidget"/>').append(s);
@@ -531,7 +531,7 @@ namespace pxt.runner {
 
     function renderDiffBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
         if (!opts.diffBlocksXmlClass) return Promise.resolve();
-        const cls = opts.diffBlocksXmlClass;
+        const { diffBlocksXmlClass } = opts;
         function renderNextXmlAsync(cls: string,
             render: (container: JQuery, r: pxt.runner.DecompileResult) => void,
             options?: pxt.blocks.BlocksRenderOptions): Promise<void> {
@@ -564,7 +564,7 @@ namespace pxt.runner {
                 })
         }
 
-        return renderNextXmlAsync(cls, (c, r) => {
+        return renderNextXmlAsync(diffBlocksXmlClass, (c, r) => {
             const s = r.blocksSvg;
             if (opts.snippetReplaceParent) c = c.parent();
             const segment = $('<div class="ui segment codewidget"/>').append(s);
@@ -575,7 +575,7 @@ namespace pxt.runner {
 
     function renderDiffAsync(opts: ClientRenderOptions): Promise<void> {
         if (!opts.diffClass) return Promise.resolve();
-        const cls = opts.diffClass;
+        const { diffClass } = opts;
         function renderNextDiffAsync(cls: string): Promise<void> {
             let $el = $("." + cls).first();
             if (!$el[0]) return Promise.resolve();
@@ -602,12 +602,12 @@ namespace pxt.runner {
             return Promise.delay(1, renderNextDiffAsync(cls));
         }
 
-        return renderNextDiffAsync(cls);
+        return renderNextDiffAsync(diffClass);
     }
 
     function renderDiffBlocksAsync(opts: ClientRenderOptions): Promise<void> {
         if (!opts.diffBlocksClass) return Promise.resolve();
-        const cls = opts.diffBlocksClass;
+        const { diffBlocksClass } = opts;
         function renderNextDiffAsync(cls: string): Promise<void> {
             let $el = $("." + cls).first();
             if (!$el[0]) return Promise.resolve();
@@ -662,7 +662,7 @@ namespace pxt.runner {
                 })
         }
 
-        return renderNextDiffAsync(cls);
+        return renderNextDiffAsync(diffBlocksClass);
     }
 
     let decompileApiPromise: Promise<DecompileResult>;
@@ -817,14 +817,14 @@ namespace pxt.runner {
                     const csymbols = symbols.filter(symbol => !!namespaces[symbol.namespace])
                     if (!csymbols.length) return;
 
-                    csymbols.sort((l,r) => {
+                    csymbols.sort((a, b) => {
                         // render cards first
-                        const lcard = !l.attributes.blockHidden && Blockly.Blocks[l.attributes.blockId];
-                        const rcard = !r.attributes.blockHidden && Blockly.Blocks[r.attributes.blockId]
+                        const lcard = !a.attributes.blockHidden && Blockly.Blocks[a.attributes.blockId];
+                        const rcard = !b.attributes.blockHidden && Blockly.Blocks[b.attributes.blockId]
                         if (!!lcard != !!rcard) return -(lcard ? 1 : 0) + (rcard ? 1 : 0);
 
                         // sort alphabetically
-                        return l.name.localeCompare(r.name);
+                        return a.name.localeCompare(b.name);
                     })
 
                     const ul = $('<div />').addClass('ui divided items');

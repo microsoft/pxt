@@ -126,8 +126,8 @@ namespace pxt.winrt.workspace {
                                 return rf;
                             else
                                 return readFileAsync(pathjoin(logicalDirname, fn))
-                                    .then(text => {
-                                        rf.content = text
+                                    .then(content => {
+                                        rf.content = content
                                         return rf;
                                     })
                         }))
@@ -139,9 +139,9 @@ namespace pxt.winrt.workspace {
                             files: files
                         };
                         return readFileAsync(pathjoin(logicalDirname, HEADER_JSON))
-                            .then(text => {
-                                if (text)
-                                    rs.header = JSON.parse(text)
+                            .then(content => {
+                                if (content)
+                                    rs.header = JSON.parse(content)
                             }, e => { })
                             .then(() => rs)
                     })

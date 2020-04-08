@@ -231,8 +231,8 @@ namespace pxtblockly {
                             } else {
                                 // Clear all current hovers.
                                 const currentHovers = tableContainer.getElementsByClassName('goog-menuitem-highlight');
-                                for (let i = 0; i < currentHovers.length; i++) {
-                                    pxt.BrowserUtils.removeClass(currentHovers[i] as HTMLElement, 'goog-menuitem-highlight');
+                                for (let j = 0; j < currentHovers.length; j++) {
+                                    pxt.BrowserUtils.removeClass(currentHovers[j] as HTMLElement, 'goog-menuitem-highlight');
                                 }
                                 // Set hover on current item
                                 pxt.BrowserUtils.addClass(menuItem, 'goog-menuitem-highlight');

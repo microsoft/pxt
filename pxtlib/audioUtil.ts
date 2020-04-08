@@ -23,13 +23,13 @@ namespace pxt.AudioContextManager {
         return undefined;
     }
 
-    export function mute(mute: boolean) {
+    export function mute(on: boolean) {
         if (!_context)
             return;
-        _mute = mute;
+        _mute = on;
         stop();
 
-        if (mute && _vco) {
+        if (on && _vco) {
             _vco.disconnect();
             _gain.disconnect();
             _vco = undefined;
@@ -49,10 +49,10 @@ namespace pxt.AudioContextManager {
         return _frequency;
     }
 
-    export function tone(frequency: number) {
+    export function tone(freq: number) {
         if (_mute) return;
-        if (frequency <= 0) return;
-        _frequency = frequency;
+        if (freq <= 0) return;
+        _frequency = freq;
 
         let ctx = context() as AudioContext;
         if (!ctx) return;
@@ -69,7 +69,7 @@ namespace pxt.AudioContextManager {
                 _vco.start(0);
 
             }
-            _vco.frequency.value = frequency;
+            _vco.frequency.value = freq;
             _gain.gain.setTargetAtTime(1, _context.currentTime, 0.015);
 
         } catch (e) {

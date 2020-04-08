@@ -52,13 +52,6 @@ const imageHeaderSize = 36 // has to be divisible by 9
 export function decodeBlobAsync(dataURL: string) {
     return pxt.BrowserUtils.loadCanvasAsync(dataURL)
         .then(canvas => {
-            const ctx = canvas.getContext("2d")
-            const imgdat = ctx.getImageData(0, 0, canvas.width, canvas.height)
-            const d = imgdat.data
-            const bpp = (d[0] & 1) | ((d[1] & 1) << 1) | ((d[2] & 1) << 2)
-            if (bpp > 5)
-                return Promise.reject(new Error(lf("Invalid encoded PNG format")))
-
             function decode(ptr: number, bpp: number, trg: Uint8Array) {
                 let shift = 0
                 let i = 0
@@ -77,6 +70,13 @@ export function decodeBlobAsync(dataURL: string) {
                 }
                 return ptr
             }
+
+            const ctx = canvas.getContext("2d")
+            const imgdat = ctx.getImageData(0, 0, canvas.width, canvas.height)
+            const d = imgdat.data
+            const bpp = (d[0] & 1) | ((d[1] & 1) << 1) | ((d[2] & 1) << 2)
+            if (bpp > 5)
+                return Promise.reject(new Error(lf("Invalid encoded PNG format")))
 
             const hd = new Uint8Array(imageHeaderSize)
             let ptr = decode(4, bpp, hd)
@@ -226,25 +226,25 @@ export function encodeBlobAsync(title: string, dataURL: string, blob: Uint8Array
 
             pxt.Util.assert(header.length == imageHeaderSize)
 
-            function encode(img: Uint8ClampedArray, ptr: number, bpp: number, data: ArrayLike<number>) {
+            function encode(img: Uint8ClampedArray, ptr: number, encodeBpp: number, encodeData: ArrayLike<number>) {
                 let shift = 0
                 let dp = 0
-                let v = data[dp++]
-                const bppMask = (1 << bpp) - 1
+                let v = encodeData[dp++]
+                const bppMask = (1 << encodeBpp) - 1
                 let keepGoing = true
                 while (keepGoing) {
                     let bits = (v >> shift) & bppMask
                     let left = 8 - shift
-                    if (left <= bpp) {
-                        if (dp >= data.length) {
+                    if (left <= encodeBpp) {
+                        if (dp >= encodeData.length) {
                             if (left == 0) break
                             else keepGoing = false
                         }
-                        v = data[dp++]
+                        v = encodeData[dp++]
                         bits |= (v << left) & bppMask
-                        shift = bpp - left
+                        shift = encodeBpp - left
                     } else {
-                        shift += bpp
+                        shift += encodeBpp
                     }
                     img[ptr] = ((img[ptr] & ~bppMask) | bits) & 0xff
                     ptr++

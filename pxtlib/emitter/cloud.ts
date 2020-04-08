@@ -165,7 +165,7 @@ namespace pxt.Cloud {
             return localRequestAsync(url).then(resp => {
                 if (resp.statusCode == 404)
                     return privateRequestAsync({ url, method: "GET" })
-                        .then(resp => { return { md: resp.text, etag: resp.headers["etag"] }; });
+                        .then(r => { return { md: r.text, etag: r.headers["etag"] }; });
                 else return { md: resp.text, etag: undefined };
             });
         else {

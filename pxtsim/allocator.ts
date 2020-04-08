@@ -224,10 +224,10 @@ namespace pxsim {
 
         private allocPartIRs(def: PartDefinition, name: string, bbFit: PartBBFit): PartIR[] {
             let partIRs: PartIR[] = [];
-            const mkIR = (def: PartDefinition, name: string, instPins?: PinTarget[], partParams?: Map<string>): PartIR => {
+            const mkIR = (partDef: PartDefinition, partName: string, instPins?: PinTarget[], partParams?: Map<string>): PartIR => {
                 let pinIRs: PinIR[] = [];
-                for (let i = 0; i < def.numberOfPins; i++) {
-                    let pinDef = def.pinDefinitions[i];
+                for (let i = 0; i < partDef.numberOfPins; i++) {
+                    let pinDef = partDef.pinDefinitions[i];
                     let pinTarget: PinTarget;
                     if (typeof pinDef.target === "string") {
                         pinTarget = <PinTarget>pinDef.target;
@@ -239,13 +239,13 @@ namespace pxsim {
                         }
                         pinTarget = instPins[instIdx];
                     }
-                    let pinLoc = def.visual.pinLocations[i];
+                    let pinLoc = partDef.visual.pinLocations[i];
                     let adjustedY = bbFit.yOffset + pinLoc.y;
-                    let relativeRowIdx = Math.round(adjustedY / def.visual.pinDistance);
-                    let relativeYOffset = adjustedY - relativeRowIdx * def.visual.pinDistance;
+                    let relativeRowIdx = Math.round(adjustedY / partDef.visual.pinDistance);
+                    let relativeYOffset = adjustedY - relativeRowIdx * partDef.visual.pinDistance;
                     let adjustedX = bbFit.xOffset + pinLoc.x;
-                    let relativeColIdx = Math.round(adjustedX / def.visual.pinDistance);
-                    let relativeXOffset = adjustedX - relativeColIdx * def.visual.pinDistance;
+                    let relativeColIdx = Math.round(adjustedX / partDef.visual.pinDistance);
+                    let relativeXOffset = adjustedX - relativeColIdx * partDef.visual.pinDistance;
                     let pinBBFit: PinBBFit = {
                         partRelativeRowIdx: relativeRowIdx,
                         partRelativeColIdx: relativeColIdx,
@@ -260,8 +260,8 @@ namespace pxsim {
                     });
                 }
                 return {
-                    name: name,
-                    def: def,
+                    name: partName,
+                    def: partDef,
                     pins: pinIRs,
                     partParams: partParams || {},
                     bbFit: bbFit
@@ -733,7 +733,7 @@ namespace pxsim {
                 const allPowerUsage = allWireIRs.map(w => computePowerUsage(w));
                 this.powerUsage = mergePowerUsage(allPowerUsage);
                 const basicWires = this.allocPowerWires(this.powerUsage);
-                const partsAndWires: PartAndWiresInst[] = partsAndWireIRs.map((irs, idx) => {
+                const partsAndWires: PartAndWiresInst[] = partsAndWireIRs.map((irs, _) => {
                     const part = this.allocPart(irs);
                     const wires = irs.wires.map(w => this.allocWire(w));
                     if (wires.some(w => !w))

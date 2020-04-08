@@ -19,7 +19,7 @@ function loadSoundAsync(id: string): Promise<AudioBuffer> {
         },
         responseArrayBuffer: true
     }).then(resp => audio.loadAsync(resp.buffer))
-      .then(buffer => sounds[path] = buffer)
+      .then(b => sounds[path] = b)
 }
 
 function playSound(id: string) {

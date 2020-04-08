@@ -225,8 +225,8 @@ namespace pxtblockly {
 
                     for (const ref of allRefs) {
                         if (!ref.parsed) {
-                            const existing = ref.block.getFieldValue(ref.field);
-                            ref.parsed = pxt.sprite.decodeTilemap(existing, "typescript");
+                            const existingRefs = ref.block.getFieldValue(ref.field);
+                            ref.parsed = pxt.sprite.decodeTilemap(existingRefs, "typescript");
                         }
 
                         const index = ref.parsed.tileset.tiles.findIndex(t => t.projectId === old.projectId);

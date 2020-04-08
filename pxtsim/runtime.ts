@@ -5,36 +5,36 @@ namespace pxsim {
     let tracePauseMs = 0;
     export namespace U {
         // Keep these helpers unified with pxtlib/browserutils.ts
-        export function containsClass(el: SVGElement | HTMLElement, classes: string) {
-            return splitClasses(classes).every(cls => containsSingleClass(el, cls));
+        export function containsClass(element: SVGElement | HTMLElement, classes: string) {
+            return splitClasses(classes).every(cls => containsSingleClass(element, cls));
 
             function containsSingleClass(el: SVGElement | HTMLElement, cls: string) {
                 if (el.classList) {
                     return el.classList.contains(cls);
                 } else {
-                    const classes = (el.className + "").split(/\s+/);
-                    return !(classes.indexOf(cls) < 0);
+                    const allClasses = (el.className + "").split(/\s+/);
+                    return !(allClasses.indexOf(cls) < 0);
                 }
             }
         }
 
-        export function addClass(el: SVGElement | HTMLElement, classes: string) {
-            splitClasses(classes).forEach(cls => addSingleClass(el, cls));
+        export function addClass(element: SVGElement | HTMLElement, classes: string) {
+            splitClasses(classes).forEach(cls => addSingleClass(element, cls));
 
             function addSingleClass(el: SVGElement | HTMLElement, cls: string) {
                 if (el.classList) {
                     el.classList.add(cls);
                 } else {
-                    const classes = (el.className + "").split(/\s+/);
-                    if (classes.indexOf(cls) < 0) {
+                    const allClasses = (el.className + "").split(/\s+/);
+                    if (allClasses.indexOf(cls) < 0) {
                         el.className.baseVal += " " + cls;
                     }
                 }
             }
         }
 
-        export function removeClass(el: SVGElement | HTMLElement, classes: string) {
-            splitClasses(classes).forEach(cls => removeSingleClass(el, cls));
+        export function removeClass(element: SVGElement | HTMLElement, classes: string) {
+            splitClasses(classes).forEach(cls => removeSingleClass(element, cls));
 
             function removeSingleClass(el: SVGElement | HTMLElement, cls: string) {
                 if (el.classList) {
@@ -438,8 +438,10 @@ namespace pxsim {
         private lock: boolean;
         private _handlers: RefAction[] = [];
         private _addRemoveLog: { act: RefAction, log: LogType }[] = [];
+        public runtime: Runtime;
 
-        constructor(public runtime: Runtime, private valueToArgs?: EventValueToActionArgs) { }
+        /* tslint:disable-next-line:no-shadowed-variable */
+        constructor(runtime: Runtime, private valueToArgs?: EventValueToActionArgs) { }
 
         public push(e: EventIDType, notifyOne: boolean): Promise<void> {
             if (this.awaiters.length > 0) {
@@ -722,9 +724,9 @@ namespace pxsim {
                 }
                 const here: ObjDesc = { obj, path: null, pointers: [[par, name]] }
                 visited[obj.id] = here
-                obj.scan((subpath, v) => {
-                    if (v instanceof RefObject && !visited[v.id])
-                        scan(subpath, v, here)
+                obj.scan((subpath, objV) => {
+                    if (objV instanceof RefObject && !visited[objV.id])
+                        scan(subpath, objV, here)
                 })
             }
 
@@ -1050,8 +1052,8 @@ namespace pxsim {
                 leaveAccessor,
             }
 
-            function oops(msg: string) {
-                throw new Error("sim error: " + msg)
+            function oops(message: string) {
+                throw new Error("sim error: " + message)
             }
 
             function doNothing(s: StackFrame) {
@@ -1133,9 +1135,9 @@ namespace pxsim {
                 s.pc = retPC;
                 s.r0 = r0;
 
-                const { msg, heap } = getBreakpointMsg(s, brkId, userGlobals);
+                const { msg: brkpntMsg, heap } = getBreakpointMsg(s, brkId, userGlobals);
                 dbgHeap = heap;
-                Runtime.postMessage(msg)
+                Runtime.postMessage(brkpntMsg)
                 breakpoints[0] = 0;
                 breakFrame = null;
                 __this.pauseScheduled();
@@ -1192,10 +1194,10 @@ namespace pxsim {
                 checkResumeConsumed();
             }
 
-            function handleDebuggerMsg(msg: DebuggerMessage) {
-                switch (msg.subtype) {
+            function handleDebuggerMsg(dbgMsg: DebuggerMessage) {
+                switch (dbgMsg.subtype) {
                     case "config":
-                        let cfg = msg as DebuggerConfigMessage
+                        let cfg = dbgMsg as DebuggerConfigMessage
                         if (cfg.setBreakpoints && breakpoints) {
                             breakpoints.fill(0)
                             for (let n of cfg.setBreakpoints)
@@ -1203,7 +1205,7 @@ namespace pxsim {
                         }
                         break;
                     case "traceConfig":
-                        let trc = msg as TraceConfigMessage;
+                        let trc = dbgMsg as TraceConfigMessage;
                         tracePauseMs = trc.interval;
                         break;
                     case "pause":
@@ -1215,10 +1217,10 @@ namespace pxsim {
                     case "stepinto":
                     case "stepout":
                         if (dbgResume)
-                            dbgResume(msg);
+                            dbgResume(dbgMsg);
                         break;
                     case "variables":
-                        const vmsg = msg as VariablesRequestMessage;
+                        const vmsg = dbgMsg as VariablesRequestMessage;
                         let vars: Variables = undefined;
                         if (dbgHeap) {
                             const v = dbgHeap[vmsg.variablesReference];
@@ -1228,7 +1230,7 @@ namespace pxsim {
                         Runtime.postMessage(<pxsim.VariablesMessage>{
                             type: "debugger",
                             subtype: "variables",
-                            req_seq: msg.seq,
+                            req_seq: dbgMsg.seq,
                             variables: vars
                         })
                         break;
@@ -1276,10 +1278,10 @@ namespace pxsim {
                         __this.errorHandler(e)
                     else {
                         console.error("Simulator crashed, no error handler", e.stack)
-                        const { msg } = getBreakpointMsg(p, p.lastBrkId, userGlobals)
-                        msg.exceptionMessage = e.message
-                        msg.exceptionStack = e.stack
-                        Runtime.postMessage(msg)
+                        const { msg: crashMsg } = getBreakpointMsg(p, p.lastBrkId, userGlobals)
+                        crashMsg.exceptionMessage = e.message
+                        crashMsg.exceptionStack = e.stack
+                        Runtime.postMessage(crashMsg)
                         if (__this.postError)
                             __this.postError(e)
                     }

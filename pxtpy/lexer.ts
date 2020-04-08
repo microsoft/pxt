@@ -99,11 +99,11 @@ namespace pxt.py {
     let source: string
     let pos = 0, pos0 = 0
 
-    export function position(startPos: number, source: string) {
+    export function position(startPos: number, src: string) {
         let lineno = 0
         let lastnl = 0
         for (let i = 0; i < startPos; ++i) {
-            if (source.charCodeAt(i) == 10) {
+            if (src.charCodeAt(i) == 10) {
                 lineno++
                 lastnl = i
             }
@@ -158,15 +158,15 @@ namespace pxt.py {
         }
     }
 
-    export function friendlyTokenToString(t: Token, source: string) {
+    export function friendlyTokenToString(t: Token, src: string) {
         let len = t.endPos - t.startPos
         let s = ""
         if (len == 0) {
             s = tokenToString(t)
         } else if (len > 20) {
-            s = "`" + source.slice(t.startPos, t.startPos + 20) + "`..."
+            s = "`" + src.slice(t.startPos, t.startPos + 20) + "`..."
         } else {
-            s = "`" + source.slice(t.startPos, t.endPos) + "`"
+            s = "`" + src.slice(t.startPos, t.endPos) + "`"
         }
         s = s.replace(/\r/g, "")
             .replace(/\n/g, "\\n")
@@ -455,10 +455,10 @@ namespace pxt.py {
                         pos++
                     }
                     if (num) {
-                        let p = parseInt(num, numBasesRadix[c2])
-                        if (isNaN(p))
+                        const evaluatedNum = parseInt(num, numBasesRadix[c2])
+                        if (isNaN(evaluatedNum))
                             addError(U.lf("invalid number"))
-                        addToken(TokenType.Number, c1 + c2 + num, p)
+                        addToken(TokenType.Number, c1 + c2 + num, evaluatedNum)
                     } else
                         addError(U.lf("expecting numbers to follow 0b, 0o, 0x"))
                     return

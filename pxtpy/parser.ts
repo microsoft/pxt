@@ -81,7 +81,7 @@ namespace pxt.py {
                         t.type = TokenType.Dedent
                         let numPop = 0
                         while (indentStack.length) {
-                            let top = indentStack[indentStack.length - 1]
+                            top = indentStack[indentStack.length - 1]
                             if (top > curr) {
                                 indentStack.pop()
                                 numPop++
@@ -430,15 +430,15 @@ namespace pxt.py {
         let t0 = peekToken()
         shiftToken()
         if (currentKw() == "from") {
-            let r = mkAST("YieldFrom") as YieldFrom
+            const r = mkAST("YieldFrom") as YieldFrom
             r.value = test()
             return wrap_expr_stmt(finish(r))
+        } else {
+            const r = mkAST("Yield") as Yield
+            if (!atStmtEnd())
+                r.value = testlist()
+            return wrap_expr_stmt(finish(r))
         }
-
-        let r = mkAST("Yield") as Yield
-        if (!atStmtEnd())
-            r.value = testlist()
-        return wrap_expr_stmt(finish(r))
     }
 
 
@@ -605,10 +605,9 @@ namespace pxt.py {
     function testlist_core(f: () => Expr): Expr {
         let t0 = peekToken()
         let exprs = parseList(U.lf("expression"), f)
-        let expr = exprs[0]
         if (exprs.length != 1)
             return tuple(t0, exprs)
-        return expr
+        return exprs[0]
     }
 
     function testlist_star_expr(): Expr { return testlist_core(star_or_test) }
@@ -627,20 +626,20 @@ namespace pxt.py {
 
     function expr_stmt(): Stmt {
         let t0 = peekToken()
-        let expr = testlist_star_expr()
+        let currExpr = testlist_star_expr()
         let op = currentOp()
 
         if (op == "Assign") {
             let assign = mkAST("Assign") as Assign
-            assign.targets = [expr]
+            assign.targets = [currExpr]
             for (; ;) {
                 shiftToken()
-                expr = testlist_star_expr()
+                currExpr = testlist_star_expr()
                 op = currentOp()
                 if (op == "Assign") {
-                    assign.targets.push(expr)
+                    assign.targets.push(currExpr)
                 } else {
-                    assign.value = expr
+                    assign.value = currExpr
                     break
                 }
             }
@@ -650,21 +649,21 @@ namespace pxt.py {
 
         if (op == "Colon") {
             let annAssign = mkAST("AnnAssign") as AnnAssign
-            annAssign.target = expr
+            annAssign.target = currExpr
             shiftToken()
             annAssign.annotation = test()
             if (currentOp() == "Assign") {
                 shiftToken()
                 annAssign.value = test()
             }
-            annAssign.simple = t0.type == TokenType.Id && expr.kind == "Name" ? 1 : 0
+            annAssign.simple = t0.type == TokenType.Id && currExpr.kind == "Name" ? 1 : 0
             setStoreCtx(annAssign.target)
             return finish(annAssign)
         }
 
         if (U.endsWith(op, "Assign")) {
             let augAssign = mkAST("AugAssign") as AugAssign
-            augAssign.target = expr
+            augAssign.target = currExpr
             augAssign.op = op.replace("Assign", "") as operator
             shiftToken()
             augAssign.value = testlist()
@@ -674,7 +673,7 @@ namespace pxt.py {
 
         if (op == "Semicolon" || peekToken().type == TokenType.NewLine) {
             let exprStmt = mkAST("ExprStmt") as ExprStmt
-            exprStmt.value = expr
+            exprStmt.value = currExpr
             return finish(exprStmt)
         }
 
@@ -824,16 +823,16 @@ namespace pxt.py {
         return finish(r)
 
         function pdef() {
-            let r = mkAST("Arg") as Arg
-            r.arg = name()
-            r.annotation = undefined
+            const argNode = mkAST("Arg") as Arg
+            argNode.arg = name()
+            argNode.annotation = undefined
             if (allowTypes) {
                 if (currentOp() == "Colon") {
                     shiftToken()
-                    r.annotation = test()
+                    argNode.annotation = test()
                 }
             }
-            return r
+            return argNode
         }
     }
 
@@ -1121,13 +1120,13 @@ namespace pxt.py {
             if (currentKw() == "for") {
                 if (e.kind == "Starred")
                     error(9562, U.lf("iterable unpacking cannot be used in comprehension"))
-                let r = mkAST("SetComp", t0) as SetComp
-                r.elt = e
-                r.generators = comp_for()
-                return finish(r)
+                const res = mkAST("SetComp", t0) as SetComp
+                res.elt = e
+                res.generators = comp_for()
+                return finish(res)
             }
 
-            let r = mkAST("Set", t0) as Set
+            const r = mkAST("Set", t0) as Set
             r.elts = [e]
 
             if (currentOp() == "Comma") {
@@ -1155,11 +1154,11 @@ namespace pxt.py {
             if (currentKw() == "for") {
                 if (!key0)
                     error(9563, U.lf("dict unpacking cannot be used in dict comprehension"))
-                let r = mkAST("DictComp", t0) as DictComp
-                r.key = key0!
-                r.value = value0
-                r.generators = comp_for()
-                return finish(r)
+                let res = mkAST("DictComp", t0) as DictComp
+                res.key = key0!
+                res.value = value0
+                res.generators = comp_for()
+                return finish(res)
             }
 
             let r = mkAST("Dict", t0) as Dict
@@ -1339,12 +1338,12 @@ namespace pxt.py {
         return r
     }
 
-    function parseParens(cl: string, tuple: string, comp: string): Expr {
+    function parseParens(cl: string, tupleType: string, comp: string): Expr {
         let t0 = peekToken()
         shiftToken()
         if (currentOp() == cl) {
             shiftToken()
-            let r = mkAST(tuple, t0) as Tuple
+            let r = mkAST(tupleType, t0) as Tuple
             r.elts = []
             return finish(r)
         }
@@ -1359,7 +1358,7 @@ namespace pxt.py {
         }
 
         if (currentOp() == "Comma") {
-            let r = mkAST(tuple, t0) as Tuple
+            let r = mkAST(tupleType, t0) as Tuple
             shiftToken()
             r.elts = parseList(U.lf("expression"), star_or_test)
             r.elts.unshift(e0)
@@ -1370,8 +1369,8 @@ namespace pxt.py {
 
         expectOp(cl)
 
-        if (tuple == "List") {
-            let r = mkAST(tuple, t0) as List
+        if (tupleType == "List") {
+            let r = mkAST(tupleType, t0) as List
             r.elts = [e0]
             return finish(r)
         }
@@ -1424,7 +1423,7 @@ namespace pxt.py {
             else {
                 if (sl.every(s => s.kind == "Index")) {
                     let q = sl[0] as Index
-                    q.value = tuple(t1, sl.map(e => (e as Index).value))
+                    q.value = tuple(t1, sl.map(ind => (ind as Index).value))
                     r.slice = q
                 } else {
                     let extSl = mkAST("ExtSlice", t1) as ExtSlice
@@ -1523,7 +1522,7 @@ namespace pxt.py {
             if (!v || !v.kind)
                 return JSON.stringify(v)
 
-            let r = ""
+            let result = ""
             let keys = Object.keys(v)
             keys.sort((a, b) => (fieldOrder[a] || 100) - (fieldOrder[b] || 100) || U.strcmp(a, b))
             for (let k of keys) {
@@ -1531,28 +1530,28 @@ namespace pxt.py {
                     continue
                 if (cmp && U.lookup(cmpIgnore, k))
                     continue
-                if (r)
-                    r += ", "
-                r += k + "="
+                if (result)
+                    result += ", "
+                result += k + "="
                 if (Array.isArray(v[k]) && v[k].length && U.lookup(stmtFields, k)) {
-                    r += "[\n"
+                    result += "[\n"
                     let i2 = ind + "  "
                     for (let e of v[k]) {
-                        r += i2 + rec(i2, e) + "\n"
+                        result += i2 + rec(i2, e) + "\n"
                     }
-                    r += ind + "]"
+                    result += ind + "]"
                 } else if (k == "_comments") {
-                    r += "[\n"
+                    result += "[\n"
                     let i2 = ind + "  "
                     for (let e of v[k] as Token[]) {
-                        r += i2 + JSON.stringify(e.value) + "\n"
+                        result += i2 + JSON.stringify(e.value) + "\n"
                     }
-                    r += ind + "]"
+                    result += ind + "]"
                 } else {
-                    r += rec(ind, v[k])
+                    result += rec(ind, v[k])
                 }
             }
-            return v.kind + "(" + r + ")"
+            return v.kind + "(" + result + ")"
         }
 
         let r = ""

@@ -209,8 +209,8 @@ export class EditorPackage {
         return Promise.resolve()
     }
 
-    saveAssetAsync(filename: string, data: Uint8Array) {
-        return workspace.saveAssetAsync(this.header.id, filename, data)
+    saveAssetAsync(filename: string, assetData: Uint8Array) {
+        return workspace.saveAssetAsync(this.header.id, filename, assetData)
             .then(() => this.assetsPkg.loadAssetsAsync())
     }
 
@@ -669,15 +669,15 @@ export interface PackageMeta {
 data.mountVirtualApi("open-pkg-meta", {
     getSync: p => {
         p = data.stripProtocol(p)
-        const f = allEditorPkgs().filter(pkg => pkg.getPkgId() == p)[0];
-        if (!f || f.getPkgId() == "built")
+        const editorPkg = allEditorPkgs().find(pkg => pkg.getPkgId() == p);
+        if (!editorPkg || editorPkg.getPkgId() == "built")
             return {}
 
-        const files = f.sortedFiles();
+        const files = editorPkg.sortedFiles();
         let numErrors = files.reduce((n, file) => n + (file.numDiagnosticsOverride
             || (file.diagnostics ? file.diagnostics.length : 0)
             || 0), 0);
-        const ks = f.getKsPkg();
+        const ks = editorPkg.getKsPkg();
         if (ks && ks.invalid())
             numErrors++;
         const r = <PackageMeta>{
@@ -702,12 +702,12 @@ export interface PackageGitStatus {
 data.mountVirtualApi("pkg-git-status", {
     getSync: p => {
         p = data.stripProtocol(p)
-        const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
+        const editorPkg = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
         const r: PackageGitStatus = {};
-        if (f) {
-            r.id = f.getPkgId() == "this" && f.header && f.header.githubId;
+        if (editorPkg) {
+            r.id = editorPkg.getPkgId() == "this" && editorPkg.header && editorPkg.header.githubId;
             if (r.id) {
-                const files = f.sortedFiles();
+                const files = editorPkg.sortedFiles();
                 r.modified = !!files.find(f => f.baseGitContent != f.publishedContent());
             }
         }

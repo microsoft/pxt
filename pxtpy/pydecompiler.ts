@@ -177,9 +177,9 @@ namespace pxt.py {
         ///
         /// NEWLINES, COMMENTS, and WRAPPERS
         ///
-        function emitFile(file: ts.SourceFile): string {
+        function emitFile(f: ts.SourceFile): string {
             // emit file
-            let outLns = file.getChildren()
+            let outLns = f.getChildren()
                 .map(emitNode)
                 .reduce((p, c) => p.concat(c), [])
 
@@ -436,9 +436,9 @@ namespace pxt.py {
                     ? `for ${name} in range(${toExcl}):`
                     : `for ${name} in range(${fromIncl}, ${toExcl}):`;
 
-                let body = emitBody(s.statement)
+                let rangeBody = emitBody(s.statement)
 
-                return [forStmt].concat(body)
+                return [forStmt].concat(rangeBody)
             }
 
             // general case:
@@ -517,8 +517,8 @@ namespace pxt.py {
 
             if (s.elseStatement) {
                 if (ts.isIfStatement(s.elseStatement)) {
-                    let { supportStmts, ifStmt, rest } = emitIfHelper(s.elseStatement)
-                    let elif = `el${ifStmt}`
+                    let { supportStmts, ifStmt: ifStmtSymb, rest } = emitIfHelper(s.elseStatement)
+                    let elif = `el${ifStmtSymb}`
                     sup = sup.concat(supportStmts)
                     ifRest.push(elif)
                     ifRest = ifRest.concat(rest)
@@ -1071,17 +1071,17 @@ namespace pxt.py {
                 .map(([_, aSup]) => aSup)
                 .reduce((p, c) => p.concat(c), fnSup)
 
+            // TODO sanity check this, should be fine?
+            const args = getCommaSep(argExps.map(([a, _]) => a).reduce((p, c) => p.concat(c), []));
             if (fn.indexOf("_py.py_") === 0) {
                 if (argExps.length <= 0)
                     return throwError(s, 3014, "Unsupported: call expression has no arguments for _py.py_ fn");
                 // The format is _py.py_type_name, so remove the type
                 fn = fn.substr(7).split("_").filter((_, i) => i !== 0).join("_");
                 const recv = argExps.shift()![0];
-                const args = getCommaSep(argExps.map(([a, _]) => a).reduce((p, c) => p.concat(c), []))
                 return [expWrap(`${recv}.${fn}(`, args, ")"), sup]
             }
 
-            let args = getCommaSep(argExps.map(([a, _]) => a).reduce((p, c) => p.concat(c), [])) //getCommaSep(argExps.map(([a, _]) => a));
             return [expWrap(`${fn}(`, args, ")"), sup]
         }
         type ParameterDeclarationExtended = ts.ParameterDeclaration & { altName?: string }
@@ -1162,7 +1162,7 @@ namespace pxt.py {
             let els = s.elements
                 .map(emitExp);
             let sup = els
-                .map(([_, sup]) => sup)
+                .map(([_, unwrappedSup]) => unwrappedSup)
                 .reduce((p, c) => p.concat(c), [])
 
             let inner = getCommaSep(els.map(([e, _]) => e).reduce((p, c) => p.concat(c), []));
@@ -1201,8 +1201,8 @@ namespace pxt.py {
             return asExpRes(name);
         }
         function visitExp(s: ts.Expression, fn: (e: ts.Expression) => boolean): boolean {
-            let visitRecur = (s: ts.Expression) =>
-                visitExp(s, fn)
+            let visitRecur = (exprNode: ts.Expression) =>
+                visitExp(exprNode, fn)
 
             if (ts.isBinaryExpression(s)) {
                 return visitRecur(s.left) && visitRecur(s.right)
@@ -1226,8 +1226,8 @@ namespace pxt.py {
             return fn(s)
         }
         function isConstExp(s: ts.Expression): boolean {
-            let isConst = (s: ts.Expression): boolean => {
-                switch (s.kind) {
+            let isConst = (subS: ts.Expression): boolean => {
+                switch (subS.kind) {
                     case ts.SyntaxKind.PropertyAccessExpression:
                     case ts.SyntaxKind.BinaryExpression:
                     case ts.SyntaxKind.ParenthesizedExpression:
@@ -1250,7 +1250,7 @@ namespace pxt.py {
                         return false
                     case ts.SyntaxKind.PrefixUnaryExpression:
                     case ts.SyntaxKind.PostfixUnaryExpression:
-                        let e = s as ts.PrefixUnaryExpression | ts.PostfixUnaryExpression
+                        let e = subS as ts.PrefixUnaryExpression | ts.PostfixUnaryExpression
                         return e.operator !== ts.SyntaxKind.PlusPlusToken
                             && e.operator !== ts.SyntaxKind.MinusMinusToken
                 }

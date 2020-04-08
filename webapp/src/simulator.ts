@@ -270,6 +270,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
     const parts = pxtc.computeUsedParts(res, true);
     const fnArgs = res.usedArguments;
     lastCompileResult = res;
+    /* tslint:disable-next-line:no-shadowed-variable */
     const { mute, highContrast, light, clickTrigger, storedState, autoRun } = options;
 
     const opts: pxsim.SimulatorRunOptions = {
@@ -299,9 +300,9 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
     driver.run(js, opts);
 }
 
-export function mute(mute: boolean) {
+export function mute(on: boolean) {
     if (!driver) return;
-    driver.mute(mute);
+    driver.mute(on);
 }
 
 export function stop(unload?: boolean, starting?: boolean) {

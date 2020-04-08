@@ -352,9 +352,9 @@ export function handleNetworkError(e: any, ignoredCodes?: number[]) {
 ////////////         Javascript console       /////////////
 ///////////////////////////////////////////////////////////
 
-export function apiAsync(path: string, data?: any) {
-    return (data ?
-        Cloud.privatePostAsync(path, data) :
+export function apiAsync(path: string, postData?: any) {
+    return (postData ?
+        Cloud.privatePostAsync(path, postData) :
         Cloud.privateGetAsync(path))
         .then(resp => {
             console.log("*")

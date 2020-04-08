@@ -26,9 +26,9 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.Sourc
     for (let diagnostic of diagnostics) {
         if (diagnostic.fileName) {
             output += `${diagnostic.category == ts.pxtc.DiagnosticCategory.Error ? lf("error") : diagnostic.category == ts.pxtc.DiagnosticCategory.Warning ? lf("warning") : lf("message")}: ${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.column + 1}): `;
-            let f = mainPkg.filterFiles(f => f.getTextFileName() == diagnostic.fileName)[0]
-            if (f) {
-                f.diagnostics.push(diagnostic)
+            let fileWithDiagnostic = mainPkg.filterFiles(f => f.getTextFileName() == diagnostic.fileName)[0]
+            if (fileWithDiagnostic) {
+                fileWithDiagnostic.diagnostics.push(diagnostic)
 
                 if (tsErrToPyLoc && diagnostic.fileName === "main.ts") {
                     let pyLoc = tsErrToPyLoc(diagnostic)
@@ -54,10 +54,10 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.Sourc
         output = U.lf("Everything seems fine!\n")
 
 
-    let f = mainPkg.outputPkg.setFile("output.txt", output)
+    let file = mainPkg.outputPkg.setFile("output.txt", output)
     // display total number of errors on the output file
     const errors = diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error);
-    f.numDiagnosticsOverride = errors.length
+    file.numDiagnosticsOverride = errors.length
     reportDiagnosticErrors(errors);
 }
 
@@ -459,18 +459,19 @@ export function getApisInfoAsync() {
 export function getBlocksAsync(): Promise<pxtc.BlocksInfo> {
     if (!cachedBlocks) {
         // Used packaged info
-        const bannedCategories = pkg.mainPkg.resolveBannedCategories();
+        let bannedCategories = pkg.mainPkg.resolveBannedCategories();
         return getCachedApiInfoAsync(pkg.mainEditorPkg(), pxt.getBundledApiInfo())
             .then(apis => {
                 if (apis) {
                     return ts.pxtc.localizeApisAsync(apis, pkg.mainPkg)
-                        .then(apis => {
-                            return cachedBlocks = pxtc.getBlocksInfo(apis, bannedCategories)
+                        .then(localizedApis => {
+                            return cachedBlocks = pxtc.getBlocksInfo(localizedApis, bannedCategories)
                         });
                 }
                 else {
                     return getApisInfoAsync().then(info => {
-                        const bannedCategories = pkg.mainPkg.resolveBannedCategories();
+                        // TODO do bannedCategories need to be recomputed here?
+                        bannedCategories = pkg.mainPkg.resolveBannedCategories();
                         cachedBlocks = pxtc.getBlocksInfo(info, bannedCategories);
 
                         return cacheApiInfoAsync(pkg.mainEditorPkg(), info);
@@ -603,7 +604,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
 }
 
 async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo) {
-    const corePkgs = pxt.Package.corePackages().map(pkg => pkg.name);
+    const corePkgs = pxt.Package.corePackages().map(pkgConfig => pkgConfig.name);
     const externalPackages = project.pkgAndDeps().filter(p => p.id !== "built" && !p.isTopLevel() && corePkgs.indexOf(p.getKsPkg().config.name) === -1);
 
     if (externalPackages.length) {
@@ -870,7 +871,7 @@ export function getPackagesWithErrors(): pkg.EditorPackage[] {
 
     const topPkg = pkg.mainEditorPkg();
     if (topPkg) {
-        const corePkgs = pxt.Package.corePackages().map(pkg => pkg.name);
+        const corePkgs = pxt.Package.corePackages().map(corePkg => corePkg.name);
 
         topPkg.forEachFile(file => {
             if (file.diagnostics && file.diagnostics.length && file.epkg && corePkgs.indexOf(file.epkg.getPkgId()) === -1 && !file.epkg.isTopLevel() &&

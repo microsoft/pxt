@@ -297,10 +297,10 @@ switch (step) {
 
         writeRaw(`  default: oops()`)
         writeRaw(`} } }`)
-        let info = nodeLocationInfo(proc.action) as FunctionLocationInfo
-        info.functionName = proc.getName()
-        info.argumentNames = proc.args && proc.args.map(a => a.getName());
-        writeRaw(`${proc.label()}.info = ${JSON.stringify(info)}`)
+        let fnInfo = nodeLocationInfo(proc.action) as FunctionLocationInfo
+        fnInfo.functionName = proc.getName()
+        fnInfo.argumentNames = proc.args && proc.args.map(a => a.getName());
+        writeRaw(`${proc.label()}.info = ${JSON.stringify(fnInfo)}`)
         if (proc.isGetter())
             writeRaw(`${proc.label()}.isGetter = true;`)
         if (proc.isRoot)
@@ -440,9 +440,9 @@ function ${id}(s) {
                     U.assert(!!arg.currUses) // not first use
                     U.assert(arg.currUses < arg.totalUses)
                     arg.currUses++
-                    let idx = exprStack.indexOf(arg)
-                    U.assert(idx >= 0)
-                    return "s.tmp_" + idx
+                    let idxOfArg = exprStack.indexOf(arg)
+                    U.assert(idxOfArg >= 0)
+                    return "s.tmp_" + idxOfArg
                 case EK.CellRef:
                     let cell = e.data as ir.Cell;
                     return locref(cell)
@@ -513,12 +513,12 @@ function ${id}(s) {
             if (arg.totalUses == 1)
                 return emitExpr(arg)
             else {
-                const idx = exprStack.length
+                const exprInd = exprStack.length
                 exprStack.push(arg)
                 let val = emitExprPossiblyInto(arg)
                 if (val != "r0")
                     val = "r0 = " + val
-                write(`s.tmp_${idx} = ${val};`)
+                write(`s.tmp_${exprInd} = ${val};`)
             }
         }
 

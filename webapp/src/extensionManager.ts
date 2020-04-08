@@ -45,7 +45,7 @@ export class ExtensionManager {
 
     handleExtensionMessage(message: e.ExtensionMessage) {
         this.handleRequestAsync(message as e.ExtensionRequest)
-            .catch(e => { })
+            .catch(err => { })
     }
 
     sendEvent(extId: string, event: string) {
@@ -89,7 +89,7 @@ export class ExtensionManager {
                 this.sendResponse(resp);
                 break;
             case "extdatastream":
-                return this.permissionOperation(request.extId, Permissions.Console, resp, (name, resp) => this.handleDataStreamRequest(name, resp));
+                return this.permissionOperation(request.extId, Permissions.Console, resp, (name, r) => this.handleDataStreamRequest(name, r));
             case "extquerypermission":
                 const perm = this.getPermissions(request.extId)
                 const r = resp as e.ExtensionResponse;
@@ -126,9 +126,9 @@ export class ExtensionManager {
                     this.sendResponse(resp);
                 }
             })
-            .catch(e => {
+            .catch(err => {
                 resp.success = false;
-                resp.error = e;
+                resp.error = err;
                 this.sendResponse(resp);
             });
     }

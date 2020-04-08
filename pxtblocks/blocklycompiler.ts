@@ -72,6 +72,7 @@ namespace pxt.blocks {
             public type: string,
             public parentType?: Point,
             public childType?: Point,
+            /* tslint:disable-next-line:no-shadowed-variable */
             public isArrayType?: boolean
         ) { }
     }
@@ -151,8 +152,8 @@ namespace pxt.blocks {
     }
 
     // Ground types.
-    function mkPoint(t: string, isArrayType = false): Point {
-        return new Point(null, t, null, null, isArrayType);
+    function mkPoint(t: string, pntIsArrayType = false): Point {
+        return new Point(null, t, null, null, pntIsArrayType);
     }
     const pNumber = mkPoint("number");
     const pBoolean = mkPoint("boolean");
@@ -444,13 +445,13 @@ namespace pxt.blocks {
                         break;
                     case "variables_set":
                     case "variables_change":
-                        let p1 = lookup(e, b, b.getField("VAR").getText()).type;
+                        let lhs = lookup(e, b, b.getField("VAR").getText()).type;
                         attachPlaceholderIf(e, b, "VALUE");
                         let rhs = getInputTargetBlock(b, "VALUE");
                         if (rhs) {
                             let tr = returnType(e, rhs);
                             try {
-                                union(p1, tr);
+                                union(lhs, tr);
                             } catch (e) {
                                 // TypeScript should catch this error and bubble it up
                             }
@@ -498,9 +499,9 @@ namespace pxt.blocks {
                             visibleParams(call, countOptionals(b)).forEach((p, i) => {
                                 const isInstance = call.isExtensionMethod && i === 0;
                                 if (p.definitionName && !b.getFieldValue(p.definitionName)) {
-                                    let i = b.inputList.find((i: Blockly.Input) => i.name == p.definitionName);
-                                    if (i && i.connection && i.connection.check_) {
-                                        if (isInstance && connectionCheck(i) === "Array") {
+                                    let input = b.inputList.find((inputInList: Blockly.Input) => inputInList.name == p.definitionName);
+                                    if (input && input.connection && input.connection.check_) {
+                                        if (isInstance && connectionCheck(input) === "Array") {
                                             let gen = handleGenericType(b, p.definitionName);
                                             if (gen) {
                                                 return;
@@ -509,9 +510,9 @@ namespace pxt.blocks {
 
                                         // All of our injected blocks have single output checks, but the builtin
                                         // blockly ones like string.length and array.length might have multiple
-                                        for (let j = 0; j < i.connection.check_.length; j++) {
+                                        for (let j = 0; j < input.connection.check_.length; j++) {
                                             try {
-                                                let t = i.connection.check_[j];
+                                                let t = input.connection.check_[j];
                                                 unionParam(e, b, p.definitionName, ground(t));
                                                 break;
                                             }
@@ -747,7 +748,7 @@ namespace pxt.blocks {
     function compileCreateList(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         // collect argument
         let args = b.inputList.map(input => input.connection && input.connection.targetBlock() ? compileExpression(e, input.connection.targetBlock(), comments) : undefined)
-            .filter(e => !!e);
+            .filter(arg => !!arg);
 
         return H.mkArrayLiteral(args);
     }
@@ -1504,7 +1505,8 @@ namespace pxt.blocks {
                 else r = [mkStmt(compileExpression(e, b, comments))];
                 break;
         }
-        let l = r[r.length - 1]; if (l) l.id = b.id;
+        let lastNode = r[r.length - 1];
+        if (lastNode) lastNode.id = b.id;
 
         if (comments.length) {
             addCommentNodes(comments, r)
@@ -2178,13 +2180,14 @@ namespace pxt.blocks {
     function escapeVariables(current: Scope, e: Environment) {
         for (const varName of Object.keys(current.declaredVars)) {
             const info = current.declaredVars[varName];
-            if (!info.escapedName) info.escapedName = escapeVarName(varName);
+            if (!info.escapedName) info.escapedName = internalEscapeVarName(varName);
         }
 
         current.children.forEach(c => escapeVariables(c, e));
 
 
-        function escapeVarName(name: string): string {
+        // TODO: is this duplicate needed / should this just use escapeVarName from ln 1121?
+        function internalEscapeVarName(name: string): string {
             if (!name) return '_';
 
             let n = ts.pxtc.escapeIdentifier(name);
@@ -2291,8 +2294,8 @@ namespace pxt.blocks {
 
         return topScope;
 
-        function trackVariables(block: Blockly.Block, currentScope: Scope, e: Environment) {
-            e.idToScope[block.id] = currentScope;
+        function trackVariables(block: Blockly.Block, currentScope: Scope, currEnv: Environment) {
+            currEnv.idToScope[block.id] = currentScope;
 
             if (block.type === "variables_get") {
                 const name = block.getField("VAR").getText();
@@ -2317,7 +2320,7 @@ namespace pxt.blocks {
             }
 
             if (hasStatementInput(block)) {
-                const vars: VarInfo[] = getDeclaredVariables(block, e).map(binding => {
+                const vars: VarInfo[] = getDeclaredVariables(block, currEnv).map(binding => {
                     return {
                         name: binding[0],
                         type: binding[1],
@@ -2345,7 +2348,7 @@ namespace pxt.blocks {
                         parentScope.declaredVars[v.name] = v;
                     });
 
-                    e.idToScope[block.id] = parentScope;
+                    currEnv.idToScope[block.id] = parentScope;
                 }
 
 
@@ -2354,7 +2357,7 @@ namespace pxt.blocks {
                 }
 
                 forEachChildExpression(block, child => {
-                    trackVariables(child, parentScope, e);
+                    trackVariables(child, parentScope, currEnv);
                 });
 
                 forEachStatementInput(block, connectedBlock => {
@@ -2367,17 +2370,17 @@ namespace pxt.blocks {
                         children: []
                     };
                     parentScope.children.push(newScope);
-                    trackVariables(connectedBlock, newScope, e);
+                    trackVariables(connectedBlock, newScope, currEnv);
                 });
             }
             else {
                 forEachChildExpression(block, child => {
-                    trackVariables(child, currentScope, e);
+                    trackVariables(child, currentScope, currEnv);
                 });
             }
 
             if (block.nextConnection && block.nextConnection.targetBlock()) {
-                trackVariables(block.nextConnection.targetBlock(), currentScope, e);
+                trackVariables(block.nextConnection.targetBlock(), currentScope, currEnv);
             }
         }
 
