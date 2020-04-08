@@ -1209,10 +1209,10 @@ namespace ts.pxtc.service {
 
             // Fill default parameters in block string
             const computeBlockString = (symbol: SymbolInfo): string => {
-                if (symbol.attributes?.paramDefl && symbol.attributes?._def) {
+                if (symbol.attributes?._def) {
                     let block = [];
                     const blockDef = symbol.attributes._def;
-                    const paramDefl = Object.assign({}, symbol.attributes.paramDefl);
+                    const compileInfo = pxt.blocks.compileInfo(symbol);
 
                     // Construct block string from parsed blockdef
                     for (let part of blockDef.parts) {
@@ -1221,15 +1221,14 @@ namespace ts.pxtc.service {
                                 block.push(part.text);
                                 break;
                             case "param":
-                                block.push(paramDefl[part.name] || part.name);
-                                delete paramDefl[part.name];
+                                // In order, preference default value, var name, param name, blockdef param name
+                                let actualParam = compileInfo.definitionNameToParam[part.name];
+                                block.push(actualParam?.defaultValue
+                                    || part.varName
+                                    || actualParam?.actualName
+                                    || part.name);
                                 break;
                         }
-                    }
-
-                    // Append values we don't find to the end of the string
-                    for (let param in paramDefl) {
-                        block.push(paramDefl[param]);
                     }
 
                     return block.join(" ");
