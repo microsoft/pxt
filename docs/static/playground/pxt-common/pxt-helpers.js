@@ -43,6 +43,8 @@ interface StringMap {
 //% text.defl="123"
 //% blockHidden=1
 function parseInt(text: string, radix?: number): number {
+    // roughly based on https://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2
+    // with some consideration for avoiding unnecessary slices where easy
     if (!text || (radix != null && (radix < 2 || radix > 36)))
         return NaN;
 
