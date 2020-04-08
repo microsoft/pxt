@@ -410,6 +410,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             document.querySelector("#blocksEditor").addEventListener("keydown", this.handleKeyDown)
         }
 
+        const self = this;
+        const onBlocklyAction = Blockly.navigation.onBlocklyAction;
+        Blockly.navigation.onBlocklyAction = function (action) {
+            if (pxt.appTarget.appTheme?.accessibleBlocks) {
+                if (!self.editor.keyboardAccessibilityMode &&
+                    (action as any).name === Blockly.navigation.actionNames.TOGGLE_KEYBOARD_NAV) {
+                    self.parent.setState({ accessibleBlocks: true });
+                }
+                return onBlocklyAction(action);
+            }
+            return false;
+        };
     }
 
     private reportDeprecatedBlocks() {
