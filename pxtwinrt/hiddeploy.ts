@@ -43,7 +43,7 @@ namespace pxt.winrt {
                 try {
                     d.close();
                 } catch (e) { }
-                if(this.onConnectionChanged)
+                if (this.onConnectionChanged)
                     this.onConnectionChanged();
             }
             return Promise.resolve();
