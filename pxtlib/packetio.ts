@@ -59,9 +59,9 @@ namespace pxt.packetio {
                     // swallow execeptions
                     pxt.reportException(e);
                 })
-                .finally(() => { 
+                .finally(() => {
                     initPromise = undefined; // dubious
-                    wrapper = undefined; 
+                    wrapper = undefined;
                 });
         }
         if (onConnectionChangedHandler)
@@ -102,10 +102,8 @@ namespace pxt.packetio {
             let p = Promise.resolve();
             if (force)
                 p = p.then(() => disconnectAsync());
-            initPromise = p.then(() => {
-                wrapper = undefined;
-                return wrapperAsync();
-            }).finally(() => { initPromise = undefined })
+            initPromise = p.then(() => wrapperAsync())
+                .finally(() => { initPromise = undefined })
         }
         return initPromise;
     }
