@@ -137,12 +137,16 @@ export function hf2ConnectAsync(path: string, raw = false) {
     // in .then() to make sure we catch errors
     let h = new HF2.Wrapper(new HidIO(path))
     h.rawMode = raw
-    return h.reconnectAsync(true).then(() => h)
+    return h.reconnectAsync().then(() => h)
 }
 
-export function mkPacketIOAsync() {
-    if (useWebUSB())
+export function mkWebUSBOrHidPacketIOAsync(): Promise<pxt.packetio.PacketIO> {
+    if (useWebUSB()) {
+        pxt.log(`packetio: mk cli webusb`)
         return hf2ConnectAsync("")
+    }
+
+    pxt.log(`packetio: mk cli hidio`)
     return Promise.resolve()
         .then(() => {
             // in .then() to make sure we catch errors
@@ -150,7 +154,7 @@ export function mkPacketIOAsync() {
         })
 }
 
-pxt.HF2.mkPacketIOAsync = mkPacketIOAsync
+pxt.packetio.mkPacketIOAsync = mkWebUSBOrHidPacketIOAsync;
 
 let hf2Dev: Promise<HF2.Wrapper>
 export function initAsync(path: string = null): Promise<HF2.Wrapper> {
@@ -178,10 +182,12 @@ export class HIDError extends Error {
     }
 }
 
-export class HidIO implements HF2.PacketIO {
+export class HidIO implements pxt.packetio.PacketIO {
     dev: any;
     private path: string;
 
+    onDeviceConnectionChanged = (connect: boolean) => { };
+    onConnectionChanged = () => { };
     onData = (v: Uint8Array) => { };
     onEvent = (v: Uint8Array) => { };
     onError = (e: Error) => { };
@@ -207,6 +213,16 @@ export class HidIO implements HF2.PacketIO {
             this.onData(new Uint8Array(v))
         })
         this.dev.on("error", (v: Error) => this.onError(v))
+        if (this.onConnectionChanged)
+            this.onConnectionChanged();
+    }
+
+    disposeAsync(): Promise<void> {
+        return Promise.resolve();
+    }
+
+    isConnected(): boolean {
+        return !!this.dev;
     }
 
     sendPacketAsync(pkt: Uint8Array): Promise<void> {
@@ -232,14 +248,17 @@ export class HidIO implements HF2.PacketIO {
         // see https://github.com/node-hid/node-hid/issues/61
         this.dev.removeAllListeners("data");
         this.dev.removeAllListeners("error");
-        let pkt = new Uint8Array([0x48])
+        const pkt = new Uint8Array([0x48])
         this.sendPacketAsync(pkt).catch(e => { })
         return Promise.delay(100)
             .then(() => {
                 if (this.dev) {
-                    this.dev.close()
-                    this.dev = null
+                    const d = this.dev;
+                    delete this.dev;
+                    d.close()
                 }
+                if (this.onConnectionChanged)
+                    this.onConnectionChanged();
             })
     }
 

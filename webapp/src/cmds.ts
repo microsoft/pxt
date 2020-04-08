@@ -7,6 +7,10 @@ import * as webusb from "./webusb";
 import * as data from "./data";
 import Cloud = pxt.Cloud;
 
+function log(msg: string) {
+    pxt.log(`cmds: ${msg}`);
+}
+
 let extensionResult: pxt.editor.ExtensionResult;
 let tryPairedDevice = false;
 
@@ -31,7 +35,7 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
     if (userContext) {
         url = pxt.BrowserUtils.toDownloadDataUri(pxt.isOutputText() ? ts.pxtc.encodeBase64(out) : out, pxt.appTarget.compile.hexMimeType);
     } else if (!pxt.isOutputText()) {
-        pxt.debug('saving ' + fn)
+        log('saving ' + fn)
         url = pxt.BrowserUtils.browserDownloadBase64(
             out,
             fn,
@@ -40,7 +44,7 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
             e => core.errorNotification(lf("saving file failed..."))
         );
     } else {
-        pxt.debug('saving ' + fn)
+        log('saving ' + fn)
         url = pxt.BrowserUtils.browserDownloadBinText(
             out,
             fn,
@@ -119,7 +123,7 @@ export function isNativeHost(): boolean {
 }
 
 function nativeHostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
-    pxt.debug(`native deploy`)
+    log(`native deploy`)
     core.infoNotification(lf("Flashing device..."));
     const out = resp.outfiles[pxt.outputName()];
     const nativePostMessage = nativeHostPostMessageFunction();
@@ -131,7 +135,7 @@ function nativeHostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 }
 
 function nativeHostSaveCoreAsync(resp: pxtc.CompileResult): Promise<void> {
-    pxt.debug(`native save`)
+    log(`native save`)
     core.infoNotification(lf("Saving file..."));
     const out = resp.outfiles[pxt.outputName()]
     const nativePostMessage = nativeHostPostMessageFunction();
@@ -143,31 +147,52 @@ function nativeHostSaveCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 }
 
 export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.DeployOptions): Promise<void> {
-    pxt.tickEvent(`hid.deploy`)
+    pxt.tickEvent(`hid.deploy`);
+    log(`hid deploy`)
     // error message handled in browser download
     if (!resp.success)
         return browserDownloadDeployCoreAsync(resp);
     core.infoNotification(lf("Downloading..."));
-    let f = resp.outfiles[pxtc.BINARY_UF2]
-    let blocks = pxtc.UF2.parseFile(pxt.Util.stringToUint8Array(atob(f)))
-    return hidbridge.initAsync()
-        .then(dev => dev.reflashAsync(blocks))
-        .catch((e) => {
-            const troubleshootDoc = pxt.appTarget && pxt.appTarget.appTheme && pxt.appTarget.appTheme.appFlashingTroubleshoot;
-            if (e.type === "repairbootloader") {
-                return pairBootloaderAsync()
-                    .then(() => hidDeployCoreAsync(resp))
-            }
-            if (e.type === "devicenotfound" && d.reportDeviceNotFoundAsync && !!troubleshootDoc) {
-                pxt.tickEvent("hid.flash.devicenotfound");
-                return d.reportDeviceNotFoundAsync(troubleshootDoc, resp);
-            } else {
+    let isRetry = false;
+    return deployAsync();
+
+    function deployAsync(): Promise<void> {
+        return pxt.packetio.initAsync(isRetry)
+            .then(dev => dev.reflashAsync(resp))
+            .timeout(25000, "timeout")
+            .catch((e) => {
+                pxt.reportException(e)
+                if (e.type === "repairbootloader") {
+                    return pairBootloaderAsync()
+                        .then(() => hidDeployCoreAsync(resp))
+                } else if (e.message === "timeout") {
+                    pxt.tickEvent("hid.flash.timeout");
+                } else if (e.type === "devicenotfound") {
+                    pxt.tickEvent("hid.flash.devicenotfound");
+                    const troubleshootDoc = pxt.appTarget?.appTheme?.appFlashingTroubleshoot;
+                    if (d)
+                        return d.reportDeviceNotFoundAsync(troubleshootDoc, resp);
+                } else {
+                    pxt.tickEvent("hid.flash.error");
+                    if (d) d.reportError(e.message);
+                }
+
+                // disconnect and try again
+                if (!isRetry) {
+                    log(`retry deploy`);
+                    isRetry = true;
+                    return deployAsync();
+                }
+
+                // default, save file
+                core.errorNotification(lf("Oops, something went wrong while downloading."))
                 return pxt.commands.saveOnlyAsync(resp);
-            }
-        });
+            });
+    }
 }
 
 function pairBootloaderAsync(): Promise<void> {
+    log(`pair bootloader`)
     return core.confirmAsync({
         header: lf("Just one more time..."),
         body: lf("You need to pair the board again, now in bootloader mode. We know..."),
@@ -176,10 +201,11 @@ function pairBootloaderAsync(): Promise<void> {
 }
 
 function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptions): Promise<void> {
+    log(`winrt deploy`)
     return hidDeployCoreAsync(r, d)
         .timeout(20000)
         .catch((e) => {
-            return hidbridge.disconnectWrapperAsync()
+            return pxt.packetio.disconnectAsync()
                 .catch((e) => {
                     // Best effort disconnect; at this point we don't even know the state of the device
                     pxt.reportException(e);
@@ -199,7 +225,7 @@ function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptio
 }
 
 function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
-    pxt.debug('local deployment...');
+    log('local deploy');
     core.infoNotification(lf("Uploading..."));
     let deploy = () => pxt.Util.requestAsync({
         url: "/api/deploy",
@@ -218,6 +244,16 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     return deploy()
 }
 
+function winrtSaveAsync(resp: pxtc.CompileResult) {
+    return pxt.winrt.saveOnlyAsync(resp)
+        .then((saved) => {
+            if (saved) {
+                core.infoNotification(lf("file saved!"));
+            }
+        })
+        .catch((e) => core.errorNotification(lf("saving file failed...")));
+}
+
 export function setExtensionResult(res: pxt.editor.ExtensionResult) {
     extensionResult = res;
     applyExtensionResult();
@@ -227,138 +263,143 @@ function applyExtensionResult() {
     const res = extensionResult;
     if (!res) return;
 
+    if (res.mkPacketIOWrapper) {
+        log(`extension mkPacketIOWrapper`)
+        pxt.packetio.mkPacketIOWrapper = res.mkPacketIOWrapper;
+    }
     if (res.deployAsync) {
-        pxt.debug(`\tadded custom deploy core async`);
+        log(`extension deploy core async`);
         pxt.commands.deployCoreAsync = res.deployAsync;
     }
     if (res.saveOnlyAsync) {
-        pxt.debug(`\tadded custom save only async`);
+        log(`extension save only async`);
         pxt.commands.saveOnlyAsync = res.saveOnlyAsync;
     }
     if (res.saveProjectAsync) {
-        pxt.debug(`\tadded custom save project async`);
+        log(`extension save project async`);
         pxt.commands.saveProjectAsync = res.saveProjectAsync;
     }
     if (res.showUploadInstructionsAsync) {
-        pxt.debug(`\tadded custom upload instructions async`);
+        log(`extension upload instructions async`);
         pxt.commands.showUploadInstructionsAsync = res.showUploadInstructionsAsync;
     }
     if (res.patchCompileResultAsync) {
-        pxt.debug(`\tadded build patch`);
+        log(`extension build patch`);
         pxt.commands.patchCompileResultAsync = res.patchCompileResultAsync;
     }
     if (res.blocklyPatch) {
-        pxt.debug(`\tadded blockly patch`);
+        log(`extension blockly patch`);
         pxt.blocks.extensionBlocklyPatch = res.blocklyPatch;
     }
     if (res.webUsbPairDialogAsync) {
-        pxt.debug(`\tadded webusb pair dialog`);
+        log(`extension webusb pair dialog`);
         pxt.commands.webUsbPairDialogAsync = res.webUsbPairDialogAsync;
     }
     if (res.onTutorialCompleted) {
-        pxt.debug(`\tadded tutorial completed`);
+        log(`extension tutorial completed`);
         pxt.commands.onTutorialCompleted = res.onTutorialCompleted;
     }
 }
 
 export function init(): void {
     pxt.onAppTargetChanged = () => {
-        pxt.debug('app target changed')
+        log('app target changed')
         init()
     }
+    pxt.packetio.mkPacketIOWrapper = pxt.HF2.mkPacketIOWrapper;
+
+    // reset commands to browser
+    pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
     pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
     pxt.commands.showUploadInstructionsAsync = showUploadInstructionsAsync;
-    const forceHexDownload = /forceHexDownload/i.test(window.location.href);
+    // used by CLI pxt.commands.deployFallbackAsync = undefined;
 
+    // check if webUSB is available and usable
     if (pxt.usb.isAvailable() && pxt.appTarget.compile.webUSB) {
-        pxt.debug(`enabled webusb`);
+        log(`enabled webusb`);
         pxt.usb.setEnabled(true);
-        pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync;
+        pxt.packetio.mkPacketIOAsync = pxt.usb.mkPacketIOAsync;
     } else {
-        pxt.debug(`disabled webusb`);
+        log(`enabled hid bridge (webusb disabled)`);
         pxt.usb.setEnabled(false);
-        pxt.HF2.mkPacketIOAsync = hidbridge.mkBridgeAsync;
+        pxt.packetio.mkPacketIOAsync = hidbridge.mkBridgeAsync;
     }
 
-    const shouldUseWebUSB = pxt.usb.isEnabled && pxt.appTarget.compile.useUF2;
-    if (isNativeHost()) {
-        pxt.debug(`deploy: webkit host`);
-        pxt.commands.deployFallbackAsync = nativeHostDeployCoreAsync;
+    const forceBrowserDownload = /force(Hex)?(Browser)?Download/i.test(window.location.href);
+    const shouldUseWebUSB = pxt.usb.isEnabled && pxt.appTarget.compile.webUSB;
+    if (forceBrowserDownload || pxt.appTarget.serial.noDeploy) {
+        log(`deploy: force browser download`);
+        // commands are ready
+    } else if (isNativeHost()) {
+        log(`deploy: webkit deploy/save`);
+        pxt.commands.deployCoreAsync = nativeHostDeployCoreAsync;
         pxt.commands.saveOnlyAsync = nativeHostSaveCoreAsync;
-    } else if (shouldUseWebUSB && pxt.appTarget.appTheme.autoWebUSBDownload) {
-        pxt.debug(`deploy: webusb`);
-        pxt.commands.deployFallbackAsync = webusb.webUsbDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // windows app
+        log(`deploy: winrt`)
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
-            pxt.debug(`deploy: winrt`);
-            pxt.winrt.initWinrtHid(() => hidbridge.initAsync(true).then(() => { }), () => hidbridge.disconnectWrapperAsync());
-            pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
-            pxt.commands.deployFallbackAsync = winrtDeployCoreAsync;
+            log(`winrt deploy`);
+            pxt.winrt.initWinrtHid(() => pxt.packetio.initAsync(true).then(() => { }), () => pxt.packetio.disconnectAsync());
+            pxt.packetio.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
+            pxt.commands.deployCoreAsync = winrtDeployCoreAsync;
         } else {
             // If we're not using HF2, then the target is using their own deploy logic in extension.ts, so don't use
             // the wrapper callbacks
-            pxt.debug(`deploy: winrt + custom deploy`);
+            log(`winrt + custom deploy`);
             pxt.winrt.initWinrtHid(null, null);
-            if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID) {
-                pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
-            }
-            pxt.commands.deployFallbackAsync = pxt.winrt.driveDeployCoreAsync;
+            if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID)
+                pxt.packetio.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
+            pxt.commands.deployCoreAsync = pxt.winrt.driveDeployCoreAsync;
         }
         pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
-        pxt.commands.saveOnlyAsync = (resp: pxtc.CompileResult) => {
-            return pxt.winrt.saveOnlyAsync(resp)
-                .then((saved) => {
-                    if (saved) {
-                        core.infoNotification(lf("file saved!"));
-                    }
-                })
-                .catch((e) => core.errorNotification(lf("saving file failed...")));
-        };
+        pxt.commands.saveOnlyAsync = winrtSaveAsync;
     } else if (pxt.BrowserUtils.isPxtElectron()) {
-        pxt.debug(`deploy: electron`);
+        log(`deploy: electron`);
         pxt.commands.deployCoreAsync = electron.driveDeployAsync;
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
-    } else if ((tryPairedDevice && shouldUseWebUSB) || !shouldUseWebUSB && hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {
-        pxt.debug(`deploy: hid`);
-        pxt.commands.deployFallbackAsync = hidDeployCoreAsync;
-    } else if (pxt.BrowserUtils.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
-        pxt.debug(`deploy: localhost`);
-        pxt.commands.deployFallbackAsync = localhostDeployCoreAsync;
+    } else if (shouldUseWebUSB && pxt.appTarget.appTheme.autoWebUSBDownload) {
+        log(`deploy: webusb auto deploy`);
+        pxt.commands.deployCoreAsync = webusb.webUsbDeployCoreAsync;
+    } else if (shouldUseWebUSB && tryPairedDevice) {
+        log(`deploy: webusb, paired once`);
+        pxt.commands.deployCoreAsync = webusb.webUsbDeployCoreAsync;
+    } else if (hidbridge.shouldUse()) {
+        log(`deploy: hid`);
+        pxt.commands.deployCoreAsync = hidDeployCoreAsync;
+    } else if (pxt.BrowserUtils.isLocalHost() && Cloud.localToken) { // local node.js
+        log(`deploy: localhost`);
+        pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
     } else { // in browser
-        pxt.debug(`deploy: browser`);
-        pxt.commands.deployFallbackAsync = shouldUseWebUSB ? checkWebUSBThenDownloadAsync : browserDownloadDeployCoreAsync;
+        log(`deploy: browser only`);
+        // commands are ready
     }
 
     applyExtensionResult();
 }
 
+export function disconnectAsync(): Promise<void> {
+    return pxt.packetio.disconnectAsync()
+        .finally(() => {
+            setWebUSBPaired(false);
+        })
+}
+
 export function setWebUSBPaired(enabled: boolean) {
     if (tryPairedDevice === enabled) return;
     tryPairedDevice = enabled;
-    data.invalidate("usb:paired");
     init();
 }
 
-function handleUSBApi(r: string) {
+function handlePacketIOApi(r: string) {
     const p = data.stripProtocol(r);
-    if (p == "paired")
-        return tryPairedDevice;
-    return Promise.resolve(false);
+    switch (p) {
+        case "connected":
+            return pxt.packetio.isConnected();
+        case "icon":
+            return "usb";
+    }
+    return false;
 }
-data.mountVirtualApi("usb", {
-    getSync: handleUSBApi
+data.mountVirtualApi("packetio", {
+    getSync: handlePacketIOApi
 });
-
-function checkWebUSBThenDownloadAsync(resp: pxtc.CompileResult) {
-    return pxt.usb.isPairedAsync()
-        .then(paired => {
-            if (paired) {
-                setWebUSBPaired(true);
-                return hidDeployCoreAsync(resp);
-            } else {
-                data.invalidate("usb:paired");
-            }
-            return browserDownloadDeployCoreAsync(resp);
-        });
-}

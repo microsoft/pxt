@@ -4,7 +4,9 @@
 type WHID = Windows.Devices.HumanInterfaceDevice.HidDevice;
 
 namespace pxt.winrt {
-    export class WindowsRuntimeIO implements pxt.HF2.PacketIO {
+    export class WindowsRuntimeIO implements pxt.packetio.PacketIO {
+        onDeviceConnectionChanged = (connect: boolean) => { };
+        onConnectionChanged = () => { };
         onData = (v: Uint8Array) => { };
         onEvent = (v: Uint8Array) => { };
         onError = (e: Error) => { };
@@ -13,8 +15,16 @@ namespace pxt.winrt {
         constructor() {
         }
 
+        disposeAsync(): Promise<void> {
+            return Promise.resolve();
+        }
+
         error(msg: string) {
             throw new Error(U.lf("USB/HID error ({0})", msg))
+        }
+
+        isConnected(): boolean {
+            return !!this.dev;
         }
 
         reconnectAsync(): Promise<void> {
@@ -23,14 +33,18 @@ namespace pxt.winrt {
         }
 
         isSwitchingToBootloader() {
-            isSwitchingToBootloader();
+            return false;
         }
 
         disconnectAsync(): Promise<void> {
             if (this.dev) {
                 const d = this.dev;
                 delete this.dev;
-                d.close();
+                try {
+                    d.close();
+                } catch (e) { }
+                if (this.onConnectionChanged)
+                    this.onConnectionChanged();
             }
             return Promise.resolve();
         }
@@ -107,6 +121,8 @@ namespace pxt.winrt {
                         }
                         this.onData(new Uint8Array(values));
                     });
+                    if (this.onConnectionChanged)
+                        this.onConnectionChanged();
                     return Promise.resolve();
                 })
                 .catch((e) => {
@@ -126,8 +142,9 @@ namespace pxt.winrt {
     }
 
     export let packetIO: WindowsRuntimeIO = undefined;
-    export function mkPacketIOAsync(): Promise<pxt.HF2.PacketIO> {
+    export function mkPacketIOAsync(): Promise<pxt.packetio.PacketIO> {
         pxt.U.assert(!packetIO);
+        pxt.log(`packetio: mk winrt`)
         packetIO = new WindowsRuntimeIO();
         return packetIO.initAsync()
             .catch((e) => {
@@ -198,6 +215,6 @@ namespace pxt.winrt {
             });
             watchers.push(watcher);
         });
-        watchers.filter(w => !w.status).forEach((w) =>  w.start());
+        watchers.filter(w => !w.status).forEach((w) => w.start());
     }
 }

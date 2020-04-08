@@ -283,7 +283,6 @@ namespace pxt.editor {
         toggleGreenScreen(): void;
         toggleAccessibleBlocks(): void;
         setAccessibleBlocks(enabled: boolean): void;
-        pair(): void;
         launchFullEditor(): void;
 
         settings: EditorSettings;
@@ -318,7 +317,8 @@ namespace pxt.editor {
         showPackageDialog(): void;
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
         checkForHwVariant(): boolean;
-        pair(): Promise<void>;
+        pairAsync(autoConnect: boolean): Promise<void>;
+        disconnectAsync(): Promise<void>;
 
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
 
@@ -379,6 +379,7 @@ namespace pxt.editor {
         toolboxOptions?: IToolboxOptions;
         blocklyPatch?: (pkgTargetVersion: string, dom: Element) => void;
         webUsbPairDialogAsync?: (confirmAsync: (options: any) => Promise<number>) => Promise<number>;
+        mkPacketIOWrapper?: (io: pxt.packetio.PacketIO) => pxt.packetio.PacketIOWrapper;
 
         // Used with the @tutorialCompleted macro. See docs/writing-docs/tutorials.md for more info
         onTutorialCompleted?: () => void;

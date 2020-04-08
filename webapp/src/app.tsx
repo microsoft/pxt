@@ -2190,22 +2190,38 @@ export class ProjectView
             );
     }
 
-    pair() {
-        const prePairAsync = pxt.commands.webUsbPairDialogAsync
-            ? pxt.commands.webUsbPairDialogAsync(core.confirmAsync)
-            : Promise.resolve(1);
-        return prePairAsync.then((res) => {
-            if (res) {
-                return pxt.usb.pairAsync()
-                    .then(() => {
-                        cmds.setWebUSBPaired(true);
-                        core.infoNotification(lf("Device paired! Try downloading now."))
-                    }, (err: Error) => {
-                        core.errorNotification(lf("Failed to pair the device: {0}", err.message))
-                    });
+    private connectAsync() {
+        cmds.setWebUSBPaired(true);
+        return pxt.packetio.initAsync()
+            .then(wrapper => wrapper.reconnectAsync())
+            .then(() => core.infoNotification(lf("Device connected! Try downloading now.")))
+            .catch((err) => {
+                pxt.reportException(err);
+                core.errorNotification(lf("Connection error: {0}", err.message))
+            });
+    }
+
+    disconnectAsync(): Promise<void> {
+        return cmds.disconnectAsync()
+            .then(() => core.infoNotification("Device disconnected"));
+    }
+
+    async pairAsync(autoConnect: boolean): Promise<void> {
+        if (autoConnect) {
+            const dev = await pxt.usb.tryGetDeviceAsync();
+            if (dev) {
+                this.connectAsync();
+                return;
             }
-            return Promise.resolve();
-        });
+        }
+
+        let res = 1;
+        if (pxt.commands.webUsbPairDialogAsync)
+            res = await pxt.commands.webUsbPairDialogAsync(core.confirmAsync);
+        if (res) {
+            pxt.usb.pairAsync()
+                .then(() => this.connectAsync());
+        }
     }
 
     ///////////////////////////////////////////////////////////
@@ -2259,7 +2275,7 @@ export class ProjectView
             && pxt.appTarget.appTheme
             && pxt.appTarget.appTheme.checkForHwVariantWebUSB
             && this.checkWebUSBVariant) {
-            hidbridge.initAsync(true)
+            pxt.packetio.initAsync(true)
                 .then(wr => {
                     if (wr.familyID) {
                         for (let v of variants) {
@@ -2408,7 +2424,7 @@ export class ProjectView
             .done();
     }
 
-    showDeviceNotFoundDialogAsync(docPath: string, resp?: pxtc.CompileResult): Promise<void> {
+    showDeviceNotFoundDialogAsync(docPath?: string, resp?: pxtc.CompileResult): Promise<void> {
         pxt.tickEvent(`compile.devicenotfound`);
         const ext = pxt.outputName().replace(/[^.]*/, "");
         const fn = pkg.genFileName(ext);
@@ -2417,7 +2433,7 @@ export class ProjectView
             header: lf("Oops, we couldn't find your {0}", pxt.appTarget.appTheme.boardName),
             body: lf("Please make sure your {0} is connected and try again.", pxt.appTarget.appTheme.boardName),
             buttons: [
-                {
+                docPath && {
                     label: lf("Troubleshoot"),
                     className: "focused",
                     icon: "help",
@@ -2822,7 +2838,7 @@ export class ProjectView
             pxt.HWDBG.postMessage = (msg) => simulator.driver.handleHwDebuggerMsg(msg)
             return Promise.join<any>(
                 compiler.compileAsync({ debug: true, native: true }),
-                hidbridge.initAsync()
+                pxt.packetio.initAsync()
             ).then(vals => pxt.HWDBG.startDebugAsync(vals[0], vals[1]))
         })
     }
@@ -3780,16 +3796,15 @@ function initLogin() {
     parseLocalToken();
 }
 
-function initSerial() {
-    const isHF2WinRTSerial = pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && pxt.winrt.isWinRT();
-    const isValidLocalhostSerial = pxt.appTarget.serial && pxt.BrowserUtils.isLocalHost() && !!Cloud.localToken;
-
-    if (!isHF2WinRTSerial && !isValidLocalhostSerial && !pxt.usb.isEnabled)
-        return;
-
-    if (hidbridge.shouldUse() || pxt.usb.isEnabled) {
-        hidbridge.configureHidSerial((buf, isErr) => {
-            let data = Util.fromUTF8(Util.uint8ArrayToString(buf))
+function initPacketIO() {
+    pxt.log(`packetio: hook events`)
+    pxt.packetio.configureEvents(
+        () => {
+            pxt.log(`packetio: ${pxt.packetio.isConnected() ? 'connected' : 'disconnected'}`)
+            data.invalidate("packetio:*")
+        },
+        (buf, isErr) => {
+            const data = Util.fromUTF8(Util.uint8ArrayToString(buf))
             //pxt.debug('serial: ' + data)
             window.postMessage({
                 type: 'serial',
@@ -3797,8 +3812,17 @@ function initSerial() {
                 data
             }, "*")
         });
+}
+
+function initSerial() {
+    const isHF2WinRTSerial = pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && pxt.winrt.isWinRT();
+    const isValidLocalhostSerial = pxt.appTarget.serial && pxt.BrowserUtils.isLocalHost() && !!Cloud.localToken;
+
+    if (!isHF2WinRTSerial && !isValidLocalhostSerial && !pxt.usb.isEnabled)
         return;
-    }
+
+    if (hidbridge.shouldUse() || pxt.usb.isEnabled)
+        return;
 
     pxt.debug('initializing serial pipe');
     let ws = new WebSocket(`ws://localhost:${pxt.options.wsPort}/${Cloud.localToken}/serial`);
@@ -4277,6 +4301,7 @@ document.addEventListener("DOMContentLoaded", () => {
             render(); // this sets theEditor
             if (state)
                 theEditor.setState({ editorState: state });
+            initPacketIO();
             initSerial();
             initHashchange();
             socketbridge.tryInit();
