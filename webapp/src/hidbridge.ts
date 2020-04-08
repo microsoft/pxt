@@ -1,6 +1,5 @@
 import Cloud = pxt.Cloud;
 import U = pxt.Util;
-import * as data from "./data";
 
 let iface: pxt.worker.Iface
 

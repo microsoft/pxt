@@ -2193,8 +2193,8 @@ export class ProjectView
     private connectAsync() {
         cmds.setWebUSBPaired(true);
         return pxt.packetio.initAsync()
-        .then(wrapper => wrapper.reconnectAsync())
-        .then(() => core.infoNotification(lf("Device connected! Try downloading now.")))
+            .then(wrapper => wrapper.reconnectAsync())
+            .then(() => core.infoNotification(lf("Device connected! Try downloading now.")))
             .catch((err) => {
                 pxt.reportException(err);
                 core.errorNotification(lf("Connection error: {0}", err.message))
@@ -2209,8 +2209,8 @@ export class ProjectView
     async pairAsync(autoConnect: boolean): Promise<void> {
         if (autoConnect) {
             const dev = await pxt.usb.tryGetDeviceAsync();
-            if (dev) {     
-                this.connectAsync();           
+            if (dev) {
+                this.connectAsync();
                 return;
             }
         }
@@ -3804,14 +3804,14 @@ function initPacketIO() {
             data.invalidate("packetio:*")
         },
         (buf, isErr) => {
-        const data = Util.fromUTF8(Util.uint8ArrayToString(buf))
-        //pxt.debug('serial: ' + data)
-        window.postMessage({
-            type: 'serial',
-            id: 'n/a', // TODO
-            data
-        }, "*")
-    });
+            const data = Util.fromUTF8(Util.uint8ArrayToString(buf))
+            //pxt.debug('serial: ' + data)
+            window.postMessage({
+                type: 'serial',
+                id: 'n/a', // TODO
+                data
+            }, "*")
+        });
 }
 
 function initSerial() {
