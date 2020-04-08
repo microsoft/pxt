@@ -414,7 +414,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const onBlocklyAction = Blockly.navigation.onBlocklyAction;
         Blockly.navigation.onBlocklyAction = function (action) {
             if (pxt.appTarget.appTheme?.accessibleBlocks) {
-                if (!(Blockly.getMainWorkspace() as any).keyboardAccessibilityMode &&
+                if (!self.editor.keyboardAccessibilityMode &&
                     (action as any).name === Blockly.navigation.actionNames.TOGGLE_KEYBOARD_NAV) {
                     self.parent.setState({ accessibleBlocks: true });
                 }
