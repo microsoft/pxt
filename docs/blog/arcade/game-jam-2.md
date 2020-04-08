@@ -35,7 +35,7 @@ We don't want to spoil anything, so give it a shot!
 Gigantic Castle is an action platformer with multiple ways to play.
 Choose between two different paths as you navigate a castle stocked with terrifying ghosts, monsters, spikes, and potted plants.
 This game is a great example of level-design done well!
-reyhanpanci is a frequent contributor on the [MakeCode Forum](forum.makecode.com), make sure you check out their other games!
+reyhanpanci is a frequent contributor on the [MakeCode Forum](https://forum.makecode.com), make sure you check out their [other games](https://forum.makecode.com/search?q=user%3Areyhanpanci256%20tags%3Agame)!
 
 ### Space Mechanic by TWIB Productions
 [![Space Mechanic](/static/blog/arcade/game-jam/one-room/spacemechanic.png)](https://arcade.makecode.com/10414-32474-22732-83822)
