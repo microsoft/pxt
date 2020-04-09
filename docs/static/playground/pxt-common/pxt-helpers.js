@@ -60,7 +60,6 @@ function parseInt(text: string, radix?: number): number {
     const letterOffset = 97; // a
     const letterCount = 26;
     const lowerCaseMask = 0x20;
-    let output = 0;
 
     let sign = 1;
     switch (text.charAt(start)) {
@@ -80,6 +79,8 @@ function parseInt(text: string, radix?: number): number {
         radix = 10;
     }
 
+    let output = 0;
+    let hasDigit = false;
     for (let i = start; i < text.length; ++i) {
         const code = text.charCodeAt(i) | lowerCaseMask;
         let val: number = undefined;
@@ -89,8 +90,13 @@ function parseInt(text: string, radix?: number): number {
         else if (code >= letterOffset && code < letterOffset + letterCount)
             val = numCount + code - letterOffset;
 
-        if (val == undefined || val >= radix)
+        if (val == undefined || val >= radix) {
+            if (!hasDigit) {
+                return NaN;
+            }
             break;
+        }
+        hasDigit = true;
         output = output * radix + val;
     }
 
