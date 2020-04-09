@@ -221,17 +221,14 @@ namespace pxt.py {
         }
 
         function emitStmtWithNewlines(s: ts.Statement): string[] {
-            let out: string[] = [];
+            const out = emitStmt(s);
 
-            const comments = pxtc.decompiler.getCommentsForStatement(s, commentMap);
+            // get comments after emit so that child nodes get a chance to claim them
+            const comments = pxtc.decompiler.getCommentsForStatement(s, commentMap)
+                .map(emitComment)
+                .reduce((p, c) => p.concat(c), [])
 
-            for (const comment of comments) {
-                out.push(...emitComment(comment));
-            }
-
-            out = out.concat(emitStmt(s))
-
-            return out;
+            return comments.concat(out);
         }
 
         ///
