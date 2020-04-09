@@ -685,7 +685,7 @@ namespace pxt {
          */
         packageLocalizationStringsAsync(lang: string): Promise<Map<string>> {
             const targetId = pxt.appTarget.id;
-            const filenames = [this.id + "-jsdoc", this.id];
+            const filenames = [this.config.name + "-jsdoc", this.config.name];
             const r: Map<string> = {};
             const theme = pxt.appTarget.appTheme || {};
 
