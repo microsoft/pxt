@@ -1007,7 +1007,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     }
                 }
 
-                core.warningNotification(Util.lf("Help resource  not found"))
+                core.warningNotification(Util.lf("Help resource not found"))
             });
     }
 
