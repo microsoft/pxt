@@ -317,6 +317,11 @@ declare interface String {
     split(separator?: string, limit?: number): string[];
 
     /**
+     * Return a substring of the current string with whitespace removed from both ends
+     */
+    trim(): string;
+
+    /**
      * Converts the string to lower case characters.
      */
     //% helper=stringToLowerCase
