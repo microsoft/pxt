@@ -41,6 +41,8 @@ export function getUsedBlocksAsync(code: string, language?: string): Promise<pxt
                     const blk = allblocks[bi];
                     if (!blk.isShadow()) usedBlocks[blk.type] = 1;
                 }
+                if (pxt.options.debug)
+                    pxt.debug(JSON.stringify(usedBlocks, null, 2));
                 return usedBlocks;
             } else {
                 throw new Error("Failed to decompile");
