@@ -256,6 +256,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     pySnippet: `randint(0, 10)`,
                     attributes: {
                         weight: 65,
+                        blockId: "device_random",
                         jsDoc: lf("Returns a random number between min and max")
                     },
                     retType: "number"
