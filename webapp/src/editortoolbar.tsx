@@ -148,7 +148,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     protected onConnectClick = () => {
-        this.props.parent.pairAsync(true);
+        this.props.parent.connectAsync();
     }
 
     protected onDisconnectClick = () => {
