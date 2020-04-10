@@ -148,6 +148,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     protected onConnectClick = () => {
+        pxt.tickEvent("editortools.connect", undefined, { interactiveConsent: true });
         this.props.parent.connectAsync();
     }
 
