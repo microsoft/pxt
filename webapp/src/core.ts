@@ -178,14 +178,6 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
             icon: options.disagreeIcon || "cancel"
         })
     }
-    if (options.helpUrl) {
-        options.buttons.push({
-            label: lf("Help"),
-            className: "help",
-            icon: "help",
-            url: options.helpUrl
-        })
-    }
     return coretsx.renderConfirmDialogAsync(options as PromptOptions);
 }
 

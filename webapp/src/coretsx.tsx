@@ -80,6 +80,7 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
 
     render() {
         const options = this.props;
+        const { helpUrl } = options;        
         const { inputValue, inputError } = this.state;
         const size: any = options.size === undefined ? 'small' : options.size;
 
@@ -110,6 +111,7 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
                 closeOnDocumentClick={!options.hideCancel}
                 closeOnEscape={!options.hideCancel}
                 modalDidOpen={this.modalDidOpen}
+                helpUrl={helpUrl}
             >
                 {options.type == 'prompt' ? <div className="ui fluid icon input">
                     <input
