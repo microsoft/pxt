@@ -12,13 +12,14 @@ function firmwareUrlAsync(): Promise<string> {
         });
 }
 
-export function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Promise<void> {
-    pxt.tickEvent(`webusb.pair`);
+export function webUsbPairDialogAsync(pairAsync: () => Promise<boolean>, confirmAsync: (options: core.PromptOptions) => Promise<number>): Promise<number> {
+    let ok = 0;
     return firmwareUrlAsync()
         .then(firmwareUrl => {
             const boardName = pxt.appTarget.appTheme.boardName || lf("device");
-            const jsx =
-                <div className={`ui ${firmwareUrl ? "four" : "three"} column grid stackable`}>
+            const helpUrl = pxt.appTarget.appTheme.usbDocs;
+            const jsx = pxt.commands?.renderUsbPairDialog(firmwareUrl)
+                || <div className={`ui ${firmwareUrl ? "four" : "three"} column grid stackable`}>
                     {firmwareUrl ? <div className="column firmware">
                         <div className="ui">
                             <div className="content">
@@ -64,58 +65,30 @@ export function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Pr
                     </div>
                 </div>;
 
-            return core.confirmAsync({
-                header: lf("Pair your {0}", boardName),
-                agreeLbl: lf("Let's pair it!"),
-                size: "",
-                className: "webusbpair",
-                jsx: jsx
-            }).then(r => {
-                if (!r) {
-                    if (resp)
-                        return cmds.browserDownloadDeployCoreAsync(resp)
-                    else
-                        pxt.U.userError(pxt.U.lf("Device not paired"))
-                }
-                if (!resp)
-                    return pxt.usb.pairAsync()
-                return pxt.usb.pairAsync()
-                    .then(() => {
-                        pxt.tickEvent(`webusb.pair.success`);
-                        return cmds.hidDeployCoreAsync(resp)
-                    })
-                    .catch(e => cmds.browserDownloadDeployCoreAsync(resp));
+            return confirmAsync({
+                header: lf("Pair device for one-click downloads"),
+                jsx,
+                hasCloseIcon: true,
+                hideAgree: true,
+                hideCancel: true,
+                helpUrl,
+                className: 'downloaddialog',
+                buttons: [
+                    {
+                        label: lf("Pair device"),
+                        icon: "usb",
+                        className: "primary",
+                        onclick: () => {
+                            core.showLoading("pair", lf("Select device to pair..."));
+                            pairAsync()
+                                .then(r => ok = !!r ? 1 : 0)
+                                .finally(() => {
+                                    core.hideLoading("pair")
+                                    core.hideDialog();
+                                });
+                        }
+                    }
+                ]
             })
-        });
-}
-
-let askPairingCount = 0;
-function askWebUSBPairAsync(resp: pxtc.CompileResult): Promise<void> {
-    pxt.tickEvent(`webusb.askpair`);
-    askPairingCount++;
-    if (askPairingCount > 3) { // looks like this is not working, don't ask anymore
-        pxt.tickEvent(`webusb.askpaircancel`);
-        return cmds.browserDownloadDeployCoreAsync(resp);
-    }
-
-    const boardName = pxt.appTarget.appTheme.boardName || lf("device");
-    return core.confirmAsync({
-        header: lf("No device detected..."),
-        jsx: <div><p><strong>{lf("Do you want to pair your {0} to the editor?", boardName)}</strong></p>
-            <p>{lf("You will get one-click downloads and data logging.")}</p></div>,
-    }).then(clickedYes =>  {
-        if (clickedYes) {
-            return showWebUSBPairingInstructionsAsync(resp)
-        }
-        else {
-            cmds.setWebUSBPaired(false);
-            return cmds.browserDownloadDeployCoreAsync(resp);
-        }
-    });
-}
-
-export function webUsbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
-    pxt.tickEvent(`webusb.deploy`)
-    return cmds.hidDeployCoreAsync(resp)
-        .catch(e => askWebUSBPairAsync(resp));
+        }).then(() => ok);
 }

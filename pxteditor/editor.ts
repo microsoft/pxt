@@ -377,11 +377,11 @@ namespace pxt.editor {
         saveOnlyAsync?: (r: ts.pxtc.CompileResult) => Promise<void>;
         saveProjectAsync?: (project: pxt.cpp.HexFile) => Promise<void>;
         renderBrowserDownloadInstructions?: () => any /* JSX.Element */;
-        renderUsbPairDialog?: () => any /* JSX.Element */;
+        renderUsbPairDialog?: (firmwareUrl?: string) => any /* JSX.Element */;
         showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>) => Promise<void>;
         toolboxOptions?: IToolboxOptions;
         blocklyPatch?: (pkgTargetVersion: string, dom: Element) => void;
-        webUsbPairDialogAsync?: (confirmAsync: (options: any) => Promise<number>) => Promise<number>;
+        webUsbPairDialogAsync?: (pairAsync: () => Promise<boolean>, confirmAsync: (options: any) => Promise<number>) => Promise<number>;
         mkPacketIOWrapper?: (io: pxt.packetio.PacketIO) => pxt.packetio.PacketIOWrapper;
 
         // Used with the @tutorialCompleted macro. See docs/writing-docs/tutorials.md for more info

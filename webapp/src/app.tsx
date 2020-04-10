@@ -2242,7 +2242,7 @@ export class ProjectView
         const variants = pxt.getHwVariants()
         if (variants.length == 0)
             return false
-        let pairAsync = () => webusb.showWebUSBPairingInstructionsAsync(null)
+        let pairAsync = () => cmds.pairAsync()
             .then(() => {
                 this.checkForHwVariant()
             }, err => {
