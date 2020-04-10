@@ -17,80 +17,100 @@ function resolveFirmwareUrl(): string {
 }
 
 export function webUsbPairDialogAsync(pairAsync: () => Promise<boolean>, confirmAsync: (options: core.PromptOptions) => Promise<number>): Promise<number> {
-    let ok = 0;
-    const firmwareUrl = resolveFirmwareUrl();
+    let failedOnce = false;
     const boardName = pxt.appTarget.appTheme.boardName || lf("device");
     const helpUrl = pxt.appTarget.appTheme.usbDocs;
-    const jsx = pxt.commands?.renderUsbPairDialog(firmwareUrl)
-        || <div className={`ui ${firmwareUrl ? "four" : "three"} column grid stackable`}>
-            {firmwareUrl ? <div className="column firmware">
-                <div className="ui">
-                    <div className="content">
-                        <div className="description">
-                            {lf("First time here?")}
-                            <br />
-                            <a href={firmwareUrl} target="_blank" rel="noopener noreferrer">{lf("Check your firmware version and update if needed")}</a>
+    const jsxd = () => {
+        const firmwareUrl = failedOnce && resolveFirmwareUrl();
+        return pxt.commands?.renderUsbPairDialog(firmwareUrl, failedOnce)
+            || <div className={`ui ${firmwareUrl ? "four" : "three"} column grid stackable`}>
+                {firmwareUrl && <div className="column firmware">
+                    <div className="ui">
+                        <div className="content">
+                            <div className="description">
+                                {lf("Update Firmware")}
+                                <br />
+                                <a href={firmwareUrl} target="_blank" rel="noopener noreferrer">{lf("Check your firmware version and update if needed")}</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>}
+                <div className="column">
+                    <div className="ui">
+                        <div className="content">
+                            <div className="description">
+                                <span className="ui yellow circular label">1</span>
+                                <strong>{lf("Connect {0} to computer with USB cable", boardName)}</strong>
+                                <br />
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-                : undefined}
-            <div className="column">
-                <div className="ui">
-                    <div className="content">
-                        <div className="description">
-                            <span className="ui yellow circular label">1</span>
-                            <strong>{lf("Connect {0} to computer with USB cable", boardName)}</strong>
-                            <br />
+                <div className="column">
+                    <div className="ui">
+                        <div className="content">
+                            <div className="description">
+                                <span className="ui blue circular label">2</span>
+                                {lf("Select the device in the pairing dialog")}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div className="column">
-                <div className="ui">
-                    <div className="content">
-                        <div className="description">
-                            <span className="ui blue circular label">2</span>
-                            {lf("Select the device in the pairing dialog")}
+                <div className="column">
+                    <div className="ui">
+                        <div className="content">
+                            <div className="description">
+                                <span className="ui blue circular label">3</span>
+                                {lf("Press \"Connect\"")}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div className="column">
-                <div className="ui">
-                    <div className="content">
-                        <div className="description">
-                            <span className="ui blue circular label">3</span>
-                            {lf("Press \"Connect\"")}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>;
+            </div>;
+    }
 
-    return confirmAsync({
-        header: lf("Pair device for one-click downloads"),
-        jsx,
-        hasCloseIcon: true,
-        hideAgree: true,
-        hideCancel: true,
-        helpUrl,
-        className: 'downloaddialog',
-        buttons: [
-            {
-                label: lf("Pair device"),
-                icon: "usb",
-                className: "primary",
-                onclick: () => {
-                    core.showLoading("pair", lf("Select device and press 'Connect'..."));
-                    pairAsync()
-                        .then(r => ok = !!r ? 1 : 0)
-                        .finally(() => {
-                            core.hideLoading("pair")
-                            core.hideDialog();
-                        });
-                }
+    return new Promise((resolve, reject) => {
+        const confirmOptions = () => {
+            return {
+                header: lf("Pair device for one-click downloads"),
+                jsxd,
+                hasCloseIcon: true,
+                hideAgree: true,
+                hideCancel: true,
+                helpUrl,
+                className: 'downloaddialog',
+                buttons: [
+                    {
+                        label: lf("Pair device"),
+                        icon: "usb",
+                        className: "primary",
+                        onclick: () => {
+                            core.showLoading("pair", lf("Select your device and press \"Connect\"."))
+                            pairAsync()
+                                .finally(() => {
+                                    core.hideLoading("pair")
+                                    core.hideDialog();
+                                })
+                                .then(paired => {
+                                    if (paired || failedOnce) {
+                                        resolve(paired ? 1 : 0)
+                                    } else {
+                                        failedOnce = true;
+                                        // allow dialog to fully close, then reopen
+                                        core.forceUpdate();
+                                        confirmAsync(confirmOptions());
+                                    }
+                                })
+                                .catch(e => {
+                                    pxt.reportException(e)
+                                    core.errorNotification(lf("Pairing error: {0}", e.message));
+                                    resolve(0);
+                                });
+                        }
+                    }
+                ]
             }
-        ]
-    }).then(() => ok);
+        };
+        confirmAsync(confirmOptions());
+    })
 }

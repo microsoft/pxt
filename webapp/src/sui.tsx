@@ -1341,7 +1341,7 @@ class ModalButtonElement extends data.PureComponent<ModalButton, {}> {
     }
 
     handleClick() {
-        if (!this.props.disabled)
+        if (!this.props.disabled && this.props.onclick)
             this.props.onclick();
     }
 
