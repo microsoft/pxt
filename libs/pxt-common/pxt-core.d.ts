@@ -455,6 +455,7 @@ declare namespace Math {
      * @param x An angle in radians
      */
     //% shim=Math_::sin
+    //% help=math/trigonometry
     function sin(x: number): number;
 
     /**
@@ -462,6 +463,7 @@ declare namespace Math {
      * @param x An angle in radians
      */
     //% shim=Math_::cos
+    //% help=math/trigonometry
     function cos(x: number): number;
 
     /**
@@ -512,6 +514,7 @@ declare namespace Math {
      * @param x A numeric expression.
      */
     //% shim=Math_::ceil
+      //% help=math
     function ceil(x: number): number;
 
     /**
@@ -519,6 +522,7 @@ declare namespace Math {
       * @param x A numeric expression.
       */
     //% shim=Math_::floor
+      //% help=math
     function floor(x: number): number;
 
     /**
@@ -526,6 +530,7 @@ declare namespace Math {
       * @param x A numeric expression.
       */
     //% shim=Math_::trunc
+    //% help=math
     function trunc(x: number): number;
 
     /**
@@ -533,6 +538,7 @@ declare namespace Math {
       * @param x The value to be rounded to the nearest number.
       */
     //% shim=Math_::round
+    //% help=math
     function round(x: number): number;
 
     /**
