@@ -3756,7 +3756,7 @@ function render() {
     ReactDOM.render(<ProjectView />, sui.appElement);
 }
 
-export function getEditor(): IProjectView {
+function getEditor() {
     return theEditor
 }
 
