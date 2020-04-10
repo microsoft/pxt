@@ -63,6 +63,24 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
     else return pxt.commands.showUploadInstructionsAsync(fn, url, core.confirmAsync);
 }
 
+function webUsbPairDialogAsync(confirmAsync: (options: any) => Promise<number>): Promise<number> {
+    const helpUrl = pxt.appTarget.appTheme.usbDocs;
+    const jsx = pxt.commands?.renderUsbPairDialog();
+    const body = !jsx && lf("Select your device from the dialog and click Pair.")
+
+    return confirmAsync({
+        header: lf("Pair device for one-click downloads"),
+        body,
+        jsx,
+        hasCloseIcon: true,
+        agreeLbl: lf("Pair device"),
+        agreeIcon: "usb",
+        hideCancel: true,
+        helpUrl,
+        className: 'downloaddialog'
+    });
+}
+
 function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (options: core.PromptOptions) => Promise<number>): Promise<void> {
     const boardName = pxt.appTarget.appTheme.boardName || lf("device");
     const boardDriveName = pxt.appTarget.appTheme.driveDisplayName || pxt.appTarget.compile.driveName || "???";
@@ -294,6 +312,10 @@ function applyExtensionResult() {
         log(`extension upload renderBrowserDownloadInstructions`);
         pxt.commands.renderBrowserDownloadInstructions = res.renderBrowserDownloadInstructions;
     }
+    if (res.renderUsbPairDialog) {
+        log(`extension renderUsbPairDialog`)
+        pxt.commands.renderUsbPairDialog = res.renderUsbPairDialog;
+    }
     if (res.showUploadInstructionsAsync) {
         log(`extension upload instructions async`);
         pxt.commands.showUploadInstructionsAsync = res.showUploadInstructionsAsync;
@@ -327,6 +349,7 @@ export function init(): void {
     pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
     pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
+    pxt.commands.webUsbPairDialogAsync = webUsbPairDialogAsync;
     pxt.commands.showUploadInstructionsAsync = showUploadInstructionsAsync;
     // used by CLI pxt.commands.deployFallbackAsync = undefined;
 
