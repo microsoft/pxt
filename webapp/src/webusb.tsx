@@ -79,7 +79,7 @@ export function webUsbPairDialogAsync(pairAsync: () => Promise<boolean>, confirm
                         icon: "usb",
                         className: "primary",
                         onclick: () => {
-                            core.showLoading("pair", lf("Select device to pair..."));
+                            core.showLoading("pair", lf("Select device and press 'Connect'..."));
                             pairAsync()
                                 .then(r => ok = !!r ? 1 : 0)
                                 .finally(() => {
