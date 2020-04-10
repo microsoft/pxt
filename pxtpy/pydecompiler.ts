@@ -999,7 +999,7 @@ namespace pxt.py {
         // use newlines to separate items
         function getCommaSep(exps: string[]): string[] {
             let res = exps.join(", ");
-            if (res.length > 60) {
+            if (res.length > 60 && exps.length > 1) {
                 return exps.map((el, i) => {
                     let sep = el.charAt(el.length - 1) == "," ? "" : ",";
                     if (i == 0) {
