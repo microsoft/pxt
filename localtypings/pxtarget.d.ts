@@ -23,8 +23,6 @@ declare namespace pxt {
         // localized galleries
         localizedGalleries?: pxt.Map<pxt.Map<string>>;
         windowsStoreLink?: string;
-        // link to the latest firmware urls (boardid -> url)
-        firmwareUrls?: pxt.Map<string>;
         // release manifest for the electron app
         electronManifest?: pxt.electron.ElectronManifest;
     }
