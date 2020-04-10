@@ -180,7 +180,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     }
     if (options.helpUrl) {
         options.buttons.unshift({
-            className: "help",
+            className: "circular help",
             title: lf("Help"),
             icon: "help",
             url: options.helpUrl
