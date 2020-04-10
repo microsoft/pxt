@@ -1105,7 +1105,8 @@ export class Menu extends data.Component<MenuProps, MenuState> {
 ///////////////////////////////////////////////////////////
 
 export interface ModalButton {
-    label: string;
+    label?: string;
+    title?: string;
     icon?: string; // defaults to "checkmark"
     className?: string; // defaults "positive"
     onclick?: () => (Promise<void> | void);
@@ -1314,7 +1315,8 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                                 key={`action_${action.label}`}
                                 icon={action.icon}
                                 text={action.label}
-                                className={`ui button approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
+                                title={action.title || action.label}
+                                className={`ui button approve ${action.icon ? 'icon right' : ''} ${action.label ? 'labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
                                 href={action.url}
                                 target={!action.fileName ? '_blank' : undefined}
                                 download={action.fileName ? pxt.Util.htmlEscape(action.fileName) : undefined}
