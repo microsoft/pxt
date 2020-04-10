@@ -101,7 +101,7 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
                 className: "ligthgrey",
                 onclick: () => {
                     pxt.tickEvent('downloaddialog.connect')
-                    core.hideDialog();3
+                    core.hideDialog();
                     connectAsync()
                 }
             },
@@ -393,31 +393,33 @@ export function init(): void {
 }
 
 export function connectAsync(): Promise<void> {
-    const dev = await pxt.usb.tryGetDeviceAsync();
-    if (dev) {
-        setWebUSBPaired(true);
-        return pxt.packetio.initAsync()
-            .then(wrapper => wrapper.reconnectAsync())
-            .then(() => core.infoNotification(lf("Device connected! Try downloading now.")))
-            .catch((err) => {
-                pxt.reportException(err);
-                core.errorNotification(lf("Connection error: {0}", err.message))
-            });
-    } else
-        return pairAsync();
+    pxt.tickEvent("cmds.connect")
+    return pxt.usb.tryGetDeviceAsync()
+        .then(dev => {
+            if (!dev) return pairAsync();
+            setWebUSBPaired(true);
+            return pxt.packetio.initAsync()
+                .then(wrapper => wrapper.reconnectAsync())
+                .then(() => core.infoNotification(lf("Device connected! Try downloading now.")))
+                .catch((err) => {
+                    pxt.reportException(err);
+                    core.errorNotification(lf("Connection error: {0}", err.message))
+                });
+        })
 }
 
 export function pairAsync(): Promise<void> {
-    let res = 1;
-    if (pxt.commands.webUsbPairDialogAsync)
-        res = await pxt.commands.webUsbPairDialogAsync(core.confirmAsync);
-    if (res)
-        return pxt.usb.pairAsync()
-            .then(() => connectAsync());
-    return Promise.resolve();
+    pxt.tickEvent("cmds.pair")
+    const p = pxt.commands.webUsbPairDialogAsync
+        ? pxt.commands.webUsbPairDialogAsync(core.confirmAsync)
+        : Promise.resolve(1);
+    return p.then(res => res && pxt.usb.pairAsync()
+        .then(() => connectAsync())
+    );
 }
 
 export function disconnectAsync(): Promise<void> {
+    pxt.tickEvent("cmds.disconnect")
     return pxt.packetio.disconnectAsync()
         .then(() => core.infoNotification("Device disconnected"))
         .finally(() => {
