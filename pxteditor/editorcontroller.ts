@@ -403,12 +403,10 @@ namespace pxt.editor {
                                         .then(() => projectView.printCode());
                                 }
                                 case "pair": {
-                                    return Promise.resolve()
-                                        .then(() => projectView.pairAsync(false));
+                                    return projectView.pairAsync();
                                 }
                                 case "connect": {
-                                    return Promise.resolve()
-                                        .then(() => projectView.pairAsync(true));
+                                    return projectView.connectAsync();
                                 }
                                 case "info": {
                                     return Promise.resolve()

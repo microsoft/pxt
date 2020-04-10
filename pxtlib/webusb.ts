@@ -398,13 +398,17 @@ namespace pxt.usb {
         }
     }
 
-    export function pairAsync(): Promise<void> {
+    export function pairAsync(): Promise<boolean> {
         return ((navigator as any).usb.requestDevice({
             filters: filters
-        }) as Promise<USBDevice>).then(dev => {
-            // try connecting to it
-            return pxt.usb.mkPacketIOAsync()
-        }).then(io => io.reconnectAsync())
+        }) as Promise<USBDevice>)
+            .then(dev => !!dev)
+            .catch(e => {
+                // user cancelled
+                if (e.name == "NotFoundError")
+                    return undefined;
+                throw e;
+            })
     }
 
     export function isPairedAsync(): Promise<boolean> {

@@ -2190,38 +2190,16 @@ export class ProjectView
             );
     }
 
-    private connectAsync() {
-        cmds.setWebUSBPaired(true);
-        return pxt.packetio.initAsync()
-            .then(wrapper => wrapper.reconnectAsync())
-            .then(() => core.infoNotification(lf("Device connected! Try downloading now.")))
-            .catch((err) => {
-                pxt.reportException(err);
-                core.errorNotification(lf("Connection error: {0}", err.message))
-            });
-    }
-
     disconnectAsync(): Promise<void> {
-        return cmds.disconnectAsync()
-            .then(() => core.infoNotification("Device disconnected"));
+        return cmds.disconnectAsync();
     }
 
-    async pairAsync(autoConnect: boolean): Promise<void> {
-        if (autoConnect) {
-            const dev = await pxt.usb.tryGetDeviceAsync();
-            if (dev) {
-                this.connectAsync();
-                return;
-            }
-        }
+    connectAsync(): Promise<void> {
+        return cmds.connectAsync();
+    }
 
-        let res = 1;
-        if (pxt.commands.webUsbPairDialogAsync)
-            res = await pxt.commands.webUsbPairDialogAsync(core.confirmAsync);
-        if (res) {
-            pxt.usb.pairAsync()
-                .then(() => this.connectAsync());
-        }
+    pairAsync(): Promise<void> {
+        return cmds.pairAsync();
     }
 
     ///////////////////////////////////////////////////////////
@@ -2264,7 +2242,7 @@ export class ProjectView
         const variants = pxt.getHwVariants()
         if (variants.length == 0)
             return false
-        let pairAsync = () => webusb.showWebUSBPairingInstructionsAsync(null)
+        let pairAsync = () => cmds.pairAsync()
             .then(() => {
                 this.checkForHwVariant()
             }, err => {

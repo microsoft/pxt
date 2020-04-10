@@ -179,9 +179,9 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         })
     }
     if (options.helpUrl) {
-        options.buttons.push({
-            label: lf("Help"),
-            className: "help",
+        options.buttons.unshift({
+            className: "circular help",
+            title: lf("Help"),
             icon: "help",
             url: options.helpUrl
         })
