@@ -265,6 +265,7 @@ namespace pxt.editor {
 
         setBannerVisible(b: boolean): void;
         typecheckNow(): void;
+        shouldPreserveUndoStack(): boolean;
 
         openExtension(extension: string, url: string, consentRequired?: boolean): void;
         handleExtensionRequest(request: ExtensionRequest): void;

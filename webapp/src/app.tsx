@@ -123,6 +123,7 @@ export class ProjectView
 
     private runToken: pxt.Util.CancellationToken;
     private updatingEditorFile: boolean;
+    private preserveUndoStack: boolean;
 
     // component ID strings
     static readonly tutorialCardId = "tutorialcard";
@@ -511,6 +512,7 @@ export class ProjectView
     }
 
     openPreviousEditor() {
+        this.preserveUndoStack = true;
         const id = this.state.header.id;
         // pop any entry matching this editor
         const e = this.settings.fileHistory[0];
@@ -592,6 +594,10 @@ export class ProjectView
             this.setState({ embedSimView: true });
             this.startSimulator();
         }
+    }
+
+    public shouldPreserveUndoStack() {
+        return this.preserveUndoStack;
     }
 
     public typecheckNow() {
@@ -883,7 +889,8 @@ export class ProjectView
                 if (this.state.showBlocks && this.editor == this.textEditor) this.textEditor.openBlocks();
             })
             .finally(() => {
-                this.updatingEditorFile = false
+                this.updatingEditorFile = false;
+                this.preserveUndoStack = false;
                 // not all editor views are really "React compliant"
                 // so force an update to ensure a proper first rendering
                 this.forceUpdate();

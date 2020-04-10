@@ -825,7 +825,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.typeScriptSaveable = false;
                 this.setDiagnostics(file)
                 this.delayLoadXml = file.content;
-                pxt.blocks.clearWithoutEvents(this.editor);
+                // serial editor is more like an overlay than a custom editor, so preserve blocks undo stack
+                if (!this.parent.shouldPreserveUndoStack()) pxt.blocks.clearWithoutEvents(this.editor);
                 this.closeFlyout();
 
                 this.filterToolbox();
