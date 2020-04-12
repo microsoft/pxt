@@ -36,11 +36,11 @@ test:
 `,
             "Gemfile": `source 'https://rubygems.org'
 gem 'github-pages', group: :jekyll_plugins`,
-            "README.md": `
----
+            "README.md": `---
 
 ---
-                > ${lf("Open this page at {0}",
+
+> ${lf("Open this page at {0}",
                 "[https://@REPOOWNER@.github.io/@REPONAME@/](https://@REPOOWNER@.github.io/@REPONAME@/)"
             )}
 
