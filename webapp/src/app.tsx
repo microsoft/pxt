@@ -422,6 +422,7 @@ export class ProjectView
     }
 
     openJavaScript(giveFocusOnLoading = true) {
+        // TODO(dz)
         if (this.updatingEditorFile) return; // already transitioning
 
         if (this.isJavaScriptActive()) {

@@ -509,6 +509,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     display(): JSX.Element {
+        // TODO(dz)
         return (
             <div id="monacoEditorArea" className="full-abs" style={{ direction: 'ltr' }}>
                 {this.isVisible && <div className={`monacoToolboxDiv ${(this.toolbox && !this.toolbox.state.visible && !this.isDebugging()) ? 'invisible' : ''}`}>
@@ -522,6 +523,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         insertSnippet={this.insertSnippet}
                         setInsertionSnippet={this.setInsertionSnippet}
                         parent={this.parent} />
+                </div>
+                <div>
+                    Error list!
                 </div>
             </div>
         )

@@ -1282,6 +1282,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             initializeSnippetExtensions(ns, extraBlocks, this.editor, this.parent);
         }
 
+        // TODO(dz): pxt.appTarget.appTheme.errorList
+
         return extraBlocks;
     }
 

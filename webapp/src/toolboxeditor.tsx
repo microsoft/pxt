@@ -3,6 +3,8 @@ import * as srceditor from "./srceditor";
 import * as toolbox from "./toolbox";
 import * as compiler from "./compiler";
 
+// TODO(dz): error list
+
 export abstract class ToolboxEditor extends srceditor.Editor {
 
     protected blockInfo: pxtc.BlocksInfo;
@@ -307,7 +309,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
         const ns = treeRow.nameid + (treeRow.subns || "");
         if (!this.blockGroupsCache) this.blockGroupsCache = {}
         if (!this.blockGroupsCache[ns]) {
-            const {groups, groupIcons, groupHelp, blocks } = treeRow;
+            const { groups, groupIcons, groupHelp, blocks } = treeRow;
 
             // Parse full list of groups from block attributes
             let parsedGroups = groups || [];
@@ -321,13 +323,13 @@ export abstract class ToolboxEditor extends srceditor.Editor {
             if (parsedGroups) {
                 for (let i = 0; i < parsedGroups.length; i++) {
                     let name = parsedGroups[i];
-                    let groupBlocks =  blocks.filter(b => (b.attributes.group || pxt.DEFAULT_GROUP_NAME) == name)
-                    .sort((f1, f2) => {
-                        // sort by fn weight
-                        const w2 = (f2.attributes.weight || 50) + (f2.attributes.advanced ? 0 : 1000);
-                        const w1 = (f1.attributes.weight || 50) + (f1.attributes.advanced ? 0 : 1000);
-                        return w2 > w1 ? 1 : -1;
-                    })
+                    let groupBlocks = blocks.filter(b => (b.attributes.group || pxt.DEFAULT_GROUP_NAME) == name)
+                        .sort((f1, f2) => {
+                            // sort by fn weight
+                            const w2 = (f2.attributes.weight || 50) + (f2.attributes.advanced ? 0 : 1000);
+                            const w1 = (f1.attributes.weight || 50) + (f1.attributes.advanced ? 0 : 1000);
+                            return w2 > w1 ? 1 : -1;
+                        })
                     if (groupBlocks && groupBlocks.length > 0) {
                         blockGroups.push({
                             name,
