@@ -244,9 +244,10 @@ namespace pxt.runner {
         if (woptions.run && !theme.hideDocsSimulator) {
             let $runBtn = snippetBtn(lf("Run"), "play icon").click(() => {
                 pxt.tickEvent("docs.btn", { button: "sim" });
-                if ($c.find('.sim')[0])
+                if ($c.find('.sim')[0]) {
                     $c.find('.sim').remove(); // remove previous simulators
-                else {
+                    scrollJQueryIntoView($c)
+                } else {
                     let padding = '81.97%';
                     if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
                     const deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
@@ -254,6 +255,8 @@ namespace pxt.runner {
                     const data = encodeURIComponent($js.text());
                     let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" data-code="${data}" allowfullscreen="allowfullscreen" sandbox="allow-popups allow-forms allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
                     $c.append($embed);
+
+                    scrollJQueryIntoView($embed)
                 }
             })
             $menu.append($runBtn);
