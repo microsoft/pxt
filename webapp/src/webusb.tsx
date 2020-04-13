@@ -22,51 +22,53 @@ export function webUsbPairDialogAsync(pairAsync: () => Promise<boolean>, confirm
     const helpUrl = pxt.appTarget.appTheme.usbDocs;
     const jsxd = () => {
         const firmwareUrl = failedOnce && resolveFirmwareUrl();
-        return pxt.commands?.renderUsbPairDialog(firmwareUrl, failedOnce)
-            || <div className={`ui ${firmwareUrl ? "four" : "three"} column grid stackable`}>
-                {firmwareUrl && <div className="column firmware">
-                    <div className="ui">
-                        <div className="content">
-                            <div className="description">
-                                {lf("Update Firmware")}
-                                <br />
-                                <a href={firmwareUrl} target="_blank" rel="noopener noreferrer">{lf("Check your firmware version and update if needed")}</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>}
-                <div className="column">
-                    <div className="ui">
-                        <div className="content">
-                            <div className="description">
-                                <span className="ui yellow circular label">1</span>
-                                <strong>{lf("Connect {0} to computer with USB cable", boardName)}</strong>
-                                <br />
-                            </div>
+        if (pxt.commands?.renderUsbPairDialog)
+            return pxt.commands?.renderUsbPairDialog(firmwareUrl, failedOnce);
+
+        return <div className={`ui ${firmwareUrl ? "four" : "three"} column grid stackable`}>
+            {firmwareUrl && <div className="column firmware">
+                <div className="ui">
+                    <div className="content">
+                        <div className="description">
+                            {lf("Update Firmware")}
+                            <br />
+                            <a href={firmwareUrl} target="_blank" rel="noopener noreferrer">{lf("Check your firmware version and update if needed")}</a>
                         </div>
                     </div>
                 </div>
-                <div className="column">
-                    <div className="ui">
-                        <div className="content">
-                            <div className="description">
-                                <span className="ui blue circular label">2</span>
-                                {lf("Select the device in the pairing dialog")}
-                            </div>
+            </div>}
+            <div className="column">
+                <div className="ui">
+                    <div className="content">
+                        <div className="description">
+                            <span className="ui yellow circular label">1</span>
+                            <strong>{lf("Connect {0} to computer with USB cable", boardName)}</strong>
+                            <br />
                         </div>
                     </div>
                 </div>
-                <div className="column">
-                    <div className="ui">
-                        <div className="content">
-                            <div className="description">
-                                <span className="ui blue circular label">3</span>
-                                {lf("Press \"Connect\"")}
-                            </div>
+            </div>
+            <div className="column">
+                <div className="ui">
+                    <div className="content">
+                        <div className="description">
+                            <span className="ui blue circular label">2</span>
+                            {lf("Select the device in the pairing dialog")}
                         </div>
                     </div>
                 </div>
-            </div>;
+            </div>
+            <div className="column">
+                <div className="ui">
+                    <div className="content">
+                        <div className="description">
+                            <span className="ui blue circular label">3</span>
+                            {lf("Press \"Connect\"")}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>;
     }
 
     return new Promise((resolve, reject) => {
