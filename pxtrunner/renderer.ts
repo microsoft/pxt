@@ -280,11 +280,14 @@ namespace pxt.runner {
             if (!$svg) return;
             const $svgBtn = snippetBtn(lf("Blocks"), BLOCKS_ICON).click(() => {
                 pxt.tickEvent("docs.btn", { button: "blocks" });
-                if ($c.find('.blocks')[0])
+                if ($c.find('.blocks')[0]) {
                     $c.find('.blocks').remove();
-                else {
+                    scrollJQueryIntoView($c);
+                } else {
                     if ($js) appendBlocks($js.parent(), $svg);
                     else appendBlocks($c, $svg);
+
+                    scrollJQueryIntoView($svg);
                 }
             })
             $menu.append($svgBtn);
@@ -297,11 +300,14 @@ namespace pxt.runner {
             else {
                 const $jsBtn = snippetBtn("JavaScript", JS_ICON).click(() => {
                     pxt.tickEvent("docs.btn", { button: "js" });
-                    if ($c.find('.js')[0])
+                    if ($c.find('.js')[0]) {
                         $c.find('.js').remove();
-                    else {
+                        scrollJQueryIntoView($c);
+                    } else {
                         if ($svg) appendJs($svg.parent(), $js, woptions);
                         else appendJs($c, $js, woptions);
+
+                        scrollJQueryIntoView($js);
                     }
                 })
                 $menu.append($jsBtn);
@@ -315,15 +321,25 @@ namespace pxt.runner {
             } else {
                 const $pyBtn = snippetBtn("Python", PY_ICON).click(() => {
                     pxt.tickEvent("docs.btn", { button: "py" });
-                    if ($c.find('.py')[0])
+                    if ($c.find('.py')[0]) {
                         $c.find('.py').remove();
-                    else {
+                        scrollJQueryIntoView($c);
+                    } else {
                         if ($svg) appendPy($svg.parent(), $py, woptions);
                         else appendPy($c, $py, woptions);
+
+                        scrollJQueryIntoView($py);
                     }
                 })
                 $menu.append($pyBtn);
             }
+        }
+
+        function scrollJQueryIntoView($toScroll: JQuery<HTMLElement>) {
+            $toScroll[0].scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
         }
     }
 
