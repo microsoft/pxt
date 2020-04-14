@@ -398,6 +398,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // might be undefined
             let xml: string;
 
+            // it's a bit for a wild round trip:
+            // 1) convert blocks to js to see if any changes happened, otherwise, just reload blocks
+            // 2) decompile js -> blocks then take the decompiled blocks -> js
+            // 3) check that decompiled js == current js % white space
             let blocksInfo: pxtc.BlocksInfo;
             return this.parent.saveFileAsync()
                 .then(() => this.parent.saveFileAsync())
@@ -408,6 +412,29 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     blocksInfo = bi;
                     pxt.blocks.initializeAndInject(blocksInfo);
                     const oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
+                    if (oldWorkspace) {
+                        return pxt.blocks.compileAsync(oldWorkspace, blocksInfo).then((compilationResult) => {
+                            const oldJs = compilationResult.source;
+                            return compiler.formatAsync(oldJs, 0).then((oldFormatted: any) => {
+                                return compiler.formatAsync(this.editor.getValue(), 0).then((newFormatted: any) => {
+                                    if (oldFormatted.formatted == newFormatted.formatted) {
+                                        pxt.debug(`${tickLang} not changed, skipping decompile`);
+                                        pxt.tickEvent(`${tickLang}.noChanges`)
+                                        this.parent.setFile(mainPkg.files[blockFile]);
+                                        return [oldWorkspace, false]; // return false to indicate we don't want to decompile
+                                    } else {
+                                        return [oldWorkspace, true];
+                                    }
+                                });
+                            });
+                        })
+                    }
+                    return [oldWorkspace, true];
+                }).then((values) => {
+                    if (!values) return Promise.resolve();
+                    const oldWorkspace = values[0] as Blockly.Workspace;
+                    const shouldDecompile = values[1] as boolean;
+                    if (!shouldDecompile) return Promise.resolve();
                     return compiler.compileAsync()
                         .then(resp => {
                             if (resp.success) {

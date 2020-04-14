@@ -544,7 +544,23 @@ export class ProjectView
     }
 
     openPythonAsync(): Promise<void> {
-        return this.convertTypeScriptToPythonAsync();
+        const pySrcFile = pkg.mainEditorPkg().files["main.py"];
+        if (pySrcFile) { // do we have any python yet?
+            // convert python to typescript, if same as current source, skip decompilation
+            const tsSrc = pkg.mainEditorPkg().files["main.ts"].content;
+            return this.textEditor.convertPythonToTypeScriptAsync()
+                .then(pyAsTsSrc => {
+                    if (pyAsTsSrc == tsSrc) {
+                        // decompiled python is same current typescript, go back to python without ts->py conversion
+                        pxt.debug(`ts -> py shortcut`)
+                        this.setFile(pySrcFile);
+                        return Promise.resolve();
+                    }
+                    else return this.convertTypeScriptToPythonAsync();
+                });
+        } else {
+            return this.convertTypeScriptToPythonAsync();
+        }
     }
 
     private convertTypeScriptToPythonAsync() {
