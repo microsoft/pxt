@@ -246,7 +246,7 @@ namespace pxt.runner {
                 pxt.tickEvent("docs.btn", { button: "sim" });
                 if ($c.find('.sim')[0]) {
                     $c.find('.sim').remove(); // remove previous simulators
-                    scrollJQueryIntoView($c)
+                    scrollJQueryIntoView($c);
                 } else {
                     let padding = '81.97%';
                     if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
@@ -256,7 +256,7 @@ namespace pxt.runner {
                     let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" data-code="${data}" allowfullscreen="allowfullscreen" sandbox="allow-popups allow-forms allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
                     $c.append($embed);
 
-                    scrollJQueryIntoView($embed)
+                    scrollJQueryIntoView($embed);
                 }
             })
             $menu.append($runBtn);
@@ -338,8 +338,8 @@ namespace pxt.runner {
             }
         }
 
-        function scrollJQueryIntoView($toScroll: JQuery<HTMLElement>) {
-            $toScroll[0].scrollIntoView({
+        function scrollJQueryIntoView($toScrollTo: JQuery<HTMLElement>) {
+            $toScrollTo[0]?.scrollIntoView({
                 behavior: "smooth",
                 block: "center"
             });
