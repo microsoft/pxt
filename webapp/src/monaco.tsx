@@ -324,6 +324,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private highlightDecorations: string[] = [];
     private highlightedBreakpoint: number;
     private editAmendmentsListener: monaco.IDisposable | undefined;
+    private errorChangesListeners: pxt.Map<(errors: pxtc.KsDiagnostic[]) => void> = {};
 
     private handleFlyoutWheel = (e: WheelEvent) => e.stopPropagation();
     private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
@@ -531,12 +532,24 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setInsertionSnippet={this.setInsertionSnippet}
                             parent={this.parent} />
                     </div>
-                    {showErrorList ? <ErrorList onSizeChange={this.resize.bind(this)} errors={this.currFile?.diagnostics} /> : undefined}
+                    {showErrorList ? <ErrorList onSizeChange={this.resize.bind(this)} listenToErrorChanges={this.listenToErrorChanges.bind(this)} /> : undefined}
                 </div>
             </div>
         )
     }
 
+    listenToErrorChanges(handlerKey: string, handler: (errors: pxtc.KsDiagnostic[]) => void) {
+        console.log("listenToErrorChanges registering")
+        this.errorChangesListeners[handlerKey] = handler;
+    }
+
+    private onErrorChanges(errors: pxtc.KsDiagnostic[]) {
+        console.log("monaco - onErrorChanges")
+        for (let listener of pxt.U.values(this.errorChangesListeners)) {
+            console.log("monaco - onErrorChanges calling listener")
+            listener(errors);
+        }
+    }
 
     public showPackageDialog() {
         pxt.tickEvent("monaco.addpackage", undefined, { interactiveConsent: true });
@@ -1385,7 +1398,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             }
             monaco.editor.setModelMarkers(model, 'typescript', monacoErrors);
-            // TODO(dz): report errors to error list?
+
+            // report errors to anyone listening (e.g. the error list)
+            this.onErrorChanges(file.diagnostics);
         }
     }
 

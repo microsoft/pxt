@@ -14,10 +14,11 @@ import * as core from "./core";
 
 export interface ErrorListProps {
     onSizeChange: () => void,
-    errors: pxtc.KsDiagnostic[],
+    listenToErrorChanges: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void,
 }
 export interface ErrorListState {
     isCollapsed: boolean
+    errors: pxtc.KsDiagnostic[],
 }
 
 export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
@@ -26,15 +27,24 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         super(props);
 
         this.state = {
-            isCollapsed: false
+            isCollapsed: false,
+            errors: []
         }
 
         this.onCollapseClick = this.onCollapseClick.bind(this)
+        this.onErrorsChanged = this.onErrorsChanged.bind(this)
+
+        props.listenToErrorChanges("errorList", this.onErrorsChanged);
     }
 
     render() {
         const showCollapseButton = true;
         const collapseTooltip = "Collapse error list"
+        function errorKey(error: pxtc.KsDiagnostic): string {
+            // React likes have a "key" for each element so that it can smartly only
+            // re-render what changes. Think of it like a hashcode/
+            return `${error.messageText}-${error.fileName}-${error.line}-${error.column}`
+        }
         return <div className="errorList" >
             {showCollapseButton &&
                 <sui.Button id='toggleErrorList' className={`toggleErrorList collapse-button large`}
@@ -42,7 +52,8 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                     title={collapseTooltip} onClick={this.onCollapseClick} />}
             <div className="errorListInner" hidden={this.state.isCollapsed}>
                 {
-                    (this.props.errors || []).map(e => <div>{e.messageText}</div>)
+                    (this.state.errors || []).map(e =>
+                        <div key={errorKey(e)}>{e.messageText}</div>)
                 }
             </div>
         </div>
@@ -53,6 +64,13 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             isCollapsed: !this.state.isCollapsed
         }, () => {
             this.props.onSizeChange()
+        })
+    }
+
+    onErrorsChanged(errors: pxtc.KsDiagnostic[]) {
+        console.log("errorList - onErrorsChanged: " + errors.length)
+        this.setState({
+            errors
         })
     }
 }
