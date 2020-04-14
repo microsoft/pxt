@@ -331,6 +331,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     constructor(parent: pxt.editor.IProjectView) {
         super(parent);
+
+        this.resize = this.resize.bind(this);
+        this.listenToErrorChanges = this.listenToErrorChanges.bind(this);
     }
 
     hasBlocks() {
@@ -531,7 +534,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setInsertionSnippet={this.setInsertionSnippet}
                             parent={this.parent} />
                     </div>
-                    {showErrorList ? <ErrorList onSizeChange={this.resize.bind(this)} listenToErrorChanges={this.listenToErrorChanges.bind(this)} /> : undefined}
+                    {showErrorList ? <ErrorList onSizeChange={this.resize} listenToErrorChanges={this.listenToErrorChanges} /> : undefined}
                 </div>
             </div>
         )
