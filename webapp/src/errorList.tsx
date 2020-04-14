@@ -11,4 +11,17 @@ import * as pkg from './package';
 import * as toolbox from "./toolbox";
 import * as core from "./core";
 
-// TODO(dz):
+
+export interface ErrorListProps {
+}
+export interface ErrorListState {
+}
+
+export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
+    // TODO(dz):
+    render() {
+        return <div className="errorList">
+            Hello, World!
+        </div>
+    }
+}

@@ -2,6 +2,7 @@
 import * as srceditor from "./srceditor";
 import * as toolbox from "./toolbox";
 import * as compiler from "./compiler";
+import { ErrorList } from "./errorList";
 
 // TODO(dz): error list
 
@@ -15,6 +16,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
 
     protected toolbox: toolbox.Toolbox;
     protected extensions: pxt.Package[];
+    protected errorList?: ErrorList;
 
     abstract getBlocksForCategory(ns: string, subns?: string): toolbox.BlockDefinition[];
 
