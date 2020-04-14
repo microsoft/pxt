@@ -139,6 +139,16 @@ export class File implements pxt.editor.IFile {
     }
 }
 
+interface CachedTranspile {
+    fromLanguage: pxtc.CodeLang;
+    fromText: string;
+
+    toLanguage: pxtc.CodeLang;
+    toText: string;
+}
+
+const MAX_CODE_EQUIVS = 10
+
 export class EditorPackage {
     files: pxt.Map<File> = {};
     header: pxt.workspace.Header;
@@ -147,6 +157,7 @@ export class EditorPackage {
     savingNow = 0;
     private simState: pxt.Map<any>;
     private simStateSaveScheduled = false;
+    protected transpileCache: CachedTranspile[] = [];
 
     id: string;
     outputPkg: EditorPackage;
@@ -455,6 +466,36 @@ export class EditorPackage {
         if (name.indexOf("pxt_modules/") === 0) name = name.slice(12);
         return this.filterFiles(f => f.getName() == name)[0]
     }
+
+    cacheTranspile(fromLanguage: pxtc.CodeLang, fromText: string, toLanguage: pxtc.CodeLang, toText: string) {
+        this.transpileCache.push({
+            fromLanguage,
+            fromText,
+            toLanguage,
+            toText
+        });
+
+        if (this.transpileCache.length > MAX_CODE_EQUIVS) {
+            this.transpileCache.shift();
+        }
+    }
+
+    getCachedTranspile(fromLanguage: pxtc.CodeLang, fromText: string, toLanguage: pxtc.CodeLang) {
+        for (const ct of this.transpileCache) {
+            if (ct.toLanguage === fromLanguage && ct.fromLanguage === toLanguage && codeIsEqual(fromLanguage, ct.toText, fromText)) {
+                return ct.fromText;
+            }
+            else if (ct.fromLanguage === fromLanguage && ct.toLanguage === toLanguage && codeIsEqual(fromLanguage, ct.fromText, fromText)) {
+                return ct.toText;
+            }
+        }
+
+        return null;
+    }
+}
+
+function codeIsEqual(language: pxtc.CodeLang, a: string, b: string) {
+    return a === b;
 }
 
 class Host

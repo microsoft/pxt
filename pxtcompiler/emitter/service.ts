@@ -801,7 +801,6 @@ namespace ts.pxtc.service {
             lastApiInfo = undefined
             lastGlobalNames = undefined
             host.reset()
-            transpile.resetCache()
         },
 
         setOptions: v => {

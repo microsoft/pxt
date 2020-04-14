@@ -544,47 +544,42 @@ export class ProjectView
     }
 
     openPythonAsync(): Promise<void> {
-        const pySrcFile = pkg.mainEditorPkg().files["main.py"];
-        if (pySrcFile) { // do we have any python yet?
-            // convert python to typescript, if same as current source, skip decompilation
-            const tsSrc = pkg.mainEditorPkg().files["main.ts"].content;
-            return this.textEditor.convertPythonToTypeScriptAsync()
-                .then(pyAsTsSrc => {
-                    if (pyAsTsSrc == tsSrc) {
-                        // decompiled python is same current typescript, go back to python without ts->py conversion
-                        pxt.debug(`ts -> py shortcut`)
-                        this.setFile(pySrcFile);
-                        return Promise.resolve();
-                    }
-                    else return this.convertTypeScriptToPythonAsync();
-                });
-        } else {
-            return this.convertTypeScriptToPythonAsync();
-        }
+        return this.convertTypeScriptToPythonAsync();
     }
 
     private convertTypeScriptToPythonAsync() {
         const snap = this.editor.snapshotState();
-        let p = this.saveTypeScriptAsync(false)
-            .then(() => compiler.pyDecompileAsync("main.ts"))
-            .then(cres => {
-                if (cres && cres.success) {
-                    const mainpy = cres.outfiles["main.py"];
-                    return this.saveVirtualFileAsync(pxt.PYTHON_PROJECT_NAME, mainpy, true);
-                } else {
-                    // TODO python
-                    this.editor.setDiagnostics(this.editorFile, snap);
-                    return Promise.resolve();
-                }
-            })
-            .catch(e => {
-                pxt.reportException(e);
-                core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
-            })
-        if (open)
-            p = core.showLoadingAsync("switchtopython", lf("switching to Python..."), p);
+        const fromLanguage = this.isBlocksActive() ? "blocks" : "ts";
+        const fromText = this.editorFile.content;
+        const mainPkg = pkg.mainEditorPkg();
 
-        return p;
+        let convertPromise: Promise<void>;
+
+        const cached = mainPkg.getCachedTranspile(fromLanguage, fromText, "py");
+        if (cached) {
+            convertPromise = this.saveVirtualFileAsync(pxt.PYTHON_PROJECT_NAME, cached, true);
+        }
+        else {
+            convertPromise = this.saveTypeScriptAsync(false)
+                .then(() => compiler.pyDecompileAsync("main.ts"))
+                .then(cres => {
+                    if (cres && cres.success) {
+                        const mainpy = cres.outfiles["main.py"];
+                        mainPkg.cacheTranspile(fromLanguage, fromText, "py", mainpy);
+                        return this.saveVirtualFileAsync(pxt.PYTHON_PROJECT_NAME, mainpy, true);
+                    } else {
+                        // TODO python
+                        this.editor.setDiagnostics(this.editorFile, snap);
+                        return Promise.resolve();
+                    }
+                })
+                .catch(e => {
+                    pxt.reportException(e);
+                    core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
+                })
+        }
+
+        return core.showLoadingAsync("switchtopython", lf("switching to Python..."), convertPromise);
     }
 
     openSimView() {
@@ -2154,12 +2149,33 @@ export class ProjectView
     }
 
     saveTypeScriptAsync(open = false): Promise<void> {
-        if (!this.editor || !this.state.currFile || this.editorFile.epkg != pkg.mainEditorPkg() || this.reload)
+        const mainPkg = pkg.mainEditorPkg();
+        if (!this.editor || !this.state.currFile || this.editorFile.epkg != mainPkg || this.reload)
             return Promise.resolve();
+
+        const fromLanguage = this.editorFile.getExtension() as pxtc.CodeLang;
+        const fromText = this.editorFile.content;
 
         let promise = open ? this.textEditor.loadMonacoAsync() : Promise.resolve();
         promise = promise
-            .then(() => this.editor.saveToTypeScriptAsync())
+            .then(() => {
+                if (open) {
+                    const cached = mainPkg.getCachedTranspile(fromLanguage, fromText, "ts");
+                    if (cached) {
+                        return Promise.resolve(cached);
+                    }
+
+                    return this.editor.saveToTypeScriptAsync()
+                        .then(src => {
+                            if (src !== undefined) {
+                                mainPkg.cacheTranspile(fromLanguage, fromText, "ts", src);
+                            }
+                            return src;
+                        });
+                }
+
+                return this.editor.saveToTypeScriptAsync()
+            })
             .then((src) => {
                 if (src === undefined && open) { // failed to convert
                     return core.confirmAsync({

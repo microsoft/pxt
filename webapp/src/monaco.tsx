@@ -27,6 +27,12 @@ import { MonacoFlyout } from "./monacoFlyout";
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
 
+interface TranspileResult {
+    success: boolean;
+    outText?: string;
+    failedResponse?: pxtc.CompileResult;
+}
+
 class CompletionProvider implements monaco.languages.CompletionItemProvider {
     constructor(public editor: Editor, public python: boolean) {
     }
@@ -392,54 +398,29 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // might be undefined
             let xml: string;
 
-            // it's a bit for a wild round trip:
-            // 1) convert blocks to js to see if any changes happened, otherwise, just reload blocks
-            // 2) decompile js -> blocks then take the decompiled blocks -> js
-            // 3) check that decompiled js == current js % white space
             let blocksInfo: pxtc.BlocksInfo;
-            return this.saveToTypeScriptAsync() // make sure Python gets converted
+            return this.parent.saveFileAsync()
                 .then(() => this.parent.saveFileAsync())
                 .then(() => this.parent.loadBlocklyAsync())
+                .then(() => this.saveToTypeScriptAsync()) // make sure python gets converted
                 .then(() => compiler.getBlocksAsync())
                 .then((bi: pxtc.BlocksInfo) => {
                     blocksInfo = bi;
                     pxt.blocks.initializeAndInject(blocksInfo);
                     const oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
-                    if (oldWorkspace) {
-                        return pxt.blocks.compileAsync(oldWorkspace, blocksInfo).then((compilationResult) => {
-                            const oldJs = compilationResult.source;
-                            return compiler.formatAsync(oldJs, 0).then((oldFormatted: any) => {
-                                return compiler.formatAsync(this.editor.getValue(), 0).then((newFormatted: any) => {
-                                    if (oldFormatted.formatted == newFormatted.formatted) {
-                                        pxt.debug(`${tickLang} not changed, skipping decompile`);
-                                        pxt.tickEvent(`${tickLang}.noChanges`)
-                                        this.parent.setFile(mainPkg.files[blockFile]);
-                                        return [oldWorkspace, false]; // return false to indicate we don't want to decompile
-                                    } else {
-                                        return [oldWorkspace, true];
-                                    }
-                                });
-                            });
-                        })
-                    }
-                    return [oldWorkspace, true];
-                }).then((values) => {
-                    if (!values) return Promise.resolve();
-                    const oldWorkspace = values[0] as Blockly.Workspace;
-                    const shouldDecompile = values[1] as boolean;
-                    if (!shouldDecompile) return Promise.resolve();
                     return compiler.compileAsync()
                         .then(resp => {
                             if (resp.success) {
-                                return compiler.decompileAsync(tsFile, blocksInfo, oldWorkspace, blockFile)
+                                return this.transpileToBlocksInternalAsync(this.currFile, blocksInfo, oldWorkspace)
                                     .then(resp => {
                                         if (!resp.success) {
-                                            this.currFile.diagnostics = resp.diagnostics;
+                                            const failed = resp.failedResponse;
+                                            this.currFile.diagnostics = failed.diagnostics;
                                             let tooLarge = false;
-                                            resp.diagnostics.forEach(d => tooLarge = (tooLarge || d.code === 9266 /* error code when script is too large */));
+                                            failed.diagnostics.forEach(d => tooLarge = (tooLarge || d.code === 9266 /* error code when script is too large */));
                                             return failedAsync(blockFile, tooLarge);
                                         }
-                                        xml = resp.outfiles[blockFile];
+                                        xml = resp.outText;
                                         Util.assert(!!xml);
                                         return mainPkg.setContentAsync(blockFile, xml)
                                             .then(() => this.parent.setFile(mainPkg.files[blockFile]));
@@ -502,6 +483,44 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 })
             }
         })
+    }
+
+    protected transpileToBlocksInternalAsync(file: pkg.File, blocksInfo: pxtc.BlocksInfo, oldWorkspace: Blockly.Workspace): Promise<TranspileResult> {
+        const mainPkg = pkg.mainEditorPkg();
+
+        const tsFilename = file.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME);
+        const blocksFilename = file.getVirtualFileName(pxt.BLOCKS_PROJECT_NAME);
+
+        const isPython = file.getExtension() === "py";
+        const fromLanguage: pxtc.CodeLang = isPython ? "py" : "ts";
+        const fromText = file.content;
+
+        const cached = mainPkg.getCachedTranspile(fromLanguage, fromText, "blocks");
+
+        if (cached != null) {
+            return Promise.resolve({
+                success: true,
+                outText: cached
+            });
+        }
+
+        return compiler.decompileAsync(tsFilename, blocksInfo, oldWorkspace, blocksFilename)
+            .then(resp => {
+                if (!resp.success) {
+                    return {
+                        success: false,
+                        failedResponse: resp
+                    };
+                }
+
+                const outText = resp.outfiles[blocksFilename];
+
+                mainPkg.cacheTranspile(fromLanguage, fromText, "blocks", outText);
+                return {
+                    success: true,
+                    outText
+                }
+            });
     }
 
     public decompileAsync(blockFile: string): Promise<pxtc.CompileResult> {
@@ -949,10 +968,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             let inline = pxtc.U.startsWith(insertText, "inline:1&");
             if (inline) insertText = insertText.substring("inline:1&".length);
 
-            let p = pxtc.U.startsWith(insertText, "qName:")
-                ? compiler.snippetAsync(insertText.substring("qName:".length), this.fileType == pxt.editor.FileType.Python)
-                : Promise.resolve(insertText)
-            p.done(snippet => {
+            let snippetPromise = Promise.resolve(insertText);
+
+            if (pxtc.U.startsWith(insertText, "qName:")) {
+                let isPython = this.fileType == pxt.editor.FileType.Python;
+                let snippetQName = insertText.substring("qName:".length);
+
+                let initPromise = isPython ? this.parent.saveFileAsync() : Promise.resolve();
+                snippetPromise = initPromise.then(() => compiler.snippetAsync(snippetQName, isPython));
+            }
+
+            snippetPromise.done(snippet => {
                 let mouseTarget = this.editor.getTargetAtClientPoint(pxt.BrowserUtils.getClientX(ev), pxt.BrowserUtils.getClientY(ev));
                 let position = mouseTarget.position;
                 pxt.tickEvent(`monaco.toolbox.insertsnippet`);
