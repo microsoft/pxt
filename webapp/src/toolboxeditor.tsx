@@ -2,9 +2,6 @@
 import * as srceditor from "./srceditor";
 import * as toolbox from "./toolbox";
 import * as compiler from "./compiler";
-import { ErrorList } from "./errorList";
-
-// TODO(dz): error list
 
 export abstract class ToolboxEditor extends srceditor.Editor {
 

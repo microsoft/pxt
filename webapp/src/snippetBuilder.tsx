@@ -567,7 +567,6 @@ function openSnippetDialog(config: pxt.SnippetConfig, editor: Blockly.WorkspaceS
         wrapper
     ) as SnippetBuilder;
     snippetBuilder.show();
-    // TODO(dz):
 }
 
 export function initializeSnippetExtensions(ns: string, extraBlocks: (toolbox.BlockDefinition | toolbox.ButtonDefinition)[], editor: Blockly.WorkspaceSvg, parent: pxt.editor.IProjectView) {

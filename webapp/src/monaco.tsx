@@ -390,7 +390,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
 
             const failedAsync = (file: string, programTooLarge = false) => {
-                // TODO(dz): report errors to error list?
                 core.cancelAsyncLoading("switchtoblocks");
                 this.forceDiagnosticsUpdate();
                 return this.showBlockConversionFailedDialog(file, programTooLarge);
