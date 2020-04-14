@@ -76,7 +76,7 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
     const saveAs = pxt.BrowserUtils.hasSaveAs();
     const ext = pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex";
     const connect = pxt.usb.isEnabled && pxt.appTarget?.compile?.webUSB;
-    const jsx = !userDownload && !saveAs && pxt.commands?.renderBrowserDownloadInstructions();
+    const jsx = !userDownload && !saveAs && pxt.commands.renderBrowserDownloadInstructions && pxt.commands.renderBrowserDownloadInstructions();
     const body = userDownload ? lf("Click 'Download' to open the {0} app.", pxt.appTarget.appTheme.boardName) :
         saveAs ? lf("Click 'Save As' and save the {0} file to the {1} drive to transfer the code into your {2}.",
             ext,
