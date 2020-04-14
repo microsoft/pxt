@@ -330,7 +330,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     constructor(parent: pxt.editor.IProjectView) {
         super(parent);
-        this.errorList = new ErrorList({});
     }
 
     hasBlocks() {
@@ -515,7 +514,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     display(): JSX.Element {
-        // TODO(dz)
+        let showErrorList = pxt.appTarget.appTheme.errorList;
         return (
             <div id="monacoEditorArea" className="monacoEditorArea" style={{ direction: 'ltr' }}>
                 {this.isVisible && <div className={`monacoToolboxDiv ${(this.toolbox && !this.toolbox.state.visible && !this.isDebugging()) ? 'invisible' : ''}`}>
@@ -531,11 +530,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setInsertionSnippet={this.setInsertionSnippet}
                             parent={this.parent} />
                     </div>
-                    {this.errorList && <ErrorList />}
+                    {showErrorList ? <ErrorList onSizeChange={this.resize.bind(this)} /> : undefined}
                 </div>
             </div>
         )
     }
+
 
     public showPackageDialog() {
         pxt.tickEvent("monaco.addpackage", undefined, { interactiveConsent: true });

@@ -13,15 +13,43 @@ import * as core from "./core";
 
 
 export interface ErrorListProps {
+    onSizeChange: () => void
 }
 export interface ErrorListState {
+    isCollapsed: boolean
 }
 
 export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
-    // TODO(dz):
+
+    constructor(props: ErrorListProps) {
+        super(props);
+
+        this.state = {
+            isCollapsed: false
+        }
+
+        this.onCollapseClick = this.onCollapseClick.bind(this)
+    }
+
     render() {
-        return <div className="errorList">
-            Hello, World!
+        const showCollapseButton = true;
+        const collapseTooltip = "Collapse error list"
+        return <div className="errorList" >
+            {showCollapseButton &&
+                <sui.Button id='toggleErrorList' className={`toggleErrorList collapse-button large`}
+                    icon={`inverted chevron ${this.state.isCollapsed ? 'up' : 'down'}`}
+                    title={collapseTooltip} onClick={this.onCollapseClick} />}
+            <div className="errorListInner" hidden={this.state.isCollapsed}>
+                TODO: show errors
+            </div>
         </div>
+    }
+
+    onCollapseClick() {
+        this.setState({
+            isCollapsed: !this.state.isCollapsed
+        }, () => {
+            this.props.onSizeChange()
+        })
     }
 }
