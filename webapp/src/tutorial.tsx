@@ -225,6 +225,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
     }
 
     showHint(visible: boolean, showFullText?: boolean) {
+        if (visible) Blockly.hideChaff();
         this.setState({ visible, showFullText });
     }
 
