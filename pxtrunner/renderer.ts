@@ -337,7 +337,8 @@ namespace pxt.runner {
         const existingFilters: Map<boolean> = {};
         return consumeNext()
             .then(() => {
-                Blockly.Workspace.getAll().forEach(el => el.dispose())
+                Blockly.Workspace.getAll().forEach(el => el.dispose());
+                pxt.blocks.cleanRenderingWorkspace();
             });
 
         function consumeNext(): Promise<void> {
