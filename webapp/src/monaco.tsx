@@ -389,6 +389,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
 
             const failedAsync = (file: string, programTooLarge = false) => {
+                // TODO(dz): report errors to error list?
                 core.cancelAsyncLoading("switchtoblocks");
                 this.forceDiagnosticsUpdate();
                 return this.showBlockConversionFailedDialog(file, programTooLarge);
@@ -530,7 +531,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setInsertionSnippet={this.setInsertionSnippet}
                             parent={this.parent} />
                     </div>
-                    {showErrorList ? <ErrorList onSizeChange={this.resize.bind(this)} /> : undefined}
+                    {showErrorList ? <ErrorList onSizeChange={this.resize.bind(this)} errors={this.currFile?.diagnostics} /> : undefined}
                 </div>
             </div>
         )
@@ -1384,6 +1385,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             }
             monaco.editor.setModelMarkers(model, 'typescript', monacoErrors);
+            // TODO(dz): report errors to error list?
         }
     }
 

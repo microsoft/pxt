@@ -13,7 +13,8 @@ import * as core from "./core";
 
 
 export interface ErrorListProps {
-    onSizeChange: () => void
+    onSizeChange: () => void,
+    errors: pxtc.KsDiagnostic[],
 }
 export interface ErrorListState {
     isCollapsed: boolean
@@ -40,7 +41,9 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                     icon={`inverted chevron ${this.state.isCollapsed ? 'up' : 'down'}`}
                     title={collapseTooltip} onClick={this.onCollapseClick} />}
             <div className="errorListInner" hidden={this.state.isCollapsed}>
-                TODO: show errors
+                {
+                    (this.props.errors || []).map(e => <div>{e.messageText}</div>)
+                }
             </div>
         </div>
     }
