@@ -1718,7 +1718,13 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     // add the labels for the target contributed types that appear in the block function create dialog
     if (cfg.runtime?.functionsOptions?.extraFunctionEditorTypes?.length) {
         cfg.runtime.functionsOptions.extraFunctionEditorTypes.forEach(extraType => {
-            if (!targetStrings[extraType.label]) targetStrings[extraType.label] = extraType.label
+            if (extraType.label) {
+                targetStrings[`{id:type}${extraType.label}`] = extraType.label;
+            }
+
+            if (extraType.defaultName) {
+                targetStrings[`{id:var}${extraType.defaultName}`] = extraType.defaultName;
+            }
         });
     }
 
@@ -1806,7 +1812,7 @@ ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
             .forEach(f => processLf(f, targetStrings))
         );
     let targetStringsSorted: pxt.Map<string> = {};
-    Object.keys(targetStrings).sort().map(k => targetStringsSorted[k] = k);
+    Object.keys(targetStrings).sort().map(k => targetStringsSorted[k] = targetStrings[k]);
 
     // write files
     nodeutil.mkdirP("built");
