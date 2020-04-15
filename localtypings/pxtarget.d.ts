@@ -385,6 +385,7 @@ declare namespace pxt {
         openProjectNewTab?: boolean; // allow opening project in a new tab
         openProjectNewDependentTab?: boolean; // allow opening project in a new tab -- connected
         tutorialExplicitHints?: boolean; // allow use explicit hints
+        errorList?: boolean; // error list experiment
     }
 
     interface SocialOptions {
