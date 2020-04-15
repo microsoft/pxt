@@ -940,6 +940,7 @@ namespace ts.pxtc.service {
                 }
             } else {
                 tsPos = position
+                opts.ast = true;
                 host.setOpts(opts)
                 const res = runConversionsAndCompileUsingService()
             }

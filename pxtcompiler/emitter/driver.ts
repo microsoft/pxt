@@ -271,7 +271,9 @@ namespace ts.pxtc {
         res.times["typescript-sem"] = emitStart - semStart
         res.times["typescript"] = emitStart - startTime
 
-        res.ast = program
+        if (opts.ast) {
+            res.ast = program
+        }
 
         if (opts.ast || opts.forceEmit || res.diagnostics.length == 0) {
             const binOutput = compileBinary(program, opts, res, entryPoint);
