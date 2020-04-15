@@ -32,8 +32,8 @@ h1 {
 .title {
     color: #fff;
     text-align: center;
-    margin-top: -20vw;
-    padding-bottom: 4rem;
+    margin-top: -15vw;
+    padding-bottom: 3rem;
 }
 
 .content {
@@ -67,10 +67,11 @@ h1 {
 
 .jump {
     display: flex;
+    justify-content: center;
+    margin: 1rem
 }
 
 .action {
-    flex: 1;
     margin-right: 2rem;
     text-align: center;
     line-height: 28px;
@@ -85,6 +86,10 @@ div#news > div {
     padding: 1rem;
     margin-bottom: 2rem;
     background-color: #fafafa;
+}
+
+div#news h4 {
+    margin-top: 0;
 }
 
 #schedule {
@@ -130,29 +135,47 @@ div#news > div {
 }
 
 .lesson .imgWrapper {
-    flex: 0 0 9rem;
+    position: relative;
+    flex: 0 0 10rem;
     height: 7rem;
     margin-right: 1rem;
     overflow: hidden;
 }
 
+.lesson .imgWrapper .play {
+    position: absolute;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    color: #fff;
+    background-color: #000;
+    opacity: 0.3;
+    font-size: 4rem;
+    line-height: 4rem;
+    justify-content: center;
+    align-items: center;
+}
+
 .lesson .imgWrapper:hover {
-    opacity: 0.7
+    text-decoration: none;
+}
+
+.lesson .imgWrapper:hover .play {
+    display: none;
 }
 
 .lesson img {
-    height: 100%;
+    width: 100%;
 }
 
 .lesson h4 {
     margin-bottom: 0.2rem;
 }
-.lesson .time {
-    margin-bottom: 0.8rem;
-    opacity: 0.5;
-}
-.lesson .time a {
-    margin-left: 0.5rem;
+.lesson > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 
