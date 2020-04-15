@@ -317,6 +317,11 @@ declare interface String {
     split(separator?: string, limit?: number): string[];
 
     /**
+     * Return a substring of the current string with whitespace removed from both ends
+     */
+    trim(): string;
+
+    /**
      * Converts the string to lower case characters.
      */
     //% helper=stringToLowerCase
@@ -450,6 +455,7 @@ declare namespace Math {
      * @param x An angle in radians
      */
     //% shim=Math_::sin
+    //% help=math/trigonometry
     function sin(x: number): number;
 
     /**
@@ -457,6 +463,7 @@ declare namespace Math {
      * @param x An angle in radians
      */
     //% shim=Math_::cos
+    //% help=math/trigonometry
     function cos(x: number): number;
 
     /**
@@ -507,6 +514,7 @@ declare namespace Math {
      * @param x A numeric expression.
      */
     //% shim=Math_::ceil
+      //% help=math
     function ceil(x: number): number;
 
     /**
@@ -514,6 +522,7 @@ declare namespace Math {
       * @param x A numeric expression.
       */
     //% shim=Math_::floor
+      //% help=math
     function floor(x: number): number;
 
     /**
@@ -521,6 +530,7 @@ declare namespace Math {
       * @param x A numeric expression.
       */
     //% shim=Math_::trunc
+    //% help=math
     function trunc(x: number): number;
 
     /**
@@ -528,6 +538,7 @@ declare namespace Math {
       * @param x The value to be rounded to the nearest number.
       */
     //% shim=Math_::round
+    //% help=math
     function round(x: number): number;
 
     /**

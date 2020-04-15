@@ -11,14 +11,12 @@ var newslist = {
     "title": "New live streams!",
     "items": [
         {
-            "headline": "Digital All-Stars is now streaming!",
+            "headline": "Digital All-Stars streaming this week!",
             "url": "https://aka.ms/makecodeDASstream",
             "description": [
-                "Microsoft Stores is proud to host a MakeCode stream with all-star ",
-                "athletes passionate about technology and connecting with their communities. ",
-                "This week, join <a href='https://www.instagram.com/thekidmcmanus/'>Brandon McManus</a> ",
-                "from the Denver Broncos as he helps you build your very own maze game with ",
-                "Microsoft MakeCode Arcade!"
+                "This week, join <a href='https://twitter.com/KB31_Era'>Kevin Byard</a> from ",
+                "the Tennessee Titans as he helps you build your very own game with Microsoft ",
+                "MakeCode Arcade!"
             ]
         }
     ]

@@ -221,17 +221,14 @@ namespace pxt.py {
         }
 
         function emitStmtWithNewlines(s: ts.Statement): string[] {
-            let out: string[] = [];
+            const out = emitStmt(s);
 
-            const comments = pxtc.decompiler.getCommentsForStatement(s, commentMap);
+            // get comments after emit so that child nodes get a chance to claim them
+            const comments = pxtc.decompiler.getCommentsForStatement(s, commentMap)
+                .map(emitComment)
+                .reduce((p, c) => p.concat(c), [])
 
-            for (const comment of comments) {
-                out.push(...emitComment(comment));
-            }
-
-            out = out.concat(emitStmt(s))
-
-            return out;
+            return comments.concat(out);
         }
 
         ///
@@ -999,7 +996,7 @@ namespace pxt.py {
         // use newlines to separate items
         function getCommaSep(exps: string[]): string[] {
             let res = exps.join(", ");
-            if (res.length > 60) {
+            if (res.length > 60 && exps.length > 1) {
                 return exps.map((el, i) => {
                     let sep = el.charAt(el.length - 1) == "," ? "" : ",";
                     if (i == 0) {

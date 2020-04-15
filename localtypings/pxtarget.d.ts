@@ -23,8 +23,6 @@ declare namespace pxt {
         // localized galleries
         localizedGalleries?: pxt.Map<pxt.Map<string>>;
         windowsStoreLink?: string;
-        // link to the latest firmware urls (boardid -> url)
-        firmwareUrls?: pxt.Map<string>;
         // release manifest for the electron app
         electronManifest?: pxt.electron.ElectronManifest;
     }
@@ -387,6 +385,7 @@ declare namespace pxt {
         openProjectNewTab?: boolean; // allow opening project in a new tab
         openProjectNewDependentTab?: boolean; // allow opening project in a new tab -- connected
         tutorialExplicitHints?: boolean; // allow use explicit hints
+        errorList?: boolean; // error list experiment
     }
 
     interface SocialOptions {

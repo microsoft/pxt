@@ -275,6 +275,7 @@ export function stripProtocol(path: string) {
 }
 
 export function invalidate(prefix: string) {
+    prefix = prefix.replace(/:\*$/, ':'); // remove trailing "*";
     Util.values(cachedData).forEach(ce => {
         if (matches(ce, prefix)) {
             ce.lastRefresh = 0;

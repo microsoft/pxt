@@ -1213,6 +1213,44 @@ namespace ts.pxtc.service {
                 return Object.keys(tooltipOrBlock).map(k => (<pxt.Map<string>>tooltipOrBlock)[k]).join(" ");
             };
 
+            // Fill default parameters in block string
+            const computeBlockString = (symbol: SymbolInfo): string => {
+                if (symbol.attributes?._def) {
+                    let block = [];
+                    const blockDef = symbol.attributes._def;
+                    const compileInfo = pxt.blocks.compileInfo(symbol);
+
+                    // Construct block string from parsed blockdef
+                    for (let part of blockDef.parts) {
+                        switch (part.kind) {
+                            case "label":
+                                block.push(part.text);
+                                break;
+                            case "param":
+                                // In order, preference default value, var name, param name, blockdef param name
+                                let actualParam = compileInfo.definitionNameToParam[part.name];
+                                block.push(actualParam?.defaultValue
+                                    || part.varName
+                                    || actualParam?.actualName
+                                    || part.name);
+                                break;
+                        }
+                    }
+
+                    return block.join(" ");
+                }
+                return symbol.attributes.block;
+            }
+
+            // Join parameter jsdoc into a string
+            const computeParameterString = (symbol: SymbolInfo): string => {
+                const paramHelp = symbol.attributes?.paramHelp;
+                if (paramHelp) {
+                    Object.keys(paramHelp).map(p => paramHelp[p]).join(" ");
+                }
+                return "";
+            }
+
             if (!builtinItems) {
                 builtinItems = [];
                 blockDefinitions = pxt.blocks.blockDefinitions();
@@ -1278,10 +1316,11 @@ namespace ts.pxtc.service {
                         qName: s.qName,
                         name: s.name,
                         namespace: s.namespace,
-                        block: s.attributes.block,
+                        block: computeBlockString(s),
+                        params: computeParameterString(s),
                         jsdoc: s.attributes.jsDoc,
                         localizedCategory: tbSubset && typeof tbSubset[s.attributes.blockId] === "string"
-                            ? tbSubset[s.attributes.blockId] as string : undefined
+                            ? tbSubset[s.attributes.blockId] as string : undefined,
                     };
                     return mappedSi;
                 });
@@ -1314,6 +1353,7 @@ namespace ts.pxtc.service {
                         { name: 'namespace', weight: 0.1 },
                         { name: 'localizedCategory', weight: 0.1 },
                         { name: 'block', weight: 0.4375 },
+                        { name: 'params', weight: 0.0625 },
                         { name: 'jsdoc', weight: 0.0625 }
                     ],
                     sortFn: function (a: any, b: any): number {

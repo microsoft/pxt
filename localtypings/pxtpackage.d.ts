@@ -83,6 +83,7 @@ declare namespace pxt {
         experimentalHw?: boolean;
         requiredCategories?: string[]; // ensure that those block categories are visible
         supportedTargets?: string[]; // a hint about targets in which this extension is supported
+        firmwareUrl?: string; // link to documentation page about upgrading firmware
     }
 
     interface PackageExtension {

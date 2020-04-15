@@ -29,7 +29,6 @@ function handleUndoRedo(event: KeyboardEvent) {
 
 function overrideBlocklyShortcuts(event: KeyboardEvent) {
     if (event.key === "Backspace" || event.key === "Delete") {
-        event.preventDefault();
         event.stopPropagation();
     }
 }
