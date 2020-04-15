@@ -184,10 +184,10 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
                 <div className="ui heading">
                     <div className="column" style={{ zIndex: 1 }}>
-                        {targetTheme.scriptManager ? <h2 role="button" className="ui header myproject-header" title={lf("View all projects")} tabIndex={0}
+                        {targetTheme.scriptManager ? <h2 role="button" className="ui header myproject-header" title={lf("View all projects")}
                             onClick={this.showScriptManager} onKeyDown={sui.fireClickOnEnter}>
                             {lf("My Projects")}
-                            <span className="view-all-button">
+                            <span className="view-all-button" tabIndex={0}>
                                 {lf("View All")}
                             </span>
                         </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
