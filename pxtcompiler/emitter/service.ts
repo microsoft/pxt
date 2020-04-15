@@ -1050,18 +1050,7 @@ namespace ts.pxtc.service {
             }
 
             if (!isPython && !resultSymbols.length) {
-                // TODO: get better default result symbols for typescript
-                // TODO: need to get local symbols?
-                // tc.getSymbolsInScope(
-                // TODO: unify with above
-                let tsNode = findInnerMostNodeAtPosition(tsAst, wordStartPos);
-                // TODO: refine
-                let symSearch: SymbolFlags = SymbolFlags.Variable | SymbolFlags.Namespace | SymbolFlags.Method | SymbolFlags.Type;
-                let tsSyms = tc.getSymbolsInScope(tsNode, symSearch);
-                let matchStr = tsNode.getText()
-                tsSyms = tsSyms.filter(s => s.name.indexOf(matchStr) >= 0)
-                console.dir(tsSyms)
-
+                // TODO: leverage TS language service to get symbols in scope
                 resultSymbols = completionSymbols(pxt.U.values(lastApiInfo.apis.byQName))
             }
 
@@ -1896,13 +1885,6 @@ namespace ts.pxtc.service {
 
     function completionSymbols(symbols: SymbolInfo[], weight = 0): CompletionSymbol[] {
         return symbols.map(s => completionSymbol(s, weight));
-    }
-
-    function getPxtSymbolFromTsSymbol(tsSym: ts.Symbol, apiInfo: ApisInfo, tc: TypeChecker): SymbolInfo | undefined {
-        if (tsSym) {
-            return apiInfo.byQName[tc.getFullyQualifiedName(tsSym)]
-        }
-        return undefined;
     }
 
     function getNodeAndSymbolAtLocation(program: Program, filename: string, position: number, apiInfo: ApisInfo): [Node, SymbolInfo] {
