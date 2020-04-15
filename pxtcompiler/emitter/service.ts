@@ -938,6 +938,8 @@ namespace ts.pxtc.service {
                 }
             } else {
                 tsPos = position
+                host.setOpts(opts)
+                const res = runConversionsAndCompileUsingService()
             }
 
             const prog = service.getProgram()
