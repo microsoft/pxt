@@ -1017,18 +1017,24 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private loadReference() {
         Util.assert(this.editor != undefined); // Guarded
-        let currentPosition = this.editor.getPosition();
-        let wordInfo = this.editor.getModel().getWordAtPosition(currentPosition);
-        if (!wordInfo) return;
-        let prevWordInfo = this.editor.getModel().getWordUntilPosition(new monaco.Position(currentPosition.lineNumber, wordInfo.startColumn - 1));
-        if (prevWordInfo && wordInfo) {
-            let namespaceName = prevWordInfo.word.replace(/([A-Z]+)/g, "-$1");
-            let methodName = wordInfo.word.replace(/([A-Z]+)/g, "-$1");
-            this.parent.setSideDoc(`/reference/${namespaceName}/${methodName}`, false);
-        } else if (wordInfo) {
-            let methodName = wordInfo.word.replace(/([A-Z]+)/g, "-$1");
-            this.parent.setSideDoc(`/reference/${methodName}`, false);
-        }
+
+        const model = this.editor.getModel();
+        const offset = model.getOffsetAt(this.editor.getPosition());
+        const source = model.getValue();
+        const fileName = this.currFile.name;
+        compiler.syntaxInfoAsync("symbol", fileName, offset, source)
+            .then(info => {
+                if (info?.symbols) {
+                    for (const s of info.symbols) {
+                        if (s.attributes.help) {
+                            this.parent.setSideDoc('/reference/' + s.attributes.help.replace(/^\//, ''));
+                            return;
+                        }
+                    }
+                }
+
+                core.warningNotification(Util.lf("Help resource not found"))
+            });
     }
 
     private setupFieldEditors() {

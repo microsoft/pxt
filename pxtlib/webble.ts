@@ -822,7 +822,7 @@ namespace pxt.webBluetooth {
             })
     }
 
-    export function flashAsync(resp: pxtc.CompileResult, d: pxt.commands.DeployOptions = {}): Promise<void> {
+    export function flashAsync(resp: pxtc.CompileResult, d?: pxt.commands.DeployOptions): Promise<void> {
         pxt.tickEvent("webble.flash");
         const hex = resp.outfiles[ts.pxtc.BINARY_HEX];
         return connectAsync()

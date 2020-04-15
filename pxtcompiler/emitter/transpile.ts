@@ -115,7 +115,7 @@ namespace ts.pxtc.transpile {
         }
         let tsSrc = program.getSourceFile(filename)
         U.assert(tsSrc !== undefined && tsSrc !== null, `Missing file "${filename}" when converting from ts->py`)
-        let fromTxt = tsSrc.getText()
+        let fromTxt = tsSrc.getFullText()
 
         return transpileInternal("ts", fromTxt, "py", doRealTranspile)
     }

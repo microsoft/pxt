@@ -1710,7 +1710,7 @@ namespace pxt.blocks {
                     });
                 }
                 if (b.type == ts.pxtc.ON_START_TYPE)
-                    append(stmtsMain, compileStartEvent(e, b).children);
+                    append(stmtsMain, compileStatementBlock(e, b));
                 else {
                     const compiled = mkBlock(compileStatementBlock(e, b));
                     if (compiled.type == NT.Block)
@@ -1973,40 +1973,10 @@ namespace pxt.blocks {
 
     function addCommentNodes(comments: string[], r: JsNode[]) {
         const commentNodes: JsNode[] = []
-        const paragraphs: string[] = []
 
         for (const comment of comments) {
-            for (const paragraph of comment.split("\n")) {
-                paragraphs.push(paragraph)
-            }
-        }
-
-        for (let i = 0; i < paragraphs.length; i++) {
-            // Wrap paragraph lines
-            const words = paragraphs[i].split(/\s/)
-            let currentLine: string;
-            for (const word of words) {
-                if (!currentLine) {
-                    currentLine = word
-                }
-                else if (currentLine.length + word.length > MAX_COMMENT_LINE_LENGTH) {
-                    commentNodes.push(mkText(`// ${currentLine}`))
-                    commentNodes.push(mkNewLine())
-                    currentLine = word
-                }
-                else {
-                    currentLine += " " + word
-                }
-            }
-
-            if (currentLine) {
-                commentNodes.push(mkText(`// ${currentLine}`))
-                commentNodes.push(mkNewLine())
-            }
-
-            // The decompiler expects an empty comment line between paragraphs
-            if (i !== paragraphs.length - 1) {
-                commentNodes.push(mkText(`//`))
+            for (const line of comment.split("\n")) {
+                commentNodes.push(mkText(`// ${line}`))
                 commentNodes.push(mkNewLine())
             }
         }

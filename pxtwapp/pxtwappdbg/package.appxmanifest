@@ -14,9 +14,9 @@
     <Resource Language="x-generate" />
   </Resources>
   <Applications>
-    <Application Id="App" StartPage="http://localhost:3232/index.html?dbg=1">
+    <Application Id="App" StartPage="http://localhost:3232/index.html?dbg=1&amp;nolocalhost1">
       <uap:ApplicationContentUriRules>
-        <uap:Rule Match="http://localhost:3232/index.html?dbg=1" Type="include" WindowsRuntimeAccess="all" />
+        <uap:Rule Match="http://localhost:3232/index.html?dbg=1&amp;nolocalhost1" Type="include" WindowsRuntimeAccess="all" />
       </uap:ApplicationContentUriRules>
       <uap:VisualElements DisplayName="DEBUG Microsoft MakeCode" Description="Microsoft MakeCode Editors" BackgroundColor="transparent" Square150x150Logo="images\Square150x150Logo.png" Square44x44Logo="images\Square44x44Logo.png">
         <uap:DefaultTile Wide310x150Logo="images\Wide310x150Logo.png">

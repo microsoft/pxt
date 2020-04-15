@@ -3730,10 +3730,6 @@ ${output}</xml>`;
                     out += line.trim() + "\n";
                 }
             }
-
-            if (comment.hasTrailingNewline) {
-                out += "\n";
-            }
         }
 
         return out.trim();
