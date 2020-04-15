@@ -1714,6 +1714,14 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     if (theme.title) targetStrings[theme.title] = theme.title;
     if (theme.name) targetStrings[theme.name] = theme.name;
     if (theme.description) targetStrings[theme.description] = theme.description;
+
+    // add the labels for the target contributed types that appear in the block function create dialog
+    if (cfg.runtime?.functionsOptions?.extraFunctionEditorTypes?.length) {
+        cfg.runtime.functionsOptions.extraFunctionEditorTypes.forEach(extraType => {
+            if (!targetStrings[extraType.label]) targetStrings[extraType.label] = extraType.label
+        });
+    }
+
     // walk options in pxt.json
     // patch icons in bundled packages
     Object.keys(cfg.bundledpkgs).forEach(pkgid => {
