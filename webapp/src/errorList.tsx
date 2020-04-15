@@ -30,7 +30,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
     render() {
         const showCollapseButton = true;
-        const collapseTooltip = lf("Collapse error list");
+        const collapseTooltip = lf("Collapse Error List");
         function errorKey(error: pxtc.KsDiagnostic): string {
             // React likes have a "key" for each element so that it can smartly only
             // re-render what changes. Think of it like a hashcode/
