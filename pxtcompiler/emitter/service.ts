@@ -910,9 +910,11 @@ namespace ts.pxtc.service {
 
             let tsPos: number;
             if (isPython) {
+                // for Python, we need to transpile into TS and map our location into
+                // TS
                 const res = transpile.pyToTs(opts)
                 if (res.syntaxInfo && res.syntaxInfo.symbols) {
-                    resultSymbols = completionSymbols(opts.syntaxInfo.symbols);
+                    resultSymbols = completionSymbols(res.syntaxInfo.symbols);
                 }
                 if (res.globalNames)
                     lastGlobalNames = res.globalNames
@@ -938,6 +940,9 @@ namespace ts.pxtc.service {
                 }
             } else {
                 tsPos = position
+                opts.ast = true;
+                host.setOpts(opts)
+                const res = runConversionsAndCompileUsingService()
             }
 
             const prog = service.getProgram()
@@ -945,6 +950,7 @@ namespace ts.pxtc.service {
             const tc = prog.getTypeChecker()
             let isPropertyAccess = false;
 
+            // special handing for member completion
             if (dotIdx !== -1) {
                 const propertyAccessTarget = findInnerMostNodeAtPosition(tsAst, isPython ? tsPos : dotIdx - 1)
 
@@ -979,6 +985,7 @@ namespace ts.pxtc.service {
             }
 
             const innerMost = findInnerMostNodeAtPosition(tsAst, tsPos)
+            // special handling for call expressions
             if (innerMost && innerMost.parent && ts.isCallExpression(innerMost.parent)) {
                 const call = innerMost.parent as ts.CallExpression;
 
@@ -1044,7 +1051,7 @@ namespace ts.pxtc.service {
             }
 
             if (!isPython && !resultSymbols.length) {
-                // TODO: get better default result symbols for typescript
+                // TODO: leverage TS language service to get symbols in scope
                 resultSymbols = completionSymbols(pxt.U.values(lastApiInfo.apis.byQName))
             }
 
@@ -1488,6 +1495,12 @@ namespace ts.pxtc.service {
             }
             if (res.diagnostics.every(d => !isPxtModulesFilename(d.fileName)))
                 host.pxtModulesOK = currKey
+            if (res.ast) {
+                // keep api info up to date after each compile
+                let ai = internalGetApiInfo(res.ast);
+                if (ai)
+                    lastApiInfo = ai
+            }
         }
         return res;
     }
@@ -1562,6 +1575,7 @@ namespace ts.pxtc.service {
         const blocksInfo = blocksInfoOp(apis, runtimeOps.bannedCategories);
         const blocksById = blocksInfo.blocksById
 
+        // TODO: move out of getSnippet for general reuse
         function getParameterDefault(param: ParameterDeclaration) {
             const typeNode = param.type;
             if (!typeNode) return python ? "None" : "null";
