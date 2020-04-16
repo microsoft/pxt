@@ -128,7 +128,7 @@ export function showDeviceNotFoundDialogAsync(docPath?: string, resp?: pxtc.Comp
             !!resp && {
                 label: lf("Download again"),
                 icon: "download",
-                className: "lightgrey",
+                className: "primary",
                 onclick: () => {
                     pxt.tickEvent(`compile.devicenotfound.download`);
                     return pxt.commands.saveOnlyAsync(resp);
