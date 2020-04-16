@@ -206,8 +206,13 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
                 pxt.appTarget.runtime.functionsOptions &&
                 pxt.appTarget.runtime.functionsOptions.extraFunctionEditorTypes &&
                 Array.isArray(pxt.appTarget.runtime.functionsOptions.extraFunctionEditorTypes)) {
+
                 pxt.appTarget.runtime.functionsOptions.extraFunctionEditorTypes.forEach(t => {
-                    types.push(t);
+                    types.push({
+                        ...t,
+                        label: t.label && pxt.Util.rlf(`{id:type}${t.label}`),
+                        defaultName: t.defaultName && pxt.Util.rlf(`{id:var}${t.defaultName}`)
+                    })
                 });
             }
 

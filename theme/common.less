@@ -460,6 +460,11 @@ div.simframe > iframe {
     position: relative;
 }
 
+.ui.button:hover,
+.ui.button:focus {
+    filter: grayscale(.15) brightness(.85) contrast(1.3);
+}
+
 /* Icon and text */
 .ui.item.link.dbg-btn > .icon-and-text.icon ~ .ui.text,
 .ui.item.link > .icon-and-text.icon ~ .ui.text.exit-debugmode-btn,
@@ -1359,7 +1364,7 @@ p.ui.font.small {
         padding-bottom: 0.5rem;
     }
 
-    .logo-wide #mainmenu {
+    #mainmenu {
         .ui.logo.brand,
         .ui.logo.organization {
             display: none !important;
