@@ -541,14 +541,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     listenToErrorChanges(handlerKey: string, handler: (errors: pxtc.KsDiagnostic[]) => void) {
-        console.log("listenToErrorChanges registering")
         this.errorChangesListeners[handlerKey] = handler;
     }
 
     private onErrorChanges(errors: pxtc.KsDiagnostic[]) {
-        console.log("monaco - onErrorChanges")
         for (let listener of pxt.U.values(this.errorChangesListeners)) {
-            console.log("monaco - onErrorChanges calling listener")
             listener(errors);
         }
     }
