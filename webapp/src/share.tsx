@@ -342,8 +342,18 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                     case ShareMode.Simulator:
                         let padding = '81.97%';
                         // TODO: parts aspect ratio
+                        let simulatorRunString = `${verPrefix}---run`;
+                        if (pxt.webConfig.runUrl) {
+                            if (pxt.webConfig.isStatic) {
+                                simulatorRunString = pxt.webConfig.runUrl;
+                            }
+                            else {
+                                // Always use live, not /beta etc.
+                                simulatorRunString = pxt.webConfig.runUrl.replace(pxt.webConfig.relprefix, "/---")
+                            }
+                        }
                         if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio).toPrecision(4) + '%';
-                        const runUrl = rootUrl + (pxt.webConfig.runUrl || `${verPrefix}--run`).replace(/^\//, '');
+                        const runUrl = rootUrl + simulatorRunString.replace(/^\//, '');
                         embed = pxt.docs.runUrl(runUrl, padding, pubId);
                         break;
                     case ShareMode.Url:
