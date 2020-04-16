@@ -1059,7 +1059,8 @@ namespace ts.pxtc.service {
                 let tsNode = findInnerMostNodeAtPosition(tsAst, wordStartPos);
                 let symSearch = SymbolFlags.Variable;
                 let inScopeTsSyms = tc.getSymbolsInScope(tsNode, symSearch);
-                // filter these to just what's at the cursor
+                // filter these to just what's at the cursor, otherwise we get things
+                //  like JS Array methods we don't support
                 let matchStr = tsNode.getText()
                 inScopeTsSyms = inScopeTsSyms.filter(s => s.name.indexOf(matchStr) >= 0)
 
