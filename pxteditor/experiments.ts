@@ -91,12 +91,6 @@ namespace pxt.editor.experiments {
                 feedbackUrl: "https://github.com/microsoft/pxt/issues/5297"
             },
             {
-                id: "autoWebUSBDownload",
-                name: lf("WebUSB Download"),
-                description: lf("Automatically try to download via WebUSB"),
-                feedbackUrl: "https://github.com/microsoft/pxt/issues/5344"
-            },
-            {
                 id: "qrCode",
                 name: lf("Shared QR Code"),
                 description: lf("Generate a QR Code form the shared project url"),
