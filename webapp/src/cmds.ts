@@ -397,9 +397,6 @@ export function init(): void {
         log(`deploy: electron`);
         pxt.commands.deployCoreAsync = electron.driveDeployAsync;
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
-    } else if (shouldUseWebUSB && pxt.appTarget.appTheme.autoWebUSBDownload) {
-        log(`deploy: webusb auto deploy`);
-        pxt.commands.deployCoreAsync = hidDeployCoreAsync;
     } else if (shouldUseWebUSB && tryPairedDevice) {
         log(`deploy: webusb, paired once`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
