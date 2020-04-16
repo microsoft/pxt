@@ -44,7 +44,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             <div className="errorListInner" hidden={this.state.isCollapsed}>
                 {
                     (this.state.errors || []).map(e =>
-                        <div key={errorKey(e)}>{e.messageText}</div>)
+                        <div key={errorKey(e)}>{`${e.messageText}-(${e.line + 1}:${e.column})`}</div>)
                 }
             </div>
         </div>
