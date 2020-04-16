@@ -59,7 +59,6 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     }
 
     onErrorsChanged(errors: pxtc.KsDiagnostic[]) {
-        console.log("errorList - onErrorsChanged: " + errors.length)
         this.setState({
             errors
         })
