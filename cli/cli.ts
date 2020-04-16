@@ -6123,6 +6123,8 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         }
     }, c => pyconv.convertAsync(c.args, !!c.flags["internal"]))
 
+    advancedCommand("jdlog", "connect via USB and log JACDAC messages", hid.logJDAsync, undefined, true);
+
     p.defineCommand({
         name: "cherrypick",
         aliases: ["cp"],

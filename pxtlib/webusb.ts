@@ -305,7 +305,7 @@ namespace pxt.usb {
                                 loop()
                             } else {
                                 // throttle down if no data coming
-                                Promise.delay(500).then(loop)
+                                Promise.delay(50).then(loop)
                             }
                         }, err => {
                             if (this.dev)

@@ -69,6 +69,16 @@ export function dmesgAsync() {
             }))
 }
 
+export function logJDAsync() {
+    HF2.enableLog()
+    const t0 = Date.now()
+    return initAsync()
+        .then(d => d.onJDMessage(buf => {
+            console.log(`JD ${Date.now() - t0} ${U.toHex(buf)}`)
+        }))
+}
+
+
 function hex(n: number) {
     return ("000" + n.toString(16)).slice(-4)
 }

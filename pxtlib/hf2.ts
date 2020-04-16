@@ -116,6 +116,10 @@ namespace pxt.HF2 {
     // to the HF2_STATUS_EVENT above
     export const HF2_EV_MASK = 0x800000
 
+    export const HF2_CMD_JDS_CONFIG = 0x0020
+    export const HF2_CMD_JDS_SEND = 0x0021
+    export const HF2_EV_JDS_PACKET = 0x800020
+
     export function write32(buf: MutableArrayLike<number>, pos: number, v: number) {
         buf[pos + 0] = (v >> 0) & 0xff;
         buf[pos + 1] = (v >> 8) & 0xff;
@@ -266,6 +270,15 @@ namespace pxt.HF2 {
         onEvent(id: number, f: (buf: Uint8Array) => void) {
             U.assert(!!(id & HF2_EV_MASK))
             this.eventHandlers[id + ""] = f
+        }
+
+        onJDMessage(f: (buf: Uint8Array) => void) {
+            this.talkAsync(HF2_CMD_JDS_CONFIG, encodeU32LE([1])).done()
+            this.onEvent(HF2_EV_JDS_PACKET, f)
+        }
+
+        sendJDMessageAsync(buf: Uint8Array) {
+            return this.talkAsync(HF2_CMD_JDS_SEND, buf)
         }
 
         reconnectAsync(): Promise<void> {
