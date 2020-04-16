@@ -116,11 +116,30 @@ namespace pxt.py {
             if (!exp.getSourceFile())
                 return null
             let tsExp = exp.getText()
+
+            const tsSym = tc.getSymbolAtLocation(exp);
+            if (tsSym) {
+                tsExp = tc.getFullyQualifiedName(tsSym);
+            }
+
             let sym = symbols[tsExp]
             if (sym && sym.attributes.alias) {
                 return sym.attributes.alias
             }
             if (sym && sym.pyQName) {
+                if (sym.isInstance) {
+                    if (ts.isPropertyAccessExpression(exp)) {
+                        // If this is a property access on an instance, we should bail out
+                        // because the left-hand side might contain an expression
+                        return null;
+                    }
+
+                    // If the pyQname is "Array.append" we just want "append"
+                    const nameRegExp = new RegExp(`(?:^|\.)${sym.namespace}\.(.+)`);
+                    const match = nameRegExp.exec(sym.pyQName);
+                    if (match) return match[1];
+                }
+
                 return sym.pyQName
             }
             else if (tsExp in pxtc.ts2PyFunNameMap) {
