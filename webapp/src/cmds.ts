@@ -116,6 +116,30 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
     }).then(() => { });
 }
 
+export function showDeviceNotFoundDialogAsync(docPath?: string, resp?: pxtc.CompileResult): Promise<void> {
+    pxt.tickEvent(`compile.devicenotfound`);
+    setWebUSBPaired(false);
+    const helpUrl = pxt.appTarget.appTheme.usbDocs;
+    return core.dialogAsync({
+        header: lf("Oops, we couldn't find your {0}", pxt.appTarget.appTheme.boardName),
+        body: lf("Please make sure your {0} is connected in bootloader mode and try again.", pxt.appTarget.appTheme.boardName),
+        helpUrl: docPath || helpUrl,
+        buttons: [
+            !!resp && {
+                label: lf("Download again"),
+                icon: "download",
+                className: "primary",
+                onclick: () => {
+                    pxt.tickEvent(`compile.devicenotfound.download`);
+                    return pxt.commands.saveOnlyAsync(resp);
+                }
+            }
+        ],
+        hideCancel: true,
+        hasCloseIcon: true
+    });
+}
+
 export function nativeHostPostMessageFunction(): (msg: pxt.editor.NativeHostMessage) => void {
     const webkit = (<any>window).webkit;
     if (webkit
