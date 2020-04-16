@@ -1555,6 +1555,7 @@ namespace ts.pxtc.service {
         field?: [string, string];
         localizedCategory?: string;
         builtinBlock?: boolean;
+        params?: string;
     }
 
     export interface ProjectSearchOptions {

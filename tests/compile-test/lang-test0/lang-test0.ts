@@ -17,12 +17,7 @@ msg("start!")
 
 function assert(cond: boolean, m?: string) {
     if (!cond) {
-        msg("assertion failed: ")
-        if (m)
-            msg(m)
-        while (1) {
-            pause(1000)
-        }
+        throw `assertion failed: ${m || ""}`;
     }
 }
 

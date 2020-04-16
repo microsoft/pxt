@@ -1549,9 +1549,10 @@ namespace pxt.blocks {
             options.push(formatCodeOption);
 
             if (pxt.appTarget.appTheme.blocksCollapsing) {
+                // Option to collapse all top-level (enabled) blocks
                 const collapseAllOption = {
                     text: lf("Collapse Blocks"),
-                    enabled: true,
+                    enabled: topBlocks.length && topBlocks.find((b: Blockly.Block) => b.isEnabled() && !b.isCollapsed()),
                     callback: () => {
                         pxt.tickEvent("blocks.context.collapse", undefined, { interactiveConsent: true });
                         pxt.blocks.layout.setCollapsedAll(this, true);
@@ -1560,9 +1561,10 @@ namespace pxt.blocks {
                 }
                 options.push(collapseAllOption);
 
+                // Option to expand all collapsed blocks
                 const expandAllOption = {
                     text: lf("Expand Blocks"),
-                    enabled: true,
+                    enabled: topBlocks.length && topBlocks.find((b: Blockly.Block) => b.isEnabled() && b.isCollapsed()),
                     callback: () => {
                         pxt.tickEvent("blocks.context.expand", undefined, { interactiveConsent: true });
                         pxt.blocks.layout.setCollapsedAll(this, false);

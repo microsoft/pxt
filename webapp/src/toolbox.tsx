@@ -188,7 +188,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
     }
 
     clearSelection() {
-        this.setState({ selectedItem: undefined, expandedItem: undefined, focusSearch: false })
+        this.setState({ selectedItem: undefined, focusSearch: false })
     }
 
     clearSearch() {
