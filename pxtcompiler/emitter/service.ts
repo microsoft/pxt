@@ -852,6 +852,7 @@ namespace ts.pxtc.service {
         },
 
         getCompletions: v => {
+            // TODO: break out into seperate file
             const { fileName, fileContent, position, wordStartPos, wordEndPos, runtime } = v
             let src: string = fileContent
             if (fileContent) {
@@ -952,32 +953,52 @@ namespace ts.pxtc.service {
 
             // special handing for member completion
             if (dotIdx !== -1) {
+                console.log("member completion")
                 const propertyAccessTarget = findInnerMostNodeAtPosition(tsAst, isPython ? tsPos : dotIdx - 1)
+                console.dir(propertyAccessTarget)
 
                 if (propertyAccessTarget) {
-                    let type: Type;
-
                     const symbol = tc.getSymbolAtLocation(propertyAccessTarget);
-                    if (symbol) {
-                        type = tc.getTypeOfSymbolAtLocation(symbol, propertyAccessTarget);
-                    }
-                    else {
-                        type = tc.getTypeAtLocation(propertyAccessTarget);
-                    }
+                    if (symbol.members?.size > 0) {
+                        // some symbols have members listed directly, e.g. the symbol for the 
+                        //      node for the "this" keyword is the class itself
+                        let members: Symbol[] = []
+                        symbol.members.forEach((v, k) => { members.push(v) })
+                        const qname = tc.getFullyQualifiedName(symbol)
+                        let pxtSyms = members
+                            .map(s => `${qname}.${s.getName()}`)
+                            .map(memQName => lastApiInfo.apis.byQName[memQName])
+                            .filter(m => !!m)
+                            .map(m => completionSymbol(m))
+                        if (pxtSyms.length) {
+                            resultSymbols = pxtSyms
+                            isPropertyAccess = true;
+                        }
+                    } else {
+                        // otherwise find the type of the symbol and find 
+                        // associated properties
+                        let type: Type;
+                        if (symbol) {
+                            type = tc.getTypeOfSymbolAtLocation(symbol, propertyAccessTarget);
+                        }
+                        else {
+                            type = tc.getTypeAtLocation(propertyAccessTarget);
+                        }
 
-                    if (type) {
-                        const qname = type.symbol ? tc.getFullyQualifiedName(type.symbol) : getNameOfWidenedType(type, tc);
+                        if (type) {
+                            const qname = type.symbol ? tc.getFullyQualifiedName(type.symbol) : getNameOfWidenedType(type, tc);
 
-                        if (qname) {
-                            const props = type.getApparentProperties()
-                                .map(prop => qname + "." + prop.getName())
-                                .map(propQname => lastApiInfo.apis.byQName[propQname])
-                                .filter(prop => !!prop)
-                                .map(prop => completionSymbol(prop));
+                            if (qname) {
+                                const props = type.getApparentProperties()
+                                    .map(prop => qname + "." + prop.getName())
+                                    .map(propQname => lastApiInfo.apis.byQName[propQname])
+                                    .filter(prop => !!prop)
+                                    .map(prop => completionSymbol(prop));
 
-                            if (props.length) {
-                                resultSymbols = props;
-                                isPropertyAccess = true;
+                                if (props.length) {
+                                    resultSymbols = props;
+                                    isPropertyAccess = true;
+                                }
                             }
                         }
                     }
