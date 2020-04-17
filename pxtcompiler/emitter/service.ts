@@ -953,9 +953,7 @@ namespace ts.pxtc.service {
 
             // special handing for member completion
             if (dotIdx !== -1) {
-                console.log("member completion")
                 const propertyAccessTarget = findInnerMostNodeAtPosition(tsAst, isPython ? tsPos : dotIdx - 1)
-                console.dir(propertyAccessTarget)
 
                 if (propertyAccessTarget) {
                     const symbol = tc.getSymbolAtLocation(propertyAccessTarget);
