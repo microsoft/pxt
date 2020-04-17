@@ -2325,88 +2325,95 @@ export class ProjectView
             && pxt.appTarget.simulator.emptyRunCode
             && !this.isBlocksEditor())
             simRestart = false;
-        this.setState({ compiling: true });
-        this.clearSerial();
-        this.editor.beforeCompile();
-        if (simRestart) this.stopSimulator();
-        let state = this.editor.snapshotState()
-        this.syncPreferredEditor()
-        compiler.compileAsync({ native: true, forceEmit: true })
-            .then<pxtc.CompileResult>(resp => {
-                this.editor.setDiagnostics(this.editorFile, state)
 
-                let fn = pxt.outputName()
-                if (!resp.outfiles[fn]) {
-                    pxt.tickEvent("compile.noemit")
-                    core.warningNotification(lf("Compilation failed, please check your code for errors."));
-                    return Promise.resolve(null)
-                }
-                resp.saveOnly = saveOnly
-                resp.userContextWindow = userContextWindow;
-                resp.downloadFileBaseName = pkg.genFileName("");
-                resp.confirmAsync = core.confirmAsync;
-                let h = this.state.header
-                if (h)
-                    resp.headerId = h.id
-                if (pxt.commands.patchCompileResultAsync)
-                    return pxt.commands.patchCompileResultAsync(resp).then(() => resp)
-                else
-                    return resp
-            }).then(resp => {
-                if (!resp) return Promise.resolve();
-                if (saveOnly) {
-                    return pxt.commands.saveOnlyAsync(resp);
-                }
-                if (!resp.success) {
-                    if (!this.maybeShowPackageErrors(true)) {
-                        core.confirmAsync({
-                            header: lf("Compilation failed"),
-                            body: lf("Ooops, looks like there are errors in your program."),
-                            hideAgree: true,
-                            disagreeLbl: lf("Close")
-                        });
+        try {
+            this.setState({ compiling: true });
+            this.clearSerial();
+            this.editor.beforeCompile();
+            if (simRestart) this.stopSimulator();
+            let state = this.editor.snapshotState()
+            this.syncPreferredEditor()
+            compiler.compileAsync({ native: true, forceEmit: true })
+                .then<pxtc.CompileResult>(resp => {
+                    this.editor.setDiagnostics(this.editorFile, state)
+
+                    let fn = pxt.outputName()
+                    if (!resp.outfiles[fn]) {
+                        pxt.tickEvent("compile.noemit")
+                        core.warningNotification(lf("Compilation failed, please check your code for errors."));
+                        return Promise.resolve(null)
                     }
-                }
-                let deployStartTime = Date.now()
-                pxt.tickEvent("deploy.start")
-                return pxt.commands.deployAsync(resp, {
-                    reportDeviceNotFoundAsync: (docPath, compileResult) => {
-                        pxt.tickEvent("deploy.devicenotfound")
-                        return cmds.showDeviceNotFoundDialogAsync(docPath, compileResult)
-                    },
-                    reportError: (e) => {
-                        pxt.tickEvent("deploy.reporterror")
-                        return core.errorNotification(e)
-                    },
-                    showNotification: (msg) => core.infoNotification(msg)
-                })
-                    .then(() => {
-                        let elapsed = Date.now() - deployStartTime
-                        pxt.tickEvent("deploy.finished", { "elapsedMs": elapsed })
-                    })
-                    .catch(e => {
-                        if (e.notifyUser) {
-                            core.warningNotification(e.message);
-                        } else {
-                            const errorText = pxt.appTarget.appTheme.useUploadMessage ? lf("Upload failed, please try again.") : lf("Download failed, please try again.");
-                            core.warningNotification(errorText);
+                    resp.saveOnly = saveOnly
+                    resp.userContextWindow = userContextWindow;
+                    resp.downloadFileBaseName = pkg.genFileName("");
+                    resp.confirmAsync = core.confirmAsync;
+                    let h = this.state.header
+                    if (h)
+                        resp.headerId = h.id
+                    if (pxt.commands.patchCompileResultAsync)
+                        return pxt.commands.patchCompileResultAsync(resp).then(() => resp)
+                    else
+                        return resp
+                }).then(resp => {
+                    if (!resp) return Promise.resolve();
+                    if (saveOnly) {
+                        return pxt.commands.saveOnlyAsync(resp);
+                    }
+                    if (!resp.success) {
+                        if (!this.maybeShowPackageErrors(true)) {
+                            core.confirmAsync({
+                                header: lf("Compilation failed"),
+                                body: lf("Ooops, looks like there are errors in your program."),
+                                hideAgree: true,
+                                disagreeLbl: lf("Close")
+                            });
                         }
-                        let elapsed = Date.now() - deployStartTime
-                        pxt.tickEvent("deploy.exception", { "notifyUser": e.notifyUser, "elapsedMs": elapsed })
-                        pxt.reportException(e);
-                        if (userContextWindow)
-                            try { userContextWindow.close() } catch (e) { }
+                    }
+                    let deployStartTime = Date.now()
+                    pxt.tickEvent("deploy.start")
+                    return pxt.commands.deployAsync(resp, {
+                        reportDeviceNotFoundAsync: (docPath, compileResult) => {
+                            pxt.tickEvent("deploy.devicenotfound")
+                            return cmds.showDeviceNotFoundDialogAsync(docPath, compileResult)
+                        },
+                        reportError: (e) => {
+                            pxt.tickEvent("deploy.reporterror")
+                            return core.errorNotification(e)
+                        },
+                        showNotification: (msg) => core.infoNotification(msg)
                     })
-            }).catch((e: Error) => {
-                pxt.reportException(e);
-                core.errorNotification(lf("Compilation failed, please contact support."));
-                if (userContextWindow)
-                    try { userContextWindow.close() } catch (e) { }
-            }).finally(() => {
+                        .then(() => {
+                            let elapsed = Date.now() - deployStartTime
+                            pxt.tickEvent("deploy.finished", { "elapsedMs": elapsed })
+                        })
+                        .catch(e => {
+                            if (e.notifyUser) {
+                                core.warningNotification(e.message);
+                            } else {
+                                const errorText = pxt.appTarget.appTheme.useUploadMessage ? lf("Upload failed, please try again.") : lf("Download failed, please try again.");
+                                core.warningNotification(errorText);
+                            }
+                            let elapsed = Date.now() - deployStartTime
+                            pxt.tickEvent("deploy.exception", { "notifyUser": e.notifyUser, "elapsedMs": elapsed })
+                            pxt.reportException(e);
+                            if (userContextWindow)
+                                try { userContextWindow.close() } catch (e) { }
+                        })
+                }).catch((e: Error) => {
+                    pxt.reportException(e);
+                    core.errorNotification(lf("Compilation failed, please contact support."));
+                    if (userContextWindow)
+                        try { userContextWindow.close() } catch (e) { }
+                }).finally(() => {
+                    this.setState({ compiling: false, isSaving: false });
+                    if (simRestart) this.runSimulator();
+                })
+                .done();
+            } catch (e) {
                 this.setState({ compiling: false, isSaving: false });
-                if (simRestart) this.runSimulator();
-            })
-            .done();
+                pxt.reportException(e);
+                core.errorNotification(lf("Compilation failed, please try again."));
+            }
     }
 
     overrideTypescriptFile(text: string) {
