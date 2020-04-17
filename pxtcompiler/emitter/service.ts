@@ -1051,8 +1051,33 @@ namespace ts.pxtc.service {
             }
 
             if (!isPython && !resultSymbols.length) {
-                // TODO: leverage TS language service to get symbols in scope
+                // TODO: share this with the "syntaxinfo" service
+                // start with global api symbols
                 resultSymbols = completionSymbols(pxt.U.values(lastApiInfo.apis.byQName))
+
+                // then use the typescript service to get symbols in scope
+                let tsNode = findInnerMostNodeAtPosition(tsAst, wordStartPos);
+                let symSearch = SymbolFlags.Variable;
+                let inScopeTsSyms = tc.getSymbolsInScope(tsNode, symSearch);
+                // filter these to just what's at the cursor, otherwise we get things
+                //  like JS Array methods we don't support
+                let matchStr = tsNode.getText()
+                inScopeTsSyms = inScopeTsSyms.filter(s => s.name.indexOf(matchStr) >= 0)
+
+                // convert these to pxt symbols
+                let inScopePxtSyms = inScopeTsSyms
+                    .map(t => {
+                        let pxtSym = getPxtSymbolFromTsSymbol(t, lastApiInfo.apis, tc)
+                        if (!pxtSym) {
+                            let tsType = tc.getTypeOfSymbolAtLocation(t, tsNode);
+                            pxtSym = makePxtSymbolFromTsSymbol(t, tsType)
+                        }
+                        return pxtSym
+                    })
+                    .filter(s => !!s)
+                    .map(s => completionSymbol(s))
+
+                resultSymbols = [...resultSymbols, ...inScopePxtSyms]
             }
 
             // determine which names are taken for auto-generated variable names
@@ -1597,7 +1622,7 @@ namespace ts.pxtc.service {
                     return getDefaultEnumValue(type, python);
                 }
                 if (isObjectType(type)) {
-                    const typeSymbol = apis.byQName[checker.getFullyQualifiedName(type.symbol)];
+                    const typeSymbol = getPxtSymbolFromTsSymbol(type.symbol, apis, checker)
                     const snip = typeSymbol && typeSymbol.attributes && (python ? typeSymbol.attributes.pySnippet : typeSymbol.attributes.snippet);
                     if (snip) return snip;
                     if (type.objectFlags & ts.ObjectFlags.Anonymous) {
@@ -1855,6 +1880,61 @@ namespace ts.pxtc.service {
         }
     }
 
+    function tsSymbolToPxtSymbolKind(ts: ts.Symbol): SymbolKind {
+        if (ts.flags & SymbolFlags.Variable)
+            return SymbolKind.Variable
+        if (ts.flags & SymbolFlags.Class)
+            return SymbolKind.Class
+        if (ts.flags & SymbolFlags.Enum)
+            return SymbolKind.Enum
+        if (ts.flags & SymbolFlags.EnumMember)
+            return SymbolKind.EnumMember
+        if (ts.flags & SymbolFlags.Method)
+            return SymbolKind.Method
+        if (ts.flags & SymbolFlags.Module)
+            return SymbolKind.Module
+        if (ts.flags & SymbolFlags.Property)
+            return SymbolKind.Property
+        return SymbolKind.None
+    }
+
+    function makePxtSymbolFromTsSymbol(tsSym: ts.Symbol, tsType: ts.Type): SymbolInfo {
+        // TODO: get proper filename, fill out parameter info, handle qualified names
+        //      none of these are needed for JS auto-complete which is the primary
+        //      use case for this.
+        let qname = tsSym.getName()
+
+        let match = /(.*)\.(.*)/.exec(qname)
+        let name = match ? match[2] : qname
+        let ns = match ? match[1] : ""
+
+        let typeName = tsType.getSymbol()?.getName() ?? "any"
+
+        let sym: SymbolInfo = {
+            kind: tsSymbolToPxtSymbolKind(tsSym),
+            name: name,
+            pyName: name,
+            qName: qname,
+            pyQName: qname,
+            namespace: ns,
+            attributes: {
+                callingConvention: ir.CallingConvention.Plain,
+                paramDefl: {},
+            },
+            fileName: "main.ts",
+            parameters: [],
+            retType: typeName,
+        }
+        return sym;
+    }
+
+    function getPxtSymbolFromTsSymbol(tsSym: ts.Symbol, apiInfo: ApisInfo, tc: TypeChecker): SymbolInfo | undefined {
+        if (tsSym) {
+            return apiInfo.byQName[tc.getFullyQualifiedName(tsSym)]
+        }
+        return undefined;
+    }
+
     function getTsSymbolFromPxtSymbol(pxtSym: SymbolInfo, location: ts.Node, meaning: SymbolFlags): ts.Symbol | null {
         const checker = service && service.getProgram().getTypeChecker();
         if (!checker)
@@ -1937,7 +2017,8 @@ namespace ts.pxtc.service {
         if (node) {
             const symbol = checker.getSymbolAtLocation(node);
             if (symbol) {
-                return [node, apiInfo.byQName[checker.getFullyQualifiedName(symbol)]];
+                let pxtSym = getPxtSymbolFromTsSymbol(symbol, apiInfo, checker)
+                return [node, pxtSym];
             }
         }
 
