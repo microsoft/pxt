@@ -3427,7 +3427,10 @@ ${lbl}: .short 0xffff
                 const en = decl as EnumMember
                 const ev = enumValue(en)
                 if (ev == null) {
-                    info.constantFolded = constantFold(en.initializer)
+                    if (en.initializer)
+                        info.constantFolded = constantFold(en.initializer)
+                    else   
+                        return null
                 } else {
                     const v = parseInt(ev)
                     if (!isNaN(v))
