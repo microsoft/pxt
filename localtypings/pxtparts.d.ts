@@ -177,6 +177,7 @@ declare namespace pxsim {
 
     // subtype=breakpoint
     export interface DebuggerBreakpointMessage extends DebuggerMessage {
+        subtype: "breakpoint" | "trace";
         breakpointId: number;
         globals: Variables;
         stackframes: StackFrameInfo[];
@@ -199,11 +200,6 @@ declare namespace pxsim {
     export interface FunctionArgument {
         name: string;
         value: any;
-    }
-
-    // subtype=trace
-    export interface TraceMessage extends DebuggerMessage {
-        breakpointId: number;
     }
 
     // subtype=traceConfig

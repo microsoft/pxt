@@ -1179,11 +1179,9 @@ namespace pxsim {
             function trace(brkId: number, s: StackFrame, retPc: number, info: any) {
                 setupResume(s, retPc);
                 if (info.functionName === "<main>" || info.fileName === "main.ts") {
-                    Runtime.postMessage({
-                        type: "debugger",
-                        subtype: "trace",
-                        breakpointId: brkId,
-                    } as TraceMessage)
+                    const { msg } = getBreakpointMsg(s, brkId, userGlobals);
+                    msg.subtype = "trace";
+                    Runtime.postMessage(msg)
                     thread.pause(tracePauseMs || 1)
                 }
                 else {
