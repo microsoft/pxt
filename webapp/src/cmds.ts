@@ -454,10 +454,12 @@ export function setWebUSBPaired(enabled: boolean) {
 function handlePacketIOApi(r: string) {
     const p = data.stripProtocol(r);
     switch (p) {
+        case "active":
+            return pxt.packetio.isActive();
         case "connected":
             return pxt.packetio.isConnected();
         case "icon":
-            return "usb";
+            return pxt.packetio.isActive() && "usb";
     }
     return false;
 }

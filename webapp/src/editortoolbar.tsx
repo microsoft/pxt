@@ -165,7 +165,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
         const showPairUSBDevice = pxt.usb.isEnabled;
         const packetioConnected = !!this.getData("packetio:connected");
-        const packetioIcon = packetioConnected && this.getData("packetio:icon") as string;
+        const packetioIcon = this.getData("packetio:icon") as string;
         const hasMenu = boards || showPairUSBDevice;
 
         let downloadButtonClasses = hasMenu ? "left attached " : "";
