@@ -3429,7 +3429,7 @@ ${lbl}: .short 0xffff
                 if (ev == null) {
                     if (en.initializer)
                         info.constantFolded = constantFold(en.initializer)
-                    else   
+                    else
                         return null
                 } else {
                     const v = parseInt(ev)
