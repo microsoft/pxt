@@ -422,6 +422,7 @@ interface ProjectsCarouselState {
 export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, ProjectsCarouselState> {
     private prevGalleries: pxt.CodeCard[] = [];
     private hasFetchErrors = false;
+    private isYoutubeOnline = false;
     private latestProject: codecard.CodeCardView;
 
     private static NUM_PROJECTS_HOMESCREEN = 8;
@@ -444,6 +445,12 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             if (this.latestProject && this.latestProject.element) {
                 this.latestProject.element.focus()
             }
+        }
+
+        if (pxt.BrowserUtils.isEdge()) {
+            const favicon = new Image();
+            favicon.src = "https://www.youtube.com/favicon.ico";
+            favicon.onload = () => { this.isYoutubeOnline = favicon.height > 0 };
         }
     }
 
@@ -599,6 +606,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             cardType={selectedElement.cardType}
                             tags={selectedElement.tags}
                             otherActions={selectedElement.otherActions}
+                            isYoutubeOnline={this.isYoutubeOnline}
                         />
                     </div>}
                 </div>
@@ -712,6 +720,7 @@ export interface ProjectsDetailProps extends ISettingsProps {
     cardType: pxt.CodeCardType;
     tags?: string[];
     otherActions?: pxt.CodeCardAction[];
+    isYoutubeOnline?: boolean;
 }
 
 export interface ProjectsDetailState {
@@ -885,7 +894,8 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         const { youTubeId } = this.props;
         // check that youtube is reachable
         return youTubeId &&
-            this.getData("ping:https://www.youtube.com/favicon.ico");
+            (this.getData("ping:https://www.youtube.com/favicon.ico") ||
+             this.props.isYoutubeOnline);
     }
 
     componentDidMount() {
