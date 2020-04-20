@@ -124,7 +124,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                 onChangeValue={this.saveProjectName}
                 disabled={projectNameReadOnly}
                 readOnly={projectNameReadOnly}
-                />)
+            />)
         }
 
         if (showSave) {
@@ -166,7 +166,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const webUSBSupported = pxt.usb.isEnabled && pxt.appTarget?.compile?.webUSB;
         const packetioActive = !!this.getData("packetio:active");
         const packetioConnected = !!this.getData("packetio:connected");
-        const packetioIcon = compiling ? downloadIcon : this.getData("packetio:icon") as string;
+        const packetioIcon = compiling ? downloadIcon
+            : this.getData("packetio:icon") as string;
         const hasMenu = boards || webUSBSupported;
 
         let downloadButtonClasses = hasMenu ? "left attached " : "";
@@ -199,7 +200,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         el.push(<EditorToolbarButton key="downloadbutton" role="menuitem" icon={downloadIcon} className={`primary download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={this.compile} view='computer' />)
 
         const deviceName = pxt.hwName || pxt.appTarget.appTheme.boardNickname || lf("device");
-        const tooltip = pxt.hwName || (packetioConnected && lf("Connected to {0}", deviceName)) || (boards ? lf("Click to select hardware") : lf("Click for one-click downloads."));
+        const tooltip = pxt.hwName
+            || (packetioConnected && lf("Connected to {0}", deviceName))
+            || (packetioActive && !packetioConnected && lf("Connecting to {0}...", deviceName))
+            || (boards ? lf("Click to select hardware") : lf("Click for one-click downloads."));
 
         const hardwareMenuText = view == View.Mobile ? lf("Hardware") : lf("Choose hardware");
         const downloadMenuText = view == View.Mobile ? (pxt.hwName || lf("Download")) : lf("Download to {0}", deviceName);
@@ -207,7 +211,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         if (hasMenu) {
             el.push(
                 <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
-                    {webUSBSupported && (!packetioActive || packetioConnected) && <sui.Item role="menuitem" icon="usb" text={lf("Connect")} tabIndex={-1} onClick={this.onConnectClick} />}
+                    {webUSBSupported && !packetioConnected && <sui.Item role="menuitem" icon="usb" text={lf("Connect")} tabIndex={-1} onClick={this.onConnectClick} />}
                     {webUSBSupported && packetioActive && <sui.Item role="menuitem" icon="usb" text={lf("Disconnect")} tabIndex={-1} onClick={this.onDisconnectClick} />}
                     {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
                     <sui.Item role="menuitem" icon="download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />

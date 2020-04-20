@@ -457,7 +457,7 @@ function handlePacketIOApi(r: string) {
         case "connected":
             return pxt.packetio.isConnected();
         case "icon":
-            return pxt.packetio.isActive() && "usb";
+            return pxt.packetio.isActive() && (pxt.packetio.isConnected() ? "usb" : "plug");
     }
     return false;
 }
