@@ -163,11 +163,11 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const downloadIcon = targetTheme.downloadIcon || "download";
         const downloadText = targetTheme.useUploadMessage ? lf("Upload") : lf("Download");
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
-        const showPairUSBDevice = pxt.usb.isEnabled;
+        const webUSBSupported = pxt.usb.isEnabled && pxt.appTarget?.compile?.webUSB;
         const packetioActive = !!this.getData("packetio:active");
         const packetioConnected = !!this.getData("packetio:connected");
-        const packetioIcon = this.getData("packetio:icon") as string;
-        const hasMenu = boards || showPairUSBDevice;
+        const packetioIcon = compiling ? downloadIcon : this.getData("packetio:icon") as string;
+        const hasMenu = boards || webUSBSupported;
 
         let downloadButtonClasses = hasMenu ? "left attached " : "";
         let downloadButtonIcon = packetioIcon || "ellipsis";
@@ -207,8 +207,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         if (hasMenu) {
             el.push(
                 <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
-                    {showPairUSBDevice && !packetioActive && <sui.Item role="menuitem" icon="usb" text={lf("Connect device")} tabIndex={-1} onClick={this.onConnectClick} />}
-                    {showPairUSBDevice && packetioActive && <sui.Item role="menuitem" icon="usb" text={lf("Disconnect device")} tabIndex={-1} onClick={this.onDisconnectClick} />}
+                    {webUSBSupported && (!packetioActive || packetioConnected) && <sui.Item role="menuitem" icon="usb" text={lf("Connect")} tabIndex={-1} onClick={this.onConnectClick} />}
+                    {webUSBSupported && packetioActive && <sui.Item role="menuitem" icon="usb" text={lf("Disconnect")} tabIndex={-1} onClick={this.onDisconnectClick} />}
                     {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
                     <sui.Item role="menuitem" icon="download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />
                 </sui.DropdownMenu>
