@@ -21,7 +21,7 @@ namespace pxt.template {
   platform: @PLATFORM@
   home_url: @HOMEURL@
 theme: jekyll-theme-slate
-include: 
+include:
   - assets
   - README.md
 `,
