@@ -179,6 +179,7 @@ declare namespace pxsim {
     export interface DebuggerBreakpointMessage extends DebuggerMessage {
         breakpointId: number;
         globals: Variables;
+        environmentGlobals?: Variables;
         stackframes: StackFrameInfo[];
         exceptionMessage?: string;
         exceptionStack?: string;
