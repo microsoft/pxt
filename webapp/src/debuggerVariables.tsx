@@ -157,7 +157,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         // inject unfiltered environment variables
         if (environmentGlobals)
             updatedGlobals.variables = updatedGlobals.variables.concat(variablesToVariableList(environmentGlobals));
-        
+
         assignVarIds(updatedGlobals.variables);
 
         let updatedFrames: ScopeVariables[];
