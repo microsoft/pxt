@@ -3416,7 +3416,7 @@ ${lbl}: .short 0xffff
                 return null
 
             const info = pxtInfo(decl)
-            if (info.constantFolded)
+            if (info.constantFolded !== undefined)
                 return info.constantFolded
 
             if (isVar(decl) && (decl.parent.flags & NodeFlags.Const)) {
@@ -3427,10 +3427,7 @@ ${lbl}: .short 0xffff
                 const en = decl as EnumMember
                 const ev = enumValue(en)
                 if (ev == null) {
-                    if (en.initializer)
-                        info.constantFolded = constantFold(en.initializer)
-                    else
-                        return null
+                    info.constantFolded = constantFold(en.initializer)
                 } else {
                     const v = parseInt(ev)
                     if (!isNaN(v))
@@ -3448,6 +3445,8 @@ ${lbl}: .short 0xffff
         }
 
         function constantFold(e: Expression): Folded {
+            if (!e)
+                return null
             const info = pxtInfo(e)
             if (info.constantFolded === undefined) {
                 info.constantFolded = null // make sure we don't come back here recursively
