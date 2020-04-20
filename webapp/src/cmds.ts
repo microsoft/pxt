@@ -194,7 +194,7 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
     function deployAsync(): Promise<void> {
         return pxt.packetio.initAsync(isRetry)
             .then(dev => dev.reflashAsync(resp))
-            .timeout(25000, "timeout")
+            .timeout(120000, "timeout") // packetio should time out first
             .catch((e) => {
                 pxt.reportException(e)
                 if (e.type === "repairbootloader") {
@@ -452,6 +452,8 @@ export function setWebUSBEnabled(enabled: boolean) {
 function handlePacketIOApi(r: string) {
     const p = data.stripProtocol(r);
     switch (p) {
+        case "active":
+            return pxt.packetio.isActive();
         case "connected":
             return pxt.packetio.isConnected();
         case "icon":

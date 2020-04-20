@@ -27,6 +27,7 @@ namespace pxt.packetio {
         reconnectAsync(): Promise<void>;
         disconnectAsync(): Promise<void>;
         isConnected(): boolean;
+        isFlashing(): boolean;
         isSwitchingToBootloader?: () => void;
         // release any native resource before being released
         disposeAsync(): Promise<void>;

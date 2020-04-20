@@ -237,6 +237,7 @@ namespace pxt.HF2 {
         }
 
         private lock = new U.PromiseQueue();
+        flashing = false;
         rawMode = false;
         infoRaw: string;
         info: BootloaderInfo;
@@ -403,15 +404,21 @@ namespace pxt.HF2 {
                 })
         }
 
+        isFlashing(): boolean {
+            return !!this.flashing;
+        }
+
         reflashAsync(resp: pxtc.CompileResult): Promise<void> {
             log(`reflash`)
             U.assert(pxt.appTarget.compile.useUF2);
             const f = resp.outfiles[pxtc.BINARY_UF2]
             const blocks = pxtc.UF2.parseFile(pxt.Util.stringToUint8Array(atob(f)))
+            this.flashing = true;
             return this.io.reconnectAsync()
                 .then(() => this.flashAsync(blocks))
                 .then(() => Promise.delay(100))
                 .then(() => this.reconnectAsync())
+                .finally(() => this.flashing = false);
         }
 
         writeWordsAsync(addr: number, words: number[]) {
