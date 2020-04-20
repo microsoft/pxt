@@ -46,8 +46,18 @@ namespace pxt.packetio {
     let onConnectionChangedHandler: () => void = () => { };
     let onSerialHandler: (buf: Uint8Array, isStderr: boolean) => void;
 
+    /**
+     * A DAP wrapper is active
+     */
+    export function isActive() {
+        return !!wrapper;
+    }
+
+    /**
+     * The DAP wrapper is active and the device is connected
+     */
     export function isConnected() {
-        return wrapper && wrapper.io.isConnected();
+        return !!wrapper && wrapper.io.isConnected();
     }
 
     export function disconnectAsync(): Promise<void> {
