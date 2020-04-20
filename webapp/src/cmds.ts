@@ -12,7 +12,7 @@ function log(msg: string) {
 }
 
 let extensionResult: pxt.editor.ExtensionResult;
-let tryPairedDevice = false;
+let webUSBEnabled = false;
 
 function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {
     pxt.BrowserUtils.browserDownloadBinText(
@@ -118,11 +118,11 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
 
 export function showDeviceNotFoundDialogAsync(docPath?: string, resp?: pxtc.CompileResult): Promise<void> {
     pxt.tickEvent(`compile.devicenotfound`);
-    setWebUSBPaired(false);
+    setWebUSBEnabled(false);
     const helpUrl = pxt.appTarget.appTheme.usbDocs;
     return core.dialogAsync({
         header: lf("Oops, we couldn't find your {0}", pxt.appTarget.appTheme.boardName),
-        body: lf("Please make sure your {0} is connected in bootloader mode and try again.", pxt.appTarget.appTheme.boardName),
+        body: lf("Please make sure your {0} is connected and try again.", pxt.appTarget.appTheme.boardName),
         helpUrl: docPath || helpUrl,
         buttons: [
             !!resp && {
@@ -367,7 +367,7 @@ export function init(): void {
     }
 
     const forceBrowserDownload = /force(Hex)?(Browser)?Download/i.test(window.location.href);
-    const shouldUseWebUSB = pxt.usb.isEnabled && pxt.appTarget?.compile?.webUSB;
+    const webUSBSupported = pxt.usb.isEnabled && pxt.appTarget?.compile?.webUSB;
     if (forceBrowserDownload || pxt.appTarget.serial.noDeploy) {
         log(`deploy: force browser download`);
         // commands are ready
@@ -397,7 +397,7 @@ export function init(): void {
         log(`deploy: electron`);
         pxt.commands.deployCoreAsync = electron.driveDeployAsync;
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
-    } else if (shouldUseWebUSB && tryPairedDevice) {
+    } else if (webUSBSupported && webUSBEnabled) {
         log(`deploy: webusb, paired once`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
     } else if (hidbridge.shouldUse()) {
@@ -419,7 +419,7 @@ export function connectAsync(): Promise<void> {
     return pxt.usb.tryGetDeviceAsync()
         .then(dev => {
             if (!dev) return pairAsync();
-            setWebUSBPaired(true);
+            setWebUSBEnabled(true);
             return pxt.packetio.initAsync()
                 .then(wrapper => wrapper.reconnectAsync())
                 .then(() => core.infoNotification(lf("Device connected! Try downloading now.")))
@@ -440,14 +440,12 @@ export function disconnectAsync(): Promise<void> {
     pxt.tickEvent("cmds.disconnect")
     return pxt.packetio.disconnectAsync()
         .then(() => core.infoNotification("Device disconnected"))
-        .finally(() => {
-            setWebUSBPaired(false);
-        })
+        .finally(() => setWebUSBEnabled(false));
 }
 
-export function setWebUSBPaired(enabled: boolean) {
-    if (tryPairedDevice === enabled) return;
-    tryPairedDevice = enabled;
+export function setWebUSBEnabled(enabled: boolean) {
+    if (webUSBEnabled === enabled) return;
+    webUSBEnabled = enabled;
     init();
 }
 
