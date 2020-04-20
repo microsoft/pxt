@@ -45,7 +45,7 @@ gem 'github-pages', group: :jekyll_plugins`,
 
 ## ${lf("Use as Extension")}
 
-${lf("This repository can be added as an **Eextension** in MakeCode.")}
+${lf("This repository can be added as an **extension** in MakeCode.")}
 
 * ${lf("open [@HOMEURL@](@HOMEURL@)")}
 * ${lf("click on **New Project**")}
