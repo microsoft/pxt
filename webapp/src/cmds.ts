@@ -189,11 +189,11 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
         return browserDownloadDeployCoreAsync(resp);
     let isRetry = false;
     const LOADING_KEY = "hiddeploy";
-    return core.showLoadingAsync(LOADING_KEY, lf("Downloading..."), deployAsync(), 5000);
+    return deployAsync();
 
     function deployAsync(): Promise<void> {
         return pxt.packetio.initAsync(isRetry)
-            .then(dev => dev.reflashAsync(resp))
+            .then(dev => core.showLoadingAsync(LOADING_KEY, lf("Downloading..."), dev.reflashAsync(resp), 5000))
             .then(() => core.infoNotification("Download completed!"))
             .finally(() => core.hideLoading(LOADING_KEY))
             .timeout(120000, "timeout") // packetio should time out first
