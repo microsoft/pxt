@@ -50,12 +50,13 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                         <div key={errorKey(e)}>{`${e.messageText} - [line ${e.line + 1}: col ${e.column}]`}</div>)
                     }
                   </div>
-                : <div className="errorListInner" id="noErrorsMessage">{lf("No Errors")}</div>
+                : <div className="errorListInner" id="noErrorsMessage">{lf("You have no errors")}</div>
             }
         </div>
     }
 
     componentDidUpdate() {
+        // ensures that the shrinking of no errors takes 
         this.props.onSizeChange()
     }
 
