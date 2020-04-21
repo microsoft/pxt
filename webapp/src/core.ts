@@ -169,6 +169,7 @@ export interface DialogOptions {
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
+    if (!options.buttons) options.buttons = [];
     if (!options.type) options.type = 'dialog';
     if (!options.hideCancel) {
         if (!options.buttons) options.buttons = [];
