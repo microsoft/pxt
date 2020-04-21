@@ -29,6 +29,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     }
 
     render() {
+        const showAvailableErrors = this.state.errors.length != 0;
         const showCollapseButton = true;
         const collapseTooltip = lf("Collapse Error List");
         function errorKey(error: pxtc.KsDiagnostic): string {
@@ -36,18 +37,26 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             // re-render what changes. Think of it like a hashcode/
             return `${error.messageText}-${error.fileName}-${error.line}-${error.column}`
         }
-        return <div className="errorList" >
-            {showCollapseButton &&
+            
+        return <div className="errorList" > 
+            {showCollapseButton && showAvailableErrors &&
                 <sui.Button id='toggleErrorList' className={`toggleErrorList collapse-button large`}
-                    icon={`inverted chevron ${this.state.isCollapsed ? 'up' : 'down'}`}
-                    title={collapseTooltip} onClick={this.onCollapseClick} />}
-            <div className="errorListInner" hidden={this.state.isCollapsed}>
-                {
+                icon={`inverted chevron ${this.state.isCollapsed ? 'up' : 'down'}`}
+                title={collapseTooltip} onClick={this.onCollapseClick} />}
+            {showAvailableErrors
+                ? <div className="errorListInner" hidden={this.state.isCollapsed}>
+                    {
                     (this.state.errors || []).map(e =>
                         <div key={errorKey(e)}>{`${e.messageText} - [line ${e.line + 1}: col ${e.column}]`}</div>)
-                }
-            </div>
+                    }
+                  </div>
+                : <div className="errorListInner" id="noErrorsMessage">{lf("No Errors")}</div>
+            }
         </div>
+    }
+
+    componentDidUpdate() {
+        this.props.onSizeChange()
     }
 
     onCollapseClick() {
