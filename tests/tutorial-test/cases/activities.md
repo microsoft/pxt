@@ -1,5 +1,5 @@
 ### @activities true
-### @noDiffs true
+### @diffs false
 
 # Tutorial title
 

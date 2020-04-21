@@ -1,6 +1,6 @@
 # Explicit Hints
 
-### @noDiffs true
+### @diffs false
 ### @explicitHints true
 
 ## Introduction
