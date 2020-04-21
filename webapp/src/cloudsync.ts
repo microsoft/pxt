@@ -764,7 +764,9 @@ function pingApiHandlerAsync(p: string): Promise<any> {
     const url = data.stripProtocol(p);
     // special case favicon.ico
     if (/\.ico$/.test(p)) {
-        const imgUrl = `${url}?v=${Math.random()}&origin=${encodeURIComponent(window.location.origin)}`;
+        const imgUrl = pxt.BrowserUtils.isEdge()
+            ? url
+            : `${url}?v=${Math.random()}&origin=${encodeURIComponent(window.location.origin)}`;
         const img = document.createElement("img")
         return new Promise<boolean>((resolve, reject) => {
             img.onload = () => resolve(true);
