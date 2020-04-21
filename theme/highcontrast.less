@@ -507,15 +507,15 @@
     }
 
     /* Dropdown */
-    .ui.menu .ui.dropdown .menu,
-    #editortools .ui.dropdown .menu {
+    .ui.dropdown .menu,
+    .ui.menu .ui.dropdown .menu {
         border: 1px solid @HCtextColor !important;
     }
 
+    .ui.dropdown .menu,
+    .ui.dropdown .menu > .item,
     .ui.menu .ui.dropdown .menu,
-    .ui.menu .ui.dropdown .menu > .item,
-    #editortools .ui.dropdown .menu,
-    #editortools .ui.dropdown .menu > .item {
+    .ui.menu .ui.dropdown .menu > .item {
         background: @HCbackground !important;
         color: @HCtextColor !important;
 
@@ -530,8 +530,8 @@
         }
     }
 
-    .ui.menu .ui.dropdown .menu > .divider,
-    #editortools .ui.dropdown .menu > .divider {
+    .ui.dropdown .menu > .divider,
+    .ui.menu .ui.dropdown .menu > .divider {
         background: @HCbackground !important;
         border-top: 1px solid @HCtextColor !important;
     }
