@@ -30,7 +30,8 @@ pxt.setAppTarget(util.testAppTarget);
 
 // TODO: deduplicate this code with decompilerrunner.ts
 describe("pydecompiler", () => {
-    let filenames = util.getFilesByExt(casesDir, ".ts")
+    let filenames = util.getFilesByExt(baselineDir, ".py")
+    filenames = filenames.filter(f => f.indexOf(".local.py") === -1);
 
     // FYI: uncomment these lines to whitelist or blacklist tests for easier development
     // let whitelist = ["string_length", "game"]
@@ -55,10 +56,10 @@ function fail(msg: string) {
     chai.assert(false, msg);
 }
 
-function pydecompileTestAsync(filename: string) {
+function pydecompileTestAsync(baselineFile: string) {
     return new Promise((resolve, reject) => {
-        const basename = path.basename(filename);
-        const baselineFile = path.join(baselineDir, util.replaceFileExtension(basename, ".py"))
+        const basename = path.basename(baselineFile);
+        const filename = path.join(casesDir, util.replaceFileExtension(basename, ".ts"))
 
         let baselineExists: boolean;
         try {
