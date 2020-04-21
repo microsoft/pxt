@@ -78,7 +78,7 @@
                     startSim();
                     break;
                 case "setstate":
-                    if (d.stateValue == null)
+                    if (d.stateValue === null)
                         delete simState[d.stateKey];
                     else
                         simState[d.stateKey] = d.stateValue;
