@@ -12,13 +12,16 @@ namespace pxt.tutorial {
         // collect code and infer editor
         const { code, templateCode, editor, language } = computeBodyMetadata(body);
 
-        if (!metadata.noDiffs
-            && (
-                (editor == pxt.BLOCKS_PROJECT_NAME && pxt.appTarget.appTheme.tutorialBlocksDiff)  //blocks enabled always
-                || (editor != pxt.BLOCKS_PROJECT_NAME && pxt.appTarget.appTheme.tutorialTextDiff) // text enabled always
-            )
-        )
+        // noDiffs legacy
+        if (metadata.diffs === true // enabled in tutorial
+            || (metadata.diffs !== false && metadata.noDiffs !== true // not disabled
+                && (
+                    (editor == pxt.BLOCKS_PROJECT_NAME && pxt.appTarget.appTheme.tutorialBlocksDiff)  //blocks enabled always
+                    || (editor != pxt.BLOCKS_PROJECT_NAME && pxt.appTarget.appTheme.tutorialTextDiff) // text enabled always
+                ))
+        ) {
             diffify(steps, activities);
+        }
 
         // strip hidden snippets
         steps.forEach(step => {
