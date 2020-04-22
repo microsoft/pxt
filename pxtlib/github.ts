@@ -857,7 +857,7 @@ namespace pxt.github {
             .catch(err => []); // offline
     }
 
-    export function parseRepoUrl(url: string): { repo: string; tag?: string; path?: string; } {
+    function parseRepoUrl(url: string): { repo: string; tag?: string; path?: string; } {
         if (!url) return undefined;
         url = url.trim()
         // match github.com urls
@@ -870,26 +870,25 @@ namespace pxt.github {
             r.path = r.repo + (r.tag ? '#' + r.tag : '');
             return r;
         }
-        // match github pages urls
-        m = /^https:\/\/([^./#]+)\.github\.io\/([^/#]+)\/?$/i.exec(url);
-        if (m) {
-            const r : { repo: string; tag?: string; path?: string; } = {
-                repo: `${m[1]}/${m[2]}`.toLowerCase()
-            }
-            return r;
-        }
         return undefined;
     }
 
     // parse https://github.com/[company]/[project](/filepath)(#tag)
     export function parseRepoId(repo: string): ParsedRepo {
         if (!repo) return undefined;
+        repo = repo.trim();
+
+        // convert github pages into github repo
+        const mgh = /^https:\/\/([^./#]+)\.github\.io\/([^/#]+)\/?$/i.exec(repo);
+        if (mgh)
+            repo = `github:${m[1]}/${m[2]}`;
+
 
         repo = repo.replace(/^github:/i, "")
         repo = repo.replace(/^https:\/\/github\.com\//i, "")
         repo = repo.replace(/\.git\b/i, "")
 
-        let m = /([^#]+)(#(.*))?/.exec(repo)
+        const m = /([^#]+)(#(.*))?/.exec(repo)
         const nameAndFile = m ? m[1] : null;
         const tag = m ? m[3] : null;
         let owner: string;
@@ -933,6 +932,7 @@ namespace pxt.github {
 
     export function normalizeRepoId(id: string) {
         const gid = parseRepoId(id);
+        if (!gid) return undefined;
         gid.tag = gid.tag || "master";
         return stringifyRepo(gid);
     }
