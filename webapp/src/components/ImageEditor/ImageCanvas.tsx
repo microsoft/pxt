@@ -329,15 +329,10 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         const [x, y] = this.cursorLocation;
 
         if (this.inBounds(x, y)) {
-            const color = drawingMode == TileDrawingMode.Wall
+            let color = drawingMode == TileDrawingMode.Wall
                 ? WALL_COLOR
                 : (isRightClick ? backgroundColor : selectedColor);
-
-            const overrideTool = tool === ImageEditorTool.Fill && drawingMode === TileDrawingMode.Wall
-                ? ImageEditorTool.WallFill
-                : null;
-
-            this.edit = getEdit(overrideTool ?? tool, this.editState, color, toolWidth);
+            this.edit = getEdit(tool, this.editState, color, toolWidth);
             this.edit.start(this.cursorLocation[0], this.cursorLocation[1], this.editState);
         }
     }
