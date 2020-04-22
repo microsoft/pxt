@@ -989,7 +989,7 @@ namespace ts.pxtc.service {
 
                 if (propertyAccessTarget) {
                     const symbol = tc.getSymbolAtLocation(propertyAccessTarget);
-                    if (symbol.members?.size > 0) {
+                    if (symbol?.members?.size > 0) {
                         // some symbols have members listed directly, e.g. the symbol for the 
                         //      node for the "this" keyword is the class itself
                         let members: Symbol[] = []
