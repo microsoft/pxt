@@ -95,6 +95,8 @@ export function getEdit(tool: ImageEditorTool, state: EditState, color: number, 
             return new OutlineEdit(state.width, state.height, color, width);
         case ImageEditorTool.Fill:
             return new FillEdit(state.width, state.height, color, width);
+        case ImageEditorTool.WallFill:
+            return new WallFillEdit(state.width, state.height, color, width);
         case ImageEditorTool.Line:
             return new LineEdit(state.width, state.height, color, width);
         case ImageEditorTool.Marquee:
@@ -629,19 +631,24 @@ export class FillEdit extends Edit {
     }
 
     protected doEditCore(state: EditState) {
-        const replColor = state.activeLayer.get(this.col, this.row);
-        if (replColor === this.color) {
+        const colorToReplace = state.activeLayer.get(this.col, this.row);
+        if (colorToReplace === this.color) {
             return;
         }
+        
         state.mergeFloatingLayer();
+        
+        this.fillRegion(state, colorToReplace);
+    }
 
-        const mask = new pxt.sprite.Bitmask(state.width, state.height);
+    protected fillRegion(outputState: EditState, colorToReplace: number, sourceState: EditState = outputState) {
+        const mask = new pxt.sprite.Bitmask(outputState.width, outputState.height);
         mask.set(this.col, this.row);
         const q: pxt.sprite.Coord[] = [{x: this.col, y: this.row}];
         while (q.length) {
             const curr = q.pop();
-            if (state.activeLayer.get(curr.x, curr.y) === replColor) {
-                state.activeLayer.set(curr.x, curr.y, this.color);
+            if (sourceState.activeLayer.get(curr.x, curr.y) === colorToReplace) {
+                outputState.activeLayer.set(curr.x, curr.y, this.color);
                 tryPush(curr.x + 1, curr.y);
                 tryPush(curr.x - 1, curr.y);
                 tryPush(curr.x, curr.y + 1);
@@ -655,6 +662,20 @@ export class FillEdit extends Edit {
                 q.push({x: x, y: y});
             }
         }
+    }
+}
+
+
+export class WallFillEdit extends FillEdit {
+    protected doEditCore(state: EditState) {
+        state.mergeFloatingLayer();
+
+        const tileState = state.copy();
+        tileState.setActiveLayer(TileDrawingMode.Default);
+
+        const tileTypeToTurnIntoWall = tileState.activeLayer.get(this.col, this.row);
+
+        this.fillRegion(state, tileTypeToTurnIntoWall, tileState);
     }
 }
 

@@ -10,7 +10,8 @@ export enum ImageEditorTool {
     Rect,
     ColorSelect,
     Marquee,
-    Pan
+    Pan,
+    WallFill
 }
 
 export const enum CursorSize {
