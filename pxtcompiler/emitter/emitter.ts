@@ -4833,7 +4833,6 @@ ${lbl}: .short 0xffff
         res: CompileResult;
         options: CompileOptions;
         usedClassInfos: ClassInfo[] = [];
-        sourceHash = "";
         checksumBlock: number[];
         numStmts = 1;
         commSize = 0;
