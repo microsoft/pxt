@@ -836,11 +836,11 @@ namespace ts.pxtc.service {
             host.reset()
         },
 
-        setOptions: (v: OpArg) => {
+        setOptions: v => {
             host.setOpts(v.options)
         },
 
-        syntaxInfo: (v: OpArg) => {
+        syntaxInfo: v => {
             // TODO: TypeScript currently only supports syntaxInfo for symbols
             let src: string = v.fileContent
             if (v.fileContent) {
@@ -883,7 +883,7 @@ namespace ts.pxtc.service {
             return opts.syntaxInfo
         },
 
-        getCompletions: (v: OpArg) => {
+        getCompletions: v => {
             // TODO: break out into seperate file
             const { fileName, fileContent, position, wordStartPos, wordEndPos, runtime } = v
             let src: string = fileContent
@@ -1186,33 +1186,33 @@ namespace ts.pxtc.service {
             return r;
         },
 
-        compile: (v: OpArg) => {
+        compile: v => {
             host.setOpts(v.options)
             const res = runConversionsAndCompileUsingService()
             timesToMs(res);
             return res
         },
-        decompile: (v: OpArg) => {
+        decompile: v => {
             host.setOpts(v.options)
             return decompile(service.getProgram(), v.options, v.fileName, false);
         },
-        pydecompile: (v: OpArg) => {
+        pydecompile: v => {
             host.setOpts(v.options)
             return transpile.tsToPy(service.getProgram(), v.fileName);
 
         },
-        assemble: (v: OpArg) => {
+        assemble: v => {
             return {
                 words: processorInlineAssemble(host.opts.target, v.fileContent)
             }
         },
 
-        py2ts: (v: OpArg) => {
+        py2ts: v => {
             addApiInfo(v.options)
             return transpile.pyToTs(v.options)
         },
 
-        fileDiags: (v: OpArg) => patchUpDiagnostics(fileDiags(v.fileName)),
+        fileDiags: v => patchUpDiagnostics(fileDiags(v.fileName)),
 
         allDiags: () => {
             // not comapatible with incremental compilation
@@ -1228,7 +1228,7 @@ namespace ts.pxtc.service {
             return res
         },
 
-        format: (v: OpArg) => {
+        format: v => {
             const formatOptions = v.format;
             return pxtc.format(formatOptions.input, formatOptions.pos);
         },
@@ -1243,7 +1243,7 @@ namespace ts.pxtc.service {
             lastApiInfo = internalGetApiInfo(service.getProgram(), host.opts.jres);
             return lastApiInfo.apis;
         },
-        snippet: (v: OpArg) => {
+        snippet: v => {
             const o = v.snippet;
             if (!lastApiInfo) return undefined;
             const fn = lastApiInfo.apis.byQName[o.qName];
@@ -1263,8 +1263,8 @@ namespace ts.pxtc.service {
 
             return ts.pxtc.service.getSnippet(lastApiInfo.apis, takenNames, v.runtime, fn, n as FunctionLikeDeclaration, isPython)
         },
-        blocksInfo: (v: OpArg) => blocksInfoOp(v as any, v.blocks && v.blocks.bannedCategories),
-        apiSearch: (v: OpArg) => {
+        blocksInfo: v => blocksInfoOp(v as any, v.blocks && v.blocks.bannedCategories),
+        apiSearch: v => {
             const SEARCH_RESULT_COUNT = 7;
             const search = v.search;
             const blockInfo = blocksInfoOp(search.localizedApis, v.blocks && v.blocks.bannedCategories); // caches
@@ -1445,7 +1445,7 @@ namespace ts.pxtc.service {
             const fns = lastFuse.search(search.term);
             return fns.slice(0, SEARCH_RESULT_COUNT);
         },
-        projectSearch: (v: OpArg) => {
+        projectSearch: v => {
             const search = v.projectSearch;
             const searchSet = search.headers;
 
