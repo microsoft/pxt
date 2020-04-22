@@ -101,8 +101,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
         else {
             pxt.Util.toArray(document.querySelectorAll(classes)).forEach((el: HTMLElement) => el.style.display = 'none');
-            if (this.editor)
-                Blockly.hideChaff();
+            if (this.editor) Blockly.hideChaff();
+            if (this.toolbox) this.toolbox.clearExpandedItem();
         }
     }
 
