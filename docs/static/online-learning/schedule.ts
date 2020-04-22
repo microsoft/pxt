@@ -91,6 +91,15 @@ const lessons: Lesson[] = [
         "days": [Day.Friday]
     },
     {
+        "title": "MakeCode Live with Adafruit's John Park",
+        "description": "Join John Park each week as he presents new projects, tips, and ideas for MakeCode.",
+        "url": "https://aka.ms/makecodejpstream",
+        "img": "/static/online-learning/img/john-park-live.png",
+        "time": 15,
+        "startDay": 21,
+        "days": [Day.Tuesday]
+    },
+    {
         "title": "DreamSpace HomeSpace",
         "description": "Join Microsoft Ireland in their HomeSpace tutorial series on your favourite MakeCode platforms: micro:bit, Arcade and Minecraft.",
         "url": "https://aka.ms/dshomespace",
