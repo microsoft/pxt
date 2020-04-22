@@ -128,6 +128,10 @@
                 },
                 body: JSON.stringify({ query: query })
             });
+            if (response.status == 401) {
+                console.log('token expired...')
+                navigateSignout();
+            }
             return response;
         }        
 
