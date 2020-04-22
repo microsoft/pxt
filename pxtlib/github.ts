@@ -798,6 +798,8 @@ namespace pxt.github {
 
     export async function repoAsync(id: string, config: pxt.PackagesConfig): Promise<GitRepo> {
         const rid = parseRepoId(id);
+        if (!rid)
+            return undefined;
         const status = repoStatus(rid, config);
         if (status == GitRepoStatus.Banned)
             return undefined;
@@ -945,7 +947,7 @@ namespace pxt.github {
                         if (targetVersion && config.releases && config.releases["v" + targetVersion.major]) {
                             const release = config.releases["v" + targetVersion.major]
                                 .map(repo => pxt.github.parseRepoId(repo))
-                                .filter(repo => repo.fullName.toLowerCase() == parsed.fullName.toLowerCase())
+                                .filter(repo => repo && repo.fullName.toLowerCase() == parsed.fullName.toLowerCase())
                             [0];
                             if (release) {
                                 // this repo is frozen to a particular tag for this target
