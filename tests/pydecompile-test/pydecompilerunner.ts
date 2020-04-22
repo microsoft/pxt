@@ -10,9 +10,9 @@ import { TestHost } from "../common/testHost";
 import * as util from "../common/testUtils";
 
 // uses the same test cases as the blocks decompiler tests
-const casesDir = path.join(process.cwd(), "tests", "decompile-test", "cases");
+const decompilerCases = path.join(process.cwd(), "tests", "decompile-test", "cases");
 
-const baselineDir = path.join(process.cwd(), "tests", "pydecompile-test", "baselines");
+const decompilerBaselines = path.join(process.cwd(), "tests", "pydecompile-test", "decompiler-baselines");
 
 function initGlobals() {
     let g = global as any
@@ -30,7 +30,7 @@ pxt.setAppTarget(util.testAppTarget);
 
 // TODO: deduplicate this code with decompilerrunner.ts
 describe("pydecompiler", () => {
-    let filenames = util.getFilesByExt(baselineDir, ".py")
+    let filenames = util.getFilesByExt(decompilerBaselines, ".py")
     filenames = filenames.filter(f => f.indexOf(".local.py") === -1);
 
     // FYI: uncomment these lines to whitelist or blacklist tests for easier development
@@ -59,7 +59,7 @@ function fail(msg: string) {
 function pydecompileTestAsync(baselineFile: string) {
     return new Promise((resolve, reject) => {
         const basename = path.basename(baselineFile);
-        const filename = path.join(casesDir, util.replaceFileExtension(basename, ".ts"))
+        const filename = path.join(decompilerCases, util.replaceFileExtension(basename, ".ts"))
 
         let baselineExists: boolean;
         try {
