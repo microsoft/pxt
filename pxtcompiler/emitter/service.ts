@@ -754,15 +754,6 @@ namespace ts.pxtc.service {
         return d
     }
 
-    interface InternalCompletionData {
-        symbols: ts.Symbol[];
-        isMemberCompletion: boolean;
-        isNewIdentifierLocation: boolean;
-        location: ts.Node;
-        isRightOfDot: boolean;
-        isJsDocTagName: boolean;
-    }
-
     const blocksInfoOp = (apisInfoLocOverride: pxtc.ApisInfo, bannedCategories: string[]) => {
         if (apisInfoLocOverride) {
             if (!lastLocBlocksInfo) {
@@ -796,7 +787,48 @@ namespace ts.pxtc.service {
         return newOpts
     }
 
-    const operations: pxt.Map<(v: OpArg) => any> = {
+    export interface ServiceOps {
+        reset: () => void;
+        setOptions: (v: OpArg) => void;
+        syntaxInfo: (v: OpArg) => SyntaxInfo;
+        getCompletions: (v: OpArg) => CompletionInfo;
+        compile: (v: OpArg) => CompileResult;
+        decompile: (v: OpArg) => CompileResult;
+        pydecompile: (v: OpArg) => transpile.TranspileResult;
+        assemble: (v: OpArg) => {
+            words: number[];
+        };
+        py2ts: (v: OpArg) => transpile.TranspileResult;
+        fileDiags: (v: OpArg) => KsDiagnostic[];
+        allDiags: () => CompileResult;
+        format: (v: OpArg) => {
+            formatted: string;
+            pos: number;
+        };
+        apiInfo: () => ApisInfo;
+        snippet: (v: OpArg) => string;
+        blocksInfo: (v: OpArg) => BlocksInfo;
+        apiSearch: (v: OpArg) => SearchInfo[];
+        projectSearch: (v: OpArg) => ProjectSearchInfo[];
+        projectSearchClear: () => void;
+    };
+
+    export type OpRes = string | void | SyntaxInfo | CompletionInfo | CompileResult | transpile.TranspileResult | {
+        words: number[];
+    } | KsDiagnostic[] | {
+        formatted: string;
+        pos: number;
+    } | ApisInfo | BlocksInfo | ProjectSearchInfo[];
+
+    export type OpError = { errorMessage: string };
+
+    export type OpResOrError = OpRes | OpError;
+
+    export function IsOpErr(res: OpResOrError): res is OpError {
+        return !!(res as OpError).errorMessage;
+    }
+
+    const operations: ServiceOps = {
         reset: () => {
             service.cleanupSemanticCache();
             lastApiInfo = undefined
@@ -804,11 +836,11 @@ namespace ts.pxtc.service {
             host.reset()
         },
 
-        setOptions: v => {
+        setOptions: (v: OpArg) => {
             host.setOpts(v.options)
         },
 
-        syntaxInfo: v => {
+        syntaxInfo: (v: OpArg) => {
             // TODO: TypeScript currently only supports syntaxInfo for symbols
             let src: string = v.fileContent
             if (v.fileContent) {
@@ -851,7 +883,7 @@ namespace ts.pxtc.service {
             return opts.syntaxInfo
         },
 
-        getCompletions: v => {
+        getCompletions: (v: OpArg) => {
             // TODO: break out into seperate file
             const { fileName, fileContent, position, wordStartPos, wordEndPos, runtime } = v
             let src: string = fileContent
@@ -1154,33 +1186,33 @@ namespace ts.pxtc.service {
             return r;
         },
 
-        compile: v => {
+        compile: (v: OpArg) => {
             host.setOpts(v.options)
             const res = runConversionsAndCompileUsingService()
             timesToMs(res);
             return res
         },
-        decompile: v => {
+        decompile: (v: OpArg) => {
             host.setOpts(v.options)
             return decompile(service.getProgram(), v.options, v.fileName, false);
         },
-        pydecompile: v => {
+        pydecompile: (v: OpArg) => {
             host.setOpts(v.options)
             return transpile.tsToPy(service.getProgram(), v.fileName);
 
         },
-        assemble: v => {
+        assemble: (v: OpArg) => {
             return {
                 words: processorInlineAssemble(host.opts.target, v.fileContent)
             }
         },
 
-        py2ts: v => {
+        py2ts: (v: OpArg) => {
             addApiInfo(v.options)
             return transpile.pyToTs(v.options)
         },
 
-        fileDiags: v => patchUpDiagnostics(fileDiags(v.fileName)),
+        fileDiags: (v: OpArg) => patchUpDiagnostics(fileDiags(v.fileName)),
 
         allDiags: () => {
             // not comapatible with incremental compilation
@@ -1196,7 +1228,7 @@ namespace ts.pxtc.service {
             return res
         },
 
-        format: v => {
+        format: (v: OpArg) => {
             const formatOptions = v.format;
             return pxtc.format(formatOptions.input, formatOptions.pos);
         },
@@ -1211,7 +1243,7 @@ namespace ts.pxtc.service {
             lastApiInfo = internalGetApiInfo(service.getProgram(), host.opts.jres);
             return lastApiInfo.apis;
         },
-        snippet: v => {
+        snippet: (v: OpArg) => {
             const o = v.snippet;
             if (!lastApiInfo) return undefined;
             const fn = lastApiInfo.apis.byQName[o.qName];
@@ -1231,8 +1263,8 @@ namespace ts.pxtc.service {
 
             return ts.pxtc.service.getSnippet(lastApiInfo.apis, takenNames, v.runtime, fn, n as FunctionLikeDeclaration, isPython)
         },
-        blocksInfo: v => blocksInfoOp(v as any, v.blocks && v.blocks.bannedCategories),
-        apiSearch: v => {
+        blocksInfo: (v: OpArg) => blocksInfoOp(v as any, v.blocks && v.blocks.bannedCategories),
+        apiSearch: (v: OpArg) => {
             const SEARCH_RESULT_COUNT = 7;
             const search = v.search;
             const blockInfo = blocksInfoOp(search.localizedApis, v.blocks && v.blocks.bannedCategories); // caches
@@ -1413,7 +1445,7 @@ namespace ts.pxtc.service {
             const fns = lastFuse.search(search.term);
             return fns.slice(0, SEARCH_RESULT_COUNT);
         },
-        projectSearch: v => {
+        projectSearch: (v: OpArg) => {
             const search = v.projectSearch;
             const searchSet = search.headers;
 
@@ -1549,13 +1581,15 @@ namespace ts.pxtc.service {
         return res;
     }
 
-    export function performOperation(op: string, arg: OpArg) {
+    export function performOperation<T extends keyof ServiceOps>(op: T, arg: OpArg):
+        OpResOrError {
         init();
-        let res: any = null;
+        let res: OpResOrError;
 
         if (operations.hasOwnProperty(op)) {
             try {
-                res = operations[op](arg) || {}
+                let opFn = operations[op]
+                res = opFn(arg)
             } catch (e) {
                 res = {
                     errorMessage: e.stack
