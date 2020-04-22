@@ -68,7 +68,7 @@ var lessons = [
     },
     {
         "title": "MakeCode Live with Adafruit's John Park",
-        "description": "Join John Park each week as he presents new projects, tips, and ideas for MakeCode.",
+        "description": "Join Adafruit’s John Park as he builds a MakeCode project each week covering fundamental concepts and techniques using real-world projects in his studio.",
         "url": "https://aka.ms/makecodejpstream",
         "img": "/static/online-learning/img/john-park-live.png",
         "time": 15,
