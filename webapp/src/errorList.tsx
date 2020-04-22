@@ -29,42 +29,40 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     }
 
     render() {
-        const showAvailableErrors = this.state.errors.length != 0;
-        const showCollapseButton = true;
+        const {isCollapsed, errors} = this.state;
+        const errorsAvailable = errors.length != 0;
         const collapseTooltip = lf("Collapse Error List");
         function errorKey(error: pxtc.KsDiagnostic): string {
             // React likes have a "key" for each element so that it can smartly only
             // re-render what changes. Think of it like a hashcode/
             return `${error.messageText}-${error.fileName}-${error.line}-${error.column}`
         }
-            
-        return <div className="errorList" > 
-            {showCollapseButton && showAvailableErrors &&
-                <sui.Button id='toggleErrorList' className={`toggleErrorList collapse-button large`}
-                icon={`inverted chevron ${this.state.isCollapsed ? 'up' : 'down'}`}
-                title={collapseTooltip} onClick={this.onCollapseClick} />}
-            {showAvailableErrors
-                ? <div className="errorListInner" hidden={this.state.isCollapsed}>
-                    {
-                    (this.state.errors || []).map(e =>
-                        <div key={errorKey(e)}>{`${e.messageText} - [line ${e.line + 1}: col ${e.column}]`}</div>)
-                    }
-                  </div>
-                : <div className="errorListInner" id="noErrorsMessage">{lf("You have no errors")}</div>
-            }
+
+        const toggleButton = <sui.Button id='toggleErrorList' className={`toggleErrorList collapse-button large`}
+                                icon={`inverted chevron ${isCollapsed ? 'up' : 'down'}`}
+                                title={collapseTooltip} onClick={this.onCollapseClick} />
+
+        const errorListInnerClasses = errorsAvailable ? "errorListInner" : "errorListInner noErrorsMessage"
+        return <div className="errorList" >
+            {errorsAvailable && toggleButton}
+            <div className={errorListInnerClasses} hidden={isCollapsed}>
+                {errorsAvailable
+                    ? (errors).map(e =>
+                        <div key={errorKey(e)}>{`${e.messageText} - [line ${e.line + 1}: col ${e.column + 1}]`}</div>)
+                    : <div>{lf("You have no errors")}</div>
+                }
+            </div>
         </div>
     }
 
     componentDidUpdate() {
-        // ensures that the shrinking of no errors takes 
+        // ensures that the shrinking of no errors takes place
         this.props.onSizeChange()
     }
 
     onCollapseClick() {
         this.setState({
             isCollapsed: !this.state.isCollapsed
-        }, () => {
-            this.props.onSizeChange()
         })
     }
 
