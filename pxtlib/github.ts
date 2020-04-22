@@ -887,27 +887,17 @@ namespace pxt.github {
         repo = repo.replace(/^https:\/\/github\.com\//i, "")
         repo = repo.replace(/\.git\b/i, "")
 
-        const m = /([^#]+)(#(.*))?/.exec(repo)
-        const nameAndFile = m ? m[1] : null;
-        const tag = m ? m[3] : null;
-        let owner: string;
-        let project: string;
-        let fullName: string;
-        let fileName: string;
-        if (m) {
-            const parts = nameAndFile.split('/');
-            owner = parts[0];
-            project = parts[1];
-            fullName = `${owner}/${project}`;
-            if (parts.length > 2)
-                fileName = parts.slice(2).join('/');
-        } else {
-            fullName = repo.toLowerCase();
-        }
+        const m = /^([^#\/:]+)\/([^#\/:]+)(\/([^#]+))?(#([^\/:]*))?$/.exec(repo);
+        if (!m)
+            return undefined;
+        const owner = m[1];
+        const project = m[2];
+        const fileName = m[4];
+        const tag = m[6];
         return {
             owner,
             project,
-            fullName,
+            fullName: `${owner}/${project}`,
             tag,
             fileName
         }
