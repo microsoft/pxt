@@ -859,16 +859,26 @@ namespace pxt.github {
 
     export function parseRepoUrl(url: string): { repo: string; tag?: string; path?: string; } {
         if (!url) return undefined;
-
-        let m = /^((https:\/\/)?github.com\/)?([^/]+\/[^/#]+)\/?(#(\w+))?$/i.exec(url.trim());
-        if (!m) return undefined;
-
-        let r: { repo: string; tag?: string; path?: string; } = {
-            repo: m ? m[3].toLowerCase() : null,
-            tag: m ? m[5] : null
+        url = url.trim()
+        // match github.com urls
+        let m = /^((https:\/\/)?github.com\/)?([^/]+\/[^/#]+)\/?(#(\w+))?$/i.exec(url);
+        if (m) {
+            const r: { repo: string; tag?: string; path?: string; } = {
+                repo: m ? m[3].toLowerCase() : null,
+                tag: m ? m[5] : null
+            }
+            r.path = r.repo + (r.tag ? '#' + r.tag : '');
+            return r;
         }
-        r.path = r.repo + (r.tag ? '#' + r.tag : '');
-        return r;
+        // match github pages urls
+        m = /^https:\/\/([^./#]+)\.github\.io\/([^/#]+)\/?$/i.exec(url);
+        if (m) {
+            const r : { repo: string; tag?: string; path?: string; } = {
+                repo: `${m[1]}/${m[2]}`.toLowerCase()
+            }
+            return r;
+        }
+        return undefined;
     }
 
     // parse https://github.com/[company]/[project](/filepath)(#tag)
