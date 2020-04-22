@@ -621,7 +621,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                         <div className="ui buttons">
                             <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
                             <sui.DropdownMenu className="floating button" icon="dropdown">
-                                <sui.Link className="ui item button" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" text={lf("Invite collaborators.")} title={lf("Invite others to contributes to this GitHub repository.")} onKeyDown={sui.fireClickOnEnter} />
+                                <sui.Link className="ui item button" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" text={lf("Invite collaborators")} title={lf("Invite others to contributes to this GitHub repository.")} onKeyDown={sui.fireClickOnEnter} />
                             </sui.DropdownMenu>
                         </div>
                     </div>
