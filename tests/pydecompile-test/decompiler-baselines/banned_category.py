@@ -1,1 +1,1 @@
-banned.shouldNotDecompile()
+banned.should_not_decompile()
