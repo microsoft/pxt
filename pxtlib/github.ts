@@ -881,8 +881,7 @@ namespace pxt.github {
         // convert github pages into github repo
         const mgh = /^https:\/\/([^./#]+)\.github\.io\/([^/#]+)\/?$/i.exec(repo);
         if (mgh)
-            repo = `github:${m[1]}/${m[2]}`;
-
+            repo = `github:${mgh[1]}/${mgh[2]}`;
 
         repo = repo.replace(/^github:/i, "")
         repo = repo.replace(/^https:\/\/github\.com\//i, "")
