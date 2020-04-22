@@ -192,6 +192,7 @@
         }
 
         async function fetchCurrentUser() {
+            if (!token()) return undefined;
             const response = await fetchGraphQL(`{
   viewer {
       login
