@@ -7,6 +7,7 @@ namespace pxt.packetio {
     export interface PacketIOWrapper {
         readonly io: PacketIO;
 
+        icon: string;
         familyID: number;
 
         onSerial: (buf: Uint8Array, isStderr: boolean) => void;
@@ -51,6 +52,10 @@ namespace pxt.packetio {
      */
     export function isActive() {
         return !!wrapper;
+    }
+
+    export function icon() {
+        return !!wrapper && (wrapper.icon || "usb");
     }
 
     /**

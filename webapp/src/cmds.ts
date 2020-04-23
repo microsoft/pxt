@@ -12,7 +12,6 @@ function log(msg: string) {
 }
 
 let extensionResult: pxt.editor.ExtensionResult;
-let webUSBEnabled = false;
 
 function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {
     pxt.BrowserUtils.browserDownloadBinText(
@@ -387,8 +386,8 @@ export function init(): void {
         log(`deploy: electron`);
         pxt.commands.deployCoreAsync = electron.driveDeployAsync;
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
-    } else if (webUSBSupported && webUSBEnabled) {
-        log(`deploy: webusb, paired once`);
+    } else if (webUSBSupported) {
+        log(`deploy: webusb`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
     } else if (hidbridge.shouldUse()) {
         log(`deploy: hid`);
@@ -409,7 +408,6 @@ export function connectAsync(): Promise<void> {
     return pxt.usb.tryGetDeviceAsync()
         .then(dev => {
             if (!dev) return pairAsync();
-            setWebUSBEnabled(true);
             return pxt.packetio.initAsync()
                 .then(wrapper => wrapper.reconnectAsync())
                 .then(() => core.infoNotification(lf("Device connected! Try downloading now.")))
@@ -429,14 +427,7 @@ export function pairAsync(): Promise<void> {
 export function disconnectAsync(): Promise<void> {
     pxt.tickEvent("cmds.disconnect")
     return pxt.packetio.disconnectAsync()
-        .then(() => core.infoNotification("Device disconnected"))
-        .finally(() => setWebUSBEnabled(false));
-}
-
-export function setWebUSBEnabled(enabled: boolean) {
-    if (webUSBEnabled === enabled) return;
-    webUSBEnabled = enabled;
-    init();
+        .then(() => core.infoNotification("Device disconnected"));
 }
 
 function handlePacketIOApi(r: string) {
@@ -447,7 +438,7 @@ function handlePacketIOApi(r: string) {
         case "connected":
             return pxt.packetio.isConnected();
         case "icon":
-            return pxt.packetio.isActive() && (pxt.packetio.isConnected() ? "usb" : "plug");
+            return pxt.packetio.icon();
     }
     return false;
 }

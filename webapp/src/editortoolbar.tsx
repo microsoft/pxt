@@ -160,18 +160,17 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const targetTheme = pxt.appTarget.appTheme;
         const { compiling, isSaving } = this.props.parent.state;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
-        const downloadIcon = targetTheme.downloadIcon || "download";
         const downloadText = targetTheme.useUploadMessage ? lf("Upload") : lf("Download");
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
         const webUSBSupported = pxt.usb.isEnabled && pxt.appTarget?.compile?.webUSB;
         const packetioActive = !!this.getData("packetio:active");
         const packetioConnected = !!this.getData("packetio:connected");
-        const packetioIcon = compiling ? downloadIcon
-            : this.getData("packetio:icon") as string;
+        const packetioIcon = this.getData("packetio:icon") as string;
+        const downloadIcon = packetioIcon || targetTheme.downloadIcon || "download";
         const hasMenu = boards || webUSBSupported;
 
         let downloadButtonClasses = hasMenu ? "left attached " : "";
-        let downloadButtonIcon = packetioIcon || "ellipsis";
+        let downloadButtonIcon = "ellipsis";
         let hwIconClasses = "";
         let displayRight = false;
         if (isSaving) {
