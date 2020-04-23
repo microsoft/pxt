@@ -67,6 +67,15 @@ var lessons = [
         "days": [Day.Friday]
     },
     {
+        "title": "MakeCode Live with Adafruit's John Park",
+        "description": "Join Adafruit’s John Park as he builds a MakeCode project each week covering fundamental concepts and techniques using real-world projects in his studio.",
+        "url": "https://aka.ms/makecodejpstream",
+        "img": "/static/online-learning/img/john-park-live.png",
+        "time": 15,
+        "startDay": 21,
+        "days": [Day.Tuesday]
+    },
+    {
         "title": "DreamSpace HomeSpace",
         "description": "Join Microsoft Ireland in their HomeSpace tutorial series on your favourite MakeCode platforms: micro:bit, Arcade and Minecraft.",
         "url": "https://aka.ms/dshomespace",
