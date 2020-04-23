@@ -420,8 +420,7 @@ export function pairAsync(): Promise<void> {
 
 export function disconnectAsync(): Promise<void> {
     pxt.tickEvent("cmds.disconnect")
-    return pxt.packetio.disconnectAsync()
-        .then(() => core.infoNotification("Device disconnected"));
+    return pxt.packetio.disconnectAsync();
 }
 
 function handlePacketIOApi(r: string) {
