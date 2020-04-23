@@ -123,7 +123,7 @@ export function renderUsbDisconnectDialog() {
     const jsx = <p>
         {lf("You need to unpair your {0}. Click on the lock icon and uncheck your device.")}
     </p>;
-    const helpUrl = pxt.appTarget.appTheme.usbDocs 
+    const helpUrl = pxt.appTarget.appTheme.usbDocs
         && (pxt.appTarget.appTheme.usbDocs + "/webusb/disconnect");
     return { header, jsx, helpUrl };
 }
