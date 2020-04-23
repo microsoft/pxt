@@ -2233,7 +2233,7 @@ export class ProjectView
     }
 
     disconnectAsync(): Promise<void> {
-        return cmds.disconnectAsync();
+        return cmds.disconnectAsync(false);
     }
 
     connectAsync(): Promise<void> {
