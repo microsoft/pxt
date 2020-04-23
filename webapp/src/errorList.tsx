@@ -29,32 +29,41 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     }
 
     render() {
-        const showCollapseButton = true;
+        const {isCollapsed, errors} = this.state;
+        const errorsAvailable = !!errors?.length;
         const collapseTooltip = lf("Collapse Error List");
         function errorKey(error: pxtc.KsDiagnostic): string {
             // React likes have a "key" for each element so that it can smartly only
             // re-render what changes. Think of it like a hashcode/
             return `${error.messageText}-${error.fileName}-${error.line}-${error.column}`
         }
+
+        const toggleButton = <sui.Button id='toggleErrorList' className={`toggleErrorList collapse-button large`}
+                                icon={`inverted chevron ${isCollapsed ? 'up' : 'down'}`}
+                                title={collapseTooltip} onClick={this.onCollapseClick} />
+
+        const errorListInnerClasses = errorsAvailable ? "errorListInner" : "errorListInner noErrorsMessage"
         return <div className="errorList" >
-            {showCollapseButton &&
-                <sui.Button id='toggleErrorList' className={`toggleErrorList collapse-button large`}
-                    icon={`inverted chevron ${this.state.isCollapsed ? 'up' : 'down'}`}
-                    title={collapseTooltip} onClick={this.onCollapseClick} />}
-            <div className="errorListInner" hidden={this.state.isCollapsed}>
-                {
-                    (this.state.errors || []).map(e =>
-                        <div key={errorKey(e)}>{`${e.messageText} - [line ${e.line + 1}: col ${e.column}]`}</div>)
+            {errorsAvailable && toggleButton}
+            <div className={errorListInnerClasses} hidden={isCollapsed}>
+                {errorsAvailable
+                    ? (errors).map(e =>
+                        <div key={errorKey(e)}>{`${e.messageText} - [line ${e.line + 1}: col ${e.column + 1}]`}</div>)
+                    : <div>{lf("You have no errors")}</div>
                 }
             </div>
         </div>
     }
 
+    componentDidUpdate() {
+        // notify parent on possible size change so siblings (monaco)
+        // can resize if needed
+        this.props.onSizeChange()
+    }
+
     onCollapseClick() {
         this.setState({
             isCollapsed: !this.state.isCollapsed
-        }, () => {
-            this.props.onSizeChange()
         })
     }
 
