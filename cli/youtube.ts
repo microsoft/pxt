@@ -108,7 +108,7 @@ async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
     }
 
     // mixer channel
-    const mixerRx = /https:\/\/mixer.com\/\w+/.exec(playlist.snippet.description);
+    const mixerRx = /(https:\/\/)?mixer.com\/\w+/.exec(playlist.snippet.description);
     if (!!mixerRx) {
         cards.unshift({
             "name": "Live Coding",
