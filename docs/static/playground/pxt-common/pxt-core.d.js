@@ -28,7 +28,7 @@ interface Array<T> {
       * Remove the last element from an array and return it.
       */
     //% help=arrays/pop
-    //% shim=Array_::pop weight=45
+    //% shim=Array_::pop weight=45 blockHidden
     //% blockId="array_pop" block="get and remove last value from %list" blockNamespace="arrays"
     //% blockGap=64
     pop(): T;
@@ -45,7 +45,7 @@ interface Array<T> {
       * Remove the first element from an array and return it. This method changes the length of the array.
       */
     //% help=arrays/shift
-    //% helper=arrayShift weight=30
+    //% helper=arrayShift weight=30 blockHidden
     //% blockId="array_shift" block="get and remove first value from %list" blockNamespace="arrays"
     shift(): T;
 
@@ -54,7 +54,7 @@ interface Array<T> {
       * @param element to insert at the start of the Array.
       */
     //% help=arrays/unshift
-    //% helper=arrayUnshift weight=25
+    //% helper=arrayUnshift weight=25 blockHidden
     //% blockId="array_unshift" block="%list| insert %value| at beginning" blockNamespace="arrays"
     //unshift(...values:T[]): number; //rest is not supported in our compiler yet.
     unshift(value: T): number;
@@ -153,7 +153,7 @@ interface Array<T> {
 
     /** Remove the element at a certain index. */
     //% help=arrays/remove-at
-    //% shim=Array_::removeAt weight=15
+    //% shim=Array_::removeAt weight=15 blockHidden
     //% blockId="array_removeat" block="%list| remove value at %index" blockNamespace="arrays"
     removeAt(index: number): T;
 
@@ -195,6 +195,42 @@ interface Array<T> {
     set(index: number, value: T): void;
 
     [n: number]: T;
+
+    /**
+      * Add one element to the beginning of an array and return the new length of the array.
+      * @param element to insert at the start of the Array.
+      */
+    //% help=arrays/unshift
+    //% helper=arrayUnshift weight=24
+    //% blockId="array_unshift_statement" block="%list| insert %value| at beginning" blockNamespace="arrays"
+    //% blockAliasFor="Array.unshift"
+    _unshiftStatement(value: T): void;
+
+    /**
+      * Remove the last element from an array and return it.
+      */
+    //% help=arrays/pop
+    //% shim=Array_::pop weight=44
+    //% blockId="array_pop_statement" block="remove last value from %list" blockNamespace="arrays"
+    //% blockGap=64
+    //% blockAliasFor="Array.pop"
+    _popStatement(): void;
+
+    /**
+      * Remove the first element from an array and return it. This method changes the length of the array.
+      */
+    //% help=arrays/shift
+    //% helper=arrayShift weight=29
+    //% blockId="array_shift_statement" block="remove first value from %list" blockNamespace="arrays"
+    //% blockAliasFor="Array.shift"
+    _shiftStatement(): void;
+
+    /** Remove the element at a certain index. */
+    //% help=arrays/remove-at
+    //% shim=Array_::removeAt weight=14
+    //% blockId="array_removeat_statement" block="%list| remove value at %index" blockNamespace="arrays"
+    //% blockAliasFor="Array.removeAt"
+    _removeAtStatement(index: number): void;
 }
 
 declare interface String {

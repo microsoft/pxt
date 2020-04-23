@@ -1,0 +1,141 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="variables_set">
+<field name="VAR">list</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="lists_create_with">
+<mutation items="2" />
+<value name="ADD0">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<value name="ADD1">
+<shadow type="math_number">
+<field name="NUM">6</field>
+</shadow>
+</value>
+</block>
+</value>
+<next>
+<block type="array_pop_statement">
+<value name="list">
+<block type="variables_get">
+<field name="VAR">list</field>
+</block>
+</value>
+<next>
+<block type="array_shift_statement">
+<value name="list">
+<block type="variables_get">
+<field name="VAR">list</field>
+</block>
+</value>
+<next>
+<block type="array_unshift_statement">
+<value name="list">
+<block type="variables_get">
+<field name="VAR">list</field>
+</block>
+</value>
+<value name="value">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+<next>
+<block type="array_removeat_statement">
+<value name="list">
+<block type="variables_get">
+<field name="VAR">list</field>
+</block>
+</value>
+<value name="index">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="array_pop">
+<value name="list">
+<block type="variables_get">
+<field name="VAR">list</field>
+</block>
+</value>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="array_shift">
+<value name="list">
+<block type="variables_get">
+<field name="VAR">list</field>
+</block>
+</value>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="array_unshift">
+<value name="list">
+<block type="variables_get">
+<field name="VAR">list</field>
+</block>
+</value>
+<value name="value">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="array_removeat">
+<value name="list">
+<block type="variables_get">
+<field name="VAR">list</field>
+</block>
+</value>
+<value name="index">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

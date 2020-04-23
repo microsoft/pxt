@@ -697,6 +697,7 @@ declare namespace ts.pxtc {
 
         alias?: string; // another symbol alias for this member
         pyAlias?: string; // optional python version of the alias
+        blockAliasFor?: string; // qname of the function this block is an alias for
     }
 
     interface ParameterDesc {
