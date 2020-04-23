@@ -427,8 +427,7 @@ namespace pxt.usb {
         return tryGetDeviceAsync()
             .then(dev => {
                 if (!dev) {
-                    let err: any = new Error(U.lf("No USB device selected or connected; try pairing!"))
-                    err.isUserError = true
+                    const err: any = new Error(U.lf("No USB device selected or connected; try pairing!"))
                     err.type = "devicenotfound"
                     throw err;
                 }

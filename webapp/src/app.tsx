@@ -2405,10 +2405,6 @@ export class ProjectView
                     let deployStartTime = Date.now()
                     pxt.tickEvent("deploy.start")
                     return pxt.commands.deployAsync(resp, {
-                        reportDeviceNotFoundAsync: (docPath, compileResult) => {
-                            pxt.tickEvent("deploy.devicenotfound")
-                            return cmds.showDeviceNotFoundDialogAsync(docPath, compileResult)
-                        },
                         reportError: (e) => {
                             pxt.tickEvent("deploy.reporterror")
                             return core.errorNotification(e)

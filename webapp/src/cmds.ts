@@ -115,18 +115,6 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
     }).then(() => { });
 }
 
-export function showDeviceNotFoundDialogAsync(docPath?: string, resp?: pxtc.CompileResult): Promise<void> {
-    pxt.tickEvent(`compile.devicenotfound`);
-    const helpUrl = pxt.appTarget.appTheme.usbDocs;
-    return core.dialogAsync({
-        header: lf("Oops, we couldn't find your {0}", pxt.appTarget.appTheme.boardName),
-        body: lf("Please make sure your {0} is connected and try again.", pxt.appTarget.appTheme.boardName),
-        helpUrl: docPath || helpUrl,
-        hideCancel: true,
-        hasCloseIcon: true
-    });
-}
-
 export function nativeHostPostMessageFunction(): (msg: pxt.editor.NativeHostMessage) => void {
     const webkit = (<any>window).webkit;
     if (webkit
@@ -193,9 +181,6 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
                     pxt.tickEvent("hid.flash.timeout");
                 } else if (e.type === "devicenotfound") {
                     pxt.tickEvent("hid.flash.devicenotfound");
-                    const troubleshootDoc = pxt.appTarget?.appTheme?.appFlashingTroubleshoot;
-                    if (d)
-                        return d.reportDeviceNotFoundAsync(troubleshootDoc, resp);
                 } else {
                     pxt.tickEvent("hid.flash.error");
                     if (d) d.reportError(e.message);
@@ -209,7 +194,6 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
                 }
 
                 // default, save file
-                core.errorNotification(lf("Oops, something went wrong while downloading."))
                 return pxt.commands.saveOnlyAsync(resp);
             });
     }
