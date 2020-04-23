@@ -383,7 +383,7 @@ export function init(): void {
     } else if (webUSBSupported) {
         log(`deploy: webusb`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
-        pxt.commands.renderDisconnectDialog = webusb.renderUsbDisconnectDialog;
+        pxt.commands.renderDisconnectDialog = webusb.renderUnpairDialog;
     } else if (hidbridge.shouldUse()) {
         log(`deploy: hid`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
