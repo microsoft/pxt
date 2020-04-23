@@ -54,15 +54,15 @@ namespace pxt.packetio {
         return !!wrapper;
     }
 
-    export function icon() {
-        return !!wrapper && (wrapper.icon || "usb");
-    }
-
     /**
      * The DAP wrapper is active and the device is connected
      */
     export function isConnected() {
         return !!wrapper && wrapper.io.isConnected();
+    }
+
+    export function icon() {
+        return !!wrapper && (wrapper.icon || "usb");
     }
 
     export function disconnectAsync(): Promise<void> {

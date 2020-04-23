@@ -165,7 +165,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const webUSBSupported = pxt.usb.isEnabled && pxt.appTarget?.compile?.webUSB;
         const packetioActive = !!this.getData("packetio:active");
         const packetioConnected = !!this.getData("packetio:connected");
-        const packetioIcon = this.getData("packetio:icon") as string;
+        const packetioIcon = !!packetioConnected && this.getData("packetio:icon") as string;
         const downloadIcon = packetioIcon || targetTheme.downloadIcon || "download";
         const hasMenu = boards || webUSBSupported;
 

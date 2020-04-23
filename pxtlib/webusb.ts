@@ -198,8 +198,9 @@ namespace pxt.usb {
         }
         private handleUSBConnected(event: any) {
             const newdev = event.device as USBDevice;
+            this.log("device connected")
             if (!this.dev) {
-                this.log("device connected")
+                this.log("attach device")
                 if (this.onDeviceConnectionChanged)
                     this.onDeviceConnectionChanged(true);
             }
