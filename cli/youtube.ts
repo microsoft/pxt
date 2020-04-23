@@ -87,7 +87,7 @@ async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
     const assets = `/static/${fn}`
     const playlist = await playlistInfoAsync(id);
     const videos = await listPlaylistVideosAsync(id);
-    const playlistUrl = `https://www.youtube.com/watch?list=${playlist.id}`;
+    const playlistUrl = `https://www.youtube.com/playlist?list=${playlist.id}`;
     const cards: pxt.CodeCard[] = videos.items.map(video => {
         return <pxt.CodeCard>{
             "name": video.snippet.title.replace(/[^-]*-/, '').trim(),
