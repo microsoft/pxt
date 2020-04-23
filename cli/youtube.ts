@@ -78,7 +78,6 @@ async function listPlaylistVideosAsync(playlistId: string): Promise<PlaylistItem
     const key = apiKey();
     let pageToken: string = undefined;
     do {
-        console.log(pageToken)
         let url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${key}`;
         if (pageToken)
             url += `&pageToken=${pageToken}`;
