@@ -405,9 +405,6 @@ namespace pxt.editor {
                                 case "pair": {
                                     return projectView.pairAsync();
                                 }
-                                case "connect": {
-                                    return projectView.connectAsync();
-                                }
                                 case "info": {
                                     return Promise.resolve()
                                         .then(() => {

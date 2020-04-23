@@ -1311,6 +1311,7 @@ export class ProjectView
                 // Editor is loaded
                 pxt.BrowserUtils.changeHash("#editor", true);
                 document.getElementById("root").focus(); // Clear the focus.
+                cmds.maybeReconnectAsync();
                 this.editorLoaded();
             })
     }
@@ -1898,6 +1899,7 @@ export class ProjectView
 
         this.stopSimulator(true); // don't keep simulator around
         this.showKeymap(false); // close keymap if open
+        cmds.disconnectAsync(true); // turn off any kind of logging
         if (this.editor) this.editor.unloadFileAsync();
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
@@ -2231,11 +2233,7 @@ export class ProjectView
     }
 
     disconnectAsync(): Promise<void> {
-        return cmds.disconnectAsync();
-    }
-
-    connectAsync(): Promise<void> {
-        return cmds.connectAsync();
+        return cmds.disconnectAsync(false);
     }
 
     pairAsync(): Promise<void> {
@@ -2405,10 +2403,6 @@ export class ProjectView
                     let deployStartTime = Date.now()
                     pxt.tickEvent("deploy.start")
                     return pxt.commands.deployAsync(resp, {
-                        reportDeviceNotFoundAsync: (docPath, compileResult) => {
-                            pxt.tickEvent("deploy.devicenotfound")
-                            return cmds.showDeviceNotFoundDialogAsync(docPath, compileResult)
-                        },
                         reportError: (e) => {
                             pxt.tickEvent("deploy.reporterror")
                             return core.errorNotification(e)

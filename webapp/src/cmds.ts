@@ -12,7 +12,6 @@ function log(msg: string) {
 }
 
 let extensionResult: pxt.editor.ExtensionResult;
-let webUSBEnabled = false;
 
 function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {
     pxt.BrowserUtils.browserDownloadBinText(
@@ -96,13 +95,13 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
         className: 'downloaddialog',
         buttons: [
             connect && {
-                label: lf("Connect device"),
+                label: lf("Pair device"),
                 icon: "usb",
                 className: "ligthgrey",
                 onclick: () => {
-                    pxt.tickEvent('downloaddialog.connect')
+                    pxt.tickEvent('downloaddialog.pair')
                     core.hideDialog();
-                    connectAsync()
+                    maybeReconnectAsync(true)
                 }
             },
             downloadAgain && {
@@ -114,18 +113,6 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
             }],
         timeout
     }).then(() => { });
-}
-
-export function showDeviceNotFoundDialogAsync(docPath?: string, resp?: pxtc.CompileResult): Promise<void> {
-    pxt.tickEvent(`compile.devicenotfound`);
-    const helpUrl = pxt.appTarget.appTheme.usbDocs;
-    return core.dialogAsync({
-        header: lf("Oops, we couldn't find your {0}", pxt.appTarget.appTheme.boardName),
-        body: lf("Please make sure your {0} is connected and try again.", pxt.appTarget.appTheme.boardName),
-        helpUrl: docPath || helpUrl,
-        hideCancel: true,
-        hasCloseIcon: true
-    });
 }
 
 export function nativeHostPostMessageFunction(): (msg: pxt.editor.NativeHostMessage) => void {
@@ -186,19 +173,25 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
             .finally(() => core.hideLoading(LOADING_KEY))
             .timeout(120000, "timeout") // packetio should time out first
             .catch((e) => {
-                pxt.reportException(e)
                 if (e.type === "repairbootloader") {
                     return pairBootloaderAsync()
                         .then(() => hidDeployCoreAsync(resp))
                 } else if (e.message === "timeout") {
                     pxt.tickEvent("hid.flash.timeout");
+                    log(`flash timeout`);
                 } else if (e.type === "devicenotfound") {
                     pxt.tickEvent("hid.flash.devicenotfound");
-                    const troubleshootDoc = pxt.appTarget?.appTheme?.appFlashingTroubleshoot;
-                    if (d)
-                        return d.reportDeviceNotFoundAsync(troubleshootDoc, resp);
+                    // no device, just save
+                    log(`device not found`);
+                    return pxt.commands.saveOnlyAsync(resp);
+                } else if (e.code == 19) {
+                    // device is locked or used by another tab
+                    pxt.tickEvent("hid.flash.devicelocked");
+                    log(`error: device locked`);
+                    return pxt.commands.saveOnlyAsync(resp);
                 } else {
                     pxt.tickEvent("hid.flash.error");
+                    pxt.reportException(e)
                     if (d) d.reportError(e.message);
                 }
 
@@ -210,7 +203,6 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
                 }
 
                 // default, save file
-                core.errorNotification(lf("Oops, something went wrong while downloading."))
                 return pxt.commands.saveOnlyAsync(resp);
             });
     }
@@ -338,6 +330,7 @@ export function init(): void {
     pxt.packetio.mkPacketIOWrapper = pxt.HF2.mkPacketIOWrapper;
 
     // reset commands to browser
+    pxt.commands.renderDisconnectDialog = undefined;
     pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
     pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
@@ -387,9 +380,10 @@ export function init(): void {
         log(`deploy: electron`);
         pxt.commands.deployCoreAsync = electron.driveDeployAsync;
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
-    } else if (webUSBSupported && webUSBEnabled) {
-        log(`deploy: webusb, paired once`);
+    } else if (webUSBSupported) {
+        log(`deploy: webusb`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
+        pxt.commands.renderDisconnectDialog = webusb.renderUnpairDialog;
     } else if (hidbridge.shouldUse()) {
         log(`deploy: hid`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
@@ -404,39 +398,35 @@ export function init(): void {
     applyExtensionResult();
 }
 
-export function connectAsync(): Promise<void> {
-    pxt.tickEvent("cmds.connect")
-    return pxt.usb.tryGetDeviceAsync()
-        .then(dev => {
-            if (!dev) return pairAsync();
-            setWebUSBEnabled(true);
-            return pxt.packetio.initAsync()
-                .then(wrapper => wrapper.reconnectAsync())
-                .then(() => core.infoNotification(lf("Device connected! Try downloading now.")))
-                .catch((err) => {
-                    pxt.reportException(err);
-                    core.errorNotification(lf("Connection error: {0}", err.message))
-                });
-        })
+export function maybeReconnectAsync(pairIfDeviceNotFound = false) {
+    return pxt.packetio.initAsync()
+        .then(wrapper => {
+            if (!wrapper) return Promise.resolve();
+            return wrapper.reconnectAsync()
+                .catch(e => {
+                    if (e.type == "devicenotfound")
+                        return pairIfDeviceNotFound && pairAsync();
+                    throw e;
+                })
+        });
 }
 
 export function pairAsync(): Promise<void> {
     pxt.tickEvent("cmds.pair")
     return pxt.commands.webUsbPairDialogAsync(pxt.usb.pairAsync, core.confirmAsync)
-        .then(res => res && connectAsync());
+        .then(res => res && maybeReconnectAsync());
 }
 
-export function disconnectAsync(): Promise<void> {
+export function disconnectAsync(silent: boolean): Promise<void> {
     pxt.tickEvent("cmds.disconnect")
     return pxt.packetio.disconnectAsync()
-        .then(() => core.infoNotification("Device disconnected"))
-        .finally(() => setWebUSBEnabled(false));
-}
-
-export function setWebUSBEnabled(enabled: boolean) {
-    if (webUSBEnabled === enabled) return;
-    webUSBEnabled = enabled;
-    init();
+        .then(() => {
+            if (!silent && !!pxt.commands.renderDisconnectDialog) {
+                const { header, jsx, helpUrl } = pxt.commands.renderDisconnectDialog();
+                return core.dialogAsync({ header, jsx, helpUrl, hideCancel: true, hasCloseIcon: true });
+            }
+            return Promise.resolve();
+        });
 }
 
 function handlePacketIOApi(r: string) {
@@ -447,7 +437,7 @@ function handlePacketIOApi(r: string) {
         case "connected":
             return pxt.packetio.isConnected();
         case "icon":
-            return pxt.packetio.isActive() && (pxt.packetio.isConnected() ? "usb" : "plug");
+            return pxt.packetio.icon();
     }
     return false;
 }
