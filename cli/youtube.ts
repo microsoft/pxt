@@ -1,6 +1,7 @@
 
 import * as nodeutil from './nodeutil';
 import * as path from 'path';
+import * as fs from 'fs';
 
 export const GOOGLE_API_KEY = "GOOGLE_API_KEY";
 
@@ -241,6 +242,21 @@ async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
             "imageUrl": resolveThumbnail(video.snippet.thumbnails)
         }
     });
+    // download images for cards
+    for (const card of cards) {
+        const cimg = `${assets}/${card.youTubeId}.jpg`;
+        const limg = `docs${cimg}`;
+        if (!nodeutil.fileExistsSync(limg)) {
+            const rimg = await pxt.Util.requestAsync({ 
+                url: card.imageUrl, 
+                method: "GET",
+                responseArrayBuffer: true 
+            });
+            await fs.writeFile(limg, rimg.buffer, 'binary', function(err) {});
+            card.imageUrl = cimg;
+        }
+    }
+
     // mixer channel
     const mixerRx = /https:\/\/mixer.com\/\w+/.exec(playlist.snippet.description);
     if (!!mixerRx) {
