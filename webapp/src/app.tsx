@@ -1311,6 +1311,7 @@ export class ProjectView
                 // Editor is loaded
                 pxt.BrowserUtils.changeHash("#editor", true);
                 document.getElementById("root").focus(); // Clear the focus.
+                cmds.maybeReconnectAsync();
                 this.editorLoaded();
             })
     }
