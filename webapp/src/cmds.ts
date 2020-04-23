@@ -411,21 +411,6 @@ export function maybeReconnectAsync() {
         });
 }
 
-export function connectAsync(): Promise<void> {
-    pxt.tickEvent("cmds.connect")
-    return pxt.usb.tryGetDeviceAsync()
-        .then(dev => {
-            if (!dev) return pairAsync();
-            return pxt.packetio.initAsync()
-                .then(wrapper => wrapper.reconnectAsync())
-                .then(() => core.infoNotification(lf("Device connected! Try downloading now.")))
-                .catch((err) => {
-                    pxt.reportException(err);
-                    core.errorNotification(lf("Connection error: {0}", err.message))
-                });
-        })
-}
-
 export function pairAsync(): Promise<void> {
     pxt.tickEvent("cmds.pair")
     return pxt.commands.webUsbPairDialogAsync(pxt.usb.pairAsync, core.confirmAsync)
