@@ -49,7 +49,7 @@ function resolveThumbnail(thumbnails: Thumbnails) {
 
 function playlistInfoAsync(playlistId: string) {
     const key = apiKey();
-    const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet&maxResults=20&id=${playlistId}&key=${key}`;
+    const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet&id=${playlistId}&key=${key}`;
     return pxt.Util.httpGetJsonAsync(url)
         .then((res: PlaylistResource) => res.items[0]);
 }
@@ -73,7 +73,7 @@ interface PlaylistVideos {
 
 function listPlaylistVideosAsync(playlistId: string) {
     const key = apiKey();
-    const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=20&playlistId=${playlistId}&key=${key}`;
+    const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${key}`;
     return pxt.Util.httpGetJsonAsync(url)
         .then((res: PlaylistVideos) => res);
 }
