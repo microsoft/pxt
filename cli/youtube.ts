@@ -90,7 +90,8 @@ async function listPlaylistVideosAsync(playlistId: string): Promise<PlaylistItem
 }
 
 function resolveDescription(d: string) {
-    return d.split('.', 1)[0];
+    // grab first paragraph
+    return d.split(/\n\s+/, 1)[0];
 }
 
 async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
