@@ -182,6 +182,10 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
                     pxt.tickEvent("hid.flash.devicenotfound");
                     // no device, just save
                     return pxt.commands.saveOnlyAsync(resp);
+                } else if (e.code == 19) {
+                    // device is locked or used by another tab
+                    pxt.tickEvent("hid.flash.devicelocked");
+                    return pxt.commands.saveOnlyAsync(resp);
                 } else {
                     pxt.tickEvent("hid.flash.error");
                     pxt.reportException(e)
