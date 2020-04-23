@@ -248,7 +248,7 @@ async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
             "name": "Live Coding",
             "description": "Watch the streams on mixer!",
             "url": mixerRx[0],
-            "imageUrl": `${assets}/mixer.jpg`
+            "imageUrl": `${assets}/mixer.png`
         })
     }
     // trailing card
@@ -256,7 +256,7 @@ async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
         "name": "PlayList",
         "description": "See entire playlist on YouTube",
         "url": playlistUrl,
-        "imageUrl": `${assets}/playlist.jpg`
+        "imageUrl": `${assets}/playlist.png`
     });
     const md = 
 `# ${playlist.snippet.title}
