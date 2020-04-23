@@ -78,6 +78,10 @@ function listPlaylistVideosAsync(playlistId: string) {
         .then((res: PlaylistVideos) => res);
 }
 
+function resolveDescription(d: string) {
+    return d.split('.', 1)[0];
+}
+
 async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
     fn = fn.replace(/\.md$/i, '');
     const assets = `/static/${fn}`
@@ -87,7 +91,7 @@ async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
     const cards: pxt.CodeCard[] = videos.items.map(video => {
         return <pxt.CodeCard>{
             "name": video.snippet.title.replace(/[^-]*-/, '').trim(),
-            "description": "", /** youtube description generally not relevant */
+            "description": resolveDescription(video.snippet.description),
             "youTubeId": video.snippet.resourceId.videoId,
             "imageUrl": resolveThumbnail(video.snippet.thumbnails)
         }
