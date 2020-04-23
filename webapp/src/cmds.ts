@@ -95,13 +95,13 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
         className: 'downloaddialog',
         buttons: [
             connect && {
-                label: lf("Connect device"),
+                label: lf("Pair device"),
                 icon: "usb",
                 className: "ligthgrey",
                 onclick: () => {
-                    pxt.tickEvent('downloaddialog.connect')
+                    pxt.tickEvent('downloaddialog.pair')
                     core.hideDialog();
-                    connectAsync()
+                    maybeReconnectAsync(true)
                 }
             },
             downloadAgain && {
@@ -398,14 +398,14 @@ export function init(): void {
     applyExtensionResult();
 }
 
-export function maybeReconnectAsync() {
+export function maybeReconnectAsync(pairIfDeviceNotFound = false) {
     return pxt.packetio.initAsync()
         .then(wrapper => {
             if (!wrapper) return Promise.resolve();
             return wrapper.reconnectAsync()
                 .catch(e => {
                     if (e.type == "devicenotfound")
-                        return; // ignore
+                        return pairIfDeviceNotFound && pairAsync();
                     throw e;
                 })
         });
@@ -414,7 +414,7 @@ export function maybeReconnectAsync() {
 export function pairAsync(): Promise<void> {
     pxt.tickEvent("cmds.pair")
     return pxt.commands.webUsbPairDialogAsync(pxt.usb.pairAsync, core.confirmAsync)
-        .then(res => res && connectAsync());
+        .then(res => res && maybeReconnectAsync());
 }
 
 export function disconnectAsync(silent: boolean): Promise<void> {
