@@ -44,24 +44,22 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
         const errorListInnerClasses = isCollapsed ? "errorListInner errorListSummary" : "errorListInner";
 
-        let viewOptions;
-        if (isCollapsed) {
-            // Show summarized view
-            if (errorsAvailable) {
-                viewOptions = <div>{lf("Uh oh! You have {0} error(s)!", errors.length)}</div>
-            } else {
-                viewOptions = <div>{lf("Good job! You have no errors")}</div>
-            }
+        let errorListInner;
+        if (!errorsAvailable) {
+            errorListInner = <div>{lf("Good job! You have no errors. Errors will displyed here")}</div>
         } else {
-            // show full expanded
-            viewOptions = (errors).map(e =>
-                            <div key={errorKey(e)}>{`${e.messageText} - [line ${e.line + 1}: col ${e.column + 1}]`}</div>)
+            if (isCollapsed) {
+                errorListInner = <div>{lf("Uh oh! You have {0} error(s)!", errors.length)}</div>
+            } else {
+                errorListInner = (errors).map(e =>
+                    <div key={errorKey(e)}>{`${e.messageText} - [line ${e.line + 1}: col ${e.column + 1}]`}</div>)
+            }
         }
 
         return <div className="errorList" >
             {errorsAvailable && toggleButton}
             <div className={errorListInnerClasses}>
-                {viewOptions}
+                {errorListInner}
             </div>
         </div>
     }
@@ -80,7 +78,8 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
     onErrorsChanged(errors: pxtc.KsDiagnostic[]) {
         this.setState({
-            errors
+            errors,
+            isCollapsed: errors.length == 0 || this.state.isCollapsed
         })
     }
 }
