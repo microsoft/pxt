@@ -1,5 +1,6 @@
 
 import * as nodeutil from './nodeutil';
+import * as path from 'path';
 
 export const GOOGLE_API_KEY = "GOOGLE_API_KEY";
 
@@ -88,13 +89,13 @@ interface Thumbnails {
 }
 
 function resolveThumbnail(thumbnails: Thumbnails) {
-    return (thumbnails.medium || thumbnails.high || thumbnails.standard || thumbnails.default).url;
+    const url = (thumbnails.medium || thumbnails.high || thumbnails.standard || thumbnails.default).url;
+    return url;
 }
 
 function playlistInfoAsync(playlistId: string) {
     const key = apiKey();
     const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet&maxResults=20&id=${playlistId}&key=${key}`;
-    console.log(url)
     return pxt.Util.httpGetJsonAsync(url)
         .then((res: PlaylistResource) => res.items[0]);
 }
@@ -223,28 +224,40 @@ interface PlaylistVideos {
 function listPlaylistVideosAsync(playlistId: string) {
     const key = apiKey();
     const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=20&playlistId=${playlistId}&key=${key}`;
-    console.log(url)
     return pxt.Util.httpGetJsonAsync(url)
         .then((res: PlaylistVideos) => res);
 }
 
 async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
+    const assets = `/static/${fn.replace(/\.\w+$/, '')}`
     const playlist = await playlistInfoAsync(id);
     const videos = await listPlaylistVideosAsync(id);
     const playlistUrl = `https://www.youtube.com/watch?list=${playlist.id}`;
     const cards: pxt.CodeCard[] = videos.items.map(video => {
         return <pxt.CodeCard>{
-            "title": video.snippet.title,
-            "description": video.snippet.description || "",
+            "name": video.snippet.title.replace(/[^-]*-/, '').trim(),
+            "description": "", /** youtube description generally not relevant */
             "youTubeId": video.snippet.resourceId.videoId,
             "imageUrl": resolveThumbnail(video.snippet.thumbnails)
         }
-    }).concat([{
-        "title": "PlayList",
+    });
+    // mixer channel
+    const mixerRx = /https:\/\/mixer.com\/\w+/.exec(playlist.snippet.description);
+    if (!!mixerRx) {
+        cards.unshift({
+            "name": "Live Coding",
+            "description": "Watch the streams on mixer!",
+            "url": mixerRx[0],
+            "imageUrl": `${assets}/mixer.jpg`
+        })
+    }
+    // trailing card
+    cards.push({
+        "name": "PlayList",
         "description": "See entire playlist on YouTube",
         "url": playlistUrl,
-        "imageUrl": resolveThumbnail(playlist.snippet.thumbnails)
-    }]);
+        "imageUrl": `${assets}/playlist.jpg`
+    });
     const md = 
 `# ${playlist.snippet.title}
 
@@ -252,8 +265,8 @@ ${playlist.snippet.description || ""}
 
 ## Videos
 
-\`\`\`codecards
-[${JSON.stringify(cards, null, 4)}]
+\`\`\`codecard
+${JSON.stringify(cards, null, 4)}
 \`\`\`
 
 ## See Also
@@ -262,7 +275,7 @@ ${playlist.snippet.description || ""}
 
 `
 
-    nodeutil.writeFileSync(fn, md, { encoding: "utf8" });
+    nodeutil.writeFileSync(path.join('docs', fn), md, { encoding: "utf8" });
 }
 
 export function renderPlaylistsAsync(playlists: pxt.Map<string>): Promise<void> {
