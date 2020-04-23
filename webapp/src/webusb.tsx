@@ -120,9 +120,11 @@ export function webUsbPairDialogAsync(pairAsync: () => Promise<boolean>, confirm
 export function renderUnpairDialog() {
     const boardName = pxt.appTarget.appTheme.boardName || lf("device");
     const header = lf("How to unpair your {0}", boardName);
-    const jsx = <p>
-        {lf("You need to unpair your {0}. Click on the lock icon and uncheck your device.")}
-    </p>;
+    const jsx = <div><p>
+        {lf("You can unpair your {0} if the WebUSB download is malfunctioning. Click on the lock icon and uncheck your device.", boardName)}
+    </p>
+        <img className="ui image centered medium" src={"./static/webusb/unpair.gif"} alt={lf("A gif showing how to unpair the {0}", boardName)} />
+    </div>
     const helpUrl = pxt.appTarget.appTheme.usbDocs
         && (pxt.appTarget.appTheme.usbDocs + "/webusb#unpair");
     return { header, jsx, helpUrl };
