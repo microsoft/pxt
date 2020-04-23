@@ -30,7 +30,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
     render() {
         const {isCollapsed, errors} = this.state;
-        const errorsAvailable = errors.length != 0;
+        const errorsAvailable = !!errors?.length;
         const collapseTooltip = lf("Collapse Error List");
         function errorKey(error: pxtc.KsDiagnostic): string {
             // React likes have a "key" for each element so that it can smartly only
