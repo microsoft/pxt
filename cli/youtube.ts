@@ -118,7 +118,7 @@ async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
             "name": "Live Coding",
             "description": "Subscribe to our mixer.com live coding stream.",
             "url": `https://${mixerRx[2]}`,
-            "imageUrl": `${assets}/mixer.png`
+            "imageUrl": `${assets}/live.png`
         })
     }
     // trailing card
