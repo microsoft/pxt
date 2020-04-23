@@ -323,6 +323,7 @@ export function init(): void {
     pxt.packetio.mkPacketIOWrapper = pxt.HF2.mkPacketIOWrapper;
 
     // reset commands to browser
+    pxt.commands.renderDisconnectDialog = undefined;
     pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
     pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
@@ -375,6 +376,7 @@ export function init(): void {
     } else if (webUSBSupported) {
         log(`deploy: webusb`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
+        pxt.commands.renderDisconnectDialog = webusb.renderUsbDisconnectDialog;
     } else if (hidbridge.shouldUse()) {
         log(`deploy: hid`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
@@ -391,15 +393,15 @@ export function init(): void {
 
 export function maybeReconnectAsync() {
     return pxt.packetio.initAsync()
-    .then(wrapper => {
-        if (!wrapper) return Promise.resolve();
-        return wrapper.reconnectAsync()
-            .catch(e => {
-                if (e.type == "devicenotfound")
-                    return; // ignore
-                throw e;
-            })
-    });
+        .then(wrapper => {
+            if (!wrapper) return Promise.resolve();
+            return wrapper.reconnectAsync()
+                .catch(e => {
+                    if (e.type == "devicenotfound")
+                        return; // ignore
+                    throw e;
+                })
+        });
 }
 
 export function connectAsync(): Promise<void> {
@@ -423,9 +425,16 @@ export function pairAsync(): Promise<void> {
         .then(res => res && connectAsync());
 }
 
-export function disconnectAsync(): Promise<void> {
+export function disconnectAsync(silent: boolean): Promise<void> {
     pxt.tickEvent("cmds.disconnect")
-    return pxt.packetio.disconnectAsync();
+    return pxt.packetio.disconnectAsync()
+        .then(() => {
+            if (!silent && !!pxt.commands.renderDisconnectDialog) {
+                const { header, jsx, helpUrl } = pxt.commands.renderDisconnectDialog();
+                return core.dialogAsync({ header, jsx, helpUrl, hideCancel: true, hasCloseIcon: true });
+            }
+            return Promise.resolve();
+        });
 }
 
 function handlePacketIOApi(r: string) {

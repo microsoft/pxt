@@ -116,3 +116,13 @@ export function webUsbPairDialogAsync(pairAsync: () => Promise<boolean>, confirm
         confirmAsync(confirmOptions());
     })
 }
+
+export function renderUsbDisconnectDialog() {
+    const boardName = pxt.appTarget.appTheme.boardName || lf("device");
+    const header = lf("How to disconnect");
+    const jsx = <p>
+        {lf("You need to unpair your {0}. Click on the lock icon and uncheck your device.")}
+    </p>;
+    const helpUrl = pxt.appTarget.appTheme.usbDocs && (pxt.appTarget.appTheme.usbDocs + "/webusb/disconnect";
+    return { header, jsx, helpUrl };
+}
