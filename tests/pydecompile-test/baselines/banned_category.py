@@ -1,1 +1,0 @@
-banned.shouldNotDecompile()

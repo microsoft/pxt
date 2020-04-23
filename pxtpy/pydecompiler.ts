@@ -917,13 +917,15 @@ namespace pxt.py {
 
             return asExpRes(`${expToStr(left)}.${right}`, leftSup);
         }
-        function getSimpleExpNameParts(s: ts.Expression, skipNamespaces = false): string[] {
+        function getSimpleExpNameParts(s: ts.Expression): string[] {
             // TODO(dz): Impl skip namespaces properly. Right now we just skip the left-most part of a property access
             if (ts.isPropertyAccessExpression(s)) {
-                let nmPart = [getName(s.name)]
-                if (skipNamespaces && ts.isIdentifier(s.expression))
-                    return nmPart
-                return getSimpleExpNameParts(s.expression, skipNamespaces).concat(nmPart)
+                let nmPart = getName(s.name)
+                if (ts.isIdentifier(s.expression)) {
+                    if (nmPart.indexOf(".") >= 0) nmPart = nmPart.substr(nmPart.lastIndexOf(".") + 1);
+                    return [nmPart]
+                }
+                return getSimpleExpNameParts(s.expression).concat([nmPart])
             }
             else if (ts.isIdentifier(s)) {
                 return [getName(s)]
@@ -935,7 +937,7 @@ namespace pxt.py {
             // get words from the callee
             let calleePart: string = ""
             if (calleeExp)
-                calleePart = getSimpleExpNameParts(calleeExp, /*skipNamespaces*/true)
+                calleePart = getSimpleExpNameParts(calleeExp)
                     .map(pxtc.snakify)
                     .join("_")
 
@@ -947,7 +949,7 @@ namespace pxt.py {
                     let arg = allArgs[i]
                     let argType = tc.getTypeAtLocation(arg)
                     if (hasTypeFlag(argType, ts.TypeFlags.EnumLike)) {
-                        let argParts = getSimpleExpNameParts(arg, /*skipNamespaces*/true)
+                        let argParts = getSimpleExpNameParts(arg)
                             .map(pxtc.snakify)
                         enumParamParts = enumParamParts.concat(argParts)
                     }

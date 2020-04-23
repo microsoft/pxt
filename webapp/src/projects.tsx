@@ -838,7 +838,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             {this.isLink() && type != "example" ? // TODO (shakao)  migrate forumurl to otherAction json in md
                 <sui.Link
                     href={this.getUrl()}
-                    refCallback={this.linkRef}
+                    refCallback={autoFocus ? this.linkRef : undefined}
                     target={'_blank'}
                     text={text}
                     className={`button attached approve large`}
@@ -947,7 +947,6 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                             <div className="card-action-title">YouTube</div>
                             <sui.Link
                                 href={`https://youtu.be/${youTubeId}`}
-                                refCallback={this.linkRef}
                                 target="_blank"
                                 text={lf("Play Video")}
                                 className={`button attached approve large`}

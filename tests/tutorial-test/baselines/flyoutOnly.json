@@ -15,7 +15,7 @@
     "activities": null,
     "code": "\n{\nlet x = 8;\nlet y = x + 2;\n}\n\n{\nbasic.showIcon(IconNames.Square)\n}\n",
     "metadata": {
-        "noDiffs": true,
+        "diffs": false,
         "flyoutOnly": true
     }
 }

@@ -882,7 +882,7 @@ ${info.id}_IfaceVT:
 ${hexfile.hexPrelude()}
     .hex 708E3B92C615A841C49866C975EE5197 ; magic number
     .hex ${hexfile.hexTemplateHash()} ; hex template hash
-    .hex 0000000000000000 ; @SRCHASH@
+    .hex 873266330af9dbdb ; replaced in binary by program hash
 `
     }
 
@@ -962,12 +962,6 @@ ${hexfile.hexPrelude()}
         asmsource += "_literals_end:\n"
 
         return asmsource
-    }
-
-    function patchSrcHash(bin: Binary, src: string) {
-        let sha = U.sha256(src)
-        bin.sourceHash = sha
-        return src.replace(/\n.*@SRCHASH@\n/, "\n    .hex " + sha.slice(0, 16).toUpperCase() + " ; program hash\n")
     }
 
     export function processorInlineAssemble(target: CompileTarget, src: string) {
@@ -1090,7 +1084,6 @@ _stored_program: .hex ${res}
 
     function assembleAndPatch(src: string, bin: Binary, opts: CompileOptions, cres: CompileResult) {
         src = asmHeader(bin) + src
-        src = patchSrcHash(bin, src)
         if (opts.embedBlob) {
             bin.packedSource = packSource(opts.embedMeta, ts.pxtc.decodeBase64(opts.embedBlob))
             // TODO more dynamic check for source size
@@ -1101,10 +1094,11 @@ _stored_program: .hex ${res}
         }
         const checksumWords = 8
         const pageSize = hexfile.flashCodeAlign(opts.target)
+
         if (opts.target.flashChecksumAddr) {
             let k = 0
             while (pageSize > (1 << k)) k++;
-            let endMarker = parseInt(bin.sourceHash.slice(0, 8), 16)
+            let endMarker = parseInt(hexfile.hexTemplateHash().slice(8, 16), 16)
             const progStart = hexfile.getStartAddress() / pageSize
             endMarker = (endMarker & 0xffffff00) | k
             let templBeg = 0
@@ -1129,7 +1123,7 @@ __flash_checksums:
     .word 0x${hexfile.hexTemplateHash().slice(0, 8)}
     ; user region
     .short ${progStart}, 0xffff
-    .word 0x${bin.sourceHash.slice(0, 8)}
+    .word 0x87326633 ; replaced later
     .word 0x0 ; terminator
 `
         }
@@ -1157,20 +1151,33 @@ __flash_checksums:
         }
 
         if (res.buf) {
+            const buf = res.buf
+            let binbuf = ""
+            for (let i = 0; i < buf.length; ++i)
+                binbuf += String.fromCharCode(buf[i] & 0xff, buf[i] >> 8)
+            const sha = U.sha256(binbuf).slice(0, 16)
+            const shawords = U.range(4).map(k => parseInt(sha.slice(k * 2, k * 2 + 2), 16))
+            U.assert(buf[12] == 0x3287)
+            for (let i = 0; i < shawords.length; ++i)
+                buf[12 + i] = shawords[i]
+
             if (opts.target.flashChecksumAddr) {
                 let pos = res.thumbFile.lookupLabel("__flash_checksums") / 2
-                U.assert(pos == res.buf.length - checksumWords * 2)
-                let chk = res.buf.slice(res.buf.length - checksumWords * 2)
-                res.buf.splice(res.buf.length - checksumWords * 2, checksumWords * 2)
-                let len = Math.ceil(res.buf.length * 2 / pageSize)
+                U.assert(pos == buf.length - checksumWords * 2)
+                let chk = buf.slice(buf.length - checksumWords * 2)
+                buf.splice(buf.length - checksumWords * 2, checksumWords * 2)
+                let len = Math.ceil(buf.length * 2 / pageSize)
+                U.assert(chk[chk.length - 4] == 0x3287)
+                chk[chk.length - 4] = shawords[0]
+                chk[chk.length - 3] = shawords[1]
                 chk[chk.length - 5] = len
                 bin.checksumBlock = chk;
             }
             if (!pxt.isOutputText(target)) {
-                const myhex = ts.pxtc.encodeBase64(hexfile.patchHex(bin, res.buf, false, !!target.useUF2)[0])
+                const myhex = ts.pxtc.encodeBase64(hexfile.patchHex(bin, buf, false, !!target.useUF2)[0])
                 bin.writeFile(prefix + pxt.outputName(target), myhex)
             } else {
-                const myhex = hexfile.patchHex(bin, res.buf, false, false).join("\r\n") + "\r\n"
+                const myhex = hexfile.patchHex(bin, buf, false, false).join("\r\n") + "\r\n"
                 bin.writeFile(prefix + pxt.outputName(target), myhex)
             }
         }

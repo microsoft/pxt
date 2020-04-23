@@ -198,8 +198,9 @@ namespace pxt.usb {
         }
         private handleUSBConnected(event: any) {
             const newdev = event.device as USBDevice;
+            this.log("device connected")
             if (!this.dev) {
-                this.log("device connected")
+                this.log("attach device")
                 if (this.onDeviceConnectionChanged)
                     this.onDeviceConnectionChanged(true);
             }
@@ -426,8 +427,7 @@ namespace pxt.usb {
         return tryGetDeviceAsync()
             .then(dev => {
                 if (!dev) {
-                    let err: any = new Error(U.lf("No USB device selected or connected; try pairing!"))
-                    err.isUserError = true
+                    const err: any = new Error(U.lf("No USB device selected or connected; try pairing!"))
                     err.type = "devicenotfound"
                     throw err;
                 }

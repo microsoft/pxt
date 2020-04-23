@@ -27,6 +27,7 @@ import * as clidbg from './clidbg';
 import * as pyconv from './pyconv';
 import * as gitfs from './gitfs';
 import * as crowdin from './crowdin';
+import * as youtube from './youtube';
 
 const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void = require('rimraf');
 
@@ -3133,6 +3134,14 @@ export function exportCppAsync(parsed: commandParser.ParsedCommand) {
         })
 }
 
+export function downloadPlaylistsAsync(parsed: commandParser.ParsedCommand): Promise<void> {
+    const fn = (parsed.args[0] as string || "playlists.json");
+    if (!nodeutil.fileExistsSync(fn))
+        U.userError(`File ${fn} not found`);
+    const playlists = nodeutil.readJson(fn);
+    return youtube.renderPlaylistsAsync(playlists);
+}
+
 export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     const rx = /```codecard((.|\s)*)```/;
     const tag = parsed.args[0] as string;
@@ -4158,11 +4167,11 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = f
             }
 
             if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
-                pxt.log("pre-compiling apisInfo for Python")
+                pxt.debug("pre-compiling apisInfo for Python")
                 pxt.prepPythonOptions(opts)
                 if (process.env["PXT_SAVE_APISINFO"])
                     fs.writeFileSync("built/apisinfo.json", nodeutil.stringify(opts.apisInfo))
-                pxt.log("done pre-compiling apisInfo for Python")
+                pxt.debug("done pre-compiling apisInfo for Python")
             }
 
             return opts;
@@ -6301,6 +6310,14 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             }
         }
     }, downloadDiscourseTagAsync)
+
+    p.defineCommand({
+        name: "downloadplaylists",
+        aliases: ["playlists"],
+        help: "Download YouTube playlists and generate markdown",
+        advanced: true,
+        argString: "<list>"
+    }, downloadPlaylistsAsync)
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
         p.defineCommand({ name, help, onlineHelp, argString }, callback);

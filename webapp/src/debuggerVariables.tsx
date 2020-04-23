@@ -19,7 +19,7 @@ interface Variable {
     children?: Variable[];
 }
 
-interface DebuggerVariablesProps  {
+interface DebuggerVariablesProps {
     apis: pxt.Map<pxtc.SymbolInfo>;
     sequence: number;
     breakpoint?: pxsim.DebuggerBreakpointMessage;
@@ -67,7 +67,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
     componentDidUpdate(prevProps: DebuggerVariablesProps) {
         if (this.props.breakpoint) {
             if (this.props.sequence != this.state.renderedSequence) {
-                this.updateVariables(this.props.breakpoint.globals, this.props.breakpoint.stackframes, this.props.filters);
+                this.updateVariables(this.props.breakpoint, this.props.filters);
             }
         }
         else if (!this.state.frozen) {
@@ -108,7 +108,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         }
 
         return <DebuggerTable header={variableTableHeader} placeholderText={placeholderText}>
-            { tableRows }
+            {tableRows}
         </DebuggerTable>
     }
 
@@ -137,8 +137,12 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         return result;
     }
 
-    updateVariables(globals: pxsim.Variables, stackFrames: pxsim.StackFrameInfo[], filters?: string[]) {
-        if (!globals) {
+    updateVariables(
+        breakpoint: pxsim.DebuggerBreakpointMessage,
+        filters?: string[]
+    ) {
+        const { globals, environmentGlobals, stackframes } = breakpoint;
+        if (!globals && !environmentGlobals) {
             // freeze the ui
             this.update(true)
             return;
@@ -150,14 +154,17 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         if (filters) {
             updatedGlobals.variables = updatedGlobals.variables.filter(v => filters.indexOf(v.name) !== -1)
         }
+        // inject unfiltered environment variables
+        if (environmentGlobals)
+            updatedGlobals.variables = updatedGlobals.variables.concat(variablesToVariableList(environmentGlobals));
 
         assignVarIds(updatedGlobals.variables);
 
         let updatedFrames: ScopeVariables[];
-        if (stackFrames) {
+        if (stackframes) {
             const oldFrames = this.state.stackFrames;
 
-            updatedFrames = stackFrames.map((sf, index) => {
+            updatedFrames = stackframes.map((sf, index) => {
                 const key = sf.breakpointId + "_" + index;
 
                 for (const frame of oldFrames) {
@@ -219,7 +226,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
 
         return result;
 
-        function collectVariables(vars: Variable[])  {
+        function collectVariables(vars: Variable[]) {
             vars.forEach(v => {
                 result.push(v);
                 if (v.children) {
@@ -261,8 +268,16 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
     }
 }
 
+function variablesToVariableList(newVars: pxsim.Variables) {
+    const current = Object.keys(newVars).map(varName => ({
+        name: fixVarName(varName),
+        value: newVars[varName]
+    }));
+    return current;
+}
+
 function updateScope(lastScope: ScopeVariables, newVars: pxsim.Variables, params?: Variable[]): ScopeVariables {
-    let current = Object.keys(newVars).map(varName => ({ name: fixVarName(varName), value: newVars[varName] }));
+    let current = variablesToVariableList(newVars);
 
     if (params) {
         current = params.concat(current);

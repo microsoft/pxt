@@ -9,17 +9,7 @@ var Day;
 })(Day || (Day = {}));
 var newslist = {
     "title": "New live streams!",
-    "items": [
-        {
-            "headline": "Digital All-Stars streaming this week!",
-            "url": "https://aka.ms/makecodeDASstream",
-            "description": [
-                "This week, join <a href='https://twitter.com/KB31_Era'>Kevin Byard</a> from ",
-                "the Tennessee Titans as he helps you build your very own game with Microsoft ",
-                "MakeCode Arcade!"
-            ]
-        }
-    ]
+    "items": []
 };
 var lessons = [
     {
@@ -75,6 +65,15 @@ var lessons = [
         "time": 14,
         "startDay": 27,
         "days": [Day.Friday]
+    },
+    {
+        "title": "MakeCode Live with Adafruit's John Park",
+        "description": "Join Adafruit’s John Park as he builds a MakeCode project each week covering fundamental concepts and techniques using real-world projects in his studio.",
+        "url": "https://aka.ms/makecodejpstream",
+        "img": "/static/online-learning/img/john-park-live.png",
+        "time": 15,
+        "startDay": 21,
+        "days": [Day.Tuesday]
     },
     {
         "title": "DreamSpace HomeSpace",
