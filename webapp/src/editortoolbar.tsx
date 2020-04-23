@@ -178,7 +178,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         } else if (compiling) {
             downloadButtonClasses += "loading disabled ";
         }
-
+        if (packetioConnected)
+            downloadButtonClasses += "connected ";
         switch (view) {
             case View.Mobile:
                 downloadButtonClasses += "download-button-full";
