@@ -83,8 +83,8 @@ async function listPlaylistVideosAsync(playlistId: string): Promise<PlaylistItem
             url += `&pageToken=${pageToken}`;
         const videos = await pxt.Util.httpGetJsonAsync(url)
         items = items.concat(videos.items);
-        pageToken =  videos.nextPageToken;
-    } while(pageToken);
+        pageToken = videos.nextPageToken;
+    } while (pageToken);
 
     return items;
 }
@@ -112,12 +112,12 @@ async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
         const cimg = `${assets}/${card.youTubeId}.jpg`;
         const limg = `docs${cimg}`;
         if (!nodeutil.fileExistsSync(limg)) {
-            const rimg = await pxt.Util.requestAsync({ 
-                url: card.imageUrl, 
+            const rimg = await pxt.Util.requestAsync({
+                url: card.imageUrl,
                 method: "GET",
-                responseArrayBuffer: true 
+                responseArrayBuffer: true
             });
-            await fs.writeFile(limg, rimg.buffer, 'binary', function(err) {});
+            await fs.writeFile(limg, rimg.buffer, 'binary', function (err) { });
         }
         card.imageUrl = cimg;
     }
@@ -141,8 +141,8 @@ async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
         "url": playlistUrl,
         "imageUrl": `${assets}/playlist.png`
     });
-    const md = 
-`# ${playlist.snippet.title}
+    const md =
+        `# ${playlist.snippet.title}
 
 ${playlist.snippet.description || ""}
 
@@ -163,5 +163,5 @@ ${JSON.stringify(cards, null, 4)}
 
 export function renderPlaylistsAsync(playlists: pxt.Map<string>): Promise<void> {
     return Promise.all(Object.keys(playlists).map(fn => renderPlaylistAsync(fn, playlists[fn])))
-        .then(() => { pxt.log('playlists refreshed')});
+        .then(() => { pxt.log('playlists refreshed') });
 }
