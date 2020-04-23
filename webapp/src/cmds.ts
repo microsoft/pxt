@@ -180,6 +180,8 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
                     pxt.tickEvent("hid.flash.timeout");
                 } else if (e.type === "devicenotfound") {
                     pxt.tickEvent("hid.flash.devicenotfound");
+                    // no device, just save
+                    return pxt.commands.saveOnlyAsync(resp);
                 } else {
                     pxt.tickEvent("hid.flash.error");
                     pxt.reportException(e)
