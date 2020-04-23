@@ -42,15 +42,26 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                                 icon={`inverted chevron ${isCollapsed ? 'up' : 'down'}`}
                                 title={collapseTooltip} onClick={this.onCollapseClick} />
 
-        const errorListInnerClasses = errorsAvailable ? "errorListInner" : "errorListInner noErrorsMessage"
+        const errorListInnerClasses = isCollapsed ? "errorListInner errorListSummary" : "errorListInner";
+
+        let viewOptions;
+        if (isCollapsed) {
+            // Show summarized view
+            if (errorsAvailable) {
+                viewOptions = <div>{lf("Uh oh! You have {0} error(s)!", errors.length)}</div>
+            } else {
+                viewOptions = <div>{lf("Good job! You have no errors")}</div>
+            }
+        } else {
+            // show full expanded
+            viewOptions = (errors).map(e =>
+                            <div key={errorKey(e)}>{`${e.messageText} - [line ${e.line + 1}: col ${e.column + 1}]`}</div>)
+        }
+
         return <div className="errorList" >
             {errorsAvailable && toggleButton}
-            <div className={errorListInnerClasses} hidden={isCollapsed}>
-                {errorsAvailable
-                    ? (errors).map(e =>
-                        <div key={errorKey(e)}>{`${e.messageText} - [line ${e.line + 1}: col ${e.column + 1}]`}</div>)
-                    : <div>{lf("You have no errors")}</div>
-                }
+            <div className={errorListInnerClasses}>
+                {viewOptions}
             </div>
         </div>
     }
