@@ -178,13 +178,16 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
                         .then(() => hidDeployCoreAsync(resp))
                 } else if (e.message === "timeout") {
                     pxt.tickEvent("hid.flash.timeout");
+                    log(`flash timeout`);
                 } else if (e.type === "devicenotfound") {
                     pxt.tickEvent("hid.flash.devicenotfound");
                     // no device, just save
+                    log(`device not found`);
                     return pxt.commands.saveOnlyAsync(resp);
                 } else if (e.code == 19) {
                     // device is locked or used by another tab
                     pxt.tickEvent("hid.flash.devicelocked");
+                    log(`error: device locked`);
                     return pxt.commands.saveOnlyAsync(resp);
                 } else {
                     pxt.tickEvent("hid.flash.error");
