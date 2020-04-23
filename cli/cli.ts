@@ -27,6 +27,7 @@ import * as clidbg from './clidbg';
 import * as pyconv from './pyconv';
 import * as gitfs from './gitfs';
 import * as crowdin from './crowdin';
+import * as youtube from './youtube';
 
 const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void = require('rimraf');
 
@@ -3131,6 +3132,16 @@ export function exportCppAsync(parsed: commandParser.ParsedCommand) {
                 fs.writeFileSync(trg, opts.extinfo.extensionFiles[s])
             }
         })
+}
+
+export function downloadPlaylistsAsync(parsed: commandParser.ParsedCommand): Promise<void> {
+    const fn = parsed.args[0] as string;
+    if (!fn)
+        U.userError("Missing Playlist list");
+    if (!nodeutil.fileExistsSync(fn))
+        U.userError(`File ${fn} not found`);
+    const playlists = nodeutil.readJson(fn);
+    return youtube.renderPlaylistsAsync(playlists);
 }
 
 export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): Promise<void> {
@@ -6301,6 +6312,14 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             }
         }
     }, downloadDiscourseTagAsync)
+
+    p.defineCommand({
+        name: "downloadplaylists",
+        aliases: ["playlists"],
+        help: "Download YouTube playlists and generate markdown",
+        advanced: true,
+        argString: "<list>"
+    }, downloadPlaylistsAsync)
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
         p.defineCommand({ name, help, onlineHelp, argString }, callback);
