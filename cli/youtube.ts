@@ -108,12 +108,12 @@ async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
     }
 
     // mixer channel
-    const mixerRx = /(https:\/\/)?mixer.com\/\w+/.exec(playlist.snippet.description);
+    const mixerRx = /(https:\/\/)?(mixer.com\/\w+)/.exec(playlist.snippet.description);
     if (!!mixerRx) {
         cards.unshift({
             "name": "Live Coding",
-            "description": "Watch the streams on mixer!",
-            "url": mixerRx[0],
+            "description": "Subscribe to our mixer.com live coding stream.",
+            "url": `https://${mixerRx[2]}`,
             "imageUrl": `${assets}/mixer.png`
         })
     }
