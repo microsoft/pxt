@@ -107,8 +107,8 @@ async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
                 responseArrayBuffer: true 
             });
             await fs.writeFile(limg, rimg.buffer, 'binary', function(err) {});
-            card.imageUrl = cimg;
         }
+        card.imageUrl = cimg;
     }
 
     // mixer channel
