@@ -68,14 +68,26 @@ interface PlaylistItem {
 }
 
 interface PlaylistVideos {
+    nextPageToken: string;
+    prevPageToken: string;
     items: PlaylistItem[];
 }
 
-function listPlaylistVideosAsync(playlistId: string) {
+async function listPlaylistVideosAsync(playlistId: string): Promise<PlaylistItem[]> {
+    let items: PlaylistItem[] = []
     const key = apiKey();
-    const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${key}`;
-    return pxt.Util.httpGetJsonAsync(url)
-        .then((res: PlaylistVideos) => res);
+    let pageToken: string = undefined;
+    do {
+        console.log(pageToken)
+        let url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${key}`;
+        if (pageToken)
+            url += `&pageToken=${pageToken}`;
+        const videos = await pxt.Util.httpGetJsonAsync(url)
+        items = items.concat(videos.items);
+        pageToken =  videos.nextPageToken;
+    } while(pageToken);
+
+    return items;
 }
 
 function resolveDescription(d: string) {
@@ -88,7 +100,7 @@ async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
     const playlist = await playlistInfoAsync(id);
     const videos = await listPlaylistVideosAsync(id);
     const playlistUrl = `https://www.youtube.com/playlist?list=${playlist.id}`;
-    const cards: pxt.CodeCard[] = videos.items.map(video => {
+    const cards: pxt.CodeCard[] = videos.map(video => {
         return <pxt.CodeCard>{
             "name": video.snippet.title.replace(/[^-]*-/, '').trim(),
             "description": resolveDescription(video.snippet.description),
