@@ -173,7 +173,6 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
             .finally(() => core.hideLoading(LOADING_KEY))
             .timeout(120000, "timeout") // packetio should time out first
             .catch((e) => {
-                pxt.reportException(e)
                 if (e.type === "repairbootloader") {
                     return pairBootloaderAsync()
                         .then(() => hidDeployCoreAsync(resp))
@@ -183,6 +182,7 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
                     pxt.tickEvent("hid.flash.devicenotfound");
                 } else {
                     pxt.tickEvent("hid.flash.error");
+                    pxt.reportException(e)
                     if (d) d.reportError(e.message);
                 }
 
