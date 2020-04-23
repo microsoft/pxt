@@ -117,7 +117,7 @@ async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
                 method: "GET",
                 responseArrayBuffer: true
             });
-            await fs.writeFile(limg, rimg.buffer, 'binary', function (err) { });
+            fs.writeFileSync(limg, rimg.buffer, 'binary');
         }
         card.imageUrl = cimg;
     }
