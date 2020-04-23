@@ -87,10 +87,14 @@ interface Thumbnails {
     maxres?: Thumbnail;
 }
 
+function resolveThumbnail(thumbnails: Thumbnails) {
+    return (thumbnails.medium || thumbnails.high || thumbnails.standard || thumbnails.default).url;
+}
+
 function playlistInfoAsync(playlistId: string) {
     const key = apiKey();
-    const part = "snippet"
-    const url = `https://www.googleapis.com/youtube/v3/playlists?part=${part}&maxResults=20&id=${playlistId}&key=${key}`;
+    const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet&maxResults=20&id=${playlistId}&key=${key}`;
+    console.log(url)
     return pxt.Util.httpGetJsonAsync(url)
         .then((res: PlaylistResource) => res.items[0]);
 }
@@ -205,6 +209,7 @@ interface PlaylistItem {
         description: string;
         publishedAt: string;
         thumbnails: Thumbnails;
+        position: number;
         resourceId: {
             videoId: string;
         }
@@ -217,8 +222,8 @@ interface PlaylistVideos {
 
 function listPlaylistVideosAsync(playlistId: string) {
     const key = apiKey();
-    const part = "snippet"
-    const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=${part}&maxResults=20&playlistId=${playlistId}&key=${key}`;
+    const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=20&playlistId=${playlistId}&key=${key}`;
+    console.log(url)
     return pxt.Util.httpGetJsonAsync(url)
         .then((res: PlaylistVideos) => res);
 }
@@ -226,28 +231,35 @@ function listPlaylistVideosAsync(playlistId: string) {
 async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
     const playlist = await playlistInfoAsync(id);
     const videos = await listPlaylistVideosAsync(id);
-    const playlistUrl = `https://www.youtube.com/playlist?list=${playlist.id}`;
-    const cards: pxt.CodeCard[] = videos.items.map(video => <pxt.CodeCard>{
-        return {
+    const playlistUrl = `https://www.youtube.com/watch?list=${playlist.id}`;
+    const cards: pxt.CodeCard[] = videos.items.map(video => {
+        return <pxt.CodeCard>{
             "title": video.snippet.title,
             "description": video.snippet.description || "",
-            "youTubeId": video.snippet.resourceId.videoId
+            "youTubeId": video.snippet.resourceId.videoId,
+            "imageUrl": resolveThumbnail(video.snippet.thumbnails)
         }
     }).concat([{
         "title": "PlayList",
         "description": "See entire playlist on YouTube",
-        "url": playlistUrl
+        "url": playlistUrl,
+        "imageUrl": resolveThumbnail(playlist.snippet.thumbnails)
     }]);
     const md = 
 `# ${playlist.snippet.title}
 
 ${playlist.snippet.description || ""}
 
-* [Open Playlist](${playlistUrl})
+## Videos
 
 \`\`\`codecards
 [${JSON.stringify(cards, null, 4)}]
 \`\`\`
+
+## See Also
+
+[YouTube Playlist](${playlistUrl})
+
 `
 
     nodeutil.writeFileSync(fn, md, { encoding: "utf8" });

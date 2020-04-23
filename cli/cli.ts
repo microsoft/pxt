@@ -3135,9 +3135,7 @@ export function exportCppAsync(parsed: commandParser.ParsedCommand) {
 }
 
 export function downloadPlaylistsAsync(parsed: commandParser.ParsedCommand): Promise<void> {
-    const fn = parsed.args[0] as string;
-    if (!fn)
-        U.userError("Missing Playlist list");
+    const fn = (parsed.args[0] as string || "playlists.json");
     if (!nodeutil.fileExistsSync(fn))
         U.userError(`File ${fn} not found`);
     const playlists = nodeutil.readJson(fn);
