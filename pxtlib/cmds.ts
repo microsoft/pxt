@@ -6,7 +6,6 @@ namespace pxt.commands {
 
     // overriden by targets
     export type DeployFnAsync = (r: ts.pxtc.CompileResult, d?: DeployOptions) => Promise<void>
-    export let maybeReconnectAsync: () => Promise<void>;
     export let deployCoreAsync: DeployFnAsync = undefined;
     export let deployFallbackAsync: DeployFnAsync = undefined;
     export let hasDeployFn = () => deployCoreAsync || deployFallbackAsync

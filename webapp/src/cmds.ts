@@ -323,7 +323,6 @@ export function init(): void {
     pxt.packetio.mkPacketIOWrapper = pxt.HF2.mkPacketIOWrapper;
 
     // reset commands to browser
-    pxt.commands.maybeReconnectAsync = undefined;
     pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
     pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
@@ -376,11 +375,9 @@ export function init(): void {
     } else if (webUSBSupported) {
         log(`deploy: webusb`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
-        pxt.commands.maybeReconnectAsync = () => pxt.packetio.initAsync().then(() => {});
     } else if (hidbridge.shouldUse()) {
         log(`deploy: hid`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
-        pxt.commands.maybeReconnectAsync = () => pxt.packetio.initAsync().then(() => {});
     } else if (pxt.BrowserUtils.isLocalHost() && Cloud.localToken) { // local node.js
         log(`deploy: localhost`);
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
@@ -393,8 +390,16 @@ export function init(): void {
 }
 
 export function maybeReconnectAsync() {
-    if (pxt.commands.maybeReconnectAsync)
-        pxt.commands.maybeReconnectAsync();
+    return pxt.packetio.initAsync()
+    .then(wrapper => {
+        if (!wrapper) return Promise.resolve();
+        return wrapper.reconnectAsync()
+            .catch(e => {
+                if (e.type == "devicenotfound")
+                    return; // ignore
+                throw e;
+            })
+    });
 }
 
 export function connectAsync(): Promise<void> {
