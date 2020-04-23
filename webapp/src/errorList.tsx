@@ -56,7 +56,8 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     }
 
     componentDidUpdate() {
-        // ensures that the shrinking of no errors takes place
+        // notify parent on possible size change so siblings (monaco)
+        // can resize if needed
         this.props.onSizeChange()
     }
 
