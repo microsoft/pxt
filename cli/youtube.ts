@@ -79,7 +79,8 @@ function listPlaylistVideosAsync(playlistId: string) {
 }
 
 async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
-    const assets = `/static/${fn.replace(/\.\w+$/, '')}`
+    fn = fn.replace(/\.md$/i, '');
+    const assets = `/static/${fn}`
     const playlist = await playlistInfoAsync(id);
     const videos = await listPlaylistVideosAsync(id);
     const playlistUrl = `https://www.youtube.com/watch?list=${playlist.id}`;
@@ -140,7 +141,7 @@ ${JSON.stringify(cards, null, 4)}
 
 `
 
-    nodeutil.writeFileSync(path.join('docs', fn), md, { encoding: "utf8" });
+    nodeutil.writeFileSync(path.join('docs', fn + ".md"), md, { encoding: "utf8" });
 }
 
 export function renderPlaylistsAsync(playlists: pxt.Map<string>): Promise<void> {
