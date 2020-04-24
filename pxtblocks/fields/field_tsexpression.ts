@@ -46,5 +46,14 @@ namespace pxtblockly {
         protected setPythonText() {
             this.setText(pxt.Util.lf("<python code>"))
         }
+
+        applyColour() {
+            if (this.sourceBlock_ && this.constants_.FULL_BLOCK_FIELDS) {
+                if (this.borderRect_) {
+                    this.borderRect_.setAttribute('stroke',
+                        (this.sourceBlock_ as Blockly.BlockSvg).style.colourTertiary);
+                }
+            }
+        }
     }
 }
