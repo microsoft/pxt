@@ -5597,7 +5597,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             return resolveTagAsync(fullname)
                 .then(tag => buildAsync(fullname, tag))
                 .catch(e => {
-                    if (e.statusCode == 429 && retry++ < 5) {
+                    if (e.statusCode == 429 && retry++ < 6) {
                         delay *= 2;
                         pxt.log(`retrying in ${delay / 1000} secs...`)
                         return Promise.delay(delay)
