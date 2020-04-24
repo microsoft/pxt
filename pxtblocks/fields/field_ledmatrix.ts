@@ -71,7 +71,7 @@ namespace pxtblockly {
             }
 
             if (this.params.scale !== undefined)
-                this.scale = Math.max(0.7, Math.min(2, this.params.scale));
+                this.scale = Math.max(0.6, Math.min(2, this.params.scale));
             else if (Math.max(this.matrixWidth, this.matrixHeight) > 15)
                 this.scale = 0.85;
             else if (Math.max(this.matrixWidth, this.matrixHeight) > 10)
