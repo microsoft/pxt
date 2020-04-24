@@ -5578,11 +5578,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             .then(() => {
                 // already built with success
                 nodeutil.writeFileSync(buildlog, tag);
-            })
-            .catch(e => {
-                reportError({ repo: pkgpgh, title: "compilation error", body: `Error while compiling:\n${e.message}` });
-                return Promise.resolve();
-            })
+            });
     }
 
     function nextAsync(fullname: string) {
@@ -5603,7 +5599,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
                         return Promise.delay(delay)
                             .then(() => workAsync());
                     }
-                    reportError({ repo: fullname, title: e.message, body: "build error" })
+                    reportError({ repo: fullname, title: "build error", body: e.message })
                     return Promise.resolve();
                 });
             }
