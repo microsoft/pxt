@@ -927,6 +927,17 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                             {desc}
                         </p>
                     })}
+                    {!!cardType && youTubeId && this.isYouTubeOnline() &&
+                        // show youtube card
+                        // thumbnail url `https://img.youtube.com/vi/${youTubeId}/default.jpg`
+                        <sui.Link
+                            href={`https://youtu.be/${youTubeId}`}
+                            target="_blank"
+                            icon="play"
+                            text={lf("Play Video Lesson")}
+                            className={`yt-button button attached approve large inverted`}
+                            title={lf("Open YouTube video in new window")}
+                        />}
                 </div>
             </div>
             <div className="actions column ten wide">
@@ -940,19 +951,6 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                         // TODO (shakao) migrate forumurl to otherAction json in md
                         this.getActionCard(lf("Open in Editor"), "example", this.handleOpenForumUrlInEditor)
                     }
-                    {!!cardType && youTubeId && this.isYouTubeOnline() &&
-                        // show youtube card
-                        <div className="card-action ui items youtube">
-                            <sui.Link role="button" className="link button attached" icon="youtube" href={`https://youtu.be/${youTubeId}`} target="_blank" tabIndex={-1} />
-                            <div className="card-action-title">YouTube</div>
-                            <sui.Link
-                                href={`https://youtu.be/${youTubeId}`}
-                                target="_blank"
-                                text={lf("Play Video")}
-                                className={`button attached approve large`}
-                                title={lf("Open YouTube video in new window")}
-                            />
-                        </div>}
                 </div>
             </div>
         </div>;
