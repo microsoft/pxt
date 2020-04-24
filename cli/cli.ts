@@ -5602,7 +5602,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
                     reportError({ repo: fullname, title: "build error", body: e.message })
                     return Promise.resolve();
                 });
-            }
+        }
     }
 
     // 1. collect packages
