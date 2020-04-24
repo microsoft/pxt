@@ -5560,15 +5560,18 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             return Promise.resolve();
         }
         pxt.log('')
-        reportLog(`  testing ${pkgpgh}`)
+        reportLog(`${pkgpgh}`)
         // clone or sync package
         const buildArgs = ["build", "--ignoreTests"];
         if (forceLocalBuild) buildArgs.push("--localbuild");
         const pkgdir = path.join(pkgsroot, pkgpgh);
         const buildlog = path.join(pkgdir, "built", "success.txt");
         // check if already built with success
-        if (nodeutil.fileExistsSync(buildlog))
+        if (nodeutil.fileExistsSync(buildlog)) {
+            reportLog(`  already built`)
             return nextAsync();
+        }
+
         return (
             !nodeutil.existsDirSync(pkgdir)
                 ? gitAsync(".", "clone", "-q", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
@@ -5579,7 +5582,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             .then(() => pxtAsync(pkgdir, buildArgs))
             .then(() => {
                 // already built with success
-                nodeutil.writeFileSync(buildlog, "");
+                nodeutil.writeFileSync(buildlog, "#");
             })
             .catch(e => {
                 errors.push(`${pkgpgh} ${e}`);
