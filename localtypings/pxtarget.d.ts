@@ -599,6 +599,7 @@ declare namespace ts.pxtc {
         imageLiteral?: number;
         imageLiteralColumns?: number; // optional number of columns
         imageLiteralRows?: number; // optional number of rows
+        imageLiteralScale?: number; // button sizing between 0.6 and 2, default is 1
         weight?: number;
         parts?: string;
         trackArgs?: number[];
