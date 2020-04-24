@@ -47,7 +47,9 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         let errorListContent;
         if (errorsAvailable) {
             if (isCollapsed) {
-                errorListContent = <div onClick={this.onCollapseClick}>{lf("Uh oh! You have {0} error(s)!", errors.length)}</div>
+                errorListContent = <div className="summarizedErrorMessage" onClick={this.onCollapseClick}>
+                    {lf("Uh oh! You have {0} error(s)!", errors.length)}
+                </div>
             } else {
                 errorListContent = (errors).map(e =>
                     <div key={errorKey(e)}>{`${e.messageText} - (${e.line + 1}:${e.column + 1})`}</div>)
