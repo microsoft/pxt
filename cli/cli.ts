@@ -5501,7 +5501,6 @@ function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
 
 function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     pxt.log(`-- testing github packages-- `);
-    pxt.log(`make sure to store your github token (GITHUB_ACCESS_TOKEN/GITHUB_TOKEN env var) to avoid throttling`)
     if (!fs.existsSync("targetconfig.json")) {
         pxt.log(`targetconfig.json not found`);
         return Promise.resolve();
@@ -5565,13 +5564,12 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             return nextAsync();
         }
 
-        return (!nodeutil.existsDirSync(pkgdir)
-            ? gitAsync(".", "clone", "-q", "-b", tag, `https://github.com/${pkgpgh}`, pkgdir)
-            : gitAsync(pkgdir, "fetch").then(() => gitAsync(pkgdir, "checkout", "-f", repos[pkgpgh].tag)))
-            .then(() => nodeutil.fileExistsSync(path.join(pkgdir, "package.json"))
-                && fs.unlinkSync(path.join(pkgdir, "package.json")))
-            .then(() => rimrafAsync(path.join(pkgdir, "node_modules"), {}))
-            .then(() => pxtAsync(pkgdir, ["clean"]))
+        return pxt.github.db.loadPackageAsync(pkgpgh, tag)
+            .then(cp => {
+                Object.keys(cp.files)
+                    .forEach(fn => nodeutil.writeFileSync(path.join(pkgdir, fn), cp.files[fn], "utf8"));
+                return pxtAsync(pkgdir, ["clean"]);
+            })
             .then(() => pxtAsync(pkgdir, ["install"]))
             .then(() => pxtAsync(pkgdir, buildArgs))
             .then(() => {
