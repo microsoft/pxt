@@ -18,9 +18,3 @@ pxt testghpkgs
 ```
 set PXT_ACCESS_TOKEN=<token>
 ```
-
-* Login with a GitHub token:
-
-```
-export GITHUB_TOKEN=<token>
-```

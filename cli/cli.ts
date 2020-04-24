@@ -5501,8 +5501,7 @@ function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
 
 function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     pxt.log(`-- testing github packages-- `);
-    if (!pxt.github.token)
-        U.userError('github token GITHUB_TOKEN missing')
+    pxt.github.forceProxy = true;
     if (!Cloud.accessToken)
         U.userError('pxt token PXT_ACCESS_TOKEN missing')
     if (!fs.existsSync("targetconfig.json")) {
@@ -5516,9 +5515,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     if (!packages) {
         pxt.log(`packages section not found in targetconfig.json`)
     }
-    let errors: { repo: string; title: string; body: string; }[] = [];
     let todo: string[];
-    const repos: pxt.Map<{ fullname: string; tag: string }> = {};
     const pkgsroot = path.join("temp", "ghpkgs");
     const logfile = path.join(pkgsroot, "log.txt");
     nodeutil.writeFileSync(logfile, ""); // reset file
@@ -5531,23 +5528,33 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         })
     }
 
+    function reportError(er: { repo: string; title: string; body: string; }) {
+        const msg = `- [ ]  [${er.repo}](https://github.com/${er.repo}) ${er.title} / [new issue](https://github.com/${er.repo}/issues/new?title=${encodeURIComponent(er.title)}&body=${encodeURIComponent(er.body)})`;
+        console.error(`error: https://github.com/${er.repo} ${er.title}`)
+        fs.appendFileSync(logfile, msg + "\n");
+    }
+
     function reportLog(msg: any) {
         pxt.log(msg);
         fs.appendFileSync(logfile, msg + "\n");
     }
 
-    function nextAsync(): Promise<void> {
-        const pkgpgh = todo.pop();
-        if (!pkgpgh) {
-            pxt.log('')
-            pxt.log(`------------------------`)
-            reportLog(`${errors.length} extensions with errors`);
-            errors.forEach(er => reportLog(`- [ ]  [${er.repo}](https://github.com/${er.repo}) ${er.title} / [new issue](https://github.com/${er.repo}/issues/new?title=${encodeURIComponent(er.title)}&body=${encodeURIComponent(er.body)})`));
-            return Promise.resolve();
-        }
-        const tag = repos[pkgpgh].tag;
-        pxt.log('')
-        reportLog(`${pkgpgh}`)
+    function resolveTagAsync(fullname: string): Promise<string> {
+        return pxt.github.listRefsAsync(fullname)
+            .then(tags => {
+                let tag = pxt.semver.sortLatestTags(tags)[0];
+                if (!tag) {
+                    reportError({ repo: fullname, title: "create a release", body: "You need to create a release in this repository. Follow the instructions at https://makecode.com/extensions/versioning." });
+                    tag = "master";
+                }
+                else {
+                    reportLog(`  release: ${tag}`)
+                }
+                return tag;
+            });
+    }
+
+    function buildAsync(pkgpgh: string, tag: string): Promise<void> {
         // clone or sync package
         const buildArgs = ["build", "--ignoreTests"];
         if (forceLocalBuild) buildArgs.push("--localbuild");
@@ -5557,7 +5564,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         if (nodeutil.fileExistsSync(buildlog) &&
             fs.readFileSync(buildlog, "utf8") === tag) {
             reportLog(`  already built ${tag}`)
-            return nextAsync();
+            return Promise.resolve();
         }
 
         return pxt.github.db.loadPackageAsync(pkgpgh, tag)
@@ -5571,13 +5578,31 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             .then(() => {
                 // already built with success
                 nodeutil.writeFileSync(buildlog, tag);
-            })
-            .catch(e => {
-                errors.push({ repo: pkgpgh, title: "compilation error", body: `Error while compiling:\n${e.message}` });
-                reportLog(e);
-                return Promise.resolve();
-            })
-            .then(() => nextAsync());
+            });
+    }
+
+    function nextAsync(fullname: string) {
+        pxt.log('')
+        reportLog(`${fullname}`)
+
+        let delay = 1000;
+        let retry = 0;
+        return workAsync();
+
+        function workAsync(): Promise<void> {
+            return resolveTagAsync(fullname)
+                .then(tag => buildAsync(fullname, tag))
+                .catch(e => {
+                    if (e.statusCode == 429 && retry++ < 6) {
+                        delay *= 2;
+                        pxt.log(`retrying in ${delay / 1000} secs...`)
+                        return Promise.delay(delay)
+                            .then(() => workAsync());
+                    }
+                    reportError({ repo: fullname, title: "build error", body: e.message })
+                    return Promise.resolve();
+                });
+            }
     }
 
     // 1. collect packages
@@ -5591,24 +5616,9 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             fullnames = U.unique(fullnames, f => f.toLowerCase());
             reportLog(`found ${fullnames.length} approved extensions`);
             reportLog(nodeutil.stringify(fullnames));
-            return Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
-                .then(tags => {
-                    const tag = pxt.semver.sortLatestTags(tags)[0];
-                    if (!tag) {
-                        errors.push({ repo: fullname, title: "create a release", body: "You need to create a release in this repository. Follow the instructions at https://makecode.com/extensions/versioning." });
-                        reportLog(errors[errors.length - 1]);
-                    }
-                    else
-                        repos[fullname] = { fullname, tag };
-                }))
-            );
-        }).then(() => {
-            todo = Object.keys(repos);
-            reportLog(`found ${todo.length} approved extension with releases`);
-            todo.forEach(fn => reportLog(`  ${fn}#${repos[fn].tag}`));
-            // 2. process each repo
-            return nextAsync();
-        });
+            return Promise.mapSeries(fullnames, nextAsync);
+        })
+        .then(() => { })
 }
 
 interface BlockTestCase {
