@@ -5539,7 +5539,22 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         fs.appendFileSync(logfile, msg + "\n");
     }
 
-    function nextAsync(pkgpgh: string, tag: string): Promise<void> {
+    function resolveTagAsync(fullname: string): Promise<string> {
+        return pxt.github.listRefsAsync(fullname)
+            .then(tags => {
+                let tag = pxt.semver.sortLatestTags(tags)[0];
+                if (!tag) {
+                    reportError({ repo: fullname, title: "create a release", body: "You need to create a release in this repository. Follow the instructions at https://makecode.com/extensions/versioning." });
+                    tag = "master";
+                }
+                else {
+                    reportLog(`  release: ${tag}`)
+                }
+                return tag;
+            });
+    }
+
+    function buildAsync(pkgpgh: string, tag: string): Promise<void> {
         pxt.log('')
         reportLog(`${pkgpgh}`)
         // clone or sync package
@@ -5572,6 +5587,27 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             })
     }
 
+    function nextAsync(fullname: string) {
+        let delay = 1000;
+        let retry = 0;
+        return workAsync()
+            .catch(e => {
+                if (e.statusCode == 429 && retry++ < 2) {
+                    delay *= 2;
+                    pxt.log(`retrying...`)
+                    return Promise.delay(delay)
+                        .then(() => workAsync());
+                }
+                reportError({ repo: fullname, title: e.message, body: "build error" })
+                return Promise.resolve();
+            })
+
+        function workAsync() {
+            return resolveTagAsync(fullname)
+                .then(tag => buildAsync(fullname, tag));
+        }
+    }
+
     // 1. collect packages
     return (clean ? rimrafAsync(pkgsroot, {}) : Promise.resolve())
         .then(() => nodeutil.mkdirP(pkgsroot))
@@ -5583,19 +5619,9 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             fullnames = U.unique(fullnames, f => f.toLowerCase());
             reportLog(`found ${fullnames.length} approved extensions`);
             reportLog(nodeutil.stringify(fullnames));
-            return Promise.mapSeries(fullnames, fullname => pxt.github.listRefsAsync(fullname)
-                .then(tags => {
-                    let tag = pxt.semver.sortLatestTags(tags)[0];
-                    if (!tag) {
-                        reportError({ repo: fullname, title: "create a release", body: "You need to create a release in this repository. Follow the instructions at https://makecode.com/extensions/versioning." });
-                        tag = "master";
-                    }
-                    else {
-                        reportLog(`  ${fullname}#${tag}`)
-                    }
-                    return nextAsync(fullname, tag)
-                })).then(() => Promise.delay(1000));
-        });
+            return Promise.mapSeries(fullnames, nextAsync);
+        })
+        .then(() => { })
 }
 
 interface BlockTestCase {
