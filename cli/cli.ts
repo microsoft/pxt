@@ -5501,6 +5501,10 @@ function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
 
 function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     pxt.log(`-- testing github packages-- `);
+    if (!pxt.github.token)
+        U.userError('github token GITHUB_TOKEN missing')
+    if (!Cloud.accessToken)
+        U.userError('pxt token PXT_ACCESS_TOKEN missing')
     if (!fs.existsSync("targetconfig.json")) {
         pxt.log(`targetconfig.json not found`);
         return Promise.resolve();
@@ -5518,14 +5522,6 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     const pkgsroot = path.join("temp", "ghpkgs");
     const logfile = path.join(pkgsroot, "log.txt");
     nodeutil.writeFileSync(logfile, ""); // reset file
-
-    function gitAsync(dir: string, ...args: string[]) {
-        return nodeutil.spawnAsync({
-            cmd: "git",
-            args: args,
-            cwd: dir
-        })
-    }
 
     function pxtAsync(dir: string, args: string[]) {
         return nodeutil.spawnAsync({
@@ -6343,6 +6339,8 @@ function loadPkgAsync() {
 }
 
 function errorHandler(reason: any) {
+    if (pxt.options.debug)
+        console.debug(reason)
     if (reason.isUserError) {
         if (pxt.options.debug)
             console.error(reason.stack)
