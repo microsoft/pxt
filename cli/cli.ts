@@ -5503,6 +5503,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     pxt.log(`-- testing github packages-- `);
     if (!pxt.github.token)
         U.userError('github token GITHUB_TOKEN missing')
+    pxt.github.forceProxy = true;
     if (!Cloud.accessToken)
         U.userError('pxt token PXT_ACCESS_TOKEN missing')
     if (!fs.existsSync("targetconfig.json")) {
@@ -5591,21 +5592,21 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             fullnames = U.unique(fullnames, f => f.toLowerCase());
             reportLog(`found ${fullnames.length} approved extensions`);
             reportLog(nodeutil.stringify(fullnames));
-            return Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
+            return Promise.mapSeries(fullnames, fullname => pxt.github.listRefsAsync(fullname)
                 .then(tags => {
                     const tag = pxt.semver.sortLatestTags(tags)[0];
                     if (!tag) {
                         errors.push({ repo: fullname, title: "create a release", body: "You need to create a release in this repository. Follow the instructions at https://makecode.com/extensions/versioning." });
                         reportLog(errors[errors.length - 1]);
                     }
-                    else
+                    else {
                         repos[fullname] = { fullname, tag };
-                }))
-            );
+                        reportLog(`  ${fullname}#${tag}`)
+                    }
+                })).then(() => Promise.delay(500));
         }).then(() => {
             todo = Object.keys(repos);
             reportLog(`found ${todo.length} approved extension with releases`);
-            todo.forEach(fn => reportLog(`  ${fn}#${repos[fn].tag}`));
             // 2. process each repo
             return nextAsync();
         });
