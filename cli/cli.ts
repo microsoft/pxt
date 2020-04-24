@@ -5529,7 +5529,9 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     }
 
     function reportError(er: { repo: string; title: string; body: string; }) {
-        reportLog(`- [ ]  [${er.repo}](https://github.com/${er.repo}) ${er.title} / [new issue](https://github.com/${er.repo}/issues/new?title=${encodeURIComponent(er.title)}&body=${encodeURIComponent(er.body)})`);       
+        const msg = `- [ ]  [${er.repo}](https://github.com/${er.repo}) ${er.title} / [new issue](https://github.com/${er.repo}/issues/new?title=${encodeURIComponent(er.title)}&body=${encodeURIComponent(er.body)})`;
+        console.error(`error: https://github.com/${er.repo} ${er.title}`)
+        fs.appendFileSync(logfile, msg + "\n");
     }
 
     function reportLog(msg: any) {
