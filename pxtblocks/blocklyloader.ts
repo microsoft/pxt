@@ -619,8 +619,9 @@ namespace pxt.blocks {
         if (fn.attributes.imageLiteral) {
             const columns = (fn.attributes.imageLiteralColumns || 5) * fn.attributes.imageLiteral;
             const rows = fn.attributes.imageLiteralRows || 5;
+            const scale = fn.attributes.imageLiteralScale;
             let ri = block.appendDummyInput();
-            ri.appendField(new pxtblockly.FieldMatrix("", { columns, rows }), "LEDS");
+            ri.appendField(new pxtblockly.FieldMatrix("", { columns, rows, scale }), "LEDS");
         }
 
         if (fn.attributes.inlineInputMode === "external") {
