@@ -5501,8 +5501,6 @@ function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
 
 function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     pxt.log(`-- testing github packages-- `);
-    if (!pxt.github.token)
-        U.userError('github token GITHUB_TOKEN missing')
     pxt.github.forceProxy = true;
     if (!Cloud.accessToken)
         U.userError('pxt token PXT_ACCESS_TOKEN missing')
@@ -5603,7 +5601,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
                         repos[fullname] = { fullname, tag };
                         reportLog(`  ${fullname}#${tag}`)
                     }
-                })).then(() => Promise.delay(500));
+                })).then(() => Promise.delay(1000));
         }).then(() => {
             todo = Object.keys(repos);
             reportLog(`found ${todo.length} approved extension with releases`);
