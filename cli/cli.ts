@@ -5555,8 +5555,6 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     }
 
     function buildAsync(pkgpgh: string, tag: string): Promise<void> {
-        pxt.log('')
-        reportLog(`${pkgpgh}`)
         // clone or sync package
         const buildArgs = ["build", "--ignoreTests"];
         if (forceLocalBuild) buildArgs.push("--localbuild");
@@ -5588,24 +5586,27 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     }
 
     function nextAsync(fullname: string) {
+        pxt.log('')
+        reportLog(`${fullname}`)
+
         let delay = 1000;
         let retry = 0;
-        return workAsync()
-            .catch(e => {
-                if (e.statusCode == 429 && retry++ < 2) {
-                    delay *= 2;
-                    pxt.log(`retrying...`)
-                    return Promise.delay(delay)
-                        .then(() => workAsync());
-                }
-                reportError({ repo: fullname, title: e.message, body: "build error" })
-                return Promise.resolve();
-            })
+        return workAsync();
 
-        function workAsync() {
+        function workAsync(): Promise<void> {
             return resolveTagAsync(fullname)
-                .then(tag => buildAsync(fullname, tag));
-        }
+                .then(tag => buildAsync(fullname, tag))
+                .catch(e => {
+                    if (e.statusCode == 429 && retry++ < 5) {
+                        delay *= 2;
+                        pxt.log(`retrying in ${delay / 1000} secs...`)
+                        return Promise.delay(delay)
+                            .then(() => workAsync());
+                    }
+                    reportError({ repo: fullname, title: e.message, body: "build error" })
+                    return Promise.resolve();
+                });
+            }
     }
 
     // 1. collect packages
