@@ -315,11 +315,12 @@ default semantic
 /* Detail view */
 @homeSelectedCardBorderSize: @homeCardBorderSize*2;
 @homeSelectedCardBorderColor: white;
-@homeDetailViewBackground: darken(@homeScreenBackground, 10%);
-@homeDetailViewColor: @homeCardColor;
+@homeDetailViewBackground: darken(@grey, 20%);
+@homeDetailViewColor: white;
 @homeDetailCloseColor: white;
 @homeDetailCloseBackground: @grey;
-@homeDetailCardActionBackground: darken(@homeDetailViewBackground, 10%);
+@homeDetailCardActionBackground: @homeScreenBackground;
+@homeDetailCardActionText: white;
 @homeInvertedDetailCardActionBackground: lighten(@homeScreenBackground, 10%);
 
 /*-------------------
