@@ -5513,21 +5513,12 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     if (!packages) {
         pxt.log(`packages section not found in targetconfig.json`)
     }
-    let errors: string[] = [];
+    let errors: { repo: string; title: string; body: string; }[] = [];
     let todo: string[];
     const repos: pxt.Map<{ fullname: string; tag: string }> = {};
     const pkgsroot = path.join("temp", "ghpkgs");
     const logfile = path.join(pkgsroot, "log.txt");
     nodeutil.writeFileSync(logfile, ""); // reset file
-
-    function detectDivision(code: string): boolean {
-        // remove /* comments
-        code = code.replace(/\/\*(.|\s)*?\*\//gi, '');
-        // remove // ... comments
-        code = code.replace(/\/\/.*?$/gim, '');
-        // search for comments
-        return /[^\/*]=?\/[^\/*]/.test(code);
-    }
 
     function gitAsync(dir: string, ...args: string[]) {
         return nodeutil.spawnAsync({
@@ -5556,7 +5547,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             pxt.log('')
             pxt.log(`------------------------`)
             reportLog(`${errors.length} extensions with errors`);
-            errors.forEach(er => reportLog(`- [ ]  ${er}`));
+            errors.forEach(er => reportLog(`- [ ]  [${er.repo}](https://github.com/${er.repo}) ${er.title} / [new issue](https://github.com/${er.repo}/issues/new?title=${encodeURIComponent(er.title)}&body=${encodeURIComponent(er.body)})`));
             return Promise.resolve();
         }
         const tag = repos[pkgpgh].tag;
@@ -5574,11 +5565,12 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             return nextAsync();
         }
 
-        return (
-            !nodeutil.existsDirSync(pkgdir)
-                ? gitAsync(".", "clone", "-q", "-b", tag, `https://github.com/${pkgpgh}`, pkgdir)
-                : gitAsync(pkgdir, "fetch").then(() => gitAsync(pkgdir, "checkout", "-f", repos[pkgpgh].tag))
-        )
+        return (!nodeutil.existsDirSync(pkgdir)
+            ? gitAsync(".", "clone", "-q", "-b", tag, `https://github.com/${pkgpgh}`, pkgdir)
+            : gitAsync(pkgdir, "fetch").then(() => gitAsync(pkgdir, "checkout", "-f", repos[pkgpgh].tag)))
+            .then(() => nodeutil.fileExistsSync(path.join(pkgdir, "package.json"))
+                && fs.unlinkSync(path.join(pkgdir, "package.json")))
+            .then(() => rimrafAsync(path.join(pkgdir, "node_modules"), {}))
             .then(() => pxtAsync(pkgdir, ["clean"]))
             .then(() => pxtAsync(pkgdir, ["install"]))
             .then(() => pxtAsync(pkgdir, buildArgs))
@@ -5587,8 +5579,8 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
                 nodeutil.writeFileSync(buildlog, tag);
             })
             .catch(e => {
-                errors.push(`${pkgpgh} ${e}`);
-                pxt.log(e);
+                errors.push({ repo: pkgpgh, title: "compilation error", body: `Error while compiling:\n${e.message}` });
+                reportLog(e);
                 return Promise.resolve();
             })
             .then(() => nextAsync());
@@ -5609,7 +5601,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
                 .then(tags => {
                     const tag = pxt.semver.sortLatestTags(tags)[0];
                     if (!tag) {
-                        errors.push(`${fullname}: no valid release found`);
+                        errors.push({ repo: fullname, title: "create a release", body: "You need to create a release in this repository. Follow the instructions at https://makecode.com/extensions/versioning." });
                         reportLog(errors[errors.length - 1]);
                     }
                     else
