@@ -3840,11 +3840,7 @@ ${lbl}: .short 0xffff
                 case SK.PlusToken: return "numops::adds";
                 case SK.MinusToken: return "numops::subs";
                 // we could expose __aeabi_idiv directly...
-                case SK.SlashToken: {
-                    if (opts.warnDiv)
-                        warning(node, 9274, "usage of / operator");
-                    return "numops::div";
-                }
+                case SK.SlashToken: return "numops::div";
                 case SK.PercentToken: return "numops::mod";
                 case SK.AsteriskToken: return "numops::muls";
                 case SK.AsteriskAsteriskToken: return "Math_::pow";

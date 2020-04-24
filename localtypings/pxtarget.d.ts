@@ -791,7 +791,6 @@ declare namespace ts.pxtc {
         justMyCode?: boolean;
         computeUsedSymbols?: boolean;
         name?: string;
-        warnDiv?: boolean; // warn when emitting division operator
         apisInfo?: ApisInfo;
         bannedCategories?: string[];
         skipPxtModulesTSC?: boolean; // skip re-checking of pxt_modules/*

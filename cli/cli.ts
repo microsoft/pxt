@@ -4184,7 +4184,6 @@ interface BuildCoreOptions {
     mode: BuildOption;
 
     debug?: boolean;
-    warnDiv?: boolean;
     ignoreTests?: boolean;
 
     // docs
@@ -4274,10 +4273,6 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
     return prepBuildOptionsAsync(buildOpts.mode, false, buildOpts.ignoreTests)
         .then((opts) => {
             compileOptions = opts;
-            if (buildOpts.warnDiv) {
-                pxt.debug(`warning on division operators`);
-                opts.warnDiv = true;
-            }
             opts.breakpoints = buildOpts.mode === BuildOption.DebugSim;
             if (buildOpts.debug) {
                 opts.breakpoints = true
@@ -4742,7 +4737,6 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
     else if (parsed && parsed.flags["deploy"])
         mode = BuildOption.Deploy;
     const clean = parsed && parsed.flags["clean"];
-    const warnDiv = parsed && !!parsed.flags["warndiv"];
     const ignoreTests = parsed && !!parsed.flags["ignoreTests"];
     const install = parsed && !!parsed.flags["install"];
 
@@ -4750,7 +4744,7 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
         .then(() => install ? installAsync(parsed) : Promise.resolve())
         .then(() => {
             parseBuildInfo(parsed);
-            return buildCoreAsync({ mode, warnDiv, ignoreTests })
+            return buildCoreAsync({ mode, ignoreTests })
         }).then((compileOpts) => { });
 }
 
@@ -5513,7 +5507,6 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         return Promise.resolve();
     }
     parseBuildInfo(parsed);
-    const warnDiv = !!parsed.flags["warndiv"];
     const clean = !!parsed.flags["clean"];
     const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
     const packages = targetConfig.packages;
@@ -5524,6 +5517,8 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     let todo: string[];
     const repos: pxt.Map<{ fullname: string; tag: string }> = {};
     const pkgsroot = path.join("temp", "ghpkgs");
+    const logfile = path.join(pkgsroot, "log.txt");
+    nodeutil.writeFileSync(logfile, ""); // reset file
 
     function detectDivision(code: string): boolean {
         // remove /* comments
@@ -5550,23 +5545,30 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         })
     }
 
+    function reportLog(msg: any) {
+        pxt.log(msg);
+        fs.appendFileSync(logfile, msg + "\n");
+    }
 
     function nextAsync(): Promise<void> {
         const pkgpgh = todo.pop();
         if (!pkgpgh) {
             pxt.log('')
             pxt.log(`------------------------`)
-            pxt.log(`${errors.length} packages with errors`);
-            errors.forEach(er => pxt.log(`- [ ]  ${er}`));
+            reportLog(`${errors.length} extensions with errors`);
+            errors.forEach(er => reportLog(`- [ ]  ${er}`));
             return Promise.resolve();
         }
         pxt.log('')
-        pxt.log(`  testing ${pkgpgh}`)
+        reportLog(`  testing ${pkgpgh}`)
         // clone or sync package
         const buildArgs = ["build", "--ignoreTests"];
-        if (warnDiv) buildArgs.push("--warndiv");
         if (forceLocalBuild) buildArgs.push("--localbuild");
         const pkgdir = path.join(pkgsroot, pkgpgh);
+        const buildlog = path.join(pkgdir, "built", "success.txt");
+        // check if already built with success
+        if (nodeutil.fileExistsSync(buildlog))
+            return nextAsync();
         return (
             !nodeutil.existsDirSync(pkgdir)
                 ? gitAsync(".", "clone", "-q", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
@@ -5576,20 +5578,8 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             .then(() => pxtAsync(pkgdir, ["install"]))
             .then(() => pxtAsync(pkgdir, buildArgs))
             .then(() => {
-                if (warnDiv) {
-                    // perform a regex search over the repo for / operator
-                    const filesWithDiv: pxt.Map<boolean> = {};
-                    nodeutil.allFiles(pkgdir, 1)
-                        .filter(f => /\.ts$/i.test(f))
-                        .forEach(f => detectDivision(fs.readFileSync(f, { encoding: "utf8" }))
-                            ? (filesWithDiv[f.replace(pkgdir, '').replace(/^[\/\\]/, '')] = true)
-                            : false);
-                    const fsw = Object.keys(filesWithDiv);
-                    if (fsw.length) {
-                        errors.push(`${pkgpgh} div found in ${fsw.join(', ')}`);
-                        pxt.log(errors[errors.length - 1])
-                    }
-                }
+                // already built with success
+                nodeutil.writeFileSync(buildlog, "");
             })
             .catch(e => {
                 errors.push(`${pkgpgh} ${e}`);
@@ -5608,14 +5598,14 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         .then(fullnames => {
             // remove dups
             fullnames = U.unique(fullnames, f => f.toLowerCase());
-            pxt.log(`found ${fullnames.length} approved packages`);
-            pxt.log(nodeutil.stringify(fullnames));
+            reportLog(`found ${fullnames.length} approved extensions`);
+            reportLog(nodeutil.stringify(fullnames));
             return Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
                 .then(tags => {
                     const tag = pxt.semver.sortLatestTags(tags)[0];
                     if (!tag) {
                         errors.push(`${fullname}: no valid release found`);
-                        pxt.log(errors[errors.length - 1]);
+                        reportLog(errors[errors.length - 1]);
                     }
                     else
                         repos[fullname] = { fullname, tag };
@@ -5623,8 +5613,8 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             );
         }).then(() => {
             todo = Object.keys(repos);
-            pxt.log(`found ${todo.length} approved package with releases`);
-            todo.forEach(fn => pxt.log(`  ${fn}#${repos[fn].tag}`));
+            reportLog(`found ${todo.length} approved extension with releases`);
+            todo.forEach(fn => reportLog(`  ${fn}#${repos[fn].tag}`));
             // 2. process each repo
             return nextAsync();
         });
@@ -5848,7 +5838,6 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             },
             debug: { description: "Emit debug information with build" },
             deploy: { description: "Deploy to device if connected" },
-            warndiv: { description: "Warns about division operators" },
             ignoreTests: { description: "Ignores tests in compilation", aliases: ["ignore-tests", "ignoretests", "it"] },
             clean: { description: "Clean before build" },
             install: {
@@ -6255,7 +6244,6 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         name: "testghpkgs",
         help: "Download and build approved github packages",
         flags: {
-            warndiv: { description: "Warns about division operators" },
             cloudbuild: {
                 description: "(deprecated) forces build to happen in the cloud",
                 aliases: ["cloud", "cloud-build", "cb"]
