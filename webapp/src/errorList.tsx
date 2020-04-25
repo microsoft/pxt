@@ -42,12 +42,10 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                                 icon={`inverted chevron ${isCollapsed ? 'up' : 'down'}`}
                                 title={collapseTooltip} onClick={this.onCollapseClick} />
 
-        const errorListInnerClasses = isCollapsed ? "errorListInner errorListSummary" : "errorListInner";
-
         let errorListContent;
         if (errorsAvailable) {
             if (isCollapsed) {
-                errorListContent = <div className="summarizedErrorMessage" onClick={this.onCollapseClick}>
+                errorListContent = <div className="summaryMessage" onClick={this.onCollapseClick}>
                     {lf("Uh oh! You have {0} error(s)!", errors.length)}
                 </div>
             } else {
@@ -58,6 +56,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             errorListContent = <div>{lf("Everything seems fine!")}</div>
         }
 
+        const errorListInnerClasses = isCollapsed ? "errorListInner errorListSummary" : "errorListInner";
         return <div className="errorList" >
             {errorsAvailable && toggleButton}
             <div className={errorListInnerClasses}>
