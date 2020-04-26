@@ -10,6 +10,21 @@ export const PROVIDER_NAME = "github";
 export class GithubProvider extends cloudsync.ProviderBase {
     constructor() {
         super(PROVIDER_NAME, lf("GitHub"), "icon github", "https://api.github.com");
+        pxt.github.handleGithubNetworkError = (e: any) => {
+            if (e.statusCode == 401) {
+                pxt.log(`github: invalid token`)
+                this.clearToken();
+                return true; // retry
+            } else if (e.statusCode == 403) {
+                pxt.log(`github: unauthorized access`)
+            }
+            return false;
+        }
+    }
+
+    private clearToken() {
+        pxt.github.token = undefined;
+        super.logout();
     }
 
     logout() {

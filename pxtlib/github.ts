@@ -95,6 +95,8 @@ namespace pxt.github {
         return hasProxy();
     }
 
+    export let handleGithubNetworkError: (e: any) => boolean;
+
     let isPrivateRepoCache: pxt.Map<boolean> = {};
 
     export interface CachedPackage {
@@ -122,6 +124,13 @@ namespace pxt.github {
             }
         }
         return U.requestAsync(opts)
+            .catch(e => {
+                if (handleGithubNetworkError) {
+                    const retry = handleGithubNetworkError(e)
+                    if (retry) return U.requestAsync(opts);
+                }
+                throw e;
+            });
     }
 
     function ghGetJsonAsync(url: string) {
