@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#" xmlns:fb="http://www.facebook.com/2008/fbml">
+
+<head>
+    <meta charset="UTF-8">
+    <title>MakeCode GitHub Classroom Redirect</title>
+    <script>
+        function checkToken() {
+            // sniff oauth
+            let keys = {};
+            window.location.hash.replace(/^#/, '').split('&')
+                .map(v => v.split('=', 2))
+                .forEach(a => keys[a[0]] = a[1]);
+
+            if (keys["access_token"]) {
+                // we've received an access token
+                if (keys["state"] == localStorage["core/oauthState"]) {
+                    localStorage["core/githubtoken"] = keys["access_token"];
+                }
+                delete localStorage["core/oauthState"];
+                // send back to assigment url
+                if (keys[assigment])
+                    window.location.href = keys[assigment];
+            } else if(keys["assigment"]) {
+                // we've been asked for an assignment,
+                // sign in with makecode
+                const state = Math.random().toString();
+                localStorage["core/oauthState"] = state;
+                const login = "https://makecode.com/oauth/login?state=" + state +
+                    "&response_type=token&client_id=gh-token&redirect_uri=" + encodeURIComponent(window.location.href.split('#', 1)[0])
+                window.location.href = login;                
+            }
+        }
+
+
+        document.addEventListener("load", function() {
+            checkToken();
+        });
+    </script>
+</head>
+<body>
+    <h1>
+        MakeCode GitHub Classroom redirect
+    </h1>
+    <body>
+        You should be redirected to GitHub classroom soon.
+    </body>
+    <footer id="footer" class="hideprint">
+        <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp; Cookies</a>
+        <a class="item" href="https://makecode.com/termsofuse" target="_blank" rel="noopener"> Terms Of Use</a>
+        <a class="item" href="https://makecode.com/trademarks" target="_blank" rel="noopener">Trademarks</a>
+        <div class="item">© 2020 Microsoft</div>
+    </footer>
+    <script type="text/javascript"
+        src="https://pxt.azureedge.net/blob/795d8506c80a04f5ca26f577a8d6152e2fa3e7a6/doccdn/pxtweb.js"></script>
+    <!-- @include tracking.html -->
+</body>
+</html>
