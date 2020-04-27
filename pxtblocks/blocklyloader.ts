@@ -2175,6 +2175,7 @@ namespace pxt.blocks {
         msg.DELETE_VARIABLE = lf("Delete the \"%1\" variable");
         msg.DELETE_VARIABLE_CONFIRMATION = lf("Delete %1 uses of the \"%2\" variable?");
         msg.NEW_VARIABLE_DROPDOWN = lf("New variable...");
+        msg.NEW_VARIABLE_TYPE_DROPDOWN = lf("New %1 variable...");
 
         // builtin variables_set
         const variablesSetId = "variables_set";
