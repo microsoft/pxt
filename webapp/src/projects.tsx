@@ -758,7 +758,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
     protected getUrl() {
         const { url, youTubeId, youTubePlaylistId } = this.props;
-        return ((youTubeId || youTubePlaylistId) && !url) 
+        return ((youTubeId || youTubePlaylistId) && !url)
             ? pxt.youtube.watchUrl(youTubeId, youTubePlaylistId)
             : ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
     }
