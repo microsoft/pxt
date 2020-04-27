@@ -570,6 +570,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 url={scr.url}
                                 imageUrl={scr.imageUrl}
                                 youTubeId={scr.youTubeId}
+                                youTubePlaylistId={scr.youTubePlaylistId}
                                 buttonLabel={scr.buttonLabel}
                                 label={scr.label}
                                 labelClass={scr.labelClass}
@@ -775,7 +776,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         else if (youTubeId)
             clickLabel = lf("Watch Video");
         else if (youTubePlaylistId)
-            clickLabel = lf("Watch Playlist")
+            clickLabel = lf("Watch Playlist");
         return clickLabel;
     }
 
