@@ -594,6 +594,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             largeImageUrl={selectedElement.largeImageUrl}
                             videoUrl={selectedElement.videoUrl}
                             youTubeId={selectedElement.youTubeId}
+                            youTubePlaylistId={selectedElement.youTubePlaylistId}
                             buttonLabel={selectedElement.buttonLabel}
                             scr={selectedElement}
                             onClick={this.props.onClick}
