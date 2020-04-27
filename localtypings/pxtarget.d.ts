@@ -15,6 +15,8 @@ declare namespace pxt {
         // value @random@ will be expanded to a random string
         // looks for 200, 403 error codes
         testUrl?: string;
+        // requires youtube acces
+        youTube?: boolean;
     }
     interface TargetConfig {
         packages?: PackagesConfig;
