@@ -10,12 +10,11 @@
     <script>
         function log(msg) {
             const eel = document.getElementById("log");
-                const line = document.createElement("div");
-                line.className = "ui message"
-                line.innerText = msg;
-                eel.append(line);
+            const line = document.createElement("div");
+            line.className = "ui message"
+            line.innerText = msg;
+            eel.append(line);
         }
-
         function checkToken() {
             // sniff oauth
             let keys = {};
@@ -24,22 +23,23 @@
                 .forEach(a => keys[a[0]] = a[1]);
 
             if (keys["access_token"]) {
-                // we've received an access token
                 if (keys["state"] == localStorage["core/oauthState"]) {
-                    localStorage["core/githubtoken"] = keys["access_token"];
+                    delete localStorage["core/oauthState"];
+                    delete localStorage["core/ghclassroomassigment"];
+                   throw new Error("invalid query");
                 }
-                delete localStorage["core/oauthState"];
+                
+                log(`redirecting to GitHub classroom`);
+                localStorage["core/githubtoken"] = keys["access_token"];
                 const assignment = keys["assignment"] = localStorage["core/ghclassroomassigment"];
+                delete localStorage["core/oauthState"];
                 delete localStorage["core/ghclassroomassigment"];
-                // send back to assigment url
-                log(`redirecting to assignment`);
                 window.location.href = "https://classroom.github.com/" + assignment;
             } else {
                 // we've been asked for an assignment,
                 const assignment = keys["assignment"];
                 if (!assignment)
                     throw Error("Invalid query");
-                log(`received assignment ${assignment}`);
                 const state = Math.random().toString();
                 localStorage["core/oauthState"] = state;
                 localStorage["core/ghclassroomassigment"] = assignment;
@@ -53,11 +53,7 @@
             try {
                 checkToken();
             } catch (e) {
-                const eel = document.getElementById("log");
-                const line = document.createElement("div");
-                line.className = "ui error message"
-                line.innerText = e.message;
-                eel.append(line);
+                log(`error: ${e.message}`)
                 throw e; // for tracking
             }
         });
