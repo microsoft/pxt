@@ -42,6 +42,8 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                                 icon={`inverted chevron ${isCollapsed ? 'up' : 'down'}`}
                                 title={collapseTooltip} onClick={this.onCollapseClick} />
 
+        const xButton = <sui.CloseButton onClick={this.onCollapseClick} />
+
         let errorListContent;
         if (errorsAvailable) {
             if (isCollapsed) {
@@ -57,8 +59,9 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         }
 
         return <div className="errorList" >
-            {errorsAvailable && toggleButton}
+            {/* {errorsAvailable && toggleButton} */}
             <div className={`errorListInner ${isCollapsed ? 'errorListSummary' : ''}`}>
+                {!isCollapsed && xButton}
                 {errorListContent}
             </div>
         </div>
