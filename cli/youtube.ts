@@ -18,6 +18,7 @@ function checkApiKey() {
 async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
     fn = fn.replace(/\.md$/i, '');
     const assets = `/static/${fn}`
+    nodeutil.mkdirP("docs" + assets)
     const playlist = await pxt.youtube.playlistInfoAsync(id);
     const videos = await pxt.youtube.listPlaylistVideosAsync(id);
     const playlistUrl = pxt.youtube.watchUrl(undefined, playlist.id);
