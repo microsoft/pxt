@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <title>MakeCode GitHub Classroom Redirect</title>
+    <link rel="stylesheet"
+        href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css"
+        type="text/css">
     <script>
         function checkToken() {
             // sniff oauth
@@ -14,8 +17,8 @@
 
             const assignment = keys["assigment"];
             if (!assignment)
-                throw Error("Missing assignment parameter");
-
+                throw Error("Invalid query");
+0
             if (keys["access_token"]) {
                 // we've received an access token
                 if (keys["state"] == localStorage["core/oauthState"]) {
@@ -24,37 +27,53 @@
                 delete localStorage["core/oauthState"];
                 // send back to assigment url
                 window.location.href = "https://classroom.github.com/" + assignment;
-            } else if(keys["assigment"]) {
+            } else if (keys["assigment"]) {
                 // we've been asked for an assignment,
                 // sign in with makecode
                 const state = Math.random().toString();
                 localStorage["core/oauthState"] = state;
                 const login = "https://makecode.com/oauth/login?state=" + state +
                     "&response_type=token&client_id=gh-token&redirect_uri=" + encodeURIComponent(window.location.href.split('#', 1)[0])
-                window.location.href = login;                
+                window.location.href = login;
             }
         }
 
-        document.addEventListener("load", function() {
-            checkToken();
+        window.addEventListener("load", function () {
+            try {
+                checkToken();
+            } catch (e) {
+                const eel = document.getElementById("error");
+                const line = document.createElement("div");
+                line.className = "ui error message"
+                line.innerText = e.message;
+                eel.append(line);
+                throw e; // for tracking
+            }
         });
     </script>
 </head>
-<body>
-    <h1>
-        MakeCode GitHub Classroom redirect
-    </h1>
-    <body>
-        You should be redirected to GitHub classroom soon.
-    </body>
-    <footer id="footer" class="hideprint">
-        <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp; Cookies</a>
-        <a class="item" href="https://makecode.com/termsofuse" target="_blank" rel="noopener"> Terms Of Use</a>
-        <a class="item" href="https://makecode.com/trademarks" target="_blank" rel="noopener">Trademarks</a>
-        <div class="item">© 2020 Microsoft</div>
-    </footer>
+
+<body id='root' class='root'>
+    <div class="ui container">
+        <h1>
+            MakeCode GitHub Classroom redirect
+        </h1>
+        <p>
+            You should be redirected to GitHub classroom soon.
+        </p>
+        <p id="error">
+
+        </p>
+        <footer id="footer" class="hideprint">
+            <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp; Cookies</a>
+            <a class="item" href="https://makecode.com/termsofuse" target="_blank" rel="noopener"> Terms Of Use</a>
+            <a class="item" href="https://makecode.com/trademarks" target="_blank" rel="noopener">Trademarks</a>
+            <div class="item">© 2020 Microsoft</div>
+        </footer>
+    </div>
     <script type="text/javascript"
         src="https://pxt.azureedge.net/blob/795d8506c80a04f5ca26f577a8d6152e2fa3e7a6/doccdn/pxtweb.js"></script>
     <!-- @include tracking.html -->
 </body>
+
 </html>
