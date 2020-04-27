@@ -705,6 +705,7 @@ export interface ProjectsDetailProps extends ISettingsProps {
     largeImageUrl?: string;
     videoUrl?: string;
     youTubeId?: string;
+    youTubePlaylistId?: string;
     buttonLabel?: string;
     url?: string;
     scr?: any;
@@ -731,9 +732,9 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     protected isLink() {
-        const { cardType, url, youTubeId } = this.props;
+        const { cardType, url, youTubeId, youTubePlaylistId } = this.props;
 
-        return isCodeCardWithLink(cardType) && (youTubeId || url);
+        return isCodeCardWithLink(cardType) && (youTubeId || youTubePlaylistId || url);
 
         function isCodeCardWithLink(value: string) {
             switch (value) {
@@ -754,15 +755,14 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     protected getUrl() {
-        const { url, youTubeId } = this.props;
-        return (youTubeId && !url) ?
-            `https://youtu.be/${youTubeId}`
-            :
-            ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
+        const { url, youTubeId, youTubePlaylistId } = this.props;
+        return ((youTubeId || youTubePlaylistId) && !url) 
+            ? pxt.youtube.watchUrl(youTubeId, youTubePlaylistId)
+            : ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
     }
 
     protected getClickLabel(cardType: string) {
-        const { youTubeId } = this.props;
+        const { youTubeId, youTubePlaylistId } = this.props;
         let clickLabel = lf("Show Instructions");
         if (cardType == "tutorial")
             clickLabel = lf("Start Tutorial");
@@ -773,7 +773,9 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         else if (cardType == "template")
             clickLabel = lf("New Project");
         else if (youTubeId)
-            clickLabel = lf("Play Video");
+            clickLabel = lf("Watch Video");
+        else if (youTubePlaylistId)
+            clickLabel = lf("Watch Playlist")
         return clickLabel;
     }
 
@@ -792,7 +794,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     protected getActionIcon(onClick: any, type: string, editor?: pxt.CodeCardEditorType): JSX.Element {
-        const { youTubeId } = this.props;
+        const { youTubeId, youTubePlaylistId } = this.props;
         let icon = "file text";
         switch (type) {
             case "tutorial":
@@ -808,7 +810,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 break;
             case "template":
             default:
-                if (youTubeId) icon = "youtube";
+                if (youTubeId || youTubePlaylistId) icon = "youtube";
                 break;
         }
         return this.isLink() && type != "example" // TODO (shakao)  migrate forumurl to otherAction json in md
@@ -882,9 +884,9 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     isYouTubeOnline(): boolean {
-        const { youTubeId } = this.props;
+        const { youTubeId, youTubePlaylistId } = this.props;
         // check that youtube is reachable
-        return youTubeId &&
+        return (youTubeId || youTubePlaylistId) &&
             this.getData("ping:https://www.youtube.com/favicon.ico");
     }
 
@@ -897,13 +899,14 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
     renderCore() {
         const { name, description, largeImageUrl, videoUrl,
-            youTubeId, buttonLabel, cardType, tags, otherActions } = this.props;
+            youTubeId, youTubePlaylistId, buttonLabel, cardType, tags, otherActions } = this.props;
 
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
         const descriptions = description && description.split("\n");
         const image = largeImageUrl || (youTubeId && `https://img.youtube.com/vi/${youTubeId}/0.jpg`);
         const video = !pxt.BrowserUtils.isElectron() && videoUrl;
         const showVideoOrImage = !pxt.appTarget.appTheme.hideHomeDetailsVideo;
+        const youTubeWatchUrl = pxt.youtube.watchUrl(youTubeId, youTubePlaylistId)
 
         let clickLabel: string;
         if (buttonLabel)
@@ -927,11 +930,11 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                             {desc}
                         </p>
                     })}
-                    {!!cardType && youTubeId && this.isYouTubeOnline() &&
+                    {!!cardType && youTubeWatchUrl && this.isYouTubeOnline() &&
                         // show youtube card
                         // thumbnail url `https://img.youtube.com/vi/${youTubeId}/default.jpg`
                         <sui.Link
-                            href={`https://youtu.be/${youTubeId}`}
+                            href={youTubeWatchUrl}
                             target="_blank"
                             icon="play"
                             text={lf("Play Video Lesson")}

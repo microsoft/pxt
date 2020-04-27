@@ -139,6 +139,7 @@ declare namespace pxt {
         largeImageUrl?: string;
         videoUrl?: string;
         youTubeId?: string;
+        youTubePlaylistId?: string; // playlist this video belongs to
         buttonLabel?: string;
         time?: number;
         url?: string;
