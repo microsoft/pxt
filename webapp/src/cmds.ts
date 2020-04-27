@@ -351,7 +351,7 @@ export function init(): void {
 
     const forceBrowserDownload = /force(Hex)?(Browser)?Download/i.test(window.location.href);
     const webUSBSupported = pxt.usb.isEnabled && pxt.appTarget?.compile?.webUSB;
-    if (forceBrowserDownload || pxt.appTarget.serial.noDeploy) {
+    if (forceBrowserDownload || pxt.appTarget?.serial?.noDeploy) {
         log(`deploy: force browser download`);
         // commands are ready
     } else if (isNativeHost()) {
