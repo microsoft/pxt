@@ -1,6 +1,6 @@
 
 namespace pxt.youtube {
-    let apiKey: string = undefined;
+    export let apiKey: string = undefined;
 
     function checkKey() {
         if (!apiKey)
@@ -51,12 +51,13 @@ namespace pxt.youtube {
             "name": video.snippet.title.replace(/[^-]*-/, '').trim(),
             "description": resolveDescription(video.snippet.description),
             "youTubeId": video.snippet.resourceId.videoId,
-            "youTubePlaylistId": video.snippet.resourceId.videoId,
+            "youTubePlaylistId": video.snippet.playlistId,
             "imageUrl": resolveThumbnail(video.snippet.thumbnails)
         }
     }
 
     export function playlistInfoAsync(playlistId: string) {
+        checkKey()
         const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet&id=${playlistId}&key=${apiKey}`;
         return pxt.Util.httpGetJsonAsync(url)
             .then((res: PlaylistResource) => res.items[0]);
@@ -64,6 +65,7 @@ namespace pxt.youtube {
 
     export interface PlaylistItem {
         snippet: {
+            playlistId: string;
             title: string;
             description: string;
             publishedAt: string;
@@ -82,6 +84,7 @@ namespace pxt.youtube {
     }
 
     export async function listPlaylistVideosAsync(playlistId: string): Promise<PlaylistItem[]> {
+        checkKey()
         let items: PlaylistItem[] = []
         let pageToken: string = undefined;
         do {

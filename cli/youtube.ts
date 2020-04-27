@@ -18,7 +18,7 @@ function apiKey() {
 async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
     fn = fn.replace(/\.md$/i, '');
     const assets = `/static/${fn}`
-    const playlist = await pxt.youtube.eplaylistInfoAsync(id);
+    const playlist = await pxt.youtube.playlistInfoAsync(id);
     const videos = await pxt.youtube.listPlaylistVideosAsync(id);
     const playlistUrl = pxt.youtube.watchUrl(undefined, playlist.id);
     const cards: pxt.CodeCard[] = videos.map(pxt.youtube.playlistItemToCodeCard);
