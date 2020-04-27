@@ -5,7 +5,7 @@ import * as fs from 'fs';
 
 export const GOOGLE_API_KEY = "GOOGLE_API_KEY";
 
-function apiKey() {
+function checkApiKey() {
     if (!pxt.youtube.apiKey) {
         const k = process.env[GOOGLE_API_KEY];
         if (!k) {
@@ -77,7 +77,7 @@ ${JSON.stringify(cards, null, 4)}
 }
 
 export function renderPlaylistsAsync(playlists: pxt.Map<string>): Promise<void> {
-    apiKey();
+    checkApiKey();
     return Promise.all(Object.keys(playlists).map(fn => renderPlaylistAsync(fn, playlists[fn])))
         .then(() => { pxt.log('playlists refreshed') });
 }
