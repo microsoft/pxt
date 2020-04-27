@@ -73,7 +73,6 @@ namespace pxt.winrt {
             const whid = wd.HumanInterfaceDevice.HidDevice;
             const rejectDeviceNotFound = () => {
                 const err = new Error(U.lf("Device not found"));
-                (<any>err).notifyUser = true;
                 (<any>err).type = "devicenotfound";
                 return Promise.reject(err);
             };

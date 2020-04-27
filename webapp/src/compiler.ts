@@ -219,7 +219,6 @@ export function py2tsAsync(force = false): Promise<pxtc.transpile.TranspileResul
         .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
         .then(opts => {
             opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
-            if (force) opts.forceTranspile = true;
 
             return workerOpAsync("py2ts", { options: opts })
         })
@@ -431,10 +430,16 @@ export function formatAsync(input: string, pos: number) {
 }
 
 export function snippetAsync(qName: string, python?: boolean): Promise<string> {
-    return workerOpAsync("snippet", {
+    let initStep = Promise.resolve();
+    if (python) {
+        // To make sure that the service is working with the most recent version of the file,
+        // run a typecheck
+        initStep = typecheckAsync().then(() => {})
+    }
+    return initStep.then(() => workerOpAsync("snippet", {
         snippet: { qName, python },
         runtime: pxt.appTarget.runtime
-    }).then(res => res as string)
+    })).then(res => res as string)
 }
 
 export function typecheckAsync() {

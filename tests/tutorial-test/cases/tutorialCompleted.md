@@ -1,6 +1,6 @@
 # Tutorial Completed 
 
-### @noDiffs true
+### @diffs false
 ## Introduction
 
 Let's get started!

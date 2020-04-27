@@ -599,6 +599,7 @@ declare namespace ts.pxtc {
         imageLiteral?: number;
         imageLiteralColumns?: number; // optional number of columns
         imageLiteralRows?: number; // optional number of rows
+        imageLiteralScale?: number; // button sizing between 0.6 and 2, default is 1
         weight?: number;
         parts?: string;
         trackArgs?: number[];
@@ -792,14 +793,12 @@ declare namespace ts.pxtc {
         justMyCode?: boolean;
         computeUsedSymbols?: boolean;
         name?: string;
-        warnDiv?: boolean; // warn when emitting division operator
         apisInfo?: ApisInfo;
         bannedCategories?: string[];
         skipPxtModulesTSC?: boolean; // skip re-checking of pxt_modules/*
         skipPxtModulesEmit?: boolean; // skip re-emit of pxt_modules/*
 
         syntaxInfo?: SyntaxInfo;
-        forceTranspile?: boolean;
 
         // decompiler only
         alwaysDecompileOnStart?: boolean;
@@ -877,6 +876,7 @@ declare namespace pxt.tutorial {
         explicitHints?: boolean; // tutorial expects explicit hints in `#### ~ tutorialhint` format
         flyoutOnly?: boolean; // no categories, display all blocks in flyout
         hideIteration?: boolean; // hide step control in tutorial
+        diffs?: boolean; // automatically diff snippets
         noDiffs?: boolean; // don't automatically generated diffs
         codeStart?: string; // command to run when code starts (MINECRAFT HOC ONLY)
         codeStop?: string; // command to run when code stops (MINECRAFT HOC ONLY)

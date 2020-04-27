@@ -95,6 +95,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     protected canvas: HTMLCanvasElement;
     protected renderedTiles: RenderedTile[];
     protected categoryTiles: RenderedTile[];
+    protected categories: Category[];
 
     constructor(props: TilePaletteProps) {
         super(props);
@@ -106,6 +107,24 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                     gallery.filter(t => t.tags.indexOf(opt.id) !== -1 && t.tileWidth === tileset.tileWidth));
                 }
         })
+
+        const extraCategories: pxt.Map<Category> = {};
+        for (const tile of gallery) {
+            const categoryName = tile.tags.find(t => pxt.Util.startsWith(t, "category-"));
+            if (categoryName) {
+                if (!extraCategories[categoryName]) {
+                    extraCategories[categoryName] = {
+                        id: categoryName,
+                        text: pxt.Util.rlf(`{id:tilecategory}${categoryName.substr(9)}`),
+                        tiles: []
+                    };
+                }
+
+                extraCategories[categoryName].tiles.push(tile);
+            }
+        }
+
+        this.categories = options.concat(Object.keys(extraCategories).map(key => extraCategories[key]));
     }
 
     componentDidMount() {
@@ -170,7 +189,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             </div>
             <Pivot options={tabs} selected={galleryOpen ? 1 : 0} onChange={this.pivotHandler} />
             <div className="tile-palette-controls-outer">
-                { galleryOpen && <Dropdown onChange={this.dropdownHandler} options={options} selected={category} /> }
+                { galleryOpen && <Dropdown onChange={this.dropdownHandler} options={this.categories} selected={category} /> }
 
                 { !galleryOpen &&
                     <div className="tile-palette-controls">
@@ -224,7 +243,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         const { page, category, galleryOpen } = this.props;
 
         if (galleryOpen) {
-            this.categoryTiles = options[category].tiles;
+            this.categoryTiles = this.categories[category].tiles;
         }
         else {
             this.categoryTiles = this.getCustomTiles().map(([t, i]) => ({ index: i, bitmap: t.data }));
@@ -242,12 +261,12 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         const tile = tileset.tiles[index];
         if (!!tile.qualifiedName) {
             // For gallery tile, find the category then the page within the category
-            const category = options.find(opt => opt.tiles.findIndex(t => t.qualifiedName == tile.qualifiedName) !== -1);
+            const category = this.categories.find(opt => opt.tiles.findIndex(t => t.qualifiedName == tile.qualifiedName) !== -1);
             if (!category || !category.tiles) return;
             const page = Math.max(Math.floor(category.tiles.findIndex(t => t.qualifiedName == tile.qualifiedName) / TILES_PER_PAGE), 0);
 
             dispatchSetGalleryOpen(true);
-            dispatchChangeTilePaletteCategory(options.indexOf(category) as TileCategory);
+            dispatchChangeTilePaletteCategory(this.categories.indexOf(category) as TileCategory);
             dispatchChangeTilePalettePage(page);
         } else {
             // For custom tile, find the page

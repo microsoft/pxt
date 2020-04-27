@@ -341,9 +341,10 @@ If you need a rendering of typescript, javascript code, specify the language as 
 
 #### ~ hint
 
-In tutorial, MakeCode automatically renders a diff between each typescrit or spy snippets.
+In tutorial, MakeCode can render a diff between each typescrit or spy snippets.
 To reset the diff on a step, use the ``@resetDiff`` metadata. 
-Use ``### @noDiffs`` to disable diffs for the entire tutorial
+
+Use ``### @diffs true/false`` to enable/disable diffs for the entire tutorial
 
 #### ~
 

@@ -565,26 +565,37 @@ export class ProjectView
 
     private convertTypeScriptToPythonAsync() {
         const snap = this.editor.snapshotState();
-        let p = this.saveTypeScriptAsync(false)
-            .then(() => compiler.pyDecompileAsync("main.ts"))
-            .then(cres => {
-                if (cres && cres.success) {
-                    const mainpy = cres.outfiles["main.py"];
-                    return this.saveVirtualFileAsync(pxt.PYTHON_PROJECT_NAME, mainpy, true);
-                } else {
-                    // TODO python
-                    this.editor.setDiagnostics(this.editorFile, snap);
-                    return Promise.resolve();
-                }
-            })
-            .catch(e => {
-                pxt.reportException(e);
-                core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
-            })
-        if (open)
-            p = core.showLoadingAsync("switchtopython", lf("switching to Python..."), p);
+        const fromLanguage = this.isBlocksActive() ? "blocks" : "ts";
+        const fromText = this.editorFile.content;
+        const mainPkg = pkg.mainEditorPkg();
 
-        return p;
+        let convertPromise: Promise<void>;
+
+        const cached = mainPkg.getCachedTranspile(fromLanguage, fromText, "py");
+        if (cached) {
+            convertPromise = this.saveVirtualFileAsync(pxt.PYTHON_PROJECT_NAME, cached, true);
+        }
+        else {
+            convertPromise = this.saveTypeScriptAsync(false)
+                .then(() => compiler.pyDecompileAsync("main.ts"))
+                .then(cres => {
+                    if (cres && cres.success) {
+                        const mainpy = cres.outfiles["main.py"];
+                        mainPkg.cacheTranspile(fromLanguage, fromText, "py", mainpy);
+                        return this.saveVirtualFileAsync(pxt.PYTHON_PROJECT_NAME, mainpy, true);
+                    } else {
+                        // TODO python
+                        this.editor.setDiagnostics(this.editorFile, snap);
+                        return Promise.resolve();
+                    }
+                })
+                .catch(e => {
+                    pxt.reportException(e);
+                    core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
+                })
+        }
+
+        return core.showLoadingAsync("switchtopython", lf("switching to Python..."), convertPromise);
     }
 
     openSimView() {
@@ -1300,6 +1311,7 @@ export class ProjectView
                 // Editor is loaded
                 pxt.BrowserUtils.changeHash("#editor", true);
                 document.getElementById("root").focus(); // Clear the focus.
+                cmds.maybeReconnectAsync();
                 this.editorLoaded();
             })
     }
@@ -1786,6 +1798,7 @@ export class ProjectView
                                 <div className="description">
                                     <p>
                                         {lf("Your project is saved in this image.")}
+                                        <br />
                                         {lf("Import or drag it into the editor to reload it.")}
                                     </p>
                                 </div>
@@ -1886,6 +1899,7 @@ export class ProjectView
 
         this.stopSimulator(true); // don't keep simulator around
         this.showKeymap(false); // close keymap if open
+        cmds.disconnectAsync(true); // turn off any kind of logging
         if (this.editor) this.editor.unloadFileAsync();
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
@@ -2154,12 +2168,33 @@ export class ProjectView
     }
 
     saveTypeScriptAsync(open = false): Promise<void> {
-        if (!this.editor || !this.state.currFile || this.editorFile.epkg != pkg.mainEditorPkg() || this.reload)
+        const mainPkg = pkg.mainEditorPkg();
+        if (!this.editor || !this.state.currFile || this.editorFile.epkg != mainPkg || this.reload)
             return Promise.resolve();
+
+        const fromLanguage = this.editorFile.getExtension() as pxtc.CodeLang;
+        const fromText = this.editorFile.content;
 
         let promise = open ? this.textEditor.loadMonacoAsync() : Promise.resolve();
         promise = promise
-            .then(() => this.editor.saveToTypeScriptAsync())
+            .then(() => {
+                if (open) {
+                    const cached = mainPkg.getCachedTranspile(fromLanguage, fromText, "ts");
+                    if (cached) {
+                        return Promise.resolve(cached);
+                    }
+
+                    return this.editor.saveToTypeScriptAsync()
+                        .then(src => {
+                            if (src !== undefined) {
+                                mainPkg.cacheTranspile(fromLanguage, fromText, "ts", src);
+                            }
+                            return src;
+                        });
+                }
+
+                return this.editor.saveToTypeScriptAsync()
+            })
             .then((src) => {
                 if (src === undefined && open) { // failed to convert
                     return core.confirmAsync({
@@ -2198,11 +2233,7 @@ export class ProjectView
     }
 
     disconnectAsync(): Promise<void> {
-        return cmds.disconnectAsync();
-    }
-
-    connectAsync(): Promise<void> {
-        return cmds.connectAsync();
+        return cmds.disconnectAsync(false);
     }
 
     pairAsync(): Promise<void> {
@@ -2325,88 +2356,91 @@ export class ProjectView
             && pxt.appTarget.simulator.emptyRunCode
             && !this.isBlocksEditor())
             simRestart = false;
-        this.setState({ compiling: true });
-        this.clearSerial();
-        this.editor.beforeCompile();
-        if (simRestart) this.stopSimulator();
-        let state = this.editor.snapshotState()
-        this.syncPreferredEditor()
-        compiler.compileAsync({ native: true, forceEmit: true })
-            .then<pxtc.CompileResult>(resp => {
-                this.editor.setDiagnostics(this.editorFile, state)
 
-                let fn = pxt.outputName()
-                if (!resp.outfiles[fn]) {
-                    pxt.tickEvent("compile.noemit")
-                    core.warningNotification(lf("Compilation failed, please check your code for errors."));
-                    return Promise.resolve(null)
-                }
-                resp.saveOnly = saveOnly
-                resp.userContextWindow = userContextWindow;
-                resp.downloadFileBaseName = pkg.genFileName("");
-                resp.confirmAsync = core.confirmAsync;
-                let h = this.state.header
-                if (h)
-                    resp.headerId = h.id
-                if (pxt.commands.patchCompileResultAsync)
-                    return pxt.commands.patchCompileResultAsync(resp).then(() => resp)
-                else
-                    return resp
-            }).then(resp => {
-                if (!resp) return Promise.resolve();
-                if (saveOnly) {
-                    return pxt.commands.saveOnlyAsync(resp);
-                }
-                if (!resp.success) {
-                    if (!this.maybeShowPackageErrors(true)) {
-                        core.confirmAsync({
-                            header: lf("Compilation failed"),
-                            body: lf("Ooops, looks like there are errors in your program."),
-                            hideAgree: true,
-                            disagreeLbl: lf("Close")
-                        });
+        try {
+            this.setState({ compiling: true });
+            this.clearSerial();
+            this.editor.beforeCompile();
+            if (simRestart) this.stopSimulator();
+            let state = this.editor.snapshotState()
+            this.syncPreferredEditor()
+            compiler.compileAsync({ native: true, forceEmit: true })
+                .then<pxtc.CompileResult>(resp => {
+                    this.editor.setDiagnostics(this.editorFile, state)
+
+                    let fn = pxt.outputName()
+                    if (!resp.outfiles[fn]) {
+                        pxt.tickEvent("compile.noemit")
+                        core.warningNotification(lf("Compilation failed, please check your code for errors."));
+                        return Promise.resolve(null)
                     }
-                }
-                let deployStartTime = Date.now()
-                pxt.tickEvent("deploy.start")
-                return pxt.commands.deployAsync(resp, {
-                    reportDeviceNotFoundAsync: (docPath, compileResult) => {
-                        pxt.tickEvent("deploy.devicenotfound")
-                        return cmds.showDeviceNotFoundDialogAsync(docPath, compileResult)
-                    },
-                    reportError: (e) => {
-                        pxt.tickEvent("deploy.reporterror")
-                        return core.errorNotification(e)
-                    },
-                    showNotification: (msg) => core.infoNotification(msg)
-                })
-                    .then(() => {
-                        let elapsed = Date.now() - deployStartTime
-                        pxt.tickEvent("deploy.finished", { "elapsedMs": elapsed })
-                    })
-                    .catch(e => {
-                        if (e.notifyUser) {
-                            core.warningNotification(e.message);
-                        } else {
-                            const errorText = pxt.appTarget.appTheme.useUploadMessage ? lf("Upload failed, please try again.") : lf("Download failed, please try again.");
-                            core.warningNotification(errorText);
+                    resp.saveOnly = saveOnly
+                    resp.userContextWindow = userContextWindow;
+                    resp.downloadFileBaseName = pkg.genFileName("");
+                    resp.confirmAsync = core.confirmAsync;
+                    let h = this.state.header
+                    if (h)
+                        resp.headerId = h.id
+                    if (pxt.commands.patchCompileResultAsync)
+                        return pxt.commands.patchCompileResultAsync(resp).then(() => resp)
+                    else
+                        return resp
+                }).then(resp => {
+                    if (!resp) return Promise.resolve();
+                    if (saveOnly) {
+                        return pxt.commands.saveOnlyAsync(resp);
+                    }
+                    if (!resp.success) {
+                        if (!this.maybeShowPackageErrors(true)) {
+                            core.confirmAsync({
+                                header: lf("Compilation failed"),
+                                body: lf("Ooops, looks like there are errors in your program."),
+                                hideAgree: true,
+                                disagreeLbl: lf("Close")
+                            });
                         }
-                        let elapsed = Date.now() - deployStartTime
-                        pxt.tickEvent("deploy.exception", { "notifyUser": e.notifyUser, "elapsedMs": elapsed })
-                        pxt.reportException(e);
-                        if (userContextWindow)
-                            try { userContextWindow.close() } catch (e) { }
+                    }
+                    let deployStartTime = Date.now()
+                    pxt.tickEvent("deploy.start")
+                    return pxt.commands.deployAsync(resp, {
+                        reportError: (e) => {
+                            pxt.tickEvent("deploy.reporterror")
+                            return core.errorNotification(e)
+                        },
+                        showNotification: (msg) => core.infoNotification(msg)
                     })
-            }).catch((e: Error) => {
-                pxt.reportException(e);
-                core.errorNotification(lf("Compilation failed, please contact support."));
-                if (userContextWindow)
-                    try { userContextWindow.close() } catch (e) { }
-            }).finally(() => {
+                        .then(() => {
+                            let elapsed = Date.now() - deployStartTime
+                            pxt.tickEvent("deploy.finished", { "elapsedMs": elapsed })
+                        })
+                        .catch(e => {
+                            if (e.notifyUser) {
+                                core.warningNotification(e.message);
+                            } else {
+                                const errorText = pxt.appTarget.appTheme.useUploadMessage ? lf("Upload failed, please try again.") : lf("Download failed, please try again.");
+                                core.warningNotification(errorText);
+                            }
+                            let elapsed = Date.now() - deployStartTime
+                            pxt.tickEvent("deploy.exception", { "notifyUser": e.notifyUser, "elapsedMs": elapsed })
+                            pxt.reportException(e);
+                            if (userContextWindow)
+                                try { userContextWindow.close() } catch (e) { }
+                        })
+                }).catch((e: Error) => {
+                    pxt.reportException(e);
+                    core.errorNotification(lf("Compilation failed, please contact support."));
+                    if (userContextWindow)
+                        try { userContextWindow.close() } catch (e) { }
+                }).finally(() => {
+                    this.setState({ compiling: false, isSaving: false });
+                    if (simRestart) this.runSimulator();
+                })
+                .done();
+            } catch (e) {
                 this.setState({ compiling: false, isSaving: false });
-                if (simRestart) this.runSimulator();
-            })
-            .done();
+                pxt.reportException(e);
+                core.errorNotification(lf("Compilation failed, please try again."));
+            }
     }
 
     overrideTypescriptFile(text: string) {

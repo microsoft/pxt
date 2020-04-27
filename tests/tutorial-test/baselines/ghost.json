@@ -16,6 +16,6 @@
     "activities": null,
     "code": "\n{\nbasic.forever(() => {\n    basic.showIcon(IconNames.Yes);\n});\n}\n\n{\nbasic.showString(\"Hello\")\n}\n\n{\nbasic.forever(function() {\n    basic.showLeds(`\n        . # . # .\n        # # # # #\n        # # # # #\n        . # # # .\n        . . # . .`);\n})\n}\n\n{\ninput.onButtonPressed(Button.A, () => {\n    radio.sendNumber(0)\n})\n}\n",
     "metadata": {
-        "noDiffs": true
+        "diffs": false
     }
 }

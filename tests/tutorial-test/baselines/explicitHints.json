@@ -19,7 +19,7 @@
     "activities": null,
     "code": "\n{\nbasic.showString(\"Micro!\")\n}\n\n{\nlet x = 1;\nlet y = x + 2;\n}\n\n{\nbasic.showIcon(IconNames.Square)\n}\n",
     "metadata": {
-        "noDiffs": true,
+        "diffs": false,
         "explicitHints": true
     }
 }

@@ -184,10 +184,10 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
                 <div className="ui heading">
                     <div className="column" style={{ zIndex: 1 }}>
-                        {targetTheme.scriptManager ? <h2 role="button" className="ui header myproject-header" title={lf("View all projects")} tabIndex={0}
+                        {targetTheme.scriptManager ? <h2 role="button" className="ui header myproject-header"
                             onClick={this.showScriptManager} onKeyDown={sui.fireClickOnEnter}>
                             {lf("My Projects")}
-                            <span className="view-all-button">
+                            <span className="view-all-button" tabIndex={0} title={lf("View all projects")}>
                                 {lf("View All")}
                             </span>
                         </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
@@ -838,7 +838,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             {this.isLink() && type != "example" ? // TODO (shakao)  migrate forumurl to otherAction json in md
                 <sui.Link
                     href={this.getUrl()}
-                    refCallback={this.linkRef}
+                    refCallback={autoFocus ? this.linkRef : undefined}
                     target={'_blank'}
                     text={text}
                     className={`button attached approve large`}
@@ -927,6 +927,17 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                             {desc}
                         </p>
                     })}
+                    {!!cardType && youTubeId && this.isYouTubeOnline() &&
+                        // show youtube card
+                        // thumbnail url `https://img.youtube.com/vi/${youTubeId}/default.jpg`
+                        <sui.Link
+                            href={`https://youtu.be/${youTubeId}`}
+                            target="_blank"
+                            icon="play"
+                            text={lf("Play Video Lesson")}
+                            className={`yt-button button attached approve large inverted`}
+                            title={lf("Open YouTube video in new window")}
+                        />}
                 </div>
             </div>
             <div className="actions column ten wide">
@@ -940,20 +951,6 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                         // TODO (shakao) migrate forumurl to otherAction json in md
                         this.getActionCard(lf("Open in Editor"), "example", this.handleOpenForumUrlInEditor)
                     }
-                    {!!cardType && youTubeId && this.isYouTubeOnline() &&
-                        // show youtube card
-                        <div className="card-action ui items youtube">
-                            <sui.Link role="button" className="link button attached" icon="youtube" href={`https://youtu.be/${youTubeId}`} target="_blank" tabIndex={-1} />
-                            <div className="card-action-title">YouTube</div>
-                            <sui.Link
-                                href={`https://youtu.be/${youTubeId}`}
-                                refCallback={this.linkRef}
-                                target="_blank"
-                                text={lf("Play Video")}
-                                className={`button attached approve large`}
-                                title={lf("Open YouTube video in new window")}
-                            />
-                        </div>}
                 </div>
             </div>
         </div>;

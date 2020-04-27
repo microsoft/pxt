@@ -142,14 +142,14 @@ Tutorial metadata is optionally specified at the top of the document. Metadata i
 * **explicitHints**: Indicates explicit hints, in the format ``### ~ tutorialhint``. The default is ``false`` making hints available for each step.
 * **flyoutOnly**: Indicates that the tutorial should display all available blocks in a permanently-visible flyout, instead of the toolbox. The default is ``false``.
 * **hideIteration**: Hides the step controls. This includes the previous, next, and exit tutorial buttons, as well as the step counter in the menu bar. The default is ``false``.
-* **noDiffs**: disable automatic diffs between snippets
+* **diffs**: enable/disable diffs on all languages
 
 ```markdown
 ### @activities true
 ### @explicitHints true
 ### @flyoutOnly true
 ### @hideIteration true
-### @noDiffs true
+### @diffs true
 ```
 
 ### Title

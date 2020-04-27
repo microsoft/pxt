@@ -901,7 +901,7 @@ namespace pxt.cpp {
                         fileName = fullName
 
                         parseCpp(src, isHeader)
-                        src = src.replace(/^\s*/mg, "") // shrink the files
+                        src = src.replace(/^[ \t]*/mg, "") // shrink the files
                         res.extensionFiles[sourcePath + fullName] = src
 
                         if (pkg.level == 0)

@@ -13,6 +13,6 @@
     "activities": null,
     "code": "\n{\nbasic.showString(\"Micro!\")\n}\n",
     "metadata": {
-        "noDiffs": true
+        "diffs": false
     }
 }
