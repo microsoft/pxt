@@ -216,7 +216,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                     if (locales && locales.indexOf(pxt.Util.userLanguage()) < 0)
                         return false; // locale not supported
                     // test if blocked
-                    const testUrl = galProps.testUrl;
+                    const testUrl = galProps.testUrl || (!!galProps.youTube && "https://www.youtube.com/favicon.ico");
                     if (testUrl) {
                         const ping = this.getData(`ping:${testUrl.replace('@random@', Math.random().toString())}`);
                         if (ping !== true) // still loading or can't ping
