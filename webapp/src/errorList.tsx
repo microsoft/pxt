@@ -56,8 +56,6 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             errorListContent = <div>{lf("Everything seems fine!")}</div>
         }
 
-        //const errorListInnerClasses = isCollapsed ? "errorListInner errorListSummary" : "errorListInner";
-        //const errorListInnerClasses = "errorListInner" ${};
         return <div className="errorList" >
             {errorsAvailable && toggleButton}
             <div className={`errorListInner ${isCollapsed ? 'errorListSummary' : ''}`}>
@@ -81,7 +79,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     onErrorsChanged(errors: pxtc.KsDiagnostic[]) {
         this.setState({
             errors,
-            isCollapsed: errors.length == 0 || this.state.isCollapsed
+            isCollapsed: errors?.length == 0 || this.state.isCollapsed
         })
     }
 }
