@@ -12,6 +12,10 @@
                 .map(v => v.split('=', 2))
                 .forEach(a => keys[a[0]] = a[1]);
 
+            const assignment = keys["assigment"];
+            if (!assignment)
+                throw Error("Missing assignment parameter");
+
             if (keys["access_token"]) {
                 // we've received an access token
                 if (keys["state"] == localStorage["core/oauthState"]) {
@@ -19,8 +23,7 @@
                 }
                 delete localStorage["core/oauthState"];
                 // send back to assigment url
-                if (keys[assigment])
-                    window.location.href = keys[assigment];
+                window.location.href = "https://classroom.github.com/" + assignment;
             } else if(keys["assigment"]) {
                 // we've been asked for an assignment,
                 // sign in with makecode
@@ -31,7 +34,6 @@
                 window.location.href = login;                
             }
         }
-
 
         document.addEventListener("load", function() {
             checkToken();
