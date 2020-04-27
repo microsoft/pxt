@@ -56,10 +56,11 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             errorListContent = <div>{lf("Everything seems fine!")}</div>
         }
 
-        const errorListInnerClasses = isCollapsed ? "errorListInner errorListSummary" : "errorListInner";
+        //const errorListInnerClasses = isCollapsed ? "errorListInner errorListSummary" : "errorListInner";
+        //const errorListInnerClasses = "errorListInner" ${};
         return <div className="errorList" >
             {errorsAvailable && toggleButton}
-            <div className={errorListInnerClasses}>
+            <div className={`errorListInner ${isCollapsed ? 'errorListSummary' : ''}`}>
                 {errorListContent}
             </div>
         </div>
