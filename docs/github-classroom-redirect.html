@@ -23,15 +23,15 @@
                 .forEach(a => keys[a[0]] = a[1]);
 
             if (keys["access_token"]) {
-                if (keys["state"] == localStorage["core/oauthState"]) {
+                if (!keys["state"] || keys["state"] != localStorage["core/oauthState"]) {
                     delete localStorage["core/oauthState"];
                     delete localStorage["core/ghclassroomassigment"];
                    throw new Error("invalid query");
                 }
-                
+
+                const assignment = localStorage["core/ghclassroomassigment"];
                 log(`redirecting to GitHub classroom`);
                 localStorage["core/githubtoken"] = keys["access_token"];
-                const assignment = keys["assignment"] = localStorage["core/ghclassroomassigment"];
                 delete localStorage["core/oauthState"];
                 delete localStorage["core/ghclassroomassigment"];
                 window.location.href = "https://classroom.github.com/" + assignment;
