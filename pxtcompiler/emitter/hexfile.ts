@@ -254,6 +254,7 @@ namespace ts.pxtc {
                 }
             }
 
+
             for (; i < hexlines.length; ++i) {
                 let m = /:02000004(....)/.exec(hexlines[i])
                 if (m) {
@@ -262,6 +263,8 @@ namespace ts.pxtc {
                 m = /^:..(....)00/.exec(hexlines[i])
                 if (m) {
                     let newAddr = parseInt(upperAddr + m[1], 16)
+                    if (!opts.flashUsableEnd && lastAddr && newAddr - lastAddr > 64 * 1024)
+                        hitEnd()
                     if (opts.flashUsableEnd && newAddr >= opts.flashUsableEnd)
                         hitEnd()
                     lastIdx = i
@@ -279,6 +282,8 @@ namespace ts.pxtc {
                     ctx.jmpStartIdx = i
                 }
             }
+
+            pxt.debug(`code start: ${ctx.codeStartAddrPadded}, jmptbl: ${ctx.jmpStartAddr}`)
 
             if (!ctx.jmpStartAddr)
                 oops("No hex start")
@@ -1203,14 +1208,16 @@ __flash_checksums:
         const opts0 = U.flatClone(opts)
         assembleAndPatch(src, bin, opts, cres)
 
-        const otherVariants = opts0.extinfo.otherMultiVariants || []
+        const otherVariants = opts0.otherMultiVariants || []
         if (otherVariants.length)
             try {
-                for (let extinfo of otherVariants) {
+                for (let other of otherVariants) {
                     const localOpts = U.flatClone(opts0)
-                    localOpts.extinfo = extinfo
+                    localOpts.extinfo = other.extinfo
+                    other.target.isNative = true
+                    localOpts.target = other.target
                     //pxt.setAppTargetVariant(extinfo.appVariant, { temporary: true })
-                    hexfile.setupFor(localOpts.target, extinfo)
+                    hexfile.setupFor(localOpts.target, localOpts.extinfo)
                     assembleAndPatch(src, bin, localOpts, cres)
                 }
             } finally {

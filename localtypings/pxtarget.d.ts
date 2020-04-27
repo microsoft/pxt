@@ -797,6 +797,8 @@ declare namespace ts.pxtc {
         skipPxtModulesTSC?: boolean; // skip re-checking of pxt_modules/*
         skipPxtModulesEmit?: boolean; // skip re-emit of pxt_modules/*
 
+        otherMultiVariants?: ExtensionTarget[];
+
         syntaxInfo?: SyntaxInfo;
 
         // decompiler only
@@ -839,9 +841,13 @@ declare namespace ts.pxtc {
         commBase?: number;
         skipCloudBuild?: boolean;
         hexinfo?: HexInfo;
-        otherMultiVariants?: ExtensionInfo[];
         appVariant?: string;
         outputPrefix?: string;
+    }
+
+    interface ExtensionTarget {
+        extinfo: ExtensionInfo
+        target: CompileTarget
     }
 
     interface HexInfo {
