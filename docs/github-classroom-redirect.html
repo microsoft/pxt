@@ -8,6 +8,14 @@
         href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css"
         type="text/css">
     <script>
+        function log(msg) {
+            const eel = document.getElementById("log");
+                const line = document.createElement("div");
+                line.className = "ui message"
+                line.innerText = msg;
+                eel.append(line);
+        }
+
         function checkToken() {
             // sniff oauth
             let keys = {};
@@ -15,23 +23,26 @@
                 .map(v => v.split('=', 2))
                 .forEach(a => keys[a[0]] = a[1]);
 
-            const assignment = keys["assigment"];
-            if (!assignment)
-                throw Error("Invalid query");
-0
             if (keys["access_token"]) {
                 // we've received an access token
                 if (keys["state"] == localStorage["core/oauthState"]) {
                     localStorage["core/githubtoken"] = keys["access_token"];
                 }
                 delete localStorage["core/oauthState"];
+                const assignment = keys["assignment"] = localStorage["core/ghclassroomassigment"];
+                delete localStorage["core/ghclassroomassigment"];
                 // send back to assigment url
+                log(`redirecting to assignment`);
                 window.location.href = "https://classroom.github.com/" + assignment;
-            } else if (keys["assigment"]) {
+            } else {
                 // we've been asked for an assignment,
-                // sign in with makecode
+                const assignment = keys["assignment"];
+                if (!assignment)
+                    throw Error("Invalid query");
+                log(`received assignment ${assignment}`);
                 const state = Math.random().toString();
                 localStorage["core/oauthState"] = state;
+                localStorage["core/ghclassroomassigment"] = assignment;
                 const login = "https://makecode.com/oauth/login?state=" + state +
                     "&response_type=token&client_id=gh-token&redirect_uri=" + encodeURIComponent(window.location.href.split('#', 1)[0])
                 window.location.href = login;
@@ -42,7 +53,7 @@
             try {
                 checkToken();
             } catch (e) {
-                const eel = document.getElementById("error");
+                const eel = document.getElementById("log");
                 const line = document.createElement("div");
                 line.className = "ui error message"
                 line.innerText = e.message;
@@ -61,7 +72,7 @@
         <p>
             You should be redirected to GitHub classroom soon.
         </p>
-        <p id="error">
+        <p id="log">
 
         </p>
         <footer id="footer" class="hideprint">
