@@ -564,6 +564,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             blocklyDiv.style.width = blocklyArea.offsetWidth + 'px';
             blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
             Blockly.svgResize(this.editor);
+            Blockly.hideChaffOnResize(true);
             this.resizeToolbox();
             this.resizeFieldEditorView();
         }
