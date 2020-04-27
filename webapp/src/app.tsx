@@ -2436,11 +2436,11 @@ export class ProjectView
                     if (simRestart) this.runSimulator();
                 })
                 .done();
-            } catch (e) {
-                this.setState({ compiling: false, isSaving: false });
-                pxt.reportException(e);
-                core.errorNotification(lf("Compilation failed, please try again."));
-            }
+        } catch (e) {
+            this.setState({ compiling: false, isSaving: false });
+            pxt.reportException(e);
+            core.errorNotification(lf("Compilation failed, please try again."));
+        }
     }
 
     overrideTypescriptFile(text: string) {
@@ -3789,12 +3789,12 @@ function initPacketIO() {
             pxt.log(`packetio: ${pxt.packetio.isConnected() ? 'connected' : 'disconnected'}`)
             data.invalidate("packetio:*")
         },
-        (buf, isErr) => {
+        (id, buf, isErr) => {
             const data = Util.fromUTF8(Util.uint8ArrayToString(buf))
             //pxt.debug('serial: ' + data)
             window.postMessage({
                 type: 'serial',
-                id: 'n/a', // TODO
+                id: id || 'n/a',
                 data
             }, "*")
         });

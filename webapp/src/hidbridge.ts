@@ -68,6 +68,7 @@ export function mkBridgeAsync(): Promise<pxt.packetio.PacketIO> {
 }
 
 class BridgeIO implements pxt.packetio.PacketIO {
+    deviceId(): string { return undefined; }
     onDeviceConnectionChanged = (connect: boolean) => { };
     onConnectionChanged = () => { };
     onData = (v: Uint8Array) => { };

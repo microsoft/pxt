@@ -15,6 +15,10 @@ namespace pxt.winrt {
         constructor() {
         }
 
+        deviceId(): string {
+            return undefined;
+        }
+
         disposeAsync(): Promise<void> {
             return Promise.resolve();
         }

@@ -10,7 +10,7 @@ namespace pxt.packetio {
         icon: string;
         familyID: number;
 
-        onSerial: (buf: Uint8Array, isStderr: boolean) => void;
+        onSerial: (deviceid: string, buf: Uint8Array, isStderr: boolean) => void;
 
         reconnectAsync(): Promise<void>;
         disconnectAsync(): Promise<void>;
@@ -18,6 +18,7 @@ namespace pxt.packetio {
     }
 
     export interface PacketIO {
+        deviceId(): string;
         sendPacketAsync(pkt: Uint8Array): Promise<void>;
         onDeviceConnectionChanged: (connect: boolean) => void;
         onConnectionChanged: () => void;
@@ -45,7 +46,7 @@ namespace pxt.packetio {
     let wrapper: PacketIOWrapper;
     let initPromise: Promise<PacketIOWrapper>;
     let onConnectionChangedHandler: () => void = () => { };
-    let onSerialHandler: (buf: Uint8Array, isStderr: boolean) => void;
+    let onSerialHandler: (deviceid: string, buf: Uint8Array, isStderr: boolean) => void;
 
     /**
      * A DAP wrapper is active
@@ -87,7 +88,7 @@ namespace pxt.packetio {
 
     export function configureEvents(
         onConnectionChanged: () => void,
-        onSerial: (buf: Uint8Array, isStderr: boolean) => void
+        onSerial: (deviceid: string, buf: Uint8Array, isStderr: boolean) => void
     ): void {
         onConnectionChangedHandler = onConnectionChanged;
         onSerialHandler = onSerial;

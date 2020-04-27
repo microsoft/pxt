@@ -187,6 +187,15 @@ namespace pxt.usb {
             return Promise.resolve();
         }
 
+        deviceId(): string {
+            try {
+                return this.dev && this.dev.serialNumber;
+            }
+            catch(e) {
+                return undefined;
+            }
+        }
+
         private handleUSBDisconnected(event: any) {
             this.log("device disconnected")
             if (event.device == this.dev) {

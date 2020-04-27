@@ -176,18 +176,18 @@ namespace pxt.HF2 {
         private cmdSeq = U.randomUint32();
         constructor(public readonly io: pxt.packetio.PacketIO) {
             let frames: Uint8Array[] = []
-            io.onDeviceConnectionChanged = connect =>
+            this.io.onDeviceConnectionChanged = connect =>
                 this.disconnectAsync()
                     .then(() => connect && this.reconnectAsync());
-            io.onSerial = (b, e) => this.onSerial(b, e)
-            io.onData = buf => {
+            this.io.onSerial = (b, e) => this.onSerial(this.io.deviceId(), b, e)
+            this.io.onData = buf => {
                 let tp = buf[0] & HF2_FLAG_MASK
                 let len = buf[0] & 63
                 //console.log(`msg tp=${tp} len=${len}`)
                 let frame = new Uint8Array(len)
                 U.memcpy(frame, 0, buf, 1, len)
                 if (tp & HF2_FLAG_SERIAL_OUT) {
-                    this.onSerial(frame, tp == HF2_FLAG_SERIAL_ERR)
+                    this.onSerial(this.io.deviceId(), frame, tp == HF2_FLAG_SERIAL_ERR)
                     return
                 }
                 frames.push(frame)
@@ -212,7 +212,7 @@ namespace pxt.HF2 {
                     }
                 }
             }
-            io.onEvent = buf => {
+            this.io.onEvent = buf => {
                 let evid = read32(buf, 0)
                 let f = U.lookup(this.eventHandlers, evid + "")
                 if (f) {
@@ -221,7 +221,7 @@ namespace pxt.HF2 {
                     log("unhandled event: " + evid.toString(16))
                 }
             }
-            io.onError = err => {
+            this.io.onError = err => {
                 log("recv error: " + err.message)
                 if (this.autoReconnect) {
                     this.autoReconnect = false
@@ -252,7 +252,7 @@ namespace pxt.HF2 {
         msgs = new U.PromiseBuffer<Uint8Array>()
         eventHandlers: pxt.Map<(buf: Uint8Array) => void> = {}
 
-        onSerial = (buf: Uint8Array, isStderr: boolean) => { };
+        onSerial = (deviceid: string, buf: Uint8Array, isStderr: boolean) => { };
 
         private resetState() {
             this.lock = new U.PromiseQueue()
