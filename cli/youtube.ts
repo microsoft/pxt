@@ -55,6 +55,7 @@ async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
         "name": "PlayList",
         "description": "See entire playlist on YouTube",
         "url": playlistUrl,
+        "youTubePlaylistId": id,
         "imageUrl": `${assets}/playlist.png`
     });
     const md =
