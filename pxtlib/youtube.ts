@@ -106,7 +106,7 @@ namespace pxt.youtube {
             if (playlistId)
                 url += `&list=${playlistId}`;
         } else if (playlistId) {
-            url = `https://www.youtube.com/watch?list=${playlistId}`;
+            url = `https://www.youtube.com/playlist?list=${playlistId}`;
         }
         return url;
     }
