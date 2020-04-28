@@ -70,7 +70,7 @@ These blocks can be found in the Loops category and allow you to exit out of lon
 
 ![Break and continue blocks](/static/blog/microbit/2020-release/break-continue.jpg)
 
-### Rudolph connectors
+### Dot-to-dot connectors
 
 That’s what we call these indicators we’ve added to help dragging and dropping embedded blocks to the right place. 
 
