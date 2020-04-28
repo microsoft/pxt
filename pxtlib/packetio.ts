@@ -14,6 +14,7 @@ namespace pxt.packetio {
 
         reconnectAsync(): Promise<void>;
         disconnectAsync(): Promise<void>;
+        // flash the device, does **not** reconnect
         reflashAsync(resp: pxtc.CompileResult): Promise<void>;
     }
 
