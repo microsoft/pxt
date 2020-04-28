@@ -5515,7 +5515,6 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     if (!packages) {
         pxt.log(`packages section not found in targetconfig.json`)
     }
-    let todo: string[];
     const pkgsroot = path.join("temp", "ghpkgs");
     const logfile = path.join(pkgsroot, "log.txt");
     nodeutil.writeFileSync(logfile, ""); // reset file
