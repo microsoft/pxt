@@ -932,7 +932,7 @@ namespace pxt {
             pxt.debug(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
 
             let variants = pxt.appTarget.multiVariants
-            if (!variants || pxt.appTargetVariant) {
+            if (!variants || pxt.appTargetVariant || (!pxt.appTarget.alwaysMultiVariant && !pxt.appTarget.compile.switches.multiVariant)) {
                 variants = [pxt.appTargetVariant || ""]
             }
 
