@@ -1679,7 +1679,7 @@ namespace ts.pxtc.service {
                 }
 
                 // 3 is completely arbitrarily chosen here
-                if (recursionDepth < 3) {
+                if (recursionDepth < 3 && lastApiInfo.decls[shadowSymbol.qName]) {
                     let snippet = getSnippet(
                         apis,
                         takenNames,
