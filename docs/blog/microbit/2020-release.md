@@ -73,7 +73,7 @@ We’ve added a couple new blocks to the Music category. Set Volume was very fre
 
 ### Break and Continue
 
-These blocks can be found in the Loops category and allow you to exit out of long-running loops, or continue processing after a check or pause. 
+These blocks can be found in the **Loops** category and allow you to exit out of long-running loops, or continue processing after a check or pause. 
 
 ![Break and continue blocks](/static/blog/microbit/2020-release/break-continue.jpg)
 
@@ -89,6 +89,13 @@ A last little feature we’ve added to help alleviate the hundreds of "Untitled"
 
 ![](/static/blog/microbit/2020-release/create-project.jpg)
 
+### Multi-edit
+
+So, you're creating radio programs for two micro:bits. One to send a message and another to receive a message. You have to make two projects seperately for both programs. Well, not anymore, now there's Multi-edit! Create, modify, and test out two programs at the same time. So awesome! Use the Multi-edit version of the editor at: https://makecode.microbit.org/multi.
+
+![Multiple program editing](/static/blog/microbit/2020-release/multi-edit.gif)
+
+<br/>
 We hope these new features and improvements are helpful. Please let us know what you think. 
 
 Happy Making and Coding!
