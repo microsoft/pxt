@@ -1,8 +1,10 @@
-# MakeCode for the micro:bit – 2020 Beta Release 
+# MakeCode for the micro:bit – 2020 Beta Release
+
+**Posted on April 28th, 2020 by [Jaqster](https://github.com/jaqster)**
 
 It’s springtime, and even though all of us are working from home these days, the release cycle doesn’t stop! We are happy to announce the Beta for our 2020 MakeCode for the micro:bit release which is still scheduled to ship for general availability in June.
 
-Thank you to everyone who has helped us identify bugs and suggested new features throughout the year. And special Thank You to our translators and proofreaders who have helped us localize in 28 different languages! Remember, we have support for in-context translations (https://makecode.com/blog/translations-in-context), so it’s easier than ever to localize MakeCode for your language.
+Thank you to everyone who has helped us identify bugs and suggested new features throughout the year. And a special Thank You to our translators and proofreaders who have helped us localize in 28 different languages!
 
 This year’s update has a lot of juicy new features and improvements, which are listed below. Please try out the Beta and let us know what you think!
 
@@ -16,7 +18,8 @@ Here’s a run-down of the new features in the 2020 release:
 
 ### Functions with return values
 
-Can’t get enough of Functions! Last year we added functions with parameters. You loved it and asked for more. So, this year, we’re adding Functions with return values. Here’s a little explanation of functions – 
+Can’t get enough of Functions! Last year we added functions with parameters. You loved it and asked for more. So, this year, we’re adding Functions with return values. Here’s a little explanation of functions –
+
 https://youtu.be/1LACtv9XvXQ
 
 ### Expand/Collapse Blocks
@@ -30,6 +33,12 @@ We know that some power-users out there have been writing very large Block progr
 Some of you may know that we’ve had support for the Python programming language as well as JavaScript in MakeCode for Minecraft for a few months now (https://makecode.com/blog/minecraft/python-release). We’ve gotten a lot of positive feedback from Educators about this, so we’re excited to bring it to micro:bit in this release!
 
 https://youtu.be/G3bW_AMyDHA
+
+### In-context translation
+
+Remember, we have support for in-context translations (https://makecode.com/blog/translations-in-context), so it’s easier than ever to localize MakeCode for your language.
+
+![In-context translation](/static/blog/microbit/2020-release/xlate-in-context.gif)
 
 ### Debugger
 
