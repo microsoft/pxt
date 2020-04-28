@@ -436,7 +436,7 @@ namespace pxt.usb {
     }
 
     export function tryGetDeviceAsync(): Promise<USBDevice> {
-        log(`get devices`)
+        log(`webusb: get devices`)
         return ((navigator as any).usb.getDevices() as Promise<USBDevice[]>)
             .then<USBDevice>((devs: USBDevice[]) => devs && devs[0]);
     }
