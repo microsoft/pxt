@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode for the micro:bit – 2020 Beta Release](/blog/microbit/2020-beta)
+
+April 28th, 2020 by [Jaqster](https://github.com/jaqster)
+
+We are happy to announce the Beta for our 2020 MakeCode for the micro:bit release which is still scheduled to ship for general availability in June.
+
+**[Continue reading this blog post](/blog/microbit/2020-beta)**
+
 ## [MakeCode Arcade One Room Game Jam](/blog/arcade/game-jam-2)
 
 April 7th, 2020
