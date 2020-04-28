@@ -24,6 +24,14 @@ namespace pxt.winrt {
             throw new Error(U.lf("USB/HID error ({0})", msg))
         }
 
+        private setConnecting(v: boolean) {
+            if (v != this.connecting) {
+                this.connecting = v;
+                if(this.onConnectionChanged)
+                    this.onConnectionChanged();
+            }
+        }
+
         isConnecting(): boolean {
             return this.connecting;
         }
@@ -91,7 +99,7 @@ namespace pxt.winrt {
                 });
             }, Promise.resolve<Windows.Devices.Enumeration.DeviceInformationCollection>(null));
 
-            this.connecting = false;
+            this.setConnecting(true);
             let deviceId: string;
             return getDevicesPromise
                 .then((devices) => {
@@ -131,9 +139,7 @@ namespace pxt.winrt {
                     return Promise.resolve();
                 })
                 .finally(() => {
-                    this.connecting = false
-                    if (this.onConnectionChanged)
-                        this.onConnectionChanged();
+                    this.setConnecting(false);
                 })
                 .catch((e) => {
                     if (isRetry) {
