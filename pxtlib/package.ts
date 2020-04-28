@@ -91,6 +91,10 @@ namespace pxt {
             this.addedBy = [addedBy];
         }
 
+        disablesVariant(v: string) {
+            return this.config && this.config.disablesVariants && this.config.disablesVariants.indexOf(v) >= 0
+        }
+
         invalid(): boolean {
             return /^invalid:/.test(this.version());
         }
@@ -503,6 +507,10 @@ namespace pxt {
             }
         }
 
+        resolvedDependencies(): Package[] {
+            return Object.keys(this.dependencies()).map(n => this.resolveDep(n))
+        }
+
         dependencies(includeCpp = false): pxt.Map<string> {
             if (!this.config) return {};
 
@@ -881,34 +889,40 @@ namespace pxt {
             }
 
             const fillExtInfoAsync = async (variant: string) => {
-                let ext: pxtc.ExtensionInfo
+                let res: pxtc.ExtensionTarget = {
+                    extinfo: null,
+                    target: null
+                }
 
                 if (variant)
                     pxt.setAppTargetVariant(variant, { temporary: true })
 
                 try {
-                    ext = cpp.getExtensionInfo(this)
+                    let einfo = cpp.getExtensionInfo(this)
                     if (!variant) {
-                        if (ext.shimsDTS) generateFile("shims.d.ts", ext.shimsDTS)
-                        if (ext.enumsDTS) generateFile("enums.d.ts", ext.enumsDTS)
+                        if (einfo.shimsDTS) generateFile("shims.d.ts", einfo.shimsDTS)
+                        if (einfo.enumsDTS) generateFile("enums.d.ts", einfo.enumsDTS)
                     }
 
-                    const inf = target.isNative ? await this.host().getHexInfoAsync(ext) : null
+                    const inf = target.isNative ? await this.host().getHexInfoAsync(einfo) : null
 
-                    ext = U.flatClone(ext)
+                    einfo = U.flatClone(einfo)
                     if (!target.keepCppFiles) {
-                        delete ext.compileData;
-                        delete ext.generatedFiles;
-                        delete ext.extensionFiles;
+                        delete einfo.compileData;
+                        delete einfo.generatedFiles;
+                        delete einfo.extensionFiles;
                     }
-                    ext.hexinfo = inf
+                    einfo.hexinfo = inf
+
+                    res.extinfo = einfo
+                    res.target = pxt.appTarget.compile
 
                 } finally {
                     if (variant)
                         pxt.setAppTargetVariant(null, { temporary: true })
                 }
 
-                return ext
+                return res
             }
 
             await this.loadAsync()
@@ -918,7 +932,7 @@ namespace pxt {
             pxt.debug(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
 
             let variants = pxt.appTarget.multiVariants
-            if (!variants || pxt.appTargetVariant) {
+            if (!variants || pxt.appTargetVariant || (!pxt.appTarget.alwaysMultiVariant && !pxt.appTarget.compile.switches.multiVariant)) {
                 variants = [pxt.appTargetVariant || ""]
             }
 
@@ -926,14 +940,15 @@ namespace pxt {
             for (let v of variants) {
                 if (ext)
                     pxt.debug(`building for ${v}`)
-                const curr = await fillExtInfoAsync(ext ? v : null)
-                curr.appVariant = v
-                curr.outputPrefix = variants.length == 1 || !v ? "" : v + "-"
+                const etarget = await fillExtInfoAsync(ext ? v : null)
+                const einfo = etarget.extinfo
+                einfo.appVariant = v
+                einfo.outputPrefix = variants.length == 1 || !v ? "" : v + "-"
                 if (ext) {
-                    ext.otherMultiVariants.push(curr)
+                    opts.otherMultiVariants.push(etarget)
                 } else {
-                    ext = curr
-                    ext.otherMultiVariants = []
+                    ext = einfo
+                    opts.otherMultiVariants = []
                 }
             }
             opts.extinfo = ext
