@@ -889,10 +889,11 @@ namespace pxt {
             }
 
             const fillExtInfoAsync = async (variant: string) => {
-                let res: pxtc.ExtensionTarget = {
+                const res: pxtc.ExtensionTarget = {
                     extinfo: null,
                     target: null
                 }
+                const prevVariant = pxt.appTargetVariant
 
                 if (variant)
                     pxt.setAppTargetVariant(variant, { temporary: true })
@@ -919,7 +920,7 @@ namespace pxt {
 
                 } finally {
                     if (variant)
-                        pxt.setAppTargetVariant(null, { temporary: true })
+                        pxt.setAppTargetVariant(prevVariant, { temporary: true })
                 }
 
                 return res
