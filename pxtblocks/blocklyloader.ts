@@ -1568,7 +1568,6 @@ namespace pxt.blocks {
                     callback: () => {
                         pxt.tickEvent("blocks.context.expand", undefined, { interactiveConsent: true });
                         pxt.blocks.layout.setCollapsedAll(this, false);
-                        pxt.blocks.layout.flow(this, { useViewWidth: true });
                     }
                 }
                 options.push(expandAllOption);
