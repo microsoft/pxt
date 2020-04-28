@@ -557,7 +557,16 @@ namespace pxt.github {
             return Promise.resolve<CachedPackage>(undefined);
         }
 
-        return db.loadPackageAsync(p.fullName, p.tag);
+        return db.loadPackageAsync(p.fullName, p.tag)
+            .then(cached => {
+                const dv = upgradedDisablesVariants(config, repoWithTag)
+                if (dv) {
+                    const cfg = JSON.parse(cached.files[pxt.CONFIG_NAME]) as pxt.PackageConfig
+                    cfg.disablesVariants = dv
+                    cached.files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+                }
+                return cached
+            })
     }
 
     export interface User {
@@ -935,6 +944,54 @@ namespace pxt.github {
         if (!gid) return undefined;
         gid.tag = gid.tag || "master";
         return stringifyRepo(gid);
+    }
+
+    function upgradeRule(cfg: PackagesConfig, id: string) {
+        if (!cfg || !cfg.upgrades)
+            return null
+        const parsed = parseRepoId(id)
+        if (!parsed) return null
+        return U.lookup(cfg.upgrades, parsed.fullName.toLowerCase())
+    }
+
+    function upgradedDisablesVariants(cfg: PackagesConfig, id: string) {
+        const upgr = upgradeRule(cfg, id)
+        const m = /^dv:(.*)/.exec(upgr)
+        if (m) {
+            const disabled = m[1].split(/,/)
+            if (disabled.some(d => !/^\w+$/.test(d)))
+                return null
+            return disabled
+        }
+        return null
+    }
+
+    export function upgradedPackageId(cfg: PackagesConfig, id: string) {
+        const upgr = upgradeRule(cfg, id)
+        if (!upgr)
+            return id
+
+        const m = /^min:(.*)/.exec(upgr)
+        if (m && pxt.semver.parse(m[1])) {
+            const parsed = parseRepoId(id)
+            const minV = pxt.semver.parse(m[1])
+            const currV = pxt.semver.parse(parsed.tag)
+            if (currV && pxt.semver.cmp(currV, minV) < 0) {
+                parsed.tag = m[1]
+                return stringifyRepo(parsed)
+            } else {
+                if (!currV)
+                    pxt.log(`not upgrading ${id} - cannot parse version`)
+                return id
+            }
+        }
+
+        const dv = upgradedDisablesVariants(cfg, id)
+        if (dv)
+            return id + "?dv=" + dv.join(",")
+
+        pxt.log(`invalid upgrade rule: ${id} -> ${upgr}`)
+        return id
     }
 
     export function latestVersionAsync(path: string, config: PackagesConfig): Promise<string> {
