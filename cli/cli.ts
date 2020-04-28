@@ -5738,6 +5738,7 @@ PXT_RUNTIME_DEV  - always rebuild the C++ runtime, allowing for modification
 PXT_ASMDEBUG     - embed additional information in generated binary.asm file
 PXT_ACCESS_TOKEN - pxt access token
 PXT_IGNORE_BMP   - don't search for Black Magic Probe debugger
+PXT_PYOCD        - use pyocd not openocd; requires 'pyocd gdbserver' running
 GITHUB_ACCESS_TOKEN/GITHUB_TOKEN - github access token
 ${pxt.crowdin.KEY_VARIABLE} - crowdin key
 `)
