@@ -1017,16 +1017,16 @@ export async function startAsync(gdbArgs: string[]) {
 
     let toolPaths = getOpenOcdPath()
 
-    
+
     if (!bmpMode) {
         if (pyOCD) {
             trg = "target extended-remote localhost:3333"
             pxt.log("will connect to pyocd at localhost:3333")
-        } else  {
+        } else {
             let oargs = toolPaths.args
             trg = "target remote | " + oargs.map(s => `"${s.replace(/\\/g, "/")}"`).join(" ")
             pxt.log("starting openocd: " + oargs.join(" "))
-        }    
+        }
     }
 
     let binfo = getBootInfo()
