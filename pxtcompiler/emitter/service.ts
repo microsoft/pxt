@@ -1572,7 +1572,7 @@ namespace ts.pxtc.service {
 . . . . .
 """`;
 
-    export function getSnippet(apis: ApisInfo, takenNames: pxt.Map<SymbolInfo>, runtimeOps: pxt.RuntimeOptions, fn: SymbolInfo, decl: ts.FunctionLikeDeclaration, python?: boolean): string {
+    export function getSnippet(apis: ApisInfo, takenNames: pxt.Map<SymbolInfo>, runtimeOps: pxt.RuntimeOptions, fn: SymbolInfo, decl: ts.FunctionLikeDeclaration, python?: boolean, recursionDepth = 0): string {
         const PY_INDENT: string = (pxt as any).py.INDENT;
 
         let preStmt = "";
@@ -1642,6 +1642,15 @@ namespace ts.pxtc.service {
             function getShadowSymbol(paramName: string): SymbolInfo | null {
                 // TODO: generalize and unify this with getCompletions code
                 let shadowBlock = (attrs._shadowOverrides || {})[paramName]
+                if (!shadowBlock) {
+                    const comp = pxt.blocks.compileInfo(fn);
+                    for (const param of comp.parameters) {
+                        if (param.actualName === paramName) {
+                            shadowBlock = param.shadowBlockId;
+                            break;
+                        }
+                    }
+                }
                 if (!shadowBlock)
                     return null
                 let sym = blocksById[shadowBlock]
@@ -1667,6 +1676,21 @@ namespace ts.pxtc.service {
                             return shadowDef
                         }
                     }
+                }
+
+                // 3 is completely arbitrarily chosen here
+                if (recursionDepth < 3) {
+                    let snippet = getSnippet(
+                        apis,
+                        takenNames,
+                        runtimeOps,
+                        shadowSymbol,
+                        lastApiInfo.decls[shadowSymbol.qName] as ts.FunctionLikeDeclaration,
+                        python,
+                        recursionDepth + 1
+                    );
+
+                    if (snippet) return snippet;
                 }
             }
 
