@@ -253,7 +253,7 @@ namespace pxt.usb {
         private setConnecting(v: boolean) {
             if (v != this.connecting) {
                 this.connecting = v;
-                if(this.onConnectionChanged)
+                if (this.onConnectionChanged)
                     this.onConnectionChanged();
             }
         }
