@@ -14,7 +14,8 @@ This year’s update has a lot of juicy new features and improvements, which are
 
 Any bugs you find, please log them in GitHub: https://github.com/Microsoft/pxt-microbit/issues
 
-Any other comments, suggestions, and feedback, please participate in the micro:bit community on Slack: https://tech.microbit.org/get-involved/where-to-find/
+Any other comments, suggestions, and feedback, please create a support ticket at
+https://support.microbit.org/en/support/tickets/new.
 
 ## New features for this release
 
