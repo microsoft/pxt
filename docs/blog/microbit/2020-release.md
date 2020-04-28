@@ -6,9 +6,13 @@ It’s springtime, and even though all of us are working from home these days, t
 
 Thank you to everyone who has helped us identify bugs and suggested new features throughout the year. And a special Thank You to our translators and proofreaders who have helped us localize in 28 different languages!
 
+## Try the Beta!
+
 This year’s update has a lot of juicy new features and improvements, which are listed below. Please try out the Beta and let us know what you think!
 
-https://makecode.microbit.org/beta Any bugs you find, please log them in GitHub: https://github.com/Microsoft/pxt-microbit/issues
+- **[MakeCode for the micro:bit Beta](https://makecode.microbit.org/beta)**
+
+Any bugs you find, please log them in GitHub: https://github.com/Microsoft/pxt-microbit/issues
 
 Any other comments, suggestions, and feedback, please participate in the micro:bit community on Slack: https://tech.microbit.org/get-involved/where-to-find/
 
@@ -42,7 +46,9 @@ Remember, we have support for in-context translations (https://makecode.com/blog
 
 ### Debugger
 
-Many Computing Education Researchers define knowledge of a programming language to be the mapping between syntax, semantics, and state. I think all too often we focus on syntax and semantics in our educational tools. No more! Debuggers are critical tools to help students understand the state of their program execution flow. We’ve worked hard to add debug capabilities to both Block and Text editors. 
+Many Computing Education Researchers define knowledge of a programming language to be the mapping between syntax, semantics, and state. All too often we focus on syntax and semantics in our educational tools. No more! Debuggers are critical tools to help students understand the state of their program execution flow. We’ve worked hard to add debug capabilities to both Block and Text editors.
+
+Also, the slow motion (Slo-Mo) feature in previous releases was the only way help the user watch the execution flow of programs. The debugger replaces Slo-Mo with its own extended slow motion mode.
 
 ![Debugger](/static/blog/microbit/2020-release/debugger.gif)
 
@@ -64,7 +70,7 @@ We’ve added a couple new blocks to the Music category. Set Volume was very fre
 
 ![Music](/static/blog/microbit/2020-release/music.gif)
 
-### Break & Continue
+### Break and Continue
 
 These blocks can be found in the Loops category and allow you to exit out of long-running loops, or continue processing after a check or pause. 
 
