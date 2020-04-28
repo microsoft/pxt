@@ -5515,7 +5515,6 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     if (!packages) {
         pxt.log(`packages section not found in targetconfig.json`)
     }
-    let todo: string[];
     const pkgsroot = path.join("temp", "ghpkgs");
     const logfile = path.join(pkgsroot, "log.txt");
     nodeutil.writeFileSync(logfile, ""); // reset file
@@ -5528,10 +5527,18 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         })
     }
 
+    let errorCount = 0;
+    function reportWarning(er: { repo: string; title: string; body: string; }) {
+        const msg = `- [ ]  [${er.repo}](https://github.com/${er.repo}) ${er.title} / [new issue](https://github.com/${er.repo}/issues/new?title=${encodeURIComponent(er.title)}&body=${encodeURIComponent(er.body)})`;
+        console.log(`warning: https://github.com/${er.repo} ${er.title}`)
+        fs.appendFileSync(logfile, msg + "\n");
+    }
+
     function reportError(er: { repo: string; title: string; body: string; }) {
         const msg = `- [ ]  [${er.repo}](https://github.com/${er.repo}) ${er.title} / [new issue](https://github.com/${er.repo}/issues/new?title=${encodeURIComponent(er.title)}&body=${encodeURIComponent(er.body)})`;
         console.error(`error: https://github.com/${er.repo} ${er.title}`)
         fs.appendFileSync(logfile, msg + "\n");
+        errorCount++;
     }
 
     function reportLog(msg: any) {
@@ -5544,7 +5551,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             .then(tags => {
                 let tag = pxt.semver.sortLatestTags(tags)[0];
                 if (!tag) {
-                    reportError({ repo: fullname, title: "create a release", body: "You need to create a release in this repository. Follow the instructions at https://makecode.com/extensions/versioning." });
+                    reportWarning({ repo: fullname, title: "create a release", body: "You need to create a release in this repository. Follow the instructions at https://makecode.com/extensions/versioning." });
                     tag = "master";
                 }
                 else {
@@ -5618,7 +5625,12 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             reportLog(nodeutil.stringify(fullnames));
             return Promise.mapSeries(fullnames, nextAsync);
         })
-        .then(() => { })
+        .then(() => {
+            if (errorCount > 0) {
+                reportLog(`${errorCount} errors found`);
+                process.exit(1);
+            }
+        })
 }
 
 interface BlockTestCase {

@@ -185,6 +185,7 @@ export class HIDError extends Error {
 export class HidIO implements pxt.packetio.PacketIO {
     dev: any;
     private path: string;
+    private connecting = false;
 
     onDeviceConnectionChanged = (connect: boolean) => { };
     onConnectionChanged = () => { };
@@ -196,29 +197,44 @@ export class HidIO implements pxt.packetio.PacketIO {
         this.connect()
     }
 
+    private setConnecting(v: boolean) {
+        if (v != this.connecting) {
+            this.connecting = v;
+            if (this.onConnectionChanged)
+                this.onConnectionChanged();
+        }
+    }
+
     private connect() {
         U.assert(isInstalled(false))
-        if (this.requestedPath == null) {
-            let devs = getHF2Devices()
-            if (devs.length == 0)
-                throw new HIDError("no devices found")
-            this.path = devs[0].path
-        } else {
-            this.path = this.requestedPath
-        }
+        this.setConnecting(true);
+        try {
+            if (this.requestedPath == null) {
+                let devs = getHF2Devices()
+                if (devs.length == 0)
+                    throw new HIDError("no devices found")
+                this.path = devs[0].path
+            } else {
+                this.path = this.requestedPath
+            }
 
-        this.dev = new HID.HID(this.path)
-        this.dev.on("data", (v: Buffer) => {
-            //console.log("got", v.toString("hex"))
-            this.onData(new Uint8Array(v))
-        })
-        this.dev.on("error", (v: Error) => this.onError(v))
-        if (this.onConnectionChanged)
-            this.onConnectionChanged();
+            this.dev = new HID.HID(this.path)
+            this.dev.on("data", (v: Buffer) => {
+                //console.log("got", v.toString("hex"))
+                this.onData(new Uint8Array(v))
+            })
+            this.dev.on("error", (v: Error) => this.onError(v))
+        } finally {
+            this.setConnecting(false);
+        }
     }
 
     disposeAsync(): Promise<void> {
         return Promise.resolve();
+    }
+
+    isConnecting(): boolean {
+        return this.connecting;
     }
 
     isConnected(): boolean {

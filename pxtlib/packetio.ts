@@ -14,6 +14,7 @@ namespace pxt.packetio {
 
         reconnectAsync(): Promise<void>;
         disconnectAsync(): Promise<void>;
+        // flash the device, does **not** reconnect
         reflashAsync(resp: pxtc.CompileResult): Promise<void>;
     }
 
@@ -27,6 +28,7 @@ namespace pxt.packetio {
         error(msg: string): any;
         reconnectAsync(): Promise<void>;
         disconnectAsync(): Promise<void>;
+        isConnecting(): boolean;
         isConnected(): boolean;
         isSwitchingToBootloader?: () => void;
         // release any native resource before being released
@@ -59,6 +61,10 @@ namespace pxt.packetio {
      */
     export function isConnected() {
         return !!wrapper && wrapper.io.isConnected();
+    }
+
+    export function isConnecting() {
+        return !!wrapper && wrapper.io.isConnecting();
     }
 
     export function icon() {

@@ -168,7 +168,9 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
 
     function deployAsync(): Promise<void> {
         return pxt.packetio.initAsync(isRetry)
-            .then(dev => core.showLoadingAsync(LOADING_KEY, lf("Downloading..."), dev.reflashAsync(resp), 5000))
+            .then(dev => core.showLoadingAsync(LOADING_KEY, lf("Downloading..."),
+                dev.reflashAsync(resp)
+                    .then(() => dev.reconnectAsync()), 5000))
             .then(() => core.infoNotification("Download completed!"))
             .finally(() => core.hideLoading(LOADING_KEY))
             .timeout(120000, "timeout") // packetio should time out first
@@ -436,6 +438,8 @@ function handlePacketIOApi(r: string) {
             return pxt.packetio.isActive();
         case "connected":
             return pxt.packetio.isConnected();
+        case "connecting":
+            return pxt.packetio.isConnecting();
         case "icon":
             return pxt.packetio.icon();
     }

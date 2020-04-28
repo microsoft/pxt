@@ -76,6 +76,7 @@ class BridgeIO implements pxt.packetio.PacketIO {
     onSerial = (v: Uint8Array, isErr: boolean) => { };
     public dev: HidDevice;
     private connected: boolean;
+    private connecting = false;
 
     constructor(public rawMode = false) {
         if (rawMode)
@@ -84,6 +85,10 @@ class BridgeIO implements pxt.packetio.PacketIO {
 
     disposeAsync(): Promise<void> {
         return Promise.resolve();
+    }
+
+    isConnecting(): boolean {
+        return this.connecting;
     }
 
     isConnected(): boolean {
@@ -147,6 +152,7 @@ class BridgeIO implements pxt.packetio.PacketIO {
 
     initAsync(): Promise<void> {
         this.connected = false;
+        this.connecting = true;
         return iface.opAsync("list", {})
             .then((devs0: any) => {
                 let devs = devs0.devices as HidDevice[]
@@ -167,6 +173,9 @@ class BridgeIO implements pxt.packetio.PacketIO {
             }))
             .then(() => {
                 this.connected = true;
+            })
+            .finally(() => {
+                this.connecting = false;
                 if (this.onConnectionChanged)
                     this.onConnectionChanged();
             })

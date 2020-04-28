@@ -159,9 +159,10 @@ namespace pxt.usb {
         reset(): Promise<void>;
     }
 
-    class HID implements pxt.packetio.PacketIO {
+    class WebUSBHID implements pxt.packetio.PacketIO {
         dev: USBDevice;
         ready = false;
+        connecting = false;
         iface: USBInterface;
         altIface: USBAlternateInterface;
         epIn: USBEndpoint;
@@ -179,11 +180,13 @@ namespace pxt.usb {
 
             (navigator as any).usb.addEventListener('disconnect', this.handleUSBDisconnected, false);
             (navigator as any).usb.addEventListener('connect', this.handleUSBConnected, false);
+            this.log(`registered webusb events`)
         }
 
         disposeAsync(): Promise<void> {
             (navigator as any).usb.removeEventListener('disconnect', this.handleUSBDisconnected);
             (navigator as any).usb.removeEventListener('connect', this.handleUSBConnected);
+            this.log(`unregistered webusb events`)
             return Promise.resolve();
         }
 
@@ -198,7 +201,7 @@ namespace pxt.usb {
         }
         private handleUSBConnected(event: any) {
             const newdev = event.device as USBDevice;
-            this.log("device connected")
+            this.log(`device connected ${newdev.serialNumber}`)
             if (!this.dev) {
                 this.log("attach device")
                 if (this.onDeviceConnectionChanged)
@@ -240,9 +243,23 @@ namespace pxt.usb {
 
         reconnectAsync() {
             this.log("reconnect")
+            this.setConnecting(true);
             return this.disconnectAsync()
                 .then(getDeviceAsync)
-                .then(dev => this.connectAsync(dev));
+                .then(dev => this.connectAsync(dev))
+                .finally(() => this.setConnecting(false));
+        }
+
+        private setConnecting(v: boolean) {
+            if (v != this.connecting) {
+                this.connecting = v;
+                if (this.onConnectionChanged)
+                    this.onConnectionChanged();
+            }
+        }
+
+        isConnecting(): boolean {
+            return this.connecting;
         }
 
         isConnected(): boolean {
@@ -250,9 +267,11 @@ namespace pxt.usb {
         }
 
         private connectAsync(dev: USBDevice) {
+            this.setConnecting(true);
             this.log("connect device: " + dev.manufacturerName + " " + dev.productName)
             this.dev = dev;
             return this.initAsync()
+                .finally(() => this.setConnecting(false));
         }
 
         sendPacketAsync(pkt: Uint8Array) {
@@ -412,13 +431,8 @@ namespace pxt.usb {
             })
     }
 
-    export function isPairedAsync(): Promise<boolean> {
-        if (!isEnabled) return Promise.resolve(false);
-        return tryGetDeviceAsync()
-            .then(dev => !!dev);
-    }
-
     export function tryGetDeviceAsync(): Promise<USBDevice> {
+        log(`webusb: get devices`)
         return ((navigator as any).usb.getDevices() as Promise<USBDevice[]>)
             .then<USBDevice>((devs: USBDevice[]) => devs && devs[0]);
     }
@@ -435,11 +449,11 @@ namespace pxt.usb {
             })
     }
 
-    let _hid: HID;
+    let _hid: WebUSBHID;
     export function mkPacketIOAsync(): Promise<pxt.packetio.PacketIO> {
         pxt.log(`packetio: mk webusb io`)
         if (!_hid)
-            _hid = new HID();
+            _hid = new WebUSBHID();
         return Promise.resolve(_hid);
     }
 

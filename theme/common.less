@@ -662,6 +662,21 @@ Avatar
     transition: outline 0.3s linear;
 }
 
+/* ping anim */
+@keyframes ping {
+    from {
+        transform: scale(.5);
+        opacity: 1;
+    }
+    to {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+}
+.ping {
+    animation: ping 1s infinite;
+}
+
 .grayscale {
     -moz-filter: grayscale(1);
     -webkit-filter: grayscale(1);
