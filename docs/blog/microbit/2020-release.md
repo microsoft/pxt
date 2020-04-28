@@ -23,7 +23,7 @@ Here’s a run-down of the new features in the 2020 release:
 
 ### Functions with return values
 
-Can’t get enough of Functions! Last year we added functions with parameters. You loved it and asked for more. So, this year, we’re adding Functions with return values. Here’s a little explanation of functions –
+Can’t get enough of Functions! Last year we added functions with parameters. You loved it and asked for more. So, this year, we’re adding Functions with return values. Better yet, you can even navigate to a function from anywhere in the code it's called. Here’s a little explanation of functions:
 
 https://youtu.be/1LACtv9XvXQ
 
@@ -41,7 +41,7 @@ https://youtu.be/G3bW_AMyDHA
 
 ### In-context translation
 
-Remember, we have support for in-context translations (https://makecode.com/blog/translations-in-context), so it’s easier than ever to localize MakeCode for your language.
+Remember, we have support for [in-context translations](https://makecode.com/blog/translations-in-context), so it’s easier than ever to localize MakeCode for your language.
 
 ![In-context translation](/static/blog/microbit/2020-release/xlate-in-context.gif)
 
@@ -55,13 +55,13 @@ Also, the slow motion (Slo-Mo) feature in previous releases was the only way hel
 
 ### GitHub Projects
 
-We’ve been working with our friends at GitHub over the past several months to provide a way to store MakeCode projects in a GitHub repository. This is great for group projects, version control, and teaching students about open source software development. Learn more about this feature here https://makecode.com/blog/makecode-with-github. 
+We’ve been working with our friends at GitHub over the past several months to provide a way to store MakeCode projects in a GitHub repository. This is great for group projects, version control, and teaching students about open source software development. Learn more about this feature at https://makecode.com/blog/makecode-with-github. 
 
 ![GitHub](/static/blog/microbit/2020-release/github.jpg)
 
 ### Web USB
 
-Could it be? A bird, a plane…? Better than superman, it’s Web USB to the rescue! No more dragging-and-dropping program files!! Web USB technology, allows you to ‘pair’ USB devices to your web browser, so when you click that Download button, it really does download directly to the micro:bit! You will need the latest firmware on your micro:bit device, and you’ll need to be using either new Edge or Chrome browsers. 
+Could it be? A bird, a plane…? Better than superman, it’s Web USB to the rescue! No more dragging-and-dropping program files!! Web USB technology, allows you to 'pair' USB devices to your web browser, so when you click that Download button, it really does download directly to the micro:bit! You will need the latest firmware on your micro:bit device, and you’ll need to be using either the new Edge or Chrome browser. 
 
 ![WebUSB](/static/blog/microbit/2020-release/webusb.gif)
 
@@ -85,7 +85,7 @@ That’s what we call these indicators we’ve added to help dragging and droppi
 
 ### Prompt for Project Name
 
-A last little feature we’ve added to help alleviate the hundreds of “Untitled” projects floating around, is a prompt to name projects as soon as a student clicks the New Project button. 
+A last little feature we’ve added to help alleviate the hundreds of "Untitled" projects floating around, is a prompt to name projects as soon as a student clicks the **New Project** button. 
 
 ![](/static/blog/microbit/2020-release/create-project.jpg)
 
