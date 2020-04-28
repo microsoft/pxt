@@ -1088,13 +1088,16 @@ _stored_program: .hex ${res}
     }
 
     function assembleAndPatch(src: string, bin: Binary, opts: CompileOptions, cres: CompileResult) {
-        if (opts.extinfo.disabledDeps) {
+        const dummy = opts.extinfo.disabledDeps
+        if (dummy) {
             src =
-                `; compilation disabled on this variant due to ${opts.extinfo.disabledDeps}` +
+                `${hexfile.hexPrelude()}\n` +
+                `; compilation disabled on this variant due to ${opts.extinfo.disabledDeps}\n` +
                 `.hex 718E3B92C615A841C49866C975EE5197\n` +
                 `.string "${opts.extinfo.disabledDeps}"`
+        } else {
+            src = asmHeader(bin) + src
         }
-        src = asmHeader(bin) + src
         if (opts.embedBlob) {
             bin.packedSource = packSource(opts.embedMeta, ts.pxtc.decodeBase64(opts.embedBlob))
             // TODO more dynamic check for source size
@@ -1106,7 +1109,7 @@ _stored_program: .hex ${res}
         const checksumWords = 8
         const pageSize = hexfile.flashCodeAlign(opts.target)
 
-        if (opts.target.flashChecksumAddr) {
+        if (!dummy && opts.target.flashChecksumAddr) {
             let k = 0
             while (pageSize > (1 << k)) k++;
             let endMarker = parseInt(hexfile.hexTemplateHash().slice(8, 16), 16)
@@ -1146,6 +1149,11 @@ __flash_checksums:
         if (res.src)
             bin.writeFile(prefix + pxtc.BINARY_ASM, res.src)
 
+        if (dummy) {
+            writeOutput()
+            return
+        }
+
         const cfg = cres.configData || []
 
         // When BOOTLOADER_BOARD_ID is present in project, it means it's meant as configuration
@@ -1184,13 +1192,7 @@ __flash_checksums:
                 chk[chk.length - 5] = len
                 bin.checksumBlock = chk;
             }
-            if (!pxt.isOutputText(target)) {
-                const myhex = ts.pxtc.encodeBase64(hexfile.patchHex(bin, buf, false, !!target.useUF2)[0])
-                bin.writeFile(prefix + pxt.outputName(target), myhex)
-            } else {
-                const myhex = hexfile.patchHex(bin, buf, false, false).join("\r\n") + "\r\n"
-                bin.writeFile(prefix + pxt.outputName(target), myhex)
-            }
+            writeOutput();
         }
 
         if (!cres.procDebugInfo) {
@@ -1205,6 +1207,17 @@ __flash_checksums:
             }
 
             cres.procDebugInfo = bin.procs.map(p => p.debugInfo)
+        }
+
+        function writeOutput() {
+            if (!pxt.isOutputText(target)) {
+                const myhex = ts.pxtc.encodeBase64(hexfile.patchHex(bin, res.buf, false, !!target.useUF2)[0]);
+                bin.writeFile(prefix + pxt.outputName(target), myhex);
+            }
+            else {
+                const myhex = hexfile.patchHex(bin, res.buf, false, false).join("\r\n") + "\r\n";
+                bin.writeFile(prefix + pxt.outputName(target), myhex);
+            }
         }
     }
 
@@ -1222,12 +1235,10 @@ __flash_checksums:
                     localOpts.extinfo = other.extinfo
                     other.target.isNative = true
                     localOpts.target = other.target
-                    //pxt.setAppTargetVariant(extinfo.appVariant, { temporary: true })
                     hexfile.setupFor(localOpts.target, localOpts.extinfo)
                     assembleAndPatch(src, bin, localOpts, cres)
                 }
             } finally {
-                //pxt.setAppTargetVariant(null, { temporary: true })
                 hexfile.setupFor(opts0.target, opts0.extinfo)
             }
     }
