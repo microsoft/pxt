@@ -2200,6 +2200,8 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             fillInCompilerExtension(cfg);
 
             const webmanifest = buildWebManifest(cfg)
+            cfg = U.clone(cfg)
+            cfg.compile.switches = {} // otherwise we leak the switches set with PXT_COMPILE_SWITCHES=
             const targetjson = nodeutil.stringify(cfg)
             nodeutil.writeFileSync("built/target.json", targetjson)
             nodeutil.writeFileSync("built/target.js", targetJsPrefix + targetjson)
