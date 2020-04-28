@@ -561,9 +561,11 @@ namespace pxt.github {
             .then(cached => {
                 const dv = upgradedDisablesVariants(config, repoWithTag)
                 if (dv) {
-                    const cfg = JSON.parse(cached.files[pxt.CONFIG_NAME]) as pxt.PackageConfig
-                    cfg.disablesVariants = dv
-                    cached.files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+                    const cfg = Package.parseAndValidConfig(cached.files[pxt.CONFIG_NAME])
+                    if (cfg) {
+                        cfg.disablesVariants = dv
+                        cached.files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+                    }
                 }
                 return cached
             })
