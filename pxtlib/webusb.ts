@@ -241,9 +241,19 @@ namespace pxt.usb {
 
         reconnectAsync() {
             this.log("reconnect")
+            this.setConnecting(true);
             return this.disconnectAsync()
                 .then(getDeviceAsync)
-                .then(dev => this.connectAsync(dev));
+                .then(dev => this.connectAsync(dev))
+                .finally(() => this.setConnecting(false));
+        }
+
+        private setConnecting(v: boolean) {
+            if (v != this.connecting) {
+                this.connecting = v;
+                if(this.onConnectionChanged)
+                    this.onConnectionChanged();
+            }
         }
 
         isConnecting(): boolean {
@@ -255,18 +265,11 @@ namespace pxt.usb {
         }
 
         private connectAsync(dev: USBDevice) {
+            this.setConnecting(true);
             this.log("connect device: " + dev.manufacturerName + " " + dev.productName)
-            U.assert(!this.connecting) // don't double connect
-            this.connecting = true;
-            if (this.onConnectionChanged)
-                this.onConnectionChanged();
             this.dev = dev;
             return this.initAsync()
-                .finally(() => {
-                    this.connecting = false
-                    if (this.onConnectionChanged)
-                        this.onConnectionChanged();
-                });
+                .finally(() => this.setConnecting(false));
         }
 
         sendPacketAsync(pkt: Uint8Array) {
@@ -433,6 +436,7 @@ namespace pxt.usb {
     }
 
     export function tryGetDeviceAsync(): Promise<USBDevice> {
+        log(`get devices`)
         return ((navigator as any).usb.getDevices() as Promise<USBDevice[]>)
             .then<USBDevice>((devs: USBDevice[]) => devs && devs[0]);
     }

@@ -166,7 +166,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const packetioConnected = !!this.getData("packetio:connected");
         const packetioConnecting = !!this.getData("packetio:connecting");
         const packetioIcon = !!packetioConnected && this.getData("packetio:icon") as string;
-        const downloadIcon = (packetioConnecting && "plug") || packetioIcon || targetTheme.downloadIcon || "download";
+        const downloadIcon = (packetioConnecting && "ping plug") || packetioIcon || targetTheme.downloadIcon || "download";
         const hasMenu = boards || webUSBSupported;
 
         let downloadButtonClasses = hasMenu ? "left attached " : "";

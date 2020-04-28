@@ -197,12 +197,17 @@ export class HidIO implements pxt.packetio.PacketIO {
         this.connect()
     }
 
+    private setConnecting(v: boolean) {
+        if (v != this.connecting) {
+            this.connecting = v;
+            if(this.onConnectionChanged)
+                this.onConnectionChanged();
+        }
+    }
+
     private connect() {
         U.assert(isInstalled(false))
-        U.assert(!this.connecting)
-        this.connecting = true;
-        if (this.onConnectionChanged)
-            this.onConnectionChanged();
+        this.setConnecting(true);
         try {
             if (this.requestedPath == null) {
                 let devs = getHF2Devices()
@@ -220,9 +225,7 @@ export class HidIO implements pxt.packetio.PacketIO {
             })
             this.dev.on("error", (v: Error) => this.onError(v))
         } finally {
-            this.connecting = false;
-            if (this.onConnectionChanged)
-                this.onConnectionChanged();
+            this.setConnecting(false);
         }
     }
 
