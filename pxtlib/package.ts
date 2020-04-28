@@ -91,6 +91,10 @@ namespace pxt {
             this.addedBy = [addedBy];
         }
 
+        disablesVariant(v: string) {
+            return this.config && this.config.disablesVariants && this.config.disablesVariants.indexOf(v) >= 0
+        }
+
         invalid(): boolean {
             return /^invalid:/.test(this.version());
         }
@@ -501,6 +505,10 @@ namespace pxt {
                     delete this.config.dependencies[dep];
                 });
             }
+        }
+
+        resolvedDependencies(): Package[] {
+            return Object.keys(this.dependencies()).map(n => this.resolveDep(n))
         }
 
         dependencies(includeCpp = false): pxt.Map<string> {

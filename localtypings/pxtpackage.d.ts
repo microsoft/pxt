@@ -84,6 +84,7 @@ declare namespace pxt {
         requiredCategories?: string[]; // ensure that those block categories are visible
         supportedTargets?: string[]; // a hint about targets in which this extension is supported
         firmwareUrl?: string; // link to documentation page about upgrading firmware
+        disablesVariants?: string[]; // don't build these variants, when this extension is enabled
     }
 
     interface PackageExtension {

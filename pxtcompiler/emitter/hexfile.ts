@@ -1088,6 +1088,12 @@ _stored_program: .hex ${res}
     }
 
     function assembleAndPatch(src: string, bin: Binary, opts: CompileOptions, cres: CompileResult) {
+        if (opts.extinfo.disabledDeps) {
+            src =
+                `; compilation disabled on this variant due to ${opts.extinfo.disabledDeps}` +
+                `.hex 718E3B92C615A841C49866C975EE5197\n` +
+                `.string "${opts.extinfo.disabledDeps}"`
+        }
         src = asmHeader(bin) + src
         if (opts.embedBlob) {
             bin.packedSource = packSource(opts.embedMeta, ts.pxtc.decodeBase64(opts.embedBlob))

@@ -843,6 +843,7 @@ declare namespace ts.pxtc {
         hexinfo?: HexInfo;
         appVariant?: string;
         outputPrefix?: string;
+        disabledDeps?: string;
     }
 
     interface ExtensionTarget {
