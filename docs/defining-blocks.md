@@ -197,6 +197,35 @@ export function showNumber(v: number, interval: number = 150): void
 **Playground examples**: [Range](https://makecode.com/playground#field-editors-range), [Default values](https://makecode.com/playground#basic-default-values)
 
 
+## Reporter blocks and Statement blocks
+
+Reporter blocks are the round or hexagonal blocks that can be slotted into the inputs of other blocks.
+Any function that has a return type other than void will be made into a reporter block if it has the `block` comment attribute.
+Occasionally there are functions that return a value but are also useful as statements, for example `Array.pop()` returns
+an element of the array but it is common in JavaScript to ignore that value.
+To define a block that has both a reporter and a statement form, use the `blockAliasFor` comment attribute:
+
+```typescript-ignore
+/**
+* Remove the last element from an array and return it.
+*/
+//% blockId="array_pop" block="get and remove last value from %list"
+function pop(): number;
+
+/**
+* Remove the last element from an array and return it.
+*/
+//% blockId="array_pop_statement" block="remove last value from %list"
+//% blockAliasFor="Array.pop"
+function _popStatement(): void;
+
+```
+
+In the example above, both the blocks defined by `pop()` and `_popStatement()` will be converted to `Array.pop()`.
+Note that `_popStatement()` begins with an underscore to prevent it from showing up in text completions in the monaco editor.
+Any block defined as an alias should have the same arguments as the source function.
+The value of `blockAliasFor` should be the fully qualified name of the source function.
+
 ## Array default values
 
 For array type parameters, set the shadow ID to "lists_create_with":
