@@ -5567,9 +5567,10 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         if (forceLocalBuild) buildArgs.push("--localbuild");
         const pkgdir = path.join(pkgsroot, pkgpgh);
         const buildlog = path.join(pkgdir, "built", "success.txt");
+        const buildkey = `${pxt.appTarget.id}-${pxt.appTarget.versions.targetId}-${pkgpgh}-${tag}`;
         // check if already built with success
         if (nodeutil.fileExistsSync(buildlog) &&
-            fs.readFileSync(buildlog, "utf8") === tag) {
+            fs.readFileSync(buildlog, "utf8") === buildkey) {
             reportLog(`  already built ${tag}`)
             return Promise.resolve();
         }
@@ -5584,7 +5585,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             .then(() => pxtAsync(pkgdir, buildArgs))
             .then(() => {
                 // already built with success
-                nodeutil.writeFileSync(buildlog, tag);
+                nodeutil.writeFileSync(buildlog, buildkey);
             });
     }
 
