@@ -172,6 +172,7 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
                 dev.reflashAsync(resp)
                     .then(() => {
                         // reconnect it he background, don't block
+                        log(`background reconnect`)
                         dev.reconnectAsync().done();                        
                     }), 
                 5000))
