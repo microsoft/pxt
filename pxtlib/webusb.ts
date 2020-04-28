@@ -201,7 +201,7 @@ namespace pxt.usb {
         }
         private handleUSBConnected(event: any) {
             const newdev = event.device as USBDevice;
-            this.log("device connected")
+            this.log(`device connected ${newdev.serialNumber}`)
             if (!this.dev) {
                 this.log("attach device")
                 if (this.onDeviceConnectionChanged)
