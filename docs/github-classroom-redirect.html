@@ -3,73 +3,94 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>MakeCode GitHub Classroom Redirect</title>
+    <title>MakeCode GitHub Classroom Registration</title>
     <link rel="stylesheet"
         href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css"
         type="text/css">
     <script>
-        function log(msg) {
-            const eel = document.getElementById("log");
-            const line = document.createElement("div");
-            line.className = "ui message"
-            line.innerText = msg;
-            eel.append(line);
-        }
-        function checkToken() {
-            // sniff oauth
+        (function () {
             let keys = {};
-            window.location.hash.replace(/^#/, '').split('&')
-                .map(v => v.split('=', 2))
-                .forEach(a => keys[a[0]] = a[1]);
 
-            if (keys["access_token"]) {
-                if (!keys["state"] || keys["state"] != localStorage["core/oauthState"]) {
-                    delete localStorage["core/oauthState"];
-                    delete localStorage["core/ghclassroomassigment"];
-                   throw new Error("invalid query");
-                }
+            function log(msg) {
+                const eel = document.getElementById("log");
+                const line = document.createElement("div");
+                line.className = "ui message"
+                line.innerText = msg;
+                eel.append(line);
+            }
 
-                const assignment = localStorage["core/ghclassroomassigment"];
-                log(`redirecting to GitHub classroom`);
-                localStorage["core/githubtoken"] = keys["access_token"];
-                delete localStorage["core/oauthState"];
-                delete localStorage["core/ghclassroomassigment"];
-                window.location.href = "https://classroom.github.com/" + assignment;
-            } else {
-                // we've been asked for an assignment,
-                const assignment = keys["assignment"];
-                if (!assignment)
-                    throw Error("Invalid query");
+            function signIn() {
                 const state = Math.random().toString();
+                const assignment = keys["assignment"];
                 localStorage["core/oauthState"] = state;
                 localStorage["core/ghclassroomassigment"] = assignment;
                 const login = "https://makecode.com/oauth/login?state=" + state +
                     "&response_type=token&client_id=gh-token&redirect_uri=" + encodeURIComponent(window.location.href.split('#', 1)[0])
                 window.location.href = login;
             }
-        }
 
-        window.addEventListener("load", function () {
-            try {
-                checkToken();
-            } catch (e) {
-                log(`error: ${e.message}`)
-                throw e; // for tracking
+            function redirectGithub() {
+                if (!keys["state"] || keys["state"] != localStorage["core/oauthState"]) {
+                        delete localStorage["core/oauthState"];
+                        delete localStorage["core/ghclassroomassigment"];
+                        throw new Error("invalid query");
+                }
+
+                const assignment = localStorage["core/ghclassroomassigment"];
+                localStorage["core/githubtoken"] = keys["access_token"];
+                delete localStorage["core/oauthState"];
+                delete localStorage["core/ghclassroomassigment"];
+                var url = "https://classroom.github.com/" + assignment;
+                log(`Redirecting to GitHub Classroom...`);
+                setTimeout(() => window.location.href = url, 2000);
             }
-        });
+
+            function init() {
+                // sniff oauth
+                window.location.hash.replace(/^#/, '').split('&')
+                    .map(v => v.split('=', 2))
+                    .forEach(a => keys[a[0]] = a[1]);
+
+                if (keys["access_token"]) {
+                    redirectGithub()
+                } else {
+                    // we've been asked for an assignment,
+                    const assignment = keys["assignment"];
+                    if (!assignment)
+                        throw Error("Invalid query");
+
+                    document.getElementById("signinbtn").onclick = () => signIn();
+                    document.getElementById("signin").className = "";
+                }
+            }
+
+            window.addEventListener("load", function () {
+                try {
+                    init();
+                } catch (e) {
+                    log(`error: ${e.message}`)
+                    throw e; // for tracking
+                }
+            });
+        })();
     </script>
 </head>
 
 <body id='root' class='root'>
     <div class="ui container">
         <h1>
-            MakeCode GitHub Classroom redirect
+            MakeCode for GitHub Classroom Registration
         </h1>
-        <p>
-            You should be redirected to GitHub classroom soon.
-        </p>
+        <div id="signin" class="ui segment hidden">
+            <p>
+                In order to use MakeCode with GitHub Classroom, you will need to sign in with the <strong>Microsoft MakeCode with GitHub</strong>.
+                Click the button below to start this process.
+            </p>
+            <p>
+                <button class="ui primary button" id="signinbtn">Sign in with MakeCode</button>
+            </p>
+        </div>
         <p id="log">
-
         </p>
         <footer id="footer" class="hideprint">
             <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp; Cookies</a>
