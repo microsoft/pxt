@@ -180,6 +180,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         }
         if (packetioConnected)
             downloadButtonClasses += "connected ";
+        else if (packetioConnecting)
+            downloadButtonClasses += "connecting ";
         switch (view) {
             case View.Mobile:
                 downloadButtonClasses += "download-button-full";
@@ -202,6 +204,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const deviceName = pxt.hwName || pxt.appTarget.appTheme.boardNickname || lf("device");
         const tooltip = pxt.hwName
             || (packetioConnected && lf("Connected to {0}", deviceName))
+            || (packetioConnecting && lf("Connecting..."))
             || (boards ? lf("Click to select hardware") : lf("Click for one-click downloads."));
 
         const hardwareMenuText = view == View.Mobile ? lf("Hardware") : lf("Choose hardware");
@@ -211,7 +214,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             el.push(
                 <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
                     {webUSBSupported && !packetioConnected && <sui.Item role="menuitem" icon="usb" text={lf("Pair device")} tabIndex={-1} onClick={this.onPairClick} />}
-                    {webUSBSupported && packetioConnected && <sui.Item role="menuitem" icon="usb" text={lf("Disconnect")} tabIndex={-1} onClick={this.onDisconnectClick} />}
+                    {webUSBSupported && (packetioConnecting || packetioConnected) && <sui.Item role="menuitem" icon="usb" text={lf("Disconnect")} tabIndex={-1} onClick={this.onDisconnectClick} />}
                     {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
                     <sui.Item role="menuitem" icon="download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />
                 </sui.DropdownMenu>

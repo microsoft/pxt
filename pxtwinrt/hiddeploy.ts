@@ -11,6 +11,7 @@ namespace pxt.winrt {
         onEvent = (v: Uint8Array) => { };
         onError = (e: Error) => { };
         public dev: Windows.Devices.HumanInterfaceDevice.HidDevice;
+        private connecting = false;
 
         constructor() {
         }
@@ -21,6 +22,10 @@ namespace pxt.winrt {
 
         error(msg: string) {
             throw new Error(U.lf("USB/HID error ({0})", msg))
+        }
+
+        isConnecting(): boolean {
+            return this.connecting;
         }
 
         isConnected(): boolean {
@@ -86,6 +91,7 @@ namespace pxt.winrt {
                 });
             }, Promise.resolve<Windows.Devices.Enumeration.DeviceInformationCollection>(null));
 
+            this.connecting = false;
             let deviceId: string;
             return getDevicesPromise
                 .then((devices) => {
@@ -123,6 +129,11 @@ namespace pxt.winrt {
                     if (this.onConnectionChanged)
                         this.onConnectionChanged();
                     return Promise.resolve();
+                })
+                .finally(() => {
+                    this.connecting = false
+                    if (this.onConnectionChanged)
+                        this.onConnectionChanged();
                 })
                 .catch((e) => {
                     if (isRetry) {
