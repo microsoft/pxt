@@ -170,12 +170,7 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
         return pxt.packetio.initAsync(isRetry)
             .then(dev => core.showLoadingAsync(LOADING_KEY, lf("Downloading..."), 
                 dev.reflashAsync(resp)
-                    .then(() => {
-                        // reconnect it he background, don't block
-                        log(`background reconnect`)
-                        dev.reconnectAsync().done();                        
-                    }), 
-                5000))
+                    .then(() => dev.reconnectAsync()), 5000))
             .then(() => core.infoNotification("Download completed!"))
             .finally(() => core.hideLoading(LOADING_KEY))
             .timeout(120000, "timeout") // packetio should time out first
