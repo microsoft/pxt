@@ -63,6 +63,10 @@ namespace pxt.packetio {
         return !!wrapper && wrapper.io.isConnected();
     }
 
+    export function isConnecting() {
+        return !!wrapper && wrapper.io.isConnecting();
+    }
+
     export function icon() {
         return !!wrapper && (wrapper.icon || "usb");
     }

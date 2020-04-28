@@ -443,6 +443,8 @@ function handlePacketIOApi(r: string) {
             return pxt.packetio.isActive();
         case "connected":
             return pxt.packetio.isConnected();
+        case "connecting":
+            return pxt.packetio.isConnecting();
         case "icon":
             return pxt.packetio.icon();
     }

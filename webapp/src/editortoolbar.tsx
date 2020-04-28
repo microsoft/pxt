@@ -163,10 +163,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const downloadText = targetTheme.useUploadMessage ? lf("Upload") : lf("Download");
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
         const webUSBSupported = pxt.usb.isEnabled && pxt.appTarget?.compile?.webUSB;
-        const packetioActive = !!this.getData("packetio:active");
         const packetioConnected = !!this.getData("packetio:connected");
+        const packetioConnecting = !!this.getData("packetio:connecting");
         const packetioIcon = !!packetioConnected && this.getData("packetio:icon") as string;
-        const downloadIcon = packetioIcon || targetTheme.downloadIcon || "download";
+        const downloadIcon = (packetioConnecting && "plug") || packetioIcon || targetTheme.downloadIcon || "download";
         const hasMenu = boards || webUSBSupported;
 
         let downloadButtonClasses = hasMenu ? "left attached " : "";
