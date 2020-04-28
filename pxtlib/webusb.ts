@@ -271,6 +271,7 @@ namespace pxt.usb {
             this.log("connect device: " + dev.manufacturerName + " " + dev.productName)
             this.dev = dev;
             return this.initAsync()
+                .delay(1000)
                 .finally(() => this.setConnecting(false));
         }
 
