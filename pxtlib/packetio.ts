@@ -28,6 +28,7 @@ namespace pxt.packetio {
         error(msg: string): any;
         reconnectAsync(): Promise<void>;
         disconnectAsync(): Promise<void>;
+        isConnecting(): boolean;
         isConnected(): boolean;
         isSwitchingToBootloader?: () => void;
         // release any native resource before being released

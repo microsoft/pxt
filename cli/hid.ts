@@ -185,6 +185,7 @@ export class HIDError extends Error {
 export class HidIO implements pxt.packetio.PacketIO {
     dev: any;
     private path: string;
+    private connecting = false;
 
     onDeviceConnectionChanged = (connect: boolean) => { };
     onConnectionChanged = () => { };
@@ -198,27 +199,39 @@ export class HidIO implements pxt.packetio.PacketIO {
 
     private connect() {
         U.assert(isInstalled(false))
-        if (this.requestedPath == null) {
-            let devs = getHF2Devices()
-            if (devs.length == 0)
-                throw new HIDError("no devices found")
-            this.path = devs[0].path
-        } else {
-            this.path = this.requestedPath
-        }
-
-        this.dev = new HID.HID(this.path)
-        this.dev.on("data", (v: Buffer) => {
-            //console.log("got", v.toString("hex"))
-            this.onData(new Uint8Array(v))
-        })
-        this.dev.on("error", (v: Error) => this.onError(v))
+        U.assert(!this.connecting)
+        this.connecting = true;
         if (this.onConnectionChanged)
             this.onConnectionChanged();
+        try {
+            if (this.requestedPath == null) {
+                let devs = getHF2Devices()
+                if (devs.length == 0)
+                    throw new HIDError("no devices found")
+                this.path = devs[0].path
+            } else {
+                this.path = this.requestedPath
+            }
+
+            this.dev = new HID.HID(this.path)
+            this.dev.on("data", (v: Buffer) => {
+                //console.log("got", v.toString("hex"))
+                this.onData(new Uint8Array(v))
+            })
+            this.dev.on("error", (v: Error) => this.onError(v))
+        } finally {
+            this.connecting = false;
+            if (this.onConnectionChanged)
+                this.onConnectionChanged();
+        }
     }
 
     disposeAsync(): Promise<void> {
         return Promise.resolve();
+    }
+
+    isConnecting(): boolean {
+        return this.connecting;
     }
 
     isConnected(): boolean {

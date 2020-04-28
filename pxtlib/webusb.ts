@@ -162,6 +162,7 @@ namespace pxt.usb {
     class HID implements pxt.packetio.PacketIO {
         dev: USBDevice;
         ready = false;
+        connecting = false;
         iface: USBInterface;
         altIface: USBAlternateInterface;
         epIn: USBEndpoint;
@@ -245,14 +246,27 @@ namespace pxt.usb {
                 .then(dev => this.connectAsync(dev));
         }
 
+        isConnecting(): boolean {
+            return this.connecting;
+        }
+
         isConnected(): boolean {
             return !!this.dev && this.ready;
         }
 
         private connectAsync(dev: USBDevice) {
             this.log("connect device: " + dev.manufacturerName + " " + dev.productName)
+            U.assert(!this.connecting) // don't double connect
+            this.connecting = true;
+            if (this.onConnectionChanged)
+                this.onConnectionChanged();
             this.dev = dev;
             return this.initAsync()
+                .finally(() => {
+                    this.connecting = false
+                    if (this.onConnectionChanged)
+                        this.onConnectionChanged();
+                });
         }
 
         sendPacketAsync(pkt: Uint8Array) {
