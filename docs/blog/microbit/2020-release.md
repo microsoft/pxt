@@ -8,9 +8,11 @@ Thank you to everyone who has helped us identify bugs and suggested new features
 
 This year’s update has a lot of juicy new features and improvements, which are listed below. Please try out the Beta and let us know what you think!
 
-https://makecode.microbit.org/beta Any bugs you find, please log them in GitHub: https://github.com/Microsoft/pxt-microbit/issues
+https://makecode.microbit.org/beta 
 
-Any other comments, suggestions, and feedback, please participate in the micro:bit community on Slack: https://tech.microbit.org/get-involved/where-to-find/
+Any bugs you find, please log them in GitHub: https://github.com/Microsoft/pxt-microbit/issues
+
+Any other comments, suggestions, and feedback, please create a support ticket at https://support.microbit.org/en/support/tickets/new.
 
 ## New features for this release
 
