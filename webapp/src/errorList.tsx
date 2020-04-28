@@ -38,19 +38,27 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             return `${error.messageText}-${error.fileName}-${error.line}-${error.column}`
         }
 
-        const toggleButton = <sui.Button id='toggleErrorList' className={`toggleErrorList collapse-button large`}
-                                icon={`inverted chevron ${isCollapsed ? 'up' : 'down'}`}
-                                title={collapseTooltip} onClick={this.onCollapseClick} />
+        const xButton = <sui.CloseButton onClick={this.onCollapseClick} />
 
-        const errorListInnerClasses = errorsAvailable ? "errorListInner" : "errorListInner noErrorsMessage"
+        let errorListContent;
+        if (errorsAvailable) {
+            if (isCollapsed) {
+                errorListContent = <div className="summaryMessage" role="button" onClick={this.onCollapseClick}>
+                    {lf("Uh oh! You have {0} error(s)!", errors.length)}
+                </div>
+            } else {
+                errorListContent = (errors).map(e =>
+                    <div key={errorKey(e)}>{`${e.messageText} - (${e.line + 1}:${e.column + 1})`}</div>)
+            }
+        } else {
+            errorListContent = <div>{lf("Everything seems fine!")}</div>
+        }
+
         return <div className="errorList" >
-            {errorsAvailable && toggleButton}
-            <div className={errorListInnerClasses} hidden={isCollapsed}>
-                {errorsAvailable
-                    ? (errors).map(e =>
-                        <div key={errorKey(e)}>{`${e.messageText} - [line ${e.line + 1}: col ${e.column + 1}]`}</div>)
-                    : <div>{lf("You have no errors")}</div>
-                }
+            <div className={`errorListInner ${isCollapsed ? 'errorListSummary' : ''}`}>
+                <h4 hidden={isCollapsed}>Error List</h4>
+                {!isCollapsed && xButton}
+                {errorListContent}
             </div>
         </div>
     }
@@ -69,7 +77,8 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
     onErrorsChanged(errors: pxtc.KsDiagnostic[]) {
         this.setState({
-            errors
+            errors,
+            isCollapsed: errors?.length == 0 || this.state.isCollapsed
         })
     }
 }
