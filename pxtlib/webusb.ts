@@ -180,11 +180,13 @@ namespace pxt.usb {
 
             (navigator as any).usb.addEventListener('disconnect', this.handleUSBDisconnected, false);
             (navigator as any).usb.addEventListener('connect', this.handleUSBConnected, false);
+            this.log(`registered webusb events`)
         }
 
         disposeAsync(): Promise<void> {
             (navigator as any).usb.removeEventListener('disconnect', this.handleUSBDisconnected);
             (navigator as any).usb.removeEventListener('connect', this.handleUSBConnected);
+            this.log(`unregistered webusb events`)
             return Promise.resolve();
         }
 
