@@ -1300,16 +1300,27 @@ namespace pxt.blocks {
             args = visibleParams(func, countOptionals(b)).map((p, i) => compileArgument(e, b, p, comments, func.isExtensionMethod && i === 0 && !func.isExpression));
         }
 
+        let callNamespace = func.namespace;
+        let callName = func.f
+        if (func.attrs.blockAliasFor) {
+            const aliased = e.blocksInfo.apis.byQName[func.attrs.blockAliasFor];
+
+            if (aliased) {
+                callName = aliased.name;
+                callNamespace = aliased.namespace;
+            }
+        }
+
         const externalInputs = !b.getInputsInline();
         if (func.isIdentity)
             return args[0];
         else if (func.property) {
-            return H.mkPropertyAccess(func.f, args[0]);
-        } else if (func.f == "@get@") {
+            return H.mkPropertyAccess(callName, args[0]);
+        } else if (callName == "@get@") {
             return H.mkPropertyAccess(args[1].op.replace(/.*\./, ""), args[0]);
-        } else if (func.f == "@set@") {
+        } else if (callName == "@set@") {
             return H.mkAssign(H.mkPropertyAccess(args[1].op.replace(/.*\./, "").replace(/@set/, ""), args[0]), args[2]);
-        } else if (func.f == "@change@") {
+        } else if (callName == "@change@") {
             return H.mkSimpleCall("+=", [H.mkPropertyAccess(args[1].op.replace(/.*\./, "").replace(/@set/, ""), args[0]), args[2]])
         } else if (func.isExtensionMethod) {
             if (func.attrs.defaultInstance) {
@@ -1325,11 +1336,11 @@ namespace pxt.blocks {
                     args.unshift(mkText(func.attrs.defaultInstance));
                 }
             }
-            return H.extensionCall(func.f, args, externalInputs);
-        } else if (func.namespace) {
-            return H.namespaceCall(func.namespace, func.f, args, externalInputs);
+            return H.extensionCall(callName, args, externalInputs);
+        } else if (callNamespace) {
+            return H.namespaceCall(callNamespace, callName, args, externalInputs);
         } else {
-            return H.stdCall(func.f, args, externalInputs);
+            return H.stdCall(callName, args, externalInputs);
         }
     }
 
