@@ -168,6 +168,7 @@ namespace pxt.usb {
         epIn: USBEndpoint;
         epOut: USBEndpoint;
         readLoopStarted = false;
+        deviceWatcherId: any = undefined;
         onDeviceConnectionChanged = (connect: boolean) => { };
         onConnectionChanged = () => { };
         onData = (v: Uint8Array) => { };
@@ -177,10 +178,13 @@ namespace pxt.usb {
         constructor() {
             this.handleUSBConnected = this.handleUSBConnected.bind(this);
             this.handleUSBDisconnected = this.handleUSBDisconnected.bind(this);
+            this.handleUSBWatch = this.handleUSBWatch.bind(this);
 
             (navigator as any).usb.addEventListener('disconnect', this.handleUSBDisconnected, false);
             (navigator as any).usb.addEventListener('connect', this.handleUSBConnected, false);
             this.log(`registered webusb events`)
+
+            this.deviceWatcherId = setInterval(this.handleUSBWatch, 5000)
         }
 
         disposeAsync(): Promise<void> {
@@ -188,6 +192,18 @@ namespace pxt.usb {
             (navigator as any).usb.removeEventListener('connect', this.handleUSBConnected);
             this.log(`unregistered webusb events`)
             return Promise.resolve();
+        }
+
+        private handleUSBWatch() {
+            if (this.dev) return; // already connected
+
+            // try to see if a device is aviable
+            if (tryGetDeviceAsync()) {
+                this.log(`device watched`);
+                // trigger a connection sequence
+                if (this.onDeviceConnectionChanged)
+                    this.onDeviceConnectionChanged(true);
+            }
         }
 
         private handleUSBDisconnected(event: any) {
