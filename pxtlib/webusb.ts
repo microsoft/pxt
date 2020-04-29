@@ -168,8 +168,6 @@ namespace pxt.usb {
         epIn: USBEndpoint;
         epOut: USBEndpoint;
         readLoopStarted = false;
-        deviceWatcherId: any = undefined;
-        deviceWatchingPromise: Promise<void>;
         onDeviceConnectionChanged = (connect: boolean) => { };
         onConnectionChanged = () => { };
         onData = (v: Uint8Array) => { };
@@ -180,7 +178,6 @@ namespace pxt.usb {
         constructor() {
             this.handleUSBConnected = this.handleUSBConnected.bind(this);
             this.handleUSBDisconnected = this.handleUSBDisconnected.bind(this);
-            this.handleUSBWatch = this.handleUSBWatch.bind(this);
         }
 
         enable(): void {
@@ -190,7 +187,6 @@ namespace pxt.usb {
             this.log("registering webusb events");
             (navigator as any).usb.addEventListener('disconnect', this.handleUSBDisconnected, false);
             (navigator as any).usb.addEventListener('connect', this.handleUSBConnected, false);
-            this.deviceWatcherId = setInterval(this.handleUSBWatch, 10000)
         }
 
         disable() {
@@ -200,33 +196,11 @@ namespace pxt.usb {
             this.log(`unregistering webusb events`);
             (navigator as any).usb.removeEventListener('disconnect', this.handleUSBDisconnected);
             (navigator as any).usb.removeEventListener('connect', this.handleUSBConnected);
-            if (this.deviceWatcherId) {
-                this.deviceWatchingPromise = undefined;
-                clearInterval(this.deviceWatcherId);
-                this.deviceWatcherId = undefined;
-            }
         }
 
         disposeAsync(): Promise<void> {
             this.disable();
             return Promise.resolve();
-        }
-
-        private handleUSBWatch() {
-            if (this.dev || this.connecting || this.deviceWatchingPromise) return; // already connected
-
-            // try to see if a device is available
-            this.deviceWatchingPromise =
-                tryGetDeviceAsync()
-                    .then(newdev => {
-                        this.deviceWatchingPromise = undefined;
-                        if (!this.dev && !this.connecting && newdev) {
-                            this.log(`device watched`);
-                            // trigger a connection sequence
-                            if (this.onDeviceConnectionChanged)
-                                this.onDeviceConnectionChanged(true);
-                        }
-                    });
         }
 
         private handleUSBDisconnected(event: any) {
