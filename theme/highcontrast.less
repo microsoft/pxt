@@ -212,7 +212,8 @@
             opacity: 1 !important;
             color: @HCmainMenuInverseTextColor !important;
         }
-        .item.active {
+        .item.active,
+        .menu > .item.selected {
             background: @HCtextColor !important;
             color: @HCmainMenuTextColor !important;
         }
@@ -536,7 +537,7 @@
         border-top: 1px solid @HCtextColor !important;
     }
 
-    #editordropdown .menu > .item:not(.active) {
+    #editordropdown .menu > .item:not(.selected) {
         background: transparent !important;
     }
 
