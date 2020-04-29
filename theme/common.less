@@ -838,6 +838,19 @@ p.ui.font.small {
     .hideEditorToolbar #filelist {
         display:none !important;
     }
+
+    #editortools {
+        #downloadArea {
+            padding: 1rem;
+            min-width: 8rem;
+            max-width: 8rem;
+
+            .ui.item {
+                margin-top: 0;
+                padding-top: 0;
+            }
+        }
+    }
 }
 
 /* Mobile only */
@@ -1133,6 +1146,7 @@ p.ui.font.small {
         min-width:@simulatorWidthSmall;
         max-width:@simulatorWidthSmall;
     }
+
     #maineditor {
         left:@simulatorWidthSmall;
     }
@@ -1145,6 +1159,12 @@ p.ui.font.small {
         top: auto;
         bottom: 2.2rem;
         margin: 0;
+    }
+}
+
+@media only screen and (min-width: @tabletBreakpoint) {
+    .ui.phone.hide {
+        display: none;
     }
 }
 
@@ -1185,6 +1205,18 @@ p.ui.font.small {
         width: 10rem; /* match width of div.simframe */
         height: 9rem;
     }
+
+    #editortools {
+        #downloadArea {
+            background-color: inherit;
+        }
+
+        .undo-editortools-btn {
+            border-radius: 0.2em;
+            margin: 0 .25em 0 0;
+        }
+    }
+
     #root:not(.fullscreensim):not(.headless):not(.sandbox) {
         #boardview {
             position: absolute;
@@ -1290,9 +1322,6 @@ p.ui.font.small {
     .hideEditorFloats .editorFloat {
         display:none;
     }
-    #downloadArea {
-        display: none;
-    }
     /* Menu spacing */
     #root:not(.sandbox) .menubar .ui.menu .item {
         padding: 0.3em !important;
@@ -1392,9 +1421,24 @@ p.ui.font.small {
         bottom: 3.4rem;
     }
 
-    #editortools .hw-button:before,
-    #editortools .hw-button:after {
-        display: none
+    #editortools {
+        .hw-button:before,
+        .hw-button:after {
+            display: none;
+        }
+
+        > .grid.padded {
+            margin: -0.5rem !important;
+        }
+
+        .ui.button {
+            font-size: .92857143rem;
+        }
+
+        .save-editortools-btn {
+            border-radius: 0.2em;
+            margin: 0 .25em 0 0;
+        }
     }
 }
 
@@ -1408,24 +1452,33 @@ p.ui.font.small {
         top: @thinMenuHeight;
         padding: 0.5rem 1.5rem;
     }
-    #editortools {
-        height: @editorToolsThinHeight;
-    }
     #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #filelist {
         bottom: @editorToolsThinHeight;
     }
-    #editortools .ui.button {
-        padding: .5em;
-    }
-    #downloadArea {
-        padding-top: 0;
-    }
-    #editorToolbarArea, #projectNameArea {
-        padding-top: 0.5rem;
-        font-size: 0.8em;
 
-        input {
-            padding: 0.35rem;
+
+    #editortools {
+        height: @editorToolsThinHeight;
+
+        .ui.button {
+            padding: 0.5rem;
+        }
+
+        #downloadArea {
+            padding-top: 0;
+        }
+
+        #editorToolbarArea, #projectNameArea {
+            padding-top: 0.5rem;
+            font-size: 0.8em;
+
+            input {
+                padding: 0.35rem;
+            }
+        }
+
+        .ui.button {
+            font-size: .92857143rem;
         }
     }
 }
