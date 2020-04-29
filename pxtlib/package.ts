@@ -318,6 +318,24 @@ namespace pxt {
             return regex.test(ts);
         }
 
+        private upgradePackagesAsync() {
+            return pxt.packagesConfigAsync()
+                .then(config => {
+                    let numfixes = 0
+                    U.iterMap(this.config.dependencies, (pkg, ver) => {
+                        if (pxt.github.isGithubId(ver)) {
+                            const upgraded = pxt.github.upgradedPackageReference(config, ver)
+                            if (upgraded && upgraded != ver) {
+                                this.config.dependencies[pkg] = upgraded
+                                numfixes++
+                            }
+                        }
+                    })
+                    if (numfixes)
+                        this.saveConfig()
+                })
+        }
+
         private getMissingPackages(config: pxt.PackageConfig, ts: string): Map<string> {
             const upgrades = pxt.patching.computePatches(this.targetVersion(), "missingPackage");
             const missing: Map<string> = {};
@@ -545,6 +563,9 @@ namespace pxt {
             } else {
                 initPromise = initPromise.then(() => this.parseConfig(str))
             }
+
+            if (this.level == 0)
+                initPromise = initPromise.then(() => this.upgradePackagesAsync())
 
             if (isInstall)
                 initPromise = initPromise.then(() => this.downloadAsync())

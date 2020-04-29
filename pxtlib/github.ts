@@ -968,10 +968,10 @@ namespace pxt.github {
         return null
     }
 
-    export function upgradedPackageId(cfg: PackagesConfig, id: string) {
+    export function upgradedPackageReference(cfg: PackagesConfig, id: string) {
         const upgr = upgradeRule(cfg, id)
         if (!upgr)
-            return id
+            return null
 
         const m = /^min:(.*)/.exec(upgr)
         if (m && pxt.semver.parse(m[1])) {
@@ -980,19 +980,26 @@ namespace pxt.github {
             const currV = pxt.semver.parse(parsed.tag)
             if (currV && pxt.semver.cmp(currV, minV) < 0) {
                 parsed.tag = m[1]
+                pxt.debug(`upgrading ${id} to ${m[1]}`)
                 return stringifyRepo(parsed)
             } else {
                 if (!currV)
                     pxt.log(`not upgrading ${id} - cannot parse version`)
-                return id
+                return null
             }
+        } else {
+            // check if the rule looks valid at all
+            if (!upgradedDisablesVariants(cfg, id))
+                pxt.log(`invalid upgrade rule: ${id} -> ${upgr}`)
         }
 
+        return id
+    }
+
+    export function upgradedPackageId(cfg: PackagesConfig, id: string) {
         const dv = upgradedDisablesVariants(cfg, id)
         if (dv)
             return id + "?dv=" + dv.join(",")
-
-        pxt.log(`invalid upgrade rule: ${id} -> ${upgr}`)
         return id
     }
 
