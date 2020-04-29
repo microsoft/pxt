@@ -175,20 +175,29 @@ namespace pxt.usb {
         onData = (v: Uint8Array) => { };
         onError = (e: Error) => { };
         onEvent = (v: Uint8Array) => { };
+        enabled = false;
 
         constructor() {
             this.handleUSBConnected = this.handleUSBConnected.bind(this);
             this.handleUSBDisconnected = this.handleUSBDisconnected.bind(this);
             this.handleUSBWatch = this.handleUSBWatch.bind(this);
+        }
 
+        enable(): void {
+            if (this.enabled) return;
+
+            this.enabled = true;
+            this.log("registering webusb events");
             (navigator as any).usb.addEventListener('disconnect', this.handleUSBDisconnected, false);
             (navigator as any).usb.addEventListener('connect', this.handleUSBConnected, false);
-            this.log(`registered webusb events`)
-
             this.deviceWatcherId = setInterval(this.handleUSBWatch, 10000)
         }
 
-        disposeAsync(): Promise<void> {
+        disable() {
+            if (!this.enabled) return;
+
+            this.enabled = false;
+            this.log(`unregistering webusb events`);
             (navigator as any).usb.removeEventListener('disconnect', this.handleUSBDisconnected);
             (navigator as any).usb.removeEventListener('connect', this.handleUSBConnected);
             if (this.deviceWatcherId) {
@@ -196,7 +205,10 @@ namespace pxt.usb {
                 clearInterval(this.deviceWatcherId);
                 this.deviceWatcherId = undefined;
             }
-            this.log(`unregistered webusb events`)
+        }
+
+        disposeAsync(): Promise<void> {
+            this.disable();
             return Promise.resolve();
         }
 
@@ -481,6 +493,7 @@ namespace pxt.usb {
         pxt.log(`packetio: mk webusb io`)
         if (!_hid)
             _hid = new WebUSBHID();
+        _hid.enable();
         return Promise.resolve(_hid);
     }
 
