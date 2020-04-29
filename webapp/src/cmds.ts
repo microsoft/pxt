@@ -416,7 +416,10 @@ export function maybeReconnectAsync(pairIfDeviceNotFound = false) {
 export function pairAsync(): Promise<void> {
     pxt.tickEvent("cmds.pair")
     return pxt.commands.webUsbPairDialogAsync(pxt.usb.pairAsync, core.confirmAsync)
-        .then(res => res && maybeReconnectAsync());
+        .then(res => {
+            if(res) return maybeReconnectAsync();
+            else return core.infoNotification("Oops, no device was paired.")
+        });
 }
 
 export function showDisconnectAsync(): Promise<void> {
