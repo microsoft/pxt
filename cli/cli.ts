@@ -5533,14 +5533,14 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     let warningCount = 0;
     function reportWarning(er: { repo: string; title: string; body: string; }) {
         reportLog(`warning: https://github.com/${er.repo} ${er.title}`)
-        const msg = `- [ ]  [${er.repo}](https://github.com/${er.repo}) ${er.title} / [new issue](https://github.com/${er.repo}/issues/new?title=${encodeURIComponent(er.title)}&body=${encodeURIComponent(er.body)})`;
+        const msg = `- [ ] warning: [${er.repo}](https://github.com/${er.repo}) ${er.title} / [new issue](https://github.com/${er.repo}/issues/new?title=${encodeURIComponent(er.title)}&body=${encodeURIComponent(er.body)})`;
         fs.appendFileSync(errorfile, msg + "\n");
         warningCount++;
     }
 
     function reportError(er: { repo: string; title: string; body: string; }) {
         reportLog(`error: https://github.com/${er.repo} ${er.title}`)
-        const msg = `- [ ]  [${er.repo}](https://github.com/${er.repo}) ${er.title} / [new issue](https://github.com/${er.repo}/issues/new?title=${encodeURIComponent(er.title)}&body=${encodeURIComponent(er.body)})`;
+        const msg = `- [ ] error:  [${er.repo}](https://github.com/${er.repo}) ${er.title} / [new issue](https://github.com/${er.repo}/issues/new?title=${encodeURIComponent(er.title)}&body=${encodeURIComponent(er.body)})`;
         fs.appendFileSync(errorfile, msg + "\n");
         errorCount++;
     }
