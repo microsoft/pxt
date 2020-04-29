@@ -419,16 +419,17 @@ export function pairAsync(): Promise<void> {
         .then(res => res && maybeReconnectAsync());
 }
 
-export function disconnectAsync(silent: boolean): Promise<void> {
+export function showDisconnectAsync(): Promise<void> {
+    if (pxt.commands.renderDisconnectDialog) {
+        const { header, jsx, helpUrl } = pxt.commands.renderDisconnectDialog();
+        return core.dialogAsync({ header, jsx, helpUrl, hideCancel: true, hasCloseIcon: true });
+    }
+    return Promise.resolve();
+}
+
+export function disconnectAsync(): Promise<void> {
     pxt.tickEvent("cmds.disconnect")
-    return pxt.packetio.disconnectAsync()
-        .then(() => {
-            if (!silent && !!pxt.commands.renderDisconnectDialog) {
-                const { header, jsx, helpUrl } = pxt.commands.renderDisconnectDialog();
-                return core.dialogAsync({ header, jsx, helpUrl, hideCancel: true, hasCloseIcon: true });
-            }
-            return Promise.resolve();
-        });
+    return pxt.packetio.disconnectAsync();
 }
 
 function handlePacketIOApi(r: string) {

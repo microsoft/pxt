@@ -4,6 +4,7 @@ import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as githubbutton from "./githubbutton";
+import * as cmds from "./cmds"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -153,7 +154,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     protected onDisconnectClick = () => {
-        this.props.parent.disconnectAsync();
+        cmds.showDisconnectAsync().done();
     }
 
     protected getCompileButton(view: View, collapsed?: boolean): JSX.Element[] {
