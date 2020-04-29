@@ -563,6 +563,7 @@ namespace pxt.github {
                 if (dv) {
                     const cfg = Package.parseAndValidConfig(cached.files[pxt.CONFIG_NAME])
                     if (cfg) {
+                        pxt.log(`auto-disable ${dv.join(",")} due to targetconfig entry for ${repoWithTag}`)
                         cfg.disablesVariants = dv
                         cached.files[pxt.CONFIG_NAME] = Package.stringifyConfig(cfg)
                     }
