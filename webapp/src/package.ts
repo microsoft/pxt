@@ -297,6 +297,7 @@ export class EditorPackage {
         let p = this.ksPkg.resolveDep(pkgid);
         if (!p || p.verProtocol() != "github") return Promise.resolve();
         let parsed = pxt.github.parseRepoId(p.verArgument())
+        if (!parsed) return Promise.resolve();
         return pxt.targetConfigAsync()
             .then(config => pxt.github.latestVersionAsync(parsed.fullName, config.packages))
             .then(tag => { parsed.tag = tag })

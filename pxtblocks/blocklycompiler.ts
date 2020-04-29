@@ -17,6 +17,10 @@ namespace pxt.blocks {
         idToComments: Map<Blockly.WorkspaceComment[]>;
     }
 
+    interface PlaceholderLikeBlock extends Blockly.Block {
+        p?: Point;
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // Miscellaneous utility functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -185,8 +189,10 @@ namespace pxt.blocks {
     function returnType(e: Environment, b: Blockly.Block): Point {
         assert(b != null);
 
-        if (b.type == "placeholder" || b.type === pxtc.TS_OUTPUT_TYPE)
-            return find((<any>b).p);
+        if (isPlaceholderBlock(b)) {
+            if (!b.p) b.p = mkPoint(null);
+            return find(b.p);
+        }
 
         if (b.type == "variables_get")
             return find(lookup(e, b, b.getField("VAR").getText()).type);
@@ -1294,16 +1300,27 @@ namespace pxt.blocks {
             args = visibleParams(func, countOptionals(b)).map((p, i) => compileArgument(e, b, p, comments, func.isExtensionMethod && i === 0 && !func.isExpression));
         }
 
+        let callNamespace = func.namespace;
+        let callName = func.f
+        if (func.attrs.blockAliasFor) {
+            const aliased = e.blocksInfo.apis.byQName[func.attrs.blockAliasFor];
+
+            if (aliased) {
+                callName = aliased.name;
+                callNamespace = aliased.namespace;
+            }
+        }
+
         const externalInputs = !b.getInputsInline();
         if (func.isIdentity)
             return args[0];
         else if (func.property) {
-            return H.mkPropertyAccess(func.f, args[0]);
-        } else if (func.f == "@get@") {
+            return H.mkPropertyAccess(callName, args[0]);
+        } else if (callName == "@get@") {
             return H.mkPropertyAccess(args[1].op.replace(/.*\./, ""), args[0]);
-        } else if (func.f == "@set@") {
+        } else if (callName == "@set@") {
             return H.mkAssign(H.mkPropertyAccess(args[1].op.replace(/.*\./, "").replace(/@set/, ""), args[0]), args[2]);
-        } else if (func.f == "@change@") {
+        } else if (callName == "@change@") {
             return H.mkSimpleCall("+=", [H.mkPropertyAccess(args[1].op.replace(/.*\./, "").replace(/@set/, ""), args[0]), args[2]])
         } else if (func.isExtensionMethod) {
             if (func.attrs.defaultInstance) {
@@ -1319,11 +1336,11 @@ namespace pxt.blocks {
                     args.unshift(mkText(func.attrs.defaultInstance));
                 }
             }
-            return H.extensionCall(func.f, args, externalInputs);
-        } else if (func.namespace) {
-            return H.namespaceCall(func.namespace, func.f, args, externalInputs);
+            return H.extensionCall(callName, args, externalInputs);
+        } else if (callNamespace) {
+            return H.namespaceCall(callNamespace, callName, args, externalInputs);
         } else {
-            return H.stdCall(func.f, args, externalInputs);
+            return H.stdCall(callName, args, externalInputs);
         }
     }
 
@@ -1504,14 +1521,14 @@ namespace pxt.blocks {
                 else r = [mkStmt(compileExpression(e, b, comments))];
                 break;
         }
-        let l = r[r.length - 1]; if (l) l.id = b.id;
+        let l = r[r.length - 1]; if (l && !l.id) l.id = b.id;
 
         if (comments.length) {
             addCommentNodes(comments, r)
         }
 
         r.forEach(l => {
-            if (l.type === NT.Block || l.type === NT.Prefix && Util.startsWith(l.op, "//")) {
+            if ((l.type === NT.Block || l.type === NT.Prefix && Util.startsWith(l.op, "//")) && (b.type != pxtc.ON_START_TYPE || !l.id)) {
                 l.id = b.id
             }
         });
@@ -2557,5 +2574,9 @@ namespace pxt.blocks {
 
             return false;
         }
+    }
+
+    function isPlaceholderBlock(b: Blockly.Block): b is PlaceholderLikeBlock {
+        return b.type == "placeholder" || b.type === pxtc.TS_OUTPUT_TYPE;
     }
 }

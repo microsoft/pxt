@@ -30,14 +30,17 @@ export function provideDocumentRangeFormattingEdits(model: monaco.editor.IReadOn
     const source = model.getValue();
 
     // TODO indentation for paste blocks
-    const partial = range.startLineNumber != 0;
-    const s =  model.getOffsetAt({ lineNumber: range.startLineNumber, column: range.startColumn });
-    const e =  model.getOffsetAt({ lineNumber: range.endLineNumber, column: range.endColumn });
-    const lines = source.slice(s, e).split('\n');
+    const lineStart = model.getOffsetAt({ lineNumber: range.startLineNumber, column: 0 });
+    const rangeStart =  model.getOffsetAt({ lineNumber: range.startLineNumber, column: range.startColumn });
+    const rangeEnd =  model.getOffsetAt({ lineNumber: range.endLineNumber, column: range.endColumn });
+    const lines = source.slice(lineStart, rangeEnd).split('\n');
+
+    const startsWithinLine = lineStart !== rangeStart && !!source.substring(lineStart, rangeStart).trim()
+
     const codeLines = lines.map((s, i) => !!s ? i : -1).filter(i => i >= 0);
 
     let prev;
-    if (partial) {
+    if (!startsWithinLine) {
         prev = getLine(source, model, range.startLineNumber - 1);
     }
 
@@ -66,6 +69,6 @@ export function provideDocumentRangeFormattingEdits(model: monaco.editor.IReadOn
 
     return [{
         text: lines.join('\n'),
-        range: range
+        range: range.setStartPosition(range.startLineNumber, 0)
     }];
 }

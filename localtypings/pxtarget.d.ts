@@ -15,6 +15,8 @@ declare namespace pxt {
         // value @random@ will be expanded to a random string
         // looks for 200, 403 error codes
         testUrl?: string;
+        // requires youtube acces
+        youTube?: boolean;
     }
     interface TargetConfig {
         packages?: PackagesConfig;
@@ -60,6 +62,7 @@ declare namespace pxt {
         uploadDocs?: boolean; // enable uploading to crowdin on master or v* builds
         variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
         multiVariants?: string[];
+        alwaysMultiVariant?: boolean;
         queryVariants?: Map<AppTarget>; // patches on top of the current AppTarget using query url regex
         unsupportedBrowsers?: BrowserOptions[]; // list of unsupported browsers for a specific target (eg IE11 in arcade). check browserutils.js browser() function for strings
         checkdocsdirs?: string[]; // list of folders for checkdocs, irrespective of SUMMARY.md
@@ -478,6 +481,7 @@ declare namespace ts.pxtc {
         time?: boolean;
         noIncr?: boolean;
         rawELF?: boolean;
+        multiVariant?: boolean;
     }
 
     interface CompileTarget {
@@ -599,6 +603,7 @@ declare namespace ts.pxtc {
         imageLiteral?: number;
         imageLiteralColumns?: number; // optional number of columns
         imageLiteralRows?: number; // optional number of rows
+        imageLiteralScale?: number; // button sizing between 0.6 and 2, default is 1
         weight?: number;
         parts?: string;
         trackArgs?: number[];
@@ -697,6 +702,7 @@ declare namespace ts.pxtc {
 
         alias?: string; // another symbol alias for this member
         pyAlias?: string; // optional python version of the alias
+        blockAliasFor?: string; // qname of the function this block is an alias for
     }
 
     interface ParameterDesc {
@@ -791,11 +797,12 @@ declare namespace ts.pxtc {
         justMyCode?: boolean;
         computeUsedSymbols?: boolean;
         name?: string;
-        warnDiv?: boolean; // warn when emitting division operator
         apisInfo?: ApisInfo;
         bannedCategories?: string[];
         skipPxtModulesTSC?: boolean; // skip re-checking of pxt_modules/*
         skipPxtModulesEmit?: boolean; // skip re-emit of pxt_modules/*
+
+        otherMultiVariants?: ExtensionTarget[];
 
         syntaxInfo?: SyntaxInfo;
 
@@ -839,9 +846,14 @@ declare namespace ts.pxtc {
         commBase?: number;
         skipCloudBuild?: boolean;
         hexinfo?: HexInfo;
-        otherMultiVariants?: ExtensionInfo[];
         appVariant?: string;
         outputPrefix?: string;
+        disabledDeps?: string;
+    }
+
+    interface ExtensionTarget {
+        extinfo: ExtensionInfo
+        target: CompileTarget
     }
 
     interface HexInfo {
@@ -875,6 +887,7 @@ declare namespace pxt.tutorial {
         explicitHints?: boolean; // tutorial expects explicit hints in `#### ~ tutorialhint` format
         flyoutOnly?: boolean; // no categories, display all blocks in flyout
         hideIteration?: boolean; // hide step control in tutorial
+        diffs?: boolean; // automatically diff snippets
         noDiffs?: boolean; // don't automatically generated diffs
         codeStart?: string; // command to run when code starts (MINECRAFT HOC ONLY)
         codeStop?: string; // command to run when code stops (MINECRAFT HOC ONLY)

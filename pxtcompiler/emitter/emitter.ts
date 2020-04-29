@@ -3416,7 +3416,7 @@ ${lbl}: .short 0xffff
                 return null
 
             const info = pxtInfo(decl)
-            if (info.constantFolded)
+            if (info.constantFolded !== undefined)
                 return info.constantFolded
 
             if (isVar(decl) && (decl.parent.flags & NodeFlags.Const)) {
@@ -3445,6 +3445,8 @@ ${lbl}: .short 0xffff
         }
 
         function constantFold(e: Expression): Folded {
+            if (!e)
+                return null
             const info = pxtInfo(e)
             if (info.constantFolded === undefined) {
                 info.constantFolded = null // make sure we don't come back here recursively
@@ -3838,11 +3840,7 @@ ${lbl}: .short 0xffff
                 case SK.PlusToken: return "numops::adds";
                 case SK.MinusToken: return "numops::subs";
                 // we could expose __aeabi_idiv directly...
-                case SK.SlashToken: {
-                    if (opts.warnDiv)
-                        warning(node, 9274, "usage of / operator");
-                    return "numops::div";
-                }
+                case SK.SlashToken: return "numops::div";
                 case SK.PercentToken: return "numops::mod";
                 case SK.AsteriskToken: return "numops::muls";
                 case SK.AsteriskAsteriskToken: return "Math_::pow";
@@ -4831,7 +4829,6 @@ ${lbl}: .short 0xffff
         res: CompileResult;
         options: CompileOptions;
         usedClassInfos: ClassInfo[] = [];
-        sourceHash = "";
         checksumBlock: number[];
         numStmts = 1;
         commSize = 0;

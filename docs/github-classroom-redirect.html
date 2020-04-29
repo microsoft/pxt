@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#" xmlns:fb="http://www.facebook.com/2008/fbml">
+
+<head>
+    <meta charset="UTF-8">
+    <title>MakeCode GitHub Classroom Registration</title>
+    <link rel="stylesheet"
+        href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css"
+        type="text/css">
+    <script>
+        (function () {
+            let keys = {};
+
+            function log(msg) {
+                const eel = document.getElementById("log");
+                const line = document.createElement("div");
+                line.className = "ui message"
+                line.innerText = msg;
+                eel.append(line);
+            }
+
+            function signIn() {
+                const state = Math.random().toString();
+                const assignment = keys["assignment"];
+                localStorage["core/oauthState"] = state;
+                localStorage["core/ghclassroomassigment"] = assignment;
+                const login = "https://makecode.com/oauth/login?state=" + state +
+                    "&response_type=token&client_id=gh-token&redirect_uri=" + encodeURIComponent(window.location.href.split('#', 1)[0])
+                window.location.href = login;
+            }
+
+            function redirectGithub() {
+                if (!keys["state"] || keys["state"] != localStorage["core/oauthState"]) {
+                        delete localStorage["core/oauthState"];
+                        delete localStorage["core/ghclassroomassigment"];
+                        throw new Error("invalid query");
+                }
+
+                const assignment = localStorage["core/ghclassroomassigment"];
+                localStorage["core/githubtoken"] = keys["access_token"];
+                delete localStorage["core/oauthState"];
+                delete localStorage["core/ghclassroomassigment"];
+                var url = "https://classroom.github.com/" + assignment;
+                log(`Redirecting to GitHub Classroom...`);
+                setTimeout(() => window.location.href = url, 2000);
+            }
+
+            function init() {
+                // sniff oauth
+                window.location.hash.replace(/^#/, '').split('&')
+                    .map(v => v.split('=', 2))
+                    .forEach(a => keys[a[0]] = a[1]);
+
+                if (keys["access_token"]) {
+                    redirectGithub()
+                } else {
+                    // we've been asked for an assignment,
+                    const assignment = keys["assignment"];
+                    if (!assignment)
+                        throw Error("Invalid query");
+
+                    document.getElementById("signinbtn").onclick = () => signIn();
+                    document.getElementById("signin").className = "";
+                }
+            }
+
+            window.addEventListener("load", function () {
+                try {
+                    init();
+                } catch (e) {
+                    log(`error: ${e.message}`)
+                    throw e; // for tracking
+                }
+            });
+        })();
+    </script>
+</head>
+
+<body id='root' class='root'>
+    <div class="ui container">
+        <h1>
+            MakeCode for GitHub Classroom Registration
+        </h1>
+        <div id="signin" class="ui segment hidden">
+            <p>
+                In order to use MakeCode with GitHub Classroom, you will need to sign in with the <strong>Microsoft MakeCode with GitHub</strong>.
+                Click the button below to start this process.
+            </p>
+            <p>
+                <button class="ui primary button" id="signinbtn">Sign in with MakeCode</button>
+            </p>
+        </div>
+        <p id="log">
+        </p>
+        <footer id="footer" class="hideprint">
+            <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp; Cookies</a>
+            <a class="item" href="https://makecode.com/termsofuse" target="_blank" rel="noopener"> Terms Of Use</a>
+            <a class="item" href="https://makecode.com/trademarks" target="_blank" rel="noopener">Trademarks</a>
+            <div class="item">© 2020 Microsoft</div>
+        </footer>
+    </div>
+    <script type="text/javascript"
+        src="https://pxt.azureedge.net/blob/795d8506c80a04f5ca26f577a8d6152e2fa3e7a6/doccdn/pxtweb.js"></script>
+    <!-- @include tracking.html -->
+</body>
+
+</html>

@@ -21,7 +21,9 @@ namespace pxt.template {
   platform: @PLATFORM@
   home_url: @HOMEURL@
 theme: jekyll-theme-slate
-include: assets
+include:
+  - assets
+  - README.md
 `,
             "Makefile": `all: deploy
 
@@ -36,15 +38,12 @@ test:
 `,
             "Gemfile": `source 'https://rubygems.org'
 gem 'github-pages', group: :jekyll_plugins`,
-            "README.md": `---
-
----
-
+            "README.md": `
 > ${lf("Open this page at {0}",
                 "[https://@REPOOWNER@.github.io/@REPONAME@/](https://@REPOOWNER@.github.io/@REPONAME@/)"
             )}
 
-## ${lf("Use this extension")}
+## ${lf("Use as Extension")}
 
 ${lf("This repository can be added as an **extension** in MakeCode.")}
 
@@ -53,7 +52,7 @@ ${lf("This repository can be added as an **extension** in MakeCode.")}
 * ${lf("click on **Extensions** under the gearwheel menu")}
 * ${lf("search for **https://github.com/@REPO@** and import")}
 
-## ${lf("Edit this extension")} ![${lf("Build status badge")}](https://github.com/@REPO@/workflows/MakeCode/badge.svg)
+## ${lf("Edit this project")} ![${lf("Build status badge")}](https://github.com/@REPO@/workflows/MakeCode/badge.svg)
 
 ${lf("To edit this repository in MakeCode.")}
 

@@ -1,6 +1,6 @@
 # Native python
 
-### @noDiffs true
+### @diffs false
 ## Step 1 @fullscreen
 
 Tutorials can be written with code in Python.

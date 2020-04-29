@@ -17,6 +17,6 @@
     "code": "\n{\nbasic.forever(() => {\n    basic.showString(\"MICRO\");\n});\n}\n",
     "templateCode": "basic.forever(() => {\n    basic.showString(\"MICRO\");\n});",
     "metadata": {
-        "noDiffs": true
+        "diffs": false
     }
 }

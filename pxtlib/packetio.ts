@@ -7,12 +7,14 @@ namespace pxt.packetio {
     export interface PacketIOWrapper {
         readonly io: PacketIO;
 
+        icon: string;
         familyID: number;
 
         onSerial: (buf: Uint8Array, isStderr: boolean) => void;
 
         reconnectAsync(): Promise<void>;
         disconnectAsync(): Promise<void>;
+        // flash the device, does **not** reconnect
         reflashAsync(resp: pxtc.CompileResult): Promise<void>;
     }
 
@@ -26,6 +28,7 @@ namespace pxt.packetio {
         error(msg: string): any;
         reconnectAsync(): Promise<void>;
         disconnectAsync(): Promise<void>;
+        isConnecting(): boolean;
         isConnected(): boolean;
         isSwitchingToBootloader?: () => void;
         // release any native resource before being released
@@ -46,8 +49,26 @@ namespace pxt.packetio {
     let onConnectionChangedHandler: () => void = () => { };
     let onSerialHandler: (buf: Uint8Array, isStderr: boolean) => void;
 
+    /**
+     * A DAP wrapper is active
+     */
+    export function isActive() {
+        return !!wrapper;
+    }
+
+    /**
+     * The DAP wrapper is active and the device is connected
+     */
     export function isConnected() {
-        return wrapper && wrapper.io.isConnected();
+        return !!wrapper && wrapper.io.isConnected();
+    }
+
+    export function isConnecting() {
+        return !!wrapper && wrapper.io.isConnecting();
+    }
+
+    export function icon() {
+        return !!wrapper && (wrapper.icon || "usb");
     }
 
     export function disconnectAsync(): Promise<void> {
