@@ -201,7 +201,7 @@ namespace pxt.usb {
         }
 
         private handleUSBWatch() {
-            if (this.dev || this.deviceWatchingPromise) return; // already connected
+            if (this.dev || this.connecting || this.deviceWatchingPromise) return; // already connected
 
             // try to see if a device is available
             this.deviceWatchingPromise =
