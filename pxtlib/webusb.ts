@@ -169,6 +169,7 @@ namespace pxt.usb {
         epOut: USBEndpoint;
         readLoopStarted = false;
         deviceWatcherId: any = undefined;
+        deviceWatchingPromise: Promise<void>;
         onDeviceConnectionChanged = (connect: boolean) => { };
         onConnectionChanged = () => { };
         onData = (v: Uint8Array) => { };
@@ -184,13 +185,14 @@ namespace pxt.usb {
             (navigator as any).usb.addEventListener('connect', this.handleUSBConnected, false);
             this.log(`registered webusb events`)
 
-            this.deviceWatcherId = setInterval(this.handleUSBWatch, 5000)
+            this.deviceWatcherId = setInterval(this.handleUSBWatch, 10000)
         }
 
         disposeAsync(): Promise<void> {
             (navigator as any).usb.removeEventListener('disconnect', this.handleUSBDisconnected);
             (navigator as any).usb.removeEventListener('connect', this.handleUSBConnected);
             if (this.deviceWatcherId) {
+                this.deviceWatchingPromise = undefined;
                 clearInterval(this.deviceWatcherId);
                 this.deviceWatcherId = undefined;
             }
@@ -199,15 +201,20 @@ namespace pxt.usb {
         }
 
         private handleUSBWatch() {
-            if (this.dev) return; // already connected
+            if (this.dev || this.deviceWatchingPromise) return; // already connected
 
-            // try to see if a device is aviable
-            if (tryGetDeviceAsync()) {
-                this.log(`device watched`);
-                // trigger a connection sequence
-                if (this.onDeviceConnectionChanged)
-                    this.onDeviceConnectionChanged(true);
-            }
+            // try to see if a device is available
+            this.deviceWatchingPromise =
+                tryGetDeviceAsync()
+                    .then(newdev => {
+                        this.deviceWatchingPromise = undefined;
+                        if (!this.dev && !this.connecting && newdev) {
+                            this.log(`device watched`);
+                            // trigger a connection sequence
+                            if (this.onDeviceConnectionChanged)
+                                this.onDeviceConnectionChanged(true);
+                        }
+                    });
         }
 
         private handleUSBDisconnected(event: any) {
@@ -222,7 +229,7 @@ namespace pxt.usb {
         private handleUSBConnected(event: any) {
             const newdev = event.device as USBDevice;
             this.log(`device connected ${newdev.serialNumber}`)
-            if (!this.dev) {
+            if (!this.dev && !this.connecting) {
                 this.log("attach device")
                 if (this.onDeviceConnectionChanged)
                     this.onDeviceConnectionChanged(true);
