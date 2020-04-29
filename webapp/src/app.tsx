@@ -1899,7 +1899,7 @@ export class ProjectView
 
         this.stopSimulator(true); // don't keep simulator around
         this.showKeymap(false); // close keymap if open
-        cmds.disconnectAsync(true); // turn off any kind of logging
+        cmds.disconnectAsync(); // turn off any kind of logging
         if (this.editor) this.editor.unloadFileAsync();
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
@@ -2230,10 +2230,6 @@ export class ProjectView
                 () => this.reloadEditor(),
                 () => this.reloadEditor()
             );
-    }
-
-    disconnectAsync(): Promise<void> {
-        return cmds.disconnectAsync(false);
     }
 
     pairAsync(): Promise<void> {

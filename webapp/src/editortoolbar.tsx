@@ -4,6 +4,7 @@ import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as githubbutton from "./githubbutton";
+import * as cmds from "./cmds"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -147,7 +148,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     protected onDisconnectClick = () => {
-        this.props.parent.disconnectAsync();
+        cmds.showDisconnectAsync().done();
     }
 
     protected getCompileButton(view: View, collapsed?: boolean): JSX.Element[] {
@@ -161,7 +162,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const packetioConnecting = !!this.getData("packetio:connecting");
         const packetioIcon = this.getData("packetio:icon") as string;
         const downloadIcon = (!!packetioConnecting && "ping " + packetioIcon)
-            || (!!packetioConnected && packetioIcon)
+            || (!!packetioConnected && "ping2s " + packetioIcon)
             || targetTheme.downloadIcon || "download";
         const hasMenu = boards || webUSBSupported;
 

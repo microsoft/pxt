@@ -416,19 +416,23 @@ export function maybeReconnectAsync(pairIfDeviceNotFound = false) {
 export function pairAsync(): Promise<void> {
     pxt.tickEvent("cmds.pair")
     return pxt.commands.webUsbPairDialogAsync(pxt.usb.pairAsync, core.confirmAsync)
-        .then(res => res && maybeReconnectAsync());
+        .then(res => {
+            if (res) return maybeReconnectAsync();
+            else return core.infoNotification("Oops, no device was paired.")
+        });
 }
 
-export function disconnectAsync(silent: boolean): Promise<void> {
+export function showDisconnectAsync(): Promise<void> {
+    if (pxt.commands.renderDisconnectDialog) {
+        const { header, jsx, helpUrl } = pxt.commands.renderDisconnectDialog();
+        return core.dialogAsync({ header, jsx, helpUrl, hideCancel: true, hasCloseIcon: true });
+    }
+    return Promise.resolve();
+}
+
+export function disconnectAsync(): Promise<void> {
     pxt.tickEvent("cmds.disconnect")
-    return pxt.packetio.disconnectAsync()
-        .then(() => {
-            if (!silent && !!pxt.commands.renderDisconnectDialog) {
-                const { header, jsx, helpUrl } = pxt.commands.renderDisconnectDialog();
-                return core.dialogAsync({ header, jsx, helpUrl, hideCancel: true, hasCloseIcon: true });
-            }
-            return Promise.resolve();
-        });
+    return pxt.packetio.disconnectAsync();
 }
 
 function handlePacketIOApi(r: string) {

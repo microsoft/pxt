@@ -173,20 +173,33 @@ namespace pxt.usb {
         onData = (v: Uint8Array) => { };
         onError = (e: Error) => { };
         onEvent = (v: Uint8Array) => { };
+        enabled = false;
 
         constructor() {
             this.handleUSBConnected = this.handleUSBConnected.bind(this);
             this.handleUSBDisconnected = this.handleUSBDisconnected.bind(this);
+        }
 
+        enable(): void {
+            if (this.enabled) return;
+
+            this.enabled = true;
+            this.log("registering webusb events");
             (navigator as any).usb.addEventListener('disconnect', this.handleUSBDisconnected, false);
             (navigator as any).usb.addEventListener('connect', this.handleUSBConnected, false);
-            this.log(`registered webusb events`)
+        }
+
+        disable() {
+            if (!this.enabled) return;
+
+            this.enabled = false;
+            this.log(`unregistering webusb events`);
+            (navigator as any).usb.removeEventListener('disconnect', this.handleUSBDisconnected);
+            (navigator as any).usb.removeEventListener('connect', this.handleUSBConnected);
         }
 
         disposeAsync(): Promise<void> {
-            (navigator as any).usb.removeEventListener('disconnect', this.handleUSBDisconnected);
-            (navigator as any).usb.removeEventListener('connect', this.handleUSBConnected);
-            this.log(`unregistered webusb events`)
+            this.disable();
             return Promise.resolve();
         }
 
@@ -202,7 +215,7 @@ namespace pxt.usb {
         private handleUSBConnected(event: any) {
             const newdev = event.device as USBDevice;
             this.log(`device connected ${newdev.serialNumber}`)
-            if (!this.dev) {
+            if (!this.dev && !this.connecting) {
                 this.log("attach device")
                 if (this.onDeviceConnectionChanged)
                     this.onDeviceConnectionChanged(true);
@@ -454,6 +467,7 @@ namespace pxt.usb {
         pxt.log(`packetio: mk webusb io`)
         if (!_hid)
             _hid = new WebUSBHID();
+        _hid.enable();
         return Promise.resolve(_hid);
     }
 
