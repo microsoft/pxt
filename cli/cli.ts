@@ -5517,7 +5517,9 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     }
     const pkgsroot = path.join("temp", "ghpkgs");
     const logfile = path.join(pkgsroot, "log.txt");
+    const errorfile = path.join(pkgsroot, "error.txt");
     nodeutil.writeFileSync(logfile, ""); // reset file
+    nodeutil.writeFileSync(errorfile, ""); // reset file
 
     function pxtAsync(dir: string, args: string[]) {
         return nodeutil.spawnAsync({
@@ -5528,19 +5530,20 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     }
 
     let errorCount = 0;
+    let warningCount = 0;
     function reportWarning(er: { repo: string; title: string; body: string; }) {
+        reportLog(`warning: https://github.com/${er.repo} ${er.title}`)
         const msg = `- [ ]  [${er.repo}](https://github.com/${er.repo}) ${er.title} / [new issue](https://github.com/${er.repo}/issues/new?title=${encodeURIComponent(er.title)}&body=${encodeURIComponent(er.body)})`;
-        console.log(`warning: https://github.com/${er.repo} ${er.title}`)
-        fs.appendFileSync(logfile, msg + "\n");
+        fs.appendFileSync(errorfile, msg + "\n");
+        warningCount++;
     }
 
     function reportError(er: { repo: string; title: string; body: string; }) {
+        reportLog(`error: https://github.com/${er.repo} ${er.title}`)
         const msg = `- [ ]  [${er.repo}](https://github.com/${er.repo}) ${er.title} / [new issue](https://github.com/${er.repo}/issues/new?title=${encodeURIComponent(er.title)}&body=${encodeURIComponent(er.body)})`;
-        console.error(`error: https://github.com/${er.repo} ${er.title}`)
-        fs.appendFileSync(logfile, msg + "\n");
+        fs.appendFileSync(errorfile, msg + "\n");
         errorCount++;
     }
-
     function reportLog(msg: any) {
         pxt.log(msg);
         fs.appendFileSync(logfile, msg + "\n");
@@ -5628,7 +5631,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         })
         .then(() => {
             if (errorCount > 0) {
-                reportLog(`${errorCount} errors found`);
+                reportLog(`${errorCount} errors, ${warningCount} warnings`);
                 process.exit(1);
             }
         })
