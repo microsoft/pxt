@@ -564,7 +564,7 @@ namespace pxt.github {
                     const cfg = Package.parseAndValidConfig(cached.files[pxt.CONFIG_NAME])
                     if (cfg) {
                         cfg.disablesVariants = dv
-                        cached.files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+                        cached.files[pxt.CONFIG_NAME] = Package.stringifyConfig(cfg)
                     }
                 }
                 return cached
