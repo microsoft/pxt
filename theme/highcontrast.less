@@ -205,6 +205,61 @@
         }
     }
 
+    .simtoolbar .debug-button.orange {
+        color: @HCeditorToolsBackground !important;
+        background-color: @HCtextColor !important;
+    }
+
+    /* Debugger toolbox */
+    .debugtoolbar .ui.compact.menu {
+        color: @HCblocklyTreeLabelColor !important;
+        background-color: @HCblocklyToolboxColor !important;
+        border-bottom: solid @HCblocklyTreeLabelColor 1px !important;
+
+        .ui.item.link.dbg-btn {
+            .icon.green, .icon.blue, .ui.text, .xicon  {
+                color: @HCblocklyTreeLabelColor !important;
+            }
+        }
+        .ui.item.link.dbg-btn.disabled {
+            .icon.green, .icon.blue, .ui.text, .xicon, .icon.disabled.icon-and-text {
+                opacity: 1 !important;
+                color: @disabled !important;
+            }
+        }
+        .ui.item.link.dbg-btn.dbg-trace.tracing {
+            background-color: @HCtextColor !important;
+            .xicon  {
+                color: @HCblocklyToolboxColor !important;
+            }
+        }
+    }
+
+    .varExplorer {
+        background-color: @HCblocklyToolboxColor !important;
+
+        .variableTableHeader, .variableTablePlaceholder {
+            color: @HCblocklyTreeLabelColor !important;
+            background-color: @HCblocklyToolboxColor !important;
+        }
+
+        .ui.segment.debugvariables {
+            .item {
+                background-color: @HCblocklyToolboxColor !important;
+
+                .variableAndValue {
+                    .variable.varname, .variable.detail {
+                        color: @HCblocklyTreeLabelColor !important;
+
+                        .varval.number, .varval.string, .varval.boolean, .varval.array, .varval.Sprite {
+                            color: @HCblocklyTreeLabelColor !important;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /* Editor switch toggle */
     .menubar .ui.menu.fixed .item.editor-menuitem .ui.grid {
         background: @HCbackground !important;
