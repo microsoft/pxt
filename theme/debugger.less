@@ -91,6 +91,26 @@
     color: #87D282 !important;
 }
 
+.ui.compact.menu .dbg-btn.dbg-trace {
+    border-radius: 0;
+}
+
+.ui.compact.menu .dbg-btn.dbg-trace.tracing {
+    background-color: @orange;
+
+    .icon {
+        color: @white;
+    }
+}
+
+.ui.compact.menu .dbg-btn.dbg-trace.tracing:hover {
+    background-color: darken(@orange, 10%);
+
+    .icon {
+        color: darken(@white, 5%);
+    }
+}
+
 .ui.item.link.dbg-btn.dbg-exit {
     background-color: #cccccc;
     color: rgb(255, 21, 0);

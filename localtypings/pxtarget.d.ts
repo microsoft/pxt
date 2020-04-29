@@ -180,7 +180,6 @@ declare namespace pxt {
         emptyRunCode?: string; // when non-empty and autoRun is disabled, this code is run upon simulator first start
         hideRestart?: boolean;
         // moved to theme
-        // enableTrace?: boolean;
         // moved to theme
         // debugger?: boolean;
         hideFullscreen?: boolean;
@@ -316,7 +315,6 @@ declare namespace pxt {
         print?: boolean; //Print blocks and text feature
         greenScreen?: boolean; // display webcam stream in background
         instructions?: boolean; // display make instructions
-        enableTrace?: boolean; // Slow-Mo button
         debugger?: boolean; // debugger button
         selectLanguage?: boolean; // add language picker to settings menu
         availableLocales?: string[]; // the list of enabled language codes
