@@ -318,6 +318,24 @@ namespace pxt {
             return regex.test(ts);
         }
 
+        private upgradePackagesAsync() {
+            return pxt.packagesConfigAsync()
+                .then(config => {
+                    let numfixes = 0
+                    U.iterMap(this.config.dependencies, (pkg, ver) => {
+                        if (pxt.github.isGithubId(ver)) {
+                            const upgraded = pxt.github.upgradedPackageReference(config, ver)
+                            if (upgraded && upgraded != ver) {
+                                this.config.dependencies[pkg] = upgraded
+                                numfixes++
+                            }
+                        }
+                    })
+                    if (numfixes)
+                        this.saveConfig()
+                })
+        }
+
         private getMissingPackages(config: pxt.PackageConfig, ts: string): Map<string> {
             const upgrades = pxt.patching.computePatches(this.targetVersion(), "missingPackage");
             const missing: Map<string> = {};
@@ -545,6 +563,9 @@ namespace pxt {
             } else {
                 initPromise = initPromise.then(() => this.parseConfig(str))
             }
+
+            if (this.level == 0)
+                initPromise = initPromise.then(() => this.upgradePackagesAsync())
 
             if (isInstall)
                 initPromise = initPromise.then(() => this.downloadAsync())
@@ -889,10 +910,11 @@ namespace pxt {
             }
 
             const fillExtInfoAsync = async (variant: string) => {
-                let res: pxtc.ExtensionTarget = {
+                const res: pxtc.ExtensionTarget = {
                     extinfo: null,
                     target: null
                 }
+                const prevVariant = pxt.appTargetVariant
 
                 if (variant)
                     pxt.setAppTargetVariant(variant, { temporary: true })
@@ -919,7 +941,7 @@ namespace pxt {
 
                 } finally {
                     if (variant)
-                        pxt.setAppTargetVariant(null, { temporary: true })
+                        pxt.setAppTargetVariant(prevVariant, { temporary: true })
                 }
 
                 return res
@@ -931,16 +953,32 @@ namespace pxt {
             opts.target.preferredEditor = this.getPreferredEditor()
             pxt.debug(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
 
-            let variants = pxt.appTarget.multiVariants
-            if (!variants || pxt.appTargetVariant || (!pxt.appTarget.alwaysMultiVariant && !pxt.appTarget.compile.switches.multiVariant)) {
-                variants = [pxt.appTargetVariant || ""]
+            let variants: string[]
+
+            if (pxt.appTarget.multiVariants) {
+                // multiVariant available
+                if (pxt.appTargetVariant) {
+                    // set explicitly by the user
+                    variants = [pxt.appTargetVariant]
+                } else if (pxt.appTarget.alwaysMultiVariant || pxt.appTarget.compile.switches.multiVariant) {
+                    // multivariants enabled
+                    variants = pxt.appTarget.multiVariants
+                } else {
+                    // not enbaled - default to first variant
+                    variants = [pxt.appTarget.multiVariants[0]]
+                }
+            } else {
+                // no multi-variants, use empty variant name,
+                // so we don't mess with pxt.setAppTargetVariant() in fillExtInfoAsync()
+                variants = [null]
             }
+
 
             let ext: pxtc.ExtensionInfo = null
             for (let v of variants) {
                 if (ext)
                     pxt.debug(`building for ${v}`)
-                const etarget = await fillExtInfoAsync(ext ? v : null)
+                const etarget = await fillExtInfoAsync(v)
                 const einfo = etarget.extinfo
                 einfo.appVariant = v
                 einfo.outputPrefix = variants.length == 1 || !v ? "" : v + "-"
