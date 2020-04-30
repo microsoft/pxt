@@ -3032,11 +3032,11 @@ export function serviceAsync(parsed: commandParser.ParsedCommand) {
     return mainPkg.getCompileOptionsAsync()
         .then(opts => {
             pxtc.service.performOperation("reset", {})
-            pxtc.service.performOperation("setOpts", { options: opts })
-            return pxtc.service.performOperation(parsed.args[0], {})
+            pxtc.service.performOperation("setOptions", { options: opts })
+            return pxtc.service.performOperation(parsed.args[0] as keyof pxtc.service.ServiceOps, {})
         })
         .then(res => {
-            if (res.errorMessage) {
+            if (pxtc.service.IsOpErr(res)) {
                 console.error("Error calling service:", res.errorMessage)
                 process.exit(1)
             } else {

@@ -107,6 +107,11 @@ function runCompletionTestCaseAsync(testCase: CompletionTestCase) {
                 testCase.fileText
             );
 
+            if (pxtc.service.IsOpErr(result)) {
+                chai.assert(false, `Lang service crashed with:\n${result.errorMessage}`)
+                return;
+            }
+
             for (const sym of testCase.expectedSymbols) {
                 chai.assert(result.entries.some(s => (testCase.isPython ? s.pyQName : s.qName) === sym), `Did not receive symbol '${sym}'`);
             }
@@ -130,7 +135,7 @@ function setOptionsOp(opts: pxtc.CompileOptions) {
     });
 }
 
-function completionsOp(fileName: string, position: number, wordStartPos: number, wordEndPos: number, fileContent?: string): pxtc.CompletionInfo {
+function completionsOp(fileName: string, position: number, wordStartPos: number, wordEndPos: number, fileContent?: string) {
     return pxtc.service.performOperation("getCompletions", {
         fileName,
         fileContent,
@@ -138,5 +143,5 @@ function completionsOp(fileName: string, position: number, wordStartPos: number,
         wordStartPos,
         wordEndPos,
         runtime: pxt.appTarget.runtime
-    });
+    }) as pxtc.service.OpError | pxtc.CompletionInfo;
 }
