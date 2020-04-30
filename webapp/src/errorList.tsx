@@ -54,8 +54,8 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             errorListContent = <div>{lf("Everything seems fine!")}</div>
         }
 
-        return <div className="errorList" >
-            <div className={`errorListInner ${isCollapsed ? 'errorListSummary' : ''}`}>
+        return <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''}`}>
+            <div className="errorListInner">
                 <h4 hidden={isCollapsed}>Error List</h4>
                 {!isCollapsed && xButton}
                 {errorListContent}

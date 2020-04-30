@@ -1,10 +1,14 @@
+@summary-hover-color: #00000067;
+
 .errorList {
     position: relative;
+    min-height: 200px;
 
     .errorListInner {
         height: 200px;
         border-top: 1px #e5e5e5 solid;
         padding: 1em;
+        overflow-y: scroll;
 
         h4 {
             margin-bottom: 0.5em;
@@ -15,7 +19,7 @@
             cursor: pointer;
             position: absolute;
             top: 1em;
-            right: 0;
+            right: 1em;
 
             i {
                 font-size: 2em;
@@ -26,13 +30,18 @@
             }
         }
     }
+}
 
-    .errorListSummary {
+.errorList.errorListSummary {
+    min-height: unset;
+
+    .errorListInner {
         height: unset;
+        overflow-y: unset;
 
         .summaryMessage:hover {
             cursor: pointer;
-            color: #00000067;
+            color: @summary-hover-color;
             text-decoration: underline;
         }
     }
