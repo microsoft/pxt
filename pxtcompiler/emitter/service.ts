@@ -1078,6 +1078,16 @@ namespace ts.pxtc.service {
                     .map(s => completionSymbol(s))
 
                 resultSymbols = [...resultSymbols, ...inScopePxtSyms]
+
+                // add in keywords
+                if (isPython) {
+                    let keywordsMap = (pxt as any).py.keywords as Map<boolean>
+                    let keywords = Object.keys(keywordsMap)
+                } else {
+                    let keywords = ts.pxtc.reservedWords
+                }
+
+                // TODO create completion symbols
             }
 
             // determine which names are taken for auto-generated variable names
