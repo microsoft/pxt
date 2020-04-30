@@ -328,6 +328,7 @@ namespace pxt {
                         if (pxt.github.isGithubId(ver)) {
                             const upgraded = pxt.github.upgradedPackageReference(packagesConfig, ver)
                             if (upgraded && upgraded != ver) {
+                                pxt.debug(`upgrading dep ${pkg} -> ${upgraded}`);
                                 this.config.dependencies[pkg] = upgraded
                                 numfixes++
                             }
