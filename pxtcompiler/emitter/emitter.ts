@@ -1119,9 +1119,6 @@ namespace ts.pxtc {
         }
 
         function unhandled(n: Node, info?: string, code: number = 9202) {
-            // if we hit this, and are in debugger, we probably want to look at the node
-            debugger
-
             // If we have info then we may as well present that instead
             if (info) {
                 return userError(code, info)
@@ -1697,6 +1694,7 @@ ${lbl}: .short 0xffff
             if (fold)
                 return emitLit(fold.val)
 
+            // TODO: handle namespaces or remove that "debugger" line in "unhandled"
             if (decl && (isVar(decl) || isParameter(decl))) {
                 return emitLocalLoad(<VarOrParam>decl)
             } else if (decl && decl.kind == SK.FunctionDeclaration) {

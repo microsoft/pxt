@@ -914,6 +914,7 @@ namespace ts.pxtc.service {
                 // TS
                 const res = transpile.pyToTs(opts)
                 if (res.syntaxInfo && res.syntaxInfo.symbols) {
+                    console.log("completion: python syntaxInfo");
                     resultSymbols = completionSymbols(res.syntaxInfo.symbols);
                 }
                 if (res.globalNames)
@@ -976,6 +977,7 @@ namespace ts.pxtc.service {
                                 .map(prop => completionSymbol(prop));
 
                             if (props.length) {
+                                console.log("completion: member completion");
                                 resultSymbols = props;
                                 isPropertyAccess = true;
                             }
@@ -1034,6 +1036,7 @@ namespace ts.pxtc.service {
                             paramIdx = callSym.parameters.length - 1
                         const paramType = getParameterTsType(callSym, paramIdx, blocksInfo)
                         if (paramType) {
+                            console.log("completion: call expression");
                             // if this is a property access, then weight the results higher if they return the
                             // correct type for the parameter
                             if (isPropertyAccess && resultSymbols.length) {
@@ -1051,6 +1054,7 @@ namespace ts.pxtc.service {
             }
 
             if (!isPython && !resultSymbols.length) {
+                console.log("completion: default");
                 // TODO: share this with the "syntaxinfo" service
                 // start with global api symbols
                 resultSymbols = completionSymbols(pxt.U.values(lastApiInfo.apis.byQName))
@@ -1080,12 +1084,18 @@ namespace ts.pxtc.service {
                 resultSymbols = [...resultSymbols, ...inScopePxtSyms]
 
                 // add in keywords
+                let keywords: string[];
                 if (isPython) {
                     let keywordsMap = (pxt as any).py.keywords as Map<boolean>
-                    let keywords = Object.keys(keywordsMap)
+                    keywords = Object.keys(keywordsMap)
                 } else {
-                    let keywords = ts.pxtc.reservedWords
+                    keywords = ts.pxtc.keywords
+                        .filter(k => k)
                 }
+                let keywordSymbols = keywords
+                    .map(makePxtSymbolFromKeyword)
+                    .map(completionSymbol)
+                resultSymbols = [...resultSymbols, ...keywordSymbols]
 
                 // TODO create completion symbols
             }
@@ -1930,6 +1940,29 @@ namespace ts.pxtc.service {
         if (ts.flags & SymbolFlags.Property)
             return SymbolKind.Property
         return SymbolKind.None
+    }
+
+    function makePxtSymbolFromKeyword(keyword: string): SymbolInfo {
+        // TODO: since keywords aren't exactly symbols, consider using a different 
+        //       type than "SymbolInfo" to carry auto completion information.
+        //       Some progress on this exists here: dazuniga/completionitem_refactor
+
+        let sym: SymbolInfo = {
+            kind: SymbolKind.None,
+            name: keyword,
+            pyName: keyword,
+            qName: keyword,
+            pyQName: keyword,
+            namespace: "",
+            attributes: {
+                callingConvention: ir.CallingConvention.Plain,
+                paramDefl: {},
+            },
+            fileName: "main.ts",
+            parameters: [],
+            retType: "any",
+        }
+        return sym
     }
 
     function makePxtSymbolFromTsSymbol(tsSym: ts.Symbol, tsType: ts.Type): SymbolInfo {
