@@ -2714,7 +2714,7 @@ export class ProjectView
 
             if (!opts.background)
                 this.editor.beforeCompile();
-            if (this.state.tracing)
+            if (this.state.tracing && this.state.debugging)
                 opts.trace = true;
 
             if (opts.debug) {
