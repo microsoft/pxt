@@ -2526,11 +2526,13 @@ export class ProjectView
             this.startSimulator();
         }
         this.setState({ collapseEditorTools: false });
+        this.fireResize();
     }
 
     collapseSimulator() {
         simulator.hide(() => {
             this.setState({ collapseEditorTools: true });
+            this.fireResize();
         })
     }
 
