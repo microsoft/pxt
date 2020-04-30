@@ -813,12 +813,14 @@ namespace ts.pxtc.service {
         projectSearchClear: () => void;
     };
 
-    export type OpRes = string | void | SyntaxInfo | CompletionInfo | CompileResult | transpile.TranspileResult | {
-        words: number[];
-    } | KsDiagnostic[] | {
-        formatted: string;
-        pos: number;
-    } | ApisInfo | BlocksInfo | ProjectSearchInfo[];
+    export type OpRes =
+        string | void | SyntaxInfo | CompletionInfo | CompileResult
+        | transpile.TranspileResult
+        | { words: number[]; }
+        | KsDiagnostic[]
+        | { formatted: string; pos: number; }
+        | ApisInfo | BlocksInfo | ProjectSearchInfo[]
+        | {};
 
     export type OpError = { errorMessage: string };
 
@@ -1584,12 +1586,12 @@ namespace ts.pxtc.service {
     export function performOperation<T extends keyof ServiceOps>(op: T, arg: OpArg):
         OpResOrError {
         init();
-        let res: OpResOrError;
+        let res: OpResOrError = null;
 
         if (operations.hasOwnProperty(op)) {
             try {
                 let opFn = operations[op]
-                res = opFn(arg)
+                res = opFn(arg) || {}
             } catch (e) {
                 res = {
                     errorMessage: e.stack
