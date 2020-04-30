@@ -245,6 +245,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
 
     protected getBlockDescription(block: toolbox.BlockDefinition, params: pxtc.ParameterDesc[]): JSX.Element[] {
         let description = [];
+        let compileInfo = pxt.blocks.compileInfo(block as pxtc.SymbolInfo)
         let parts = block.attributes._def && block.attributes._def.parts;
         let name = block.qName || block.name;
         if (parts) {
@@ -262,19 +263,32 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                         description.push(<span key={name + i}>{" "}</span>);
                         break;
                     case "param":
-                        let p = params && params.shift();
-                        let val = p && (p.default || p.name) || part.name;
+                        let actualParam = compileInfo?.definitionNameToParam[part.name];
+                        let val = actualParam?.defaultValue
+                            || part.varName
+                            || actualParam?.actualName
+                            || part.name
                         description.push(<span className="argName" key={name + i}>{val}</span>);
                         break;
                 }
             })
         } else {
             // if no blockdef found, use the snippet name
-            description.push(<span key={name}>{block.snippetName || block.name}</span>)
+            description.push(<span key={name}>{this.getSnippetName(block) || block.name}</span>)
         }
 
         // imitates block behavior in adding "run code" before any handler
-        if (params && params.find(p => p.type && p.type.indexOf("=>") >= 0)) description.unshift(<span key="prefix">{lf("run code ")}</span>)
+        let handler = params && params.find(p => p?.type && p.type.indexOf("=>") >= 0);
+        if (handler) {
+            description.unshift(<span key="prefix">{lf("run code ")}</span>)
+            if (handler.handlerParameters) {
+                // add break between end of block and parameters
+                description.push(<span key="handler_break">{" "}</span>);
+                handler.handlerParameters.forEach((handlerParam) => {
+                    description.push(<span className="argName" key={`handler_${handlerParam.name}`}>{handlerParam.name}</span>);
+                })
+            }
+        }
 
         return description;
     }

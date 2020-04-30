@@ -105,6 +105,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     snippetName: "let",
                     snippet: `let item: number`,
                     pySnippet: `item = 0`,
+                    pySnippetName: `item = 0`,
                     snippetOnly: true,
                     attributes: {
                         blockId: 'variables_set',
