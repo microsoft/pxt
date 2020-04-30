@@ -57,14 +57,24 @@ namespace ts.pxtc {
         initialMembers: string[];
     }
 
-    export interface CompletionEntry {
-        name: string;
-        kind: string;
-        qualifiedName: string;
+    export interface CompletionItem {
+        snippet: string,
+        qName: string,
+        name: string,
+        namespace: string,
+        hasHandler: boolean,
+        documentation: string,
+        weight: number,
+        kind: pxtc.SymbolKind,
+        isHidden: boolean,
+        isDeprecated: boolean,
+        isShim: boolean
+        blockId?: string,
+        symbol?: pxtc.SymbolInfo,
     }
 
     export interface CompletionInfo {
-        entries: SymbolInfo[];
+        entries: CompletionItem[];
         isMemberCompletion: boolean;
         isNewIdentifierLocation: boolean;
         isTypeLocation: boolean;

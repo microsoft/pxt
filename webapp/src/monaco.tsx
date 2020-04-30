@@ -68,24 +68,12 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
         const wordStartOffset = model.getOffsetAt({ lineNumber: position.lineNumber, column: word.startColumn })
         const wordEndOffset = model.getOffsetAt({ lineNumber: position.lineNumber, column: word.endColumn })
 
-        if (this.python) {
-            // TODO(dz):
-            // include python keywords
-            // /Users/darylzuniga/mc/pxt/pxtpy/lexer.ts
-            // pxt.py.keywords
-        } else {
-            // TODO(dz):
-            // include typescript keywords
-            // /Users/darylzuniga/mc/pxt/pxtlib/typescript.ts
-            // maybe use: ts.pxtc.reservedWords
-        }
-
         return compiler.completionsAsync(fileName, offset, wordStartOffset, wordEndOffset, source)
             .then(completions => {
                 const items = (completions.entries || []).map((si, i) => {
-                    let insertSnippet = this.python ? si.pySnippet : si.snippet;
-                    let qName = this.python ? si.pyQName : si.qName;
-                    let name = this.python ? si.pyName : si.name;
+                    let insertSnippet = si.snippet;
+                    let qName = si.qName;
+                    let name = si.name;
                     let completionSnippet: string | undefined = undefined;
                     let isMultiLine = insertSnippet && insertSnippet.indexOf("\n") >= 0
 
@@ -122,8 +110,8 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         }
                     }
                     const label = completions.isMemberCompletion ? name : qName
-                    const documentation = pxt.Util.rlf(si.attributes.jsDoc);
-                    const block = pxt.Util.rlf(si.attributes.block);
+                    const documentation = si.documentation;
+                    const block = si.blockId;
 
                     const word = model.getWordAtPosition(position);
                     const range: monaco.IRange = {
