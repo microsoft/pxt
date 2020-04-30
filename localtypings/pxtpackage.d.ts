@@ -83,6 +83,8 @@ declare namespace pxt {
         experimentalHw?: boolean;
         requiredCategories?: string[]; // ensure that those block categories are visible
         supportedTargets?: string[]; // a hint about targets in which this extension is supported
+        firmwareUrl?: string; // link to documentation page about upgrading firmware
+        disablesVariants?: string[]; // don't build these variants, when this extension is enabled
     }
 
     interface PackageExtension {
@@ -138,6 +140,7 @@ declare namespace pxt {
         largeImageUrl?: string;
         videoUrl?: string;
         youTubeId?: string;
+        youTubePlaylistId?: string; // playlist this video belongs to
         buttonLabel?: string;
         time?: number;
         url?: string;

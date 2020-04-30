@@ -23,6 +23,6 @@
     "code": "\n{\nbasic.showString(\"Micro!\")\n}\n",
     "metadata": {
         "flyoutOnly": true,
-        "noDiffs": true
+        "diffs": false
     }
 }

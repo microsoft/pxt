@@ -139,7 +139,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         onTraceMessage: function (msg) {
             let brkInfo = lastCompileResult.breakpoints[msg.breakpointId]
-            if (config) config.highlightStatement(brkInfo)
+            if (config) config.highlightStatement(brkInfo, msg)
         },
         onDebuggerWarning: function (wrn) {
             for (let id of wrn.breakpointIds) {

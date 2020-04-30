@@ -460,6 +460,11 @@ div.simframe > iframe {
     position: relative;
 }
 
+.ui.button:hover,
+.ui.button:focus {
+    filter: grayscale(.15) brightness(.85) contrast(1.3);
+}
+
 /* Icon and text */
 .ui.item.link.dbg-btn > .icon-and-text.icon ~ .ui.text,
 .ui.item.link > .icon-and-text.icon ~ .ui.text.exit-debugmode-btn,
@@ -655,6 +660,29 @@ Avatar
     outline: 3px solid transparent;
     animation: glow 0.3s infinite alternate;
     transition: outline 0.3s linear;
+}
+
+/* ping anim */
+@keyframes ping {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(0.5);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+.ping2s {
+    animation: ping 1s;
+    animation-iteration-count: 2;
+}
+.ping {
+    animation: ping 1s infinite;
 }
 
 .grayscale {
@@ -1359,7 +1387,7 @@ p.ui.font.small {
         padding-bottom: 0.5rem;
     }
 
-    .logo-wide #mainmenu {
+    #mainmenu {
         .ui.logo.brand,
         .ui.logo.organization {
             display: none !important;

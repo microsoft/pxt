@@ -369,9 +369,9 @@ namespace pxt.sprite {
 
         return syms.map(sym => {
             const splitTags = (sym.attributes.tags || "")
-                .toLowerCase()
                 .split(" ")
-                .filter(el => !!el);
+                .filter(el => !!el)
+                .map(tag => pxt.Util.startsWith(tag, "category-") ? tag : tag.toLowerCase());
 
             return {
                 qName: sym.qName,

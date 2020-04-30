@@ -86,13 +86,13 @@
                 }
 
                 > .view-all-button {
-                    margin-left: 0.5em;
+                    margin-left: 1.5em;
                     color: @primaryColor;
-                    font-size: 16px;
+                    font-size: 14px;
                     font-weight: 500;
                     border-bottom: 1px solid fade(@primaryColor, 0%);
                     transition: border-color 400ms ease;
-                    &:hover {
+                    &:hover, &:focus {
                         border-color: @primaryColor;
                     }
                 }
@@ -224,6 +224,11 @@
         .detail {
             color: @homeDetailViewColor;
         }
+        .yt-button {
+            display: inline-block;
+            border-radius: 0.5rem;
+            background-color: @primaryColor;
+        }
         .actions {
             padding-right: 4rem !important;
             position: absolute;
@@ -253,7 +258,7 @@
                 .button.attached i {
                     display: block;
                     margin: auto!important;
-                    opacity: 0.1;
+                    opacity: 0.05;
                     color: @homeCardHeaderColor;
                 }
                 .button.attached .icon:not(.xicon) {
@@ -264,12 +269,12 @@
 
                 .button.approve {
                     width: 100%;
-                    color: @homeCardHeaderColor;
+                    color: @homeDetailCardActionText;
                     background-color: @orange;
                     transition-duration: 0s;
                 }
                 &:first-child .button.approve {
-                    background-color: @green;
+                    background-color: @primaryColor;
                 }
             }
             .card-action-title {
@@ -282,12 +287,13 @@
                 transform: translateX(-50%) translateY(-50%);
                 pointer-events: none;
             }
-            .card-action:hover {
+            .card-action:hover,
+            .card-action:focus-within {
                 cursor: pointer;
                 border-color: @white;
                 transform: scale(1.1);
-                .card-action-title, .approve {
-                    color: @white;
+                .ui.button {
+                    filter: none;
                 }
                 .ui.button:first-child:hover {
                     z-index: auto;
@@ -620,7 +626,7 @@
 
         .detailview {
             .column:first-child {
-                height: 8rem;
+                height: 10.5rem;
                 overflow: hidden;
             }
             .actions {

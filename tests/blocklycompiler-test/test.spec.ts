@@ -302,6 +302,10 @@ describe("blockly compiler", function () {
         it("should give variables that are only assigned the empty array a type of number[]", (done: () => void) => {
             blockTestAsync("just_empty_array").then(done, done);
         });
+
+        it("should compile aliases for pop, shift, unshift, and removeAt", (done: () => void) => {
+            blockTestAsync("array_aliases").then(done, done);
+        });
     });
 
     describe("compiling logic", () => {

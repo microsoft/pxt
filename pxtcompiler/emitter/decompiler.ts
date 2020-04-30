@@ -56,6 +56,10 @@ namespace ts.pxtc.decompiler {
         initializer: string;
     }
 
+    interface DecompilerCallInfo extends pxtc.CallInfo {
+        decompilerBlockAlias?: string;
+    }
+
     const SK = ts.SyntaxKind;
 
     /**
@@ -86,6 +90,7 @@ namespace ts.pxtc.decompiler {
         compInfo: (c: pxtc.CallInfo) => pxt.blocks.BlockCompileInfo;
         localReporters: PropertyDesc[][]; // A stack of groups of locally scoped argument declarations, to determine whether an argument should decompile as a reporter or a variable
         opts: DecompileBlocksOptions;
+        aliasBlocks: pxt.Map<string>; // A mapping of qualified names to qualified names of blocks that use blockAliasFor
     }
 
     interface KindDeclarationInfo {
@@ -387,7 +392,8 @@ namespace ts.pxtc.decompiler {
             compInfo: compInfo,
             localReporters: [],
             tileset: [],
-            opts: options || {}
+            opts: options || {},
+            aliasBlocks: {}
         };
         const fileText = file.getFullText();
         let output = ""
@@ -398,6 +404,14 @@ namespace ts.pxtc.decompiler {
         const autoDeclarations: [string, ts.Node][] = [];
 
         const getCommentRef = (() => { let currentCommentId = 0; return () => `${currentCommentId++}` })();
+
+        const apis = blocksInfo.apis.byQName;
+        Object.keys(apis).forEach(qName => {
+            const api = apis[qName];
+            if (api.attributes.blockAliasFor && apis[api.attributes.blockAliasFor]) {
+                env.aliasBlocks[api.attributes.blockAliasFor] = api.qName;
+            }
+        });
 
 
         const commentMap = buildCommentMap(file);
@@ -553,8 +567,8 @@ ${output}</xml>`;
             result.success = false;
         }
 
-        function attrs(callInfo: pxtc.CallInfo): pxtc.CommentAttrs {
-            const blockInfo = blocksInfo.apis.byQName[callInfo.qName];
+        function attrs(callInfo: DecompilerCallInfo): pxtc.CommentAttrs {
+            const blockInfo = blocksInfo.apis.byQName[callInfo.decompilerBlockAlias || callInfo.qName];
             if (blockInfo) {
                 const attributes = blockInfo.attributes;
 
@@ -1912,7 +1926,7 @@ ${output}</xml>`;
         }
 
         function getCallStatement(node: ts.CallExpression, asExpression: boolean): StatementNode | ExpressionNode {
-            const info: pxtc.CallInfo = pxtc.pxtInfo(node).callInfo
+            const info: DecompilerCallInfo = pxtc.pxtInfo(node).callInfo
             const attributes = attrs(info);
 
             if (info.qName == "Math.pow") {
@@ -2023,7 +2037,7 @@ ${output}</xml>`;
             }
 
             const args = paramList(info, env.blocks);
-            const api = env.blocks.apis.byQName[info.qName];
+            const api = env.blocks.apis.byQName[info.decompilerBlockAlias || info.qName];
             const comp = pxt.blocks.compileInfo(api);
 
             const r = asExpression ? mkExpr(attributes.blockId, node)
@@ -2629,7 +2643,7 @@ ${output}</xml>`;
         }
 
         function checkCall(n: ts.CallExpression, env: DecompilerEnv, asExpression = false, topLevel = false) {
-            const info: pxtc.CallInfo = pxtc.pxtInfo(n).callInfo;
+            const info: DecompilerCallInfo = pxtc.pxtInfo(n).callInfo;
             if (!info) {
                 return Util.lf("Function call not supported in the blocks");
             }
@@ -2644,7 +2658,14 @@ ${output}</xml>`;
 
             if (!asExpression) {
                 if (info.isExpression && !userFunction) {
-                    return Util.lf("No output expressions as statements");
+                    const alias = env.aliasBlocks[info.qName];
+
+                    if (alias) {
+                        info.decompilerBlockAlias = env.aliasBlocks[info.qName];
+                    }
+                    else {
+                        return Util.lf("No output expressions as statements");
+                    }
                 }
             }
 
@@ -3208,20 +3229,6 @@ ${output}</xml>`;
         return e.kind === SK.ArrayLiteralExpression && (e as ArrayLiteralExpression).elements.length === 0;
     }
 
-    function getCallInfo(checker: ts.TypeChecker, node: ts.Node, apiInfo: ApisInfo) {
-        const symb = checker.getSymbolAtLocation(node);
-
-        if (symb) {
-            const qName = checker.getFullyQualifiedName(symb);
-
-            if (qName) {
-                return apiInfo.byQName[qName];
-            }
-        }
-
-        return undefined;
-    }
-
     function getObjectBindingProperties(callback: ts.ArrowFunction): [string[], pxt.Map<string>] {
         if (callback.parameters.length === 1 && callback.parameters[0].name.kind === SK.ObjectBindingPattern) {
             const elements = (callback.parameters[0].name as ObjectBindingPattern).elements;
@@ -3729,10 +3736,6 @@ ${output}</xml>`;
                 for (const line of comment.lines) {
                     out += line.trim() + "\n";
                 }
-            }
-
-            if (comment.hasTrailingNewline) {
-                out += "\n";
             }
         }
 

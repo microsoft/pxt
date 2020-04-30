@@ -15,6 +15,7 @@ interface Array<T> {
     //% help=arrays/push
     //% shim=Array_::push weight=50
     //% blockId="array_push" block="%list| add value %value| to end" blockNamespace="arrays"
+    //% group="Modify"
     push(item: T): void;
 
     /**
@@ -30,7 +31,7 @@ interface Array<T> {
     //% help=arrays/pop
     //% shim=Array_::pop weight=45
     //% blockId="array_pop" block="get and remove last value from %list" blockNamespace="arrays"
-    //% blockGap=64
+    //% group="Read"
     pop(): T;
 
     /**
@@ -39,6 +40,7 @@ interface Array<T> {
     //% help=arrays/reverse
     //% helper=arrayReverse weight=10
     //% blockId="array_reverse" block="reverse %list" blockNamespace="arrays"
+    //% group="Operations"
     reverse(): void;
 
     /**
@@ -47,6 +49,7 @@ interface Array<T> {
     //% help=arrays/shift
     //% helper=arrayShift weight=30
     //% blockId="array_shift" block="get and remove first value from %list" blockNamespace="arrays"
+    //% group="Read"
     shift(): T;
 
     /**
@@ -56,6 +59,7 @@ interface Array<T> {
     //% help=arrays/unshift
     //% helper=arrayUnshift weight=25
     //% blockId="array_unshift" block="%list| insert %value| at beginning" blockNamespace="arrays"
+    //% group="Modify"
     //unshift(...values:T[]): number; //rest is not supported in our compiler yet.
     unshift(value: T): number;
 
@@ -153,8 +157,9 @@ interface Array<T> {
 
     /** Remove the element at a certain index. */
     //% help=arrays/remove-at
-    //% shim=Array_::removeAt weight=15
-    //% blockId="array_removeat" block="%list| remove value at %index" blockNamespace="arrays"
+    //% shim=Array_::removeAt weight=47
+    //% blockId="array_removeat" block="%list| get and remove value at %index" blockNamespace="arrays"
+    //% group="Read"
     removeAt(index: number): T;
 
     /**
@@ -165,6 +170,7 @@ interface Array<T> {
     //% help=arrays/insert-at
     //% shim=Array_::insertAt weight=20
     //% blockId="array_insertAt" block="%list| insert at %index| value %value" blockNamespace="arrays"
+    //% group="Modify"
     insertAt(index: number, value: T): void;
 
     /**
@@ -175,6 +181,7 @@ interface Array<T> {
     //% help=arrays/index-of
     //% shim=Array_::indexOf weight=40
     //% blockId="array_indexof" block="%list| find index of %value" blockNamespace="arrays"
+    //% group="Operations"
     indexOf(item: T, fromIndex?: number): number;
 
     /**
@@ -195,6 +202,45 @@ interface Array<T> {
     set(index: number, value: T): void;
 
     [n: number]: T;
+
+    /**
+      * Add one element to the beginning of an array and return the new length of the array.
+      * @param element to insert at the start of the Array.
+      */
+    //% help=arrays/unshift
+    //% helper=arrayUnshift weight=24
+    //% blockId="array_unshift_statement" block="%list| insert %value| at beginning" blockNamespace="arrays"
+    //% blockAliasFor="Array.unshift"
+    //% group="Modify"
+    _unshiftStatement(value: T): void;
+
+    /**
+      * Remove the last element from an array and return it.
+      */
+    //% help=arrays/pop
+    //% shim=Array_::pop weight=44
+    //% blockId="array_pop_statement" block="remove last value from %list" blockNamespace="arrays"
+    //% blockAliasFor="Array.pop"
+    //% group="Modify"
+    _popStatement(): void;
+
+    /**
+      * Remove the first element from an array and return it. This method changes the length of the array.
+      */
+    //% help=arrays/shift
+    //% helper=arrayShift weight=29
+    //% blockId="array_shift_statement" block="remove first value from %list" blockNamespace="arrays"
+    //% blockAliasFor="Array.shift"
+    //% group="Modify"
+    _shiftStatement(): void;
+
+    /** Remove the element at a certain index. */
+    //% help=arrays/remove-at
+    //% shim=Array_::removeAt weight=14
+    //% blockId="array_removeat_statement" block="%list| remove value at %index" blockNamespace="arrays"
+    //% blockAliasFor="Array.removeAt"
+    //% group="Modify"
+    _removeAtStatement(index: number): void;
 }
 
 declare interface String {
@@ -315,6 +361,11 @@ declare interface String {
     //% blockId="string_split" blockNamespace="text"
     //% block="split %this=text|at %separator"
     split(separator?: string, limit?: number): string[];
+
+    /**
+     * Return a substring of the current string with whitespace removed from both ends
+     */
+    trim(): string;
 
     /**
      * Converts the string to lower case characters.
@@ -450,6 +501,7 @@ declare namespace Math {
      * @param x An angle in radians
      */
     //% shim=Math_::sin
+    //% help=math/trigonometry
     function sin(x: number): number;
 
     /**
@@ -457,6 +509,7 @@ declare namespace Math {
      * @param x An angle in radians
      */
     //% shim=Math_::cos
+    //% help=math/trigonometry
     function cos(x: number): number;
 
     /**
@@ -507,6 +560,7 @@ declare namespace Math {
      * @param x A numeric expression.
      */
     //% shim=Math_::ceil
+      //% help=math
     function ceil(x: number): number;
 
     /**
@@ -514,6 +568,7 @@ declare namespace Math {
       * @param x A numeric expression.
       */
     //% shim=Math_::floor
+      //% help=math
     function floor(x: number): number;
 
     /**
@@ -521,6 +576,7 @@ declare namespace Math {
       * @param x A numeric expression.
       */
     //% shim=Math_::trunc
+    //% help=math
     function trunc(x: number): number;
 
     /**
@@ -528,6 +584,7 @@ declare namespace Math {
       * @param x The value to be rounded to the nearest number.
       */
     //% shim=Math_::round
+    //% help=math
     function round(x: number): number;
 
     /**

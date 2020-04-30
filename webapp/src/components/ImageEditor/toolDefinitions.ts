@@ -629,10 +629,12 @@ export class FillEdit extends Edit {
     }
 
     protected doEditCore(state: EditState) {
-        const replColor = state.activeLayer.get(this.col, this.row);
-        if (replColor === this.color) {
+        // Read image layer, but write to the active layer; allows wall fill to fill based on tiles
+        const colorToReplace = state.image.get(this.col, this.row);
+        if (state.activeLayer === state.image && colorToReplace === this.color) {
             return;
         }
+
         state.mergeFloatingLayer();
 
         const mask = new pxt.sprite.Bitmask(state.width, state.height);
@@ -640,7 +642,7 @@ export class FillEdit extends Edit {
         const q: pxt.sprite.Coord[] = [{x: this.col, y: this.row}];
         while (q.length) {
             const curr = q.pop();
-            if (state.activeLayer.get(curr.x, curr.y) === replColor) {
+            if (state.image.get(curr.x, curr.y) === colorToReplace) {
                 state.activeLayer.set(curr.x, curr.y, this.color);
                 tryPush(curr.x + 1, curr.y);
                 tryPush(curr.x - 1, curr.y);

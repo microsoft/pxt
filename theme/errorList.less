@@ -1,0 +1,39 @@
+.errorList {
+    position: relative;
+
+    .errorListInner {
+        height: 200px;
+        border-top: 1px #e5e5e5 solid;
+        padding: 1em;
+
+        h4 {
+            margin-bottom: 0.5em;
+        }
+
+        .closeIcon {
+            float: right;
+            cursor: pointer;
+            position: absolute;
+            top: 1em;
+            right: 0;
+
+            i {
+                font-size: 2em;
+            }
+
+            i:not(:hover) {
+                opacity: 0.5;
+            }
+        }
+    }
+
+    .errorListSummary {
+        height: unset;
+
+        .summaryMessage:hover {
+            cursor: pointer;
+            color: #00000067;
+            text-decoration: underline;
+        }
+    }
+}

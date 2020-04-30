@@ -138,6 +138,7 @@ namespace pxt.blocks.layout {
 
     export function setCollapsedAll(ws: Blockly.WorkspaceSvg, collapsed: boolean) {
         ws.getTopBlocks(false)
+            .filter(b => b.isEnabled())
             .forEach(b => b.setCollapsed(collapsed));
     }
 
@@ -241,7 +242,7 @@ namespace pxt.blocks.layout {
 
     export function cleanUpBlocklySvg(svg: SVGElement): SVGElement {
         pxt.BrowserUtils.removeClass(svg, "blocklySvg");
-        pxt.BrowserUtils.addClass(svg, "blocklyPreview");
+        pxt.BrowserUtils.addClass(svg, "blocklyPreview pxt-renderer");
 
         pxt.U.toArray(svg.querySelectorAll('.blocklyMainBackground,.blocklyScrollbarBackground'))
             .forEach(el => { if (el) el.parentNode.removeChild(el) });

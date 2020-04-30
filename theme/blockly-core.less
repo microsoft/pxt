@@ -58,32 +58,34 @@ body.blocklyMinimalBody {
         Blockly Text
 *******************************/
 
-text.blocklyText, input.blocklyHtmlInput, .blocklyDropDownDiv .goog-menuitem, textarea.blocklyCommentTextarea {
-    font-family: @blocklyFont !important;
-    font-weight: normal;
-}
+.pxt-renderer {
+    text.blocklyText, input.blocklyHtmlInput, .blocklyDropDownDiv .goog-menuitem, textarea.blocklyCommentTextarea {
+        font-family: @blocklyFont !important;
+        font-weight: normal;
+    }
 
-text.blocklyFlyoutLabelText, .blocklyFlyoutButton text.blocklyText {
-    font-family: @pageFont !important;
-}
+    text.blocklyFlyoutLabelText, .blocklyFlyoutButton text.blocklyText {
+        font-family: @pageFont !important;
+    }
 
-text.blocklyText.blocklyBoldText {
-    font-weight: bold;
-}
+    text.blocklyText.blocklyBoldText {
+        font-weight: bold;
+    }
 
-text.blocklyText.blocklyItalicizedText {
-    font-style: italic;
-}
+    text.blocklyText.blocklyItalicizedText {
+        font-style: italic;
+    }
 
-text.blocklyText.blocklyBoldItalicizedText {
-    font-weight: bold;
-    font-style: italic;
-}
+    text.blocklyText.blocklyBoldItalicizedText {
+        font-weight: bold;
+        font-style: italic;
+    }
 
-text.semanticIcon {
-    fill: #fff;
-    font-family: "Icons";
-    font-size: 19px;
+    text.semanticIcon {
+        fill: #fff;
+        font-family: "Icons";
+        font-size: 19px;
+    }
 }
 
 
@@ -202,6 +204,7 @@ text.blocklyCheckbox {
 
 /* (arcade only) Sets the correct background color for the sprite image field */
 .pxt-renderer .blocklyEditableText > rect.blocklySpriteField,
+.pxt-renderer .blocklyEditableText > rect.blocklyAnimationField,
 .pxt-renderer .blocklyEditableText > rect.blocklyTilemapField {
     fill: #dedede;
     stroke: #898989;

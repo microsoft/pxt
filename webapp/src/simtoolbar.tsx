@@ -20,7 +20,6 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         if (pxt.BrowserUtils.isIOS())
             this.props.parent.setMute(true);
 
-        this.toggleTrace = this.toggleTrace.bind(this);
         this.toggleMute = this.toggleMute.bind(this);
         this.restartSimulator = this.restartSimulator.bind(this);
         this.openInstructions = this.openInstructions.bind(this);
@@ -43,11 +42,6 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
     restartSimulator() {
         pxt.tickEvent('simulator.restart', undefined, { interactiveConsent: true });
         this.props.parent.restartSimulator();
-    }
-
-    toggleTrace() {
-        pxt.tickEvent("simulator.trace", undefined, { interactiveConsent: true });
-        this.props.parent.toggleTrace();
     }
 
     toggleDebug() {
@@ -89,11 +83,8 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
         const run = true;
         const restart = run && !simOpts.hideRestart;
-        const trace = !!targetTheme.enableTrace;
         // We hide debug button in Monaco because it's not implemented yet.
         const debug = targetTheme.debugger && !inTutorial && !pxt.BrowserUtils.isIE();
-        const tracing = this.props.parent.state.tracing;
-        const traceTooltip = tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo")
         const debugging = parentState.debugging;
         // we need to escape full screen from a tutorial!
         const fullscreen = run && !simOpts.hideFullscreen && !sandbox;
@@ -118,7 +109,6 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
                 {run && !targetTheme.bigRunButton && <PlayButton parent={this.props.parent} simState={parentState.simState} debugging={parentState.debugging} />}
                 {restart && <sui.Button disabled={!runControlsEnabled} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} />}
                 {run && debug && <sui.Button disabled={!debugBtnEnabled} key='debugbtn' className={`debug-button ${debugging ? "orange" : ""}`} icon="icon bug" title={debugTooltip} onClick={this.toggleDebug} />}
-                {trace && <sui.Button key='trace' className={`trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={this.toggleTrace} />}
             </div>
             {!isHeadless && <div className={`ui icon tiny buttons computer only`} style={{ padding: "0" }}>
                 {audio && <sui.Button key='mutebtn' className={`mute-button ${isMuted ? 'red' : ''}`} icon={`${isMuted ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={this.toggleMute} />}

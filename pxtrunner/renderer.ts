@@ -244,9 +244,10 @@ namespace pxt.runner {
         if (woptions.run && !theme.hideDocsSimulator) {
             let $runBtn = snippetBtn(lf("Run"), "play icon").click(() => {
                 pxt.tickEvent("docs.btn", { button: "sim" });
-                if ($c.find('.sim')[0])
+                if ($c.find('.sim')[0]) {
                     $c.find('.sim').remove(); // remove previous simulators
-                else {
+                    scrollJQueryIntoView($c);
+                } else {
                     let padding = '81.97%';
                     if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
                     const deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
@@ -254,6 +255,8 @@ namespace pxt.runner {
                     const data = encodeURIComponent($js.text());
                     let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" data-code="${data}" allowfullscreen="allowfullscreen" sandbox="allow-popups allow-forms allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
                     $c.append($embed);
+
+                    scrollJQueryIntoView($embed);
                 }
             })
             $menu.append($runBtn);
@@ -280,11 +283,14 @@ namespace pxt.runner {
             if (!$svg) return;
             const $svgBtn = snippetBtn(lf("Blocks"), BLOCKS_ICON).click(() => {
                 pxt.tickEvent("docs.btn", { button: "blocks" });
-                if ($c.find('.blocks')[0])
+                if ($c.find('.blocks')[0]) {
                     $c.find('.blocks').remove();
-                else {
+                    scrollJQueryIntoView($c);
+                } else {
                     if ($js) appendBlocks($js.parent(), $svg);
                     else appendBlocks($c, $svg);
+
+                    scrollJQueryIntoView($svg);
                 }
             })
             $menu.append($svgBtn);
@@ -297,11 +303,14 @@ namespace pxt.runner {
             else {
                 const $jsBtn = snippetBtn("JavaScript", JS_ICON).click(() => {
                     pxt.tickEvent("docs.btn", { button: "js" });
-                    if ($c.find('.js')[0])
+                    if ($c.find('.js')[0]) {
                         $c.find('.js').remove();
-                    else {
+                        scrollJQueryIntoView($c);
+                    } else {
                         if ($svg) appendJs($svg.parent(), $js, woptions);
                         else appendJs($c, $js, woptions);
+
+                        scrollJQueryIntoView($js);
                     }
                 })
                 $menu.append($jsBtn);
@@ -315,15 +324,25 @@ namespace pxt.runner {
             } else {
                 const $pyBtn = snippetBtn("Python", PY_ICON).click(() => {
                     pxt.tickEvent("docs.btn", { button: "py" });
-                    if ($c.find('.py')[0])
+                    if ($c.find('.py')[0]) {
                         $c.find('.py').remove();
-                    else {
+                        scrollJQueryIntoView($c);
+                    } else {
                         if ($svg) appendPy($svg.parent(), $py, woptions);
                         else appendPy($c, $py, woptions);
+
+                        scrollJQueryIntoView($py);
                     }
                 })
                 $menu.append($pyBtn);
             }
+        }
+
+        function scrollJQueryIntoView($toScrollTo: JQuery<HTMLElement>) {
+            $toScrollTo[0]?.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
         }
     }
 
@@ -337,7 +356,8 @@ namespace pxt.runner {
         const existingFilters: Map<boolean> = {};
         return consumeNext()
             .then(() => {
-                Blockly.Workspace.getAll().forEach(el => el.dispose())
+                Blockly.Workspace.getAll().forEach(el => el.dispose());
+                pxt.blocks.cleanRenderingWorkspace();
             });
 
         function consumeNext(): Promise<void> {

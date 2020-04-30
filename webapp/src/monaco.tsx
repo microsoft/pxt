@@ -23,9 +23,16 @@ import { DebuggerToolbox } from "./debuggerToolbox";
 import { amendmentToInsertSnippet, listenForEditAmendments, createLineReplacementPyAmendment } from "./monacoEditAmendments";
 
 import { MonacoFlyout } from "./monacoFlyout";
+import { ErrorList } from "./errorList";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
+
+interface TranspileResult {
+    success: boolean;
+    outText?: string;
+    failedResponse?: pxtc.CompileResult;
+}
 
 class CompletionProvider implements monaco.languages.CompletionItemProvider {
     constructor(public editor: Editor, public python: boolean) {
@@ -335,9 +342,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private highlightDecorations: string[] = [];
     private highlightedBreakpoint: number;
     private editAmendmentsListener: monaco.IDisposable | undefined;
+    private errorChangesListeners: pxt.Map<(errors: pxtc.KsDiagnostic[]) => void> = {};
 
     private handleFlyoutWheel = (e: WheelEvent) => e.stopPropagation();
     private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
+
+    constructor(parent: pxt.editor.IProjectView) {
+        super(parent);
+
+        this.resize = this.resize.bind(this);
+        this.listenToErrorChanges = this.listenToErrorChanges.bind(this);
+    }
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -409,9 +424,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // 2) decompile js -> blocks then take the decompiled blocks -> js
             // 3) check that decompiled js == current js % white space
             let blocksInfo: pxtc.BlocksInfo;
-            return this.saveToTypeScriptAsync() // make sure Python gets converted
+            return this.parent.saveFileAsync()
                 .then(() => this.parent.saveFileAsync())
                 .then(() => this.parent.loadBlocklyAsync())
+                .then(() => this.saveToTypeScriptAsync()) // make sure python gets converted
                 .then(() => compiler.getBlocksAsync())
                 .then((bi: pxtc.BlocksInfo) => {
                     blocksInfo = bi;
@@ -443,15 +459,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     return compiler.compileAsync()
                         .then(resp => {
                             if (resp.success) {
-                                return compiler.decompileAsync(tsFile, blocksInfo, oldWorkspace, blockFile)
+                                return this.transpileToBlocksInternalAsync(this.currFile, blocksInfo, oldWorkspace)
                                     .then(resp => {
                                         if (!resp.success) {
-                                            this.currFile.diagnostics = resp.diagnostics;
+                                            const failed = resp.failedResponse;
+                                            this.currFile.diagnostics = failed.diagnostics;
                                             let tooLarge = false;
-                                            resp.diagnostics.forEach(d => tooLarge = (tooLarge || d.code === 9266 /* error code when script is too large */));
+                                            failed.diagnostics.forEach(d => tooLarge = (tooLarge || d.code === 9266 /* error code when script is too large */));
                                             return failedAsync(blockFile, tooLarge);
                                         }
-                                        xml = resp.outfiles[blockFile];
+                                        xml = resp.outText;
                                         Util.assert(!!xml);
                                         return mainPkg.setContentAsync(blockFile, xml)
                                             .then(() => this.parent.setFile(mainPkg.files[blockFile]));
@@ -516,27 +533,79 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         })
     }
 
+    protected transpileToBlocksInternalAsync(file: pkg.File, blocksInfo: pxtc.BlocksInfo, oldWorkspace: Blockly.Workspace): Promise<TranspileResult> {
+        const mainPkg = pkg.mainEditorPkg();
+
+        const tsFilename = file.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME);
+        const blocksFilename = file.getVirtualFileName(pxt.BLOCKS_PROJECT_NAME);
+
+        const isPython = file.getExtension() === "py";
+        const fromLanguage: pxtc.CodeLang = isPython ? "py" : "ts";
+        const fromText = file.content;
+
+        const cached = mainPkg.getCachedTranspile(fromLanguage, fromText, "blocks");
+
+        if (cached != null) {
+            return Promise.resolve({
+                success: true,
+                outText: cached
+            });
+        }
+
+        return compiler.decompileAsync(tsFilename, blocksInfo, oldWorkspace, blocksFilename)
+            .then(resp => {
+                if (!resp.success) {
+                    return {
+                        success: false,
+                        failedResponse: resp
+                    };
+                }
+
+                const outText = resp.outfiles[blocksFilename];
+
+                mainPkg.cacheTranspile(fromLanguage, fromText, "blocks", outText);
+                return {
+                    success: true,
+                    outText
+                }
+            });
+    }
+
     public decompileAsync(blockFile: string): Promise<pxtc.CompileResult> {
         return compiler.decompileAsync(blockFile)
     }
 
     display(): JSX.Element {
+        let showErrorList = pxt.appTarget.appTheme.errorList;
         return (
-            <div id="monacoEditorArea" className="full-abs" style={{ direction: 'ltr' }}>
+            <div id="monacoEditorArea" className="monacoEditorArea" style={{ direction: 'ltr' }}>
                 {this.isVisible && <div className={`monacoToolboxDiv ${(this.toolbox && !this.toolbox.state.visible && !this.isDebugging()) ? 'invisible' : ''}`}>
                     <toolbox.Toolbox ref={this.handleToolboxRef} editorname="monaco" parent={this} />
                     <div id="monacoDebuggerToolbox"></div>
                 </div>}
-                <div id='monacoEditorInner' style={{ float: 'right' }}>
-                    <MonacoFlyout ref={this.handleFlyoutRef} fileType={this.fileType}
-                        blockIdMap={this.blockIdMap}
-                        moveFocusToParent={this.moveFocusToToolbox}
-                        insertSnippet={this.insertSnippet}
-                        setInsertionSnippet={this.setInsertionSnippet}
-                        parent={this.parent} />
+                <div id="monacoEditorRightArea" className="monacoEditorRightArea">
+                    <div id='monacoEditorInner'>
+                        <MonacoFlyout ref={this.handleFlyoutRef} fileType={this.fileType}
+                            blockIdMap={this.blockIdMap}
+                            moveFocusToParent={this.moveFocusToToolbox}
+                            insertSnippet={this.insertSnippet}
+                            setInsertionSnippet={this.setInsertionSnippet}
+                            parent={this.parent} />
+                    </div>
+                    {showErrorList ? <ErrorList onSizeChange={this.resize} listenToErrorChanges={this.listenToErrorChanges} /> : undefined}
                 </div>
             </div>
         )
+    }
+
+    listenToErrorChanges(handlerKey: string, handler: (errors: pxtc.KsDiagnostic[]) => void) {
+        this.errorChangesListeners[handlerKey] = handler;
+    }
+
+    private onErrorChanges(errors: pxtc.KsDiagnostic[]) {
+        for (let listener of pxt.U.values(this.errorChangesListeners)) {
+            listener(errors);
+        }
     }
 
     public showPackageDialog() {
@@ -961,10 +1030,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             let inline = pxtc.U.startsWith(insertText, "inline:1&");
             if (inline) insertText = insertText.substring("inline:1&".length);
 
-            let p = pxtc.U.startsWith(insertText, "qName:")
-                ? compiler.snippetAsync(insertText.substring("qName:".length), this.fileType == pxt.editor.FileType.Python)
-                : Promise.resolve(insertText)
-            p.done(snippet => {
+            let snippetPromise = Promise.resolve(insertText);
+
+            if (pxtc.U.startsWith(insertText, "qName:")) {
+                let isPython = this.fileType == pxt.editor.FileType.Python;
+                let snippetQName = insertText.substring("qName:".length);
+
+                let initPromise = isPython ? this.parent.saveFileAsync() : Promise.resolve();
+                snippetPromise = initPromise.then(() => compiler.snippetAsync(snippetQName, isPython));
+            }
+
+            snippetPromise.done(snippet => {
                 let mouseTarget = this.editor.getTargetAtClientPoint(pxt.BrowserUtils.getClientX(ev), pxt.BrowserUtils.getClientY(ev));
                 let position = mouseTarget.position;
                 pxt.tickEvent(`monaco.toolbox.insertsnippet`);
@@ -1003,18 +1079,24 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private loadReference() {
         Util.assert(this.editor != undefined); // Guarded
-        let currentPosition = this.editor.getPosition();
-        let wordInfo = this.editor.getModel().getWordAtPosition(currentPosition);
-        if (!wordInfo) return;
-        let prevWordInfo = this.editor.getModel().getWordUntilPosition(new monaco.Position(currentPosition.lineNumber, wordInfo.startColumn - 1));
-        if (prevWordInfo && wordInfo) {
-            let namespaceName = prevWordInfo.word.replace(/([A-Z]+)/g, "-$1");
-            let methodName = wordInfo.word.replace(/([A-Z]+)/g, "-$1");
-            this.parent.setSideDoc(`/reference/${namespaceName}/${methodName}`, false);
-        } else if (wordInfo) {
-            let methodName = wordInfo.word.replace(/([A-Z]+)/g, "-$1");
-            this.parent.setSideDoc(`/reference/${methodName}`, false);
-        }
+
+        const model = this.editor.getModel();
+        const offset = model.getOffsetAt(this.editor.getPosition());
+        const source = model.getValue();
+        const fileName = this.currFile.name;
+        compiler.syntaxInfoAsync("symbol", fileName, offset, source)
+            .then(info => {
+                if (info?.symbols) {
+                    for (const s of info.symbols) {
+                        if (s.attributes.help) {
+                            this.parent.setSideDoc('/reference/' + s.attributes.help.replace(/^\//, ''));
+                            return;
+                        }
+                    }
+                }
+
+                core.warningNotification(Util.lf("Help resource not found"))
+            });
     }
 
     private setupFieldEditors() {
@@ -1131,9 +1213,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         let loading = document.createElement("div");
         loading.className = "ui inverted loading dimmer active";
-        let editorArea = document.getElementById("monacoEditorArea");
+        let editorRightArea = document.getElementById("monacoEditorRightArea");
         let editorDiv = document.getElementById("monacoEditorInner");
-        editorArea.insertBefore(loading, editorDiv);
+        editorRightArea.insertBefore(loading, editorDiv);
 
         this.pythonSourceMap = null;
 
@@ -1247,7 +1329,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                 return this.foldFieldEditorRangesAsync()
             }).finally(() => {
-                editorArea.removeChild(loading);
+                editorRightArea.removeChild(loading);
             });
     }
 
@@ -1386,6 +1468,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             }
             monaco.editor.setModelMarkers(model, 'typescript', monacoErrors);
+
+            // report errors to anyone listening (e.g. the error list)
+            this.onErrorChanges(file.diagnostics);
         }
     }
 

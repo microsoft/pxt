@@ -177,6 +177,17 @@ namespace pxsim {
         return stackFrame.retval;
     }
 
+    export function injectEnvironmentGlobals(msg: DebuggerBreakpointMessage, heap: Map<any>) {
+        const environmentGlobals = runtime.environmentGlobals;
+        const keys = Object.keys(environmentGlobals);
+        if (!keys.length)
+            return;
+
+        const envVars: Variables = msg.environmentGlobals = {};
+        Object.keys(environmentGlobals)
+            .forEach(n => envVars[n] = valToJSON(runtime.environmentGlobals[n], heap))
+    }
+
     export function getBreakpointMsg(s: pxsim.StackFrame, brkId: number, userGlobals?: string[]): { msg: DebuggerBreakpointMessage, heap: Map<any> } {
         const heap: pxsim.Map<any> = {};
 

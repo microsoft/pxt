@@ -468,26 +468,26 @@ export function fixupFileNames(txt: ScriptText) {
 
 const scriptDlQ = new U.PromiseQueue();
 const scripts = new db.Table("script"); // cache for published scripts
-//let scriptCache:any = {}
-export function getPublishedScriptAsync(id: string) {
-    //if (scriptCache.hasOwnProperty(id)) return Promise.resolve(scriptCache[id])
+export async function getPublishedScriptAsync(id: string) {
     if (pxt.github.isGithubId(id))
         id = pxt.github.normalizeRepoId(id)
-    let eid = encodeURIComponent(id)
-    return pxt.packagesConfigAsync()
-        .then(config => scriptDlQ.enqueue(id, () => scripts.getAsync(eid)
-            .then(v => v.files, e =>
-                (pxt.github.isGithubId(id) ?
-                    pxt.github.downloadPackageAsync(id, config).then(v => v.files) :
-                    Cloud.downloadScriptFilesAsync(id))
-                    .catch(core.handleNetworkError)
-                    .then(files => scripts.setAsync({ id: eid, files: files })
-                        .then(() => {
-                            //return (scriptCache[id] = files)
-                            return files
-                        })))
-            .then(fixupFileNames))
-        );
+    const config = await pxt.packagesConfigAsync()
+    const eid = encodeURIComponent(pxt.github.upgradedPackageId(config, id))
+    return await scriptDlQ.enqueue(eid, async () => {
+        let files: ScriptText
+        try {
+            files = (await scripts.getAsync(eid)).files
+        } catch {
+            if (pxt.github.isGithubId(id)) {
+                files = (await pxt.github.downloadPackageAsync(id, config)).files
+            } else {
+                files = await (Cloud.downloadScriptFilesAsync(id)
+                    .catch(core.handleNetworkError))
+            }
+            await scripts.setAsync({ id: eid, files: files })
+        }
+        return fixupFileNames(files)
+    })
 }
 
 export enum PullStatus {

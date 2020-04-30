@@ -116,11 +116,30 @@ namespace pxt.py {
             if (!exp.getSourceFile())
                 return null
             let tsExp = exp.getText()
+
+            const tsSym = tc.getSymbolAtLocation(exp);
+            if (tsSym) {
+                tsExp = tc.getFullyQualifiedName(tsSym);
+            }
+
             let sym = symbols[tsExp]
             if (sym && sym.attributes.alias) {
                 return sym.attributes.alias
             }
             if (sym && sym.pyQName) {
+                if (sym.isInstance) {
+                    if (ts.isPropertyAccessExpression(exp)) {
+                        // If this is a property access on an instance, we should bail out
+                        // because the left-hand side might contain an expression
+                        return null;
+                    }
+
+                    // If the pyQname is "Array.append" we just want "append"
+                    const nameRegExp = new RegExp(`(?:^|\.)${sym.namespace}\.(.+)`);
+                    const match = nameRegExp.exec(sym.pyQName);
+                    if (match) return match[1];
+                }
+
                 return sym.pyQName
             }
             else if (tsExp in pxtc.ts2PyFunNameMap) {
@@ -221,17 +240,14 @@ namespace pxt.py {
         }
 
         function emitStmtWithNewlines(s: ts.Statement): string[] {
-            let out: string[] = [];
+            const out = emitStmt(s);
 
-            const comments = pxtc.decompiler.getCommentsForStatement(s, commentMap);
+            // get comments after emit so that child nodes get a chance to claim them
+            const comments = pxtc.decompiler.getCommentsForStatement(s, commentMap)
+                .map(emitComment)
+                .reduce((p, c) => p.concat(c), [])
 
-            for (const comment of comments) {
-                out.push(...emitComment(comment));
-            }
-
-            out = out.concat(emitStmt(s))
-
-            return out;
+            return comments.concat(out);
         }
 
         ///
@@ -901,13 +917,15 @@ namespace pxt.py {
 
             return asExpRes(`${expToStr(left)}.${right}`, leftSup);
         }
-        function getSimpleExpNameParts(s: ts.Expression, skipNamespaces = false): string[] {
+        function getSimpleExpNameParts(s: ts.Expression): string[] {
             // TODO(dz): Impl skip namespaces properly. Right now we just skip the left-most part of a property access
             if (ts.isPropertyAccessExpression(s)) {
-                let nmPart = [getName(s.name)]
-                if (skipNamespaces && ts.isIdentifier(s.expression))
-                    return nmPart
-                return getSimpleExpNameParts(s.expression, skipNamespaces).concat(nmPart)
+                let nmPart = getName(s.name)
+                if (ts.isIdentifier(s.expression)) {
+                    if (nmPart.indexOf(".") >= 0) nmPart = nmPart.substr(nmPart.lastIndexOf(".") + 1);
+                    return [nmPart]
+                }
+                return getSimpleExpNameParts(s.expression).concat([nmPart])
             }
             else if (ts.isIdentifier(s)) {
                 return [getName(s)]
@@ -919,7 +937,7 @@ namespace pxt.py {
             // get words from the callee
             let calleePart: string = ""
             if (calleeExp)
-                calleePart = getSimpleExpNameParts(calleeExp, /*skipNamespaces*/true)
+                calleePart = getSimpleExpNameParts(calleeExp)
                     .map(pxtc.snakify)
                     .join("_")
 
@@ -931,7 +949,7 @@ namespace pxt.py {
                     let arg = allArgs[i]
                     let argType = tc.getTypeAtLocation(arg)
                     if (hasTypeFlag(argType, ts.TypeFlags.EnumLike)) {
-                        let argParts = getSimpleExpNameParts(arg, /*skipNamespaces*/true)
+                        let argParts = getSimpleExpNameParts(arg)
                             .map(pxtc.snakify)
                         enumParamParts = enumParamParts.concat(argParts)
                     }
@@ -999,7 +1017,7 @@ namespace pxt.py {
         // use newlines to separate items
         function getCommaSep(exps: string[]): string[] {
             let res = exps.join(", ");
-            if (res.length > 60) {
+            if (res.length > 60 && exps.length > 1) {
                 return exps.map((el, i) => {
                     let sep = el.charAt(el.length - 1) == "," ? "" : ",";
                     if (i == 0) {

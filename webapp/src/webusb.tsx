@@ -2,120 +2,130 @@ import * as React from "react";
 import * as core from "./core";
 import * as cmds from "./cmds";
 
-function firmwareUrlAsync(): Promise<string> {
-    return pxt.targetConfigAsync()
-        .then(config => {
-            const firmwareUrl = (config.firmwareUrls || {})[
-                pxt.appTarget.simulator.boardDefinition ? pxt.appTarget.simulator.boardDefinition.id
-                    : ""];
-            return firmwareUrl;
-        });
+function resolveFirmwareUrl(): string {
+    const boardid = pxt.appTarget?.simulator?.boardDefinition?.id;
+    if (boardid) {
+        const bundled = pxt.appTarget.bundledpkgs[boardid];
+        if (bundled) {
+            const cfg = pxt.Package.parseAndValidConfig(bundled[pxt.CONFIG_NAME]);
+            if (cfg) {
+                return cfg.firmwareUrl;
+            }
+        }
+    }
+    return undefined;
 }
 
-export function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Promise<void> {
-    pxt.tickEvent(`webusb.pair`);
-    return firmwareUrlAsync()
-        .then(firmwareUrl => {
-            const boardName = pxt.appTarget.appTheme.boardName || lf("device");
-            const jsx =
-                <div className={`ui ${firmwareUrl ? "four" : "three"} column grid stackable`}>
-                    {firmwareUrl ? <div className="column firmware">
-                        <div className="ui">
-                            <div className="content">
-                                <div className="description">
-                                    {lf("First time here?")}
-                                    <br />
-                                    <a href={firmwareUrl} target="_blank" rel="noopener noreferrer">{lf("Check your firmware version and update if needed")}</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                        : undefined}
-                    <div className="column">
-                        <div className="ui">
-                            <div className="content">
-                                <div className="description">
-                                    <span className="ui yellow circular label">1</span>
-                                    <strong>{lf("Connect {0} to computer with USB cable", boardName)}</strong>
-                                    <br />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="column">
-                        <div className="ui">
-                            <div className="content">
-                                <div className="description">
-                                    <span className="ui blue circular label">2</span>
-                                    {lf("Select the device in the pairing dialog")}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="column">
-                        <div className="ui">
-                            <div className="content">
-                                <div className="description">
-                                    <span className="ui blue circular label">3</span>
-                                    {lf("Press \"Connect\"")}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>;
+export function webUsbPairDialogAsync(pairAsync: () => Promise<boolean>, confirmAsync: (options: core.PromptOptions) => Promise<number>): Promise<number> {
+    let failedOnce = false;
+    const boardName = pxt.appTarget.appTheme.boardName || lf("device");
+    const helpUrl = pxt.appTarget.appTheme.usbDocs;
+    const jsxd = () => {
+        const firmwareUrl = failedOnce && resolveFirmwareUrl();
+        if (pxt.commands?.renderUsbPairDialog)
+            return pxt.commands?.renderUsbPairDialog(firmwareUrl, failedOnce);
 
-            return core.confirmAsync({
-                header: lf("Pair your {0}", boardName),
-                agreeLbl: lf("Let's pair it!"),
-                size: "",
-                className: "webusbpair",
-                jsx: jsx
-            }).then(r => {
-                if (!r) {
-                    if (resp)
-                        return cmds.browserDownloadDeployCoreAsync(resp)
-                    else
-                        pxt.U.userError(pxt.U.lf("Device not paired"))
-                }
-                if (!resp)
-                    return pxt.usb.pairAsync()
-                return pxt.usb.pairAsync()
-                    .then(() => {
-                        pxt.tickEvent(`webusb.pair.success`);
-                        return cmds.hidDeployCoreAsync(resp)
-                    })
-                    .catch(e => cmds.browserDownloadDeployCoreAsync(resp));
-            })
-        });
-}
-
-let askPairingCount = 0;
-function askWebUSBPairAsync(resp: pxtc.CompileResult): Promise<void> {
-    pxt.tickEvent(`webusb.askpair`);
-    askPairingCount++;
-    if (askPairingCount > 3) { // looks like this is not working, don't ask anymore
-        pxt.tickEvent(`webusb.askpaircancel`);
-        return cmds.browserDownloadDeployCoreAsync(resp);
+        return <div className={`ui ${firmwareUrl ? "four" : "three"} column grid stackable`}>
+            {firmwareUrl && <div className="column firmware">
+                <div className="ui">
+                    <div className="content">
+                        <div className="description">
+                            {lf("Update Firmware")}
+                            <br />
+                            <a href={firmwareUrl} target="_blank" rel="noopener noreferrer">{lf("Check your firmware version and update if needed")}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>}
+            <div className="column">
+                <div className="ui">
+                    <div className="content">
+                        <div className="description">
+                            <span className="ui yellow circular label">1</span>
+                            <strong>{lf("Connect {0} to computer with USB cable", boardName)}</strong>
+                            <br />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div className="column">
+                <div className="ui">
+                    <div className="content">
+                        <div className="description">
+                            <span className="ui blue circular label">2</span>
+                            {lf("Select the device in the pairing dialog")}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div className="column">
+                <div className="ui">
+                    <div className="content">
+                        <div className="description">
+                            <span className="ui blue circular label">3</span>
+                            {lf("Press \"Connect\"")}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>;
     }
 
-    const boardName = pxt.appTarget.appTheme.boardName || lf("device");
-    return core.confirmAsync({
-        header: lf("No device detected..."),
-        jsx: <div><p><strong>{lf("Do you want to pair your {0} to the editor?", boardName)}</strong></p>
-            <p>{lf("You will get one-click downloads and data logging.")}</p></div>,
-    }).then(clickedYes =>  {
-        if (clickedYes) {
-            return showWebUSBPairingInstructionsAsync(resp)
-        }
-        else {
-            cmds.setWebUSBPaired(false);
-            return cmds.browserDownloadDeployCoreAsync(resp);
-        }
-    });
+    return new Promise((resolve, reject) => {
+        const confirmOptions = () => {
+            return {
+                header: lf("Pair device for one-click downloads"),
+                jsxd,
+                hasCloseIcon: true,
+                hideAgree: true,
+                hideCancel: true,
+                helpUrl,
+                className: 'downloaddialog',
+                buttons: [
+                    {
+                        label: lf("Pair device"),
+                        icon: "usb",
+                        className: "primary",
+                        onclick: () => {
+                            core.showLoading("pair", lf("Select your device and press \"Connect\"."))
+                            pairAsync()
+                                .finally(() => {
+                                    core.hideLoading("pair")
+                                    core.hideDialog();
+                                })
+                                .then(paired => {
+                                    if (paired || failedOnce) {
+                                        resolve(paired ? 1 : 0)
+                                    } else {
+                                        failedOnce = true;
+                                        // allow dialog to fully close, then reopen
+                                        core.forceUpdate();
+                                        confirmAsync(confirmOptions());
+                                    }
+                                })
+                                .catch(e => {
+                                    pxt.reportException(e)
+                                    core.errorNotification(lf("Pairing error: {0}", e.message));
+                                    resolve(0);
+                                });
+                        }
+                    }
+                ]
+            }
+        };
+        confirmAsync(confirmOptions());
+    })
 }
 
-export function webUsbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
-    pxt.tickEvent(`webusb.deploy`)
-    return cmds.hidDeployCoreAsync(resp)
-        .catch(e => askWebUSBPairAsync(resp));
+export function renderUnpairDialog() {
+    const boardName = pxt.appTarget.appTheme.boardName || lf("device");
+    const header = lf("How to unpair your {0}", boardName);
+    const jsx = <div><p>
+        {lf("You can unpair your {0} if the WebUSB download is malfunctioning. Click on the lock icon and uncheck your device.", boardName)}
+    </p>
+        <img className="ui image centered medium" src={"./static/webusb/unpair.gif"} alt={lf("A gif showing how to unpair the {0}", boardName)} />
+    </div>
+    const helpUrl = pxt.appTarget.appTheme.usbDocs
+        && (pxt.appTarget.appTheme.usbDocs + "/webusb#unpair");
+    return { header, jsx, helpUrl };
 }

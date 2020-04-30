@@ -205,6 +205,61 @@
         }
     }
 
+    .simtoolbar .debug-button.orange {
+        color: @HCeditorToolsBackground !important;
+        background-color: @HCtextColor !important;
+    }
+
+    /* Debugger toolbox */
+    .debugtoolbar .ui.compact.menu {
+        color: @HCblocklyTreeLabelColor !important;
+        background-color: @HCblocklyToolboxColor !important;
+        border-bottom: solid @HCblocklyTreeLabelColor 1px !important;
+
+        .ui.item.link.dbg-btn {
+            .icon.green, .icon.blue, .ui.text, .xicon  {
+                color: @HCblocklyTreeLabelColor !important;
+            }
+        }
+        .ui.item.link.dbg-btn.disabled {
+            .icon.green, .icon.blue, .ui.text, .xicon, .icon.disabled.icon-and-text {
+                opacity: 1 !important;
+                color: @disabled !important;
+            }
+        }
+        .ui.item.link.dbg-btn.dbg-trace.tracing {
+            background-color: @HCtextColor !important;
+            .xicon  {
+                color: @HCblocklyToolboxColor !important;
+            }
+        }
+    }
+
+    .varExplorer {
+        background-color: @HCblocklyToolboxColor !important;
+
+        .variableTableHeader, .variableTablePlaceholder {
+            color: @HCblocklyTreeLabelColor !important;
+            background-color: @HCblocklyToolboxColor !important;
+        }
+
+        .ui.segment.debugvariables {
+            .item {
+                background-color: @HCblocklyToolboxColor !important;
+
+                .variableAndValue {
+                    .variable.varname, .variable.detail {
+                        color: @HCblocklyTreeLabelColor !important;
+
+                        .varval.number, .varval.string, .varval.boolean, .varval.array, .varval.Sprite {
+                            color: @HCblocklyTreeLabelColor !important;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /* Editor switch toggle */
     .menubar .ui.menu.fixed .item.editor-menuitem .ui.grid {
         background: @HCbackground !important;
@@ -212,7 +267,8 @@
             opacity: 1 !important;
             color: @HCmainMenuInverseTextColor !important;
         }
-        .item.active {
+        .item.active,
+        .menu > .item.selected {
             background: @HCtextColor !important;
             color: @HCmainMenuTextColor !important;
         }
@@ -507,15 +563,15 @@
     }
 
     /* Dropdown */
-    .ui.menu .ui.dropdown .menu,
-    #editortools .ui.dropdown .menu {
+    .ui.dropdown .menu,
+    .ui.menu .ui.dropdown .menu {
         border: 1px solid @HCtextColor !important;
     }
 
+    .ui.dropdown .menu,
+    .ui.dropdown .menu > .item,
     .ui.menu .ui.dropdown .menu,
-    .ui.menu .ui.dropdown .menu > .item,
-    #editortools .ui.dropdown .menu,
-    #editortools .ui.dropdown .menu > .item {
+    .ui.menu .ui.dropdown .menu > .item {
         background: @HCbackground !important;
         color: @HCtextColor !important;
 
@@ -530,13 +586,13 @@
         }
     }
 
-    .ui.menu .ui.dropdown .menu > .divider,
-    #editortools .ui.dropdown .menu > .divider {
+    .ui.dropdown .menu > .divider,
+    .ui.menu .ui.dropdown .menu > .divider {
         background: @HCbackground !important;
         border-top: 1px solid @HCtextColor !important;
     }
 
-    #editordropdown .menu > .item:not(.active) {
+    #editordropdown .menu > .item:not(.selected) {
         background: transparent !important;
     }
 

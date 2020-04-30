@@ -41,6 +41,8 @@ export function getUsedBlocksAsync(code: string, language?: string): Promise<pxt
                     const blk = allblocks[bi];
                     if (!blk.isShadow()) usedBlocks[blk.type] = 1;
                 }
+                if (pxt.options.debug)
+                    pxt.debug(JSON.stringify(usedBlocks, null, 2));
                 return usedBlocks;
             } else {
                 throw new Error("Failed to decompile");
@@ -223,6 +225,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
     }
 
     showHint(visible: boolean, showFullText?: boolean) {
+        if (visible) Blockly.hideChaff();
         this.setState({ visible, showFullText });
     }
 
@@ -243,7 +246,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         if (!step.unplugged) {
             if (!tutorialHint) return <div />;
 
-            return <div className={`tutorialhint ${!visible ? 'hidden' : ''}`} ref={this.setRef}>
+            return <div className={`tutorialhint no-select ${!visible ? 'hidden' : ''}`} ref={this.setRef}>
                 <md.MarkedContent markdown={this.state.showFullText ? fullText : tutorialHint} unboxSnippets={true} parent={this.props.parent} />
             </div>
         } else {

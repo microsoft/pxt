@@ -10,9 +10,12 @@ import { TestHost } from "../common/testHost";
 import * as util from "../common/testUtils";
 
 // uses the same test cases as the blocks decompiler tests
-const casesDir = path.join(process.cwd(), "tests", "decompile-test", "cases");
+const decompilerCases = path.join(process.cwd(), "tests", "decompile-test", "cases");
+const decompilerBaselines = path.join(process.cwd(), "tests", "pydecompile-test", "decompiler-baselines");
+const pydecompilerCases = path.join(process.cwd(), "tests", "pydecompile-test", "cases");
+const pydecompilerBaselines = path.join(process.cwd(), "tests", "pydecompile-test", "baselines");
 
-const baselineDir = path.join(process.cwd(), "tests", "pydecompile-test", "baselines");
+const testBlocksDir = path.relative(process.cwd(), path.join("tests", "decompile-test", "cases", "testBlocks"));
 
 function initGlobals() {
     let g = global as any
@@ -30,19 +33,16 @@ pxt.setAppTarget(util.testAppTarget);
 
 // TODO: deduplicate this code with decompilerrunner.ts
 describe("pydecompiler", () => {
-    let filenames = util.getFilesByExt(casesDir, ".ts")
+    let decompilerBaselineFiles = util.getFilesByExt(decompilerBaselines, ".py")
+    decompilerBaselineFiles = decompilerBaselineFiles.filter(f => f.indexOf(".local.py") === -1);
 
-    // FYI: uncomment these lines to whitelist or blacklist tests for easier development
-    // let whitelist = ["string_length", "game"]
-    // let blacklist = [
-    //     "shadowing",
-    //     "always_decompile_renames",
-    //     "always_decompile_renames_expressions",
-    //     "always_unsupported_operators",
-    // ]
-    // filenames = filenames
-    //     .filter(f => !blacklist.some(s => f.indexOf(s) > 0))
-    //     .filter(f => whitelist.some(s => f.indexOf(s) > 0))
+    decompilerBaselineFiles.forEach(filename => {
+        it("should decompile " + path.basename(filename), () => {
+            return testDecompilerBaselineAsync(filename);
+        });
+    });
+
+    let filenames = util.getFilesByExt(pydecompilerCases, ".ts")
 
     filenames.forEach(filename => {
         it("should decompile " + path.basename(filename), () => {
@@ -55,10 +55,23 @@ function fail(msg: string) {
     chai.assert(false, msg);
 }
 
-function pydecompileTestAsync(filename: string) {
+function testDecompilerBaselineAsync(baselineFile: string) {
+    const basename = path.basename(baselineFile);
+    const filename = path.join(decompilerCases, util.replaceFileExtension(basename, ".ts"))
+
+    return pydecompileTestCoreAsync(filename, baselineFile);
+}
+
+function pydecompileTestAsync(caseFile: string) {
+    const basename = path.basename(caseFile);
+    const baselineFile = path.join(pydecompilerBaselines, util.replaceFileExtension(basename, ".py"))
+
+    return pydecompileTestCoreAsync(caseFile, baselineFile);
+}
+
+function pydecompileTestCoreAsync(filename: string, baselineFile: string) {
     return new Promise((resolve, reject) => {
-        const basename = path.basename(filename);
-        const baselineFile = path.join(baselineDir, util.replaceFileExtension(basename, ".py"))
+        const basename = path.basename(baselineFile);
 
         let baselineExists: boolean;
         try {
@@ -69,7 +82,7 @@ function pydecompileTestAsync(filename: string) {
             baselineExists = false
         }
 
-        return util.ts2pyAsync(filename)
+        return util.ts2pyAsync(filename, testBlocksDir)
             .then(decompiled => {
                 const outFile = path.join(util.replaceFileExtension(baselineFile, ".local.py"));
 

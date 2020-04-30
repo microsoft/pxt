@@ -31,17 +31,7 @@ interface NewsList {
 const newslist: NewsList = {
     "title": "New live streams!",
     "items": [
-        {
-            "headline": "Digital All-Stars is now streaming!",
-            "url": "https://aka.ms/makecodeDASstream",
-            "description": [
-                "Microsoft Stores is proud to host a MakeCode stream with all-star ",
-                "athletes passionate about technology and connecting with their communities. ",
-                "This week, join <a href='https://www.instagram.com/thekidmcmanus/'>Brandon McManus</a> ",
-                "from the Denver Broncos as he helps you build your very own maze game with ",
-                "Microsoft MakeCode Arcade!"
-            ]
-        }
+        
     ]
 };
 
@@ -50,7 +40,7 @@ const lessons: Lesson[] = [
         "title": "Beginner micro:bit",
         "description": "Learn the basics of physical computing with the micro:bit!  Peli, a member of the MakeCode Team will take you through some beginner-level coding tutorials.",
         "url": "https://aka.ms/makecodemicrobitstream",
-        "img": "/static/online-learning/img/microbit-stream.jpg",
+        "img": "/static/online-learning/img/microbit-stream.png",
         "time": 9,
         "startDay": 25,
         "days": [Day.All]
@@ -59,7 +49,7 @@ const lessons: Lesson[] = [
         "title": "Beginner Minecraft",
         "description": "If you have access to Minecraft: Education Edition at home, learn how to programmatically spawn mobs, control robots, and build structures! Peli, a member of the MakeCode Team will take you through some beginner-level coding tutorials.",
         "url": "https://aka.ms/makecodeminecraftstream",
-        "img": "/static/online-learning/img/minecraft-stream.jpg",
+        "img": "/static/online-learning/img/minecraft-stream.png",
         "time": 10,
         "startDay": 25,
         "days": [Day.All]
@@ -86,7 +76,7 @@ const lessons: Lesson[] = [
         "title": "Advanced Arcade",
         "description": "Create new games (or recreate old ones) with a rotating cast of developers from the MakeCode team, including Richard, Shannon, Daryl, and Joey",
         "url": "https://aka.ms/makecodearcadestream",
-        "img": "/static/online-learning/img/arcade-stream.jpg",
+        "img": "/static/online-learning/img/arcade-stream.png",
         "time": 13,
         "startDay": 25,
         "days": [Day.All]
@@ -101,10 +91,19 @@ const lessons: Lesson[] = [
         "days": [Day.Friday]
     },
     {
+        "title": "MakeCode Live with Adafruit's John Park",
+        "description": "Join Adafruit’s John Park as he builds a MakeCode project each week covering fundamental concepts and techniques using real-world projects in his studio.",
+        "url": "https://aka.ms/makecodejpstream",
+        "img": "/static/online-learning/img/john-park-live.png",
+        "time": 15,
+        "startDay": 21,
+        "days": [Day.Tuesday]
+    },
+    {
         "title": "DreamSpace HomeSpace",
         "description": "Join Microsoft Ireland in their HomeSpace tutorial series on your favourite MakeCode platforms: micro:bit, Arcade and Minecraft.",
         "url": "https://aka.ms/dshomespace",
-        "img": "/static/online-learning/img/dreamspace-homespace.jpg",
+        "img": "/static/online-learning/img/dreamspace-homespace.png",
         "time": 6,
         "startDay": 30,
         "days": [Day.Monday, Day.Wednesday, Day.Friday]
@@ -113,7 +112,6 @@ const lessons: Lesson[] = [
 
 makeNewsList();
 makeLessons();
-makeSchedule();
 
 function makeNewsList() {
     if (newslist.items.length == 0) {
@@ -195,10 +193,13 @@ function makeLessons() {
 
         const img = document.createElement("img");
         img.src = l.img;
+        const play = document.createElement("i");
+        play.className = "icon play";
         const wrapper = document.createElement("a");
         wrapper.className = "imgWrapper";
         wrapper.href = l.url;
         wrapper.appendChild(img);
+        wrapper.appendChild(play);
         lesson.appendChild(wrapper);
 
         const description = document.createElement("div");
@@ -207,20 +208,14 @@ function makeLessons() {
         const header = document.createElement("h4");
         header.innerText = l.title;
         title.appendChild(header);
-        const time = document.createElement("div");
-        const ttime = document.createElement("span");
-        ttime.appendChild(document.createTextNode(formatTime(l.time)))
-        time.appendChild(ttime);
-        time.className = "time";
         const text = document.createElement("div");
         text.innerText = l.description;
         const ics = document.createElement("a");
         ics.href = "/static/online-learning/" + l.title.replace(/[^a-z0-9]+/ig, '').toLowerCase() + ".ics";
         ics.text = "Add to calendar";
-        ics.className = "ics"        
+        ics.className = "ics";
         //time.appendChild(ics);
         description.appendChild(title);
-        description.appendChild(time);
         description.appendChild(text);
 
         lesson.appendChild(description);

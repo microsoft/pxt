@@ -551,7 +551,7 @@ const testAll = gulp.series(
     testlang,
     testerr,
     testfmt,
-    // testpydecomp,
+    testpydecomp,
     testpycomp,
     testpytraces,
     testtutorials,

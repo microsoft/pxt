@@ -485,6 +485,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     name: "lists_create_with",
                     attributes: {
                         blockId: "lists_create_with",
+                        group: "Create",
                         weight: 90
                     },
                     blockXml: `<block type="variables_set" gap="8">
@@ -509,6 +510,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     name: "lists_create_with",
                     attributes: {
                         blockId: "lists_create_with",
+                        group: "Create",
                         weight: 89
                     },
                     blockXml: `<block type="variables_set">
@@ -538,6 +540,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     name: "lists_create_with",
                     attributes: {
                         blockId: "lists_create_with",
+                        group: "Create",
                         weight: 5
                     },
                     blockXml: `<block type="lists_create_with">
@@ -548,6 +551,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     name: "lists_index_get",
                     attributes: {
                         blockId: "lists_index_get",
+                        group: "Read",
                         weight: 87
                     },
                     blockXml: `<block type="lists_index_get">
@@ -567,6 +571,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     name: "lists_index_set",
                     attributes: {
                         blockId: "lists_index_set",
+                        group: "Modify",
                         weight: 86
                     },
                     blockXml: `<block type="lists_index_set">
@@ -586,6 +591,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     name: "lists_length",
                     attributes: {
                         blockId: "lists_length",
+                        group: "Read",
                         weight: 88
                     },
                     blockXml: `<block type="lists_length">
@@ -601,6 +607,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 advanced: true,
                 weight: 50.07,
                 icon: "arrays",
+                groups: ["Create", "Read", "Modify", "Operations"],
                 callingConvention: ts.pxtc.ir.CallingConvention.Plain,
                 paramDefl: {}
             }

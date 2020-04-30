@@ -91,6 +91,10 @@ namespace pxt {
             this.addedBy = [addedBy];
         }
 
+        disablesVariant(v: string) {
+            return this.config && this.config.disablesVariants && this.config.disablesVariants.indexOf(v) >= 0
+        }
+
         invalid(): boolean {
             return /^invalid:/.test(this.version());
         }
@@ -314,6 +318,24 @@ namespace pxt {
             return regex.test(ts);
         }
 
+        private upgradePackagesAsync() {
+            return pxt.packagesConfigAsync()
+                .then(config => {
+                    let numfixes = 0
+                    U.iterMap(this.config.dependencies, (pkg, ver) => {
+                        if (pxt.github.isGithubId(ver)) {
+                            const upgraded = pxt.github.upgradedPackageReference(config, ver)
+                            if (upgraded && upgraded != ver) {
+                                this.config.dependencies[pkg] = upgraded
+                                numfixes++
+                            }
+                        }
+                    })
+                    if (numfixes)
+                        this.saveConfig()
+                })
+        }
+
         private getMissingPackages(config: pxt.PackageConfig, ts: string): Map<string> {
             const upgrades = pxt.patching.computePatches(this.targetVersion(), "missingPackage");
             const missing: Map<string> = {};
@@ -503,6 +525,10 @@ namespace pxt {
             }
         }
 
+        resolvedDependencies(): Package[] {
+            return Object.keys(this.dependencies()).map(n => this.resolveDep(n))
+        }
+
         dependencies(includeCpp = false): pxt.Map<string> {
             if (!this.config) return {};
 
@@ -537,6 +563,9 @@ namespace pxt {
             } else {
                 initPromise = initPromise.then(() => this.parseConfig(str))
             }
+
+            if (this.level == 0)
+                initPromise = initPromise.then(() => this.upgradePackagesAsync())
 
             if (isInstall)
                 initPromise = initPromise.then(() => this.downloadAsync())
@@ -685,7 +714,7 @@ namespace pxt {
          */
         packageLocalizationStringsAsync(lang: string): Promise<Map<string>> {
             const targetId = pxt.appTarget.id;
-            const filenames = [this.id + "-jsdoc", this.id];
+            const filenames = [this.config.name + "-jsdoc", this.config.name];
             const r: Map<string> = {};
             const theme = pxt.appTarget.appTheme || {};
 
@@ -881,34 +910,41 @@ namespace pxt {
             }
 
             const fillExtInfoAsync = async (variant: string) => {
-                let ext: pxtc.ExtensionInfo
+                const res: pxtc.ExtensionTarget = {
+                    extinfo: null,
+                    target: null
+                }
+                const prevVariant = pxt.appTargetVariant
 
                 if (variant)
                     pxt.setAppTargetVariant(variant, { temporary: true })
 
                 try {
-                    ext = cpp.getExtensionInfo(this)
+                    let einfo = cpp.getExtensionInfo(this)
                     if (!variant) {
-                        if (ext.shimsDTS) generateFile("shims.d.ts", ext.shimsDTS)
-                        if (ext.enumsDTS) generateFile("enums.d.ts", ext.enumsDTS)
+                        if (einfo.shimsDTS) generateFile("shims.d.ts", einfo.shimsDTS)
+                        if (einfo.enumsDTS) generateFile("enums.d.ts", einfo.enumsDTS)
                     }
 
-                    const inf = target.isNative ? await this.host().getHexInfoAsync(ext) : null
+                    const inf = target.isNative ? await this.host().getHexInfoAsync(einfo) : null
 
-                    ext = U.flatClone(ext)
+                    einfo = U.flatClone(einfo)
                     if (!target.keepCppFiles) {
-                        delete ext.compileData;
-                        delete ext.generatedFiles;
-                        delete ext.extensionFiles;
+                        delete einfo.compileData;
+                        delete einfo.generatedFiles;
+                        delete einfo.extensionFiles;
                     }
-                    ext.hexinfo = inf
+                    einfo.hexinfo = inf
+
+                    res.extinfo = einfo
+                    res.target = pxt.appTarget.compile
 
                 } finally {
                     if (variant)
-                        pxt.setAppTargetVariant(null, { temporary: true })
+                        pxt.setAppTargetVariant(prevVariant, { temporary: true })
                 }
 
-                return ext
+                return res
             }
 
             await this.loadAsync()
@@ -917,23 +953,40 @@ namespace pxt {
             opts.target.preferredEditor = this.getPreferredEditor()
             pxt.debug(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
 
-            let variants = pxt.appTarget.multiVariants
-            if (!variants || pxt.appTargetVariant) {
-                variants = [pxt.appTargetVariant || ""]
+            let variants: string[]
+
+            if (pxt.appTarget.multiVariants) {
+                // multiVariant available
+                if (pxt.appTargetVariant) {
+                    // set explicitly by the user
+                    variants = [pxt.appTargetVariant]
+                } else if (pxt.appTarget.alwaysMultiVariant || pxt.appTarget.compile.switches.multiVariant) {
+                    // multivariants enabled
+                    variants = pxt.appTarget.multiVariants
+                } else {
+                    // not enbaled - default to first variant
+                    variants = [pxt.appTarget.multiVariants[0]]
+                }
+            } else {
+                // no multi-variants, use empty variant name,
+                // so we don't mess with pxt.setAppTargetVariant() in fillExtInfoAsync()
+                variants = [null]
             }
+
 
             let ext: pxtc.ExtensionInfo = null
             for (let v of variants) {
                 if (ext)
                     pxt.debug(`building for ${v}`)
-                const curr = await fillExtInfoAsync(ext ? v : null)
-                curr.appVariant = v
-                curr.outputPrefix = variants.length == 1 || !v ? "" : v + "-"
+                const etarget = await fillExtInfoAsync(v)
+                const einfo = etarget.extinfo
+                einfo.appVariant = v
+                einfo.outputPrefix = variants.length == 1 || !v ? "" : v + "-"
                 if (ext) {
-                    ext.otherMultiVariants.push(curr)
+                    opts.otherMultiVariants.push(etarget)
                 } else {
-                    ext = curr
-                    ext.otherMultiVariants = []
+                    ext = einfo
+                    opts.otherMultiVariants = []
                 }
             }
             opts.extinfo = ext

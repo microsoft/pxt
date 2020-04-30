@@ -157,9 +157,8 @@ namespace pxtblockly {
             const bg = new svg.Rect()
                 .at(PADDING + ICON_WIDTH, PADDING)
                 .size(BG_WIDTH, BG_WIDTH)
-                .fill("#dedede")
-                .stroke("#898989", 1)
-                .corner(4);
+                .corner(4)
+                .setClass("blocklyAnimationField");
 
             this.fieldGroup_.appendChild(bg.el);
 

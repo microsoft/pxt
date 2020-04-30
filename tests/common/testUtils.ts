@@ -81,9 +81,9 @@ export function getTestCompileOptsAsync(packageFiles: pxt.Map<string> = { "main.
     return Promise.resolve(opts);
 }
 
-export function ts2pyAsync(f: string): Promise<string> {
+export function ts2pyAsync(f: string, dependency?: string): Promise<string> {
     const tsMain = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-    return getTestCompileOptsAsync({ "main.ts": tsMain })
+    return getTestCompileOptsAsync({ "main.ts": tsMain }, dependency, !!dependency)
         .then(opts => {
             let program = pxtc.getTSProgram(opts);
             // TODO: if needed, we can re-use the CallInfo annotations the blockly decompiler can add

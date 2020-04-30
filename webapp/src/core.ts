@@ -169,6 +169,7 @@ export interface DialogOptions {
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
+    if (!options.buttons) options.buttons = [];
     if (!options.type) options.type = 'dialog';
     if (!options.hideCancel) {
         if (!options.buttons) options.buttons = [];
@@ -179,9 +180,9 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         })
     }
     if (options.helpUrl) {
-        options.buttons.push({
-            label: lf("Help"),
-            className: "help",
+        options.buttons.unshift({
+            className: "circular help",
+            title: lf("Help"),
             icon: "help",
             url: options.helpUrl
         })

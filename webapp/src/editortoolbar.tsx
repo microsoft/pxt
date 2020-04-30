@@ -4,6 +4,7 @@ import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as githubbutton from "./githubbutton";
+import * as cmds from "./cmds"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -25,7 +26,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         this.zoomIn = this.zoomIn.bind(this);
         this.zoomOut = this.zoomOut.bind(this);
         this.startStopSimulator = this.startStopSimulator.bind(this);
-        this.toggleTrace = this.toggleTrace.bind(this);
         this.toggleDebugging = this.toggleDebugging.bind(this);
     }
 
@@ -69,11 +69,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     startStopSimulator(view?: string) {
         pxt.tickEvent("editortools.startStopSimulator", { view: view, collapsed: this.getCollapsedState(), headless: this.getHeadlessState() }, { interactiveConsent: true });
         this.props.parent.startStopSimulator({ clickTrigger: true });
-    }
-
-    toggleTrace(view?: string) {
-        pxt.tickEvent("editortools.trace", { view: view, collapsed: this.getCollapsedState(), headless: this.getHeadlessState() }, { interactiveConsent: true });
-        this.props.parent.toggleTrace();
     }
 
     toggleDebugging(view?: string) {
@@ -124,7 +119,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                 onChangeValue={this.saveProjectName}
                 disabled={projectNameReadOnly}
                 readOnly={projectNameReadOnly}
-                />)
+            />)
         }
 
         if (showSave) {
@@ -148,22 +143,31 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     protected onPairClick = () => {
-        this.props.parent.pair();
+        pxt.tickEvent("editortools.pair", undefined, { interactiveConsent: true });
+        this.props.parent.pairAsync();
+    }
+
+    protected onDisconnectClick = () => {
+        cmds.showDisconnectAsync().done();
     }
 
     protected getCompileButton(view: View, collapsed?: boolean): JSX.Element[] {
         const targetTheme = pxt.appTarget.appTheme;
         const { compiling, isSaving } = this.props.parent.state;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
-        const downloadIcon = targetTheme.downloadIcon || "download";
         const downloadText = targetTheme.useUploadMessage ? lf("Upload") : lf("Download");
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
-        const showPairUSBDevice = pxt.usb.isEnabled;
-        const usbPaired = showPairUSBDevice && !!this.getData("usb:paired");
-        const hasMenu = boards || showPairUSBDevice;
+        const webUSBSupported = pxt.usb.isEnabled && pxt.appTarget?.compile?.webUSB;
+        const packetioConnected = !!this.getData("packetio:connected");
+        const packetioConnecting = !!this.getData("packetio:connecting");
+        const packetioIcon = this.getData("packetio:icon") as string;
+        const downloadIcon = (!!packetioConnecting && "ping " + packetioIcon)
+            || (!!packetioConnected && "ping2s " + packetioIcon)
+            || targetTheme.downloadIcon || "download";
+        const hasMenu = boards || webUSBSupported;
 
         let downloadButtonClasses = hasMenu ? "left attached " : "";
-        let downloadButtonIcon = usbPaired ? "usb" : "ellipsis";
+        const downloadButtonIcon = "ellipsis";
         let hwIconClasses = "";
         let displayRight = false;
         if (isSaving) {
@@ -171,7 +175,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         } else if (compiling) {
             downloadButtonClasses += "loading disabled ";
         }
-
+        if (packetioConnected)
+            downloadButtonClasses += "connected ";
+        else if (packetioConnecting)
+            downloadButtonClasses += "connecting ";
         switch (view) {
             case View.Mobile:
                 downloadButtonClasses += "download-button-full";
@@ -192,7 +199,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         el.push(<EditorToolbarButton key="downloadbutton" role="menuitem" icon={downloadIcon} className={`primary download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={this.compile} view='computer' />)
 
         const deviceName = pxt.hwName || pxt.appTarget.appTheme.boardNickname || lf("device");
-        const tooltip = pxt.hwName || (usbPaired && lf("Connected to {0}", deviceName)) || (boards ? lf("Click to select hardware") : lf("Click for one-click downloads."));
+        const tooltip = pxt.hwName
+            || (packetioConnected && lf("Connected to {0}", deviceName))
+            || (packetioConnecting && lf("Connecting..."))
+            || (boards ? lf("Click to select hardware") : lf("Click for one-click downloads."));
 
         const hardwareMenuText = view == View.Mobile ? lf("Hardware") : lf("Choose hardware");
         const downloadMenuText = view == View.Mobile ? (pxt.hwName || lf("Download")) : lf("Download to {0}", deviceName);
@@ -200,7 +210,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         if (hasMenu) {
             el.push(
                 <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
-                    {showPairUSBDevice && <sui.Item role="menuitem" icon="usb" text={lf("Pair device")} tabIndex={-1} onClick={this.onPairClick} />}
+                    {webUSBSupported && !packetioConnected && <sui.Item role="menuitem" icon="usb" text={lf("Pair device")} tabIndex={-1} onClick={this.onPairClick} />}
+                    {webUSBSupported && (packetioConnecting || packetioConnected) && <sui.Item role="menuitem" icon="usb" text={lf("Disconnect")} tabIndex={-1} onClick={this.onDisconnectClick} />}
                     {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
                     <sui.Item role="menuitem" icon="download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />
                 </sui.DropdownMenu>
@@ -250,9 +261,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             && !!targetTheme.githubEditor
             && !readOnly && !isController && !debugging && !tutorial;
 
-        const trace = !!targetTheme.enableTrace;
-        const tracing = this.props.parent.state.tracing;
-        const traceTooltip = tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo")
         const debug = !!targetTheme.debugger && !readOnly;
         const debugTooltip = debugging ? lf("Disable Debugging") : lf("Debugging")
         const downloadIcon = pxt.appTarget.appTheme.downloadIcon || "download";
@@ -328,7 +336,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                 <div className="row" style={readOnly || !showUndoRedo ? undefined : { paddingTop: 0 }}>
                                     <div className="column">
                                         <div className="ui icon large buttons">
-                                            {trace && <EditorToolbarButton key='tracebtn' className={`trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onButtonClick={this.toggleTrace} view='mobile' />}
                                             {debug && <EditorToolbarButton key='debugbtn' className={`debug-button ${debugging ? 'orange' : ''}`} icon="icon bug" title={debugTooltip} onButtonClick={this.toggleDebugging} view='mobile' />}
                                             {compileBtn && this.getCompileButton(mobile)}
                                         </div>
@@ -393,7 +400,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                     </div>}
                                 <div className="row" style={showUndoRedo || showZoomControls ? { paddingTop: 0 } : {}}>
                                     <div className="column">
-                                        {trace && <EditorToolbarButton key='tracebtn' className={`large trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onButtonClick={this.toggleTrace} view='tablet' />}
                                         {debug && <EditorToolbarButton key='debugbtn' className={`large debug-button ${debugging ? 'orange' : ''}`} icon="icon bug" title={debugTooltip} onButtonClick={this.toggleDebugging} view='tablet' />}
                                     </div>
                                 </div>

@@ -619,8 +619,9 @@ namespace pxt.blocks {
         if (fn.attributes.imageLiteral) {
             const columns = (fn.attributes.imageLiteralColumns || 5) * fn.attributes.imageLiteral;
             const rows = fn.attributes.imageLiteralRows || 5;
+            const scale = fn.attributes.imageLiteralScale;
             let ri = block.appendDummyInput();
-            ri.appendField(new pxtblockly.FieldMatrix("", { columns, rows }), "LEDS");
+            ri.appendField(new pxtblockly.FieldMatrix("", { columns, rows, scale }), "LEDS");
         }
 
         if (fn.attributes.inlineInputMode === "external") {
@@ -1549,24 +1550,24 @@ namespace pxt.blocks {
             options.push(formatCodeOption);
 
             if (pxt.appTarget.appTheme.blocksCollapsing) {
+                // Option to collapse all top-level (enabled) blocks
                 const collapseAllOption = {
                     text: lf("Collapse Blocks"),
-                    enabled: true,
+                    enabled: topBlocks.length && topBlocks.find((b: Blockly.Block) => b.isEnabled() && !b.isCollapsed()),
                     callback: () => {
                         pxt.tickEvent("blocks.context.collapse", undefined, { interactiveConsent: true });
                         pxt.blocks.layout.setCollapsedAll(this, true);
-                        pxt.blocks.layout.flow(this, { useViewWidth: true });
                     }
                 }
                 options.push(collapseAllOption);
 
+                // Option to expand all collapsed blocks
                 const expandAllOption = {
                     text: lf("Expand Blocks"),
-                    enabled: true,
+                    enabled: topBlocks.length && topBlocks.find((b: Blockly.Block) => b.isEnabled() && b.isCollapsed()),
                     callback: () => {
                         pxt.tickEvent("blocks.context.expand", undefined, { interactiveConsent: true });
                         pxt.blocks.layout.setCollapsedAll(this, false);
-                        pxt.blocks.layout.flow(this, { useViewWidth: true });
                     }
                 }
                 options.push(expandAllOption);
