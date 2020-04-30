@@ -68,18 +68,6 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
         const wordStartOffset = model.getOffsetAt({ lineNumber: position.lineNumber, column: word.startColumn })
         const wordEndOffset = model.getOffsetAt({ lineNumber: position.lineNumber, column: word.endColumn })
 
-        if (this.python) {
-            // TODO(dz):
-            // include python keywords
-            // /Users/darylzuniga/mc/pxt/pxtpy/lexer.ts
-            // pxt.py.keywords
-        } else {
-            // TODO(dz):
-            // include typescript keywords
-            // /Users/darylzuniga/mc/pxt/pxtlib/typescript.ts
-            // maybe use: ts.pxtc.reservedWords
-        }
-
         return compiler.completionsAsync(fileName, offset, wordStartOffset, wordEndOffset, source)
             .then(completions => {
                 const items = (completions.entries || []).map((si, i) => {
