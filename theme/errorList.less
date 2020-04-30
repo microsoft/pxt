@@ -1,5 +1,8 @@
+@summary-hover-color: #00000067;
+
 .errorList {
     position: relative;
+    min-height: 200px;
 
     .errorListInner {
         height: 200px;
@@ -27,13 +30,18 @@
             }
         }
     }
+}
 
-    .errorListSummary {
+.errorList.errorListSummary {
+    min-height: unset;
+
+    .errorListInner {
         height: unset;
+        overflow-y: unset;
 
         .summaryMessage:hover {
             cursor: pointer;
-            color: #00000067;
+            color: @summary-hover-color;
             text-decoration: underline;
         }
     }
