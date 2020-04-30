@@ -319,12 +319,14 @@ namespace pxt {
         }
 
         private upgradePackagesAsync() {
+            if (!this.config)
+                this.loadConfig();
             return pxt.packagesConfigAsync()
-                .then(config => {
+                .then(packagesConfig => {
                     let numfixes = 0
                     U.iterMap(this.config.dependencies, (pkg, ver) => {
                         if (pxt.github.isGithubId(ver)) {
-                            const upgraded = pxt.github.upgradedPackageReference(config, ver)
+                            const upgraded = pxt.github.upgradedPackageReference(packagesConfig, ver)
                             if (upgraded && upgraded != ver) {
                                 this.config.dependencies[pkg] = upgraded
                                 numfixes++
