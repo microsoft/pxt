@@ -4972,12 +4972,11 @@ export function hexdumpAsync(c: commandParser.ParsedCommand) {
     let filename = c.args[0]
     let buf = fs.readFileSync(filename)
     if (/^UF2\n/.test(buf.slice(0, 4).toString("utf8"))) {
-        let r = pxtc.UF2.toBin(buf as any)
-        if (r) {
-            console.log("UF2 file detected.")
-            console.log(pxtc.hexDump(r.buf, r.start))
-            return Promise.resolve()
+        for (let b of pxtc.UF2.parseFile(buf)) {
+            console.log(`UF2 Block: ${b.blockNo}/${b.numBlocks} family:${b.familyId.toString(16)} flags:${b.flags.toString(16)}\n` +
+                pxtc.hexDump(b.data, b.targetAddr))
         }
+        return Promise.resolve()
     }
     console.log("Binary file assumed.")
     console.log(pxtc.hexDump(buf))
