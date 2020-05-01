@@ -23,6 +23,13 @@ namespace pxt.blocks {
         NoSpace = 2
     }
 
+
+    const reservedWords = ["break", "case", "catch", "class", "const", "continue", "debugger",
+        "default", "delete", "do", "else", "enum", "export", "extends", "false", "finally",
+        "for", "function", "if", "import", "in", "instanceof", "new", "null", "return",
+        "super", "switch", "this", "throw", "true", "try", "typeof", "var", "void", "while",
+        "with"];
+
     let placeholders: Map<Map<any>> = {};
 
     export function backtickLit(s: string) {
