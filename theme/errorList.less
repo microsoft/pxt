@@ -1,43 +1,47 @@
 @summary-hover-color: #00000067;
 
+// Expanded error list
 .errorList {
     position: relative;
     min-height: 200px;
+    border-top: 1px #e5e5e5 solid;
+
+    h4 {
+        padding: 1em;
+        margin-bottom: 0;
+    }
+
+    .collapseButton {
+        float: right;
+        cursor: pointer;
+        position: absolute;
+        top: 1em;
+        right: 1em;
+
+        i {
+            font-size: 2em;
+        }
+
+        i:not(:hover) {
+            opacity: 0.5;
+        }
+    }
 
     .errorListInner {
-        height: 200px;
-        border-top: 1px #e5e5e5 solid;
-        padding: 1em;
+        height: 160px;
+        padding: 0 1em 1em 1em;
         overflow-y: scroll;
-
-        h4 {
-            margin-bottom: 0.5em;
-        }
-
-        .closeIcon {
-            float: right;
-            cursor: pointer;
-            position: absolute;
-            top: 1em;
-            right: 1em;
-
-            i {
-                font-size: 2em;
-            }
-
-            i:not(:hover) {
-                opacity: 0.5;
-            }
-        }
     }
 }
 
+// collapsed error list
 .errorList.errorListSummary {
     min-height: unset;
 
     .errorListInner {
         height: unset;
         overflow-y: unset;
+        padding: 1em;
 
         .summaryMessage:hover {
             cursor: pointer;

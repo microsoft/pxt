@@ -38,7 +38,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             return `${error.messageText}-${error.fileName}-${error.line}-${error.column}`
         }
 
-        const xButton = <sui.CloseButton onClick={this.onCollapseClick} />
+        const collapseButton = <sui.Button className="collapseButton" icon={`chevron down`} onClick={this.onCollapseClick} />
 
         let errorListContent;
         if (errorsAvailable) {
@@ -55,9 +55,9 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         }
 
         return <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''}`}>
+            <h4 hidden={isCollapsed}>Error List</h4>
+            {!isCollapsed && collapseButton}
             <div className="errorListInner">
-                <h4 hidden={isCollapsed}>Error List</h4>
-                {!isCollapsed && xButton}
                 {errorListContent}
             </div>
         </div>
