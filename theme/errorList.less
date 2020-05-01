@@ -6,24 +6,32 @@
     min-height: 200px;
     border-top: 1px #e5e5e5 solid;
 
-    h4 {
+    .errorListHeader {
         padding: 1em;
         margin-bottom: 0;
-    }
 
-    .collapseButton {
-        float: right;
-        cursor: pointer;
-        position: absolute;
-        top: 1em;
-        right: 1em;
-
-        i {
-            font-size: 2em;
+        h4 {
+            margin: 0;
+            display: inline-block;
+            vertical-align: middle;
         }
 
-        i:not(:hover) {
-            opacity: 0.5;
+        .collapseButton {
+            //float: right;
+            cursor: pointer;
+            position: relative;
+            //top: 1em;
+            //right: 1em;
+            display: inline-block;
+            vertical-align: middle;
+
+            i {
+                font-size: 0.5em; // FIX THIS
+            }
+
+            i:not(:hover) {
+                opacity: 0.5;
+            }
         }
     }
 
