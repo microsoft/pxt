@@ -565,7 +565,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         {cards.map((scr, index) =>
                             <ProjectsCodeCard
                                 className="example"
-                                key={path + (scr.name || scr.url)}
+                                key={path + (scr.youTubeId || scr.name || scr.url)}
                                 name={scr.name}
                                 url={scr.url}
                                 imageUrl={scr.imageUrl}

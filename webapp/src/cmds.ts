@@ -338,17 +338,20 @@ export function init(): void {
     pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
     pxt.commands.webUsbPairDialogAsync = webusb.webUsbPairDialogAsync;
     pxt.commands.showUploadInstructionsAsync = showUploadInstructionsAsync;
+    pxt.packetio.mkPacketIOAsync = undefined;
     // used by CLI pxt.commands.deployFallbackAsync = undefined;
 
     // check if webUSB is available and usable
-    if (pxt.usb.isAvailable() && pxt.appTarget.compile.webUSB) {
-        log(`enabled webusb`);
-        pxt.usb.setEnabled(true);
-        pxt.packetio.mkPacketIOAsync = pxt.usb.mkPacketIOAsync;
-    } else {
-        log(`enabled hid bridge (webusb disabled)`);
-        pxt.usb.setEnabled(false);
-        pxt.packetio.mkPacketIOAsync = hidbridge.mkBridgeAsync;
+    if (pxt.appTarget?.compile?.isNative || pxt.appTarget?.compile?.hasHex) {
+        if (pxt.usb.isAvailable() && pxt.appTarget?.compile?.webUSB) {
+            log(`enabled webusb`);
+            pxt.usb.setEnabled(true);
+            pxt.packetio.mkPacketIOAsync = pxt.usb.mkPacketIOAsync;
+        } else {
+            log(`enabled hid bridge (webusb disabled)`);
+            pxt.usb.setEnabled(false);
+            pxt.packetio.mkPacketIOAsync = hidbridge.mkBridgeAsync;
+        }
     }
 
     const forceBrowserDownload = /force(Hex)?(Browser)?Download/i.test(window.location.href);

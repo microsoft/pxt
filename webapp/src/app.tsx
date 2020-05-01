@@ -718,9 +718,10 @@ export class ProjectView
         }, 1000, false);
 
     private markdownChangeHandler = Util.debounce(() => {
-        if (this.state.currFile && /\.md$/i.test(this.state.currFile.name))
+        if (this.state.currFile && /\.md$/i.test(this.state.currFile.name)
+            && this.isSideDocExpanded())
             this.setSideMarkdown(this.editor.getCurrentSource());
-    }, 4000, false);
+    }, 8000, false);
     private editorChangeHandler = Util.debounce(() => {
         if (!this.editor.isIncomplete()) {
             this.saveFileAsync().done(); // don't wait till save is done
@@ -1030,6 +1031,11 @@ export class ProjectView
                 return p.savePkgAsync();
             })
             .then(() => this.reloadHeaderAsync())
+    }
+
+    isSideDocExpanded(): boolean {
+        const sd = this.refs["sidedoc"] as container.SideDocs;
+        return !!sd && sd.isCollapsed();
     }
 
     setSideMarkdown(md: string) {
@@ -2432,11 +2438,11 @@ export class ProjectView
                     if (simRestart) this.runSimulator();
                 })
                 .done();
-            } catch (e) {
-                this.setState({ compiling: false, isSaving: false });
-                pxt.reportException(e);
-                core.errorNotification(lf("Compilation failed, please try again."));
-            }
+        } catch (e) {
+            this.setState({ compiling: false, isSaving: false });
+            pxt.reportException(e);
+            core.errorNotification(lf("Compilation failed, please try again."));
+        }
     }
 
     overrideTypescriptFile(text: string) {
@@ -3962,9 +3968,13 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             pxt.tickEvent("hash." + hash.cmd)
             let tutorialPath = hash.arg;
             let editorProjectName: string = undefined;
-            if (/^(js|py):/.test(tutorialPath)) {
-                editorProjectName = /^py:/.test(tutorialPath)
-                    ? pxt.PYTHON_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME;
+            if (/^([jt]s|py|blocks):/i.test(tutorialPath)) {
+                if (/^py:/i.test(tutorialPath))
+                    editorProjectName = pxt.BLOCKS_PROJECT_NAME;
+                else if (/^[jt]s:/i.test(tutorialPath))
+                    editorProjectName = pxt.JAVASCRIPT_PROJECT_NAME;
+                else
+                    editorProjectName = pxt.BLOCKS_PROJECT_NAME;
                 tutorialPath = tutorialPath.substr(tutorialPath.indexOf(':') + 1)
             }
             editor.startActivity(hash.cmd, tutorialPath, undefined, editorProjectName);
