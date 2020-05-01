@@ -1032,6 +1032,11 @@ export class ProjectView
             .then(() => this.reloadHeaderAsync())
     }
 
+    isSideDocExpanded(): boolean {
+        const sd = this.refs["sidedoc"] as container.SideDocs;
+        return !!sd && sd.isCollapsed();
+    }
+
     setSideMarkdown(md: string) {
         let sd = this.refs["sidedoc"] as container.SideDocs;
         if (!sd) return;
@@ -1299,7 +1304,8 @@ export class ProjectView
                 const editorForFile = this.pickEditorFor(file);
                 const readme = main.lookupFile("this/README.md");
                 // no auto-popup when editing packages locally
-                if (!h.githubId && readme && readme.content && readme.content.trim())
+                if (!h.githubId && readme && readme.content && readme.content.trim()
+                    && this.isSideDocExpanded())
                     this.setSideMarkdown(readme.content);
                 else if (pkg.mainPkg && pkg.mainPkg.config && pkg.mainPkg.config.documentation)
                     this.setSideDoc(pkg.mainPkg.config.documentation, editorForFile == this.blocksEditor);
