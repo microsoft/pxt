@@ -18,7 +18,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         super(props);
 
         this.state = {
-            isCollapsed: false,
+            isCollapsed: true,
             errors: []
         }
 
