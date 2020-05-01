@@ -718,9 +718,10 @@ export class ProjectView
         }, 1000, false);
 
     private markdownChangeHandler = Util.debounce(() => {
-        if (this.state.currFile && /\.md$/i.test(this.state.currFile.name))
+        if (this.state.currFile && /\.md$/i.test(this.state.currFile.name)
+            && this.isSideDocExpanded())
             this.setSideMarkdown(this.editor.getCurrentSource());
-    }, 4000, false);
+    }, 8000, false);
     private editorChangeHandler = Util.debounce(() => {
         if (!this.editor.isIncomplete()) {
             this.saveFileAsync().done(); // don't wait till save is done
@@ -1304,8 +1305,7 @@ export class ProjectView
                 const editorForFile = this.pickEditorFor(file);
                 const readme = main.lookupFile("this/README.md");
                 // no auto-popup when editing packages locally
-                if (!h.githubId && readme && readme.content && readme.content.trim()
-                    && this.isSideDocExpanded())
+                if (!h.githubId && readme && readme.content && readme.content.trim())
                     this.setSideMarkdown(readme.content);
                 else if (pkg.mainPkg && pkg.mainPkg.config && pkg.mainPkg.config.documentation)
                     this.setSideDoc(pkg.mainPkg.config.documentation, editorForFile == this.blocksEditor);
@@ -2438,11 +2438,11 @@ export class ProjectView
                     if (simRestart) this.runSimulator();
                 })
                 .done();
-            } catch (e) {
-                this.setState({ compiling: false, isSaving: false });
-                pxt.reportException(e);
-                core.errorNotification(lf("Compilation failed, please try again."));
-            }
+        } catch (e) {
+            this.setState({ compiling: false, isSaving: false });
+            pxt.reportException(e);
+            core.errorNotification(lf("Compilation failed, please try again."));
+        }
     }
 
     overrideTypescriptFile(text: string) {
@@ -3970,7 +3970,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             let editorProjectName: string = undefined;
             if (/^([jt]s|py|blocks):/i.test(tutorialPath)) {
                 if (/^py:/i.test(tutorialPath))
-                    editorProjectName = pxt.BLOCKS_PROJECT_NAME; 
+                    editorProjectName = pxt.BLOCKS_PROJECT_NAME;
                 else if (/^[jt]s:/i.test(tutorialPath))
                     editorProjectName = pxt.JAVASCRIPT_PROJECT_NAME;
                 else
