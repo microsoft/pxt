@@ -43,7 +43,7 @@ export class Editor extends srceditor.Editor {
     hasHistory() { return false; }
 
     hasEditorToolbar() {
-        return false
+        return true
     }
 
     setVisible(b: boolean) {
