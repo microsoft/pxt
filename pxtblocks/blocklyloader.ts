@@ -1192,8 +1192,6 @@ namespace pxt.blocks {
             renameVar: function (oldName: string, newName: string) {
                 const varField = this.getField('VAR');
                 if (Blockly.Names.equals(oldName, varField.getText())) {
-
-                    varField.setText(newName);
                     varField.setValue(newName);
                 }
             },
@@ -1280,8 +1278,6 @@ namespace pxt.blocks {
             renameVar: function (oldName: string, newName: string) {
                 const varField = this.getField('VAR');
                 if (Blockly.Names.equals(oldName, varField.getText())) {
-
-                    varField.setText(newName);
                     varField.setValue(newName);
                 }
             },
@@ -3021,7 +3017,6 @@ namespace pxt.blocks {
             (varField as any).initModel();
             const model = (varField as any).getVariable();
             model.name = newName;
-            varField.setText(newName);
             varField.setValue(model.getId());
         }
     }

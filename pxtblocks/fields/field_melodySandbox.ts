@@ -114,7 +114,7 @@ namespace pxtblockly {
             this.createMelodyIfDoesntExist();
 
             if (this.invalidString) {
-                Blockly.FieldLabel.prototype.setText.call(this, pxt.Util.lf("Invalid Input"));
+                Blockly.FieldLabel.prototype.setValue.call(this, pxt.Util.lf("Invalid Input"));
             } else {
                 if (!this.fieldGroup_) {
                     // Build the DOM.

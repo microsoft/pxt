@@ -244,7 +244,12 @@ namespace pxt.blocks.layout {
         pxt.BrowserUtils.removeClass(svg, "blocklySvg");
         pxt.BrowserUtils.addClass(svg, "blocklyPreview pxt-renderer");
 
+        // Remove background elements
         pxt.U.toArray(svg.querySelectorAll('.blocklyMainBackground,.blocklyScrollbarBackground'))
+            .forEach(el => { if (el) el.parentNode.removeChild(el) });
+
+        // Remove connection indicator elements
+        pxt.U.toArray(svg.querySelectorAll('.blocklyConnectionIndicator,.blocklyInputConnectionIndicator'))
             .forEach(el => { if (el) el.parentNode.removeChild(el) });
 
         svg.removeAttribute('width');
