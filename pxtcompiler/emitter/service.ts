@@ -978,7 +978,6 @@ namespace ts.pxtc.service {
                                 .map(prop => completionSymbol(prop));
 
                             if (props.length) {
-                                console.log("completion: member completion");
                                 resultSymbols = props;
                                 isPropertyAccess = true;
                             }
@@ -1037,7 +1036,6 @@ namespace ts.pxtc.service {
                             paramIdx = callSym.parameters.length - 1
                         const paramType = getParameterTsType(callSym, paramIdx, blocksInfo)
                         if (paramType) {
-                            console.log("completion: call expression");
                             // if this is a property access, then weight the results higher if they return the
                             // correct type for the parameter
                             if (isPropertyAccess && resultSymbols.length) {
