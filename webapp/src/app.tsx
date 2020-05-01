@@ -3962,9 +3962,13 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             pxt.tickEvent("hash." + hash.cmd)
             let tutorialPath = hash.arg;
             let editorProjectName: string = undefined;
-            if (/^(js|py):/.test(tutorialPath)) {
-                editorProjectName = /^py:/.test(tutorialPath)
-                    ? pxt.PYTHON_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME;
+            if (/^([jt]s|py|blocks):/i.test(tutorialPath)) {
+                if (/^py:/i.test(tutorialPath))
+                    editorProjectName = pxt.BLOCKS_PROJECT_NAME; 
+                else if (/^[jt]s:/i.test(tutorialPath))
+                    editorProjectName = pxt.JAVASCRIPT_PROJECT_NAME;
+                else
+                    editorProjectName = pxt.BLOCKS_PROJECT_NAME;
                 tutorialPath = tutorialPath.substr(tutorialPath.indexOf(':') + 1)
             }
             editor.startActivity(hash.cmd, tutorialPath, undefined, editorProjectName);
