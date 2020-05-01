@@ -263,6 +263,19 @@ div.simframe div.pause-overlay {
     }
 }
 
+@media only screen and (max-width: @largeMonitorBreakpoint) {
+    .dbg-btn.dbg-step .ui.text {
+        display: none;
+    }
+
+    .ui.varExplorer .ui.variableTableHeader, .ui.varExplorer .ui.variableTablePlaceholder {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        padding-left: 0.5rem;
+        font-size: large;
+    }
+}
+
 @media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
     .debugger div.monacoToolboxDiv {
         min-width: calc(@blocklyRowWidthTablet + 100px);
