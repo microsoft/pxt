@@ -291,12 +291,12 @@ ${comment} ${pxt.U.lf("4. Choose a blocks color using the hex format below.")}
 ${comment} ${pxt.U.lf("5. Learn more about extensions at: https://makecode.com/extensions/getting-started")}
 ${comment} ${pxt.U.lf("6. Ask questions at https://forum.makecode.com")}
 
-${comment} ${pxt.U.lf("//% color=#4287f5 icon=\"\\uf118s\"")}
+${comment} ${pxt.U.lf("//% color=#4287f5 icon=\"\\uf118\"")}
 ${comment} ${pxt.U.lf("namespace awesome {")}
 ${comment} ${pxt.U.lf("\t//% block=\"my awesome block $num\"")}
 ${comment} ${pxt.U.lf("\texport function myBlock(num: number) {}")}
 ${comment} ${pxt.U.lf("}")}
-`, s
+`,
                 true
             );
         }).done()
