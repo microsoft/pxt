@@ -281,6 +281,21 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             return this.props.parent.updateFileAsync(
                 fileName,
                 `${comment} ${pxt.U.lf("Add your code here")}
+                
+                ${comment} ${pxt.U.lf("If this is an extension:")}
+                ${comment} ${pxt.U.lf("1. Uncomment the code below")}
+                ${comment} ${pxt.U.lf("2. Change the namespace name. This name will be shown as a new blocks category.")}
+                ${comment} ${pxt.U.lf("3. Choose a new icon from: https://fontawesome.com/v4.7.0/icons/")}
+                ${comment} ${pxt.U.lf("  Be sure to get the unicode character and include '\\u' like below.")}
+                ${comment} ${pxt.U.lf("4. Choose a blocks color using the hex format below.")}
+                ${comment} ${pxt.U.lf("5. Learn more about extensions at: https://makecode.com/extensions/getting-started")}
+                ${comment} ${pxt.U.lf("6. Ask questions at https://forum.makecode.com")}
+
+                ${comment} ${pxt.U.lf("//% color=#4287f5 icon=\"\\uf118s\"")}
+                ${comment} ${pxt.U.lf("namespace my_extension {")}
+                ${comment} ${pxt.U.lf("\t//% block=\"my awesome block $num\"")}
+                ${comment} ${pxt.U.lf("\texport function myBlock(num: number) {}")}
+                ${comment} ${pxt.U.lf("}")}
 `,
                 true
             );
