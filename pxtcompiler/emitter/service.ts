@@ -1008,7 +1008,7 @@ namespace ts.pxtc.service {
                     }
 
                     if (type) {
-                        const qname = type.symbol ? tc.getFullyQualifiedName(type.symbol) : getNameOfWidenedType(type, tc);
+                        const qname = type.symbol ? tc.getFullyQualifiedName(type.symbol) : tsTypeToPxtTypeString(type, tc);
 
                         if (qname) {
                             const props = type.getApparentProperties()
@@ -2146,19 +2146,27 @@ namespace ts.pxtc.service {
         return (n && n.kind === SK.SourceFile) ? null : n;
     }
 
-    function getNameOfWidenedType(t: Type, tc: TypeChecker) {
+    function tsTypeToPxtTypeString(t: Type, tc: TypeChecker) {
         if (t.flags & TypeFlags.NumberLiteral) {
-            return "number";
+            return "Number";
         }
         else if (t.flags & TypeFlags.StringLiteral) {
             return "String";
         }
         else if (t.flags & TypeFlags.BooleanLiteral) {
-            return "boolean";
+            return "Boolean";
         }
 
-        return tc.typeToString(t);
+        const tcString = tc.typeToString(t);
+        const primativeToQname: { [key: string]: string } = {
+            "number": "Number",
+            "string": "String",
+            "boolean": "Boolean"
+        }
+        const pxtString = primativeToQname[tcString] ?? tcString
+        return pxtString
     }
+
 
     function filenameWithExtension(filename: string, extension: string) {
         if (extension.charAt(0) === ".") extension = extension.substr(1);
