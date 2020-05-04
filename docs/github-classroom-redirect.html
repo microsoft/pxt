@@ -43,9 +43,7 @@
                 const state = Math.random().toString();
                 localStorage["core/oauthState"] = state;
                 localStorage["core/ghclassroomassigment"] = assignment;
-                //const redirect_uri = encodeURIComponent(window.location.href.split('#', 1)[0]);
-                console.log(encodeURIComponent(window.location.href.split('#', 1)[0]))
-                const redirect_uri = "https://makecode.com"// encodeURIComponent(window.location.href.split('#', 1)[0]);
+                const redirect_uri = encodeURIComponent(window.location.href.split('#', 1)[0]);
                 const login = `https://makecode.com/oauth/login?state=${state}&response_type=token&client_id=gh-token&redirect_uri=${redirect_uri}`;
                 console.log(`login: ${login}`)
                 window.location.href = login;
