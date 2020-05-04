@@ -42,6 +42,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         const collapseButton = <div className="collapseButton"><sui.Icon icon={`chevron down`} onClick={this.onCollapseClick} /></div>
         const errorListHeader = <div className="errorListHeader">
             <h4 hidden={isCollapsed}>Problems</h4>
+            <a className="ui grey circular label">{errors?.length}</a>
             {!isCollapsed && collapseButton}
         </div>
 
