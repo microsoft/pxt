@@ -1,15 +1,19 @@
-@summary-hover-color: #00000067;
+@total-height: 16em;
+@header-height: 4em;
+@inner-height: (@total-height - @header-height);
+@collapsed-errors-hover-color: rgba(0, 0, 0, 0.02);
+@border-color: #e5e5e5;
 
 // Expanded error list
 .errorList {
     position: relative;
-    max-height: 16em;
-    min-height: 16em;
-    border-top: 2px #e5e5e5 solid;
+    max-height: @total-height;
+    min-height: @total-height;
+    border-top: 2px @border-color solid;
 
     .errorListHeader {
         padding: 1em;
-        height: 4em;
+        height: @header-height;
         margin-bottom: 0;
 
         h4 {
@@ -39,7 +43,7 @@
     }
 
     .errorListInner {
-        height: 12em;
+        height: @inner-height;
         padding: 0 1em 1em 1em;
         overflow-y: scroll;
 
@@ -55,6 +59,6 @@
 
     &:hover {
         cursor: pointer;
-        background-color: rgba(0, 0, 0, 0.02);
+        background-color: @collapsed-errors-hover-color;
     }
 }
