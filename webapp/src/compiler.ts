@@ -15,7 +15,8 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.Sourc
     //  TS errors to PY
     let tsErrToPyLoc: (err: pxtc.LocationInfo) => pxtc.LocationInfo = undefined;
     if (diagnostics.length > 0
-        && mainPkg.filterFiles(f => f.name === "main.ts" || f.name === "main.py").length === 2
+        && mainPkg.files["main.ts"]
+        && mainPkg.files["main.py"]
         && sourceMap) {
         const tsFile = mainPkg.files["main.ts"].content
         const pyFile = mainPkg.files["main.py"].content
