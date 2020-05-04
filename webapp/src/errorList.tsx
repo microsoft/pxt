@@ -18,7 +18,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         super(props);
 
         this.state = {
-            isCollapsed: false,
+            isCollapsed: true,
             errors: []
         }
 
@@ -38,28 +38,27 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             return `${error.messageText}-${error.fileName}-${error.line}-${error.column}`
         }
 
-        const xButton = <sui.CloseButton onClick={this.onCollapseClick} />
+        // Header
+        const collapseButton = <div className="collapseButton"><sui.Icon icon={`chevron down`} onClick={this.onCollapseClick} /></div>
+        const errorListHeader = <div className="errorListHeader">
+            <h4>Problems</h4>
+            {<div className="ui grey circular label countBubble">{errors?.length}</div>}
+            {!isCollapsed && collapseButton}
+        </div>
 
-        let errorListContent;
-        if (errorsAvailable) {
-            if (isCollapsed) {
-                errorListContent = <div className="summaryMessage" role="button" onClick={this.onCollapseClick}>
-                    {lf("Uh oh! You have {0} error(s)!", errors.length)}
+        const errorListContent = (errors).map(e =>
+            <div key={errorKey(e)} className="errorMessage">{`${e.messageText} ${lf("at line {0}", e.line + 1)}`}</div>)
+
+        return <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''}`}
+                    onClick={isCollapsed ? this.onCollapseClick : null}
+                    role={isCollapsed ? "button" : null}
+                    hidden={!errorsAvailable}>
+            {errorListHeader}
+            {!isCollapsed &&
+                <div className="errorListInner">
+                    {errorListContent}
                 </div>
-            } else {
-                errorListContent = (errors).map(e =>
-                    <div key={errorKey(e)}>{`${e.messageText} - (${e.line + 1}:${e.column + 1})`}</div>)
             }
-        } else {
-            errorListContent = <div>{lf("Everything seems fine!")}</div>
-        }
-
-        return <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''}`}>
-            <div className="errorListInner">
-                <h4 hidden={isCollapsed}>Error List</h4>
-                {!isCollapsed && xButton}
-                {errorListContent}
-            </div>
         </div>
     }
 

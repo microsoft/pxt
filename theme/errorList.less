@@ -1,28 +1,39 @@
-@summary-hover-color: #00000067;
+@total-height: 16em;
+@header-height: 4em;
+@inner-height: (@total-height - @header-height);
+@collapsed-errors-hover-color: rgba(0, 0, 0, 0.02);
+@border-color: #e5e5e5;
 
+// Expanded error list
 .errorList {
     position: relative;
-    min-height: 200px;
+    max-height: @total-height;
+    min-height: @total-height;
+    border-top: 2px @border-color solid;
 
-    .errorListInner {
-        height: 200px;
-        border-top: 1px #e5e5e5 solid;
+    .errorListHeader {
         padding: 1em;
-        overflow-y: scroll;
+        height: @header-height;
+        margin-bottom: 0;
 
         h4 {
-            margin-bottom: 0.5em;
+            margin: 0;
+            display: inline-block;
+            vertical-align: middle;
         }
 
-        .closeIcon {
+        .countBubble {
+            margin-left: 1em;
+        }
+
+        .collapseButton {
             float: right;
             cursor: pointer;
-            position: absolute;
-            top: 1em;
-            right: 1em;
+            position: relative;
+            vertical-align: middle;
 
             i {
-                font-size: 2em;
+                font-size: 1.5em;
             }
 
             i:not(:hover) {
@@ -30,19 +41,24 @@
             }
         }
     }
+
+    .errorListInner {
+        height: @inner-height;
+        padding: 0 1em 1em 1em;
+        overflow-y: scroll;
+
+        .errorMessage {
+            padding: 0.1em;
+        }
+    }
 }
 
+// collapsed error list
 .errorList.errorListSummary {
     min-height: unset;
 
-    .errorListInner {
-        height: unset;
-        overflow-y: unset;
-
-        .summaryMessage:hover {
-            cursor: pointer;
-            color: @summary-hover-color;
-            text-decoration: underline;
-        }
+    &:hover {
+        cursor: pointer;
+        background-color: @collapsed-errors-hover-color;
     }
 }
