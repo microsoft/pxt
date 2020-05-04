@@ -387,6 +387,18 @@ declare interface String {
 //% text.defl="123"
 declare function parseFloat(text: string): number;
 
+/**
+ * Returns a pseudorandom number between min and max included.
+ * If both numbers are integral, the result is integral.
+ * @param min the lower inclusive bound, eg: 0
+ * @param max the upper inclusive bound, eg: 10
+ */
+//% blockId="device_random" block="pick random %min|to %limit"
+//% blockNamespace="Math"
+//% help=math/randint
+//% shim=Math_::randomRange
+declare function randint(min: number, max: number): number;
+
 interface Object { }
 interface Function { }
 interface IArguments { }
@@ -477,8 +489,8 @@ declare namespace Math {
      * @param min the lower inclusive bound, eg: 0
      * @param max the upper inclusive bound, eg: 10
      */
-    //% blockId="device_random" block="pick random %min|to %limit"
-    //% help=math/random-range
+    //% blockId="device_random_deprecated" block="pick random %min|to %limit"
+    //% help=math/random-range deprecated
     //% shim=Math_::randomRange
     function randomRange(min: number, max: number): number;
 

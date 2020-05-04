@@ -19,7 +19,6 @@ namespace ts.pxtc {
         "Math.min": { n: "min", t: ts.SyntaxKind.NumberKeyword, snippet: "min(0, 0)" },
         "Math.max": { n: "max", t: ts.SyntaxKind.NumberKeyword, snippet: "max(0, 0)" },
         "Math.abs": { n: "abs", t: ts.SyntaxKind.NumberKeyword, snippet: "abs(0)" },
-        "Math.randomRange": { n: "randint", t: ts.SyntaxKind.NumberKeyword, snippet: "randint(0, 10)" },
         "console.log": { n: "print", t: ts.SyntaxKind.VoidKeyword, snippet: 'print(":)")' },
         ".length": { n: "len", t: ts.SyntaxKind.NumberKeyword },
         ".toLowerCase()": { n: "string.lower", t: ts.SyntaxKind.StringKeyword },
@@ -1984,7 +1983,7 @@ namespace ts.pxtc.service {
     }
 
     function makePxtSymbolFromKeyword(keyword: string): SymbolInfo {
-        // TODO: since keywords aren't exactly symbols, consider using a different 
+        // TODO: since keywords aren't exactly symbols, consider using a different
         //       type than "SymbolInfo" to carry auto completion information.
         //       Some progress on this exists here: dazuniga/completionitem_refactor
 
