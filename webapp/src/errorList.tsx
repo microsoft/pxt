@@ -6,6 +6,7 @@ import * as sui from "./sui";
 export interface ErrorListProps {
     onSizeChange: () => void,
     listenToErrorChanges: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void,
+    scrollToLine: (line: number) => void
 }
 export interface ErrorListState {
     isCollapsed: boolean
@@ -29,7 +30,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     }
 
     render() {
-        const {isCollapsed, errors} = this.state;
+        const { isCollapsed, errors } = this.state;
         const errorsAvailable = !!errors?.length;
         const collapseTooltip = lf("Collapse Error List");
         function errorKey(error: pxtc.KsDiagnostic): string {
@@ -73,6 +74,9 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         this.setState({
             isCollapsed: !this.state.isCollapsed
         })
+
+        // TODO: move
+        this.props.scrollToLine(5)
     }
 
     onErrorsChanged(errors: pxtc.KsDiagnostic[]) {

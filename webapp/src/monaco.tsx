@@ -340,6 +340,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         this.resize = this.resize.bind(this);
         this.listenToErrorChanges = this.listenToErrorChanges.bind(this);
+        this.scrollToLine = this.scrollToLine.bind(this)
     }
 
     hasBlocks() {
@@ -580,10 +581,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setInsertionSnippet={this.setInsertionSnippet}
                             parent={this.parent} />
                     </div>
-                    {showErrorList ? <ErrorList onSizeChange={this.resize} listenToErrorChanges={this.listenToErrorChanges} /> : undefined}
+                    {showErrorList ? <ErrorList onSizeChange={this.resize} listenToErrorChanges={this.listenToErrorChanges} scrollToLine={this.scrollToLine} /> : undefined}
                 </div>
             </div>
         )
+    }
+
+    scrollToLine(line: number) {
+        this.editor.revealLine(line)
     }
 
     listenToErrorChanges(handlerKey: string, handler: (errors: pxtc.KsDiagnostic[]) => void) {
