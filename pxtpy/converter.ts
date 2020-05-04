@@ -538,7 +538,9 @@ namespace pxt.py {
         t0 = find(t0)
         t1 = find(t1)
 
-        if (t0 === t1)
+        // We don't handle generic types yet, so bail out. Worst case
+        // scenario is that we infer some extra types as "any"
+        if (t0 === t1 || isGenericType(t0) || isGenericType(t1))
             return
 
         if (t0.primType === "any") {
@@ -569,6 +571,10 @@ namespace pxt.py {
             // detect late unifications
             // if (currIteration > 2) error(a, `unify ${t2s(t0)} ${t2s(t1)}`)
         }
+    }
+
+    function isGenericType(t: Type) {
+        return !!(t?.primType?.startsWith("'"));
     }
 
     function mkSymbol(kind: SK, qname: string): SymbolInfo {
