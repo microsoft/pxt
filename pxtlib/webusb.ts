@@ -281,8 +281,9 @@ namespace pxt.usb {
 
         private connectAsync(dev: USBDevice) {
             this.setConnecting(true);
-            this.log("connect device: " + dev.manufacturerName + " " + dev.productName)
             this.dev = dev;
+            this.log(`connect device: ${dev.manufacturerName} ${dev.productName}`)
+            this.log(`serial number: ${dev.serialNumber}`);
             return this.initAsync()
                 .finally(() => this.setConnecting(false));
         }
