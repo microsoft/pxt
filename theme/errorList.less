@@ -16,7 +16,7 @@
             vertical-align: middle;
         }
 
-        a {
+        .countBubble {
             margin-left: 1em;
         }
 
@@ -42,7 +42,7 @@
         overflow-y: scroll;
 
         .errorMessage {
-            padding: 0.25em;
+            padding: 0.1em;
         }
     }
 }
@@ -51,22 +51,8 @@
 .errorList.errorListSummary {
     min-height: unset;
 
-    &.errorsAvailable:hover {
+    &:hover {
+        cursor: pointer;
         background-color: rgba(0, 0, 0, 0.02);
-    }
-
-    .errorListInner {
-        height: unset;
-        overflow-y: unset;
-        padding: 1em;
-
-        .summaryMessage {
-
-            &:hover {
-                cursor: pointer;
-                color: @summary-hover-color;
-                text-decoration: underline;
-            }
-        }
     }
 }
