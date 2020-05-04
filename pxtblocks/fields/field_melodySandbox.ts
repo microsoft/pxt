@@ -380,6 +380,7 @@ namespace pxtblockly {
                                 else {
                                     tempoBlock.setFieldValue(this.tempoInput.value, "NUM")
                                 }
+                                this.tempoInput.focus();
                             }
                         }
                         break;
