@@ -12,7 +12,6 @@ import * as util from "../common/testUtils";
 const casesDir = path.join(process.cwd(), "tests", "language-service", "cases");
 const testPackage = path.relative(process.cwd(), path.join("tests", "language-service", "test-package"));
 
-
 interface CompletionTestCase {
     fileName: string;
     fileText: string;
@@ -21,6 +20,7 @@ interface CompletionTestCase {
     wordStartPos: number;
     wordEndPos: number;
     expectedSymbols: string[];
+    unwantedSymbols: string[];
 }
 
 function initGlobals() {
@@ -72,7 +72,13 @@ function getTestCases() {
             const commentIndex = line.indexOf(commentString);
             if (commentIndex !== -1) {
                 const comment = line.substr(commentIndex + commentString.length).trim();
-                const expectedSymbols = comment.split(";").map(s => s.trim());
+                const symbols = comment.split(";")
+                    .map(s => s.trim())
+                const expectedSymbols = symbols
+                    .filter(s => s.indexOf("!") === -1)
+                const unwantedSymbols = symbols
+                    .filter(s => s.indexOf("!") !== -1)
+                    .map(s => s.replace("!", ""))
 
                 const dotPosition = position + line.substring(0, commentIndex).lastIndexOf(".");
 
@@ -81,6 +87,7 @@ function getTestCases() {
                     fileText,
                     isPython,
                     expectedSymbols,
+                    unwantedSymbols,
                     position: dotPosition + 1,
                     wordStartPos: dotPosition + 1,
                     wordEndPos: dotPosition + 1,
@@ -112,8 +119,12 @@ function runCompletionTestCaseAsync(testCase: CompletionTestCase) {
                 return;
             }
 
+            const symbolExists = (sym: string) => result.entries.some(s => (testCase.isPython ? s.pyQName : s.qName) === sym)
             for (const sym of testCase.expectedSymbols) {
-                chai.assert(result.entries.some(s => (testCase.isPython ? s.pyQName : s.qName) === sym), `Did not receive symbol '${sym}'`);
+                chai.assert(symbolExists(sym), `Did not receive symbol '${sym}'`);
+            }
+            for (const sym of testCase.unwantedSymbols) {
+                chai.assert(!symbolExists(sym), `Receive explicitly unwanted symbol '${sym}'`);
             }
         })
 }
@@ -135,7 +146,7 @@ function setOptionsOp(opts: pxtc.CompileOptions) {
     });
 }
 
-function completionsOp(fileName: string, position: number, wordStartPos: number, wordEndPos: number, fileContent?: string) {
+function completionsOp(fileName: string, position: number, wordStartPos: number, wordEndPos: number, fileContent?: string): pxtc.service.OpError | pxtc.CompletionInfo {
     return pxtc.service.performOperation("getCompletions", {
         fileName,
         fileContent,
