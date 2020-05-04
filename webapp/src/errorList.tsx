@@ -51,6 +51,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
         return <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''}`}
                     onClick={isCollapsed ? this.onCollapseClick : null}
+                    role={isCollapsed ? "button" : null}
                     hidden={!errorsAvailable}>
             {errorListHeader}
             {!isCollapsed &&
