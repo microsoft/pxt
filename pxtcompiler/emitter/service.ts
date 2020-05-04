@@ -922,13 +922,15 @@ namespace ts.pxtc.service {
             let lastNl = src.lastIndexOf("\n", position)
             lastNl = Math.max(0, lastNl)
 
-            if (dotIdx != -1)
+            const isMemberCompletion = dotIdx !== -1
+
+            if (isMemberCompletion)
                 complPosition = dotIdx
 
             const entries: pxt.Map<CompletionSymbol> = {};
             const r: CompletionInfo = {
                 entries: [],
-                isMemberCompletion: dotIdx != -1,
+                isMemberCompletion: isMemberCompletion,
                 isNewIdentifierLocation: true,
                 isTypeLocation: false
             }
@@ -986,7 +988,7 @@ namespace ts.pxtc.service {
             let isPropertyAccess = false;
 
             // special handing for member completion
-            if (dotIdx !== -1) {
+            if (isMemberCompletion) {
                 const propertyAccessTarget = findInnerMostNodeAtPosition(tsAst, isPython ? tsPos : dotIdx - 1)
 
                 if (propertyAccessTarget) {
@@ -1118,6 +1120,23 @@ namespace ts.pxtc.service {
                     .map(s => completionSymbol(s))
 
                 resultSymbols = [...resultSymbols, ...inScopePxtSyms]
+            }
+
+            // add in keywords
+            if (!isMemberCompletion) {
+                // TODO: use more context to filter keywords
+                //      e.g. "while" shouldn't show up in an expression
+                let keywords: string[];
+                if (isPython) {
+                    let keywordsMap = (pxt as any).py.keywords as Map<boolean>
+                    keywords = Object.keys(keywordsMap)
+                } else {
+                    keywords = [...ts.pxtc.reservedWords, ...ts.pxtc.keywordTypes]
+                }
+                let keywordSymbols = keywords
+                    .map(makePxtSymbolFromKeyword)
+                    .map(completionSymbol)
+                resultSymbols = [...resultSymbols, ...keywordSymbols]
             }
 
             // determine which names are taken for auto-generated variable names
@@ -1962,6 +1981,29 @@ namespace ts.pxtc.service {
         if (ts.flags & SymbolFlags.Property)
             return SymbolKind.Property
         return SymbolKind.None
+    }
+
+    function makePxtSymbolFromKeyword(keyword: string): SymbolInfo {
+        // TODO: since keywords aren't exactly symbols, consider using a different 
+        //       type than "SymbolInfo" to carry auto completion information.
+        //       Some progress on this exists here: dazuniga/completionitem_refactor
+
+        let sym: SymbolInfo = {
+            kind: SymbolKind.None,
+            name: keyword,
+            pyName: keyword,
+            qName: keyword,
+            pyQName: keyword,
+            namespace: "",
+            attributes: {
+                callingConvention: ir.CallingConvention.Plain,
+                paramDefl: {},
+            },
+            fileName: "main.ts",
+            parameters: [],
+            retType: "any",
+        }
+        return sym
     }
 
     function makePxtSymbolFromTsSymbol(tsSym: ts.Symbol, tsType: ts.Type): SymbolInfo {

@@ -195,6 +195,8 @@ namespace ts.pxtc {
         // PXT Specific
         "Math"];
 
+    export const keywordTypes = ["boolean", "number", "string"]
+
     export function escapeIdentifier(name: string): string {
         if (!name) return '_';
         let n = name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_$]/g, a =>
