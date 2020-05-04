@@ -15,6 +15,7 @@ const testPackage = path.relative(process.cwd(), path.join("tests", "language-se
 interface CompletionTestCase {
     fileName: string;
     fileText: string;
+    lineText: string;
     isPython: boolean;
     position: number;
     wordStartPos: number;
@@ -85,6 +86,7 @@ function getTestCases() {
                 testCases.push({
                     fileName,
                     fileText,
+                    lineText: line.substr(0, commentIndex),
                     isPython,
                     expectedSymbols,
                     unwantedSymbols,
@@ -121,10 +123,10 @@ function runCompletionTestCaseAsync(testCase: CompletionTestCase) {
 
             const symbolExists = (sym: string) => result.entries.some(s => (testCase.isPython ? s.pyQName : s.qName) === sym)
             for (const sym of testCase.expectedSymbols) {
-                chai.assert(symbolExists(sym), `Did not receive symbol '${sym}'`);
+                chai.assert(symbolExists(sym), `Did not receive symbol '${sym}' for '${testCase.lineText}'`);
             }
             for (const sym of testCase.unwantedSymbols) {
-                chai.assert(!symbolExists(sym), `Receive explicitly unwanted symbol '${sym}'`);
+                chai.assert(!symbolExists(sym), `Receive explicitly unwanted symbol '${sym}' for '${testCase.lineText}'`);
             }
         })
 }
