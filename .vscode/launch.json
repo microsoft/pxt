@@ -52,7 +52,7 @@
 			"stopOnEntry": false,
 			"args": [
 				"checkdocs",
-				"--re", 
+				"--re",
 				"adafruit"
 			],
 			"cwd": "${workspaceRoot}/../pxt-maker",
@@ -137,7 +137,8 @@
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
 			"args": [
-				"buildsprites", "space"
+				"buildsprites",
+				"space"
 			],
 			"cwd": "${workspaceRoot}/../pxt-32/libs/device",
 			"runtimeExecutable": null,
@@ -195,7 +196,7 @@
 			"outFiles": []
 		},
 		{
-			"name": "Mocha",
+			"name": "Tests, decompiler",
 			"type": "node",
 			"request": "launch",
 			"program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
@@ -209,6 +210,41 @@
 			"env": {
 				"NODE_ENV": "testing"
 			}
+		},
+		// {
+		// 	"name": "Tests, language-service",
+		// 	"type": "node",
+		// 	"request": "launch",
+		// 	"program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
+		// 	"stopOnEntry": true,
+		// 	"args": [
+		// 		"${workspaceRoot}/built/tests/language-service/runner.js",
+		// 		"--reporter dot",
+		// 		"--no-timeouts"
+		// 	],
+		// 	"cwd": "${workspaceRoot}",
+		// 	"runtimeExecutable": null,
+		// 	"env": {
+		// 		"NODE_ENV": "testing"
+		// 	}
+		// },
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Tests, language-service",
+			"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+			"args": [
+				"-u",
+				"tdd",
+				"--timeout",
+				"999999",
+				"--colors",
+				"${workspaceRoot}/built/tests/language-service/runner.js",
+			],
+			"internalConsoleOptions": "openOnSessionStart",
+			"skipFiles": [
+				"<node_internals>/**"
+			]
 		},
 		{
 			"name": "Attach",
