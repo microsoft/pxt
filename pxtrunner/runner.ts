@@ -399,10 +399,6 @@ namespace pxt.runner {
             );
         }
 
-        document.body.classList.remove("editorlang-text");
-        $('link[title="light"]').prop('disabled', false);
-        $('link[title="dark"]').prop('disabled', true);
-
         return Promise.resolve();
     }
 
