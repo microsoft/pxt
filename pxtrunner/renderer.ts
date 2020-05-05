@@ -153,12 +153,12 @@ namespace pxt.runner {
     }
 
     function appendJs($parent: JQuery, $js: JQuery, woptions: WidgetOptions) {
-        $parent.append($(`<div class="ui content js"><div class="subheading"><i class="ui icon xicon js"/>JavaScript</div></div>`).append($js));
+        $parent.append($(`<div class="ui content js"><div class="subheading"><i class="ui icon xicon js"></i>JavaScript</div></div>`).append($js));
         highlight($js);
     }
 
     function appendPy($parent: JQuery, $py: JQuery, woptions: WidgetOptions) {
-        $parent.append($(`<div class="ui content py"><div class="subheading"><i class="ui icon xicon python"/>Python</div></div>`).append($py));
+        $parent.append($(`<div class="ui content py"><div class="subheading"><i class="ui icon xicon python"></i>Python</div></div>`).append($py));
         highlight($py);
     }
 
@@ -479,7 +479,7 @@ namespace pxt.runner {
             // add an html widge that allows to translate the block
             if (pxt.Util.isTranslationMode()) {
                 const trs = $('<div class="ui segment" />');
-                trs.append($(`<div class="ui header"><i class="ui xicon globe" /></div>`));
+                trs.append($(`<div class="ui header"><i class="ui xicon globe"></i></div>`));
                 if (symbolInfo.attributes.translationId)
                     trs.append($('<div class="ui message">').text(symbolInfo.attributes.translationId));
                 if (symbolInfo.attributes.jsDoc)
