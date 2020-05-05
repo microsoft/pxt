@@ -1,4 +1,5 @@
 import { rangeToSelection } from "./monaco";
+import { fixIndentationInRange } from "./monacopyhelper";
 
 // This file adds a feature to Monaco I (dz) call "Edit Amendments".
 // EditAmendments are used by the auto-complete system as a work around for limitations in Monaco.
@@ -96,6 +97,8 @@ function scanForEditAmendment(e: monaco.editor.IModelContentChangedEvent): EditA
 }
 
 function applyAmendment(amendment: EditAmendmentInstance, editor: monaco.editor.IStandaloneCodeEditor) {
+    const model = editor.getModel();
+
     const MAX_COLUMN_LENGTH = 99999 // clunky way to select a whole line
     setTimeout(() => { // see top of file comments about why use setTimeout
         // determine where to apply
@@ -109,6 +112,10 @@ function applyAmendment(amendment: EditAmendmentInstance, editor: monaco.editor.
         } else {
             let _: never = amendment.behavior;
         }
+
+        const corrected = fixIndentationInRange(model, model.validateRange(amendRange), amendment.insertText)[0];
+        amendment.range = corrected.range;
+        amendment.insertText = corrected.text;
 
         // determine selection range after applying
         let afterRange: monaco.Range | null = null;
@@ -126,7 +133,6 @@ function applyAmendment(amendment: EditAmendmentInstance, editor: monaco.editor.
             }
         }
 
-        const model = editor.getModel();
 
         // remove the amendment so it doesn't appear in the undo stack
         let reverseRange = {
