@@ -287,13 +287,13 @@ namespace pxt.usb {
             try {
                 // move last known device in front
                 if (this.lastKnownDeviceSerialNumber)
-                    devs.sort((l,r) => (l.serialNumber == this.lastKnownDeviceSerialNumber ? 1 : -1) - (r.serialNumber == this.lastKnownDeviceSerialNumber ? 1 : -1))
+                    devs.sort((l, r) => (l.serialNumber == this.lastKnownDeviceSerialNumber ? 1 : -1) - (r.serialNumber == this.lastKnownDeviceSerialNumber ? 1 : -1))
 
                 for (let i = 0; i < devs.length; ++i) {
-                    const dev = devs[0];
+                    const dev = devs[i];
                     this.dev = dev;
                     this.log(`connect device: ${dev.manufacturerName} ${dev.productName}`)
-                    this.log(`serial number: ${dev.serialNumber}`);
+                    this.log(`serial number: ${dev.serialNumber} ${this.lastKnownDeviceSerialNumber === dev.serialNumber ? "(last known device)" : ""} `);
                     try {
                         await this.initAsync();
                         // success, stop trying
