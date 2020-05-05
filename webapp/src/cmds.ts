@@ -186,7 +186,7 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
                     // no device, just save
                     log(`device not found`);
                     return pxt.commands.saveOnlyAsync(resp);
-                } else if (e.code == 19) {
+                } else if (e.code == 19 || e.type === "devicelocked") {
                     // device is locked or used by another tab
                     pxt.tickEvent("hid.flash.devicelocked");
                     log(`error: device locked`);
