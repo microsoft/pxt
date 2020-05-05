@@ -282,6 +282,12 @@ namespace pxt.usb {
 
         private async connectAsync(devs: USBDevice[]) {
             this.log(`trying to connect (${devs.length} devices)`)
+            // no devices...
+            if (devs.length == 0) {
+                const e = new Error("Device not found.");
+                (e as any).type = "devicenotfound";
+                throw e;
+            }
 
             this.setConnecting(true);
             try {
@@ -304,8 +310,10 @@ namespace pxt.usb {
                         // try next
                     }
                 }
-                // failed to connect
-                throw new Error("Oops, could not connect to any device.");
+                // failed to connect, all devices are locked or broken
+                const e = new Error(U.lf("Device in use or not found."));
+                (e as any).type = "devicelocked";
+                throw e;
             } finally {
                 this.setConnecting(false);
             }
