@@ -294,13 +294,15 @@ namespace pxt.usb {
                 // move last known device in front
                 // if we have a race with another tab when reconnecting, wait a bit if device unknown
                 if (this.lastKnownDeviceSerialNumber) {
-                    if (devs.some(d => d.serialNumber === this.lastKnownDeviceSerialNumber)) {
-                        this.log(`last known device spotted`)
-                        devs.sort((l, r) => (l.serialNumber == this.lastKnownDeviceSerialNumber ? 1 : -1) - (r.serialNumber == this.lastKnownDeviceSerialNumber ? 1 : -1))
+                    const lastDev = devs.find(d => d.serialNumber === this.lastKnownDeviceSerialNumber);
+                    if (lastDev) {
+                        this.log(`last known device spotted`);
+                        devs.splice(devs.indexOf(lastDev), 1);
+                        devs.unshift(lastDev);
                     } else {
                         // give another frame a chance to grab the device
                         this.log(`delay for last known device`)
-                        await Promise.delay(1000);
+                        await Promise.delay(2000);
                     }
                 }
 
