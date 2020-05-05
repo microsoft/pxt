@@ -48,8 +48,10 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             {!isCollapsed && collapseButton}
         </div>
 
+        const createOnErrorMessageClick = (e: pxtc.KsDiagnostic) => () => this.onErrorMessageClick(e.line + 1, e.column + 1)
+
         const errorListContent = (errors).map(e =>
-            <div key={errorKey(e)} className="errorMessage" onClick={() => this.onErrorMessageClick(e.line + 1, e.column + 1)}>
+            <div key={errorKey(e)} className="errorMessage" role="button" onClick={createOnErrorMessageClick(e)}>
                 {`${e.messageText} ${lf("at line {0}", e.line + 1)}`}
             </div>)
 
