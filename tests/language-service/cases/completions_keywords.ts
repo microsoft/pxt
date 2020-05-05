@@ -4,6 +4,6 @@ whi // while
 
 ; func // function
 
-; let foo: nu // number
+; let foo: nu // number; !Number
 
-function bar(): st // string
+function bar(): st // string; !String
