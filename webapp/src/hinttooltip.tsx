@@ -37,7 +37,7 @@ export class HintTooltip extends data.Component<HintTooltipProps, HintTooltipSta
 
 export class HintManager {
     private timer: number;
-    private defaultDuration: number = 15000;
+    private defaultDuration: number = 10000;
     private defaultDisplayCount: number = 3;
     private hints: { [key: string]: any } = {};
 
