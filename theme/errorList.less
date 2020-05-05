@@ -1,7 +1,7 @@
 @total-height: 16em;
 @header-height: 4em;
 @inner-height: (@total-height - @header-height);
-@collapsed-errors-hover-color: rgba(0, 0, 0, 0.02);
+@collapsed-errors-hover-color: rgba(0, 0, 0, 0.05);
 @border-color: #e5e5e5;
 
 // Expanded error list
@@ -44,14 +44,15 @@
 
     .errorListInner {
         height: @inner-height;
-        padding: 0 1em 1em 1em;
+        padding: 0 0 1em 0;
         overflow-y: scroll;
 
         .errorMessage {
-            padding: 0.1em;
+            padding: 0.1em 1em;
 
             &:hover {
                 cursor: pointer;
+                background-color: @collapsed-errors-hover-color;
             }
         }
     }

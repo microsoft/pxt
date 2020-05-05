@@ -6,7 +6,7 @@ import * as sui from "./sui";
 export interface ErrorListProps {
     onSizeChange: () => void,
     listenToErrorChanges: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void,
-    scrollToLine: (line: number) => void
+    goToError: (line: number, column: number) => void
 }
 export interface ErrorListState {
     isCollapsed: boolean
@@ -49,7 +49,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         </div>
 
         const errorListContent = (errors).map(e =>
-            <div key={errorKey(e)} className="errorMessage" onClick={() => this.onErrorMessageClick(e.line + 1)}>
+            <div key={errorKey(e)} className="errorMessage" onClick={() => this.onErrorMessageClick(e.line + 1, e.column + 1)}>
                 {`${e.messageText} ${lf("at line {0}", e.line + 1)}`}
             </div>)
 
@@ -78,8 +78,8 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         })
     }
 
-    onErrorMessageClick(line: number) {
-        this.props.scrollToLine(line)
+    onErrorMessageClick(line: number, column: number) {
+        this.props.goToError(line, column)
     }
 
     onErrorsChanged(errors: pxtc.KsDiagnostic[]) {
