@@ -1071,6 +1071,8 @@ export class ProjectView
         // save and typecheck
         this.typecheckNow();
         // Notify tutorial content pane
+
+        this.stopPokeUserActivity();
         let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
         if (!tc) return;
         if (step > -1) {
