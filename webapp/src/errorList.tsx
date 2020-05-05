@@ -6,6 +6,7 @@ import * as sui from "./sui";
 export interface ErrorListProps {
     onSizeChange: () => void,
     listenToErrorChanges: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void,
+    scrollToLine: (line: number) => void
 }
 export interface ErrorListState {
     isCollapsed: boolean
@@ -24,6 +25,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
         this.onCollapseClick = this.onCollapseClick.bind(this)
         this.onErrorsChanged = this.onErrorsChanged.bind(this)
+        this.onErrorMessageClick = this.onErrorMessageClick.bind(this)
 
         props.listenToErrorChanges("errorList", this.onErrorsChanged);
     }
@@ -47,7 +49,9 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         </div>
 
         const errorListContent = (errors).map(e =>
-            <div key={errorKey(e)} className="errorMessage">{`${e.messageText} ${lf("at line {0}", e.line + 1)}`}</div>)
+            <div key={errorKey(e)} className="errorMessage" onClick={() => this.onErrorMessageClick(e.line + 1)}>
+                {`${e.messageText} ${lf("at line {0}", e.line + 1)}`}
+            </div>)
 
         return <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''}`}
                     onClick={isCollapsed ? this.onCollapseClick : null}
@@ -72,6 +76,10 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         this.setState({
             isCollapsed: !this.state.isCollapsed
         })
+    }
+
+    onErrorMessageClick(line: number) {
+        this.props.scrollToLine(line)
     }
 
     onErrorsChanged(errors: pxtc.KsDiagnostic[]) {
