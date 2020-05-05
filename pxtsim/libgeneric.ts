@@ -419,6 +419,10 @@ namespace pxsim {
         print() {
             // console.log(`RefBuffer id:${this.id} refs:${this.refcnt} len:${this.data.length} d0:${this.data[0]}`)
         }
+
+        toDebugString(): string {
+            return BufferMethods.toHex(this);
+        }
     }
 
     export namespace BufferMethods {
