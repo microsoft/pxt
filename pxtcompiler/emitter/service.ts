@@ -1154,7 +1154,9 @@ namespace ts.pxtc.service {
                     si.attributes.hidden ||
                     si.attributes.deprecated ||
                     // ignore TD_ID helpers
-                    si.attributes.shim == "TD_ID"
+                    si.attributes.shim == "TD_ID" ||
+                    // ignore block aliases like "_popStatement" on arrays
+                    si.attributes.blockAliasFor
                 )
                 return use
             }
