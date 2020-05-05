@@ -5,3 +5,4 @@ function returnFive() {
     return 5;
 }
 exports.returnFive = returnFive;
+//# sourceMappingURL=sample-runner.js.map
