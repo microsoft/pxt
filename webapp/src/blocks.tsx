@@ -83,7 +83,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     handleKeyDown = (e: any) => {
         if (this.parent.state?.accessibleBlocks) {
             let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-            if (charCode === 84 /* T Key */) { // SHAKAO check if blocks accessibility on
+            if (charCode === 84 /* T Key */) {
                 this.focusToolbox();
                 e.stopPropagation();
             }
@@ -636,7 +636,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     closeFlyout() {
         if (!this.editor) return;
         this.hideFlyout();
-        Blockly.hideChaff();
     }
 
     getId() {
@@ -1389,6 +1388,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.flyoutXmlList.push(label);
         }
         this.showFlyoutInternal_(this.flyoutXmlList, "search");
+        this.toolbox.setSearch();
     }
 
     private showTopBlocksFlyout() {
