@@ -48,10 +48,10 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             {!isCollapsed && collapseButton}
         </div>
 
-        const createOnErrorMessageClick = (e: pxtc.KsDiagnostic) => () => this.onErrorMessageClick(e.line + 1, e.column + 1)
+        const createOnErrorMessageClick = (e: pxtc.KsDiagnostic, index: number) => () => this.onErrorMessageClick(index, e.line + 1, e.column + 1)
 
-        const errorListContent = (errors).map(e =>
-            <div key={errorKey(e)} className="errorMessage" role="button" onClick={createOnErrorMessageClick(e)}>
+        const errorListContent = (errors).map((e, index) =>
+            <div key={errorKey(e)} className="errorMessage" role="button" onClick={createOnErrorMessageClick(e, index)}>
                 {`${e.messageText} ${lf("at line {0}", e.line + 1)}`}
             </div>)
 
@@ -75,12 +75,14 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     }
 
     onCollapseClick() {
+        pxt.tickEvent('errorlist.collapse', null, { interactiveConsent: true })
         this.setState({
             isCollapsed: !this.state.isCollapsed
         })
     }
 
-    onErrorMessageClick(line: number, column: number) {
+    onErrorMessageClick(index: number, line: number, column: number) {
+        pxt.tickEvent('errorlist.goto', {errorIndex: index}, { interactiveConsent: true });
         this.props.goToError(line, column)
     }
 
