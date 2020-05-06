@@ -408,7 +408,7 @@ export class ProjectView
         if (this.isBlocksActive()) {
             this.blocksEditor.openPython();
         } else if (this.isJavaScriptActive()) {
-            this.openPythonAsync();
+            this.openPythonAsync().done();
         } else {
             // make sure there's .py file
             const mpkg = pkg.mainEditorPkg();
