@@ -97,7 +97,7 @@ namespace pxt.youtube {
             pageToken = videos.nextPageToken;
         } while (pageToken);
 
-        if(pxt.options.debug)
+        if (pxt.options.debug)
             pxt.debug(JSON.stringify(items, null, 2));
         return items;
     }
