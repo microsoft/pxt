@@ -1975,6 +1975,14 @@ namespace pxt.blocks {
         return undefined;
     }
 
+    export function getTopLevelParent(block: Blockly.Block): Blockly.Block {
+        if (!block.previousConnection && !block.nextConnection) {
+            return block;
+        } else {
+            return pxt.blocks.getTopLevelParent(block.getParent())
+        }
+    }
+
     export function compileAsync(b: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
         const e = mkEnv(b, blockInfo);
         const [nodes, diags] = compileWorkspace(e, b, blockInfo);
