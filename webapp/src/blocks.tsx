@@ -712,6 +712,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         if (debugging) {
             this.toolbox.hide();
+            // unselect any highlighted block
+            (Blockly.selected as Blockly.BlockSvg)?.unselect();
         } else {
             this.debuggerToolbox = null;
             this.toolbox.show();
@@ -908,10 +910,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.updateDebuggerVariables(brk);
         if (stmt) {
             let bid = pxt.blocks.findBlockIdByLine(this.compilationResult.sourceMap, { start: stmt.line, length: stmt.endLine - stmt.line });
+            const b = this.editor.getBlockById(bid) as Blockly.BlockSvg;
             if (bid) {
-                this.editor.highlightBlock(bid);
+                const parent = pxt.blocks.getTopLevelParent(b);
+                if (parent.isCollapsed()) {
+                    this.editor.highlightBlock(parent.id)
+                } else {
+                    this.editor.highlightBlock(bid);
+                }
                 if (brk) {
-                    const b = this.editor.getBlockById(bid) as Blockly.BlockSvg;
                     b.setWarningText(brk ? brk.exceptionMessage : undefined);
                     // ensure highlight is in the screen when a breakpoint info is available
                     // TODO: make warning mode look good
