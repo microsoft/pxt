@@ -22,10 +22,11 @@ async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
     const playlist = await pxt.youtube.playlistInfoAsync(id);
     const videos = await pxt.youtube.listPlaylistVideosAsync(id);
     const playlistUrl = pxt.youtube.watchUrl(undefined, playlist.id);
-    const cards: pxt.CodeCard[] = videos.map(pxt.youtube.playlistItemToCodeCard);
+    let cards: pxt.CodeCard[] = videos.map(pxt.youtube.playlistItemToCodeCard);
+    // remove delete movies
+    cards = cards.filter(card => !!card.imageUrl);
     // download images for cards
     for (const card of cards) {
-        if (!card.imageUrl) continue;
         const cimg = `${assets}/${card.youTubeId}.jpg`;
         const limg = `docs${cimg}`;
         if (!nodeutil.fileExistsSync(limg)) {
