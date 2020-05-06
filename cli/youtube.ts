@@ -25,6 +25,7 @@ async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
     const cards: pxt.CodeCard[] = videos.map(pxt.youtube.playlistItemToCodeCard);
     // download images for cards
     for (const card of cards) {
+        if (!card.imageUrl) continue;
         const cimg = `${assets}/${card.youTubeId}.jpg`;
         const limg = `docs${cimg}`;
         if (!nodeutil.fileExistsSync(limg)) {
