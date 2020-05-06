@@ -27,18 +27,38 @@ function isCodeBlock(s: string): boolean {
 }
 
 export function provideDocumentRangeFormattingEdits(model: monaco.editor.IReadOnlyModel, range: monaco.Range, options: monaco.languages.FormattingOptions, token: monaco.CancellationToken): monaco.editor.ISingleEditOperation[] {
+    return fixIndentationInRange(model, range);
+}
+
+export function fixIndentationInRange(model: monaco.editor.IReadOnlyModel, range: monaco.Range, insertText?: string): monaco.editor.ISingleEditOperation[] {
     const source = model.getValue();
 
     // TODO indentation for paste blocks
-    const partial = range.startLineNumber != 0;
-    const s =  model.getOffsetAt({ lineNumber: range.startLineNumber, column: range.startColumn });
-    const e =  model.getOffsetAt({ lineNumber: range.endLineNumber, column: range.endColumn });
-    const lines = source.slice(s, e).split('\n');
+    const lineStart = model.getOffsetAt({ lineNumber: range.startLineNumber, column: 0 });
+    const rangeStart =  model.getOffsetAt({ lineNumber: range.startLineNumber, column: range.startColumn });
+    const rangeEnd =  model.getOffsetAt({ lineNumber: range.endLineNumber, column: range.endColumn });
+
+    let lines: string[];
+
+    if (insertText) {
+        lines = (source.slice(lineStart, rangeStart) + insertText).split('\n');
+    }
+    else {
+        lines = source.slice(lineStart, rangeEnd).split('\n');
+    }
+
+    const startsWithinLine = lineStart !== rangeStart && !!source.substring(lineStart, rangeStart).trim()
+
     const codeLines = lines.map((s, i) => !!s ? i : -1).filter(i => i >= 0);
 
     let prev;
-    if (partial) {
+    let baseIndent = 0;
+    if (!startsWithinLine) {
         prev = getLine(source, model, range.startLineNumber - 1);
+        baseIndent = getIndent(prev);
+        if (isCodeBlock(prev)) {
+            baseIndent += INDENT;
+        }
     }
 
     for (let i = 0; i < codeLines.length; i++) {
@@ -49,15 +69,19 @@ export function provideDocumentRangeFormattingEdits(model: monaco.editor.IReadOn
         if (prev) {
             let prevIndent = getIndent(prev);
             let nextIndent = getIndent(next);
+            let currentIndent = getIndent(curr);
 
             // TODO additional heuristics based on position of next line?
             if (isCodeBlock(prev)) {
                 // at the start of a code block, add one additional indent
                 let indent = prevIndent + INDENT;
-                lines[currIndex] = setIndent(indent, curr);
-            } else if (next && prevIndent == nextIndent && prevIndent != getIndent(curr)  && !isCodeBlock(curr)) {
+                lines[currIndex] = setIndent(Math.max(baseIndent, indent), curr);
+            } else if (next && prevIndent == nextIndent && prevIndent != currentIndent && !isCodeBlock(curr)) {
                 // if previous and next line have same indent, adjust current to match
-                lines[currIndex] = setIndent(prevIndent, curr);
+                lines[currIndex] = setIndent(Math.max(baseIndent, prevIndent), curr);
+            }
+            else if (currentIndent < baseIndent) {
+                lines[currIndex] = setIndent(baseIndent, curr);
             }
         }
 
@@ -66,6 +90,6 @@ export function provideDocumentRangeFormattingEdits(model: monaco.editor.IReadOn
 
     return [{
         text: lines.join('\n'),
-        range: range
+        range: range.setStartPosition(range.startLineNumber, 0)
     }];
 }

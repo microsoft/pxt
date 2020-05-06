@@ -418,8 +418,6 @@ export class ProjectView
             else
                 this.setFile(mainpy);
         }
-        // update language pref
-        pxt.Util.setEditorLanguagePref("py");
     }
 
     openJavaScript(giveFocusOnLoading = true) {
@@ -584,17 +582,18 @@ export class ProjectView
                         mainPkg.cacheTranspile(fromLanguage, fromText, "py", mainpy);
                         return this.saveVirtualFileAsync(pxt.PYTHON_PROJECT_NAME, mainpy, true);
                     } else {
-                        // TODO python
                         this.editor.setDiagnostics(this.editorFile, snap);
-                        return Promise.resolve();
+                        return Promise.reject(new Error("Failed to convert to Python."));
                     }
                 })
-                .catch(e => {
+                .then(() => {
+                    // on success, update editor pref
+                    pxt.Util.setEditorLanguagePref("py");
+                }, e => {
                     pxt.reportException(e);
                     core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
-                })
+                });
         }
-
         return core.showLoadingAsync("switchtopython", lf("switching to Python..."), convertPromise);
     }
 
@@ -718,9 +717,10 @@ export class ProjectView
         }, 1000, false);
 
     private markdownChangeHandler = Util.debounce(() => {
-        if (this.state.currFile && /\.md$/i.test(this.state.currFile.name))
+        if (this.state.currFile && /\.md$/i.test(this.state.currFile.name)
+            && this.isSideDocExpanded())
             this.setSideMarkdown(this.editor.getCurrentSource());
-    }, 4000, false);
+    }, 8000, false);
     private editorChangeHandler = Util.debounce(() => {
         if (!this.editor.isIncomplete()) {
             this.saveFileAsync().done(); // don't wait till save is done
@@ -1032,6 +1032,11 @@ export class ProjectView
             .then(() => this.reloadHeaderAsync())
     }
 
+    isSideDocExpanded(): boolean {
+        const sd = this.refs["sidedoc"] as container.SideDocs;
+        return !!sd && sd.isCollapsed();
+    }
+
     setSideMarkdown(md: string) {
         let sd = this.refs["sidedoc"] as container.SideDocs;
         if (!sd) return;
@@ -1065,6 +1070,8 @@ export class ProjectView
         // save and typecheck
         this.typecheckNow();
         // Notify tutorial content pane
+
+        this.stopPokeUserActivity();
         let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
         if (!tc) return;
         if (step > -1) {
@@ -1899,7 +1906,7 @@ export class ProjectView
 
         this.stopSimulator(true); // don't keep simulator around
         this.showKeymap(false); // close keymap if open
-        cmds.disconnectAsync(true); // turn off any kind of logging
+        cmds.disconnectAsync(); // turn off any kind of logging
         if (this.editor) this.editor.unloadFileAsync();
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
@@ -2232,10 +2239,6 @@ export class ProjectView
             );
     }
 
-    disconnectAsync(): Promise<void> {
-        return cmds.disconnectAsync(false);
-    }
-
     pairAsync(): Promise<void> {
         return cmds.pairAsync();
     }
@@ -2436,11 +2439,11 @@ export class ProjectView
                     if (simRestart) this.runSimulator();
                 })
                 .done();
-            } catch (e) {
-                this.setState({ compiling: false, isSaving: false });
-                pxt.reportException(e);
-                core.errorNotification(lf("Compilation failed, please try again."));
-            }
+        } catch (e) {
+            this.setState({ compiling: false, isSaving: false });
+            pxt.reportException(e);
+            core.errorNotification(lf("Compilation failed, please try again."));
+        }
     }
 
     overrideTypescriptFile(text: string) {
@@ -2530,11 +2533,13 @@ export class ProjectView
             this.startSimulator();
         }
         this.setState({ collapseEditorTools: false });
+        this.fireResize();
     }
 
     collapseSimulator() {
         simulator.hide(() => {
             this.setState({ collapseEditorTools: true });
+            this.fireResize();
         })
     }
 
@@ -2718,7 +2723,7 @@ export class ProjectView
 
             if (!opts.background)
                 this.editor.beforeCompile();
-            if (this.state.tracing)
+            if (this.state.tracing && this.state.debugging)
                 opts.trace = true;
 
             if (opts.debug) {
@@ -3964,9 +3969,13 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             pxt.tickEvent("hash." + hash.cmd)
             let tutorialPath = hash.arg;
             let editorProjectName: string = undefined;
-            if (/^(js|py):/.test(tutorialPath)) {
-                editorProjectName = /^py:/.test(tutorialPath)
-                    ? pxt.PYTHON_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME;
+            if (/^([jt]s|py|blocks):/i.test(tutorialPath)) {
+                if (/^py:/i.test(tutorialPath))
+                    editorProjectName = pxt.BLOCKS_PROJECT_NAME;
+                else if (/^[jt]s:/i.test(tutorialPath))
+                    editorProjectName = pxt.JAVASCRIPT_PROJECT_NAME;
+                else
+                    editorProjectName = pxt.BLOCKS_PROJECT_NAME;
                 tutorialPath = tutorialPath.substr(tutorialPath.indexOf(':') + 1)
             }
             editor.startActivity(hash.cmd, tutorialPath, undefined, editorProjectName);
@@ -4212,6 +4221,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    pxt.setCompileSwitches(window.localStorage["compile"])
     pxt.setCompileSwitches(query["compiler"] || query["compile"])
 
     // github token set in cloud provider

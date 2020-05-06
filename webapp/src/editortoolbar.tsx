@@ -4,6 +4,7 @@ import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as githubbutton from "./githubbutton";
+import * as cmds from "./cmds"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -25,7 +26,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         this.zoomIn = this.zoomIn.bind(this);
         this.zoomOut = this.zoomOut.bind(this);
         this.startStopSimulator = this.startStopSimulator.bind(this);
-        this.toggleTrace = this.toggleTrace.bind(this);
         this.toggleDebugging = this.toggleDebugging.bind(this);
     }
 
@@ -69,11 +69,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     startStopSimulator(view?: string) {
         pxt.tickEvent("editortools.startStopSimulator", { view: view, collapsed: this.getCollapsedState(), headless: this.getHeadlessState() }, { interactiveConsent: true });
         this.props.parent.startStopSimulator({ clickTrigger: true });
-    }
-
-    toggleTrace(view?: string) {
-        pxt.tickEvent("editortools.trace", { view: view, collapsed: this.getCollapsedState(), headless: this.getHeadlessState() }, { interactiveConsent: true });
-        this.props.parent.toggleTrace();
     }
 
     toggleDebugging(view?: string) {
@@ -151,7 +146,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     protected onDisconnectClick = () => {
-        this.props.parent.disconnectAsync();
+        cmds.showDisconnectAsync().done();
     }
 
     protected getCompileButton(view: View): JSX.Element[] {
@@ -166,7 +161,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const packetioConnecting = !!this.getData("packetio:connecting");
         const packetioIcon = this.getData("packetio:icon") as string;
         const downloadIcon = (!!packetioConnecting && "ping " + packetioIcon)
-            || (!!packetioConnected && packetioIcon)
+            || (!!packetioConnected && "ping2s " + packetioIcon)
             || targetTheme.downloadIcon || "download";
         const hasMenu = boards || webUSBSupported;
 
@@ -261,9 +256,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             && !!targetTheme.githubEditor
             && !readOnly && !isController && !debugging && !tutorial;
 
-        const trace = !!targetTheme.enableTrace;
-        const tracing = this.props.parent.state.tracing;
-        const traceTooltip = tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo")
         const debug = !!targetTheme.debugger && !readOnly;
         const debugTooltip = debugging ? lf("Disable Debugging") : lf("Debugging")
         const downloadIcon = pxt.appTarget.appTheme.downloadIcon || "download";

@@ -105,6 +105,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     snippetName: "let",
                     snippet: `let item: number`,
                     pySnippet: `item = 0`,
+                    pySnippetName: `item = 0`,
                     snippetOnly: true,
                     attributes: {
                         blockId: 'variables_set',
@@ -249,9 +250,9 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     retType: "number"
                 },
                 {
-                    name: "Math.randomRange",
-                    snippetName: "randomRange",
-                    snippet: `Math.randomRange(0, 10)`,
+                    name: "randint",
+                    snippetName: "randint",
+                    snippet: `randint(0, 10)`,
                     pySnippetName: `randint`,
                     pySnippet: `randint(0, 10)`,
                     attributes: {

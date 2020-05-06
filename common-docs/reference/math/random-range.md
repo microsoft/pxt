@@ -6,6 +6,15 @@ Return a pseudo-random value within a range of numbers.
 Math.randomRange(0, 10)
 ```
 
+## ~ hint
+
+**Deprecated**
+
+This API has been deprecated!
+Use [randint](/reference/math/randint) instead.
+
+## ~
+
 Returns a pseudo-random number in the range ``[min, max];`` that is, from ``0`` (inclusive) up to including ``1`` (inclusive), which you can then scale to your desired range.
 
 ## Parameters

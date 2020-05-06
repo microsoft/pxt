@@ -1191,8 +1191,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             || this.isDebugging();
         return pxt.appTarget.appTheme.monacoToolbox
             && !readOnly
-            && ((this.fileType == "typescript" && this.currFile.name == "main.ts")
-                || (this.fileType == "python" && this.currFile.name == "main.py"));
+            && (this.fileType == "typescript" || this.fileType == "python");
     }
 
     loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {

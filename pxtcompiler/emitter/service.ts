@@ -19,7 +19,6 @@ namespace ts.pxtc {
         "Math.min": { n: "min", t: ts.SyntaxKind.NumberKeyword, snippet: "min(0, 0)" },
         "Math.max": { n: "max", t: ts.SyntaxKind.NumberKeyword, snippet: "max(0, 0)" },
         "Math.abs": { n: "abs", t: ts.SyntaxKind.NumberKeyword, snippet: "abs(0)" },
-        "Math.randomRange": { n: "randint", t: ts.SyntaxKind.NumberKeyword, snippet: "randint(0, 10)" },
         "console.log": { n: "print", t: ts.SyntaxKind.VoidKeyword, snippet: 'print(":)")' },
         ".length": { n: "len", t: ts.SyntaxKind.NumberKeyword },
         ".toLowerCase()": { n: "string.lower", t: ts.SyntaxKind.StringKeyword },
@@ -754,15 +753,6 @@ namespace ts.pxtc.service {
         return d
     }
 
-    interface InternalCompletionData {
-        symbols: ts.Symbol[];
-        isMemberCompletion: boolean;
-        isNewIdentifierLocation: boolean;
-        location: ts.Node;
-        isRightOfDot: boolean;
-        isJsDocTagName: boolean;
-    }
-
     const blocksInfoOp = (apisInfoLocOverride: pxtc.ApisInfo, bannedCategories: string[]) => {
         if (apisInfoLocOverride) {
             if (!lastLocBlocksInfo) {
@@ -796,7 +786,50 @@ namespace ts.pxtc.service {
         return newOpts
     }
 
-    const operations: pxt.Map<(v: OpArg) => any> = {
+    export interface ServiceOps {
+        reset: () => void;
+        setOptions: (v: OpArg) => void;
+        syntaxInfo: (v: OpArg) => SyntaxInfo;
+        getCompletions: (v: OpArg) => CompletionInfo;
+        compile: (v: OpArg) => CompileResult;
+        decompile: (v: OpArg) => CompileResult;
+        pydecompile: (v: OpArg) => transpile.TranspileResult;
+        assemble: (v: OpArg) => {
+            words: number[];
+        };
+        py2ts: (v: OpArg) => transpile.TranspileResult;
+        fileDiags: (v: OpArg) => KsDiagnostic[];
+        allDiags: () => CompileResult;
+        format: (v: OpArg) => {
+            formatted: string;
+            pos: number;
+        };
+        apiInfo: () => ApisInfo;
+        snippet: (v: OpArg) => string;
+        blocksInfo: (v: OpArg) => BlocksInfo;
+        apiSearch: (v: OpArg) => SearchInfo[];
+        projectSearch: (v: OpArg) => ProjectSearchInfo[];
+        projectSearchClear: () => void;
+    };
+
+    export type OpRes =
+        string | void | SyntaxInfo | CompletionInfo | CompileResult
+        | transpile.TranspileResult
+        | { words: number[]; }
+        | KsDiagnostic[]
+        | { formatted: string; pos: number; }
+        | ApisInfo | BlocksInfo | ProjectSearchInfo[]
+        | {};
+
+    export type OpError = { errorMessage: string };
+
+    export type OpResOrError = OpRes | OpError;
+
+    export function IsOpErr(res: OpResOrError): res is OpError {
+        return !!(res as OpError).errorMessage;
+    }
+
+    const operations: ServiceOps = {
         reset: () => {
             service.cleanupSemanticCache();
             lastApiInfo = undefined
@@ -852,6 +885,7 @@ namespace ts.pxtc.service {
         },
 
         getCompletions: v => {
+            // TODO: break out into seperate file
             const { fileName, fileContent, position, wordStartPos, wordEndPos, runtime } = v
             let src: string = fileContent
             if (fileContent) {
@@ -887,13 +921,15 @@ namespace ts.pxtc.service {
             let lastNl = src.lastIndexOf("\n", position)
             lastNl = Math.max(0, lastNl)
 
-            if (dotIdx != -1)
+            const isMemberCompletion = dotIdx !== -1
+
+            if (isMemberCompletion)
                 complPosition = dotIdx
 
             const entries: pxt.Map<CompletionSymbol> = {};
             const r: CompletionInfo = {
                 entries: [],
-                isMemberCompletion: dotIdx != -1,
+                isMemberCompletion: isMemberCompletion,
                 isNewIdentifierLocation: true,
                 isTypeLocation: false
             }
@@ -951,14 +987,19 @@ namespace ts.pxtc.service {
             let isPropertyAccess = false;
 
             // special handing for member completion
-            if (dotIdx !== -1) {
+            if (isMemberCompletion) {
                 const propertyAccessTarget = findInnerMostNodeAtPosition(tsAst, isPython ? tsPos : dotIdx - 1)
 
                 if (propertyAccessTarget) {
                     let type: Type;
 
                     const symbol = tc.getSymbolAtLocation(propertyAccessTarget);
-                    if (symbol) {
+                    if (symbol?.members?.size > 0) {
+                        // Some symbols for nodes like "this" are directly the symbol for the type (e.g. "this" gives "Foo" class symbol)
+                        type = tc.getDeclaredTypeOfSymbol(symbol)
+                    }
+                    else if (symbol) {
+                        // Otherwise we use the typechecker to lookup the symbol type
                         type = tc.getTypeOfSymbolAtLocation(symbol, propertyAccessTarget);
                     }
                     else {
@@ -1078,6 +1119,23 @@ namespace ts.pxtc.service {
                     .map(s => completionSymbol(s))
 
                 resultSymbols = [...resultSymbols, ...inScopePxtSyms]
+            }
+
+            // add in keywords
+            if (!isMemberCompletion) {
+                // TODO: use more context to filter keywords
+                //      e.g. "while" shouldn't show up in an expression
+                let keywords: string[];
+                if (isPython) {
+                    let keywordsMap = (pxt as any).py.keywords as Map<boolean>
+                    keywords = Object.keys(keywordsMap)
+                } else {
+                    keywords = [...ts.pxtc.reservedWords, ...ts.pxtc.keywordTypes]
+                }
+                let keywordSymbols = keywords
+                    .map(makePxtSymbolFromKeyword)
+                    .map(completionSymbol)
+                resultSymbols = [...resultSymbols, ...keywordSymbols]
             }
 
             // determine which names are taken for auto-generated variable names
@@ -1530,13 +1588,15 @@ namespace ts.pxtc.service {
         return res;
     }
 
-    export function performOperation(op: string, arg: OpArg) {
+    export function performOperation<T extends keyof ServiceOps>(op: T, arg: OpArg):
+        OpResOrError {
         init();
-        let res: any = null;
+        let res: OpResOrError = null;
 
         if (operations.hasOwnProperty(op)) {
             try {
-                res = operations[op](arg) || {}
+                let opFn = operations[op]
+                res = opFn(arg) || {}
             } catch (e) {
                 res = {
                     errorMessage: e.stack
@@ -1572,7 +1632,7 @@ namespace ts.pxtc.service {
 . . . . .
 """`;
 
-    export function getSnippet(apis: ApisInfo, takenNames: pxt.Map<SymbolInfo>, runtimeOps: pxt.RuntimeOptions, fn: SymbolInfo, decl: ts.FunctionLikeDeclaration, python?: boolean): string {
+    export function getSnippet(apis: ApisInfo, takenNames: pxt.Map<SymbolInfo>, runtimeOps: pxt.RuntimeOptions, fn: SymbolInfo, decl: ts.FunctionLikeDeclaration, python?: boolean, recursionDepth = 0): string {
         const PY_INDENT: string = (pxt as any).py.INDENT;
 
         let preStmt = "";
@@ -1642,6 +1702,15 @@ namespace ts.pxtc.service {
             function getShadowSymbol(paramName: string): SymbolInfo | null {
                 // TODO: generalize and unify this with getCompletions code
                 let shadowBlock = (attrs._shadowOverrides || {})[paramName]
+                if (!shadowBlock) {
+                    const comp = pxt.blocks.compileInfo(fn);
+                    for (const param of comp.parameters) {
+                        if (param.actualName === paramName) {
+                            shadowBlock = param.shadowBlockId;
+                            break;
+                        }
+                    }
+                }
                 if (!shadowBlock)
                     return null
                 let sym = blocksById[shadowBlock]
@@ -1667,6 +1736,21 @@ namespace ts.pxtc.service {
                             return shadowDef
                         }
                     }
+                }
+
+                // 3 is completely arbitrarily chosen here
+                if (recursionDepth < 3 && lastApiInfo.decls[shadowSymbol.qName]) {
+                    let snippet = getSnippet(
+                        apis,
+                        takenNames,
+                        runtimeOps,
+                        shadowSymbol,
+                        lastApiInfo.decls[shadowSymbol.qName] as ts.FunctionLikeDeclaration,
+                        python,
+                        recursionDepth + 1
+                    );
+
+                    if (snippet) return snippet;
                 }
             }
 
@@ -1896,6 +1980,29 @@ namespace ts.pxtc.service {
         if (ts.flags & SymbolFlags.Property)
             return SymbolKind.Property
         return SymbolKind.None
+    }
+
+    function makePxtSymbolFromKeyword(keyword: string): SymbolInfo {
+        // TODO: since keywords aren't exactly symbols, consider using a different
+        //       type than "SymbolInfo" to carry auto completion information.
+        //       Some progress on this exists here: dazuniga/completionitem_refactor
+
+        let sym: SymbolInfo = {
+            kind: SymbolKind.None,
+            name: keyword,
+            pyName: keyword,
+            qName: keyword,
+            pyQName: keyword,
+            namespace: "",
+            attributes: {
+                callingConvention: ir.CallingConvention.Plain,
+                paramDefl: {},
+            },
+            fileName: "main.ts",
+            parameters: [],
+            retType: "any",
+        }
+        return sym
     }
 
     function makePxtSymbolFromTsSymbol(tsSym: ts.Symbol, tsType: ts.Type): SymbolInfo {

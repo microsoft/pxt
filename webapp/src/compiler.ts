@@ -15,7 +15,8 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.Sourc
     //  TS errors to PY
     let tsErrToPyLoc: (err: pxtc.LocationInfo) => pxtc.LocationInfo = undefined;
     if (diagnostics.length > 0
-        && mainPkg.filterFiles(f => f.name === "main.ts" || f.name === "main.py").length === 2
+        && mainPkg.files["main.ts"]
+        && mainPkg.files["main.py"]
         && sourceMap) {
         const tsFile = mainPkg.files["main.ts"].content
         const pyFile = mainPkg.files["main.py"].content
@@ -360,7 +361,7 @@ function pyDecompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Prom
     return workerOpAsync("pydecompile", { options: opts, fileName: fileName })
 }
 
-export function workerOpAsync(op: string, arg: pxtc.service.OpArg) {
+export function workerOpAsync<T extends keyof pxtc.service.ServiceOps>(op: T, arg: pxtc.service.OpArg): Promise<any> {
     const startTm = Date.now()
     pxt.debug("worker op: " + op)
     return pxt.worker.getWorker(pxt.webConfig.workerjs)
@@ -434,7 +435,7 @@ export function snippetAsync(qName: string, python?: boolean): Promise<string> {
     if (python) {
         // To make sure that the service is working with the most recent version of the file,
         // run a typecheck
-        initStep = typecheckAsync().then(() => {})
+        initStep = typecheckAsync().then(() => { })
     }
     return initStep.then(() => workerOpAsync("snippet", {
         snippet: { qName, python },

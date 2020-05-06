@@ -37,6 +37,10 @@ declare namespace pxt {
         bannedRepos?: string[];
         allowUnapproved?: boolean;
         preferredRepos?: string[]; // list of company/project(#tag) of packages to show by default in search
+        // format:
+        // "acme-corp/pxt-widget": "min:v0.1.2" - auto-upgrade to that version
+        // "acme-corp/pxt-widget": "dv:foo,bar" - add "disablesVariant": ["foo", "bar"] to pxt.json
+        upgrades?: pxt.Map<string>;
     }
 
     interface AppTarget {
@@ -176,7 +180,6 @@ declare namespace pxt {
         emptyRunCode?: string; // when non-empty and autoRun is disabled, this code is run upon simulator first start
         hideRestart?: boolean;
         // moved to theme
-        // enableTrace?: boolean;
         // moved to theme
         // debugger?: boolean;
         hideFullscreen?: boolean;
@@ -312,7 +315,6 @@ declare namespace pxt {
         print?: boolean; //Print blocks and text feature
         greenScreen?: boolean; // display webcam stream in background
         instructions?: boolean; // display make instructions
-        enableTrace?: boolean; // Slow-Mo button
         debugger?: boolean; // debugger button
         selectLanguage?: boolean; // add language picker to settings menu
         availableLocales?: string[]; // the list of enabled language codes
@@ -702,6 +704,7 @@ declare namespace ts.pxtc {
 
         alias?: string; // another symbol alias for this member
         pyAlias?: string; // optional python version of the alias
+        blockAliasFor?: string; // qname of the function this block is an alias for
     }
 
     interface ParameterDesc {

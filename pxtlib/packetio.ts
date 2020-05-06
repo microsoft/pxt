@@ -107,6 +107,11 @@ namespace pxt.packetio {
         if (wrapper)
             return Promise.resolve(wrapper);
 
+        if (!mkPacketIOAsync) {
+            pxt.log(`packetio: not defined, skipping`)
+            return Promise.resolve(undefined);
+        }
+
         pxt.log(`packetio: new wrapper`)
         return mkPacketIOAsync()
             .then(io => {

@@ -398,15 +398,6 @@ namespace pxt.runner {
                 localeLiveRx.test(localeInfo)
             );
         }
-        if (editorLanguageMode == LanguageMode.Blocks) {
-            document.body.classList.remove("editorlang-text");
-            $('link[title="light"]').prop('disabled', false);
-            $('link[title="dark"]').prop('disabled', true);
-        } else {
-            document.body.classList.add("editorlang-text");
-            $('link[title="light"]').prop('disabled', true);
-            $('link[title="dark"]').prop('disabled', false);
-        }
 
         return Promise.resolve();
     }

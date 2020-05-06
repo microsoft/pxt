@@ -119,8 +119,12 @@ namespace pxt {
         if (!names)
             return
         for (let s of names.split(/[\s,;:]+/)) {
-            if (s)
+            if (!s) continue
+            if (s[0] == "-") {
+                setCompileSwitch(s.slice(1), false)
+            } else {
                 setCompileSwitch(s, true)
+            }
         }
     }
 

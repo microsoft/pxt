@@ -45,8 +45,12 @@ function parseHwVariant(parsed: commandParser.ParsedCommand) {
         // map known variants
         const knowVariants: pxt.Map<string> = {
             "f4": "stm32f401",
+            "f401": "stm32f401",
             "d5": "samd51",
-            "p0": "rpi"
+            "d51": "samd51",
+            "p0": "rpi",
+            "pi0": "rpi",
+            "pi": "rpi"
         }
         hwvariant = knowVariants[hwvariant.toLowerCase()] || hwvariant;
         if (!/^hw---/.test(hwvariant)) hwvariant = 'hw---' + hwvariant;
@@ -2200,6 +2204,8 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             fillInCompilerExtension(cfg);
 
             const webmanifest = buildWebManifest(cfg)
+            cfg = U.clone(cfg)
+            cfg.compile.switches = {} // otherwise we leak the switches set with PXT_COMPILE_SWITCHES=
             const targetjson = nodeutil.stringify(cfg)
             nodeutil.writeFileSync("built/target.json", targetjson)
             nodeutil.writeFileSync("built/target.js", targetJsPrefix + targetjson)
@@ -3026,11 +3032,11 @@ export function serviceAsync(parsed: commandParser.ParsedCommand) {
     return mainPkg.getCompileOptionsAsync()
         .then(opts => {
             pxtc.service.performOperation("reset", {})
-            pxtc.service.performOperation("setOpts", { options: opts })
-            return pxtc.service.performOperation(parsed.args[0], {})
+            pxtc.service.performOperation("setOptions", { options: opts })
+            return pxtc.service.performOperation(parsed.args[0] as keyof pxtc.service.ServiceOps, {})
         })
         .then(res => {
-            if (res.errorMessage) {
+            if (pxtc.service.IsOpErr(res)) {
                 console.error("Error calling service:", res.errorMessage)
                 process.exit(1)
             } else {
@@ -4966,12 +4972,11 @@ export function hexdumpAsync(c: commandParser.ParsedCommand) {
     let filename = c.args[0]
     let buf = fs.readFileSync(filename)
     if (/^UF2\n/.test(buf.slice(0, 4).toString("utf8"))) {
-        let r = pxtc.UF2.toBin(buf as any)
-        if (r) {
-            console.log("UF2 file detected.")
-            console.log(pxtc.hexDump(r.buf, r.start))
-            return Promise.resolve()
+        for (let b of pxtc.UF2.parseFile(buf)) {
+            console.log(`UF2 Block: ${b.blockNo}/${b.numBlocks} family:${b.familyId.toString(16)} flags:${b.flags.toString(16)}\n` +
+                pxtc.hexDump(b.data, b.targetAddr))
         }
+        return Promise.resolve()
     }
     console.log("Binary file assumed.")
     console.log(pxtc.hexDump(buf))
@@ -5517,7 +5522,9 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     }
     const pkgsroot = path.join("temp", "ghpkgs");
     const logfile = path.join(pkgsroot, "log.txt");
+    const errorfile = path.join(pkgsroot, "error.txt");
     nodeutil.writeFileSync(logfile, ""); // reset file
+    nodeutil.writeFileSync(errorfile, ""); // reset file
 
     function pxtAsync(dir: string, args: string[]) {
         return nodeutil.spawnAsync({
@@ -5528,19 +5535,20 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     }
 
     let errorCount = 0;
+    let warningCount = 0;
     function reportWarning(er: { repo: string; title: string; body: string; }) {
-        const msg = `- [ ]  [${er.repo}](https://github.com/${er.repo}) ${er.title} / [new issue](https://github.com/${er.repo}/issues/new?title=${encodeURIComponent(er.title)}&body=${encodeURIComponent(er.body)})`;
-        console.log(`warning: https://github.com/${er.repo} ${er.title}`)
-        fs.appendFileSync(logfile, msg + "\n");
+        reportLog(`warning: https://github.com/${er.repo} ${er.title}`)
+        const msg = `- [ ] warning: [${er.repo}](https://github.com/${er.repo}) ${er.title} / [new issue](https://github.com/${er.repo}/issues/new?title=${encodeURIComponent(er.title)}&body=${encodeURIComponent(er.body)})`;
+        fs.appendFileSync(errorfile, msg + "\n");
+        warningCount++;
     }
 
     function reportError(er: { repo: string; title: string; body: string; }) {
-        const msg = `- [ ]  [${er.repo}](https://github.com/${er.repo}) ${er.title} / [new issue](https://github.com/${er.repo}/issues/new?title=${encodeURIComponent(er.title)}&body=${encodeURIComponent(er.body)})`;
-        console.error(`error: https://github.com/${er.repo} ${er.title}`)
-        fs.appendFileSync(logfile, msg + "\n");
+        reportLog(`error: https://github.com/${er.repo} ${er.title}`)
+        const msg = `- [ ] error:  [${er.repo}](https://github.com/${er.repo}) ${er.title} / [new issue](https://github.com/${er.repo}/issues/new?title=${encodeURIComponent(er.title)}&body=${encodeURIComponent(er.body)})`;
+        fs.appendFileSync(errorfile, msg + "\n");
         errorCount++;
     }
-
     function reportLog(msg: any) {
         pxt.log(msg);
         fs.appendFileSync(logfile, msg + "\n");
@@ -5567,9 +5575,10 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         if (forceLocalBuild) buildArgs.push("--localbuild");
         const pkgdir = path.join(pkgsroot, pkgpgh);
         const buildlog = path.join(pkgdir, "built", "success.txt");
+        const buildkey = `${pxt.appTarget.id}-${pxt.appTarget.versions.targetId}-${pkgpgh}-${tag}`;
         // check if already built with success
         if (nodeutil.fileExistsSync(buildlog) &&
-            fs.readFileSync(buildlog, "utf8") === tag) {
+            fs.readFileSync(buildlog, "utf8") === buildkey) {
             reportLog(`  already built ${tag}`)
             return Promise.resolve();
         }
@@ -5584,7 +5593,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             .then(() => pxtAsync(pkgdir, buildArgs))
             .then(() => {
                 // already built with success
-                nodeutil.writeFileSync(buildlog, tag);
+                nodeutil.writeFileSync(buildlog, buildkey);
             });
     }
 
@@ -5627,7 +5636,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         })
         .then(() => {
             if (errorCount > 0) {
-                reportLog(`${errorCount} errors found`);
+                reportLog(`${errorCount} errors, ${warningCount} warnings`);
                 process.exit(1);
             }
         })

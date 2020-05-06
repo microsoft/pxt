@@ -653,6 +653,10 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         this.props.parent.setState({ sideDocsCollapsed: true });
     }
 
+    isCollapsed() {
+        return !!this.state.sideDocsCollapsed;
+    }
+
     popOut() {
         SideDocs.notify({
             type: "popout"

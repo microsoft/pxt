@@ -24,7 +24,7 @@ namespace pxt.py {
         endPos: number;
     }
 
-    const keywords: Map<boolean> = {
+    export const keywords: Map<boolean> = {
         "False": true, "None": true, "True": true, "and": true, "as": true, "assert": true,
         "async": true, "await": true, "break": true, "class": true, "continue": true,
         "def": true, "del": true, "elif": true, "else": true, "except": true, "finally": true,

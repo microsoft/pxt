@@ -186,7 +186,7 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
                     // no device, just save
                     log(`device not found`);
                     return pxt.commands.saveOnlyAsync(resp);
-                } else if (e.code == 19) {
+                } else if (e.code == 19 || e.type === "devicelocked") {
                     // device is locked or used by another tab
                     pxt.tickEvent("hid.flash.devicelocked");
                     log(`error: device locked`);
@@ -338,17 +338,20 @@ export function init(): void {
     pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
     pxt.commands.webUsbPairDialogAsync = webusb.webUsbPairDialogAsync;
     pxt.commands.showUploadInstructionsAsync = showUploadInstructionsAsync;
+    pxt.packetio.mkPacketIOAsync = undefined;
     // used by CLI pxt.commands.deployFallbackAsync = undefined;
 
     // check if webUSB is available and usable
-    if (pxt.usb.isAvailable() && pxt.appTarget.compile.webUSB) {
-        log(`enabled webusb`);
-        pxt.usb.setEnabled(true);
-        pxt.packetio.mkPacketIOAsync = pxt.usb.mkPacketIOAsync;
-    } else {
-        log(`enabled hid bridge (webusb disabled)`);
-        pxt.usb.setEnabled(false);
-        pxt.packetio.mkPacketIOAsync = hidbridge.mkBridgeAsync;
+    if (pxt.appTarget?.compile?.isNative || pxt.appTarget?.compile?.hasHex) {
+        if (pxt.usb.isAvailable() && pxt.appTarget?.compile?.webUSB) {
+            log(`enabled webusb`);
+            pxt.usb.setEnabled(true);
+            pxt.packetio.mkPacketIOAsync = pxt.usb.mkPacketIOAsync;
+        } else {
+            log(`enabled hid bridge (webusb disabled)`);
+            pxt.usb.setEnabled(false);
+            pxt.packetio.mkPacketIOAsync = hidbridge.mkBridgeAsync;
+        }
     }
 
     const forceBrowserDownload = /force(Hex)?(Browser)?Download/i.test(window.location.href);
@@ -416,19 +419,23 @@ export function maybeReconnectAsync(pairIfDeviceNotFound = false) {
 export function pairAsync(): Promise<void> {
     pxt.tickEvent("cmds.pair")
     return pxt.commands.webUsbPairDialogAsync(pxt.usb.pairAsync, core.confirmAsync)
-        .then(res => res && maybeReconnectAsync());
+        .then(res => {
+            if (res) return maybeReconnectAsync();
+            else return core.infoNotification("Oops, no device was paired.")
+        });
 }
 
-export function disconnectAsync(silent: boolean): Promise<void> {
+export function showDisconnectAsync(): Promise<void> {
+    if (pxt.commands.renderDisconnectDialog) {
+        const { header, jsx, helpUrl } = pxt.commands.renderDisconnectDialog();
+        return core.dialogAsync({ header, jsx, helpUrl, hideCancel: true, hasCloseIcon: true });
+    }
+    return Promise.resolve();
+}
+
+export function disconnectAsync(): Promise<void> {
     pxt.tickEvent("cmds.disconnect")
-    return pxt.packetio.disconnectAsync()
-        .then(() => {
-            if (!silent && !!pxt.commands.renderDisconnectDialog) {
-                const { header, jsx, helpUrl } = pxt.commands.renderDisconnectDialog();
-                return core.dialogAsync({ header, jsx, helpUrl, hideCancel: true, hasCloseIcon: true });
-            }
-            return Promise.resolve();
-        });
+    return pxt.packetio.disconnectAsync();
 }
 
 function handlePacketIOApi(r: string) {

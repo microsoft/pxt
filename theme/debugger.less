@@ -91,6 +91,26 @@
     color: #87D282 !important;
 }
 
+.ui.compact.menu .dbg-btn.dbg-trace {
+    border-radius: 0;
+}
+
+.ui.compact.menu .dbg-btn.dbg-trace.tracing {
+    background-color: @orange;
+
+    .icon {
+        color: @white;
+    }
+}
+
+.ui.compact.menu .dbg-btn.dbg-trace.tracing:hover {
+    background-color: darken(@orange, 10%);
+
+    .icon {
+        color: darken(@white, 5%);
+    }
+}
+
 .ui.item.link.dbg-btn.dbg-exit {
     background-color: #cccccc;
     color: rgb(255, 21, 0);
@@ -240,6 +260,19 @@ div.simframe div.pause-overlay {
 @media only screen and (min-width: @computerBreakpoint) {
     .debugger div.monacoToolboxDiv {
         min-width: calc(@blocklyRowWidthWide + 100px);
+    }
+}
+
+@media only screen and (max-width: @largeMonitorBreakpoint) {
+    .dbg-btn.dbg-step .ui.text {
+        display: none;
+    }
+
+    .ui.varExplorer .ui.variableTableHeader, .ui.varExplorer .ui.variableTablePlaceholder {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        padding-left: 0.5rem;
+        font-size: large;
     }
 }
 
