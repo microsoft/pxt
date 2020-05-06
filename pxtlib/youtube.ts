@@ -18,7 +18,7 @@ namespace pxt.youtube {
             channelId: string;
             title: string;
             description: string;
-            thumbnails: Thumbnails;
+            thumbnails?: Thumbnails;
         }
     }
 
@@ -37,8 +37,9 @@ namespace pxt.youtube {
     }
 
     function resolveThumbnail(thumbnails: Thumbnails) {
-        const url = (thumbnails.medium || thumbnails.high || thumbnails.standard || thumbnails.default).url;
-        return url;
+        if (!thumbnails) return "";
+        const thumbnail = (thumbnails.medium || thumbnails.high || thumbnails.standard || thumbnails.default);
+        return thumbnail?.url || "";
     }
 
     function resolveDescription(d: string) {
@@ -96,6 +97,8 @@ namespace pxt.youtube {
             pageToken = videos.nextPageToken;
         } while (pageToken);
 
+        if (pxt.options.debug)
+            pxt.debug(JSON.stringify(items, null, 2));
         return items;
     }
 

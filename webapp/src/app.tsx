@@ -418,8 +418,6 @@ export class ProjectView
             else
                 this.setFile(mainpy);
         }
-        // update language pref
-        pxt.Util.setEditorLanguagePref("py");
     }
 
     openJavaScript(giveFocusOnLoading = true) {
@@ -584,17 +582,18 @@ export class ProjectView
                         mainPkg.cacheTranspile(fromLanguage, fromText, "py", mainpy);
                         return this.saveVirtualFileAsync(pxt.PYTHON_PROJECT_NAME, mainpy, true);
                     } else {
-                        // TODO python
                         this.editor.setDiagnostics(this.editorFile, snap);
-                        return Promise.resolve();
+                        return Promise.reject(new Error("Failed to convert to Python."));
                     }
                 })
-                .catch(e => {
+                .then(() => {
+                    // on success, update editor pref
+                    pxt.Util.setEditorLanguagePref("py");
+                }, e => {
                     pxt.reportException(e);
                     core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
-                })
+                });
         }
-
         return core.showLoadingAsync("switchtopython", lf("switching to Python..."), convertPromise);
     }
 
@@ -1071,6 +1070,8 @@ export class ProjectView
         // save and typecheck
         this.typecheckNow();
         // Notify tutorial content pane
+
+        this.stopPokeUserActivity();
         let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
         if (!tc) return;
         if (step > -1) {
