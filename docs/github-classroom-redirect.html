@@ -25,7 +25,7 @@
                 localStorage["core/oauthState"] = state;
                 localStorage["core/ghclassroomassigment"] = assignment;
                 const login = "https://makecode.com/oauth/login?state=" + state +
-                    "&response_type=token&client_id=gh-token&redirect_uri=" + encodeURIComponent(window.location.href.split('#', 1)[0])
+                    "&prompt=consent&response_type=token&client_id=gh-token&redirect_uri=" + encodeURIComponent(window.location.href.split('#', 1)[0])
                 window.location.href = login;
             }
 
