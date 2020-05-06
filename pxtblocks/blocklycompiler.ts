@@ -1854,16 +1854,37 @@ namespace pxt.blocks {
         else if (b.type == ts.pxtc.FUNCTION_DEFINITION_TYPE)
             return JSON.stringify({ type: "function", name: b.getFieldValue("function_name") });
 
-        const call = e.stdCallTable[b.type];
-        if (call) {
-            // detect if same event is registered already
-            const compiledArgs = eventArgs(call, b).map(arg => compileArgument(e, b, arg, []));
-            const key = JSON.stringify({ name: call.f, ns: call.namespace, compiledArgs })
-                .replace(/"id"\s*:\s*"[^"]+"/g, ''); // remove blockly ids
-            return key;
+        const key = JSON.stringify(blockKey(b))
+            .replace(/"id"\s*:\s*"[^"]+"/g, ''); // remove blockly ids
+
+        return key;
+    }
+
+    function blockKey(b: Blockly.Block) {
+        const fields: string[] = []
+        const inputs: any[] = []
+        for (const input of b.inputList) {
+            for (const field of input.fieldRow) {
+                if (field.name) {
+                    fields.push(field.getText())
+                }
+            }
+
+            if (input.type === Blockly.INPUT_VALUE) {
+                if (input.connection.targetBlock()) {
+                    inputs.push(blockKey(input.connection.targetBlock()));
+                }
+                else {
+                    inputs.push(null);
+                }
+            }
         }
 
-        return undefined;
+        return {
+            type: b.type,
+            fields,
+            inputs
+        };
     }
 
     function updateDisabledBlocks(e: Environment, allBlocks: Blockly.Block[], topBlocks: Blockly.Block[]) {
