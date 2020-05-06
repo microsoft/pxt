@@ -134,12 +134,19 @@ namespace pxt.blocks {
             const def = refMap[THIS_NAME] || defParameters[0];
             const defName = def.name;
             const isVar = !def.shadowBlockId || def.shadowBlockId === "variables_get";
+
+            let defaultValue: string;
+
+            if (isVar) {
+                defaultValue = def.varName || fn.attributes.paramDefl[defName] || fn.attributes.paramDefl["this"];
+            }
+
             res.thisParameter = {
                 actualName: THIS_NAME,
                 definitionName: defName,
                 shadowBlockId: def.shadowBlockId,
                 type: fn.namespace,
-                defaultValue: isVar ? def.varName : undefined,
+                defaultValue: defaultValue,
 
                 // Normally we pass ths actual parameter name, but the "this" parameter doesn't have one
                 fieldEditor: fieldEditor(defName, THIS_NAME),
