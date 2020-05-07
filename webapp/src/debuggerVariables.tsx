@@ -118,6 +118,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         }
 
         const previewVar = this.getVariableById(preview?.id);
+        const previewLabel = previewVar && lf("Current value for '{0}'", previewVar.name);
 
         return <div>
             <DebuggerTable header={variableTableHeader} placeholderText={placeholderText}>
@@ -129,6 +130,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                     className="debugger-preview"
                     ref={this.handlePreviewRef}
                     tabIndex={0}
+                    aria-label={previewLabel}
                     style={{
                         top: `${preview.top}px`,
                         left: `${preview.left}px`
