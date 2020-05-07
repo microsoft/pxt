@@ -1121,7 +1121,6 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
     }
 
     renderCore() {
-
         const pullRequest = this.pullRequestStatus();
         const mergeable = pullRequest.mergeable === "MERGEABLE";
         const open = pullRequest.state === "OPEN";
