@@ -37,13 +37,13 @@ export class Editor extends srceditor.Editor {
     chartRoot: HTMLElement
 
     getId() {
-        return "serialEditor"
+        return "serialEditor";
     }
 
     hasHistory() { return false; }
 
     hasEditorToolbar() {
-        return false
+        return true;
     }
 
     setVisible(b: boolean) {
