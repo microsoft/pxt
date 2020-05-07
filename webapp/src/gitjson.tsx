@@ -1125,16 +1125,17 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
                     <i className="icon green inverted circular check" />
                     {lf("This branch has no conflicts with the base branch.")}
                 </div>
-                <div>{lf("Merging can be performed automatically.")}</div>
             </div>}
             <div className="ui field">
                 <sui.Button className="green" text={lf("Merge changes")}
                     loading={mergeableUnknown}
                     disabled={mergeable}
                     onClick={this.handleMergeClick} onKeyDown={sui.fireClickOnEnter} />
-                <span className="inline-help">{lf("Merge your changes as a single commit into the base branch.")}
-                    {sui.helpIconLink("/github/commit", lf("Learn about merging pull requests in GitHub."))}
-                </span>
+                {mergeable &&
+                    <span className="inline-help">{lf("Merge your changes as a single commit into the base branch.")}
+                        {sui.helpIconLink("/github/commit", lf("Learn about merging pull requests in GitHub."))}
+                    </span>}
+                {mergeableUnknown && <span className="inline-help">{lf("Checking if this branch has conflicts with the base branch.")}</span>}
             </div>
         </div>
     }
