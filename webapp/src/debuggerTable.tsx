@@ -35,19 +35,21 @@ export interface DebuggerTableRowProps {
     leftClass?: string;
     depth?: number;
     rowClass?: string;
+    describedBy?: string;
 
     onClick?: (e: React.SyntheticEvent<HTMLDivElement>, component: DebuggerTableRow) => void;
+    onValueClick?: (e: React.SyntheticEvent<HTMLDivElement>, component: DebuggerTableRow) => void;
 }
 
 export class DebuggerTableRow extends React.Component<DebuggerTableRowProps> {
     render() {
-        return <div role="listitem" className={`item ${this.props.rowClass || ""}`} onClick={this.props.onClick ? this.clickHandler : undefined}>
+        return <div role="listitem" className={`item ${this.props.rowClass || ""}`} onClick={this.props.onClick ? this.clickHandler : undefined} aria-describedby={this.props.describedBy}>
             <div className="variableAndValue">
                 <div className={`variable varname ${this.props.leftClass || ""}`} title={this.props.leftTitle} style={this.props.depth ? { marginLeft: (this.props.depth * 0.75) + "em" } : undefined}>
                     { <i className={`ui icon small ${this.props.icon || "invisible"}`} /> }
                     <span>{this.props.leftText}</span>
                 </div>
-                <div className="variable detail" style={{ padding: 0.2 }} title={this.props.rightTitle}>
+                <div className="variable detail" style={{ padding: 0.2 }} title={this.props.rightTitle} onClick={this.valueClickHandler}>
                     <span className={`varval ${this.props.rightClass || ""}`}>{this.props.rightText}</span>
                 </div>
             </div>
@@ -56,5 +58,9 @@ export class DebuggerTableRow extends React.Component<DebuggerTableRowProps> {
 
     protected clickHandler = (e: React.SyntheticEvent<HTMLDivElement>) => {
         if (this.props.onClick) this.props.onClick(e, this);
+    }
+
+    protected valueClickHandler = (e: React.SyntheticEvent<HTMLDivElement>) => {
+        if (this.props.onValueClick) this.props.onValueClick(e, this);
     }
 }
