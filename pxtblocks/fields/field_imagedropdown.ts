@@ -127,8 +127,7 @@ namespace pxtblockly {
 
             Blockly.DropDownDiv.setColour(this.backgroundColour_, this.borderColour_);
 
-            Blockly.DropDownDiv.showPositionedByBlock(
-                this, this.sourceBlock_, this.onHide_.bind(this));
+            Blockly.DropDownDiv.showPositionedByField(this, this.onHide_.bind(this));
 
             let source = this.sourceBlock_ as Blockly.BlockSvg;
             this.savedPrimary_ = source?.getColour();
