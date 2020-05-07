@@ -701,7 +701,9 @@ namespace pxt.github {
             has_issues: true, // default
             has_projects: false,
             has_wiki: false,
-            allow_rebase_merge: false
+            allow_rebase_merge: false,
+            allow_merge_commit: false,
+            delete_branch_on_merge: true
         }).then(v => mkRepo(v, null))
     }
 
