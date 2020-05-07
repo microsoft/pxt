@@ -340,6 +340,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         this.resize = this.resize.bind(this);
         this.listenToErrorChanges = this.listenToErrorChanges.bind(this);
+        this.goToError = this.goToError.bind(this);
     }
 
     hasBlocks() {
@@ -580,7 +581,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setInsertionSnippet={this.setInsertionSnippet}
                             parent={this.parent} />
                     </div>
-                    {showErrorList ? <ErrorList onSizeChange={this.resize} listenToErrorChanges={this.listenToErrorChanges} /> : undefined}
+                    {showErrorList ? <ErrorList onSizeChange={this.resize} listenToErrorChanges={this.listenToErrorChanges} goToError={this.goToError}/> : undefined}
                 </div>
             </div>
         )
@@ -588,6 +589,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     listenToErrorChanges(handlerKey: string, handler: (errors: pxtc.KsDiagnostic[]) => void) {
         this.errorChangesListeners[handlerKey] = handler;
+    }
+
+    goToError(line: number, column: number) {
+        this.editor.revealLineInCenterIfOutsideViewport(line, monaco.editor.ScrollType.Smooth);
+        this.editor.setPosition({column: column, lineNumber: line});
+        this.editor.focus();
     }
 
     private onErrorChanges(errors: pxtc.KsDiagnostic[]) {

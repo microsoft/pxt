@@ -6,6 +6,7 @@ import * as sui from "./sui";
 export interface ErrorListProps {
     onSizeChange: () => void,
     listenToErrorChanges: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void,
+    goToError: (line: number, column: number) => void
 }
 export interface ErrorListState {
     isCollapsed: boolean
@@ -24,6 +25,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
         this.onCollapseClick = this.onCollapseClick.bind(this)
         this.onErrorsChanged = this.onErrorsChanged.bind(this)
+        this.onErrorMessageClick = this.onErrorMessageClick.bind(this)
 
         props.listenToErrorChanges("errorList", this.onErrorsChanged);
     }
@@ -46,8 +48,12 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             {!isCollapsed && collapseButton}
         </div>
 
-        const errorListContent = (errors).map(e =>
-            <div key={errorKey(e)} className="errorMessage">{`${e.messageText} ${lf("at line {0}", e.line + 1)}`}</div>)
+        const createOnErrorMessageClick = (e: pxtc.KsDiagnostic, index: number) => () => this.onErrorMessageClick(index, e.line + 1, e.column + 1)
+
+        const errorListContent = (errors).map((e, index) =>
+            <div key={errorKey(e)} className="errorMessage" role="button" onClick={createOnErrorMessageClick(e, index)}>
+                {`${e.messageText} ${lf("at line {0}", e.line + 1)}`}
+            </div>)
 
         return <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''}`}
                     onClick={isCollapsed ? this.onCollapseClick : null}
@@ -69,9 +75,15 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     }
 
     onCollapseClick() {
+        pxt.tickEvent('errorlist.collapse', null, { interactiveConsent: true })
         this.setState({
             isCollapsed: !this.state.isCollapsed
         })
+    }
+
+    onErrorMessageClick(index: number, line: number, column: number) {
+        pxt.tickEvent('errorlist.goto', {errorIndex: index}, { interactiveConsent: true });
+        this.props.goToError(line, column)
     }
 
     onErrorsChanged(errors: pxtc.KsDiagnostic[]) {

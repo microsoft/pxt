@@ -1,19 +1,15 @@
-@total-height: 16em;
-@header-height: 4em;
-@inner-height: (@total-height - @header-height);
-@collapsed-errors-hover-color: rgba(0, 0, 0, 0.02);
-@border-color: #e5e5e5;
+@import 'themes/pxt/globals/site.variables';
 
 // Expanded error list
 .errorList {
     position: relative;
-    max-height: @total-height;
-    min-height: @total-height;
-    border-top: 2px @border-color solid;
+    max-height: @errorListHeight;
+    min-height: @errorListHeight;
+    border-top: 2px @errorListBorderColor solid;
 
     .errorListHeader {
         padding: 1em;
-        height: @header-height;
+        height: @errorListHeaderHeight;
         margin-bottom: 0;
 
         h4 {
@@ -43,12 +39,17 @@
     }
 
     .errorListInner {
-        height: @inner-height;
-        padding: 0 1em 1em 1em;
+        height: @errorListInnerHeight;
+        padding: 0 0 1em 0;
         overflow-y: scroll;
 
         .errorMessage {
-            padding: 0.1em;
+            padding: 0.1em 1em;
+
+            &:hover {
+                cursor: pointer;
+                background-color: @errorListMessageHoverColor;
+            }
         }
     }
 }
@@ -59,6 +60,6 @@
 
     &:hover {
         cursor: pointer;
-        background-color: @collapsed-errors-hover-color;
+        background-color: @errorListMessageHoverColor;
     }
 }
