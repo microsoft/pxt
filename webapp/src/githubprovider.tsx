@@ -22,7 +22,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
         }
     }
 
-    private clearToken() {
+    clearToken() {
         pxt.github.token = undefined;
         super.logout();
     }

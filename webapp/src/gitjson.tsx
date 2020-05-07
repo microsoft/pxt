@@ -278,8 +278,11 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         else if (e.isMergeConflictMarkerError) {
             pxt.tickEvent("github.commitwithconflicts");
             core.warningNotification(lf("Please merge all conflicts before commiting changes."))
-        } else if (statusCode == 401)
-            core.warningNotification(lf("GitHub access token looks invalid; sign out and try again."));
+        } else if (statusCode == 401) {
+            cloudsync.githubProvider().clearToken();
+            this.forceUpdate();
+            core.warningNotification(lf("Please sign in to GitHub again."));
+        }
         else if (statusCode == 404)
             core.warningNotification(lf("GitHub resource not found; please check that it still exists."));
         else if (statusCode == 403)
@@ -513,7 +516,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     private async handlePullRequest() {
         const title = await core.promptAsync({
             header: lf("Create pull request"),
-            body: lf("Pull requests let you tell others about changes you've pushed to a branch in a repository on GitHub."),
+            jsx: <p>{lf("Pull requests let you tell others about changes you've pushed to a branch in a repository on GitHub.")}</p>,
             helpUrl: "/github/pull-request",
             hasCloseIcon: true,
             hideCancel: true,
@@ -528,7 +531,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                 `
 ### ${lf("How to use this pull request")}
 
-- [ ] ${lf("assign a reviewer")}
+- [ ] ${lf("assign a reviewer (you can be your own reviewer)")}
 - [ ] ${lf("reviewer approves or request changes")}
 - [ ] ${lf("apply requested changes if any")}
 - [ ] ${lf("merge once approved")}
