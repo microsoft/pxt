@@ -116,7 +116,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         await f.setContentAsync(JSON.stringify(gs, null, 4))
     }
 
-    private async switchToBranchAsync(newBranch: string) {
+    async switchToBranchAsync(newBranch: string) {
         const { header } = this.props.parent.state;
         const gs = this.getGitJson();
         const parsed = this.parsedRepoId()
@@ -398,7 +398,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
     }
 
-    private async pullAsync() {
+    async pullAsync() {
         this.showLoading("github.pull", false, lf("pulling changes from GitHub..."));
         const { header } = this.props.parent.state;
         try {
@@ -1103,12 +1103,20 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
     }
 
     private handleMergeClick() {
+        pxt.tickEvent("github.merge", null, { interactiveConsent: true });
 
+        const { gs } = this.props;
+        const header = this.props.parent.props.parent.state.header;
+        const pr: pxt.github.PullRequest = this.props.parent.getData("pkg-git-pr:" + header.id)
+        core.showLoading("github.merge", lf("merging pull request..."))
+        pxt.github.mergeAsync(gs.repo, pr.base, gs.commit.sha)
+            .then(() => this.props.parent.switchBranchAsync())
+            .then(() => this.props.parent.pullAsync())
+            .then(() => core.handleNetworkError)
+            .finally(() => core.hideLoading("github.merge"))
     }
 
     renderCore() {
-        const { githubId } = this.props;
-        const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
 
         const pullRequest = this.pullRequestStatus();
         const mergeable = pullRequest.mergeable === "MERGEABLE";
