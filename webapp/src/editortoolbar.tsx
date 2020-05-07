@@ -233,8 +233,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const simOpts = pxt.appTarget.simulator;
         const headless = simOpts.headless;
         const collapsed = (hideEditorFloats && headless) || collapseEditorTools;
-        const isEditor = this.props.parent.isBlocksEditor() || this.props.parent.isTextEditor();
-        if (!isEditor) return <div />;
+        // editor decide what to be done
 
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
         const ghid = header && pxt.github.parseRepoId(header.githubId);

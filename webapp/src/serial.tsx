@@ -42,10 +42,6 @@ export class Editor extends srceditor.Editor {
 
     hasHistory() { return false; }
 
-    hasEditorToolbar() {
-        return true;
-    }
-
     setVisible(b: boolean) {
         if (this.parent.state.highContrast !== this.highContrast) {
             this.setHighContrast(this.parent.state.highContrast)
