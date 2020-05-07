@@ -1367,86 +1367,86 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
             .finally(() => this.setState({ loading: false }))
     }
 
-    private computeDiffAsync(commit: pxt.github.Commit): Promise<DiffFile[{
+    private computeDiffAsync(commit: pxt.github.Commit): Promise<DiffFile[]> {
         const { githubId } = this.props;
-const files = pkg.mainEditorPkg().sortedFiles();
-const oldFiles: pxt.Map<string> = {};
+        const files = pkg.mainEditorPkg().sortedFiles();
+        const oldFiles: pxt.Map<string> = {};
 
-return Promise.all(
-    files.map(p => {
-        const path = p.name;
-        const oldEnt = pxt.github.lookupFile(commit, path);
-        if (!oldEnt) return Promise.resolve();
-        return pxt.github.downloadTextAsync(githubId.fullName, commit.sha, path)
-            .then(content => { oldFiles[path] = content; });
-    }))
-    .then(() => files.map(p => {
-        const path = p.name;
-        const oldContent = oldFiles[path];
-        const isBlocks = /\.blocks$/.test(path);
-        const newContent = p.publishedContent();
-        const hasChanges = oldContent !== newContent;
-        if (!hasChanges) return undefined;
-        const df: DiffFile = {
-            file: p,
-            name: p.name,
-            gitFile: oldContent,
-            editorFile: newContent
-        }
-        if (isBlocks && pxt.blocks.needsDecompiledDiff(oldContent, newContent)) {
-            const vpn = p.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME);
-            const virtualNewFile = files.find(ff => ff.name == vpn);
-            const virtualOldContent = oldFiles[vpn];
-            if (virtualNewFile && virtualOldContent) {
-                df.tsEditorFile = virtualNewFile.publishedContent();
-                df.tsGitFile = virtualOldContent;
-            }
-        }
-        return df;
-    })).then(diffs => diffs.filter(df => !!df));
+        return Promise.all(
+            files.map(p => {
+                const path = p.name;
+                const oldEnt = pxt.github.lookupFile(commit, path);
+                if (!oldEnt) return Promise.resolve();
+                return pxt.github.downloadTextAsync(githubId.fullName, commit.sha, path)
+                    .then(content => { oldFiles[path] = content; });
+            }))
+            .then(() => files.map(p => {
+                const path = p.name;
+                const oldContent = oldFiles[path];
+                const isBlocks = /\.blocks$/.test(path);
+                const newContent = p.publishedContent();
+                const hasChanges = oldContent !== newContent;
+                if (!hasChanges) return undefined;
+                const df: DiffFile = {
+                    file: p,
+                    name: p.name,
+                    gitFile: oldContent,
+                    editorFile: newContent
+                }
+                if (isBlocks && pxt.blocks.needsDecompiledDiff(oldContent, newContent)) {
+                    const vpn = p.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME);
+                    const virtualNewFile = files.find(ff => ff.name == vpn);
+                    const virtualOldContent = oldFiles[vpn];
+                    if (virtualNewFile && virtualOldContent) {
+                        df.tsEditorFile = virtualNewFile.publishedContent();
+                        df.tsGitFile = virtualOldContent;
+                    }
+                }
+                return df;
+            })).then(diffs => diffs.filter(df => !!df));
     }
 
-handleRestore(e: React.MouseEvent<HTMLElement>) {
-    e.stopPropagation();
-    pxt.tickEvent("github.restore", undefined, { interactiveConsent: true })
+    handleRestore(e: React.MouseEvent<HTMLElement>) {
+        e.stopPropagation();
+        pxt.tickEvent("github.restore", undefined, { interactiveConsent: true })
         const { commit } = this.props;
-    core.confirmAsync({
-        header: lf("Would you like to restore this commit?"),
-        body: lf("You will restore your project to the point in time when this commit was made. Don't worry, you can undo this action by restoring to the previous commit."),
-        agreeLbl: lf("Restore"),
-        agreeClass: "green",
-    }).then(r => {
-        if (!r) return;
-        core.showLoading("github.restore", lf("restoring commit..."))
-        workspace.restoreCommitAsync(this.props.parent.props.parent.state.header, commit)
-            .then(() => {
-                data.invalidate("gh-commits:*");
-                return this.props.parent.props.parent.reloadHeaderAsync();
-            })
-            .finally(() => core.hideLoading("github.restore"))
-    })
+        core.confirmAsync({
+            header: lf("Would you like to restore this commit?"),
+            body: lf("You will restore your project to the point in time when this commit was made. Don't worry, you can undo this action by restoring to the previous commit."),
+            agreeLbl: lf("Restore"),
+            agreeClass: "green",
+        }).then(r => {
+            if (!r) return;
+            core.showLoading("github.restore", lf("restoring commit..."))
+            workspace.restoreCommitAsync(this.props.parent.props.parent.state.header, commit)
+                .then(() => {
+                    data.invalidate("gh-commits:*");
+                    return this.props.parent.props.parent.reloadHeaderAsync();
+                })
+                .finally(() => core.hideLoading("github.restore"))
+        })
         return false;
-}
+    }
 
     renderCore() {
-    const { parent, commit, expanded, onClick, githubId } = this.props;
-    const { diffFiles, loading } = this.state;
-    const date = new Date(Date.parse(commit.author.date));
+        const { parent, commit, expanded, onClick, githubId } = this.props;
+        const { diffFiles, loading } = this.state;
+        const date = new Date(Date.parse(commit.author.date));
 
-    if(expanded && !diffFiles && !loading)
-this.loadDiffFilesAsync();
+        if (expanded && !diffFiles && !loading)
+            this.loadDiffFilesAsync();
 
-return <div className={`ui item link`} role="button" onClick={onClick} onKeyDown={sui.fireClickOnEnter}>
-    <div className="content">
-        {expanded && <sui.Button loading={loading} className="right floated" text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />}
-        <div className="meta">
-            <span>{date.toLocaleTimeString()}</span>
+        return <div className={`ui item link`} role="button" onClick={onClick} onKeyDown={sui.fireClickOnEnter}>
+            <div className="content">
+                {expanded && <sui.Button loading={loading} className="right floated" text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />}
+                <div className="meta">
+                    <span>{date.toLocaleTimeString()}</span>
+                </div>
+                <div className="description">{commit.message}</div>
+                {expanded && diffFiles && <div className="ui inverted segment">{lf("Comparing selected commit with local files")}</div>}
+                {expanded && diffFiles && <DiffView parent={parent} blocksMode={false} diffFiles={diffFiles} cacheKey={commit.sha} />}
+            </div>
         </div>
-        <div className="description">{commit.message}</div>
-        {expanded && diffFiles && <div className="ui inverted segment">{lf("Comparing selected commit with local files")}</div>}
-        {expanded && diffFiles && <DiffView parent={parent} blocksMode={false} diffFiles={diffFiles} cacheKey={commit.sha} />}
-    </div>
-</div>
     }
 }
 
@@ -1477,7 +1477,7 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
         const loading = expanded && !commits;
 
         // group commits by day
-        const days: pxt.Map<pxt.github.CommitInfo[{};
+        const days: pxt.Map<pxt.github.CommitInfo[]> = {};
         if (commits)
             commits.forEach(commit => {
                 const day = new Date(Date.parse(commit.author.date)).toLocaleDateString();
