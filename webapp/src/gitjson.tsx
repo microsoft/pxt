@@ -632,10 +632,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                 <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
                 <div className="ui form">
                     {showPrResolved &&
-                        <a href={`https://github.com/${githubId.fullName}/pull/${pr.number}`} role="button" className="ui tiny basic button create-pr"
-                            target="_blank" rel="noopener noreferrer">
-                            {lf("Pull request (#{0})", pr.number)}
-                        </a>}
+                        <sui.Link href={`https://github.com/${githubId.fullName}/pull/${pr.number}`} role="button" className="ui tiny basic button create-pr"
+                            target="_blank" text={lf("Pull request (#{0})", pr.number)} icon="external alternate" />}
                     {showPrCreate &&
                         <sui.Button className="tiny basic create-pr" text={lf("Pull request")} onClick={this.handlePullRequest} />
                     }
@@ -645,7 +643,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                         <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
                     </h3>
                     {needsCommit && <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
-                    {showPrResolved && <PullRequestZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
+                    {showPrResolved && !needsCommit && <PullRequestZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {diffFiles && <DiffView parent={this} diffFiles={diffFiles} cacheKey={gs.commit.sha} allowRevert={true} showWhitespaceDiff={true} blocksMode={isBlocksMode} showConflicts={true} />}
                     <HistoryZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
                     {master && <ReleaseZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
@@ -1072,7 +1070,7 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
                     error={descrError} />
             </div>
             <div className="ui field">
-                <sui.Button className="primary" text={lf("Commit & push changes")} icon="long arrow alternate up" onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
+                <sui.Button className="green" text={lf("Commit & push changes")} icon="long arrow alternate up" onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
                 <span className="inline-help">{lf("Save your changes in GitHub.")}
                     {sui.helpIconLink("/github/commit", lf("Learn about commiting and pushing code into GitHub."))}
                 </span>
@@ -1084,6 +1082,7 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
 class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
     constructor(props: GitHubViewProps) {
         super(props);
+        this.handleMergeClick = this.handleMergeClick.bind(this);
     }
 
     private scheduleRefreshPullRequestStatus = pxtc.Util.debounce(() => {
@@ -1103,6 +1102,9 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
         return pr;
     }
 
+    private handleMergeClick() {
+
+    }
 
     renderCore() {
         const { githubId } = this.props;
@@ -1110,31 +1112,31 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
 
         const pullRequest = this.pullRequestStatus();
         const mergeable = pullRequest.mergeable === "MERGEABLE";
+        const mergeableUnknown = pullRequest.mergeable === "UNKNOWN";
         const closed = pullRequest.state === "CLOSED";
 
-        return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
-            <div className="ui header">
-                {lf("Pull Request")}
-                <a href={`https://github.com/${githubId.fullName}/pull/${pullRequest.number}`} role="button" className="ui tiny basic button create-pr"
-                    target="_blank" rel="noopener noreferrer">
-                    {lf("#{0}", pullRequest.number)}
-                </a>
-            </div>
-            {mergeable &&
-                <div className="ui field">
-                    <sui.Button className="basic button"
-                        inverted={inverted}
-                        text={lf("Merge")} />
-                    <span className="inline-help">
-                        {lf("Blend your code changes back into the master branch and close this pull requeset.")}
-                        {sui.helpIconLink("/github/pull-requests", lf("Learn about Pull Requests."))}
-                    </span>
-                </div>}
+        return <div className="ui segment green">
             {closed &&
                 <div className="ui field">
                     {lf("This Pull Request is closed!")}
                 </div>}
-        </div>;
+            {mergeable && <div className="ui field">
+                <div className="ui header">
+                    <i className="icon green inverted circular check" />
+                    {lf("This branch has no conflicts with the base branch.")}
+                </div>
+                <div>{lf("Merging can be performed automatically.")}</div>
+            </div>}
+            <div className="ui field">
+                <sui.Button className="green" text={lf("Merge changes")}
+                    loading={mergeableUnknown}
+                    disabled={mergeable}
+                    onClick={this.handleMergeClick} onKeyDown={sui.fireClickOnEnter} />
+                <span className="inline-help">{lf("Merge your changes as a single commit into the base branch.")}
+                    {sui.helpIconLink("/github/commit", lf("Learn about merging pull requests in GitHub."))}
+                </span>
+            </div>
+        </div>
     }
 }
 
