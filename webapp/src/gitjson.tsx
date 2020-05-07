@@ -632,7 +632,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                 <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
                 <div className="ui form">
                     {showPrResolved &&
-                        <sui.Link href={`https://github.com/${githubId.fullName}/pull/${pr.number}`} role="button" className="ui tiny basic button create-pr"
+                        <sui.Link href={pr.url} role="button" className="ui tiny basic button create-pr"
                             target="_blank" text={lf("Pull request (#{0})", pr.number)} icon="external alternate" />}
                     {showPrCreate &&
                         <sui.Button className="tiny basic create-pr" text={lf("Pull request")} onClick={this.handlePullRequest} />
@@ -1137,7 +1137,7 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
             <div className="ui field">
                 <sui.Button className="green" text={lf("Merge changes")}
                     loading={mergeableUnknown}
-                    disabled={mergeable}
+                    disabled={!mergeable}
                     onClick={this.handleMergeClick} onKeyDown={sui.fireClickOnEnter} />
                 {mergeable &&
                     <span className="inline-help">{lf("Merge your changes as a single commit into the base branch.")}
