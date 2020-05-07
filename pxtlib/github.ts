@@ -414,14 +414,15 @@ namespace pxt.github {
         return res.html_url as string
     }
 
-    export function mergeAsync(repopath: string, branch: string, commitid: string) {
+    export function mergeAsync(repopath: string, base: string, head: string, message?: string) {
         return ghRequestAsync({
             url: "https://api.github.com/repos/" + repopath + "/merges",
             method: "POST",
             allowHttpErrors: true,
             data: {
-                base: branch,
-                head: commitid
+                base,
+                head,
+                commit_message: message
             }
         }).then(resp => {
             if (resp.statusCode == 201 || resp.statusCode == 204)
@@ -700,7 +701,9 @@ namespace pxt.github {
             has_issues: true, // default
             has_projects: false,
             has_wiki: false,
-            allow_rebase_merge: false
+            allow_rebase_merge: false,
+            allow_merge_commit: false,
+            delete_branch_on_merge: true
         }).then(v => mkRepo(v, null))
     }
 
@@ -1074,6 +1077,10 @@ namespace pxt.github {
 
     export interface PullRequest {
         number: number;
+        url?: string;
+        title?: string;
+        base?: string;
+        isDraft?: boolean;
         state?: "OPEN" | "CLOSED" | "MERGED";
         mergeable?: "MERGEABLE" | "CONFLICTING" | "UNKNOWN";
     }
@@ -1095,6 +1102,9 @@ namespace pxt.github {
                     number
                     state
                     mergeable
+                    baseRefName
+                    url
+                    isDraft
                 }
             }
         }
@@ -1128,7 +1138,10 @@ namespace pxt.github {
                     return {
                         number: node.number,
                         mergeable: node.mergeable,
-                        state: node.state
+                        state: node.state,
+                        title: node.title,
+                        url: node.url,
+                        base: node.baseRefName
                     }
                 }
                 return {

@@ -773,6 +773,10 @@ data.mountVirtualApi("pkg-git-pull-status", {
     expirationTime: p => 3600 * 1000
 })
 
+export function invalidatePullRequestStatus(hd: pxt.workspace.Header) {
+    data.invalidateHeader("pkg-git-pr", hd)
+}
+
 data.mountVirtualApi("pkg-git-pr", {
     getAsync: p => {
         const missing = <pxt.github.PullRequest>{
