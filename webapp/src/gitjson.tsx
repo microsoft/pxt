@@ -123,7 +123,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         header.githubId = parsed.fullName + "#" + newBranch
         gs.repo = header.githubId
         await this.saveGitJsonAsync(gs)
-        data.invalidateHeader("pkg-git-pr", header);
+        pkg.invalidatePullRequestStatus(header);
     }
 
     private async newBranchAsync() {
@@ -473,6 +473,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             // skip bump in this case - we don't know if it was merged
         } else {
             pkg.invalidatePagesStatus(header);
+            pkg.invalidatePullRequestStatus(header);
             // maybe needs a reload
             await this.maybeReloadAsync();
         }
@@ -1085,10 +1086,29 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
         super(props);
     }
 
+    private scheduleRefreshPullRequestStatus = pxtc.Util.debounce(() => {
+        const header = this.props.parent.props.parent.state.header;
+        if (!header) return;
+        pkg.invalidatePullRequestStatus(header);
+        this.pullRequestStatus();
+    }, 10000, false);
+
+    private pullRequestStatus() {
+        const header = this.props.parent.props.parent.state.header;
+        const pr: pxt.github.PullRequest = this.props.parent.getData("pkg-git-pr:" + header.id)
+
+        // schedule a refresh
+        if (pr && pr.mergeable === "UNKNOWN")
+            this.scheduleRefreshPullRequestStatus();
+        return pr;
+    }
+
+
     renderCore() {
-        const { githubId, pullRequest } = this.props;
+        const { githubId } = this.props;
         const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
 
+        const pullRequest = this.pullRequestStatus();
         const mergeable = pullRequest.mergeable === "MERGEABLE";
         const closed = pullRequest.state === "CLOSED";
 
@@ -1152,6 +1172,7 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
 
     private scheduleRefreshPageStatus = pxtc.Util.debounce(() => {
         const header = this.props.parent.props.parent.state.header;
+        if (!header) return;
         pkg.invalidatePagesStatus(header);
         this.pagesStatus();
     }, 10000, false);
