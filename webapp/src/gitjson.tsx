@@ -1105,12 +1105,12 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
     private handleMergeClick() {
         pxt.tickEvent("github.merge", null, { interactiveConsent: true });
 
-        const { gs } = this.props;
+        const { githubId } = this.props;
         const header = this.props.parent.props.parent.state.header;
         const pr: pxt.github.PullRequest = this.props.parent.getData("pkg-git-pr:" + header.id)
         core.showLoading("github.merge", lf("merging pull request..."))
-        pxt.github.mergeAsync(gs.repo, pr.base, gs.commit.sha)
-            .then(() => this.props.parent.switchBranchAsync())
+        pxt.github.mergeAsync(githubId.fullName, pr.base, githubId.tag)
+            .then(() => this.props.parent.switchToBranchAsync(pr.base))
             .then(() => this.props.parent.pullAsync())
             .then(() => core.handleNetworkError)
             .finally(() => core.hideLoading("github.merge"))
