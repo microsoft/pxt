@@ -986,27 +986,11 @@ ${content}
 class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
     constructor(props: GitHubViewProps) {
         super(props)
-        this.handleSwitchBranch = this.handleSwitchBranch.bind(this);
-    }
-
-    private handleSwitchBranch(e: React.MouseEvent<HTMLElement>) {
-        pxt.tickEvent("github.branch.switch");
-        e.stopPropagation();
-        this.props.parent.switchBranchAsync().done();
     }
 
     renderCore() {
         const { needsCommitMessage } = this.props.parent.state;
-        const { pullStatus, pullRequest } = this.props;
-
-        if (pullRequest && pullRequest.number > 0 && pullRequest.state == "MERGED")
-            return <div className="ui icon warning message">
-                <i className="exclamation circle icon"></i>
-                <div className="content">
-                    {lf("This pull request has been merged.")}
-                    <span role="button" className="ui link" onClick={this.handleSwitchBranch} onKeyDown={sui.fireClickOnEnter}>{lf("Switch branch")}</span>
-                </div>
-            </div>
+        const { pullStatus } = this.props;
 
         if (pullStatus == workspace.PullStatus.BranchNotFound)
             return <div className="ui icon warning message">
@@ -1083,6 +1067,13 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
     constructor(props: GitHubViewProps) {
         super(props);
         this.handleMergeClick = this.handleMergeClick.bind(this);
+        this.handleSwitchBranch = this.handleSwitchBranch.bind(this);
+    }
+
+    private handleSwitchBranch(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("github.branch.switch");
+        e.stopPropagation();
+        this.props.parent.switchBranchAsync().done();
     }
 
     private scheduleRefreshPullRequestStatus = pxtc.Util.debounce(() => {
@@ -1097,13 +1088,14 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
         const pr: pxt.github.PullRequest = this.props.parent.getData("pkg-git-pr:" + header.id)
 
         // schedule a refresh
-        if (pr && pr.mergeable === "UNKNOWN")
+        if (pr?.mergeable === "UNKNOWN" && pr?.state === "OPEN")
             this.scheduleRefreshPullRequestStatus();
         return pr;
     }
 
-    private handleMergeClick() {
+    private handleMergeClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.merge", null, { interactiveConsent: true });
+        e.stopPropagation();
 
         const { githubId } = this.props;
         const header = this.props.parent.props.parent.state.header;
@@ -1120,21 +1112,27 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
 
         const pullRequest = this.pullRequestStatus();
         const mergeable = pullRequest.mergeable === "MERGEABLE";
-        const mergeableUnknown = pullRequest.mergeable === "UNKNOWN";
+        const open = pullRequest.state === "OPEN";
         const closed = pullRequest.state === "CLOSED";
+        const merged = pullRequest.state === "MERGED";
+        const mergeableUnknown = open && pullRequest.mergeable === "UNKNOWN";
 
         return <div className="ui segment green">
-            {closed &&
-                <div className="ui field">
-                    {lf("This Pull Request is closed!")}
-                </div>}
+            {closed || merged && <div className="ui icon warning message">
+                <i className="exclamation circle icon"></i>
+                <div className="content">
+                    {closed && lf("This Pull Request is closed!")}
+                    {merged && lf("This pull request has been merged.")}
+                    <span role="button" className="ui link" onClick={this.handleSwitchBranch} onKeyDown={sui.fireClickOnEnter}>{lf("Switch branch")}</span>
+                </div>
+            </div>}
             {mergeable && <div className="ui field">
                 <div className="ui header">
                     <i className="icon green inverted circular check" />
                     {lf("This branch has no conflicts with the base branch.")}
                 </div>
             </div>}
-            <div className="ui field">
+            {mergeableUnknown || mergeable && <div className="ui field">
                 <sui.Button className="green" text={lf("Merge changes")}
                     loading={mergeableUnknown}
                     disabled={!mergeable}
@@ -1144,7 +1142,7 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
                         {sui.helpIconLink("/github/commit", lf("Learn about merging pull requests in GitHub."))}
                     </span>}
                 {mergeableUnknown && <span className="inline-help">{lf("Checking if this branch has conflicts with the base branch.")}</span>}
-            </div>
+            </div>}
         </div>
     }
 }
