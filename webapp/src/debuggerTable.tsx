@@ -49,7 +49,7 @@ export class DebuggerTableRow extends React.Component<DebuggerTableRowProps> {
                     { <i className={`ui icon small ${this.props.icon || "invisible"}`} /> }
                     <span>{this.props.leftText}</span>
                 </div>
-                <div className="variable detail" style={{ padding: 0.2 }} title={this.props.rightTitle} onClick={this.valueClickHandler}>
+                <div className="variable detail" role="button" style={{ padding: 0.2 }} title={this.props.rightTitle} onClick={this.valueClickHandler}>
                     <span className={`varval ${this.props.rightClass || ""}`}>{this.props.rightText}</span>
                 </div>
             </div>
