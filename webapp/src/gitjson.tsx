@@ -986,11 +986,30 @@ ${content}
 class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
     constructor(props: GitHubViewProps) {
         super(props)
+        this.handleSwitchBranch = this.handleSwitchBranch.bind(this);
+    }
+
+    private handleSwitchBranch(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("github.branch.switch");
+        e.stopPropagation();
+        this.props.parent.switchBranchAsync().done();
     }
 
     renderCore() {
         const { needsCommitMessage } = this.props.parent.state;
-        const { pullStatus } = this.props;
+        const { pullStatus, pullRequest } = this.props;
+
+        const closed = pullRequest?.state == "CLOSED"
+        const merged = pullRequest?.state == "MERGED"
+        if (closed || merged)
+            return <div className="ui icon negative message">
+                <i className="exclamation circle icon"></i>
+                <div className="content">
+                    {closed && lf("This Pull Request is closed!")}
+                    {merged && lf("This pull request has been merged.")}
+                    <span role="button" className="ui link" onClick={this.handleSwitchBranch} onKeyDown={sui.fireClickOnEnter}>{lf("Switch branch")}</span>
+                </div>
+            </div>;
 
         if (pullStatus == workspace.PullStatus.BranchNotFound)
             return <div className="ui icon warning message">
@@ -1067,13 +1086,6 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
     constructor(props: GitHubViewProps) {
         super(props);
         this.handleMergeClick = this.handleMergeClick.bind(this);
-        this.handleSwitchBranch = this.handleSwitchBranch.bind(this);
-    }
-
-    private handleSwitchBranch(e: React.MouseEvent<HTMLElement>) {
-        pxt.tickEvent("github.branch.switch");
-        e.stopPropagation();
-        this.props.parent.switchBranchAsync().done();
     }
 
     private scheduleRefreshPullRequestStatus = pxtc.Util.debounce(() => {
@@ -1094,7 +1106,7 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
     }
 
     private handleMergeClick(e: React.MouseEvent<HTMLElement>) {
-        pxt.tickEvent("github.merge", null, { interactiveConsent: true });
+        pxt.tickEvent("github.pr.merge", null, { interactiveConsent: true });
         e.stopPropagation();
 
         const { githubId } = this.props;
@@ -1113,26 +1125,29 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
         const pullRequest = this.pullRequestStatus();
         const mergeable = pullRequest.mergeable === "MERGEABLE";
         const open = pullRequest.state === "OPEN";
-        const closed = pullRequest.state === "CLOSED";
-        const merged = pullRequest.state === "MERGED";
         const mergeableUnknown = open && pullRequest.mergeable === "UNKNOWN";
 
-        return <div className="ui segment green">
-            {closed || merged && <div className="ui icon warning message">
-                <i className="exclamation circle icon"></i>
-                <div className="content">
-                    {closed && lf("This Pull Request is closed!")}
-                    {merged && lf("This pull request has been merged.")}
-                    <span role="button" className="ui link" onClick={this.handleSwitchBranch} onKeyDown={sui.fireClickOnEnter}>{lf("Switch branch")}</span>
+        if (!open) return <div></div>; // handled elsewhere
+
+        if (!mergeable && !mergeableUnknown) {
+            return <div className="ui orange segment">
+                <div className="ui field">
+                    <div className="ui header">
+                        <i className="icon green inverted circular cross" />
+                        {lf("This branch has conflicts with the base branch.")}
+                    </div>
                 </div>
-            </div>}
+            </div>
+        }
+
+        return <div className="ui green segment">
             {mergeable && <div className="ui field">
                 <div className="ui header">
                     <i className="icon green inverted circular check" />
                     {lf("This branch has no conflicts with the base branch.")}
                 </div>
             </div>}
-            {mergeableUnknown || mergeable && <div className="ui field">
+            {(mergeableUnknown || mergeable) && <div className="ui field">
                 <sui.Button className="green" text={lf("Merge changes")}
                     loading={mergeableUnknown}
                     disabled={!mergeable}
@@ -1353,86 +1368,86 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
             .finally(() => this.setState({ loading: false }))
     }
 
-    private computeDiffAsync(commit: pxt.github.Commit): Promise<DiffFile[]> {
+    private computeDiffAsync(commit: pxt.github.Commit): Promise<DiffFile[{
         const { githubId } = this.props;
-        const files = pkg.mainEditorPkg().sortedFiles();
-        const oldFiles: pxt.Map<string> = {};
+const files = pkg.mainEditorPkg().sortedFiles();
+const oldFiles: pxt.Map<string> = {};
 
-        return Promise.all(
-            files.map(p => {
-                const path = p.name;
-                const oldEnt = pxt.github.lookupFile(commit, path);
-                if (!oldEnt) return Promise.resolve();
-                return pxt.github.downloadTextAsync(githubId.fullName, commit.sha, path)
-                    .then(content => { oldFiles[path] = content; });
-            }))
-            .then(() => files.map(p => {
-                const path = p.name;
-                const oldContent = oldFiles[path];
-                const isBlocks = /\.blocks$/.test(path);
-                const newContent = p.publishedContent();
-                const hasChanges = oldContent !== newContent;
-                if (!hasChanges) return undefined;
-                const df: DiffFile = {
-                    file: p,
-                    name: p.name,
-                    gitFile: oldContent,
-                    editorFile: newContent
-                }
-                if (isBlocks && pxt.blocks.needsDecompiledDiff(oldContent, newContent)) {
-                    const vpn = p.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME);
-                    const virtualNewFile = files.find(ff => ff.name == vpn);
-                    const virtualOldContent = oldFiles[vpn];
-                    if (virtualNewFile && virtualOldContent) {
-                        df.tsEditorFile = virtualNewFile.publishedContent();
-                        df.tsGitFile = virtualOldContent;
-                    }
-                }
-                return df;
-            })).then(diffs => diffs.filter(df => !!df));
+return Promise.all(
+    files.map(p => {
+        const path = p.name;
+        const oldEnt = pxt.github.lookupFile(commit, path);
+        if (!oldEnt) return Promise.resolve();
+        return pxt.github.downloadTextAsync(githubId.fullName, commit.sha, path)
+            .then(content => { oldFiles[path] = content; });
+    }))
+    .then(() => files.map(p => {
+        const path = p.name;
+        const oldContent = oldFiles[path];
+        const isBlocks = /\.blocks$/.test(path);
+        const newContent = p.publishedContent();
+        const hasChanges = oldContent !== newContent;
+        if (!hasChanges) return undefined;
+        const df: DiffFile = {
+            file: p,
+            name: p.name,
+            gitFile: oldContent,
+            editorFile: newContent
+        }
+        if (isBlocks && pxt.blocks.needsDecompiledDiff(oldContent, newContent)) {
+            const vpn = p.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME);
+            const virtualNewFile = files.find(ff => ff.name == vpn);
+            const virtualOldContent = oldFiles[vpn];
+            if (virtualNewFile && virtualOldContent) {
+                df.tsEditorFile = virtualNewFile.publishedContent();
+                df.tsGitFile = virtualOldContent;
+            }
+        }
+        return df;
+    })).then(diffs => diffs.filter(df => !!df));
     }
 
-    handleRestore(e: React.MouseEvent<HTMLElement>) {
-        e.stopPropagation();
-        pxt.tickEvent("github.restore", undefined, { interactiveConsent: true })
+handleRestore(e: React.MouseEvent<HTMLElement>) {
+    e.stopPropagation();
+    pxt.tickEvent("github.restore", undefined, { interactiveConsent: true })
         const { commit } = this.props;
-        core.confirmAsync({
-            header: lf("Would you like to restore this commit?"),
-            body: lf("You will restore your project to the point in time when this commit was made. Don't worry, you can undo this action by restoring to the previous commit."),
-            agreeLbl: lf("Restore"),
-            agreeClass: "green",
-        }).then(r => {
-            if (!r) return;
-            core.showLoading("github.restore", lf("restoring commit..."))
-            workspace.restoreCommitAsync(this.props.parent.props.parent.state.header, commit)
-                .then(() => {
-                    data.invalidate("gh-commits:*");
-                    return this.props.parent.props.parent.reloadHeaderAsync();
-                })
-                .finally(() => core.hideLoading("github.restore"))
-        })
+    core.confirmAsync({
+        header: lf("Would you like to restore this commit?"),
+        body: lf("You will restore your project to the point in time when this commit was made. Don't worry, you can undo this action by restoring to the previous commit."),
+        agreeLbl: lf("Restore"),
+        agreeClass: "green",
+    }).then(r => {
+        if (!r) return;
+        core.showLoading("github.restore", lf("restoring commit..."))
+        workspace.restoreCommitAsync(this.props.parent.props.parent.state.header, commit)
+            .then(() => {
+                data.invalidate("gh-commits:*");
+                return this.props.parent.props.parent.reloadHeaderAsync();
+            })
+            .finally(() => core.hideLoading("github.restore"))
+    })
         return false;
-    }
+}
 
     renderCore() {
-        const { parent, commit, expanded, onClick, githubId } = this.props;
-        const { diffFiles, loading } = this.state;
-        const date = new Date(Date.parse(commit.author.date));
+    const { parent, commit, expanded, onClick, githubId } = this.props;
+    const { diffFiles, loading } = this.state;
+    const date = new Date(Date.parse(commit.author.date));
 
-        if (expanded && !diffFiles && !loading)
-            this.loadDiffFilesAsync();
+    if(expanded && !diffFiles && !loading)
+this.loadDiffFilesAsync();
 
-        return <div className={`ui item link`} role="button" onClick={onClick} onKeyDown={sui.fireClickOnEnter}>
-            <div className="content">
-                {expanded && <sui.Button loading={loading} className="right floated" text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />}
-                <div className="meta">
-                    <span>{date.toLocaleTimeString()}</span>
-                </div>
-                <div className="description">{commit.message}</div>
-                {expanded && diffFiles && <div className="ui inverted segment">{lf("Comparing selected commit with local files")}</div>}
-                {expanded && diffFiles && <DiffView parent={parent} blocksMode={false} diffFiles={diffFiles} cacheKey={commit.sha} />}
-            </div>
+return <div className={`ui item link`} role="button" onClick={onClick} onKeyDown={sui.fireClickOnEnter}>
+    <div className="content">
+        {expanded && <sui.Button loading={loading} className="right floated" text={lf("Restore")} onClick={this.handleRestore} onKeyDown={sui.fireClickOnEnter} />}
+        <div className="meta">
+            <span>{date.toLocaleTimeString()}</span>
         </div>
+        <div className="description">{commit.message}</div>
+        {expanded && diffFiles && <div className="ui inverted segment">{lf("Comparing selected commit with local files")}</div>}
+        {expanded && diffFiles && <DiffView parent={parent} blocksMode={false} diffFiles={diffFiles} cacheKey={commit.sha} />}
+    </div>
+</div>
     }
 }
 
@@ -1463,7 +1478,7 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
         const loading = expanded && !commits;
 
         // group commits by day
-        const days: pxt.Map<pxt.github.CommitInfo[]> = {};
+        const days: pxt.Map<pxt.github.CommitInfo[{};
         if (commits)
             commits.forEach(commit => {
                 const day = new Date(Date.parse(commit.author.date)).toLocaleDateString();
