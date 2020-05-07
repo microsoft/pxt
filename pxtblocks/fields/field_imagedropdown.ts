@@ -161,6 +161,7 @@ namespace pxtblockly {
             content.removeAttribute('aria-activedescendant');
             content.style.width = '';
             content.style.paddingRight = '';
+            content.style.maxHeight = '';
 
             let source = this.sourceBlock_ as Blockly.BlockSvg;
             if (source?.isShadow()) {
