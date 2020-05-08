@@ -1144,46 +1144,43 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
                 .then(() => this.props.parent.pullAsync())
                 .then(() => core.handleNetworkError)
                 .finally(() => core.hideLoading("github.merge"))
-                .then(() => {})
+                .then(() => { })
         })
     }
 
     renderCore() {
+        const { gs } = this.props;
         const pullRequest = this.pullRequestStatus();
+        const merging = !!gs.mergeSha;
         const mergeable = pullRequest.mergeable === "MERGEABLE";
         const open = pullRequest.state === "OPEN";
         const mergeableUnknown = open && pullRequest.mergeable === "UNKNOWN";
+        const icon = merging ? "sync" : mergeable ? "check" : mergeableUnknown ? "" : "exclamation";
+        const color = merging ? "orange" : mergeable ? "green" : mergeableUnknown ? "grey" : "orange";
+        const msg = merging ? lf("A merge is in progress. Please resolve conflicts or cancel it.")
+            : mergeable ? lf("This branch has no conflicts with the base branch.")
+                : mergeableUnknown ? lf("Checking if your branch can be merged.")
+                    : lf("This branch has merge conflicts with the base branch.");
 
         if (!open) return <div></div>; // handled elsewhere
 
-        if (!mergeable && !mergeableUnknown) {
-            return <div className="ui orange segment">
-                <div className="ui field">
-                    <div className="ui header">
-                        <i className="icon green inverted circular cross" />
-                        {lf("This branch has merge conflicts with the base branch.")}
-                    </div>
+        return <div className={`ui ${color} segment`}>
+            <div className="ui field">
+                <div className="ui">
+                    <i className={`icon ${color} inverted circular ${icon}`} />
+                    {msg}
                 </div>
             </div>
-        }
-
-        return <div className={`ui ${mergeableUnknown ? "orange" : "green"} segment`}>
-            {mergeable && <div className="ui field">
-                <div className="ui header">
-                    <i className="icon green inverted circular check" />
-                    {lf("This branch has no conflicts with the base branch.")}
-                </div>
-            </div>}
-            {(mergeableUnknown || mergeable) && <div className="ui field">
-                <sui.Button className={mergeableUnknown ? "orange" : "green"} text={lf("Squash and merge")}
+            {(merging || mergeable) && <div className="ui field">
+                {merging && <sui.Button className={color} text={lf("Cancel")}
+                    onKeyDown={sui.fireClickOnEnter} />}
+                {mergeable && <sui.Button className="green" text={lf("Squash and merge")}
                     loading={mergeableUnknown}
                     disabled={!mergeable}
-                    onClick={this.handleMergeClick} onKeyDown={sui.fireClickOnEnter} />
-                {mergeable &&
-                    <span className="inline-help">{lf("Merge your changes as a single commit into the base branch.")}
-                        {sui.helpIconLink("/github/commit", lf("Learn about merging pull requests in GitHub."))}
-                    </span>}
-                {mergeableUnknown && <span className="inline-help">{lf("Checking if this branch has conflicts with the base branch.")}</span>}
+                    onClick={this.handleMergeClick} onKeyDown={sui.fireClickOnEnter} />}
+                <span className="inline-help">{lf("Merge your changes as a single commit into the base branch.")}
+                    {sui.helpIconLink("/github/commit", lf("Learn about merging pull requests in GitHub."))}
+                </span>
             </div>}
             {!mergeableUnknown && <div className="ui field">
                 <sui.Button text={lf("Sync branch")}
