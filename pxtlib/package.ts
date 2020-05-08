@@ -839,6 +839,14 @@ namespace pxt {
         getTargetOptions(): pxtc.CompileTarget {
             let res = U.clone(appTarget.compile)
             U.assert(!!res)
+            if (!res.utf8) {
+                this.sortedDeps(true).forEach(p => {
+                    if (p.config && p.config.utf8) {
+                        pxt.debug("forcing utf8 mode: pkg=" + p.id)
+                        res.utf8 = true
+                    }
+                })
+            }
             return res
         }
 

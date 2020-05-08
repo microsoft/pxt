@@ -5746,8 +5746,12 @@ function initCommands() {
 The following environment variables modify the behavior of the CLI when set to
 non-empty string:
 
-PXT_DEBUG        - display extensive logging info
-PXT_USE_HID      - use webusb or hid to flash device
+PXT_DEBUG            - display extensive logging info
+PXT_USE_HID          - use webusb or hid to flash device
+PXT_COMPILE_SWITCHES - same as ?compile=... in the webapp, interesting options
+   PXT_COMPILE_SWITCHES=profile - enable profiling
+   PXT_COMPILE_SWITCHES=time    - print-out compilation times
+   PXT_COMPILE_SWITCHES=rawELF  - generate ELF files for Linux, without UF2 continer
 
 These apply to the C++ runtime builds:
 

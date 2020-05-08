@@ -200,7 +200,7 @@ namespace pxt.cpp {
             }
         compileService = U.clone(compileService)
 
-        let compile = appTarget.compile
+        let compile = mainPkg.getTargetOptions()
         if (!compile)
             compile = {
                 isNative: false,
