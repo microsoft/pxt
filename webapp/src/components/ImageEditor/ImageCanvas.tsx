@@ -179,6 +179,11 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
         if (!this.inBounds(this.cursorLocation[0], this.cursorLocation[1])) return;
 
+        if (isRightClick && this.isInMarqueeSelection(this.cursorLocation[0], this.cursorLocation[1])) {
+            this.copyMarqueeSelection();
+            return;
+        }
+
         this.startEdit(!!isRightClick);
         this.updateEdit(this.cursorLocation[0], this.cursorLocation[1]);
         this.commitEdit();
@@ -354,16 +359,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             this.edit.doEdit(this.editState);
             this.edit = undefined;
 
-            dispatchImageEdit({
-                bitmap: this.editState.image.data(),
-                layerOffsetX: this.editState.layerOffsetX,
-                layerOffsetY: this.editState.layerOffsetY,
-                floating: this.editState.floating && {
-                    bitmap: this.editState.floating.image ? this.editState.floating.image.data() : undefined,
-                    overlayLayers: this.editState.floating.overlayLayers ? this.editState.floating.overlayLayers.map(el => el.data()) : undefined
-                },
-                overlayLayers: this.editState.overlayLayers ? this.editState.overlayLayers.map(el => el.data()) : undefined
-            });
+            dispatchImageEdit(this.editState.toImageState());
         }
     }
 
@@ -704,6 +700,17 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         }
     }
 
+    protected copyMarqueeSelection() {
+        const { dispatchImageEdit } = this.props;
+        const { layerOffsetX, layerOffsetY, floating } = this.editState;
+        const { width, height } = floating.image;
+
+        this.editState.mergeFloatingLayer();
+        this.editState.copyToLayer(layerOffsetX, layerOffsetY, width, height);
+
+        dispatchImageEdit(this.editState.toImageState());
+    }
+
     protected cloneCanvasStyle(base: HTMLCanvasElement, target: HTMLCanvasElement) {
         target.style.position = base.style.position;
         target.style.width = base.style.width;
@@ -749,6 +756,10 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
     protected isColorSelect() {
         return this.props.tool === ImageEditorTool.ColorSelect;
+    }
+
+    protected isInMarqueeSelection(x: number, y: number) {
+        return this.props.tool === ImageEditorTool.Marquee && this.editState?.inFloatingLayer(x, y);
     }
 
     protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();
