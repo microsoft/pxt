@@ -685,7 +685,7 @@ namespace pxt.py {
         for (let ct of constructorTypes) {
             let f = getClassField(ct, n, checkOnly)
             if (f) {
-                let isModule = !!ct.moduleTypeMarker
+                let isModule = !!recvType.moduleType
                 if (isModule) {
                     if (f.isInstance)
                         error(null, 9505, U.lf("the field '{0}' of '{1}' is not static", n, ct.pyQName))
