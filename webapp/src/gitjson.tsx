@@ -443,7 +443,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         // pull changes and merge; if any conflicts, bail out
         await workspace.pullAsync(header);
         // check if any merge markers
-        const hasConflicts = await workspace.hasMergeConflictMarkers(header);
+        const hasConflicts = await workspace.hasMergeConflictMarkersAsync(header);
         if (hasConflicts) {
             // bail out
             // maybe needs a reload
@@ -1090,6 +1090,7 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
     constructor(props: GitHubViewProps) {
         super(props);
         this.handleMergeClick = this.handleMergeClick.bind(this);
+        this.handleMergeUpstreamClick = this.handleMergeUpstreamClick.bind(this);
     }
 
     private scheduleRefreshPullRequestStatus = pxtc.Util.debounce(() => {
@@ -1107,6 +1108,17 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
         if (pr?.mergeable === "UNKNOWN" && pr?.state === "OPEN")
             this.scheduleRefreshPullRequestStatus();
         return pr;
+    }
+
+    private handleMergeUpstreamClick(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("github.pr.merge", null, { interactiveConsent: true });
+        e.stopPropagation();
+        const header = this.props.parent.props.parent.state.header;
+        const pr: pxt.github.PullRequest = this.props.parent.getData("pkg-git-pr:" + header.id)
+        if (!header || !pr || !pr.base) return;
+
+        core.showLoading("github.mergeupstream", lf("merging from master branch..."))
+        workspace.mergeUpstreamAsync(header, pr.base)
     }
 
     private handleMergeClick(e: React.MouseEvent<HTMLElement>) {
@@ -1172,6 +1184,11 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
                         {sui.helpIconLink("/github/commit", lf("Learn about merging pull requests in GitHub."))}
                     </span>}
                 {mergeableUnknown && <span className="inline-help">{lf("Checking if this branch has conflicts with the base branch.")}</span>}
+            </div>}
+            {!mergeableUnknown && <div className="ui field">
+                <sui.Button text={lf("Sync branch")}
+                    onClick={this.handleMergeUpstreamClick} onKeyDown={sui.fireClickOnEnter} />
+                <span className="inline-help">{lf("Merge changes from master into this branch.")}</span>
             </div>}
         </div>
     }

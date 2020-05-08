@@ -505,7 +505,7 @@ export async function hasPullAsync(hd: Header) {
     return (await pullAsync(hd, true)) == PullStatus.GotChanges
 }
 
-export async function pullAsync(hd: Header, checkOnly = false) {
+export async function pullAsync(hd: Header, checkOnly = false, mergeBranch?: string) {
     let files = await getTextAsync(hd.id)
     await recomputeHeaderFlagsAsync(hd, files)
     let gitjsontext = files[GIT_JSON]
@@ -513,7 +513,8 @@ export async function pullAsync(hd: Header, checkOnly = false) {
         return PullStatus.NoSourceControl
     let gitjson = JSON.parse(gitjsontext) as GitJson
     let parsed = pxt.github.parseRepoId(gitjson.repo)
-    const sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
+    const branch = mergeBranch || parsed.tag;
+    const sha = await pxt.github.getRefAsync(parsed.fullName, branch)
     if (!sha) {
         // 404: branch does not exist, repo is gone or no rights to access repo
         // try to get the list of heads to see if we can access the project
@@ -527,7 +528,7 @@ export async function pullAsync(hd: Header, checkOnly = false) {
     if (checkOnly)
         return PullStatus.GotChanges
     try {
-        await githubUpdateToAsync(hd, { repo: gitjson.repo, sha, files, tryDiff3: true })
+        await githubUpdateToAsync(hd, { repo: gitjson.repo, sha, files, tryDiff3: true, merge: true })
         return PullStatus.GotChanges
     } catch (e) {
         if (e.isMergeError)
@@ -536,7 +537,7 @@ export async function pullAsync(hd: Header, checkOnly = false) {
     }
 }
 
-export async function hasMergeConflictMarkers(hd: Header): Promise<boolean> {
+export async function hasMergeConflictMarkersAsync(hd: Header): Promise<boolean> {
     const files = await getTextAsync(hd.id)
     return !!Object.keys(files).find(k => pxt.diff.hasMergeConflictMarker(files[k]));
 }
@@ -751,6 +752,15 @@ export async function restoreCommitAsync(hd: Header, commit: pxt.github.CommitIn
     })
 }
 
+export async function mergeUpstreamAsync(hd: Header, base: string) {
+    // pull in all the changes
+    try {
+        await pullAsync(hd, false, base);
+    } catch(e) {
+        pxt.reportException(e);
+    }
+}
+
 interface UpdateOptions {
     repo: string;
     sha: string;
@@ -758,6 +768,7 @@ interface UpdateOptions {
     saveTag?: string;
     justJSON?: boolean;
     tryDiff3?: boolean;
+    merge?: boolean; // don't bail out on merge conflicts and create merge commit
 }
 
 function mergeError() {
@@ -893,6 +904,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
 
     commit.tag = options.saveTag
     gitjson.commit = commit
+    // todo create merge commit
     files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
 
     if (!hd) {
