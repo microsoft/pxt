@@ -514,15 +514,16 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     }
 
     private async handlePullRequest() {
-        const title = await core.promptAsync({
+        const gh = this.parsedRepoId();
+        let title = await core.promptAsync({
             header: lf("Create pull request"),
             jsx: <p>{lf("Pull requests let you tell others about changes you've pushed to a branch in a repository on GitHub.")}</p>,
             helpUrl: "/github/pull-request",
             hasCloseIcon: true,
-            hideCancel: true,
-            placeholder: lf("Describe the changes in this branch.")
+            hideCancel: true
         });
-        if (title === null) return;
+        if (title === null)
+            title = gh.tag; // maybe something better?
 
         this.showLoading("github.createpr", true, lf("creating pull request..."));
         try {
