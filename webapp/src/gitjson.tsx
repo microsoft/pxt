@@ -1162,7 +1162,7 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
                 </div>
             </div>}
             {(mergeableUnknown || mergeable) && <div className="ui field">
-                <sui.Button className="green" text={lf("Squash and merge")}
+                <sui.Button className={mergeableUnknown ? "orange" : "green"} text={lf("Squash and merge")}
                     loading={mergeableUnknown}
                     disabled={!mergeable}
                     onClick={this.handleMergeClick} onKeyDown={sui.fireClickOnEnter} />
