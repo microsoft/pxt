@@ -533,7 +533,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 ### ${lf("How to use this pull request")}
 
 - [ ] ${lf("assign a reviewer (you can be your own reviewer)")}
-- [ ] ${lf("reviewer approves or request changes")}
+- [ ] ${lf("reviewer approves or requests changes")}
 - [ ] ${lf("apply requested changes if any")}
 - [ ] ${lf("merge once approved")}
 `; // TODO
@@ -1149,13 +1149,13 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
                 <div className="ui field">
                     <div className="ui header">
                         <i className="icon green inverted circular cross" />
-                        {lf("This branch has conflicts with the base branch.")}
+                        {lf("This branch has merge conflicts with the base branch.")}
                     </div>
                 </div>
             </div>
         }
 
-        return <div className="ui green segment">
+        return <div className={`ui ${mergeableUnknown ? "orange" : "green"} segment`}>
             {mergeable && <div className="ui field">
                 <div className="ui header">
                     <i className="icon green inverted circular check" />
