@@ -757,10 +757,18 @@ export async function restoreCommitAsync(hd: Header, commit: pxt.github.CommitIn
 
 export async function mergeUpstreamAsync(hd: Header, base: string) {
     // pull in all the changes
+    core.showLoading("github.mergeupdstream", lf("merging changes from {0}", base))
     try {
-        await pullAsync(hd, false, base);
-    } catch(e) {
-        pxt.reportException(e);
+        const result = await pullAsync(hd, false, base);
+        if (result == PullStatus.GotChanges) {
+            const hasConflict = hasMergeConflictMarkersAsync(hd);
+            if (!hasConflict)
+                await commitAsync(hd, {
+                    message: lf("Merging changes from {0} branch", base)
+                })
+        }
+    } finally { 
+        core.hideLoading("github.mergeupdstream")
     }
 }
 
