@@ -485,7 +485,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
     async commitAsync() {
         this.setState({ needsCommitMessage: false });
-        this.showLoading("github.commit", true, lf("commit & push changes to GitHub..."));
+        this.showLoading("github.commit", true, lf("commit and push changes to GitHub..."));
         try {
             await this.commitCoreAsync()
             await this.maybeReloadAsync()
@@ -1076,7 +1076,7 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
                     error={descrError} />
             </div>
             <div className="ui field">
-                <sui.Button className="green" text={lf("Commit & push changes")} icon="long arrow alternate up" onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
+                <sui.Button className="green" text={lf("Commit and push changes")} icon="long arrow alternate up" onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
                 <span className="inline-help">{lf("Save your changes in GitHub.")}
                     {sui.helpIconLink("/github/commit", lf("Learn about commiting and pushing code into GitHub."))}
                 </span>
@@ -1150,7 +1150,7 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
                 </div>
             </div>}
             {(mergeableUnknown || mergeable) && <div className="ui field">
-                <sui.Button className="green" text={lf("Merge changes")}
+                <sui.Button className="green" text={lf("Squash and merge")}
                     loading={mergeableUnknown}
                     disabled={!mergeable}
                     onClick={this.handleMergeClick} onKeyDown={sui.fireClickOnEnter} />
