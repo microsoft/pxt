@@ -19,6 +19,12 @@ interface Variable {
     children?: Variable[];
 }
 
+interface PreviewState {
+    id: number;
+    top: number;
+    left: number;
+}
+
 interface DebuggerVariablesProps {
     apis: pxt.Map<pxtc.SymbolInfo>;
     sequence: number;
@@ -34,6 +40,8 @@ interface DebuggerVariablesState {
     renderedSequence?: number;
 
     frozen?: boolean;
+
+    preview: PreviewState | null;
 }
 
 export class DebuggerVariables extends data.Component<DebuggerVariablesProps, DebuggerVariablesState> {
@@ -45,7 +53,8 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                 variables: []
             },
             stackFrames: [],
-            nextID: 0
+            nextID: 0,
+            preview: null
         };
 
     }
@@ -56,12 +65,13 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                 title: this.state.globalFrame.title,
                 variables: []
             },
-            stackFrames: []
+            stackFrames: [],
+            preview: null
         });
     }
 
     update(frozen = false) {
-        this.setState({ frozen });
+        this.setState({ frozen, preview: frozen ? null : this.state.preview });
     }
 
     componentDidUpdate(prevProps: DebuggerVariablesProps) {
@@ -71,12 +81,12 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             }
         }
         else if (!this.state.frozen) {
-            this.setState({ frozen: true });
+            this.update(true);
         }
     }
 
     renderCore() {
-        const { globalFrame, stackFrames, frozen } = this.state;
+        const { globalFrame, stackFrames, frozen, preview } = this.state;
         const { activeFrame, breakpoint } = this.props;
         const variableTableHeader = lf("Variables");
         let variables = globalFrame.variables;
@@ -107,17 +117,39 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             />);
         }
 
-        return <DebuggerTable header={variableTableHeader} placeholderText={placeholderText}>
-            {tableRows}
-        </DebuggerTable>
+        const previewVar = this.getVariableById(preview?.id);
+        const previewLabel = previewVar && lf("Current value for '{0}'", previewVar.name);
+
+        return <div>
+            <DebuggerTable header={variableTableHeader} placeholderText={placeholderText}>
+                {tableRows}
+            </DebuggerTable>
+            { preview &&
+                <div id="debugger-preview"
+                    role="tooltip"
+                    className="debugger-preview"
+                    ref={this.handlePreviewRef}
+                    tabIndex={0}
+                    aria-label={previewLabel}
+                    style={{
+                        top: `${preview.top}px`,
+                        left: `${preview.left}px`
+                    }}>
+                        {renderValue(previewVar.value)}
+                    </div>
+            }
+        </div>
     }
 
     renderVars(vars: Variable[], depth = 0, result: JSX.Element[] = []) {
+        const previewed = this.state.preview?.id;
+
         vars.forEach(varInfo => {
             const valueString = renderValue(varInfo.value);
             const typeString = variableType(varInfo);
 
             result.push(<DebuggerTableRow key={varInfo.id}
+                describedBy={varInfo.id === previewed ? "debugger-preview" : undefined}
                 refID={varInfo.id}
                 icon={(varInfo.value && varInfo.value.hasFields) ? (varInfo.children ? "down triangle" : "right triangle") : undefined}
                 leftText={varInfo.name + ":"}
@@ -127,6 +159,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                 rightTitle={shouldShowValueOnHover(typeString) ? valueString : undefined}
                 rightClass={typeString}
                 onClick={this.handleComponentClick}
+                onValueClick={this.handleValueClick}
                 depth={depth}
             />)
 
@@ -205,16 +238,62 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         }
     }
 
+    protected getVariableById(id: number) {
+        if (id === null) return null;
+        for (const v of this.getFullVariableList()) {
+            if (v.id === id) {
+                return v;
+            }
+        }
+        return null;
+    }
+
     protected handleComponentClick = (e: React.SyntheticEvent<HTMLDivElement>, component: DebuggerTableRow) => {
         if (this.state.frozen) return;
 
-        const id = component.props.refID;
+        const variable = this.getVariableById(component.props.refID as number);
 
-        for (const v of this.getFullVariableList()) {
-            if (v.id === id) {
-                this.toggle(v);
-                return;
+        if (variable) {
+            this.toggle(variable);
+
+            if (this.state.preview !== null) {
+                this.setState({
+                    preview: null
+                });
             }
+        }
+    }
+
+    protected handleValueClick = (e: React.SyntheticEvent<HTMLDivElement>, component: DebuggerTableRow) => {
+        if (this.state.frozen) return;
+
+        const id = component.props.refID;
+        const bb = (e.target as HTMLDivElement).getBoundingClientRect();
+        this.setState({
+            preview: {
+                id: id as number,
+                top: bb.top,
+                left: bb.left
+            }
+        });
+    }
+
+    protected handlePreviewRef = (ref: HTMLDivElement) => {
+        if (ref) {
+            const previewed = this.state.preview;
+            ref.focus();
+            ref.addEventListener("blur", () => {
+                if (this.state.preview?.id === previewed.id) {
+                    this.setState({
+                        preview: null
+                    });
+                }
+            });
+            const select = window.getSelection();
+            select.removeAllRanges();
+            const range = document.createRange();
+            range.selectNodeContents(ref);
+            select.addRange(range);
         }
     }
 
