@@ -485,7 +485,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
     async commitAsync() {
         this.setState({ needsCommitMessage: false });
-        this.showLoading("github.commit", true, lf("commit & push changes to GitHub..."));
+        this.showLoading("github.commit", true, lf("commit and push changes to GitHub..."));
         try {
             await this.commitCoreAsync()
             await this.maybeReloadAsync()
@@ -514,15 +514,16 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     }
 
     private async handlePullRequest() {
-        const title = await core.promptAsync({
+        const gh = this.parsedRepoId();
+        let title = await core.promptAsync({
             header: lf("Create pull request"),
             jsx: <p>{lf("Pull requests let you tell others about changes you've pushed to a branch in a repository on GitHub.")}</p>,
             helpUrl: "/github/pull-request",
             hasCloseIcon: true,
-            hideCancel: true,
-            placeholder: lf("Describe the changes in this branch.")
+            hideCancel: true
         });
-        if (title === null) return;
+        if (title === null)
+            title = gh.tag; // maybe something better?
 
         this.showLoading("github.createpr", true, lf("creating pull request..."));
         try {
@@ -532,7 +533,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 ### ${lf("How to use this pull request")}
 
 - [ ] ${lf("assign a reviewer (you can be your own reviewer)")}
-- [ ] ${lf("reviewer approves or request changes")}
+- [ ] ${lf("reviewer approves or requests changes")}
 - [ ] ${lf("apply requested changes if any")}
 - [ ] ${lf("merge once approved")}
 `; // TODO
@@ -638,7 +639,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                         <sui.Link href={pr.url} role="button" className="ui tiny basic button create-pr"
                             target="_blank" text={lf("Pull request (#{0})", pr.number)} icon="external alternate" />}
                     {showPrCreate &&
-                        <sui.Button className="tiny basic create-pr" text={lf("Pull request")} onClick={this.handlePullRequest} />
+                        <sui.Button className="tiny basic create-pr" text={lf("Create pull request")} onClick={this.handlePullRequest} />
                     }
                     <h3 className="header">
                         <i className="large github icon" />
@@ -1076,7 +1077,7 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
                     error={descrError} />
             </div>
             <div className="ui field">
-                <sui.Button className="green" text={lf("Commit & push changes")} icon="long arrow alternate up" onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
+                <sui.Button className="green" text={lf("Commit and push changes")} icon="long arrow alternate up" onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
                 <span className="inline-help">{lf("Save your changes in GitHub.")}
                     {sui.helpIconLink("/github/commit", lf("Learn about commiting and pushing code into GitHub."))}
                 </span>
@@ -1115,12 +1116,24 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
         const { githubId } = this.props;
         const header = this.props.parent.props.parent.state.header;
         const pr: pxt.github.PullRequest = this.props.parent.getData("pkg-git-pr:" + header.id)
-        core.showLoading("github.merge", lf("merging pull request..."))
-        pxt.github.mergeAsync(githubId.fullName, pr.base, githubId.tag)
-            .then(() => this.props.parent.switchToBranchAsync(pr.base))
-            .then(() => this.props.parent.pullAsync())
-            .then(() => core.handleNetworkError)
-            .finally(() => core.hideLoading("github.merge"))
+        core.confirmAsync({
+            header: lf("Squash and merge?"),
+            jsx: <p>{lf("Your changes will merged as a single commit into the base branch and you will switch back to the base branch.")}</p>,
+            agreeLbl: lf("Confirm merge"),
+            helpUrl: "/github/pull-request",
+            hideCancel: true,
+            hasCloseIcon: true
+        }).then(r => {
+            if (!r) return Promise.resolve();
+
+            core.showLoading("github.merge", lf("merging pull request..."))
+            return pxt.github.mergeAsync(githubId.fullName, pr.base, githubId.tag)
+                .then(() => this.props.parent.switchToBranchAsync(pr.base))
+                .then(() => this.props.parent.pullAsync())
+                .then(() => core.handleNetworkError)
+                .finally(() => core.hideLoading("github.merge"))
+                .then(() => {})
+        })
     }
 
     renderCore() {
@@ -1136,13 +1149,13 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
                 <div className="ui field">
                     <div className="ui header">
                         <i className="icon green inverted circular cross" />
-                        {lf("This branch has conflicts with the base branch.")}
+                        {lf("This branch has merge conflicts with the base branch.")}
                     </div>
                 </div>
             </div>
         }
 
-        return <div className="ui green segment">
+        return <div className={`ui ${mergeableUnknown ? "orange" : "green"} segment`}>
             {mergeable && <div className="ui field">
                 <div className="ui header">
                     <i className="icon green inverted circular check" />
@@ -1150,7 +1163,7 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
                 </div>
             </div>}
             {(mergeableUnknown || mergeable) && <div className="ui field">
-                <sui.Button className="green" text={lf("Merge changes")}
+                <sui.Button className={mergeableUnknown ? "orange" : "green"} text={lf("Squash and merge")}
                     loading={mergeableUnknown}
                     disabled={!mergeable}
                     onClick={this.handleMergeClick} onKeyDown={sui.fireClickOnEnter} />
