@@ -1053,6 +1053,7 @@ namespace pxt.github {
         repo: string;
         commit: pxt.github.Commit;
         isFork?: boolean;
+        mergeSha?: string;
     }
 
     export const GIT_JSON = ".git.json"

@@ -664,6 +664,9 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         parents: [gitjson.commit.sha],
         tree: treeId
     }
+    // we are in a merge
+    if (gitjson.mergeSha)
+        commit.parents.push(gitjson.mergeSha)
     let commitId = await pxt.github.createObjectAsync(parsed.fullName, "commit", commit)
     let ok = await pxt.github.fastForwardAsync(parsed.fullName, parsed.tag, commitId)
     let newCommit = commitId
@@ -904,7 +907,8 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
 
     commit.tag = options.saveTag
     gitjson.commit = commit
-    // todo create merge commit
+    if (options.merge)
+        gitjson.mergeSha = sha;
     files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
 
     if (!hd) {
