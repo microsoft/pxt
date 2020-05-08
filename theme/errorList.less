@@ -8,7 +8,7 @@
     border-top: 2px @errorListBorderColor solid;
 
     .errorListHeader {
-        padding: 1em;
+        padding: 0.75em 1em;
         height: @errorListHeaderHeight;
         margin-bottom: 0;
 
@@ -22,7 +22,7 @@
             margin-left: 1em;
         }
 
-        .collapseButton {
+        .toggleButton {
             float: right;
             cursor: pointer;
             position: relative;
@@ -43,14 +43,28 @@
         padding: 0 0 1em 0;
         overflow-y: scroll;
 
-        .errorMessage {
-            padding: 0.1em 1em;
+        .ui.selection.list {
+            color: black;
 
-            &:hover {
-                cursor: pointer;
-                background-color: @errorListMessageHoverColor;
+            .item {
+                border-radius: unset;
+                padding: 0.5em 1em;
+                color: black;
+
+                &:hover {
+                    background-color: @errorListMessageHoverColor;
+                }
+
+                &:nth-child(even) {
+                    background-color: @errorListEven;
+                }
+
+                &:nth-child(odd) {
+                    background-color: @errorListOdd;
+                }
             }
         }
+
     }
 }
 

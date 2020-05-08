@@ -40,20 +40,23 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             return `${error.messageText}-${error.fileName}-${error.line}-${error.column}`
         }
 
-        // Header
-        const collapseButton = <div className="collapseButton"><sui.Icon icon={`chevron down`} onClick={this.onCollapseClick} /></div>
-        const errorListHeader = <div className="errorListHeader">
-            <h4>Problems</h4>
-            {<div className="ui grey circular label countBubble">{errors?.length}</div>}
-            {!isCollapsed && collapseButton}
-        </div>
-
         const createOnErrorMessageClick = (e: pxtc.KsDiagnostic, index: number) => () => this.onErrorMessageClick(index, e.line + 1, e.column + 1)
 
-        const errorListContent = (errors).map((e, index) =>
-            <div key={errorKey(e)} className="errorMessage" role="button" onClick={createOnErrorMessageClick(e, index)}>
-                {`${e.messageText} ${lf("at line {0}", e.line + 1)}`}
-            </div>)
+        const errorListHeader = <div className="errorListHeader">
+            <h4>Problems</h4>
+            <div className="ui red circular label countBubble">{errors?.length}</div>
+            <div className="toggleButton"><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`} onClick={this.onCollapseClick} /></div>
+        </div>
+
+        const errorListContent = <div className="ui selection list">
+            {
+                (errors).map((e, index) =>
+                    <div className="item" key={errorKey(e)} role="button" onClick={createOnErrorMessageClick(e, index)}>
+                        {lf("line {0}: ", e.line + 1)}
+                        {e.messageText}
+                    </div>)
+            }
+        </div>
 
         return <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''}`}
                     onClick={isCollapsed ? this.onCollapseClick : null}
