@@ -377,4 +377,3 @@ default semantic
 @errorListBorderColor: #e5e5e5;
 @errorListOdd: @homeScreenBackground;
 @errorListEven: darken(@errorListOdd, 3%);
-@errorListMessageSecondaryColor: @secondaryColor;
