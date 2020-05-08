@@ -757,7 +757,7 @@ export async function restoreCommitAsync(hd: Header, commit: pxt.github.CommitIn
 
 export async function mergeUpstreamAsync(hd: Header, base: string) {
     // pull in all the changes
-    core.showLoading("github.mergeupdstream", lf("merging changes from {0}", base))
+    core.showLoading("github.mergeupstream", lf("merging changes from {0}", base))
     try {
         const result = await pullAsync(hd, false, base);
         if (result == PullStatus.GotChanges) {
@@ -769,7 +769,7 @@ export async function mergeUpstreamAsync(hd: Header, base: string) {
                 })
         }
     } finally {
-        core.hideLoading("github.mergeupdstream")
+        core.hideLoading("github.mergeupstream")
     }
 }
 
