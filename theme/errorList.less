@@ -55,11 +55,11 @@
                     background-color: @errorListMessageHoverColor;
                 }
 
-                &:nth-child(even) {
+                &:nth-child(even):not(:hover) {
                     background-color: @errorListEven;
                 }
 
-                &:nth-child(odd) {
+                &:nth-child(odd):not(:hover) {
                     background-color: @errorListOdd;
                 }
             }

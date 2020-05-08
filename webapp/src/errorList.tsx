@@ -6,7 +6,7 @@ import * as sui from "./sui";
 export interface ErrorListProps {
     onSizeChange: () => void,
     listenToErrorChanges: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void,
-    goToError: (line: number, column: number) => void
+    goToError: (error: pxtc.KsDiagnostic) => void
 }
 export interface ErrorListState {
     isCollapsed: boolean
@@ -40,7 +40,8 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             return `${error.messageText}-${error.fileName}-${error.line}-${error.column}`
         }
 
-        const createOnErrorMessageClick = (e: pxtc.KsDiagnostic, index: number) => () => this.onErrorMessageClick(index, e.line + 1, e.column + 1)
+        const createOnErrorMessageClick = (e: pxtc.KsDiagnostic, index: number) => () =>
+            this.onErrorMessageClick(e, index)
 
         const errorListHeader = <div className="errorListHeader">
             <h4>Problems</h4>
@@ -52,7 +53,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             {
                 (errors).map((e, index) =>
                     <div className="item" key={errorKey(e)} role="button" onClick={createOnErrorMessageClick(e, index)}>
-                        {lf("line {0}: ", e.line + 1)}
+                        {lf("Line {0}: ", e.line + 1)}
                         {e.messageText}
                     </div>)
             }
@@ -84,9 +85,9 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         })
     }
 
-    onErrorMessageClick(index: number, line: number, column: number) {
+    onErrorMessageClick(e: pxtc.KsDiagnostic, index: number) {
         pxt.tickEvent('errorlist.goto', {errorIndex: index}, { interactiveConsent: true });
-        this.props.goToError(line, column)
+        this.props.goToError(e)
     }
 
     onErrorsChanged(errors: pxtc.KsDiagnostic[]) {
