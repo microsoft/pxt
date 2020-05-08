@@ -639,7 +639,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                         <sui.Link href={pr.url} role="button" className="ui tiny basic button create-pr"
                             target="_blank" text={lf("Pull request (#{0})", pr.number)} icon="external alternate" />}
                     {showPrCreate &&
-                        <sui.Button className="tiny basic create-pr" text={lf("Pull request")} onClick={this.handlePullRequest} />
+                        <sui.Button className="tiny basic create-pr" text={lf("Create pull request")} onClick={this.handlePullRequest} />
                     }
                     <h3 className="header">
                         <i className="large github icon" />
