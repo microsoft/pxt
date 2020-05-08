@@ -592,14 +592,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     goToError(error: pxtc.KsDiagnostic) {
-        // this.editor.revealLinesInCenter(line, monaco.editor.ScrollType.Smooth);
-        // this.editor.setPosition({column: column, lineNumber: line});
-        // this.editor.focus();
-
-        // this.editor.revealPositionInCenter({column: column, lineNumber: line})
-        // this.editor.focus();
-
-        this.editor.revealLinesInCenter(error.line + 1, error.endLine + 1)
+        this.editor.revealLineInCenter(error.line + 1)
         this.editor.setPosition({column: error.endColumn + 1, lineNumber: error.endLine + 1})
         this.editor.focus()
     }
