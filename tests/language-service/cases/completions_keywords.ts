@@ -1,9 +1,9 @@
 whi // while
 
-; i // if
+    ; i // if
 
-; func // function
+    ; func // function
 
-; let foo: nu // number; !Number
+    ; let foo: nu // number
 
-function bar(): st // string; !String
+function bar(): st // string

@@ -47,16 +47,34 @@ describe("language service", () => {
 })
 
 function getTestCases() {
-    const filenames: string[] = [];
+    let filenames: string[] = [];
     for (const file of fs.readdirSync(casesDir)) {
+        // ignore hidden files
         if (file[0] == ".") {
             continue;
         }
 
-        const filename = path.join(casesDir, file);
-        if (file.substr(-3) === ".ts") {
-            filenames.push(filename);
+        // ignore files that start with TODO_; these represent future work
+        if (file.indexOf("TODO") >= 0) {
+            continue;
         }
+
+        // TODO support python as well
+        if (file.substr(-3) !== ".ts") {
+            continue;
+        }
+
+        const filename = path.join(casesDir, file);
+
+        // if a file is named "ONLY", only run that one file
+        // (this is useful for working on a specific test case when
+        // the test suite gets large)
+        if (file.indexOf("ONLY") >= 0) {
+            filenames = [filename]
+            break;
+        }
+
+        filenames.push(filename);
     };
 
     const testCases: CompletionTestCase[] = [];

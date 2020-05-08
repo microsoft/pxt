@@ -4,4 +4,8 @@ namespace testNamespace {
     }
 
     export let someString: string;
+
+    export interface SomeInterface {
+        someField: number;
+    }
 }

@@ -19,3 +19,7 @@ This says that that symbol MUST NOT be present.
 
 Sample code can be added to the **test-package** folder.
 This sample code can be used in test cases.
+
+Use the "TODO_" filename prefix to add a disabled test case.
+
+Use the "ONLY_" filename prefix to run only that test case (do not commit this change).
