@@ -1037,7 +1037,8 @@ function uploadCoreAsync(opts: UploadOptions) {
         "simulator.html",
         "sim.manifest",
         "sim.webmanifest",
-        "workerConfig.js"
+        "workerConfig.js",
+        "multi.html"
     ]
 
     nodeutil.mkdirP("built/uploadrepl")
