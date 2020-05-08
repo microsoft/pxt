@@ -3969,7 +3969,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             pxt.tickEvent("hash." + hash.cmd)
             let tutorialPath = hash.arg;
             let editorProjectName: string = undefined;
-            if (/^([jt]s|py|blocks):/i.test(tutorialPath)) {
+            if (/^([jt]s|py|blocks?):/i.test(tutorialPath)) {
                 if (/^py:/i.test(tutorialPath))
                     editorProjectName = pxt.BLOCKS_PROJECT_NAME;
                 else if (/^[jt]s:/i.test(tutorialPath))
@@ -4015,13 +4015,17 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             if (loading) pxt.BrowserUtils.changeHash("");
             return false;
         case "github": {
+            pxt.BrowserUtils.changeHash("");
+            // ignore if token is not set
+            if (!cloudsync.githubProvider().hasToken())
+                return false;
             // #github:owner/user --> import
             // #github:create-repository:headerid --> create repo
+            // #github:import -> import dialog
             const repoid = pxt.github.parseRepoId(hash.arg);
             const [ghCmd, ghArg] = hash.arg.split(':', 2);
-            if (ghCmd == "create-repository") {
+            if (ghCmd === "create-repository") {
                 // #github:create-repository:HEADERID
-                pxt.BrowserUtils.changeHash("");
                 const hd = workspace.getHeader(ghArg);
                 if (hd) {
                     theEditor.loadHeaderAsync(hd)
@@ -4029,8 +4033,11 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
                         .done(r => r && theEditor.reloadHeaderAsync())
                     return true;
                 }
+            }
+            else if (ghCmd === "import") {
+                dialogs.showImportGithubDialogAsync();
+                return true;
             } else if (repoid) {
-                pxt.BrowserUtils.changeHash("");
                 importGithubProject(hash.arg, true);
                 return true;
             }
