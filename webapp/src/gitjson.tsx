@@ -1115,7 +1115,7 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
         const { githubId } = this.props;
         const header = this.props.parent.props.parent.state.header;
         const pr: pxt.github.PullRequest = this.props.parent.getData("pkg-git-pr:" + header.id)
-        core.showLoading("github.merge", lf("merging pull request..."))
+        core.showLoading("github.merge", lf("squash and merge pull request..."))
         pxt.github.mergeAsync(githubId.fullName, pr.base, githubId.tag)
             .then(() => this.props.parent.switchToBranchAsync(pr.base))
             .then(() => this.props.parent.pullAsync())
