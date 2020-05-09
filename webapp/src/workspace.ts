@@ -505,7 +505,7 @@ export async function hasPullAsync(hd: Header) {
     return (await pullAsync(hd, true)) == PullStatus.GotChanges
 }
 
-export async function pullAsync(hd: Header, checkOnly = false, mergeBranch?: string) {
+export async function pullAsync(hd: Header, checkOnly = false) {
     let files = await getTextAsync(hd.id)
     await recomputeHeaderFlagsAsync(hd, files)
     let gitjsontext = files[GIT_JSON]
@@ -513,7 +513,7 @@ export async function pullAsync(hd: Header, checkOnly = false, mergeBranch?: str
         return PullStatus.NoSourceControl
     let gitjson = JSON.parse(gitjsontext) as GitJson
     let parsed = pxt.github.parseRepoId(gitjson.repo)
-    const branch = mergeBranch || parsed.tag;
+    const branch = parsed.tag;
     const sha = await pxt.github.getRefAsync(parsed.fullName, branch)
     if (!sha) {
         // 404: branch does not exist, repo is gone or no rights to access repo
@@ -528,7 +528,7 @@ export async function pullAsync(hd: Header, checkOnly = false, mergeBranch?: str
     if (checkOnly)
         return PullStatus.GotChanges
     try {
-        await githubUpdateToAsync(hd, { repo: gitjson.repo, sha, files, tryDiff3: true, merge: !!mergeBranch })
+        await githubUpdateToAsync(hd, { repo: gitjson.repo, sha, files, tryDiff3: true })
         return PullStatus.GotChanges
     } catch (e) {
         if (e.isMergeError)

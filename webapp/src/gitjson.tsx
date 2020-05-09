@@ -1155,12 +1155,12 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
         const mergeable = pullRequest.mergeable === "MERGEABLE";
         const open = pullRequest.state === "OPEN";
         const mergeableUnknown = open && pullRequest.mergeable === "UNKNOWN";
-        const icon = merging ? "sync" : mergeable ? "check" : mergeableUnknown ? "question" : "exclamation";
-        const color = merging ? "orange" : mergeable ? "green" : mergeableUnknown ? "grey" : "orange";
+        const icon = merging ? "sync" : mergeable ? "check" : mergeableUnknown ? "question" : "exclamation triangle";
+        const color = merging ? "orange" : mergeable ? "green" : mergeableUnknown ? "orange" : "grey";
         const msg = merging ? lf("A merge is in progress. Please resolve conflicts or cancel it.")
             : mergeable ? lf("This branch has no conflicts with the base branch.")
                 : mergeableUnknown ? lf("Checking if your branch can be merged.")
-                    : lf("This branch has merge conflicts with the base branch.");
+                    : lf("This branch has conflicts that must be resolved.");
 
         if (!open) return <div></div>; // handled elsewhere
 
@@ -1173,23 +1173,25 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
 */
 
         return <div className={`ui ${color} segment`}>
+            <div className="ui header">
+                {pullRequest.title}
+                <span className="label">{lf("#{0}", pullRequest.number)}</span>
+            </div>
             <div className="ui field">
                 <div className="ui">
                     <i className={`icon ${color} inverted circular ${icon}`} />
                     {msg}
                 </div>
             </div>
-            {(merging || mergeable) && <div className="ui field">
-                {merging && <sui.Button className={color} text={lf("Cancel")}
-                    onKeyDown={sui.fireClickOnEnter} />}
-                {mergeable && <sui.Button className="green" text={lf("Squash and merge")}
+            <div className="ui field">
+                <sui.Button className={color} text={lf("Squash and merge")}
                     loading={mergeableUnknown}
                     disabled={!mergeable}
-                    onClick={this.handleMergeClick} onKeyDown={sui.fireClickOnEnter} />}
+                    onClick={this.handleMergeClick} onKeyDown={sui.fireClickOnEnter} />
                 <span className="inline-help">{lf("Merge your changes as a single commit into the base branch.")}
                     {sui.helpIconLink("/github/commit", lf("Learn about merging pull requests in GitHub."))}
                 </span>
-            </div>}
+            </div>
         </div>
     }
 }
