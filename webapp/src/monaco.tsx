@@ -591,10 +591,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.errorChangesListeners[handlerKey] = handler;
     }
 
-    goToError(line: number, column: number) {
-        this.editor.revealLineInCenterIfOutsideViewport(line, monaco.editor.ScrollType.Smooth);
-        this.editor.setPosition({column: column, lineNumber: line});
-        this.editor.focus();
+    goToError(error: pxtc.KsDiagnostic) {
+        this.editor.revealLineInCenter(error.line + 1)
+        this.editor.setPosition({column: error.endColumn + 1, lineNumber: error.endLine + 1})
+        this.editor.focus()
     }
 
     private onErrorChanges(errors: pxtc.KsDiagnostic[]) {
