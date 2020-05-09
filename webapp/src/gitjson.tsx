@@ -1116,18 +1116,20 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
         const { githubId } = this.props;
         const header = this.props.parent.props.parent.state.header;
         const pr: pxt.github.PullRequest = this.props.parent.getData("pkg-git-pr:" + header.id)
-        core.confirmAsync({
+        core.promptAsync({
             header: lf("Squash and merge?"),
             jsx: <p>{lf("Your changes will merged as a single commit into the base branch and you will switch back to the base branch.")}</p>,
             agreeLbl: lf("Confirm merge"),
             helpUrl: "/github/pull-request",
             hideCancel: true,
-            hasCloseIcon: true
-        }).then(r => {
-            if (!r) return Promise.resolve();
+            hasCloseIcon: true,
+            placeholder: lf("Describe your changes")
+        }).then(message => {
+            if (message === null) return Promise.resolve();
 
+            message = message || pr.title || lf(`Merge pull request`);
             core.showLoading("github.merge", lf("merging pull request..."))
-            return pxt.github.mergeAsync(githubId.fullName, pr.base, githubId.tag)
+            return pxt.github.mergeAsync(githubId.fullName, pr.base, githubId.tag, `${message} (#${pr.number})`)
                 .then(() => this.props.parent.switchToBranchAsync(pr.base))
                 .then(() => this.props.parent.pullAsync())
                 .then(() => core.handleNetworkError)
