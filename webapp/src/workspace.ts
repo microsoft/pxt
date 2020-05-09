@@ -616,7 +616,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         await addToTree(path, fileContent);
     }
 
-    if (treeUpdate.tree.length == 0 && !gitjson.mergeSha)
+    if (treeUpdate.tree.length == 0)
         U.userError(lf("Nothing to commit!"))
 
     // add screenshots
@@ -757,20 +757,7 @@ export async function restoreCommitAsync(hd: Header, commit: pxt.github.CommitIn
 
 export async function mergeUpstreamAsync(hd: Header, base: string) {
     // pull in all the changes
-    core.showLoading("github.mergeupstream", lf("merging changes from {0}", base))
-    try {
-        const result = await pullAsync(hd, false, base);
-        if (result == PullStatus.GotChanges) {
-            await forceSaveAsync(hd);
-            const hasConflict = await hasMergeConflictMarkersAsync(hd);
-            if (!hasConflict)
-                await commitAsync(hd, {
-                    message: lf("Merging changes from {0} branch", base)
-                })
-        }
-    } finally {
-        core.hideLoading("github.mergeupstream")
-    }
+    return Promise.resolve();
 }
 
 interface UpdateOptions {
@@ -780,7 +767,6 @@ interface UpdateOptions {
     saveTag?: string;
     justJSON?: boolean;
     tryDiff3?: boolean;
-    merge?: boolean; // don't bail out on merge conflicts and create merge commit
 }
 
 function mergeError() {
@@ -914,14 +900,9 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         }
     }
 
-    if (options.merge) {
-        //U.assert(!gitjson.mergeSha);
-        gitjson.mergeSha = sha;
-    } else {
-        commit.tag = options.saveTag
-        gitjson.mergeSha = undefined
-        gitjson.commit = commit
-    }
+    commit.tag = options.saveTag
+    gitjson.mergeSha = undefined
+    gitjson.commit = commit
     files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
 
     if (!hd) {
