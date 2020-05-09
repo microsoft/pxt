@@ -1155,7 +1155,7 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
         const mergeable = pullRequest.mergeable === "MERGEABLE";
         const open = pullRequest.state === "OPEN";
         const mergeableUnknown = open && pullRequest.mergeable === "UNKNOWN";
-        const icon = merging ? "sync" : mergeable ? "check" : mergeableUnknown ? "" : "exclamation";
+        const icon = merging ? "sync" : mergeable ? "check" : mergeableUnknown ? "sync alternate" : "exclamation";
         const color = merging ? "orange" : mergeable ? "green" : mergeableUnknown ? "grey" : "orange";
         const msg = merging ? lf("A merge is in progress. Please resolve conflicts or cancel it.")
             : mergeable ? lf("This branch has no conflicts with the base branch.")
@@ -1163,6 +1163,14 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
                     : lf("This branch has merge conflicts with the base branch.");
 
         if (!open) return <div></div>; // handled elsewhere
+
+/*
+            {!mergeableUnknown && <div className="ui field">
+                <sui.Button text={lf("Sync branch")}
+                    onClick={this.handleMergeUpstreamClick} onKeyDown={sui.fireClickOnEnter} />
+                <span className="inline-help">{lf("Merge changes from master into this branch.")}</span>
+            </div>}
+*/
 
         return <div className={`ui ${color} segment`}>
             <div className="ui field">
@@ -1181,11 +1189,6 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
                 <span className="inline-help">{lf("Merge your changes as a single commit into the base branch.")}
                     {sui.helpIconLink("/github/commit", lf("Learn about merging pull requests in GitHub."))}
                 </span>
-            </div>}
-            {!mergeableUnknown && <div className="ui field">
-                <sui.Button text={lf("Sync branch")}
-                    onClick={this.handleMergeUpstreamClick} onKeyDown={sui.fireClickOnEnter} />
-                <span className="inline-help">{lf("Merge changes from master into this branch.")}</span>
             </div>}
         </div>
     }
