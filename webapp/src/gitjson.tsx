@@ -1155,7 +1155,7 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
         const mergeable = pullRequest.mergeable === "MERGEABLE";
         const open = pullRequest.state === "OPEN";
         const mergeableUnknown = open && pullRequest.mergeable === "UNKNOWN";
-        const icon = merging ? "sync" : mergeable ? "check" : mergeableUnknown ? "sync alternate" : "exclamation";
+        const icon = merging ? "sync" : mergeable ? "check" : mergeableUnknown ? "question" : "exclamation";
         const color = merging ? "orange" : mergeable ? "green" : mergeableUnknown ? "grey" : "orange";
         const msg = merging ? lf("A merge is in progress. Please resolve conflicts or cancel it.")
             : mergeable ? lf("This branch has no conflicts with the base branch.")
