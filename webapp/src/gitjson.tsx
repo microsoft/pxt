@@ -1167,7 +1167,7 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
                     {msg}
                 </div>
             </div>
-            {!mergeable && <div className="ui field">
+            {(!mergeable && !mergeableUnknown) && <div className="ui field">
                 <sui.Link className="button" text={lf("Resolve conflicts")}
                     href={`https://github.com/${githubId.fullName}/pull/${pullRequest.number}/conflicts`}
                     target="_blank" />
@@ -1175,7 +1175,7 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
                     {sui.helpIconLink("/github/pull-requests", lf("Learn about merging pull requests in GitHub."))}
                 </span>
             </div>}
-            {mergeable || mergeableUnknown && <div className="ui field">
+            {(mergeable || mergeableUnknown) && <div className="ui field">
                 <sui.Button className={color} text={lf("Squash and merge")}
                     loading={mergeableUnknown}
                     disabled={!mergeable}
