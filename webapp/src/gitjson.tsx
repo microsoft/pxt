@@ -1132,6 +1132,10 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
             return pxt.github.mergeAsync(githubId.fullName, pr.base, githubId.tag, `${message} (#${pr.number})`)
                 .then(() => this.props.parent.switchToBranchAsync(pr.base))
                 .then(() => this.props.parent.pullAsync())
+                .then(() => {
+                    core.hideLoading("github.merge");
+                    core.infoNotification("Pull request merged successfully!")
+                })
                 .then(() => core.handleNetworkError)
                 .finally(() => core.hideLoading("github.merge"))
                 .then(() => { })
