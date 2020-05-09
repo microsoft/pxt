@@ -4068,9 +4068,9 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
         case "edit":
         case "sandboxproject":
         case "project":
-        case "github":
         case "header":
             return true;
+        case "github":
         default:
             return false;
     }
@@ -4318,9 +4318,8 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .then(() => pxt.winrt.hasActivationProjectAsync())
         .then((hasWinRTProject) => {
-            if (theEditor.shouldShowHomeScreen() && !hasWinRTProject) {
-                return Promise.resolve();
-            } else {
+            const showHome = theEditor.shouldShowHomeScreen();
+            if (!showHome || hasWinRTProject) {
                 // Hide the home screen
                 theEditor.setState({ home: false });
             }
@@ -4330,6 +4329,8 @@ document.addEventListener("DOMContentLoaded", () => {
             if (hasWinRTProject) {
                 return pxt.winrt.loadActivationProject();
             }
+            if (showHome)
+                return Promise.resolve();
 
             // default handlers
             const ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0];

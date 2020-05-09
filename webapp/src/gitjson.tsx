@@ -1127,7 +1127,7 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
         }).then(message => {
             if (message === null) return Promise.resolve();
 
-            message = message || pr.title || lf(`Merge pull request`);
+            message = message || pr.title || lf("Merge pull request");
             core.showLoading("github.merge", lf("merging pull request..."))
             return pxt.github.mergeAsync(githubId.fullName, pr.base, githubId.tag, `${message} (#${pr.number})`)
                 .then(() => this.props.parent.switchToBranchAsync(pr.base))
