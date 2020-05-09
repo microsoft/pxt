@@ -524,19 +524,19 @@ export function showImportGithubDialogAsync() {
         core.hideDialog()
     }
     core.showLoading("githublist", lf("searching GitHub repositories..."))
-    return cloudsync.githubProvider().routedLoginAsync(`import`)    
+    return cloudsync.githubProvider().routedLoginAsync(`import`)
         .then(() => pxt.github.listUserReposAsync())
         .finally(() => core.hideLoading("githublist"))
         .then(repos => {
             return repos.map(r => ({
-                    name: r.fullName,
-                    description: r.description,
-                    updatedAt: r.updatedAt,
-                    onClick: () => {
-                        res = pxt.github.normalizeRepoId("https://github.com/" + r.fullName)
-                        core.hideDialog()
-                    },
-                }))
+                name: r.fullName,
+                description: r.description,
+                updatedAt: r.updatedAt,
+                onClick: () => {
+                    res = pxt.github.normalizeRepoId("https://github.com/" + r.fullName)
+                    core.hideDialog()
+                },
+            }))
         })
         .then(repos => core.confirmAsync({
             header: lf("Clone or create your own GitHub repo"),
