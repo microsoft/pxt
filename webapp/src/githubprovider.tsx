@@ -38,6 +38,11 @@ export class GithubProvider extends cloudsync.ProviderBase {
         return false;
     }
 
+    hasToken(): boolean {
+        this.loginCheck();
+        return !!this.token();
+    }
+
     loginCheck() {
         super.loginCheck();
 

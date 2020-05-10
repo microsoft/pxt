@@ -1006,9 +1006,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
     private async cloneGithub() {
         pxt.tickEvent("github.projects.clone", undefined, { interactiveConsent: true });
         this.hide();
-        await cloudsync.githubProvider().loginAsync();
-        if (pxt.github.token)
-            this.props.parent.showImportGithubDialog();
+        this.props.parent.showImportGithubDialog();
     }
 
     renderCore() {

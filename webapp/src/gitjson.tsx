@@ -443,7 +443,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         // pull changes and merge; if any conflicts, bail out
         await workspace.pullAsync(header);
         // check if any merge markers
-        const hasConflicts = await workspace.hasMergeConflictMarkers(header);
+        const hasConflicts = await workspace.hasMergeConflictMarkersAsync(header);
         if (hasConflicts) {
             // bail out
             // maybe needs a reload
@@ -515,16 +515,16 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
     private async handlePullRequest() {
         const gh = this.parsedRepoId();
-        let title = await core.promptAsync({
+        let res = await core.confirmAsync({
             header: lf("Create pull request"),
             jsx: <p>{lf("Pull requests let you tell others about changes you've pushed to a branch in a repository on GitHub.")}</p>,
             helpUrl: "/github/pull-request",
             hasCloseIcon: true,
             hideCancel: true
         });
-        if (title === null)
-            title = gh.tag; // maybe something better?
+        if (!res) return;
 
+        const title = gh.tag; // maybe something better?
         this.showLoading("github.createpr", true, lf("creating pull request..."));
         try {
             const gh = this.parsedRepoId();
@@ -1116,62 +1116,79 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
         const { githubId } = this.props;
         const header = this.props.parent.props.parent.state.header;
         const pr: pxt.github.PullRequest = this.props.parent.getData("pkg-git-pr:" + header.id)
-        core.confirmAsync({
+        core.promptAsync({
             header: lf("Squash and merge?"),
             jsx: <p>{lf("Your changes will merged as a single commit into the base branch and you will switch back to the base branch.")}</p>,
             agreeLbl: lf("Confirm merge"),
             helpUrl: "/github/pull-request",
             hideCancel: true,
-            hasCloseIcon: true
-        }).then(r => {
-            if (!r) return Promise.resolve();
+            hasCloseIcon: true,
+            placeholder: lf("Describe your changes")
+        }).then(message => {
+            if (message === null) return Promise.resolve();
 
+            message = message || pr.title || lf("Merge pull request");
             core.showLoading("github.merge", lf("merging pull request..."))
-            return pxt.github.mergeAsync(githubId.fullName, pr.base, githubId.tag)
+            return pxt.github.mergeAsync(githubId.fullName, pr.base, githubId.tag, `${message} (#${pr.number})`)
                 .then(() => this.props.parent.switchToBranchAsync(pr.base))
                 .then(() => this.props.parent.pullAsync())
+                .then(() => {
+                    core.hideLoading("github.merge");
+                    core.infoNotification("Pull request merged successfully!")
+                })
                 .then(() => core.handleNetworkError)
                 .finally(() => core.hideLoading("github.merge"))
-                .then(() => {})
+                .then(() => { })
         })
     }
 
     renderCore() {
+        const { gs, githubId } = this.props;
         const pullRequest = this.pullRequestStatus();
+        const merging = !!gs.mergeSha;
         const mergeable = pullRequest.mergeable === "MERGEABLE";
         const open = pullRequest.state === "OPEN";
         const mergeableUnknown = open && pullRequest.mergeable === "UNKNOWN";
+        const icon = merging ? "sync" : mergeable ? "check" : mergeableUnknown ? "question" : "exclamation triangle";
+        const color = merging ? "orange" : mergeable ? "green" : mergeableUnknown ? "orange" : "grey";
+        const msg = merging ? lf("A merge is in progress. Please resolve conflicts or cancel it")
+            : mergeable ? lf("This branch has no conflicts with the base branch")
+                : mergeableUnknown ? lf("Checking if your branch can be merged")
+                    : lf("This branch has conflicts that must be resolved");
 
         if (!open) return <div></div>; // handled elsewhere
 
-        if (!mergeable && !mergeableUnknown) {
-            return <div className="ui orange segment">
-                <div className="ui field">
-                    <div className="ui header">
-                        <i className="icon green inverted circular cross" />
-                        {lf("This branch has merge conflicts with the base branch.")}
-                    </div>
+        /*
+                    {!mergeableUnknown && <div className="ui field">
+                        <sui.Button text={lf("Sync branch")}
+                            onClick={this.handleMergeUpstreamClick} onKeyDown={sui.fireClickOnEnter} />
+                        <span className="inline-help">{lf("Merge changes from master into this branch.")}</span>
+                    </div>}
+        */
+
+        return <div className={`ui ${color} segment`}>
+            <div className="ui field">
+                <div className="ui">
+                    <i className={`icon ${color} inverted circular ${icon}`} />
+                    {msg}
                 </div>
             </div>
-        }
-
-        return <div className={`ui ${mergeableUnknown ? "orange" : "green"} segment`}>
-            {mergeable && <div className="ui field">
-                <div className="ui header">
-                    <i className="icon green inverted circular check" />
-                    {lf("This branch has no conflicts with the base branch.")}
-                </div>
+            {(!mergeable && !mergeableUnknown) && <div className="ui field">
+                <sui.Link className="button" text={lf("Resolve conflicts")}
+                    href={`https://github.com/${githubId.fullName}/pull/${pullRequest.number}/conflicts`}
+                    target="_blank" />
+                <span className="inline-help">{lf("Resolve merge conflicts in GitHub.")}
+                    {sui.helpIconLink("/github/pull-requests", lf("Learn about merging pull requests in GitHub."))}
+                </span>
             </div>}
-            {(mergeableUnknown || mergeable) && <div className="ui field">
-                <sui.Button className={mergeableUnknown ? "orange" : "green"} text={lf("Squash and merge")}
+            {(mergeable || mergeableUnknown) && <div className="ui field">
+                <sui.Button className={color} text={lf("Squash and merge")}
                     loading={mergeableUnknown}
                     disabled={!mergeable}
                     onClick={this.handleMergeClick} onKeyDown={sui.fireClickOnEnter} />
-                {mergeable &&
-                    <span className="inline-help">{lf("Merge your changes as a single commit into the base branch.")}
-                        {sui.helpIconLink("/github/commit", lf("Learn about merging pull requests in GitHub."))}
-                    </span>}
-                {mergeableUnknown && <span className="inline-help">{lf("Checking if this branch has conflicts with the base branch.")}</span>}
+                <span className="inline-help">{lf("Merge your changes as a single commit into the base branch.")}
+                    {sui.helpIconLink("/github/pull-requests", lf("Learn about merging pull requests in GitHub."))}
+                </span>
             </div>}
         </div>
     }

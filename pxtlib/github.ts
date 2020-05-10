@@ -702,8 +702,8 @@ namespace pxt.github {
             has_projects: false,
             has_wiki: false,
             allow_rebase_merge: false,
-            allow_merge_commit: false,
-            delete_branch_on_merge: true
+            allow_merge_commit: true,
+            delete_branch_on_merge: false // keep branches for naming purposes
         }).then(v => mkRepo(v, null))
     }
 
@@ -1053,6 +1053,7 @@ namespace pxt.github {
         repo: string;
         commit: pxt.github.Commit;
         isFork?: boolean;
+        mergeSha?: string;
     }
 
     export const GIT_JSON = ".git.json"

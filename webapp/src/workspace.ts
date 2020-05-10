@@ -513,7 +513,8 @@ export async function pullAsync(hd: Header, checkOnly = false) {
         return PullStatus.NoSourceControl
     let gitjson = JSON.parse(gitjsontext) as GitJson
     let parsed = pxt.github.parseRepoId(gitjson.repo)
-    const sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
+    const branch = parsed.tag;
+    const sha = await pxt.github.getRefAsync(parsed.fullName, branch)
     if (!sha) {
         // 404: branch does not exist, repo is gone or no rights to access repo
         // try to get the list of heads to see if we can access the project
@@ -536,7 +537,7 @@ export async function pullAsync(hd: Header, checkOnly = false) {
     }
 }
 
-export async function hasMergeConflictMarkers(hd: Header): Promise<boolean> {
+export async function hasMergeConflictMarkersAsync(hd: Header): Promise<boolean> {
     const files = await getTextAsync(hd.id)
     return !!Object.keys(files).find(k => pxt.diff.hasMergeConflictMarker(files[k]));
 }
@@ -663,6 +664,9 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         parents: [gitjson.commit.sha],
         tree: treeId
     }
+    // we are in a merge
+    if (gitjson.mergeSha)
+        commit.parents.push(gitjson.mergeSha)
     let commitId = await pxt.github.createObjectAsync(parsed.fullName, "commit", commit)
     let ok = await pxt.github.fastForwardAsync(parsed.fullName, parsed.tag, commitId)
     let newCommit = commitId
@@ -749,6 +753,11 @@ export async function restoreCommitAsync(hd: Header, commit: pxt.github.CommitIn
         sha: commitId,
         files
     })
+}
+
+export async function mergeUpstreamAsync(hd: Header, base: string) {
+    // pull in all the changes
+    return Promise.resolve();
 }
 
 interface UpdateOptions {
@@ -892,6 +901,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
     }
 
     commit.tag = options.saveTag
+    gitjson.mergeSha = undefined
     gitjson.commit = commit
     files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
 
