@@ -40,6 +40,7 @@ export interface ShareEditorState {
     recordingState?: ShareRecordingState;
     recordError?: string;
     qrCodeUri?: string;
+    qrCodeExpanded?: boolean;
     title?: string;
 }
 
@@ -66,6 +67,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         this.handleScreenshotClick = this.handleScreenshotClick.bind(this);
         this.handleScreenshotMessage = this.handleScreenshotMessage.bind(this);
         this.handleCreateGitHubRepository = this.handleCreateGitHubRepository.bind(this);
+        this.handleQrCodeClick = this.handleQrCodeClick.bind(this);
     }
 
     hide() {
@@ -110,6 +112,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             sharingError: undefined,
             screenshotUri: undefined,
             qrCodeUri: undefined,
+            qrCodeExpanded: false,
             title,
             projectName: header.name
         }, thumbnails ? (() => this.props.parent.startSimulator()) : undefined);
@@ -188,6 +191,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             || this.state.recordingState != nextState.recordingState
             || this.state.screenshotUri != nextState.screenshotUri
             || this.state.qrCodeUri != nextState.qrCodeUri
+            || this.state.qrCodeExpanded != nextState.qrCodeExpanded
             || this.state.title != nextState.title
             ;
     }
@@ -203,6 +207,13 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     restartSimulator() {
         pxt.tickEvent('share.restart', undefined, { interactiveConsent: true });
         this.props.parent.restartSimulator();
+    }
+
+    handleQrCodeClick(e: React.MouseEvent<HTMLImageElement>) {
+        pxt.tickEvent('share.qrtoggle');
+        e.stopPropagation();
+        const { qrCodeExpanded } = this.state;
+        this.setState({ qrCodeExpanded: !qrCodeExpanded });
     }
 
     handleScreenshotClick() {
@@ -311,12 +322,13 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     renderCore() {
-        const { visible, projectName: newProjectName, loading, recordingState, screenshotUri, thumbnails, recordError, pubId, qrCodeUri, title, sharingError } = this.state;
+        const { visible, projectName: newProjectName, loading, recordingState, screenshotUri, thumbnails, recordError, pubId, qrCodeUri, qrCodeExpanded, title, sharingError } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const header = this.props.parent.state.header;
-        const hideEmbed = !!targetTheme.hideShareEmbed;
+        const hideEmbed = !!targetTheme.hideShareEmbed || qrCodeExpanded;
         const socialOptions = targetTheme.socialOptions;
-        const showSocialIcons = !!socialOptions && !pxt.BrowserUtils.isUwpEdge();
+        const showSocialIcons = !!socialOptions && !pxt.BrowserUtils.isUwpEdge()
+            && !qrCodeExpanded;
         const ready = !!pubId;
         let mode = this.state.mode;
         let url = '';
@@ -372,7 +384,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             }
             p.then(() => this.props.parent.anonymousPublishAsync(screenshotUri))
                 .then((id) => {
-                    this.setState({ pubId: id, qrCodeUri: undefined });
+                    this.setState({ pubId: id, qrCodeUri: undefined, qrCodeExpanded: false });
                     if (pxt.appTarget.appTheme.qrCode)
                         qr.renderAsync(`${shareUrl}${id}`)
                             .then(qruri => {
@@ -386,7 +398,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                     this.setState({
                         pubId: undefined,
                         sharingError: e,
-                        qrCodeUri: undefined
+                        qrCodeUri: undefined,
+                        qrCodeExpanded: false
                     });
                 });
             this.forceUpdate();
@@ -489,9 +502,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                         <p>{lf("Your project is ready! Use the address below to share your projects.")}</p>
                         <sui.Input id="projectUri" class="mini" readOnly={true} lines={1} value={url} copy={true} autoFocus={!pxt.BrowserUtils.isMobile()} selectOnClick={true} aria-describedby="projectUriLabel" autoComplete={false} />
                         <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project.")}</label>
-                        {qrCodeUri ?
-                            <img className="ui tiny image floated right" alt={lf("QR Code of the saved program")} src={qrCodeUri} />
-                            : undefined}
+                        {!!qrCodeUri && <img className={`ui ${qrCodeExpanded ? "huge" : "tiny"} image ${qrCodeExpanded ? "centered" : "floated right"} pixelart`} alt={lf("QR Code of the saved program")} src={qrCodeUri} onClick={this.handleQrCodeClick} title={lf("Click to expand or collapse.")} />}
                         {showSocialIcons ? <div className="social-icons">
                             <SocialButton url={url} ariaLabel="Facebook" type='facebook' heading={lf("Share on Facebook")} />
                             <SocialButton url={url} ariaLabel="Twitter" type='twitter' heading={lf("Share on Twitter")} />
