@@ -3971,7 +3971,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             let editorProjectName: string = undefined;
             if (/^([jt]s|py|blocks?):/i.test(tutorialPath)) {
                 if (/^py:/i.test(tutorialPath))
-                    editorProjectName = pxt.BLOCKS_PROJECT_NAME;
+                    editorProjectName = pxt.PYTHON_PROJECT_NAME;
                 else if (/^[jt]s:/i.test(tutorialPath))
                     editorProjectName = pxt.JAVASCRIPT_PROJECT_NAME;
                 else
