@@ -142,6 +142,9 @@ namespace pxt.blocks.layout {
             .forEach(b => b.setCollapsed(collapsed));
     }
 
+    // Workspace margins
+    const marginx = 20;
+    const marginy = 20;
     export function flow(ws: Blockly.WorkspaceSvg, opts?: FlowOptions) {
         if (opts) {
             if (opts.useViewWidth) {
@@ -150,6 +153,7 @@ namespace pxt.blocks.layout {
                 // Only use the width if in portrait, otherwise the blocks are too spread out
                 if (metrics.viewHeight > metrics.viewWidth) {
                     flowBlocks(ws.getTopComments(true) as Blockly.WorkspaceCommentSvg[], ws.getTopBlocks(true) as Blockly.BlockSvg[], undefined, metrics.viewWidth)
+                    ws.scroll(marginx, marginy);
                     return;
                 }
             }
@@ -158,6 +162,7 @@ namespace pxt.blocks.layout {
         else {
             flowBlocks(ws.getTopComments(true) as Blockly.WorkspaceCommentSvg[], ws.getTopBlocks(true) as Blockly.BlockSvg[]);
         }
+        ws.scroll(marginx, marginy);
     }
 
     export function screenshotEnabled(): boolean {
@@ -394,10 +399,6 @@ namespace pxt.blocks.layout {
 
         // Margin between groups of blocks and comments
         const outerGroupMargin = 45;
-
-        // Workspace margins
-        const marginx = 20;
-        const marginy = 20;
 
         const groups: Formattable[] = [];
         const commentMap: Map<Blockly.WorkspaceCommentSvg> = {};
