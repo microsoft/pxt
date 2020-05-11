@@ -13,7 +13,7 @@ same [Monaco][] editor that powers [Visual Studio Code][].
 [visual studio code]: http://code.visualstudio.com
 
 Most modern browsers automatically update themselves. In some environments,
-such as schools, these automatic updates are disabled for security. **We
+such as schools, automatic updates are disabled so that any change to browser software can wait until it is approved by an administrator. **We
 strongly recommend that you use the most recent version of any of these
 browsers**, but if you can't then you must use at least:
 
