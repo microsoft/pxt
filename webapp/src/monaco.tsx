@@ -733,6 +733,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             });
 
             if (monacoToolboxDiv) monacoToolboxDiv.style.height = `100%`;
+
+            this.editor.focus();
         }
     }
 

@@ -77,7 +77,6 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         this.setState({
             isCollapsed: !this.state.isCollapsed
         })
-        this.props.adjust()
     }
 
     onErrorMessageClick(e: pxtc.KsDiagnostic, index: number) {
