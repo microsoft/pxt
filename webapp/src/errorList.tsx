@@ -6,7 +6,8 @@ import * as sui from "./sui";
 export interface ErrorListProps {
     onSizeChange: () => void,
     listenToErrorChanges: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void,
-    goToError: (error: pxtc.KsDiagnostic) => void
+    goToError: (error: pxtc.KsDiagnostic) => void,
+    adjust: () => void
 }
 export interface ErrorListState {
     isCollapsed: boolean
@@ -76,6 +77,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         this.setState({
             isCollapsed: !this.state.isCollapsed
         })
+        this.props.adjust()
     }
 
     onErrorMessageClick(e: pxtc.KsDiagnostic, index: number) {
