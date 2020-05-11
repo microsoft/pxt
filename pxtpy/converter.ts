@@ -1111,9 +1111,10 @@ namespace pxt.py {
                 else
                     nodes.push(B.mkText("export function "), quote(funname))
             }
+            let retType = n.returns ? compileType(n.returns) : sym.pyRetType;
             nodes.push(
                 doArgs(n, isMethod),
-                n.returns ? typeAnnot(compileType(n.returns)) : B.mkText(""))
+                retType ? typeAnnot(retType) : B.mkText(""))
 
             // make sure type is initialized
             getOrSetSymbolType(sym)
