@@ -156,9 +156,6 @@
             window.onresize = setWidths;
             window.onhashchange = handleHash;
 
-            setWidths();
-            handleHash();
-
             divider.onmouseover = function () {
                 document.body.style.cursor = "w-resize";
                 divider.onmousedown = startDrag;
@@ -167,6 +164,9 @@
                 document.body.style.cursor = "default";
                 divider.onmousedown = null;
             }
+
+            setWidths();
+            handleHash();
         })();        
     </script>
     <!-- @include tracking.html -->
