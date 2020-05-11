@@ -49,6 +49,7 @@
 
             var left = document.getElementById("left");
             var right = document.getElementById("right");
+            var frames = [left, right]
             var divider = document.getElementById("divider");
             var localhost = window.location.hostname == "localhost";
             var editor = (pxtConfig ? pxtConfig.relprefix : '/').replace(/-*$/, '');
@@ -56,31 +57,37 @@
             var ratio = .5;
             var dividerWidth = 14;
 
-            window.onmessage = function (msg) {
+            function updateSrc(ifrm, hash) {
+                var h = hash ? "#" + hash : "";
+                if (localhost) {
+                    ifrm.src = "/index.html" + flags + h;
+                } else {
+                    ifrm.src = editor + flags + h;
+                }
+            }
+
+            function handleHash() {
+                var hashLeft = ""
+                var hashRight = ""
+                var route = (window.location.hash || "#");
+                var parts = route.replace(/^#/, '').split(':|:', 2);
+                updateSrc(left, parts[0]);
+                updateSrc(right, parts[1]);
+                window.history.replaceState('', '', '#')
+            }
+            function handleMessage(msg) {
                 var data = msg.data;
                 var source = msg.source;
                 if (!!data.broadcast) {
                     data.outer = true;
-                    [left, right]
-                        .filter(function (ifrm) {
+                    frames.filter(function (ifrm) {
                             return ifrm.contentWindow !== source;
                         })
                         .forEach(function (ifrm) {
                             ifrm.contentWindow.postMessage(data, window.location.origin)
                         });
                 }
-            };
-
-            function updateSrc(ifrm) {
-                if (localhost) {
-                    ifrm.src = "/index.html" + flags;
-                } else {
-                    ifrm.src = editor + flags;
-                }
             }
-            updateSrc(left);
-            updateSrc(right);
-
             function setWidths() {
                 var t = document.body.clientWidth;
                 var n = Math.floor(t * ratio);
@@ -115,7 +122,9 @@
                 }
             }
             window.onresize = setWidths;
-            setWidths();
+            window.onhashchange = handleHash;
+            window.onmessage = handleMessage;
+
             divider.onmouseover = function () {
                 document.body.style.cursor = "w-resize";
                 divider.onmousedown = startDrag;
@@ -124,6 +133,8 @@
                 document.body.style.cursor = "default";
                 divider.onmousedown = null;
             }
+            setWidths();
+            handleHash();
         })();        
     </script>
     <!-- @include tracking.html -->
