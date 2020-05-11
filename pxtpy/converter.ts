@@ -1958,6 +1958,7 @@ namespace pxt.py {
 
             if (isCallTo(n, "str")) {
                 // Our standard method of toString in TypeScript is to concatenate with the empty string
+                unify(n, n.tsType!, tpString);
                 return B.mkInfix(B.mkText(`""`), "+", expr(n.args[0]))
             }
 
@@ -2147,6 +2148,7 @@ namespace pxt.py {
         },
         Subscript: (n: py.Subscript) => {
             if (n.slice.kind == "Index") {
+                unifyTypeOf(n, typeOf(n.value));
                 let idx = (n.slice as py.Index).value
                 if (currIteration > 2 && isFree(typeOf(idx))) {
                     unifyTypeOf(idx, tpNumber)
@@ -2158,6 +2160,7 @@ namespace pxt.py {
                     B.mkText("]"),
                 ])
             } else if (n.slice.kind == "Slice") {
+                unifyTypeOf(n, typeOf(n.value));
                 let s = n.slice as py.Slice
                 return B.mkInfix(expr(n.value), ".",
                     B.H.mkCall("slice", [s.lower ? expr(s.lower) : B.mkText("0"),
