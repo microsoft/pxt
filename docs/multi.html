@@ -109,8 +109,8 @@
                 var hashRight = ""
                 var route = (window.location.hash || "#");
                 var parts = route.replace(/^#/, '').split(':|:', 2);
-                updateSrc(left, parts[0]);
-                updateSrc(right, parts[1]);
+                updateSrc(left, selectLeft, parts[0]);
+                updateSrc(right, selectRight, parts[1]);
                 window.history.replaceState('', '', '#')
             }
 
