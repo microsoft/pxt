@@ -72,6 +72,21 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         return cache;
     }
 
+    fastForwardMergeAsync(githubId: pxt.github.ParsedRepo, pr: pxt.github.PullRequest, message: string) {
+        message = message || pr.title || lf("Merge pull request");
+        core.showLoading("github.merge", lf("merging pull request..."))
+        return pxt.github.mergeAsync(githubId.fullName, pr.base, githubId.tag, `${message} (#${pr.number})`)
+            .then(() => this.switchToBranchAsync(pr.base))
+            .then(() => this.pullAsync())
+            .then(() => {
+                core.hideLoading("github.merge");
+                core.infoNotification("Pull request merged successfully!")
+            })
+            .then(() => this.handleGithubError)
+            .finally(() => core.hideLoading("github.merge"))
+            .then(() => { })
+    }
+
     async revertFileAsync(f: DiffFile, deletedFiles: string[], addedFiles: string[], virtualF: pkg.File) {
         pxt.tickEvent("github.revert", { start: 1 }, { interactiveConsent: true })
         const res = await core.confirmAsync({
@@ -263,7 +278,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
     }
 
-    private handleGithubError(e: any) {
+    protected handleGithubError(e: any) {
         const statusCode = parseInt(e.statusCode);
         if (e.isOffline || statusCode === 0)
             core.warningNotification(lf("Please connect to internet and try again."));
@@ -406,7 +421,6 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const { header } = this.props.parent.state;
         try {
             const status = await workspace.pullAsync(this.props.parent.state.header)
-                .catch(this.handleGithubError)
             switch (status) {
                 case workspace.PullStatus.NoSourceControl:
                 case workspace.PullStatus.UpToDate:
@@ -1126,19 +1140,7 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
             placeholder: lf("Describe your changes")
         }).then(message => {
             if (message === null) return Promise.resolve();
-
-            message = message || pr.title || lf("Merge pull request");
-            core.showLoading("github.merge", lf("merging pull request..."))
-            return pxt.github.mergeAsync(githubId.fullName, pr.base, githubId.tag, `${message} (#${pr.number})`)
-                .then(() => this.props.parent.switchToBranchAsync(pr.base))
-                .then(() => this.props.parent.pullAsync())
-                .then(() => {
-                    core.hideLoading("github.merge");
-                    core.infoNotification("Pull request merged successfully!")
-                })
-                .then(() => core.handleNetworkError)
-                .finally(() => core.hideLoading("github.merge"))
-                .then(() => { })
+            return this.props.parent.fastForwardMergeAsync(githubId, pr, message);
         })
     }
 
@@ -1462,7 +1464,7 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
     }
 
     renderCore() {
-        const { parent, commit, expanded, onClick, githubId } = this.props;
+        const { parent, commit, expanded, onClick } = this.props;
         const { diffFiles, loading } = this.state;
         const date = new Date(Date.parse(commit.author.date));
 
