@@ -1106,7 +1106,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
         let templateGitIgnore = templateFiles[pxt.GITIGNORE_FILE]
         const currGitIgnore = currFiles[pxt.GITIGNORE_FILE]
         if (templateREADME || currGitIgnore)
-        templateGitIgnore = [currGitIgnore, templateGitIgnore].filter(s => !!s).join(`
+            templateGitIgnore = [currGitIgnore, templateGitIgnore].filter(s => !!s).join(`
 
 `);
 
