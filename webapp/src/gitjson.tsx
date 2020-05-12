@@ -262,7 +262,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                 provider.authorizeAppAsync();
             }
             org = <p className="ui small">
-                {lf("If you are the owner of the {0} organization, you can authorize the MakeCode App.", parsed.owner)}
+                {lf("If you are the owner of the {0} organization, you can authorize the MakeCode App. Otherwise use a Developer token to sign in.", parsed.owner)}
                 <sui.Link className="link" text={lf("Authorize MakeCode")} onClick={authorize} />
             </p>
         }
