@@ -252,19 +252,19 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const user = provider.user();
         const error = fromError && <div className="ui message warning">{lf("You don't seem to have write permission to {0}.\n", parsed.fullName)}</div>;
         const help =
-            <div>{lf("Forking creates a copy of {0} under your account. You can include your changes via a pull request.", parsed.fullName)}</div>
+            <p>{lf("Forking creates a copy of {0} under your account. You can include your changes via a pull request.", parsed.fullName)}</p>
         let org: JSX.Element = undefined;
-        if (user && parsed.owner !== user.userName) {
+        if (fromError && user && parsed.owner !== user.userName) {
             // this is an org repo, so our OAuth app might not have been granted rights
+            // test if the app can read the repo
             const authorize = () => {
                 pxt.tickEvent("github.forkdialog.authorize");
                 provider.authorizeAppAsync();
             }
-            org = <div>
-                {lf("If you are the owner of the {0} organization, make sure to authorize the MakeCode App.")}
-                {lf("Otherwise, use a Developer token instead when signing into GitHub.")}
-                <sui.Button text={lf("Authorize MakeCode")} onClick={authorize} />
-            </div>
+            org = <p className="ui small">
+                {lf("If you are the owner of the {0} organization, make sure to authorize the MakeCode App. Otherwise, use a Developer token.", parsed.owner)}
+                <sui.Link className="link" text={lf("Authorize MakeCode")} onClick={authorize} />
+            </p>
         }
         const res = await core.confirmAsync({
             header: lf("Do you want to fork {0}?", parsed.fullName),
