@@ -43,21 +43,24 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         const createOnErrorMessageClick = (e: pxtc.KsDiagnostic, index: number) => () =>
             this.onErrorMessageClick(e, index)
 
-        const errorListContent = (
-            <div className="ui selection list">
-                {(errors).map((e, index) =>
+        let errorListContent;
+        if (!isCollapsed) {
+            errorListContent = (
+                <div className="ui selection list">
+                    {(errors).map((e, index) =>
                     <div className="item" key={errorKey(e)} role="button" onClick={createOnErrorMessageClick(e, index)}>
-                        {lf("Line {0}: ", e.line + 1)}
-                        {e.messageText}
+                        {lf("Line {0}: {1}", e.line + 1, e.messageText)}
                     </div>)
-                }
-            </div> )
+                    }
+                </div>
+            )
+        }
 
         return (
             <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''}`} hidden={!errorsAvailable}>
                 <div className="errorListHeader" role="button" onClick={this.onCollapseClick}>
                     <h4>{lf("Problems")}</h4>
-                    <div className="ui red circular label countBubble">{errors?.length}</div>
+                    <div className="ui red circular label countBubble">{errors.length}</div>
                     <div className="toggleButton"><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`} onClick={this.onCollapseClick} /></div>
                 </div>
                 {!isCollapsed && <div className="errorListInner">{errorListContent}</div>}
