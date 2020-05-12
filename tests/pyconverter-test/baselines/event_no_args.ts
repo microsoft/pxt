@@ -1,3 +1,3 @@
-player.onDied(function on_died(): void {
+player.onDied(function on_died() {
     
 })

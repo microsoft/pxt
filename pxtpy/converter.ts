@@ -1114,7 +1114,7 @@ namespace pxt.py {
             let retType = n.returns ? compileType(n.returns) : sym.pyRetType;
             nodes.push(
                 doArgs(n, isMethod),
-                retType ? typeAnnot(retType) : B.mkText(""))
+                retType && find(retType) != tpVoid ? typeAnnot(retType) : B.mkText(""))
 
             // make sure type is initialized
             getOrSetSymbolType(sym)
