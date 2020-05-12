@@ -74,7 +74,8 @@ ${lf("This image may take a few minutes to refresh.")}
 `,
 
             ".gitignore":
-                `built
+                `# MakeCode
+built
 node_modules
 yotta_modules
 yotta_targets
@@ -83,6 +84,7 @@ _site
 *.db
 *.tgz
 .header.json
+.simstate.json
 `,
             ".vscode/settings.json":
                 `{
