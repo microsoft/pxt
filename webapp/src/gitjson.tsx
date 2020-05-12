@@ -39,7 +39,6 @@ interface GithubState {
     isVisible?: boolean;
     description?: string;
     needsCommitMessage?: boolean;
-    triedFork?: boolean;
     previousCfgKey?: string;
     loadingMessage?: string;
 }
