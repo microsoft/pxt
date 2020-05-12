@@ -5753,6 +5753,7 @@ PXT_COMPILE_SWITCHES - same as ?compile=... in the webapp, interesting options
    PXT_COMPILE_SWITCHES=profile - enable profiling
    PXT_COMPILE_SWITCHES=time    - print-out compilation times
    PXT_COMPILE_SWITCHES=rawELF  - generate ELF files for Linux, without UF2 continer
+PXT_FORCE_GITHUB_PROXY - always using backend cloud to download github repositories
 
 These apply to the C++ runtime builds:
 
@@ -6428,6 +6429,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     fillInCompilerExtension(trg)
     pxt.setAppTarget(trg)
 
+    pxt.github.forceProxy = !!process.env["PXT_FORCE_GITHUB_PROXY"];
     pxt.setCompileSwitches(process.env["PXT_COMPILE_SWITCHES"])
     trg = pxt.appTarget
 
