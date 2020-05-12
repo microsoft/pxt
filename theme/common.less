@@ -117,7 +117,7 @@ pre {
     align-items: center;
 
     > div {
-        padding: 1em;
+        padding: 1rem;
     }
 }
 
@@ -1209,8 +1209,10 @@ p.ui.font.small {
         position:absolute;
         padding: 0;
         margin: 1em;
-        bottom: 4rem !important;
-        top: auto;
+        bottom: 6rem !important;
+        right: 0.5rem;
+        top: unset;
+        left: unset;
         width: auto;
         min-width: inherit;
         max-width: inherit;
@@ -1221,10 +1223,8 @@ p.ui.font.small {
         display: none;
     }
     #filelistOverlay {
+        position: absolute;
         display: block;
-        top: auto;
-        left: 4rem; /* match left pos of #boardview */
-        bottom: -3rem;
         width: 10rem; /* match width of div.simframe */
         height: 9rem;
     }
@@ -1242,12 +1242,13 @@ p.ui.font.small {
 
     #root:not(.fullscreensim):not(.headless):not(.sandbox) {
         #boardview {
-            position: absolute;
-            left: 4rem;
+            display: inline-block;
             width: 10rem;
         }
         #filelist .simtoolbar {
             margin: 0.5em 0;
+            width: 3rem;
+            float: right;
         }
         #filelist .simtoolbar > div:not(:first-child),
         #filelist .simtoolbar > .buttons > .button {
@@ -1286,12 +1287,6 @@ p.ui.font.small {
     }
     #maineditor:not(.sandbox) {
         bottom: 0rem;
-    }
-    #editortools {
-        height: 10rem;
-    }
-    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #msg {
-        bottom: 10rem;
     }
     #tutorialcard.bottom {
         bottom: 11rem;
@@ -1339,7 +1334,7 @@ p.ui.font.small {
         bottom: 10rem;
     }
     .collapsedEditorTools #mobiletogglesim {
-        bottom: 4.7rem;
+        bottom: @editorToolsCollapsedHeight;
     }
     /* Hide floating editors */
     .hideEditorFloats .editorFloat {
