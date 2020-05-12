@@ -99,7 +99,9 @@ function getTestCases() {
                     .filter(s => s.indexOf("!") !== -1)
                     .map(s => s.replace("!", ""))
 
-                const dotPosition = position + line.substring(0, commentIndex).lastIndexOf(".");
+                const lineWithoutCommment = line.substring(0, commentIndex);
+                const relativeDotPosition = lineWithoutCommment.lastIndexOf(".") + 1 /*monaco is one-indexed*/;
+                const dotPosition = position + relativeDotPosition;
 
                 testCases.push({
                     fileName,
@@ -108,13 +110,13 @@ function getTestCases() {
                     isPython,
                     expectedSymbols,
                     unwantedSymbols,
-                    position: dotPosition + 1,
+                    position: dotPosition,
                     wordStartPos: dotPosition + 1,
                     wordEndPos: dotPosition + 1,
                 })
             }
 
-            position += line.length;
+            position += line.length + 1/*new lines*/;
         }
     }
 
