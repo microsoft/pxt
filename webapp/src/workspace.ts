@@ -1177,7 +1177,9 @@ export async function importGithubAsync(id: string): Promise<Header> {
             const r = await core.confirmAsync({
                 header: lf("Initialize repository for MakeCode?"),
                 body: lf("We need to add a few files to your repository to make it work with MakeCode."),
-                agreeLbl: lf("Ok")
+                agreeLbl: lf("Ok"),
+                hideCancel: true,
+                hasCloseIcon: true
             })
             if (!r) return Promise.resolve(undefined);
         }
