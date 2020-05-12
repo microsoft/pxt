@@ -130,7 +130,7 @@ namespace pxsim {
             for (let k of Object.keys(frame)) {
                 // skip members starting with __
                 if (!/^__/.test(k) && /___\d+$/.test(k) && (!filters || filters.indexOf(k) !== -1)) {
-                    r[k.replace(/___\d+$/, '')] = valToJSON(frame[k], heap)
+                    r[k] = valToJSON(frame[k], heap)
                 }
             }
             if (frame.fields && fields) {
@@ -142,7 +142,7 @@ namespace pxsim {
             }
             if (frame.fields) {
                 for (let k of Object.keys(frame.fields).filter(field => !field.startsWith('_'))) {
-                    r[k.replace(/___\d+$/, '')] = valToJSON(frame.fields[k], heap)
+                    r[k] = valToJSON(frame.fields[k], heap)
                 }
             } else if (Array.isArray(frame.data)) {
                 // This is an Array.
