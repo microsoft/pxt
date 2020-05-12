@@ -729,8 +729,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             if (monacoToolboxDiv) monacoToolboxDiv.style.height = `100%`;
 
-            // ensures all lines are displayed
-            this.editor.focus();
+            // triggers remeasuring
+            this.editor.layout();
         }
     }
 
