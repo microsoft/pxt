@@ -1176,9 +1176,7 @@ export async function importGithubAsync(id: string): Promise<Header> {
             // ask user before modifying project
             const r = await core.confirmAsync({
                 header: lf("Initialize repository for MakeCode?"),
-                body: lf("We need to add a few files to your repository to make it work with MakeCode.")
-                    + " "
-                    + lf("Your existing files will not be modified."),
+                body: lf("We need to add a few files to your repository to make it work with MakeCode."),
                 agreeLbl: lf("Ok")
             })
             if (!r) return Promise.resolve(undefined);
