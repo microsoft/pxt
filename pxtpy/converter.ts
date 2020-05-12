@@ -2350,8 +2350,13 @@ namespace pxt.py {
             && sym.modifier === undefined
             && (sym.lastRefPos! > sym.forVariableEndPos!
                 || sym.firstRefPos! < sym.firstAssignPos!
-                || sym.firstAssignDepth! > scope.blockDepth!);
+                || sym.firstAssignDepth! > scope.blockDepth!)
+            && !(isTopLevelScope(scope) && sym.firstAssignDepth! === 0);
         return !!result
+    }
+
+    function isTopLevelScope(scope: py.ScopeDef) {
+        return scope.kind === "Module" && (scope as py.Module).name === "main";
     }
 
     // TODO look at scopes of let
