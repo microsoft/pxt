@@ -5613,7 +5613,8 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             }
 
             if (fs.existsSync(errorlog)) {
-
+                reportError({ repo: fullname, title: "build error", body: nodeutil.readText(errorlog) })
+                return Promise.resolve();
             }
         }
 
