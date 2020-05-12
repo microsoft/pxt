@@ -194,7 +194,9 @@ function initWebappServiceWorker() {
     }
 
     function decodeURLs(encodedURLs: string) {
-        const cdnEscaped = "@" + "cdnUrl" + "@";
+        // Charcode 64 is '@', we need to calculate it because otherwise the minifier
+        // will combine the string concatenation into @cdnUrl@ and get mangled by the backend
+        const cdnEscaped = String.fromCharCode(64) + "cdnUrl" + String.fromCharCode(64);
 
         return dedupe(
             encodedURLs.split(";")
