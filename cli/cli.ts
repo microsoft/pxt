@@ -5515,6 +5515,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         return Promise.resolve();
     }
     parseBuildInfo(parsed);
+    const fast = !!parsed.flags["fast"];
     const clean = !!parsed.flags["clean"];
     const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
     const packages = targetConfig.packages;
@@ -5602,6 +5603,20 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         pxt.log('')
         reportLog(`${fullname}`)
 
+        const pkgdir = path.join(pkgsroot, fullname);
+        const buildlog = path.join(pkgdir, "built", "success.txt");
+        const errorlog = path.join(pkgdir, "built", "error.txt");
+        if (fast) {
+            if (nodeutil.fileExistsSync(buildlog)) {
+                reportLog(`${fullname} built already`);
+                return Promise.resolve();
+            }
+
+            if (fs.existsSync(errorlog)) {
+
+            }
+        }
+
         let delay = 1000;
         let retry = 0;
         return workAsync();
@@ -5617,6 +5632,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
                             .then(() => workAsync());
                     }
                     reportError({ repo: fullname, title: "build error", body: e.message })
+                    nodeutil.writeFileSync(errorlog, e.message);
                     return Promise.resolve();
                 });
         }
@@ -6281,7 +6297,8 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
             },
-            clean: { description: "delete all previous repos" }
+            clean: { description: "delete all previous repos" },
+            fast: { description: "don't check tag" }
         }
     }, testGithubPackagesAsync);
 
