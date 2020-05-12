@@ -53,6 +53,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.handleBranchClick = this.handleBranchClick.bind(this);
         this.handleGithubError = this.handleGithubError.bind(this);
         this.handlePullRequest = this.handlePullRequest.bind(this);
+        this.handleAutorize = this.handleAutorize.bind(this);
     }
 
     clearCacheDiff(cachePrefix?: string, f?: DiffFile) {
@@ -245,6 +246,12 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.pullAsync().done();
     }
 
+    private handleAutorize() {
+        pxt.tickEvent("github.authorize");
+        const provider = cloudsync.githubProvider();
+        provider.authorizeAppAsync();
+    }
+
     async forkAsync(fromError: boolean) {
         const parsed = this.parsedRepoId()
         const provider = cloudsync.githubProvider();
@@ -258,13 +265,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             // test if the app can read the repo
             const isOrg = await pxt.github.isOrgAsync(parsed.owner);
             if (isOrg) {
-                const authorize = () => {
-                    pxt.tickEvent("github.forkdialog.authorize");
-                    provider.authorizeAppAsync();
-                }
                 org = <p className="ui small">
                     {lf("You need to authorize the MakeCode App for {0}. Otherwise use a Developer token to sign in.", parsed.owner)}
-                    <sui.Link className="link" text={lf("Authorize MakeCode")} onClick={authorize} />
+                    <sui.Link className="link" text={lf("Authorize MakeCode")} onClick={this.handleAutorize} onKeyDown={sui.fireClickOnEnter} />
                 </p>
             }
         }
