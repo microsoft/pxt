@@ -56,11 +56,17 @@ function getTestCases() {
 
         // ignore files that start with TODO_; these represent future work
         if (file.indexOf("TODO") >= 0) {
+            console.log("Skipping test file marked as 'TODO': " + file);
             continue;
         }
 
-        // TODO(pxt-arcade/1887) support python as well
+        if (file.substr(-3) === ".py") {
+            // TODO(pxt-arcade/1887) support python as well
+            console.warn("Skipping .py file. .py filess are not yet supported in the language service tests: " + file);
+            continue;
+        }
         if (file.substr(-3) !== ".ts") {
+            console.error("Skipping unknown/unsupported file in test folder: " + file);
             continue;
         }
 
