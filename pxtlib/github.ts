@@ -133,7 +133,7 @@ namespace pxt.github {
             });
     }
 
-    export function isOrgAsyn(owner: string): Promise<boolean> {
+    export function isOrgAsync(owner: string): Promise<boolean> {
         return ghRequestAsync({ url: `orgs/${owner}`, allowHttpErrors: true, method: "GET" })
             .then(resp => resp.statusCode == 200);
     }
