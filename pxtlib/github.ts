@@ -133,6 +133,11 @@ namespace pxt.github {
             });
     }
 
+    export function isOrgAsync(owner: string): Promise<boolean> {
+        return ghRequestAsync({ url: `https://api.github.com/orgs/${owner}`, allowHttpErrors: true, method: "GET" })
+            .then(resp => resp.statusCode == 200);
+    }
+
     function ghGetJsonAsync(url: string) {
         return ghRequestAsync({ url }).then(resp => resp.json)
     }

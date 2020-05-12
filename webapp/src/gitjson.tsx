@@ -39,7 +39,6 @@ interface GithubState {
     isVisible?: boolean;
     description?: string;
     needsCommitMessage?: boolean;
-    triedFork?: boolean;
     previousCfgKey?: string;
     loadingMessage?: string;
 }
@@ -54,6 +53,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.handleBranchClick = this.handleBranchClick.bind(this);
         this.handleGithubError = this.handleGithubError.bind(this);
         this.handlePullRequest = this.handlePullRequest.bind(this);
+        this.handleAutorize = this.handleAutorize.bind(this);
     }
 
     clearCacheDiff(cachePrefix?: string, f?: DiffFile) {
@@ -70,6 +70,21 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             this.diffCache[cachePrefix + f.name] = cache
         }
         return cache;
+    }
+
+    fastForwardMergeAsync(githubId: pxt.github.ParsedRepo, pr: pxt.github.PullRequest, message: string) {
+        message = message || pr.title || lf("Merge pull request");
+        core.showLoading("github.merge", lf("merging pull request..."))
+        return pxt.github.mergeAsync(githubId.fullName, pr.base, githubId.tag, `${message} (#${pr.number})`)
+            .then(() => this.switchToBranchAsync(pr.base))
+            .then(() => this.pullAsync())
+            .then(() => {
+                core.hideLoading("github.merge");
+                core.infoNotification("Pull request merged successfully!")
+            })
+            .then(() => this.handleGithubError)
+            .finally(() => core.hideLoading("github.merge"))
+            .then(() => { })
     }
 
     async revertFileAsync(f: DiffFile, deletedFiles: string[], addedFiles: string[], virtualF: pkg.File) {
@@ -231,17 +246,41 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.pullAsync().done();
     }
 
+    private handleAutorize() {
+        pxt.tickEvent("github.authorize");
+        const provider = cloudsync.githubProvider();
+        provider.authorizeAppAsync();
+    }
+
     async forkAsync(fromError: boolean) {
         const parsed = this.parsedRepoId()
-        const pref = fromError ? lf("You don't seem to have write permission to {0}.\n", parsed.fullName) : ""
+        const provider = cloudsync.githubProvider();
+        const user = provider.user();
+        const error = fromError && <div className="ui message warning">{lf("You don't seem to have write permission to {0}.\n", parsed.fullName)}</div>;
+        const help =
+            <p>{lf("Forking creates a copy of {0} under your account. You can include your changes via a pull request.", parsed.fullName)}</p>
+        let org: JSX.Element = undefined;
+        if (fromError && user && parsed.owner !== user.userName) {
+            // this is an org repo, so our OAuth app might not have been granted rights
+            // test if the app can read the repo
+            const isOrg = await pxt.github.isOrgAsync(parsed.owner);
+            if (isOrg) {
+                org = <p className="ui small">
+                    {lf("You need to authorize the MakeCode App for {0}. Otherwise use a Developer token to sign in.", parsed.owner)}
+                    <sui.Link className="link" text={lf("Authorize MakeCode")} onClick={this.handleAutorize} onKeyDown={sui.fireClickOnEnter} />
+                </p>
+            }
+        }
         const res = await core.confirmAsync({
             header: lf("Do you want to fork {0}?", parsed.fullName),
             hideCancel: true,
             hasCloseIcon: true,
             helpUrl: "/github/fork",
-            body: pref +
-                lf("Forking creates a copy of {0} under your account. You can include your changes via a pull request.",
-                    parsed.fullName),
+            jsx: <div>
+                {error}
+                {help}
+                {org}
+            </div>,
             agreeLbl: "Fork",
             agreeIcon: "copy outline"
         })
@@ -268,12 +307,12 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         if (e.isOffline || statusCode === 0)
             core.warningNotification(lf("Please connect to internet and try again."));
         else if (e.needsWritePermission) {
-            if (this.state.triedFork) {
-                core.warningNotification(lf("You don't have write permission."));
-            } else {
-                core.hideDialog()
-                this.forkAsync(true).done()
-            }
+            // a few things may happen here:
+            // - the user does not have rights, we should fork
+            // - our oauth app doesnot have write access to the organization, we should tell the user to grant access
+            //   or use a token
+            core.hideDialog()
+            this.forkAsync(true).done();
         }
         else if (e.isMergeConflictMarkerError) {
             pxt.tickEvent("github.commitwithconflicts");
@@ -406,7 +445,6 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const { header } = this.props.parent.state;
         try {
             const status = await workspace.pullAsync(this.props.parent.state.header)
-                .catch(this.handleGithubError)
             switch (status) {
                 case workspace.PullStatus.NoSourceControl:
                 case workspace.PullStatus.UpToDate:
@@ -1126,19 +1164,7 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
             placeholder: lf("Describe your changes")
         }).then(message => {
             if (message === null) return Promise.resolve();
-
-            message = message || pr.title || lf("Merge pull request");
-            core.showLoading("github.merge", lf("merging pull request..."))
-            return pxt.github.mergeAsync(githubId.fullName, pr.base, githubId.tag, `${message} (#${pr.number})`)
-                .then(() => this.props.parent.switchToBranchAsync(pr.base))
-                .then(() => this.props.parent.pullAsync())
-                .then(() => {
-                    core.hideLoading("github.merge");
-                    core.infoNotification("Pull request merged successfully!")
-                })
-                .then(() => core.handleNetworkError)
-                .finally(() => core.hideLoading("github.merge"))
-                .then(() => { })
+            return this.props.parent.fastForwardMergeAsync(githubId, pr, message);
         })
     }
 
@@ -1462,7 +1488,7 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
     }
 
     renderCore() {
-        const { parent, commit, expanded, onClick, githubId } = this.props;
+        const { parent, commit, expanded, onClick } = this.props;
         const { diffFiles, loading } = this.state;
         const date = new Date(Date.parse(commit.author.date));
 
