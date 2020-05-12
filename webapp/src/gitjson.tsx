@@ -259,11 +259,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             const authorize = () => provider.authorizeAppAsync();
             org = <div>
                 {lf("If you are the owner of the {0} organization, make sure to authorize the MakeCode App.")}
+                {lf("Otherwise, use a Developer token instead when signing into GitHub.")}
                 <sui.Button text={lf("Authorize MakeCode")} onClick={authorize} />
-                <div className="ui small">
-                    {lf("Looking to use a Developer token instead?")}
-                    <sui.Link className="link" text={lf("Click here")} onClick={showToken} />
-                </div>
             </div>
         }
         const res = await core.confirmAsync({
