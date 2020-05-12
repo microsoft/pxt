@@ -1097,15 +1097,26 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
         if (!pxt.Package.parseAndValidConfig(currFiles[pxt.CONFIG_NAME]))
             delete currFiles[pxt.CONFIG_NAME];
         // special case append README.md content: append to existing file
-        const templateREADME = templateFiles[pxt.README_FILE];
+        let templateREADME = templateFiles[pxt.README_FILE];
         const currREADME = currFiles[pxt.README_FILE];
         if (templateREADME || currREADME)
-            templateFiles[pxt.README_FILE] = [currREADME, templateREADME].filter(s => !!s).join(`
+            templateREADME = [currREADME, templateREADME].filter(s => !!s).join(`
 
 `);
+        let templateGitIgnore = templateFiles[pxt.GITIGNORE_FILE]
+        const currGitIgnore = currFiles[pxt.GITIGNORE_FILE]
+        if (templateREADME || currGitIgnore)
+        templateGitIgnore = [currGitIgnore, templateGitIgnore].filter(s => !!s).join(`
+
+`);
+
         // current files override defaults
         U.jsonMergeFrom(templateFiles, currFiles);
         currFiles = templateFiles;
+        if (templateREADME)
+            currFiles[pxt.README_FILE] = templateREADME;
+        if (templateGitIgnore)
+            currFiles[pxt.GITIGNORE_FILE] = templateGitIgnore;
     }
 
     // update config with files if needed
