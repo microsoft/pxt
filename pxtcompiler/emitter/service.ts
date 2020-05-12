@@ -2160,7 +2160,7 @@ namespace ts.pxtc.service {
         }
 
         const tcString = tc.typeToString(t);
-        const primativeToQname: { [key: string]: string } = {
+        const primativeToQname: pxt.Map<string> = {
             "number": "Number",
             "string": "String",
             "boolean": "Boolean"

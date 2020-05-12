@@ -59,7 +59,7 @@ function getTestCases() {
             continue;
         }
 
-        // TODO support python as well
+        // TODO(pxt-arcade/1887) support python as well
         if (file.substr(-3) !== ".ts") {
             continue;
         }
