@@ -134,7 +134,7 @@ namespace pxt.github {
     }
 
     export function isOrgAsync(owner: string): Promise<boolean> {
-        return ghRequestAsync({ url: `orgs/${owner}`, allowHttpErrors: true, method: "GET" })
+        return ghRequestAsync({ url: `https://api.github.com/orgs/${owner}`, allowHttpErrors: true, method: "GET" })
             .then(resp => resp.statusCode == 200);
     }
 
