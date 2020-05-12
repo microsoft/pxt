@@ -250,13 +250,16 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const parsed = this.parsedRepoId()
         const provider = cloudsync.githubProvider();
         const user = provider.user();
-        const error = fromError && <div>{lf("You don't seem to have write permission to {0}.\n", parsed.fullName)}</div>;
+        const error = fromError && <div className="ui message warning">{lf("You don't seem to have write permission to {0}.\n", parsed.fullName)}</div>;
         const help =
             <div>{lf("Forking creates a copy of {0} under your account. You can include your changes via a pull request.", parsed.fullName)}</div>
         let org: JSX.Element = undefined;
         if (user && parsed.owner !== user.userName) {
             // this is an org repo, so our OAuth app might not have been granted rights
-            const authorize = () => provider.authorizeAppAsync();
+            const authorize = () => {
+                pxt.tickEvent("github.forkdialog.authorize");
+                provider.authorizeAppAsync();
+            }
             org = <div>
                 {lf("If you are the owner of the {0} organization, make sure to authorize the MakeCode App.")}
                 {lf("Otherwise, use a Developer token instead when signing into GitHub.")}

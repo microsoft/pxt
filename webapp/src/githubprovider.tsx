@@ -134,8 +134,8 @@ export class GithubProvider extends cloudsync.ProviderBase {
         }
     }
 
-    public authorizeAppAsync(route: string) {
-        return this.oauthRedirectAsync(route, true);
+    public authorizeAppAsync(route?: string) {
+        return this.oauthRedirectAsync(route || window.location.hash, true);
     }
 
     private oauthRedirectAsync(route: string, consent?: boolean): Promise<void> {
