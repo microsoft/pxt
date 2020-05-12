@@ -1103,20 +1103,11 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
             templateREADME = [currREADME, templateREADME].filter(s => !!s).join(`
 
 `);
-        let templateGitIgnore = templateFiles[pxt.GITIGNORE_FILE]
-        const currGitIgnore = currFiles[pxt.GITIGNORE_FILE]
-        if (templateREADME || currGitIgnore)
-            templateGitIgnore = [currGitIgnore, templateGitIgnore].filter(s => !!s).join(`
-
-`);
-
         // current files override defaults
         U.jsonMergeFrom(templateFiles, currFiles);
         currFiles = templateFiles;
         if (templateREADME)
             currFiles[pxt.README_FILE] = templateREADME;
-        if (templateGitIgnore)
-            currFiles[pxt.GITIGNORE_FILE] = templateGitIgnore;
     }
 
     // update config with files if needed
