@@ -257,14 +257,17 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         if (fromError && user && parsed.owner !== user.userName) {
             // this is an org repo, so our OAuth app might not have been granted rights
             // test if the app can read the repo
-            const authorize = () => {
-                pxt.tickEvent("github.forkdialog.authorize");
-                provider.authorizeAppAsync();
+            const isOrg = await pxt.github.isOrgAsync(parsed.owner);
+            if (isOrg) {
+                const authorize = () => {
+                    pxt.tickEvent("github.forkdialog.authorize");
+                    provider.authorizeAppAsync();
+                }
+                org = <p className="ui small">
+                    {lf("If you are the owner of the {0} organization, you can authorize the MakeCode App. Otherwise use a Developer token to sign in.", parsed.owner)}
+                    <sui.Link className="link" text={lf("Authorize MakeCode")} onClick={authorize} />
+                </p>
             }
-            org = <p className="ui small">
-                {lf("If you are the owner of the {0} organization, you can authorize the MakeCode App. Otherwise use a Developer token to sign in.", parsed.owner)}
-                <sui.Link className="link" text={lf("Authorize MakeCode")} onClick={authorize} />
-            </p>
         }
         const res = await core.confirmAsync({
             header: lf("Do you want to fork {0}?", parsed.fullName),
