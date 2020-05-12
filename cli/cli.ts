@@ -5517,6 +5517,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     parseBuildInfo(parsed);
     const fast = !!parsed.flags["fast"];
     const clean = !!parsed.flags["clean"];
+    const filterRx = parsed.args["filter"] && new RegExp(parsed.flags["filter"] as string);
     const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
     const packages = targetConfig.packages;
     if (!packages) {
@@ -5648,6 +5649,9 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         .then(fullnames => {
             // remove dups
             fullnames = U.unique(fullnames, f => f.toLowerCase());
+            // filter out
+            if (filterRx)
+                fullnames = fullnames.filter(fn => filterRx.test(fn))
             reportLog(`found ${fullnames.length} approved extensions`);
             reportLog(nodeutil.stringify(fullnames));
             return Promise.mapSeries(fullnames, nextAsync);
@@ -6299,8 +6303,9 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 aliases: ["local", "l", "local-build", "lb"]
             },
             clean: { description: "delete all previous repos" },
-            fast: { description: "don't check tag" }
-        }
+            fast: { description: "don't check tag" },
+            filter: { description: "regex filter for the package name", type: "string", argument: "filter" }
+        },
     }, testGithubPackagesAsync);
 
     p.defineCommand({
