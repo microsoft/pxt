@@ -248,15 +248,34 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
     async forkAsync(fromError: boolean) {
         const parsed = this.parsedRepoId()
-        const pref = fromError ? lf("You don't seem to have write permission to {0}.\n", parsed.fullName) : ""
+        const provider = cloudsync.githubProvider();
+        const user = provider.user();
+        const error = fromError && <div>{lf("You don't seem to have write permission to {0}.\n", parsed.fullName)}</div>;
+        const help =
+            <div>{lf("Forking creates a copy of {0} under your account. You can include your changes via a pull request.", parsed.fullName)}</div>
+        let org: JSX.Element = undefined;
+        if (user && parsed.owner !== user.userName) {
+            // this is an org repo, so our OAuth app might not have been granted rights
+            const authorize = () => provider.authorizeAppAsync();
+            org = <div>
+                {lf("If you are the owner of the {0} organization, make sure to authorize the MakeCode App.")}
+                <sui.Button text={lf("Authorize MakeCode")} onClick={authorize} />
+                <div className="ui small">
+                    {lf("Looking to use a Developer token instead?")}
+                    <sui.Link className="link" text={lf("Click here")} onClick={showToken} />
+                </div>
+            </div>
+        }
         const res = await core.confirmAsync({
             header: lf("Do you want to fork {0}?", parsed.fullName),
             hideCancel: true,
             hasCloseIcon: true,
             helpUrl: "/github/fork",
-            body: pref +
-                lf("Forking creates a copy of {0} under your account. You can include your changes via a pull request.",
-                    parsed.fullName),
+            jsx: <div>
+                {error}
+                {help}
+                {org}
+            </div>,
             agreeLbl: "Fork",
             agreeIcon: "copy outline"
         })
@@ -278,17 +297,17 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
     }
 
-    protected handleGithubError(e: any) {
+    private handleGithubError(e: any) {
         const statusCode = parseInt(e.statusCode);
         if (e.isOffline || statusCode === 0)
             core.warningNotification(lf("Please connect to internet and try again."));
         else if (e.needsWritePermission) {
-            if (this.state.triedFork) {
-                core.warningNotification(lf("You don't have write permission."));
-            } else {
-                core.hideDialog()
-                this.forkAsync(true).done()
-            }
+            // a few things may happen here:
+            // - the user does not have rights, we should fork
+            // - our oauth app doesnot have write access to the organization, we should tell the user to grant access
+            //   or use a token
+            core.hideDialog()
+            this.forkAsync(true).done();
         }
         else if (e.isMergeConflictMarkerError) {
             pxt.tickEvent("github.commitwithconflicts");
