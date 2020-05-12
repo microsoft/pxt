@@ -111,6 +111,14 @@ pre {
     z-index: @editorToolsZIndex;
     height: @editorToolsCollapsedHeight;
     background-color: @editorToolsBackground;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    > div {
+        padding: 1em;
+    }
 }
 
 .transparentEditorTools #editortools {
@@ -172,9 +180,16 @@ pre {
 }
 
 #downloadArea {
-    margin-top: 0 !important;
-    padding-top: 0.55rem;
+    margin: unset;
     background-color: @simulatorBackground;
+
+    > div {
+        margin: 0;
+    }
+}
+
+#editorToolbarArea {
+    margin-left: auto;
 }
 
 #editortools .download-button.icon-and-text {

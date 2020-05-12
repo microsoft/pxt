@@ -286,9 +286,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             saveButtonClasses = "disabled";
         }
 
-        // TODO: just drop sui grid? it's a lot of pain to work around and probably easier to handle repositioning with just basic flexbox.. lets see.
-
-        return <div className="ui grid equal width right aligned padded">
+        return <div id="editortools" className="ui" role="complementary" aria-label={lf("Editor toolbar")}>
             <div id="downloadArea" className="ui column items">{headless &&
                 <div className="ui item">
                     <div className="ui icon large buttons">
