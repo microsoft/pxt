@@ -1175,11 +1175,12 @@ export async function importGithubAsync(id: string): Promise<Header> {
             forceTemplateFiles = false;
             // ask user before modifying project
             const r = await core.confirmAsync({
-                header: lf("Initialize repository for MakeCode?"),
-                body: lf("We need to add a few files to your repository to make it work with MakeCode."),
+                header: lf("Initialize GitHub repository for MakeCode?"),
+                body: lf("We need to add a few files to your GitHub repository to make it work with MakeCode."),
                 agreeLbl: lf("Ok"),
                 hideCancel: true,
-                hasCloseIcon: true
+                hasCloseIcon: true,
+                helpUrl: "/github/import"
             })
             if (!r) return Promise.resolve(undefined);
         }
