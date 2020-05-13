@@ -1120,10 +1120,9 @@ p.ui.font.small {
         min-width: 21px;
         width: 21px;
         padding: 0;
-    }
-
-    .collapsedEditorTools:not(.headless) #filelist > * {
-        display: none;
+        > * {
+            display: none;
+        }
     }
 
     .collapsedEditorTools #downloadArea {
@@ -1205,6 +1204,7 @@ p.ui.font.small {
         max-width: inherit;
         background: transparent !important;
         overflow: visible;
+        z-index: 20;
     }
     .collapsedEditorTools #filelist {
         display: none;
