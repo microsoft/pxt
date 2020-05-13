@@ -52,23 +52,6 @@
    Breakpoints
 --------------------*/
 
-@tabletBreakpoint: 814px; // iPhone X landscape is 812px;
-/*
-default semantic
-@mobileBreakpoint            : 320px;
-@tabletBreakpoint            : 768px;
-@computerBreakpoint          : 992px;
-@largeMonitorBreakpoint      : 1200px;
-@widescreenMonitorBreakpoint : 1920px;
-
-// experiment
-@mobileBreakpoint            : unit( (63 * @emSize), px);
-@tabletBreakpoint            : unit( (79 * @emSize), px);
-@computerBreakpoint          : unit( (91 * @emSize), px);
-@largeMonitorBreakpoint      : unit( (99 * @emSize), px);
-@widescreenMonitorBreakpoint : unit( (119 * @emSize), px);
-*/
-
 @tallEditorBreakpoint: 44rem;
 @thinEditorBreakpoint: 50rem;
 

@@ -1112,6 +1112,16 @@ p.ui.font.small {
         transform: translateX(0%)!important;
         left: -2rem;
     }
+
+    #root:not(.fullscreensim):not(.headless):not(.sandbox) {
+        #boardview {
+            width: 6.5rem !important;
+        }
+        #filelistOverlay {
+            width: 6.5rem !important;
+            height: 5.5rem !important;
+        }
+    }
 }
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
@@ -1222,20 +1232,27 @@ p.ui.font.small {
 
     #editortools {
         height: @editorToolsCollapsedMobileHeight;
+        padding: 0.25rem;
 
         > div {
-            padding: .5rem !important;
+            padding: 0 !important;
         }
 
         #downloadArea {
             background-color: inherit;
-            min-width: 6.5rem;
-            max-width: 6.5rem;
+            min-width: unset;
+            max-width: unset;
+            margin-left: auto;
+            margin-right: 0.25rem;
 
             .ui.item {
                 margin-top: 0;
                 padding-top: 0;
             }
+        }
+
+        #projectNameArea {
+            margin-right: auto;
         }
 
         .undo-editortools-btn {
