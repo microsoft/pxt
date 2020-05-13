@@ -1121,6 +1121,10 @@ p.ui.font.small {
             width: 6.5rem !important;
             height: 5.5rem !important;
         }
+
+        #filelist .simtoolbar > .buttons > .play-button {
+            display: none !important;
+        }
     }
 }
 
@@ -1281,9 +1285,10 @@ p.ui.font.small {
         #filelist .simtoolbar > .buttons > .button {
             display: none;
         }
-        #filelist .simtoolbar > .buttons > .play-button,
-        #filelist .simtoolbar > .buttons > .restart-button {
-            display: block;
+        #filelist .simtoolbar > .buttons {
+            > .restart-button, > .play-button, > .debug-button {
+                display: block;
+            }
         }
         #filelist .simtoolbar > div:first-child {
             flex-direction: column;
