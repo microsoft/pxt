@@ -601,7 +601,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         } else {
             line = error.line + 1;
             column = error.column + error.length + 1;
-
         }
 
         this.editor.revealLineInCenter(line);
