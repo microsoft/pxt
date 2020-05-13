@@ -5515,7 +5515,9 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         return Promise.resolve();
     }
     parseBuildInfo(parsed);
+    const fast = !!parsed.flags["fast"];
     const clean = !!parsed.flags["clean"];
+    const filterRx = parsed.args["filter"] && new RegExp(parsed.flags["filter"] as string);
     const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
     const packages = targetConfig.packages;
     if (!packages) {
@@ -5602,6 +5604,21 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         pxt.log('')
         reportLog(`${fullname}`)
 
+        const pkgdir = path.join(pkgsroot, fullname);
+        const buildlog = path.join(pkgdir, "built", "success.txt");
+        const errorlog = path.join(pkgdir, "built", "error.txt");
+        if (fast) {
+            if (nodeutil.fileExistsSync(buildlog)) {
+                reportLog(`${fullname} built already`);
+                return Promise.resolve();
+            }
+
+            if (nodeutil.fileExistsSync(errorlog)) {
+                reportError({ repo: fullname, title: "build error", body: nodeutil.readText(errorlog) })
+                return Promise.resolve();
+            }
+        }
+
         let delay = 1000;
         let retry = 0;
         return workAsync();
@@ -5617,6 +5634,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
                             .then(() => workAsync());
                     }
                     reportError({ repo: fullname, title: "build error", body: e.message })
+                    nodeutil.writeFileSync(errorlog, e.message);
                     return Promise.resolve();
                 });
         }
@@ -5631,6 +5649,9 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         .then(fullnames => {
             // remove dups
             fullnames = U.unique(fullnames, f => f.toLowerCase());
+            // filter out
+            if (filterRx)
+                fullnames = fullnames.filter(fn => filterRx.test(fn))
             reportLog(`found ${fullnames.length} approved extensions`);
             reportLog(nodeutil.stringify(fullnames));
             return Promise.mapSeries(fullnames, nextAsync);
@@ -6281,8 +6302,10 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
             },
-            clean: { description: "delete all previous repos" }
-        }
+            clean: { description: "delete all previous repos" },
+            fast: { description: "don't check tag" },
+            filter: { description: "regex filter for the package name", type: "string", argument: "filter" }
+        },
     }, testGithubPackagesAsync);
 
     p.defineCommand({
