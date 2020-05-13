@@ -329,7 +329,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         />
                     </div>}
             </div>
-            <div className="ui portrait only">
+            <div id="simToggleArea" className="ui portrait only">
                 {!targetTheme.bigRunButton && <EditorToolbarButton
                     className="expand-button green"
                     icon={`inverted chevron ${this.props.collapsed ? 'up' : 'down'}`}
