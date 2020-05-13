@@ -346,6 +346,7 @@ namespace pxt.editor {
     export interface ISettingsProps {
         parent: IProjectView;
         visible?: boolean;
+        collapsed?: boolean;
     }
 
     export interface IFieldCustomOptions {

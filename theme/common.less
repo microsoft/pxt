@@ -422,7 +422,7 @@ div.simframe > iframe {
     z-index: @sandboxFooterZIndex;
     margin-bottom: 0.2rem !important;
 }
-.sandboxfooter .item{
+.sandboxfooter .item {
     font-size: 0.8rem !important;
 }
 
@@ -861,19 +861,6 @@ p.ui.font.small {
     .hideEditorToolbar #filelist {
         display:none !important;
     }
-
-    #editortools {
-        #downloadArea {
-            padding: 1rem;
-            min-width: 8rem;
-            max-width: 8rem;
-
-            .ui.item {
-                margin-top: 0;
-                padding-top: 0;
-            }
-        }
-    }
 }
 
 /* Mobile only */
@@ -1209,7 +1196,7 @@ p.ui.font.small {
         position:absolute;
         padding: 0;
         margin: 1em;
-        bottom: 6rem !important;
+        bottom: 4.5rem !important;
         right: 0.5rem;
         top: unset;
         left: unset;
@@ -1229,14 +1216,36 @@ p.ui.font.small {
         height: 9rem;
     }
 
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #filelist {
+        bottom: @editorToolsCollapsedMobileHeight;
+    }
+
     #editortools {
+        height: @editorToolsCollapsedMobileHeight;
+
+        > div {
+            padding: .5rem !important;
+        }
+
         #downloadArea {
             background-color: inherit;
+            min-width: 6.5rem;
+            max-width: 6.5rem;
+
+            .ui.item {
+                margin-top: 0;
+                padding-top: 0;
+            }
         }
 
         .undo-editortools-btn {
             border-radius: 0.2em;
             margin: 0 .25em 0 0;
+        }
+
+        #editorToolbarArea {
+            margin-left: 0;
+            order: -1;
         }
     }
 
@@ -1292,7 +1301,7 @@ p.ui.font.small {
         bottom: 11rem;
     }
     .hideEditorFloats #editortools {
-        height: @editorToolsCollapsedHeight;
+        height: @editorToolsCollapsedMobileHeight;
     }
     .hideEditorFloats.transparentEditorTools #editortools > div > div > .ui.grid {
         margin: auto;
@@ -1301,10 +1310,10 @@ p.ui.font.small {
         padding-top: 0;
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor, .hideEditorFloats #msg {
-        bottom: @editorToolsCollapsedHeight;
+        bottom: @editorToolsCollapsedMobileHeight;
     }
     .hideEditorFloats #tutorialcard.bottom {
-        bottom: @editorToolsCollapsedHeight;
+        bottom: @editorToolsCollapsedMobileHeight;
     }
     /* Simulator */
     div.simframe {
@@ -1436,7 +1445,7 @@ p.ui.font.small {
         font-size: 1rem;
     }
     .collapsedEditorTools #mobiletogglesim {
-        bottom: 3.4rem;
+        bottom: @editorToolsCollapsedMobileHeight;
     }
 
     #editortools {

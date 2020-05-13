@@ -27,6 +27,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         this.zoomOut = this.zoomOut.bind(this);
         this.startStopSimulator = this.startStopSimulator.bind(this);
         this.toggleDebugging = this.toggleDebugging.bind(this);
+        this.toggleCollapsed = this.toggleCollapsed.bind(this);
     }
 
     saveProjectName(name: string, view?: string) {
@@ -76,12 +77,17 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         this.props.parent.toggleDebugging();
     }
 
+    toggleCollapsed() {
+        pxt.tickEvent("editortools.portraitToggleCollapse", { collapsed: this.getCollapsedState(), headless: this.getHeadlessState() }, { interactiveConsent: true });
+        this.props.parent.toggleSimulatorCollapse();
+    }
+
     private getViewString(view: View): string {
         return view.toString().toLowerCase();
     }
 
     private getCollapsedState(): string {
-        return '' + this.props.parent.state.collapseEditorTools;
+        return '' + this.props.collapsed;
     }
 
     private getHeadlessState(): string {
@@ -195,7 +201,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         }
 
         let el = [];
-        el.push(<EditorToolbarButton key="downloadbutton" role="menuitem" icon={downloadIcon} className={`primary download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={this.compile} view='computer' />)
+        el.push(<EditorToolbarButton key="downloadbutton" icon={downloadIcon} className={`primary download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={this.compile} view='computer' />)
 
         const deviceName = pxt.hwName || pxt.appTarget.appTheme.boardNickname || lf("device");
         const tooltip = pxt.hwName
@@ -260,6 +266,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const debugTooltip = debugging ? lf("Disable Debugging") : lf("Debugging")
         const downloadIcon = pxt.appTarget.appTheme.downloadIcon || "download";
 
+        const collapseIconTooltip = this.props.collapsed ? lf("Show the simulator") : lf("Hide the simulator");
         const bigRunButtonTooltip = (() => {
             switch (simState) {
                 case pxt.editor.SimState.Stopped:
@@ -294,7 +301,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     </div>
                 </div>}
                 {/* TODO clean this; make it just getCompileButton, and set the buttons fontsize to 0 / the icon itself back to normal to just hide text */}
-                {!headless &&<div className="ui item portrait hide">
+                {!headless && <div className="ui item portrait hide">
                     {compileBtn && this.getCompileButton(computer)}
                 </div>}
                 {!headless && <div className="ui portrait only">
@@ -302,19 +309,34 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                 </div>}
             </div>
             {(showProjectRename || showGithub) &&
-                <div id="projectNameArea" className="column left aligned">
+                <div id="projectNameArea" className="ui column items">
                     <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`}>
                         {showProjectRename && this.getSaveInput(showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}
                         {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
                     </div>
                 </div>}
-            <div id="editorToolbarArea" className="column right aligned">
+            <div id="editorToolbarArea" className="ui column items">
                 {showUndoRedo && <div className="ui icon small buttons">{this.getUndoRedo(computer)}</div>}
                 {showZoomControls && <div className="ui icon small buttons portrait hide">{this.getZoomControl(computer)}</div>}
                 {targetTheme.bigRunButton &&
                     <div className="big-play-button-wrapper">
-                        <EditorToolbarButton role="menuitem" className={`big-play-button play-button ${running ? "stop" : "play"}`} key='runmenubtn' disabled={starting} icon={running ? "stop" : "play"} title={bigRunButtonTooltip} onButtonClick={this.startStopSimulator} view='computer' />
+                        <EditorToolbarButton
+                            className={`big-play-button play-button ${running ? "stop" : "play"}`}
+                            key='runmenubtn' disabled={starting}
+                            icon={running ? "stop" : "play"}
+                            title={bigRunButtonTooltip} onButtonClick={this.startStopSimulator}
+                            view='computer'
+                        />
                     </div>}
+            </div>
+            <div className="ui portrait only">
+                {!targetTheme.bigRunButton && <EditorToolbarButton
+                    className="expand-button green"
+                    icon={`inverted chevron ${this.props.collapsed ? 'up' : 'down'}`}
+                    disabled={starting}
+                    title={collapseIconTooltip} onButtonClick={this.toggleCollapsed}
+                    view='computer'
+                />}
             </div>
         </div>;
     }
@@ -340,8 +362,8 @@ class EditorToolbarButton extends sui.StatelessUIElement<EditorToolbarButtonProp
     }
 
     renderCore() {
-        const { onClick, onButtonClick, ...rest } = this.props;
-        return <sui.Button {...rest} onClick={this.handleClick} />;
+        const { onClick, onButtonClick, role, ...rest } = this.props;
+        return <sui.Button role={role || "menuitem"} {...rest} onClick={this.handleClick} />;
     }
 }
 
