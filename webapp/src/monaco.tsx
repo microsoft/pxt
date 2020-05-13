@@ -592,9 +592,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     goToError(error: pxtc.KsDiagnostic) {
-        this.editor.revealLineInCenter(error.line + 1)
-        this.editor.setPosition({column: error.endColumn + 1, lineNumber: error.endLine + 1})
-        this.editor.focus()
+        // Uses length to set cursor since errors in javascript
+        // are missing endColumn...
+        const line = error.line + 1;
+        const column = error.column + error.length + 1;
+
+        this.editor.revealLineInCenter(line);
+        this.editor.setPosition({column: column, lineNumber: line});
+        this.editor.focus();
     }
 
     private onErrorChanges(errors: pxtc.KsDiagnostic[]) {
