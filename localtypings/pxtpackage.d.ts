@@ -85,6 +85,7 @@ declare namespace pxt {
         supportedTargets?: string[]; // a hint about targets in which this extension is supported
         firmwareUrl?: string; // link to documentation page about upgrading firmware
         disablesVariants?: string[]; // don't build these variants, when this extension is enabled
+        utf8?: boolean; // force compilation with UTF8 enabled
     }
 
     interface PackageExtension {

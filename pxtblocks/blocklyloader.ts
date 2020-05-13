@@ -1471,12 +1471,10 @@ namespace pxt.blocks {
         };
 
         // Use Blockly hook to customize context menu
-        (<any>Blockly).WorkspaceSvg.prototype.configureContextMenu = function (options: Blockly.ContextMenu.Option[]) {
+        (<any>Blockly).WorkspaceSvg.prototype.configureContextMenu = function (options: Blockly.ContextMenu.Option[], e: any) {
             if (this.options.readOnly || this.isFlyout) {
                 return;
             }
-            // Store workspace comment option
-            const commentOption = options.find(el => el.text.toLowerCase().includes("comment"));
 
             // Clear default Blockly options
             options.length = 0;
@@ -1487,7 +1485,7 @@ namespace pxt.blocks {
 
             // Option to add a workspace comment.
             if (this.options.comments && !BrowserUtils.isIE()) {
-                options.push(commentOption);
+                options.push(Blockly.ContextMenu.workspaceCommentOption(ws, e));
             }
 
 

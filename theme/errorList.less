@@ -1,20 +1,20 @@
-@total-height: 16em;
-@header-height: 4em;
-@inner-height: (@total-height - @header-height);
-@collapsed-errors-hover-color: rgba(0, 0, 0, 0.02);
-@border-color: #e5e5e5;
+@import 'themes/pxt/globals/site.variables';
 
 // Expanded error list
 .errorList {
     position: relative;
-    max-height: @total-height;
-    min-height: @total-height;
-    border-top: 2px @border-color solid;
+    max-height: @errorListHeight;
+    min-height: @errorListHeight;
+    border-top: 2px @errorListBorderColor solid;
 
     .errorListHeader {
-        padding: 1em;
-        height: @header-height;
+        padding: 0.75em 1em;
+        height: @errorListHeaderHeight;
         margin-bottom: 0;
+
+        &:hover {
+            cursor: pointer;
+        }
 
         h4 {
             margin: 0;
@@ -26,14 +26,14 @@
             margin-left: 1em;
         }
 
-        .collapseButton {
+        .toggleButton {
             float: right;
             cursor: pointer;
             position: relative;
             vertical-align: middle;
 
             i {
-                font-size: 1.5em;
+                font-size: 1.3em;
             }
 
             i:not(:hover) {
@@ -43,13 +43,32 @@
     }
 
     .errorListInner {
-        height: @inner-height;
-        padding: 0 1em 1em 1em;
+        height: @errorListInnerHeight;
+        padding: 0 0 1em 0;
         overflow-y: scroll;
 
-        .errorMessage {
-            padding: 0.1em;
+        .ui.selection.list {
+            color: black;
+
+            .item {
+                border-radius: unset;
+                padding: 0.5em 1em;
+                color: black;
+
+                &:hover {
+                    background-color: @errorListMessageHoverColor;
+                }
+
+                &:nth-child(even):not(:hover) {
+                    background-color: @errorListEven;
+                }
+
+                &:nth-child(odd):not(:hover) {
+                    background-color: @errorListOdd;
+                }
+            }
         }
+
     }
 }
 
@@ -58,7 +77,6 @@
     min-height: unset;
 
     &:hover {
-        cursor: pointer;
-        background-color: @collapsed-errors-hover-color;
+        background-color: @errorListMessageHoverColor;
     }
 }

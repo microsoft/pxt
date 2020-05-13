@@ -711,6 +711,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         if (debugging) {
             this.toolbox.hide();
+            // unselect any highlighted block
+            (Blockly.selected as Blockly.BlockSvg)?.unselect();
         } else {
             this.debuggerToolbox = null;
             this.toolbox.show();
@@ -908,6 +910,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (stmt) {
             let bid = pxt.blocks.findBlockIdByLine(this.compilationResult.sourceMap, { start: stmt.line, length: stmt.endLine - stmt.line });
             if (bid) {
+                const parent = pxt.blocks.getTopLevelParent(this.editor.getBlockById(bid));
+                bid = parent?.isCollapsed() ? parent.id : bid;
                 this.editor.highlightBlock(bid);
                 if (brk) {
                     const b = this.editor.getBlockById(bid) as Blockly.BlockSvg;

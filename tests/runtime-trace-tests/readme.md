@@ -51,7 +51,7 @@ for (let i = 0; i < 5; i++) {
     console.log(i)
 }
 ```
-Then run `gulp testtraces`.
+Then run `gulp testpytraces`.
 At the time of this writing, this test will fail on step #4 mentioned above because ts2py converts the file to:
 ```
 for i in range(5):

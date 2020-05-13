@@ -203,6 +203,31 @@
     }
 }
 
+.debugger-preview {
+    position: fixed;
+    background-color: white;
+    color: black;
+    border: solid 1px black;
+    padding: 0.25rem;
+
+    -webkit-touch-callout: text; /* iOS Safari */
+    -webkit-user-select: text;   /* Chrome/Safari/Opera */
+    -khtml-user-select: text;    /* Konqueror */
+    -moz-user-select: text;      /* Firefox */
+    -ms-user-select: text;       /* Internet Explorer/Edge */
+    user-select: text;           /* Non-prefixed version, currently
+                                    not supported by any browser */
+    overflow-wrap: break-word;
+    max-width: 500px;
+}
+
+// When the preview appears, the text is selected so that the user can copy it.
+// Hide the selection formatting because it makes it look like the text can be edited
+.debugger-preview::selection {
+    color: black;
+    background-color: white;
+}
+
 .debugging .ui.segment.debugvariables {
     display: block;
     margin: 0;

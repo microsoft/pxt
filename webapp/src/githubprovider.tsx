@@ -22,7 +22,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
         }
     }
 
-    private clearToken() {
+    clearToken() {
         pxt.github.token = undefined;
         super.logout();
     }
@@ -36,6 +36,11 @@ export class GithubProvider extends cloudsync.ProviderBase {
 
     hasSync(): boolean {
         return false;
+    }
+
+    hasToken(): boolean {
+        this.loginCheck();
+        return !!this.token();
     }
 
     loginCheck() {
@@ -129,12 +134,18 @@ export class GithubProvider extends cloudsync.ProviderBase {
         }
     }
 
-    private oauthRedirectAsync(route: string): Promise<void> {
+    public authorizeAppAsync(route?: string) {
+        return this.oauthRedirectAsync(route || window.location.hash, true);
+    }
+
+    private oauthRedirectAsync(route: string, consent?: boolean): Promise<void> {
         core.showLoading("ghlogin", lf("Signing you into GitHub..."))
+        route = (route || "").replace(/^#/, "");
         const state = cloudsync.setOauth(this.name, route ? `#github:${route}` : undefined);
         const self = window.location.href.replace(/#.*/, "")
         const login = pxt.Cloud.getServiceUrl() +
             "/oauth/login?state=" + state +
+            (consent ? "&prompt=consent" : "") +
             "&response_type=token&client_id=gh-token&redirect_uri=" +
             encodeURIComponent(self)
         window.location.href = login;

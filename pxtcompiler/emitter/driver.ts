@@ -257,13 +257,7 @@ namespace ts.pxtc {
         const semStart = U.cpuUs()
 
         if (res.diagnostics.length == 0) {
-            if (opts.skipPxtModulesTSC) {
-                const allDiag = program.getSourceFiles().map(f =>
-                    isPxtModulesFilename(f.fileName) ? [] : program.getSemanticDiagnostics(f))
-                res.diagnostics = patchUpDiagnostics(U.concatArrayLike(allDiag), opts.ignoreFileResolutionErrors)
-            } else {
-                res.diagnostics = patchUpDiagnostics(program.getSemanticDiagnostics(), opts.ignoreFileResolutionErrors);
-            }
+            res.diagnostics = patchUpDiagnostics(program.getSemanticDiagnostics(), opts.ignoreFileResolutionErrors);
         }
 
         const emitStart = U.cpuUs()

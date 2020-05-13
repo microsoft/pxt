@@ -25,7 +25,7 @@
                 localStorage["core/oauthState"] = state;
                 localStorage["core/ghclassroomassigment"] = assignment;
                 const login = "https://makecode.com/oauth/login?state=" + state +
-                    "&response_type=token&client_id=gh-token&redirect_uri=" + encodeURIComponent(window.location.href.split('#', 1)[0])
+                    "&prompt=consent&response_type=token&client_id=gh-token&redirect_uri=" + encodeURIComponent(window.location.href.split('#', 1)[0])
                 window.location.href = login;
             }
 
@@ -90,21 +90,8 @@
                     target="_blank">Microsoft MakeCode for GitHub</a> app
                 to your classroom organization.
             </p>
-            <div class="ui message">
-                <p>
-                    If you have <strong>already</strong> granted access to the <strong>Microsoft MakeCode for
-                        GitHub</strong> app,
-                    you will need to <a href="https://github.com/settings/connections/applications/1919c4da46b6e87c4469"
-                        target="_blank">revoke access</a>
-                    before this step (in order to force GitHub to show you the grant dialog). Revoking access does not
-                    modify any of your repositories or organizations.
-                </p>
-                <p>
-                    We are working to remove this step.
-                </p>
-            </div>
             <p>
-                <button class="ui primary button" id="signinbtn">Authorize MakeCode</button>
+                <button class="ui primary button" id="signinbtn">Authorize Microsoft MakeCode for GitHub</button>
             </p>
         </div>
         <p id="log">
