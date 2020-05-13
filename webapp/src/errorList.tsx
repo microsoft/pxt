@@ -49,7 +49,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                 <div className="ui selection list">
                     {(errors).map((e, index) =>
                     <div className="item" key={errorKey(e)} role="button" onClick={createOnErrorMessageClick(e, index)}>
-                        {lf("Line {0}: {1}", e.line + 1, e.messageText)}
+                        {lf("Line {0}: {1}", e.endLine + 1 || e.line + 1, e.messageText)}
                     </div>)
                     }
                 </div>
