@@ -157,6 +157,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
             return Promise.resolve(undefined);
         return pxt.github.authenticatedUserAsync()
             .then(ghuser => {
+                if (!ghuser) return undefined;
                 return {
                     id: ghuser.login,
                     userName: ghuser.login,
