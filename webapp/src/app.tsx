@@ -4033,18 +4033,22 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         case "reload": // need to reload last project - handled later in the load process
             if (loading) pxt.BrowserUtils.changeHash("");
             return false;
-        case "github": {
+        case "github":
+        case "github-redirect": {
             const repoid = pxt.github.parseRepoId(hash.arg);
             const [ghCmd, ghArg] = hash.arg.split(':', 2);
             pxt.BrowserUtils.changeHash("");
-            // ignore if token is not set
-            if (!cloudsync.githubProvider().hasToken())
+            // ignore if token is not set and we are coming back from an OAuth dance
+            if (hash.cmd == "github-redirect" && !cloudsync.githubProvider().hasToken()) {
+                pxt.log(`returning from github oauth without a token, skipping`)
                 return false;
+            }
             // #github:owner/user --> import
             // #github:create-repository:headerid --> create repo
             // #github:import -> import dialog
             if (ghCmd === "create-repository") {
                 // #github:create-repository:HEADERID
+                cloudsync.ensureGitHubTokenAsync(hash.arg);
                 const hd = workspace.getHeader(ghArg);
                 if (hd) {
                     theEditor.loadHeaderAsync(hd)
@@ -4057,6 +4061,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
                 dialogs.showImportGithubDialogAsync();
                 return true;
             } else if (repoid) {
+                cloudsync.ensureGitHubTokenAsync(hash.arg);
                 importGithubProject(hash.arg, true);
                 return true;
             }

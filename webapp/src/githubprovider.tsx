@@ -141,7 +141,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
     private oauthRedirectAsync(route: string, consent?: boolean): Promise<void> {
         core.showLoading("ghlogin", lf("Signing you into GitHub..."))
         route = (route || "").replace(/^#/, "");
-        const state = cloudsync.setOauth(this.name, route ? `#github:${route}` : undefined);
+        const state = cloudsync.setOauth(this.name, route ? `#github-redirect:${route}` : undefined);
         const self = window.location.href.replace(/#.*/, "")
         const login = pxt.Cloud.getServiceUrl() +
             "/oauth/login?state=" + state +
