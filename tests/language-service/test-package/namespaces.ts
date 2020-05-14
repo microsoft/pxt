@@ -8,4 +8,13 @@ namespace testNamespace {
     export interface SomeInterface {
         someField: number;
     }
+
+    export enum SomeEnum {
+        One,
+        Two
+    }
+
+    export class SomeClass {
+        e: SomeEnum;
+    }
 }

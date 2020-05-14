@@ -162,7 +162,7 @@ function runCompletionTestCaseAsync(testCase: CompletionTestCase) {
 
             const symbolExists = (sym: string) => result.entries.some(s => (testCase.isPython ? s.pyQName : s.qName) === sym)
             for (const sym of testCase.expectedSymbols) {
-                chai.assert(symbolExists(sym), `Did not receive symbol '${sym}' for '${testCase.lineText}'; instead we got ${result.entries.length} other symbols.`);
+                chai.assert(symbolExists(sym), `Did not receive symbol '${sym}' for '${testCase.lineText}'; instead we got ${result.entries.length} other symbols${result.entries.length < 5 ? ": " + result.entries.map(e => e.qName).join(", ") : "."}`);
             }
             for (const sym of testCase.unwantedSymbols) {
                 chai.assert(!symbolExists(sym), `Receive explicitly unwanted symbol '${sym}' for '${testCase.lineText}'`);

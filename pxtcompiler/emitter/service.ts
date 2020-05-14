@@ -1020,10 +1020,8 @@ namespace ts.pxtc.service {
                                 .filter(prop => !!prop)
                                 .map(prop => completionSymbol(prop));
 
-                            if (props.length) {
-                                resultSymbols = props;
-                                didFindMemberCompletions = true;
-                            }
+                            resultSymbols = props;
+                            didFindMemberCompletions = true;
                         }
                     }
                 }
@@ -1081,7 +1079,7 @@ namespace ts.pxtc.service {
                         if (paramType) {
                             // if this is a property access, then weight the results higher if they return the
                             // correct type for the parameter
-                            if (didFindMemberCompletions && resultSymbols.length) {
+                            if (didFindMemberCompletions) {
                                 const matchingApis = getApisForTsType(paramType, call, tc, resultSymbols);
 
                                 matchingApis.forEach(match => match.weight = 1);
@@ -1095,7 +1093,7 @@ namespace ts.pxtc.service {
                 }
             }
 
-            if (!isPython && !resultSymbols.length) {
+            if (!isPython && !didFindMemberCompletions) {
                 // TODO: share this with the "syntaxinfo" service
                 // start with global api symbols
                 resultSymbols = completionSymbols(pxt.U.values(lastApiInfo.apis.byQName))
@@ -1498,7 +1496,6 @@ namespace ts.pxtc.service {
             return undefined;
 
         const paramDesc = callSym.parameters[paramIdx]
-        console.dir({ paramDesc })
         let result = paramDesc.type;
 
         // check if this parameter has a shadow block, if so use the type from that instead
