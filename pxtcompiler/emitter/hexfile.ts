@@ -1137,7 +1137,7 @@ __flash_checksums:
     .word 0x${hexfile.hexTemplateHash().slice(0, 8)}
     ; user region
     .short ${progStart}, 0xffff
-    .word 0x87326633 ; replaced later
+    .hex 87326633 ; replaced later
     .word 0x0 ; terminator
 `
         }
