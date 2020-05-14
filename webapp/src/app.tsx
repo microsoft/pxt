@@ -3238,9 +3238,12 @@ export class ProjectView
                             reportId = "https://github.com/" + ghid.fullName;
                             break;
                     }
-                    return pxt.github.downloadPackageAsync(ghid.fullName, config);
-                })
-                .then(gh => resolveMarkdown(ghid, gh.files));
+                    return (ghid.tag ? Promise.resolve(ghid.tag) : pxt.github.latestVersionAsync(ghid.fullName, config))
+                        .then(tag => {
+                            ghid.tag = tag;
+                            return pxt.github.downloadPackageAsync(`${ghid.fullName}#${ghid.tag}`, config);
+                        });
+                }).then(gh => resolveMarkdown(ghid, gh.files));
         } else if (header) {
             pxt.tickEvent("tutorial.header");
             temporary = true;
