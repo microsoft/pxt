@@ -4037,9 +4037,6 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             const repoid = pxt.github.parseRepoId(hash.arg);
             const [ghCmd, ghArg] = hash.arg.split(':', 2);
             pxt.BrowserUtils.changeHash("");
-            // ignore if token is not set
-            if (!cloudsync.githubProvider().hasToken())
-                return false;
             // #github:owner/user --> import
             // #github:create-repository:headerid --> create repo
             // #github:import -> import dialog
@@ -4047,6 +4044,9 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
                 // #github:create-repository:HEADERID
                 const hd = workspace.getHeader(ghArg);
                 if (hd) {
+                    // ignore if token is not set
+                    if (!cloudsync.githubProvider().hasToken())
+                        return false;
                     theEditor.loadHeaderAsync(hd)
                         .then(() => cloudsync.githubProvider().createRepositoryAsync(hd.name, hd))
                         .done(r => r && theEditor.reloadHeaderAsync())
