@@ -129,9 +129,10 @@ namespace pxt.github {
                     opts.headers['Authorization'] = `token ${token}`
                 }
             }
-            opts.allowHttpErrors = canRetry;
+            opts.allowHttpErrors = false;
             return U.requestAsync(opts)
                 .catch(e => {
+                    pxt.tickEvent("github.error", { statusCode: e.statusCode });
                     if (handleGithubNetworkError) {
                         const retry = handleGithubNetworkError(e)
                         // retry if it may fix the issue
