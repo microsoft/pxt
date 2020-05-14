@@ -3225,6 +3225,7 @@ export class ProjectView
                 });
         } else if (!!ghid && ghid.owner && ghid.project) {
             pxt.tickEvent("tutorial.github");
+            pxt.log(`loading tutorial from ${ghid.fullName}`)
             p = pxt.packagesConfigAsync()
                 .then(config => {
                     const status = pxt.github.repoStatus(ghid, config);
@@ -3238,9 +3239,13 @@ export class ProjectView
                             reportId = "https://github.com/" + ghid.fullName;
                             break;
                     }
-                    return pxt.github.downloadPackageAsync(ghid.fullName, config);
-                })
-                .then(gh => resolveMarkdown(ghid, gh.files));
+                    return (ghid.tag ? Promise.resolve(ghid.tag) : pxt.github.latestVersionAsync(ghid.fullName, config))
+                        .then(tag => {
+                            ghid.tag = tag;
+                            pxt.log(`tutorial ${ghid.fullName} tag: ${tag}`);
+                            return pxt.github.downloadPackageAsync(`${ghid.fullName}#${ghid.tag}`, config);
+                        });
+                }).then(gh => resolveMarkdown(ghid, gh.files));
         } else if (header) {
             pxt.tickEvent("tutorial.header");
             temporary = true;
@@ -3263,7 +3268,8 @@ export class ProjectView
             };
         }).catch(e => {
             core.handleNetworkError(e);
-            core.errorNotification(lf("Oops, we could not load this activity."))
+            core.errorNotification(lf("Oops, we could not load this activity."));
+            this.openHome(); // don't stay stranded
         });
 
         function processMarkdown(md: string) {
