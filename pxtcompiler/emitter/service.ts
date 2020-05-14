@@ -955,6 +955,10 @@ namespace ts.pxtc.service {
                 if (res.globalNames)
                     lastGlobalNames = res.globalNames
 
+                if (!resultSymbols.length && res.globalNames) {
+                    resultSymbols = completionSymbols(pxt.U.values(res.globalNames))
+                }
+
                 // update our language host
                 Object.keys(res.outfiles)
                     .forEach(k => {
@@ -984,7 +988,7 @@ namespace ts.pxtc.service {
             const prog = service.getProgram()
             const tsAst = prog.getSourceFile(tsFilename)
             const tc = prog.getTypeChecker()
-            let isPropertyAccess = false;
+            let didFindMemberCompletions = false;
 
             // special handing for member completion
             if (isMemberCompletion) {
@@ -1018,7 +1022,7 @@ namespace ts.pxtc.service {
 
                             if (props.length) {
                                 resultSymbols = props;
-                                isPropertyAccess = true;
+                                didFindMemberCompletions = true;
                             }
                         }
                     }
@@ -1077,7 +1081,7 @@ namespace ts.pxtc.service {
                         if (paramType) {
                             // if this is a property access, then weight the results higher if they return the
                             // correct type for the parameter
-                            if (isPropertyAccess && resultSymbols.length) {
+                            if (didFindMemberCompletions && resultSymbols.length) {
                                 const matchingApis = getApisForTsType(paramType, call, tc, resultSymbols);
 
                                 matchingApis.forEach(match => match.weight = 1);
