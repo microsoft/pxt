@@ -789,7 +789,7 @@ export class ProjectView
                     // The simulator has paused on the first statement, so we need to send the breakpoints
                     // and continue
                     let breakpoints: number[];
-                    if (this.isAnyEditeableJavaScriptOrPackageActive()) {
+                    if (this.isAnyEditeableJavaScriptOrPackageActive() || this.isPythonActive()) {
                         breakpoints = this.textEditor.getBreakpoints();
                     }
                     else if (this.isBlocksActive()) {
