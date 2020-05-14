@@ -4048,12 +4048,12 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             // #github:import -> import dialog
             if (ghCmd === "create-repository") {
                 // #github:create-repository:HEADERID
-                cloudsync.ensureGitHubTokenAsync(hash.arg);
                 const hd = workspace.getHeader(ghArg);
                 if (hd) {
-                    theEditor.loadHeaderAsync(hd)
+                    cloudsync.ensureGitHubTokenAsync(hash.arg)
+                        .then(() => theEditor.loadHeaderAsync(hd))
                         .then(() => cloudsync.githubProvider().createRepositoryAsync(hd.name, hd))
-                        .done(r => r && theEditor.reloadHeaderAsync())
+                        .done(r => r && theEditor.reloadHeaderAsync());
                     return true;
                 }
             }
@@ -4061,7 +4061,6 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
                 dialogs.showImportGithubDialogAsync();
                 return true;
             } else if (repoid) {
-                cloudsync.ensureGitHubTokenAsync(hash.arg);
                 importGithubProject(hash.arg, true);
                 return true;
             }
