@@ -623,7 +623,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     }
 
     private rootDocsUrl(): string {
-        return pxt.webConfig.docsUrl || '/--docs#';
+        return (pxt.webConfig.docsUrl || '/--docs') + "#";
     }
 
     public static notify(message: pxsim.SimulatorMessage) {
