@@ -434,7 +434,6 @@ export function showDisconnectAsync(): Promise<void> {
 }
 
 export function disconnectAsync(): Promise<void> {
-    pxt.tickEvent("cmds.disconnect")
     return pxt.packetio.disconnectAsync();
 }
 

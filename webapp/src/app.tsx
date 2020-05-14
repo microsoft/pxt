@@ -228,23 +228,42 @@ export class ProjectView
         data.invalidate('pkg-git-pr');
         data.invalidate('pkg-git-pages')
 
+        // there is a race with another tab that has a lock on the device
+        // don't try to reconnect immediately as the other is still closing
+        // the webusb resources
+        const maybeReconnect = () => {
+            Promise.delay(3000).then(() => {
+                if (!this.state.home && document.visibilityState == 'visible')
+                    cmds.maybeReconnectAsync();
+            });
+        }
+
+        // disconnect devices to avoid locking between tabs
+        if (!active)
+            cmds.disconnectAsync(); // turn off any kind of logging
+
         if (!active && this.state.autoRun) {
             if (simulator.driver.state == pxsim.SimulatorState.Running) {
                 this.suspendSimulator();
                 this.setState({ resumeOnVisibility: true });
             }
             this.saveFileAsync().done();
-        } else {
+        } else if (active) {
+            data.invalidate("header:*")
             if (workspace.isHeadersSessionOutdated()
                 || workspace.isHeaderSessionOutdated(this.state.header)) {
                 pxt.debug('workspace: changed, reloading...')
                 let id = this.state.header ? this.state.header.id : '';
                 workspace.syncAsync()
                     .done(() => !this.state.home && id ? this.loadHeaderAsync(workspace.getHeader(id), this.state.editorState) : Promise.resolve());
+                // device scanning restarts in loadheader
             } else if (this.state.resumeOnVisibility) {
                 this.setState({ resumeOnVisibility: false });
                 // We did a save when the page was hidden, no need to save again.
                 this.runSimulator();
+                maybeReconnect()
+            } else if (!this.state.home) {
+                maybeReconnect();
             }
         }
     }
@@ -4354,6 +4373,8 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("unload", ev => {
         if (theEditor)
             theEditor.saveSettings()
+        // don't lock device while being away from tab
+        cmds.disconnectAsync();
     });
     window.addEventListener("resize", ev => {
         if (theEditor && theEditor.editor) {
