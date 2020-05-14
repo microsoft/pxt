@@ -8,7 +8,7 @@ interface Line {
 
 function getIndent(s: string): number {
     if (!s) return 0;
-    return s.match(/^\s*/)[0].length || 0;
+    return s.match(/^ */)[0].length || 0;
 }
 
 function setIndent(i: number, s: string): string {
