@@ -739,9 +739,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             });
 
             if (monacoToolboxDiv) monacoToolboxDiv.style.height = `100%`;
-
-            // triggers remeasuring
-            this.editor.layout();
         }
     }
 
