@@ -157,10 +157,14 @@ body#docs.tutorial {
 }
 
 .tutorial #tutorialcard .tutorialmessage {
-    width: ~'calc(100% - @{avatarMargin} - 0.5rem)';
+    width: 100%;
     padding: 0.5rem;
     height: calc(@tutorialCardHeight - 1.5rem);
     overflow: hidden;
+}
+
+.tutorial #tutorialcard.hasHint .tutorialmessage {
+    width: ~'calc(100% - @{avatarMargin} - 0.5rem)';
 }
 
 .tutorial.tutorialExpanded #tutorialcard .tutorialmessage {
