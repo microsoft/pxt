@@ -75,8 +75,9 @@ namespace pxt.packetio {
         let p = Promise.resolve();
         if (wrapper) {
             log('disconnect')
-            p = p.then(() => wrapper.disconnectAsync())
-                .then(() => wrapper.io.disposeAsync())
+            const w = wrapper;
+            p = p.then(() => w.disconnectAsync())
+                .then(() => w.io ? w.io.disposeAsync() : Promise.resolve())
                 .catch(e => {
                     // swallow execeptions
                     pxt.reportException(e);
