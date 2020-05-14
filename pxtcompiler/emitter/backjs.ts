@@ -221,7 +221,7 @@ s.pc = -1;
         }
         writeRaw(`
 while (true) {
-if (yieldSteps-- < 0 && maybeYield(s, step, r0) || runtime.id !== pxsim.runtime.id) return null;
+if (yieldSteps-- < 0 && maybeYield(s, step, r0) || runtime !== pxsim.runtime) return null;
 switch (step) {
   case 0:
 `)
