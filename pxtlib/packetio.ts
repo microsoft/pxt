@@ -71,13 +71,16 @@ namespace pxt.packetio {
         return !!wrapper && (wrapper.icon || "usb");
     }
 
+    let disconnectPromise: Promise<void>
     export function disconnectAsync(): Promise<void> {
+        if (disconnectPromise)
+            return disconnectPromise;
         let p = Promise.resolve();
         if (wrapper) {
             log('disconnect')
             const w = wrapper;
             p = p.then(() => w.disconnectAsync())
-                .then(() => w.io ? w.io.disposeAsync() : Promise.resolve())
+                .then(() => w.io.disposeAsync())
                 .catch(e => {
                     // swallow execeptions
                     pxt.reportException(e);
@@ -85,9 +88,11 @@ namespace pxt.packetio {
                 .finally(() => {
                     initPromise = undefined; // dubious
                     wrapper = undefined;
+                    disconnectPromise = undefined;
                 });
             if (onConnectionChangedHandler)
                 p = p.then(() => onConnectionChangedHandler());
+            disconnectPromise = p;
         }
         return p;
     }
