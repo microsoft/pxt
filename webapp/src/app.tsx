@@ -4361,7 +4361,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (theEditor)
             theEditor.saveSettings()
         // don't lock device while being away from tab
-        pxt.packetio.disconnectAsync().done();
+        cmds.disconnectAsync();
     });
     window.addEventListener("resize", ev => {
         if (theEditor && theEditor.editor) {
