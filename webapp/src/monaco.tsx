@@ -38,7 +38,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
     constructor(public editor: Editor, public python: boolean) {
     }
 
-    triggerCharacters?: string[] = ["(", "."];
+    triggerCharacters?: string[] = ["(", ".", ":"];
 
     kindMap = {}
     private tsKindToMonacoKind(s: pxtc.SymbolKind): monaco.languages.CompletionItemKind {
@@ -581,7 +581,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setInsertionSnippet={this.setInsertionSnippet}
                             parent={this.parent} />
                     </div>
-                    {showErrorList ? <ErrorList onSizeChange={this.resize} listenToErrorChanges={this.listenToErrorChanges} goToError={this.goToError}/> : undefined}
+                    {showErrorList ? <ErrorList onSizeChange={this.resize} listenToErrorChanges={this.listenToErrorChanges} goToError={this.goToError} /> : undefined}
                 </div>
             </div>
         )
@@ -593,7 +593,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     goToError(error: pxtc.KsDiagnostic) {
         this.editor.revealLineInCenter(error.line + 1)
-        this.editor.setPosition({column: error.endColumn + 1, lineNumber: error.endLine + 1})
+        this.editor.setPosition({ column: error.endColumn + 1, lineNumber: error.endLine + 1 })
         this.editor.focus()
     }
 
