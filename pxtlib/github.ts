@@ -123,6 +123,7 @@ namespace pxt.github {
                 opts.headers['Authorization'] = `token ${token}`
             }
         }
+        opts.allowHttpErrors = true;
         return U.requestAsync(opts)
             .catch(e => {
                 if (handleGithubNetworkError) {
