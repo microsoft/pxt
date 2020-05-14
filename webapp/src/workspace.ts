@@ -1193,7 +1193,7 @@ export async function importGithubAsync(id: string): Promise<Header> {
             pxt.debug(`github: detected import empty project`)
             if (pxt.shell.isReadOnly())
                 U.userError(lf("This repository looks empty."));
-            await cloudsync.ensureGitHubTokenAsync();
+            await cloudsync.ensureGitHubTokenAsync(id);
             await pxt.github.putFileAsync(parsed.fullName, ".gitignore", "# Initial\n");
             isEmpty = true;
             forceTemplateFiles = true;
@@ -1210,8 +1210,10 @@ export async function importGithubAsync(id: string): Promise<Header> {
         sha,
         files: {}
     })
-    if (hd && isEmpty)
+    if (hd && isEmpty) {
+        await cloudsync.ensureGitHubTokenAsync(id);
         await initializeGithubRepoAsync(hd, repoid, forceTemplateFiles, false);
+    }
     return hd
 }
 

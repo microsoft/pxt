@@ -336,9 +336,12 @@ export function githubProvider(): githubprovider.GithubProvider {
 
 
 // requests token to user if needed
-export async function ensureGitHubTokenAsync() {
+export async function ensureGitHubTokenAsync(route?: string) {
     // check that we have a token first
-    await githubProvider().loginAsync();
+    if (route)
+        await githubProvider().routedLoginAsync(route);
+    else
+        await githubProvider().loginAsync();
     if (!pxt.github.token)
         U.userError(lf("Please sign in to GitHub to perform this operation."))
 }
