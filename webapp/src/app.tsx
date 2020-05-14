@@ -736,10 +736,9 @@ export class ProjectView
         }, 1000, false);
 
     private markdownChangeHandler = Util.debounce(() => {
-        if (this.state.currFile && /\.md$/i.test(this.state.currFile.name)
-            && this.isSideDocExpanded())
+        if (this.state.currFile && /\.md$/i.test(this.state.currFile.name))
             this.setSideMarkdown(this.editor.getCurrentSource());
-    }, 8000, false);
+    }, 3000, false);
     private editorChangeHandler = Util.debounce(() => {
         if (!this.editor.isIncomplete()) {
             this.saveFileAsync().done(); // don't wait till save is done
@@ -1321,14 +1320,6 @@ export class ProjectView
                         }
                     })
                     .done()
-
-                const editorForFile = this.pickEditorFor(file);
-                const readme = main.lookupFile("this/README.md");
-                // no auto-popup when editing packages locally
-                if (!h.githubId && readme && readme.content && readme.content.trim())
-                    this.setSideMarkdown(readme.content);
-                else if (pkg.mainPkg && pkg.mainPkg.config && pkg.mainPkg.config.documentation)
-                    this.setSideDoc(pkg.mainPkg.config.documentation, editorForFile == this.blocksEditor);
 
                 // update recentUse on the header
                 return workspace.saveAsync(h)
@@ -2036,7 +2027,6 @@ export class ProjectView
         if (!options.prj) options.prj = pxt.appTarget.blocksprj;
         let cfg = pxt.U.clone(options.prj.config);
         cfg.name = options.name || lf("Untitled");
-        cfg.documentation = options.documentation;
         let files: pxt.workspace.ScriptText = Util.clone(options.prj.files)
         if (options.filesOverride)
             Util.jsonCopyFrom(files, options.filesOverride)

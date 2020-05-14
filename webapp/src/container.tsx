@@ -548,7 +548,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const tsOnly = !inAltEditor && languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly;
         const pyOnly = !inAltEditor && languageRestriction === pxt.editor.LanguageRestriction.PythonOnly;
         const showToggle = !inAltEditor && !targetTheme.blocksOnly
-                && (sandbox || !(tsOnly || pyOnly)); // show if sandbox or not single language
+            && (sandbox || !(tsOnly || pyOnly)); // show if sandbox or not single language
         const editor = this.props.parent.isPythonActive() ? "Python" : (this.props.parent.isJavaScriptActive() ? "JavaScript" : "Blocks");
 
         /* tslint:disable:react-a11y-anchors */
@@ -622,6 +622,10 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         this.popOut = this.popOut.bind(this);
     }
 
+    private rootDocsUrl(): string {
+        return pxt.webConfig.docsUrl || '/--docs#';
+    }
+
     public static notify(message: pxsim.SimulatorMessage) {
         let sd = document.getElementById("sidedocsframe") as HTMLIFrameElement;
         if (sd && sd.contentWindow) sd.contentWindow.postMessage(message, "*");
@@ -629,20 +633,19 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
     setPath(path: string, blocksEditor: boolean) {
         this.openingSideDoc = true;
-        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
+        const docsUrl = this.rootDocsUrl();
         const mode = blocksEditor ? "blocks" : "js";
-        const url = `${docsUrl}#doc:${path}:${mode}:${pxt.Util.localeInfo()}`;
+        const url = `${docsUrl}doc:${path}:${mode}:${pxt.Util.localeInfo()}`;
         this.setUrl(url);
     }
 
     setMarkdown(md: string) {
-        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
+        const docsUrl = this.rootDocsUrl();
         // always render blocks by default when sending custom markdown
         // to side bar
         const mode = "blocks" // this.props.parent.isBlocksEditor() ? "blocks" : "js";
-        const url = `${docsUrl}#md:${encodeURIComponent(md)}:${mode}:${pxt.Util.localeInfo()}`;
-        this.setUrl(url);
-        this.collapse();
+        const url = `${docsUrl}md:${encodeURIComponent(md)}:${mode}:${pxt.Util.localeInfo()}`;
+        this.props.parent.setState({ sideDocsLoadUrl: url });
     }
 
     private setUrl(url: string) {
@@ -703,6 +706,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
         if (!docsUrl) return null;
 
+        const url = sideDocsCollapsed ? this.rootDocsUrl() : docsUrl;
         /* tslint:disable:react-iframe-missing-sandbox */
         return <div>
             <button id="sidedocstoggle" role="button" aria-label={sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation")} className="ui icon button large" onClick={this.toggleVisibility}>
@@ -710,7 +714,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             </button>
             <div id="sidedocs">
                 <div id="sidedocsframe-wrapper">
-                    <iframe id="sidedocsframe" src={docsUrl} title={lf("Documentation")} aria-atomic="true" aria-live="assertive"
+                    <iframe id="sidedocsframe" src={url} title={lf("Documentation")} aria-atomic="true" aria-live="assertive"
                         sandbox={`allow-scripts allow-same-origin allow-forms ${lockedEditor ? "" : "allow-popups"}`} />
                 </div>
                 {!lockedEditor && <div className="ui app hide" id="sidedocsbar">
