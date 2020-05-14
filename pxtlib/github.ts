@@ -109,29 +109,37 @@ namespace pxt.github {
         loadPackageAsync(repopath: string, tag: string): Promise<CachedPackage>;
     }
 
-    function ghRequestAsync(opts: U.HttpRequestOptions) {
-        if (token) {
-            if (!opts.headers) opts.headers = {}
-            if (opts.url == GRAPHQL_URL)
-                opts.headers['Authorization'] = `bearer ${token}`
-            else {
-                if (opts.url.indexOf('?') > 0)
-                    opts.url += "&"
-                else
-                    opts.url += "?"
-                opts.url += "anti_cache=" + Math.random()
-                opts.headers['Authorization'] = `token ${token}`
-            }
-        }
-        opts.allowHttpErrors = true;
-        return U.requestAsync(opts)
-            .catch(e => {
-                if (handleGithubNetworkError) {
-                    const retry = handleGithubNetworkError(e)
-                    if (retry) return U.requestAsync(opts);
+    function ghRequestAsync(options: U.HttpRequestOptions) {
+        // call github request with existing token
+        // if the request fails and the token is clear, try again with the token
+        return workAsync(!!token)
+
+        function workAsync(canRetry: boolean): Promise<U.HttpResponse> {
+            const opts = U.clone(options) as U.HttpRequestOptions;
+            if (token) {
+                if (!opts.headers) opts.headers = {}
+                if (opts.url == GRAPHQL_URL)
+                    opts.headers['Authorization'] = `bearer ${token}`
+                else {
+                    if (opts.url.indexOf('?') > 0)
+                        opts.url += "&"
+                    else
+                        opts.url += "?"
+                    opts.url += "anti_cache=" + Math.random()
+                    opts.headers['Authorization'] = `token ${token}`
                 }
-                throw e;
-            });
+            }
+            opts.allowHttpErrors = canRetry;
+            return U.requestAsync(opts)
+                .catch(e => {
+                    if (handleGithubNetworkError) {
+                        const retry = handleGithubNetworkError(e)
+                        // retry if it may fix the issue
+                        if (retry) return workAsync(false);
+                    }
+                    throw e;
+                });
+        }
     }
 
     export function isOrgAsync(owner: string): Promise<boolean> {
