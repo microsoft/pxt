@@ -256,21 +256,24 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const parsed = this.parsedRepoId()
         const provider = cloudsync.githubProvider();
         const user = provider.user();
-        const error = fromError && <div className="ui message warning">{lf("You don't seem to have write permission to {0}.\n", parsed.fullName)}</div>;
-        const help =
-            <p>{lf("Forking creates a copy of {0} under your account. You can include your changes via a pull request.", parsed.fullName)}</p>
         let org: JSX.Element = undefined;
         if (fromError && user && parsed.owner !== user.userName) {
             // this is an org repo, so our OAuth app might not have been granted rights
             // test if the app can read the repo
             const isOrg = await pxt.github.isOrgAsync(parsed.owner);
             if (isOrg) {
-                org = <p className="ui small">
+                org = <span>
                     {lf("You need to authorize the MakeCode App for {0}. Otherwise use a Developer token to sign in.", parsed.owner)}
                     <sui.Link className="link" text={lf("Authorize MakeCode")} onClick={this.handleAutorize} onKeyDown={sui.fireClickOnEnter} />
-                </p>
+                </span>
             }
         }
+        const error = fromError && <div className="ui message warning">
+            {lf("You don't seem to have write permission to {0}.\n", parsed.fullName)}
+            {org}
+        </div>;
+        const help =
+            <p>{lf("Forking creates a copy of {0} under your account. You can include your changes via a pull request.", parsed.fullName)}</p>
         const res = await core.confirmAsync({
             header: lf("Do you want to fork {0}?", parsed.fullName),
             hideCancel: true,
@@ -279,7 +282,6 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             jsx: <div>
                 {error}
                 {help}
-                {org}
             </div>,
             agreeLbl: "Fork",
             agreeIcon: "copy outline"
