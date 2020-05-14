@@ -11,6 +11,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
     constructor() {
         super(PROVIDER_NAME, lf("GitHub"), "icon github", "https://api.github.com");
         pxt.github.handleGithubNetworkError = (e: any) => {
+            pxt.tickEvent("github.error", { statusCode: e.statusCode });
             if (e.statusCode == 401) {
                 pxt.log(`github: invalid token`)
                 this.clearToken();
@@ -158,8 +159,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
         return pxt.github.authenticatedUserAsync()
             .then(ghuser => {
                 if (!ghuser) {
-                    pxt.log(`unkown github user, clearing token`)
-                    this.setNewToken(undefined); // token is expired or deleted
+                    pxt.log(`unkown github user`)
                     return undefined;
                 }
                 return {
