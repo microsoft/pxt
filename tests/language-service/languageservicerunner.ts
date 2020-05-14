@@ -106,8 +106,25 @@ function getTestCases() {
                     .map(s => s.replace("!", ""))
 
                 const lineWithoutCommment = line.substring(0, commentIndex);
-                const relativeDotPosition = lineWithoutCommment.lastIndexOf(".") + 1 /*monaco is one-indexed*/;
-                const dotPosition = position + relativeDotPosition;
+
+                const dotPosition = lineWithoutCommment.lastIndexOf(".");
+                const isCompletionAtDot = dotPosition !== -1
+
+                let relativeCompletionPosition;
+                if (!isCompletionAtDot) {
+                    // find last non-whitespace character
+                    for (let i = lineWithoutCommment.length - 1; i >= 0; i--) {
+                        console.log("considering: " + lineWithoutCommment[i])
+                        relativeCompletionPosition = i
+                        if (lineWithoutCommment[i] !== " ") {
+                            break
+                        }
+                    }
+                } else {
+                    relativeCompletionPosition = dotPosition + 1 // one character beyond the dot
+                }
+
+                const completionPosition = position + relativeCompletionPosition;
 
                 testCases.push({
                     fileName,
@@ -116,9 +133,11 @@ function getTestCases() {
                     isPython,
                     expectedSymbols,
                     unwantedSymbols,
-                    position: dotPosition,
-                    wordStartPos: dotPosition + 1,
-                    wordEndPos: dotPosition + 1,
+                    position: completionPosition,
+                    // TODO: we could be smarter about the word start and end position, but
+                    //  this works for all cases we care about so far.
+                    wordStartPos: completionPosition,
+                    wordEndPos: completionPosition,
                 })
             }
 
@@ -149,7 +168,7 @@ function runCompletionTestCaseAsync(testCase: CompletionTestCase) {
 
             const symbolExists = (sym: string) => result.entries.some(s => (testCase.isPython ? s.pyQName : s.qName) === sym)
             for (const sym of testCase.expectedSymbols) {
-                chai.assert(symbolExists(sym), `Did not receive symbol '${sym}' for '${testCase.lineText}'`);
+                chai.assert(symbolExists(sym), `Did not receive symbol '${sym}' for '${testCase.lineText}'; instead we got ${result.entries.length} other symbols.`);
             }
             for (const sym of testCase.unwantedSymbols) {
                 chai.assert(!symbolExists(sym), `Receive explicitly unwanted symbol '${sym}' for '${testCase.lineText}'`);
