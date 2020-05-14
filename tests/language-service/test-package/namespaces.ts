@@ -1,5 +1,5 @@
 namespace testNamespace {
-    export function someFunction() {
+    export function someFunction(someParam: string) {
 
     }
 

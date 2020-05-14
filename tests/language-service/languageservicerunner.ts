@@ -107,21 +107,18 @@ function getTestCases() {
 
                 const lineWithoutCommment = line.substring(0, commentIndex);
 
-                const dotPosition = lineWithoutCommment.lastIndexOf(".");
-                const isCompletionAtDot = dotPosition !== -1
-
-                let relativeCompletionPosition;
-                if (!isCompletionAtDot) {
-                    // find last non-whitespace character
-                    for (let i = lineWithoutCommment.length - 1; i >= 0; i--) {
-                        relativeCompletionPosition = i
-                        if (lineWithoutCommment[i] !== " ") {
-                            break
-                        }
+                // find last non-whitespace character
+                let lastNonWhitespace: number;
+                let endsInDot = false;
+                for (let i = lineWithoutCommment.length - 1; i >= 0; i--) {
+                    lastNonWhitespace = i
+                    if (lineWithoutCommment[i] !== " ") {
+                        endsInDot = lineWithoutCommment[i] === "."
+                        break
                     }
-                } else {
-                    relativeCompletionPosition = dotPosition + 1 // one character beyond the dot
                 }
+
+                let relativeCompletionPosition = endsInDot ? lastNonWhitespace + 1 : lastNonWhitespace
 
                 const completionPosition = position + relativeCompletionPosition;
 
