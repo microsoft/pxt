@@ -72,9 +72,9 @@ namespace pxt.packetio {
     }
 
     export function disconnectAsync(): Promise<void> {
-        log('disconnect')
         let p = Promise.resolve();
         if (wrapper) {
+            log('disconnect')
             p = p.then(() => wrapper.disconnectAsync())
                 .then(() => wrapper.io.disposeAsync())
                 .catch(e => {
@@ -85,9 +85,9 @@ namespace pxt.packetio {
                     initPromise = undefined; // dubious
                     wrapper = undefined;
                 });
+            if (onConnectionChangedHandler)
+                p = p.then(() => onConnectionChangedHandler());
         }
-        if (onConnectionChangedHandler)
-            p = p.then(() => onConnectionChangedHandler());
         return p;
     }
 

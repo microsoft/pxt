@@ -228,6 +228,12 @@ export class ProjectView
         data.invalidate('pkg-git-pr');
         data.invalidate('pkg-git-pages')
 
+        // disconnect devices to avoid locking between tabs
+        if (!active)
+            cmds.disconnectAsync(); // turn off any kind of logging
+        else if (this.state.header) // turn it back on if in the editor
+            cmds.maybeReconnectAsync();
+
         if (!active && this.state.autoRun) {
             if (simulator.driver.state == pxsim.SimulatorState.Running) {
                 this.suspendSimulator();
@@ -4354,6 +4360,8 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("unload", ev => {
         if (theEditor)
             theEditor.saveSettings()
+        // don't lock device while being away from tab
+        pxt.packetio.disconnectAsync().done();
     });
     window.addEventListener("resize", ev => {
         if (theEditor && theEditor.editor) {
