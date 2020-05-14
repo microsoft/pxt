@@ -1121,6 +1121,9 @@ namespace ts.pxtc.service {
                     .filter(s => !!s)
                     .map(s => completionSymbol(s))
 
+                // in scope locals should be weighter higher
+                inScopePxtSyms.forEach(s => s.weight += 100)
+
                 resultSymbols = [...resultSymbols, ...inScopePxtSyms]
             }
 
