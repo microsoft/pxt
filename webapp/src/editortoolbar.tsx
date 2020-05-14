@@ -316,8 +316,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     </div>
                 </div>}
             <div id="editorToolbarArea" className="ui column items">
-                {showUndoRedo && <div className="ui icon small buttons">{this.getUndoRedo(computer)}</div>}
-                {showZoomControls && <div className="ui icon small buttons portrait hide">{this.getZoomControl(computer)}</div>}
+                {showUndoRedo && <div className="ui icon buttons">{this.getUndoRedo(computer)}</div>}
+                {showZoomControls && <div className="ui icon buttons portrait hide">{this.getZoomControl(computer)}</div>}
                 {targetTheme.bigRunButton &&
                     <div className="big-play-button-wrapper">
                         <EditorToolbarButton
