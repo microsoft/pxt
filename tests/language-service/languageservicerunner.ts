@@ -60,12 +60,8 @@ function getTestCases() {
             continue;
         }
 
-        if (file.substr(-3) === ".py") {
-            // TODO(pxt-arcade/1887) support python as well
-            console.warn("Skipping .py file. .py filess are not yet supported in the language service tests: " + file);
-            continue;
-        }
-        if (file.substr(-3) !== ".ts") {
+        const ext = file.substr(-3)
+        if (ext !== ".ts" && ext !== ".py") {
             console.error("Skipping unknown/unsupported file in test folder: " + file);
             continue;
         }
@@ -144,13 +140,15 @@ function getTestCases() {
     return testCases;
 }
 
+const fileName = (isPython: boolean) => isPython ? "main.py" : "main.ts"
+
 function runCompletionTestCaseAsync(testCase: CompletionTestCase) {
-    return getOptionsAsync(testCase.fileText)
+    return getOptionsAsync(testCase.fileText, testCase.isPython)
         .then(opts => {
             setOptionsOp(opts);
             ensureAPIInfoOp();
             const result = completionsOp(
-                "main.ts",
+                fileName(testCase.isPython),
                 testCase.position,
                 testCase.wordStartPos,
                 testCase.wordEndPos,
@@ -172,11 +170,16 @@ function runCompletionTestCaseAsync(testCase: CompletionTestCase) {
         })
 }
 
-function getOptionsAsync(fileContent: string) {
+function getOptionsAsync(fileContent: string, isPython: boolean) {
     const packageFiles: pxt.Map<string> = {};
-    packageFiles["main.ts"] = fileContent;
+    packageFiles[fileName(isPython)] = fileContent;
 
-    return util.getTestCompileOptsAsync(packageFiles, testPackage, true);
+    return util.getTestCompileOptsAsync(packageFiles, testPackage, true)
+        .then(opts => {
+            if (isPython)
+                opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+            return opts
+        })
 }
 
 function ensureAPIInfoOp() {
