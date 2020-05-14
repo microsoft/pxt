@@ -160,12 +160,25 @@ function runCompletionTestCaseAsync(testCase: CompletionTestCase) {
                 return;
             }
 
-            const symbolExists = (sym: string) => result.entries.some(s => (testCase.isPython ? s.pyQName : s.qName) === sym)
+            const symbolIndex = (sym: string) => result.entries.reduce((prevIdx, s, idx) => {
+                if (prevIdx >= 0)
+                    return prevIdx
+                if ((testCase.isPython ? s.pyQName : s.qName) === sym)
+                    return idx;
+                return -1
+            }, -1)
+            const hasSymbol = (sym: string) => symbolIndex(sym) >= 0;
+
+            let lastFoundIdx = -1;
             for (const sym of testCase.expectedSymbols) {
-                chai.assert(symbolExists(sym), `Did not receive symbol '${sym}' for '${testCase.lineText}'; instead we got ${result.entries.length} other symbols${result.entries.length < 5 ? ": " + result.entries.map(e => e.qName).join(", ") : "."}`);
+                let idx = symbolIndex(sym)
+                const foundSymbol = idx >= 0
+                chai.assert(foundSymbol, `Did not receive symbol '${sym}' for '${testCase.lineText}'; instead we got ${result.entries.length} other symbols${result.entries.length < 5 ? ": " + result.entries.map(e => e.qName).join(", ") : "."}`);
+                chai.assert(!foundSymbol || idx > lastFoundIdx, `Found symbol '${sym}', but in the wrong order at index: ${idx}. Expected it after: ${lastFoundIdx >= 0 ? result.entries[lastFoundIdx].qName : ""}`)
+                lastFoundIdx = idx;
             }
             for (const sym of testCase.unwantedSymbols) {
-                chai.assert(!symbolExists(sym), `Receive explicitly unwanted symbol '${sym}' for '${testCase.lineText}'`);
+                chai.assert(!hasSymbol(sym), `Receive explicitly unwanted symbol '${sym}' for '${testCase.lineText}'`);
             }
         })
 }
