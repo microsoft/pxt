@@ -87,10 +87,10 @@ namespace pxt.github {
         return true
     }
 
-    function useProxy() {
+    function shouldUseProxy(force?: boolean) {
         if (forceProxy)
             return true;
-        if (token)
+        if (token && !force)
             return false
         return hasProxy();
     }
@@ -491,14 +491,15 @@ namespace pxt.github {
         return repoInfo.fullName + "#" + branchName
     }
 
-    export function listRefsAsync(repopath: string, namespace = "tags"): Promise<string[]> {
-        return listRefsExtAsync(repopath, namespace)
+    export function listRefsAsync(repopath: string, namespace = "tags", useProxy?: boolean): Promise<string[]> {
+        return listRefsExtAsync(repopath, namespace, useProxy)
             .then(res => Object.keys(res.refs))
     }
 
-    export function listRefsExtAsync(repopath: string, namespace = "tags"): Promise<RefsResult> {
+    export function listRefsExtAsync(repopath: string, namespace = "tags", useProxy?: boolean): Promise<RefsResult> {
+        const proxy = shouldUseProxy(useProxy);
         let head: string = null
-        const fetch = !useProxy() ?
+        const fetch = !proxy ?
             ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/" + namespace + "/?per_page=100") :
             // no CDN caching here
             U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${repopath}/refs`)
@@ -538,6 +539,7 @@ namespace pxt.github {
     }
 
     function tagToShaAsync(repopath: string, tag: string) {
+        // TODO  support fetching a tag
         if (/^[a-f0-9]{40}$/.test(tag))
             return Promise.resolve(tag)
         return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/tags/" + tag)
@@ -1012,7 +1014,7 @@ namespace pxt.github {
         return id
     }
 
-    export function latestVersionAsync(path: string, config: PackagesConfig): Promise<string> {
+    export function latestVersionAsync(path: string, config: PackagesConfig, useProxy?: boolean): Promise<string> {
         let parsed = parseRepoId(path)
 
         if (!parsed) return Promise.resolve<string>(null);
@@ -1020,7 +1022,7 @@ namespace pxt.github {
         return repoAsync(parsed.fullName, config)
             .then(scr => {
                 if (!scr) return undefined;
-                return listRefsExtAsync(scr.fullName, "tags")
+                return listRefsExtAsync(scr.fullName, "tags", useProxy)
                     .then(refsRes => {
                         let tags = Object.keys(refsRes.refs)
                         // only look for semver tags
