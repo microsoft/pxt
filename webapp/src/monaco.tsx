@@ -121,6 +121,11 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         endLineNumber: position.lineNumber
                     }
 
+                    // Need to take the whitespace out of this string, otherwise monaco
+                    // won't dismiss the suggest widget when the user types a space. Replace
+                    // them with commas so that we don't confuse the fuzzy matcher in monaco
+                    const filterText = `${label},${documentation},${block}`.replace(/\s/g, ",")
+
                     let res: monaco.languages.CompletionItem = {
                         label: label,
                         range,
@@ -129,7 +134,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         detail: insertSnippet,
                         // force monaco to use our sorting
                         sortText: `${tosort(i)} ${insertSnippet}`,
-                        filterText: `${label} ${documentation} ${block}`,
+                        filterText: filterText,
                         insertText: completionSnippet || undefined,
                     };
                     return res
