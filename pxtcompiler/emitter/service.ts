@@ -1103,7 +1103,8 @@ namespace ts.pxtc.service {
                 // filter these to just what's at the cursor, otherwise we get things
                 //  like JS Array methods we don't support
                 let matchStr = tsNode.getText()
-                inScopeTsSyms = inScopeTsSyms.filter(s => s.name.indexOf(matchStr) >= 0)
+                if (matchStr !== "_") // if have a real identifier ("_" is a placeholder we added), filter to prefix matches
+                    inScopeTsSyms = inScopeTsSyms.filter(s => s.name.indexOf(matchStr) >= 0)
 
                 // convert these to pxt symbols
                 let inScopePxtSyms = inScopeTsSyms

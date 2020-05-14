@@ -1,3 +1,5 @@
 function fib(num: number) {
-    if (nu  // num
+    if (    // testNamespace.someString; num
+    ;
+    if (nu  // !testNamespace.someString; num
 }
