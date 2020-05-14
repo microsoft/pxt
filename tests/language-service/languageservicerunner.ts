@@ -114,7 +114,6 @@ function getTestCases() {
                 if (!isCompletionAtDot) {
                     // find last non-whitespace character
                     for (let i = lineWithoutCommment.length - 1; i >= 0; i--) {
-                        console.log("considering: " + lineWithoutCommment[i])
                         relativeCompletionPosition = i
                         if (lineWithoutCommment[i] !== " ") {
                             break
