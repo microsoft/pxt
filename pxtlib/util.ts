@@ -626,7 +626,7 @@ namespace ts.pxtc.Util {
                 //if (debugHttpRequests)
                 //    pxt.debug(`  << ${resp.statusCode}`);
                 const statusCode = resp.statusCode;
-                if ((resp.statusCode != 304 && !(resp.statusCode >= 200 && resp.statusCode <= 204)) && !options.allowHttpErrors) {
+                if ((resp.statusCode != 304 && !(resp.statusCode >= 200 && resp.statusCode <= 202)) && !options.allowHttpErrors) {
                     const msg = Util.lf("Bad HTTP status code: {0} at {1}; message: {2}",
                         resp.statusCode, options.url, (resp.text || "").slice(0, 500))
                     const err: any = new Error(msg)
