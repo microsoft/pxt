@@ -232,6 +232,8 @@ namespace pxt.py {
                             break
                     }
                     U.pushRange(outputRange, stmt());
+
+                    if (peekToken().type == TokenType.EOF) break;
                 }
             }
 

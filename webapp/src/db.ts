@@ -142,6 +142,7 @@ class GithubDb implements pxt.github.IGithubDb {
         );
     }
     loadPackageAsync(repopath: string, tag: string): Promise<pxt.github.CachedPackage> {
+        tag = tag || "master";
         // don't cache master
         if (tag == "master")
             return this.mem.loadPackageAsync(repopath, tag);

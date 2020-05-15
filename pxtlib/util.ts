@@ -616,9 +616,15 @@ namespace ts.pxtc.Util {
         json?: any;
     }
 
+    // debug flag
+    //export let debugHttpRequests = false;
     export function requestAsync(options: HttpRequestOptions): Promise<HttpResponse> {
+        //if (debugHttpRequests)
+        //    pxt.debug(`>> ${options.method || "GET"} ${options.url.replace(/[?#].*/, "...")}`); // don't leak secrets in logs
         return httpRequestCoreAsync(options)
             .then(resp => {
+                //if (debugHttpRequests)
+                //    pxt.debug(`  << ${resp.statusCode}`);
                 if ((resp.statusCode != 200 && resp.statusCode != 304) && !options.allowHttpErrors) {
                     let msg = Util.lf("Bad HTTP status code: {0} at {1}; message: {2}",
                         resp.statusCode, options.url, (resp.text || "").slice(0, 500))

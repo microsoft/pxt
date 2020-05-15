@@ -920,6 +920,8 @@ namespace pxt {
                 }
             }
 
+            let shimsGenerated = false
+
             const fillExtInfoAsync = async (variant: string) => {
                 const res: pxtc.ExtensionTarget = {
                     extinfo: null,
@@ -932,7 +934,8 @@ namespace pxt {
 
                 try {
                     let einfo = cpp.getExtensionInfo(this)
-                    if (!variant) {
+                    if (!shimsGenerated) {
+                        shimsGenerated = true
                         if (einfo.shimsDTS) generateFile("shims.d.ts", einfo.shimsDTS)
                         if (einfo.enumsDTS) generateFile("enums.d.ts", einfo.enumsDTS)
                     }

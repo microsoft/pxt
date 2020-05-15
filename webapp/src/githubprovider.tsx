@@ -88,7 +88,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
                 <p>{lf("You can host your code on GitHub and collaborate with friends on projects.")}</p>
                 {!useToken && <p className="ui small">
                     {lf("Looking to use a Developer token instead?")}
-                    <sui.Link className="link" text={lf("Click here")} onClick={showToken} />
+                    <sui.Link className="link" text={lf("Use Developer token")} onClick={showToken} />
                 </p>}
                 {useToken && <ol>
                     <li>
@@ -157,6 +157,10 @@ export class GithubProvider extends cloudsync.ProviderBase {
             return Promise.resolve(undefined);
         return pxt.github.authenticatedUserAsync()
             .then(ghuser => {
+                if (!ghuser) {
+                    pxt.log(`unkown github user`)
+                    return undefined;
+                }
                 return {
                     id: ghuser.login,
                     userName: ghuser.login,
@@ -164,12 +168,6 @@ export class GithubProvider extends cloudsync.ProviderBase {
                     photo: ghuser.avatar_url,
                     profile: `https://github.com/${ghuser.login}`
                 }
-            }).catch(e => {
-                // the token expired or got deleted by the user
-                if (e.statusCode == 401) {
-                    this.setNewToken(undefined);
-                }
-                throw e;
             })
     }
 

@@ -117,7 +117,7 @@ namespace pxt.vs {
             model: null,
             ariaLabel: Util.lf("JavaScript editor"),
             fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', 'monospace'",
-            scrollBeyondLastLine: false,
+            scrollBeyondLastLine: true,
             language: "typescript",
             mouseWheelZoom: false,
             wordBasedSuggestions: true,

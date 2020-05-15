@@ -121,6 +121,11 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         endLineNumber: position.lineNumber
                     }
 
+                    // Need to take the whitespace out of this string, otherwise monaco
+                    // won't dismiss the suggest widget when the user types a space. Replace
+                    // them with commas so that we don't confuse the fuzzy matcher in monaco
+                    const filterText = `${label},${documentation},${block}`.replace(/\s/g, ",")
+
                     let res: monaco.languages.CompletionItem = {
                         label: label,
                         range,
@@ -129,7 +134,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         detail: insertSnippet,
                         // force monaco to use our sorting
                         sortText: `${tosort(i)} ${insertSnippet}`,
-                        filterText: `${label} ${documentation} ${block}`,
+                        filterText: filterText,
                         insertText: completionSnippet || undefined,
                     };
                     return res
@@ -592,9 +597,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     goToError(error: pxtc.KsDiagnostic) {
-        this.editor.revealLineInCenter(error.line + 1)
-        this.editor.setPosition({ column: error.endColumn + 1, lineNumber: error.endLine + 1 })
-        this.editor.focus()
+        // Use endLine and endColumn to position the cursor when
+        // when errors do have them
+        let line, column;
+        if (error.endLine && error.endColumn) {
+            line = error.endLine + 1;
+            column = error.endColumn + 1;
+        } else {
+            line = error.line + 1;
+            column = error.column + error.length + 1;
+        }
+
+        this.editor.revealLineInCenter(line);
+        this.editor.setPosition({ column: column, lineNumber: line });
+        this.editor.focus();
     }
 
     private onErrorChanges(errors: pxtc.KsDiagnostic[]) {

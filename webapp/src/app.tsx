@@ -228,23 +228,42 @@ export class ProjectView
         data.invalidate('pkg-git-pr');
         data.invalidate('pkg-git-pages')
 
+        // there is a race with another tab that has a lock on the device
+        // don't try to reconnect immediately as the other is still closing
+        // the webusb resources
+        const maybeReconnect = () => {
+            Promise.delay(3000).then(() => {
+                if (!this.state.home && document.visibilityState == 'visible')
+                    cmds.maybeReconnectAsync();
+            });
+        }
+
+        // disconnect devices to avoid locking between tabs
+        if (!active)
+            cmds.disconnectAsync(); // turn off any kind of logging
+
         if (!active && this.state.autoRun) {
             if (simulator.driver.state == pxsim.SimulatorState.Running) {
                 this.suspendSimulator();
                 this.setState({ resumeOnVisibility: true });
             }
             this.saveFileAsync().done();
-        } else {
+        } else if (active) {
+            data.invalidate("header:*")
             if (workspace.isHeadersSessionOutdated()
                 || workspace.isHeaderSessionOutdated(this.state.header)) {
                 pxt.debug('workspace: changed, reloading...')
                 let id = this.state.header ? this.state.header.id : '';
                 workspace.syncAsync()
                     .done(() => !this.state.home && id ? this.loadHeaderAsync(workspace.getHeader(id), this.state.editorState) : Promise.resolve());
+                // device scanning restarts in loadheader
             } else if (this.state.resumeOnVisibility) {
                 this.setState({ resumeOnVisibility: false });
                 // We did a save when the page was hidden, no need to save again.
                 this.runSimulator();
+                maybeReconnect()
+            } else if (!this.state.home) {
+                maybeReconnect();
             }
         }
     }
@@ -717,10 +736,9 @@ export class ProjectView
         }, 1000, false);
 
     private markdownChangeHandler = Util.debounce(() => {
-        if (this.state.currFile && /\.md$/i.test(this.state.currFile.name)
-            && this.isSideDocExpanded())
+        if (this.state.currFile && /\.md$/i.test(this.state.currFile.name))
             this.setSideMarkdown(this.editor.getCurrentSource());
-    }, 8000, false);
+    }, 3000, false);
     private editorChangeHandler = Util.debounce(() => {
         if (!this.editor.isIncomplete()) {
             this.saveFileAsync().done(); // don't wait till save is done
@@ -770,7 +788,7 @@ export class ProjectView
                     // The simulator has paused on the first statement, so we need to send the breakpoints
                     // and continue
                     let breakpoints: number[];
-                    if (this.isAnyEditeableJavaScriptOrPackageActive()) {
+                    if (this.isAnyEditeableJavaScriptOrPackageActive() || this.isPythonActive()) {
                         breakpoints = this.textEditor.getBreakpoints();
                     }
                     else if (this.isBlocksActive()) {
@@ -1302,14 +1320,6 @@ export class ProjectView
                         }
                     })
                     .done()
-
-                const editorForFile = this.pickEditorFor(file);
-                const readme = main.lookupFile("this/README.md");
-                // no auto-popup when editing packages locally
-                if (!h.githubId && readme && readme.content && readme.content.trim())
-                    this.setSideMarkdown(readme.content);
-                else if (pkg.mainPkg && pkg.mainPkg.config && pkg.mainPkg.config.documentation)
-                    this.setSideDoc(pkg.mainPkg.config.documentation, editorForFile == this.blocksEditor);
 
                 // update recentUse on the header
                 return workspace.saveAsync(h)
@@ -2017,7 +2027,6 @@ export class ProjectView
         if (!options.prj) options.prj = pxt.appTarget.blocksprj;
         let cfg = pxt.U.clone(options.prj.config);
         cfg.name = options.name || lf("Untitled");
-        cfg.documentation = options.documentation;
         let files: pxt.workspace.ScriptText = Util.clone(options.prj.files)
         if (options.filesOverride)
             Util.jsonCopyFrom(files, options.filesOverride)
@@ -3216,6 +3225,7 @@ export class ProjectView
                 });
         } else if (!!ghid && ghid.owner && ghid.project) {
             pxt.tickEvent("tutorial.github");
+            pxt.log(`loading tutorial from ${ghid.fullName}`)
             p = pxt.packagesConfigAsync()
                 .then(config => {
                     const status = pxt.github.repoStatus(ghid, config);
@@ -3229,9 +3239,13 @@ export class ProjectView
                             reportId = "https://github.com/" + ghid.fullName;
                             break;
                     }
-                    return pxt.github.downloadPackageAsync(ghid.fullName, config);
-                })
-                .then(gh => resolveMarkdown(ghid, gh.files));
+                    return (ghid.tag ? Promise.resolve(ghid.tag) : pxt.github.latestVersionAsync(ghid.fullName, config, true))
+                        .then(tag => {
+                            ghid.tag = tag;
+                            pxt.log(`tutorial ${ghid.fullName} tag: ${tag}`);
+                            return pxt.github.downloadPackageAsync(`${ghid.fullName}#${ghid.tag}`, config);
+                        });
+                }).then(gh => resolveMarkdown(ghid, gh.files));
         } else if (header) {
             pxt.tickEvent("tutorial.header");
             temporary = true;
@@ -3254,7 +3268,8 @@ export class ProjectView
             };
         }).catch(e => {
             core.handleNetworkError(e);
-            core.errorNotification(lf("Oops, we could not load this activity."))
+            core.errorNotification(lf("Oops, we could not load this activity."));
+            this.openHome(); // don't stay stranded
         });
 
         function processMarkdown(md: string) {
@@ -4018,9 +4033,6 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             const repoid = pxt.github.parseRepoId(hash.arg);
             const [ghCmd, ghArg] = hash.arg.split(':', 2);
             pxt.BrowserUtils.changeHash("");
-            // ignore if token is not set
-            if (!cloudsync.githubProvider().hasToken())
-                return false;
             // #github:owner/user --> import
             // #github:create-repository:headerid --> create repo
             // #github:import -> import dialog
@@ -4028,6 +4040,9 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
                 // #github:create-repository:HEADERID
                 const hd = workspace.getHeader(ghArg);
                 if (hd) {
+                    // ignore if token is not set
+                    if (!cloudsync.githubProvider().hasToken())
+                        return false;
                     theEditor.loadHeaderAsync(hd)
                         .then(() => cloudsync.githubProvider().createRepositoryAsync(hd.name, hd))
                         .done(r => r && theEditor.reloadHeaderAsync())
@@ -4354,6 +4369,8 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("unload", ev => {
         if (theEditor)
             theEditor.saveSettings()
+        // don't lock device while being away from tab
+        cmds.disconnectAsync();
     });
     window.addEventListener("resize", ev => {
         if (theEditor && theEditor.editor) {

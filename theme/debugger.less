@@ -270,8 +270,16 @@ div.simframe div.pause-overlay {
     transition: opacity 0.2s;
 }
 
-.monaco-breakpoint:hover {
-    opacity: 0.7;
+.monaco-editor .margin-view-overlays:hover {
+    .codicon.monaco-breakpoint {
+        opacity: 0;
+    }
+    .codicon.monaco-breakpoint:hover {
+        opacity: 0.7;
+    }
+    .monaco-breakpoint.active {
+        opacity: 1;
+    }
 }
 
 .monaco-breakpoint.active {

@@ -1096,16 +1096,18 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
         // special handling of broken/missing/corrupted pxt.json
         if (!pxt.Package.parseAndValidConfig(currFiles[pxt.CONFIG_NAME]))
             delete currFiles[pxt.CONFIG_NAME];
-        // special case override README.md if empty
-        let templateREADME = templateFiles["README.md"];
-        if (currFiles["README.md"] && currFiles["README.md"].trim())
-            templateREADME = undefined;
+        // special case append README.md content: append to existing file
+        let templateREADME = templateFiles[pxt.README_FILE];
+        const currREADME = currFiles[pxt.README_FILE];
+        if (templateREADME || currREADME)
+            templateREADME = [currREADME, templateREADME].filter(s => !!s).join(`
+
+`);
         // current files override defaults
         U.jsonMergeFrom(templateFiles, currFiles);
         currFiles = templateFiles;
-
         if (templateREADME)
-            currFiles["README.md"] = templateREADME;
+            currFiles[pxt.README_FILE] = templateREADME;
     }
 
     // update config with files if needed
@@ -1115,7 +1117,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
     if (!files.filter(f => /\.ts$/.test(f)).length) {
         // add files from the template
         Object.keys(currFiles)
-            .filter(f => /\.(blocks|ts|py|asm|md)$/.test(f))
+            .filter(f => /\.(blocks|ts|py|asm|md|json)$/.test(f))
             .filter(f => f != pxt.CONFIG_NAME)
             .forEach(f => files.push(f));
     }
@@ -1175,11 +1177,12 @@ export async function importGithubAsync(id: string): Promise<Header> {
             forceTemplateFiles = false;
             // ask user before modifying project
             const r = await core.confirmAsync({
-                header: lf("Initialize repository for MakeCode?"),
-                body: lf("We need to add a few files to your repository to make it work with MakeCode.")
-                    + " "
-                    + lf("Your existing files will not be modified."),
-                agreeLbl: lf("Ok")
+                header: lf("Initialize GitHub repository for MakeCode?"),
+                body: lf("We need to add a few files to your GitHub repository to make it work with MakeCode."),
+                agreeLbl: lf("Ok"),
+                hideCancel: true,
+                hasCloseIcon: true,
+                helpUrl: "/github/import"
             })
             if (!r) return Promise.resolve(undefined);
         }
