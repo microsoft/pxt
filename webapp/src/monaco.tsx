@@ -38,7 +38,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
     constructor(public editor: Editor, public python: boolean) {
     }
 
-    triggerCharacters?: string[] = ["(", ".", ":"];
+    triggerCharacters?: string[] = ["(", "."];
 
     kindMap = {}
     private tsKindToMonacoKind(s: pxtc.SymbolKind): monaco.languages.CompletionItemKind {
