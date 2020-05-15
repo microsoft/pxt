@@ -85,7 +85,8 @@ function pyconverterTestAsync(pyFilename: string) {
             baselineExists = false
         }
 
-        const pyInput = fs.readFileSync(pyFilename, "utf8").replace(/\r\n/g, "\n");
+        const pyInputRaw = fs.readFileSync(pyFilename, "utf8").replace(/\r\n/g, "\n");
+        const [pyInput, compareOpts] = util.getAndStripComparisonOptions(pyInputRaw, true);
 
         return util.py2tsAsync(pyInput, testBlocksDir, false, pyFilename)
             .then(res => {
@@ -99,7 +100,7 @@ function pyconverterTestAsync(pyFilename: string) {
                 }
 
                 const baseline = fs.readFileSync(baselineFile, "utf8")
-                if (!util.compareBaselines(decompiled, baseline)) {
+                if (!util.compareBaselines(decompiled, baseline, compareOpts)) {
                     fs.writeFileSync(outFile, decompiled)
                     fail(`${basename} did not match baseline, output written to ${outFile}`);
                 }

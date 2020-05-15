@@ -83,7 +83,7 @@ function pydecompileTestCoreAsync(tsFilename: string, baselineFile: string) {
         }
 
         const tsMainRaw = fs.readFileSync(tsFilename, "utf8").replace(/\r\n/g, "\n");
-        const [tsMain, compareOpts] = getAndStripComparisonOptions(tsMainRaw, false)
+        const [tsMain, compareOpts] = util.getAndStripComparisonOptions(tsMainRaw, false)
 
         return util.ts2pyAsync(tsMain, testBlocksDir, tsFilename)
             .then(decompiled => {
@@ -97,7 +97,7 @@ function pydecompileTestCoreAsync(tsFilename: string, baselineFile: string) {
 
                 const baseline = fs.readFileSync(baselineFile, "utf8")
 
-                if (!util.compareBaselines(decompiled, baseline, compareOpts.whitespaceSensitive)) {
+                if (!util.compareBaselines(decompiled, baseline, compareOpts)) {
                     fs.writeFileSync(outFile, decompiled)
                     fail(`${basename} did not match baseline, output written to ${outFile}`);
                 }
@@ -108,20 +108,4 @@ function pydecompileTestCoreAsync(tsFilename: string, baselineFile: string) {
             })
             .then(() => resolve(), reject);
     });
-}
-
-interface ComparisonOptions {
-    whitespaceSensitive?: boolean
-}
-
-function getAndStripComparisonOptions(input: string, isPython: boolean): [string, ComparisonOptions] {
-    const MARKER = isPython ? "#%" : "//%";
-    if (input.indexOf(MARKER) === 0) {
-        const firstLineEnd = input.indexOf("\n")
-        const optsString = input.substring(MARKER.length, firstLineEnd)
-        const opts = JSON.parse(optsString) as ComparisonOptions;
-        const stripped = input.substr(firstLineEnd + 1);
-        return [stripped, opts]
-    }
-    return [input, {}]
 }

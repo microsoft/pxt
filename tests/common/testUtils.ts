@@ -46,13 +46,29 @@ export interface PyConverterResult {
     diagnostics: pxtc.KsDiagnostic[];
 }
 
-export function compareBaselines(a: string, b: string, whitespaceSensitive = false): boolean {
-    if (!whitespaceSensitive) {
+export function compareBaselines(a: string, b: string, opts: ComparisonOptions = {}): boolean {
+    if (!opts.whitespaceSensitive) {
         a = a.replace(/\s/g, "");
         b = b.replace(/\s/g, "");
     }
 
     return a === b;
+}
+
+interface ComparisonOptions {
+    whitespaceSensitive?: boolean
+}
+
+export function getAndStripComparisonOptions(input: string, isPython: boolean): [string, ComparisonOptions] {
+    const MARKER = isPython ? "#%" : "//%";
+    if (input.indexOf(MARKER) === 0) {
+        const firstLineEnd = input.indexOf("\n")
+        const optsString = input.substring(MARKER.length, firstLineEnd)
+        const opts = JSON.parse(optsString) as ComparisonOptions;
+        const stripped = input.substr(firstLineEnd + 1);
+        return [stripped, opts]
+    }
+    return [input, {}]
 }
 
 export function replaceFileExtension(file: string, extension: string) {
