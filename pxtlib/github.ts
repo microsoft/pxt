@@ -365,7 +365,7 @@ namespace pxt.github {
     }
 
     export async function fastForwardAsync(repopath: string, branch: string, commitid: string) {
-        let resp = await ghRequestAsync({
+        const resp = await ghRequestAsync({
             url: "https://api.github.com/repos/" + repopath + "/git/refs/heads/" + branch,
             method: "PATCH",
             allowHttpErrors: true,
@@ -378,7 +378,7 @@ namespace pxt.github {
     }
 
     export async function putFileAsync(repopath: string, path: string, content: string) {
-        let resp = await ghRequestAsync({
+        await ghRequestAsync({
             url: "https://api.github.com/repos/" + repopath + "/contents/" + path,
             method: "PUT",
             allowHttpErrors: true,
@@ -386,10 +386,9 @@ namespace pxt.github {
                 message: lf("Initialize empty repo"),
                 content: btoa(U.toUTF8(content)),
                 branch: "master"
-            }
+            },
+            successCodes: [201]
         })
-        if (resp.statusCode != 201)
-            U.userError("PUT file failed")
     }
 
     export async function createTagAsync(repopath: string, tag: string, commitid: string) {
@@ -418,14 +417,14 @@ namespace pxt.github {
             base: baseBranch,
             maintainer_can_modify: true
         })
-        return res.html_url as string
+        return res?.html_url as string
     }
 
     export function mergeAsync(repopath: string, base: string, head: string, message?: string) {
         return ghRequestAsync({
             url: "https://api.github.com/repos/" + repopath + "/merges",
             method: "POST",
-            allowHttpErrors: true,
+            successCodes: [201, 204, 409],
             data: {
                 base,
                 head,
