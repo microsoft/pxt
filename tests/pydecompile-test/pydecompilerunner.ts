@@ -97,7 +97,7 @@ function pydecompileTestCoreAsync(tsFilename: string, baselineFile: string) {
 
                 const baseline = fs.readFileSync(baselineFile, "utf8")
 
-                if (!util.compareBaselines(decompiled, baseline, compareOpts.whitespaceSensative)) {
+                if (!util.compareBaselines(decompiled, baseline, compareOpts.whitespaceSensitive)) {
                     fs.writeFileSync(outFile, decompiled)
                     fail(`${basename} did not match baseline, output written to ${outFile}`);
                 }
@@ -111,7 +111,7 @@ function pydecompileTestCoreAsync(tsFilename: string, baselineFile: string) {
 }
 
 interface ComparisonOptions {
-    whitespaceSensative?: boolean
+    whitespaceSensitive?: boolean
 }
 
 function getAndStripComparisonOptions(input: string, isPython: boolean): [string, ComparisonOptions] {

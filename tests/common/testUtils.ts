@@ -46,8 +46,8 @@ export interface PyConverterResult {
     diagnostics: pxtc.KsDiagnostic[];
 }
 
-export function compareBaselines(a: string, b: string, whitespaceSensative = false): boolean {
-    if (!whitespaceSensative) {
+export function compareBaselines(a: string, b: string, whitespaceSensitive = false): boolean {
+    if (!whitespaceSensitive) {
         a = a.replace(/\s/g, "");
         b = b.replace(/\s/g, "");
     }

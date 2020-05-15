@@ -1,4 +1,4 @@
-//%{ "whitespaceSensative": true }
+//%{ "whitespaceSensitive": true }
 basic.forever(function () {
     basic.showNumber(2)
 })

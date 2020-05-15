@@ -2,8 +2,8 @@ The py-decompiler tests run the python decompiler on the test cases in the "case
 
 This is very similiar in nature to the tests in "decompile-test/".
 
-Test cases are whitespace insensative by default. To make a test case whitespace sensative, add: 
+Test cases are whitespace insensitive by default. To make a test case whitespace sensative, add: 
 ```
-//%{ 'whitespaceSensative': true }
+//%{ 'whitespaceSensitive': true }
 ```
 to the base case file.
