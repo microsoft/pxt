@@ -46,10 +46,11 @@ export interface PyConverterResult {
     diagnostics: pxtc.KsDiagnostic[];
 }
 
-export function compareBaselines(a: string, b: string): boolean {
-    // Ignore whitespace
-    a = a.replace(/\s/g, "");
-    b = b.replace(/\s/g, "");
+export function compareBaselines(a: string, b: string, whitespaceSensative = false): boolean {
+    if (!whitespaceSensative) {
+        a = a.replace(/\s/g, "");
+        b = b.replace(/\s/g, "");
+    }
 
     return a === b;
 }
@@ -81,9 +82,8 @@ export function getTestCompileOptsAsync(packageFiles: pxt.Map<string> = { "main.
     return Promise.resolve(opts);
 }
 
-export function ts2pyAsync(f: string, dependency?: string): Promise<string> {
-    const tsMain = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-    return getTestCompileOptsAsync({ "main.ts": tsMain }, dependency, !!dependency)
+export function ts2pyAsync(tsInput: string, dependency: string, caseName: string): Promise<string> {
+    return getTestCompileOptsAsync({ "main.ts": tsInput }, dependency, !!dependency)
         .then(opts => {
             let program = pxtc.getTSProgram(opts);
             // TODO: if needed, we can re-use the CallInfo annotations the blockly decompiler can add
@@ -94,14 +94,13 @@ export function ts2pyAsync(f: string, dependency?: string): Promise<string> {
                 return decompiled.outfiles["main.py"];
             }
             else {
-                return Promise.reject(new Error("Could not convert ts to py " + f + JSON.stringify(decompiled.diagnostics, null, 4)));
+                return Promise.reject(new Error(`Could not convert ts to py: ${caseName}\n` + JSON.stringify(decompiled.diagnostics, null, 4)));
             }
         })
 }
 
-export function py2tsAsync(f: string, dependency = "bare", allowErrors = false): Promise<PyConverterResult> {
-    const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-    return getTestCompileOptsAsync({ "main.py": input, "main.ts": "// no main" }, dependency, true)
+export function py2tsAsync(pyInput: string, dependency: string, allowErrors: boolean, caseName: string): Promise<PyConverterResult> {
+    return getTestCompileOptsAsync({ "main.py": pyInput, "main.ts": "// no main" }, dependency, true)
         .then(opts => {
             opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
             let stsCompRes = pxtc.compile(opts);
@@ -118,7 +117,7 @@ export function py2tsAsync(f: string, dependency = "bare", allowErrors = false):
 
             if (success || allowErrors) {
                 return {
-                    python: input,
+                    python: pyInput,
                     ts: opts.fileSystem["main.ts"],
                     diagnostics
                 };
@@ -126,7 +125,7 @@ export function py2tsAsync(f: string, dependency = "bare", allowErrors = false):
             else {
                 let partialOutput = outfiles["main.ts"]
                 let errorStr = diagnostics.map(pxtc.getDiagnosticString).join()
-                return Promise.reject(new Error(`Could not convert py to ts ${f}\n${errorStr}\n${partialOutput}`))
+                return Promise.reject(new Error(`Could not convert py to ts: ${caseName}\n${errorStr}\n${partialOutput}`))
             }
         })
 }

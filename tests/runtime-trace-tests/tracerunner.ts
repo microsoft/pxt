@@ -235,14 +235,16 @@ function runNodeJsAsync(nodeArgs: string): Promise<string> {
 }
 
 async function convertTs2Py(tsFile: string): Promise<string> {
-    let pyCode = await util.ts2pyAsync(tsFile)
+    const tsCode = fs.readFileSync(tsFile, "utf8").replace(/\r\n/g, "\n");
+    let pyCode = await util.ts2pyAsync(tsCode, null, tsFile)
     const pyFile = path.join(util.replaceFileExtension(tsFile, ".ts.py"));
     writeFileStringSync(pyFile, pyCode)
     return pyFile
 }
 
 async function convertPy2Ts(pyFile: string): Promise<string> {
-    let tsCode = await util.py2tsAsync(pyFile)
+    const pyCode = fs.readFileSync(pyFile, "utf8").replace(/\r\n/g, "\n");
+    let tsCode = await util.py2tsAsync(pyCode, "bare", false, pyFile)
     const tsFile = path.join(util.replaceFileExtension(pyFile, ".py.ts"));
     writeFileStringSync(tsFile, tsCode.ts)
     return tsFile

@@ -71,9 +71,9 @@ function fail(msg: string) {
     chai.assert(false, msg);
 }
 
-function pyconverterTestAsync(filename: string) {
+function pyconverterTestAsync(pyFilename: string) {
     return new Promise((resolve, reject) => {
-        const basename = path.basename(filename);
+        const basename = path.basename(pyFilename);
         const baselineFile = path.join(baselineDir, util.replaceFileExtension(basename, ".ts"))
 
         let baselineExists: boolean;
@@ -85,7 +85,9 @@ function pyconverterTestAsync(filename: string) {
             baselineExists = false
         }
 
-        return util.py2tsAsync(filename, testBlocksDir)
+        const pyInput = fs.readFileSync(pyFilename, "utf8").replace(/\r\n/g, "\n");
+
+        return util.py2tsAsync(pyInput, testBlocksDir, false, pyFilename)
             .then(res => {
                 const outFile = path.join(util.replaceFileExtension(baselineFile, ".local.ts"));
                 const decompiled = res.ts;
@@ -111,7 +113,8 @@ function pyconverterTestAsync(filename: string) {
 }
 
 function pyerrorTest(filename: string) {
-    return util.py2tsAsync(filename, testBlocksDir, true)
+    const pyInput = fs.readFileSync(filename, "utf8").replace(/\r\n/g, "\n");
+    return util.py2tsAsync(pyInput, testBlocksDir, true, filename)
         .then(result => {
             const expected = getErrorCases(result.python);
             const failing = expected.filter(errorCase => {

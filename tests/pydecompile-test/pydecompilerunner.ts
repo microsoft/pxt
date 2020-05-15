@@ -69,7 +69,7 @@ function pydecompileTestAsync(caseFile: string) {
     return pydecompileTestCoreAsync(caseFile, baselineFile);
 }
 
-function pydecompileTestCoreAsync(filename: string, baselineFile: string) {
+function pydecompileTestCoreAsync(tsFilename: string, baselineFile: string) {
     return new Promise((resolve, reject) => {
         const basename = path.basename(baselineFile);
 
@@ -82,7 +82,10 @@ function pydecompileTestCoreAsync(filename: string, baselineFile: string) {
             baselineExists = false
         }
 
-        return util.ts2pyAsync(filename, testBlocksDir)
+        const tsMainRaw = fs.readFileSync(tsFilename, "utf8").replace(/\r\n/g, "\n");
+        const [tsMain, compareOpts] = getAndStripComparisonOptions(tsMainRaw, false)
+
+        return util.ts2pyAsync(tsMain, testBlocksDir, tsFilename)
             .then(decompiled => {
                 const outFile = path.join(util.replaceFileExtension(baselineFile, ".local.py"));
 
@@ -93,7 +96,8 @@ function pydecompileTestCoreAsync(filename: string, baselineFile: string) {
                 }
 
                 const baseline = fs.readFileSync(baselineFile, "utf8")
-                if (!util.compareBaselines(decompiled, baseline)) {
+
+                if (!util.compareBaselines(decompiled, baseline, compareOpts.whitespaceSensative)) {
                     fs.writeFileSync(outFile, decompiled)
                     fail(`${basename} did not match baseline, output written to ${outFile}`);
                 }
@@ -104,4 +108,20 @@ function pydecompileTestCoreAsync(filename: string, baselineFile: string) {
             })
             .then(() => resolve(), reject);
     });
+}
+
+interface ComparisonOptions {
+    whitespaceSensative?: boolean
+}
+
+function getAndStripComparisonOptions(input: string, isPython: boolean): [string, ComparisonOptions] {
+    const MARKER = isPython ? "#%" : "//%";
+    if (input.indexOf(MARKER) === 0) {
+        const firstLineEnd = input.indexOf("\n")
+        const optsString = input.substring(MARKER.length, firstLineEnd)
+        const opts = JSON.parse(optsString) as ComparisonOptions;
+        const stripped = input.substr(firstLineEnd + 1);
+        return [stripped, opts]
+    }
+    return [input, {}]
 }
