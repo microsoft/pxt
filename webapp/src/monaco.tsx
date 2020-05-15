@@ -208,6 +208,9 @@ class HoverProvider implements monaco.languages.HoverProvider {
      * to the word range at the position when omitted.
      */
     provideHover(model: monaco.editor.IReadOnlyModel, position: monaco.Position, token: monaco.CancellationToken): monaco.languages.Hover | monaco.Thenable<monaco.languages.Hover> {
+        // Don't provide hover if currently dragging snippet
+        if (this.editor.hasInsertionSnippet()) return null;
+
         const offset = model.getOffsetAt(position);
         const source = model.getValue();
         const fileName = this.editor.currFile.name;
@@ -1880,6 +1883,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     // Snippet as string, or "qName:" + qualified name of block
     public setInsertionSnippet = (snippet: string) => {
         this.insertionSnippet = snippet;
+    }
+
+    // Check if insertion snippet is currently set
+    public hasInsertionSnippet = (): boolean => {
+        return !!this.insertionSnippet;
     }
 
     ///////////////////////////////////////////////////////////
