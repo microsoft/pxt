@@ -955,6 +955,10 @@ namespace ts.pxtc.service {
                 if (res.globalNames)
                     lastGlobalNames = res.globalNames
 
+                if (!resultSymbols.length && res.globalNames) {
+                    resultSymbols = completionSymbols(pxt.U.values(res.globalNames))
+                }
+
                 // update our language host
                 Object.keys(res.outfiles)
                     .forEach(k => {
@@ -984,7 +988,7 @@ namespace ts.pxtc.service {
             const prog = service.getProgram()
             const tsAst = prog.getSourceFile(tsFilename)
             const tc = prog.getTypeChecker()
-            let isPropertyAccess = false;
+            let didFindMemberCompletions = false;
 
             // special handing for member completion
             if (isMemberCompletion) {
@@ -1016,10 +1020,8 @@ namespace ts.pxtc.service {
                                 .filter(prop => !!prop)
                                 .map(prop => completionSymbol(prop));
 
-                            if (props.length) {
-                                resultSymbols = props;
-                                isPropertyAccess = true;
-                            }
+                            resultSymbols = props;
+                            didFindMemberCompletions = true;
                         }
                     }
                 }
@@ -1077,7 +1079,7 @@ namespace ts.pxtc.service {
                         if (paramType) {
                             // if this is a property access, then weight the results higher if they return the
                             // correct type for the parameter
-                            if (isPropertyAccess && resultSymbols.length) {
+                            if (didFindMemberCompletions) {
                                 const matchingApis = getApisForTsType(paramType, call, tc, resultSymbols);
 
                                 matchingApis.forEach(match => match.weight = 1);
@@ -1091,7 +1093,7 @@ namespace ts.pxtc.service {
                 }
             }
 
-            if (!isPython && !resultSymbols.length) {
+            if (!isPython && !didFindMemberCompletions) {
                 // TODO: share this with the "syntaxinfo" service
                 // start with global api symbols
                 resultSymbols = completionSymbols(pxt.U.values(lastApiInfo.apis.byQName))
@@ -1103,7 +1105,8 @@ namespace ts.pxtc.service {
                 // filter these to just what's at the cursor, otherwise we get things
                 //  like JS Array methods we don't support
                 let matchStr = tsNode.getText()
-                inScopeTsSyms = inScopeTsSyms.filter(s => s.name.indexOf(matchStr) >= 0)
+                if (matchStr !== "_") // if have a real identifier ("_" is a placeholder we added), filter to prefix matches
+                    inScopeTsSyms = inScopeTsSyms.filter(s => s.name.indexOf(matchStr) >= 0)
 
                 // convert these to pxt symbols
                 let inScopePxtSyms = inScopeTsSyms
@@ -1117,6 +1120,9 @@ namespace ts.pxtc.service {
                     })
                     .filter(s => !!s)
                     .map(s => completionSymbol(s))
+
+                // in scope locals should be weighter higher
+                inScopePxtSyms.forEach(s => s.weight += 100)
 
                 resultSymbols = [...resultSymbols, ...inScopePxtSyms]
             }
@@ -1493,7 +1499,6 @@ namespace ts.pxtc.service {
             return undefined;
 
         const paramDesc = callSym.parameters[paramIdx]
-        console.dir({ paramDesc })
         let result = paramDesc.type;
 
         // check if this parameter has a shadow block, if so use the type from that instead

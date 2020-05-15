@@ -1,5 +1,5 @@
 namespace testNamespace {
-    export function someFunction() {
+    export function someFunction(someParam: string) {
 
     }
 
@@ -7,5 +7,14 @@ namespace testNamespace {
 
     export interface SomeInterface {
         someField: number;
+    }
+
+    export enum SomeEnum {
+        One,
+        Two
+    }
+
+    export class SomeClass {
+        e: SomeEnum;
     }
 }

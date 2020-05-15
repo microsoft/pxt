@@ -56,11 +56,13 @@ function getTestCases() {
 
         // ignore files that start with TODO_; these represent future work
         if (file.indexOf("TODO") >= 0) {
+            console.log("Skipping test file marked as 'TODO': " + file);
             continue;
         }
 
-        // TODO(pxt-arcade/1887) support python as well
-        if (file.substr(-3) !== ".ts") {
+        const ext = file.substr(-3)
+        if (ext !== ".ts" && ext !== ".py") {
+            console.error("Skipping unknown/unsupported file in test folder: " + file);
             continue;
         }
 
@@ -100,8 +102,21 @@ function getTestCases() {
                     .map(s => s.replace("!", ""))
 
                 const lineWithoutCommment = line.substring(0, commentIndex);
-                const relativeDotPosition = lineWithoutCommment.lastIndexOf(".") + 1 /*monaco is one-indexed*/;
-                const dotPosition = position + relativeDotPosition;
+
+                // find last non-whitespace character
+                let lastNonWhitespace: number;
+                let endsInDot = false;
+                for (let i = lineWithoutCommment.length - 1; i >= 0; i--) {
+                    lastNonWhitespace = i
+                    if (lineWithoutCommment[i] !== " ") {
+                        endsInDot = lineWithoutCommment[i] === "."
+                        break
+                    }
+                }
+
+                let relativeCompletionPosition = endsInDot ? lastNonWhitespace + 1 : lastNonWhitespace
+
+                const completionPosition = position + relativeCompletionPosition;
 
                 testCases.push({
                     fileName,
@@ -110,9 +125,11 @@ function getTestCases() {
                     isPython,
                     expectedSymbols,
                     unwantedSymbols,
-                    position: dotPosition,
-                    wordStartPos: dotPosition + 1,
-                    wordEndPos: dotPosition + 1,
+                    position: completionPosition,
+                    // TODO: we could be smarter about the word start and end position, but
+                    //  this works for all cases we care about so far.
+                    wordStartPos: completionPosition,
+                    wordEndPos: completionPosition,
                 })
             }
 
@@ -123,13 +140,15 @@ function getTestCases() {
     return testCases;
 }
 
+const fileName = (isPython: boolean) => isPython ? "main.py" : "main.ts"
+
 function runCompletionTestCaseAsync(testCase: CompletionTestCase) {
-    return getOptionsAsync(testCase.fileText)
+    return getOptionsAsync(testCase.fileText, testCase.isPython)
         .then(opts => {
             setOptionsOp(opts);
             ensureAPIInfoOp();
             const result = completionsOp(
-                "main.ts",
+                fileName(testCase.isPython),
                 testCase.position,
                 testCase.wordStartPos,
                 testCase.wordEndPos,
@@ -141,21 +160,39 @@ function runCompletionTestCaseAsync(testCase: CompletionTestCase) {
                 return;
             }
 
-            const symbolExists = (sym: string) => result.entries.some(s => (testCase.isPython ? s.pyQName : s.qName) === sym)
+            const symbolIndex = (sym: string) => result.entries.reduce((prevIdx, s, idx) => {
+                if (prevIdx >= 0)
+                    return prevIdx
+                if ((testCase.isPython ? s.pyQName : s.qName) === sym)
+                    return idx;
+                return -1
+            }, -1)
+            const hasSymbol = (sym: string) => symbolIndex(sym) >= 0;
+
+            let lastFoundIdx = -1;
             for (const sym of testCase.expectedSymbols) {
-                chai.assert(symbolExists(sym), `Did not receive symbol '${sym}' for '${testCase.lineText}'`);
+                let idx = symbolIndex(sym)
+                const foundSymbol = idx >= 0
+                chai.assert(foundSymbol, `Did not receive symbol '${sym}' for '${testCase.lineText}'; instead we got ${result.entries.length} other symbols${result.entries.length < 5 ? ": " + result.entries.map(e => e.qName).join(", ") : "."}`);
+                chai.assert(!foundSymbol || idx > lastFoundIdx, `Found symbol '${sym}', but in the wrong order at index: ${idx}. Expected it after: ${lastFoundIdx >= 0 ? result.entries[lastFoundIdx].qName : ""}`)
+                lastFoundIdx = idx;
             }
             for (const sym of testCase.unwantedSymbols) {
-                chai.assert(!symbolExists(sym), `Receive explicitly unwanted symbol '${sym}' for '${testCase.lineText}'`);
+                chai.assert(!hasSymbol(sym), `Receive explicitly unwanted symbol '${sym}' for '${testCase.lineText}'`);
             }
         })
 }
 
-function getOptionsAsync(fileContent: string) {
+function getOptionsAsync(fileContent: string, isPython: boolean) {
     const packageFiles: pxt.Map<string> = {};
-    packageFiles["main.ts"] = fileContent;
+    packageFiles[fileName(isPython)] = fileContent;
 
-    return util.getTestCompileOptsAsync(packageFiles, testPackage, true);
+    return util.getTestCompileOptsAsync(packageFiles, testPackage, true)
+        .then(opts => {
+            if (isPython)
+                opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+            return opts
+        })
 }
 
 function ensureAPIInfoOp() {
