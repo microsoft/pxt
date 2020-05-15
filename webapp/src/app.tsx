@@ -3327,7 +3327,7 @@ export class ProjectView
             .then(r => {
                 const { filename, dependencies, temporary, reportId, autoChooseBoard, features, md } = (r || {});
                 if (!md)
-                    throw new Error(lf("Tutorial not found"));
+                    throw new Error(lf("Tutorial {0} not found", tutorialId));
 
                 const { options, editor: parsedEditor } = pxt.tutorial.getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
 

@@ -59,6 +59,7 @@
 
             function updateSrc(ifrm, hash) {
                 var h = hash ? "#" + hash : "";
+                console.log("hash: " + h)
                 if (localhost) {
                     ifrm.src = "/index.html" + flags + h;
                 } else {
