@@ -95,7 +95,7 @@ namespace pxt.github {
         return hasProxy();
     }
 
-    export let handleGithubNetworkError: (e: any) => boolean;
+    export let handleGithubNetworkError: (opts: U.HttpRequestOptions, e: any) => boolean;
 
     let isPrivateRepoCache: pxt.Map<boolean> = {};
 
@@ -110,6 +110,7 @@ namespace pxt.github {
     }
 
     function ghRequestAsync(options: U.HttpRequestOptions) {
+        options.method = options.method ?? "GET";
         // call github request with existing token
         // if the request fails and the token is clear, try again with the token
         return workAsync(!!token)
@@ -129,12 +130,12 @@ namespace pxt.github {
                     opts.headers['Authorization'] = `token ${token}`
                 }
             }
-            opts.allowHttpErrors = false;
+            opts.allowHttpErrors = opts.allowHttpErrors ?? false;
             return U.requestAsync(opts)
                 .catch(e => {
                     pxt.tickEvent("github.error", { statusCode: e.statusCode });
                     if (handleGithubNetworkError) {
-                        const retry = handleGithubNetworkError(e)
+                        const retry = handleGithubNetworkError(opts, e)
                         // retry if it may fix the issue
                         if (retry) return workAsync(false);
                     }
@@ -143,13 +144,8 @@ namespace pxt.github {
         }
     }
 
-    export function isOrgAsync(owner: string): Promise<boolean> {
-        return ghRequestAsync({ url: `https://api.github.com/orgs/${owner}`, allowHttpErrors: true, method: "GET" })
-            .then(resp => resp.statusCode == 200);
-    }
-
     function ghGetJsonAsync(url: string) {
-        return ghRequestAsync({ url }).then(resp => resp.json)
+        return ghRequestAsync({ url, method: "GET" }).then(resp => resp.json)
     }
 
     function ghProxyJsonAsync(path: string) {
@@ -159,6 +155,11 @@ namespace pxt.github {
     function ghProxyHandleException(e: any) {
         pxt.log(`github proxy error: ${e.message}`)
         pxt.debug(e);
+    }
+
+    export function isOrgAsync(owner: string): Promise<boolean> {
+        return ghGetJsonAsync(`https://api.github.com/orgs/${owner}`)
+            .then(resp => resp.statusCode == 200);
     }
 
     export class MemoryGithubDb implements IGithubDb {
@@ -264,7 +265,8 @@ namespace pxt.github {
 
     function fallbackDownloadTextAsync(repopath: string, commitid: string, filepath: string) {
         return ghRequestAsync({
-            url: "https://api.github.com/repos/" + repopath + "/contents/" + filepath + "?ref=" + commitid
+            url: "https://api.github.com/repos/" + repopath + "/contents/" + filepath + "?ref=" + commitid,
+            method: "GET"
         }).then(resp => {
             const f = resp.json as FileContent
             isPrivateRepoCache[repopath] = true
@@ -339,25 +341,13 @@ namespace pxt.github {
         tree: string; // sha
     }
 
-    function ghPostAsync(path: string, data: any, headers?: any, method?: string) {
+    function ghPostAsync(path: string, data: any, headers?: any, method?: string): Promise<any> {
         return ghRequestAsync({
             url: /^https:/.test(path) ? path : "https://api.github.com/repos/" + path,
             headers,
             method: method || "POST",
-            allowHttpErrors: true,
             data: data
-        }).then(resp => {
-            if (resp.statusCode == 200 || resp.statusCode == 202 || resp.statusCode == 201 || resp.statusCode == 204)
-                return resp.json
-
-            let e = new Error(lf("Cannot create object at github.com/{0}; code: {1}",
-                path, resp.statusCode));
-            (<any>e).statusCode = resp.statusCode;
-            (<any>e).isUserError = true;
-            if (resp.statusCode == 404)
-                (<any>e).needsWritePermission = true;
-            throw e
-        })
+        }).then(resp => resp.json);
     }
 
     export function createObjectAsync(repopath: string, type: string, data: any) {
