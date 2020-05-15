@@ -81,7 +81,7 @@ async function stsErrorTestAsync(filename: string) {
 async function pyErrorTestAsync(filename: string) {
     const basename = path.basename(filename);
     const text = fs.readFileSync(filename, "utf8");
-    const res = await util.py2tsAsync(filename, "bare", /** allowErrors **/ true);
+    const res = await util.py2tsAsync(text, "bare", /** allowErrors **/ true, filename);
     checkDiagnostics(res.diagnostics, basename, text);
 }
 

@@ -201,6 +201,14 @@ namespace pxt.py {
             let outLns = file.getChildren()
                 .map(emitNode)
                 .reduce((p, c) => p.concat(c), [])
+                .reduce((p, c) => {
+                    if (!c && !p[p.length - 1]) {
+                        // if there are consecutive empty lines, reduce those to just one
+                        return p
+                    } else {
+                        return [...p, c]
+                    }
+                }, [])
 
             // emit any comments that could not be associated with a
             // statement at the end of the file
@@ -674,11 +682,16 @@ namespace pxt.py {
             if (unaryExp)
                 return unaryExp
 
-            let [exp, expSup] = emitExp(s.expression)
-            return expSup.concat(exp)
+            const [exp, expSup] = emitExp(s.expression)
+            if (expSup.length)
+                // If an expression has supporting statements, this is usually an event handler
+                // and we usually want it to be padded with empty lines.
+                return ["", ...expSup, ...exp, ""]
+            else
+                return [...expSup, ...exp]
         }
         function emitBlock(s: ts.Block): string[] {
-            let stmts = s.getChildren()
+            const stmts = s.getChildren()
                 .map(emitNode)
                 .reduce((p, c) => p.concat(c), [])
             return stmts
