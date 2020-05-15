@@ -342,11 +342,13 @@ namespace pxt.github {
     }
 
     function ghPostAsync(path: string, data: any, headers?: any, method?: string): Promise<any> {
+        // need to handle 204
         return ghRequestAsync({
             url: /^https:/.test(path) ? path : "https://api.github.com/repos/" + path,
             headers,
             method: method || "POST",
-            data: data
+            data: data,
+            successCodes: [200, 201, 202, 204]
         }).then(resp => resp.json);
     }
 
