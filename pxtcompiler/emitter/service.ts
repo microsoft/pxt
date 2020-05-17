@@ -932,7 +932,7 @@ namespace ts.pxtc.service {
                 isMemberCompletion: isMemberCompletion,
                 isNewIdentifierLocation: true,
                 isTypeLocation: false,
-                namespace: "",
+                namespace: [],
             };
 
             let opts = cloneCompileOpts(host.opts)

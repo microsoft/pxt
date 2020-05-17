@@ -68,11 +68,25 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
         const wordStartOffset = model.getOffsetAt({ lineNumber: position.lineNumber, column: word.startColumn })
         const wordEndOffset = model.getOffsetAt({ lineNumber: position.lineNumber, column: word.endColumn })
 
+
         return compiler.completionsAsync(fileName, offset, wordStartOffset, wordEndOffset, source)
             .then(completions => {
+                function stripLocalNamespace(qName: string): string {
+                    // leave out namespace qualifiers if we're inside a matching namespace
+                    if (!qName)
+                        return qName
+                    for (let ns of completions.namespace) {
+                        if (qName.startsWith(ns + "."))
+                            qName = qName.substr((ns + ".").length)
+                        else
+                            break
+                    }
+                    return qName
+                }
+
                 const items = (completions.entries || []).map((si, i) => {
-                    let insertSnippet = this.python ? si.pySnippet : si.snippet;
-                    let qName = this.python ? si.pyQName : si.qName;
+                    let insertSnippet = stripLocalNamespace(this.python ? si.pySnippet : si.snippet);
+                    let qName = stripLocalNamespace(this.python ? si.pyQName : si.qName);
                     let name = this.python ? si.pyName : si.name;
                     let completionSnippet: string | undefined = undefined;
                     let isMultiLine = insertSnippet && insertSnippet.indexOf("\n") >= 0
