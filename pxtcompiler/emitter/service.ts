@@ -931,8 +931,9 @@ namespace ts.pxtc.service {
                 entries: [],
                 isMemberCompletion: isMemberCompletion,
                 isNewIdentifierLocation: true,
-                isTypeLocation: false
-            }
+                isTypeLocation: false,
+                namespace: "",
+            };
 
             let opts = cloneCompileOpts(host.opts)
             opts.fileSystem[fileName] = src
@@ -988,9 +989,13 @@ namespace ts.pxtc.service {
             const prog = service.getProgram()
             const tsAst = prog.getSourceFile(tsFilename)
             const tc = prog.getTypeChecker()
-            let didFindMemberCompletions = false;
+            let tsNode = findInnerMostNodeAtPosition(tsAst, tsPos);
+
+            // determine the current namespace
+            r.namespace = getCurrentNamespaces(tsNode)
 
             // special handing for member completion
+            let didFindMemberCompletions = false;
             if (isMemberCompletion) {
                 const propertyAccessTarget = findInnerMostNodeAtPosition(tsAst, isPython ? tsPos : dotIdx - 1)
 
@@ -1027,15 +1032,14 @@ namespace ts.pxtc.service {
                 }
             }
 
-            const innerMost = findInnerMostNodeAtPosition(tsAst, tsPos)
             // special handling for call expressions
-            if (innerMost && innerMost.parent && ts.isCallExpression(innerMost.parent)) {
-                const call = innerMost.parent as ts.CallExpression;
+            if (tsNode && tsNode.parent && ts.isCallExpression(tsNode.parent)) {
+                const call = tsNode.parent as ts.CallExpression;
 
                 function findArgIdx() {
                     // does our cursor syntax node trivially map to an argument?
                     let paramIdx = call.arguments
-                        .map(a => a === innerMost)
+                        .map(a => a === tsNode)
                         .indexOf(true)
                     if (paramIdx >= 0)
                         return paramIdx
@@ -1099,7 +1103,10 @@ namespace ts.pxtc.service {
                 resultSymbols = completionSymbols(pxt.U.values(lastApiInfo.apis.byQName))
 
                 // then use the typescript service to get symbols in scope
-                let tsNode = findInnerMostNodeAtPosition(tsAst, wordStartPos);
+                if (!tsNode)
+                    tsNode = findInnerMostNodeAtPosition(tsAst, wordStartPos);
+                if (!tsNode)
+                    tsNode = tsAst.getSourceFile()
                 let symSearch = SymbolFlags.Variable;
                 let inScopeTsSyms = tc.getSymbolsInScope(tsNode, symSearch);
                 // filter these to just what's at the cursor, otherwise we get things
@@ -2177,5 +2184,22 @@ namespace ts.pxtc.service {
     function filenameWithExtension(filename: string, extension: string) {
         if (extension.charAt(0) === ".") extension = extension.substr(1);
         return filename.substr(0, filename.lastIndexOf(".") + 1) + extension;
+    }
+
+    function getParentNamespace(n?: Node): ModuleDeclaration | null {
+        if (!n)
+            return null
+        if (ts.isModuleDeclaration(n))
+            return n
+        return getParentNamespace(n.parent)
+    }
+    function getCurrentNamespaces(n?: Node): string[] {
+        if (!n)
+            return [];
+        let parent = getParentNamespace(n)
+        if (!parent)
+            return [];
+        let ns = parent.name.getText()
+        return [...getCurrentNamespaces(parent.parent), ns]
     }
 }
