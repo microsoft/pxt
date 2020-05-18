@@ -235,7 +235,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const hideIteration = tutorialOptions && tutorialOptions.metadata && tutorialOptions.metadata.hideIteration;
         const simOpts = pxt.appTarget.simulator;
         const headless = simOpts.headless;
-        const collapsed = (hideEditorFloats && headless) || collapseEditorTools;
 
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
         const ghid = header && pxt.github.parseRepoId(header.githubId);
@@ -266,7 +265,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const debugTooltip = debugging ? lf("Disable Debugging") : lf("Debugging")
         const downloadIcon = pxt.appTarget.appTheme.downloadIcon || "download";
 
-        const collapseIconTooltip = this.props.collapsed ? lf("Show the simulator") : lf("Hide the simulator");
         const bigRunButtonTooltip = (() => {
             switch (simState) {
                 case pxt.editor.SimState.Stopped:
@@ -328,15 +326,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                             view='computer'
                         />
                     </div>}
-            </div>
-            <div id="simToggleArea" className="ui portrait only">
-                {!targetTheme.bigRunButton && <EditorToolbarButton
-                    className="expand-button green"
-                    icon={`inverted chevron ${this.props.collapsed ? 'up' : 'down'}`}
-                    disabled={starting}
-                    title={collapseIconTooltip} onButtonClick={this.toggleCollapsed}
-                    view='computer'
-                />}
             </div>
         </div>;
     }

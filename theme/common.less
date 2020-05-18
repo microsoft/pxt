@@ -1217,7 +1217,12 @@ p.ui.font.small {
         z-index: 20;
     }
     .collapsedEditorTools #filelist {
-        display: none;
+        > div {
+            display: none;
+        }
+        aside.simtoolbar button:not(.expand-button) {
+            display: none !important;
+        }
     }
     #filelistOverlay {
         position: absolute;

@@ -3714,7 +3714,7 @@ export class ProjectView
                     <div id="filelist" className="ui items">
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0}>
                         </div>
-                        <simtoolbar.SimulatorToolbar parent={this} />
+                        <simtoolbar.SimulatorToolbar parent={this} collapsed={this.state.collapseEditorTools} />
                         {this.state.keymap && simOpts.keymap && <keymap.Keymap parent={this} />}
                         <div className="ui item portrait hide hidefullscreen">
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' className='teal' icon="xicon chip" text={"Dev Debug"} onClick={this.hwDebug} /> : ''}
