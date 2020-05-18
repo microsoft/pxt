@@ -2134,6 +2134,9 @@ ${lbl}: .short 0xffff
                 return emitExpr(args[0])
             }
 
+            if (opts.target.shimRenames && U.lookup(opts.target.shimRenames, nm))
+                nm = opts.target.shimRenames[nm]
+
             if (opts.target.isNative) {
                 hexfile.validateShim(getDeclName(decl), nm, attrs, hasRet, args.map(isNumberLike))
             }

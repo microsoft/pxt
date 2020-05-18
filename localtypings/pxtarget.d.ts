@@ -525,6 +525,7 @@ declare namespace ts.pxtc {
         keepCppFiles?: boolean;
         debugMode?: boolean; // set dynamically, not in config
         compilerExtension?: string; // JavaScript code to load in compiler
+        shimRenames?: pxt.Map<string>;
     }
 
     type BlockContentPart = BlockLabel | BlockParameter | BlockImage;
