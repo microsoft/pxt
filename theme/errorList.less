@@ -47,19 +47,26 @@
         padding: 0 0 1em 0;
         overflow-y: scroll;
 
-        .errorListContent {
+        .errorListContent.ui.selection.list {
             color: black;
 
-            .errorListItem {
-                padding: 0.5em 1em;
+            .errorListItemContainer {
 
-                &:hover:not(:active) {
-                    background-color: @errorListMessageHoverColor;
+                &:hover {
+                    cursor: pointer;
                 }
 
-                .messageText.active {
-                    background-color: rgb(52, 84, 209);
-                    color: white;
+                .item {
+                    padding: 0.5em 1em;
+
+                    &:hover:not(.selected) {
+                        background-color: @errorListMessageHoverColor;
+                    }
+
+                    &.selected {
+                        background-color: rgb(52, 84, 209);
+                        color: white;
+                    }
                 }
 
                 // &:nth-child(even):not(:active) {

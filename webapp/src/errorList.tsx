@@ -47,42 +47,18 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         const createOnErrorMessageClick = (e: pxtc.KsDiagnostic, key: string, index: number) => () =>
             this.onErrorMessageClick(e, key, index)
 
-        // let errorListContent;
-        // if (!isCollapsed) {
-        //     errorListContent = (
-        //         <div className="ui selection list">
-        //             {(errors).map((e, index) =>
-        //             <div className={`item ${activeKey === errorKey(e) ? 'active': ''}`} key={errorKey(e)} data-key={errorKey(e)} role="button" onClick={createOnErrorMessageClick(e, errorKey(e), index)}>
-        //                 {lf("Line {0}: {1}", (e.endLine) ? e.endLine + 1 : e.line + 1, e.messageText)}
-        //             </div>)
-        //             }
-        //         </div>
-        //     )
-        // }
-
         let errorListContent;
         if (!isCollapsed) {
             errorListContent = (
-                <div className="errorListContent">
+                <div className="errorListContent ui selection list">
                     {(errors).map((e, index) =>
-                    <div className="errorListItem" key={errorKey(e)} role="button" onClick={createOnErrorMessageClick(e, errorKey(e), index)}>
+                    <div className="errorListItemContainer" key={errorKey(e)} role="button" onClick={createOnErrorMessageClick(e, errorKey(e), index)}>
                         <ErrorListItem error={e} active={activeKey === errorKey(e)}/>
                     </div>)
                     }
                 </div>
             )
         }
-
-        // let errorListContent;
-        // if (!isCollapsed) {
-        //     errorListContent = (
-        //         <div className="errorListContent">
-        //             {(errors).map((e, index) =>
-        //                 <ErrorListItem key={errorKey(e)} data-key={errorKey(e)} error={e} active={errorKey(e) === activeKey} onToggle={this.toggleActive}/>)
-        //             }
-        //         </div>
-        //     )
-        // }
 
         return (
             <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''}`} hidden={!errorsAvailable}>
@@ -140,39 +116,9 @@ class ErrorListItem extends React.Component<ErrorListItemProps> {
     render() {
         const {error, active} = this.props
         return (
-            <div className={`messageText ${active ? 'active' : ''}`}>
+            <div className={`item ${active ? 'selected' : ''}`}>
             {lf("Line {0}: {1}", (error.endLine) ? error.endLine + 1 : error.line + 1, error.messageText)}
             </div>
         )
     }
 }
-
-
-
-// interface ErrorListItemProps {
-//     error: pxtc.KsDiagnostic,
-//     active: boolean,
-//     onToggle: any
-// }
-
-// class ErrorListItem extends React.Component<ErrorListItemProps> {
-//     constructor(props: ErrorListItemProps) {
-//         super(props)
-
-//         this.handleClick = this.handleClick.bind(this)
-//     }
-
-//     render() {
-//         const e = this.props.error
-
-//         return (
-//             <div className={`errorListItem ${this.props.active ? 'active' : ''}`} >
-//                 {lf("Line {0}: {1}", (e.endLine) ? e.endLine + 1 : e.line + 1, e.messageText)}
-//             </div>
-//         )
-//     }
-
-//     handleClick(event: any) {
-//         this.props.onToggle(event.target.dataset.key)
-//     }
-// }
