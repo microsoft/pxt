@@ -87,7 +87,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     private getCollapsedState(): string {
-        return '' + this.props.collapsed;
+        return '' + this.props.parent.state.collapseEditorTools;
     }
 
     private getHeadlessState(): string {

@@ -7,6 +7,9 @@ import * as sui from "./sui";
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 export interface SimulatorProps extends ISettingsProps {
+    collapsed?: boolean;
+    simSerialActive?: boolean;
+    devSerialActive?: boolean;
 }
 
 export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
@@ -26,6 +29,8 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         this.startStopSimulator = this.startStopSimulator.bind(this);
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
         this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
+        this.openDeviceSimulator = this.openDeviceSimulator.bind(this);
+        this.openDeviceSerial = this.openDeviceSerial.bind(this);
         this.takeScreenshot = this.takeScreenshot.bind(this);
         this.toggleDebug = this.toggleDebug.bind(this);
     }
@@ -65,13 +70,27 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         this.props.parent.toggleSimulatorCollapse();
     }
 
+    openDeviceSerial() {
+        pxt.tickEvent("simulator.fullscreen.serial.simulator", { }, { interactiveConsent: true });
+        this.props.parent.toggleSimulatorFullscreen();
+        this.props.parent.openDeviceSerial();
+    }
+
+    openDeviceSimulator() {
+        pxt.tickEvent("simulator.fullscreen.serial.device", { }, { interactiveConsent: true });
+        this.props.parent.toggleSimulatorFullscreen();
+        this.props.parent.openSimSerial();
+    }
+
     takeScreenshot() {
         pxt.tickEvent("simulator.takescreenshot", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
         this.props.parent.downloadScreenshotAsync().done();
     }
 
     renderCore() {
-        const parentState = this.props.parent.state;
+        const { parent, simSerialActive, devSerialActive } = this.props;
+        // const parent = this.props.parent;
+        const parentState = parent.state;
         if (!parentState.currFile || parentState.home) return <div />
 
         const targetTheme = pxt.appTarget.appTheme;
@@ -110,11 +129,15 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const muteTooltip = isMuted ? lf("Unmute audio") : lf("Mute audio");
         const screenshotTooltip = targetTheme.simScreenshotKey ? lf("Take Screenshot (shortcut {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
         const collapseIconTooltip = this.props.collapsed ? lf("Show the simulator") : lf("Hide the simulator");
+        const simSerialTooltip = lf("Open simulator console");
+        const devSerialTooltip = lf("Open device console");
+
+        const showSerialEditorSection = isFullscreen && (simSerialActive || devSerialActive);
 
         return <aside className={"ui item grid centered simtoolbar" + (sandbox ? "" : " portrait ")} role="complementary" aria-label={lf("Simulator toolbar")}>
             <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
                 {make && <sui.Button disabled={debugging} icon='configure' className="secondary" title={makeTooltip} onClick={this.openInstructions} />}
-                {run && !targetTheme.bigRunButton && <PlayButton parent={this.props.parent} simState={parentState.simState} debugging={parentState.debugging} />}
+                {run && !targetTheme.bigRunButton && <PlayButton parent={parent} simState={parentState.simState} debugging={parentState.debugging} />}
                 {restart && <sui.Button disabled={!runControlsEnabled} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} />}
                 {run && debug && <sui.Button disabled={!debugBtnEnabled} key='debugbtn' className={`debug-button ${debugging ? "orange" : ""}`} icon="icon bug" title={debugTooltip} onClick={this.toggleDebug} />}
                 {/* These buttons are for mobile view only, attached to reduce extra padding */}
@@ -127,7 +150,19 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
             </div>
             {!isHeadless && <div className={`ui icon tiny buttons computer only`} style={{ padding: "0" }}>
                 {audio && <sui.Button key='mutebtn' className={`mute-button ${isMuted ? 'red' : ''}`} icon={`${isMuted ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={this.toggleMute} />}
-                {simOpts.keymap && <sui.Button key='keymap' className="keymap-button" icon="keyboard" title={keymapTooltip} onClick={this.props.parent.toggleKeymap} />}
+                {simOpts.keymap && <sui.Button key='keymap' className="keymap-button" icon="keyboard" title={keymapTooltip} onClick={parent.toggleKeymap} />}
+            </div>}
+            {showSerialEditorSection && <div className={`ui item tiny buttons full-screen-console`}>
+                {simSerialActive && <sui.Button
+                    icon="list"
+                    title={simSerialTooltip}
+                    onClick={this.openDeviceSimulator}
+                />}
+                {devSerialActive && <sui.Button
+                    icon="usb"
+                    title={devSerialTooltip}
+                    onClick={this.openDeviceSerial}
+                />}
             </div>}
             {!isHeadless && <div className={`ui icon tiny buttons computer only`} style={{ padding: "0" }}>
                 {screenshot && <sui.Button disabled={!isRunning} key='screenshotbtn' className={`screenshot-button ${screenshotClass}`} icon={`icon camera left`} title={screenshotTooltip} onClick={this.takeScreenshot} />}

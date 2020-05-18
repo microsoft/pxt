@@ -86,6 +86,9 @@ namespace pxt.editor {
         home?: boolean;
         hasError?: boolean;
 
+        simSerialActive?: boolean;
+        deviceSerialActive?: boolean;
+
         screenshoting?: boolean;
     }
 
@@ -175,12 +178,13 @@ namespace pxt.editor {
         forceUpdate(): void;
 
         reloadEditor(): void;
-
         openBlocks(): void;
         openJavaScript(giveFocusOnLoading?: boolean): void;
         openPython(giveFocusOnLoading?: boolean): void;
         openSettings(): void;
         openSimView(): void;
+        openSimSerial(): void;
+        openDeviceSerial(): void;
         openPreviousEditor(): void;
 
         switchTypeScript(): void;
@@ -347,6 +351,8 @@ namespace pxt.editor {
         parent: IProjectView;
         visible?: boolean;
         collapsed?: boolean;
+        simSerialActive?: boolean;
+        devSerialActive?: boolean;
     }
 
     export interface IFieldCustomOptions {
