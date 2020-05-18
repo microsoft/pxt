@@ -164,7 +164,7 @@ namespace pxt.blocks {
 
                 switch (isArray) {
                     case "number":
-                        fieldValues = ["1", "2", "3"];
+                        fieldValues = ["0", "1"];
                         break;
                     case "string":
                         fieldValues = ["a", "b", "c"];
