@@ -399,6 +399,9 @@ export async function renameAsync(h: Header, newName: string) {
 }
 
 export function resetAsync() {
+    const ghProvider = githubProvider();
+    const ghNeedsLogout = ghProvider && ghProvider.hasToken();
+
     if (currentProvider)
         currentProvider.logout()
     currentProvider = null
@@ -407,8 +410,8 @@ export function resetAsync() {
     clearOauth();
     invalidateData();
 
-    const ghProvider = githubProvider();
-    if (ghProvider)
+    // the user was signed in with github
+    if(ghNeedsLogout)
         ghProvider.logout();
 
     return Promise.resolve()
