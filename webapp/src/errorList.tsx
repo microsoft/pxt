@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import * as sui from "./sui";
-import { REDO_IMAGE_EDIT } from "./components/ImageEditor/actions/types";
 
 export interface ErrorListProps {
     onSizeChange: () => void,
