@@ -47,27 +47,61 @@
         padding: 0 0 1em 0;
         overflow-y: scroll;
 
-        .ui.selection.list {
+        .errorListContent {
             color: black;
 
-            .item {
-                border-radius: unset;
+            .errorListItem {
                 padding: 0.5em 1em;
-                color: black;
 
-                &:hover {
+                &:hover:not(:active) {
                     background-color: @errorListMessageHoverColor;
                 }
 
-                &:nth-child(even):not(:hover) {
-                    background-color: @errorListEven;
+                .messageText.active {
+                    background-color: rgb(52, 84, 209);
+                    color: white;
                 }
 
-                &:nth-child(odd):not(:hover) {
-                    background-color: @errorListOdd;
-                }
+                // &:nth-child(even):not(:active) {
+                //     background-color: @errorListEven;
+                //     &:active {
+                //         background-color: rgb(52, 84, 209);
+                //         color: white;
+                //     }
+                // }
+
+                // &:nth-child(odd):not(:active) {
+                //     background-color: @errorListOdd;
+                //     &:active {
+                //         background-color: rgb(52, 84, 209);
+                //         color: white;
+                //     }
+                // }
             }
         }
+
+        // .ui.selection.list {
+        //     color: black;
+
+        //     .item {
+        //         border-radius: unset;
+        //         padding: 0.5em 1em;
+        //         color: black;
+
+        //         &:hover {
+        //             background-color: @errorListMessageHoverColor;
+        //         }
+
+        //         &:nth-child(even) {
+        //             background-color: @errorListEven;
+        //         }
+
+        //         &:nth-child(odd) {
+        //             background-color: @errorListOdd;
+        //         }
+        //     }
+        // }
+
 
     }
 }
