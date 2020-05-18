@@ -524,7 +524,7 @@ export function showImportGithubDialogAsync() {
         core.hideDialog()
     }
     core.showLoading("githublist", lf("searching GitHub repositories..."))
-    return cloudsync.githubProvider().routedLoginAsync(`import`)
+    return cloudsync.githubProvider(true).routedLoginAsync(`import`)
         .then(r => r && r.accessToken && pxt.github.listUserReposAsync())
         .finally(() => core.hideLoading("githublist"))
         .then(repos => {
