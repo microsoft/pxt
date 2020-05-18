@@ -495,12 +495,12 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                                 <mutation items="2"></mutation>
                                 <value name="ADD0">
                                     <shadow type="math_number">
-                                        <field name="NUM">1</field>
+                                        <field name="NUM">0</field>
                                     </shadow>
                                 </value>
                                 <value name="ADD1">
                                     <shadow type="math_number">
-                                        <field name="NUM">2</field>
+                                        <field name="NUM">1</field>
                                     </shadow>
                                 </value>
                             </block>
