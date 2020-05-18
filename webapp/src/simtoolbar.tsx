@@ -117,7 +117,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
                 {run && !targetTheme.bigRunButton && <PlayButton parent={this.props.parent} simState={parentState.simState} debugging={parentState.debugging} />}
                 {restart && <sui.Button disabled={!runControlsEnabled} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} />}
                 {run && debug && <sui.Button disabled={!debugBtnEnabled} key='debugbtn' className={`debug-button ${debugging ? "orange" : ""}`} icon="icon bug" title={debugTooltip} onClick={this.toggleDebug} />}
-                {/* This button is for mobile view only, attached to reduce extra padding */}
+                {/* These buttons are for mobile view only, attached to reduce extra padding */}
                 {fullscreen && <sui.Button key='fullscreenbtn' className={`fullscreen-button tablet only`} icon={`xicon ${isFullscreen ? 'fullscreencollapse' : 'fullscreen'}`} title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} />}
                 {collapse && <sui.Button
                     className={`expand-button portrait only ${this.props.collapsed ? "green" : "red"}`}

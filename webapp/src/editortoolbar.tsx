@@ -226,13 +226,12 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const { tutorialOptions, hideEditorFloats, collapseEditorTools, projectName, compiling, isSaving, simState, debugging, header } = this.props.parent.state;
+        const { tutorialOptions, projectName, compiling, isSaving, simState, debugging, header } = this.props.parent.state;
 
         const targetTheme = pxt.appTarget.appTheme;
         const isController = pxt.shell.isControllerMode();
         const readOnly = pxt.shell.isReadOnly();
         const tutorial = tutorialOptions ? tutorialOptions.tutorial : false;
-        const hideIteration = tutorialOptions && tutorialOptions.metadata && tutorialOptions.metadata.hideIteration;
         const simOpts = pxt.appTarget.simulator;
         const headless = simOpts.headless;
 
@@ -252,8 +251,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const running = simState == pxt.editor.SimState.Running;
         const starting = simState == pxt.editor.SimState.Starting;
 
-        const hasUndo = this.props.parent.editor.hasUndo();
-
         const showUndoRedo = !readOnly && !debugging;
         const showZoomControls = true;
         const showGithub = !!pxt.appTarget.cloud
@@ -261,8 +258,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             && !!targetTheme.githubEditor
             && !readOnly && !isController && !debugging && !tutorial;
 
-        const debug = !!targetTheme.debugger && !readOnly;
-        const debugTooltip = debugging ? lf("Disable Debugging") : lf("Debugging")
         const downloadIcon = pxt.appTarget.appTheme.downloadIcon || "download";
 
         const bigRunButtonTooltip = (() => {
@@ -278,7 +273,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         })();
 
         const mobile = View.Mobile;
-        const tablet = View.Tablet;
         const computer = View.Computer;
 
         let downloadButtonClasses = "";
