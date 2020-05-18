@@ -68,6 +68,7 @@ namespace ts.pxtc {
         isMemberCompletion: boolean;
         isNewIdentifierLocation: boolean;
         isTypeLocation: boolean;
+        namespace: string[];
     }
 
     export interface LocationInfo {
