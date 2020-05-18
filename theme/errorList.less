@@ -52,14 +52,19 @@
 
             .errorListItemContainer {
 
-                &:hover {
-                    cursor: pointer;
+                &:nth-child(even) {
+                    background-color: @errorListEven;
+                }
+
+                &:nth-child(odd) {
+                    background-color: @errorListOdd;
                 }
 
                 .item {
                     padding: 0.5em 1em;
 
-                    &:hover:not(.selected) {
+                    &:hover {
+                        cursor: pointer;
                         background-color: @errorListMessageHoverColor;
                     }
 
@@ -68,48 +73,8 @@
                         color: white;
                     }
                 }
-
-                // &:nth-child(even):not(:active) {
-                //     background-color: @errorListEven;
-                //     &:active {
-                //         background-color: rgb(52, 84, 209);
-                //         color: white;
-                //     }
-                // }
-
-                // &:nth-child(odd):not(:active) {
-                //     background-color: @errorListOdd;
-                //     &:active {
-                //         background-color: rgb(52, 84, 209);
-                //         color: white;
-                //     }
-                // }
             }
         }
-
-        // .ui.selection.list {
-        //     color: black;
-
-        //     .item {
-        //         border-radius: unset;
-        //         padding: 0.5em 1em;
-        //         color: black;
-
-        //         &:hover {
-        //             background-color: @errorListMessageHoverColor;
-        //         }
-
-        //         &:nth-child(even) {
-        //             background-color: @errorListEven;
-        //         }
-
-        //         &:nth-child(odd) {
-        //             background-color: @errorListOdd;
-        //         }
-        //     }
-        // }
-
-
     }
 }
 
