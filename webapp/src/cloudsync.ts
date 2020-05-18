@@ -411,7 +411,7 @@ export function resetAsync() {
     invalidateData();
 
     // the user was signed in with github
-    if(ghNeedsLogout)
+    if (ghNeedsLogout)
         ghProvider.logout();
 
     return Promise.resolve()

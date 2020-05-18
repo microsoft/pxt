@@ -4034,7 +4034,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             const [ghCmd, ghArg] = hash.arg.split(':', 2);
             pxt.BrowserUtils.changeHash("");
             const provider = cloudsync.githubProvider();
-            if(!provider)
+            if (!provider)
                 return false;
             // #github:owner/user --> import
             // #github:create-repository:headerid --> create repo
