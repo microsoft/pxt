@@ -155,11 +155,13 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
             {showSerialEditorSection && <div className={`ui item tiny buttons full-screen-console`}>
                 {simSerialActive && <sui.Button
                     icon="list"
+                    className="purple"
                     title={simSerialTooltip}
                     onClick={this.openDeviceSimulator}
                 />}
                 {devSerialActive && <sui.Button
                     icon="usb"
+                    className="purple"
                     title={devSerialTooltip}
                     onClick={this.openDeviceSerial}
                 />}
