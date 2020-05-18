@@ -330,15 +330,18 @@ export function providers(): Provider[] {
     return identityProviders().filter(p => p.hasSync()).map(p => <Provider>p);
 }
 
-export function githubProvider(): githubprovider.GithubProvider {
-    return identityProviders().filter(p => p.name == githubprovider.PROVIDER_NAME)[0] as githubprovider.GithubProvider;
+export function githubProvider(required?: boolean): githubprovider.GithubProvider {
+    const p = identityProviders().filter(p => p.name == githubprovider.PROVIDER_NAME)[0] as githubprovider.GithubProvider;
+    if (!p && required)
+        U.userError(lf("GitHub not configured in this editor."))
+    return p;
 }
 
 
 // requests token to user if needed
 export async function ensureGitHubTokenAsync() {
     // check that we have a token first
-    await githubProvider().loginAsync();
+    await githubProvider(true).loginAsync();
     if (!pxt.github.token)
         U.userError(lf("Please sign in to GitHub to perform this operation."))
 }
@@ -396,6 +399,9 @@ export async function renameAsync(h: Header, newName: string) {
 }
 
 export function resetAsync() {
+    const ghProvider = githubProvider();
+    const ghNeedsLogout = ghProvider && ghProvider.hasToken();
+
     if (currentProvider)
         currentProvider.logout()
     currentProvider = null
@@ -403,6 +409,10 @@ export function resetAsync() {
     pxt.storage.removeLocal("cloudId")
     clearOauth();
     invalidateData();
+
+    // the user was signed in with github
+    if (ghNeedsLogout)
+        ghProvider.logout();
 
     return Promise.resolve()
 }

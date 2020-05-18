@@ -2810,7 +2810,7 @@ export class ProjectView
 
     createGitHubRepositoryAsync(): Promise<void> {
         const { projectName, header } = this.state;
-        return cloudsync.githubProvider().createRepositoryAsync(projectName, header)
+        return cloudsync.githubProvider(true).createRepositoryAsync(projectName, header)
             .then(r => r && this.reloadHeaderAsync());
     }
 
@@ -4033,6 +4033,9 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             const repoid = pxt.github.parseRepoId(hash.arg);
             const [ghCmd, ghArg] = hash.arg.split(':', 2);
             pxt.BrowserUtils.changeHash("");
+            const provider = cloudsync.githubProvider();
+            if (!provider)
+                return false;
             // #github:owner/user --> import
             // #github:create-repository:headerid --> create repo
             // #github:import -> import dialog
@@ -4041,10 +4044,10 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
                 const hd = workspace.getHeader(ghArg);
                 if (hd) {
                     // ignore if token is not set
-                    if (!cloudsync.githubProvider().hasToken())
+                    if (!provider.hasToken())
                         return false;
                     theEditor.loadHeaderAsync(hd)
-                        .then(() => cloudsync.githubProvider().createRepositoryAsync(hd.name, hd))
+                        .then(() => provider.createRepositoryAsync(hd.name, hd))
                         .done(r => r && theEditor.reloadHeaderAsync())
                     return true;
                 }
@@ -4102,7 +4105,7 @@ async function importGithubProject(repoid: string, requireSignin?: boolean) {
         );
         if (!hd) {
             if (requireSignin) {
-                const token = await cloudsync.githubProvider().routedLoginAsync(repoid);
+                const token = await cloudsync.githubProvider(true).routedLoginAsync(repoid);
                 if (!token.accessToken) { // did not sign in, give up
                     theEditor.openHome();
                     return;
