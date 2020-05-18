@@ -1271,7 +1271,7 @@ p.ui.font.small {
             display: none;
         }
         #filelist .simtoolbar > .buttons {
-            > .restart-button, > .debug-button {
+            > .restart-button {
                 display: block;
             }
         }
@@ -1403,6 +1403,19 @@ p.ui.font.small {
     }
     #root #editordropdown .menu .item .text {
         display: inline-block!important;
+    }
+}
+
+@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
+    /* Top Menu */
+    #maineditor {
+        top: @thinMenuHeight;
+    }
+    .hideMenuBar #maineditor {
+        top: 0;
+    }
+    .sandbox #maineditor {
+        top: @sandboxMobileMenuHeight;
     }
 }
 
