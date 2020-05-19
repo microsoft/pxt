@@ -89,7 +89,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
     renderCore() {
         const { parent, simSerialActive, devSerialActive } = this.props;
-        // const parent = this.props.parent;
+
         const parentState = parent.state;
         if (!parentState.currFile || parentState.home) return <div />
 
