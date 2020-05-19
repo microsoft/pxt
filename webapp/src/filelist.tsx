@@ -120,7 +120,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 && /\.md$/.test(file.name)
                 && !/^_locales\//.test(file.name)
             const fn = file.name.replace(/\.[a-z]+$/, '');
-            const previewUrl = !shellReadonly 
+            const previewUrl = !shellReadonly
                 && isTutorialMd
                 && `#tutorial:${header.id}:${fn}`;
             const ghid = usesGitHub && pxt.github.parseRepoId(header.githubId)
@@ -129,7 +129,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 && `${window.location.origin}${window.location.pathname || ""}#tutorial:github:${ghid.fullName}/${fn}`
             const lang = pxt.Util.userLanguage();
             const localized = `_locales/${lang}/${file.name}`;
-            const addLocale =  !shellReadonly
+            const addLocale = !shellReadonly
                 && isTutorialMd
                 && pxt.Util.userLanguage() !== (pxt.appTarget.appTheme.defaultLocale || "en")
                 && !files.some(f => f.name == localized);
@@ -162,7 +162,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     private packageOf(p: pkg.EditorPackage) {
         const expandedPkg = this.state.expandedPkg;
-        const del = !pxt.shell.isReadOnly()        
+        const del = !pxt.shell.isReadOnly()
             && p.getPkgId() != pxt.appTarget.id
             && p.getPkgId() != "built"
             && p.getPkgId() != "assets"
