@@ -101,7 +101,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
     onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
         this.setState({
-            exception: exception
+            exception
         })
     }
 }
