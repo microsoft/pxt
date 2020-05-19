@@ -37,7 +37,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
     render() {
         const {isCollapsed, errors, exception} = this.state;
-        const errorsAvailable = !!errors?.length;
+        const errorsAvailable = !!errors?.length || !!exception;
         const collapseTooltip = lf("Collapse Error List");
         function errorKey(error: pxtc.KsDiagnostic): string {
             // React likes have a "key" for each element so that it can smartly only
@@ -50,23 +50,26 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
         let errorListContent;
         if (!isCollapsed) {
-            errorListContent = (
-                <div className="ui selection list">
-                    {(errors).map((e, index) =>
-                    <div className="item" key={errorKey(e)} role="button" onClick={createOnErrorMessageClick(e, index)}>
-                        {lf("Line {0}: {1}", (e.endLine) ? e.endLine + 1 : e.line + 1, e.messageText)}
-                    </div>)
-                    }
-                    {exception && <div className="item">{exception.exceptionMessage}</div>}
-                </div>
-            )
+            if (exception) {
+                errorListContent = <div className="item">{lf(exception.exceptionMessage)}</div>
+            } else {
+                errorListContent = (
+                    <div className="ui selection list">
+                        {(errors).map((e, index) =>
+                        <div className="item" key={errorKey(e)} role="button" onClick={createOnErrorMessageClick(e, index)}>
+                            {lf("Line {0}: {1}", (e.endLine) ? e.endLine + 1 : e.line + 1, e.messageText)}
+                        </div>)
+                        }
+                    </div>
+                )
+            }
         }
 
         return (
             <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''}`} hidden={!errorsAvailable}>
                 <div className="errorListHeader" role="button" onClick={this.onCollapseClick}>
                     <h4>{lf("Problems")}</h4>
-                    <div className="ui red circular label countBubble">{errors.length}</div>
+                    <div className="ui red circular label countBubble">{exception ? 1 : errors.length}</div>
                     <div className="toggleButton"><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`} onClick={this.onCollapseClick} /></div>
                 </div>
                 {!isCollapsed && <div className="errorListInner">{errorListContent}</div>}
