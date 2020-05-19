@@ -6,11 +6,13 @@ import * as sui from "./sui";
 export interface ErrorListProps {
     onSizeChange: () => void,
     listenToErrorChanges: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void,
+    listenToExceptionChanges: (handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage) => void) => void,
     goToError: (error: pxtc.KsDiagnostic) => void
 }
 export interface ErrorListState {
-    isCollapsed: boolean
+    isCollapsed: boolean,
     errors: pxtc.KsDiagnostic[],
+    exception: pxsim.DebuggerBreakpointMessage
 }
 
 export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
@@ -20,18 +22,21 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
         this.state = {
             isCollapsed: true,
-            errors: []
+            errors: [],
+            exception: null
         }
 
         this.onCollapseClick = this.onCollapseClick.bind(this)
         this.onErrorsChanged = this.onErrorsChanged.bind(this)
+        this.onExceptionDetected = this.onExceptionDetected.bind(this)
         this.onErrorMessageClick = this.onErrorMessageClick.bind(this)
 
         props.listenToErrorChanges("errorList", this.onErrorsChanged);
+        props.listenToExceptionChanges("errorList", this.onExceptionDetected)
     }
 
     render() {
-        const {isCollapsed, errors} = this.state;
+        const {isCollapsed, errors, exception} = this.state;
         const errorsAvailable = !!errors?.length;
         const collapseTooltip = lf("Collapse Error List");
         function errorKey(error: pxtc.KsDiagnostic): string {
@@ -52,6 +57,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                         {lf("Line {0}: {1}", (e.endLine) ? e.endLine + 1 : e.line + 1, e.messageText)}
                     </div>)
                     }
+                    {exception && <div className="item">{exception.exceptionMessage}</div>}
                 </div>
             )
         }
@@ -90,6 +96,12 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         this.setState({
             errors,
             isCollapsed: errors?.length == 0 || this.state.isCollapsed
+        })
+    }
+
+    onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
+        this.setState({
+            exception: exception
         })
     }
 }

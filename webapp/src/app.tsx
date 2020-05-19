@@ -781,7 +781,8 @@ export class ProjectView
             orphanException: brk => {
                 // TODO: start debugging session
                 // TODO: user friendly error message
-                core.warningNotification(lf("Program Error: {0}", brk.exceptionMessage));
+                //core.warningNotification(lf("Program Error: {0}", brk.exceptionMessage));
+                this.textEditor.onExceptionDetected(brk)
             },
             highlightStatement: (stmt, brk) => {
                 if (this.state.debugging && !simulator.driver.areBreakpointsSet() && brk && !brk.exceptionMessage) {
