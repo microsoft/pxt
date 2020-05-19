@@ -2635,10 +2635,20 @@ export class ProjectView
 
     clearSerial() {
         this.serialEditor.clear()
-        const simIndicator = this.refs["simIndicator"] as serialindicator.SerialIndicator
-        const devIndicator = this.refs["devIndicator"] as serialindicator.SerialIndicator
-        if (simIndicator) simIndicator.clear()
-        if (devIndicator) devIndicator.clear()
+        this.simulatorSerialIndicator()?.clear();
+        this.deviceSerialIndicator()?.clear();
+        this.setState({
+            simSerialActive: false,
+            deviceSerialActive: false
+        })
+    }
+
+    simulatorSerialIndicator() {
+        return this.refs["simIndicator"] as serialindicator.SerialIndicator;
+    }
+
+    deviceSerialIndicator() {
+        return this.refs["devIndicator"] as serialindicator.SerialIndicator;
     }
 
     shouldStartSimulator(): boolean {
@@ -3735,15 +3745,20 @@ export class ProjectView
                     <div id="filelist" className="ui items">
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0}>
                         </div>
-                        <simtoolbar.SimulatorToolbar parent={this} />
+                        <simtoolbar.SimulatorToolbar
+                            parent={this}
+                            collapsed={this.state.collapseEditorTools}
+                            simSerialActive={this.state.simSerialActive}
+                            devSerialActive={this.state.deviceSerialActive}
+                        />
                         {this.state.keymap && simOpts.keymap && <keymap.Keymap parent={this} />}
                         <div className="ui item portrait hide hidefullscreen">
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' className='teal' icon="xicon chip" text={"Dev Debug"} onClick={this.hwDebug} /> : ''}
                         </div>
                         {useSerialEditor ?
                             <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
-                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.openSimSerial} />
-                                <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.openDeviceSerial} />
+                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.openSimSerial} parent={this}/>
+                                <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.openDeviceSerial} parent={this} />
                             </div> : undefined}
                         {showFileList ? <filelist.FileList parent={this} /> : undefined}
                         {!isHeadless && <div id="filelistOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.toggleSimulatorFullscreen}></div>}
@@ -3751,7 +3766,6 @@ export class ProjectView
                 </div>
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
                     {showCollapseButton && <sui.Button id='computertogglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
-                    {showCollapseButton && <sui.Button id='mobiletogglesim' className={`mobile tablet only collapse-button large ${!this.state.collapseEditorTools ? "toggle-hide" : ""}`} icon={`inverted chevron ${this.state.collapseEditorTools ? 'up' : 'down'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
                     {this.allEditors.map(e => e.displayOuter(expandedStyle))}
                 </div>
                 {inHome ? <div id="homescreen" className="full-abs">
@@ -3763,9 +3777,7 @@ export class ProjectView
                         <projects.Projects parent={this} ref={this.handleHomeRef} />
                     </div>
                 </div> : undefined}
-                {showEditorToolbar ? <div id="editortools" role="complementary" aria-label={lf("Editor toolbar")}>
-                    <editortoolbar.EditorToolbar ref="editortools" parent={this} />
-                </div> : undefined}
+                {showEditorToolbar && <editortoolbar.EditorToolbar ref="editortools" parent={this} />}
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} sideDocsCollapsed={this.state.sideDocsCollapsed} docsUrl={this.state.sideDocsLoadUrl} /> : undefined}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={this.handleScriptSearchRef} />}
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={this.handleExtensionRef} />}

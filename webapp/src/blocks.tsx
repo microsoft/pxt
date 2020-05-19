@@ -561,8 +561,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const blocklyDiv = this.getBlocksEditorDiv();
         // Position blocklyDiv over blocklyArea.
         if (blocklyDiv && this.editor) {
-            blocklyDiv.style.width = blocklyArea.offsetWidth + 'px';
-            blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
             Blockly.svgResize(this.editor);
             this.resizeToolbox();
             this.resizeFieldEditorView();
