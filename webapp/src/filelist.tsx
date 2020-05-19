@@ -159,7 +159,8 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     private packageOf(p: pkg.EditorPackage) {
         const expandedPkg = this.state.expandedPkg;
-        const del = p.getPkgId() != pxt.appTarget.id
+        const del = !pxt.shell.isReadOnly()        
+            && p.getPkgId() != pxt.appTarget.id
             && p.getPkgId() != "built"
             && p.getPkgId() != "assets"
             && p.getPkgId() != pxt.appTarget.corepkg
