@@ -12,7 +12,7 @@ export interface ErrorListProps {
 export interface ErrorListState {
     isCollapsed: boolean,
     errors: pxtc.KsDiagnostic[],
-    exception: pxsim.DebuggerBreakpointMessage
+    exception?: pxsim.DebuggerBreakpointMessage
 }
 
 export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
