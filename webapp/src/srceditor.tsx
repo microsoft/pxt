@@ -139,4 +139,8 @@ export class Editor implements pxt.editor.IEditor {
 
     updateToolbox() {
     }
+
+    // allows all editors to send exceptions to error list
+    onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
+    }
 }

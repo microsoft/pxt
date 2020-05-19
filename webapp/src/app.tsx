@@ -782,7 +782,8 @@ export class ProjectView
                 // TODO: start debugging session
                 // TODO: user friendly error message
                 //core.warningNotification(lf("Program Error: {0}", brk.exceptionMessage));
-                this.textEditor.onExceptionDetected(brk)
+                //this.currentEditor.onExceptionDetected(brk)
+                this.editor.onExceptionDetected(brk)
             },
             highlightStatement: (stmt, brk) => {
                 if (this.state.debugging && !simulator.driver.areBreakpointsSet() && brk && !brk.exceptionMessage) {
