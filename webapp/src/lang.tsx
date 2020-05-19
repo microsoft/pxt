@@ -102,7 +102,9 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
         const targetTheme = pxt.appTarget.appTheme;
         const languageList = this.languageList();
         const modalSize = languageList.length > 4 ? "large" : "small";
-        const translateTheEditor = !pxt.BrowserUtils.isIE() && pxt.appTarget.appTheme.crowdinProject;
+        const translateTheEditor = !pxt.BrowserUtils.isIE()
+            && !pxt.shell.isReadOnly()
+            && pxt.appTarget.appTheme.crowdinProject;
 
         return (
             <sui.Modal isOpen={this.state.visible}
