@@ -42,14 +42,18 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
 
         core.confirmAsync({
             header: lf("Translate the editor"),
-            jsx: <p>
-                {lf("This editor uses crowd-sourced translation. If you wish to help with translation, make sure to register as a translator.")}
-                {lf("'Translate' will reload the editor with in-context translations. Close the editor when done.")}
-            </p>,
+            jsx: <div><p>
+                {lf("This editor uses crowd-sourced translation! If you wish to help with translation, make sure to register as a translator.")}
+            </p>
+                <p>
+                    {lf("'Translate' will reload the editor with in-context translations. Close the editor when done.")}
+                </p></div>,
             helpUrl: "/translate",
             buttons: [{
-                title: lf("Register"),
-                url: `https://crowdin.com/project/${pxt.appTarget.appTheme.crowdinProject}`               
+                label: lf("Register"),
+                className: lf("secondary"),
+                title: lf("Register as a translator before starting the translation."),
+                url: `https://crowdin.com/project/${pxt.appTarget.appTheme.crowdinProject}`
             }],
             agreeLbl: lf("Translate"),
             hideCancel: true,
@@ -58,7 +62,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
             if (r) {
                 pxt.tickEvent("translate.editor.incontext.translate")
                 const sep = window.location.href.indexOf("?") < 0 ? "?" : "&";
-                window.location.href = window.location.pathname + (window.location.search || "") + sep +  "translate=1" + (window.location.hash || "");        
+                window.location.href = window.location.pathname + (window.location.search || "") + sep + "translate=1" + (window.location.hash || "");
             }
         })
     }
@@ -122,13 +126,13 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                                 description={lang.englishName}
                                 onClick={this.changeLanguage}
                             />
-                            }
+                        }
                         )}
                     </div>
                     {targetTheme.crowdinProject ?
                         <div className="ui" id="langmodalfooter">
                             <sui.Link aria-label={lf("How do I add a new language?")} href="/translate" text={lf("How do I add a new language?")} target="_blank" />
-                            {translateTheEditor && <sui.Button aria-label={lf("Translate the editor")} onClick={this.translateEditor} text={lf("Translate the editor")} /> }
+                            {translateTheEditor && <sui.Button aria-label={lf("Translate the editor")} onClick={this.translateEditor} text={lf("Translate the editor")} />}
                         </div> : undefined}
                 </div>
             </sui.Modal>
