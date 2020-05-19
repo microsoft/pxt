@@ -1321,6 +1321,11 @@ export class ProjectView
                     })
                     .done()
 
+                    // load side docs
+                    const editorForFile = this.pickEditorFor(file);
+                    if (pkg?.mainPkg?.config?.documentation)
+                        this.setSideDoc(pkg.mainPkg.config.documentation, editorForFile == this.blocksEditor);
+
                 // update recentUse on the header
                 return workspace.saveAsync(h)
             }).then(() => this.loadTutorialFiltersAsync())
@@ -2027,6 +2032,7 @@ export class ProjectView
         if (!options.prj) options.prj = pxt.appTarget.blocksprj;
         let cfg = pxt.U.clone(options.prj.config);
         cfg.name = options.name || lf("Untitled");
+        cfg.documentation = options.documentation;
         let files: pxt.workspace.ScriptText = Util.clone(options.prj.files)
         if (options.filesOverride)
             Util.jsonCopyFrom(files, options.filesOverride)
