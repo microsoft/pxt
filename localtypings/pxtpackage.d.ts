@@ -40,7 +40,7 @@ declare namespace pxt {
         // url to icon -- support for built-in packages only
         icon?: string;
         // semver description for support target version
-        // documentation?: string; outdated // doc page to open when loading project
+        documentation?: string; // doc page to open when loading project, used by sidedocs
         targetVersions?: TargetVersions; // versions of the target/pxt the package was compiled against
         description?: string;
         dependencies: Map<string>;
