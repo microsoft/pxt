@@ -3734,8 +3734,8 @@ export class ProjectView
                         <div className="ui item portrait hide hidefullscreen">
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' className='teal' icon="xicon chip" text={"Dev Debug"} onClick={this.hwDebug} /> : ''}
                         </div>
-                    {useSerialEditor ?
-                            <div id="serialPreview" className="ui editorFloat portrait hide">
+                        {useSerialEditor ?
+                            <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
                                 <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.openSimSerial} parent={this}/>
                                 <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.openDeviceSerial} parent={this} />
                             </div> : undefined}

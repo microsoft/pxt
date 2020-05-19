@@ -285,8 +285,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             saveButtonClasses = "disabled";
         }
 
-        return <div id="editortools" className="ui" role="complementary" aria-label={lf("Editor toolbar")}>
-            <div id="downloadArea" className="ui column items">{headless &&
+        return <div id="editortools" className="ui" role="menubar" aria-label={lf("Editor toolbar")}>
+            <div id="downloadArea" role="menu" className="ui column items">{headless &&
                 <div className="ui item">
                     <div className="ui icon large buttons">
                         {compileBtn && <EditorToolbarButton icon={downloadIcon} className={`primary large download-button mobile tablet hide ${downloadButtonClasses}`} title={compileTooltip} onButtonClick={this.compile} view='computer' />}
@@ -301,15 +301,15 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                 </div>}
             </div>
             {(showProjectRename || showGithub) &&
-                <div id="projectNameArea" className="ui column items">
+                <div id="projectNameArea" role="menu" className="ui column items">
                     <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`}>
                         {showProjectRename && this.getSaveInput(showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}
                         {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
                     </div>
                 </div>}
-            <div id="editorToolbarArea" className="ui column items">
+            <div id="editorToolbarArea" role="menu" className="ui column items">
                 {showUndoRedo && <div className="ui icon buttons">{this.getUndoRedo(computer)}</div>}
-                {showZoomControls && <div className="ui icon buttons portrait hide">{this.getZoomControl(computer)}</div>}
+                {showZoomControls && <div className="ui icon buttons mobile hide">{this.getZoomControl(computer)}</div>}
                 {targetTheme.bigRunButton &&
                     <div className="big-play-button-wrapper">
                         <EditorToolbarButton
