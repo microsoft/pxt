@@ -151,6 +151,9 @@
     repositories(first: 100, orderBy: {field: UPDATED_AT, direction: DESC}) {
       nodes {
         name
+        owner {
+            login
+        }
         nameWithOwner
         object(expression: "master:pxt.json") {
           ... on Blob {
@@ -216,17 +219,22 @@
                     </div>`)
                     return;
                 }
-                $('#repoes')
-                    .append(`
-<a href="https://github.com/${user.login}" target="_blank" class="ui link item" title="Open user profile">
-                    <div class="ui mini image">
-      <img src="${user.avatarUrl}">
+                const userEl = $(`
+<a href="" target="_blank" class="ui link item" title="Open user profile">
+    <div class="ui mini image">
+      <img src="">
     </div>
     <div class="content">
-        <div class="header">${user.name}</div>
-        <div class="description">${user.login}</div>
+        <div class="header"></div>
+        <div class="description"></div>
     </div>
 </a>`)
+                userEl.attr("href", `https://github.com/${user.login}`)
+                userEl.find("img").attr('src', user.avatarUrl)
+                userEl.find(".header").text(user.name)
+                userEl.find(".description").text(user.login)
+                $('#repoes')
+                    .append(userEl)
                 const repoes = await fetchUserRepos(userName);
                 $("#repoes")
                     .append(`<div class="ui divider"></div>`)
@@ -237,13 +245,16 @@
                             const item = $(
                                 `<div class="ui link item">
     <div class="ui mini image">
-      <img src="${icon}">
+        <img src="">
     </div>
     <div class="content">
-        <div class="header">${repo.name.replace(/^pxt-/, '')}</div>
-        <div class="description">${target.name}</div>
+        <div class="header"></div>
+        <div class="description"></a></div>
     </div>
 </div>`);
+                            item.find("img").attr("src", icon)
+                            item.find(".header").text(repo.name)
+                            item.find(".description").text(repo.owner.login)
                             item.click(event => {
                                 trackClick("github.explorer.open")
                                 $('#repoes').children().removeClass('active');
