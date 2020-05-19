@@ -50,7 +50,8 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                 </p></div>,
             helpUrl: "/translate",
             buttons: [{
-                label: lf("Register"),
+                label: lf("Pair device"),
+                icon: "xicon globe",
                 className: lf("secondary"),
                 title: lf("Register as a translator before starting the translation."),
                 url: `https://crowdin.com/project/${pxt.appTarget.appTheme.crowdinProject}`
