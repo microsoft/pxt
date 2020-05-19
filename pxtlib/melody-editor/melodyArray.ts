@@ -156,17 +156,17 @@ namespace pxtmelody {
         return rowNum;
     }
 
-    export function getColorClass(row: number): string {
-        let colorClass = "melody-default";
+    export function getColorHex(row?: number): string {
+        let colorClass = "#DCDCDC"; // Gray (default)
         switch (row) {
-            case 0: colorClass = "melody-red"; break; // Middle C
-            case 1: colorClass = "melody-orange"; break; // Middle D
-            case 2: colorClass = "melody-yellow"; break; // Middle E
-            case 3: colorClass = "melody-green"; break; // Middle F
-            case 4: colorClass = "melody-teal"; break; // Middle G
-            case 5: colorClass = "melody-blue"; break; // Middle A
-            case 6: colorClass = "melody-purple"; break; // Middle B
-            case 7: colorClass = "melody-violet"; break; // Tenor C
+            case 0: colorClass = "#A80000"; break; // Middle C
+            case 1: colorClass = "#D83B01"; break; // Middle D
+            case 2: colorClass = "#FFB900"; break; // Middle E
+            case 3: colorClass = "#107C10"; break; // Middle F
+            case 4: colorClass = "#008272"; break; // Middle G
+            case 5: colorClass = "#0078D7"; break; // Middle A
+            case 6: colorClass = "#B4009E"; break; // Middle B
+            case 7: colorClass = "#5C2D91"; break; // Tenor C
         }
         return colorClass;
     }

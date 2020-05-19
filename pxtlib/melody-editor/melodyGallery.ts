@@ -266,15 +266,15 @@ namespace pxtmelody {
             pxt.BrowserUtils.addClass(colorBlock, "melody-color-block");
             let notes = sample.notes.split(" ");
             for (let i = 0; i < notes.length; i++) {
-                let className = pxtmelody.getColorClass(pxtmelody.noteToRow(notes[i]));
                 let colorDiv = document.createElement("div");
-                // create rounded effect on edge divs and fill in color
+                colorDiv.style.backgroundColor = pxtmelody.getColorHex(pxtmelody.noteToRow(notes[i]));
+                // create rounded effect on edge divs
                 if (i == 0) {
-                    pxt.BrowserUtils.addClass(colorDiv, "left-edge sliver " + className);
+                    pxt.BrowserUtils.addClass(colorDiv, "left-edge sliver");
                 } else if (i == notes.length - 1) {
-                    pxt.BrowserUtils.addClass(colorDiv, "right-edge sliver " + className);
+                    pxt.BrowserUtils.addClass(colorDiv, "right-edge sliver");
                 } else {
-                    pxt.BrowserUtils.addClass(colorDiv, "sliver " + className);
+                    pxt.BrowserUtils.addClass(colorDiv, "sliver");
                 }
 
                 colorBlock.appendChild(colorDiv);

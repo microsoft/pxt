@@ -326,14 +326,13 @@ namespace pxtblockly {
             let notes = this.melody.getStringRepresentation().trim().split(" ");
 
             for (let i = 0; i < notes.length; i++) {
-                let className = pxtmelody.getColorClass(pxtmelody.noteToRow(notes[i]));
                 const cb = new svg.Rect()
                     .at((FieldCustomMelody.COLOR_BLOCK_WIDTH + FieldCustomMelody.COLOR_BLOCK_SPACING) * i + FieldCustomMelody.COLOR_BLOCK_X, FieldCustomMelody.COLOR_BLOCK_Y)
                     .size(FieldCustomMelody.COLOR_BLOCK_WIDTH, FieldCustomMelody.COLOR_BLOCK_HEIGHT)
                     .stroke("#898989", 1)
                     .corners(3, 2);
 
-                pxt.BrowserUtils.addClass(cb.el, className);
+                cb.setAttribute("style", `fill: ${pxtmelody.getColorHex(pxtmelody.noteToRow(notes[i]))}`);
                 this.fieldGroup_.appendChild(cb.el);
             }
         }
@@ -417,18 +416,14 @@ namespace pxtblockly {
 
         private updateGrid() {
             for (let row = 0; row < this.numRow; row++) {
-                const rowClass = pxtmelody.getColorClass(row);
-
                 for (let col = 0; col < this.numCol; col++) {
                     const cell = this.cells[row][col];
 
                     if (this.melody.getValue(row, col)) {
-                        pxt.BrowserUtils.removeClass(cell, "melody-default");
-                        pxt.BrowserUtils.addClass(cell, rowClass);
+                        cell.setAttribute("fill", pxtmelody.getColorHex(row));
                     }
                     else {
-                        pxt.BrowserUtils.addClass(cell, "melody-default");
-                        pxt.BrowserUtils.removeClass(cell, rowClass);
+                        cell.setAttribute("fill", pxtmelody.getColorHex());
                     }
                 }
             }
@@ -534,14 +529,11 @@ namespace pxtblockly {
                 'width': FieldCustomMelody.CELL_WIDTH,
                 'height': FieldCustomMelody.CELL_WIDTH,
                 'stroke': 'white',
+                'fill': pxtmelody.getColorHex(this.melody.getValue(x, y) ? x : null),
                 'data-x': x,
                 'data-y': y,
                 'rx': FieldCustomMelody.CELL_CORNER_RADIUS
             }) as SVGRectElement;
-
-            // add appropriate class so the cell has the correct fill color
-            if (this.melody.getValue(x, y)) pxt.BrowserUtils.addClass(cellRect, pxtmelody.getColorClass(x));
-            else pxt.BrowserUtils.addClass(cellRect, "melody-default");
 
             if ((this.sourceBlock_.workspace as any).isFlyout) return;
 
