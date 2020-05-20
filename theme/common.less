@@ -1092,6 +1092,12 @@ p.ui.font.small {
         transform: translateX(0%)!important;
         left: -2rem;
     }
+
+    #downloadArea {
+        // .25rem from padding around editortoolbar in portrait mode
+        width: ~"calc(@{blocklyRowWidthTablet} - .25rem)";
+        margin-right: 0 !important;
+    }
 }
 
 /* Mobile */

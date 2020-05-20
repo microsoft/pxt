@@ -138,12 +138,11 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
             <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
                 {make && <sui.Button disabled={debugging} icon='configure' className="secondary" title={makeTooltip} onClick={this.openInstructions} />}
                 {run && !targetTheme.bigRunButton && <PlayButton parent={parent} simState={parentState.simState} debugging={parentState.debugging} />}
+                {fullscreen && <sui.Button key='fullscreenbtn' className="fullscreen-button tablet only hidefullscreen" icon="xicon fullscreen" title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} />}
                 {restart && <sui.Button disabled={!runControlsEnabled} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} />}
                 {run && debug && <sui.Button disabled={!debugBtnEnabled} key='debugbtn' className={`debug-button ${debugging ? "orange" : ""}`} icon="icon bug" title={debugTooltip} onClick={this.toggleDebug} />}
-                {/* These buttons are for mobile view only, attached to reduce extra padding */}
-                {fullscreen && <sui.Button key='fullscreenbtn' className={`fullscreen-button tablet only hidefullscreen`} icon={`xicon ${isFullscreen ? 'fullscreencollapse' : 'fullscreen'}`} title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} />}
                 {collapse && <sui.Button
-                    className={`expand-button portrait only ${this.props.collapsed ? "green" : "red"} hidefullscreen`}
+                    className={`expand-button portrait only editortools-btn hidefullscreen`}
                     icon={`${this.props.collapsed ? 'play' : 'stop'}`}
                     title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse}
                 />}
