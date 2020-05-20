@@ -3372,7 +3372,6 @@ export class ProjectView
                 }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve());
             }).catch((e) => {
                 core.errorNotification(lf("Please check your internet connection and check the tutorial is valid."));
-                core.handleNetworkError(e);
                 // go home if possible
                 this.openHome();
             })
