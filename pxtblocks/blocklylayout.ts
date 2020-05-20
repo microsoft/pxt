@@ -292,14 +292,13 @@ namespace pxt.blocks.layout {
         const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
         const isRtl = Util.isUserLanguageRtl();
         const customCssHref = (document.getElementById(`style-${isRtl ? 'rtl' : ''}blockly.css`) as HTMLLinkElement).href;
-        const semanticCssHref = Util.toArray(document.head.getElementsByTagName("link"))
-            .filter(l => Util.endsWith(l.getAttribute("href"), "semantic.css"))[0].href;
-        return Promise.all([pxt.BrowserUtils.loadAjaxAsync(customCssHref), pxt.BrowserUtils.loadAjaxAsync(semanticCssHref)])
+        const fontCssHref = (document.getElementById(`style-${isRtl ? 'rtl' : ''}iconfont.css`) as HTMLLinkElement)?.href;
+        return Promise.all([pxt.BrowserUtils.loadAjaxAsync(customCssHref), pxt.BrowserUtils.loadAjaxAsync(fontCssHref)])
             .then((customCss) => {
                 const blocklySvg = Util.toArray(document.head.querySelectorAll("style"))
                     .filter((el: HTMLStyleElement) => /\.blocklySvg/.test(el.innerText))[0] as HTMLStyleElement;
                 // CSS may contain <, > which need to be stored in CDATA section
-                const cssString = (blocklySvg ? blocklySvg.innerText : "") + '\n\n' + customCss.map(el => el + '\n\n');
+                const cssString = (blocklySvg ? blocklySvg.innerText : "") + '\n\n' + customCss.join('\n\n') + '\n\n';
                 cssLink.appendChild(xsg.createCDATASection(cssString));
                 xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
 

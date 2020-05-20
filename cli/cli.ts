@@ -1853,6 +1853,9 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
         let semCss = fs.readFileSync('built/web/semantic.css', "utf8")
         semCss = semCss.replace('src: url("fonts/icons.eot");', "")
             .replace(/src:.*url\("fonts\/icons\.woff.*/g, "src: " + url + ";")
+
+        let fontCss = `@font-face {font-family: Icons; src: ${url};}`
+        nodeutil.writeFileSync('built/web/iconfont.css', fontCss);
         return semCss;
     }).then((semCss) => {
         // Append icons.css to semantic.css (custom pxt icons)

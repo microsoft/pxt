@@ -493,7 +493,14 @@ namespace pxt.BrowserUtils {
     export function loadBlocklyAsync(): Promise<void> {
         if (!loadBlocklyPromise) {
             pxt.debug(`blockly: delay load`);
-            let p = pxt.BrowserUtils.loadStyleAsync("blockly.css", ts.pxtc.Util.isUserLanguageRtl());
+            let p = pxt.BrowserUtils.loadStyleAsync("blockly.css", ts.pxtc.Util.isUserLanguageRtl())
+                .then(() => pxt.BrowserUtils.loadStyleAsync("iconfont.css", ts.pxtc.Util.isUserLanguageRtl()))
+                .then(() => {
+                    // disable iconfont.css, as it is only used for screenshots
+                    (document.getElementById(`style-${Util.isUserLanguageRtl() ? 'rtl' : ''}iconfont.css`) as HTMLLinkElement).disabled = true;
+                    return;
+                });
+
             // js not loaded yet?
             if (typeof Blockly === "undefined")
                 p = p.then(() => pxt.BrowserUtils.loadScriptAsync("pxtblockly.js"));
