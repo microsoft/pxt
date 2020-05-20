@@ -1321,10 +1321,10 @@ export class ProjectView
                     })
                     .done()
 
-                    // load side docs
-                    const editorForFile = this.pickEditorFor(file);
-                    if (pkg?.mainPkg?.config?.documentation)
-                        this.setSideDoc(pkg.mainPkg.config.documentation, editorForFile == this.blocksEditor);
+                // load side docs
+                const editorForFile = this.pickEditorFor(file);
+                if (pkg?.mainPkg?.config?.documentation)
+                    this.setSideDoc(pkg.mainPkg.config.documentation, editorForFile == this.blocksEditor);
 
                 // update recentUse on the header
                 return workspace.saveAsync(h)
@@ -1916,7 +1916,8 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     openHome() {
-        const hasHome = !pxt.shell.isControllerMode();
+        const hasHome = !pxt.shell.isControllerMode()
+            && !pxt.appTarget.appTheme.lockedEditor;
         if (!hasHome) return;
 
         this.stopSimulator(true); // don't keep simulator around
@@ -3372,6 +3373,8 @@ export class ProjectView
             }).catch((e) => {
                 core.errorNotification(lf("Please check your internet connection and check the tutorial is valid."));
                 core.handleNetworkError(e);
+                // go home if possible
+                this.openHome();
             })
             .finally(() => core.hideLoading("tutorial"));
     }
@@ -3761,7 +3764,7 @@ export class ProjectView
                         </div>
                         {useSerialEditor ?
                             <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
-                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.openSimSerial} parent={this}/>
+                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.openSimSerial} parent={this} />
                                 <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.openDeviceSerial} parent={this} />
                             </div> : undefined}
                         {showFileList ? <filelist.FileList parent={this} /> : undefined}
