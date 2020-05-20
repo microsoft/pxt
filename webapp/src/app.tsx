@@ -3371,6 +3371,7 @@ export class ProjectView
                     temporary: temporary
                 }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve());
             }).catch((e) => {
+                pxt.reportException(e, { tutorialId });
                 core.errorNotification(lf("Please check your internet connection and check the tutorial is valid."));
                 // go home if possible
                 this.openHome();
