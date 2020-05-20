@@ -3257,11 +3257,15 @@ export class ProjectView
                     }
                     return (ghid.tag ? Promise.resolve(ghid.tag) : pxt.github.latestVersionAsync(ghid.fullName, config, true))
                         .then(tag => {
+                            if (!tag) {
+                                pxt.log(`tutorial github tag not found at ${ghid.fullName}`);
+                                return undefined;
+                            }
                             ghid.tag = tag;
                             pxt.log(`tutorial ${ghid.fullName} tag: ${tag}`);
                             return pxt.github.downloadPackageAsync(`${ghid.fullName}#${ghid.tag}`, config);
                         });
-                }).then(gh => resolveMarkdown(ghid, gh.files));
+                }).then(gh => gh && resolveMarkdown(ghid, gh.files));
         } else if (header) {
             pxt.tickEvent("tutorial.header");
             temporary = true;
