@@ -51,7 +51,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         let errorListContent;
         if (!isCollapsed) {
             if (exception) {
-                errorListContent = <div className="item">{lf(exception.exceptionMessage)}</div>
+                errorListContent = <div className="exceptionMessage">{lf(exception.exceptionMessage)}</div>
             } else {
                 errorListContent = (
                     <div className="ui selection list">
@@ -98,7 +98,8 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     onErrorsChanged(errors: pxtc.KsDiagnostic[]) {
         this.setState({
             errors,
-            isCollapsed: errors?.length == 0 || this.state.isCollapsed
+            isCollapsed: errors?.length == 0 || this.state.isCollapsed,
+            exception: null
         })
     }
 
