@@ -25,7 +25,9 @@ namespace pxt.BrowserUtils {
     }
 
     export function isIOS(): boolean {
-        return hasNavigator() && /iPad|iPhone|iPod/.test(navigator.userAgent);
+        return hasNavigator() &&
+            (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+            navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
     }
 
     //MacIntel on modern Macs
