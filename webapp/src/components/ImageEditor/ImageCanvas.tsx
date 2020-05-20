@@ -120,8 +120,11 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             if (!this.edit) this.updateCursorLocation(null);
         });
 
-        document.addEventListener("keydown", this.onKeyDown);
+        document.addEventListener("keydown", this.onKeyDown, true);
         document.addEventListener("keyup", this.onKeyUp);
+
+        document.addEventListener("copy", this.onCopy);
+        document.addEventListener("paste", this.onPaste);
 
         const imageState = this.getImageState();
         this.editState = getEditState(imageState, this.props.isTilemap, this.props.drawingMode);
@@ -162,8 +165,11 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
     componentWillUnmount() {
         this.tileCache = [];
-        document.removeEventListener("keydown", this.onKeyDown);
+        document.removeEventListener("keydown", this.onKeyDown, true);
         document.removeEventListener("keyup", this.onKeyUp);
+
+        document.removeEventListener("copy", this.onCopy);
+        document.removeEventListener("paste", this.onPaste);
     }
 
     onClick(coord: ClientCoordinates, isRightClick?: boolean): void {
@@ -235,6 +241,11 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected onKeyDown = (ev: KeyboardEvent): void => {
         this.hasInteracted = true
         if (!ev.repeat) {
+            // prevent blockly's ctrl+c / ctrl+v handler
+            if ((ev.ctrlKey || ev.metaKey) && (ev.key === 'c' || ev.key === 'v')) {
+                ev.stopPropagation();
+            }
+
             // hotkeys for switching temporarily between tools
             this.lastTool = this.props.tool;
             switch (ev.keyCode) {
@@ -259,6 +270,41 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             this.props.dispatchChangeImageTool(this.lastTool);
             this.lastTool = null;
             this.updateCursor(false, false);
+        }
+    }
+
+    protected onCopy = (ev: ClipboardEvent) => {
+        if (this.props.isTilemap) {
+            return;
+        }
+
+        if (this.props.tool === ImageEditorTool.Marquee && this.editState?.floating?.image) {
+            ev.preventDefault();
+
+            const imageData = pxt.sprite.bitmapToImageLiteral(this.editState.floating.image, 'typescript');
+            ev.clipboardData.setData('application/makecode-image', imageData);
+            ev.clipboardData.setData('text/plain', imageData);
+        }
+    }
+
+    protected onPaste = (ev: ClipboardEvent) => {
+        if (this.props.isTilemap) {
+            return;
+        }
+
+        const imageData = ev.clipboardData.getData('application/makecode-image');
+        const image = imageData && pxt.sprite.imageLiteralToBitmap(imageData);
+
+        if (image && image.width && image.height) {
+            ev.preventDefault();
+
+            // force marquee tool so the pasted selection can be moved
+            if (this.props.tool !== ImageEditorTool.Marquee) {
+                this.props.dispatchChangeImageTool(ImageEditorTool.Marquee);
+            }
+
+            this.editState.setFloatingLayer(image);
+            this.props.dispatchImageEdit(this.editState.toImageState());
         }
     }
 
@@ -354,16 +400,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             this.edit.doEdit(this.editState);
             this.edit = undefined;
 
-            dispatchImageEdit({
-                bitmap: this.editState.image.data(),
-                layerOffsetX: this.editState.layerOffsetX,
-                layerOffsetY: this.editState.layerOffsetY,
-                floating: this.editState.floating && {
-                    bitmap: this.editState.floating.image ? this.editState.floating.image.data() : undefined,
-                    overlayLayers: this.editState.floating.overlayLayers ? this.editState.floating.overlayLayers.map(el => el.data()) : undefined
-                },
-                overlayLayers: this.editState.overlayLayers ? this.editState.overlayLayers.map(el => el.data()) : undefined
-            });
+            dispatchImageEdit(this.editState.toImageState());
         }
     }
 

@@ -273,6 +273,27 @@ export class EditState {
 
         return col >= 0 && col < this.floating.image.width && row >= 0 && row < this.floating.image.height;
     }
+
+    setFloatingLayer(floatingImage: pxt.sprite.Bitmap, offset?: { layerOffsetX: number, layerOffsetY: number }) {
+        this.mergeFloatingLayer();
+
+        this.floating = { image: floatingImage };
+        this.layerOffsetX = offset?.layerOffsetX ?? 0;
+        this.layerOffsetY = offset?.layerOffsetY ?? 0;
+    }
+
+    toImageState(): pxt.sprite.ImageState {
+        return {
+            bitmap: this.image.data(),
+            layerOffsetX: this.layerOffsetX,
+            layerOffsetY: this.layerOffsetY,
+            floating: this.floating && {
+                bitmap: this.floating.image ? this.floating.image.data() : undefined,
+                overlayLayers: this.floating.overlayLayers ? this.floating.overlayLayers.map(el => el.data()) : undefined
+            },
+            overlayLayers: this.overlayLayers ? this.overlayLayers.map(el => el.data()) : undefined
+        };
+    }
 }
 
 export abstract class Edit {
