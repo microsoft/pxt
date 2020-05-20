@@ -881,6 +881,22 @@ namespace ts.pxtc.service {
                 opts.syntaxInfo.auxResult = opts.syntaxInfo.symbols.map(s => displayStringForSymbol(s, isPython, apiInfo))
             }
 
+            if (isSymbol && !opts.syntaxInfo.symbols?.length) {
+                const possibleKeyword = getWordAtPosition(v.fileContent, v.position);
+                if (possibleKeyword) {
+                    const help = getHelpForKeyword(possibleKeyword.text, isPython);
+
+                    if (help) {
+                        opts.syntaxInfo.auxResult = {
+                            documentation: help,
+                            displayString: displayStringForKeyword(possibleKeyword.text, isPython),
+                        };
+                        opts.syntaxInfo.beginPos = possibleKeyword.start;
+                        opts.syntaxInfo.endPos = possibleKeyword.end;
+                    }
+                }
+            }
+
             return opts.syntaxInfo
         },
 
@@ -2234,5 +2250,30 @@ namespace ts.pxtc.service {
             return [];
         let ns = parent.name.getText()
         return [...getCurrentNamespaces(parent.parent), ns]
+    }
+
+    /**
+     * This function only cares about getting words of the form [a-zA-z]+
+     */
+    function getWordAtPosition(text: string, position: number) {
+        let start = position;
+        let end = position;
+
+        while (start > 0 && isWordCharacter(start)) --start;
+        while (end < text.length - 1 && isWordCharacter(end)) ++end
+
+        if (start != end) {
+            return {
+                text: text.substring(start + 1, end),
+                start: start + 1,
+                end: end
+            };
+        }
+        return null;
+
+        function isWordCharacter(index: number) {
+            const charCode = text.charCodeAt(index);
+            return charCode >= 64 && charCode <= 90 || charCode >= 97 && charCode <= 122;
+        }
     }
 }
