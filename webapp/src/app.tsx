@@ -1321,10 +1321,10 @@ export class ProjectView
                     })
                     .done()
 
-                    // load side docs
-                    const editorForFile = this.pickEditorFor(file);
-                    if (pkg?.mainPkg?.config?.documentation)
-                        this.setSideDoc(pkg.mainPkg.config.documentation, editorForFile == this.blocksEditor);
+                // load side docs
+                const editorForFile = this.pickEditorFor(file);
+                if (pkg?.mainPkg?.config?.documentation)
+                    this.setSideDoc(pkg.mainPkg.config.documentation, editorForFile == this.blocksEditor);
 
                 // update recentUse on the header
                 return workspace.saveAsync(h)
@@ -1916,7 +1916,8 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     openHome() {
-        const hasHome = !pxt.shell.isControllerMode();
+        const hasHome = !pxt.shell.isControllerMode()
+            && !pxt.appTarget.appTheme.lockedEditor;
         if (!hasHome) return;
 
         this.stopSimulator(true); // don't keep simulator around
@@ -3257,11 +3258,15 @@ export class ProjectView
                     }
                     return (ghid.tag ? Promise.resolve(ghid.tag) : pxt.github.latestVersionAsync(ghid.fullName, config, true))
                         .then(tag => {
+                            if (!tag) {
+                                pxt.log(`tutorial github tag not found at ${ghid.fullName}`);
+                                return undefined;
+                            }
                             ghid.tag = tag;
                             pxt.log(`tutorial ${ghid.fullName} tag: ${tag}`);
                             return pxt.github.downloadPackageAsync(`${ghid.fullName}#${ghid.tag}`, config);
                         });
-                }).then(gh => resolveMarkdown(ghid, gh.files));
+                }).then(gh => gh && resolveMarkdown(ghid, gh.files));
         } else if (header) {
             pxt.tickEvent("tutorial.header");
             temporary = true;
@@ -3366,8 +3371,10 @@ export class ProjectView
                     temporary: temporary
                 }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve());
             }).catch((e) => {
-                core.errorNotification(lf("Please check your internet connection and check the tutorial is valid."));
-                core.handleNetworkError(e);
+                pxt.reportException(e, { tutorialId });
+                core.warningNotification(lf("Please check your internet connection and check the tutorial is valid."));
+                // go home if possible
+                this.openHome();
             })
             .finally(() => core.hideLoading("tutorial"));
     }
@@ -3757,7 +3764,7 @@ export class ProjectView
                         </div>
                         {useSerialEditor ?
                             <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
-                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.openSimSerial} parent={this}/>
+                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.openSimSerial} parent={this} />
                                 <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.openDeviceSerial} parent={this} />
                             </div> : undefined}
                         {showFileList ? <filelist.FileList parent={this} /> : undefined}
