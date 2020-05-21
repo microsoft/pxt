@@ -76,7 +76,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
     }
 
     private updatePkg(p: pkg.EditorPackage) {
-        pkg.mainEditorPkg().updateDepAsync(p.getPkgId(), true)
+        pkg.mainEditorPkg().updateDepAsync(p.getPkgId())
             .then(() => this.props.parent.reloadHeaderAsync())
             .done()
     }

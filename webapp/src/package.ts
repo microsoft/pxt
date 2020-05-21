@@ -293,13 +293,13 @@ export class EditorPackage {
         return null;
     }
 
-    updateDepAsync(pkgid: string, noCache?: boolean): Promise<void> {
+    updateDepAsync(pkgid: string): Promise<void> {
         let p = this.ksPkg.resolveDep(pkgid);
         if (!p || p.verProtocol() != "github") return Promise.resolve();
         let parsed = pxt.github.parseRepoId(p.verArgument())
         if (!parsed) return Promise.resolve();
         return pxt.targetConfigAsync()
-            .then(config => pxt.github.latestVersionAsync(parsed.fullName, config.packages, true, noCache))
+            .then(config => pxt.github.latestVersionAsync(parsed.fullName, config.packages))
             .then(tag => { parsed.tag = tag })
             .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag))
             .catch(core.handleNetworkError)
