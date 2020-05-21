@@ -492,16 +492,16 @@ namespace pxt.github {
         return repoInfo.fullName + "#" + branchName
     }
 
-    export function listRefsAsync(repopath: string, namespace = "tags", useProxy?: boolean): Promise<string[]> {
-        return listRefsExtAsync(repopath, namespace, useProxy)
+    export function listRefsAsync(repopath: string, namespace = "tags", useProxy?: boolean, noCache?: boolean): Promise<string[]> {
+        return listRefsExtAsync(repopath, namespace, useProxy, noCache)
             .then(res => Object.keys(res.refs))
     }
 
-    export function listRefsExtAsync(repopath: string, namespace = "tags", useProxy?: boolean): Promise<RefsResult> {
+    export function listRefsExtAsync(repopath: string, namespace = "tags", useProxy?: boolean, noCache?: boolean): Promise<RefsResult> {
         const proxy = shouldUseProxy(useProxy);
         let head: string = null
         const fetch = !proxy ?
-            ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/" + namespace + "/?per_page=100") :
+            ghGetJsonAsync(`https://api.github.com/repos/${repopath}/git/refs/${namespace}/?per_page=100${noCache ? "&nocache=1" : ""}`) :
             // no CDN caching here
             U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${repopath}/refs`)
                 .then(r => {
@@ -1015,7 +1015,7 @@ namespace pxt.github {
         return id
     }
 
-    export function latestVersionAsync(path: string, config: PackagesConfig, useProxy?: boolean): Promise<string> {
+    export function latestVersionAsync(path: string, config: PackagesConfig, useProxy?: boolean, noCache?: boolean): Promise<string> {
         let parsed = parseRepoId(path)
 
         if (!parsed) return Promise.resolve<string>(null);
@@ -1023,7 +1023,7 @@ namespace pxt.github {
         return repoAsync(parsed.fullName, config)
             .then(scr => {
                 if (!scr) return undefined;
-                return listRefsExtAsync(scr.fullName, "tags", useProxy)
+                return listRefsExtAsync(scr.fullName, "tags", useProxy, noCache)
                     .then(refsRes => {
                         let tags = Object.keys(refsRes.refs)
                         // only look for semver tags
