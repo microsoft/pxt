@@ -125,8 +125,14 @@
 
     /* ErrorList */
     .errorList {
-        background: @HCbackground !important;
+        background-color: @HCbackground !important;
         color: @HCtextColor !important;
+
+        .errorListInner > .ui.selection.list > .item {
+            background-color: @HCbackground !important;
+            color: @HCtextColor !important;
+            border: 0.01em solid @HCtextColor !important;
+        }
     }
 
     /* Blockly flyout */
