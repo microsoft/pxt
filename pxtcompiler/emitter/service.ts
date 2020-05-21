@@ -31,7 +31,8 @@ namespace ts.pxtc {
         "!!": { n: "bool", t: ts.SyntaxKind.BooleanKeyword },
         "Array.indexOf": { n: "Array.index", t: ts.SyntaxKind.Unknown },
         "Array.push": { n: "Array.append", t: ts.SyntaxKind.Unknown },
-        "parseInt": { n: "int", t: ts.SyntaxKind.NumberKeyword, snippet: 'int("0")' }
+        "parseInt": { n: "int", t: ts.SyntaxKind.NumberKeyword, snippet: 'int("0")' },
+        "_py.range": { n: "range", t: ts.SyntaxKind.Unknown, snippet: 'range("0")' }
     }
 
     export function snakify(s: string) {
