@@ -76,7 +76,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         message = message || pr.title || lf("Merge pull request");
         core.showLoading("github.merge", lf("merging pull request..."))
         return pxt.github.mergeAsync(githubId.fullName, pr.base, githubId.tag, `${message} (#${pr.number})`)
-            .then(() => this.switchToBranchAsync(pr.base))
+            .then(() => this.switchProjectToBranchAsync(pr.base))
             .then(() => this.pullAsync())
             .then(() => {
                 core.hideLoading("github.merge");
@@ -131,7 +131,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         await f.setContentAsync(JSON.stringify(gs, null, 4))
     }
 
-    async switchToBranchAsync(newBranch: string) {
+    private async switchProjectToBranchAsync(newBranch: string) {
         const { header } = this.props.parent.state;
         const gs = this.getGitJson();
         const parsed = this.parsedRepoId()
@@ -165,7 +165,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         try {
             const gs = this.getGitJson()
             await pxt.github.createNewBranchAsync(gid.fullName, branchName, gs.commit.sha)
-            await this.switchToBranchAsync(branchName)
+            await this.switchProjectToBranchAsync(branchName)
             this.forceUpdate();
         } catch (e) {
             this.handleGithubError(e);
@@ -174,7 +174,20 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
     }
 
-    public async switchBranchAsync() {
+    public async switchBranchAsync(branch: string) {
+        await this.setStateAsync({ needsCommitMessage: false });
+        const prevBranch = this.parsedRepoId().tag
+        try {
+            await this.switchProjectToBranchAsync(branch)
+            await this.pullAsync()
+        } finally {
+            if (this.state.needsCommitMessage) {
+                await this.switchProjectToBranchAsync(prevBranch)
+            }
+        }        
+    }
+
+    public async showSwitchBranchDialogAsync() {
         const gid = this.parsedRepoId()
         const branches = await pxt.github.listRefsExtAsync(gid.fullName, "heads")
         const branchList = Object.keys(branches.refs).map(r => ({
@@ -182,16 +195,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             description: branches.refs[r],
             onClick: async () => {
                 core.hideDialog()
-                await this.setStateAsync({ needsCommitMessage: false });
-                const prevBranch = this.parsedRepoId().tag
-                try {
-                    await this.switchToBranchAsync(r)
-                    await this.pullAsync()
-                } finally {
-                    if (this.state.needsCommitMessage) {
-                        await this.switchToBranchAsync(prevBranch)
-                    }
-                }
+                await this.switchBranchAsync(r);
             }
         }))
 
@@ -233,7 +237,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     private handleBranchClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.branch");
         e.stopPropagation();
-        this.switchBranchAsync().done();
+        this.showSwitchBranchDialogAsync().done();
     }
 
     private goBack() {
@@ -1030,13 +1034,13 @@ ${content}
 class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
     constructor(props: GitHubViewProps) {
         super(props)
-        this.handleSwitchBranch = this.handleSwitchBranch.bind(this);
+        this.handleSwitchMasterBranch = this.handleSwitchMasterBranch.bind(this);
     }
 
-    private handleSwitchBranch(e: React.MouseEvent<HTMLElement>) {
+    private handleSwitchMasterBranch(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.branch.switch");
         e.stopPropagation();
-        this.props.parent.switchBranchAsync().done();
+        this.props.parent.switchBranchAsync("master");
     }
 
     renderCore() {
@@ -1051,7 +1055,7 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
                 <div className="content">
                     {closed && lf("This Pull Request is closed!")}
                     {merged && lf("This pull request has been merged.")}
-                    <span role="button" className="ui link" onClick={this.handleSwitchBranch} onKeyDown={sui.fireClickOnEnter}>{lf("Switch branch")}</span>
+                    <span role="button" className="ui link" onClick={this.handleSwitchMasterBranch} onKeyDown={sui.fireClickOnEnter}>{lf("Switch to master branch")}</span>
                 </div>
             </div>;
 
@@ -1060,7 +1064,7 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
                 <i className="exclamation circle icon"></i>
                 <div className="content">
                     {lf("This branch was not found, please pull again or switch to a different branch.")}
-                    <span role="button" className="ui link" onClick={this.handleSwitchBranch} onKeyDown={sui.fireClickOnEnter}>{lf("Switch branch")}</span>
+                    <span role="button" className="ui link" onClick={this.handleSwitchMasterBranch} onKeyDown={sui.fireClickOnEnter}>{lf("Switch to master branch")}</span>
                 </div>
             </div>
 
@@ -1177,7 +1181,7 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
         const mergeable = pullRequest.mergeable === "MERGEABLE";
         const open = pullRequest.state === "OPEN";
         const mergeableUnknown = open && pullRequest.mergeable === "UNKNOWN";
-        const icon = merging ? "sync" : mergeable ? "check" : mergeableUnknown ? "question" : "exclamation triangle";
+        const icon = merging ? "sync" : mergeable ? "check" : mergeableUnknown ? "circle outline" : "exclamation triangle";
         const color = merging ? "orange" : mergeable ? "green" : mergeableUnknown ? "orange" : "grey";
         const msg = merging ? lf("A merge is in progress. Please resolve conflicts or cancel it")
             : mergeable ? lf("This branch has no conflicts with the base branch")
@@ -1209,10 +1213,8 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
                     {sui.helpIconLink("/github/pull-requests", lf("Learn about merging pull requests in GitHub."))}
                 </span>
             </div>}
-            {(mergeable || mergeableUnknown) && <div className="ui field">
+            {mergeable && <div className="ui field">
                 <sui.Button className={color} text={lf("Squash and merge")}
-                    loading={mergeableUnknown}
-                    disabled={!mergeable}
                     onClick={this.handleMergeClick} onKeyDown={sui.fireClickOnEnter} />
                 <span className="inline-help">{lf("Merge your changes as a single commit into the base branch.")}
                     {sui.helpIconLink("/github/pull-requests", lf("Learn about merging pull requests in GitHub."))}
