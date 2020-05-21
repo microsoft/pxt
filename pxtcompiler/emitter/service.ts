@@ -877,25 +877,35 @@ namespace ts.pxtc.service {
                 }
             }
 
-            if (isSymbol && opts.syntaxInfo.symbols) {
-                const apiInfo = getLastApiInfo(opts).apis;
-                opts.syntaxInfo.auxResult = opts.syntaxInfo.symbols.map(s => displayStringForSymbol(s, isPython, apiInfo))
-            }
-
             if (isSymbol && !opts.syntaxInfo.symbols?.length) {
                 const possibleKeyword = getWordAtPosition(v.fileContent, v.position);
                 if (possibleKeyword) {
-                    const help = getHelpForKeyword(possibleKeyword.text, isPython);
+                    if (isPython && possibleKeyword.text === "range") {
+                        const apiInfo = getLastApiInfo(opts).apis;
+                        if (apiInfo.byQName["_py.range"]) {
+                            opts.syntaxInfo.symbols = [apiInfo.byQName["_py.range"]];
+                            opts.syntaxInfo.beginPos = possibleKeyword.start;
+                            opts.syntaxInfo.endPos = possibleKeyword.end;
+                        }
+                    }
+                    else {
+                        const help = getHelpForKeyword(possibleKeyword.text, isPython);
 
-                    if (help) {
-                        opts.syntaxInfo.auxResult = {
-                            documentation: help,
-                            displayString: displayStringForKeyword(possibleKeyword.text, isPython),
-                        };
-                        opts.syntaxInfo.beginPos = possibleKeyword.start;
-                        opts.syntaxInfo.endPos = possibleKeyword.end;
+                        if (help) {
+                            opts.syntaxInfo.auxResult = {
+                                documentation: help,
+                                displayString: displayStringForKeyword(possibleKeyword.text, isPython),
+                            };
+                            opts.syntaxInfo.beginPos = possibleKeyword.start;
+                            opts.syntaxInfo.endPos = possibleKeyword.end;
+                        }
                     }
                 }
+            }
+
+            if (isSymbol && opts.syntaxInfo.symbols?.length) {
+                const apiInfo = getLastApiInfo(opts).apis;
+                opts.syntaxInfo.auxResult = opts.syntaxInfo.symbols.map(s => displayStringForSymbol(s, isPython, apiInfo))
             }
 
             return opts.syntaxInfo
