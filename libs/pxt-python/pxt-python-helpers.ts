@@ -260,4 +260,37 @@ namespace _py {
         }
         return index;
     }
+
+    /**
+     * Returns a sequence of numbers up to but not including the limit
+     * @param first The value to end the sequence before. This value will not show up in the result.
+     *      If more than one argument is passed, this argument is instead used for the first value in the range
+     * @param stop  The value to end the sequence before. This value will not show up in the result
+     * @param step  The value to increase or decrease by for each step in the range. Must be a nonzero integer
+     */
+    export function range(first: number, stop?: number, step?: number) {
+        if (step === undefined) step = 1
+        // step must be a nonzero integer (can be negative)
+        if (step === 0 || (step | 0) !== step) {
+            throw VALUE_ERROR;
+        }
+
+        // If only one argument is given, then start is actually stop
+        if (stop === undefined) {
+            stop = first;
+            first = 0;
+        }
+
+        const res: number[] = [];
+        if (step > 0 && first >= stop || step < 0 && first <= stop) return res;
+
+        let index = first;
+
+        while (step < 0 ? index > stop : index < stop) {
+            res.push(index);
+            index += step
+        }
+
+        return res;
+    }
 }
