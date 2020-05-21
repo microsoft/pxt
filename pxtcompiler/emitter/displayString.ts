@@ -28,7 +28,7 @@ namespace ts.pxtc.service {
     }
 
     export function displayStringForKeyword(keyword: string, python: boolean) {
-        return `\`\`\`${python ? "py" : "ts"}\nkeyword ${keyword}\n\`\`\``
+        return `\`\`\`${python ? "py" : "ts"}\n(keyword) ${keyword}\n\`\`\``
     }
 
     function displayStringForFunction(sym: SymbolInfo, python: boolean, apiInfo: ApisInfo) {

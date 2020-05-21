@@ -2273,7 +2273,7 @@ namespace ts.pxtc.service {
 
         function isWordCharacter(index: number) {
             const charCode = text.charCodeAt(index);
-            return charCode >= 64 && charCode <= 90 || charCode >= 97 && charCode <= 122;
+            return charCode >= 65 && charCode <= 90 || charCode >= 97 && charCode <= 122;
         }
     }
 }
