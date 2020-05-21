@@ -1093,6 +1093,12 @@ p.ui.font.small {
         left: -2rem;
     }
 
+    #filelist .simtoolbar > .buttons {
+        > .restart-button {
+            display: block !important;
+        }
+    }
+
     #downloadArea {
         // .25rem from padding around editortoolbar in portrait mode
         width: ~"calc(@{blocklyRowWidthTablet} - .25rem)";
@@ -1276,11 +1282,6 @@ p.ui.font.small {
         #filelist .simtoolbar > div:not(:first-child),
         #filelist .simtoolbar > .buttons > .button {
             display: none;
-        }
-        #filelist .simtoolbar > .buttons {
-            > .restart-button {
-                display: block;
-            }
         }
         #filelist .simtoolbar > div:first-child {
             flex-direction: column;
