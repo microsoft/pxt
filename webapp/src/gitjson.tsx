@@ -184,7 +184,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             if (this.state.needsCommitMessage) {
                 await this.switchProjectToBranchAsync(prevBranch)
             }
-        }        
+        }
     }
 
     public async showSwitchBranchDialogAsync() {
