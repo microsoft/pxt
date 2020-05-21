@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>MakeCode Arcade Stencils</title>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="stylesheet" href="/doccdn/semantic.css" type="text/css">
+  <script type="text/javascript"
+    src="https://pxt.azureedge.net/blob/4d9b3a258759c53e7bc66b6fc554c51e2434437c/doccdn/jquery.js"></script>
+  <script type="text/javascript"
+    src="https://pxt.azureedge.net/blob/fc2f56f46189a2e8be3743a1a5abed3b676f9318/doccdn/semantic.js"></script>
+    <style>
+  svg {
+    background-color: #fafaff;
+    max-width: 16rem;
+    max-height: 16rem;
+    margin: 1rem 0rem 1rem 1rem;
+  }
+  
+  textarea {
+    font-family: monospace;
+  }
+  
+  #preview {
+    background: rgba(0,0,0,.05);
+    margin-top: 1rem;
+  }
+    </style>
+
+  <!-- import the webpage's javascript file -->
+  <script src="/static/tools/arcade-stencils/script.js" defer></script>
+</head>
+
+<body id='root' class='root'>
+  <div class="ui container">
+    <h1>MakeCode Arcade Stencils</h1>
+    <div class="ui segment">
+      <p>
+        This tool takes a <a href="https://arcade.makecode.com">MakeCode Arcade</a> image and turns into
+        a set of pixelated stencils. Cut out the senticals and use them to paint your image!
+      </p>
+      <p>
+        Copy the source of a MakeCode Arcade image into the textbox below
+        and click <strong>generate</strong> to turn it into DXF stencils.
+      </p>
+      <p>
+        Use a laser cutter, Cricut or hobby stencil to cut out the stencils.
+      </p>
+      <p>
+        Paint each layer with color markers or spray paints,
+        you can also paint t-shirts.
+      </p>
+    </div>
+
+    <form class="ui form">
+      <div class="ui field">
+        <label>Copy MakeCode Arcade Image below</label>
+        <textarea id="img" class="ui fluid" rows="20">
+        </textarea>
+      </div>
+      <div class="ui fields">
+        <div class="ui field">
+          <label>Cell width (inches)</label>
+          <input id="cell" type="number" class="ui fluid" />
+        </div>
+        <div class="ui field">
+          <label>Filename prefix</label>
+          <input id="prefix" type="text" class="ui fluid" />
+        </div>
+      </div>
+    </form>
+
+    <div class="ui segment">
+      <button id="generate" class="ui button positive">
+        generate
+      </button>
+      <label id="output" class="ui small"></label>
+      <div id="preview"></div>
+      <div id="loader" class="ui inverted dimmer">
+        <div class="ui loader"></div>
+      </div>
+    </div>
+
+    <div class="ui segment">
+      <div id="model" class="ui cards">
+        Nothing yet... click generate.
+      </div>
+    </div>
+
+    <div class="ui footer">
+      Made with ❤️ with <a href="https://maker.js.org/">Maker.JS</a>.
+    </div>
+
+    <!-- @include tracking.html -->
+    <!-- @include thin-footer.html -->
+</body>
+
+</html>
