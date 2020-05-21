@@ -3,26 +3,26 @@
 The following JavaScript statements are supported for the @boardname@:
 
 ## Variable declarations
-* [`const` statement](http://devdocs.io/javascript/statements/const)
-* [`let` statement](http://devdocs.io/javascript/statements/let)
+* [`const` statement](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/const)
+* [`let` statement](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let)
 
 ## Block-structured statements
 
-* [`{ }` block statement](http://devdocs.io/javascript/statements/block)
-* [`if-else` conditional statement](http://devdocs.io/javascript/statements/if...else)
-* [`while` loop](http://devdocs.io/javascript/statements/while)
-* [`do-while` loop](http://devdocs.io/javascript/statements/do...while)
-* [`for(;;)` loop](http://devdocs.io/javascript/statements/for)
-* [`switch` statement (on numbers only)](http://devdocs.io/javascript/statements/switch)
+* [`{ }` block statement](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/block)
+* [`if-else` conditional statement](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/if...else)
+* [`while` loop](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/while)
+* [`do-while` loop](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/do...while)
+* [`for(;;)` loop](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for)
+* [`switch` statement (on numbers only)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/switch)
 
 ## Control-flow commands
 
-* [`break` statement](http://devdocs.io/javascript/statements/break)
-* [`continue` statement](http://devdocs.io/javascript/statements/continue)
-* [`return` statement](http://devdocs.io/javascript/statements/return)
-* [`debugger` statement for breakpoints](http://devdocs.io/javascript/statements/debugger)
+* [`break` statement](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/break)
+* [`continue` statement](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/continue)
+* [`return` statement](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/return)
+* [`debugger` statement for breakpoints](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/debugger)
 
 ## Labeling statements
 
-* [`label:` statement](http://devdocs.io/javascript/statements/label)
-* [`default` statement](http://devdocs.io/javascript/statements/default)
+* [`label:` statement](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/label)
+* [`default` statement](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/default)
