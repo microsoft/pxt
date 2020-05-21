@@ -880,6 +880,12 @@ namespace ts.pxtc.service {
             if (isSymbol && !opts.syntaxInfo.symbols?.length) {
                 const possibleKeyword = getWordAtPosition(v.fileContent, v.position);
                 if (possibleKeyword) {
+                    // In python if range() is used in a for-loop, we don't convert
+                    // it to a function call when going to TS (we just convert it to
+                    // a regular for-loop). Because our symbol detection is based off
+                    // of the TS, we won't get a symbol result for range at this position
+                    // in the file. This special case makes sure we return the same help
+                    // as a standalone call to range().
                     if (isPython && possibleKeyword.text === "range") {
                         const apiInfo = getLastApiInfo(opts).apis;
                         if (apiInfo.byQName["_py.range"]) {
