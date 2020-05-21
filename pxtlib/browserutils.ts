@@ -1083,4 +1083,9 @@ namespace pxt.BrowserUtils {
             document.cookie = `${pxt.Util.pxtLangCookieId}=${langId}; expires=${expiration.toUTCString()}; path=/`;
         }
     }
+
+    export function cacheBustingUrl(url: string): string {
+        if (!url) return url;
+        return `${url}${url.indexOf('?') > 0 ? "&" : "?"}rnd=${Math.random()}`        
+    }
 }
