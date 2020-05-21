@@ -1087,6 +1087,6 @@ namespace pxt.BrowserUtils {
     export function cacheBustingUrl(url: string): string {
         if (!url) return url;
         if (/[?&]rnd=/.test(url)) return url; // already busted
-        return `${url}${url.indexOf('?') > 0 ? "&" : "?"}rnd=${Math.random()}`        
+        return `${url}${url.indexOf('?') > 0 ? "&" : "?"}rnd=${Math.random()}`
     }
 }
