@@ -15,7 +15,7 @@ function update() {
 }
 
 function initWorker() {
-  worker = new Worker('/static/tools/arcade-stencils/worker.js');
+  worker = new Worker('https://makecode.com/static/tools/arcade-stencils/worker.js');
   worker.addEventListener('message', function(e) {
     const d = e.data;
     console.log('Worker said: ', d);
