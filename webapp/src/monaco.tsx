@@ -231,16 +231,25 @@ class HoverProvider implements monaco.languages.HoverProvider {
         return compiler.syntaxInfoAsync("symbol", fileName, offset, source)
             .then(r => {
                 let sym = r.symbols ? r.symbols[0] : null
-                if (!sym) return null;
-                const documentation = pxt.Util.rlf(sym.attributes.jsDoc);
 
-                let contents: string[] = [r.auxResult[0], documentation];
+                let contents: string[];
+                if (sym) {
+                    const documentation = pxt.Util.rlf(sym.attributes.jsDoc);
 
-                const res: monaco.languages.Hover = {
-                    contents: contents.map(toMarkdownString),
-                    range: monaco.Range.fromPositions(model.getPositionAt(r.beginPos), model.getPositionAt(r.endPos))
+                    contents = [r.auxResult[0], documentation];
                 }
-                return res
+                else if (r.auxResult) {
+                    contents = [r.auxResult.displayString, r.auxResult.documentation];
+                }
+
+                if (contents) {
+                    const res: monaco.languages.Hover = {
+                        contents: contents.map(toMarkdownString),
+                        range: monaco.Range.fromPositions(model.getPositionAt(r.beginPos), model.getPositionAt(r.endPos))
+                    }
+                    return res;
+                }
+                return null;
             });
     }
 }
