@@ -122,10 +122,10 @@ namespace pxt.github {
                 if (opts.url == GRAPHQL_URL)
                     opts.headers['Authorization'] = `bearer ${token}`
                 else {
+                    // defeat browser cache when signed in
+                    opts.url = pxt.BrowserUtils.cacheBustingUrl(opts.url);
                     opts.headers['Authorization'] = `token ${token}`
                 }
-                // defeat browser cache when signed in
-                opts.url = pxt.BrowserUtils.cacheBustingUrl(opts.url);
             }
             opts.allowHttpErrors = opts.allowHttpErrors ?? false;
             return U.requestAsync(opts)
