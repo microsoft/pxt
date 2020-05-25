@@ -49,7 +49,7 @@ namespace ts.pxtc {
     }
 
     function isTsDiagnostic(a: KsDiagnostic | Diagnostic): a is Diagnostic {
-        return (DiagnosticCategory as any).file != undefined;
+        return (a as any).file !== undefined;
     }
 
     export function plainTscCompileDir(dir: string): Program {
