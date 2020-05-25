@@ -16,16 +16,18 @@
             background: rgb(99, 93, 198);
             background: linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1) 100%);
         }
+
         footer {
             font-size: 70%;
             color: white;
-            position:absolute;
+            position: absolute;
             z-index: -1;
             bottom: 0.5vh;
             left: 1vw;
             opacity: 65%;
         }
-        footer > a {
+
+        footer>a {
             color: white;
             text-decoration: none;
         }
@@ -263,34 +265,32 @@
             }
 
             function loadSocial() {
-                if (config.twitter) {
-                    const a = document.createElement("span");
-                    a.className = "social"
-                    a.append(document.createTextNode(`@${config.twitter}`))
-                    social.append(a)
-                }
-                if (config.youTube) {
-                    const a = document.createElement("span");
-                    a.className = "social"
-                    a.append(document.createTextNode(`youtube.com/${config.twitter}`))
-                    social.append(a)
-                }
-                if (config.mixer) {
-                    const a = document.createElement("span");
-                    a.className = "social"
-                    a.innerText = `mixer.com/${config.twitter}`
-                    social.append(a)
-                }
+                if (config.twitter)
+                    addSocial(`@${config.twitter}`)
+                if (config.youTube)
+                    addSocial(`youtube.com/${config.youTube}`);
+                if (config.mixer)
+                    addSocial(`mixer.com/${config.mixer}`);
+                else if (config.twitch)
+                    addSocial(`twitch.tv/${config.twitch}`);
 
                 // click handler
-                if (config.mixer) {
+                if (config.mixer || config.twitch)
                     social.addEventListener("pointerdown", toggleChat, false)
+
+                function addSocial(text) {
+                    const a = document.createElement("span");
+                    a.className = "social"
+                    a.innerText = text
+                    social.append(a)
                 }
             }
 
             function loadChat() {
                 if (config.mixer)
                     chat.src = `https://mixer.com/embed/chat/${config.mixer}?composer=false`;
+                else if (config.twitch)
+                    chat.src = `https://www.twitch.tv/embed/${config.twitch}/chat?parent=makecode.com`;
                 else // remove from dom
                     chat.remove();
             }
