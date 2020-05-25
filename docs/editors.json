@@ -1,0 +1,32 @@
+{
+    "ev3": {
+        "name": "LEGO® MINDSTORMS® Education EV3",
+        "url": "https://makecode.mindstorms.com/beta"
+    },
+    "arcade": {
+        "name": "Arcade",
+        "url": "https://arcade.makecode.com/beta"
+    },
+    "microbit": {
+        "name": "micro:bit",
+        "url": "https://makecode.microbit.org/beta"
+    },
+    "adafruit": {
+        "name": "Adafruit Circuit Playground Express",
+        "url": "https://makecode.adafruit.com/beta",
+        "icon": "https://pxt.azureedge.net/blob/1215b9ef46d3e04bc9923a1a333d92db92eb5419/static/logo.square.black.svg"
+    },
+    "minecraft": {
+        "name": "Minecraft",
+        "icon": "https://minecraft.makecode.com/favicon.ico",
+        "url": "https://minecraft.makecode.com/beta?github=1"
+    },
+    "maker": {
+        "name": "Maker",
+        "url": "https://maker.makecode.com"
+    },
+    "calliopemini": {
+        "name": "Calliope Mini",
+        "url": "https://makecode.calliope.cc/beta"
+    }
+}

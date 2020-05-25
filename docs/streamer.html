@@ -4,33 +4,86 @@
 <head>
     <meta charset="UTF-8">
     <title>MakeCode Streamer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap" rel="stylesheet">
     <style>
-        /* https://cssgradient.io/ */
+        /* 
+            Style for the background. 
+            
+            Generate your custom css gradients at https://cssgradient.io/ 
+        */
         body {
+            font-family: 'Roboto', sans-serif;
             background: rgb(99, 93, 198);
             background: linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1) 100%);
         }
 
-        /* https://alligator.io/css/gradient-borders-pure-css/ */
+        /* 
+            Style for the boxes.
+
+            https://alligator.io/css/gradient-borders-pure-css/ 
+        */
         .box {
             border: 0.5rem solid;
             border-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
 
-            transition: left 0.5s, right 0.5s, bottom 0.5s, top 0.5s, width 0.5s, height 0.5s;
+            transition: left 0.5s, right 0.5s, bottom 0.5s, top 0.5s, width 0.5s, height 0.5s, opacity 0.5s;;
         }
 
+        /*
+            MakeCode editor box
+        */
         #editor {
             position: absolute;
-            width: 94%;
-            height: 90%;
+            width: 94vw;
+            height: 88vh;
             top: 1vh;
         }
 
+        /*
+            Face camera            
+        */
         #facecam {
             position: absolute;
-            width: 40%;
-            bottom: 1vh;
+            width: 40vw;
+            bottom: 1.5vh;
             right: 1vw;
+        }
+
+        /*
+            Chat window
+        */
+        #chat {
+            position: absolute;
+            width: 30vw;
+            height: 60vh;
+            top: 1vh;
+            right: 1vw;
+            opacity: 0;
+        }
+
+        #social {
+            position: absolute;
+            width: 60vw;
+            height: 5vh;
+            left: 1vw;
+            bottom: 1.5vh;
+            display: flex;
+        }
+
+        span.social {
+            font-size: 2.5vh;
+            color: white;
+            flex-grow: 1;
+            margin: 1vh 2vw 1vh 2vw;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        /** 
+        * chat visibility
+        */
+        body.chat #chat {
+            opacity: 90%;
         }
 
         /* startingsoon scene */
@@ -39,46 +92,149 @@
             display: none;
         }
 
-        /* right scene */
+        /* rightscene: browser with facecam on right */
         body.rightscene #editor {
             left: 1vw;
         }
 
         body.rightscene #facecam {
-            right: 1vw;            
-            width: 30%;
+            right: 1vw;
+            width: 30vw;
         }
 
-        /* left scene */
+        body.rightscene #chat {
+            right: 1vw;
+            width: 30vw;
+            height: 63vh;
+        }
+
+        body.rightscene.chat #editor {
+            width: 65vw;
+            top: 1vh;
+            height: 88vh;
+        }
+
+        /* leftscene: browser with facecam on left left */
         body.leftscene #editor {
-            left: 2vw;
+            left: 4vw;
+            height: 89vh;
+        }
+        body.leftscene #facecam {
+            right: 58vw;
+            width: 40vw;
+        }
+        body.leftscene #social {
+            width: 55vw;
+            height: 5vh;
+            left: 43vw;
+            bottom: 1.5vh;
+        }
+        /** leftscene + chat **/
+        body.leftscene.chat #editor {
+            left: 33vw;
+            width: 65vw;
+        }
+        body.leftscene.chat #facecam {
+            right: 68vw;
+            width: 30vw;
+        }
+        body.leftscene.chat #chat {
+            right: 68vw;
+            height: 63vh;
         }
 
-        body.leftscene #facecam {
-            right: calc(60% - 2vw);
-            width: 40%;
+        /* chatscene: facecam and stream chat */
+        body.chatscene #editor {
+            left: 4vw;
+        }
+
+        body.chatscene #facecam {
+            right: 58vw;
+            width: 40vw;
         }
     </style>
 </head>
 
-<body id="body" class="rightscene">
+<body class="rightscene chat">
     <iframe class="box" id="editor"></iframe>
+    <iframe class="box" id="chat"></iframe>
     <video class="box" autoplay="true" id="facecam"></video>
-
+    <div class="box" id="social"></div>
     <script>
         (async function () {
-            window.resizeTo(1920, 1080)
             const body = document.body;
             const editor = document.getElementById("editor");
             const facecam = document.getElementById("facecam");
+            const chat = document.getElementById("chat");
+            const social = document.getElementById("social");
+            const scenes = ["leftscene", "rightscene"];
 
-            facecam.addEventListener("click", e => { body.className = (body.className == "leftscene" ? "rightscene" : "leftscene") }, false)
+            const editorConfigs = await fetchJSON("/editors.json");
+            const editorConfig = editorConfigs["microbit"]
+            const config = {
+                twitter: "MsMakeCode",
+                youTube: "MicrosoftMakeCode",
+                mixer: "MakeCode"
+            }
+            const state = {
+                sceneIndex: 1,
+                chat: true
+            }
 
+            loadEditor()
+            loadChat()
+            loadSocial()
             await loadFaceCam()
-            await loadEditor()
+            render()
 
-            async function loadEditor() {
-                editor.src = "https://makecode.microbit.org/beta?editorLayout=ide&nosandbox=1"
+            async function fetchJSON(url) {
+                const resp = await fetch(url)
+                const json = await resp.json();
+                return json;
+            }
+
+            function render() {
+                body.className = `${scenes[state.sceneIndex]} ${state.chat ? "chat" : ""}`
+            }
+
+            function loadEditor() {
+                editor.src = `${editorConfig.url}?editorLayout=ide&nosandbox=1`
+            }
+
+            function loadSocial() {
+                if (config.twitter) {
+                    const a = document.createElement("span");
+                    a.className = "social"
+                    a.append(document.createTextNode(`@${config.twitter}`))
+                    social.append(a)
+                }
+                if (config.youTube) {
+                    const a = document.createElement("span");
+                    a.className = "social"
+                    a.append(document.createTextNode(`youtube.com/${config.twitter}`))
+                    social.append(a)
+                }
+                if (config.mixer) {
+                    const a = document.createElement("span");
+                    a.className = "social"
+                    a.innerText = `mixer.com/${config.twitter}`
+                    social.append(a)
+                }
+
+                // click handler
+                if (config.mixer)
+                    social.addEventListener("click", e => {
+                        e.stopPropagation();
+                        state.chat = !state.chat;
+                        render();
+                    })
+            }
+
+            function loadChat() {
+                if (config.mixer)
+                    chat.src = `https://mixer.com/embed/chat/${config.mixer}?composer=false`;
+                else // remove from dom
+                    chat.remove();
             }
 
             async function loadFaceCam() {
@@ -92,6 +248,12 @@
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 facecam.srcObject = stream;
                 facecam.onloadedmetadata = (e) => facecam.play();
+
+                facecam.addEventListener("click", e => {
+                    e.stopPropagation();
+                    state.sceneIndex = (state.sceneIndex + 1) % scenes.length
+                    render();
+                }, false)
             }
         })()
     </script>
