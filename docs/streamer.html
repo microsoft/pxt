@@ -48,6 +48,11 @@
             display: none;
         }
 
+        .rotate {
+            transform: rotate(180deg); 
+            transform-origin: 50% 50%;
+        }
+
         /*
         Settings
         */
@@ -58,18 +63,20 @@
             width: 58vw;
             height: 58vh;
             background: #a3e0f7;
-            font-size: 150%;
             padding: 5vh 5vw 5vh 5vw;
+            overflow-y: auto;
         }
 
         #settings .field {
             padding: 1vh 0 1vh 0;
-            border-bottom: 2px solid blue;
         }
 
         #settings .field input {
             width: 100%;
             font-size: 90%;
+        }
+        #settings .field input[type="checkbox"] {
+            width: unset;
         }
 
         #settings .field select {
@@ -233,30 +240,37 @@
     <iframe class="box" id="chat"></iframe>
     <video class="box" autoplay="true" id="facecam"></video>
     <div class="box" id="social"></div>
-    <div class="box hidden" id="settings">
+    <div class="box" id="settings">
         <button id="settingsclose">close</button>
+        <h2>MakeCode Streamer settings</h2>
         <div class="field">
-            <label for="editorselect">Editor</label>
+            <label for="editorselect">Choose your editor</label>
             <select id="editorselect"></select>
         </div>
+        <h2>Video</h2>
         <div class="field">
-            <label for="faceselect">Face Webcam</label>
+            <label for="faceselect">Choose a Webcam</label>
             <select id="facecamselect"></select>
         </div>
         <div class="field">
-            <label for="twitterinput">Twitter</label>
+            <input type="checkbox" id="rotatecameracheckbox"></input>
+            <label for="rotatecameracheckbox">Rotate camera 180</label>
+        </div>
+        <h2>Social accounts</h2>
+        <div class="field">
+            <label for="twitterinput">Twitter (optional)</label>
             <input id="twitterinput" placeholder="Twitter handle (@account)" />
         </div>
         <div class="field">
-            <label for="youtubeinput"">YouTube</label>
+            <label for="youtubeinput"">YouTube (optional)</label>
             <input id="youtubeinput" placeholder="YouTube account (/account)" />
         </div>
         <div class="field">
-            <label for="mixerinput">Mixer</label>
+            <label for="mixerinput">Mixer (optional)</label>
             <input id="mixerinput" placeholder="Mixer.com account (/account)" />
         </div>
         <div class="field">
-            <label for="twitchinput">Twitch</label>
+            <label for="twitchinput">Twitch (optional)</label>
             <input id="twitchinput" placeholder="Twitch.tv account (/account)" />
         </div>
     </div>
@@ -442,11 +456,16 @@
 
             async function startStream(deviceId) {
                 stopStream()
+                const config = readConfig();
                 console.log(`trying webcam ${deviceId}`)
                 const constraints = { audio: true, video: { deviceId: deviceId } }
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 facecam.srcObject = stream;
-                facecam.onloadedmetadata = (e) => facecam.play();
+                facecam.onloadedmetadata = (e) => facecam.play();                
+                if (config.faceCamRotate)
+                    facecam.classList.add("rotate")
+                else
+                    facecam.classList.remove("rotate");
             }
 
             async function loadSettings() {
@@ -489,6 +508,14 @@
                     config.faceCamId = selected.value;
                     saveConfig(config)
                     loadFaceCam().then(() => loadSettings())
+                }
+
+                const rotatecheckbox = document.getElementById("rotatecameracheckbox")
+                rotatecheckbox.checked = !!config.faceCamRotate
+                rotatecheckbox.onchange = function () {
+                    config.faceCamRotate = !!rotatecheckbox.checked
+                    saveConfig(config)
+                    loadFaceCam()
                 }
 
                 const twitterinput = document.getElementById("twitterinput")
