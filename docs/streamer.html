@@ -16,6 +16,19 @@
             background: rgb(99, 93, 198);
             background: linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1) 100%);
         }
+        footer {
+            font-size: 70%;
+            color: white;
+            position:absolute;
+            z-index: -1;
+            bottom: 0.5vh;
+            left: 1vw;
+            opacity: 65%;
+        }
+        footer > a {
+            color: white;
+            text-decoration: none;
+        }
 
         /* 
             Style for the boxes.
@@ -66,7 +79,7 @@
             width: 60vw;
             height: 5vh;
             left: 1vw;
-            bottom: 1.5vh;
+            bottom: 2vh;
             display: flex;
             background: #615fc7;
         }
@@ -285,8 +298,8 @@
             async function loadFaceCam() {
                 // load webcam
                 const constraints = { audio: true, video: { deviceId: "bc42b24a58793b3dd9be23ee01be8763bbab6648c2a58c4efff39536f09cd48f" } }
-                const cams = await navigator.mediaDevices.enumerateDevices(constraints);
-                cams.forEach(function (device) {
+                const cams = await navigator.mediaDevices.enumerateDevices(constraints)
+                cams.filter(d => d.kind == "videoinput").forEach(function (device) {
                     console.log(device.kind + ": " + device.label +
                         " id = " + device.deviceId);
                 });
@@ -298,7 +311,13 @@
             }
         })()
     </script>
-
+    <!-- @include tracking.html -->
+    <footer>
+        <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp; Cookies</a>|
+        <a class="item" href="https://makecode.com/termsofuse" target="_blank" rel="noopener"> Terms Of Use</a>|
+        <a class="item" href="https://makecode.com/trademarks" target="_blank" rel="noopener">Trademarks</a>|
+        <span class="item">© 2020 Microsoft</span>
+    </footer>
 </body>
 
 </html>
