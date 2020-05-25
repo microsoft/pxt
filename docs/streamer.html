@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="UTF-8">
+    <title>MakeCode Streamer</title>
+    <style>
+        /* https://cssgradient.io/ */
+        body {
+            background: rgb(99, 93, 198);
+            background: linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1) 100%);
+        }
+
+        /* https://alligator.io/css/gradient-borders-pure-css/ */
+        .box {
+            border: 0.5rem solid;
+            border-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
+
+            transition: left 0.5s, right 0.5s, bottom 0.5s, top 0.5s, width 0.5s, height 0.5s;
+        }
+
+        #editor {
+            position: absolute;
+            width: 94%;
+            height: 90%;
+            top: 1vh;
+        }
+
+        #facecam {
+            position: absolute;
+            width: 40%;
+            bottom: 1vh;
+            right: 1vw;
+        }
+
+        /* startingsoon scene */
+        body.startingsoonscene #editor,
+        body.startingsoonscene #facecam {
+            display: none;
+        }
+
+        /* right scene */
+        body.rightscene #editor {
+            left: 1vw;
+        }
+
+        body.rightscene #facecam {
+            right: 1vw;            
+            width: 30%;
+        }
+
+        /* left scene */
+        body.leftscene #editor {
+            left: 2vw;
+        }
+
+        body.leftscene #facecam {
+            right: calc(60% - 2vw);
+            width: 40%;
+        }
+    </style>
+</head>
+
+<body id="body" class="rightscene">
+    <iframe class="box" id="editor"></iframe>
+    <video class="box" autoplay="true" id="facecam"></video>
+
+    <script>
+        (async function () {
+            window.resizeTo(1920, 1080)
+            const body = document.body;
+            const editor = document.getElementById("editor");
+            const facecam = document.getElementById("facecam");
+
+            facecam.addEventListener("click", e => { body.className = (body.className == "leftscene" ? "rightscene" : "leftscene") }, false)
+
+            await loadFaceCam()
+            await loadEditor()
+
+            async function loadEditor() {
+                editor.src = "https://makecode.microbit.org/beta?editorLayout=ide&nosandbox=1"
+            }
+
+            async function loadFaceCam() {
+                // load webcam
+                const constraints = { audio: true, video: { deviceId: "bc42b24a58793b3dd9be23ee01be8763bbab6648c2a58c4efff39536f09cd48f" } }
+                const cams = await navigator.mediaDevices.enumerateDevices(constraints);
+                cams.forEach(function (device) {
+                    console.log(device.kind + ": " + device.label +
+                        " id = " + device.deviceId);
+                });
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                facecam.srcObject = stream;
+                facecam.onloadedmetadata = (e) => facecam.play();
+            }
+        })()
+    </script>
+
+</body>
+
+</html>
