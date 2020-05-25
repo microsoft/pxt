@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="UTF-8">
+    <title>MakeCode Streamer</title>
+    <style>
+        /* 
+            Style for the background. 
+            
+            Generate your custom css gradients at https://cssgradient.io/ 
+        */
+        body {
+            font-family: monospace;
+            background: rgb(99, 93, 198);
+            background: linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1) 100%);
+        }
+
+        footer {
+            font-size: 70%;
+            color: white;
+            position: absolute;
+            z-index: -1;
+            bottom: 0.5vh;
+            left: 1vw;
+            opacity: 65%;
+        }
+
+        footer>a {
+            color: white;
+            text-decoration: none;
+        }
+
+        /* 
+            Style for the boxes.
+
+            https://alligator.io/css/gradient-borders-pure-css/ 
+        */
+        .box {
+            border: 0.5rem solid;
+            border-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
+
+            transition: left 0.5s, right 0.5s, bottom 0.5s, top 0.5s, width 0.5s, height 0.5s, opacity 1s;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .rotate {
+            transform: rotate(180deg); 
+            transform-origin: 50% 50%;
+        }
+
+        /*
+        Settings
+        */
+        #settings {
+            position: absolute;
+            left: 16vw;
+            top: 16vh;
+            width: 58vw;
+            height: 58vh;
+            background: #a3e0f7;
+            padding: 5vh 5vw 5vh 5vw;
+            overflow-y: auto;
+        }
+
+        #settings .field {
+            padding: 1vh 0 1vh 0;
+        }
+
+        #settings .field input {
+            width: 100%;
+            font-size: 90%;
+        }
+        #settings .field input[type="checkbox"] {
+            width: unset;
+        }
+
+        #settings .field select {
+            width: 100%;
+            font-size: 90%;
+        }
+        #settings #settingsclose {
+            position: absolute;
+            right: 2vw;
+            top: 2vw;
+        }
+
+        /*
+            MakeCode editor box
+        */
+        #editor {
+            position: absolute;
+            width: 94vw;
+            height: 87vh;
+            top: 1vh;
+        }
+
+        /*
+            Face camera            
+        */
+        #facecam {
+            position: absolute;
+            width: 40vw;
+            bottom: 1.5vh;
+            right: 1vw;
+        }
+
+        /*
+            Chat window
+        */
+        #chat {
+            position: absolute;
+            width: 30vw;
+            height: 60vh;
+            top: 1vh;
+            right: 1vw;
+            opacity: 0;
+        }
+
+        #social {
+            position: absolute;
+            width: 60vw;
+            height: 5vh;
+            left: 1vw;
+            bottom: 2vh;
+            display: flex;
+            background: #615fc7;
+        }
+
+        span.social {
+            font-size: 2.5vh;
+            color: white;
+            flex-grow: 1;
+            margin: 1vh 2vw 1vh 2vw;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        /** 
+        * chat visibility
+        */
+        body.chat #chat {
+            opacity: 90%;
+        }
+
+        /* startingsoon scene */
+        body.startingsoonscene #editor,
+        body.startingsoonscene #facecam {
+            display: none;
+        }
+
+        /* rightscene: browser with facecam on right */
+        body.rightscene #editor {
+            left: 1vw;
+        }
+
+        body.rightscene #facecam {
+            right: 1vw;
+            width: 30vw;
+        }
+
+        body.rightscene #chat {
+            right: 1vw;
+            width: 30vw;
+            height: 63vh;
+        }
+
+        body.rightscene.chat #editor {
+            width: 65vw;
+            top: 1vh;
+            height: 87vh;
+        }
+
+        /* leftscene: browser with facecam on left left */
+        body.leftscene #editor {
+            left: 4vw;
+            height: 87vh;
+        }
+
+        body.leftscene #facecam {
+            right: 58vw;
+            width: 40vw;
+        }
+
+        body.leftscene #social {
+            width: 55vw;
+            height: 5vh;
+            left: 43vw;
+            bottom: 1.5vh;
+        }
+
+        /** leftscene + chat **/
+        body.leftscene.chat #editor {
+            left: 33vw;
+            width: 65vw;
+        }
+
+        body.leftscene.chat #facecam {
+            right: 68vw;
+            width: 30vw;
+        }
+
+        body.leftscene.chat #chat {
+            right: 68vw;
+            height: 63vh;
+        }
+
+        /* chatscene: facecam and stream chat */
+        body.chatscene #facecam {
+            bottom: 26vh;
+            right: 33vw;
+            width: 63vw;
+        }
+
+        body.chatscene #editor {
+            opacity: 0;
+        }
+
+        body.chatscene #chat {
+            top: 10vh;
+            right: 4vw;
+            width: 24vw;
+            height: 63vh;
+            opacity: 100%;
+        }
+
+        body.chatscene #social {
+            left: 4vw;
+            bottom: 14vh;
+        }
+    </style>
+</head>
+
+<body class="rightscene chat">
+    <iframe class="box" id="editor"></iframe>
+    <iframe class="box" id="chat"></iframe>
+    <video class="box" autoplay="true" id="facecam"></video>
+    <div class="box" id="social"></div>
+    <div class="box" id="settings">
+        <button id="settingsclose">close</button>
+        <h2>MakeCode Streamer settings</h2>
+        <div class="field">
+            <label for="editorselect">Choose your editor</label>
+            <select id="editorselect"></select>
+        </div>
+        <h2>Video</h2>
+        <div class="field">
+            <label for="faceselect">Choose a Webcam</label>
+            <select id="facecamselect"></select>
+        </div>
+        <div class="field">
+            <input type="checkbox" id="rotatecameracheckbox"></input>
+            <label for="rotatecameracheckbox">Rotate camera 180</label>
+        </div>
+        <h2>Social accounts</h2>
+        <div class="field">
+            <label for="twitterinput">Twitter (optional)</label>
+            <input id="twitterinput" placeholder="Twitter handle (@account)" />
+        </div>
+        <div class="field">
+            <label for="youtubeinput"">YouTube (optional)</label>
+            <input id="youtubeinput" placeholder="YouTube account (/account)" />
+        </div>
+        <div class="field">
+            <label for="mixerinput">Mixer (optional)</label>
+            <input id="mixerinput" placeholder="Mixer.com account (/account)" />
+        </div>
+        <div class="field">
+            <label for="twitchinput">Twitch (optional)</label>
+            <input id="twitchinput" placeholder="Twitch.tv account (/account)" />
+        </div>
+    </div>
+    <script>
+        (async function () {
+            const body = document.body;
+            const editor = document.getElementById("editor");
+            const facecam = document.getElementById("facecam");
+            const chat = document.getElementById("chat");
+            const social = document.getElementById("social");
+            const settings = document.getElementById("settings");
+
+            const scenes = ["leftscene", "rightscene", "chatscene"];
+            const editorConfigs = await fetchJSON("/editors.json");
+            const state = {
+                sceneIndex: 1,
+                left: false,
+                chat: true
+            }
+
+            facecam.addEventListener("pointerdown", nextScene, false);
+            social.addEventListener("pointerdown", toggleChat, false);
+            window.addEventListener("hashchange", loadEditor, false);
+            await loadFaceCam()
+            await loadSettings()
+            load();
+
+            function load() {
+                loadEditor()
+                loadChat()
+                loadSocial()
+                render()
+            }
+
+            function saveConfig(config) {
+                if (!config) throw "missing config"
+                localStorage["streamer.config"] = JSON.stringify(config)
+            }
+
+            function showSettings() {
+                settings.classList.remove("hidden")
+            }
+
+            function readConfig() {
+                try {
+                    const cfg = JSON.parse(localStorage["streamer.config"]);
+                    return cfg;
+                } catch (e) { 
+                    console.log(e)
+                }
+
+                showSettings()
+                return {
+                    editor: "microbit",
+                    twitter: "MsMakeCode",
+                    youTube: "MicrosoftMakeCode",
+                    mixer: "MakeCode"
+                }
+            }
+
+            async function fetchJSON(url) {
+                const resp = await fetch(url)
+                const json = await resp.json();
+                return json;
+            }
+
+            function render() {
+                body.className = `${scenes[state.sceneIndex]} ${state.chat ? "chat" : ""}`
+            }
+
+            function loadEditor() {
+                const config = readConfig();
+                const hash = window.location.hash.substr(1);
+                const editorConfig = editorConfigs[hash] || editorConfigs[config.editor] || editorConfigs["microbit"]
+                editor.src = `${editorConfig.url}?editorLayout=ide&nosandbox=1`
+                saveConfig(config);
+            }
+
+            function stopEvent(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            function toggleChat(e) {
+                stopEvent(e)
+                state.chat = !state.chat;
+                if (!state.chat && scenes[state.sceneIndex] == "chatscene") {
+                    state.sceneIndex = state.left ? 0 : 1;
+                }
+                render();
+            }
+
+            function nextScene(e) {
+                stopEvent(e)
+                if (scenes[state.sceneIndex] == "chatscene") {
+                    state.sceneIndex = state.left ? 0 : 1;
+                } else if (state.chat) {
+                    state.sceneIndex = 2;
+                } else {
+                    state.left = !state.left;
+                    state.sceneIndex = state.left ? 0 : 1;
+                }
+                render();
+            }
+
+            function loadSocial() {
+                const config = readConfig();
+                social.innerHTML = ''
+                if (config.twitter)
+                    addSocial(`@${config.twitter}`)
+                if (config.youTube)
+                    addSocial(`youtube.com/${config.youTube}`);
+                if (config.mixer)
+                    addSocial(`mixer.com/${config.mixer}`);
+                else if (config.twitch)
+                    addSocial(`twitch.tv/${config.twitch}`);
+
+                function addSocial(text) {
+                    const a = document.createElement("span");
+                    a.className = "social"
+                    a.innerText = text
+                    social.append(a)
+                }
+            }
+
+            function loadChat() {
+                const config = readConfig();
+                if (config.mixer) {
+                    chat.src = `https://mixer.com/embed/chat/${config.mixer}?composer=false`;
+                    if (!chat.parentElement)
+                        body.insertBefore(chat, facecam)
+                }
+                else if (config.twitch) {
+                    chat.src = `https://www.twitch.tv/embed/${config.twitch}/chat?parent=makecode.com`;
+                    if (!chat.parentElement)
+                        body.insertBefore(chat, facecam)
+                }
+                else // remove from dom
+                    chat.remove();
+            }
+
+            async function listCameras() {
+                let cams = await navigator.mediaDevices.enumerateDevices()
+                cams = cams.filter(d => d.kind == "videoinput")
+                return cams;
+            }
+
+            async function loadFaceCam() {
+                // load previous webcam
+                const config = readConfig();
+                if (config.faceCamId) {
+                    try {
+                        startStream(config.faceCamId);
+                        return; // success!
+                    }
+                    catch (e) {
+                        console.log(`could not start previous web cam`, e)
+                    }
+                }
+                // try out all webcams
+                const cams = await listCameras()
+                for (const cam of cams) {
+                    try {
+                        await startStream(cam.deviceId);
+                        config.faceCamId = cam.deviceId;
+                        saveConfig(config)
+                        return; // success!
+                    } catch (e) {
+                        console.log(`could not start web cam`, e)
+                    }
+                }
+                // no web cam available
+            }
+
+            function stopStream() {
+                try {
+                    if (facecam.srcObject) {
+                        const tracks = facecam.srcObject.getVideoTracks();
+                        if (tracks && tracks[0] && tracks[0].stop) tracks[0].stop();
+                    }
+                } catch (e) { }
+            }
+
+            async function startStream(deviceId) {
+                stopStream()
+                const config = readConfig();
+                console.log(`trying webcam ${deviceId}`)
+                const constraints = { audio: true, video: { deviceId: deviceId } }
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                facecam.srcObject = stream;
+                facecam.onloadedmetadata = (e) => facecam.play();                
+                if (config.faceCamRotate)
+                    facecam.classList.add("rotate")
+                else
+                    facecam.classList.remove("rotate");
+            }
+
+            async function loadSettings() {
+                const config = readConfig();
+                const settingsclose = document.getElementById("settingsclose")
+                settingsclose.onclick = function(e) {
+                    stopEvent(e)
+                    settings.classList.add("hidden")
+                }
+                const editorselect = document.getElementById("editorselect");
+                editorselect.innerHTML = "" // remove all web cams
+                Object.keys(editorConfigs).forEach(editorid => {
+                    const option = document.createElement("option")
+                    option.value = editorid
+                    option.text = editorConfigs[editorid].name;
+                    editorselect.add(option)
+                    if (config.editor == editorid)
+                        option.selected = true;
+                })
+                editorselect.onchange = function () {
+                    const selected = editorselect.options[editorselect.selectedIndex];
+                    config.editor = selected.value;
+                    saveConfig(config);
+                    loadEditor();
+                }
+
+                const facecamselect = document.getElementById("facecamselect");
+                facecamselect.innerHTML = "" // remove all web cams
+                const cams = await listCameras()
+                cams.forEach(cam => {
+                    const option = document.createElement("option")
+                    option.value = cam.deviceId
+                    option.text = cam.label
+                    facecamselect.add(option)
+                    if (option.faceCamId == cam.deviceId)
+                        option.selected = true;
+                })
+                facecamselect.onchange = function () {
+                    const selected = facecamselect.options[facecamselect.selectedIndex];
+                    config.faceCamId = selected.value;
+                    saveConfig(config)
+                    loadFaceCam().then(() => loadSettings())
+                }
+
+                const rotatecheckbox = document.getElementById("rotatecameracheckbox")
+                rotatecheckbox.checked = !!config.faceCamRotate
+                rotatecheckbox.onchange = function () {
+                    config.faceCamRotate = !!rotatecheckbox.checked
+                    saveConfig(config)
+                    loadFaceCam()
+                }
+
+                const twitterinput = document.getElementById("twitterinput")
+                twitterinput.value = config.twitter || ""
+                twitterinput.onchange = function(e) {
+                    config.twitter = (twitterinput.value || "").replace(/^https:\/\/twitter.com\//, '').replace(/^@/, '').trim()
+                    twitterinput.value = config.twitter
+                    saveConfig(config);
+                    loadSocial();
+                }
+
+                const youtubeinput = document.getElementById("youtubeinput")
+                youtubeinput.value = config.youTube || ""
+                youtubeinput.onchange = function(e) {
+                    config.youTube = (youtubeinput.value || "").replace(/^https:\/\/youtube.com\//, '').replace(/^\//, '').trim()
+                    youtubeinput.value = config.youTube
+                    saveConfig(config);
+                    loadSocial();
+                }
+
+                const twitchinput = document.getElementById("twitchinput")
+                twitchinput.value = config.twitch || ""
+                twitchinput.onchange = function(e) {
+                    config.twitch = (twitchinput.value || "").replace(/^https:\/\/twitch.tv\//, '').replace(/^\//, '').trim()
+                    twitchinput.value = config.twitch
+                    saveConfig(config);
+                    loadSocial();
+                    loadChat();
+                }
+
+                const mixerinput = document.getElementById("mixerinput")
+                mixerinput.value = config.mixer || ""
+                mixerinput.onchange = function(e) {
+                    config.mixer = (mixerinput.value || "").replace(/^https:\/\/mixer.com\//, '').replace(/^\//, '').trim()
+                    mixerinput.value = config.mixer
+                    saveConfig(config);
+                    loadSocial();
+                    loadChat();
+                }
+            }
+        })()
+    </script>
+    <!-- @include tracking.html -->
+    <footer>
+        <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp; Cookies</a>|
+        <a class="item" href="https://makecode.com/termsofuse" target="_blank" rel="noopener"> Terms Of Use</a>|
+        <a class="item" href="https://makecode.com/trademarks" target="_blank" rel="noopener">Trademarks</a>|
+        <span class="item">© 2020 Microsoft</span>
+    </footer>
+</body>
+
+</html>
