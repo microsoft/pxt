@@ -26,7 +26,7 @@
             border: 0.5rem solid;
             border-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
 
-            transition: left 0.5s, right 0.5s, bottom 0.5s, top 0.5s, width 0.5s, height 0.5s, opacity 0.5s;;
+            transition: left 0.5s, right 0.5s, bottom 0.5s, top 0.5s, width 0.5s, height 0.5s, opacity 1s;
         }
 
         /*
@@ -68,6 +68,7 @@
             left: 1vw;
             bottom: 1.5vh;
             display: flex;
+            background: #615fc7;
         }
 
         span.social {
@@ -117,40 +118,59 @@
         /* leftscene: browser with facecam on left left */
         body.leftscene #editor {
             left: 4vw;
-            height: 89vh;
+            height: 88vh;
         }
+
         body.leftscene #facecam {
             right: 58vw;
             width: 40vw;
         }
+
         body.leftscene #social {
             width: 55vw;
             height: 5vh;
             left: 43vw;
             bottom: 1.5vh;
         }
+
         /** leftscene + chat **/
         body.leftscene.chat #editor {
             left: 33vw;
             width: 65vw;
         }
+
         body.leftscene.chat #facecam {
             right: 68vw;
             width: 30vw;
         }
+
         body.leftscene.chat #chat {
             right: 68vw;
             height: 63vh;
         }
 
         /* chatscene: facecam and stream chat */
-        body.chatscene #editor {
-            left: 4vw;
+        body.chatscene #facecam {
+            bottom: 26vh;
+            right: 33vw;
+            width: 63vw;
         }
 
-        body.chatscene #facecam {
-            right: 58vw;
-            width: 40vw;
+        body.chatscene #editor {
+            opacity: 0;
+        }
+
+        body.chatscene #chat {
+            top: 10vh;
+            right: 4vw;
+            width: 24vw;
+            height: 63vh;
+            opacity: 100%;
+        }
+
+        body.chatscene #social {
+            left: 4vw;
+            bottom: 14vh;
         }
     </style>
 </head>
@@ -167,7 +187,7 @@
             const facecam = document.getElementById("facecam");
             const chat = document.getElementById("chat");
             const social = document.getElementById("social");
-            const scenes = ["leftscene", "rightscene"];
+            const scenes = ["leftscene", "rightscene", "chatscene"];
 
             const editorConfigs = await fetchJSON("/editors.json");
             const editorConfig = editorConfigs["microbit"]
@@ -201,6 +221,23 @@
                 editor.src = `${editorConfig.url}?editorLayout=ide&nosandbox=1`
             }
 
+            function stopEvent(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            function toggleChat(e) {
+                stopEvent(e)
+                state.chat = !state.chat;
+                render();
+            }
+
+            function nextScene(e) {
+                stopEvent(e)
+                state.sceneIndex = (state.sceneIndex + 1) % scenes.length
+                render();
+            }
+
             function loadSocial() {
                 if (config.twitter) {
                     const a = document.createElement("span");
@@ -222,12 +259,9 @@
                 }
 
                 // click handler
-                if (config.mixer)
-                    social.addEventListener("click", e => {
-                        e.stopPropagation();
-                        state.chat = !state.chat;
-                        render();
-                    })
+                if (config.mixer) {
+                    social.addEventListener("pointerdown", toggleChat, false)
+                }
             }
 
             function loadChat() {
@@ -249,11 +283,7 @@
                 facecam.srcObject = stream;
                 facecam.onloadedmetadata = (e) => facecam.play();
 
-                facecam.addEventListener("click", e => {
-                    e.stopPropagation();
-                    state.sceneIndex = (state.sceneIndex + 1) % scenes.length
-                    render();
-                }, false)
+                facecam.addEventListener("pointerdown", nextScene, false)
             }
         })()
     </script>
