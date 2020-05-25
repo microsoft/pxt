@@ -198,6 +198,7 @@
             }
             const state = {
                 sceneIndex: 1,
+                left: false,
                 chat: true
             }
 
@@ -229,12 +230,22 @@
             function toggleChat(e) {
                 stopEvent(e)
                 state.chat = !state.chat;
+                if (!state.chat && scenes[state.sceneIndex] == "chatscene") {
+                    state.sceneIndex = state.left ? 0 : 1;
+                }
                 render();
             }
 
             function nextScene(e) {
                 stopEvent(e)
-                state.sceneIndex = (state.sceneIndex + 1) % scenes.length
+                if (scenes[state.sceneIndex] == "chatscene") {
+                    state.sceneIndex = state.left ? 0 : 1;
+                } else if (state.chat) {
+                    state.sceneIndex = 2;
+                } else {
+                    state.left = !state.left;
+                    state.sceneIndex = state.left ? 0 : 1;
+                }
                 render();
             }
 
