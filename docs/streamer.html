@@ -205,23 +205,41 @@
             const scenes = ["leftscene", "rightscene", "chatscene"];
 
             const editorConfigs = await fetchJSON("/editors.json");
-            const editorConfig = editorConfigs["microbit"]
-            const config = {
-                twitter: "MsMakeCode",
-                youTube: "MicrosoftMakeCode",
-                mixer: "MakeCode"
-            }
             const state = {
                 sceneIndex: 1,
                 left: false,
                 chat: true
             }
 
-            loadEditor()
-            loadChat()
-            loadSocial()
+            facecam.addEventListener("pointerdown", nextScene, false);
+            social.addEventListener("pointerdown", toggleChat, false)
             await loadFaceCam()
-            render()
+            load();
+
+            function load() {
+                loadEditor()
+                loadChat()
+                loadSocial()
+                render()
+            }
+
+            function saveConfig(config) {
+                localStorage["streamer.config"] = JSON.stringify(config)
+            }
+
+            function readConfig() {
+                try {
+                    const cfg = JSON.parse(localStorage["streamer.config"]);
+                    return cfg;
+                } catch (e) { }
+
+                return {
+                    editor: "microbit",
+                    twitter: "MsMakeCode",
+                    youTube: "MicrosoftMakeCode",
+                    mixer: "MakeCode"
+                }
+            }
 
             async function fetchJSON(url) {
                 const resp = await fetch(url)
@@ -234,6 +252,8 @@
             }
 
             function loadEditor() {
+                const config = readConfig();
+                const editorConfig = editorConfigs[config.editor]
                 editor.src = `${editorConfig.url}?editorLayout=ide&nosandbox=1`
             }
 
@@ -265,6 +285,7 @@
             }
 
             function loadSocial() {
+                const config = readConfig();
                 if (config.twitter)
                     addSocial(`@${config.twitter}`)
                 if (config.youTube)
@@ -273,10 +294,6 @@
                     addSocial(`mixer.com/${config.mixer}`);
                 else if (config.twitch)
                     addSocial(`twitch.tv/${config.twitch}`);
-
-                // click handler
-                if (config.mixer || config.twitch)
-                    social.addEventListener("pointerdown", toggleChat, false)
 
                 function addSocial(text) {
                     const a = document.createElement("span");
@@ -287,6 +304,7 @@
             }
 
             function loadChat() {
+                const config = readConfig();
                 if (config.mixer)
                     chat.src = `https://mixer.com/embed/chat/${config.mixer}?composer=false`;
                 else if (config.twitch)
@@ -296,18 +314,39 @@
             }
 
             async function loadFaceCam() {
-                // load webcam
-                const constraints = { audio: true, video: { deviceId: "bc42b24a58793b3dd9be23ee01be8763bbab6648c2a58c4efff39536f09cd48f" } }
-                const cams = await navigator.mediaDevices.enumerateDevices(constraints)
-                cams.filter(d => d.kind == "videoinput").forEach(function (device) {
-                    console.log(device.kind + ": " + device.label +
-                        " id = " + device.deviceId);
-                });
+                // load previous webcam
+                const config = readConfig();
+                if (config.faceCamId) {
+                    try {
+                        startStream(config.faceCamId);
+                        return; // success!
+                    }
+                    catch (e) { 
+                        console.log(`could not start previous web cam`, e)
+                    }
+                }
+                // try out all webcams
+                let cams = await navigator.mediaDevices.enumerateDevices()
+                cams = cams.filter(d => d.kind == "videoinput")
+                for (const cam of cams) {
+                    try {
+                        await startStream(cam.deviceId);
+                        config.faceCamId = cam.deviceId;
+                        saveConfig(config)
+                        return; // success!
+                    } catch (e) {
+                        console.log(`could not start web cam`, e)
+                    }
+                }
+                // no web cam available
+            }
+
+            async function startStream(deviceId) {
+                console.log(`trying webcam ${deviceId}`)
+                const constraints = { audio: true, video: { deviceId: deviceId } }
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 facecam.srcObject = stream;
                 facecam.onloadedmetadata = (e) => facecam.play();
-
-                facecam.addEventListener("pointerdown", nextScene, false)
             }
         })()
     </script>
