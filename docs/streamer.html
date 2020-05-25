@@ -212,7 +212,8 @@
             }
 
             facecam.addEventListener("pointerdown", nextScene, false);
-            social.addEventListener("pointerdown", toggleChat, false)
+            social.addEventListener("pointerdown", toggleChat, false);
+            window.addEventListener("hashchange", loadEditor, false);
             await loadFaceCam()
             load();
 
@@ -253,8 +254,10 @@
 
             function loadEditor() {
                 const config = readConfig();
-                const editorConfig = editorConfigs[config.editor]
+                const hash = window.location.hash.substr(1);
+                const editorConfig = editorConfigs[hash] || editorConfigs[config.editor] || editorConfigs["microbit"]
                 editor.src = `${editorConfig.url}?editorLayout=ide&nosandbox=1`
+                saveConfig(config);
             }
 
             function stopEvent(e) {
