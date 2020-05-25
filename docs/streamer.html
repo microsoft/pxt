@@ -44,6 +44,44 @@
             transition: left 0.5s, right 0.5s, bottom 0.5s, top 0.5s, width 0.5s, height 0.5s, opacity 1s;
         }
 
+        .hidden {
+            display: none;
+        }
+
+        /*
+        Settings
+        */
+        #settings {
+            position: absolute;
+            left: 16vw;
+            top: 16vh;
+            width: 58vw;
+            height: 58vh;
+            background: #a3e0f7;
+            font-size: 150%;
+            padding: 5vh 5vw 5vh 5vw;
+        }
+
+        #settings .field {
+            padding: 1vh 0 1vh 0;
+            border-bottom: 2px solid blue;
+        }
+
+        #settings .field input {
+            width: 100%;
+            font-size: 90%;
+        }
+
+        #settings .field select {
+            width: 100%;
+            font-size: 90%;
+        }
+        #settings #settingsclose {
+            position: absolute;
+            right: 2vw;
+            top: 2vw;
+        }
+
         /*
             MakeCode editor box
         */
@@ -195,6 +233,33 @@
     <iframe class="box" id="chat"></iframe>
     <video class="box" autoplay="true" id="facecam"></video>
     <div class="box" id="social"></div>
+    <div class="box hidden" id="settings">
+        <button id="settingsclose">close</button>
+        <div class="field">
+            <label for="editorselect">Editor</label>
+            <select id="editorselect"></select>
+        </div>
+        <div class="field">
+            <label for="faceselect">Face Webcam</label>
+            <select id="facecamselect"></select>
+        </div>
+        <div class="field">
+            <label for="twitterinput">Twitter</label>
+            <input id="twitterinput" placeholder="Twitter handle (@account)" />
+        </div>
+        <div class="field">
+            <label for="youtubeinput"">YouTube</label>
+            <input id="youtubeinput" placeholder="YouTube account (/account)" />
+        </div>
+        <div class="field">
+            <label for="mixerinput">Mixer</label>
+            <input id="mixerinput" placeholder="Mixer.com account (/account)" />
+        </div>
+        <div class="field">
+            <label for="twitchinput">Twitch</label>
+            <input id="twitchinput" placeholder="Twitch.tv account (/account)" />
+        </div>
+    </div>
     <script>
         (async function () {
             const body = document.body;
@@ -202,8 +267,9 @@
             const facecam = document.getElementById("facecam");
             const chat = document.getElementById("chat");
             const social = document.getElementById("social");
-            const scenes = ["leftscene", "rightscene", "chatscene"];
+            const settings = document.getElementById("settings");
 
+            const scenes = ["leftscene", "rightscene", "chatscene"];
             const editorConfigs = await fetchJSON("/editors.json");
             const state = {
                 sceneIndex: 1,
@@ -215,6 +281,7 @@
             social.addEventListener("pointerdown", toggleChat, false);
             window.addEventListener("hashchange", loadEditor, false);
             await loadFaceCam()
+            await loadSettings()
             load();
 
             function load() {
@@ -225,15 +292,23 @@
             }
 
             function saveConfig(config) {
+                if (!config) throw "missing config"
                 localStorage["streamer.config"] = JSON.stringify(config)
+            }
+
+            function showSettings() {
+                settings.classList.remove("hidden")
             }
 
             function readConfig() {
                 try {
                     const cfg = JSON.parse(localStorage["streamer.config"]);
                     return cfg;
-                } catch (e) { }
+                } catch (e) { 
+                    console.log(e)
+                }
 
+                showSettings()
                 return {
                     editor: "microbit",
                     twitter: "MsMakeCode",
@@ -289,6 +364,7 @@
 
             function loadSocial() {
                 const config = readConfig();
+                social.innerHTML = ''
                 if (config.twitter)
                     addSocial(`@${config.twitter}`)
                 if (config.youTube)
@@ -308,12 +384,24 @@
 
             function loadChat() {
                 const config = readConfig();
-                if (config.mixer)
+                if (config.mixer) {
                     chat.src = `https://mixer.com/embed/chat/${config.mixer}?composer=false`;
-                else if (config.twitch)
+                    if (!chat.parentElement)
+                        body.insertBefore(chat, facecam)
+                }
+                else if (config.twitch) {
                     chat.src = `https://www.twitch.tv/embed/${config.twitch}/chat?parent=makecode.com`;
+                    if (!chat.parentElement)
+                        body.insertBefore(chat, facecam)
+                }
                 else // remove from dom
                     chat.remove();
+            }
+
+            async function listCameras() {
+                let cams = await navigator.mediaDevices.enumerateDevices()
+                cams = cams.filter(d => d.kind == "videoinput")
+                return cams;
             }
 
             async function loadFaceCam() {
@@ -324,13 +412,12 @@
                         startStream(config.faceCamId);
                         return; // success!
                     }
-                    catch (e) { 
+                    catch (e) {
                         console.log(`could not start previous web cam`, e)
                     }
                 }
                 // try out all webcams
-                let cams = await navigator.mediaDevices.enumerateDevices()
-                cams = cams.filter(d => d.kind == "videoinput")
+                const cams = await listCameras()
                 for (const cam of cams) {
                     try {
                         await startStream(cam.deviceId);
@@ -344,12 +431,103 @@
                 // no web cam available
             }
 
+            function stopStream() {
+                try {
+                    if (facecam.srcObject) {
+                        const tracks = facecam.srcObject.getVideoTracks();
+                        if (tracks && tracks[0] && tracks[0].stop) tracks[0].stop();
+                    }
+                } catch (e) { }
+            }
+
             async function startStream(deviceId) {
+                stopStream()
                 console.log(`trying webcam ${deviceId}`)
                 const constraints = { audio: true, video: { deviceId: deviceId } }
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 facecam.srcObject = stream;
                 facecam.onloadedmetadata = (e) => facecam.play();
+            }
+
+            async function loadSettings() {
+                const config = readConfig();
+                const settingsclose = document.getElementById("settingsclose")
+                settingsclose.onclick = function(e) {
+                    stopEvent(e)
+                    settings.classList.add("hidden")
+                }
+                const editorselect = document.getElementById("editorselect");
+                editorselect.innerHTML = "" // remove all web cams
+                Object.keys(editorConfigs).forEach(editorid => {
+                    const option = document.createElement("option")
+                    option.value = editorid
+                    option.text = editorConfigs[editorid].name;
+                    editorselect.add(option)
+                    if (config.editor == editorid)
+                        option.selected = true;
+                })
+                editorselect.onchange = function () {
+                    const selected = editorselect.options[editorselect.selectedIndex];
+                    config.editor = selected.value;
+                    saveConfig(config);
+                    loadEditor();
+                }
+
+                const facecamselect = document.getElementById("facecamselect");
+                facecamselect.innerHTML = "" // remove all web cams
+                const cams = await listCameras()
+                cams.forEach(cam => {
+                    const option = document.createElement("option")
+                    option.value = cam.deviceId
+                    option.text = cam.label
+                    facecamselect.add(option)
+                    if (option.faceCamId == cam.deviceId)
+                        option.selected = true;
+                })
+                facecamselect.onchange = function () {
+                    const selected = facecamselect.options[facecamselect.selectedIndex];
+                    config.faceCamId = selected.value;
+                    saveConfig(config)
+                    loadFaceCam().then(() => loadSettings())
+                }
+
+                const twitterinput = document.getElementById("twitterinput")
+                twitterinput.value = config.twitter || ""
+                twitterinput.onchange = function(e) {
+                    config.twitter = (twitterinput.value || "").replace(/^https:\/\/twitter.com\//, '').replace(/^@/, '').trim()
+                    twitterinput.value = config.twitter
+                    saveConfig(config);
+                    loadSocial();
+                }
+
+                const youtubeinput = document.getElementById("youtubeinput")
+                youtubeinput.value = config.youTube || ""
+                youtubeinput.onchange = function(e) {
+                    config.youTube = (youtubeinput.value || "").replace(/^https:\/\/youtube.com\//, '').replace(/^\//, '').trim()
+                    youtubeinput.value = config.youTube
+                    saveConfig(config);
+                    loadSocial();
+                }
+
+                const twitchinput = document.getElementById("twitchinput")
+                twitchinput.value = config.twitch || ""
+                twitchinput.onchange = function(e) {
+                    config.twitch = (twitchinput.value || "").replace(/^https:\/\/twitch.tv\//, '').replace(/^\//, '').trim()
+                    twitchinput.value = config.twitch
+                    saveConfig(config);
+                    loadSocial();
+                    loadChat();
+                }
+
+                const mixerinput = document.getElementById("mixerinput")
+                mixerinput.value = config.mixer || ""
+                mixerinput.onchange = function(e) {
+                    config.mixer = (mixerinput.value || "").replace(/^https:\/\/mixer.com\//, '').replace(/^\//, '').trim()
+                    mixerinput.value = config.mixer
+                    saveConfig(config);
+                    loadSocial();
+                    loadChat();
+                }
             }
         })()
     </script>
