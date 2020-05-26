@@ -128,6 +128,7 @@
             width: 94vw;
             height: 87vh;
             top: 1vh;
+            transition-delay: 0.2s;
         }
 
         .multi #editor {
@@ -139,6 +140,7 @@
             width: 50vw;
             height: 87vh;
             top: 1vh;
+            transition-delay: 0.3s;
         }
 
         /*
@@ -162,6 +164,7 @@
             top: 1vh;
             right: 1vw;
             opacity: 0;
+            transition-delay: 0.3s;
         }
 
         #social {
@@ -173,6 +176,7 @@
             display: flex;
             background: #615fc7;
             cursor: pointer;
+            transition-delay: 0.1s;
         }
 
         span.social {
@@ -210,7 +214,7 @@
         body.rightscene #chat {
             right: 1vw;
             width: 30vw;
-            height: 63vh;
+            height: 52vh;
         }
 
         body.rightscene.chat #editor {
@@ -277,14 +281,14 @@
 
         body.leftscene.chat #chat {
             right: 68vw;
-            height: 63vh;
+            height: 52vh;
         }
 
         /* chatscene: facecam and stream chat */
         body.chatscene #facecam {
-            bottom: 26vh;
-            right: 33vw;
-            width: 63vw;
+            bottom: 19vh;
+            right: 38vw;
+            width: 52vw;
         }
 
         body.chatscene #editor {
@@ -292,16 +296,16 @@
         }
 
         body.chatscene #chat {
-            top: 10vh;
+            top: 9vh;
             right: 4vw;
             width: 24vw;
-            height: 63vh;
+            height: 80vh;
             opacity: 100%;
         }
 
         body.chatscene #social {
             left: 4vw;
-            bottom: 14vh;
+            bottom: 9vh;
         }
     </style>
     <style id="editorstyle"></style>
@@ -618,7 +622,13 @@
                 stopStream()
                 const config = readConfig();
                 console.log(`trying webcam ${deviceId}`)
-                const constraints = { audio: false, video: { deviceId: deviceId } }
+                const constraints = {
+                    audio: false,
+                    video: {
+                        deviceId: deviceId,
+                        aspectRatio: 4/3
+                    }
+                }
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 facecam.volume = 0; // don't use sound!
                 facecam.srcObject = stream;
@@ -633,7 +643,7 @@
                 const config = readConfig();
                 const settingsclose = document.getElementById("settingsclose")
                 settingsclose.onclick = function (e) {
-                    tickEvent("streamer.settingsclose", undefined, { interactiveConsent: true})
+                    tickEvent("streamer.settingsclose", undefined, { interactiveConsent: true })
                     stopEvent(e)
                     settings.classList.add("hidden")
                 }
