@@ -3,6 +3,30 @@
     <meta charset="UTF-8">
     <title>Microsoft MakeCode Streamer</title>
     <style>
+
+/*
+  Your use of the content in the files referenced here is subject to the terms of the license at https://aka.ms/fabric-assets-license
+  Use https://uifabricicons.azurewebsites.net/
+*/
+@font-face {
+  font-family: 'FabricMDL2Icons';
+  src: url('data:application/octet-stream;base64,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') format('truetype');
+}
+
+.ms-Icon {
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  display: inline-block;
+  font-family: 'FabricMDL2Icons';
+  font-style: normal;
+  font-weight: normal;
+  speak: none;
+}
+
+.ms-Icon--Settings:before { content: "\E713"; }
+
+    </style>
+    <style>
         /* 
             Style for the background. 
             
@@ -16,7 +40,6 @@
             font-size: 70%;
             color: white;
             position: absolute;
-            z-index: -1;
             bottom: 0.5vh;
             left: 1vw;
             opacity: 65%;
@@ -47,7 +70,10 @@
             transform: rotate(180deg);
             transform-origin: 50% 50%;
         }
-
+        .ms-Icon {
+            vertical-align: middle;
+            margin-right: 0.5rem;
+        }
         /*
         Settings
         */
@@ -308,6 +334,14 @@
             <input id="twitchinput" placeholder="Twitch.tv account (/account)" />
         </div>
     </div>
+    <!-- @include tracking.html -->
+    <footer>
+        <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp; Cookies</a>|
+        <a class="item" href="https://makecode.com/termsofuse" target="_blank" rel="noopener">Terms Of Use</a>|
+        <a class="item" href="https://makecode.com/trademarks" target="_blank" rel="noopener">Trademarks</a>|
+        <span class="item">© 2020 Microsoft</span>|
+        <span id="settingsbtn" class="item" role="button"><i role="button" class="ms-Icon ms-Icon--Settings"></i>settings</span>
+    </footer>
     <script>
         (async function () {
             const body = document.body;
@@ -318,6 +352,7 @@
             const social = document.getElementById("social");
             const settings = document.getElementById("settings");
             const editorStyle = document.getElementById("editorstyle");
+            const settingsbtn = document.getElementById("settingsbtn");
             const frames = [editor, editor2];
 
             const scenes = ["leftscene", "rightscene", "chatscene"];
@@ -330,6 +365,7 @@
 
             facecam.addEventListener("pointerdown", nextScene, false);
             social.addEventListener("pointerdown", toggleChat, false);
+            settingsbtn.addEventListener("pointerdown", showSettings, false)
             initMessages();
             await loadFaceCam()
             await loadSettings()
@@ -668,13 +704,6 @@
             }
         })()
     </script>
-    <!-- @include tracking.html -->
-    <footer>
-        <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp; Cookies</a>|
-        <a class="item" href="https://makecode.com/termsofuse" target="_blank" rel="noopener"> Terms Of Use</a>|
-        <a class="item" href="https://makecode.com/trademarks" target="_blank" rel="noopener">Trademarks</a>|
-        <span class="item">© 2020 Microsoft</span>
-    </footer>
 </body>
 
 </html>
