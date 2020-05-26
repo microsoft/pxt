@@ -159,11 +159,11 @@
         */
         #chat {
             position: absolute;
-            width: 30vw;
+            width: 0;
             height: 60vh;
             top: 1vh;
             right: 1vw;
-            opacity: 0;
+            display: none;
             transition-delay: 0.3s;
         }
 
@@ -192,6 +192,7 @@
         * chat visibility
         */
         body.chat #chat {
+            display: block;
             opacity: 90%;
         }
 
@@ -208,29 +209,29 @@
 
         body.rightscene #facecam {
             right: 1vw;
-            width: 30vw;
+            width: 28vw;
         }
 
         body.rightscene #chat {
             right: 1vw;
-            width: 30vw;
-            height: 52vh;
+            width: 28vw;
+            height: 54vh;
         }
 
         body.rightscene.chat #editor {
-            width: 65vw;
+            width: 67vw;
             top: 1vh;
             height: 87vh;
         }
 
         body.rightscene.multi #editor {
-            width: 66vw;
+            width: 67vw;
         }
 
         body.rightscene.multi #editor2 {
-            width: 30vw;
-            left: 68vw;
-            height: 52vh;
+            width: 28vw;
+            left: 70vw;
+            height: 54vh;
         }
 
         /* leftscene: browser with facecam on left left */
@@ -240,8 +241,8 @@
         }
 
         body.leftscene #facecam {
-            right: 68vw;
-            width: 30vw;
+            right: 70vw;
+            width: 28vw;
         }
 
         body.leftscene #social {
@@ -254,34 +255,35 @@
         /* left+multi*/
         body.leftscene.multi #editor {
             left: 1vw;
-            width: 30vw;
-            height: 52vh;
+            width: 28vw;
+            height: 54vh;
         }
 
         body.leftscene.multi #editor2 {
-            width: 66vw;
-            left: 32vw;
+            width: 67vw;
+            left: 31vw;
         }
 
         body.leftscene.multi #facecam {
-            right: 68vw;
-            width: 30vw;
+            right: 70vw;
+            width: 28vw;
         }
 
         /** leftscene + chat **/
         body.leftscene.chat #editor {
-            left: 33vw;
-            width: 65vw;
+            left: 31vw;
+            width: 67vw;
         }
 
         body.leftscene.chat #facecam {
-            right: 68vw;
-            width: 30vw;
+            right: 70vw;
+            width: 28vw;
         }
 
         body.leftscene.chat #chat {
-            right: 68vw;
-            height: 52vh;
+            right: 70vw;
+            height: 54vh;
+            width: 28vw;
         }
 
         /* chatscene: facecam and stream chat */
@@ -292,7 +294,7 @@
         }
 
         body.chatscene #editor {
-            opacity: 0;
+            width: 0;
         }
 
         body.chatscene #chat {
