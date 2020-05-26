@@ -51,7 +51,12 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         let errorListContent;
         if (!isCollapsed) {
             if (exception) {
-                errorListContent = <div className="exceptionMessage">{pxt.Util.rlf(exception.exceptionMessage)}</div>
+                errorListContent = (
+                    <div className="exceptionMessage">
+                        <div>{pxt.Util.rlf(exception.exceptionMessage)}</div>
+                        <div>{pxt.Util.rlf(exception.exceptionStack)}</div>
+                    </div>
+                )
             } else {
                 errorListContent = (
                     <div className="ui selection list">
