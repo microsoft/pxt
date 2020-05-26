@@ -1,8 +1,4 @@
 {
-    "ev3": {
-        "name": "LEGO® MINDSTORMS® Education EV3",
-        "url": "https://makecode.mindstorms.com/beta"
-    },
     "arcade": {
         "name": "Arcade",
         "url": "https://arcade.makecode.com/beta",
@@ -21,19 +17,33 @@
             "background": "linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1) 100%)"
         }
     },
-    "adafruit": {
-        "name": "Adafruit Circuit Playground Express",
-        "url": "https://makecode.adafruit.com/beta",
-        "icon": "https://pxt.azureedge.net/blob/1215b9ef46d3e04bc9923a1a333d92db92eb5419/static/logo.square.black.svg"
-    },
     "minecraft": {
         "name": "Minecraft",
         "icon": "https://minecraft.makecode.com/favicon.ico",
-        "url": "https://minecraft.makecode.com/beta?github=1"
+        "url": "https://minecraft.makecode.com/beta?github=1",
+        "styles": {
+            "primary": "#E6EFF4",
+            "menu": "#31ae1f",
+            "background": "linear-gradient(215deg, #3C3C3C 0%, #C6C6C6 100%)"
+        }
+    },
+    "adafruit": {
+        "name": "Adafruit Circuit Playground Express",
+        "url": "https://makecode.adafruit.com/beta",
+        "icon": "https://pxt.azureedge.net/blob/1215b9ef46d3e04bc9923a1a333d92db92eb5419/static/logo.square.black.svg",
+        "styles": {
+            "primary": "#0083B7",
+            "menu": "#FB48C7",
+            "background": "linear-gradient(45deg, #1c1f2b 0%, #000 100%)" 
+        }
     },
     "maker": {
         "name": "Maker",
         "url": "https://maker.makecode.com"
+    },
+    "ev3": {
+        "name": "LEGO® MINDSTORMS® Education EV3",
+        "url": "https://makecode.mindstorms.com/beta"
     },
     "calliopemini": {
         "name": "Calliope Mini",
