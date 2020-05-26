@@ -3732,7 +3732,7 @@ export class ProjectView
         const isRTL = pxt.Util.isUserLanguageRtl();
         const showRightChevron = (this.state.collapseEditorTools || isRTL) && !(this.state.collapseEditorTools && isRTL); // Collapsed XOR RTL
         // don't show in sandbox or is blocks editor or previous editor is blocks
-        const showFileList = !sandbox
+        const showFileList = !sandbox && !inTutorial
             && !(isBlocks
                 || (pkg.mainPkg && pkg.mainPkg.config && (pkg.mainPkg.config.preferredEditor == pxt.BLOCKS_PROJECT_NAME)));
         const hasCloud = this.hasCloud();
