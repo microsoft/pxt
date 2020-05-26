@@ -325,8 +325,10 @@
                 return {
                     editor: "microbit",
                     twitter: "MsMakeCode",
-                    youTube: "MicrosoftMakeCode",
-                    mixer: "MakeCode"
+                    youTube: "",
+                    mixer: "MakeCode",
+                    faceCamId: undefined,
+                    faceCamRotate: false
                 }
             }
 
@@ -457,8 +459,9 @@
                 stopStream()
                 const config = readConfig();
                 console.log(`trying webcam ${deviceId}`)
-                const constraints = { audio: true, video: { deviceId: deviceId } }
+                const constraints = { audio: false, video: { deviceId: deviceId } }
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                facecam.volume = 0; // don't use sound!
                 facecam.srcObject = stream;
                 facecam.onloadedmetadata = (e) => facecam.play();                
                 if (config.faceCamRotate)
