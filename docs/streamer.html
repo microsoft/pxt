@@ -394,7 +394,7 @@
                 editor.src = url;
                 if (config.multiEditor) {
                     if (!editor2.parentElement)
-                        body.insertBefore(editor, editor2);
+                        body.insertBefore(editor2, editor);
                     editor2.src = url;
                 } else {
                     // remove from DOM
@@ -532,6 +532,7 @@
                         const tracks = facecam.srcObject.getVideoTracks();
                         if (tracks && tracks[0] && tracks[0].stop) tracks[0].stop();
                     }
+                    facecam.srcObject = null;
                 } catch (e) { }
             }
 
@@ -584,8 +585,8 @@
                     const selected = editorselect.options[editorselect.selectedIndex];
                     config.editor = selected.value;
                     saveConfig(config);
-                    loadEditor();
                     render()
+                    loadEditor();
                 }
 
                 const multicheckbox = document.getElementById("multicheckbox")
@@ -593,8 +594,8 @@
                 multicheckbox.onchange = function () {
                     config.multiEditor = !!multicheckbox.checked
                     saveConfig(config)
-                    loadEditor()
                     render()
+                    loadEditor()
                 }
 
                 const facecamselect = document.getElementById("facecamselect");
