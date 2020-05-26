@@ -320,6 +320,7 @@
 
         body.chatscene #editor {
             width: 0;
+            left: -5rem;
         }
 
         body.chatscene #chat {
@@ -559,9 +560,6 @@
                 stopEvent(e)
                 const config = readConfig();
                 state.chat = !state.chat && (config.mixer || config.twitch);
-                if (!state.chat && scenes[state.sceneIndex] == "chatscene") {
-                    state.sceneIndex = state.left ? 0 : 1;
-                }
                 render();
             }
 
