@@ -54,7 +54,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                 errorListContent = (
                     <div className="exceptionMessage">
                         <div>{pxt.Util.rlf(exception.exceptionMessage)}</div>
-                        <div>{pxt.Util.rlf(exception.exceptionStack)}</div>
+                        {this.generateStackTraces(exception)}
                     </div>
                 )
             } else {
@@ -112,5 +112,15 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         this.setState({
             exception
         })
+    }
+
+    private generateStackTraces(exception: pxsim.DebuggerBreakpointMessage) {
+        return (
+            <div className = "stacktrace">
+                {(exception.stackframes).map(sf =>
+                    <div>{`at  ${sf.funcInfo.functionName} (${sf.funcInfo.fileName}:${sf.funcInfo.line + 1}:${sf.funcInfo.column + 1})`}</div>)
+                }
+            </div>
+        );
     }
 }
