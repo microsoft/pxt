@@ -606,7 +606,7 @@
                     option.value = cam.deviceId
                     option.text = cam.label
                     facecamselect.add(option)
-                    if (option.faceCamId == cam.deviceId)
+                    if (config.faceCamId == cam.deviceId)
                         option.selected = true;
                 })
                 facecamselect.onchange = function () {
