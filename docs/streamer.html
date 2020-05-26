@@ -44,7 +44,7 @@
         }
 
         .rotate {
-            transform: rotate(180deg); 
+            transform: rotate(180deg);
             transform-origin: 50% 50%;
         }
 
@@ -70,6 +70,7 @@
             width: 100%;
             font-size: 90%;
         }
+
         #settings .field input[type="checkbox"] {
             width: unset;
         }
@@ -78,6 +79,7 @@
             width: 100%;
             font-size: 90%;
         }
+
         #settings #settingsclose {
             position: absolute;
             right: 2vw;
@@ -93,13 +95,22 @@
             height: 87vh;
             top: 1vh;
         }
+        .multi #editor {
+            width: 50vw;
+        }
+        #editor2 {
+            position: absolute;
+            width: 50vw;
+            height: 87vh;
+            top: 1vh;
+        }
 
         /*
             Face camera            
         */
         #facecam {
             position: absolute;
-            width: 40vw;
+            width: 30vw;
             bottom: 1.5vh;
             right: 1vw;
         }
@@ -169,6 +180,14 @@
             top: 1vh;
             height: 87vh;
         }
+        body.rightscene.multi #editor {
+            width: 66vw;
+        }
+        body.rightscene.multi #editor2 {
+            width: 30vw;
+            left: 68vw;
+            height: 52vh;
+        }
 
         /* leftscene: browser with facecam on left left */
         body.leftscene #editor {
@@ -177,8 +196,8 @@
         }
 
         body.leftscene #facecam {
-            right: 58vw;
-            width: 40vw;
+            right: 68vw;
+            width: 30vw;
         }
 
         body.leftscene #social {
@@ -186,6 +205,20 @@
             height: 5vh;
             left: 43vw;
             bottom: 1.5vh;
+        }
+        /* left+multi*/
+        body.leftscene.multi #editor {
+            left: 1vw;
+            width: 30vw;
+            height: 52vh;
+        }
+        body.leftscene.multi #editor2 {
+            width: 66vw;
+            left: 32vw;
+        }
+        body.leftscene.multi #facecam {
+            right: 68vw;
+            width: 30vw;
         }
 
         /** leftscene + chat **/
@@ -233,6 +266,7 @@
 
 <body class="rightscene chat">
     <iframe class="box" id="editor"></iframe>
+    <iframe class="box" id="editor2"></iframe>
     <iframe class="box" id="chat"></iframe>
     <video class="box" autoplay="true" id="facecam"></video>
     <div class="box" id="social"></div>
@@ -242,6 +276,10 @@
         <div class="field">
             <label for="editorselect">Choose your editor</label>
             <select id="editorselect"></select>
+        </div>
+        <div class="field">
+            <input type="checkbox" id="multicheckbox"></input>
+            <label for="multicheckbox">Multi editors</label>
         </div>
         <h2>Video</h2>
         <div class="field">
@@ -274,23 +312,25 @@
         (async function () {
             const body = document.body;
             const editor = document.getElementById("editor");
+            const editor2 = document.getElementById("editor2");
             const facecam = document.getElementById("facecam");
             const chat = document.getElementById("chat");
             const social = document.getElementById("social");
             const settings = document.getElementById("settings");
             const editorStyle = document.getElementById("editorstyle");
+            const frames = [editor, editor2];
 
             const scenes = ["leftscene", "rightscene", "chatscene"];
             const editorConfigs = await fetchJSON("/editors.json");
             const state = {
                 sceneIndex: 1,
                 left: false,
-                chat: true
+                chat: false
             }
 
             facecam.addEventListener("pointerdown", nextScene, false);
             social.addEventListener("pointerdown", toggleChat, false);
-            window.addEventListener("hashchange", loadEditor, false);
+            initMessages();
             await loadFaceCam()
             await loadSettings()
             load();
@@ -315,13 +355,14 @@
                 try {
                     const cfg = JSON.parse(localStorage["streamer.config"]);
                     return cfg;
-                } catch (e) { 
+                } catch (e) {
                     console.log(e)
                 }
 
                 showSettings()
                 return {
                     editor: "microbit",
+                    multiEditor: false,
                     twitter: "MsMakeCode",
                     youTube: "",
                     mixer: "MakeCode",
@@ -337,19 +378,35 @@
             }
 
             function render() {
-                body.className = `${scenes[state.sceneIndex]} ${state.chat ? "chat" : ""}`
+                const config = readConfig();
+                body.className = `${scenes[state.sceneIndex]} ${state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""}`
             }
 
             function loadEditor() {
                 const config = readConfig();
                 const hash = window.location.hash.substr(1);
+
+                // update first editor
                 const editorConfig = editorConfigs[hash] || editorConfigs[config.editor] || editorConfigs["microbit"]
-                editor.src = `${editorConfig.url}?editorLayout=ide&nosandbox=1`
+                let url = `${editorConfig.url}?editorLayout=ide&nosandbox=1`;
+                if (config.multiEditor)
+                    url += `&nestededitorsim=1`;
+                editor.src = url;
+                if (config.multiEditor) {
+                    if (!editor2.parentElement)
+                        body.insertBefore(editor, editor2);
+                    editor2.src = url;
+                } else {
+                    // remove from DOM
+                    editor2.remove();
+                }
+
+                // update page style
                 let css = "";
                 const styles = editorConfig.styles;
                 if (styles) {
-                    css = 
-`body {
+                    css =
+                        `body {
     background: ${styles.background};
 }
 .box {
@@ -357,17 +414,16 @@
 }`
                 } else {
                     css =
-`body {
+                        `body {
     background: rgb(99, 93, 198);
     background: linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1) 100%);
 }
 .box {
     border-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
-}`                    
+}`
                 }
                 editorStyle.innerText = ""
                 editorStyle.append(document.createTextNode(css));
-                saveConfig(config);
             }
 
             function stopEvent(e) {
@@ -377,7 +433,8 @@
 
             function toggleChat(e) {
                 stopEvent(e)
-                state.chat = !state.chat;
+                const config = readConfig();
+                state.chat = !state.chat && (config.mixer || config.twitch);
                 if (!state.chat && scenes[state.sceneIndex] == "chatscene") {
                     state.sceneIndex = state.left ? 0 : 1;
                 }
@@ -408,6 +465,9 @@
                     addSocial(`mixer.com/${config.mixer}`);
                 else if (config.twitch)
                     addSocial(`twitch.tv/${config.twitch}`);
+
+                if (!config.mixer && !config.twitch)
+                    state.chat = false;
 
                 function addSocial(text) {
                     const a = document.createElement("span");
@@ -475,6 +535,19 @@
                 } catch (e) { }
             }
 
+            function initMessages() {
+                window.onmessage = function (msg) {
+                    const data = msg.data;
+                    const source = msg.source;
+                    if (!!data.broadcast) {
+                        data.outer = true;
+                        frames
+                            .filter(ifrm => ifrm.contentWindow !== source)
+                            .forEach((ifrm) => ifrm.contentWindow.postMessage(data, "*"));
+                    }
+                };
+            }
+
             async function startStream(deviceId) {
                 stopStream()
                 const config = readConfig();
@@ -483,7 +556,7 @@
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 facecam.volume = 0; // don't use sound!
                 facecam.srcObject = stream;
-                facecam.onloadedmetadata = (e) => facecam.play();                
+                facecam.onloadedmetadata = (e) => facecam.play();
                 if (config.faceCamRotate)
                     facecam.classList.add("rotate")
                 else
@@ -493,7 +566,7 @@
             async function loadSettings() {
                 const config = readConfig();
                 const settingsclose = document.getElementById("settingsclose")
-                settingsclose.onclick = function(e) {
+                settingsclose.onclick = function (e) {
                     stopEvent(e)
                     settings.classList.add("hidden")
                 }
@@ -512,6 +585,16 @@
                     config.editor = selected.value;
                     saveConfig(config);
                     loadEditor();
+                    render()
+                }
+
+                const multicheckbox = document.getElementById("multicheckbox")
+                multicheckbox.checked = !!config.multiEditor
+                multicheckbox.onchange = function () {
+                    config.multiEditor = !!multicheckbox.checked
+                    saveConfig(config)
+                    loadEditor()
+                    render()
                 }
 
                 const facecamselect = document.getElementById("facecamselect");
@@ -542,38 +625,42 @@
 
                 const twitterinput = document.getElementById("twitterinput")
                 twitterinput.value = config.twitter || ""
-                twitterinput.onchange = function(e) {
+                twitterinput.onchange = function (e) {
                     config.twitter = (twitterinput.value || "").replace(/^https:\/\/twitter.com\//, '').replace(/^@/, '').trim()
                     twitterinput.value = config.twitter
                     saveConfig(config);
-                    loadSocial();
+                    loadSocial()
+                    render()
                 }
 
                 const youtubeinput = document.getElementById("youtubeinput")
                 youtubeinput.value = config.youTube || ""
-                youtubeinput.onchange = function(e) {
+                youtubeinput.onchange = function (e) {
                     config.youTube = (youtubeinput.value || "").replace(/^https:\/\/youtube.com\//, '').replace(/^\//, '').trim()
                     youtubeinput.value = config.youTube
                     saveConfig(config);
                     loadSocial();
+                    render()
                 }
 
                 const twitchinput = document.getElementById("twitchinput")
                 twitchinput.value = config.twitch || ""
-                twitchinput.onchange = function(e) {
+                twitchinput.onchange = function (e) {
                     config.twitch = (twitchinput.value || "").replace(/^https:\/\/twitch.tv\//, '').replace(/^\//, '').trim()
                     twitchinput.value = config.twitch
                     saveConfig(config);
                     loadSocial();
+                    render()
                     loadChat();
                 }
 
                 const mixerinput = document.getElementById("mixerinput")
                 mixerinput.value = config.mixer || ""
-                mixerinput.onchange = function(e) {
+                mixerinput.onchange = function (e) {
                     config.mixer = (mixerinput.value || "").replace(/^https:\/\/mixer.com\//, '').replace(/^\//, '').trim()
                     mixerinput.value = config.mixer
                     saveConfig(config);
+                    render()
                     loadSocial();
                     loadChat();
                 }
