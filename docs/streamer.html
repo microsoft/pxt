@@ -42,7 +42,8 @@
             position: absolute;
             bottom: 0.5vh;
             left: 1vw;
-            opacity: 65%;
+            opacity: 90%;
+            text-shadow: black 1px 1px;            
         }
 
         footer>a {
@@ -73,6 +74,9 @@
         .ms-Icon {
             vertical-align: middle;
             margin-right: 0.2rem;
+        }
+        .item {
+            cursor: pointer;
         }
         /*
         Settings
@@ -447,7 +451,11 @@
 }
 .box {
     border-color: ${styles.menu};
-}`
+}
+#social {
+    background: ${styles.primary};
+}
+`
                 } else {
                     css =
                         `body {
@@ -456,7 +464,11 @@
 }
 .box {
     border-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
-}`
+}
+#social {
+    background: #615fc7;
+}
+`
                 }
                 editorStyle.innerText = ""
                 editorStyle.append(document.createTextNode(css));
