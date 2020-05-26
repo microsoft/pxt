@@ -118,7 +118,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         return <div>
             {(exception.stackframes || []).map(sf =>
                 <div className="stackframe">
-                    {pxt.Util.rlf("at {0} ({1}:{2}:{3})", sf.funcInfo.functionName, sf.funcInfo.fileName, sf.funcInfo.line + 1, sf.funcInfo.column + 1)}
+                    {lf("at {0} ({1}:{2}:{3})", sf.funcInfo.functionName, sf.funcInfo.fileName, sf.funcInfo.line + 1, sf.funcInfo.column + 1)}
                 </div>)
             }
         </div>;
