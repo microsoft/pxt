@@ -51,7 +51,12 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         let errorListContent;
         if (!isCollapsed) {
             if (exception) {
-                errorListContent = <div className="exceptionMessage">{pxt.Util.rlf(exception.exceptionMessage)}</div>
+                errorListContent = (
+                    <div>
+                        <div className="exceptionMessage">{pxt.Util.rlf(exception.exceptionMessage)}</div>
+                        {this.generateStackTraces(exception)}
+                    </div>
+                )
             } else {
                 errorListContent = (
                     <div className="ui selection list">
@@ -107,5 +112,15 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         this.setState({
             exception
         })
+    }
+
+    private generateStackTraces(exception: pxsim.DebuggerBreakpointMessage) {
+        return <div>
+            {(exception.stackframes || []).map(sf =>
+                <div className="stackframe">
+                    {lf("at {0} ({1}:{2}:{3})", sf.funcInfo.functionName, sf.funcInfo.fileName, sf.funcInfo.line + 1, sf.funcInfo.column + 1)}
+                </div>)
+            }
+        </div>;
     }
 }
