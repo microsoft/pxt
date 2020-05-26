@@ -5,7 +5,12 @@
     },
     "arcade": {
         "name": "Arcade",
-        "url": "https://arcade.makecode.com/beta"
+        "url": "https://arcade.makecode.com/beta",
+        "styles": {
+            "primary": "#F76820",
+            "menu": "#F76820",
+            "background": "linear-gradient(45deg, #F76820 0%, #FEF3E0 100%)"      
+        }
     },
     "microbit": {
         "name": "micro:bit",
