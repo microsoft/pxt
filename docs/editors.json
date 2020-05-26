@@ -9,7 +9,12 @@
     },
     "microbit": {
         "name": "micro:bit",
-        "url": "https://makecode.microbit.org/beta"
+        "url": "https://makecode.microbit.org/beta",
+        "styles": {
+            "primary": "#6633cc",
+            "menu": "#3454D1",
+            "background": "linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1) 100%)"
+        }
     },
     "adafruit": {
         "name": "Adafruit Circuit Playground Express",

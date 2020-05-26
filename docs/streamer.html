@@ -1,9 +1,7 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
-
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>MakeCode Streamer</title>
+    <title>Microsoft MakeCode Streamer</title>
     <style>
         /* 
             Style for the background. 
@@ -12,8 +10,6 @@
         */
         body {
             font-family: monospace;
-            background: rgb(99, 93, 198);
-            background: linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1) 100%);
         }
 
         footer {
@@ -38,7 +34,7 @@
         */
         .box {
             border: 0.5rem solid;
-            border-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
+            border-radius: 0.5rem;
 
             transition: left 0.5s, right 0.5s, bottom 0.5s, top 0.5s, width 0.5s, height 0.5s, opacity 1s;
         }
@@ -232,6 +228,7 @@
             bottom: 14vh;
         }
     </style>
+    <style id="editorstyle"></style>
 </head>
 
 <body class="rightscene chat">
@@ -281,6 +278,7 @@
             const chat = document.getElementById("chat");
             const social = document.getElementById("social");
             const settings = document.getElementById("settings");
+            const editorStyle = document.getElementById("editorstyle");
 
             const scenes = ["leftscene", "rightscene", "chatscene"];
             const editorConfigs = await fetchJSON("/editors.json");
@@ -347,6 +345,28 @@
                 const hash = window.location.hash.substr(1);
                 const editorConfig = editorConfigs[hash] || editorConfigs[config.editor] || editorConfigs["microbit"]
                 editor.src = `${editorConfig.url}?editorLayout=ide&nosandbox=1`
+                let css = "";
+                const styles = editorConfig.styles;
+                if (styles) {
+                    css = 
+`body {
+    background: ${styles.background};
+}
+.box {
+    border-color: ${styles.menu};
+}`
+                } else {
+                    css =
+`body {
+    background: rgb(99, 93, 198);
+    background: linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1) 100%);
+}
+.box {
+    border-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
+}`                    
+                }
+                editorStyle.innerText = ""
+                editorStyle.append(document.createTextNode(css));
                 saveConfig(config);
             }
 
