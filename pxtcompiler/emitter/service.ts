@@ -105,8 +105,8 @@ namespace ts.pxtc {
             }
             case ts.SyntaxKind.TypeReference: {
                 let t = s as ts.TypeReferenceNode
-                let nm = t.typeName && t.typeName.getText ? t.typeName.getText() : t.typeName;
-                return `${nm}`
+                let nm = t.typeName && t.typeName.getText ? t.typeName.getText() : "";
+                return nm
             }
             case ts.SyntaxKind.AnyKeyword:
                 return "any"
@@ -325,16 +325,25 @@ namespace ts.pxtc {
                     }
                     if (minVal) options['min'] = { value: minVal };
                     if (maxVal) options['max'] = { value: maxVal };
-                    const pyTypeString = p.type ? emitPyTypeFromTypeNode(p.type) : emitPyTypeFromType(paramType)
+                    const pyTypeString = (p.type && emitPyTypeFromTypeNode(p.type))
+                        || (paramType && emitPyTypeFromType(paramType))
+                        || "unknown";
+                    if (pyTypeString === "unknown" || pyTypeString === "undefined") {
+                        // TODO
+                        console.error("Unable to get py type string for: " + n)
+                    }
+                    const initializer = p.initializer ? p.initializer.getText() :
+                        getExplicitDefault(attributes, n) ||
+                        (p.questionToken ? "undefined" : undefined)
+                    if (n === "myNum") {
+                        console.error("psst!")
+                    }
                     return {
                         name: n,
                         description: desc,
                         type: typeOf(p.type, p),
                         pyTypeString,
-                        initializer:
-                            p.initializer ? p.initializer.getText() :
-                                getExplicitDefault(attributes, n) ||
-                                (p.questionToken ? "undefined" : undefined),
+                        initializer,
                         default: attributes.paramDefl[n],
                         properties: props,
                         handlerParameters: parameters,

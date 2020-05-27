@@ -45,6 +45,10 @@ namespace ts.pxtc.service {
             ).join(", ");
         }
 
+        if (sym.pyQName === "fib") {
+            console.error("yoo-hoo!")
+        }
+
         let retType = sym.retType || "void";
 
         if (python) {
