@@ -264,6 +264,11 @@
             left: 70vw;
             height: 54vh;
         }
+        body.rightscene.multi.hardware #hardwarecam {
+            right: 1vw;
+            width: 22vw;
+            bottom: 24vw;
+        }
 
         /* leftscene: browser with facecam on left left */
         body.leftscene #editor {
@@ -306,6 +311,11 @@
             right: 70vw;
             width: 28vw;
         }
+        body.leftscene.multi.hardware #hardwarecam {
+            right: 76vw;
+            width: 22vw;
+            bottom: 24vw;
+        }
 
         /** leftscene + chat **/
         body.leftscene.chat #editor {
@@ -332,8 +342,10 @@
         }
 
         body.chatscene #editor {
-            width: 0;
-            left: -5rem;
+            left: -150rem;
+        }
+        body.chatscene #editor2 {
+            right: -150rem;
         }
 
         body.chatscene #chat {
