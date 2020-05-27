@@ -449,6 +449,7 @@
             const editor = document.getElementById("editor");
             const editor2 = document.getElementById("editor2");
             const facecam = document.getElementById("facecam");
+            const hardwarecam = document.getElementById("hardwarecam");
             const chat = document.getElementById("chat");
             const social = document.getElementById("social");
             const banner = document.getElementById("banner");
@@ -719,6 +720,7 @@
                     try {
                         startStream(facecam, config.faceCamId, config.faceCamRotate);
                         state.faceCamError = false;
+                        console.log(`face cam started`)
                         return; // success!
                     }
                     catch (e) {
@@ -726,6 +728,7 @@
                         stopStream(facecam);
                     }
                 } else stopStream(facecam);
+                console.log(`scanning for face cam`)
                 // stop hardware cam
                 stopStream(hardwarecam);
                 // try out all webcams
@@ -736,6 +739,7 @@
                         config.faceCamId = cam.deviceId;
                         saveConfig(config)
                         state.faceCamError = false;
+                        console.log(`face cam started`)
                         return; // success!
                     } catch (e) {
                         console.log(`could not start web cam`, e)
@@ -743,6 +747,7 @@
                     }
                 }
                 state.faceCamError = true;
+                console.log(`face cam failed`)
             }
 
             async function loadHardwareCam() {
@@ -752,6 +757,7 @@
                     try {
                         startStream(hardwarecam, config.hardwareCamId, config.hardwareCamRotate);
                         state.hardwareCamError = false;
+                        console.log(`hardware cam started`)
                         return; // success!
                     }
                     catch (e) {
