@@ -647,7 +647,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const haspull = pullStatus == workspace.PullStatus.GotChanges;
         const githubId = this.parsedRepoId()
         const master = githubId.tag == "master";
-        const user = this.getData("github:user");
+        const user = this.getData("github:user") as pxt.editor.UserInfo;
 
         // don't use gs.prUrl, as it gets cleared often
         const url = `https://github.com/${githubId.fullName}${master ? "" : `/tree/${githubId.tag}`}`;
@@ -656,7 +656,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const pr: pxt.github.PullRequest = this.getData("pkg-git-pr:" + header.id)
         const showPr = pr !== null && (gs.isFork || !master);
         const showPrResolved = showPr && pr && pr.number > 0;
-        const showPrCreate = showPr && pr && pr.number <= 0
+        const showPrCreate = showPr && pr && pr.number <= 0;
+        const isOwner = user && user.id === githubId.owner;
         return (
             <div id="githubArea">
                 <div id="serialHeader" className="ui serialHeader">
@@ -668,13 +669,10 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                     <div className="rightHeader">
                         <sui.Button icon={`${hasissue ? "exclamation circle" : haspull ? "long arrow alternate down" : "check"}`}
                             className={haspull === true ? "positive" : ""}
-                            text={lf("Pull changes")} textClass={"landscape only"} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
-                        <div className="ui buttons">
-                            <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
-                            <sui.DropdownMenu className="floating button" icon="dropdown">
-                                <sui.Link className="ui item button" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" text={lf("Invite collaborators")} title={lf("Invite others to contributes to this GitHub repository.")} onKeyDown={sui.fireClickOnEnter} />
-                            </sui.DropdownMenu>
-                        </div>
+                            text={lf("Pull changes")} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
+                        {!isBlocksMode && isOwner &&
+                            <sui.Link className="ui item button desktop only" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite others to contributes to this GitHub repository.")} />}
+                        <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
                 <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
