@@ -88,6 +88,12 @@
         .item {
             cursor: pointer;
         }
+        .error {
+            border: solid 1px red;
+            margin: 1rem 0rem 1rem 0rem;
+            padding: 1rem;
+            background: white;
+        }
         #toolbox > button {
             height: 2rem;
             width: 2rem;
@@ -253,7 +259,7 @@
         body.rightscene.hardware #hardwarecam {
             right: 1vw;
             width: 22vw;
-            bottom: 44vw;
+            bottom: 38vw;
         }
 
         body.rightscene.multi #editor {
@@ -284,6 +290,7 @@
 
         body.leftscene #hardwarecam {
             bottom: 9vh;
+            right: 1vw;
         }
 
         body.leftscene #social {
@@ -402,6 +409,7 @@
         <div class="field">
             <label for="facecamselect">Choose a Face Webcam</label>
             <select id="facecamselect"></select>
+            <div class="error hidden" id="facecamerror">Connection error. Make sure the WebCam is not beging used by another application.</div>
         </div>
         <div class="field">
             <input type="checkbox" id="facerotatecameracheckbox"></input>
@@ -410,6 +418,7 @@
         <div class="field">
             <label for="hardwarecamselect">Choose a Hardware Webcam</label>
             <select id="hardwarecamselect"></select>
+            <div class="error hidden" id="hardwarecamerror">Connection error. Make sure the WebCam is not beging used by another application.</div>
         </div>
         <div class="field">
             <input type="checkbox" id="hardwarerotatecameracheckbox"></input>
@@ -446,6 +455,7 @@
             const editor = document.getElementById("editor");
             const editor2 = document.getElementById("editor2");
             const facecam = document.getElementById("facecam");
+            const hardwarecam = document.getElementById("hardwarecam");
             const chat = document.getElementById("chat");
             const social = document.getElementById("social");
             const banner = document.getElementById("banner");
@@ -483,7 +493,8 @@
                 localStorage["streamer.config"] = JSON.stringify(config)
             }
 
-            function showSettings() {
+            async function showSettings() {
+                await loadSettings()
                 settings.classList.remove("hidden")
             }
 
@@ -496,15 +507,11 @@
                 }
 
                 const cfg = {
-                    editor: "",
+                    editor: "microbit",
                     multiEditor: false,
                     twitter: "",
                     youTube: "",
-                    mixer: "",
-                    faceCamId: undefined,
-                    faceCamRotate: false,
-                    hardwareCamId: undefined,
-                    hardwareCamRotate: false
+                    mixer: ""
                 }
                 saveConfig(cfg)
                 return cfg;
@@ -519,6 +526,8 @@
             function render() {
                 const config = readConfig();
                 body.className = `${scenes[state.sceneIndex]} ${state.hardware ? "hardware" : state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""}`
+                if (!config.faceCamId || state.faceCamError)
+                    showSettings();
             }
 
             function loadToolbox() {
@@ -714,26 +723,22 @@
                 const config = readConfig();
                 if (config.faceCamId) {
                     try {
-                        startStream(facecam, config.faceCamId, config.faceCamRotate);
+                        state.faceCamError = false;
+                        await startStream(facecam, config.faceCamId, config.faceCamRotate);
+                        console.log(`face cam started`)
                         return; // success!
                     }
                     catch (e) {
-                        console.log(`could not start previous web cam`, e)
-                    }
-                } else stopStream(facecam);
-                // try out all webcams
-                const cams = await listCameras()
-                for (const cam of cams) {
-                    try {
-                        await startStream(facecam, cam.deviceId, config.faceCamRotate);
-                        config.faceCamId = cam.deviceId;
+                        stopStream(facecam);
+                        state.faceCamError = true;
                         saveConfig(config)
-                        return; // success!
-                    } catch (e) {
-                        console.log(`could not start web cam`, e)
+                        console.log(`could not start face cam`, e)
+                        render()
                     }
+                } else {
+                    state.faceCamError = true;
+                    stopStream(facecam);
                 }
-                // no web cam available
             }
 
             async function loadHardwareCam() {
@@ -741,13 +746,22 @@
                 const config = readConfig();
                 if (config.hardwareCamId) {
                     try {
-                        startStream(hardwarecam, config.hardwareCamId, config.hardwareCamRotate);
+                        state.hardwareCamError = false;
+                        await startStream(hardwarecam, config.hardwareCamId, config.hardwareCamRotate);
+                        console.log(`hardware cam started`)
                         return; // success!
                     }
                     catch (e) {
+                        stopStream(hardwarecam)
+                        state.hardwareCamError = true;
+                        saveConfig(config)
                         console.log(`could not start web cam`, e)
+                        render()
                     }
-                } else stopStream(hardwarecam)
+                } else {
+                    state.hardwareCamError = false
+                    stopStream(hardwarecam)
+                }
             }
 
 
@@ -856,6 +870,11 @@
                     saveConfig(config)
                     loadFaceCam().then(() => loadSettings())
                 }
+                const facecamerror = document.getElementById("facecamerror")
+                if (config.faceCamId && state.faceCamError)
+                    facecamerror.classList.remove("hidden")
+                else
+                    facecamerror.classList.add("hidden")
 
                 const hardwarecamselect = document.getElementById("hardwarecamselect");
                 hardwarecamselect.innerHTML = "" // remove all web cams
@@ -887,6 +906,11 @@
                     saveConfig(config)
                     loadHardwareCam().then(() => loadSettings())
                 }
+                const hardwarecamerror = document.getElementById("hardwarecamerror")
+                if (config.hardwareCamId && state.hardwareCamError)
+                    hardwarecamerror.classList.remove("hidden")
+                else
+                    hardwarecamerror.classList.add("hidden")
 
                 const twitterinput = document.getElementById("twitterinput")
                 twitterinput.value = config.twitter || ""
