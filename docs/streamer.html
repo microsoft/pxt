@@ -464,10 +464,10 @@
             }
 
             initMessages();
-            await loadFaceCam()
-            await loadHardwareCam()
             await loadSettings()
             load();
+            await loadFaceCam()
+            await loadHardwareCam()
             tickEvent("streamer.load")
 
             function load() {
@@ -495,9 +495,8 @@
                     console.log(e)
                 }
 
-                showSettings()
-                return {
-                    editor: "microbit",
+                const cfg = {
+                    editor: "",
                     multiEditor: false,
                     twitter: "",
                     youTube: "",
@@ -507,6 +506,8 @@
                     hardwareCamId: undefined,
                     hardwareCamRotate: false
                 }
+                saveConfig(cfg)
+                return cfg;
             }
 
             async function fetchJSON(url) {
@@ -552,10 +553,14 @@
 
             function loadEditor() {
                 const config = readConfig();
-                const hash = window.location.hash.substr(1);
-
                 // update first editor
-                const editorConfig = editorConfigs[hash] || editorConfigs[config.editor] || editorConfigs["microbit"]
+                const editorConfig = editorConfigs[config.editor];
+                if (!editorConfig) {
+                    showSettings();
+                    loadStyle();
+                    return;
+                }
+
                 let url = `${editorConfig.url}?editorLayout=ide&nosandbox=1`;
                 if (config.multiEditor)
                     url += `&nestededitorsim=1`;
@@ -572,6 +577,42 @@
                 // update page style
                 let css = "";
                 const styles = editorConfig.styles;
+                if (styles) {
+                    css =
+                        `body {
+    background: ${styles.background};
+}
+.box {
+    border-color: ${styles.menu};
+}
+#social {
+    background: ${styles.primary};
+}
+`
+                } else {
+                    css =
+                        `body {
+    background: rgb(99, 93, 198);
+    background: linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1) 100%);
+}
+.box {
+    border-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
+}
+#social {
+    background: #615fc7;
+}
+`
+                }
+                editorStyle.innerText = ""
+                editorStyle.append(document.createTextNode(css));
+            }
+
+            function loadStyle() {
+                const config = readConfig();
+                const editorConfig = editorConfigs[config.editor];
+                // update page style
+                let css = "";
+                const styles = editorConfig && editorConfig.styles;
                 if (styles) {
                     css =
                         `body {
