@@ -493,8 +493,8 @@
                 localStorage["streamer.config"] = JSON.stringify(config)
             }
 
-            function showSettings() {
-                loadSettings()
+            async function showSettings() {
+                await loadSettings()
                 settings.classList.remove("hidden")
             }
 
