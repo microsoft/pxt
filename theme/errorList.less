@@ -26,18 +26,32 @@
             margin-left: 1em;
         }
 
-        .toggleButton {
+        .cornerIcons {
             float: right;
-            cursor: pointer;
-            position: relative;
-            vertical-align: middle;
 
-            i {
-                font-size: 1.3em;
+            .debugWrapper {
+                display: inline-block;
+                vertical-align: middle;
+                .debug-button {
+                    &:not(:hover) {
+                        opacity: 0.5;
+                    }
+                }
             }
 
-            i:not(:hover) {
-                opacity: 0.5;
+            .toggleButton {
+                float: right;
+                cursor: pointer;
+                position: relative;
+                vertical-align: middle;
+
+                i {
+                    font-size: 1.3em;
+                }
+
+                i:not(:hover) {
+                    opacity: 0.5;
+                }
             }
         }
     }
@@ -75,11 +89,15 @@
         .exceptionMessage {
             padding-left: 1em;
             padding-top: 0.5em;
+            padding-bottom: 0.5em;
         }
 
-        .stackframe {
-            padding-left: 2em;
-            padding-top: 0.25em;
+        .ui.selection.list.exception {
+                margin-top: 0;
+            .stackframe.item {
+                padding-left: 2em;
+                padding-top: 0.25em;
+            }
         }
     }
 }

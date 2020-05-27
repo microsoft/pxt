@@ -75,8 +75,11 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                 <div className="errorListHeader" role="button" onClick={this.onCollapseClick}>
                     <h4>{lf("Problems")}</h4>
                     <div className="ui red circular label countBubble">{exception ? 1 : errors.length}</div>
-                    <div className="toggleButton"><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`} onClick={this.onCollapseClick} /></div>
-                </div>
+                    <div className="cornerIcons">
+                        {exception && <div className="dubugWrapper"><sui.Icon className={`debug-button`} icon="icon bug"/></div>}
+                        <div className="toggleButton"><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`} onClick={this.onCollapseClick} /></div>
+                    </div>
+                    </div>
                 {!isCollapsed && <div className="errorListInner">{errorListContent}</div>}
             </div>
         )
@@ -115,9 +118,9 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     }
 
     private generateStackTraces(exception: pxsim.DebuggerBreakpointMessage) {
-        return <div>
+        return <div className="ui selection list exception">
             {(exception.stackframes || []).map(sf =>
-                <div className="stackframe">
+                <div className="stackframe item">
                     {lf("at {0} ({1}:{2}:{3})", sf.funcInfo.functionName, sf.funcInfo.fileName, sf.funcInfo.line + 1, sf.funcInfo.column + 1)}
                 </div>)
             }
