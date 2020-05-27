@@ -673,7 +673,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                         <div className="ui buttons">
                             <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
                             {!isBlocksMode && isOwner &&
-                                <sui.Link className="ui item button" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" text={lf("Invite collaborators")} title={lf("Invite others to contributes to this GitHub repository.")} />}
+                                <sui.Link className="ui item button desktop only" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite others to contributes to this GitHub repository.")} />}
                         </div>
                     </div>
                 </div>
