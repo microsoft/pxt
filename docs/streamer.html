@@ -716,12 +716,16 @@
                 if (config.faceCamId) {
                     try {
                         startStream(facecam, config.faceCamId, config.faceCamRotate);
+                        state.faceCamError = false;
                         return; // success!
                     }
                     catch (e) {
                         console.log(`could not start previous web cam`, e)
+                        stopStream(facecam);
                     }
                 } else stopStream(facecam);
+                // stop hardware cam
+                stopStream(hardwarecam);
                 // try out all webcams
                 const cams = await listCameras()
                 for (const cam of cams) {
@@ -729,12 +733,14 @@
                         await startStream(facecam, cam.deviceId, config.faceCamRotate);
                         config.faceCamId = cam.deviceId;
                         saveConfig(config)
+                        state.faceCamError = false;
                         return; // success!
                     } catch (e) {
                         console.log(`could not start web cam`, e)
+                        stopStream(facecam);
                     }
                 }
-                // no web cam available
+                state.faceCamError = true;
             }
 
             async function loadHardwareCam() {
@@ -743,12 +749,18 @@
                 if (config.hardwareCamId) {
                     try {
                         startStream(hardwarecam, config.hardwareCamId, config.hardwareCamRotate);
+                        state.hardwareCamError = false;
                         return; // success!
                     }
                     catch (e) {
+                        state.hardwareCamError = true;
                         console.log(`could not start web cam`, e)
+                        stopStream(hardwarecam)
                     }
-                } else stopStream(hardwarecam)
+                } else {
+                    stopStream(hardwarecam)
+                    state.hardwareCamError = false
+                }
             }
 
 
