@@ -88,7 +88,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
     }
 
     renderCore() {
-        const { parent, simSerialActive, devSerialActive } = this.props;
+        const { collapsed, devSerialActive, parent, simSerialActive } = this.props;
 
         const parentState = parent.state;
         if (!parentState.currFile || parentState.home) return <div />
@@ -128,7 +128,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const fullscreenTooltip = isFullscreen ? lf("Exit fullscreen mode") : lf("Launch in fullscreen");
         const muteTooltip = isMuted ? lf("Unmute audio") : lf("Mute audio");
         const screenshotTooltip = targetTheme.simScreenshotKey ? lf("Take Screenshot (shortcut {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
-        const collapseIconTooltip = this.props.collapsed ? lf("Show the simulator") : lf("Hide the simulator");
+        const collapseIconTooltip = collapsed ? lf("Show the simulator") : lf("Hide the simulator");
         const simSerialTooltip = lf("Open simulator console");
         const devSerialTooltip = lf("Open device console");
 
@@ -143,7 +143,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
                 {run && debug && <sui.Button disabled={!debugBtnEnabled} key='debugbtn' className={`debug-button ${debugging ? "orange" : ""}`} icon="icon bug" title={debugTooltip} onClick={this.toggleDebug} />}
                 {collapse && <sui.Button
                     className={`expand-button portrait only editortools-btn hidefullscreen`}
-                    icon={`${this.props.collapsed ? 'play' : 'stop'}`}
+                    icon={`${collapsed ? 'play' : 'stop'}`}
                     title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse}
                 />}
             </div>
