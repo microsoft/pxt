@@ -833,6 +833,9 @@
                     const selected = hardwarecamselect.options[hardwarecamselect.selectedIndex];
                     config.hardwareCamId = selected.value;
                     saveConfig(config)
+                    state.hardware = !!config.hardwareCamId
+                    loadToolbox()
+                    render()
                     loadHardwareCam().then(() => loadSettings())
                 }
                 const hardwarerotatecheckbox = document.getElementById("hardwarerotatecameracheckbox")
