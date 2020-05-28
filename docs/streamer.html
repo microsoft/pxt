@@ -1020,7 +1020,7 @@ background: #615fc7;
         cams.forEach(cam => {
             const option = document.createElement("option")
             option.value = cam.deviceId
-            option.text = cam.label
+            option.text = cam.label || `camera ${cam.deviceId}`
             facecamselect.add(option)
             if (config.faceCamId == cam.deviceId)
                 option.selected = true;
@@ -1055,7 +1055,7 @@ background: #615fc7;
         cams.forEach(cam => {
             const option = document.createElement("option")
             option.value = cam.deviceId
-            option.text = cam.label
+            option.text = cam.label || `camera ${cam.deviceId}`
             hardwarecamselect.add(option)
             if (config.hardwareCamId == cam.deviceId)
                 option.selected = true;
