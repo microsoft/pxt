@@ -131,6 +131,8 @@ namespace pxsim {
     }
     export interface SimulatorI2CMessage extends SimulatorMessage {
         type: "i2c";
+        broadcast: true;
+        address: number;
         data: Uint8Array;
     }
 
