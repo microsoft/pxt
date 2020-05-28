@@ -418,7 +418,7 @@ namespace pxt.py {
     }
     export interface NameConstant extends Expr {
         kind: "NameConstant";
-        value: boolean | undefined; // undefined=None, True, False
+        value: boolean | null; // null=None, True, False
     }
     export interface Ellipsis extends Expr {
         kind: "Ellipsis";

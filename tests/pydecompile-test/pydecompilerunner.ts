@@ -85,7 +85,7 @@ function pydecompileTestCoreAsync(tsFilename: string, baselineFile: string) {
         const tsMainRaw = fs.readFileSync(tsFilename, "utf8").replace(/\r\n/g, "\n");
         const [tsMain, compareOpts] = util.getAndStripComparisonOptions(tsMainRaw, false)
 
-        return util.ts2pyAsync(tsMain, testBlocksDir, tsFilename)
+        return util.ts2pyAsync(tsMain, testBlocksDir, false, tsFilename)
             .then(decompiled => {
                 const outFile = path.join(util.replaceFileExtension(baselineFile, ".local.py"));
 
