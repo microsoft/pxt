@@ -43,13 +43,18 @@
             font-family: monospace;
             overflow: hidden;
         }
+        .container {
+            padding-top: 56.25%;
+            position: relative;
+            width: 100%;            
+        }
 
         footer {
             font-size: 70%;
             color: white;
             position: absolute;
-            bottom: 0.5vh;
-            left: 1vw;
+            bottom: 0.5%;
+            left: 1%;
             opacity: 90%;
             text-shadow: black 1px 1px;
         }
@@ -117,17 +122,17 @@
         */
         #settings {
             position: absolute;
-            left: 16vw;
-            top: 16vh;
-            width: 58vw;
-            height: 58vh;
+            left: 16%;
+            top: 16%;
+            width: 58%;
+            height: 58%;
             background: #ccc;
-            padding: 5vh 5vw 5vh 5vw;
+            padding: 5% 5% 5% 5%;
             overflow-y: auto;
         }
 
         #settings .field {
-            padding: 1vh 0 1vh 0;
+            padding: 1% 0 1% 0;
         }
 
         #settings .field input {
@@ -146,8 +151,8 @@
 
         #settings #settingsclose {
             position: absolute;
-            right: 2vw;
-            top: 2vw;
+            right: 2%;
+            top: 2%;
         }
 
         /*
@@ -155,21 +160,21 @@
         */
         #editor {
             position: absolute;
-            width: 94vw;
-            height: 87vh;
-            top: 1vh;
+            width: 94%;
+            height: 87%;
+            top: 1%;
             transition-delay: 0.2s;
         }
 
         .multi #editor {
-            width: 50vw;
+            width: 50%;
         }
 
         #editor2 {
             position: absolute;
-            width: 50vw;
-            height: 87vh;
-            top: 1vh;
+            width: 50%;
+            height: 87%;
+            top: 1%;
             transition-delay: 0.3s;
         }
 
@@ -178,9 +183,9 @@
         */
         #facecam, #hardwarecam {
             position: absolute;
-            width: 30vw;
-            bottom: 1.5vh;
-            right: 1vw;
+            width: 30%;
+            bottom: 1.5%;
+            right: 1%;
         }
         #hardwarecam {
             width: 0;
@@ -197,19 +202,19 @@
         #chat {
             position: absolute;
             width: 0;
-            height: 60vh;
-            top: 1vh;
-            right: 1vw;
+            height: 60%;
+            top: 1%;
+            right: 1%;
             display: none;
             transition-delay: 0.3s;
         }
 
         #social {
             position: absolute;
-            width: 60vw;
-            height: 5vh;
-            left: 1vw;
-            bottom: 2vh;
+            width: 60%;
+            height: 5%;
+            left: 1%;
+            bottom: 2%;
             background: #615fc7;
             transition-delay: 0.1s;
         }
@@ -218,10 +223,10 @@
         }
 
         span.social {
-            font-size: 2.5vh;
+            font-size: 2.5%;
             color: white;
             flex-grow: 1;
-            margin: 1vh 2vw 1vh 2vw;
+            margin: 1% 2% 1% 2%;
             text-align: center;
             cursor: pointer;
         }
@@ -236,117 +241,117 @@
 
         /* rightscene: browser with facecam on right */
         body.rightscene #editor {
-            left: 1vw;
+            left: 1%;
         }
 
         body.rightscene #facecam {
-            right: 1vw;
-            width: 28vw;
+            right: 1%;
+            width: 28%;
         }
         
         body.rightscene #chat {
-            right: 1vw;
-            width: 28vw;
-            height: 54vh;
+            right: 1%;
+            width: 28%;
+            height: 54%;
         }
 
         body.rightscene.chat #editor {
-            width: 67vw;
-            top: 1vh;
-            height: 87vh;
+            width: 67%;
+            top: 1%;
+            height: 87%;
         }
 
         body.rightscene.hardware #hardwarecam {
-            right: 1vw;
-            width: 22vw;
-            bottom: 38vw;
+            right: 1%;
+            width: 22%;
+            bottom: 38%;
         }
 
         body.rightscene.multi #editor {
-            width: 67vw;
+            width: 67%;
         }
 
         body.rightscene.multi #editor2 {
-            width: 28vw;
-            left: 70vw;
-            height: 54vh;
+            width: 28%;
+            left: 70%;
+            height: 54%;
         }
         body.rightscene.multi.hardware #hardwarecam {
-            right: 1vw;
-            width: 22vw;
-            bottom: 24vw;
+            right: 1%;
+            width: 22%;
+            bottom: 24%;
         }
 
         /* leftscene: browser with facecam on left left */
         body.leftscene #editor {
-            left: 4vw;
-            height: 87vh;
+            left: 4%;
+            height: 87%;
         }
 
         body.leftscene #facecam {
-            right: 70vw;
-            width: 28vw;
+            right: 70%;
+            width: 28%;
         }
 
         body.leftscene #hardwarecam {
-            bottom: 9vh;
-            right: 1vw;
+            bottom: 9%;
+            right: 1%;
         }
 
         body.leftscene #social {
-            width: 55vw;
-            height: 5vh;
-            left: 43vw;
-            bottom: 1.5vh;
+            width: 55%;
+            height: 5%;
+            left: 43%;
+            bottom: 1.5%;
         }
         body.leftscene.hardware #hardwarecam {
-            width: 22vw;
+            width: 22%;
         }
 
         /* left+multi*/
         body.leftscene.multi #editor {
-            left: 1vw;
-            width: 28vw;
-            height: 54vh;
+            left: 1%;
+            width: 28%;
+            height: 54%;
         }
 
         body.leftscene.multi #editor2 {
-            width: 67vw;
-            left: 31vw;
+            width: 67%;
+            left: 31%;
         }
 
         body.leftscene.multi #facecam {
-            right: 70vw;
-            width: 28vw;
+            right: 70%;
+            width: 28%;
         }
         body.leftscene.multi.hardware #hardwarecam {
-            right: 76vw;
-            width: 22vw;
-            bottom: 24vw;
+            right: 76%;
+            width: 22%;
+            bottom: 24%;
         }
 
         /** leftscene + chat **/
         body.leftscene.chat #editor {
-            left: 31vw;
-            width: 67vw;
+            left: 31%;
+            width: 67%;
         }
 
         body.leftscene.chat #facecam {
-            right: 70vw;
-            width: 28vw;
+            right: 70%;
+            width: 28%;
         }
 
         body.leftscene.chat #chat {
-            right: 70vw;
-            height: 54vh;
-            width: 28vw;
+            right: 70%;
+            height: 54%;
+            width: 28%;
         }
 
         /* chatscene: facecam and stream chat */
         body.chatscene #facecam {
-            bottom: 19vh;
-            right: 38vw;
-            width: 52vw;
+            bottom: 19%;
+            right: 38%;
+            width: 52%;
         }
 
         body.chatscene #editor {
@@ -357,33 +362,34 @@
         }
 
         body.chatscene #chat {
-            top: 9vh;
-            right: 4vw;
-            width: 24vw;
-            height: 80vh;
+            top: 9%;
+            right: 4%;
+            width: 24%;
+            height: 80%;
             opacity: 100%;
         }
 
         body.chatscene #social {
-            left: 4vw;
-            bottom: 9vh;
+            left: 4%;
+            bottom: 9%;
         }
 
         body.chatscene.hardware #facecam {
-            bottom: 19vh;
-            right: 49vw;
-            width: 46vw;
+            bottom: 19%;
+            right: 49%;
+            width: 46%;
         }
         body.chatscene.hardware #hardwarecam {
-            width: 46vw;
-            bottom: 19vh;
-            right: 1vw;            
+            width: 46%;
+            bottom: 19%;
+            right: 1%;            
         }
     </style>
     <style id="editorstyle"></style>
 </head>
 
 <body class="rightscene chat">
+    <div class="container">
     <iframe class="box" id="editor" allow="usb;camera"></iframe>
     <iframe class="box" id="editor2" allow="usb;camera"></iframe>
     <iframe class="box" id="chat"></iframe>
@@ -982,6 +988,7 @@
             }
         })()
     </script>
+    </div>
 </body>
 
 </html>
