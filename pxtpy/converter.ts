@@ -1601,7 +1601,16 @@ namespace pxt.py {
                 }
             }
         }
-        return B.mkStmt(B.mkText(pref), B.mkInfix(expr(target), "=", expr(value)))
+
+        let lExp: B.JsNode;
+        if (annotation && value.kind === "NameConstant"
+            && (value as NameConstant).value === null)
+            // if we have a type annotation and the value is null / undefined, include the annoation
+            lExp = B.mkInfix(expr(target), ":", expr(annotation))
+        else
+            lExp = expr(target)
+
+        return B.mkStmt(B.mkText(pref), B.mkInfix(lExp, "=", expr(value)))
 
         function convertName(n: py.Name) {
             // TODO resuse with Name expr
@@ -2110,7 +2119,7 @@ namespace pxt.py {
             return B.mkText(`hex\`${U.toHex(new Uint8Array(n.s))}\``)
         },
         NameConstant: (n: py.NameConstant) => {
-            if (n.value != null) {
+            if (n.value !== null) {
                 if (!n.tsType)
                     error(n, 9558, lf("tsType missing"));
                 unify(n, n.tsType!, tpBoolean)
