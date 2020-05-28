@@ -111,7 +111,7 @@ namespace pxt {
             stats.milestones.push([msg, time])
         }
         export function init() {
-            enabled = performance && !!performance.mark;
+            enabled = performance && !!performance.mark && !!performance.measure;
             if (enabled) {
                 performance.measure("measure from the start of navigation to now")
                 let navStartMeasure = performance.getEntriesByType("measure")[0]
