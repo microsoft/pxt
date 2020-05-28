@@ -35,7 +35,6 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
             const electronManifest = config && config.electronManifest;
             return core.confirmAsync({
                 header: lf("About"),
-                hideCancel: true,
                 hasCloseIcon: true,
                 agreeLbl: lf("Ok"),
                 agreeClass: "positive",
@@ -108,7 +107,6 @@ export function showPackageErrorDialogAsync(badPackages: pkg.EditorPackage[], up
     return core.dialogAsync({
         header: lf("Extension Errors"),
         hasCloseIcon: true,
-        hideCancel: true,
         jsx: <div className="wizard-wrapper">
             <ExtensionErrorWizard
                 openLegacyEditor={openLegacyEditor}
@@ -357,7 +355,6 @@ export function showImportUrlDialogAsync() {
     return core.confirmAsync({
         header: lf("Open project URL"),
         hasCloseIcon: true,
-        hideCancel: true,
         onLoaded: (el) => {
             input = el.querySelector('input');
             input.onkeydown = ev => {
@@ -462,7 +459,6 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
     }
 
     return core.confirmAsync({
-        hideCancel: true,
         hasCloseIcon: true,
         header: lf("Create GitHub repository"),
         jsxd: () => {
@@ -542,7 +538,6 @@ export function showImportGithubDialogAsync() {
             return core.confirmAsync({
                 header: lf("Clone or create your own GitHub repo"),
                 hideAgree: true,
-                hideCancel: true,
                 hasCloseIcon: true,
                 /* tslint:disable:react-a11y-anchors */
                 jsx: <div className="ui form">
@@ -601,7 +596,6 @@ export function showImportFileDialogAsync(options?: pxt.editor.ImportFileOptions
     return core.confirmAsync({
         header: lf("Open {0} file", exts.join(lf(" or "))),
         hasCloseIcon: true,
-        hideCancel: true,
         onLoaded: (el) => {
             input = el.querySelectorAll('input')[0] as HTMLInputElement;
         },
@@ -637,7 +631,6 @@ export function showReportAbuseAsync(pubId?: string) {
     const shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
     core.confirmAsync({
         header: lf("Report Abuse"),
-        hideCancel: true,
         hasCloseIcon: true,
         onLoaded: (el) => {
             urlInput = el.querySelectorAll('input')[0] as HTMLInputElement;
@@ -695,7 +688,6 @@ export function showResetDialogAsync() {
 export function promptTranslateBlock(blockid: string, blockTranslationIds: string[]) {
     core.confirmAsync({
         header: lf("Translate this block"),
-        hideCancel: true,
         hideAgree: true,
         hasCloseIcon: true,
         helpUrl: "/translate",

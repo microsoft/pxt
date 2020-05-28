@@ -215,7 +215,6 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             header: lf("Switch to a different branch"),
             hasCloseIcon: true,
             hideAgree: true,
-            hideCancel: true,
             /* tslint:disable:react-a11y-anchors */
             jsx: <div className="ui form">
                 <div className="ui relaxed divided list" role="menu">
@@ -280,7 +279,6 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             <p>{lf("Forking creates a copy of {0} under your account. You can submit your changes back via a pull request.", parsed.fullName)}</p>
         const res = await core.confirmAsync({
             header: lf("Do you want to fork {0}?", parsed.fullName),
-            hideCancel: true,
             hasCloseIcon: true,
             helpUrl: "/github/fork",
             jsx: <div>
@@ -564,7 +562,6 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             jsx: <p>{lf("Pull requests let you tell others about changes you've pushed to a branch in a repository on GitHub.")}</p>,
             helpUrl: "/github/pull-request",
             hasCloseIcon: true,
-            hideCancel: true
         });
         if (!res) return;
 
@@ -584,10 +581,10 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             /*
                         `
             ![${lf("A rendered view of the blocks")}](https://github.com/${gh.fullName}/raw/${gh.tag}/.github/makecode/blocks.png)
-            
+
             ${lf("This image shows the blocks code from the last commit in this pull request.")}
             ${lf("This image may take a few minutes to refresh.")}
-            
+
             `
             */
             const id = await pxt.github.createPRFromBranchAsync(gh.fullName, "master", gh.tag, title, msg);
@@ -846,7 +843,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
             // the xml payload needs to be decompiled
             diffJSX = <div className="ui basic segment">{lf("Your blocks were updated. Go back to the editor to view the changes.")}</div>
         } else {
-            // if the xml is completed reconstructed, 
+            // if the xml is completed reconstructed,
             // bail off to decompiled diffs
             let markdown: string;
             if (f.tsEditorFile &&
@@ -1163,7 +1160,6 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
             jsx: <p>{lf("Your changes will merged as a single commit into the base branch and you will switch back to the base branch.")}</p>,
             agreeLbl: lf("Confirm merge"),
             helpUrl: "/github/pull-request",
-            hideCancel: true,
             hasCloseIcon: true,
             placeholder: lf("Describe your changes")
         }).then(message => {

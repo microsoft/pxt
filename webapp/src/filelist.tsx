@@ -422,7 +422,6 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
             header: lf("Share this tutorial"),
             body: lf("The URL will start the MakeCode editor in your tutorial."),
             copyable: this.props.shareUrl,
-            hideCancel: true,
             hasCloseIcon: true
         })
     }

@@ -428,7 +428,7 @@ export function pairAsync(): Promise<void> {
 export function showDisconnectAsync(): Promise<void> {
     if (pxt.commands.renderDisconnectDialog) {
         const { header, jsx, helpUrl } = pxt.commands.renderDisconnectDialog();
-        return core.dialogAsync({ header, jsx, helpUrl, hideCancel: true, hasCloseIcon: true });
+        return core.dialogAsync({ header, jsx, helpUrl, hasCloseIcon: true });
     }
     return Promise.resolve();
 }

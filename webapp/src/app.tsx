@@ -2228,6 +2228,7 @@ export class ProjectView
                         agreeLbl: lf("Done"),
                         agreeClass: "cancel",
                         agreeIcon: "cancel",
+                        hasCloseIcon: true,
                     }).then(b => {
                         if (this.isPythonActive()) {
                             pxt.Util.setEditorLanguagePref("py"); // stay in python, else go to blocks
@@ -2617,7 +2618,6 @@ export class ProjectView
         core.dialogAsync({
             header: lf("Print Code"),
             hasCloseIcon: true,
-            hideCancel: true,
             size: "large",
             jsx:
                 /* tslint:disable:react-iframe-missing-sandbox */
@@ -3160,7 +3160,6 @@ export class ProjectView
         return core.dialogAsync({
             header: options.header,
             body: options.body,
-            hideCancel: true,
             hasCloseIcon: true,
             buttons: options.buttons
         })
