@@ -908,6 +908,7 @@ background: #615fc7;
                 return; // success!
             }
             catch (e) {
+                tickEvent("streamer.facecam.error")
                 stopStream(facecam);
                 facecam.classList.add("error");
                 state.faceCamError = true;
@@ -936,6 +937,7 @@ background: #615fc7;
                 return; // success!
             }
             catch (e) {
+                tickEvent("streamer.hardwarecam.error")
                 stopStream(hardwarecam)
                 state.hardwareCamError = true;
                 saveConfig(config)
