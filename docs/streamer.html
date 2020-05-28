@@ -599,9 +599,9 @@
         function addButton(icon, title, handler) {
             const btn = document.createElement("button")
             btn.title = title
-            btn.addEventListener("pointerdown", function() {
+            btn.addEventListener("pointerdown", function(e) {
                 tickEvent("streamer.button", { button: icon }, { interactiveConsent: true })
-                handler()
+                handler(e)
             }, false)
             const i = document.createElement("i")
             btn.append(i)
