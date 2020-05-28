@@ -599,7 +599,10 @@
         function addButton(icon, title, handler) {
             const btn = document.createElement("button")
             btn.title = title
-            btn.addEventListener("pointerdown", handler, false)
+            btn.addEventListener("pointerdown", function() {
+                tickEvent("streamer.button", { button: icon }, { interactiveConsent: true })
+                handler()
+            }, false)
             const i = document.createElement("i")
             btn.append(i)
             i.className = `ms-Icon ms-Icon--${icon}`
