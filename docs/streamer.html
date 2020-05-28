@@ -621,7 +621,7 @@
                 }, false);
                 
                 paint.addEventListener('mousedown', function(e) {
-                    paintCtx.lineWidth = Math.max(16, (paint.width / 100) | 0);
+                    paintCtx.lineWidth = Math.max(10, (paint.width / 100) | 0);
                     paintCtx.lineJoin = 'round';
                     paintCtx.lineCap = 'round';
                     paintCtx.strokeStyle = '#ffe135';
