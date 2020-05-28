@@ -112,6 +112,7 @@ namespace pxt.vs {
     export function createEditor(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {
         const inverted = pxt.appTarget.appTheme.invertedMonaco;
         const hasFieldEditors = !!(pxt.appTarget.appTheme.monacoFieldEditors && pxt.appTarget.appTheme.monacoFieldEditors.length);
+        const isAndroid = pxt.BrowserUtils.isAndroid();
 
         let editor = monaco.editor.create(element, {
             model: null,
@@ -134,6 +135,7 @@ namespace pxt.vs {
             dragAndDrop: true,
             matchBrackets: "always",
             occurrencesHighlight: false,
+            quickSuggestions: !isAndroid,
             quickSuggestionsDelay: 200,
             theme: inverted ? 'vs-dark' : 'vs',
             renderIndentGuides: true,
