@@ -133,7 +133,7 @@ namespace pxsim {
         type: "i2c";
         broadcast: true;
         address: number;
-        data: Uint8Array;
+        packet: Uint8Array;
         repeat?: boolean;
     }
 
