@@ -255,8 +255,6 @@ export function promptAsync(options: PromptOptions): Promise<string> {
 
     let result = options.initialValue || "";
     let oked: boolean = false;
-    if (options.hasCloseIcon)
-        options.hideCancel = true;
 
     options.onInputChanged = (v: string) => { result = v };
 
