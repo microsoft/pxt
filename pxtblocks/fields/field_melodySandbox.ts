@@ -108,14 +108,17 @@ namespace pxtblockly {
             super.doValueUpdate_(this.getValue());
         }
 
+        getText_() {
+            if (this.invalidString) return pxt.Util.lf("Invalid Input");
+            else return this.getValue();
+        }
+
         // This will be run when the field is created (i.e. when it appears on the workspace)
         protected onInit() {
             this.render_();
             this.createMelodyIfDoesntExist();
 
-            if (this.invalidString) {
-                Blockly.FieldLabel.prototype.setValue.call(this, pxt.Util.lf("Invalid Input"));
-            } else {
+            if (!this.invalidString) {
                 if (!this.fieldGroup_) {
                     // Build the DOM.
                     this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null) as SVGGElement;
