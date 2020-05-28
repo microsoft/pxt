@@ -142,6 +142,10 @@
             cursor:pointer !important;
         }
 
+        body.loading {
+            filter: blur(0.2vw);
+        }
+
         /*
         Settings
         */
@@ -253,6 +257,9 @@
             flex-grow: 1;
             text-align: center;
             cursor: pointer;
+        }
+        video.error {
+            background: rgba(255, 0, 0, 0.5)
         }
 
         /** 
@@ -543,7 +550,8 @@
     function readConfig() {
         try {
             const cfg = JSON.parse(localStorage["streamer.config"]);
-            return cfg;
+            if (cfg)
+                return cfg;
         } catch (e) {
             console.log(e)
         }
@@ -567,7 +575,7 @@
 
     function render() {
         const config = readConfig();
-        body.className = `${scenes[state.sceneIndex]} ${state.hardware ? "hardware" : state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""} ${state.paint ? "paint" : ""}`
+        body.className = `${scenes[state.sceneIndex]} ${state.hardware ? "hardware" : state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""} ${state.paint ? "paint" : ""}`        
         if (!config.faceCamId || state.faceCamError)
             showSettings();
     }
@@ -893,19 +901,27 @@ background: #615fc7;
         if (config.faceCamId) {
             try {
                 state.faceCamError = false;
+                body.classList.add("loading");
+                facecam.classList.remove("error");
                 await startStream(facecam, config.faceCamId, config.faceCamRotate);
                 console.log(`face cam started`)
                 return; // success!
             }
             catch (e) {
+                tickEvent("streamer.facecam.error")
                 stopStream(facecam);
+                facecam.classList.add("error");
                 state.faceCamError = true;
                 saveConfig(config)
                 console.log(`could not start face cam`, e)
                 render()
             }
+            finally  {
+                body.classList.remove("loading");
+            }
         } else {
             state.faceCamError = true;
+            facecam.classList.add("error");
             stopStream(facecam);
         }
     }
@@ -921,6 +937,7 @@ background: #615fc7;
                 return; // success!
             }
             catch (e) {
+                tickEvent("streamer.hardwarecam.error")
                 stopStream(hardwarecam)
                 state.hardwareCamError = true;
                 saveConfig(config)
@@ -1016,6 +1033,12 @@ background: #615fc7;
 
         const facecamselect = document.getElementById("facecamselect");
         facecamselect.innerHTML = "" // remove all web cams
+        {
+            const option = document.createElement("option")
+            option.value = ""
+            option.text = "Off"
+            facecamselect.add(option)
+        }
         cams.forEach(cam => {
             const option = document.createElement("option")
             option.value = cam.deviceId
@@ -1041,6 +1064,7 @@ background: #615fc7;
         facerotatecheckbox.onchange = function () {
             config.faceCamRotate = !!facerotatecheckbox.checked
             saveConfig(config)
+            render()
             loadFaceCam().then(() => loadSettings())
         }
         const facecamerror = document.getElementById("facecamerror")
