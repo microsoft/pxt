@@ -577,8 +577,10 @@
 
                 if (state.paint) {
                     addPaintButton("ArrowTallUpLeft", "Draw arrow", "arrow")
+                    addPaintButton("RectangleShape", "Draw rectangle", "rect")
                     addPaintButton("PenWorkspace", "Draw freeform", "pen")
                     addButton("WhiteBoardApp16", "Paint screen in white", whiteboard)
+                    addButton("EraseTool", "Clear all drawings", clearPaint)
                     addButton("ChromeClose", "Exit paint mode", togglePaint)
                 } else {
                     addButton("OpenPane", "move webcam left", () => setScene("left"))
@@ -632,7 +634,7 @@
             function whiteboard() {
                 paintCtx.save()
                 paintCtx.beginPath();
-                paintCtx.fillStyle = "rgba(255, 255, 255, 0.8)"
+                paintCtx.fillStyle = "rgba(255, 255, 255, 0.9)"
                 paintCtx.rect(0, 0, paint.width, paint.height)
                 paintCtx.fill()
                 paintCtx.restore()
@@ -661,38 +663,33 @@
                 }, false);
                 
                 painttool.addEventListener('mousedown', function(e) {
-                    if (state.painttool == 'arrow') {
-                        head.x = e.pageX - this.offsetLeft;
-                        head.y = e.pageY - this.offsetTop;
-                        painttoolCtx.lineWidth = Math.max(10, (paint.width / 100) | 0);
-                        painttoolCtx.lineJoin = 'round';
-                        painttoolCtx.lineCap = 'round';
-                        painttoolCtx.strokeStyle = '#ffe135';
-                    } else if (state.painttool == 'pen') {
-                        paintCtx.lineWidth = Math.max(10, (paint.width / 100) | 0);
-                        paintCtx.lineJoin = 'round';
-                        paintCtx.lineCap = 'round';
-                        paintCtx.strokeStyle = '#ffe135';
-                        paintCtx.beginPath();
-                        paintCtx.moveTo(mouse.x, mouse.y);
+                    head.x = e.pageX - this.offsetLeft;
+                    head.y = e.pageY - this.offsetTop;
+                    painttoolCtx.lineWidth = Math.max(10, (paint.width / 100) | 0);
+                    painttoolCtx.lineJoin = 'round';
+                    painttoolCtx.lineCap = 'round';
+                    painttoolCtx.strokeStyle = '#ffe135';
+                    if (state.painttool == 'pen') {
+                        painttoolCtx.beginPath();
+                        painttoolCtx.moveTo(mouse.x, mouse.y);
                     }                
                     painttool.addEventListener('mousemove', onPaint, false);
                 }, false);
                 
                 painttool.addEventListener('mouseup', function() {
-                    if (state.painttool != 'pen')
-                        paintCtx.drawImage(painttool, 0, 0)
+                    paintCtx.drawImage(painttool, 0, 0)
+                    painttoolCtx.clearRect(0, 0, painttool.width, painttool.height)
                     painttool.removeEventListener('mousemove', onPaint, false);
                 }, false);
                 
                 function onPaint() {
+                    const ctx = painttoolCtx
+                    ctx.clearRect(0, 0, painttool.width, painttool.height)
+                    ctx.save();
                     if (state.painttool == 'arrow') {
-                        const ctx = painttoolCtx
-                        ctx.clearRect(0, 0, painttool.width, painttool.height)
-                        ctx.save();
 
                         const p1 = mouse, p2 = head;
-                        const size = ctx.lineWidth * 3;
+                        const size = ctx.lineWidth * 2;
                         // Rotate the context to point along the path
                         const dx = p2.x - p1.x
                         const dy = p2.y - p1.y
@@ -714,12 +711,15 @@
                         ctx.moveTo(0,0);
                         ctx.lineTo(-size, size);
                         ctx.stroke();
-
-                        ctx.restore();
+                    } else if (state.painttool == 'rect') {
+                        ctx.beginPath();
+                        ctx.rect(head.x, head.y, mouse.x - head.x, mouse.y - head.y)
+                        ctx.stroke()
                     } else if (state.painttool == 'pen') {
-                        paintCtx.lineTo(mouse.x, mouse.y);
-                        paintCtx.stroke();
+                        ctx.lineTo(mouse.x, mouse.y);
+                        ctx.stroke();
                     }
+                    ctx.restore();
                 }
 
                 clearPaint();
