@@ -251,7 +251,6 @@
             font-size: 2vh;
             color: white;
             flex-grow: 1;
-            margin: 1% 2% 1% 2%;
             text-align: center;
             cursor: pointer;
         }
@@ -1022,6 +1021,10 @@ background: #615fc7;
             option.value = cam.deviceId
             option.text = cam.label || `camera ${cam.deviceId}`
             facecamselect.add(option)
+            if (!cam.label && !config.faceCamId) { // we haven't asked for videos yet
+                config.faceCamId = cam.deviceId;
+                saveConfig(config);
+            }   
             if (config.faceCamId == cam.deviceId)
                 option.selected = true;
         })
