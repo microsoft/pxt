@@ -51,6 +51,7 @@
         .ui.selection.list {
             color: black;
             cursor: pointer;
+            margin: 0;
 
             .item {
                 border-radius: unset;
@@ -68,6 +69,10 @@
                 &:nth-child(odd):not(:hover) {
                     background-color: @errorListOdd;
                 }
+
+                &.stackFrame {
+                    padding-left: 2em;
+                }
             }
         }
 
@@ -77,7 +82,7 @@
             padding-top: 0.5em;
             padding-bottom: 0.5em;
 
-            .debuggerSuggestion.blue {
+            .debuggerSuggestion {
                 float: right;
                 margin-right: 1em;
                 color: @errorListDebugSuggestionColor;
@@ -91,14 +96,6 @@
                     margin-left: 0.5em;
                     vertical-align: top;
                 }
-            }
-        }
-
-        .ui.selection.list.exception {
-                margin-top: 0;
-            .stackframe.item {
-                padding-left: 2em;
-                padding-top: 0.25em;
             }
         }
     }
