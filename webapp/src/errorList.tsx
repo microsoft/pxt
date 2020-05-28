@@ -7,7 +7,8 @@ export interface ErrorListProps {
     onSizeChange: () => void,
     listenToErrorChanges: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void,
     listenToExceptionChanges: (handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage) => void) => void,
-    goToError: (error: pxtc.KsDiagnostic) => void
+    goToError: (error: pxtc.KsDiagnostic) => void,
+    startDebugger: () => void
 }
 export interface ErrorListState {
     isCollapsed: boolean,
@@ -54,8 +55,11 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                 errorListContent = (
                     <div>
                         <div className="exceptionMessage">
-                            {`${pxt.Util.rlf(exception.exceptionMessage)}: ${lf("Try starting a debug session")}`}
-                            <sui.Icon className="debug-icon" icon="icon bug"/>
+                            {pxt.Util.rlf(exception.exceptionMessage)}
+                            <span className="debuggerSuggestion" onClick={this.props.startDebugger}>
+                                {lf('Try starting a debug session')}
+                                <sui.Icon className="debug-icon blue" icon="icon bug"/>
+                            </span>
                         </div>
                         {this.generateStackTraces(exception)}
                     </div>

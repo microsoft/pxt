@@ -76,6 +76,21 @@
             padding-left: 1em;
             padding-top: 0.5em;
             padding-bottom: 0.5em;
+
+            .debuggerSuggestion {
+                float: right;
+                margin-right: 1em;
+                cursor: pointer;
+
+                &:hover {
+                    opacity: 0.75;
+                }
+
+                .debug-icon.blue {
+                    margin-left: 0.5em;
+                    vertical-align: top;
+                }
+            }
         }
 
         .ui.selection.list.exception {
