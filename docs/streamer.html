@@ -575,7 +575,7 @@
 
     function render() {
         const config = readConfig();
-        body.className = `${scenes[state.sceneIndex]} ${state.hardware ? "hardware" : state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""} ${state.paint ? "paint" : ""}`
+        body.className = `${scenes[state.sceneIndex]} ${state.hardware ? "hardware" : state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""} ${state.paint ? "paint" : ""}`        
         if (!config.faceCamId || state.faceCamError)
             showSettings();
     }
@@ -1031,6 +1031,12 @@ background: #615fc7;
 
         const facecamselect = document.getElementById("facecamselect");
         facecamselect.innerHTML = "" // remove all web cams
+        {
+            const option = document.createElement("option")
+            option.value = ""
+            option.text = "Off"
+            facecamselect.add(option)
+        }
         cams.forEach(cam => {
             const option = document.createElement("option")
             option.value = cam.deviceId
@@ -1056,6 +1062,7 @@ background: #615fc7;
         facerotatecheckbox.onchange = function () {
             config.faceCamRotate = !!facerotatecheckbox.checked
             saveConfig(config)
+            render()
             loadFaceCam().then(() => loadSettings())
         }
         const facecamerror = document.getElementById("facecamerror")
