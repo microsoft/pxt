@@ -135,12 +135,19 @@ namespace pxt.vs {
             dragAndDrop: true,
             matchBrackets: "always",
             occurrencesHighlight: false,
-            quickSuggestions: !isAndroid,
             quickSuggestionsDelay: 200,
             theme: inverted ? 'vs-dark' : 'vs',
             renderIndentGuides: true,
             //accessibilitySupport: 'on',
-            accessibilityHelpUrl: "" //TODO: Add help url explaining how to use the editor with a screen reader
+            accessibilityHelpUrl: "", //TODO: Add help url explaining how to use the editor with a screen reader
+            // disable completions on android
+            quickSuggestions: {
+                "other": !isAndroid,
+                "comments": !isAndroid,
+                "strings": !isAndroid
+           },
+            acceptSuggestionOnCommitCharacter: !isAndroid,
+            acceptSuggestionOnEnter: !isAndroid ? "on" : "off",
         });
 
         editor.layout();
