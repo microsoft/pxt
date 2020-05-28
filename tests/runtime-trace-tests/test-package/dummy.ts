@@ -16,5 +16,12 @@ namespace dummyNs {
 
     export class SomeClass {
         e: SomeEnum;
+
+        doSomething(n: number) {
+        }
+    }
+
+    export function createSomething(): SomeClass {
+        return new SomeClass()
     }
 }
