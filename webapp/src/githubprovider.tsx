@@ -78,7 +78,6 @@ export class GithubProvider extends cloudsync.ProviderBase {
         let form: HTMLElement;
         return core.confirmAsync({
             header: lf("Sign in with GitHub"),
-            hideCancel: true,
             hasCloseIcon: true,
             helpUrl: "/github",
             agreeLbl: lf("Sign in"),

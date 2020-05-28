@@ -353,7 +353,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 header: message,
                 initialValue: defaultValue,
                 agreeLbl: lf("Ok"),
-                hideCancel: true,
                 hasCloseIcon: true,
                 size: "tiny"
             }).then(value => {
