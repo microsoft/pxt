@@ -78,7 +78,6 @@ export function webUsbPairDialogAsync(pairAsync: () => Promise<boolean>, confirm
                 jsxd,
                 hasCloseIcon: true,
                 hideAgree: true,
-                hideCancel: true,
                 helpUrl,
                 className: 'downloaddialog',
                 buttons: [

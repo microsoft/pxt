@@ -89,7 +89,6 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
         body,
         jsx,
         hasCloseIcon: true,
-        hideCancel: true,
         hideAgree: true,
         helpUrl,
         className: 'downloaddialog',
