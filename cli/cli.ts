@@ -3365,7 +3365,7 @@ function runCoreAsync(res: pxtc.CompileResult) {
                         const m = <pxsim.SimulatorI2CMessage>msg;
                         let d = m.data;
                         if (d)
-                            console.log(`i2c: ${m.address} ${d}`);
+                            console.log(`i2c: ${m.address} ${d} ${m.repeat ? "repeat" : ""}`);
                     }
                     break;
                 default:

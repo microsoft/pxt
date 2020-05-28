@@ -134,6 +134,7 @@ namespace pxsim {
         broadcast: true;
         address: number;
         data: Uint8Array;
+        repeat?: boolean;
     }
 
     export interface SimulatorRadioPacketPayload {
