@@ -26,32 +26,18 @@
             margin-left: 1em;
         }
 
-        .cornerIcons {
+        .toggleButton {
             float: right;
+            cursor: pointer;
+            position: relative;
+            vertical-align: middle;
 
-            .debugWrapper {
-                display: inline-block;
-                vertical-align: middle;
-                .debug-button {
-                    &:not(:hover) {
-                        opacity: 0.5;
-                    }
-                }
+            i {
+                font-size: 1.3em;
             }
 
-            .toggleButton {
-                float: right;
-                cursor: pointer;
-                position: relative;
-                vertical-align: middle;
-
-                i {
-                    font-size: 1.3em;
-                }
-
-                i:not(:hover) {
-                    opacity: 0.5;
-                }
+            i:not(:hover) {
+                opacity: 0.5;
             }
         }
     }
