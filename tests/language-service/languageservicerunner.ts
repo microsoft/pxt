@@ -187,7 +187,7 @@ function getOptionsAsync(fileContent: string, isPython: boolean) {
     const packageFiles: pxt.Map<string> = {};
     packageFiles[fileName(isPython)] = fileContent;
 
-    return util.getTestCompileOptsAsync(packageFiles, testPackage, true)
+    return util.getTestCompileOptsAsync(packageFiles, [testPackage], true)
         .then(opts => {
             if (isPython)
                 opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME

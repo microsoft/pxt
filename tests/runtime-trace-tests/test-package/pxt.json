@@ -1,0 +1,10 @@
+{
+    "name": "test-package",
+    "description": "Project that defines a variety of APIs for testing the TypeScript and Python",
+    "files": [
+        "dummy.ts"
+    ],
+    "public": true,
+    "dependencies": {},
+    "installedVersion": "file:."
+}
