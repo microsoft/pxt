@@ -745,7 +745,7 @@ export class ProjectView
             this.typecheck();
         }
         this.markdownChangeHandler();
-    }, 500, false);
+    }, 2000, false);
     private initEditors() {
         this.textEditor = new monaco.Editor(this);
         this.pxtJsonEditor = new pxtjson.Editor(this);
@@ -781,7 +781,9 @@ export class ProjectView
             orphanException: brk => {
                 // TODO: start debugging session
                 // TODO: user friendly error message
-                core.warningNotification(lf("Program Error: {0}", brk.exceptionMessage));
+                //core.warningNotification(lf("Program Error: {0}", brk.exceptionMessage));
+                //this.currentEditor.onExceptionDetected(brk)
+                this.editor?.onExceptionDetected(brk)
             },
             highlightStatement: (stmt, brk) => {
                 if (this.state.debugging && !simulator.driver.areBreakpointsSet() && brk && !brk.exceptionMessage) {
@@ -1321,10 +1323,10 @@ export class ProjectView
                     })
                     .done()
 
-                    // load side docs
-                    const editorForFile = this.pickEditorFor(file);
-                    if (pkg?.mainPkg?.config?.documentation)
-                        this.setSideDoc(pkg.mainPkg.config.documentation, editorForFile == this.blocksEditor);
+                // load side docs
+                const editorForFile = this.pickEditorFor(file);
+                if (pkg?.mainPkg?.config?.documentation)
+                    this.setSideDoc(pkg.mainPkg.config.documentation, editorForFile == this.blocksEditor);
 
                 // update recentUse on the header
                 return workspace.saveAsync(h)
@@ -1916,7 +1918,8 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     openHome() {
-        const hasHome = !pxt.shell.isControllerMode();
+        const hasHome = !pxt.shell.isControllerMode()
+            && !pxt.appTarget.appTheme.lockedEditor;
         if (!hasHome) return;
 
         this.stopSimulator(true); // don't keep simulator around
@@ -2225,6 +2228,7 @@ export class ProjectView
                         agreeLbl: lf("Done"),
                         agreeClass: "cancel",
                         agreeIcon: "cancel",
+                        hasCloseIcon: true,
                     }).then(b => {
                         if (this.isPythonActive()) {
                             pxt.Util.setEditorLanguagePref("py"); // stay in python, else go to blocks
@@ -2614,7 +2618,6 @@ export class ProjectView
         core.dialogAsync({
             header: lf("Print Code"),
             hasCloseIcon: true,
-            hideCancel: true,
             size: "large",
             jsx:
                 /* tslint:disable:react-iframe-missing-sandbox */
@@ -3157,7 +3160,6 @@ export class ProjectView
         return core.dialogAsync({
             header: options.header,
             body: options.body,
-            hideCancel: true,
             hasCloseIcon: true,
             buttons: options.buttons
         })
@@ -3257,11 +3259,15 @@ export class ProjectView
                     }
                     return (ghid.tag ? Promise.resolve(ghid.tag) : pxt.github.latestVersionAsync(ghid.fullName, config, true))
                         .then(tag => {
+                            if (!tag) {
+                                pxt.log(`tutorial github tag not found at ${ghid.fullName}`);
+                                return undefined;
+                            }
                             ghid.tag = tag;
                             pxt.log(`tutorial ${ghid.fullName} tag: ${tag}`);
                             return pxt.github.downloadPackageAsync(`${ghid.fullName}#${ghid.tag}`, config);
                         });
-                }).then(gh => resolveMarkdown(ghid, gh.files));
+                }).then(gh => gh && resolveMarkdown(ghid, gh.files));
         } else if (header) {
             pxt.tickEvent("tutorial.header");
             temporary = true;
@@ -3366,8 +3372,10 @@ export class ProjectView
                     temporary: temporary
                 }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve());
             }).catch((e) => {
-                core.errorNotification(lf("Please check your internet connection and check the tutorial is valid."));
-                core.handleNetworkError(e);
+                pxt.reportException(e, { tutorialId });
+                core.warningNotification(lf("Please check your internet connection and check the tutorial is valid."));
+                // go home if possible
+                this.openHome();
             })
             .finally(() => core.hideLoading("tutorial"));
     }
@@ -3723,7 +3731,7 @@ export class ProjectView
         const isRTL = pxt.Util.isUserLanguageRtl();
         const showRightChevron = (this.state.collapseEditorTools || isRTL) && !(this.state.collapseEditorTools && isRTL); // Collapsed XOR RTL
         // don't show in sandbox or is blocks editor or previous editor is blocks
-        const showFileList = !sandbox
+        const showFileList = !sandbox && !inTutorial
             && !(isBlocks
                 || (pkg.mainPkg && pkg.mainPkg.config && (pkg.mainPkg.config.preferredEditor == pxt.BLOCKS_PROJECT_NAME)));
         const hasCloud = this.hasCloud();
@@ -3757,7 +3765,7 @@ export class ProjectView
                         </div>
                         {useSerialEditor ?
                             <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
-                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.openSimSerial} parent={this}/>
+                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.openSimSerial} parent={this} />
                                 <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.openDeviceSerial} parent={this} />
                             </div> : undefined}
                         {showFileList ? <filelist.FileList parent={this} /> : undefined}

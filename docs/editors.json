@@ -1,0 +1,52 @@
+{
+    "arcade": {
+        "name": "Arcade",
+        "url": "https://arcade.makecode.com/beta",
+        "styles": {
+            "primary": "#6B4F76",
+            "menu": "#F76820",
+            "background": "linear-gradient(90deg, #B1E3DA 0%, #E91E63 100%)"
+        }
+    },
+    "microbit": {
+        "name": "micro:bit",
+        "url": "https://makecode.microbit.org/beta",
+        "styles": {
+            "primary": "#6633cc",
+            "menu": "#3454D1",
+            "background": "linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1) 100%)"
+        }
+    },
+    "minecraft": {
+        "name": "Minecraft",
+        "icon": "https://minecraft.makecode.com/favicon.ico",
+        "url": "https://minecraft.makecode.com/beta?github=1",
+        "styles": {
+            "primary": "#3C3C3C",
+            "menu": "#31ae1f",
+            "background": "linear-gradient(215deg, #3C3C3C 0%, #C6C6C6 100%)"
+        }
+    },
+    "adafruit": {
+        "name": "Adafruit Circuit Playground Express",
+        "url": "https://makecode.adafruit.com/beta",
+        "icon": "https://pxt.azureedge.net/blob/1215b9ef46d3e04bc9923a1a333d92db92eb5419/static/logo.square.black.svg",
+        "styles": {
+            "primary": "#1c1f2b ",
+            "menu": "#FB48C7",
+            "background": "linear-gradient(45deg, #1c1f2b 0%, #000 100%)" 
+        }
+    },
+    "maker": {
+        "name": "Maker",
+        "url": "https://maker.makecode.com"
+    },
+    "ev3": {
+        "name": "LEGO® MINDSTORMS® Education EV3",
+        "url": "https://makecode.mindstorms.com/beta"
+    },
+    "calliopemini": {
+        "name": "Calliope Mini",
+        "url": "https://makecode.calliope.cc/beta"
+    }
+}

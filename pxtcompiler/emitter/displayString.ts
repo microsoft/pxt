@@ -27,6 +27,10 @@ namespace ts.pxtc.service {
         return `**${sym.qName}**`
     }
 
+    export function displayStringForKeyword(keyword: string, python: boolean) {
+        return `\`\`\`${python ? "py" : "ts"}\n(keyword) ${keyword}\n\`\`\``
+    }
+
     function displayStringForFunction(sym: SymbolInfo, python: boolean, apiInfo: ApisInfo) {
         let prefix = "";
         if (sym.kind === SymbolKind.Function) {

@@ -231,16 +231,25 @@ class HoverProvider implements monaco.languages.HoverProvider {
         return compiler.syntaxInfoAsync("symbol", fileName, offset, source)
             .then(r => {
                 let sym = r.symbols ? r.symbols[0] : null
-                if (!sym) return null;
-                const documentation = pxt.Util.rlf(sym.attributes.jsDoc);
 
-                let contents: string[] = [r.auxResult[0], documentation];
+                let contents: string[];
+                if (sym) {
+                    const documentation = pxt.Util.rlf(sym.attributes.jsDoc);
 
-                const res: monaco.languages.Hover = {
-                    contents: contents.map(toMarkdownString),
-                    range: monaco.Range.fromPositions(model.getPositionAt(r.beginPos), model.getPositionAt(r.endPos))
+                    contents = [r.auxResult[0], documentation];
                 }
-                return res
+                else if (r.auxResult) {
+                    contents = [r.auxResult.displayString, r.auxResult.documentation];
+                }
+
+                if (contents) {
+                    const res: monaco.languages.Hover = {
+                        contents: contents.map(toMarkdownString),
+                        range: monaco.Range.fromPositions(model.getPositionAt(r.beginPos), model.getPositionAt(r.endPos))
+                    }
+                    return res;
+                }
+                return null;
             });
     }
 }
@@ -353,6 +362,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private highlightedBreakpoint: number;
     private editAmendmentsListener: monaco.IDisposable | undefined;
     private errorChangesListeners: pxt.Map<(errors: pxtc.KsDiagnostic[]) => void> = {};
+    private exceptionChangesListeners: pxt.Map<(exception: pxsim.DebuggerBreakpointMessage) => void> = {}
 
     private handleFlyoutWheel = (e: WheelEvent) => e.stopPropagation();
     private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
@@ -362,6 +372,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         this.resize = this.resize.bind(this);
         this.listenToErrorChanges = this.listenToErrorChanges.bind(this);
+        this.listenToExceptionChanges = this.listenToExceptionChanges.bind(this)
         this.goToError = this.goToError.bind(this);
     }
 
@@ -603,10 +614,21 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setInsertionSnippet={this.setInsertionSnippet}
                             parent={this.parent} />
                     </div>
-                    {showErrorList ? <ErrorList onSizeChange={this.resize} listenToErrorChanges={this.listenToErrorChanges} goToError={this.goToError} /> : undefined}
+                    {showErrorList && <ErrorList onSizeChange={this.resize} listenToErrorChanges={this.listenToErrorChanges}
+                        listenToExceptionChanges={this.listenToExceptionChanges} goToError={this.goToError}/>}
                 </div>
             </div>
         )
+    }
+
+    listenToExceptionChanges(handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage) => void) {
+        this.exceptionChangesListeners[handlerKey] = handler;
+    }
+
+    public onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
+        for (let listener of pxt.U.values(this.exceptionChangesListeners)) {
+            listener(exception);
+        }
     }
 
     listenToErrorChanges(handlerKey: string, handler: (errors: pxtc.KsDiagnostic[]) => void) {
@@ -614,7 +636,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     goToError(error: pxtc.KsDiagnostic) {
-        // Use endLine and endColumn to position the cursor when
+        // Use endLine and endColumn to position the cursor
         // when errors do have them
         let line, column;
         if (error.endLine && error.endColumn) {

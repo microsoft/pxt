@@ -25,7 +25,9 @@ namespace pxt.BrowserUtils {
     }
 
     export function isIOS(): boolean {
-        return hasNavigator() && /iPad|iPhone|iPod/.test(navigator.userAgent);
+        return hasNavigator() &&
+            (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+            navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
     }
 
     //MacIntel on modern Macs
@@ -1082,5 +1084,11 @@ namespace pxt.BrowserUtils {
             expiration.setTime(expiration.getTime() + (pxt.Util.langCookieExpirationDays * 24 * 60 * 60 * 1000));
             document.cookie = `${pxt.Util.pxtLangCookieId}=${langId}; expires=${expiration.toUTCString()}; path=/`;
         }
+    }
+
+    export function cacheBustingUrl(url: string): string {
+        if (!url) return url;
+        if (/[?&]rnd=/.test(url)) return url; // already busted
+        return `${url}${url.indexOf('?') > 0 ? "&" : "?"}rnd=${Math.random()}`
     }
 }

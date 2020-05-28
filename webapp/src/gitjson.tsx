@@ -76,7 +76,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         message = message || pr.title || lf("Merge pull request");
         core.showLoading("github.merge", lf("merging pull request..."))
         return pxt.github.mergeAsync(githubId.fullName, pr.base, githubId.tag, `${message} (#${pr.number})`)
-            .then(() => this.switchToBranchAsync(pr.base))
+            .then(() => this.switchProjectToBranchAsync(pr.base))
             .then(() => this.pullAsync())
             .then(() => {
                 core.hideLoading("github.merge");
@@ -131,7 +131,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         await f.setContentAsync(JSON.stringify(gs, null, 4))
     }
 
-    async switchToBranchAsync(newBranch: string) {
+    private async switchProjectToBranchAsync(newBranch: string) {
         const { header } = this.props.parent.state;
         const gs = this.getGitJson();
         const parsed = this.parsedRepoId()
@@ -165,7 +165,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         try {
             const gs = this.getGitJson()
             await pxt.github.createNewBranchAsync(gid.fullName, branchName, gs.commit.sha)
-            await this.switchToBranchAsync(branchName)
+            await this.switchProjectToBranchAsync(branchName)
             this.forceUpdate();
         } catch (e) {
             this.handleGithubError(e);
@@ -174,7 +174,20 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
     }
 
-    public async switchBranchAsync() {
+    public async switchBranchAsync(branch: string) {
+        await this.setStateAsync({ needsCommitMessage: false });
+        const prevBranch = this.parsedRepoId().tag
+        try {
+            await this.switchProjectToBranchAsync(branch)
+            await this.pullAsync()
+        } finally {
+            if (this.state.needsCommitMessage) {
+                await this.switchProjectToBranchAsync(prevBranch)
+            }
+        }
+    }
+
+    public async showSwitchBranchDialogAsync() {
         const gid = this.parsedRepoId()
         const branches = await pxt.github.listRefsExtAsync(gid.fullName, "heads")
         const branchList = Object.keys(branches.refs).map(r => ({
@@ -182,16 +195,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             description: branches.refs[r],
             onClick: async () => {
                 core.hideDialog()
-                await this.setStateAsync({ needsCommitMessage: false });
-                const prevBranch = this.parsedRepoId().tag
-                try {
-                    await this.switchToBranchAsync(r)
-                    await this.pullAsync()
-                } finally {
-                    if (this.state.needsCommitMessage) {
-                        await this.switchToBranchAsync(prevBranch)
-                    }
-                }
+                await this.switchBranchAsync(r);
             }
         }))
 
@@ -211,7 +215,6 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             header: lf("Switch to a different branch"),
             hasCloseIcon: true,
             hideAgree: true,
-            hideCancel: true,
             /* tslint:disable:react-a11y-anchors */
             jsx: <div className="ui form">
                 <div className="ui relaxed divided list" role="menu">
@@ -233,7 +236,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     private handleBranchClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.branch");
         e.stopPropagation();
-        this.switchBranchAsync().done();
+        this.showSwitchBranchDialogAsync().done();
     }
 
     private goBack() {
@@ -276,7 +279,6 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             <p>{lf("Forking creates a copy of {0} under your account. You can submit your changes back via a pull request.", parsed.fullName)}</p>
         const res = await core.confirmAsync({
             header: lf("Do you want to fork {0}?", parsed.fullName),
-            hideCancel: true,
             hasCloseIcon: true,
             helpUrl: "/github/fork",
             jsx: <div>
@@ -560,7 +562,6 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             jsx: <p>{lf("Pull requests let you tell others about changes you've pushed to a branch in a repository on GitHub.")}</p>,
             helpUrl: "/github/pull-request",
             hasCloseIcon: true,
-            hideCancel: true
         });
         if (!res) return;
 
@@ -580,10 +581,10 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             /*
                         `
             ![${lf("A rendered view of the blocks")}](https://github.com/${gh.fullName}/raw/${gh.tag}/.github/makecode/blocks.png)
-            
+
             ${lf("This image shows the blocks code from the last commit in this pull request.")}
             ${lf("This image may take a few minutes to refresh.")}
-            
+
             `
             */
             const id = await pxt.github.createPRFromBranchAsync(gh.fullName, "master", gh.tag, title, msg);
@@ -643,7 +644,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const haspull = pullStatus == workspace.PullStatus.GotChanges;
         const githubId = this.parsedRepoId()
         const master = githubId.tag == "master";
-        const user = this.getData("github:user");
+        const user = this.getData("github:user") as pxt.editor.UserInfo;
 
         // don't use gs.prUrl, as it gets cleared often
         const url = `https://github.com/${githubId.fullName}${master ? "" : `/tree/${githubId.tag}`}`;
@@ -652,7 +653,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const pr: pxt.github.PullRequest = this.getData("pkg-git-pr:" + header.id)
         const showPr = pr !== null && (gs.isFork || !master);
         const showPrResolved = showPr && pr && pr.number > 0;
-        const showPrCreate = showPr && pr && pr.number <= 0
+        const showPrCreate = showPr && pr && pr.number <= 0;
+        const isOwner = user && user.id === githubId.owner;
         return (
             <div id="githubArea">
                 <div id="serialHeader" className="ui serialHeader">
@@ -664,13 +666,10 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                     <div className="rightHeader">
                         <sui.Button icon={`${hasissue ? "exclamation circle" : haspull ? "long arrow alternate down" : "check"}`}
                             className={haspull === true ? "positive" : ""}
-                            text={lf("Pull changes")} textClass={"landscape only"} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
-                        <div className="ui buttons">
-                            <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
-                            <sui.DropdownMenu className="floating button" icon="dropdown">
-                                <sui.Link className="ui item button" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" text={lf("Invite collaborators")} title={lf("Invite others to contributes to this GitHub repository.")} onKeyDown={sui.fireClickOnEnter} />
-                            </sui.DropdownMenu>
-                        </div>
+                            text={lf("Pull changes")} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
+                        {!isBlocksMode && isOwner &&
+                            <sui.Link className="ui item button desktop only" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite others to contributes to this GitHub repository.")} />}
+                        <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
                 <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
@@ -844,7 +843,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
             // the xml payload needs to be decompiled
             diffJSX = <div className="ui basic segment">{lf("Your blocks were updated. Go back to the editor to view the changes.")}</div>
         } else {
-            // if the xml is completed reconstructed, 
+            // if the xml is completed reconstructed,
             // bail off to decompiled diffs
             let markdown: string;
             if (f.tsEditorFile &&
@@ -1030,13 +1029,13 @@ ${content}
 class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
     constructor(props: GitHubViewProps) {
         super(props)
-        this.handleSwitchBranch = this.handleSwitchBranch.bind(this);
+        this.handleSwitchMasterBranch = this.handleSwitchMasterBranch.bind(this);
     }
 
-    private handleSwitchBranch(e: React.MouseEvent<HTMLElement>) {
+    private handleSwitchMasterBranch(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.branch.switch");
         e.stopPropagation();
-        this.props.parent.switchBranchAsync().done();
+        this.props.parent.switchBranchAsync("master");
     }
 
     renderCore() {
@@ -1051,7 +1050,7 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
                 <div className="content">
                     {closed && lf("This Pull Request is closed!")}
                     {merged && lf("This pull request has been merged.")}
-                    <span role="button" className="ui link" onClick={this.handleSwitchBranch} onKeyDown={sui.fireClickOnEnter}>{lf("Switch branch")}</span>
+                    <span role="button" className="ui link" onClick={this.handleSwitchMasterBranch} onKeyDown={sui.fireClickOnEnter}>{lf("Switch to master branch")}</span>
                 </div>
             </div>;
 
@@ -1060,7 +1059,7 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
                 <i className="exclamation circle icon"></i>
                 <div className="content">
                     {lf("This branch was not found, please pull again or switch to a different branch.")}
-                    <span role="button" className="ui link" onClick={this.handleSwitchBranch} onKeyDown={sui.fireClickOnEnter}>{lf("Switch branch")}</span>
+                    <span role="button" className="ui link" onClick={this.handleSwitchMasterBranch} onKeyDown={sui.fireClickOnEnter}>{lf("Switch to master branch")}</span>
                 </div>
             </div>
 
@@ -1161,7 +1160,6 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
             jsx: <p>{lf("Your changes will merged as a single commit into the base branch and you will switch back to the base branch.")}</p>,
             agreeLbl: lf("Confirm merge"),
             helpUrl: "/github/pull-request",
-            hideCancel: true,
             hasCloseIcon: true,
             placeholder: lf("Describe your changes")
         }).then(message => {
@@ -1177,7 +1175,7 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
         const mergeable = pullRequest.mergeable === "MERGEABLE";
         const open = pullRequest.state === "OPEN";
         const mergeableUnknown = open && pullRequest.mergeable === "UNKNOWN";
-        const icon = merging ? "sync" : mergeable ? "check" : mergeableUnknown ? "question" : "exclamation triangle";
+        const icon = merging ? "sync" : mergeable ? "check" : mergeableUnknown ? "circle outline" : "exclamation triangle";
         const color = merging ? "orange" : mergeable ? "green" : mergeableUnknown ? "orange" : "grey";
         const msg = merging ? lf("A merge is in progress. Please resolve conflicts or cancel it")
             : mergeable ? lf("This branch has no conflicts with the base branch")
@@ -1209,10 +1207,8 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
                     {sui.helpIconLink("/github/pull-requests", lf("Learn about merging pull requests in GitHub."))}
                 </span>
             </div>}
-            {(mergeable || mergeableUnknown) && <div className="ui field">
+            {mergeable && <div className="ui field">
                 <sui.Button className={color} text={lf("Squash and merge")}
-                    loading={mergeableUnknown}
-                    disabled={!mergeable}
                     onClick={this.handleMergeClick} onKeyDown={sui.fireClickOnEnter} />
                 <span className="inline-help">{lf("Merge your changes as a single commit into the base branch.")}
                     {sui.helpIconLink("/github/pull-requests", lf("Learn about merging pull requests in GitHub."))}

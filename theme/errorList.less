@@ -45,10 +45,12 @@
     .errorListInner {
         height: @errorListInnerHeight;
         padding: 0 0 1em 0;
-        overflow-y: scroll;
+        overflow-y: auto;
 
+        // errors
         .ui.selection.list {
             color: black;
+            cursor: pointer;
 
             .item {
                 border-radius: unset;
@@ -69,6 +71,16 @@
             }
         }
 
+        // exceptions
+        .exceptionMessage {
+            padding-left: 1em;
+            padding-top: 0.5em;
+        }
+
+        .stackframe {
+            padding-left: 2em;
+            padding-top: 0.25em;
+        }
     }
 }
 

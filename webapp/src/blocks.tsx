@@ -353,7 +353,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 header: message,
                 initialValue: defaultValue,
                 agreeLbl: lf("Ok"),
-                hideCancel: true,
                 hasCloseIcon: true,
                 size: "tiny"
             }).then(value => {
@@ -1229,7 +1228,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private filterBlocks(subns: string, blocks: toolbox.BlockDefinition[]) {
-        return blocks.filter((block => !(block.attributes.blockHidden || block.attributes.deprecated)
+        return blocks.filter((block => !(block.attributes.blockHidden)
+            && !(block.attributes.deprecated && this.parent.state.tutorialOptions == undefined)
             && ((!subns && !block.attributes.subcategory && !block.attributes.advanced)
                 || (subns && ((block.attributes.advanced && subns == lf("more"))
                     || (block.attributes.subcategory && subns == block.attributes.subcategory))))));
@@ -1671,7 +1671,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return [blockXml];
         function shouldShowBlock(fn: pxtc.SymbolInfo) {
             if (fn.attributes.debug && !pxt.options.debug) return false;
-            if (!shadow && (fn.attributes.deprecated || fn.attributes.blockHidden)) return false;
+            if (!shadow && fn.attributes.blockHidden) return false;
+            if (fn.attributes.deprecated && that.parent.state.tutorialOptions == undefined) return false;
             let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
             return that.shouldShowBlock(fn.attributes.blockId, ns, shadow);
         }

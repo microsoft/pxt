@@ -88,7 +88,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
     }
 
     renderCore() {
-        const { parent, simSerialActive, devSerialActive } = this.props;
+        const { collapsed, devSerialActive, parent, simSerialActive } = this.props;
 
         const parentState = parent.state;
         if (!parentState.currFile || parentState.home) return <div />
@@ -128,7 +128,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const fullscreenTooltip = isFullscreen ? lf("Exit fullscreen mode") : lf("Launch in fullscreen");
         const muteTooltip = isMuted ? lf("Unmute audio") : lf("Mute audio");
         const screenshotTooltip = targetTheme.simScreenshotKey ? lf("Take Screenshot (shortcut {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
-        const collapseIconTooltip = this.props.collapsed ? lf("Show the simulator") : lf("Hide the simulator");
+        const collapseIconTooltip = collapsed ? lf("Show the simulator") : lf("Hide the simulator");
         const simSerialTooltip = lf("Open simulator console");
         const devSerialTooltip = lf("Open device console");
 
@@ -138,13 +138,12 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
             <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
                 {make && <sui.Button disabled={debugging} icon='configure' className="secondary" title={makeTooltip} onClick={this.openInstructions} />}
                 {run && !targetTheme.bigRunButton && <PlayButton parent={parent} simState={parentState.simState} debugging={parentState.debugging} />}
+                {fullscreen && <sui.Button key='fullscreenbtn' className="fullscreen-button portrait only hidefullscreen" icon="xicon fullscreen" title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} />}
                 {restart && <sui.Button disabled={!runControlsEnabled} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} />}
                 {run && debug && <sui.Button disabled={!debugBtnEnabled} key='debugbtn' className={`debug-button ${debugging ? "orange" : ""}`} icon="icon bug" title={debugTooltip} onClick={this.toggleDebug} />}
-                {/* These buttons are for mobile view only, attached to reduce extra padding */}
-                {fullscreen && <sui.Button key='fullscreenbtn' className={`fullscreen-button tablet only`} icon={`xicon ${isFullscreen ? 'fullscreencollapse' : 'fullscreen'}`} title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} />}
                 {collapse && <sui.Button
-                    className={`expand-button portrait only ${this.props.collapsed ? "green" : "red"}`}
-                    icon={`${this.props.collapsed ? 'play' : 'stop'}`}
+                    className={`expand-button portrait only editortools-btn hidefullscreen`}
+                    icon={`${collapsed ? 'play' : 'stop'}`}
                     title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse}
                 />}
             </div>

@@ -122,11 +122,8 @@ namespace pxt.github {
                 if (opts.url == GRAPHQL_URL)
                     opts.headers['Authorization'] = `bearer ${token}`
                 else {
-                    if (opts.url.indexOf('?') > 0)
-                        opts.url += "&"
-                    else
-                        opts.url += "?"
-                    opts.url += "anti_cache=" + Math.random()
+                    // defeat browser cache when signed in
+                    opts.url = pxt.BrowserUtils.cacheBustingUrl(opts.url);
                     opts.headers['Authorization'] = `token ${token}`
                 }
             }
@@ -148,7 +145,7 @@ namespace pxt.github {
         return ghRequestAsync({ url, method: "GET" }).then(resp => resp.json)
     }
 
-    function ghProxyJsonAsync(path: string) {
+    function ghProxyWithCdnJsonAsync(path: string) {
         return Cloud.apiRequestWithCdnAsync({ url: "gh/" + path }).then(r => r.json)
     }
 
@@ -166,7 +163,7 @@ namespace pxt.github {
         private configs: pxt.Map<pxt.PackageConfig> = {};
         private packages: pxt.Map<CachedPackage> = {};
 
-        private proxyLoadPackageAsync(repopath: string, tag: string): Promise<CachedPackage> {
+        private proxyWithCdnLoadPackageAsync(repopath: string, tag: string): Promise<CachedPackage> {
             // cache lookup
             const key = `${repopath}/${tag}`;
             let res = this.packages[key];
@@ -176,7 +173,7 @@ namespace pxt.github {
             }
 
             // load and cache
-            return ghProxyJsonAsync(`${repopath}/${tag}/text`)
+            return ghProxyWithCdnJsonAsync(`${repopath}/${tag}/text`)
                 .then(v => this.packages[key] = { files: v });
         }
 
@@ -201,7 +198,7 @@ namespace pxt.github {
             // try proxy if available
             if (hasProxy()) {
                 try {
-                    const gpkg = await this.proxyLoadPackageAsync(repopath, tag)
+                    const gpkg = await this.proxyWithCdnLoadPackageAsync(repopath, tag)
                     return this.cacheConfig(key, gpkg.files[pxt.CONFIG_NAME]);
                 } catch (e) {
                     ghProxyHandleException(e);
@@ -218,7 +215,7 @@ namespace pxt.github {
             // try using github proxy first
             if (hasProxy()) {
                 try {
-                    return await this.proxyLoadPackageAsync(repopath, tag).then(v => U.clone(v));
+                    return await this.proxyWithCdnLoadPackageAsync(repopath, tag).then(v => U.clone(v));
                 } catch (e) {
                     ghProxyHandleException(e);
                 }
@@ -492,18 +489,18 @@ namespace pxt.github {
         return repoInfo.fullName + "#" + branchName
     }
 
-    export function listRefsAsync(repopath: string, namespace = "tags", useProxy?: boolean): Promise<string[]> {
-        return listRefsExtAsync(repopath, namespace, useProxy)
+    export function listRefsAsync(repopath: string, namespace = "tags", useProxy?: boolean, noCache?: boolean): Promise<string[]> {
+        return listRefsExtAsync(repopath, namespace, useProxy, noCache)
             .then(res => Object.keys(res.refs))
     }
 
-    export function listRefsExtAsync(repopath: string, namespace = "tags", useProxy?: boolean): Promise<RefsResult> {
+    export function listRefsExtAsync(repopath: string, namespace = "tags", useProxy?: boolean, noCache?: boolean): Promise<RefsResult> {
         const proxy = shouldUseProxy(useProxy);
         let head: string = null
         const fetch = !proxy ?
-            ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/" + namespace + "/?per_page=100") :
-            // no CDN caching here
-            U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${repopath}/refs`)
+            ghGetJsonAsync(`https://api.github.com/repos/${repopath}/git/refs/${namespace}/?per_page=100`) :
+            // no CDN caching here, bust browser cace
+            U.httpGetJsonAsync(pxt.BrowserUtils.cacheBustingUrl(`${pxt.Cloud.apiRoot}gh/${repopath}/refs${noCache ? "?nocache=1" : ""}`))
                 .then(r => {
                     let res = Object.keys(r.refs)
                         .filter(k => U.startsWith(k, "refs/" + namespace + "/"))
@@ -851,7 +848,7 @@ namespace pxt.github {
 
     function proxyRepoAsync(rid: ParsedRepo, status: GitRepoStatus): Promise<GitRepo> {
         // always use proxy
-        return ghProxyJsonAsync(`${rid.fullName}`)
+        return ghProxyWithCdnJsonAsync(`${rid.fullName}`)
             .then(meta => {
                 if (!meta) return undefined;
                 return {
@@ -878,9 +875,7 @@ namespace pxt.github {
             return Promise.all(repos.map(id => repoAsync(id.path, config)))
                 .then(rs => rs.filter(r => r && r.status != GitRepoStatus.Banned)); // allow deep links to github repos
 
-        let fetch = () => U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}ghsearch/${appTarget.id}/${appTarget.platformid || appTarget.id}?q=`
-            + encodeURIComponent(query))
-
+        const fetch = () => U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}ghsearch/${appTarget.id}/${appTarget.platformid || appTarget.id}?q=${encodeURIComponent(query)}`)
         return fetch()
             .then((rs: SearchResults) =>
                 rs.items.map(item => mkRepo(item, config))
@@ -1015,7 +1010,7 @@ namespace pxt.github {
         return id
     }
 
-    export function latestVersionAsync(path: string, config: PackagesConfig, useProxy?: boolean): Promise<string> {
+    export function latestVersionAsync(path: string, config: PackagesConfig, useProxy?: boolean, noCache?: boolean): Promise<string> {
         let parsed = parseRepoId(path)
 
         if (!parsed) return Promise.resolve<string>(null);
@@ -1023,7 +1018,7 @@ namespace pxt.github {
         return repoAsync(parsed.fullName, config)
             .then(scr => {
                 if (!scr) return undefined;
-                return listRefsExtAsync(scr.fullName, "tags", useProxy)
+                return listRefsExtAsync(scr.fullName, "tags", useProxy, noCache)
                     .then(refsRes => {
                         let tags = Object.keys(refsRes.refs)
                         // only look for semver tags

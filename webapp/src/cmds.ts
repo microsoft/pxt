@@ -89,7 +89,6 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
         body,
         jsx,
         hasCloseIcon: true,
-        hideCancel: true,
         hideAgree: true,
         helpUrl,
         className: 'downloaddialog',
@@ -428,7 +427,7 @@ export function pairAsync(): Promise<void> {
 export function showDisconnectAsync(): Promise<void> {
     if (pxt.commands.renderDisconnectDialog) {
         const { header, jsx, helpUrl } = pxt.commands.renderDisconnectDialog();
-        return core.dialogAsync({ header, jsx, helpUrl, hideCancel: true, hasCloseIcon: true });
+        return core.dialogAsync({ header, jsx, helpUrl, hasCloseIcon: true });
     }
     return Promise.resolve();
 }

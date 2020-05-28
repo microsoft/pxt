@@ -171,6 +171,8 @@ export interface DialogOptions {
 export function dialogAsync(options: DialogOptions): Promise<void> {
     if (!options.buttons) options.buttons = [];
     if (!options.type) options.type = 'dialog';
+    if (options.hasCloseIcon)
+        options.hideCancel = true;
     if (!options.hideCancel) {
         if (!options.buttons) options.buttons = [];
         options.buttons.push({
@@ -253,8 +255,6 @@ export function promptAsync(options: PromptOptions): Promise<string> {
 
     let result = options.initialValue || "";
     let oked: boolean = false;
-    if (options.hasCloseIcon)
-        options.hideCancel = true;
 
     options.onInputChanged = (v: string) => { result = v };
 

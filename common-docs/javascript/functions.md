@@ -142,7 +142,7 @@ foo(() => { // arrow function!
 
 Often, a function like ``foo()`` will save the arrow function ``handler`` in a variable to run the code inside the function later when a certain condition occurs. Arrow functions serve as a kind of shortcut to provide extra code to run without having to write a separate formal function for that purpose. In this way arrow, or lambda, functions are thought of as "anonymous" functions.
 
-[Read more about arrow functions...](http://devdocs.io/javascript/functions/arrow_functions)
+[Read more about arrow functions...](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions)
 
 
 ## Anonymous Functions

@@ -1092,6 +1092,18 @@ p.ui.font.small {
         transform: translateX(0%)!important;
         left: -2rem;
     }
+
+    #filelist .simtoolbar > .buttons {
+        > .debug-button {
+            display: block !important;
+        }
+    }
+
+    #downloadArea {
+        // .25rem from padding around editortoolbar in portrait mode
+        width: ~"calc(@{blocklyRowWidthTablet} - .25rem)";
+        margin-right: 0 !important;
+    }
 }
 
 /* Mobile */
@@ -1219,7 +1231,7 @@ p.ui.font.small {
     }
     .collapsedEditorTools #filelist {
         > div {
-            display: none;
+            display: none !important;
         }
         aside.simtoolbar button:not(.expand-button) {
             display: none !important;
@@ -1270,11 +1282,6 @@ p.ui.font.small {
         #filelist .simtoolbar > div:not(:first-child),
         #filelist .simtoolbar > .buttons > .button {
             display: none;
-        }
-        #filelist .simtoolbar > .buttons {
-            > .restart-button {
-                display: block;
-            }
         }
         #filelist .simtoolbar > div:first-child {
             flex-direction: column;

@@ -692,7 +692,10 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         })
         if (options.createRelease) {
             await pxt.github.createReleaseAsync(parsed.fullName, options.createRelease, newCommit)
-            await pxt.github.enablePagesAsync(parsed.fullName); // ensure pages are on
+            // ensure pages are on
+            await pxt.github.enablePagesAsync(parsed.fullName);
+            // clear the cloud cache
+            await pxt.github.listRefsAsync(parsed.fullName, "tags", true, true);
         }
         return ""
     }
@@ -1180,7 +1183,6 @@ export async function importGithubAsync(id: string): Promise<Header> {
                 header: lf("Initialize GitHub repository for MakeCode?"),
                 body: lf("We need to add a few files to your GitHub repository to make it work with MakeCode."),
                 agreeLbl: lf("Ok"),
-                hideCancel: true,
                 hasCloseIcon: true,
                 helpUrl: "/github/import"
             })

@@ -63,7 +63,6 @@ export function makeAsync(): Promise<void> {
     return core.dialogAsync({
         header: lf("Make"),
         size: "large",
-        hideCancel: true,
         hasCloseIcon: true,
         jsx:
             /* tslint:disable:react-iframe-missing-sandbox */

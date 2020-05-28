@@ -767,6 +767,7 @@ declare namespace ts.pxtc {
         combinedProperties?: string[];
         pyName?: string;
         pyQName?: string;
+        snippetAddsDefinitions?: boolean;
     }
 
     interface ApisInfo {

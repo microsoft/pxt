@@ -1601,7 +1601,16 @@ namespace pxt.py {
                 }
             }
         }
-        return B.mkStmt(B.mkText(pref), B.mkInfix(expr(target), "=", expr(value)))
+
+        let lExp: B.JsNode;
+        if (annotation && value.kind === "NameConstant"
+            && (value as NameConstant).value === null)
+            // if we have a type annotation and the value is null / undefined, include the annoation
+            lExp = B.mkInfix(expr(target), ":", expr(annotation))
+        else
+            lExp = expr(target)
+
+        return B.mkStmt(B.mkText(pref), B.mkInfix(lExp, "=", expr(value)))
 
         function convertName(n: py.Name) {
             // TODO resuse with Name expr
@@ -2110,7 +2119,7 @@ namespace pxt.py {
             return B.mkText(`hex\`${U.toHex(new Uint8Array(n.s))}\``)
         },
         NameConstant: (n: py.NameConstant) => {
-            if (n.value != null) {
+            if (n.value !== null) {
                 if (!n.tsType)
                     error(n, 9558, lf("tsType missing"));
                 unify(n, n.tsType!, tpBoolean)
@@ -2161,8 +2170,21 @@ namespace pxt.py {
                     B.mkText("]"),
                 ])
             } else if (n.slice.kind == "Slice") {
-                unifyTypeOf(n, typeOf(n.value));
+                const valueType = typeOf(n.value);
+                unifyTypeOf(n, valueType);
                 let s = n.slice as py.Slice
+
+                if (s.step) {
+                    const isString = valueType?.primType === "string";
+
+                    return B.H.mkCall(isString ? "_py.stringSlice" : "_py.slice", [
+                        expr(n.value),
+                        s.lower ? expr(s.lower) : B.mkText("null"),
+                        s.upper ? expr(s.upper) : B.mkText("null"),
+                        expr(s.step)
+                    ]);
+                }
+
                 return B.mkInfix(expr(n.value), ".",
                     B.H.mkCall("slice", [s.lower ? expr(s.lower) : B.mkText("0"),
                     s.upper ? expr(s.upper) : null].filter(isTruthy)))

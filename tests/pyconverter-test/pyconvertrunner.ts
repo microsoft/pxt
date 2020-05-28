@@ -88,7 +88,7 @@ function pyconverterTestAsync(pyFilename: string) {
         const pyInputRaw = fs.readFileSync(pyFilename, "utf8").replace(/\r\n/g, "\n");
         const [pyInput, compareOpts] = util.getAndStripComparisonOptions(pyInputRaw, true);
 
-        return util.py2tsAsync(pyInput, testBlocksDir, false, pyFilename)
+        return util.py2tsAsync(pyInput, testBlocksDir, true, false, pyFilename)
             .then(res => {
                 const outFile = path.join(util.replaceFileExtension(baselineFile, ".local.ts"));
                 const decompiled = res.ts;
@@ -115,7 +115,7 @@ function pyconverterTestAsync(pyFilename: string) {
 
 function pyerrorTest(filename: string) {
     const pyInput = fs.readFileSync(filename, "utf8").replace(/\r\n/g, "\n");
-    return util.py2tsAsync(pyInput, testBlocksDir, true, filename)
+    return util.py2tsAsync(pyInput, testBlocksDir, true, true, filename)
         .then(result => {
             const expected = getErrorCases(result.python);
             const failing = expected.filter(errorCase => {

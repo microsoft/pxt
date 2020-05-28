@@ -287,17 +287,19 @@ namespace pxt.blocks.layout {
         const xmlString = serializeNode(sg)
             .replace(/^\s*<svg[^>]+>/i, '')
             .replace(/<\/svg>\s*$/i, '') // strip out svg tag
-        const svgXml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="${XLINK_NAMESPACE}" width="${width}" height="${height}" viewBox="${x} ${y} ${width} ${height}">${xmlString}</svg>`;
+        const svgXml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="${XLINK_NAMESPACE}" width="${width}" height="${height}" viewBox="${x} ${y} ${width} ${height}" class="pxt-renderer">${xmlString}</svg>`;
         const xsg = new DOMParser().parseFromString(svgXml, "image/svg+xml");
         const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
         const isRtl = Util.isUserLanguageRtl();
         const customCssHref = (document.getElementById(`style-${isRtl ? 'rtl' : ''}blockly.css`) as HTMLLinkElement).href;
-        return pxt.BrowserUtils.loadAjaxAsync(customCssHref)
+        const semanticCssHref = Util.toArray(document.head.getElementsByTagName("link"))
+            .filter(l => Util.endsWith(l.getAttribute("href"), "semantic.css"))[0].href;
+        return Promise.all([pxt.BrowserUtils.loadAjaxAsync(customCssHref), pxt.BrowserUtils.loadAjaxAsync(semanticCssHref)])
             .then((customCss) => {
                 const blocklySvg = Util.toArray(document.head.querySelectorAll("style"))
                     .filter((el: HTMLStyleElement) => /\.blocklySvg/.test(el.innerText))[0] as HTMLStyleElement;
                 // CSS may contain <, > which need to be stored in CDATA section
-                const cssString = (blocklySvg ? blocklySvg.innerText : "") + '\n\n' + customCss + '\n\n';
+                const cssString = (blocklySvg ? blocklySvg.innerText : "") + '\n\n' + customCss.map(el => el + '\n\n');
                 cssLink.appendChild(xsg.createCDATASection(cssString));
                 xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
 
