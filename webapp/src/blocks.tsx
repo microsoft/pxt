@@ -1017,7 +1017,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 maxScale: 2.5,
                 minScale: .2,
                 scaleSpeed: 1.5,
-                startScale: pxt.BrowserUtils.isMobile() ? 0.7 : 0.9
+                startScale: pxt.BrowserUtils.isMobile() ? 0.7 : 0.9,
+                pinch: true
             },
             rtl: Util.isUserLanguageRtl()
         };
