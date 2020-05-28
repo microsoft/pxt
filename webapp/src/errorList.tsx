@@ -49,6 +49,8 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         const createOnErrorMessageClick = (e: pxtc.KsDiagnostic, index: number) => () =>
             this.onErrorMessageClick(e, index)
 
+
+
         let errorListContent;
         if (!isCollapsed) {
             if (exception) {
@@ -57,7 +59,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                         <div className="exceptionMessage">
                             {pxt.Util.rlf(exception.exceptionMessage)}
                             <span className="debuggerSuggestion" role="button" onClick={this.props.startDebugger}>
-                                {lf('Try starting a debug session')}
+                                <a>{lf("Debug this project")}</a>
                                 <sui.Icon className="debug-icon blue" icon="icon bug"/>
                             </span>
                         </div>
