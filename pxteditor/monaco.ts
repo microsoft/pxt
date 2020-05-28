@@ -138,7 +138,6 @@ namespace pxt.vs {
             quickSuggestionsDelay: 200,
             theme: inverted ? 'vs-dark' : 'vs',
             renderIndentGuides: true,
-            //accessibilitySupport: 'on',
             accessibilityHelpUrl: "", //TODO: Add help url explaining how to use the editor with a screen reader
             // disable completions on android
             quickSuggestions: {
@@ -148,6 +147,7 @@ namespace pxt.vs {
            },
             acceptSuggestionOnCommitCharacter: !isAndroid,
             acceptSuggestionOnEnter: !isAndroid ? "on" : "off",
+            accessibilitySupport: !isAndroid ? "on" : "off"
         });
 
         editor.layout();
