@@ -99,7 +99,7 @@ export function getTestCompileOptsAsync(packageFiles: pxt.Map<string> = { "main.
 }
 
 export function ts2pyAsync(tsInput: string, dependency: string, includeCommon: boolean, caseName: string): Promise<string> {
-    const deps = [dependency, ...(!includeCommon ? ["bare"] : [])]
+    const deps = [...(dependency ? [dependency] : []), ...(!includeCommon ? ["bare"] : [])]
     return getTestCompileOptsAsync({ "main.ts": tsInput }, deps, includeCommon)
         .then(opts => {
             let program = pxtc.getTSProgram(opts);
@@ -117,7 +117,7 @@ export function ts2pyAsync(tsInput: string, dependency: string, includeCommon: b
 }
 
 export function py2tsAsync(pyInput: string, dependency: string, includeCommon: boolean, allowErrors: boolean, caseName: string): Promise<PyConverterResult> {
-    const deps = [dependency, ...(!includeCommon ? ["bare"] : [])]
+    const deps = [...(dependency ? [dependency] : []), ...(!includeCommon ? ["bare"] : [])]
     return getTestCompileOptsAsync({ "main.py": pyInput, "main.ts": "// no main" }, deps, includeCommon)
         .then(opts => {
             opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME

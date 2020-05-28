@@ -34,7 +34,6 @@ pxt.setAppTarget(util.testAppTarget);
 
 // tests files
 const casesDir = path.join(process.cwd(), "tests", "runtime-trace-tests", "cases");
-const testPackage = path.relative(process.cwd(), path.join("tests", "runtime-trace-tests", "test-package"));
 
 describe("convert between ts<->py ", () => {
     // TODO: can this be moved to a mocha before() block?
@@ -237,7 +236,7 @@ function runNodeJsAsync(nodeArgs: string): Promise<string> {
 
 async function convertTs2Py(tsFile: string): Promise<string> {
     const tsCode = fs.readFileSync(tsFile, "utf8").replace(/\r\n/g, "\n");
-    let pyCode = await util.ts2pyAsync(tsCode, testPackage, false, tsFile)
+    let pyCode = await util.ts2pyAsync(tsCode, null, false, tsFile)
     const pyFile = path.join(util.replaceFileExtension(tsFile, ".ts.py"));
     writeFileStringSync(pyFile, pyCode)
     return pyFile
@@ -245,7 +244,7 @@ async function convertTs2Py(tsFile: string): Promise<string> {
 
 async function convertPy2Ts(pyFile: string): Promise<string> {
     const pyCode = fs.readFileSync(pyFile, "utf8").replace(/\r\n/g, "\n");
-    let tsCode = await util.py2tsAsync(pyCode, testPackage, false, true, pyFile)
+    let tsCode = await util.py2tsAsync(pyCode, null, false, true, pyFile)
     const tsFile = path.join(util.replaceFileExtension(pyFile, ".py.ts"));
     writeFileStringSync(tsFile, tsCode.ts)
     return tsFile
@@ -307,7 +306,7 @@ pause(300);
     `
     let body = fs.readFileSync(filename, "utf8")
     let tsMain = [prelude, body, postlude].join("\n")
-    return util.stsAsync(tsMain, testPackage)
+    return util.stsAsync(tsMain)
         .then((compiled) => {
             return runStsAsync(compiled)
         })
