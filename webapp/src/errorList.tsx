@@ -56,7 +56,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                     <div>
                         <div className="exceptionMessage">
                             {pxt.Util.rlf(exception.exceptionMessage)}
-                            <span className="debuggerSuggestion" onClick={this.props.startDebugger}>
+                            <span className="debuggerSuggestion" role="button" onClick={this.props.startDebugger}>
                                 {lf('Try starting a debug session')}
                                 <sui.Icon className="debug-icon blue" icon="icon bug"/>
                             </span>
