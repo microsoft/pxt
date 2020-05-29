@@ -2347,7 +2347,7 @@ ${lbl}: .short 0xffff
                     // completely dynamic dispatch
                     return mkMethodCall(args.map((x) => emitExpr(x)), {
                         ifaceIndex: getIfaceMemberId(fieldName, true),
-                        callLocationIndex: res.procCallLocations.push(pxtc.nodeLocationInfo(node)) - 1,
+                        callLocationIndex: markCallLocation(node),
                         noArgs
                     })
                 }
@@ -2409,7 +2409,7 @@ ${lbl}: .short 0xffff
                     return mkMethodCall(args.map((x) => emitExpr(x)), {
                         ifaceIndex: getIfaceMemberId(getName(decl), true),
                         isSet: noArgs && args.length == 2,
-                        callLocationIndex: res.procCallLocations.push(pxtc.nodeLocationInfo(node)) - 1,
+                        callLocationIndex: markCallLocation(node),
                         noArgs
                     })
                 } else {
@@ -2431,16 +2431,16 @@ ${lbl}: .short 0xffff
             U.assert(!noArgs)
             return mkMethodCall(args.map(x => emitExpr(x)), {
                 virtualIndex: -1,
-                callLocationIndex: res.procCallLocations.push(pxtc.nodeLocationInfo(node)) - 1,
+                callLocationIndex: markCallLocation(node),
                 noArgs
             });
         }
 
-        function mkProcCallCore(proc: ir.Procedure, usage: ts.Node, args: ir.Expr[]) {
+        function mkProcCallCore(proc: ir.Procedure, callLocation: ts.Node, args: ir.Expr[]) {
             U.assert(!bin.finalPass || !!proc)
             let data: ir.ProcId = {
                 proc: proc,
-                callLocationIndex: res.procCallLocations.push(pxtc.nodeLocationInfo(usage)) - 1,
+                callLocationIndex: markCallLocation(callLocation),
                 virtualIndex: null,
                 ifaceIndex: null
             }
@@ -2455,14 +2455,14 @@ ${lbl}: .short 0xffff
             return pxtInfo(decl).proc
         }
 
-        function mkProcCall(decl: ts.Declaration, usage: ts.Node, args: ir.Expr[]) {
+        function mkProcCall(decl: ts.Declaration, callLocation: ts.Node, args: ir.Expr[]) {
             const proc = lookupProc(decl)
             if (decl.kind == SK.FunctionDeclaration) {
                 const info = getFunctionInfo(decl as FunctionDeclaration)
                 markUsageOrder(info)
             }
             assert(!!proc || !bin.finalPass, "!!proc || !bin.finalPass")
-            return mkProcCallCore(proc, usage, args)
+            return mkProcCallCore(proc, callLocation, args)
         }
 
         function layOutGlobals() {
@@ -4451,7 +4451,7 @@ ${lbl}: .short 0xffff
             } else {
                 exres = mkMethodCall([objRef], {
                     ifaceIndex: getIfaceMemberId(fieldName, true),
-                    callLocationIndex: res.procCallLocations.push(pxtc.nodeLocationInfo(node)) - 1,
+                    callLocationIndex: markCallLocation(node),
                     noArgs: true
                 })
             }
@@ -4784,6 +4784,10 @@ ${lbl}: .short 0xffff
                     return emitExportAssignment(<ExportAssignment>node);
                 */
             }
+        }
+
+        function markCallLocation(node: ts.Node) {
+            return res.procCallLocations.push(pxtc.nodeLocationInfo(node)) - 1;
         }
     }
 
