@@ -2786,8 +2786,8 @@ export class ProjectView
                                 storedState: pkg.mainEditorPkg().getSimState(),
                                 autoRun: this.state.autoRun
                             }, opts.trace)
-                            this.blocksEditor.setBreakpointsMap(resp.breakpoints);
-                            this.textEditor.setBreakpointsMap(resp.breakpoints);
+                            this.blocksEditor.setBreakpointsMap(resp.breakpoints, resp.procCallLocations);
+                            this.textEditor.setBreakpointsMap(resp.breakpoints, resp.procCallLocations);
                             if (!cancellationToken.isCancelled()) {
                                 // running state is set by the simulator once the iframe is loaded
                                 this.setState({ showParts: simulator.driver.hasParts() })

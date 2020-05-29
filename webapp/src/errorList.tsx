@@ -6,14 +6,15 @@ import * as sui from "./sui";
 export interface ErrorListProps {
     onSizeChange: (state: pxt.editor.ErrorListState) => void;
     listenToErrorChanges: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void;
-    listenToExceptionChanges: (handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage) => void) => void;
+    listenToExceptionChanges: (handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void) => void,
     goToError: (error: pxtc.KsDiagnostic) => void;
     startDebugger: () => void;
 }
 export interface ErrorListState {
     isCollapsed: boolean,
     errors: pxtc.KsDiagnostic[],
-    exception?: pxsim.DebuggerBreakpointMessage
+    exception?: pxsim.DebuggerBreakpointMessage,
+    callLocations?: pxtc.LocationInfo[]
 }
 
 export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
@@ -127,19 +128,24 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         }, this.onDisplayStateChange);
     }
 
-    onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
+    onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage, callLocations: pxtc.LocationInfo[]) {
         this.setState({
-            exception
-        }, this.onDisplayStateChange);
+            exception,
+            callLocations
+        })
     }
 
     private generateStackTraces(exception: pxsim.DebuggerBreakpointMessage) {
         return <div className="ui selection list">
-            {(exception.stackframes || []).map(sf =>
-                <div className="item stackFrame">
-                    {lf("at {0} ({1}:{2}:{3})", sf.funcInfo.functionName, sf.funcInfo.fileName, sf.funcInfo.line + 1, sf.funcInfo.column + 1)}
-                </div>)
-            }
+            {(exception.stackframes || []).map((sf, index) => {
+                const location = this.state.callLocations[sf.callLocationId];
+
+                if (!location) return null;
+
+                return <div className="item stackframe" key={index}>
+                    {lf("at {0} ({1}:{2}:{3})", sf.funcInfo.functionName, sf.funcInfo.fileName, location.line + 1, location.column + 1)}
+                </div>
+            })}
         </div>;
     }
 }

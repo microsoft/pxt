@@ -618,6 +618,10 @@ function ${id}(s) {
 
             let callIt = `s.pc = ${lblId}; return ${frameRef};`
 
+            if (procid.callLocationIndex != null) {
+                callIt = `s.callLocIdx = ${procid.callLocationIndex}; ${callIt}`
+            }
+
             if (procid.ifaceIndex != null) {
                 U.assert(callproc == null)
                 const ifaceFieldName = bin.ifaceMembers[procid.ifaceIndex]

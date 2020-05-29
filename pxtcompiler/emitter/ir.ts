@@ -411,6 +411,7 @@ namespace ts.pxtc.ir {
 
     export interface ProcId {
         proc?: Procedure;
+        callLocationIndex?: number;
         virtualIndex?: number;
         ifaceIndex?: number;
         classInfo?: ClassInfo;

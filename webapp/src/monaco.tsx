@@ -362,7 +362,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private highlightedBreakpoint: number;
     private editAmendmentsListener: monaco.IDisposable | undefined;
     private errorChangesListeners: pxt.Map<(errors: pxtc.KsDiagnostic[]) => void> = {};
-    private exceptionChangesListeners: pxt.Map<(exception: pxsim.DebuggerBreakpointMessage) => void> = {}
+    private exceptionChangesListeners: pxt.Map<(exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void> = {}
+    private callLocations: pxtc.LocationInfo[];
 
     private handleFlyoutWheel = (e: WheelEvent) => e.stopPropagation();
     private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
@@ -624,13 +625,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         )
     }
 
-    listenToExceptionChanges(handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage) => void) {
+    listenToExceptionChanges(handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void) {
         this.exceptionChangesListeners[handlerKey] = handler;
     }
 
     public onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
         for (let listener of pxt.U.values(this.exceptionChangesListeners)) {
-            listener(exception);
+            listener(exception, this.callLocations);
         }
     }
 
@@ -1442,7 +1443,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         });
     }
 
-    setBreakpointsMap(breakpoints: pxtc.Breakpoint[]): void {
+    setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
+        this.callLocations = procCallLocations;
         if (this.isDebugging()) {
             if (!this.breakpoints) {
                 this.breakpoints = new BreakpointCollection(breakpoints, this.pythonSourceMap);

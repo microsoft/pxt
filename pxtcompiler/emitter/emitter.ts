@@ -993,6 +993,7 @@ namespace ts.pxtc {
                 line: 0,
                 column: 0,
             }]
+            res.procCallLocations = [];
         }
 
         if (opts.computeUsedSymbols) {
@@ -2296,7 +2297,7 @@ ${lbl}: .short 0xffff
             }
 
             function emitPlain() {
-                let r = mkProcCall(decl, args.map((x) => emitExpr(x)))
+                let r = mkProcCall(decl, node, args.map((x) => emitExpr(x)))
                 let pp = r.data as ir.ProcId
                 if (args[0] && pp.proc && pp.proc.classInfo)
                     pp.isThis = args[0].kind == SK.ThisKeyword
@@ -2329,7 +2330,7 @@ ${lbl}: .short 0xffff
                     throw userError(9280, lf("super() call requires an explicit constructor in base class"))
                 let ctorArgs = args.map((x) => emitExpr(x))
                 ctorArgs.unshift(emitThis(funcExpr))
-                return mkProcCallCore(baseCtor, ctorArgs)
+                return mkProcCallCore(baseCtor, node, ctorArgs)
             }
 
             if (hasRecv) {
@@ -2346,6 +2347,7 @@ ${lbl}: .short 0xffff
                     // completely dynamic dispatch
                     return mkMethodCall(args.map((x) => emitExpr(x)), {
                         ifaceIndex: getIfaceMemberId(fieldName, true),
+                        callLocationIndex: markCallLocation(node),
                         noArgs
                     })
                 }
@@ -2407,6 +2409,7 @@ ${lbl}: .short 0xffff
                     return mkMethodCall(args.map((x) => emitExpr(x)), {
                         ifaceIndex: getIfaceMemberId(getName(decl), true),
                         isSet: noArgs && args.length == 2,
+                        callLocationIndex: markCallLocation(node),
                         noArgs
                     })
                 } else {
@@ -2426,13 +2429,18 @@ ${lbl}: .short 0xffff
             args.unshift(funcExpr)
 
             U.assert(!noArgs)
-            return mkMethodCall(args.map(x => emitExpr(x)), { virtualIndex: -1, noArgs })
+            return mkMethodCall(args.map(x => emitExpr(x)), {
+                virtualIndex: -1,
+                callLocationIndex: markCallLocation(node),
+                noArgs
+            });
         }
 
-        function mkProcCallCore(proc: ir.Procedure, args: ir.Expr[]) {
+        function mkProcCallCore(proc: ir.Procedure, callLocation: ts.Node, args: ir.Expr[]) {
             U.assert(!bin.finalPass || !!proc)
             let data: ir.ProcId = {
                 proc: proc,
+                callLocationIndex: markCallLocation(callLocation),
                 virtualIndex: null,
                 ifaceIndex: null
             }
@@ -2447,14 +2455,14 @@ ${lbl}: .short 0xffff
             return pxtInfo(decl).proc
         }
 
-        function mkProcCall(decl: ts.Declaration, args: ir.Expr[]) {
+        function mkProcCall(decl: ts.Declaration, callLocation: ts.Node, args: ir.Expr[]) {
             const proc = lookupProc(decl)
             if (decl.kind == SK.FunctionDeclaration) {
                 const info = getFunctionInfo(decl as FunctionDeclaration)
                 markUsageOrder(info)
             }
             assert(!!proc || !bin.finalPass, "!!proc || !bin.finalPass")
-            return mkProcCallCore(proc, args)
+            return mkProcCallCore(proc, callLocation, args)
         }
 
         function layOutGlobals() {
@@ -2585,7 +2593,7 @@ ${lbl}: .short 0xffff
                         return ir.rtcall(ctorAttrs.shim, compiled)
                     }
                     compiled.unshift(obj)
-                    proc.emitExpr(mkProcCall(ctor, compiled))
+                    proc.emitExpr(mkProcCall(ctor, node, compiled))
                     return obj
                 } else {
                     if (node.arguments && node.arguments.length)
@@ -4436,17 +4444,18 @@ ${lbl}: .short 0xffff
             const fieldSym = checker.getPropertyOfType(objType, fieldName);
             U.assert(!!fieldSym, "field sym")
             const myType = checker.getTypeOfSymbolAtLocation(fieldSym, node);
-            let res: ir.Expr
+            let exres: ir.Expr
             if (isPossiblyGenericClassType(objType)) {
                 const info = getClassInfo(objType)
-                res = ir.op(EK.FieldAccess, [objRef], fieldIndexCore(info, getFieldInfo(info, fieldName)))
+                exres = ir.op(EK.FieldAccess, [objRef], fieldIndexCore(info, getFieldInfo(info, fieldName)))
             } else {
-                res = mkMethodCall([objRef], {
+                exres = mkMethodCall([objRef], {
                     ifaceIndex: getIfaceMemberId(fieldName, true),
+                    callLocationIndex: markCallLocation(node),
                     noArgs: true
                 })
             }
-            return [res, myType]
+            return [exres, myType]
         }
 
         function bindingElementAccessExpression(bindingElement: BindingElement, parentAccess: ir.Expr, parentType: Type): [ir.Expr, Type] {
@@ -4775,6 +4784,10 @@ ${lbl}: .short 0xffff
                     return emitExportAssignment(<ExportAssignment>node);
                 */
             }
+        }
+
+        function markCallLocation(node: ts.Node) {
+            return res.procCallLocations.push(pxtc.nodeLocationInfo(node)) - 1;
         }
     }
 
