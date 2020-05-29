@@ -68,7 +68,8 @@
             editor: "microbit",
             multiEditor: false,
             twitter: "",
-            mixer: ""
+            mixer: "",
+            emojis: "😄🤔😭👀"
         }
         saveConfig(cfg)
         return cfg;
@@ -91,7 +92,10 @@
         const config = readConfig();
         toolbox.innerHTML = ""
 
-        const emojis = "😄 👀".split(" ")
+        const emojis = [];
+        if (config.emojis)
+            for(let i =0; i < config.emojis.length;i += 2)
+                emojis[i >> 1] = config.emojis.substr(i, 2);
         if (state.paint) {
             addPaintButton("ArrowTallUpLeft", "Draw arrow", "arrow")
             addPaintButton("RectangleShape", "Draw rectangle", "rect")
@@ -202,11 +206,7 @@
             if (state.painttool == 'pen') {
                 painttoolCtx.beginPath();
                 painttoolCtx.moveTo(mouse.x, mouse.y);
-            } else if (state.painttool == 'emoji') {
-                paintCtx.font = '16vh serif';
-                paintCtx.textAlign = 'center'
-                paintCtx.fillText(state.emoji, mouse.x, mouse.y);
-            }            
+            }          
             painttool.addEventListener('mousemove', onPaint, false);
         }, false);
         
@@ -252,6 +252,10 @@
             } else if (state.painttool == 'pen') {
                 ctx.lineTo(mouse.x, mouse.y);
                 ctx.stroke();
+            } else if (state.painttool == 'emoji') {
+                ctx.font = '16vh serif';
+                ctx.textAlign = 'center'
+                ctx.fillText(state.emoji, mouse.x, mouse.y);
             }
             ctx.restore();
         }
@@ -666,6 +670,16 @@ background: #615fc7;
             loadSocial();
             loadToolbox()
             loadChat();
+            render()
+        }
+
+        const emojisinput = document.getElementById("emojisinput")
+        emojisinput.value = config.emojis || ""
+        emojisinput.onchange = function (e) {
+            config.emojis = emojisinput.value.replace(/\s*/g, '');
+            emojisinput.value = config.emojis
+            saveConfig(config);
+            loadSocial()
             render()
         }
     }
