@@ -31,7 +31,7 @@
     initMessages();
     loadPaint();
     loadEditor()
-    await loadFaceCam()
+    await firstLoadFaceCam()
     await loadHardwareCam()
     await loadSettings()
     load();
@@ -261,7 +261,7 @@
         editor.src = url;
         if (config.multiEditor) {
             if (!editor2.parentElement)
-                body.insertBefore(editor2, editor);
+                container.insertBefore(editor2, editor);
             editor2.src = url;
         } else {
             // remove from DOM
@@ -386,12 +386,12 @@ background: #615fc7;
         if (config.mixer) {
             chat.src = `https://mixer.com/embed/chat/${config.mixer}?composer=false`;
             if (!chat.parentElement)
-                body.insertBefore(chat, facecam)
+                container.insertBefore(chat, facecam)
         }
         else if (config.twitch) {
             chat.src = `https://www.twitch.tv/embed/${config.twitch}/chat?parent=makecode.com`;
             if (!chat.parentElement)
-                body.insertBefore(chat, facecam)
+                container.insertBefore(chat, facecam)
         }
         else // remove from dom
             chat.remove();
@@ -401,6 +401,19 @@ background: #615fc7;
         let cams = await navigator.mediaDevices.enumerateDevices()
         cams = cams.filter(d => d.kind == "videoinput")
         return cams;
+    }
+
+    async function firstLoadFaceCam() {
+        await loadFaceCam()
+        const config = readConfig();
+        if (!config.faceCamId) {
+            const cams = await listCameras();
+            if (cams && cams[0] && cams[0].deviceId) {
+                config.faceCamId = cams[0].deviceId;
+                saveConfig(config);
+                await loadFaceCam();            
+            }
+        }
     }
 
     async function loadFaceCam() {
