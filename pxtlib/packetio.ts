@@ -77,7 +77,7 @@ namespace pxt.packetio {
             return disconnectPromise;
         let p = Promise.resolve();
         if (wrapper) {
-            log('disconnect')
+            debug('packetio: disconnect')
             const w = wrapper;
             p = p.then(() => w.disconnectAsync())
                 .then(() => w.io.disposeAsync())
@@ -114,11 +114,11 @@ namespace pxt.packetio {
             return Promise.resolve(wrapper);
 
         if (!mkPacketIOAsync) {
-            pxt.log(`packetio: not defined, skipping`)
+            pxt.debug(`packetio: not defined, skipping`)
             return Promise.resolve(undefined);
         }
 
-        pxt.log(`packetio: new wrapper`)
+        pxt.debug(`packetio: new wrapper`)
         return mkPacketIOAsync()
             .then(io => {
                 io.onConnectionChanged = onConnectionChangedHandler;
@@ -130,7 +130,7 @@ namespace pxt.packetio {
     }
 
     export function initAsync(force = false): Promise<PacketIOWrapper> {
-        pxt.log(`packetio: init ${force ? "(force)" : ""}`)
+        pxt.debug(`packetio: init ${force ? "(force)" : ""}`)
         if (!initPromise) {
             let p = Promise.resolve();
             if (force)
