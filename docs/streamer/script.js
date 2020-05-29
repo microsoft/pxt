@@ -68,7 +68,6 @@
             editor: "microbit",
             multiEditor: false,
             twitter: "",
-            youTube: "",
             mixer: ""
         }
         saveConfig(cfg)
@@ -363,12 +362,6 @@ background: #615fc7;
         banner.innerHTML = ''
         if (config.twitter)
             addSocial(`@${config.twitter}`)
-        if (config.youTube)
-            addSocial(`youtube.com/${config.youTube}`);
-        if (config.mixer)
-            addSocial(`mixer.com/${config.mixer}`);
-        else if (config.twitch)
-            addSocial(`twitch.tv/${config.twitch}`);
 
         if (!config.mixer && !config.twitch)
             state.chat = false;
@@ -634,16 +627,6 @@ background: #615fc7;
             twitterinput.value = config.twitter
             saveConfig(config);
             loadSocial()
-            render()
-        }
-
-        const youtubeinput = document.getElementById("youtubeinput")
-        youtubeinput.value = config.youTube || ""
-        youtubeinput.onchange = function (e) {
-            config.youTube = (youtubeinput.value || "").replace(/^https:\/\/youtube.com\//, '').replace(/^\//, '').trim()
-            youtubeinput.value = config.youTube
-            saveConfig(config);
-            loadSocial();
             render()
         }
 
