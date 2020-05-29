@@ -374,6 +374,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.listenToErrorChanges = this.listenToErrorChanges.bind(this);
         this.listenToExceptionChanges = this.listenToExceptionChanges.bind(this)
         this.goToError = this.goToError.bind(this);
+        this.startDebugger = this.startDebugger.bind(this)
     }
 
     hasBlocks() {
@@ -616,7 +617,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             parent={this.parent} />
                     </div>
                     {showErrorList && <ErrorList onSizeChange={this.resize} listenToErrorChanges={this.listenToErrorChanges}
-                        listenToExceptionChanges={this.listenToExceptionChanges} goToError={this.goToError}/>}
+                        listenToExceptionChanges={this.listenToExceptionChanges} goToError={this.goToError}
+                        startDebugger={this.startDebugger} />}
                 </div>
             </div>
         )
@@ -651,6 +653,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.editor.revealLineInCenter(line);
         this.editor.setPosition({ column: column, lineNumber: line });
         this.editor.focus();
+    }
+
+    startDebugger() {
+        pxt.tickEvent('errorList.startDebugger', null, { interactiveConsent: true })
+        this.parent.toggleDebugging()
     }
 
     private onErrorChanges(errors: pxtc.KsDiagnostic[]) {

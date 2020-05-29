@@ -7,7 +7,8 @@ export interface ErrorListProps {
     onSizeChange: () => void,
     listenToErrorChanges: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void,
     listenToExceptionChanges: (handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage) => void) => void,
-    goToError: (error: pxtc.KsDiagnostic) => void
+    goToError: (error: pxtc.KsDiagnostic) => void,
+    startDebugger: () => void
 }
 export interface ErrorListState {
     isCollapsed: boolean,
@@ -48,6 +49,8 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         const createOnErrorMessageClick = (e: pxtc.KsDiagnostic, index: number) => () =>
             this.onErrorMessageClick(e, index)
 
+
+
         let errorListContent;
         if (!isCollapsed) {
             if (exception) {
@@ -77,7 +80,13 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                     <div className="ui red circular label countBubble">{exception ? 1 : errors.length}</div>
                     <div className="toggleButton"><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`} onClick={this.onCollapseClick} /></div>
                 </div>
-                {!isCollapsed && <div className="errorListInner">{errorListContent}</div>}
+                {!isCollapsed && <div className="errorListInner">
+                    {exception && <div className="debuggerSuggestion" role="button" onClick={this.props.startDebugger}>
+                        {lf("Debug this project")}
+                        <sui.Icon className="debug-icon blue" icon="icon bug"/>
+                    </div>}
+                    {errorListContent}
+                </div>}
             </div>
         )
     }
@@ -115,9 +124,9 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     }
 
     private generateStackTraces(exception: pxsim.DebuggerBreakpointMessage) {
-        return <div>
+        return <div className="ui selection list">
             {(exception.stackframes || []).map(sf =>
-                <div className="stackframe">
+                <div className="item stackFrame">
                     {lf("at {0} ({1}:{2}:{3})", sf.funcInfo.functionName, sf.funcInfo.fileName, sf.funcInfo.line + 1, sf.funcInfo.column + 1)}
                 </div>)
             }
