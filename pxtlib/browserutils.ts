@@ -30,6 +30,10 @@ namespace pxt.BrowserUtils {
             navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
     }
 
+    export function isAndroid(): boolean {
+        return hasNavigator() && /android/i.test(navigator.userAgent);
+    }
+
     //MacIntel on modern Macs
     export function isMac(): boolean {
         return hasNavigator() && /Mac/i.test(navigator.platform);

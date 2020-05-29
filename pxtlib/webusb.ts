@@ -238,7 +238,7 @@ namespace pxt.usb {
         }
 
         log(msg: string) {
-            pxt.log("webusb: " + msg)
+            pxt.debug("webusb: " + msg)
         }
 
         disconnectAsync() {

@@ -72,6 +72,8 @@ namespace pxt {
 
     // performance measuring, added here because this is amongst the first (typescript) code ever executed
     export namespace perf {
+        let enabled: boolean;
+
         export let startTimeMs: number;
         export let stats: {
             // name, start, duration
@@ -109,16 +111,18 @@ namespace pxt {
             stats.milestones.push([msg, time])
         }
         export function init() {
-            performance.measure("measure from the start of navigation to now")
-            let navStartMeasure = performance.getEntriesByType("measure")[0]
-            startTimeMs = navStartMeasure.startTime
-            // startTimeMs = performance.timing.navigationStart
+            enabled = performance && !!performance.mark && !!performance.measure;
+            if (enabled) {
+                performance.measure("measure from the start of navigation to now")
+                let navStartMeasure = performance.getEntriesByType("measure")[0]
+                startTimeMs = navStartMeasure.startTime
+            }
         }
         export function measureStart(name: string) {
-            performance.mark(`${name} start`)
+            if (enabled) performance.mark(`${name} start`)
         }
         export function measureEnd(name: string) {
-            if (performance.getEntriesByName(`${name} start`).length) {
+            if (enabled && performance.getEntriesByName(`${name} start`).length) {
                 performance.mark(`${name} end`)
                 performance.measure(`${name} elapsed`, `${name} start`, `${name} end`)
                 let e = performance.getEntriesByName(`${name} elapsed`, "measure")
@@ -135,23 +139,25 @@ namespace pxt {
             }
         }
         export function report() {
-            let report = `performance report:\n`
-            for (let [msg, time] of stats.milestones) {
-                let pretty = prettyStr(time)
-                report += `\t\t${msg} @ ${pretty}\n`
-            }
-            report += `\n`
-            for (let [msg, start, duration] of stats.durations) {
-                if (duration > 50) {
-                    let pretty = prettyStr(duration)
-                    report += `\t\t${msg} took ~ ${pretty}`
-                    if (duration > 1000) {
-                        report += ` (${prettyStr(start)} - ${prettyStr(start + duration)})`
-                    }
-                    report += `\n`
+            if (enabled) {
+                let report = `performance report:\n`
+                for (let [msg, time] of stats.milestones) {
+                    let pretty = prettyStr(time)
+                    report += `\t\t${msg} @ ${pretty}\n`
                 }
+                report += `\n`
+                for (let [msg, start, duration] of stats.durations) {
+                    if (duration > 50) {
+                        let pretty = prettyStr(duration)
+                        report += `\t\t${msg} took ~ ${pretty}`
+                        if (duration > 1000) {
+                            report += ` (${prettyStr(start)} - ${prettyStr(start + duration)})`
+                        }
+                        report += `\n`
+                    }
+                }
+                console.log(report)
             }
-            console.log(report)
             perfReportLogged = true
         }
         (function () {

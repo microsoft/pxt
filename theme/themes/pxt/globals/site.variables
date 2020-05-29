@@ -360,3 +360,4 @@
 @errorListBorderColor: #e5e5e5;
 @errorListOdd: @homeScreenBackground;
 @errorListEven: darken(@errorListOdd, 3%);
+@errorListDebugSuggestionColor:rgb(52, 84, 209); // TODO: maybe change to display color based on editor

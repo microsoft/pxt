@@ -371,10 +371,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     constructor(parent: pxt.editor.IProjectView) {
         super(parent);
 
-        this.resize = this.resize.bind(this);
+        this.setErrorListState = this.setErrorListState.bind(this);
         this.listenToErrorChanges = this.listenToErrorChanges.bind(this);
         this.listenToExceptionChanges = this.listenToExceptionChanges.bind(this)
         this.goToError = this.goToError.bind(this);
+        this.startDebugger = this.startDebugger.bind(this)
     }
 
     hasBlocks() {
@@ -599,9 +600,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     display(): JSX.Element {
-        let showErrorList = pxt.appTarget.appTheme.errorList;
+        const showErrorList = pxt.appTarget.appTheme.errorList;
+        const isAndroid = pxt.BrowserUtils.isAndroid();
         return (
-            <div id="monacoEditorArea" className="monacoEditorArea" style={{ direction: 'ltr' }}>
+            <div id="monacoEditorArea" className={`monacoEditorArea ${isAndroid ? "android" : ""}`} style={{ direction: 'ltr' }}>
                 {this.isVisible && <div className={`monacoToolboxDiv ${(this.toolbox && !this.toolbox.state.visible && !this.isDebugging()) ? 'invisible' : ''}`}>
                     <toolbox.Toolbox ref={this.handleToolboxRef} editorname="monaco" parent={this} />
                     <div id="monacoDebuggerToolbox"></div>
@@ -615,8 +617,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setInsertionSnippet={this.setInsertionSnippet}
                             parent={this.parent} />
                     </div>
-                    {showErrorList && <ErrorList onSizeChange={this.resize} listenToErrorChanges={this.listenToErrorChanges}
-                        listenToExceptionChanges={this.listenToExceptionChanges} goToError={this.goToError}/>}
+                    {showErrorList && <ErrorList onSizeChange={this.setErrorListState} listenToErrorChanges={this.listenToErrorChanges}
+                        listenToExceptionChanges={this.listenToExceptionChanges} goToError={this.goToError}
+                        startDebugger={this.startDebugger} />}
                 </div>
             </div>
         )
@@ -651,6 +654,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.editor.revealLineInCenter(line);
         this.editor.setPosition({ column: column, lineNumber: line });
         this.editor.focus();
+    }
+
+    startDebugger() {
+        pxt.tickEvent('errorList.startDebugger', null, { interactiveConsent: true })
+        this.parent.toggleDebugging()
     }
 
     private onErrorChanges(errors: pxtc.KsDiagnostic[]) {
@@ -784,6 +792,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             });
 
             if (monacoToolboxDiv) monacoToolboxDiv.style.height = `100%`;
+        }
+    }
+
+    setErrorListState(newState?: pxt.editor.ErrorListState) {
+        const oldState = this.parent.state.errorListState;
+
+        if (oldState != newState) {
+            this.resize();
+            this.parent.setState({
+                errorListState: newState
+            });
         }
     }
 

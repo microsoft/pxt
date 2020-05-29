@@ -4,10 +4,11 @@ import * as React from "react";
 import * as sui from "./sui";
 
 export interface ErrorListProps {
-    onSizeChange: () => void,
-    listenToErrorChanges: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void,
+    onSizeChange: (state: pxt.editor.ErrorListState) => void;
+    listenToErrorChanges: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void;
     listenToExceptionChanges: (handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void) => void,
-    goToError: (error: pxtc.KsDiagnostic) => void
+    goToError: (error: pxtc.KsDiagnostic) => void;
+    startDebugger: () => void;
 }
 export interface ErrorListState {
     isCollapsed: boolean,
@@ -31,6 +32,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         this.onErrorsChanged = this.onErrorsChanged.bind(this)
         this.onExceptionDetected = this.onExceptionDetected.bind(this)
         this.onErrorMessageClick = this.onErrorMessageClick.bind(this)
+        this.onDisplayStateChange = this.onDisplayStateChange.bind(this)
 
         props.listenToErrorChanges("errorList", this.onErrorsChanged);
         props.listenToExceptionChanges("errorList", this.onExceptionDetected)
@@ -48,6 +50,8 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
         const createOnErrorMessageClick = (e: pxtc.KsDiagnostic, index: number) => () =>
             this.onErrorMessageClick(e, index)
+
+
 
         let errorListContent;
         if (!isCollapsed) {
@@ -78,22 +82,37 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                     <div className="ui red circular label countBubble">{exception ? 1 : errors.length}</div>
                     <div className="toggleButton"><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`} onClick={this.onCollapseClick} /></div>
                 </div>
-                {!isCollapsed && <div className="errorListInner">{errorListContent}</div>}
+                {!isCollapsed && <div className="errorListInner">
+                    {exception && <div className="debuggerSuggestion" role="button" onClick={this.props.startDebugger}>
+                        {lf("Debug this project")}
+                        <sui.Icon className="debug-icon blue" icon="icon bug"/>
+                    </div>}
+                    {errorListContent}
+                </div>}
             </div>
         )
     }
 
-    componentDidUpdate() {
+    onDisplayStateChange() {
+        const { errors, exception, isCollapsed } = this.state;
         // notify parent on possible size change so siblings (monaco)
         // can resize if needed
-        this.props.onSizeChange()
+
+        const noValueToDisplay = !(errors?.length || exception);
+        this.props.onSizeChange(
+            noValueToDisplay ?
+                undefined
+                : isCollapsed ?
+                    pxt.editor.ErrorListState.HeaderOnly
+                    : pxt.editor.ErrorListState.Expanded
+        );
     }
 
     onCollapseClick() {
         pxt.tickEvent('errorlist.collapse', null, { interactiveConsent: true })
         this.setState({
             isCollapsed: !this.state.isCollapsed
-        })
+        }, this.onDisplayStateChange);
     }
 
     onErrorMessageClick(e: pxtc.KsDiagnostic, index: number) {
@@ -106,7 +125,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             errors,
             isCollapsed: errors?.length == 0 || this.state.isCollapsed,
             exception: null
-        })
+        }, this.onDisplayStateChange);
     }
 
     onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage, callLocations: pxtc.LocationInfo[]) {
@@ -117,17 +136,16 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     }
 
     private generateStackTraces(exception: pxsim.DebuggerBreakpointMessage) {
-        return <div>
-            {(exception.stackframes || []).map(sf => {
+        return <div className="ui selection list">
+            {(exception.stackframes || []).map((sf, index) => {
                 const location = this.state.callLocations[sf.callLocationId];
 
                 if (!location) return null;
 
-                return <div className="stackframe">
+                return <div className="item stackframe" key={index}>
                     {lf("at {0} ({1}:{2}:{3})", sf.funcInfo.functionName, sf.funcInfo.fileName, location.line + 1, location.column + 1)}
                 </div>
-            })
-            }
+            })}
         </div>;
     }
 }
