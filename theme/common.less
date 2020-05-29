@@ -121,6 +121,16 @@ pre {
     }
 }
 
+#root {
+    --extra-mobile-sim-padding: 0px;
+    &.errorListHeader {
+        --extra-mobile-sim-padding: @errorListHeaderHeight;
+    }
+    &.errorListExpanded {
+        --extra-mobile-sim-padding: @errorListHeight;
+    }
+}
+
 .transparentEditorTools #editortools {
     background-color: transparent;
     z-index: (@blocklyFlyoutZIndex)-1;
@@ -1218,7 +1228,7 @@ p.ui.font.small {
         position:absolute;
         padding: 0;
         margin: 1em;
-        bottom: 4.5rem !important;
+        bottom: ~"calc(4.5rem + var(--extra-mobile-sim-padding))" !important;
         right: 0.5rem;
         top: unset;
         left: unset;

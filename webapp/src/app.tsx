@@ -3716,7 +3716,8 @@ export class ProjectView
             flyoutOnly ? "flyoutOnly" : "",
             hideTutorialIteration ? "hideIteration" : "",
             this.editor != this.blocksEditor ? "editorlang-text" : "",
-            'full-abs'
+            this.editor == this.textEditor && this.state.errorListState,
+            'full-abs',
         ];
         const rootClasses = sui.cx(rootClassList);
 

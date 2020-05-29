@@ -370,7 +370,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     constructor(parent: pxt.editor.IProjectView) {
         super(parent);
 
-        this.resize = this.resize.bind(this);
+        this.setErrorListState = this.setErrorListState.bind(this);
         this.listenToErrorChanges = this.listenToErrorChanges.bind(this);
         this.listenToExceptionChanges = this.listenToExceptionChanges.bind(this)
         this.goToError = this.goToError.bind(this);
@@ -616,7 +616,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setInsertionSnippet={this.setInsertionSnippet}
                             parent={this.parent} />
                     </div>
-                    {showErrorList && <ErrorList onSizeChange={this.resize} listenToErrorChanges={this.listenToErrorChanges}
+                    {showErrorList && <ErrorList onSizeChange={this.setErrorListState} listenToErrorChanges={this.listenToErrorChanges}
                         listenToExceptionChanges={this.listenToExceptionChanges} goToError={this.goToError}
                         startDebugger={this.startDebugger} />}
                 </div>
@@ -791,6 +791,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             });
 
             if (monacoToolboxDiv) monacoToolboxDiv.style.height = `100%`;
+        }
+    }
+
+    setErrorListState(newState?: pxt.editor.ErrorListState) {
+        const oldState = this.parent.state.errorListState;
+
+        if (oldState != newState) {
+            this.resize();
+            this.parent.setState({
+                errorListState: newState
+            });
         }
     }
 

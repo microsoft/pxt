@@ -37,6 +37,11 @@ namespace pxt.editor {
         fileHistory: FileHistoryEntry[];
     }
 
+    export enum ErrorListState {
+        HeaderOnly = "errorListHeader",
+        Expanded = "errorListExpanded"
+    }
+
     export interface IAppProps { }
     export interface IAppState {
         active?: boolean; // is this tab visible at all
@@ -88,6 +93,8 @@ namespace pxt.editor {
 
         simSerialActive?: boolean;
         deviceSerialActive?: boolean;
+
+        errorListState?: ErrorListState;
 
         screenshoting?: boolean;
     }
