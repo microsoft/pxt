@@ -1227,8 +1227,7 @@ export class ProjectView
             simulator.driver.preload(pxt.appTarget.simulator.aspectRatio);
         this.clearSerial()
         this.firstRun = true
-        // clear caches in all editors
-        compiler.clearCaches();
+        // clear caches in all editors -> compiler.newProjectAsync
         this.allEditors.forEach(editor => editor.clearCaches())
         // always start simulator once at least if autoRun is enabled
         // always disable tracing
@@ -1247,7 +1246,8 @@ export class ProjectView
 
         if (!h.cloudSync && this.cloudSync()) h.cloudSync = true;
 
-        return (h.backupRef ? workspace.restoreFromBackupAsync(h) : Promise.resolve())
+        return compiler.newProjectAsync()
+            .then(() => h.backupRef ? workspace.restoreFromBackupAsync(h) : Promise.resolve())
             .then(() => pkg.loadPkgAsync(h.id))
             .then(() => {
                 if (!this.state || this.state.header != h) {
