@@ -91,11 +91,22 @@
         const config = readConfig();
         toolbox.innerHTML = ""
 
+        const emojis = "😄 👀".split(" ")
         if (state.paint) {
             addPaintButton("ArrowTallUpLeft", "Draw arrow", "arrow")
             addPaintButton("RectangleShape", "Draw rectangle", "rect")
             addPaintButton("PenWorkspace", "Draw freeform", "pen")
             addButton("WhiteBoardApp16", "Paint screen in white", whiteboard)
+            emojis.forEach(emoji => {
+                const btn = document.createElement("button")
+                btn.innerText = emoji;
+                btn.addEventListener("pointerdown", function(e) {
+                    tickEvent("streamer.emoji", { emoji }, { interactiveConsent: true })
+                    state.emoji = emoji;
+                    setPaintTool("emoji")
+                }, false)
+                toolbox.append(btn)
+            })
             addButton("EraseTool", "Clear all drawings", clearPaint)
             addButton("ChromeClose", "Exit paint mode", togglePaint)
         } else {
@@ -191,7 +202,11 @@
             if (state.painttool == 'pen') {
                 painttoolCtx.beginPath();
                 painttoolCtx.moveTo(mouse.x, mouse.y);
-            }                
+            } else if (state.painttool == 'emoji') {
+                paintCtx.font = '16vh serif';
+                paintCtx.textAlign = 'center'
+                paintCtx.fillText(state.emoji, mouse.x, mouse.y);
+            }            
             painttool.addEventListener('mousemove', onPaint, false);
         }, false);
         
