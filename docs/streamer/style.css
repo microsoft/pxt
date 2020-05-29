@@ -1,0 +1,408 @@
+/*
+Use https://uifabricicons.azurewebsites.net/
+*/
+/*
+Your use of the content in the files referenced here is subject to the terms of the license at https://aka.ms/fabric-assets-license
+*/
+@font-face {
+font-family: 'FabricMDL2Icons';
+src: url('data:application/octet-stream;base64,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') format('truetype');
+}
+
+.ms-Icon {
+-moz-osx-font-smoothing: grayscale;
+-webkit-font-smoothing: antialiased;
+display: inline-block;
+font-family: 'FabricMDL2Icons';
+font-style: normal;
+font-weight: normal;
+speak: none;
+}
+
+.ms-Icon--PenWorkspace:before { content: "\EDC6"; }
+.ms-Icon--OpenPaneMirrored:before { content: "\EA5B"; }
+.ms-Icon--Robot:before { content: "\E99A"; }
+.ms-Icon--OfficeChat:before { content: "\F70F"; }
+.ms-Icon--WhiteBoardApp16:before { content: "\F673"; }
+.ms-Icon--ArrowTallUpLeft:before { content: "\F2BD"; }
+.ms-Icon--RectangleShape:before { content: "\F1A9"; }
+.ms-Icon--Settings:before { content: "\E713"; }
+.ms-Icon--Contact:before { content: "\E77B"; }
+.ms-Icon--EraseTool:before { content: "\E75C"; }
+.ms-Icon--ChromeClose:before { content: "\E8BB"; }
+.ms-Icon--OpenPane:before { content: "\E8A0"; }
+
+/* 
+    Style for the background. 
+    
+    Generate your custom css gradients at https://cssgradient.io/ 
+*/
+body {
+    font-family: monospace;
+    overflow: hidden;
+}
+.container {
+    padding-top: 56.25%;
+    position: relative;
+    width: 100%;            
+}
+
+footer {
+    font-size: 70%;
+    color: white;
+    position: absolute;
+    bottom: 0.5%;
+    left: 1%;
+    opacity: 90%;
+    text-shadow: black 1px 1px;
+}
+
+footer>a {
+    color: white;
+    text-decoration: none;
+}
+
+/* 
+    Style for the boxes.
+
+    https://alligator.io/css/gradient-borders-pure-css/ 
+*/
+.box {
+    border: 0.5rem solid;
+    border-radius: 0.5rem;
+
+    transition: left 0.5s, right 0.5s, bottom 0.5s, top 0.5s, width 0.5s, height 0.5s, opacity 1s;
+}
+
+.hidden {
+    display: none;
+}
+
+.rotate {
+    transform: rotate(180deg);
+    transform-origin: 50% 50%;
+}
+
+.ms-Icon {
+    vertical-align: middle;
+    margin-right: 0.2rem;
+}
+
+.item {
+    cursor: pointer;
+}
+.error {
+    border: solid 1px red;
+    margin: 1rem 0rem 1rem 0rem;
+    padding: 1rem;
+    background: white;
+}
+#toolbox > button {
+    height: 2rem;
+    width: 2rem;
+    border-radius: 1rem;
+    background: black;
+    color: white;
+    padding: 0.47rem;
+    margin: 0.25rem;
+    cursor: pointer;
+    opacity: 40%;
+}
+#toolbox > button:hover {
+    opacity: 100%;
+}
+#toolbox > button.active {
+    background: white;
+    color: black;
+}
+#banner {
+    margin: 0.5vh;
+}
+canvas {
+    display: none;
+}
+.paint canvas {
+    display: block;
+    position:absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+}
+.paint {
+    cursor:pointer !important;
+}
+
+body.loading {
+    filter: blur(0.2vw);
+}
+
+/*
+Settings
+*/
+#settings {
+    position: absolute;
+    left: 16%;
+    top: 16%;
+    width: 58%;
+    height: 58%;
+    background: #ccc;
+    padding: 5% 5% 5% 5%;
+    overflow-y: auto;
+}
+
+#settings .field {
+    padding: 1% 0 1% 0;
+}
+
+#settings .field input {
+    width: 100%;
+    font-size: 90%;
+}
+
+#settings .field input[type="checkbox"] {
+    width: unset;
+}
+
+#settings .field select {
+    width: 100%;
+    font-size: 90%;
+}
+
+#settings #settingsclose {
+    position: absolute;
+    right: 2%;
+    top: 2%;
+}
+
+/*
+    MakeCode editor box
+*/
+#editor {
+    position: absolute;
+    width: 94%;
+    height: 87%;
+    top: 1%;
+    transition-delay: 0.2s;
+}
+
+.multi #editor {
+    width: 50%;
+}
+
+#editor2 {
+    position: absolute;
+    width: 50%;
+    height: 87%;
+    top: 1%;
+    transition-delay: 0.3s;
+}
+
+/*
+    Face camera            
+*/
+#facecam, #hardwarecam {
+    position: absolute;
+    width: 30%;
+    bottom: 1.5%;
+    right: 1%;
+}
+#hardwarecam {
+    width: 0;
+    right: -1rem;
+    opacity: 0;
+}
+body.hardware #hardwarecam {
+    opacity: 100%;
+}
+
+/*
+    Chat window
+*/
+#chat {
+    position: absolute;
+    width: 0;
+    height: 60%;
+    top: 1%;
+    right: 1%;
+    display: none;
+    transition-delay: 0.3s;
+}
+
+#social {
+    position: absolute;
+    width: 60%;
+    height: 5%;
+    left: 1%;
+    bottom: 2%;
+    background: #615fc7;
+    transition-delay: 0.1s;
+}
+#toolbox {
+    float:right;
+}
+
+span.social {
+    font-size: 2vh;
+    color: white;
+    flex-grow: 1;
+    text-align: center;
+    cursor: pointer;
+}
+video.error {
+    background: rgba(255, 0, 0, 0.5)
+}
+
+/** 
+* chat visibility
+*/
+body.chat #chat {
+    display: block;
+    opacity: 90%;
+}
+
+/* rightscene: browser with facecam on right */
+body.rightscene #editor {
+    left: 1%;
+}
+
+body.rightscene #facecam {
+    right: 1%;
+    width: 28%;
+}
+
+body.rightscene #chat {
+    right: 1%;
+    width: 28%;
+    height: 54%;
+}
+
+body.rightscene.chat #editor {
+    width: 67%;
+    top: 1%;
+    height: 87%;
+}
+
+body.rightscene.hardware #hardwarecam {
+    right: 1%;
+    width: 22%;
+    bottom: 42%;
+}
+
+body.rightscene.multi #editor {
+    width: 67%;
+}
+
+body.rightscene.multi #editor2 {
+    width: 28%;
+    left: 70%;
+    height: 54%;
+}
+body.rightscene.multi.hardware #hardwarecam {
+    right: 1%;
+    width: 22%;
+    bottom: 24%;
+}
+
+/* leftscene: browser with facecam on left left */
+body.leftscene #editor {
+    left: 4%;
+    height: 87%;
+}
+
+body.leftscene #facecam {
+    right: 70%;
+    width: 28%;
+}
+
+body.leftscene #hardwarecam {
+    bottom: 9%;
+    right: 1%;
+}
+
+body.leftscene #social {
+    width: 55%;
+    height: 5%;
+    left: 43%;
+    bottom: 1.5%;
+}
+body.leftscene.hardware #hardwarecam {
+    width: 22%;
+}
+
+/* left+multi*/
+body.leftscene.multi #editor {
+    left: 1%;
+    width: 28%;
+    height: 54%;
+}
+
+body.leftscene.multi #editor2 {
+    width: 67%;
+    left: 31%;
+}
+
+body.leftscene.multi #facecam {
+    right: 70%;
+    width: 28%;
+}
+body.leftscene.multi.hardware #hardwarecam {
+    right: 76%;
+    width: 22%;
+    bottom: 24%;
+}
+
+/** leftscene + chat **/
+body.leftscene.chat #editor {
+    left: 31%;
+    width: 67%;
+}
+
+body.leftscene.chat #facecam {
+    right: 70%;
+    width: 28%;
+}
+
+body.leftscene.chat #chat {
+    right: 70%;
+    height: 54%;
+    width: 28%;
+}
+
+/* chatscene: facecam and stream chat */
+body.chatscene #facecam {
+    bottom: 19%;
+    right: 38%;
+    width: 52%;
+}
+
+body.chatscene #editor {
+    left: -150rem;
+}
+body.chatscene #editor2 {
+    right: -150rem;
+}
+
+body.chatscene #chat {
+    top: 9%;
+    right: 4%;
+    width: 24%;
+    height: 80%;
+    opacity: 100%;
+}
+
+body.chatscene #social {
+    left: 4%;
+    bottom: 9%;
+}
+
+body.chatscene.hardware #facecam {
+    bottom: 19%;
+    right: 49%;
+    width: 46%;
+}
+body.chatscene.hardware #hardwarecam {
+    width: 46%;
+    bottom: 19%;
+    right: 1%;            
+}
