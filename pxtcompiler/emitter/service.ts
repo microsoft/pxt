@@ -329,7 +329,7 @@ namespace ts.pxtc {
                     const pyTypeString = (p.type && emitPyTypeFromTypeNode(p.type))
                         || (paramType && emitPyTypeFromType(paramType))
                         || "unknown";
-                    if (pyTypeString === "unknown" || pyTypeString === "undefined") {
+                    if (!pyTypeString || pyTypeString === "unknown" || pyTypeString === "undefined") {
                         // TODO
                         console.error("Unable to get py type string for: " + n)
                     }
@@ -941,6 +941,10 @@ namespace ts.pxtc.service {
 
             if (isSymbol && opts.syntaxInfo.symbols?.length) {
                 const apiInfo = getLastApiInfo(opts).apis;
+                opts.syntaxInfo.symbols = opts.syntaxInfo.symbols.map(s => {
+                    // TODO(dz): this works, but why is the symbol info deficient in the first place?
+                    return apiInfo.byQName[s.qName] || s
+                })
                 opts.syntaxInfo.auxResult = opts.syntaxInfo.symbols.map(s => displayStringForSymbol(s, isPython, apiInfo))
             }
 
