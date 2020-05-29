@@ -4,10 +4,10 @@ import * as React from "react";
 import * as sui from "./sui";
 
 export interface ErrorListProps {
-    onSizeChange: () => void,
-    listenToErrorChanges: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void,
-    listenToExceptionChanges: (handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage) => void) => void,
-    goToError: (error: pxtc.KsDiagnostic) => void
+    onSizeChange: (state: pxt.editor.ErrorListState) => void;
+    listenToErrorChanges: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void;
+    listenToExceptionChanges: (handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage) => void) => void;
+    goToError: (error: pxtc.KsDiagnostic) => void;
 }
 export interface ErrorListState {
     isCollapsed: boolean,
@@ -30,6 +30,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         this.onErrorsChanged = this.onErrorsChanged.bind(this)
         this.onExceptionDetected = this.onExceptionDetected.bind(this)
         this.onErrorMessageClick = this.onErrorMessageClick.bind(this)
+        this.onDisplayStateChange = this.onDisplayStateChange.bind(this)
 
         props.listenToErrorChanges("errorList", this.onErrorsChanged);
         props.listenToExceptionChanges("errorList", this.onExceptionDetected)
@@ -82,17 +83,26 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         )
     }
 
-    componentDidUpdate() {
+    onDisplayStateChange() {
+        const { errors, exception, isCollapsed } = this.state;
         // notify parent on possible size change so siblings (monaco)
         // can resize if needed
-        this.props.onSizeChange()
+
+        const noValueToDisplay = !(errors?.length || exception);
+        this.props.onSizeChange(
+            noValueToDisplay ?
+                undefined
+                : isCollapsed ?
+                    pxt.editor.ErrorListState.HeaderOnly
+                    : pxt.editor.ErrorListState.Expanded
+        );
     }
 
     onCollapseClick() {
         pxt.tickEvent('errorlist.collapse', null, { interactiveConsent: true })
         this.setState({
             isCollapsed: !this.state.isCollapsed
-        })
+        }, this.onDisplayStateChange);
     }
 
     onErrorMessageClick(e: pxtc.KsDiagnostic, index: number) {
@@ -105,13 +115,13 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             errors,
             isCollapsed: errors?.length == 0 || this.state.isCollapsed,
             exception: null
-        })
+        }, this.onDisplayStateChange);
     }
 
     onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
         this.setState({
             exception
-        })
+        }, this.onDisplayStateChange);
     }
 
     private generateStackTraces(exception: pxsim.DebuggerBreakpointMessage) {
