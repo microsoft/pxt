@@ -11,7 +11,7 @@
     <div id="container" class="container">
     <iframe class="box" id="editor" allow="usb;camera"></iframe>
     <iframe class="box" id="editor2" allow="usb;camera"></iframe>
-    <iframe class="box" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
+    <iframe class="box" id="chat" sandbox="allow-scripts allow-same-origin" allow="autoplay; encrypted-media; sameorigin"></iframe>
     <video class="box" autoplay="true" id="facecam"></video>
     <video class="box" autoplay="true" id="hardwarecam"></video>
     <canvas id="paint" class=""></canvas>
@@ -56,10 +56,7 @@
             <label for="twitterinput">Twitter (optional)</label>
             <input id="twitterinput" placeholder="Twitter handle (@account)" />
         </div>
-        <div class="field">
-            <label for="youtubeinput"">YouTube (optional)</label>
-            <input id="youtubeinput" placeholder="YouTube account (/account)" />
-        </div>
+        <h2>Streaming chats</h2>
         <div class="field">
             <label for="mixerinput">Mixer (optional)</label>
             <input id="mixerinput" placeholder="Mixer.com account (/account)" />
