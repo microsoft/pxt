@@ -37,7 +37,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
 
-    setBreakpointsMap(breakpoints: pxtc.Breakpoint[]): void {
+    setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
         let map: pxt.Map<number> = {};
         if (!breakpoints || !this.compilationResult) return;
         breakpoints.forEach(breakpoint => {
