@@ -47,10 +47,16 @@
         padding: 0 0 1em 0;
         overflow-y: auto;
 
+        .exceptionMessage {
+            padding: 0.5em 1em;
+            width: 70%;
+        }
+
         // errors
         .ui.selection.list {
             color: black;
             cursor: pointer;
+            margin: 0;
 
             .item {
                 border-radius: unset;
@@ -68,18 +74,30 @@
                 &:nth-child(odd):not(:hover) {
                     background-color: @errorListOdd;
                 }
+
+                &.stackFrame {
+                    padding-left: 2em;
+                }
             }
         }
 
-        // exceptions
-        .exceptionMessage {
-            padding-left: 1em;
+        .debuggerSuggestion {
+            float: right;
+            height: fit-content;
+            width: fit-content;
             padding-top: 0.5em;
-        }
+            margin-right: 0.5em;
+            color: @errorListDebugSuggestionColor;
+            cursor: pointer;
 
-        .stackframe {
-            padding-left: 2em;
-            padding-top: 0.25em;
+            &:hover {
+                opacity: 0.75;
+            }
+
+            .debug-icon.blue {
+                margin-left: 0.5em;
+                vertical-align: text-top;
+            }
         }
     }
 }
