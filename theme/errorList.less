@@ -47,6 +47,11 @@
         padding: 0 0 1em 0;
         overflow-y: auto;
 
+        .exceptionMessage {
+            padding: 0.5em 1em;
+            width: 70%;
+        }
+
         // errors
         .ui.selection.list {
             color: black;
@@ -76,26 +81,22 @@
             }
         }
 
-        // exceptions
-        .exceptionMessage {
-            padding-left: 1em;
+        .debuggerSuggestion {
+            float: right;
+            height: fit-content;
+            width: fit-content;
             padding-top: 0.5em;
-            padding-bottom: 0.5em;
+            margin-right: 0.5em;
+            color: @errorListDebugSuggestionColor;
+            cursor: pointer;
 
-            .debuggerSuggestion {
-                float: right;
-                margin-right: 1em;
-                color: @errorListDebugSuggestionColor;
-                cursor: pointer;
+            &:hover {
+                opacity: 0.75;
+            }
 
-                &:hover {
-                    opacity: 0.75;
-                }
-
-                .debug-icon.blue {
-                    margin-left: 0.5em;
-                    vertical-align: top;
-                }
+            .debug-icon.blue {
+                margin-left: 0.5em;
+                vertical-align: text-top;
             }
         }
     }

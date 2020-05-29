@@ -56,13 +56,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             if (exception) {
                 errorListContent = (
                     <div>
-                        <div className="exceptionMessage">
-                            {pxt.Util.rlf(exception.exceptionMessage)}
-                            <span className="debuggerSuggestion" role="button" onClick={this.props.startDebugger}>
-                                {lf("Debug this project")}
-                                <sui.Icon className="debug-icon blue" icon="icon bug"/>
-                            </span>
-                        </div>
+                        <div className="exceptionMessage">{pxt.Util.rlf(exception.exceptionMessage)}</div>
                         {this.generateStackTraces(exception)}
                     </div>
                 )
@@ -86,7 +80,13 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                     <div className="ui red circular label countBubble">{exception ? 1 : errors.length}</div>
                     <div className="toggleButton"><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`} onClick={this.onCollapseClick} /></div>
                 </div>
-                {!isCollapsed && <div className="errorListInner">{errorListContent}</div>}
+                {!isCollapsed && <div className="errorListInner">
+                    {exception && <div className="debuggerSuggestion" role="button" onClick={this.props.startDebugger}>
+                        {lf("Debug this project")}
+                        <sui.Icon className="debug-icon blue" icon="icon bug"/>
+                    </div>}
+                    {errorListContent}
+                </div>}
             </div>
         )
     }
