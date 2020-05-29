@@ -30,10 +30,11 @@
 
     initMessages();
     loadPaint();
-    await loadSettings()
-    load();
+    loadEditor()
     await loadFaceCam()
     await loadHardwareCam()
+    await loadSettings()
+    load();
     tickEvent("streamer.load")
 
     function load() {
@@ -405,31 +406,27 @@ background: #615fc7;
     async function loadFaceCam() {
         // load previous webcam
         const config = readConfig();
-        if (config.faceCamId) {
-            try {
-                state.faceCamError = false;
-                body.classList.add("loading");
-                facecam.classList.remove("error");
-                await startStream(facecam, config.faceCamId, config.faceCamRotate);
-                console.log(`face cam started`)
-                return; // success!
-            }
-            catch (e) {
-                tickEvent("streamer.facecam.error")
-                stopStream(facecam);
-                facecam.classList.add("error");
-                state.faceCamError = true;
-                saveConfig(config)
-                console.log(`could not start face cam`, e)
-                render()
-            }
-            finally  {
-                body.classList.remove("loading");
-            }
-        } else {
-            state.faceCamError = true;
-            facecam.classList.add("error");
+        try {
+            state.faceCamError = false;
+            body.classList.add("loading");
+            facecam.classList.remove("error");
+            await startStream(facecam, config.faceCamId, config.faceCamRotate);
+            console.log(`face cam started`)
+            if (!config.faceCamId)
+                stopStream(facecam); // request permission only
+            return; // success!
+        }
+        catch (e) {
+            tickEvent("streamer.facecam.error")
             stopStream(facecam);
+            facecam.classList.add("error");
+            state.faceCamError = true;
+            saveConfig(config)
+            console.log(`could not start face cam`, e)
+            render()
+        }
+        finally  {
+            body.classList.remove("loading");
         }
     }
 
@@ -487,10 +484,11 @@ background: #615fc7;
         const constraints = {
             audio: false,
             video: {
-                deviceId: deviceId,
                 aspectRatio: 4/3
             }
         }
+        if (deviceId)
+            constraints.video.deviceId = deviceId;
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         el.volume = 0; // don't use sound!
         el.srcObject = stream;
@@ -551,11 +549,7 @@ background: #615fc7;
             option.value = cam.deviceId
             option.text = cam.label || `camera ${cam.deviceId}`
             facecamselect.add(option)
-            if (!cam.label && !config.faceCamId) { // we haven't asked for videos yet
-                config.faceCamId = cam.deviceId;
-                saveConfig(config);
-            }   
-            if (config.faceCamId == cam.deviceId)
+            if (config.faceCamId == cam.deviceId && cam.deviceId)
                 option.selected = true;
         })
         facecamselect.onchange = function () {
@@ -575,23 +569,27 @@ background: #615fc7;
             loadFaceCam().then(() => loadSettings())
         }
         const facecamerror = document.getElementById("facecamerror")
-        if (config.faceCamId && state.faceCamError)
+        if (state.faceCamError)
             facecamerror.classList.remove("hidden")
         else
             facecamerror.classList.add("hidden")
 
         const hardwarecamselect = document.getElementById("hardwarecamselect");
         hardwarecamselect.innerHTML = "" // remove all web cams
-        const option = document.createElement("option")
-        option.value = ""
-        option.text = "Off"
-        hardwarecamselect.add(option)
+        {
+            const option = document.createElement("option")
+            option.value = ""
+            option.text = "Off"
+            if (!config.hardwareCamId)
+                option.selected = true;
+            hardwarecamselect.add(option)
+        }
         cams.forEach(cam => {
             const option = document.createElement("option")
             option.value = cam.deviceId
             option.text = cam.label || `camera ${cam.deviceId}`
             hardwarecamselect.add(option)
-            if (config.hardwareCamId == cam.deviceId)
+            if (config.hardwareCamId == cam.deviceId && cam.deviceId)
                 option.selected = true;
         })
         hardwarecamselect.onchange = function () {
