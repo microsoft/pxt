@@ -253,9 +253,16 @@
                 ctx.lineTo(mouse.x, mouse.y);
                 ctx.stroke();
             } else if (state.painttool == 'emoji') {
-                ctx.font = '16vh serif';
+                const p1 = mouse, p2 = head;
+                const dx = p2.x - p1.x
+                const dy = p2.y - p1.y
+                const len= Math.max(64, (Math.sqrt(dx*dx+dy*dy) * 0.9) | 0);
+                ctx.translate(p2.x, p2.y);
+                ctx.rotate(Math.atan2(dy,dx) - Math.PI / 2);
+
+                ctx.font = `${len}px serif`;
                 ctx.textAlign = 'center'
-                ctx.fillText(state.emoji, mouse.x, mouse.y);
+                ctx.fillText(state.emoji, 0, 0);
             }
             ctx.restore();
         }
