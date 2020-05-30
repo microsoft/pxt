@@ -9,11 +9,13 @@ Functions to combine, split, and search text strings.
 parseInt("");
 "".indexOf("");
 "".includes("");
+"".split(",",0)
+"".isEmpty()
 ```
 
 ## See also
 
 [char at](/reference/text/char-at), [compare](/reference/text/compare),
 [substr](/reference/text/substr), [parse float](/reference/text/parse-float),
-[index of](/reference/text/index-of),
-[includes](/reference/text/includes)
+[index of](/reference/text/index-of), [includes](/reference/text/includes),
+[split](/reference/text/split), [is empty](/reference/text/is-empty)
