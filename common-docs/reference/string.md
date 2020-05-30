@@ -3,13 +3,13 @@
 Functions to combine, split, and search text strings.
 
 ```cards
-"".charAt(0);
-"".compare("");
-"".substr(0, 0);
-parseInt("");
-"".indexOf("");
-"".includes("");
-"".split(",",0)
+"".charAt(0)
+"".compare("")
+"".substr(0, 0)
+parseInt("")
+"".indexOf("")
+"".includes("")
+"".split(",")
 "".isEmpty()
 ```
 
