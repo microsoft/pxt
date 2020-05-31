@@ -455,6 +455,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             && (sharingError as any).statusCode === 413
             && pxt.appTarget?.cloud?.cloudProviders?.github;
         const unknownError = sharingError && !tooBigErrorSuggestGitHub;
+        const qrCodeFull = !!qrCodeUri && qrCodeExpanded;
 
         return (
             <sui.Modal isOpen={visible} className="sharedialog"
@@ -499,10 +500,10 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                     </p>}
                     {unknownError && <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}</p>}
                     {url && ready ? <div>
-                        <p>{lf("Your project is ready! Use the address below to share your projects.")}</p>
-                        <sui.Input id="projectUri" class="mini" readOnly={true} lines={1} value={url} copy={true} autoFocus={!pxt.BrowserUtils.isMobile()} selectOnClick={true} aria-describedby="projectUriLabel" autoComplete={false} />
-                        <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project.")}</label>
-                        {!!qrCodeUri && <img className={`ui ${qrCodeExpanded ? "huge" : "tiny"} image ${qrCodeExpanded ? "centered" : "floated right"} pixelart`} alt={lf("QR Code of the saved program")} src={qrCodeUri} onClick={this.handleQrCodeClick} title={lf("Click to expand or collapse.")} />}
+                        {!qrCodeFull && <p>{lf("Your project is ready! Use the address below to share your projects.")}</p>}
+                        {!qrCodeFull && <sui.Input id="projectUri" class="mini" readOnly={true} lines={1} value={url} copy={true} autoFocus={!pxt.BrowserUtils.isMobile()} selectOnClick={true} aria-describedby="projectUriLabel" autoComplete={false} />}
+                        {!qrCodeFull && <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project.")}</label>}
+                        {!!qrCodeUri && <img className={`ui ${qrCodeFull ? "huge" : "small"} image ${qrCodeExpanded ? "centered" : "floated right"} button pixelart`} alt={lf("QR Code of the saved program")} src={qrCodeUri} onClick={this.handleQrCodeClick} title={lf("Click to expand or collapse.")} />}
                         {showSocialIcons ? <div className="social-icons">
                             <SocialButton url={url} ariaLabel="Facebook" type='facebook' heading={lf("Share on Facebook")} />
                             <SocialButton url={url} ariaLabel="Twitter" type='twitter' heading={lf("Share on Twitter")} />
