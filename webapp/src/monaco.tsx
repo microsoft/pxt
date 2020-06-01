@@ -1765,7 +1765,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private filterBlocks(subns: string, blocks: toolbox.BlockDefinition[]) {
         return blocks.filter((block => !(block.attributes.blockHidden)
-            && !(block.attributes.deprecated && this.parent.state.tutorialOptions == undefined)
+            && !(block.attributes.deprecated && !this.parent.isTutorial())
             && (block.name.indexOf('_') != 0)
             && ((!subns && !block.attributes.subcategory && !block.attributes.advanced)
                 || (subns && ((block.attributes.advanced && subns == lf("more"))
@@ -1775,7 +1775,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private getBuiltinBlocks(ns: string, subns: string) {
         let cat = snippets.getBuiltinCategory(ns);
         let blocks = cat.blocks || [];
-        if (!cat.custom && this.nsMap[ns]) blocks = blocks.concat(this.nsMap[ns].filter(block => !(block.attributes.blockHidden) &&  !(block.attributes.deprecated && this.parent.state.tutorialOptions == undefined)));
+        if (!cat.custom && this.nsMap[ns]) blocks = blocks.concat(this.nsMap[ns].filter(block => !(block.attributes.blockHidden) &&  !(block.attributes.deprecated && !this.parent.isTutorial())));
         return this.filterBlocks(subns, blocks);
     }
 

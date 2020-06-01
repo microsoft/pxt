@@ -3470,6 +3470,10 @@ export class ProjectView
         if (tc) tc.showHint(true, showFullText);
     }
 
+    isTutorial() {
+        return this.state.tutorialOptions != undefined;
+    }
+
     getExpandedCardStyle(flyoutOnly?: boolean): any {
         let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
         let margin = 2;
