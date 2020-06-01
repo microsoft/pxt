@@ -665,7 +665,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                     </div>
                     <div className="rightHeader">
                         <sui.Button icon={`${hasissue ? "exclamation circle" : haspull ? "long arrow alternate down" : "check"}`}
-                            className={hasissue === true ? "orange" : haspull === true ? "positive" : ""}
+                            className={haspull === true ? "positive" : ""}
                             text={lf("Pull changes")} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
                         {!isBlocksMode && isOwner &&
                             <sui.Link className="ui item button desktop only" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite others to contributes to this GitHub repository.")} />}
