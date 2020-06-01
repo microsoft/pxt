@@ -211,7 +211,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         e.stopPropagation();
     }
 
-    private addTypeScriptFile() {
+    private addProjectFile() {
         const validRx = /^[\w][\/\w\-\.]*$/;
         core.promptAsync({
             header: lf("Add new file?"),
@@ -243,6 +243,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 
             let ext = 'ts';
             let comment = "//";
+            let commentText = pxt.U.lf("Add your code here");
 
             if (languageRestriction === pxt.editor.LanguageRestriction.PythonOnly) {
                 ext = "py";
@@ -261,7 +262,12 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                         break;
                     case "md":
                         ext = "md";
-                        comment = ">";
+                        comment = "#";
+                        commentText = name;
+                        break;
+                    case "json":
+                        ext = "json"
+                        comment = undefined;
                         break;
                     default:
                         // not a valid extension; leave it as it was and append def extension
@@ -284,8 +290,8 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             }
             return this.props.parent.updateFileAsync(
                 fileName,
-                `${comment} ${pxt.U.lf("Add your code here")}
-`,
+                comment ? `${comment} ${commentText}
+` : "",
                 true
             );
         }).done()
@@ -293,7 +299,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     private addCustomBlocksFile() {
         if (this.props.parent.state.header.githubId || pxt.appTarget.appTheme.addNewTypeScriptFile) {
-            this.addTypeScriptFile()
+            this.addProjectFile()
             return
         }
         core.confirmAsync({
