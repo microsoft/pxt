@@ -640,7 +640,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const needsCommit = diffFiles.length > 0;
 
         const pullStatus: workspace.PullStatus = this.getData("pkg-git-pull-status:" + header.id);
-        const hasissue = pullStatus == workspace.PullStatus.BranchNotFound;
+        const hasissue = pullStatus == workspace.PullStatus.BranchNotFound || pullStatus == workspace.PullStatus.NoSourceControl;
         const haspull = pullStatus == workspace.PullStatus.GotChanges;
         const githubId = this.parsedRepoId()
         const master = githubId.tag == "master";
@@ -665,7 +665,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                     </div>
                     <div className="rightHeader">
                         <sui.Button icon={`${hasissue ? "exclamation circle" : haspull ? "long arrow alternate down" : "check"}`}
-                            className={haspull === true ? "positive" : ""}
+                            className={hasissue === true ? "orange" : haspull === true ? "positive" : ""}
                             text={lf("Pull changes")} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
                         {!isBlocksMode && isOwner &&
                             <sui.Link className="ui item button desktop only" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite others to contributes to this GitHub repository.")} />}
@@ -1040,7 +1040,7 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
 
     renderCore() {
         const { needsCommitMessage } = this.props.parent.state;
-        const { pullStatus, pullRequest } = this.props;
+        const { pullStatus, pullRequest, githubId } = this.props;
 
         const closed = pullRequest?.state == "CLOSED"
         const merged = pullRequest?.state == "MERGED"
@@ -1053,6 +1053,15 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
                     <span role="button" className="ui link" onClick={this.handleSwitchMasterBranch} onKeyDown={sui.fireClickOnEnter}>{lf("Switch to master branch")}</span>
                 </div>
             </div>;
+
+        if (pullStatus == workspace.PullStatus.NoSourceControl)
+            return <div className="ui icon warning message">
+                <i className="exclamation circle icon"></i>
+                <div className="content">
+                    {lf("This repository was not found. It might have been deleted or you may not have rights to access it.")}
+                    <sui.Link href={`https://github.com/${githubId.fullName}`} text={lf("Go to GitHub")} />
+                </div>
+            </div>
 
         if (pullStatus == workspace.PullStatus.BranchNotFound)
             return <div className="ui icon warning message">
