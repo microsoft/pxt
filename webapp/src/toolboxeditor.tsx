@@ -119,7 +119,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
         let that = this;
 
         function filterNamespaces(namespaces: [string, pxtc.CommentAttrs][]) {
-            return namespaces.filter(([, md]) => !(md.deprecated && that.parent.state.tutorialOptions == undefined)&& (isAdvanced ? md.advanced : !md.advanced));
+            return namespaces.filter(([, md]) => !(md.deprecated && that.parent.state.tutorialOptions == undefined) && (isAdvanced ? md.advanced : !md.advanced));
         }
 
         const namespaces = filterNamespaces(this.getNamespaces()
