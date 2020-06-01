@@ -1567,7 +1567,7 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
                         onKeyDown={sui.fireClickOnEnter}>
                         <div className="content">
                             <div className="ui header">{day}
-                                <div className="ui label">
+                                <div className="ui label button">
                                     <i className="long arrow alternate up icon"></i> {days[day].length}
                                 </div>
                             </div>
