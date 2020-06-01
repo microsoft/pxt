@@ -34,17 +34,6 @@ See the micro:bit tutorials [**flashing-heart.md**](https://github.com/Microsoft
 
 ### ~
 
-
-## In context tutorials
-
-In context tutorials are micro-tutorials that run within your current program. They need to be enabled separately. The format is the same as other tutorials.
-
-* (editor maintainer) add a ``recipes: true`` entry in the ``appTheme`` section of your ``pxtarget.json`` editor
-* add a ``/docs/recipes.md`` file that contains the gallery of micro-tutorials
-
-In order to select the proper language (blocks vs JavaScript vs Python), you should add
-a ``"editor": "js"`` entry for JavaScript tutorials and ``"editor": "py"`` entry for Python tutorials to each code card.
-
 ## Tutorial format
 
 The tutorial markdown has a format that the guides the tutorial runner in making a sequence of interactions. A tutorial has a flow model that is either a simple set of steps or groups of steps placed into activity sections. The tutorial author chooses which type of flow to use by setting a metadata option.
@@ -348,7 +337,8 @@ basic.showString("Hello!")
 
 ## Other languages
 
-Note that if the target supports python then snippets written in the usual way like:
+Note that if the target supports python, then snippets are written in the usual way like:
+
 ````
 ```typescript
 basic.showString("Hello!")
@@ -358,51 +348,28 @@ or
 basic.showString("Hello!")
 ```
 ````
-users will have the option of clicking the Python icon to see the snippet in Python just like they can with Blocks and Javascript/Typescript.
 
-## JavaScript and Python tutorial ("Spy tutorials")
+Users will have the option of clicking the Python icon to see the snippet in Python just like they can with Blocks and Javascript/Typescript.
 
-If you author tutorials using ``JavaScript`` or ``spy``, MakeCode is able to automatically
-render them in JavaScript or Python. Overriding the default language is done in the
-``tutorials.md`` page, in the cards section by specifying the ``editor`` field.
+## Adding tutorials to the home screen
+
+To have a tutorial appear on the home screen, you will need to create or use an existing gallery and add a tutorial entry to it. See the
+[home screen](/targets/home-screen#galleries) page for information about creating and adding to home screen galleries.
+
+### JavaScript and Python tutorial ("Spy tutorials")
 
 If you are able to author your tutorial in a language agnostic way, 
-you will be able to have a single source for both JavaScript and Python.
+you will be able to have a single source document for both JavaScript and Python. You can specify a single tutorial for multiple languages using the [otherActions](/targets/home-screen#otheractions) field in the tutorial code card.
 
-````
-```codecard
-[{
-    "name": "Chicken Rain",
-    "cardType": "tutorial",
-    "url": "/tutorials/spy/chicken-rain",
-    ...
-    "otherActions": [{
-        "url": "/tutorials/spy/chicken-rain",
-        "editor": "py",
-        "cardType": "tutorial"
-    }, {
-        "url": "/tutorials/spy/chicken-rain",
-        "editor": "js",
-        "cardType": "tutorial"
-    }]
-}]
-```
-````
+## In context tutorials
 
-Leave ``otherActions`` empty, to automatically populate it.
+In context tutorials are micro-tutorials that run within your current program. They need to be enabled separately. The format is the same as other tutorials.
 
-````
-```codecard
-[{
-    "name": "Chicken Rain",
-    "cardType": "tutorial",
-    "url": "/tutorials/spy/chicken-rain",
-    ...
-    "otherActions": []
-}]
-```
-````
+* (editor maintainer) add a ``recipes: true`` entry in the ``appTheme`` section of your [``pxtarget.json``](/targets/pxtarget#apptheme-apptheme) editor
+* add a ``/docs/recipes.md`` file that contains the gallery of micro-tutorials
 
+In order to select the proper language (blocks vs JavaScript vs Python), you should add
+a ``"editor": "js"`` entry for JavaScript tutorials and ``"editor": "py"`` entry for Python tutorials to each code card.
 
 ## Testing
 

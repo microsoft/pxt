@@ -291,7 +291,7 @@ Render a diff of blocks between two JavaScript snippets. The snippet consists of
 
 #### Ghost snippet
 
-You can use the ``ghost`` code section to provide the code of a step that has a gif instead of code.
+You can use the [ghost](#ghost) code section to provide actual code of a step that show only a gif instead of code.
 
 ### ~
 
