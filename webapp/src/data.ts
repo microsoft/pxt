@@ -73,7 +73,10 @@ mountVirtualApi("gh-commits", {
     getAsync: query => {
         const p = stripProtocol(query);
         const [ repo, sha ] = p.split('#', 2)
-        return pxt.github.getCommitsAsync(repo, sha)
+        return pxt.github.getCommitsAsync(repo, sha).catch(e => {
+            core.handleNetworkError(e);
+            return [];
+        })
     },
     expirationTime: p => 60 * 1000,
     isOffline: () => !Cloud.isOnline(),

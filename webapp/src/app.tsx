@@ -3830,10 +3830,10 @@ function initLogin() {
 }
 
 function initPacketIO() {
-    pxt.log(`packetio: hook events`)
+    pxt.debug(`packetio: hook events`)
     pxt.packetio.configureEvents(
         () => {
-            pxt.log(`packetio: ${pxt.packetio.isConnected() ? 'connected' : 'disconnected'}`)
+            pxt.debug(`packetio: ${pxt.packetio.isConnected() ? 'connected' : 'disconnected'}`)
             data.invalidate("packetio:*")
         },
         (buf, isErr) => {

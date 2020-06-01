@@ -8,7 +8,7 @@ import * as data from "./data";
 import Cloud = pxt.Cloud;
 
 function log(msg: string) {
-    pxt.log(`cmds: ${msg}`);
+    pxt.debug(`cmds: ${msg}`);
 }
 
 let extensionResult: pxt.editor.ExtensionResult;
