@@ -36,7 +36,8 @@ STS disallows programs where a program element can denote many kinds of runtime 
 (for example, a variable that is a string at one point in execution and a number at another point, 
 as specified by the union type *string | number*).
 
-As a result of this choice, many dynamic features of JavaScript (and thus TypeScript) are out of STS: 
+As a result of this choice, many dynamic features of JavaScript (and thus TypeScript) are out of STS:
+
 * the *eval* function;
 * the *with* statement;
 * access to the prototype property (goodbye to prototype-based inheritance);
