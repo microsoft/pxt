@@ -268,11 +268,13 @@ Render a diff between two JavaScript snippets. The snippet consists of two text 
     let y = 1
     ```
 
-#### ~ hint
+### ~ hint
+
+#### Trailing semicolons
 
 Avoid using trailing ``;`` in your JavaScript snippets.
 
-#### ~
+### ~
 
 ### diffblocks
 
@@ -285,27 +287,29 @@ Render a diff of blocks between two JavaScript snippets. The snippet consists of
     let y = 1
     ```
 
-#### ~ hint
+### ~ hint
 
-You can use the ``gost`` code section to provide the code of a step that has a gif instead of code.
+#### Ghost snippet
 
-#### ~
+You can use the ``ghost`` code section to provide the code of a step that has a gif instead of code.
+
+### ~
 
 ### cards
 
 The **cards** "language" displays a code card for each function call.
 
     ```cards
-    basic.showNumber(0);
+    basic.showNumber(0)
     basic.showLeds(`
     . . . . .
     . . . . .
     . . # . .
     . . . . .
     . . . . .
-    `);
-    basic.showString("Hello!");
-    basic.clearScreen();
+    `)
+    basic.showString("Hello!")
+    basic.clearScreen()
     ```
 
 **Example:** the [basic](https://makecode.micorbit.org/reference/basic) reference doc
@@ -316,8 +320,8 @@ and it's [markdown](https://github.com/Microsoft/pxt-microbit/blob/master/docs/r
 The **namespaces** "language" displays a code card for the first symbol of each namespace.
 
     ```namespaces
-    basic.showNumber(0);
-    input.onButtonPressed(() => {});
+    basic.showNumber(0)
+    input.onButtonPressed(() => {})
     ```
 
 **Example:** the [reference](https://makecode.microbit.org/reference) namespaces doc
@@ -336,7 +340,7 @@ The **block** "language" renders a JavaScript snippet into blocks without any si
 If you need a rendering of typescript, javascript code, specify the language as ``typescript``.
 
     ```typescript
-    let x = 0;
+    let x = 0
     ```
 
 #### ~ hint
@@ -354,7 +358,7 @@ If your editor supports [Static Python](/js/python), you can specify a TypeScrip
 using the ``spy`` macro.
 
     ```spy
-    let x = 0;
+    let x = 0
     ```
 
 ### ghost
@@ -362,7 +366,7 @@ using the ``spy`` macro.
 The **ghost** "language" causes addtional blocks to appear in the Toolbox during a tutorial step. This is used to provide additional block choices other than those matching the code snippet in a **blocks** section. The **ghost** blocks don't render but serve to identify other blocks to add to the Toolbox choices.
 
     ```ghost
-    let x = 0;
+    let x = 0
     ```
 
 
@@ -371,7 +375,7 @@ The **ghost** "language" causes addtional blocks to appear in the Toolbox during
 The **template** "language" is used to specify the initial code that appears in the workspace at the start of a tutorial. If there is no **template** block present in the tutorial, the default "new project" code will be used.
 
     ```template
-    let x = 0;
+    let x = 0
     ```
 
 ### codecard
@@ -422,10 +426,10 @@ You can use `typescript-valid` to showcase typescript that is **correct**:
 
     ```typescript-valid
     // You can include any TS in here, e.g. to showcase correct syntax
-    callFunction();
+    callFunction()
     ```
 
-### @highlight
+### highlight
 
 The render will higlight the next line or block following a 
 comment with **@highlight**.
