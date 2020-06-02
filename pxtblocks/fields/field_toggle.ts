@@ -221,7 +221,7 @@ namespace pxtblockly {
                         halfWidth = width / 2;
                         let quarterWidth = halfWidth / 2;
                         // TODO: the left padding calculation is a hack, we should calculate left padding based on width (generic case)
-                        leftPadding = this.getMaxLength() > 3 ? -10 : 1;
+                        leftPadding = -halfWidth + quarterWidth;
                         rightPadding = -quarterWidth;
                         const topLeftPoint = -quarterWidth;
                         const bottomRightPoint = halfWidth;
