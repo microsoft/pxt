@@ -159,6 +159,79 @@ Use **label** and **labelClass** to control the content and appearance of the la
 }
 ```
 
+### otherActions
+
+If you author tutorials using ``JavaScript`` or ``spy``, MakeCode is able to automatically
+render them in JavaScript or Python. Overriding the default language is done in the
+``tutorials.md`` page, in the cards section by specifying the ``editor`` field.
+
+If your gallery entry is for a tutorial and your tutorial instructions relate similarly
+when using different languages, you can use the ``otherActions`` field. Writing your tutorial in a language agnostic way lets you use a single source document for both JavaScript and Python. 
+
+````
+```codecard
+[{
+    "name": "Chicken Rain",
+    "cardType": "tutorial",
+    "url": "/tutorials/spy/chicken-rain",
+    ...
+    "otherActions": [{
+        "url": "/tutorials/spy/chicken-rain",
+        "editor": "py",
+        "cardType": "tutorial"
+    }, {
+        "url": "/tutorials/spy/chicken-rain",
+        "editor": "js",
+        "cardType": "tutorial"
+    }]
+}]
+```
+````
+
+Leave ``otherActions`` empty to automatically populate options for all language types (Blocks, JavaScript, and Python) for a single tutorial source.
+
+````
+```codecard
+[{
+    "name": "Chicken Rain",
+    "cardType": "tutorial",
+    "url": "/tutorials/spy/chicken-rain",
+    ...
+    "otherActions": []
+}]
+```
+````
+
+## Example
+
+Here is an example of a gallery defined for tutorials.
+
+````markdown
+# Tutorials
+
+Here are some cool tutorials to get you started with your Gizmo Board!
+
+## Basic
+
+```codecard
+[{
+  "name": "Flashing Heart",
+  "url":"/projects/flashing-heart",
+  "description": "Make an animated flashing heart.",
+  "imageUrl": "/static/gizmo/projects/a1-display.png",
+  "cardType": "tutorial",
+  "label": "New? Start Here!",
+  "labelClass": "purple ribbon large"
+}, {
+  "name": "Name Tag",
+  "description": "Scroll your name on the screen",
+  "imageUrl": "/static/gizmo/projects/name-tag.png",
+  "url": "/projects/name-tag",
+  "cardType": "tutorial"
+}]
+```
+````
+
 ## Testing
 
 Before pushing documentation changes, you can run the [checkdocs](/cli/checkdocs) command to validate
