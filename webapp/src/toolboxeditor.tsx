@@ -76,7 +76,8 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                 let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
 
                 if (fn.attributes.debug && !pxt.options.debug) return;
-                if (fn.attributes.deprecated || fn.attributes.blockHidden) return;
+                if (fn.attributes.blockHidden) return;
+                if (fn.attributes.deprecated && this.parent.state.tutorialOptions == undefined) return;
                 if (this.shouldShowBlock(fn.attributes.blockId, ns)) {
                     // Add to search subset
                     searchSubset[fn.attributes.blockId] = true;
@@ -118,7 +119,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
         let that = this;
 
         function filterNamespaces(namespaces: [string, pxtc.CommentAttrs][]) {
-            return namespaces.filter(([, md]) => !md.deprecated && (isAdvanced ? md.advanced : !md.advanced));
+            return namespaces.filter(([, md]) => !(md.deprecated && that.parent.state.tutorialOptions == undefined) && (isAdvanced ? md.advanced : !md.advanced));
         }
 
         const namespaces = filterNamespaces(this.getNamespaces()
