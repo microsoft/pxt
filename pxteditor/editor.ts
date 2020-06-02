@@ -241,6 +241,7 @@ namespace pxt.editor {
         exitTutorial(): void;
         completeTutorialAsync(): Promise<void>;
         showTutorialHint(): void;
+        isTutorial(): boolean;
         pokeUserActivity(): void;
         stopPokeUserActivity(): void;
         clearUserPoke(): void;
