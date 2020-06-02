@@ -51,8 +51,6 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         const createOnErrorMessageClick = (e: pxtc.KsDiagnostic, index: number) => () =>
             this.onErrorMessageClick(e, index)
 
-
-
         let errorListContent;
         if (!isCollapsed) {
             if (exception) {
@@ -66,7 +64,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                 errorListContent = (
                     <div className="ui selection list">
                         {(errors).map((e, index) =>
-                        <div className="item" key={errorKey(e)} role="button" onClick={createOnErrorMessageClick(e, index)}>
+                        <div className="item" key={errorKey(e)} role="button" onClick={createOnErrorMessageClick(e, index)} onKeyDown={sui.fireClickOnEnter}>
                             {lf("Line {0}: {1}", (e.endLine) ? e.endLine + 1 : e.line + 1, e.messageText)}
                         </div>)
                         }
@@ -77,13 +75,13 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
         return (
             <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''}`} hidden={!errorsAvailable}>
-                <div className="errorListHeader" role="button" onClick={this.onCollapseClick}>
+                <div className="errorListHeader" role="button" onClick={this.onCollapseClick} onKeyDown={sui.fireClickOnEnter}>
                     <h4>{lf("Problems")}</h4>
                     <div className="ui red circular label countBubble">{exception ? 1 : errors.length}</div>
-                    <div className="toggleButton"><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`} onClick={this.onCollapseClick} /></div>
+                    <div className="toggleButton" onClick={this.onCollapseClick} onKeyDown={sui.fireClickOnEnter}><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`}/></div>
                 </div>
                 {!isCollapsed && <div className="errorListInner">
-                    {exception && <div className="debuggerSuggestion" role="button" onClick={this.props.startDebugger}>
+                    {exception && <div className="debuggerSuggestion" role="button" onClick={this.props.startDebugger} onKeyDown={sui.fireClickOnEnter}>
                         {lf("Debug this project")}
                         <sui.Icon className="debug-icon blue" icon="icon bug"/>
                     </div>}
