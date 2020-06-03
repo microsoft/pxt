@@ -3836,10 +3836,7 @@ function initLogin() {
 function initPacketIO() {
     pxt.debug(`packetio: hook events`)
     pxt.packetio.configureEvents(
-        () => {
-            pxt.debug(`packetio on connection changed: ${pxt.packetio.isConnected() ? pxt.packetio.isConnecting() ? 'connecting' : 'connected' : 'disconnected'}`)
-            data.invalidate("packetio:*")
-        },
+        () => data.invalidate("packetio:*"),
         (buf, isErr) => {
             const data = Util.fromUTF8(Util.uint8ArrayToString(buf))
             //pxt.debug('serial: ' + data)
