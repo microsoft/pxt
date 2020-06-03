@@ -4342,7 +4342,8 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(() => {
             pxt.BrowserUtils.initTheme();
             pxt.editor.experiments.syncTheme();
-            cmds.init();
+            return cmds.initAsync();
+        }).then(() => {
             // editor messages need to be enabled early, in case workspace provider is IFrame
             if (theme.allowParentController
                 || theme.allowPackageExtensions

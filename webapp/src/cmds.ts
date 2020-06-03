@@ -323,12 +323,15 @@ function applyExtensionResult() {
     }
 }
 
-export function init(): void {
+export async function initAsync() {
     log(`cmds init`);
     pxt.onAppTargetChanged = () => {
         log('app target changed')
-        init()
+        initAsync()
     }
+
+    // unplug any existing packetio
+    await pxt.packetio.disconnectAsync()
 
     // reset commands to browser
     pxt.packetio.mkPacketIOWrapper = undefined;
