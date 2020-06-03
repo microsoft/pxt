@@ -130,6 +130,8 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     getTilemap() {
         const state = this.getStore().getState();
         const tilemapState = state.store.present as TilemapState;
+        if (!tilemapState.tilemap) return null;
+
         const { floating, overlayLayers, layerOffsetX, layerOffsetY } = tilemapState.tilemap;
         const layers = applyBitmapData(overlayLayers[0], floating && floating.overlayLayers && floating.overlayLayers[0], layerOffsetX, layerOffsetY);
         return new pxt.sprite.TilemapData(imageStateToTilemap(tilemapState.tilemap), tilemapState.tileset, layers);
@@ -155,6 +157,15 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
     disableResize() {
         this.dispatchOnStore(dispatchDisableResize());
+    }
+
+    enableKeyboardShortcuts(enabled: boolean) {
+        if (enabled) {
+            addKeyListener();
+        }
+        else {
+            removeKeyListener();
+        }
     }
 
     protected getStore() {

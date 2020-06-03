@@ -269,6 +269,11 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                         ext = "json"
                         comment = undefined;
                         break;
+                    case pxt.sprite.TILEMAP_EXTENSION:
+                        ext = pxt.sprite.TILEMAP_EXTENSION;
+                        comment = " ";
+                        commentText = " ";
+                        break;
                     default:
                         // not a valid extension; leave it as it was and append def extension
                         name = str;

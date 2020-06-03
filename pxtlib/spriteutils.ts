@@ -5,6 +5,8 @@ namespace pxt.sprite {
     export const BLOCKLY_TILESET_TYPE = "BLOCKLY_TILESET_TYPE";
     export const TILE_PREFIX = "tile";
     export const TILE_NAMESPACE = "myTiles";
+    export const TILESET_EXTENSION = "tileset";
+    export const TILEMAP_EXTENSION = "tilemap";
 
     const tileReferenceRegex = new RegExp(`^\\s*${TILE_NAMESPACE}\\s*\\.\\s*${TILE_PREFIX}(\\d+)\\s*$`);
 
