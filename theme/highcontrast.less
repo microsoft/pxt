@@ -127,11 +127,18 @@
     .errorList {
         background-color: @HCbackground !important;
         color: @HCtextColor !important;
+        opacity: 1 !important;
 
-        .errorListInner > .ui.selection.list > .item {
-            background-color: @HCbackground !important;
-            color: @HCtextColor !important;
-            border: 0.01em solid @HCtextColor !important;
+        .errorListInner {
+            .ui.selection.list > .item {
+                background-color: @HCbackground !important;
+                color: @HCtextColor !important;
+                border: 1px solid @HCtextColor !important;
+            }
+
+            .debuggerSuggestion {
+                color: @HCtextColor !important;
+            }
         }
     }
 
