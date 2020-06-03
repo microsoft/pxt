@@ -364,21 +364,9 @@ export function init(): void {
         pxt.commands.saveOnlyAsync = nativeHostSaveCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // windows app
         log(`deploy: winrt`)
-        if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
-            log(`winrt deploy`);
-            pxt.winrt.initWinrtHid(() => pxt.packetio.initAsync(true).then(() => { }), () => pxt.packetio.disconnectAsync());
-            pxt.packetio.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
-            pxt.commands.deployCoreAsync = winrtDeployCoreAsync;
-        } else {
-            // If we're not using HF2, then the target is using their own deploy logic in extension.ts, so don't use
-            // the wrapper callbacks
-            log(`winrt + custom deploy`);
-            pxt.winrt.initWinrtHid(null, null);
-            if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID)
-                pxt.packetio.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
-            pxt.commands.deployCoreAsync = pxt.winrt.driveDeployCoreAsync;
-        }
+        pxt.packetio.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
         pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
+        pxt.commands.deployCoreAsync = winrtDeployCoreAsync;
         pxt.commands.saveOnlyAsync = winrtSaveAsync;
     } else if (pxt.BrowserUtils.isPxtElectron()) {
         log(`deploy: electron`);
@@ -400,6 +388,15 @@ export function init(): void {
     }
 
     applyExtensionResult();
+
+    // don't initialize until extension has hookup as well
+    if (pxt.winrt.isWinRT()) {
+        log(`deploy: init winrt`)
+        pxt.winrt.initWinrtHid(
+            () => pxt.packetio.initAsync(true).then(() => { }),
+            () => pxt.packetio.disconnectAsync()
+        );
+    }
 }
 
 export function maybeReconnectAsync(pairIfDeviceNotFound = false) {

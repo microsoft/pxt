@@ -183,7 +183,7 @@ namespace pxt.winrt {
     let expectingAdd: boolean = false;
     let expectingRemove: boolean = false;
 
-    export function initWinrtHid(reconnectUf2WrapperCb: () => Promise<void>, disconnectUf2WrapperCb: () => Promise<void>) {
+    export function initWinrtHid(reconnectAsync: () => Promise<void>, disconnectAsync: () => Promise<void>) {
         const wd = Windows.Devices;
         const wde = Windows.Devices.Enumeration.DeviceInformation;
         const whid = wd.HumanInterfaceDevice.HidDevice;
@@ -205,8 +205,8 @@ namespace pxt.winrt {
                     // A new device was plugged in. If it's the first one, then reconnect the UF2 wrapper. Otherwise,
                     // we're already connected to a plugged device, so don't do anything.
                     ++deviceCount
-                    if (deviceCount === 1 && reconnectUf2WrapperCb) {
-                        reconnectUf2WrapperCb();
+                    if (deviceCount === 1 && reconnectAsync) {
+                        reconnectAsync();
                     }
                 }
             });
@@ -219,10 +219,10 @@ namespace pxt.winrt {
                     // one is the one we were connected to. In that case, reconnect the UF2 wrapper. If no more devices
                     // are left, disconnect the existing wrapper while we wait for a new device to be plugged in.
                     --deviceCount
-                    if (deviceCount > 0 && reconnectUf2WrapperCb) {
-                        reconnectUf2WrapperCb();
-                    } else if (deviceCount === 0 && disconnectUf2WrapperCb) {
-                        disconnectUf2WrapperCb();
+                    if (deviceCount > 0 && reconnectAsync) {
+                        reconnectAsync();
+                    } else if (deviceCount === 0 && disconnectAsync) {
+                        disconnectAsync();
                     }
                 }
             });
