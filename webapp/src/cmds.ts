@@ -159,8 +159,10 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
     pxt.tickEvent(`hid.deploy`);
     log(`hid deploy`)
     // error message handled in browser download
-    if (!resp.success)
+    if (!resp.success) {
+        log(`compilation failed, use browser deploy instead`)
         return browserDownloadDeployCoreAsync(resp);
+    }
     let isRetry = false;
     const LOADING_KEY = "hiddeploy";
     return deployAsync();
@@ -192,6 +194,7 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
                     return pxt.commands.saveOnlyAsync(resp);
                 } else {
                     pxt.tickEvent("hid.flash.error");
+                    log(`hid error ${e.message}`)
                     pxt.reportException(e)
                     if (d) d.reportError(e.message);
                 }
