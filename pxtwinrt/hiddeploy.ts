@@ -78,12 +78,12 @@ namespace pxt.winrt {
             return pxt.winrt.promisify(
                 this.dev.sendOutputReportAsync(report)
                     .then(value => {
-                        pxt.debug(`hf2: ${value} bytes written`)
+                        //pxt.debug(`hf2: ${value} bytes written`)
                     }));
         }
 
         private handleInputReport(e: Windows.Devices.HumanInterfaceDevice.HidInputReportReceivedEventArgs) {
-            pxt.debug(`input report`)
+            //pxt.debug(`input report`)
             const dr = Windows.Storage.Streams.DataReader.fromBuffer(e.report.data);
             const values: number[] = [];
             while (dr.unconsumedBufferLength) {
