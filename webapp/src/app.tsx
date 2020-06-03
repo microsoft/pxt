@@ -4342,8 +4342,6 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(() => {
             pxt.BrowserUtils.initTheme();
             pxt.editor.experiments.syncTheme();
-            return cmds.initAsync();
-        }).then(() => {
             // editor messages need to be enabled early, in case workspace provider is IFrame
             if (theme.allowParentController
                 || theme.allowPackageExtensions
@@ -4356,13 +4354,13 @@ document.addEventListener("DOMContentLoaded", () => {
             render(); // this sets theEditor
             if (state)
                 theEditor.setState({ editorState: state });
+            return initExtensionsAsync(); // need to happen before cmd init
+        }).then(() => cmds.initAsync())
+        .then(() => {
             initPacketIO();
             initSerial();
             initHashchange();
             socketbridge.tryInit();
-            return initExtensionsAsync();
-        })
-        .then(() => {
             electron.initElectron(theEditor);
             return pxt.winrt.initAsync(importHex);
         })
