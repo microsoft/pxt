@@ -935,7 +935,7 @@ namespace ts.pxtc.service {
                 }
             }
 
-            if (isSymbol && opts.syntaxInfo.symbols?.length) {
+            if (opts.syntaxInfo.symbols?.length) {
                 const apiInfo = getLastApiInfo(opts).apis;
                 opts.syntaxInfo.symbols = opts.syntaxInfo.symbols.map(s => {
                     // symbol info gathered during the py->ts compilation phase
@@ -943,7 +943,11 @@ namespace ts.pxtc.service {
                     // a pass over ts, so we prefer the latter if available
                     return apiInfo.byQName[s.qName] || s
                 })
-                opts.syntaxInfo.auxResult = opts.syntaxInfo.symbols.map(s => displayStringForSymbol(s, isPython, apiInfo))
+
+                if (isSymbol) {
+                    opts.syntaxInfo.auxResult = opts.syntaxInfo.symbols.map(s =>
+                        displayStringForSymbol(s, isPython, apiInfo))
+                }
             }
 
             return opts.syntaxInfo
