@@ -255,7 +255,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const showZoomControls = true;
         const showGithub = !!pxt.appTarget.cloud
             && !!pxt.appTarget.cloud.githubPackages
-            && !!targetTheme.githubEditor
+            && targetTheme.githubEditor && !pxt.winrt.isWinRT() // not supported in windows 10
             && !readOnly && !isController && !debugging && !tutorial;
 
         const downloadIcon = pxt.appTarget.appTheme.downloadIcon || "download";
