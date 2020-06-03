@@ -14,6 +14,7 @@ namespace pxt.winrt {
         private connecting = false;
 
         constructor() {
+            this.handleInputReport = this.handleInputReport.bind(this);
         }
 
         disposeAsync(): Promise<void> {
@@ -27,6 +28,7 @@ namespace pxt.winrt {
         private setConnecting(v: boolean) {
             if (v != this.connecting) {
                 this.connecting = v;
+                console.log(`winrt ${this.connecting ? "connecting" : "connected"}`)
                 if (this.onConnectionChanged)
                     this.onConnectionChanged();
             }
@@ -80,6 +82,19 @@ namespace pxt.winrt {
                     }));
         }
 
+        private handleInputReport(e: Windows.Devices.HumanInterfaceDevice.HidInputReportReceivedEventArgs) {
+            pxt.debug(`input report`)
+            const dr = Windows.Storage.Streams.DataReader.fromBuffer(e.report.data);
+            const values: number[] = [];
+            while (dr.unconsumedBufferLength) {
+                values.push(dr.readByte());
+            }
+            if (values.length == 65 && values[0] === 0) {
+                values.shift()
+            }
+            this.onData(new Uint8Array(values));
+        }
+
         initAsync(isRetry: boolean = false): Promise<void> {
             Util.assert(!this.dev, "HID interface not properly reseted");
             const wd = Windows.Devices;
@@ -122,20 +137,7 @@ namespace pxt.winrt {
                         return Promise.reject(new Error("can't connect to hid device"));
                     }
                     pxt.debug(`hid device version ${this.dev.version}`);
-                    this.dev.addEventListener("inputreportreceived", (e) => {
-                        pxt.debug(`input report`)
-                        const dr = Windows.Storage.Streams.DataReader.fromBuffer(e.report.data);
-                        const values: number[] = [];
-                        while (dr.unconsumedBufferLength) {
-                            values.push(dr.readByte());
-                        }
-                        if (values.length == 65 && values[0] === 0) {
-                            values.shift()
-                        }
-                        this.onData(new Uint8Array(values));
-                    });
-                    if (this.onConnectionChanged)
-                        this.onConnectionChanged();
+                    this.dev.addEventListener("inputreportreceived", this.handleInputReport);
                     return Promise.resolve();
                 })
                 .finally(() => {
@@ -159,7 +161,7 @@ namespace pxt.winrt {
 
     export let packetIO: WindowsRuntimeIO = undefined;
     export function mkWinRTPacketIOAsync(): Promise<pxt.packetio.PacketIO> {
-        pxt.debug(`packetio: mk winrt`)
+        pxt.debug(`packetio: mk winrt packetio`)
         if (packetIO)
             return Promise.resolve(packetIO);
 
