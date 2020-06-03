@@ -228,12 +228,9 @@ class HoverProvider implements monaco.languages.HoverProvider {
         const offset = model.getOffsetAt(position);
         const source = model.getValue();
         const fileName = this.editor.currFile.name;
-        // TODO(dz): fix hover help
         return compiler.syntaxInfoAsync("symbol", fileName, offset, source)
             .then(r => {
                 let sym = r.symbols ? r.symbols[0] : null
-
-                console.dir({ r }) // TODO(dz)
 
                 let contents: string[];
                 if (sym) {
@@ -618,7 +615,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             parent={this.parent} />
                     </div>
                     {showErrorList && <ErrorList onSizeChange={this.resize} listenToErrorChanges={this.listenToErrorChanges}
-                        listenToExceptionChanges={this.listenToExceptionChanges} goToError={this.goToError} />}
+                        listenToExceptionChanges={this.listenToExceptionChanges} goToError={this.goToError}/>}
                 </div>
             </div>
         )

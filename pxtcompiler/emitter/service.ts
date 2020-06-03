@@ -119,7 +119,7 @@ namespace ts.pxtc {
         // return s.getText()
     }
 
-    export function emitPyTypeFromType(s: ts.Type): string {
+    export function emitPyTypeFromTsType(s: ts.Type): string {
         if (!s || !s.flags) return null;
         switch (s.flags) {
             case ts.TypeFlags.String:
@@ -327,12 +327,8 @@ namespace ts.pxtc {
                     if (minVal) options['min'] = { value: minVal };
                     if (maxVal) options['max'] = { value: maxVal };
                     const pyTypeString = (p.type && emitPyTypeFromTypeNode(p.type))
-                        || (paramType && emitPyTypeFromType(paramType))
+                        || (paramType && emitPyTypeFromTsType(paramType))
                         || "unknown";
-                    if (!pyTypeString || pyTypeString === "unknown" || pyTypeString === "undefined") {
-                        // TODO
-                        console.error("Unable to get py type string for: " + n)
-                    }
                     const initializer = p.initializer ? p.initializer.getText() :
                         getExplicitDefault(attributes, n) ||
                         (p.questionToken ? "undefined" : undefined)
@@ -942,7 +938,9 @@ namespace ts.pxtc.service {
             if (isSymbol && opts.syntaxInfo.symbols?.length) {
                 const apiInfo = getLastApiInfo(opts).apis;
                 opts.syntaxInfo.symbols = opts.syntaxInfo.symbols.map(s => {
-                    // TODO(dz): this works, but why is the symbol info deficient in the first place?
+                    // symbol info gathered during the py->ts compilation phase
+                    // is less precise than the symbol info created when doing
+                    // a pass over ts, so we prefer the latter if available
                     return apiInfo.byQName[s.qName] || s
                 })
                 opts.syntaxInfo.auxResult = opts.syntaxInfo.symbols.map(s => displayStringForSymbol(s, isPython, apiInfo))
