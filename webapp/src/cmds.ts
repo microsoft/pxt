@@ -208,7 +208,8 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
 
                 // default, save file
                 return pxt.commands.saveOnlyAsync(resp);
-            });
+            })
+            .finally(() => data.invalidate("packetio:*"))
     }
 }
 
