@@ -4,7 +4,7 @@
 type WHID = Windows.Devices.HumanInterfaceDevice.HidDevice;
 
 namespace pxt.winrt {
-    export class WindowsRuntimeIO implements pxt.packetio.PacketIO {
+    export class WinRTPacketIO implements pxt.packetio.PacketIO {
         onDeviceConnectionChanged = (connect: boolean) => { };
         onConnectionChanged = () => { };
         onData = (v: Uint8Array) => { };
@@ -45,7 +45,10 @@ namespace pxt.winrt {
         }
 
         isSwitchingToBootloader() {
-            return false;
+            expectingAdd = true;
+            if (this.dev) {
+                expectingRemove = true;
+            }
         }
 
         disconnectAsync(): Promise<void> {
@@ -144,7 +147,7 @@ namespace pxt.winrt {
                     if (isRetry) {
                         return rejectDeviceNotFound();
                     }
-                    return bootloaderViaBaud()
+                    return bootloaderViaBaud(this)
                         .then(() => {
                             return this.initAsync(true);
                         })
@@ -156,26 +159,14 @@ namespace pxt.winrt {
         }
     }
 
-    export let packetIO: WindowsRuntimeIO = undefined;
     export function mkWinRTPacketIOAsync(): Promise<pxt.packetio.PacketIO> {
         pxt.debug(`packetio: mk winrt packetio`)
-        if (packetIO)
-            return Promise.resolve(packetIO);
-
-        packetIO = new WindowsRuntimeIO();
+        const packetIO = new WinRTPacketIO();
         return packetIO.initAsync()
             .catch((e) => {
-                packetIO = null;
                 return Promise.reject(e);
             })
             .then(() => packetIO);
-    }
-
-    export function isSwitchingToBootloader() {
-        expectingAdd = true;
-        if (packetIO && packetIO.dev) {
-            expectingRemove = true;
-        }
     }
 
     const hidSelectors: string[] = [];
