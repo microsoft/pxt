@@ -53,7 +53,7 @@ export class Editor extends srceditor.Editor {
         return <div id="imageEditorArea">
             <div className="image-editor-wrapper">
                 <div className="image-editor-gallery-content">
-                    <ImageEditor ref={this.handleImageEditorRef} singleFrame={true} />
+                    <ImageEditor ref={this.handleImageEditorRef} singleFrame={true} onChange={this.handleImageEditorChange} />
                 </div>
             </div>
         </div>
@@ -65,21 +65,51 @@ export class Editor extends srceditor.Editor {
         }
     }
 
-    hasHistory() { return true; }
-    hasUndo() { return true; }
-    hasRedo() { return true; }
-    undo() { }
-    redo() { }
+    undo() {
+        if (this.editor) {
+            this.editor.undo();
+        }
+    }
 
-    zoomIn() { }
-    zoomOut() { }
-    setScale(scale: number) { }
+    redo() {
+        if (this.editor) {
+            this.editor.redo();
+        }
+    }
+
+    hasUndo() {
+        return this.editor ? this.editor.hasUndo() : false;
+    }
+
+    hasRedo() {
+        return this.editor ? this.editor.hasRedo() : false;
+    }
+
+    zoomIn() {
+        if (this.editor)  {
+            this.editor.zoomIn();
+        }
+    }
+
+    zoomOut() {
+        if (this.editor)  {
+            this.editor.zoomOut();
+        }
+    }
+
+    hasHistory() {
+        return true;
+    }
 
     protected handleImageEditorRef = (ref: ImageEditor) => {
         if (ref) {
             this.editor = ref;
             this.editor.enableKeyboardShortcuts(false);
         }
+    }
+
+    protected handleImageEditorChange = () => {
+        this.changeCallback();
     }
 
     protected loadFileInEditorAsync() {

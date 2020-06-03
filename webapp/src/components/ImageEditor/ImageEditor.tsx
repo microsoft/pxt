@@ -11,7 +11,7 @@ import { Alert, AlertInfo } from './Alert';
 import { Timeline } from './Timeline';
 import { addKeyListener, removeKeyListener } from './keyboardShortcuts';
 
-import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchSetInitialFrames, dispatchSetInitialTilemap, dispatchCloseTileEditor, dispatchDisableResize } from './actions/dispatch';
+import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchSetInitialFrames, dispatchSetInitialTilemap, dispatchCloseTileEditor, dispatchDisableResize, dispatchUndoImageEdit, dispatchRedoImageEdit } from './actions/dispatch';
 import { EditorState, AnimationState, TilemapState, GalleryTile, ImageEditorStore } from './store/imageReducer';
 import { imageStateToBitmap, imageStateToTilemap, applyBitmapData } from './util';
 import { Unsubscribe, Action } from 'redux';
@@ -38,6 +38,9 @@ export interface ImageEditorState {
 
 export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorState> {
     protected unsubscribeChangeListener: Unsubscribe;
+
+    // Used for detecting changes to the current image
+    protected lastPastLength: number = null;
 
     constructor(props: ImageEditorProps) {
         super(props);
@@ -95,14 +98,17 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     initSingleFrame(value: pxt.sprite.Bitmap) {
+        this.init();
         this.dispatchOnStore(dispatchSetInitialFrames([{ bitmap: value.data() }], 100))
     }
 
     initAnimation(frames: pxt.sprite.Bitmap[], interval: number) {
+        this.init();
         this.dispatchOnStore(dispatchSetInitialFrames(frames.map(frame => ({ bitmap: frame.data() })), interval));
     }
 
     initTilemap(data: pxt.sprite.TilemapData, gallery: GalleryTile[]) {
+        this.init();
         this.dispatchOnStore(dispatchSetInitialTilemap(data.tilemap.data(), data.tileset, gallery, [data.layers], data.nextId, data.projectReferences));
     }
 
@@ -110,9 +116,20 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         this.dispatchOnStore(dispatchChangeZoom(0));
     }
 
+    zoomIn() {
+        this.dispatchOnStore(dispatchChangeZoom(1));
+    }
+
+    zoomOut() {
+        this.dispatchOnStore(dispatchChangeZoom(-1));
+    }
+
     getCurrentFrame(): pxt.sprite.Bitmap {
         const state = this.getStore().getState();
         const animationState = state.store.present as AnimationState;
+
+        if (!animationState?.frames?.length) return null;
+
         const currentFrame = animationState.frames[animationState.currentFrame];
 
         return imageStateToBitmap(currentFrame);
@@ -168,16 +185,40 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         }
     }
 
+    undo() {
+        this.dispatchOnStore(dispatchUndoImageEdit());
+    }
+
+    redo() {
+        this.dispatchOnStore(dispatchRedoImageEdit());
+    }
+
+    hasUndo() {
+        return !!this.getStore().getState().store.past.length
+    }
+
+    hasRedo() {
+        return !!this.getStore().getState().store.future.length
+    }
+
+    protected init() {
+        this.lastPastLength = null;
+    }
+
     protected getStore() {
         return this.props.store || mainStore;
     }
 
     protected onStoreChange = () => {
+        const state = this.getStore().getState();
+
+        // We want to ignore the non-asset changes like zoom, cursor, etc.
+        if (state.store.past.length === this.lastPastLength) return;
+        this.lastPastLength = state.store.past.length;
+
         if (this.props.onChange) {
             this.props.onChange(this.props.singleFrame ? pxt.sprite.bitmapToImageLiteral(this.getCurrentFrame(), "typescript") : "")
         }
-
-        const state = this.getStore().getState();
 
         if (state.editor) this.setState({ alert: state.editor.alert });
 
