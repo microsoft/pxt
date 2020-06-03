@@ -1011,9 +1011,11 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
 
     renderCore() {
         const { visible } = this.state;
+        const targetTheme = pxt.appTarget.appTheme;
         const disableFileAccessinMaciOs = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
         const showImport = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
-        const showCreateGithubRepo = pxt.appTarget?.cloud?.cloudProviders?.github;
+        const showCreateGithubRepo = targetTheme.githubEditor && !pxt.winrt.isWinRT() // not supported in windows 10
+            && pxt.appTarget?.cloud?.cloudProviders?.github;
         /* tslint:disable:react-a11y-anchors */
         return (
             <sui.Modal isOpen={visible} className="importdialog" size="small"
