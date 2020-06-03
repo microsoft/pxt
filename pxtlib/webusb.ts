@@ -515,7 +515,7 @@ namespace pxt.usb {
     }
 
     export function isAvailable() {
-        if (pxt.BrowserUtils.isElectron())
+        if (pxt.BrowserUtils.isElectron() || pxt.BrowserUtils.isWinRT())
             return false;
 
         if (!!(navigator as any).usb) {
