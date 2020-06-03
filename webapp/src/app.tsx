@@ -3837,7 +3837,7 @@ function initPacketIO() {
     pxt.debug(`packetio: hook events`)
     pxt.packetio.configureEvents(
         () => {
-            pxt.debug(`packetio: ${pxt.packetio.isConnected() ? 'connected' : 'disconnected'}`)
+            pxt.debug(`packetio on connection changed: ${pxt.packetio.isConnected() ? pxt.packetio.isConnecting() ? 'connecting' : 'connected' : 'disconnected'}`)
             data.invalidate("packetio:*")
         },
         (buf, isErr) => {
