@@ -209,7 +209,6 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
                 // default, save file
                 return pxt.commands.saveOnlyAsync(resp);
             })
-            .finally(() => data.invalidate("packetio:*"))
     }
 }
 
@@ -221,7 +220,7 @@ function pairBootloaderAsync(): Promise<void> {
 function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptions): Promise<void> {
     log(`winrt deploy`)
     return hidDeployCoreAsync(r, d)
-        .timeout(20000)
+        .timeout(60000)
         .catch((e) => {
             return pxt.packetio.disconnectAsync()
                 .catch((e) => {
