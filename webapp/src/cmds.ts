@@ -324,13 +324,14 @@ function applyExtensionResult() {
 }
 
 export function init(): void {
+    log(`cmds init`);
     pxt.onAppTargetChanged = () => {
         log('app target changed')
         init()
     }
-    pxt.packetio.mkPacketIOWrapper = pxt.HF2.mkPacketIOWrapper;
 
     // reset commands to browser
+    pxt.packetio.mkPacketIOWrapper = undefined;
     pxt.commands.renderDisconnectDialog = undefined;
     pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
@@ -338,18 +339,23 @@ export function init(): void {
     pxt.commands.webUsbPairDialogAsync = webusb.webUsbPairDialogAsync;
     pxt.commands.showUploadInstructionsAsync = showUploadInstructionsAsync;
     pxt.packetio.mkPacketIOAsync = undefined;
-    // used by CLI pxt.commands.deployFallbackAsync = undefined;
+
+    // uf2/hf2 support
+    if (pxt.appTarget?.compile?.useUF2) {
+        log(`hf2 wrapper`)
+        pxt.packetio.mkPacketIOWrapper = pxt.HF2.mkHF2PacketIOWrapper;
+    }
 
     // check if webUSB is available and usable
     if (pxt.appTarget?.compile?.isNative || pxt.appTarget?.compile?.hasHex) {
         if (pxt.usb.isAvailable() && pxt.appTarget?.compile?.webUSB) {
             log(`enabled webusb`);
             pxt.usb.setEnabled(true);
-            pxt.packetio.mkPacketIOAsync = pxt.usb.mkPacketIOAsync;
+            pxt.packetio.mkPacketIOAsync = pxt.usb.mkWebUSBHIDPacketIOAsync;
         } else {
             log(`enabled hid bridge (webusb disabled)`);
             pxt.usb.setEnabled(false);
-            pxt.packetio.mkPacketIOAsync = hidbridge.mkBridgeAsync;
+            pxt.packetio.mkPacketIOAsync = hidbridge.mkHIDBridgePacketIOAsync;
         }
     }
 
@@ -364,8 +370,8 @@ export function init(): void {
         pxt.commands.saveOnlyAsync = nativeHostSaveCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // windows app
         log(`deploy: winrt`)
-        pxt.packetio.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
-        pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
+        pxt.packetio.mkPacketIOAsync = pxt.winrt.mkWinRTPacketIOAsync;
+        pxt.commands.browserDownloadAsync = pxt.winrt.winrtbrowserDownloadAsync;
         pxt.commands.deployCoreAsync = winrtDeployCoreAsync;
         pxt.commands.saveOnlyAsync = winrtSaveAsync;
     } else if (pxt.BrowserUtils.isPxtElectron()) {

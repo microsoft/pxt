@@ -158,7 +158,7 @@ namespace pxt.winrt {
     }
 
     export let packetIO: WindowsRuntimeIO = undefined;
-    export function mkPacketIOAsync(): Promise<pxt.packetio.PacketIO> {
+    export function mkWinRTPacketIOAsync(): Promise<pxt.packetio.PacketIO> {
         pxt.U.assert(!packetIO);
         pxt.debug(`packetio: mk winrt`)
         packetIO = new WindowsRuntimeIO();
