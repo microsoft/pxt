@@ -26,12 +26,9 @@ namespace pxt.winrt {
         }
 
         private setConnecting(v: boolean) {
-            if (v != this.connecting) {
-                this.connecting = v;
-                console.log(`winrt ${this.connecting ? "connecting" : "connected"}`)
-                if (this.onConnectionChanged)
-                    this.onConnectionChanged();
-            }
+            this.connecting = v;
+            if (this.onConnectionChanged)
+                this.onConnectionChanged();
         }
 
         isConnecting(): boolean {
