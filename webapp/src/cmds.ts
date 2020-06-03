@@ -371,7 +371,7 @@ export function init(): void {
     } else if (pxt.winrt.isWinRT()) { // windows app
         log(`deploy: winrt`)
         pxt.packetio.mkPacketIOAsync = pxt.winrt.mkWinRTPacketIOAsync;
-        pxt.commands.browserDownloadAsync = pxt.winrt.winrtbrowserDownloadAsync;
+        pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
         pxt.commands.deployCoreAsync = winrtDeployCoreAsync;
         pxt.commands.saveOnlyAsync = winrtSaveAsync;
     } else if (pxt.BrowserUtils.isPxtElectron()) {
