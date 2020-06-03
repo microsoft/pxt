@@ -159,11 +159,13 @@ namespace pxt.winrt {
         }
     }
 
+    export let packetIO: WinRTPacketIO = undefined;
     export function mkWinRTPacketIOAsync(): Promise<pxt.packetio.PacketIO> {
         pxt.debug(`packetio: mk winrt packetio`)
-        const packetIO = new WinRTPacketIO();
+        packetIO = new WinRTPacketIO();
         return packetIO.initAsync()
             .catch((e) => {
+                packetIO = undefined;
                 return Promise.reject(e);
             })
             .then(() => packetIO);
@@ -215,6 +217,7 @@ namespace pxt.winrt {
                         reconnectAsync();
                     } else if (deviceCount === 0 && disconnectAsync) {
                         disconnectAsync();
+                        packetIO = undefined;
                     }
                 }
             });
