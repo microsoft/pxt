@@ -204,7 +204,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             && !!this.parent.state.header.githubId);
         // strip out id, x, y attributes
         if (normalize) xml = xml.replace(/(x|y|id)="[^"]*"/g, '')
-        pxt.debug(xml)
+        console.dir({ blocksXml: xml })
         return xml;
     }
 
