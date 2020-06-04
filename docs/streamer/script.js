@@ -15,6 +15,7 @@
     const paintCtx = paint.getContext('2d');
     const painttool = document.getElementById('painttool');
     const painttoolCtx = painttool.getContext('2d');
+    const recorder = document.getElementById('recorder')
 
     const frames = [editor, editor2];
 
@@ -497,29 +498,31 @@ background: #615fc7;
         }
     }
 
-    async function loadMicrophone() {
-        // load previous webcam
+    async function startMicrophone() {
+        console.log("opening audio stream")
         const config = readConfig();
-        if (config.micId) {
-            try {
-                state.micError = false;
-                const constraints = { audio: true }
-                if (deviceId)
-                    constraints.video.deviceId = deviceId;
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        
-                console.log(`mic started`)
-                return; // success!
+        try {
+            state.micError = false;
+            const constraints = {
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true
+                }
             }
-            catch (e) {
-                tickEvent("streamer.mic.error")
-                state.micError = true;
-                saveConfig(config)
-                console.log(`could not start microphonem`, e)
-                render()
-            }
-        } else {
-            state.micError = false
+            if (config.micId)
+                constraints.audio.deviceId = config.micId;
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            console.log("audio stream ready")
+            return stream;
+        }
+        catch (e) {
+            tickEvent("streamer.mic.error")
+            state.micError = true;
+            saveConfig(config)
+            console.log(`could not start microphonem`, e)
+            render()
+            return undefined
         }
     }
 
@@ -573,8 +576,16 @@ background: #615fc7;
         if (stop) stop();
     }
 
-    function startRecording() {
-        const stream = facecam.srcObject
+    async function startRecording() {
+        state.recording = undefined;
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+            video: {
+                displaySurface: "browser",
+                cursor: "always"
+            }
+        });
+        const audioStream = await startMicrophone();
+        stream.addTrack(audioStream.getAudioTracks()[0])
         const chunks = [];
         const options = {
             mimeType: 'video/webm;codecs=H264'
@@ -584,12 +595,24 @@ background: #615fc7;
         mediaRecorder.onstop = (e) => download();
         mediaRecorder.onerror = (e) => download();
 
-        mediaRecorder.start();
+        recorder.classList.remove('hidden')
+        recorder.onclick = () => {
+            recorder.classList.add('hidden')
+            mediaRecorder.start();
+        }
         state.recording = () => mediaRecorder.stop();
         loadToolbox();
         render();
 
+
         function download() {
+            // makesure to close all streams
+            recorder.classList.add('hidden')
+            try {
+                stream.getVideoTracks().forEach(track => track.stop())
+                stream.getAudioTracks().forEach(track => track.stop())
+            } catch (e) { }
+
             state.recording = undefined;
 
             const blob = new Blob(chunks, {
@@ -605,7 +628,7 @@ background: #615fc7;
             window.URL.revokeObjectURL(url);
 
             loadToolbox();
-            render();    
+            render();
         }
     }
 
@@ -777,7 +800,7 @@ background: #615fc7;
             option.text = "Off"
             if (!config.hardwareCamId)
                 option.selected = true;
-                micselect.add(option)
+            micselect.add(option)
         }
         mics.forEach(cam => {
             const option = document.createElement("option")

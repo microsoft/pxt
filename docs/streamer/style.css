@@ -141,6 +141,27 @@ body.loading {
     filter: blur(0.2vw);
 }
 
+/**
+Recorder
+*/
+#recorder {
+    position: absolute;
+    left: 20%;
+    top: 30%;
+    width: 60%;
+    height: 5rem;
+    background: #ccc;
+    padding: 5%;
+    overflow-y: auto;
+    text-align: center;
+    font-size: 4rem;
+    cursor: button;
+    opacity: 40%;
+}
+#recorder:hover {
+    opacity: 100%;
+}
+
 /*
 Settings
 */
