@@ -1890,8 +1890,8 @@ namespace pxt.blocks {
     function setChildrenEnabled(block: Blockly.Block, enabled: boolean) {
         block.setEnabled(enabled);
         // propagate changes
-        var children = block.getDescendants(false);
-        for (var i = 0, child; (child = children[i]); i++) {
+        const children = block.getDescendants(false);
+        for (const child of children) {
             child.setEnabled(enabled);
         }
     }
