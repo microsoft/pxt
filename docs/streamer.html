@@ -120,7 +120,13 @@ footer>a {
 .error.micdelay {
     display: none;
 }
-.micdelay .error.micdelay {
+.micdelayerror .error.micdelay {
+    display: block;
+}
+.error.displaymedia {
+    display: none;
+}
+.displaymediaerror .error.displaymedia {
     display: block;
 }
 
@@ -550,6 +556,7 @@ body.chatscene.hardware #hardwarecam {
             <input id="twitchinput" placeholder="Twitch.tv account (/account)" />
         </div>
         <h2>Recording</h2>
+        <div class="error hidden displaymedia">This browser does not support recording the screen.</div>
         <div class="field">
             <label for="micselect">Choose a Microphone</label>
             <select id="micselect"></select>
@@ -560,6 +567,7 @@ body.chatscene.hardware #hardwarecam {
             <input id="micdelayinput" type="number" placeholder="200" />
             <div class="error hidden micdelay">Record your video and clap. Adjust the delay so that the video and the audio are in sync.</div>
         </div>
+        <p>When starting the recording, select the current browser tab.</p>
     </div>
     <div class="box hidden" id="recorder">
         <span>click to start recording</span>
