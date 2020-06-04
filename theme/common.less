@@ -1103,12 +1103,6 @@ p.ui.font.small {
         left: -2rem;
     }
 
-    #filelist .simtoolbar > .buttons {
-        > .debug-button {
-            display: block !important;
-        }
-    }
-
     #downloadArea {
         // .25rem from padding around editortoolbar in portrait mode
         width: ~"calc(@{blocklyRowWidthTablet} - .25rem)";
@@ -1238,6 +1232,11 @@ p.ui.font.small {
         background: transparent !important;
         overflow: visible;
         z-index: 20;
+    }
+    #filelist .simtoolbar > .buttons {
+        > .debug-button {
+            display: block !important;
+        }
     }
     .collapsedEditorTools #filelist {
         > div {
