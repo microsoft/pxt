@@ -45,7 +45,6 @@
         loadEditor()
         loadChat()
         loadSocial()
-        loadToolbox()
         render()
     }
 
@@ -87,9 +86,12 @@
     }
 
     function render() {
+        loadToolbox();
+
         const config = readConfig();
 
-        body.className = `${scenes[state.sceneIndex]} ${state.hardware ? "hardware" : state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""} ${state.paint ? "paint" : ""} ${state.micError ? "micerror" : ""} ${config.micDelay === undefined ? "micdelay" : ""}`
+        const displayMedia = navigator.mediaDevices.getDisplayMedia ? "" : "displaymediaerror"
+        body.className = `${scenes[state.sceneIndex]} ${state.hardware ? "hardware" : ""} ${state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""} ${state.paint ? "paint" : ""} ${state.micError ? "micerror" : ""} ${config.micDelay === undefined ? "micdelayerror" : ""} ${displayMedia}`
         if (!config.faceCamId || state.faceCamError)
             showSettings();
     }
@@ -121,13 +123,13 @@
             addButton("EraseTool", "Clear all drawings", clearPaint)
             addButton("ChromeClose", "Exit paint mode", togglePaint)
         } else {
-            addButton("OpenPane", "move webcam left", () => setScene("left"))
-            addButton("OpenPaneMirrored", "move webcam right", () => setScene("right"))
-            addButton("Contact", "webcam large", () => setScene("chat"))
+            addSceneButton("OpenPane", "move webcam left", "left")
+            addSceneButton("OpenPaneMirrored", "move webcam right", "right")
+            addSceneButton("Contact", "webcam large", "chat")
             if (config.hardwareCamId)
-                addButton("Robot", "hardware webcam", toggleHardware)
+                addButton("Robot", "hardware webcam", toggleHardware, state.hardware)
             if (config.mixer || config.twitch)
-                addButton("OfficeChat", "show/hide chat", toggleChat)
+                addButton("OfficeChat", "show/hide chat", toggleChat, state.chat)
             addButton("PenWorkspace", "Paint mode", togglePaint)
         }
 
@@ -141,7 +143,7 @@
             addButton("Record2", "Start recording", startRecording)
         addButton("Settings", "Show settings", showSettings);
 
-        function addButton(icon, title, handler) {
+        function addButton(icon, title, handler, active) {
             const btn = document.createElement("button")
             btn.title = title
             btn.addEventListener("pointerdown", function (e) {
@@ -150,15 +152,20 @@
             }, false)
             const i = document.createElement("i")
             btn.append(i)
+            if (active)
+                btn.classList.add("active")
             i.className = `ms-Icon ms-Icon--${icon}`
             toolbox.append(btn)
             return btn;
         }
 
         function addPaintButton(icon, title, tool) {
-            const btn = addButton(icon, title, () => setPaintTool(tool));
-            if (state.painttool == tool)
-                btn.classList.add("active")
+            addButton(icon, title, () => setPaintTool(tool), state.painttool == tool);
+        }
+
+        function addSceneButton(icon, title, scene) {
+            const sceneIndex = scenes.indexOf(`${scene}scene`)
+            addButton(icon, title, () => setScene(scene), state.sceneIndex == sceneIndex)
         }
 
         function setScene(scene) {
@@ -172,7 +179,6 @@
         state.paint = !state.paint;
         clearPaint();
         updatePaintSize();
-        loadToolbox();
         render();
     }
 
@@ -645,7 +651,6 @@ background: #615fc7;
                 console.log(e)
             }
         }
-        loadToolbox();
         render();
 
 
@@ -672,7 +677,6 @@ background: #615fc7;
             a.click();
             window.URL.revokeObjectURL(url);
 
-            loadToolbox();
             render();
         }
     }
@@ -776,7 +780,6 @@ background: #615fc7;
             config.hardwareCamId = selected.value;
             saveConfig(config)
             state.hardware = !!config.hardwareCamId
-            loadToolbox()
             render()
             loadHardwareCam().then(() => loadSettings())
         }
@@ -810,7 +813,6 @@ background: #615fc7;
             twitchinput.value = config.twitch
             saveConfig(config);
             loadSocial();
-            loadToolbox()
             loadChat();
             render()
         }
@@ -822,7 +824,6 @@ background: #615fc7;
             mixerinput.value = config.mixer
             saveConfig(config);
             loadSocial();
-            loadToolbox()
             loadChat();
             render()
         }
@@ -859,7 +860,6 @@ background: #615fc7;
             const selected = micselect.options[micselect.selectedIndex];
             config.micId = selected.value;
             saveConfig(config)
-            loadToolbox()
             render()
         }
         const micdelayinput = document.getElementById("micdelayinput")

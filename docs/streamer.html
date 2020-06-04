@@ -120,7 +120,13 @@ footer>a {
 .error.micdelay {
     display: none;
 }
-.micdelay .error.micdelay {
+.micdelayerror .error.micdelay {
+    display: block;
+}
+.error.displaymedia {
+    display: none;
+}
+.displaymediaerror .error.displaymedia {
     display: block;
 }
 
@@ -365,6 +371,23 @@ body.rightscene.hardware #hardwarecam {
     bottom: 42%;
 }
 
+body.rightscene.hardware.chat #editor {
+    width: 73%;
+}
+
+body.rightscene.hardware.chat #chat {
+    width: 22%;
+    height: 30%;    
+}
+body.rightscene.hardware.chat #hardwarecam {
+    width:22%;
+    bottom: 34%;
+}
+
+body.rightscene.hardware.chat #facecam {
+    width:22%;
+}
+
 body.rightscene.multi #editor {
     width: 67%;
 }
@@ -392,7 +415,7 @@ body.leftscene #facecam {
 }
 
 body.leftscene #hardwarecam {
-    bottom: 9%;
+    bottom: 10%;
     right: 1%;
 }
 
@@ -461,8 +484,8 @@ body.chatscene #editor2 {
 
 body.chatscene #chat {
     top: 9%;
-    right: 4%;
-    width: 24%;
+    right: 1%;
+    width: 30%;
     height: 80%;
     opacity: 100%;
 }
@@ -481,6 +504,21 @@ body.chatscene.hardware #hardwarecam {
     width: 46%;
     bottom: 19%;
     right: 1%;            
+}
+
+body.chatscene.hardware.chat #facecam {
+    right: 41%;    
+}
+body.chatscene.hardware.chat #hardwarecam {
+    width: 30%;
+    bottom: 9%;
+    right: 1%; 
+}
+body.chatscene.hardware.chat #chat {
+    top: 1%;
+    right: 1%;
+    width: 30%;
+    height: 43%;
 }
     </style>
     <style id="editorstyle"></style>
@@ -550,21 +588,23 @@ body.chatscene.hardware #hardwarecam {
             <input id="twitchinput" placeholder="Twitch.tv account (/account)" />
         </div>
         <h2>Recording</h2>
+        <div class="error hidden displaymedia">This browser does not support recording the screen.</div>
         <div class="field">
             <label for="micselect">Choose a Microphone</label>
             <select id="micselect"></select>
             <div class="error hidden mic">Connection error. Make sure the microphone is not blocked or used by another application.</div>
         </div>
         <div class="field">
-            <label for="micdelayinput">Sound delay (ms)</label>
+            <label for="micdelayinput">Sound delay (ms). To tune: record a clap and adjust the delay until video and audio are sync.</label>
             <input id="micdelayinput" type="number" placeholder="200" />
             <div class="error hidden micdelay">Record your video and clap. Adjust the delay so that the video and the audio are in sync.</div>
         </div>
+        <p>When starting the recording, select the current browser tab.</p>
     </div>
     <div class="box hidden" id="recorder">
         <span>click to start recording</span>
         <span id="screensize">0x0</span>
-        <div class="message details" id="recorderfacecamerror">Resize your browser to hit 1920x1080 (180p, HD) or 1280x720 (720p, SD).</div>
+        <div class="message details">Resize your browser to hit 1920x1080 (180p, HD) or 1280x720 (720p, SD).</div>
         <div class="error details mic">Select a microphone in the settings.</div>
         <div class="error details micdelay">Tune your microphone delay to sync video and audio.</div>
     </div>
