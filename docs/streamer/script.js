@@ -509,7 +509,8 @@ background: #615fc7;
                 audio: {
                     echoCancellation: true,
                     noiseSuppression: true,
-                    autoGainControl: true
+                    autoGainControl: true,
+                    latency: 400
                 }
             }
             if (config.micId)
@@ -539,7 +540,7 @@ background: #615fc7;
     }
 
     function initResize() {
-        window.onresize = function(e) {
+        window.onresize = function (e) {
             screensize.innerText = `(${window.innerWidth}x${window.innerHeight})`
         }
     }
@@ -569,6 +570,7 @@ background: #615fc7;
         if (deviceId)
             constraints.video.deviceId = deviceId;
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        el.muted = true;
         el.volume = 0; // don't use sound!
         el.srcObject = stream;
         el.onloadedmetadata = (e) => el.play();
