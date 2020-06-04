@@ -2175,7 +2175,6 @@ export class ProjectView
     }
 
     saveBlocksToTypeScriptAsync(): Promise<string> {
-        console.log("2178")
         return this.blocksEditor.saveToTypeScriptAsync();
     }
 
@@ -2210,7 +2209,6 @@ export class ProjectView
                         return Promise.resolve(cached);
                     }
 
-                    console.log("2213")
                     return this.editor.saveToTypeScriptAsync()
                         .then(src => {
                             if (src !== undefined) {
@@ -2220,7 +2218,6 @@ export class ProjectView
                         });
                 }
 
-                console.log("2223")
                 return this.editor.saveToTypeScriptAsync()
             })
             .then((src) => {
