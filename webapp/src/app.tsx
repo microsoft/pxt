@@ -4123,6 +4123,12 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
 }
 
 async function importGithubProject(repoid: string, requireSignin?: boolean) {
+    if (!pxt.appTarget.appTheme.githubEditor || pxt.winrt.isWinRT() || pxt.BrowserUtils.isPxtElectron()) {
+        core.warningNotification(lf("Importing GitHub projects not currently supported"));
+        theEditor.openHome();
+        return;
+    }
+
     core.showLoading("loadingheader", lf("importing GitHub project..."));
     try {
         // normalize for precise matching
