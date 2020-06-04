@@ -167,8 +167,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const packetioConnecting = !!this.getData("packetio:connecting");
         const packetioIcon = this.getData("packetio:icon") as string;
         const downloadIcon = (!!packetioConnecting && "ping " + packetioIcon)
-            || (!!packetioConnected && "ping2s " + packetioIcon)
-            || targetTheme.downloadIcon || "download";
+            || (!!packetioConnected && packetioIcon)
+            || targetTheme.downloadIcon
+            || "download";
         const hasMenu = boards || webUSBSupported;
 
         let downloadButtonClasses = hasMenu ? "left attached " : "";
@@ -186,17 +187,17 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             downloadButtonClasses += "connecting ";
         switch (view) {
             case View.Mobile:
-                downloadButtonClasses += "download-button-full";
+                downloadButtonClasses += "download-button-full ";
                 displayRight = collapsed;
                 break;
             case View.Tablet:
-                downloadButtonClasses += `download-button-full ${!collapsed ? 'large fluid' : ''}`;
+                downloadButtonClasses += `download-button-full ${!collapsed ? 'large fluid' : ''} `;
                 hwIconClasses = !collapsed ? "large" : "";
                 displayRight = collapsed;
                 break;
             case View.Computer:
             default:
-                downloadButtonClasses += "huge fluid";
+                downloadButtonClasses += "huge fluid ";
                 hwIconClasses = "large";
         }
 

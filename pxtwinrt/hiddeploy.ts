@@ -4,7 +4,7 @@
 type WHID = Windows.Devices.HumanInterfaceDevice.HidDevice;
 
 namespace pxt.winrt {
-    export class WindowsRuntimeIO implements pxt.packetio.PacketIO {
+    export class WinRTPacketIO implements pxt.packetio.PacketIO {
         onDeviceConnectionChanged = (connect: boolean) => { };
         onConnectionChanged = () => { };
         onData = (v: Uint8Array) => { };
@@ -14,6 +14,7 @@ namespace pxt.winrt {
         private connecting = false;
 
         constructor() {
+            this.handleInputReport = this.handleInputReport.bind(this);
         }
 
         disposeAsync(): Promise<void> {
@@ -25,11 +26,9 @@ namespace pxt.winrt {
         }
 
         private setConnecting(v: boolean) {
-            if (v != this.connecting) {
-                this.connecting = v;
-                if (this.onConnectionChanged)
-                    this.onConnectionChanged();
-            }
+            this.connecting = v;
+            if (this.onConnectionChanged)
+                this.onConnectionChanged();
         }
 
         isConnecting(): boolean {
@@ -46,7 +45,10 @@ namespace pxt.winrt {
         }
 
         isSwitchingToBootloader() {
-            return false;
+            expectingAdd = true;
+            if (this.dev) {
+                expectingRemove = true;
+            }
         }
 
         disconnectAsync(): Promise<void> {
@@ -76,8 +78,21 @@ namespace pxt.winrt {
             return pxt.winrt.promisify(
                 this.dev.sendOutputReportAsync(report)
                     .then(value => {
-                        pxt.debug(`hf2: ${value} bytes written`)
+                        //pxt.debug(`hf2: ${value} bytes written`)
                     }));
+        }
+
+        private handleInputReport(e: Windows.Devices.HumanInterfaceDevice.HidInputReportReceivedEventArgs) {
+            //pxt.debug(`input report`)
+            const dr = Windows.Storage.Streams.DataReader.fromBuffer(e.report.data);
+            const values: number[] = [];
+            while (dr.unconsumedBufferLength) {
+                values.push(dr.readByte());
+            }
+            if (values.length == 65 && values[0] === 0) {
+                values.shift()
+            }
+            this.onData(new Uint8Array(values));
         }
 
         initAsync(isRetry: boolean = false): Promise<void> {
@@ -122,20 +137,7 @@ namespace pxt.winrt {
                         return Promise.reject(new Error("can't connect to hid device"));
                     }
                     pxt.debug(`hid device version ${this.dev.version}`);
-                    this.dev.addEventListener("inputreportreceived", (e) => {
-                        pxt.debug(`input report`)
-                        const dr = Windows.Storage.Streams.DataReader.fromBuffer(e.report.data);
-                        const values: number[] = [];
-                        while (dr.unconsumedBufferLength) {
-                            values.push(dr.readByte());
-                        }
-                        if (values.length == 65 && values[0] === 0) {
-                            values.shift()
-                        }
-                        this.onData(new Uint8Array(values));
-                    });
-                    if (this.onConnectionChanged)
-                        this.onConnectionChanged();
+                    this.dev.addEventListener("inputreportreceived", this.handleInputReport);
                     return Promise.resolve();
                 })
                 .finally(() => {
@@ -145,7 +147,7 @@ namespace pxt.winrt {
                     if (isRetry) {
                         return rejectDeviceNotFound();
                     }
-                    return bootloaderViaBaud()
+                    return bootloaderViaBaud(this)
                         .then(() => {
                             return this.initAsync(true);
                         })
@@ -157,24 +159,16 @@ namespace pxt.winrt {
         }
     }
 
-    export let packetIO: WindowsRuntimeIO = undefined;
-    export function mkPacketIOAsync(): Promise<pxt.packetio.PacketIO> {
-        pxt.U.assert(!packetIO);
-        pxt.debug(`packetio: mk winrt`)
-        packetIO = new WindowsRuntimeIO();
+    export let packetIO: WinRTPacketIO = undefined;
+    export function mkWinRTPacketIOAsync(): Promise<pxt.packetio.PacketIO> {
+        pxt.debug(`packetio: mk winrt packetio`)
+        packetIO = new WinRTPacketIO();
         return packetIO.initAsync()
             .catch((e) => {
-                packetIO = null;
+                packetIO = undefined;
                 return Promise.reject(e);
             })
             .then(() => packetIO);
-    }
-
-    export function isSwitchingToBootloader() {
-        expectingAdd = true;
-        if (packetIO && packetIO.dev) {
-            expectingRemove = true;
-        }
     }
 
     const hidSelectors: string[] = [];
@@ -183,7 +177,7 @@ namespace pxt.winrt {
     let expectingAdd: boolean = false;
     let expectingRemove: boolean = false;
 
-    export function initWinrtHid(reconnectUf2WrapperCb: () => Promise<void>, disconnectUf2WrapperCb: () => Promise<void>) {
+    export function initWinrtHid(reconnectAsync: () => Promise<void>, disconnectAsync: () => Promise<void>) {
         const wd = Windows.Devices;
         const wde = Windows.Devices.Enumeration.DeviceInformation;
         const whid = wd.HumanInterfaceDevice.HidDevice;
@@ -205,8 +199,8 @@ namespace pxt.winrt {
                     // A new device was plugged in. If it's the first one, then reconnect the UF2 wrapper. Otherwise,
                     // we're already connected to a plugged device, so don't do anything.
                     ++deviceCount
-                    if (deviceCount === 1 && reconnectUf2WrapperCb) {
-                        reconnectUf2WrapperCb();
+                    if (deviceCount === 1 && reconnectAsync) {
+                        reconnectAsync();
                     }
                 }
             });
@@ -219,10 +213,11 @@ namespace pxt.winrt {
                     // one is the one we were connected to. In that case, reconnect the UF2 wrapper. If no more devices
                     // are left, disconnect the existing wrapper while we wait for a new device to be plugged in.
                     --deviceCount
-                    if (deviceCount > 0 && reconnectUf2WrapperCb) {
-                        reconnectUf2WrapperCb();
-                    } else if (deviceCount === 0 && disconnectUf2WrapperCb) {
-                        disconnectUf2WrapperCb();
+                    if (deviceCount > 0 && reconnectAsync) {
+                        reconnectAsync();
+                    } else if (deviceCount === 0 && disconnectAsync) {
+                        disconnectAsync();
+                        packetIO = undefined;
                     }
                 }
             });

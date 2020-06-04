@@ -3836,10 +3836,7 @@ function initLogin() {
 function initPacketIO() {
     pxt.debug(`packetio: hook events`)
     pxt.packetio.configureEvents(
-        () => {
-            pxt.debug(`packetio: ${pxt.packetio.isConnected() ? 'connected' : 'disconnected'}`)
-            data.invalidate("packetio:*")
-        },
+        () => data.invalidate("packetio:*"),
         (buf, isErr) => {
             const data = Util.fromUTF8(Util.uint8ArrayToString(buf))
             //pxt.debug('serial: ' + data)
@@ -4342,7 +4339,6 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(() => {
             pxt.BrowserUtils.initTheme();
             pxt.editor.experiments.syncTheme();
-            cmds.init();
             // editor messages need to be enabled early, in case workspace provider is IFrame
             if (theme.allowParentController
                 || theme.allowPackageExtensions
@@ -4355,13 +4351,13 @@ document.addEventListener("DOMContentLoaded", () => {
             render(); // this sets theEditor
             if (state)
                 theEditor.setState({ editorState: state });
+            return initExtensionsAsync(); // need to happen before cmd init
+        }).then(() => cmds.initAsync())
+        .then(() => {
             initPacketIO();
             initSerial();
             initHashchange();
             socketbridge.tryInit();
-            return initExtensionsAsync();
-        })
-        .then(() => {
             electron.initElectron(theEditor);
             return pxt.winrt.initAsync(importHex);
         })

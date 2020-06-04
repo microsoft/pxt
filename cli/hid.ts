@@ -127,7 +127,7 @@ export function hf2ConnectAsync(path: string, raw = false) {
         }
 
         return pxt.usb.pairAsync()
-            .then(() => pxt.usb.mkPacketIOAsync())
+            .then(() => pxt.usb.mkWebUSBHIDPacketIOAsync())
             .then(io => new HF2.Wrapper(io))
             .then(d => d.reconnectAsync().then(() => d))
     }
