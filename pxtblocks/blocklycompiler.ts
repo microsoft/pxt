@@ -1984,15 +1984,6 @@ namespace pxt.blocks {
         return undefined;
     }
 
-    export function getTopLevelParent(block: Blockly.Block): Blockly.Block {
-        const parent = block.getParent();
-        if (!parent || parent.id == block.id) {
-            return block;
-        } else {
-            return pxt.blocks.getTopLevelParent(block.getParent())
-        }
-    }
-
     export function compileAsync(b: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
         const e = mkEnv(b, blockInfo);
         const [nodes, diags] = compileWorkspace(e, b, blockInfo);
