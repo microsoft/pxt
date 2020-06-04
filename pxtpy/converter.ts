@@ -1602,12 +1602,17 @@ namespace pxt.py {
             }
         }
 
-        let lExp: B.JsNode;
-        if (annotation && value.kind === "NameConstant"
-            && (value as NameConstant).value === null)
-            // if we have a type annotation and the value is null / undefined, include the annoation
-            lExp = B.mkInfix(expr(target), ":", expr(annotation))
-        else
+        let lExp: B.JsNode | undefined = undefined;
+        if (annotation) {
+            // if we have a type annotation, emit it in these cases if the r-value is:
+            //  - null / undefined
+            //  - empty list
+            if (value.kind === "NameConstant" && (value as NameConstant).value === null
+                || value.kind === "List" && (value as List).elts.length === 0) {
+                lExp = B.mkInfix(expr(target), ":", expr(annotation))
+            }
+        }
+        if (!lExp)
             lExp = expr(target)
 
         return B.mkStmt(B.mkText(pref), B.mkInfix(lExp, "=", expr(value)))
