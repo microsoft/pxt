@@ -106,9 +106,10 @@
             addPaintButton("ArrowTallUpLeft", "Draw arrow", "arrow")
             addPaintButton("RectangleShape", "Draw rectangle", "rect")
             addPaintButton("PenWorkspace", "Draw freeform", "pen")
-            addButton("WhiteBoardApp16", "Paint screen in white", whiteboard)
+            addButton("WhiteBoardApp32", "Paint screen in white", whiteboard)
             emojis.forEach(emoji => {
                 const btn = document.createElement("button")
+                btn.className = "emoji"
                 btn.innerText = emoji;
                 btn.addEventListener("pointerdown", function (e) {
                     tickEvent("streamer.emoji", { emoji }, { interactiveConsent: true })
@@ -128,12 +129,17 @@
             if (config.mixer || config.twitch)
                 addButton("OfficeChat", "show/hide chat", toggleChat)
             addButton("PenWorkspace", "Paint mode", togglePaint)
-            if (state.recording)
-                addButton("Stop", "Stop recording", stopRecording)
-            else
-                addButton("Record2", "Start recording", startRecording)
-            addButton("Settings", "Show settings", showSettings);
         }
+
+        const sep = document.createElement("div")
+        sep.className = "sep"
+        toolbox.append(sep)
+
+        if (state.recording)
+            addButton("Stop", "Stop recording", stopRecording)
+        else
+            addButton("Record2", "Start recording", startRecording)
+        addButton("Settings", "Show settings", showSettings);
 
         function addButton(icon, title, handler) {
             const btn = document.createElement("button")
@@ -540,7 +546,7 @@ background: #615fc7;
                     .filter(track => track.stop)
                     .forEach(track => track.stop());
             }
-        } catch (e) { 
+        } catch (e) {
             console.log(e)
         }
     }
@@ -614,7 +620,7 @@ background: #615fc7;
             const audioDestination = audioCtx.createMediaStreamDestination();
             delay.connect(audioDestination);
             stream.addTrack(audioDestination.stream.getAudioTracks()[0])
-        } catch(e) {
+        } catch (e) {
             console.log(e)
             state.micError = true;
         }
@@ -635,7 +641,7 @@ background: #615fc7;
         state.recording = () => {
             try {
                 stopStream(mediaRecorder.stream);
-            } catch(e) {
+            } catch (e) {
                 console.log(e)
             }
         }
@@ -863,7 +869,7 @@ background: #615fc7;
             config.micDelay = isNaN(i) ? 0 : i;
             micdelayinput.value = config.micDelay
             saveConfig(config);
-        }        
+        }
     }
 
     function tickEvent(id, data, opts) {

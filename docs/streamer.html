@@ -95,7 +95,6 @@ footer>a {
 
 .ms-Icon {
     vertical-align: middle;
-    margin-right: 0.2rem;
 }
 
 .item {
@@ -135,15 +134,16 @@ footer>a {
     text-align: left;
 }
 #toolbox > button {
-    height: 2rem;
-    width: 2rem;
-    border-radius: 1rem;
+    height: 2vw;
+    width: 2vw;
+    border-radius: 1vw;
+    font-size: 1vw;
     background: black;
     color: white;
-    padding: 0.47rem;
-    margin: 0.25rem;
+    margin: 0.3vw 0.2vw 0.1vw 0.1vw;
     cursor: pointer;
     opacity: 40%;
+    vertical-align: bottom;
 }
 #toolbox > button:hover {
     opacity: 100%;
@@ -151,6 +151,14 @@ footer>a {
 #toolbox > button.active {
     background: white;
     color: black;
+}
+#toolbox > div.sep {
+    border-left: solid 2px grey;
+    display: inline-block;
+    font-size: 1vw;
+    width: 2px;
+    height: 76%;
+    vertical-align: text-bottom;
 }
 #banner {
     margin: 0.5vh;
