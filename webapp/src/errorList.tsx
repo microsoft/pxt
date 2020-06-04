@@ -64,7 +64,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                 errorListContent = (
                     <div className="ui selection list">
                         {(errors).map((e, index) =>
-                        <div className="item" key={errorKey(e)} role="button" onClick={createOnErrorMessageClick(e, index)} onKeyDown={sui.fireClickOnEnter}>
+                        <div className="item" key={errorKey(e)} role="button" onClick={createOnErrorMessageClick(e, index)} onKeyDown={sui.fireClickOnEnter} tabIndex={0}>
                             {lf("Line {0}: {1}", (e.endLine) ? e.endLine + 1 : e.line + 1, e.messageText)}
                         </div>)
                         }
@@ -78,10 +78,10 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                 <div className="errorListHeader" role="button" onClick={this.onCollapseClick} onKeyDown={sui.fireClickOnEnter}>
                     <h4>{lf("Problems")}</h4>
                     <div className="ui red circular label countBubble">{exception ? 1 : errors.length}</div>
-                    <div className="toggleButton" onClick={this.onCollapseClick} onKeyDown={sui.fireClickOnEnter}><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`}/></div>
+                    <div className="toggleButton" onClick={this.onCollapseClick} onKeyDown={sui.fireClickOnEnter} tabIndex={0}><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`}/></div>
                 </div>
                 {!isCollapsed && <div className="errorListInner">
-                    {exception && <div className="debuggerSuggestion" role="button" onClick={this.props.startDebugger} onKeyDown={sui.fireClickOnEnter}>
+                    {exception && <div className="debuggerSuggestion" role="button" onClick={this.props.startDebugger} onKeyDown={sui.fireClickOnEnter} tabIndex={0}>
                         {lf("Debug this project")}
                         <sui.Icon className="debug-icon" icon="icon bug"/>
                     </div>}
