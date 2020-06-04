@@ -483,7 +483,7 @@ namespace pxt.blocks {
                         unionParam(e, b, "INDEX", ground(pNumber.type));
                         break;
                     case 'function_definition':
-                        getReturnTypeOfFunction(e, b.getField("function_name").getText());
+                        getReturnTypeOfFunction(e, b.getField("function_name",).getText());
                         break;
                     case 'function_call':
                     case 'function_call_output':
@@ -1986,7 +1986,6 @@ namespace pxt.blocks {
     export function compileAsync(b: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
         const e = mkEnv(b, blockInfo);
         const [nodes, diags] = compileWorkspace(e, b, blockInfo);
-        console.dir({ nodes })
         const result = tdASTtoTS(e, nodes, diags);
         return result;
     }
