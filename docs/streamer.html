@@ -36,7 +36,7 @@
         <div class="field">
             <label for="facecamselect">Choose a Face Webcam</label>
             <select id="facecamselect"></select>
-            <div class="error hidden" id="facecamerror">Connection error. Make sure the camera is not blocked and that the WebCam is not beging used by another application.</div>
+            <div class="error hidden" id="facecamerror">Connection error. Make sure the camera is not blocked or used by another application.</div>
         </div>
         <div class="field">
             <input type="checkbox" id="facerotatecameracheckbox"></input>
@@ -45,7 +45,7 @@
         <div class="field">
             <label for="hardwarecamselect">Choose a Hardware Webcam</label>
             <select id="hardwarecamselect"></select>
-            <div class="error hidden" id="hardwarecamerror">Connection error. Make sure the camera is not blocked and that the WebCam is not beging used by another application.</div>
+            <div class="error hidden" id="hardwarecamerror">Connection error. Make sure the camera is not blocked or used by another application.</div>
         </div>
         <div class="field">
             <input type="checkbox" id="hardwarerotatecameracheckbox"></input>
@@ -69,6 +69,12 @@
         <div class="field">
             <label for="twitchinput">Twitch (optional)</label>
             <input id="twitchinput" placeholder="Twitch.tv account (/account)" />
+        </div>
+        <h2>Recording</h2>
+        <div class="field">
+            <label for="micselect">Choose a Microphone</label>
+            <select id="micselect"></select>
+            <div class="error hidden" id="micerror">Connection error. Make sure the microphone is not blocked or used by another application.</div>
         </div>
     </div>
 </div>
