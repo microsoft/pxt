@@ -1887,6 +1887,15 @@ namespace pxt.blocks {
         };
     }
 
+    function setChildrenEnabled(block: Blockly.Block, enabled: boolean) {
+        block.setEnabled(enabled);
+        // propagate changes
+        var children = block.getDescendants(false);
+        for (var i = 0, child; (child = children[i]); i++) {
+            child.setEnabled(enabled);
+        }
+    }
+
     function updateDisabledBlocks(e: Environment, allBlocks: Blockly.Block[], topBlocks: Blockly.Block[]) {
         // unset disabled
         allBlocks.forEach(b => b.setEnabled(true));
@@ -1898,9 +1907,9 @@ namespace pxt.blocks {
             const otherEvent = events[key];
             if (otherEvent) {
                 // another block is already registered
-                block.setEnabled(false);
+                setChildrenEnabled(block, false);
             } else {
-                block.setEnabled(true);
+                setChildrenEnabled(block, true);
                 events[key] = block;
             }
         }
@@ -1921,7 +1930,7 @@ namespace pxt.blocks {
                 // all non-events are disabled
                 let t = b;
                 while (t) {
-                    t.setEnabled(false);
+                    setChildrenEnabled(b, false);
                     t = t.getNextBlock();
                 }
             }
@@ -1976,7 +1985,8 @@ namespace pxt.blocks {
     }
 
     export function getTopLevelParent(block: Blockly.Block): Blockly.Block {
-        if (!block.previousConnection && !block.nextConnection) {
+        const parent = block.getParent();
+        if (!parent || parent.id == block.id) {
             return block;
         } else {
             return pxt.blocks.getTopLevelParent(block.getParent())
