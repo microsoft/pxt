@@ -293,6 +293,7 @@ Settings
     width: 0;
     right: -1rem;
     opacity: 0;
+    transition-delay: 0.1s;
 }
 body.hardware #hardwarecam {
     opacity: 100%;
@@ -303,11 +304,9 @@ body.hardware #hardwarecam {
 */
 #chat {
     position: absolute;
-    width: 0;
     height: 60%;
     top: 1%;
-    right: 1%;
-    display: none;
+    right: -100%;    
     transition-delay: 0.3s;
 }
 
@@ -353,7 +352,7 @@ body.rightscene #facecam {
     width: 28%;
 }
 
-body.rightscene #chat {
+body.rightscene.chat #chat {
     right: 1%;
     width: 28%;
     height: 54%;
@@ -365,12 +364,14 @@ body.rightscene.chat #editor {
     height: 87%;
 }
 
+/* right + hardware */
 body.rightscene.hardware #hardwarecam {
     right: 1%;
     width: 22%;
     bottom: 42%;
 }
 
+/* right + hardware + chat */
 body.rightscene.hardware.chat #editor {
     width: 73%;
 }
@@ -379,6 +380,7 @@ body.rightscene.hardware.chat #chat {
     width: 22%;
     height: 30%;    
 }
+
 body.rightscene.hardware.chat #hardwarecam {
     width:22%;
     bottom: 34%;
@@ -425,8 +427,31 @@ body.leftscene #social {
     left: 43%;
     bottom: 1.5%;
 }
+
 body.leftscene.hardware #hardwarecam {
+    right: 76%;
     width: 22%;
+    bottom: 42%;
+}
+
+/* left + hardware + chat */
+body.leftscene.hardware.chat #editor {
+    width: 74%;
+    left: 24%;
+}
+body.leftscene.hardware.chat #chat {
+    width: 22%;
+    height: 30%;    
+    right: 77%;
+}
+body.leftscene.hardware.chat #hardwarecam {
+    width:22%;
+    bottom: 35%;
+    right: 77%;
+}
+body.leftscene.hardware.chat #facecam {
+    width:22%;
+    right: 77%;
 }
 
 /* left+multi*/
@@ -445,10 +470,21 @@ body.leftscene.multi #facecam {
     right: 70%;
     width: 28%;
 }
+
+/* left + multi + facecam + hardware */
+body.leftscene.multi.hardware #facecam {
+    right: 73%;
+    width: 25%;
+    bottom: 7%;
+}
 body.leftscene.multi.hardware #hardwarecam {
-    right: 76%;
+    right: 56%;
     width: 22%;
-    bottom: 24%;
+    bottom: 1.5%;
+}
+body.leftscene.multi.hardware #social {
+    width: 53%;
+    left: 45%;
 }
 
 /** leftscene + chat **/
@@ -482,7 +518,7 @@ body.chatscene #editor2 {
     right: -150rem;
 }
 
-body.chatscene #chat {
+body.chatscene.chat #chat {
     top: 9%;
     right: 1%;
     width: 30%;
