@@ -88,7 +88,8 @@
 
     function render() {
         const config = readConfig();
-        body.className = `${scenes[state.sceneIndex]} ${state.hardware ? "hardware" : state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""} ${state.paint ? "paint" : ""}`
+
+        body.className = `${scenes[state.sceneIndex]} ${state.hardware ? "hardware" : state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""} ${state.paint ? "paint" : ""} ${state.micError ? "micerror" : ""} ${config.micDelay === undefined ? "micdelay" : ""}`
         if (!config.faceCamId || state.faceCamError)
             showSettings();
     }
@@ -460,12 +461,12 @@ background: #615fc7;
             await startStream(facecam, config.faceCamId, config.faceCamRotate);
             console.log(`face cam started`)
             if (!config.faceCamId)
-                stopStream(facecam); // request permission only
+                stopStream(facecam.srcObject); // request permission only
             return; // success!
         }
         catch (e) {
             tickEvent("streamer.facecam.error")
-            stopStream(facecam);
+            stopStream(facecam.srcObject);
             facecam.classList.add("error");
             state.faceCamError = true;
             saveConfig(config)
@@ -489,7 +490,7 @@ background: #615fc7;
             }
             catch (e) {
                 tickEvent("streamer.hardwarecam.error")
-                stopStream(hardwarecam)
+                stopStream(hardwarecam.srcObject)
                 state.hardwareCamError = true;
                 saveConfig(config)
                 console.log(`could not start web cam`, e)
@@ -497,7 +498,7 @@ background: #615fc7;
             }
         } else {
             state.hardwareCamError = false
-            stopStream(hardwarecam)
+            stopStream(hardwarecam.srcObject)
         }
     }
 
@@ -529,14 +530,19 @@ background: #615fc7;
         }
     }
 
-    function stopStream(el) {
+    function stopStream(stream) {
         try {
-            if (el.srcObject) {
-                const tracks = el.srcObject.getVideoTracks();
-                if (tracks && tracks[0] && tracks[0].stop) tracks[0].stop();
+            if (stream && stream.active) {
+                (stream.getVideoTracks() || [])
+                    .filter(track => track.stop)
+                    .forEach(track => track.stop());
+                (stream.getAudioTracks() || [])
+                    .filter(track => track.stop)
+                    .forEach(track => track.stop());
             }
-            el.srcObject = null;
-        } catch (e) { }
+        } catch (e) { 
+            console.log(e)
+        }
     }
 
     function initResize() {
@@ -559,7 +565,7 @@ background: #615fc7;
     }
 
     async function startStream(el, deviceId, rotate) {
-        stopStream(el)
+        stopStream(el.srcObject)
         console.log(`trying device ${deviceId}`)
         const constraints = {
             audio: false,
@@ -584,6 +590,7 @@ background: #615fc7;
         const stop = state.recording;
         state.recording = undefined;
         if (stop) stop();
+        render();
     }
 
     async function startRecording() {
@@ -595,16 +602,22 @@ background: #615fc7;
                 cursor: "always"
             }
         });
-        const audioStream = await startMicrophone();
-        // handle delay
-        const audioCtx = new AudioContext();
-        const audioSource = audioCtx.createMediaStreamSource(audioStream);
-        const delay = audioCtx.createDelay(2);
-        delay.delayTime.value = (config.micDelay || 0) / 1000;
-        audioSource.connect(delay);
-        const audioDestination = audioCtx.createMediaStreamDestination();
-        delay.connect(audioDestination);
-        stream.addTrack(audioDestination.stream.getAudioTracks()[0])
+
+        try {
+            state.micError = false;
+            const audioStream = await startMicrophone();
+            const audioCtx = new AudioContext();
+            const audioSource = audioCtx.createMediaStreamSource(audioStream);
+            const delay = audioCtx.createDelay(2);
+            delay.delayTime.value = (config.micDelay || 0) / 1000;
+            audioSource.connect(delay);
+            const audioDestination = audioCtx.createMediaStreamDestination();
+            delay.connect(audioDestination);
+            stream.addTrack(audioDestination.stream.getAudioTracks()[0])
+        } catch(e) {
+            console.log(e)
+            state.micError = true;
+        }
         const chunks = [];
         const options = {
             mimeType: 'video/webm;codecs=H264'
@@ -619,7 +632,13 @@ background: #615fc7;
             recorder.classList.add('hidden')
             mediaRecorder.start();
         }
-        state.recording = () => mediaRecorder.stop();
+        state.recording = () => {
+            try {
+                stopStream(mediaRecorder.stream);
+            } catch(e) {
+                console.log(e)
+            }
+        }
         loadToolbox();
         render();
 
