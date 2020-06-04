@@ -15,6 +15,8 @@
     const paintCtx = paint.getContext('2d');
     const painttool = document.getElementById('painttool');
     const painttoolCtx = painttool.getContext('2d');
+    const recorder = document.getElementById('recorder')
+    const screensize = document.getElementById('screensize')
 
     const frames = [editor, editor2];
 
@@ -25,10 +27,12 @@
         left: false,
         chat: false,
         hardware: false,
-        painttool: "arrow"
+        painttool: "arrow",
+        recording: undefined
     }
 
     initMessages();
+    initResize();
     loadPaint();
     loadEditor()
     await firstLoadFaceCam()
@@ -69,7 +73,8 @@
             multiEditor: false,
             twitter: "",
             mixer: "",
-            emojis: "😄🤔😭👀"
+            emojis: "😄🤔😭👀",
+            micDelay: 200
         }
         saveConfig(cfg)
         return cfg;
@@ -83,7 +88,7 @@
 
     function render() {
         const config = readConfig();
-        body.className = `${scenes[state.sceneIndex]} ${state.hardware ? "hardware" : state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""} ${state.paint ? "paint" : ""}`        
+        body.className = `${scenes[state.sceneIndex]} ${state.hardware ? "hardware" : state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""} ${state.paint ? "paint" : ""}`
         if (!config.faceCamId || state.faceCamError)
             showSettings();
     }
@@ -94,7 +99,7 @@
 
         const emojis = [];
         if (config.emojis)
-            for(let i =0; i < config.emojis.length;i += 2)
+            for (let i = 0; i < config.emojis.length; i += 2)
                 emojis[i >> 1] = config.emojis.substr(i, 2);
         if (state.paint) {
             addPaintButton("ArrowTallUpLeft", "Draw arrow", "arrow")
@@ -104,7 +109,7 @@
             emojis.forEach(emoji => {
                 const btn = document.createElement("button")
                 btn.innerText = emoji;
-                btn.addEventListener("pointerdown", function(e) {
+                btn.addEventListener("pointerdown", function (e) {
                     tickEvent("streamer.emoji", { emoji }, { interactiveConsent: true })
                     state.emoji = emoji;
                     setPaintTool("emoji")
@@ -118,17 +123,21 @@
             addButton("OpenPaneMirrored", "move webcam right", () => setScene("right"))
             addButton("Contact", "webcam large", () => setScene("chat"))
             if (config.hardwareCamId)
-            addButton("Robot", "hardware webcam", toggleHardware)
+                addButton("Robot", "hardware webcam", toggleHardware)
             if (config.mixer || config.twitch)
                 addButton("OfficeChat", "show/hide chat", toggleChat)
             addButton("PenWorkspace", "Paint mode", togglePaint)
+            if (state.recording)
+                addButton("Stop", "Stop recording", stopRecording)
+            else
+                addButton("Record2", "Start recording", startRecording)
             addButton("Settings", "Show settings", showSettings);
         }
 
         function addButton(icon, title, handler) {
             const btn = document.createElement("button")
             btn.title = title
-            btn.addEventListener("pointerdown", function(e) {
+            btn.addEventListener("pointerdown", function (e) {
                 tickEvent("streamer.button", { button: icon }, { interactiveConsent: true })
                 handler(e)
             }, false)
@@ -175,8 +184,8 @@
     }
 
     function clearPaint() {
-        paintCtx.clearRect(0,0,paint.width,paint.height);
-        painttoolCtx.clearRect(0,0,paint.width,paint.height);
+        paintCtx.clearRect(0, 0, paint.width, paint.height);
+        painttoolCtx.clearRect(0, 0, paint.width, paint.height);
     }
 
     function updatePaintSize() {
@@ -188,15 +197,15 @@
     }
 
     function loadPaint() {
-        const mouse = {x: 0, y: 0};
-        let head = {x:0,y:0}
-        
-        painttool.addEventListener('mousemove', function(e) {
+        const mouse = { x: 0, y: 0 };
+        let head = { x: 0, y: 0 }
+
+        painttool.addEventListener('mousemove', function (e) {
             mouse.x = e.pageX - this.offsetLeft;
             mouse.y = e.pageY - this.offsetTop;
         }, false);
-        
-        painttool.addEventListener('mousedown', function(e) {
+
+        painttool.addEventListener('mousedown', function (e) {
             head.x = e.pageX - this.offsetLeft;
             head.y = e.pageY - this.offsetTop;
             painttoolCtx.lineWidth = Math.max(10, (paint.width / 100) | 0);
@@ -206,16 +215,16 @@
             if (state.painttool == 'pen') {
                 painttoolCtx.beginPath();
                 painttoolCtx.moveTo(mouse.x, mouse.y);
-            }          
+            }
             painttool.addEventListener('mousemove', onPaint, false);
         }, false);
-        
-        painttool.addEventListener('mouseup', function() {
+
+        painttool.addEventListener('mouseup', function () {
             paintCtx.drawImage(painttool, 0, 0)
             painttoolCtx.clearRect(0, 0, painttool.width, painttool.height)
             painttool.removeEventListener('mousemove', onPaint, false);
         }, false);
-        
+
         function onPaint() {
             const ctx = painttoolCtx
             ctx.clearRect(0, 0, painttool.width, painttool.height)
@@ -227,22 +236,22 @@
                 // Rotate the context to point along the path
                 const dx = p2.x - p1.x
                 const dy = p2.y - p1.y
-                const len=Math.sqrt(dx*dx+dy*dy);
+                const len = Math.sqrt(dx * dx + dy * dy);
                 ctx.translate(p2.x, p2.y);
-                ctx.rotate(Math.atan2(dy,dx));
+                ctx.rotate(Math.atan2(dy, dx));
 
                 // line
                 ctx.beginPath();
-                ctx.moveTo(0,0);
-                ctx.lineTo(-len,0);
+                ctx.moveTo(0, 0);
+                ctx.lineTo(-len, 0);
                 ctx.closePath();
                 ctx.stroke();
 
                 // arrowhead
                 ctx.beginPath();
-                ctx.moveTo(0,0);
-                ctx.lineTo(-size,-size);
-                ctx.moveTo(0,0);
+                ctx.moveTo(0, 0);
+                ctx.lineTo(-size, -size);
+                ctx.moveTo(0, 0);
                 ctx.lineTo(-size, size);
                 ctx.stroke();
             } else if (state.painttool == 'rect') {
@@ -256,9 +265,9 @@
                 const p1 = mouse, p2 = head;
                 const dx = p2.x - p1.x
                 const dy = p2.y - p1.y
-                const len= Math.max(64, (Math.sqrt(dx*dx+dy*dy) * 0.9) | 0);
+                const len = Math.max(64, (Math.sqrt(dx * dx + dy * dy) * 0.9) | 0);
                 ctx.translate(p2.x, p2.y);
-                ctx.rotate(Math.atan2(dy,dx) - Math.PI / 2);
+                ctx.rotate(Math.atan2(dy, dx) - Math.PI / 2);
 
                 ctx.font = `${len}px serif`;
                 ctx.textAlign = 'center'
@@ -422,6 +431,12 @@ background: #615fc7;
         return cams;
     }
 
+    async function listMicrophones() {
+        let cams = await navigator.mediaDevices.enumerateDevices()
+        cams = cams.filter(d => d.kind == "audioinput")
+        return cams;
+    }
+
     async function firstLoadFaceCam() {
         await loadFaceCam()
         const config = readConfig();
@@ -430,7 +445,7 @@ background: #615fc7;
             if (cams && cams[0] && cams[0].deviceId) {
                 config.faceCamId = cams[0].deviceId;
                 saveConfig(config);
-                await loadFaceCam();            
+                await loadFaceCam();
             }
         }
     }
@@ -457,7 +472,7 @@ background: #615fc7;
             console.log(`could not start face cam`, e)
             render()
         }
-        finally  {
+        finally {
             body.classList.remove("loading");
         }
     }
@@ -486,6 +501,33 @@ background: #615fc7;
         }
     }
 
+    async function startMicrophone() {
+        console.log("opening audio stream")
+        const config = readConfig();
+        try {
+            state.micError = false;
+            const constraints = {
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true
+                }
+            }
+            if (config.micId)
+                constraints.audio.deviceId = config.micId;
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            console.log("audio stream ready")
+            return stream;
+        }
+        catch (e) {
+            tickEvent("streamer.mic.error")
+            state.micError = true;
+            saveConfig(config)
+            console.log(`could not start microphonem`, e)
+            render()
+            return undefined
+        }
+    }
 
     function stopStream(el) {
         try {
@@ -495,6 +537,12 @@ background: #615fc7;
             }
             el.srcObject = null;
         } catch (e) { }
+    }
+
+    function initResize() {
+        window.onresize = function (e) {
+            screensize.innerText = `(${window.innerWidth}x${window.innerHeight})`
+        }
     }
 
     function initMessages() {
@@ -512,16 +560,17 @@ background: #615fc7;
 
     async function startStream(el, deviceId, rotate) {
         stopStream(el)
-        console.log(`trying webcam ${deviceId}`)
+        console.log(`trying device ${deviceId}`)
         const constraints = {
             audio: false,
             video: {
-                aspectRatio: 4/3
+                aspectRatio: 4 / 3
             }
         }
         if (deviceId)
             constraints.video.deviceId = deviceId;
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        el.muted = true;
         el.volume = 0; // don't use sound!
         el.srcObject = stream;
         el.onloadedmetadata = (e) => el.play();
@@ -531,9 +580,82 @@ background: #615fc7;
             el.classList.remove("rotate");
     }
 
+    function stopRecording() {
+        const stop = state.recording;
+        state.recording = undefined;
+        if (stop) stop();
+    }
+
+    async function startRecording() {
+        const config = readConfig();
+        state.recording = undefined;
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+            video: {
+                displaySurface: "browser",
+                cursor: "always"
+            }
+        });
+        const audioStream = await startMicrophone();
+        // handle delay
+        const audioCtx = new AudioContext();
+        const audioSource = audioCtx.createMediaStreamSource(audioStream);
+        const delay = audioCtx.createDelay(2);
+        delay.delayTime.value = (config.micDelay || 0) / 1000;
+        audioSource.connect(delay);
+        const audioDestination = audioCtx.createMediaStreamDestination();
+        delay.connect(audioDestination);
+        stream.addTrack(audioDestination.stream.getAudioTracks()[0])
+        const chunks = [];
+        const options = {
+            mimeType: 'video/webm;codecs=H264'
+        };
+        const mediaRecorder = new MediaRecorder(stream, options)
+        mediaRecorder.ondataavailable = (e) => event.data.size && chunks.push(e.data);
+        mediaRecorder.onstop = (e) => download();
+        mediaRecorder.onerror = (e) => download();
+
+        recorder.classList.remove('hidden')
+        recorder.onclick = () => {
+            recorder.classList.add('hidden')
+            mediaRecorder.start();
+        }
+        state.recording = () => mediaRecorder.stop();
+        loadToolbox();
+        render();
+
+
+        function download() {
+            // makesure to close all streams
+            recorder.classList.add('hidden')
+            try {
+                audioCtx.close();
+                stream.getVideoTracks().forEach(track => track.stop())
+                stream.getAudioTracks().forEach(track => track.stop())
+            } catch (e) { }
+
+            state.recording = undefined;
+
+            const blob = new Blob(chunks, {
+                type: "video/webm"
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            document.body.appendChild(a);
+            a.style = "display: none";
+            a.href = url;
+            a.download = "recording.webm";
+            a.click();
+            window.URL.revokeObjectURL(url);
+
+            loadToolbox();
+            render();
+        }
+    }
+
     async function loadSettings() {
         const config = readConfig();
         const cams = await listCameras()
+        const mics = await listMicrophones()
 
         const settingsclose = document.getElementById("settingsclose")
         settingsclose.onclick = function (e) {
@@ -689,6 +811,40 @@ background: #615fc7;
             loadSocial()
             render()
         }
+
+        const micselect = document.getElementById("micselect");
+        micselect.innerHTML = "" // remove all web cams
+        {
+            const option = document.createElement("option")
+            option.value = ""
+            option.text = "Off"
+            if (!config.hardwareCamId)
+                option.selected = true;
+            micselect.add(option)
+        }
+        mics.forEach(cam => {
+            const option = document.createElement("option")
+            option.value = cam.deviceId
+            option.text = cam.label || `audio ${cam.deviceId}`
+            micselect.add(option)
+            if (config.micId == cam.deviceId && cam.deviceId)
+                option.selected = true;
+        })
+        micselect.onchange = function () {
+            const selected = micselect.options[micselect.selectedIndex];
+            config.micId = selected.value;
+            saveConfig(config)
+            loadToolbox()
+            render()
+        }
+        const micdelayinput = document.getElementById("micdelayinput")
+        micdelayinput.value = config.micDelay || ""
+        micdelayinput.onchange = function (e) {
+            const i = parseInt(micdelayinput.value || "0");
+            config.micDelay = isNaN(i) ? 0 : i;
+            micdelayinput.value = config.micDelay
+            saveConfig(config);
+        }        
     }
 
     function tickEvent(id, data, opts) {
