@@ -73,7 +73,8 @@
             multiEditor: false,
             twitter: "",
             mixer: "",
-            emojis: "😄🤔😭👀"
+            emojis: "😄🤔😭👀",
+            micDelay: 200
         }
         saveConfig(cfg)
         return cfg;
@@ -509,8 +510,7 @@ background: #615fc7;
                 audio: {
                     echoCancellation: true,
                     noiseSuppression: true,
-                    autoGainControl: true,
-                    latency: 400
+                    autoGainControl: true
                 }
             }
             if (config.micId)
@@ -587,6 +587,7 @@ background: #615fc7;
     }
 
     async function startRecording() {
+        const config = readConfig();
         state.recording = undefined;
         const stream = await navigator.mediaDevices.getDisplayMedia({
             video: {
@@ -595,7 +596,15 @@ background: #615fc7;
             }
         });
         const audioStream = await startMicrophone();
-        stream.addTrack(audioStream.getAudioTracks()[0])
+        // handle delay
+        const audioCtx = new AudioContext();
+        const audioSource = audioCtx.createMediaStreamSource(audioStream);
+        const delay = audioCtx.createDelay(2);
+        delay.delayTime.value = (config.micDelay || 0) / 1000;
+        audioSource.connect(delay);
+        const audioDestination = audioCtx.createMediaStreamDestination();
+        delay.connect(audioDestination);
+        stream.addTrack(audioDestination.stream.getAudioTracks()[0])
         const chunks = [];
         const options = {
             mimeType: 'video/webm;codecs=H264'
@@ -619,6 +628,7 @@ background: #615fc7;
             // makesure to close all streams
             recorder.classList.add('hidden')
             try {
+                audioCtx.close();
                 stream.getVideoTracks().forEach(track => track.stop())
                 stream.getAudioTracks().forEach(track => track.stop())
             } catch (e) { }
@@ -827,6 +837,14 @@ background: #615fc7;
             loadToolbox()
             render()
         }
+        const micdelayinput = document.getElementById("micdelayinput")
+        micdelayinput.value = config.micDelay || ""
+        micdelayinput.onchange = function (e) {
+            const i = parseInt(micdelayinput.value || "0");
+            config.micDelay = isNaN(i) ? 0 : i;
+            micdelayinput.value = config.micDelay
+            saveConfig(config);
+        }        
     }
 
     function tickEvent(id, data, opts) {
