@@ -149,14 +149,17 @@ Recorder
     left: 20%;
     top: 30%;
     width: 60%;
-    height: 5rem;
+    height: 4rem;
     background: #ccc;
     padding: 5%;
     overflow-y: auto;
     text-align: center;
-    font-size: 4rem;
-    cursor: button;
-    opacity: 40%;
+    font-size: 3rem;
+    cursor: cursor;
+    opacity: 80%;
+}
+#screensize {
+    font-size: 2rem;
 }
 #recorder:hover {
     opacity: 100%;

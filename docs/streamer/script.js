@@ -16,6 +16,7 @@
     const painttool = document.getElementById('painttool');
     const painttoolCtx = painttool.getContext('2d');
     const recorder = document.getElementById('recorder')
+    const screensize = document.getElementById('screensize')
 
     const frames = [editor, editor2];
 
@@ -31,6 +32,7 @@
     }
 
     initMessages();
+    initResize();
     loadPaint();
     loadEditor()
     await firstLoadFaceCam()
@@ -534,6 +536,12 @@ background: #615fc7;
             }
             el.srcObject = null;
         } catch (e) { }
+    }
+
+    function initResize() {
+        window.onresize = function(e) {
+            screensize.innerText = `(${window.innerWidth}x${window.innerHeight})`
+        }
     }
 
     function initMessages() {
