@@ -125,6 +125,9 @@ namespace pxt.packetio {
                 wrapper = mkPacketIOWrapper(io);
                 if (onSerialHandler)
                     wrapper.onSerial = onSerialHandler;
+                // trigger ui update
+                if (onConnectionChangedHandler)
+                    onConnectionChangedHandler();
                 return wrapper;
             })
     }
