@@ -7,6 +7,10 @@
     min-height: @errorListHeight;
     border-top: 2px @errorListBorderColor solid;
 
+    *:focus {
+        outline: none;
+    }
+
     .errorListHeader {
         padding: 0.75em 1em;
         height: @errorListHeaderHeight;
@@ -14,6 +18,14 @@
 
         &:hover {
             cursor: pointer;
+        }
+
+        &:focus {
+            background-color: lighten(@errorListMessageHoverColor, 50%);
+        }
+
+        &:not(:hover):not(:focus) > .toggleButton > i {
+            opacity: 0.5;
         }
 
         h4 {
@@ -28,16 +40,11 @@
 
         .toggleButton {
             float: right;
-            cursor: pointer;
             position: relative;
             vertical-align: middle;
 
             i {
                 font-size: 1.3em;
-            }
-
-            i:not(:hover) {
-                opacity: 0.5;
             }
         }
     }
@@ -63,8 +70,8 @@
                 padding: 0.5em 1em;
                 color: black;
 
-                &:hover {
-                    background-color: @errorListMessageHoverColor;
+                &:hover, &:focus {
+                    background-color: @errorListMessageHoverColor !important;
                 }
 
                 &:nth-child(even):not(:hover) {
