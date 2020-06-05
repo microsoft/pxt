@@ -54,6 +54,8 @@ Use https://uifabricicons.azurewebsites.net/
 body {
     font-family: monospace;
     overflow: hidden;
+    width:100%;
+    height:100%;
 }
 .container {
     padding-top: 56.25%;
@@ -207,6 +209,7 @@ title, countdown
     text-align: center;
     vertical-align: middle;
     color: white;
+    background: #615fc7;
 }
 #countdown {
     position: absolute;
@@ -716,6 +719,11 @@ body.countdownscene #countdown {
 }
 body.countdownscene #social {
     left: 25%;
+}
+body.countdownscene.hardware #hardwarecam {
+    right: -10%;
+    width: 120%;
+    bottom: -10%;
 }
     </style>
     <style id="editorstyle"></style>

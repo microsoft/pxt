@@ -391,7 +391,7 @@ background: ${styles.background};
 .box {
 border-color: ${styles.menu};
 }
-#social {
+#social, #title {
 background: ${styles.primary};
 }
 `
@@ -406,8 +406,13 @@ border-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
 }
 #social {
 background: #615fc7;
+color: white;
 }
-`
+#title {
+background: #615fc7;
+color: white;
+}
+    `
         }
         editorStyle.innerText = ""
         editorStyle.append(document.createTextNode(css));
