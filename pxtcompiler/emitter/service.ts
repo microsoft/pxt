@@ -125,7 +125,7 @@ namespace ts.pxtc {
             case ts.TypeFlags.String:
                 return "str"
             case ts.TypeFlags.Number:
-                // Note, "real" python expects this to be "float" or "int", we're intentionally diverging here
+                // Note: "real" python expects this to be "float" or "int", we're intentionally diverging here
                 return "number"
             case ts.TypeFlags.Boolean:
                 return "bool"
