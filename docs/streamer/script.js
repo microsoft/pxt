@@ -6,7 +6,6 @@
     const facecam = document.getElementById("facecam");
     const hardwarecam = document.getElementById("hardwarecam");
     const chat = document.getElementById("chat");
-    const social = document.getElementById("social");
     const banner = document.getElementById("banner");
     const settings = document.getElementById("settings");
     const editorStyle = document.getElementById("editorstyle");
@@ -17,10 +16,12 @@
     const painttoolCtx = painttool.getContext('2d');
     const recorder = document.getElementById('recorder')
     const screensize = document.getElementById('screensize')
+    const countdown = document.getElementById('countdown')
+    const titleEl = document.getElementById('title')
 
     const frames = [editor, editor2];
 
-    const scenes = ["leftscene", "rightscene", "chatscene", "timerscene"];
+    const scenes = ["leftscene", "rightscene", "chatscene", "countdownscene"];
     const editorConfigs = await fetchJSON("/editors.json");
     const state = {
         sceneIndex: 1,
@@ -28,7 +29,8 @@
         chat: false,
         hardware: false,
         painttool: "arrow",
-        recording: undefined
+        recording: undefined,
+        timerEnd: undefined
     }
 
     initMessages();
@@ -100,15 +102,15 @@
         const config = readConfig();
         toolbox.innerHTML = ""
 
-        const scene = scenes[state.sceneIndex];
+        const currentScene = scenes[state.sceneIndex];
         const emojis = [];
         if (config.emojis)
             for (let i = 0; i < config.emojis.length; i += 2)
                 emojis[i >> 1] = config.emojis.substr(i, 2);
 
-        if (scene == "timerscene") {
-            addButton("Add", "Add 1 minute to countdown", updateCountdown(60))
-            addButton("Remove", "Remove 1 minute from countdonw", updateCountdown(-60))
+        if (currentScene == "countdownscene") {
+            addButton("Add", "Add 1 minute to countdown", () => updateCountdown(30))
+            addButton("Remove", "Remove 1 minute from countdonw", () => updateCountdown(-30))
             addSep()
         }
 
@@ -134,7 +136,7 @@
             addSceneButton("OpenPane", "move webcam left", "left")
             addSceneButton("OpenPaneMirrored", "move webcam right", "right")
             addSceneButton("Contact", "webcam large", "chat")
-            addSceneButton("Timer", "show countdown", "timer")
+            addSceneButton("Timer", "show countdown", "countdown")
             addSep()
             if (config.hardwareCamId)
                 addButton("Robot", "hardware webcam", toggleHardware, state.hardware)
@@ -185,12 +187,55 @@
         function setScene(scene) {
             tickEvent("streamer.scene", { scene: scene }, { interactiveConsent: true });
             state.sceneIndex = scenes.indexOf(`${scene}scene`);
+            if (scene === "countdown")
+                startCountdown();
+            else
+                stopCountdown();
             render();
         }
     }
 
     function updateCountdown(seconds) {
+        // comput timer end
+        const timerEnd = state.timerEnd || (Date.now() + 300000);
+        // add seconds
+        let remaining = timerEnd - Date.now() + seconds * 1000;
+        // round to a multiple 30 seconds
+        remaining = (Math.ceil(remaining / 30000) * 30000) | 0;
+        state.timerEnd = Date.now() + remaining + 1000;
+    }
 
+    function startCountdown() {
+        if (!state.timerInterval) {
+            state.timerEnd = Date.now() + 300000;
+            state.timerInterval = setInterval(renderCountdown, 500);
+        }        
+    }
+
+    function stopCountdown() {
+        if (state.timerInterval)
+            clearInterval(state.timerInterval);
+        state.timerInterval = undefined;
+    }
+
+    function renderCountdown() {
+        if (state.timerEnd !== undefined) {
+            let remaining = Math.floor((state.timerEnd - Date.now()) / 1000) // seconds;
+            if (remaining < 0) {
+                remaining = 0;
+                stopCountdown();
+            }
+            const minutes = Math.floor(remaining / 60);
+            const seconds = remaining % 60;
+            countdown.innerText = `${minutes}:${pad(seconds)}`
+        } else {
+            countdown.innerText = ""
+        }
+
+        function pad(num) {
+            var s = "00" + num;
+            return s.substr(s.length-2);
+        }
     }
 
     function togglePaint() {
