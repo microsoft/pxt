@@ -459,4 +459,11 @@ namespace pxt.py {
         kind: "Tuple";
         elts: Expr[];
     }
+
+    export function isIndex(e: AST): e is Index {
+        return e.kind === "Index"
+    }
+    export function isSubscript(e: Expr): e is Subscript {
+        return e.kind === "Subscript"
+    }
 }

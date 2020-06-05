@@ -93,6 +93,7 @@ namespace pxt.py {
 
 
     const builtInTypes: Map<Type> = {
+        "str": tpString,
         "string": tpString,
         "number": tpNumber,
         "boolean": tpBoolean,
@@ -854,6 +855,20 @@ namespace pxt.py {
 
             error(e, 9506, U.lf("cannot find type '{0}'", tpName))
         }
+        else {
+            // translate Python to TS type annotation for arrays
+            // example: List[str] => string[]
+            if (isSubscript(e)/*i.e. [] syntax*/) {
+                let isList = tryGetName(e.value) === "List"
+                if (isList) {
+                    if (isIndex(e.slice)) {
+                        let listTypeArg = compileType(e.slice.value)
+                        let listType = mkArrayType(listTypeArg)
+                        return listType
+                    }
+                }
+            }
+        }
 
         error(e, 9507, U.lf("invalid type syntax"))
         return mkType({})
@@ -1602,12 +1617,20 @@ namespace pxt.py {
             }
         }
 
-        let lExp: B.JsNode;
-        if (annotation && value.kind === "NameConstant"
-            && (value as NameConstant).value === null)
-            // if we have a type annotation and the value is null / undefined, include the annoation
-            lExp = B.mkInfix(expr(target), ":", expr(annotation))
-        else
+        let lExp: B.JsNode | undefined = undefined;
+        if (annotation) {
+            // if we have a type annotation, emit it in these cases if the r-value is:
+            //  - null / undefined
+            //  - empty list
+            if (value.kind === "NameConstant" && (value as NameConstant).value === null
+                || value.kind === "List" && (value as List).elts.length === 0) {
+                const annotAsType = compileType(annotation)
+                const annotStr = t2s(annotAsType);
+
+                lExp = B.mkInfix(expr(target), ":", B.mkText(annotStr))
+            }
+        }
+        if (!lExp)
             lExp = expr(target)
 
         return B.mkStmt(B.mkText(pref), B.mkInfix(lExp, "=", expr(value)))
