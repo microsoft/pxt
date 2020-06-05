@@ -210,6 +210,7 @@ title, countdown
     vertical-align: middle;
     color: white;
     background: #615fc7;
+    opacity: 0;
 }
 #countdown {
     position: absolute;
@@ -221,6 +222,7 @@ title, countdown
     transition-delay: 0.5s;
     font-size: 12vw;
     color:white;
+    opacity: 0;
 }
 
 /**
@@ -669,7 +671,13 @@ body.chatscene.chat #chat {
     height: 80%;
     opacity: 100%;
 }
-
+body.chatscene #title {
+    width: 46%;
+    top: 6%;
+    right: 41%;
+    font-size: 2vw;    
+    opacity: 100%;
+}
 body.chatscene #social {
     left: 4%;
     bottom: 9%;
@@ -713,8 +721,10 @@ body.countdownscene #hardwarecam {
 }
 body.countdownscene #title {
     top: 36%;
+    opacity: 100%;
 }
 body.countdownscene #countdown {
+    opacity: 100%;
     bottom: 20%;
 }
 body.countdownscene #social {
