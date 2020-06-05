@@ -332,9 +332,6 @@ namespace ts.pxtc {
                     const initializer = p.initializer ? p.initializer.getText() :
                         getExplicitDefault(attributes, n) ||
                         (p.questionToken ? "undefined" : undefined)
-                    if (n === "myNum") {
-                        console.error("psst!")
-                    }
                     return {
                         name: n,
                         description: desc,

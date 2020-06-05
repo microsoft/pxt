@@ -2578,7 +2578,6 @@ namespace pxt.py {
         apis.forEach(addSym)
 
         if (syntaxInfo && infoNode) {
-            console.log("converter.ts 2581")
             infoNode = infoNode as AST
 
             syntaxInfo.beginPos = infoNode.startPos
