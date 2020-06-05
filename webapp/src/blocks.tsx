@@ -907,7 +907,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (stmt) {
             let bid = pxt.blocks.findBlockIdByLine(this.compilationResult.sourceMap, { start: stmt.line, length: stmt.endLine - stmt.line });
             if (bid) {
-                const parent = pxt.blocks.getTopLevelParent(this.editor.getBlockById(bid));
+                const parent = this.editor.getBlockById(bid).getRootBlock();
                 bid = parent?.isCollapsed() ? parent.id : bid;
                 this.editor.highlightBlock(bid);
                 if (brk) {
