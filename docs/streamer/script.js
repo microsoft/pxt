@@ -6,7 +6,6 @@
     const facecam = document.getElementById("facecam");
     const hardwarecam = document.getElementById("hardwarecam");
     const chat = document.getElementById("chat");
-    const social = document.getElementById("social");
     const banner = document.getElementById("banner");
     const settings = document.getElementById("settings");
     const editorStyle = document.getElementById("editorstyle");
@@ -17,10 +16,12 @@
     const painttoolCtx = painttool.getContext('2d');
     const recorder = document.getElementById('recorder')
     const screensize = document.getElementById('screensize')
+    const countdown = document.getElementById('countdown')
+    const titleEl = document.getElementById('title')
 
     const frames = [editor, editor2];
 
-    const scenes = ["leftscene", "rightscene", "chatscene"];
+    const scenes = ["leftscene", "rightscene", "chatscene", "countdownscene"];
     const editorConfigs = await fetchJSON("/editors.json");
     const state = {
         sceneIndex: 1,
@@ -28,7 +29,8 @@
         chat: false,
         hardware: false,
         painttool: "arrow",
-        recording: undefined
+        recording: undefined,
+        timerEnd: undefined
     }
 
     initMessages();
@@ -73,7 +75,8 @@
             twitter: "",
             mixer: "",
             emojis: "😄🤔😭👀",
-            micDelay: 200
+            micDelay: 200,
+            title: "STARTING SOON"
         }
         saveConfig(cfg)
         return cfg;
@@ -100,10 +103,18 @@
         const config = readConfig();
         toolbox.innerHTML = ""
 
+        const currentScene = scenes[state.sceneIndex];
         const emojis = [];
         if (config.emojis)
             for (let i = 0; i < config.emojis.length; i += 2)
                 emojis[i >> 1] = config.emojis.substr(i, 2);
+
+        if (currentScene == "countdownscene") {
+            addButton("Add", "Add 1 minute to countdown", () => updateCountdown(30))
+            addButton("Remove", "Remove 1 minute from countdonw", () => updateCountdown(-30))
+            addSep()
+        }
+
         if (state.paint) {
             addPaintButton("ArrowTallUpLeft", "Draw arrow", "arrow")
             addPaintButton("RectangleShape", "Draw rectangle", "rect")
@@ -126,6 +137,8 @@
             addSceneButton("OpenPane", "move webcam left", "left")
             addSceneButton("OpenPaneMirrored", "move webcam right", "right")
             addSceneButton("Contact", "webcam large", "chat")
+            addSceneButton("Timer", "show countdown", "countdown")
+            addSep()
             if (config.hardwareCamId)
                 addButton("Robot", "hardware webcam", toggleHardware, state.hardware)
             if (config.mixer || config.twitch)
@@ -133,15 +146,19 @@
             addButton("PenWorkspace", "Paint mode", togglePaint)
         }
 
-        const sep = document.createElement("div")
-        sep.className = "sep"
-        toolbox.append(sep)
+        addSep()
 
         if (state.recording)
             addButton("Stop", "Stop recording", stopRecording)
         else
             addButton("Record2", "Start recording", startRecording)
         addButton("Settings", "Show settings", showSettings);
+
+        function addSep() {
+            const sep = document.createElement("div")
+            sep.className = "sep"
+            toolbox.append(sep)    
+        }
 
         function addButton(icon, title, handler, active) {
             const btn = document.createElement("button")
@@ -171,7 +188,55 @@
         function setScene(scene) {
             tickEvent("streamer.scene", { scene: scene }, { interactiveConsent: true });
             state.sceneIndex = scenes.indexOf(`${scene}scene`);
+            if (scene === "countdown")
+                startCountdown();
+            else
+                stopCountdown();
             render();
+        }
+    }
+
+    function updateCountdown(seconds) {
+        // comput timer end
+        const timerEnd = state.timerEnd || (Date.now() + 300000);
+        // add seconds
+        let remaining = timerEnd - Date.now() + seconds * 1000;
+        // round to a multiple 30 seconds
+        remaining = ((Math.ceil(remaining / 30000) * 30000)) | 0;
+        state.timerEnd = Date.now() + remaining;
+        renderCountdown();
+    }
+
+    function startCountdown() {
+        if (!state.timerInterval) {
+            state.timerEnd = Date.now() + 300000;
+            state.timerInterval = setInterval(renderCountdown, 500);
+        }        
+    }
+
+    function stopCountdown() {
+        if (state.timerInterval)
+            clearInterval(state.timerInterval);
+        state.timerInterval = undefined;
+    }
+
+    function renderCountdown() {
+        if (state.timerEnd !== undefined) {
+            let remaining = Math.floor((state.timerEnd - Date.now()) / 1000) // seconds;
+            if (remaining < 0) {
+                remaining = 0;
+                stopCountdown();
+            }
+            const minutes = Math.floor(remaining / 60);
+            const seconds = remaining % 60;
+            countdown.innerText = `${minutes}:${pad(seconds)}`
+        } else {
+            countdown.innerText = ""
+        }
+
+        function pad(num) {
+            var s = "00" + num;
+            return s.substr(s.length-2);
         }
     }
 
@@ -326,7 +391,7 @@ background: ${styles.background};
 .box {
 border-color: ${styles.menu};
 }
-#social {
+#social, #title {
 background: ${styles.primary};
 }
 `
@@ -341,8 +406,13 @@ border-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
 }
 #social {
 background: #615fc7;
+color: white;
 }
-`
+#title {
+background: #615fc7;
+color: white;
+}
+    `
         }
         editorStyle.innerText = ""
         editorStyle.append(document.createTextNode(css));
@@ -413,6 +483,8 @@ background: #615fc7;
 
         if (!config.mixer && !config.twitch)
             state.chat = false;
+
+        titleEl.innerText = config.title;
 
         function addSocial(text) {
             const a = document.createElement("span");
@@ -803,6 +875,16 @@ background: #615fc7;
             twitterinput.value = config.twitter
             saveConfig(config);
             loadSocial()
+            render()
+        }
+
+        const titleinput = document.getElementById("titleinput")
+        titleinput.value = config.title || ""
+        titleinput.onchange = function (e) {
+            config.title = (titleinput.value || "");
+            titleinput.value = config.twitch
+            saveConfig(config);
+            loadSocial();
             render()
         }
 
