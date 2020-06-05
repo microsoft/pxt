@@ -71,7 +71,7 @@ namespace pxtblockly {
     }
 
     function promptAndCreateEnum(ws: Blockly.Workspace, opts: pxtc.EnumInfo, message: string, cb: (newValue: string) => void) {
-        Blockly.prompt(message, opts.promptHint, response => {
+        Blockly.prompt(message, null, response => {
             if (response) {
                 let nameIsValid = false;
                 if (pxtc.isIdentifierStart(response.charCodeAt(0), 2)) {
@@ -101,7 +101,7 @@ namespace pxtblockly {
 
                 cb(createNewEnumMember(ws, opts, response));
             }
-        });
+        }, { placeholder:  opts.promptHint });
     }
 
     function parseName(model: Blockly.VariableModel): [string, number] {

@@ -347,14 +347,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
          * @param {string} message The message to display to the user.
          * @param {string} defaultValue The value to initialize the prompt with.
          * @param {!function(string)} callback The callback for handling user reponse.
+         * @param {Object} options
          */
-        Blockly.prompt = function (message, defaultValue, callback) {
+        Blockly.prompt = function (message, defaultValue, callback, options) {
             return core.promptAsync({
                 header: message,
                 initialValue: defaultValue,
                 agreeLbl: lf("Ok"),
                 hasCloseIcon: true,
-                size: "tiny"
+                size: "tiny",
+                ...options
             }).then(value => {
                 callback(value);
             })
