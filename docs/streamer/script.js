@@ -20,7 +20,7 @@
 
     const frames = [editor, editor2];
 
-    const scenes = ["leftscene", "rightscene", "chatscene"];
+    const scenes = ["leftscene", "rightscene", "chatscene", "timerscene"];
     const editorConfigs = await fetchJSON("/editors.json");
     const state = {
         sceneIndex: 1,
@@ -100,10 +100,18 @@
         const config = readConfig();
         toolbox.innerHTML = ""
 
+        const scene = scenes[state.sceneIndex];
         const emojis = [];
         if (config.emojis)
             for (let i = 0; i < config.emojis.length; i += 2)
                 emojis[i >> 1] = config.emojis.substr(i, 2);
+
+        if (scene == "timerscene") {
+            addButton("Add", "Add 1 minute to countdown", updateCountdown(60))
+            addButton("Remove", "Remove 1 minute from countdonw", updateCountdown(-60))
+            addSep()
+        }
+
         if (state.paint) {
             addPaintButton("ArrowTallUpLeft", "Draw arrow", "arrow")
             addPaintButton("RectangleShape", "Draw rectangle", "rect")
@@ -126,6 +134,8 @@
             addSceneButton("OpenPane", "move webcam left", "left")
             addSceneButton("OpenPaneMirrored", "move webcam right", "right")
             addSceneButton("Contact", "webcam large", "chat")
+            addSceneButton("Timer", "show countdown", "timer")
+            addSep()
             if (config.hardwareCamId)
                 addButton("Robot", "hardware webcam", toggleHardware, state.hardware)
             if (config.mixer || config.twitch)
@@ -133,15 +143,19 @@
             addButton("PenWorkspace", "Paint mode", togglePaint)
         }
 
-        const sep = document.createElement("div")
-        sep.className = "sep"
-        toolbox.append(sep)
+        addSep()
 
         if (state.recording)
             addButton("Stop", "Stop recording", stopRecording)
         else
             addButton("Record2", "Start recording", startRecording)
         addButton("Settings", "Show settings", showSettings);
+
+        function addSep() {
+            const sep = document.createElement("div")
+            sep.className = "sep"
+            toolbox.append(sep)    
+        }
 
         function addButton(icon, title, handler, active) {
             const btn = document.createElement("button")
@@ -173,6 +187,10 @@
             state.sceneIndex = scenes.indexOf(`${scene}scene`);
             render();
         }
+    }
+
+    function updateCountdown(seconds) {
+
     }
 
     function togglePaint() {
