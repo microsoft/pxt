@@ -128,10 +128,24 @@
         background-color: @HCbackground !important;
         color: @HCtextColor !important;
 
-        .errorListInner > .ui.selection.list > .item {
-            background-color: @HCbackground !important;
-            color: @HCtextColor !important;
-            border: 0.01em solid @HCtextColor !important;
+        .errorListHeader:focus {
+            border: 1px @selected solid !important;
+        }
+
+        .errorListInner {
+            .ui.selection.list > .item {
+                background-color: @HCbackground !important;
+                color: @HCtextColor !important;
+                border: 1px solid @HCtextColor !important;
+
+                &:focus {
+                    border: 1px solid @selected!important;
+                }
+            }
+
+            .debuggerSuggestion {
+                color: @HCtextColor !important;
+            }
         }
     }
 

@@ -7,6 +7,10 @@
     min-height: @errorListHeight;
     border-top: 2px @errorListBorderColor solid;
 
+    *:focus {
+        outline: none;
+    }
+
     .errorListHeader {
         padding: 0.75em 1em;
         height: @errorListHeaderHeight;
@@ -14,6 +18,10 @@
 
         &:hover {
             cursor: pointer;
+        }
+
+        &:not(:hover):not(:focus) > .toggleButton > i {
+            opacity: 0.5;
         }
 
         h4 {
@@ -26,18 +34,17 @@
             margin-left: 1em;
         }
 
+        &:hover > .toggleButton > i , &:focus > .toggleButton > i{
+            font-size: 1.4em;
+        }
+
         .toggleButton {
             float: right;
-            cursor: pointer;
             position: relative;
             vertical-align: middle;
 
             i {
                 font-size: 1.3em;
-            }
-
-            i:not(:hover) {
-                opacity: 0.5;
             }
         }
     }
@@ -63,8 +70,8 @@
                 padding: 0.5em 1em;
                 color: black;
 
-                &:hover {
-                    background-color: @errorListMessageHoverColor;
+                &:hover, &:focus {
+                    background-color: @errorListMessageHoverColor !important;
                 }
 
                 &:nth-child(even):not(:hover) {
@@ -75,7 +82,7 @@
                     background-color: @errorListOdd;
                 }
 
-                &.stackFrame {
+                &.stackframe {
                     padding-left: 2em;
                 }
             }
@@ -90,11 +97,11 @@
             color: @errorListDebugSuggestionColor;
             cursor: pointer;
 
-            &:hover {
+            &:hover, &:focus {
                 opacity: 0.75;
             }
 
-            .debug-icon.blue {
+            .debug-icon {
                 margin-left: 0.5em;
                 vertical-align: text-top;
             }
