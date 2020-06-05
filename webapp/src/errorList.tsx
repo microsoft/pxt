@@ -64,7 +64,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                 errorListContent = (
                     <div className="ui selection list">
                         {(errors).map((e, index) =>
-                        <div className="item" key={errorKey(e)} role="button" onClick={createOnErrorMessageClick(e, index)} onKeyDown={sui.fireClickOnEnter} tabIndex={0}>
+                        <div className="item" key={errorKey(e)} role="button" aria-label={lf("Go to error")} onClick={createOnErrorMessageClick(e, index)} onKeyDown={sui.fireClickOnEnter} tabIndex={0}>
                             {lf("Line {0}: {1}", (e.endLine) ? e.endLine + 1 : e.line + 1, e.messageText)}
                         </div>)
                         }
