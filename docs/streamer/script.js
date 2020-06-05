@@ -75,7 +75,8 @@
             twitter: "",
             mixer: "",
             emojis: "😄🤔😭👀",
-            micDelay: 200
+            micDelay: 200,
+            title: "STARTING SOON"
         }
         saveConfig(cfg)
         return cfg;
@@ -201,8 +202,9 @@
         // add seconds
         let remaining = timerEnd - Date.now() + seconds * 1000;
         // round to a multiple 30 seconds
-        remaining = (Math.ceil(remaining / 30000) * 30000) | 0;
-        state.timerEnd = Date.now() + remaining + 1000;
+        remaining = ((Math.ceil(remaining / 30000) * 30000)) | 0;
+        state.timerEnd = Date.now() + remaining;
+        renderCountdown();
     }
 
     function startCountdown() {
@@ -476,6 +478,8 @@ background: #615fc7;
 
         if (!config.mixer && !config.twitch)
             state.chat = false;
+
+        titleEl.innerText = config.title;
 
         function addSocial(text) {
             const a = document.createElement("span");
@@ -866,6 +870,16 @@ background: #615fc7;
             twitterinput.value = config.twitter
             saveConfig(config);
             loadSocial()
+            render()
+        }
+
+        const titleinput = document.getElementById("titleinput")
+        titleinput.value = config.title || ""
+        titleinput.onchange = function (e) {
+            config.title = (titleinput.value || "");
+            titleinput.value = config.twitch
+            saveConfig(config);
+            loadSocial();
             render()
         }
 

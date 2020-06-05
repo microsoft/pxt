@@ -199,11 +199,11 @@ title, countdown
 */
 #title {
     position: absolute;
-    width: 50%;
+    width: 70%;
     top: -50%;
-    right: 25%;
+    right: 15%;
     transition-delay: 0.4s;
-    font-size: 8vw;
+    font-size: 4vw;
     text-align: center;
     vertical-align: middle;
     color: white;
@@ -709,7 +709,7 @@ body.countdownscene #hardwarecam {
     right: -100%;
 }
 body.countdownscene #title {
-    top: 20%;
+    top: 36%;
 }
 body.countdownscene #countdown {
     bottom: 20%;
@@ -739,7 +739,11 @@ body.countdownscene #social {
     </div>
     <div class="box animated hidden" id="settings">
         <button id="settingsclose">close</button>
-        <h2>MakeCode Streamer settings</h2>
+        <h2>MakeCode Streamer</h2>
+        <div class="field">
+            <label for="titleinput">Stream title</label>
+            <input id="titleinput" placeholder="My awesome stream" />
+        </div>
         <div class="field">
             <label for="editorselect">Choose your editor</label>
             <select id="editorselect"></select>
