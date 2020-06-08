@@ -7,7 +7,7 @@ export interface ErrorListProps {
     onSizeChange: (state: pxt.editor.ErrorListState) => void;
     listenToErrorChanges: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void;
     listenToExceptionChanges: (handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void) => void,
-    goToError: (error: pxtc.KsDiagnostic) => void;
+    goToError: (errorLocation: pxtc.LocationInfo) => void;
     startDebugger: () => void;
 }
 export interface ErrorListState {
@@ -33,6 +33,8 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         this.onExceptionDetected = this.onExceptionDetected.bind(this)
         this.onErrorMessageClick = this.onErrorMessageClick.bind(this)
         this.onDisplayStateChange = this.onDisplayStateChange.bind(this)
+        this.getCompilerErrors = this.getCompilerErrors.bind(this)
+        this.generateStackTraces = this.generateStackTraces.bind(this)
 
         props.listenToErrorChanges("errorList", this.onErrorsChanged);
         props.listenToExceptionChanges("errorList", this.onExceptionDetected)
@@ -42,36 +44,8 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         const {isCollapsed, errors, exception} = this.state;
         const errorsAvailable = !!errors?.length || !!exception;
         const collapseTooltip = lf("Collapse Error List");
-        function errorKey(error: pxtc.KsDiagnostic): string {
-            // React likes have a "key" for each element so that it can smartly only
-            // re-render what changes. Think of it like a hashcode/
-            return `${error.messageText}-${error.fileName}-${error.line}-${error.column}`
-        }
 
-        const createOnErrorMessageClick = (e: pxtc.KsDiagnostic, index: number) => () =>
-            this.onErrorMessageClick(e, index)
-
-        let errorListContent;
-        if (!isCollapsed) {
-            if (exception) {
-                errorListContent = (
-                    <div>
-                        <div className="exceptionMessage">{pxt.Util.rlf(exception.exceptionMessage)}</div>
-                        {this.generateStackTraces(exception)}
-                    </div>
-                )
-            } else {
-                errorListContent = (
-                    <div className="ui selection list">
-                        {(errors).map((e, index) =>
-                        <div className="item" key={errorKey(e)} role="button" aria-label={lf("Go to error")} onClick={createOnErrorMessageClick(e, index)} onKeyDown={sui.fireClickOnEnter} tabIndex={0}>
-                            {lf("Line {0}: {1}", (e.endLine) ? e.endLine + 1 : e.line + 1, e.messageText)}
-                        </div>)
-                        }
-                    </div>
-                )
-            }
-        }
+        const errorListContent = !isCollapsed ? (exception ? this.generateStackTraces(exception) : this.getCompilerErrors(errors)) : undefined;
 
         return (
             <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''}`} hidden={!errorsAvailable}>
@@ -113,7 +87,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         }, this.onDisplayStateChange);
     }
 
-    onErrorMessageClick(e: pxtc.KsDiagnostic, index: number) {
+    onErrorMessageClick(e: pxtc.LocationInfo, index: number) {
         pxt.tickEvent('errorlist.goto', {errorIndex: index}, { interactiveConsent: true });
         this.props.goToError(e)
     }
@@ -133,17 +107,67 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         })
     }
 
-    private generateStackTraces(exception: pxsim.DebuggerBreakpointMessage) {
+    getCompilerErrors(errors: pxtc.KsDiagnostic[]) {
+        function errorKey(error: pxtc.KsDiagnostic): string {
+            // React likes have a "key" for each element so that it can smartly only
+            // re-render what changes. Think of it like a hashcode/
+            return `${error.messageText}-${error.fileName}-${error.line}-${error.column}`
+        }
+
         return <div className="ui selection list">
-            {(exception.stackframes || []).map((sf, index) => {
-                const location = this.state.callLocations[sf.callLocationId];
+            {(errors).map((e, index) => <ErrorListItem key={errorKey(e)} index={index} error={e} isStackFrame={false} revealError={this.onErrorMessageClick} />)}
+        </div>
+    }
 
-                if (!location) return null;
+    generateStackTraces(exception: pxsim.DebuggerBreakpointMessage) {
+        return <div>
+            <div className="exceptionMessage">{pxt.Util.rlf(exception.exceptionMessage)}</div>
+            <div className="ui selection list">
+                {(exception.stackframes || []).map((sf, index) => {
+                    const location = this.state.callLocations[sf.callLocationId];
 
-                return <div className="item stackframe" key={index}>
-                    {lf("at {0} ({1}:{2}:{3})", sf.funcInfo.functionName, sf.funcInfo.fileName, location.line + 1, location.column + 1)}
-                </div>
-            })}
+                    if (!location) return null;
+
+                    return <ErrorListItem key={index} index={index} stackFrame={sf} location={location} isStackFrame={true} revealError={this.onErrorMessageClick}/>
+                })}
+            </div>
         </div>;
+    }
+}
+
+interface ErrorListItemProps {
+    index: number;
+    isStackFrame: boolean;
+    error?: pxtc.KsDiagnostic;
+    stackFrame?: pxsim.StackFrameInfo;
+    location?: pxtc.LocationInfo;
+    revealError: (location: pxtc.LocationInfo, index: number) => void;
+}
+
+interface ErrorListItemState {
+}
+
+
+class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemState> {
+    constructor(props: ErrorListItemProps) {
+        super(props)
+
+        this.onErrorListItemClick = this.onErrorListItemClick.bind(this)
+    }
+
+    render() {
+        const {isStackFrame, error, stackFrame, location} = this.props
+
+        const message = isStackFrame ?  lf("line {0} at {1}", location.line + 1, stackFrame.funcInfo.functionName)
+            : lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText)
+
+        return <div className={`item ${isStackFrame ? 'stackframe' : ''}`} role="button" onClick={this.onErrorListItemClick} aria-label={lf("Go to {0}", isStackFrame ? 'stackframe' : 'error')}>
+            {message}
+        </div>
+    }
+
+    onErrorListItemClick() {
+        const location = this.props.isStackFrame ? this.props.location : this.props.error
+        this.props.revealError(location, this.props.index)
     }
 }
