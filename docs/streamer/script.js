@@ -414,6 +414,7 @@ border-color: ${styles.menu};
 }
 .videolabel {
 background: ${styles.primary};
+border-top-color: ${styles.menu};
 color: white;
 }
 #social {

@@ -342,23 +342,24 @@ Settings
     width: 30%;
     bottom: 1.5%;
     right: 1%;
+    overflow: hidden;
 }
 #facecam video {
     width: 100%;
 }
-#facecamlabel {
+.videolabel  {
     display: none;
-}
-body.facecamlabel #facecamlabel {
-    display: block;
-}
-.videolabel {
     position: absolute;
     bottom: 0;
     right: 0;
     width: calc(100% - 1vw);
     font-size: 1vw;
     padding: 0.5vw;
+    border-top: 0.5rem solid;
+    left: 0;
+}
+body.facecamlabel #facecamlabel.videolabel {
+    display: block;
 }
 #hardwarecam {
     width: 0;
