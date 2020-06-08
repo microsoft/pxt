@@ -146,7 +146,10 @@ namespace pxt.github {
     }
 
     function ghProxyWithCdnJsonAsync(path: string) {
-        return Cloud.apiRequestWithCdnAsync({ url: "gh/" + path }).then(r => r.json)
+        return Cloud.apiRequestWithCdnAsync({
+            url: "gh/" + path,
+            forceLiveEndpoint: true
+        }).then(r => r.json);
     }
 
     function ghProxyHandleException(e: any) {
