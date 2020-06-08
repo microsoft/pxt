@@ -227,7 +227,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     screenshotAsync = () => {
         return this.props.parent.requestScreenshotAsync()
             .then(img => {
-                console.log("reqd screenshot")
                 const st: ShareEditorState = { recordingState: ShareRecordingState.None, recordError: undefined };
                 if (img) st.screenshotUri = img;
                 else st.recordError = lf("Oops, screenshot failed. Please try again.")
