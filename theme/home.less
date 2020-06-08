@@ -291,13 +291,15 @@
             .card-action:focus-within {
                 cursor: pointer;
                 border-color: @white;
-                transform: scale(1.1);
                 .ui.button {
                     filter: none;
                 }
                 .ui.button:first-child:hover {
                     z-index: auto;
                 }
+            }
+            .card-action:hover {
+                transform: scale(1.1);
             }
             /* custom icons (override font to avoid mac/windows alignment issue) */
             .card-action .xicon:before {
