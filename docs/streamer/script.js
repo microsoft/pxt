@@ -24,6 +24,8 @@
     const scenes = ["leftscene", "rightscene", "chatscene", "countdownscene"];
     const LEFT_SCENE_INDEX = scenes.indexOf("leftscene")
     const RIGHT_SCENE_INDEX = scenes.indexOf("rightscene")
+    const CHAT_SCENE_INDEX = scenes.indexOf("chatscene")
+    const COUNTDOWN_SCENE_INDEX = scenes.indexOf("countdownscene")
     const editorConfigs = await fetchJSON("/editors.json");
     const state = {
         sceneIndex: 1,
