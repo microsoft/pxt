@@ -91,6 +91,16 @@ footer>a {
 .animated {
     transition: left 0.5s, right 0.5s, bottom 0.5s, top 0.5s, width 0.5s, height 0.5s, opacity 1s;
 }
+.clickeable {
+    cursor:pointer;
+}
+.clickeable:hover {
+    box-shadow:
+  0 11.6px 0.9px -20px rgba(0, 0, 0, 0.028),
+  0 18.5px 3.1px -20px rgba(0, 0, 0, 0.042),
+  0 40px 14px -20px rgba(0, 0, 0, 0.07)
+;
+}
 
 .hidden {
     display: none;
@@ -746,7 +756,7 @@ body.countdownscene.hardware #hardwarecam {
     <iframe class="box animated" id="editor" allow="usb;camera"></iframe>
     <iframe class="box animated" id="editor2" allow="usb;camera"></iframe>
     <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
-    <video class="box animated" autoplay="true" id="facecam"></video>
+    <video class="box animated clickeable" autoplay="true" id="facecam"></video>
     <video class="box animated" autoplay="true" id="hardwarecam"></video>
     <div class="box animated" id="title">title</div>
     <div class="animated" id="countdown">5:00</div>

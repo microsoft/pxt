@@ -22,6 +22,8 @@
     const frames = [editor, editor2];
 
     const scenes = ["leftscene", "rightscene", "chatscene", "countdownscene"];
+    const LEFT_SCENE_INDEX = scenes.indexOf("leftscene")
+    const RIGHT_SCENE_INDEX = scenes.indexOf("rightscene")
     const editorConfigs = await fetchJSON("/editors.json");
     const state = {
         sceneIndex: 1,
@@ -35,6 +37,7 @@
 
     initMessages();
     initResize();
+    initVideos();
     loadPaint();
     loadEditor()
     await firstLoadFaceCam()
@@ -184,16 +187,16 @@
             const sceneIndex = scenes.indexOf(`${scene}scene`)
             addButton(icon, title, () => setScene(scene), state.sceneIndex == sceneIndex)
         }
+    }
 
-        function setScene(scene) {
-            tickEvent("streamer.scene", { scene: scene }, { interactiveConsent: true });
-            state.sceneIndex = scenes.indexOf(`${scene}scene`);
-            if (scene === "countdown")
-                startCountdown();
-            else
-                stopCountdown();
-            render();
-        }
+    function setScene(scene) {
+        tickEvent("streamer.scene", { scene: scene }, { interactiveConsent: true });
+        state.sceneIndex = scenes.indexOf(`${scene}scene`);
+        if (scene === "countdown")
+            startCountdown();
+        else
+            stopCountdown();
+        render();
     }
 
     function updateCountdown(seconds) {
@@ -626,6 +629,15 @@ background: #615fc7;
             }
         } catch (e) {
             console.log(e)
+        }
+    }
+
+    function initVideos() {
+        facecam.onclick = function (e) {
+            if(state.sceneIndex == LEFT_SCENE_INDEX)
+                setScene("right")
+            else if (state.sceneIndex == RIGHT_SCENE_INDEX)
+                setScene("left")
         }
     }
 
