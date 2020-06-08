@@ -386,7 +386,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             }
             // if screenshots are enabled, always take one
             if (targetTheme.simScreenshot && !screenshotUri) {
-                p = p.then(() => this.screenshotAsync());
+                p = p.then(this.screenshotAsync);
             }
             p.then(() => this.props.parent.anonymousPublishAsync(this.state.screenshotUri))
                 .then((id) => {
