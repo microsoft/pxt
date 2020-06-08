@@ -485,13 +485,14 @@ background: #615fc7;
     function loadSocial() {
         const config = readConfig();
         banner.innerHTML = ''
-        if (config.twitter)
-            addSocial(`@${config.twitter}`)
+        if (config.banner)
+            banner.innerText = config.banner;
 
         if (!config.mixer && !config.twitch)
             state.chat = false;
 
-        titleEl.innerText = config.title;
+        const editorConfig = editorConfigs[config.editor]
+        titleEl.innerText = config.title || (editorConfig && `MakeCode for ${editorConfig.name}`) || "";
 
         function addSocial(text) {
             const a = document.createElement("span");
@@ -898,7 +899,17 @@ background: #615fc7;
         titleinput.value = config.title || ""
         titleinput.onchange = function (e) {
             config.title = (titleinput.value || "");
-            titleinput.value = config.twitch
+            titleinput.value = config.title
+            saveConfig(config);
+            loadSocial();
+            render()
+        }
+
+        const bannerinput = document.getElementById("bannerinput")
+        bannerinput.value = config.banner || ""
+        bannerinput.onchange = function (e) {
+            config.banner = (bannerinput.value || "");
+            bannerinput.value = config.banner
             saveConfig(config);
             loadSocial();
             render()
