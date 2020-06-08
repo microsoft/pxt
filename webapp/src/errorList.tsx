@@ -160,7 +160,11 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
         const message = stackFrame ?  lf("line {0} at {1}", location.line + 1, stackFrame.funcInfo.functionName)
             : lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText)
 
-        return <div className={`item ${stackFrame ? 'stackframe' : ''}`} role="button" onClick={this.onErrorListItemClick} aria-label={lf("Go to {0}", stackFrame ? 'stackframe' : 'error')}>
+        return <div className={`item ${stackFrame ? 'stackframe' : ''}`} role="button"
+                    onClick={this.onErrorListItemClick}
+                    onKeyDown={sui.fireClickOnEnter}
+                    aria-label={lf("Go to {0}", stackFrame ? 'stackframe' : 'error')}
+                    tabIndex={0}>
             {message}
         </div>
     }
