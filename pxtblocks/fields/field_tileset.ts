@@ -116,7 +116,6 @@ namespace pxtblockly {
         protected selected: pxt.sprite.TileInfo;
         protected blocksInfo: pxtc.BlocksInfo;
         protected transparent: TilesetDropdownOption;
-        protected notPresentInTilemap: boolean;
 
         constructor(text: string, options: FieldImageDropdownOptions, validator?: Function) {
             super(text, options, validator);
