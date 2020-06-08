@@ -205,16 +205,18 @@
         // comput timer end
         const timerEnd = state.timerEnd || (Date.now() + 300000);
         // add seconds
-        let remaining = timerEnd - Date.now() + seconds * 1000;
+        let remaining = Math.max(0, timerEnd - Date.now()) + seconds * 1000;
         // round to a multiple 30 seconds
         remaining = ((Math.ceil(remaining / 30000) * 30000)) | 0;
         state.timerEnd = Date.now() + remaining;
-        renderCountdown();
+        renderCountdown();        
+        startCountdown();
     }
 
     function startCountdown() {
         if (!state.timerInterval) {
-            state.timerEnd = Date.now() + 300000;
+            if (state.timerEnd === undefined)
+                state.timerEnd = Date.now() + 300000;
             state.timerInterval = setInterval(renderCountdown, 500);
         }        
     }
