@@ -115,7 +115,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         }
 
         return <div className="ui selection list">
-            {(errors).map((e, index) => <ErrorListItem key={errorKey(e)} index={index} error={e} isStackFrame={false} revealError={this.onErrorMessageClick} />)}
+            {(errors).map((e, index) => <ErrorListItem key={errorKey(e)} index={index} error={e} revealError={this.onErrorMessageClick} />)}
         </div>
     }
 
@@ -128,7 +128,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
                     if (!location) return null;
 
-                    return <ErrorListItem key={index} index={index} stackFrame={sf} location={location} isStackFrame={true} revealError={this.onErrorMessageClick}/>
+                    return <ErrorListItem key={index} index={index} stackFrame={sf} location={location} revealError={this.onErrorMessageClick}/>
                 })}
             </div>
         </div>;
@@ -137,7 +137,6 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
 interface ErrorListItemProps {
     index: number;
-    isStackFrame: boolean;
     error?: pxtc.KsDiagnostic;
     stackFrame?: pxsim.StackFrameInfo;
     location?: pxtc.LocationInfo;
@@ -156,18 +155,18 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
     }
 
     render() {
-        const {isStackFrame, error, stackFrame, location} = this.props
+        const {error, stackFrame, location} = this.props
 
-        const message = isStackFrame ?  lf("line {0} at {1}", location.line + 1, stackFrame.funcInfo.functionName)
+        const message = stackFrame ?  lf("line {0} at {1}", location.line + 1, stackFrame.funcInfo.functionName)
             : lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText)
 
-        return <div className={`item ${isStackFrame ? 'stackframe' : ''}`} role="button" onClick={this.onErrorListItemClick} aria-label={lf("Go to {0}", isStackFrame ? 'stackframe' : 'error')}>
+        return <div className={`item ${stackFrame ? 'stackframe' : ''}`} role="button" onClick={this.onErrorListItemClick} aria-label={lf("Go to {0}", stackFrame ? 'stackframe' : 'error')}>
             {message}
         </div>
     }
 
     onErrorListItemClick() {
-        const location = this.props.isStackFrame ? this.props.location : this.props.error
+        const location = this.props.stackFrame ? this.props.location : this.props.error
         this.props.revealError(location, this.props.index)
     }
 }
