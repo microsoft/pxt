@@ -5,7 +5,8 @@
     const editor2 = document.getElementById("editor2");
     const facecam = document.getElementById("facecamvideo");
     const facecamlabel = document.getElementById("facecamlabel");
-    const hardwarecam = document.getElementById("hardwarecam");
+    const hardwarecam = document.getElementById("hardwarecamvideo");
+    const hardwarecamlabel = document.getElementById("hardwarecamlabel");
     const chat = document.getElementById("chat");
     const banner = document.getElementById("banner");
     const settings = document.getElementById("settings");
@@ -80,6 +81,7 @@
             editor: "microbit",
             multiEditor: false,
             faceCamLabel: "",
+            hardwareCamLabel: "",
             mixer: "",
             emojis: "😄🤔😭👀",
             micDelay: 200,
@@ -101,9 +103,11 @@
         const config = readConfig();
 
         const displayMedia = navigator.mediaDevices.getDisplayMedia ? "" : "displaymediaerror"
-        body.className = `${scenes[state.sceneIndex]} ${state.hardware ? "hardware" : ""} ${state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""} ${state.paint ? "paint" : ""} ${state.micError ? "micerror" : ""} ${config.micDelay === undefined ? "micdelayerror" : ""} ${displayMedia} ${config.faceCamLabel ? "facecamlabel" : ""}`
+        body.className = `${scenes[state.sceneIndex]} ${state.hardware ? "hardware" : ""} ${state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""} ${state.paint ? "paint" : ""} ${state.micError ? "micerror" : ""} ${config.micDelay === undefined ? "micdelayerror" : ""} ${displayMedia} ${config.faceCamLabel ? "facecamlabel" : ""} ${config.hardwareCamLabel ? "hardwarecamlabel" : ""}`
         if (!config.faceCamId || state.faceCamError)
             showSettings();
+        facecamlabel.innerText = config.faceCamLabel || ""
+        hardwarecamlabel.innerText = config.hardwareCamLabel || ""
     }
 
     function loadToolbox() {
@@ -198,15 +202,20 @@
         const sceneIndex = scenes.indexOf(`${scene}scene`);
         if (state.sceneIndex !== sceneIndex) {
             state.sceneIndex = scenes.indexOf(`${scene}scene`);
-            facecamlabel.classList.remove("fadeout")
-            const x = facecamlabel.offsetWidth; // reflow
-            facecamlabel.classList.add("fadeout")
+            resetTransition(facecamlabel, "fadeout")
+            resetTransition(hardwarecamlabel, "fadeout")
         }
         if (scene === "countdown")
             startCountdown();
         else
             stopCountdown();
         render();
+    }
+
+    function resetTransition(el, name) {
+        el.classList.remove(name)
+        const x = el.offsetWidth; // reflow
+        el.classList.add(name)
     }
 
     function updateCountdown(seconds) {
@@ -475,13 +484,6 @@ background: #615fc7;
 
         const editorConfig = editorConfigs[config.editor]
         titleEl.innerText = config.title || (editorConfig && `MakeCode for ${editorConfig.name}`) || "";
-
-        function addSocial(text) {
-            const a = document.createElement("span");
-            a.className = "social"
-            a.innerText = text
-            banner.append(a)
-        }
     }
 
     function loadChat() {
@@ -872,6 +874,16 @@ background: #615fc7;
         facecamlabelinput.onchange = function (e) {
             config.faceCamLabel = (facecamlabelinput.value || "").trim()
             facecamlabelinput.value = config.faceCamLabel
+            saveConfig(config);
+            loadSocial()
+            render()
+        }
+
+        const hardwarecamlabelinput = document.getElementById("hardwarecamlabelinput")
+        hardwarecamlabelinput.value = config.hardwareCamLabel || ""
+        hardwarecamlabelinput.onchange = function (e) {
+            config.hardwareCamLabel = (hardwarecamlabelinput.value || "").trim()
+            hardwarecamlabelinput.value = config.hardwareCamLabel
             saveConfig(config);
             loadSocial()
             render()

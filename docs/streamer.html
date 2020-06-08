@@ -344,7 +344,8 @@ Settings
     right: 1%;
     overflow: hidden;
 }
-#facecam video {
+#facecam video,
+#hardwarecam video {
     width: 100%;
 }
 .videolabel  {
@@ -358,7 +359,8 @@ Settings
     border-top: 0.5rem solid;
     left: 0;
 }
-body.facecamlabel #facecamlabel.videolabel {
+body.facecamlabel #facecamlabel.videolabel,
+body.hardwarecamlabel #hardwarecamlabel.videolabel {
     display: block;
 }
 #hardwarecam {
@@ -784,9 +786,12 @@ body.countdownscene.hardware #hardwarecam {
     <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
     <div class="box animated clickeable" id="facecam">
         <video autoplay="true" id="facecamvideo"></video>
-        <div class="videolabel" id="facecamlabel">@MsMakeCode</div>
+        <div class="videolabel" id="facecamlabel"></div>
     </div>
-    <video class="box animated" autoplay="true" id="hardwarecam"></video>
+    <div class="box animated clickeable" id="hardwarecam">
+        <video autoplay="true" id="hardwarecamvideo"></video>
+        <div class="videolabel" id="hardwarecamlabel"></div>
+    </div>
     <div class="box animated" id="title">title</div>
     <div class="animated" id="countdown">5:00</div>
     <canvas id="paint" class=""></canvas>
@@ -815,7 +820,7 @@ body.countdownscene.hardware #hardwarecam {
             <input type="checkbox" id="multicheckbox"></input>
             <label for="multicheckbox">Multi editors</label>
         </div>
-        <h2>Video</h2>
+        <h2>Face camera</h2>
         <div class="field">
             <label for="facecamselect">Choose a Face Webcam</label>
             <select id="facecamselect"></select>
@@ -829,10 +834,15 @@ body.countdownscene.hardware #hardwarecam {
             <input type="checkbox" id="facerotatecameracheckbox"></input>
             <label for="facerotatecameracheckbox">Rotate camera 180</label>
         </div>
+        <h2>Document camera</h2>
         <div class="field">
-            <label for="hardwarecamselect">Choose a Hardware Webcam</label>
+            <label for="hardwarecamselect">Choose a document Webcam</label>
             <select id="hardwarecamselect"></select>
             <div class="error hidden" id="hardwarecamerror">Connection error. Make sure the camera is not blocked or used by another application.</div>
+        </div>
+        <div class="field">
+            <label for="hardwarecamlabelinput">Camera label</label>
+            <input id="hardwarecamlabelinput" placeholder="Cam description" />
         </div>
         <div class="field">
             <input type="checkbox" id="hardwarerotatecameracheckbox"></input>
