@@ -166,7 +166,7 @@ namespace pxt {
             return;
         }
 
-        if (isSandboxMode()) {
+        if (isSandboxMode() || (window as any).pxtSkipAnalyticsCookie) {
             initializeAppInsightsInternal(false);
             return;
         }
