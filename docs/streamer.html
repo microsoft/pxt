@@ -105,7 +105,13 @@ footer>a {
 .hidden {
     display: none;
 }
-
+.fadeout {
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 10s 2s, opacity 2s linear;
+  transition-delay: 10s;
+  transition-property: visibility, opacity;
+}
 .rotate {
     transform: rotate(180deg);
     transform-origin: 50% 50%;
@@ -336,6 +342,23 @@ Settings
     width: 30%;
     bottom: 1.5%;
     right: 1%;
+}
+#facecam video {
+    width: 100%;
+}
+#facecamlabel {
+    display: none;
+}
+body.facecamlabel #facecamlabel {
+    display: block;
+}
+.videolabel {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: calc(100% - 1vw);
+    font-size: 1vw;
+    padding: 0.5vw;
 }
 #hardwarecam {
     width: 0;
@@ -758,7 +781,10 @@ body.countdownscene.hardware #hardwarecam {
     <iframe class="box animated" id="editor" allow="usb;camera"></iframe>
     <iframe class="box animated" id="editor2" allow="usb;camera"></iframe>
     <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
-    <video class="box animated clickeable" autoplay="true" id="facecam"></video>
+    <div class="box animated clickeable" id="facecam">
+        <video autoplay="true" id="facecamvideo"></video>
+        <div class="videolabel" id="facecamlabel">@MsMakeCode</div>
+    </div>
     <video class="box animated" autoplay="true" id="hardwarecam"></video>
     <div class="box animated" id="title">title</div>
     <div class="animated" id="countdown">5:00</div>
@@ -795,6 +821,10 @@ body.countdownscene.hardware #hardwarecam {
             <div class="error hidden facecamerror" id="facecamerror">Connection error. Make sure the camera is not blocked or used by another application.</div>
         </div>
         <div class="field">
+            <label for="facecamlabelinput">Camera label</label>
+            <input id="facecamlabelinput" placeholder="My name, social accounts" />
+        </div>
+        <div class="field">
             <input type="checkbox" id="facerotatecameracheckbox"></input>
             <label for="facerotatecameracheckbox">Rotate camera 180</label>
         </div>
@@ -806,11 +836,6 @@ body.countdownscene.hardware #hardwarecam {
         <div class="field">
             <input type="checkbox" id="hardwarerotatecameracheckbox"></input>
             <label for="hardwarerotatecameracheckbox">Rotate camera 180</label>
-        </div>
-        <h2>Social accounts</h2>
-        <div class="field">
-            <label for="twitterinput">Twitter (optional)</label>
-            <input id="twitterinput" placeholder="Twitter handle (@account)" />
         </div>
         <h2>Paint</h2>
         <div class="field">

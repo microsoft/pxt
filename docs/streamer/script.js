@@ -3,7 +3,8 @@
     const container = document.getElementById("container");
     const editor = document.getElementById("editor");
     const editor2 = document.getElementById("editor2");
-    const facecam = document.getElementById("facecam");
+    const facecam = document.getElementById("facecamvideo");
+    const facecamlabel = document.getElementById("facecamlabel");
     const hardwarecam = document.getElementById("hardwarecam");
     const chat = document.getElementById("chat");
     const banner = document.getElementById("banner");
@@ -28,7 +29,7 @@
     const COUNTDOWN_SCENE_INDEX = scenes.indexOf("countdownscene")
     const editorConfigs = await fetchJSON("/editors.json");
     const state = {
-        sceneIndex: 1,
+        sceneIndex: -1,
         left: false,
         chat: false,
         hardware: false,
@@ -52,6 +53,7 @@
         loadEditor()
         loadChat()
         loadSocial()
+        setScene("right")
         render()
     }
 
@@ -77,7 +79,7 @@
         const cfg = {
             editor: "microbit",
             multiEditor: false,
-            twitter: "",
+            faceCamLabel: "",
             mixer: "",
             emojis: "😄🤔😭👀",
             micDelay: 200,
@@ -99,7 +101,7 @@
         const config = readConfig();
 
         const displayMedia = navigator.mediaDevices.getDisplayMedia ? "" : "displaymediaerror"
-        body.className = `${scenes[state.sceneIndex]} ${state.hardware ? "hardware" : ""} ${state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""} ${state.paint ? "paint" : ""} ${state.micError ? "micerror" : ""} ${config.micDelay === undefined ? "micdelayerror" : ""} ${displayMedia}`
+        body.className = `${scenes[state.sceneIndex]} ${state.hardware ? "hardware" : ""} ${state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""} ${state.paint ? "paint" : ""} ${state.micError ? "micerror" : ""} ${config.micDelay === undefined ? "micdelayerror" : ""} ${displayMedia} ${config.faceCamLabel ? "facecamlabel" : ""}`
         if (!config.faceCamId || state.faceCamError)
             showSettings();
     }
@@ -193,7 +195,13 @@
 
     function setScene(scene) {
         tickEvent("streamer.scene", { scene: scene }, { interactiveConsent: true });
-        state.sceneIndex = scenes.indexOf(`${scene}scene`);
+        const sceneIndex = scenes.indexOf(`${scene}scene`);
+        if (state.sceneIndex !== sceneIndex) {
+            state.sceneIndex = scenes.indexOf(`${scene}scene`);
+            facecamlabel.classList.remove("fadeout")
+            const x = facecamlabel.offsetWidth; // reflow
+            facecamlabel.classList.add("fadeout")
+        }
         if (scene === "countdown")
             startCountdown();
         else
@@ -387,42 +395,7 @@
             editor2.remove();
         }
 
-        // update page style
-        let css = "";
-        const styles = editorConfig.styles;
-        if (styles) {
-            css =
-                `body {
-background: ${styles.background};
-}
-.box {
-border-color: ${styles.menu};
-}
-#social, #title {
-background: ${styles.primary};
-}
-`
-        } else {
-            css =
-                `body {
-background: rgb(99, 93, 198);
-background: linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1) 100%);
-}
-.box {
-border-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
-}
-#social {
-background: #615fc7;
-color: white;
-}
-#title {
-background: #615fc7;
-color: white;
-}
-    `
-        }
-        editorStyle.innerText = ""
-        editorStyle.append(document.createTextNode(css));
+        loadStyle();
     }
 
     function loadStyle() {
@@ -439,6 +412,10 @@ background: ${styles.background};
 .box {
 border-color: ${styles.menu};
 }
+.videolabel {
+background: ${styles.primary};
+color: white;
+}
 #social {
 background: ${styles.primary};
 }
@@ -451,6 +428,10 @@ background: linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1)
 }
 .box {
 border-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
+}
+.videolabel {
+background: ${styles.menu};
+color: white;
 }
 #social {
 background: #615fc7;
@@ -885,11 +866,11 @@ background: #615fc7;
         else
             hardwarecamerror.classList.add("hidden")
 
-        const twitterinput = document.getElementById("twitterinput")
-        twitterinput.value = config.twitter || ""
-        twitterinput.onchange = function (e) {
-            config.twitter = (twitterinput.value || "").replace(/^https:\/\/twitter.com\//, '').replace(/^@/, '').trim()
-            twitterinput.value = config.twitter
+        const facecamlabelinput = document.getElementById("facecamlabelinput")
+        facecamlabelinput.value = config.faceCamLabel || ""
+        facecamlabelinput.onchange = function (e) {
+            config.faceCamLabel = (facecamlabelinput.value || "").trim()
+            facecamlabelinput.value = config.faceCamLabel
             saveConfig(config);
             loadSocial()
             render()
