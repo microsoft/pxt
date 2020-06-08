@@ -3,8 +3,10 @@
     const container = document.getElementById("container");
     const editor = document.getElementById("editor");
     const editor2 = document.getElementById("editor2");
-    const facecam = document.getElementById("facecam");
-    const hardwarecam = document.getElementById("hardwarecam");
+    const facecam = document.getElementById("facecamvideo");
+    const facecamlabel = document.getElementById("facecamlabel");
+    const hardwarecam = document.getElementById("hardwarecamvideo");
+    const hardwarecamlabel = document.getElementById("hardwarecamlabel");
     const chat = document.getElementById("chat");
     const banner = document.getElementById("banner");
     const settings = document.getElementById("settings");
@@ -22,9 +24,13 @@
     const frames = [editor, editor2];
 
     const scenes = ["leftscene", "rightscene", "chatscene", "countdownscene"];
+    const LEFT_SCENE_INDEX = scenes.indexOf("leftscene")
+    const RIGHT_SCENE_INDEX = scenes.indexOf("rightscene")
+    const CHAT_SCENE_INDEX = scenes.indexOf("chatscene")
+    const COUNTDOWN_SCENE_INDEX = scenes.indexOf("countdownscene")
     const editorConfigs = await fetchJSON("/editors.json");
     const state = {
-        sceneIndex: 1,
+        sceneIndex: -1,
         left: false,
         chat: false,
         hardware: false,
@@ -35,6 +41,7 @@
 
     initMessages();
     initResize();
+    initVideos();
     loadPaint();
     loadEditor()
     await firstLoadFaceCam()
@@ -47,6 +54,7 @@
         loadEditor()
         loadChat()
         loadSocial()
+        setScene("right")
         render()
     }
 
@@ -72,7 +80,8 @@
         const cfg = {
             editor: "microbit",
             multiEditor: false,
-            twitter: "",
+            faceCamLabel: "",
+            hardwareCamLabel: "",
             mixer: "",
             emojis: "😄🤔😭👀",
             micDelay: 200,
@@ -94,9 +103,11 @@
         const config = readConfig();
 
         const displayMedia = navigator.mediaDevices.getDisplayMedia ? "" : "displaymediaerror"
-        body.className = `${scenes[state.sceneIndex]} ${state.hardware ? "hardware" : ""} ${state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""} ${state.paint ? "paint" : ""} ${state.micError ? "micerror" : ""} ${config.micDelay === undefined ? "micdelayerror" : ""} ${displayMedia}`
+        body.className = `${scenes[state.sceneIndex]} ${state.hardware ? "hardware" : ""} ${state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""} ${state.paint ? "paint" : ""} ${state.micError ? "micerror" : ""} ${config.micDelay === undefined ? "micdelayerror" : ""} ${displayMedia} ${config.faceCamLabel ? "facecamlabel" : ""} ${config.hardwareCamLabel ? "hardwarecamlabel" : ""}`
         if (!config.faceCamId || state.faceCamError)
             showSettings();
+        facecamlabel.innerText = config.faceCamLabel || ""
+        hardwarecamlabel.innerText = config.hardwareCamLabel || ""
     }
 
     function loadToolbox() {
@@ -184,32 +195,45 @@
             const sceneIndex = scenes.indexOf(`${scene}scene`)
             addButton(icon, title, () => setScene(scene), state.sceneIndex == sceneIndex)
         }
+    }
 
-        function setScene(scene) {
-            tickEvent("streamer.scene", { scene: scene }, { interactiveConsent: true });
+    function setScene(scene) {
+        tickEvent("streamer.scene", { scene: scene }, { interactiveConsent: true });
+        const sceneIndex = scenes.indexOf(`${scene}scene`);
+        if (state.sceneIndex !== sceneIndex) {
             state.sceneIndex = scenes.indexOf(`${scene}scene`);
-            if (scene === "countdown")
-                startCountdown();
-            else
-                stopCountdown();
-            render();
+            resetTransition(facecamlabel, "fadeout")
+            resetTransition(hardwarecamlabel, "fadeout")
         }
+        if (scene === "countdown")
+            startCountdown();
+        else
+            stopCountdown();
+        render();
+    }
+
+    function resetTransition(el, name) {
+        el.classList.remove(name)
+        const x = el.offsetWidth; // reflow
+        el.classList.add(name)
     }
 
     function updateCountdown(seconds) {
         // comput timer end
         const timerEnd = state.timerEnd || (Date.now() + 300000);
         // add seconds
-        let remaining = timerEnd - Date.now() + seconds * 1000;
+        let remaining = Math.max(0, timerEnd - Date.now()) + seconds * 1000;
         // round to a multiple 30 seconds
         remaining = ((Math.ceil(remaining / 30000) * 30000)) | 0;
         state.timerEnd = Date.now() + remaining;
-        renderCountdown();
+        renderCountdown();        
+        startCountdown();
     }
 
     function startCountdown() {
         if (!state.timerInterval) {
-            state.timerEnd = Date.now() + 300000;
+            if (state.timerEnd === undefined)
+                state.timerEnd = Date.now() + 300000;
             state.timerInterval = setInterval(renderCountdown, 500);
         }        
     }
@@ -380,42 +404,7 @@
             editor2.remove();
         }
 
-        // update page style
-        let css = "";
-        const styles = editorConfig.styles;
-        if (styles) {
-            css =
-                `body {
-background: ${styles.background};
-}
-.box {
-border-color: ${styles.menu};
-}
-#social, #title {
-background: ${styles.primary};
-}
-`
-        } else {
-            css =
-                `body {
-background: rgb(99, 93, 198);
-background: linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1) 100%);
-}
-.box {
-border-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
-}
-#social {
-background: #615fc7;
-color: white;
-}
-#title {
-background: #615fc7;
-color: white;
-}
-    `
-        }
-        editorStyle.innerText = ""
-        editorStyle.append(document.createTextNode(css));
+        loadStyle();
     }
 
     function loadStyle() {
@@ -432,6 +421,11 @@ background: ${styles.background};
 .box {
 border-color: ${styles.menu};
 }
+.videolabel {
+background: ${styles.primary};
+border-top-color: ${styles.menu};
+color: white;
+}
 #social {
 background: ${styles.primary};
 }
@@ -444,6 +438,10 @@ background: linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1)
 }
 .box {
 border-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
+}
+.videolabel {
+background: ${styles.menu};
+color: white;
 }
 #social {
 background: #615fc7;
@@ -478,20 +476,14 @@ background: #615fc7;
     function loadSocial() {
         const config = readConfig();
         banner.innerHTML = ''
-        if (config.twitter)
-            addSocial(`@${config.twitter}`)
+        if (config.banner)
+            banner.innerText = config.banner;
 
         if (!config.mixer && !config.twitch)
             state.chat = false;
 
-        titleEl.innerText = config.title;
-
-        function addSocial(text) {
-            const a = document.createElement("span");
-            a.className = "social"
-            a.innerText = text
-            banner.append(a)
-        }
+        const editorConfig = editorConfigs[config.editor]
+        titleEl.innerText = config.title || (editorConfig && `MakeCode for ${editorConfig.name}`) || "";
     }
 
     function loadChat() {
@@ -626,6 +618,15 @@ background: #615fc7;
             }
         } catch (e) {
             console.log(e)
+        }
+    }
+
+    function initVideos() {
+        facecam.onclick = function (e) {
+            if(state.sceneIndex == LEFT_SCENE_INDEX)
+                setScene("right")
+            else if (state.sceneIndex == RIGHT_SCENE_INDEX)
+                setScene("left")
         }
     }
 
@@ -868,11 +869,21 @@ background: #615fc7;
         else
             hardwarecamerror.classList.add("hidden")
 
-        const twitterinput = document.getElementById("twitterinput")
-        twitterinput.value = config.twitter || ""
-        twitterinput.onchange = function (e) {
-            config.twitter = (twitterinput.value || "").replace(/^https:\/\/twitter.com\//, '').replace(/^@/, '').trim()
-            twitterinput.value = config.twitter
+        const facecamlabelinput = document.getElementById("facecamlabelinput")
+        facecamlabelinput.value = config.faceCamLabel || ""
+        facecamlabelinput.onchange = function (e) {
+            config.faceCamLabel = (facecamlabelinput.value || "").trim()
+            facecamlabelinput.value = config.faceCamLabel
+            saveConfig(config);
+            loadSocial()
+            render()
+        }
+
+        const hardwarecamlabelinput = document.getElementById("hardwarecamlabelinput")
+        hardwarecamlabelinput.value = config.hardwareCamLabel || ""
+        hardwarecamlabelinput.onchange = function (e) {
+            config.hardwareCamLabel = (hardwarecamlabelinput.value || "").trim()
+            hardwarecamlabelinput.value = config.hardwareCamLabel
             saveConfig(config);
             loadSocial()
             render()
@@ -882,7 +893,17 @@ background: #615fc7;
         titleinput.value = config.title || ""
         titleinput.onchange = function (e) {
             config.title = (titleinput.value || "");
-            titleinput.value = config.twitch
+            titleinput.value = config.title
+            saveConfig(config);
+            loadSocial();
+            render()
+        }
+
+        const bannerinput = document.getElementById("bannerinput")
+        bannerinput.value = config.banner || ""
+        bannerinput.onchange = function (e) {
+            config.banner = (bannerinput.value || "");
+            bannerinput.value = config.banner
             saveConfig(config);
             loadSocial();
             render()

@@ -91,11 +91,27 @@ footer>a {
 .animated {
     transition: left 0.5s, right 0.5s, bottom 0.5s, top 0.5s, width 0.5s, height 0.5s, opacity 1s;
 }
+.clickeable {
+    cursor:pointer;
+}
+.clickeable:hover {
+    box-shadow:
+  0 11.6px 0.9px -20px rgba(0, 0, 0, 0.028),
+  0 18.5px 3.1px -20px rgba(0, 0, 0, 0.042),
+  0 40px 14px -20px rgba(0, 0, 0, 0.07)
+;
+}
 
 .hidden {
     display: none;
 }
-
+.fadeout {
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 10s 2s, opacity 2s linear;
+  transition-delay: 10s;
+  transition-property: visibility, opacity;
+}
 .rotate {
     transform: rotate(180deg);
     transform-origin: 50% 50%;
@@ -223,6 +239,7 @@ title, countdown
     font-size: 12vw;
     color:white;
     opacity: 0;
+    text-shadow: black 2px 2px 1px;
 }
 
 /**
@@ -325,6 +342,26 @@ Settings
     width: 30%;
     bottom: 1.5%;
     right: 1%;
+    overflow: hidden;
+}
+#facecam video,
+#hardwarecam video {
+    width: 100%;
+}
+.videolabel  {
+    display: none;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: calc(100% - 1vw);
+    font-size: 1vw;
+    padding: 0.5vw;
+    border-top: 0.5rem solid;
+    left: 0;
+}
+body.facecamlabel #facecamlabel.videolabel,
+body.hardwarecamlabel #hardwarecamlabel.videolabel {
+    display: block;
 }
 #hardwarecam {
     width: 0;
@@ -360,13 +397,11 @@ body.hardware #hardwarecam {
     float:right;
 }
 
-span.social {
+#banner {
     font-size: 2vw;
     color: white;
     flex-grow: 1;
     margin-left: 1%;
-    text-align: center;
-    cursor: pointer;
 }
 video.error {
     background: rgba(255, 0, 0, 0.5)
@@ -387,7 +422,7 @@ body.rightscene #editor {
 
 body.rightscene #facecam {
     right: 1%;
-    width: 28%;
+    width: 26%;
 }
 
 body.rightscene.chat #chat {
@@ -395,7 +430,9 @@ body.rightscene.chat #chat {
     width: 28%;
     height: 54%;
 }
-
+body.rightscene.chat #facecam {
+    width: 28%;
+}
 body.rightscene.chat #editor {
     width: 67%;
     top: 1%;
@@ -405,8 +442,8 @@ body.rightscene.chat #editor {
 /* right + hardware */
 body.rightscene.hardware #hardwarecam {
     right: 1%;
-    width: 22%;
-    bottom: 42%;
+    width: 24%;
+    bottom: 41%;
 }
 
 /* right + hardware + chat */
@@ -510,8 +547,8 @@ body.leftscene #editor {
 }
 
 body.leftscene #facecam {
-    right: 70%;
-    width: 28%;
+    right: 72%;
+    width: 26%;
 }
 
 body.leftscene #hardwarecam {
@@ -527,9 +564,9 @@ body.leftscene #social {
 }
 
 body.leftscene.hardware #hardwarecam {
-    right: 76%;
-    width: 22%;
-    bottom: 42%;
+    right: 74%;
+    width: 24%;
+    bottom: 41%;
 }
 
 /* left + hardware + chat */
@@ -652,9 +689,9 @@ body.leftscene.hardware.multi.chat #facecam {
 
 /* chatscene: facecam and stream chat */
 body.chatscene #facecam {
-    bottom: 19%;
-    right: 38%;
-    width: 52%;
+    bottom: 10%;
+    right: 20%;
+    width: 64%;
 }
 
 body.chatscene #editor {
@@ -663,7 +700,22 @@ body.chatscene #editor {
 body.chatscene #editor2 {
     right: -100%;
 }
-
+body.chatscene #title {
+    width: 46%;
+    top: 1.5%;
+    right: 41%;
+    font-size: 2vw;    
+    opacity: 100%;
+}
+body.chatscene #social {
+    left: 15%;
+    width: 64%;
+}
+body.chatscene.chat #facecam {
+    bottom: 19%;
+    right: 38%;
+    width: 52%;
+}
 body.chatscene.chat #chat {
     top: 9%;
     right: 1%;
@@ -671,18 +723,6 @@ body.chatscene.chat #chat {
     height: 80%;
     opacity: 100%;
 }
-body.chatscene #title {
-    width: 46%;
-    top: 6%;
-    right: 41%;
-    font-size: 2vw;    
-    opacity: 100%;
-}
-body.chatscene #social {
-    left: 4%;
-    bottom: 9%;
-}
-
 body.chatscene.hardware #facecam {
     bottom: 19%;
     right: 49%;
@@ -744,8 +784,14 @@ body.countdownscene.hardware #hardwarecam {
     <iframe class="box animated" id="editor" allow="usb;camera"></iframe>
     <iframe class="box animated" id="editor2" allow="usb;camera"></iframe>
     <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
-    <video class="box animated" autoplay="true" id="facecam"></video>
-    <video class="box animated" autoplay="true" id="hardwarecam"></video>
+    <div class="box animated clickeable" id="facecam">
+        <video autoplay="true" id="facecamvideo"></video>
+        <div class="videolabel" id="facecamlabel"></div>
+    </div>
+    <div class="box animated clickeable" id="hardwarecam">
+        <video autoplay="true" id="hardwarecamvideo"></video>
+        <div class="videolabel" id="hardwarecamlabel"></div>
+    </div>
     <div class="box animated" id="title">title</div>
     <div class="animated" id="countdown">5:00</div>
     <canvas id="paint" class=""></canvas>
@@ -763,6 +809,10 @@ body.countdownscene.hardware #hardwarecam {
             <input id="titleinput" placeholder="My awesome stream" />
         </div>
         <div class="field">
+            <label for="bannerinput">Stream banner</label>
+            <input id="bannerinput" placeholder="Text that displays near the icons" />
+        </div>
+        <div class="field">
             <label for="editorselect">Choose your editor</label>
             <select id="editorselect"></select>
         </div>
@@ -770,29 +820,33 @@ body.countdownscene.hardware #hardwarecam {
             <input type="checkbox" id="multicheckbox"></input>
             <label for="multicheckbox">Multi editors</label>
         </div>
-        <h2>Video</h2>
+        <h2>Face camera</h2>
         <div class="field">
             <label for="facecamselect">Choose a Face Webcam</label>
             <select id="facecamselect"></select>
             <div class="error hidden facecamerror" id="facecamerror">Connection error. Make sure the camera is not blocked or used by another application.</div>
         </div>
         <div class="field">
+            <label for="facecamlabelinput">Camera label</label>
+            <input id="facecamlabelinput" placeholder="My name, social accounts" />
+        </div>
+        <div class="field">
             <input type="checkbox" id="facerotatecameracheckbox"></input>
             <label for="facerotatecameracheckbox">Rotate camera 180</label>
         </div>
+        <h2>Document camera</h2>
         <div class="field">
-            <label for="hardwarecamselect">Choose a Hardware Webcam</label>
+            <label for="hardwarecamselect">Choose a document Webcam</label>
             <select id="hardwarecamselect"></select>
             <div class="error hidden" id="hardwarecamerror">Connection error. Make sure the camera is not blocked or used by another application.</div>
         </div>
         <div class="field">
+            <label for="hardwarecamlabelinput">Camera label</label>
+            <input id="hardwarecamlabelinput" placeholder="Cam description" />
+        </div>
+        <div class="field">
             <input type="checkbox" id="hardwarerotatecameracheckbox"></input>
             <label for="hardwarerotatecameracheckbox">Rotate camera 180</label>
-        </div>
-        <h2>Social accounts</h2>
-        <div class="field">
-            <label for="twitterinput">Twitter (optional)</label>
-            <input id="twitterinput" placeholder="Twitter handle (@account)" />
         </div>
         <h2>Paint</h2>
         <div class="field">
