@@ -298,6 +298,8 @@ namespace pxt.blocks.layout {
             .then((customCss) => {
                 const blocklySvg = Util.toArray(document.head.querySelectorAll("style"))
                     .filter((el: HTMLStyleElement) => /\.blocklySvg/.test(el.innerText))[0] as HTMLStyleElement;
+                // Custom CSS injected directly into the DOM by Blockly
+                customCss.push((document.getElementById(`blockly-renderer-style-pxt`) as HTMLLinkElement)?.innerText);
                 // CSS may contain <, > which need to be stored in CDATA section
                 const cssString = (blocklySvg ? blocklySvg.innerText : "") + '\n\n' + customCss.map(el => el + '\n\n');
                 cssLink.appendChild(xsg.createCDATASection(cssString));
