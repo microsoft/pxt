@@ -128,7 +128,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
                     if (!location) return null;
 
-                    return <ErrorListItem key={index} index={index} stackFrame={sf} location={location} revealError={this.onErrorMessageClick}/>
+                    return <ErrorListItem key={index} index={index} stackframe={sf} location={location} revealError={this.onErrorMessageClick}/>
                 })}
             </div>
         </div>;
@@ -137,10 +137,10 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
 interface ErrorListItemProps {
     index: number;
-    error?: pxtc.KsDiagnostic;
-    stackFrame?: pxsim.StackFrameInfo;
-    location?: pxtc.LocationInfo;
     revealError: (location: pxtc.LocationInfo, index: number) => void;
+    error?: pxtc.KsDiagnostic;
+    stackframe?: pxsim.StackFrameInfo;
+    location?: pxtc.LocationInfo;
 }
 
 interface ErrorListItemState {
@@ -155,22 +155,22 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
     }
 
     render() {
-        const {error, stackFrame, location} = this.props
+        const {error, stackframe, location} = this.props
 
-        const message = stackFrame ? lf("at {0} line {1}", stackFrame.funcInfo.functionName, location.line + 1)
+        const message = stackframe ? lf("at {0} (line {1})", stackframe.funcInfo.functionName, location.line + 1)
             : lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText)
 
-        return <div className={`item ${stackFrame ? 'stackframe' : ''}`} role="button"
+        return <div className={`item ${stackframe ? 'stackframe' : ''}`} role="button"
                     onClick={this.onErrorListItemClick}
                     onKeyDown={sui.fireClickOnEnter}
-                    aria-label={lf("Go to {0}: {1}", stackFrame ? '' : 'error', message)}
+                    aria-label={lf("Go to {0}: {1}", stackframe ? '' : 'error', message)}
                     tabIndex={0}>
             {message}
         </div>
     }
 
     onErrorListItemClick() {
-        const location = this.props.stackFrame ? this.props.location : this.props.error
+        const location = this.props.stackframe ? this.props.location : this.props.error
         this.props.revealError(location, this.props.index)
     }
 }
