@@ -102,9 +102,6 @@ namespace pxtblockly {
             super(text, options, validator);
             this.blocksInfo = options.blocksInfo;
 
-            if (!text) {
-                this.setValue(this.getOptions()[0][1]);
-            }
         }
 
         init() {
@@ -118,6 +115,9 @@ namespace pxtblockly {
                     // TODO: Other tile sizes
                     saveTilesetTile(this.sourceBlock_.workspace, { projectId: 0, data: new pxt.sprite.Bitmap(16, 16).data() });
                 }
+            }
+            else if (this.sourceBlock_ && this.sourceBlock_.isInFlyout){
+                this.setValue(this.getOptions()[0][1]);
             }
         }
 
