@@ -135,8 +135,8 @@
                 emojis[i >> 1] = config.emojis.substr(i, 2);
 
         if (currentScene == "countdownscene") {
-            addButton("Add", "Add 1 minute to countdown", () => updateCountdown(30))
-            addButton("Remove", "Remove 1 minute from countdonw", () => updateCountdown(-30))
+            addButton("Add", "Add 1 minute to countdown", () => updateCountdown(60))
+            addButton("Remove", "Remove 1 minute from countdonw", () => updateCountdown(-60))
             addSep()
         }
 
@@ -240,7 +240,7 @@
         // add seconds
         let remaining = Math.max(0, timerEnd - Date.now()) + seconds * 1000;
         // round to a multiple 30 seconds
-        remaining = ((Math.ceil(remaining / 30000) * 30000)) | 0;
+        remaining = ((Math.ceil(remaining / 60000) * 60000) + 1000) | 0;
         state.timerEnd = Date.now() + remaining;
         renderCountdown();
         startCountdown();
