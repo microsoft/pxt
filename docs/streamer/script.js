@@ -159,16 +159,18 @@
 
         addSep()
 
-        if (state.recording)
-            addButton("Stop", "Stop recording", stopRecording)
-        else
-            addButton("Record2", "Start recording", startRecording)
+        if (!!navigator.mediaDevices.getDisplayMedia) {
+            if (state.recording)
+                addButton("Stop", "Stop recording", stopRecording)
+            else
+                addButton("Record2", "Start recording", startRecording)
+        }
         addButton("Settings", "Show settings", showSettings);
 
         function addSep() {
             const sep = document.createElement("div")
             sep.className = "sep"
-            toolbox.append(sep)    
+            toolbox.append(sep)
         }
 
         function addButton(icon, title, handler, active) {
@@ -226,7 +228,7 @@
         // round to a multiple 30 seconds
         remaining = ((Math.ceil(remaining / 30000) * 30000)) | 0;
         state.timerEnd = Date.now() + remaining;
-        renderCountdown();        
+        renderCountdown();
         startCountdown();
     }
 
@@ -234,8 +236,8 @@
         if (!state.timerInterval) {
             if (state.timerEnd === undefined)
                 state.timerEnd = Date.now() + 300000;
-            state.timerInterval = setInterval(renderCountdown, 500);
-        }        
+            state.timerInterval = setInterval(renderCountdown, 100);
+        }
     }
 
     function stopCountdown() {
@@ -260,7 +262,7 @@
 
         function pad(num) {
             var s = "00" + num;
-            return s.substr(s.length-2);
+            return s.substr(s.length - 2);
         }
     }
 
@@ -622,8 +624,11 @@ background: #615fc7;
     }
 
     function initVideos() {
-        facecam.onclick = function (e) {
-            if(state.sceneIndex == LEFT_SCENE_INDEX)
+        facecam.onclick = swapLeftRight;
+        hardwarecam.onclick = swapLeftRight;
+        
+        function swapLeftRight(e) {
+            if (state.sceneIndex == LEFT_SCENE_INDEX)
                 setScene("right")
             else if (state.sceneIndex == RIGHT_SCENE_INDEX)
                 setScene("left")
@@ -652,18 +657,28 @@ background: #615fc7;
     async function startStream(el, deviceId, rotate) {
         stopStream(el.srcObject)
         console.log(`trying device ${deviceId}`)
-        const constraints = {
-            audio: false,
-            video: {
-                aspectRatio: 4 / 3
+        if (deviceId === "display") {
+            const stream = await navigator.mediaDevices.getDisplayMedia({
+                video: {
+                    displaySurface: "application",
+                    cursor: "never"
+                }
+            });
+            el.srcObject = stream;
+        } else {
+            const constraints = {
+                audio: false,
+                video: {
+                    aspectRatio: 4 / 3
+                }
             }
+            if (deviceId)
+                constraints.video.deviceId = deviceId;
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            el.srcObject = stream;
         }
-        if (deviceId)
-            constraints.video.deviceId = deviceId;
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         el.muted = true;
         el.volume = 0; // don't use sound!
-        el.srcObject = stream;
         el.onloadedmetadata = (e) => el.play();
         if (rotate)
             el.classList.add("rotate")
@@ -848,6 +863,15 @@ background: #615fc7;
             if (config.hardwareCamId == cam.deviceId && cam.deviceId)
                 option.selected = true;
         })
+        if (!!navigator.mediaDevices.getDisplayMedia)
+        {
+            const option = document.createElement("option")
+            option.value = "display"
+            option.text = "Application"
+            if (config.hardwareCamId === option.value)
+                option.selected = true
+            hardwarecamselect.add(option)
+        }
         hardwarecamselect.onchange = function () {
             const selected = hardwarecamselect.options[hardwarecamselect.selectedIndex];
             config.hardwareCamId = selected.value;
