@@ -116,7 +116,7 @@ namespace pxtblockly {
                     saveTilesetTile(this.sourceBlock_.workspace, { projectId: 0, data: new pxt.sprite.Bitmap(16, 16).data() });
                 }
             }
-            else if (this.sourceBlock_ && this.sourceBlock_.isInFlyout){
+            else if (this.sourceBlock_ && this.sourceBlock_.isInFlyout) {
                 this.setValue(this.getOptions()[0][1]);
             }
         }
