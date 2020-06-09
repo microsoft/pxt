@@ -431,7 +431,7 @@ body.rightscene #editor {
 
 body.rightscene #facecam {
     right: 1%;
-    width: 26%;
+    width: 24%;
 }
 
 body.rightscene.chat #chat {
@@ -449,10 +449,16 @@ body.rightscene.chat #editor {
 }
 
 /* right + hardware */
+body.rightscene.hardware #facecam {
+    width: 22%;
+}
 body.rightscene.hardware #hardwarecam {
     right: 1%;
-    width: 24%;
-    bottom: 41%;
+    width: 22%;
+    bottom: 34%;
+}
+body.rightscene.hardware #editor {
+    width: 88%
 }
 
 /* right + hardware + chat */
@@ -554,10 +560,9 @@ body.leftscene #editor {
     left: 4%;
     height: 87%;
 }
-
 body.leftscene #facecam {
-    right: 72%;
-    width: 26%;
+    right: 74%;
+    width: 24%;
 }
 
 body.leftscene #hardwarecam {
@@ -572,11 +577,22 @@ body.leftscene #social {
     bottom: 1.5%;
 }
 
+/* left + hardware */
 body.leftscene.hardware #hardwarecam {
-    right: 74%;
-    width: 24%;
-    bottom: 41%;
+    right: 76%;
+    width: 22%;
+    bottom: 34%;
 }
+body.leftscene.hardware #facecam {
+    right: 76%;
+    width: 22%;
+}
+body.leftscene.hardware #editor {
+    left: 10%;
+    width: 88%
+
+}
+
 
 /* left + hardware + chat */
 body.leftscene.hardware.chat #editor {
@@ -590,7 +606,7 @@ body.leftscene.hardware.chat #chat {
 }
 body.leftscene.hardware.chat #hardwarecam {
     width:22%;
-    bottom: 35%;
+    bottom: 34%;
     right: 77%;
 }
 body.leftscene.hardware.chat #facecam {
@@ -734,13 +750,14 @@ body.chatscene.chat #chat {
 }
 body.chatscene.hardware #facecam {
     bottom: 19%;
-    right: 49%;
+    right: 51%;
     width: 46%;
 }
 body.chatscene.hardware #hardwarecam {
     width: 46%;
+    height: calc(46% * 4 /3);    
     bottom: 19%;
-    right: 1%;            
+    right: 2%;            
 }
 
 body.chatscene.hardware.chat #facecam {
@@ -748,12 +765,13 @@ body.chatscene.hardware.chat #facecam {
 }
 body.chatscene.hardware.chat #hardwarecam {
     width: 30%;
+    height: calc(30% * 4 /3);    
     bottom: 9%;
-    right: 1%; 
+    right: 2%; 
 }
 body.chatscene.hardware.chat #chat {
     top: 1%;
-    right: 1%;
+    right: 2%;
     width: 30%;
     height: 43%;
 }
