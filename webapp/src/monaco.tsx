@@ -639,7 +639,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.errorChangesListeners[handlerKey] = handler;
     }
 
-    goToError(error: pxtc.KsDiagnostic) {
+    goToError(error: pxtc.LocationInfo) {
         // Use endLine and endColumn to position the cursor
         // when errors do have them
         let line, column;
