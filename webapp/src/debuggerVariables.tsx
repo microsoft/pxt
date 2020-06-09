@@ -112,6 +112,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             tableRows.unshift(<DebuggerTableRow
                 leftText={lf("Exception:")}
                 leftClass="exception"
+                key="exception-message"
                 rightText={truncateLength(breakpoint.exceptionMessage)}
                 rightTitle={breakpoint.exceptionMessage}
             />);
