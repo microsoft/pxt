@@ -103,8 +103,21 @@
 
         const config = readConfig();
 
-        const displayMedia = navigator.mediaDevices.getDisplayMedia ? "" : "displaymediaerror"
-        body.className = `${scenes[state.sceneIndex]} ${state.hardware ? "hardware" : ""} ${state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""} ${state.paint ? "paint" : ""} ${state.micError ? "micerror" : ""} ${config.micDelay === undefined ? "micdelayerror" : ""} ${displayMedia} ${config.faceCamLabel ? "facecamlabel" : ""} ${config.hardwareCamLabel ? "hardwarecamlabel" : ""} ${config.hardwareCamId === DISPLAY_DEVICE_ID ? "display" : ""}`
+        const displayMedia = 
+        body.className = [
+            scenes[state.sceneIndex],
+            state.hardware && "hardware",
+            state.chat && "chat",
+            config.multiEditor && "multi",
+            state.paint && "paint",
+            state.micError && "micerror",
+            config.micDelay === undefined && "micdelayerror",
+            !navigator.mediaDevices.getDisplayMedia && "displaymediaerror",
+            config.faceCamLabel && "facecamlabel",
+            config.hardwareCamLabel && "hardwarecamlabel",
+            config.faceCamId === DISPLAY_DEVICE_ID && "facecamdisplay",
+            config.hardwareCamId === DISPLAY_DEVICE_ID && "hardwarecamdisplay"
+        ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
             showSettings();
         facecamlabel.innerText = config.faceCamLabel || ""
@@ -824,6 +837,15 @@ background: #615fc7;
             if (config.faceCamId == cam.deviceId && cam.deviceId)
                 option.selected = true;
         })
+        if (!!navigator.mediaDevices.getDisplayMedia)
+        {
+            const option = document.createElement("option")
+            option.value = DISPLAY_DEVICE_ID
+            option.text = "Application"
+            if (config.faceCamId === option.value)
+                option.selected = true
+            facecamselect.add(option)
+        }        
         facecamselect.onchange = function () {
             const selected = facecamselect.options[facecamselect.selectedIndex];
             config.faceCamId = selected.value;
