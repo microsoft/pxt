@@ -157,7 +157,7 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
     render() {
         const {error, stackFrame, location} = this.props
 
-        const message = stackFrame ?  lf("line {0} at {1}", location.line + 1, stackFrame.funcInfo.functionName)
+        const message = stackFrame ? lf("at {0} line {1}", stackFrame.funcInfo.functionName, location.line + 1)
             : lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText)
 
         return <div className={`item ${stackFrame ? 'stackframe' : ''}`} role="button"
