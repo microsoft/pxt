@@ -373,6 +373,15 @@ body.hardware #hardwarecam {
     opacity: 100%;
 }
 
+/** application clipping */
+body.hardware.display #hardwarecam video {
+    clip-path: polygon(10% 20%, 90% 20%, 90% 100%, 10% 100%);
+    width: 130%;
+    left: -10%;
+    margin-left: -15%;
+    margin-top: -20%;
+}
+
 /*
     Chat window
 */

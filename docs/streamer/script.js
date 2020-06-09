@@ -28,6 +28,7 @@
     const RIGHT_SCENE_INDEX = scenes.indexOf("rightscene")
     const CHAT_SCENE_INDEX = scenes.indexOf("chatscene")
     const COUNTDOWN_SCENE_INDEX = scenes.indexOf("countdownscene")
+    const DISPLAY_DEVICE_ID = "display"
     const editorConfigs = await fetchJSON("/editors.json");
     const state = {
         sceneIndex: -1,
@@ -103,7 +104,7 @@
         const config = readConfig();
 
         const displayMedia = navigator.mediaDevices.getDisplayMedia ? "" : "displaymediaerror"
-        body.className = `${scenes[state.sceneIndex]} ${state.hardware ? "hardware" : ""} ${state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""} ${state.paint ? "paint" : ""} ${state.micError ? "micerror" : ""} ${config.micDelay === undefined ? "micdelayerror" : ""} ${displayMedia} ${config.faceCamLabel ? "facecamlabel" : ""} ${config.hardwareCamLabel ? "hardwarecamlabel" : ""}`
+        body.className = `${scenes[state.sceneIndex]} ${state.hardware ? "hardware" : ""} ${state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""} ${state.paint ? "paint" : ""} ${state.micError ? "micerror" : ""} ${config.micDelay === undefined ? "micdelayerror" : ""} ${displayMedia} ${config.faceCamLabel ? "facecamlabel" : ""} ${config.hardwareCamLabel ? "hardwarecamlabel" : ""} ${config.hardwareCamId === DISPLAY_DEVICE_ID ? "display" : ""}`
         if (!config.faceCamId || state.faceCamError)
             showSettings();
         facecamlabel.innerText = config.faceCamLabel || ""
@@ -657,7 +658,7 @@ background: #615fc7;
     async function startStream(el, deviceId, rotate) {
         stopStream(el.srcObject)
         console.log(`trying device ${deviceId}`)
-        if (deviceId === "display") {
+        if (deviceId === DISPLAY_DEVICE_ID) {
             const stream = await navigator.mediaDevices.getDisplayMedia({
                 video: {
                     displaySurface: "application",
@@ -866,7 +867,7 @@ background: #615fc7;
         if (!!navigator.mediaDevices.getDisplayMedia)
         {
             const option = document.createElement("option")
-            option.value = "display"
+            option.value = DISPLAY_DEVICE_ID
             option.text = "Application"
             if (config.hardwareCamId === option.value)
                 option.selected = true
