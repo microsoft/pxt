@@ -28,6 +28,7 @@
     const RIGHT_SCENE_INDEX = scenes.indexOf("rightscene")
     const CHAT_SCENE_INDEX = scenes.indexOf("chatscene")
     const COUNTDOWN_SCENE_INDEX = scenes.indexOf("countdownscene")
+    const DISPLAY_DEVICE_ID = "display"
     const editorConfigs = await fetchJSON("/editors.json");
     const state = {
         sceneIndex: -1,
@@ -102,8 +103,21 @@
 
         const config = readConfig();
 
-        const displayMedia = navigator.mediaDevices.getDisplayMedia ? "" : "displaymediaerror"
-        body.className = `${scenes[state.sceneIndex]} ${state.hardware ? "hardware" : ""} ${state.chat ? "chat" : ""} ${config.multiEditor ? "multi" : ""} ${state.paint ? "paint" : ""} ${state.micError ? "micerror" : ""} ${config.micDelay === undefined ? "micdelayerror" : ""} ${displayMedia} ${config.faceCamLabel ? "facecamlabel" : ""} ${config.hardwareCamLabel ? "hardwarecamlabel" : ""}`
+        const displayMedia = 
+        body.className = [
+            scenes[state.sceneIndex],
+            state.hardware && "hardware",
+            state.chat && "chat",
+            config.multiEditor && "multi",
+            state.paint && "paint",
+            state.micError && "micerror",
+            config.micDelay === undefined && "micdelayerror",
+            !navigator.mediaDevices.getDisplayMedia && "displaymediaerror",
+            config.faceCamLabel && "facecamlabel",
+            config.hardwareCamLabel && "hardwarecamlabel",
+            config.faceCamId === DISPLAY_DEVICE_ID && "facecamdisplay",
+            config.hardwareCamId === DISPLAY_DEVICE_ID && "hardwarecamdisplay"
+        ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
             showSettings();
         facecamlabel.innerText = config.faceCamLabel || ""
@@ -121,8 +135,8 @@
                 emojis[i >> 1] = config.emojis.substr(i, 2);
 
         if (currentScene == "countdownscene") {
-            addButton("Add", "Add 1 minute to countdown", () => updateCountdown(30))
-            addButton("Remove", "Remove 1 minute from countdonw", () => updateCountdown(-30))
+            addButton("Add", "Add 1 minute to countdown", () => updateCountdown(60))
+            addButton("Remove", "Remove 1 minute from countdonw", () => updateCountdown(-60))
             addSep()
         }
 
@@ -159,16 +173,18 @@
 
         addSep()
 
-        if (state.recording)
-            addButton("Stop", "Stop recording", stopRecording)
-        else
-            addButton("Record2", "Start recording", startRecording)
+        if (!!navigator.mediaDevices.getDisplayMedia) {
+            if (state.recording)
+                addButton("Stop", "Stop recording", stopRecording)
+            else
+                addButton("Record2", "Start recording", startRecording)
+        }
         addButton("Settings", "Show settings", showSettings);
 
         function addSep() {
             const sep = document.createElement("div")
             sep.className = "sep"
-            toolbox.append(sep)    
+            toolbox.append(sep)
         }
 
         function addButton(icon, title, handler, active) {
@@ -224,9 +240,9 @@
         // add seconds
         let remaining = Math.max(0, timerEnd - Date.now()) + seconds * 1000;
         // round to a multiple 30 seconds
-        remaining = ((Math.ceil(remaining / 30000) * 30000)) | 0;
+        remaining = ((Math.ceil(remaining / 60000) * 60000) + 1000) | 0;
         state.timerEnd = Date.now() + remaining;
-        renderCountdown();        
+        renderCountdown();
         startCountdown();
     }
 
@@ -234,8 +250,8 @@
         if (!state.timerInterval) {
             if (state.timerEnd === undefined)
                 state.timerEnd = Date.now() + 300000;
-            state.timerInterval = setInterval(renderCountdown, 500);
-        }        
+            state.timerInterval = setInterval(renderCountdown, 100);
+        }
     }
 
     function stopCountdown() {
@@ -260,7 +276,7 @@
 
         function pad(num) {
             var s = "00" + num;
-            return s.substr(s.length-2);
+            return s.substr(s.length - 2);
         }
     }
 
@@ -622,8 +638,11 @@ background: #615fc7;
     }
 
     function initVideos() {
-        facecam.onclick = function (e) {
-            if(state.sceneIndex == LEFT_SCENE_INDEX)
+        facecam.onclick = swapLeftRight;
+        hardwarecam.onclick = swapLeftRight;
+        
+        function swapLeftRight(e) {
+            if (state.sceneIndex == LEFT_SCENE_INDEX)
                 setScene("right")
             else if (state.sceneIndex == RIGHT_SCENE_INDEX)
                 setScene("left")
@@ -652,18 +671,28 @@ background: #615fc7;
     async function startStream(el, deviceId, rotate) {
         stopStream(el.srcObject)
         console.log(`trying device ${deviceId}`)
-        const constraints = {
-            audio: false,
-            video: {
-                aspectRatio: 4 / 3
+        if (deviceId === DISPLAY_DEVICE_ID) {
+            const stream = await navigator.mediaDevices.getDisplayMedia({
+                video: {
+                    displaySurface: "application",
+                    cursor: "never"
+                }
+            });
+            el.srcObject = stream;
+        } else {
+            const constraints = {
+                audio: false,
+                video: {
+                    aspectRatio: 4 / 3
+                }
             }
+            if (deviceId)
+                constraints.video.deviceId = deviceId;
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            el.srcObject = stream;
         }
-        if (deviceId)
-            constraints.video.deviceId = deviceId;
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         el.muted = true;
         el.volume = 0; // don't use sound!
-        el.srcObject = stream;
         el.onloadedmetadata = (e) => el.play();
         if (rotate)
             el.classList.add("rotate")
@@ -808,6 +837,15 @@ background: #615fc7;
             if (config.faceCamId == cam.deviceId && cam.deviceId)
                 option.selected = true;
         })
+        if (!!navigator.mediaDevices.getDisplayMedia)
+        {
+            const option = document.createElement("option")
+            option.value = DISPLAY_DEVICE_ID
+            option.text = "Application"
+            if (config.faceCamId === option.value)
+                option.selected = true
+            facecamselect.add(option)
+        }        
         facecamselect.onchange = function () {
             const selected = facecamselect.options[facecamselect.selectedIndex];
             config.faceCamId = selected.value;
@@ -848,6 +886,15 @@ background: #615fc7;
             if (config.hardwareCamId == cam.deviceId && cam.deviceId)
                 option.selected = true;
         })
+        if (!!navigator.mediaDevices.getDisplayMedia)
+        {
+            const option = document.createElement("option")
+            option.value = DISPLAY_DEVICE_ID
+            option.text = "Application"
+            if (config.hardwareCamId === option.value)
+                option.selected = true
+            hardwarecamselect.add(option)
+        }
         hardwarecamselect.onchange = function () {
             const selected = hardwarecamselect.options[hardwarecamselect.selectedIndex];
             config.hardwareCamId = selected.value;

@@ -373,6 +373,16 @@ body.hardware #hardwarecam {
     opacity: 100%;
 }
 
+/** application clipping */
+body.hardwarecamdisplay #hardwarecamvideo,
+body.facecamdisplay #facecamvideo {
+    clip-path: polygon(10% 20%, 90% 20%, 90% 100%, 10% 100%);
+    width: 130%;
+    left: -10%;
+    margin-left: -15%;
+    margin-top: -20%;
+}
+
 /*
     Chat window
 */
@@ -422,13 +432,13 @@ body.rightscene #editor {
 
 body.rightscene #facecam {
     right: 1%;
-    width: 26%;
+    width: 24%;
 }
 
 body.rightscene.chat #chat {
     right: 1%;
     width: 28%;
-    height: 54%;
+    height: 55%;
 }
 body.rightscene.chat #facecam {
     width: 28%;
@@ -440,10 +450,16 @@ body.rightscene.chat #editor {
 }
 
 /* right + hardware */
+body.rightscene.hardware #facecam {
+    width: 22%;
+}
 body.rightscene.hardware #hardwarecam {
     right: 1%;
-    width: 24%;
-    bottom: 41%;
+    width: 20%;
+    bottom: 34%;
+}
+body.rightscene.hardware #editor {
+    width: 88%
 }
 
 /* right + hardware + chat */
@@ -545,10 +561,9 @@ body.leftscene #editor {
     left: 4%;
     height: 87%;
 }
-
 body.leftscene #facecam {
-    right: 72%;
-    width: 26%;
+    right: 74%;
+    width: 24%;
 }
 
 body.leftscene #hardwarecam {
@@ -563,11 +578,22 @@ body.leftscene #social {
     bottom: 1.5%;
 }
 
+/* left + hardware */
 body.leftscene.hardware #hardwarecam {
-    right: 74%;
-    width: 24%;
-    bottom: 41%;
+    right: 78%;
+    width: 20%;
+    bottom: 34%;
 }
+body.leftscene.hardware #facecam {
+    right: 76%;
+    width: 22%;
+}
+body.leftscene.hardware #editor {
+    left: 10%;
+    width: 88%
+
+}
+
 
 /* left + hardware + chat */
 body.leftscene.hardware.chat #editor {
@@ -581,7 +607,7 @@ body.leftscene.hardware.chat #chat {
 }
 body.leftscene.hardware.chat #hardwarecam {
     width:22%;
-    bottom: 35%;
+    bottom: 34%;
     right: 77%;
 }
 body.leftscene.hardware.chat #facecam {
@@ -635,7 +661,7 @@ body.leftscene.chat #facecam {
 
 body.leftscene.chat #chat {
     right: 70%;
-    height: 54%;
+    height: 55%;
     width: 28%;
 }
 
@@ -725,13 +751,14 @@ body.chatscene.chat #chat {
 }
 body.chatscene.hardware #facecam {
     bottom: 19%;
-    right: 49%;
+    right: 51%;
     width: 46%;
 }
 body.chatscene.hardware #hardwarecam {
     width: 46%;
+    height: calc(46% * 4 /3);    
     bottom: 19%;
-    right: 1%;            
+    right: 2%;            
 }
 
 body.chatscene.hardware.chat #facecam {
@@ -739,12 +766,13 @@ body.chatscene.hardware.chat #facecam {
 }
 body.chatscene.hardware.chat #hardwarecam {
     width: 30%;
+    height: calc(30% * 4 /3);    
     bottom: 9%;
-    right: 1%; 
+    right: 2%; 
 }
 body.chatscene.hardware.chat #chat {
     top: 1%;
-    right: 1%;
+    right: 2%;
     width: 30%;
     height: 43%;
 }
@@ -769,11 +797,6 @@ body.countdownscene #countdown {
 }
 body.countdownscene #social {
     left: 18%;
-}
-body.countdownscene.hardware #hardwarecam {
-    right: -10%;
-    width: 120%;
-    bottom: -10%;
 }
     </style>
     <style id="editorstyle"></style>
