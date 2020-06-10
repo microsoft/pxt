@@ -1,4 +1,3 @@
-
 namespace pxt.blocks.layout {
     export interface FlowOptions {
         ratio?: number;
@@ -170,15 +169,24 @@ namespace pxt.blocks.layout {
             && !BrowserUtils.isUwpEdge(); // TODO figure out why screenshots are not working in UWP; disable for now
     }
 
-    export function screenshotAsync(ws: Blockly.WorkspaceSvg, pixelDensity?: number): Promise<string> {
-        return toPngAsync(ws, pixelDensity);
+    export function screenshotAsync(ws: Blockly.WorkspaceSvg, pixelDensity?: number, encodeBlocks?: boolean): Promise<string> {
+        return toPngAsync(ws, pixelDensity, encodeBlocks);
     }
 
-    export function toPngAsync(ws: Blockly.WorkspaceSvg, pixelDensity?: number): Promise<string> {
+    export function toPngAsync(ws: Blockly.WorkspaceSvg, pixelDensity?: number, encodeBlocks?: boolean): Promise<string> {
+        let blockSnippet: BlockSnippet;
+        if (encodeBlocks) {
+            blockSnippet = {
+                xml: pxt.Util.htmlEscape(pxt.blocks.saveBlocksXml(ws))
+            };
+        }
+
         return toSvgAsync(ws)
             .then(sg => {
                 if (!sg) return Promise.resolve<string>(undefined);
-                return toPngAsyncInternal(sg.width, sg.height, (pixelDensity | 0) || 4, sg.xml);
+                return toPngAsyncInternal(
+                    sg.width, sg.height, (pixelDensity | 0) || 4, sg.xml,
+                    encodeBlocks ? JSON.stringify(blockSnippet, null, 2) : null);
             }).catch(e => {
                 pxt.reportException(e);
                 return undefined;
@@ -186,33 +194,41 @@ namespace pxt.blocks.layout {
     }
 
     const MAX_SCREENSHOT_SIZE = 1e6; // max 1Mb
-    function toPngAsyncInternal(width: number, height: number, pixelDensity: number, data: string): Promise<string> {
-        return new Promise<string>((resolve, reject) => {
-            const cvs = document.createElement("canvas") as HTMLCanvasElement;
-            const ctx = cvs.getContext("2d");
-            const img = new Image;
+    function toPngAsyncInternal(width: number, height: number, pixelDensity: number, data: string, text?: string): Promise<string> {
+        return pxt.lzmaCompressAsync(text)
+            .then(blob => {
+                return new Promise<string>((resolve, reject) => {
+                    let cvs = document.createElement("canvas") as HTMLCanvasElement;
+                    const ctx = cvs.getContext("2d");
+                    const img = new Image;
 
-            cvs.width = width * pixelDensity;
-            cvs.height = height * pixelDensity;
-            img.onload = function () {
-                ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
-                let canvasdata = cvs.toDataURL("image/png");
-                // if the generated image is too big, shrink image
-                while (canvasdata.length > MAX_SCREENSHOT_SIZE) {
-                    cvs.width = (cvs.width / 2) >> 0;
-                    cvs.height = (cvs.height / 2) >> 0;
-                    pxt.log(`screenshot size ${canvasdata.length}b, shrinking to ${cvs.width}x${cvs.height}`)
-                    ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
-                    canvasdata = cvs.toDataURL("image/png");
-                }
-                resolve(canvasdata);
-            };
-            img.onerror = ev => {
-                pxt.reportError("blocks", "blocks screenshot failed");
-                resolve(undefined)
-            }
-            img.src = data;
-        })
+                    cvs.width = width * pixelDensity;
+                    cvs.height = height * pixelDensity;
+                    img.onload = function () {
+                        ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
+                        let dataLength = cvs.toDataURL("image/png").length;
+                        // if the generated image is too big, shrink image
+                        while (dataLength > MAX_SCREENSHOT_SIZE) {
+                            cvs.width = (cvs.width / 2) >> 0;
+                            cvs.height = (cvs.height / 2) >> 0;
+                            pxt.log(`screenshot size ${dataLength}b, shrinking to ${cvs.width}x${cvs.height}`)
+                            ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
+                            dataLength = cvs.toDataURL("image/png").length;
+                        }
+                        if (blob) {
+                            let datacvs = pxt.Util.encodeBlobAsync(cvs, blob, true);
+                            resolve(datacvs.toDataURL("image/png"));
+                        } else {
+                            resolve(cvs.toDataURL("image/png"));
+                        }
+                    };
+                    img.onerror = ev => {
+                        pxt.reportError("blocks", "blocks screenshot failed");
+                        resolve(undefined)
+                    }
+                    img.src = data;
+                })
+            });
     }
 
     const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";

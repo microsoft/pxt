@@ -1497,10 +1497,17 @@ export class ProjectView
             Promise.resolve(pxt.U.uint8ArrayToString(buf)) :
             pxt.lzmaDecompressAsync(buf))
             .then(contents => {
-                let data = JSON.parse(contents) as pxt.cpp.HexFile;
-                this.importHex(data, options);
+                let parsedContents = JSON.parse(contents);
+                if (parsedContents.xml) {
+                    let blockSnippet = parsedContents as pxt.blocks.BlockSnippet;
+                    let text = pxt.Util.htmlUnescape(blockSnippet.xml.replace(/^"|"$/g, ""));
+                    pxt.blocks.loadBlocksXml(this.blocksEditor.editor, text)
+                } else {
+                    let data = parsedContents as pxt.cpp.HexFile;
+                    this.importHex(data, options);
+                }
             }).catch(e => {
-                core.warningNotification(lf("Sorry, we could not import this project."))
+                core.warningNotification(lf("Sorry, we could not import this project or block snippet."))
                 this.openHome();
             });
     }
@@ -1546,13 +1553,13 @@ export class ProjectView
     importPNGFile(file: File, options?: pxt.editor.ImportFileOptions) {
         if (!file) return;
         ts.pxtc.Util.fileReadAsBufferAsync(file)
-            .then(buf => screenshot.decodeBlobAsync("data:image/png;base64," +
+            .then(buf => pxt.Util.decodeBlobAsync("data:image/png;base64," +
                 btoa(pxt.Util.uint8ArrayToString(buf))))
             .then(buf => this.importProjectCoreAsync(buf, options))
     }
 
     importPNGBuffer(buf: ArrayBuffer) {
-        screenshot.decodeBlobAsync("data:image/png;base64," +
+        pxt.Util.decodeBlobAsync("data:image/png;base64," +
             btoa(pxt.Util.uint8ArrayToString(new Uint8Array(buf))))
             .then(buf => this.importProjectCoreAsync(buf));
     }
