@@ -159,16 +159,16 @@
             addButton("EraseTool", "Clear all drawings", clearPaint)
             addButton("ChromeClose", "Exit paint mode", togglePaint)
         } else {
-            addSceneButton("OpenPane", "move webcam left", "left")
-            addSceneButton("OpenPaneMirrored", "move webcam right", "right")
-            addSceneButton("Contact", "webcam large", "chat")
-            addSceneButton("Timer", "show countdown", "countdown")
+            addSceneButton("OpenPane", "Move webcam left (Ctrl+Shift+1)", "left")
+            addSceneButton("OpenPaneMirrored", "Move webcam right (Ctrl+Shift+2)", "right")
+            addSceneButton("Contact", "Webcam large (Ctrl+Shift+3)", "chat")
+            addSceneButton("Timer", "Show countdown (Ctrl+Shift+4)", "countdown")
             addSep()
             if (config.hardwareCamId)
-                addButton("Robot", "hardware webcam", toggleHardware, state.hardware)
+                addButton("Robot", "Hardware webcam (Ctrl+Shift+5)", toggleHardware, state.hardware)
             if (config.mixer || config.twitch)
-                addButton("OfficeChat", "show/hide chat", toggleChat, state.chat)
-            addButton("PenWorkspace", "Paint mode", togglePaint)
+                addButton("OfficeChat", "Chat  (Ctrl+Shift+6)", toggleChat, state.chat)
+            addButton("PenWorkspace", "Paint mode  (Ctrl+Shift+7)", togglePaint)
         }
 
         addSep()
@@ -1066,6 +1066,38 @@ background: #615fc7;
             saveConfig(config);
         }
     }
+
+    document.addEventListener("keyup", function(ev) {
+        if (ev.shiftKey && ev.ctrlKey) {
+            switch(ev.keyCode) {
+                case 49: // 1
+                    ev.preventDefault();
+                    setScene("left");
+                    break;
+                case 50: // 2
+                    ev.preventDefault();
+                    setScene("right"); 
+                    break;
+                case 51: // 3
+                    ev.preventDefault();
+                    setScene("chat"); 
+                    break;
+                case 52: // 4
+                    ev.preventDefault();
+                    setScene("countdown"); 
+                    break;
+                case 53: // 5
+                    (ev);
+                    break;
+                case 54: // 6
+                    toggleChat(ev);
+                    break;
+                case 55: // 7
+                    togglePaint(ev);
+                    break;
+            }
+        }
+    }, true);
 
     function tickEvent(id, data, opts) {
         if (typeof pxt === "undefined" || !pxt.aiTrackException || !pxt.aiTrackEvent) return;
