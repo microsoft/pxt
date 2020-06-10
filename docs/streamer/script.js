@@ -407,7 +407,7 @@
             return;
         }
 
-        let url = `${editorConfig.url}?editorLayout=ide&nosandbox=1`;
+        let url = `${editorConfig.url}?editorLayout=ide&nosandbox=1&controller=1`;
         if (config.multiEditor)
             url += `&nestededitorsim=1`;
         editor.src = url;
