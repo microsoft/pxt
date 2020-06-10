@@ -2570,16 +2570,19 @@ export class ProjectView
         this.toggleSimulatorFullscreen();
     }
 
-    toggleSimulatorFullscreen() {
-        if (!this.state.fullscreen) {
+    setSimulatorFullScreen(enabled: boolean) {
+        if (!enabled) {
             document.addEventListener('keydown', this.closeOnEscape);
             simulator.driver.focus();
         } else {
             document.removeEventListener('keydown', this.closeOnEscape);
         }
         this.closeFlyout();
+        this.setState({ fullscreen: enabled });
+    }
 
-        this.setState({ fullscreen: !this.state.fullscreen });
+    toggleSimulatorFullscreen() {
+        this.setSimulatorFullScreen(!this.state.fullscreen);
     }
 
     closeFlyout() {

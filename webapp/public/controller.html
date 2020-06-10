@@ -65,6 +65,7 @@
         }
 
         var pendingMsgs = {};
+        var fullScreen = false;
         function sendMessage(action) {
             console.log('send ' + action)
             var logs = document.getElementById("logs");
@@ -88,6 +89,8 @@
             }
             else if (action == 'settracestate') {
                 msg.enabled = true;
+            } else if (action == 'setsimulatorfullscreen') {
+                msg.enabled = fullScreen = !fullScreen;
             }
             if (msg.response)
                 pendingMsgs[msg.id] = msg;
@@ -169,6 +172,7 @@
         <button class="ui button" onclick="sendMessage('redo')">redo</button>
         <button class="ui button" onclick="sendMessage('renderblocks')">renderblocks</button>
         <button class="ui button" onclick="sendMessage('closeflyout')">close flyout</button>
+        <button class="ui button" onclick="sendMessage('setsimulatorfullscreen')">set sim full screen</button>
         <button class="ui button" onclick="sendMessage('togglehighcontrast')">toggle high contrast</button>
         <button class="ui button" onclick="sendMessage('togglegreenscreen')">toggle green screen</button>
         <button class="ui button" onclick="sendMessage('print')">print</button>
