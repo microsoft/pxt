@@ -95,8 +95,8 @@ namespace pxt.blocks {
         let xmlBlock = Blockly.Xml.textToDom(text);
         let block = Blockly.Xml.domToBlock(xmlBlock, ws) as Blockly.BlockSvg;
         if (ws.getMetrics) {
-            var metrics = ws.getMetrics() as Blockly.Metrics;
-            var blockDimensions = block.getHeightWidth();
+            let metrics = ws.getMetrics() as Blockly.Metrics;
+            let blockDimensions = block.getHeightWidth();
             block.moveBy(
               metrics.viewLeft + (metrics.viewWidth / 2) - (blockDimensions.width / 2),
               metrics.viewTop + (metrics.viewHeight / 2) - (blockDimensions.height / 2)
