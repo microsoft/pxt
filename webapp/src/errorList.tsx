@@ -4,11 +4,11 @@ import * as React from "react";
 import * as sui from "./sui";
 
 export interface ErrorListProps {
-    onSizeChange: (state: pxt.editor.ErrorListState) => void;
-    listenToErrorChanges: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void;
-    listenToExceptionChanges: (handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void) => void,
-    goToError: (errorLocation: pxtc.LocationInfo) => void;
-    startDebugger: () => void;
+    onSizeChange?: (state: pxt.editor.ErrorListState) => void;
+    listenToErrorChanges?: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void;
+    listenToExceptionChanges?: (handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void) => void,
+    goToError?: (errorLocation: pxtc.LocationInfo) => void;
+    startDebugger?: () => void;
 }
 export interface ErrorListState {
     isCollapsed: boolean,
@@ -42,7 +42,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
     render() {
         const {isCollapsed, errors, exception} = this.state;
-        const errorsAvailable = !!errors?.length || !!exception;
+        const errorsAvailable = true; //!!errors?.length || !!exception;
         const collapseTooltip = lf("Collapse Error List");
 
         const errorListContent = !isCollapsed ? (exception ? this.generateStackTraces(exception) : this.getCompilerErrors(errors)) : undefined;
