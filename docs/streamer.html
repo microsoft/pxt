@@ -264,7 +264,7 @@ Settings
     width: 50%;
     height: 64%;
     background: #ccc;
-    padding: 3rem;
+    padding: 2vw;
     overflow-y: auto;
 }
 
@@ -284,6 +284,9 @@ body.chatscene #settings {
 
 #settings h2 {
     margin: 0;  
+    border-top: solid 1px #888;
+    margin-top: 1vw;
+    padding-top: 1vw;
 }
 
 #settings .field {
@@ -843,7 +846,7 @@ body.countdownscene.hardware #hardwarecam {
             <option value="100"></option>
         </datalist>        
         <button id="settingsclose">close</button>
-        <h2>MakeCode Streamer</h2>
+        <h1>MakeCode Streamer</h1>
         <div class="field">
             <label for="titleinput">Stream title</label>
             <input id="titleinput" placeholder="My awesome stream" />
@@ -852,6 +855,7 @@ body.countdownscene.hardware #hardwarecam {
             <label for="bannerinput">Stream banner</label>
             <input id="bannerinput" placeholder="Text that displays near the icons" />
         </div>
+        <h2>Editor</h2>
         <div class="field">
             <label for="editorselect">Choose your editor</label>
             <select id="editorselect"></select>
