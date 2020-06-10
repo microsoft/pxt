@@ -1264,8 +1264,20 @@ export class ProjectView
                     h.editor = pkg.mainPkg.config.preferredEditor
                 let file = main.getMainFile();
                 const e = h.editor != pxt.BLOCKS_PROJECT_NAME && this.settings.fileHistory.filter(e => e.id == h.id)[0]
-                if (e)
-                    file = main.lookupFile(e.name) || file
+                if (e) {
+                    const lastEdited = main.lookupFile(e.name);
+
+                    if (lastEdited) {
+                        file = lastEdited
+                    }
+                    else if (pkg.getExtensionOfFileName(e.name) === "ts") {
+                        file = main.lookupFile("this/" + file.getFileNameWithExtension("ts")) || file;
+                    }
+                    else if (pkg.getExtensionOfFileName(e.name) === "py") {
+                        file = main.lookupFile("this/" + file.getFileNameWithExtension("py")) || file;
+                    }
+                }
+
 
                 // no history entry, and there is a virtual file for the current file in the language recorded in the header
                 if ((!e && h.editor && file.getVirtualFileName(h.editor)))
