@@ -84,7 +84,12 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                     return qName
                 }
 
-                const items = (completions.entries || []).map((si, i) => {
+                let entries = completions.entries;
+                if (entries) {
+                    entries = entries.filter(si => si.name.indexOf("_") != 0);
+                }
+
+                const items = (entries || []).map((si, i) => {
                     let insertSnippet = stripLocalNamespace(this.python ? si.pySnippet : si.snippet);
                     let qName = stripLocalNamespace(this.python ? si.pyQName : si.qName);
                     let name = this.python ? si.pyName : si.name;
