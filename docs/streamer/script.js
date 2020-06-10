@@ -141,8 +141,8 @@
         }
 
         if (state.paint) {
-            addPaintButton("ArrowTallUpLeft", "Draw arrow", "arrow")
-            addPaintButton("RectangleShape", "Draw rectangle", "rect")
+            addPaintButton("ArrowTallUpLeft", "Draw arrow (Alt+Shift+A)", "arrow")
+            addPaintButton("RectangleShape", "Draw rectangle (Alt+Shift+R)", "rect")
             addPaintButton("PenWorkspace", "Draw freeform", "pen")
             addButton("WhiteBoardApp32", "Paint screen in white", whiteboard)
             emojis.forEach(emoji => {
@@ -159,16 +159,16 @@
             addButton("EraseTool", "Clear all drawings", clearPaint)
             addButton("ChromeClose", "Exit paint mode", togglePaint)
         } else {
-            addSceneButton("OpenPane", "Move webcam left (Ctrl+Shift+1)", "left")
-            addSceneButton("OpenPaneMirrored", "Move webcam right (Ctrl+Shift+2)", "right")
-            addSceneButton("Contact", "Webcam large (Ctrl+Shift+3)", "chat")
-            addSceneButton("Timer", "Show countdown (Ctrl+Shift+4)", "countdown")
+            addSceneButton("OpenPane", "Move webcam left (Alt+Shift+1)", "left")
+            addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+2)", "right")
+            addSceneButton("Contact", "Webcam large (Alt+Shift+3)", "chat")
+            addSceneButton("Timer", "Show countdown (Alt+Shift+4)", "countdown")
             addSep()
             if (config.hardwareCamId)
-                addButton("Robot", "Hardware webcam (Ctrl+Shift+5)", toggleHardware, state.hardware)
+                addButton("Robot", "Hardware webcam (Alt+Shift+5)", toggleHardware, state.hardware)
             if (config.mixer || config.twitch)
-                addButton("OfficeChat", "Chat  (Ctrl+Shift+6)", toggleChat, state.chat)
-            addButton("PenWorkspace", "Paint mode  (Ctrl+Shift+7)", togglePaint)
+                addButton("OfficeChat", "Chat  (Alt+Shift+6)", toggleChat, state.chat)
+            addButton("PenWorkspace", "Paint mode  (Alt+Shift+7)", togglePaint)
         }
 
         addSep()
@@ -1067,10 +1067,11 @@ background: #615fc7;
         }
     }
 
-    document.addEventListener("keyup", function(ev) {
+    document.onkeyup = function(ev) {
         // always active
-        if (ev.shiftKey && ev.ctrlKey) {
+        if (ev.shiftKey && ev.altKey) {
             switch(ev.keyCode) {
+                // scenes
                 case 49: // 1
                     ev.preventDefault();
                     setScene("left");
@@ -1096,6 +1097,12 @@ background: #615fc7;
                 case 55: // 7
                     togglePaint(ev);
                     break;
+                
+                // paint tools
+                case 65: // a
+                    setPaintTool(ev, "arrow"); break;
+                case 82: // r
+                    setPaintTool(ev, "rect"); break;
             }
         }
         // special keys
@@ -1107,7 +1114,14 @@ background: #615fc7;
                     updateCountdown(-60); break;
             }
         }
-    }, true);
+
+        function setPaintTool(ev, name) {
+            state.painttool = name
+            if (!state.paint)
+                togglePaint(ev);
+            render()            
+        }
+    };
 
     function tickEvent(id, data, opts) {
         if (typeof pxt === "undefined" || !pxt.aiTrackException || !pxt.aiTrackEvent) return;
