@@ -464,8 +464,26 @@ background: #615fc7;
 }
 `
         }
+
+        const faceCamFilter = camFilter(config.faceCamFilter)
+        if (faceCamFilter)
+            css += `#facecamvideo { filter: ${faceCamFilter}; }
+`
+        const hardwareCamFilter = camFilter(config.hardwareCamFilter)
+        if (hardwareCamFilter)
+            css += `#hardwarecamvideo { filter: ${hardwareCamFilter}; }
+        `
+
         editorStyle.innerText = ""
         editorStyle.append(document.createTextNode(css));
+    }
+
+    function camFilter(filter) {
+        filter = filter || {};
+        return ["contrast", "brightness", "saturate"]
+            .filter(k => filter[k] !== undefined)
+            .map(k => `${k}(${filter[k] * 2}%)`)
+            .join(" ");
     }
 
     function stopEvent(e) {
@@ -862,6 +880,17 @@ background: #615fc7;
             render()
             loadFaceCam().then(() => loadSettings())
         }
+        config.faceCamFilter = config.faceCamFilter || {};
+        ["contrast", "brightness", "saturate"].forEach(function(k) {
+            const elid = "facecam" + k;
+            const el = document.getElementById(elid);
+            el.valueAsNumber = config.faceCamFilter[k];
+            el.onchange = function() {
+                config.faceCamFilter[k] = el.valueAsNumber;
+                saveConfig(config);
+                loadStyle();
+            }
+        })
         const facecamerror = document.getElementById("facecamerror")
         if (state.faceCamError)
             facecamerror.classList.remove("hidden")
@@ -910,6 +939,17 @@ background: #615fc7;
             saveConfig(config)
             loadHardwareCam().then(() => loadSettings())
         }
+        config.hardwareCamFilter = config.hardwareCamFilter || {};
+        ["contrast", "brightness", "saturate"].forEach(function(k) {
+            const elid = "hardwarecam" + k;
+            const el = document.getElementById(elid);
+            el.valueAsNumber = config.hardwareCamFilter[k];
+            el.onchange = function() {
+                config.hardwareCamFilter[k] = el.valueAsNumber;
+                saveConfig(config);
+                loadStyle();
+            }
+        })        
         const hardwarecamerror = document.getElementById("hardwarecamerror")
         if (config.hardwareCamId && state.hardwareCamError)
             hardwarecamerror.classList.remove("hidden")
