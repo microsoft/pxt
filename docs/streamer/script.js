@@ -1068,6 +1068,7 @@ background: #615fc7;
     }
 
     document.addEventListener("keyup", function(ev) {
+        // always active
         if (ev.shiftKey && ev.ctrlKey) {
             switch(ev.keyCode) {
                 case 49: // 1
@@ -1095,6 +1096,15 @@ background: #615fc7;
                 case 55: // 7
                     togglePaint(ev);
                     break;
+            }
+        }
+        // special keys
+        if (state.sceneIndex == COUNTDOWN_SCENE_INDEX) {
+            switch(ev.keyCode) {
+                case 38: // arrow up
+                    updateCountdown(60); break;
+                case 40: // arrow down
+                    updateCountdown(-60); break;
             }
         }
     }, true);
