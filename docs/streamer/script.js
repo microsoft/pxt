@@ -57,6 +57,7 @@
         loadSocial()
         setScene("right")
         render()
+        handleHashChange();
     }
 
     function saveConfig(config) {
@@ -684,6 +685,22 @@ background: #615fc7;
                     .forEach((ifrm) => ifrm.contentWindow.postMessage(data, "*"));
             }
         };
+
+        window.onhashchange = handleHashChange;
+
+    }
+
+    function handleHashChange() {
+        const hash = window.location.hash;
+        const m = /^#([^:]+):(.+)$/.exec(hash);
+        if (m) {
+            const action = m[1];
+            const arg = m[2];
+            switch(action) {
+                case "editor": setEditor(arg); break;
+            }
+        }
+        window.history.replaceState('', '', '#')
     }
 
     async function startStream(el, deviceId, rotate) {
@@ -824,15 +841,7 @@ background: #615fc7;
         })
         editorselect.onchange = function () {
             const selected = editorselect.options[editorselect.selectedIndex];
-            config.editor = selected.value;
-            const editorConfig = editorConfigs[config.editor];
-            if (editorConfig)
-                config.title = `MakeCode for ${editorConfig.name}`
-            saveConfig(config);
-            loadEditor();
-            loadSettings();
-            loadSocial();
-            render()
+            setEditor(selected.value);
         }
 
         const multicheckbox = document.getElementById("multicheckbox")
@@ -1065,6 +1074,21 @@ background: #615fc7;
             micdelayinput.value = config.micDelay
             saveConfig(config);
         }
+    }
+
+    function setEditor(editor) {
+        const editorConfig = editorConfigs[editor];
+        if (!editorConfig) return;
+        
+        const config = readConfig();
+        config.editor = editor;
+        if (editorConfig)
+            config.title = `MakeCode for ${editorConfig.name}`
+        saveConfig(config);
+        loadEditor();
+        loadSettings();
+        loadSocial();
+        render()
     }
 
     document.onkeyup = function(ev) {
