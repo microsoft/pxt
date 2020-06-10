@@ -456,7 +456,7 @@ background: linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1)
 border-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
 }
 .videolabel {
-background: ${styles.menu};
+background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
 color: white;
 }
 #social {
@@ -825,9 +825,14 @@ background: #615fc7;
         editorselect.onchange = function () {
             const selected = editorselect.options[editorselect.selectedIndex];
             config.editor = selected.value;
+            const editorConfig = editorConfigs[config.editor];
+            if (editorConfig)
+                config.title = `MakeCode for ${editorConfig.name}`
             saveConfig(config);
-            render()
             loadEditor();
+            loadSettings();
+            loadSocial();
+            render()
         }
 
         const multicheckbox = document.getElementById("multicheckbox")
