@@ -482,7 +482,7 @@ background: #615fc7;
         filter = filter || {};
         return ["contrast", "brightness", "saturate"]
             .filter(k => filter[k] !== undefined)
-            .map(k => `${k}(${filter[k]}%)`)
+            .map(k => `${k}(${filter[k] * 2}%)`)
             .join(" ");
     }
 

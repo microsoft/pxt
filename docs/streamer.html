@@ -276,11 +276,25 @@ Settings
     position: absolute;
     left: 16%;
     top: 16%;
-    width: 58%;
-    height: 58%;
+    width: 50%;
+    height: 64%;
     background: #ccc;
     padding: 3rem;
     overflow-y: auto;
+}
+
+body.leftscene #settings {
+    left: 32%;
+    top: 3%;
+}
+
+body.rightscene #settings {
+    left: 5%;
+    top: 3%;
+}
+body.chatscene #settings {
+    top: 51%;
+    height: 26%;
 }
 
 #settings h2 {
@@ -830,6 +844,19 @@ body.countdownscene.hardware #hardwarecam {
         <div id="banner"></div>
     </div>
     <div class="box animated hidden" id="settings">
+        <datalist id="tickmarks">
+            <option value="0"></option>
+            <option value="10"></option>
+            <option value="20"></option>
+            <option value="30"></option>
+            <option value="40"></option>
+            <option value="50"></option>
+            <option value="60"></option>
+            <option value="70"></option>
+            <option value="80"></option>
+            <option value="90"></option>
+            <option value="100"></option>
+        </datalist>        
         <button id="settingsclose">close</button>
         <h2>MakeCode Streamer</h2>
         <div class="field">
@@ -860,15 +887,15 @@ body.countdownscene.hardware #hardwarecam {
         </div>
         <div class="field">
             <label for="facecamcontrast">Contrast</label>
-            <input type="range" id="facecamcontrast" min="0" max="100">
+            <input type="range" id="facecamcontrast" min="0" max="100" step="1" list="tickmarks">
         </div>
         <div class="field">
             <label for="facecambrightness">Brightness</label>
-            <input type="range" id="facecambrightness" min="0" max="100">
+            <input type="range" id="facecambrightness" min="0" max="100" step="1" list="tickmarks">
         </div>
         <div class="field">
             <label for="facecamsaturate">Saturate</label>
-            <input type="range" id="facecamsaturate" min="0" max="100">
+            <input type="range" id="facecamsaturate" min="0" max="100" step="1" list="tickmarks">
         </div>
         <div class="field">
             <input type="checkbox" id="facerotatecameracheckbox"></input>
@@ -890,15 +917,15 @@ body.countdownscene.hardware #hardwarecam {
         </div>        
         <div class="field"> 
             <label for="hardwarecamcontrast">Contrast</label>
-            <input type="range" id="hardwarecamcontrast" min="0" max="100">
+            <input type="range" id="hardwarecamcontrast" min="0" max="100" step="1" list="tickmarks">
         </div>
         <div class="field">
             <label for="hardwarecambrightness">Brightness</label>
-            <input type="range" id="hardwarecambrightness" min="0" max="100">
+            <input type="range" id="hardwarecambrightness" min="0" max="100" step="1" list="tickmarks">
         </div>
         <div class="field">
             <label for="hardwarecamsaturate">Saturate</label>
-            <input type="range" id="hardwarecamsaturate" min="0" max="100">
+            <input type="range" id="hardwarecamsaturate" min="0" max="100" step="1" list="tickmarks">
         </div>       
         <h2>Paint</h2>
         <div class="field">
