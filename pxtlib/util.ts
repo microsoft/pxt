@@ -225,12 +225,6 @@ namespace ts.pxtc.Util {
         return r
     }
 
-    export function mapStringMapAsync<T, S>(m: pxt.Map<T>, f: (k: string, v: T) => Promise<S>) {
-        let r: pxt.Map<S> = {}
-        return Promise.all(Object.keys(m).map(k => f(k, m[k]).then(v => r[k] = v)))
-            .then(() => r)
-    }
-
     export function values<T>(m: pxt.Map<T>) {
         return Object.keys(m || {}).map(k => m[k])
     }

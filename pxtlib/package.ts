@@ -605,11 +605,12 @@ namespace pxt {
 
 
             const loadDepsRecursive = (deps: pxt.Map<string>, from: Package, isCpp = false) => {
-                return U.mapStringMapAsync(deps || from.dependencies(isCpp), (id, ver) => {
+                if (!deps) deps = from.dependencies(isCpp)
+                return Promise.mapSeries(Object.keys(deps), (id) => {
+                    const ver = deps[id] || "*"
                     if (id == "hw" && pxt.hwVariant)
                         id = "hw---" + pxt.hwVariant
                     let mod = from.resolveDep(id)
-                    ver = ver || "*"
                     if (mod) {
                         if (mod.invalid()) {
                             // failed to resolve dependency, ignore
