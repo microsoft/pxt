@@ -17,7 +17,6 @@ namespace pxtblockly {
         private static galleryTiles: TilesetDropdownOption[];
 
         public static rebuildTileCache(ws: Blockly.Workspace, blocksInfo: pxtc.BlocksInfo) {
-            console.log(JSON.stringify(this));
             const tiles = getAllTilesetTiles(ws);
 
             if (!FieldTileset.tileCache) FieldTileset.tileCache = {};
