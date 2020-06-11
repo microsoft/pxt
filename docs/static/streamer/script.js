@@ -4,6 +4,7 @@
     const editor = document.getElementById("editor");
     const editor2 = document.getElementById("editor2");
     const selectapp = document.getElementById("selectapp");
+    const facecamcontainer = document.getElementById("facecam");
     const facecam = document.getElementById("facecamvideo");
     const facecamlabel = document.getElementById("facecamlabel");
     const hardwarecam = document.getElementById("hardwarecamvideo");
@@ -527,12 +528,12 @@ background: #615fc7;
         if (config.mixer) {
             chat.src = `https://mixer.com/embed/chat/${config.mixer}?composer=false`;
             if (!chat.parentElement)
-                container.insertBefore(chat, facecam)
+                container.insertBefore(chat, facecamcontainer)
         }
         else if (config.twitch) {
             chat.src = `https://www.twitch.tv/embed/${config.twitch}/chat?parent=makecode.com`;
             if (!chat.parentElement)
-                container.insertBefore(chat, facecam)
+                container.insertBefore(chat, facecamcontainer)
         }
         else // remove from dom
             chat.remove();
@@ -1030,6 +1031,7 @@ background: #615fc7;
             config.twitch = (twitchinput.value || "").replace(/^https:\/\/twitch.tv\//, '').replace(/^\//, '').trim()
             twitchinput.value = config.twitch
             saveConfig(config);
+            state.chat = !!config.twitch;
             loadSocial();
             loadChat();
             render()
@@ -1041,6 +1043,7 @@ background: #615fc7;
             config.mixer = (mixerinput.value || "").replace(/^https:\/\/mixer.com\//, '').replace(/^\//, '').trim()
             mixerinput.value = config.mixer
             saveConfig(config);
+            state.chat = !!config.mixer;
             loadSocial();
             loadChat();
             render()
