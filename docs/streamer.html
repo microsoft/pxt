@@ -880,14 +880,6 @@ body.countdownscene.hardware #hardwarecam {
             <video id="introvideo" preload="metadata" poster="/static/streamer/intro.png" src="/static/streamer/intro.webm"></video>
             <label>Take the tour!</label>
         </button>
-        <div class="field">
-            <label for="titleinput">Stream title</label>
-            <input id="titleinput" placeholder="My awesome stream" />
-        </div>
-        <div class="field">
-            <label for="bannerinput">Stream banner</label>
-            <input id="bannerinput" placeholder="Text that displays near the icons" />
-        </div>
         <h2>Editor</h2>
         <div class="field">
             <label for="editorselect">Choose your editor</label>
@@ -896,6 +888,15 @@ body.countdownscene.hardware #hardwarecam {
         <div class="field">
             <input type="checkbox" id="multicheckbox"></input>
             <label for="multicheckbox">Multi editors</label>
+        </div>
+        <h2>Labels</h2>
+        <div class="field">
+            <label for="titleinput">Stream title</label>
+            <input id="titleinput" placeholder="My awesome stream" />
+        </div>
+        <div class="field">
+            <label for="bannerinput">Stream banner</label>
+            <input id="bannerinput" placeholder="Text that displays near the icons" />
         </div>
         <h2>Face camera</h2>
         <div class="field">
@@ -975,7 +976,6 @@ body.countdownscene.hardware #hardwarecam {
             <input id="micdelayinput" type="number" placeholder="200" />
             <div class="error hidden micdelay">Record your video and clap. Adjust the delay so that the video and the audio are in sync.</div>
         </div>
-        <p>When starting the recording, select the current browser tab.</p>
         <h2>Legal</h2>
         <div class="field">
             <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp; Cookies</a>|
