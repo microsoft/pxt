@@ -1097,7 +1097,7 @@ background: #615fc7;
         const config = readConfig();
         config.editor = editor;
         if (editorConfig)
-            config.title = `MakeCode for ${editorConfig.name}`
+            config.title = `MakeCode ${editorConfig.name}`
         saveConfig(config);
         loadEditor();
         loadSettings();
