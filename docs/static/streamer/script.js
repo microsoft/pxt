@@ -1134,7 +1134,7 @@ background: #615fc7;
                     setScene("countdown"); 
                     break;
                 case 53: // 5
-                    (ev);
+                    toggleHardware(ev);
                     break;
                 case 54: // 6
                     toggleChat(ev);
