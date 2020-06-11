@@ -2,10 +2,12 @@
 
 import * as React from "react";
 import * as sui from "./sui";
+import { prototype } from "react-modal";
 
 export interface ErrorListProps {
     onSizeChange?: (state: pxt.editor.ErrorListState) => void;
     listenToErrorChanges?: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void;
+    listenToBlockErrorChanges?: (key: string, onErrorChanges: (errors: pxt.blocks.BlockDiagnostic[]) => void) => void;
     listenToExceptionChanges?: (handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void) => void,
     goToError?: (errorLocation: pxtc.LocationInfo) => void;
     startDebugger?: () => void;
@@ -14,7 +16,8 @@ export interface ErrorListState {
     isCollapsed: boolean,
     errors: pxtc.KsDiagnostic[],
     exception?: pxsim.DebuggerBreakpointMessage,
-    callLocations?: pxtc.LocationInfo[]
+    callLocations?: pxtc.LocationInfo[],
+    blockErrors: pxt.blocks.BlockDiagnostic[]
 }
 
 export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
@@ -25,27 +28,38 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         this.state = {
             isCollapsed: true,
             errors: [],
-            exception: null
+            exception: null,
+            blockErrors: []
         }
 
         this.onCollapseClick = this.onCollapseClick.bind(this)
         this.onErrorsChanged = this.onErrorsChanged.bind(this)
+        this.onBlockErrorsChanged = this.onBlockErrorsChanged.bind(this)
         this.onExceptionDetected = this.onExceptionDetected.bind(this)
         this.onErrorMessageClick = this.onErrorMessageClick.bind(this)
         this.onDisplayStateChange = this.onDisplayStateChange.bind(this)
         this.getCompilerErrors = this.getCompilerErrors.bind(this)
         this.generateStackTraces = this.generateStackTraces.bind(this)
+        this.listBlockErrors = this.listBlockErrors.bind(this)
 
-        props.listenToErrorChanges("errorList", this.onErrorsChanged);
-        props.listenToExceptionChanges("errorList", this.onExceptionDetected)
+        if (props.listenToBlockErrorChanges) {
+            props.listenToBlockErrorChanges("errorList", this.onBlockErrorsChanged)
+        }
+
+        // used for monaco errors TEMP
+        if (props.listenToErrorChanges && props.listenToExceptionChanges) {
+            props.listenToErrorChanges("errorList", this.onErrorsChanged);
+            props.listenToExceptionChanges("errorList", this.onExceptionDetected);
+        }
     }
 
     render() {
-        const {isCollapsed, errors, exception} = this.state;
-        const errorsAvailable = true; //!!errors?.length || !!exception;
+        const {isCollapsed, errors, exception, blockErrors} = this.state;
+        const errorsAvailable = true; //!!errors?.length || !!exception; TEMP
         const collapseTooltip = lf("Collapse Error List");
 
-        const errorListContent = !isCollapsed ? (exception ? this.generateStackTraces(exception) : this.getCompilerErrors(errors)) : undefined;
+        //const errorListContent = !isCollapsed ? (exception ? this.generateStackTraces(exception) : this.getCompilerErrors(errors)) : undefined;
+        const errorListContent = blockErrors ? this.listBlockErrors(blockErrors) : undefined;
 
         return (
             <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''}`} hidden={!errorsAvailable}>
@@ -71,13 +85,17 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         // can resize if needed
 
         const noValueToDisplay = !(errors?.length || exception);
-        this.props.onSizeChange(
-            noValueToDisplay ?
-                undefined
-                : isCollapsed ?
-                    pxt.editor.ErrorListState.HeaderOnly
-                    : pxt.editor.ErrorListState.Expanded
-        );
+
+        // TEMP
+        if (this.props.onSizeChange) {
+            this.props.onSizeChange(
+                noValueToDisplay ?
+                    undefined
+                    : isCollapsed ?
+                        pxt.editor.ErrorListState.HeaderOnly
+                        : pxt.editor.ErrorListState.Expanded
+            );
+        }
     }
 
     onCollapseClick() {
@@ -100,12 +118,22 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         }, this.onDisplayStateChange);
     }
 
+    onBlockErrorsChanged(blockErrors: pxt.blocks.BlockDiagnostic[]) {
+        this.setState({
+            blockErrors,
+            isCollapsed: blockErrors?.length == 0 || this.state.isCollapsed,
+            exception: null
+        }, this.onDisplayStateChange);
+    }
+
     onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage, callLocations: pxtc.LocationInfo[]) {
         this.setState({
             exception,
             callLocations
         })
     }
+
+
 
     getCompilerErrors(errors: pxtc.KsDiagnostic[]) {
         function errorKey(error: pxtc.KsDiagnostic): string {
@@ -133,14 +161,21 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             </div>
         </div>;
     }
+
+    listBlockErrors(blockErrors: pxt.blocks.BlockDiagnostic[]) {
+        return <div className="ui selection list">
+            {(blockErrors || []).map((e, i) => <ErrorListItem key={`${i}-${e}`} blockError={e}/>)}
+        </div>
+    }
 }
 
 interface ErrorListItemProps {
-    index: number;
-    revealError: (location: pxtc.LocationInfo, index: number) => void;
+    index?: number;
+    revealError?: (location: pxtc.LocationInfo, index: number) => void;
     error?: pxtc.KsDiagnostic;
     stackframe?: pxsim.StackFrameInfo;
     location?: pxtc.LocationInfo;
+    blockError?: pxt.blocks.BlockDiagnostic;
 }
 
 interface ErrorListItemState {
@@ -155,10 +190,12 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
     }
 
     render() {
-        const {error, stackframe, location} = this.props
+        const {error, stackframe, location, blockError} = this.props
 
-        const message = stackframe ? lf("at {0} (line {1})", stackframe.funcInfo.functionName, location.line + 1)
-            : lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText)
+        // const message = stackframe ? lf("at {0} (line {1})", stackframe.funcInfo.functionName, location.line + 1)
+        //     : lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText)
+
+        const message = blockError ? lf("{0}", blockError.message) : undefined
 
         return <div className={`item ${stackframe ? 'stackframe' : ''}`} role="button"
                     onClick={this.onErrorListItemClick}

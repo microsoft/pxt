@@ -34,9 +34,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
     breakpointsSet: number[]; // the IDs of the breakpoints set.
 
+    private errorChangesListeners: pxt.Map<(errors: pxt.blocks.BlockDiagnostic[]) => void> = {};
+
     protected debuggerToolbox: DebuggerToolbox;
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
+
+    constructor(parent: pxt.editor.IProjectView) {
+        super(parent);
+
+        this.listenToBlockErrorChanges = this.listenToBlockErrorChanges.bind(this)
+    }
 
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
         let map: pxt.Map<number> = {};
@@ -646,10 +654,21 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let flyoutOnly = this.parent.state.editorState && this.parent.state.editorState.hasCategories === false;
         return (
             <div>
+                <ErrorList listenToBlockErrorChanges={this.listenToBlockErrorChanges}/>
                 <div id="blocksEditor"></div>
                 <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
             </div>
         )
+    }
+
+    listenToBlockErrorChanges(handlerKey: string, handler: (errors: pxt.blocks.BlockDiagnostic[]) => void) {
+        this.errorChangesListeners[handlerKey] = handler;
+    }
+
+    private onBlockErrorChanges(errors: pxt.blocks.BlockDiagnostic[]) {
+        for (let listener of pxt.U.values(this.errorChangesListeners)) {
+            listener(errors)
+        }
     }
 
     getBlocksAreaDiv() {
@@ -893,13 +912,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         })
         this.compilationResult.diagnostics.forEach(d => {
             if (d.blockId) {
+
                 let b = this.editor.getBlockById(d.blockId) as Blockly.BlockSvg;
+
                 if (b) {
                     b.setWarningText(d.message);
                     b.setHighlightWarning(true);
                 }
             }
         })
+        this.onBlockErrorChanges(this.compilationResult.diagnostics)
         this.setBreakpointsFromBlocks();
     }
 
