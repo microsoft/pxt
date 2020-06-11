@@ -77,6 +77,9 @@ body {
 .animated {
     transition: left 0.5s, right 0.5s, bottom 0.5s, top 0.5s, width 0.5s, height 0.5s, opacity 1s;
 }
+button:hover {
+    outline: solid 5px rgba(0,0,100, 0.2);    
+}
 .clickeable {
     cursor:pointer;
 }
@@ -877,7 +880,7 @@ body.countdownscene.hardware #hardwarecam {
         <button id="settingsclose">close</button>
         <h1>MakeCode Streamer</h1>
         <button class="pip" title="Watch the introduction video!">
-            <video id="introvideo" preload="metadata" poster="/static/streamer/intro.png" src="/static/streamer/intro.webm"></video>
+            <video id="introvideo" preload="metadata" poster="/static/streamer/intro.png" src="/static/streamer/intro.mp4"></video>
             <label>Take the tour!</label>
         </button>
         <h2>Editor</h2>

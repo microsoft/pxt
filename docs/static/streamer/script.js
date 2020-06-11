@@ -410,7 +410,7 @@
             return;
         }
 
-        let url = `${editorConfig.url}?editorLayout=ide&nosandbox=1&controller=1`;
+        let url = `${editorConfig.url}?editorLayout=ide&nosandbox=1`;
         if (config.multiEditor)
             url += `&nestededitorsim=1`;
         editor.src = url;
@@ -670,7 +670,11 @@ background: #615fc7;
         }
 
         const introvideo = document.getElementById("introvideo");
-        introvideo.onclick = function() {
+        introvideo.onclick = function(e) {                        
+            tickEvent("streamer.introvideo", undefined, { interactiveConsent: true })
+            stopEvent(e)
+            loadSettings()            
+            settings.classList.add("hidden")
             introvideo.requestPictureInPicture()
                 .then(() => introvideo.play())
         }
