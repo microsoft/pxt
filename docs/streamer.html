@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Microsoft MakeCode Streamer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
     <style>
 /*
 Use https://uifabricicons.azurewebsites.net/
@@ -52,7 +53,7 @@ Use https://uifabricicons.azurewebsites.net/
     Generate your custom css gradients at https://cssgradient.io/ 
 */
 body {
-    font-family: monospace;
+    font-family: 'Open Sans', sans-serif;
     overflow: hidden;
     width:100%;
     height:100%;
@@ -195,6 +196,14 @@ canvas {
 
 body.loading {
     filter: blur(0.2vw);
+}
+
+.pip {
+    padding: 0.5vw;
+}
+.pip video {
+    width: 10vw;
+    display: block;
 }
 
 /**
@@ -503,6 +512,9 @@ body.rightscene.multi #editor2 {
     width: 28%;
     left: 70%;
     height: 54%;
+}
+body.rightscene.multi #facecam {
+    width: 28%;
 }
 
 /* right + chat + multi */
@@ -864,6 +876,10 @@ body.countdownscene.hardware #hardwarecam {
         </datalist>        
         <button id="settingsclose">close</button>
         <h1>MakeCode Streamer</h1>
+        <button class="pip" title="Watch the introduction video!">
+            <video id="introvideo" preload="metadata" poster="/static/streamer/intro.png" src="/static/streamer/intro.webm"></video>
+            <label>Getting started</label>
+        </button>
         <div class="field">
             <label for="titleinput">Stream title</label>
             <input id="titleinput" placeholder="My awesome stream" />
@@ -977,7 +993,7 @@ body.countdownscene.hardware #hardwarecam {
     </div>
 </div>
     <!-- @include tracking.html -->
-<script src="/streamer/script.js"></script>
+<script src="/static/streamer/script.js"></script>
 </body>
 
 </html>
