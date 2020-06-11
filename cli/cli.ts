@@ -2078,17 +2078,11 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     }
 
     const hexCachePath = path.resolve(process.cwd(), "built", "hexcache");
-    const apiInfoPath = path.resolve(process.cwd(), "temp", "api-cache.json");
-    const apiInfoCompressedPath = path.resolve(process.cwd(), "temp", "api-cache-compressed.json");
     nodeutil.mkdirP(hexCachePath);
 
     pxt.log(`building target.json in ${process.cwd()}...`)
 
     let builtInfo: pxt.Map<pxt.PackageApiInfo> = {};
-
-    if (!pxt.appTarget.appTheme.disableAPICache && fs.existsSync(apiInfoPath)) {
-        builtInfo = nodeutil.readJson(apiInfoPath);
-    }
 
     let coreDependencies: string[];
     const corepkg = "libs/" + pxt.appTarget.corepkg;
@@ -2186,9 +2180,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                 });
             }
 
-            nodeutil.writeFileSync(apiInfoPath, nodeutil.stringify(builtInfo));
             const compressedBuiltInfo = compressApiInfo(builtInfo);
-            nodeutil.writeFileSync(apiInfoCompressedPath, nodeutil.stringify(compressedBuiltInfo));
             cfg.apiInfo = compressedBuiltInfo;
 
             const info = ciBuildInfo()
