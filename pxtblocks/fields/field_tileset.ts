@@ -17,6 +17,7 @@ namespace pxtblockly {
         private static galleryTiles: TilesetDropdownOption[];
 
         public static rebuildTileCache(ws: Blockly.Workspace, blocksInfo: pxtc.BlocksInfo) {
+            console.log(JSON.stringify(this));
             const tiles = getAllTilesetTiles(ws);
 
             if (!FieldTileset.tileCache) FieldTileset.tileCache = {};
@@ -51,7 +52,7 @@ namespace pxtblockly {
 
             const tsRefs = getAllBlocksWithTilesets(ws)
                 .map(({ ref }) => ref.getValue() as string)
-                .filter(qname => qname !== "null" && !pxt.Util.startsWith(qname, pxt.sprite.TILE_NAMESPACE));
+                .filter(qname => qname !== "null" && !pxt.Util.startsWith(qname, pxt.sprite.TILE_NAMESPACE) && !pxt.Util.startsWith(qname, "sprites")); // Filtering out sprites, since field_imagedropdown will add one as default
 
             for (const galleryRef of tsRefs) {
                 if (!FieldTileset.tileCache[galleryRef]) {
