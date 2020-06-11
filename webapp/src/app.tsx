@@ -745,7 +745,7 @@ export class ProjectView
             this.typecheck();
         }
         this.markdownChangeHandler();
-    }, 2000, false);
+    }, 2000, true);
     private initEditors() {
         this.textEditor = new monaco.Editor(this);
         this.pxtJsonEditor = new pxtjson.Editor(this);
