@@ -3,6 +3,7 @@
     const container = document.getElementById("container");
     const editor = document.getElementById("editor");
     const editor2 = document.getElementById("editor2");
+    const selectapp = document.getElementById("selectapp");
     const facecam = document.getElementById("facecamvideo");
     const facecamlabel = document.getElementById("facecamlabel");
     const hardwarecam = document.getElementById("hardwarecamvideo");
@@ -745,12 +746,19 @@ background: #615fc7;
     async function startRecording() {
         const config = readConfig();
         state.recording = undefined;
-        const stream = await navigator.mediaDevices.getDisplayMedia({
-            video: {
-                displaySurface: "browser",
-                cursor: "always"
-            }
-        });
+        let stream;
+        try {
+            selectapp.classList.remove("hidden");
+            stream = await navigator.mediaDevices.getDisplayMedia({
+                video: {
+                    displaySurface: "browser",
+                    cursor: "always"
+                }
+            });
+        }
+        finally {
+            selectapp.classList.add("hidden");
+        }
 
         try {
             state.micError = false;
