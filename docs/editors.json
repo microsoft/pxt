@@ -1,6 +1,7 @@
 {
     "arcade": {
         "name": "Arcade",
+        "title": "MakeCode Arcade",
         "url": "https://arcade.makecode.com/beta",
         "styles": {
             "primary": "#6B4F76",
@@ -10,6 +11,7 @@
     },
     "microbit": {
         "name": "micro:bit",
+        "title": "MakeCode for micro:bit",
         "url": "https://makecode.microbit.org/beta",
         "styles": {
             "primary": "#6633cc",
@@ -17,8 +19,30 @@
             "background": "linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1) 100%)"
         }
     },
+    "adafruit": {
+        "name": "Adafruit Circuit Playground Express",
+        "title": "MakeCode for Circuit Playgroung",
+        "url": "https://makecode.adafruit.com/beta",
+        "icon": "https://pxt.azureedge.net/blob/1215b9ef46d3e04bc9923a1a333d92db92eb5419/static/logo.square.black.svg",
+        "styles": {
+            "primary": "#1c1f2b",
+            "menu": "#FB48C7",
+            "background": "linear-gradient(45deg, #1c1f2b 0%, #000 100%)" 
+        }
+    },
+    "maker": {
+        "name": "Maker",
+        "title": "MakeCode Maker",
+        "url": "https://maker.makecode.com"
+    },
+    "ev3": {
+        "name": "LEGO® MINDSTORMS® Education EV3",
+        "title": "MakeCode for EV3",
+        "url": "https://makecode.mindstorms.com/beta"
+    },
     "minecraft": {
         "name": "Minecraft",
+        "title": "MakeCode for Minecraft",
         "icon": "https://minecraft.makecode.com/favicon.ico",
         "url": "https://minecraft.makecode.com/beta?github=1",
         "styles": {
@@ -27,26 +51,14 @@
             "background": "linear-gradient(215deg, #3C3C3C 0%, #C6C6C6 100%)"
         }
     },
-    "adafruit": {
-        "name": "Adafruit Circuit Playground Express",
-        "url": "https://makecode.adafruit.com/beta",
-        "icon": "https://pxt.azureedge.net/blob/1215b9ef46d3e04bc9923a1a333d92db92eb5419/static/logo.square.black.svg",
-        "styles": {
-            "primary": "#1c1f2b ",
-            "menu": "#FB48C7",
-            "background": "linear-gradient(45deg, #1c1f2b 0%, #000 100%)" 
-        }
-    },
-    "maker": {
-        "name": "Maker",
-        "url": "https://maker.makecode.com"
-    },
-    "ev3": {
-        "name": "LEGO® MINDSTORMS® Education EV3",
-        "url": "https://makecode.mindstorms.com/beta"
-    },
     "calliopemini": {
         "name": "Calliope Mini",
+        "title": "MakeCode for Calliope",
         "url": "https://makecode.calliope.cc/beta"
+    },
+    "stm32iotnode": {
+        "name": "STM32L4 Discovery kit IoT node",
+        "title": "MakeCode pour STM32",
+        "url": "https://makecode.st.com/"
     }
 }
