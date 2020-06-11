@@ -1472,6 +1472,7 @@ namespace pxt.py {
                     error(n, 9521, U.lf("No binding found for global variable"));
                 }
 
+                // TODO:
                 const sym = defvar(name, { modifier: VarModifier.Global });
 
                 if (sym.firstRefPos! < n.startPos) {
