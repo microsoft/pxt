@@ -397,12 +397,13 @@
                 ctx.lineTo(mouse.x, mouse.y);
                 ctx.stroke();
             } else if (state.painttool == 'emoji') {
-                const p1 = mouse, p2 = head;
+                const p1 = head, p2 = mouse;
                 const dx = p2.x - p1.x
                 const dy = p2.y - p1.y
-                const len = Math.max(64, (Math.sqrt(dx * dx + dy * dy) * 0.9) | 0);
+                const len = Math.max(64, (Math.sqrt(dx * dx + dy * dy) ) | 0);
                 ctx.translate(p2.x, p2.y);
                 ctx.rotate(Math.atan2(dy, dx) - Math.PI / 2);
+                ctx.translate(0, -len/2)
 
                 ctx.font = `${len}px serif`;
                 ctx.textAlign = 'center'
