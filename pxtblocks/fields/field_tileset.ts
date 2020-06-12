@@ -51,7 +51,7 @@ namespace pxtblockly {
 
             const tsRefs = getAllBlocksWithTilesets(ws)
                 .map(({ ref }) => ref.getValue() as string)
-                .filter(qname => qname !== "null" && !pxt.Util.startsWith(qname, pxt.sprite.TILE_NAMESPACE) && !pxt.Util.startsWith(qname, "sprites")); // Filtering out sprites, since field_imagedropdown will add one as default
+                .filter(qname => qname !== "null" && !pxt.Util.startsWith(qname, pxt.sprite.TILE_NAMESPACE));
 
             for (const galleryRef of tsRefs) {
                 if (!FieldTileset.tileCache[galleryRef]) {
@@ -121,14 +121,19 @@ namespace pxtblockly {
             }
         }
 
+        getOptions(): any[] {
+            if (typeof this.menuGenerator_ !== 'function') {
+                this.transparent = constructTransparentTile();
+                return [this.transparent];
+            }
+            
+            return this.menuGenerator_.call(this);
+        }
+
+
         menuGenerator_ = () => {
             if (!this.transparent) {
-                this.transparent = [{
-                    src: mkTransparentTileImage(16),
-                    width: PREVIEW_SIDE_LENGTH,
-                    height: PREVIEW_SIDE_LENGTH,
-                    alt: pxt.U.lf("transparency")
-                }, "myTiles.tile0"];
+                this.transparent = constructTransparentTile();
             }
 
             let options: TilesetDropdownOption[] = [this.transparent];
@@ -149,6 +154,15 @@ namespace pxtblockly {
 
             return options;
         }
+    }
+
+    function constructTransparentTile(): TilesetDropdownOption {
+        return [{
+            src: mkTransparentTileImage(16),
+            width: PREVIEW_SIDE_LENGTH,
+            height: PREVIEW_SIDE_LENGTH,
+            alt: pxt.U.lf("transparency")
+        }, "myTiles.tile0"];
     }
 
     function mkTransparentTileImage(sideLength: number) {
