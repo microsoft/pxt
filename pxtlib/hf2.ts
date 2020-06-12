@@ -540,8 +540,8 @@ namespace pxt.HF2 {
 
     }
 
-    export function mkPacketIOWrapper(io: pxt.packetio.PacketIO): pxt.packetio.PacketIOWrapper {
-        pxt.log(`packetio: wrapper hf2`)
+    export function mkHF2PacketIOWrapper(io: pxt.packetio.PacketIO): pxt.packetio.PacketIOWrapper {
+        pxt.debug(`packetio: wrapper hf2`)
         return new Wrapper(io);
     }
 

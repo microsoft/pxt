@@ -127,7 +127,7 @@ export function hf2ConnectAsync(path: string, raw = false) {
         }
 
         return pxt.usb.pairAsync()
-            .then(() => pxt.usb.mkPacketIOAsync())
+            .then(() => pxt.usb.mkWebUSBHIDPacketIOAsync())
             .then(io => new HF2.Wrapper(io))
             .then(d => d.reconnectAsync().then(() => d))
     }
@@ -142,11 +142,11 @@ export function hf2ConnectAsync(path: string, raw = false) {
 
 export function mkWebUSBOrHidPacketIOAsync(): Promise<pxt.packetio.PacketIO> {
     if (useWebUSB()) {
-        pxt.log(`packetio: mk cli webusb`)
+        pxt.debug(`packetio: mk cli webusb`)
         return hf2ConnectAsync("")
     }
 
-    pxt.log(`packetio: mk cli hidio`)
+    pxt.debug(`packetio: mk cli hidio`)
     return Promise.resolve()
         .then(() => {
             // in .then() to make sure we catch errors

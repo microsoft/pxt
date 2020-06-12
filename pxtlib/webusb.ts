@@ -238,7 +238,7 @@ namespace pxt.usb {
         }
 
         log(msg: string) {
-            pxt.log("webusb: " + msg)
+            pxt.debug("webusb: " + msg)
         }
 
         disconnectAsync() {
@@ -499,8 +499,8 @@ namespace pxt.usb {
     }
 
     let _hid: WebUSBHID;
-    export function mkPacketIOAsync(): Promise<pxt.packetio.PacketIO> {
-        pxt.log(`packetio: mk webusb io`)
+    export function mkWebUSBHIDPacketIOAsync(): Promise<pxt.packetio.PacketIO> {
+        pxt.debug(`packetio: mk webusb io`)
         if (!_hid)
             _hid = new WebUSBHID();
         _hid.enable();
@@ -515,7 +515,7 @@ namespace pxt.usb {
     }
 
     export function isAvailable() {
-        if (pxt.BrowserUtils.isElectron())
+        if (pxt.BrowserUtils.isElectron() || pxt.BrowserUtils.isWinRT())
             return false;
 
         if (!!(navigator as any).usb) {

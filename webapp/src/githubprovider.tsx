@@ -70,6 +70,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
         pxt.tickEvent("github.login.dialog");
         // auth flow if github provider is prsent
         const oAuthSupported = pxt.appTarget
+            && !pxt.BrowserUtils.isPxtElectron()
             && pxt.appTarget.cloud
             && pxt.appTarget.cloud.cloudProviders
             && !!pxt.appTarget.cloud.cloudProviders[this.name];
@@ -78,7 +79,6 @@ export class GithubProvider extends cloudsync.ProviderBase {
         let form: HTMLElement;
         return core.confirmAsync({
             header: lf("Sign in with GitHub"),
-            hideCancel: true,
             hasCloseIcon: true,
             helpUrl: "/github",
             agreeLbl: lf("Sign in"),
@@ -160,7 +160,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
         return pxt.github.authenticatedUserAsync()
             .then(ghuser => {
                 if (!ghuser) {
-                    pxt.log(`unkown github user`)
+                    pxt.log(`unknown github user`)
                     return undefined;
                 }
                 return {

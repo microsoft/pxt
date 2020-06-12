@@ -76,11 +76,11 @@ export function replaceFileExtension(file: string, extension: string) {
 }
 
 let cachedOpts: pxt.Map<pxtc.CompileOptions> = {}
-export function getTestCompileOptsAsync(packageFiles: pxt.Map<string> = { "main.ts": "// no main" }, dependency?: string, includeCommon = false): Promise<pxtc.CompileOptions> {
-    let cacheStr = Object.keys(packageFiles).concat(pxt.Util.values(packageFiles)).join("~") + dependency + includeCommon
+export function getTestCompileOptsAsync(packageFiles: pxt.Map<string> = { "main.ts": "// no main" }, dependencies: string[] = [], includeCommon = false): Promise<pxtc.CompileOptions> {
+    let cacheStr = Object.keys(packageFiles).concat(pxt.Util.values(packageFiles)).join("~") + dependencies.join("~") + includeCommon
     let cacheKey = pxt.Util.codalHash16(cacheStr)
     if (!cachedOpts[cacheKey]) {
-        const pkg = new pxt.MainPackage(new TestHost("test-pkg", packageFiles, dependency ? [dependency] : [], includeCommon));
+        const pkg = new pxt.MainPackage(new TestHost("test-pkg", packageFiles, dependencies || [], includeCommon));
 
         const target = pkg.getTargetOptions();
         target.isNative = false;
@@ -98,8 +98,9 @@ export function getTestCompileOptsAsync(packageFiles: pxt.Map<string> = { "main.
     return Promise.resolve(opts);
 }
 
-export function ts2pyAsync(tsInput: string, dependency: string, caseName: string): Promise<string> {
-    return getTestCompileOptsAsync({ "main.ts": tsInput }, dependency, !!dependency)
+export function ts2pyAsync(tsInput: string, dependency: string, includeCommon: boolean, caseName: string): Promise<string> {
+    const deps = [...(dependency ? [dependency] : []), ...(!includeCommon ? ["bare"] : [])]
+    return getTestCompileOptsAsync({ "main.ts": tsInput }, deps, includeCommon)
         .then(opts => {
             let program = pxtc.getTSProgram(opts);
             // TODO: if needed, we can re-use the CallInfo annotations the blockly decompiler can add
@@ -115,8 +116,9 @@ export function ts2pyAsync(tsInput: string, dependency: string, caseName: string
         })
 }
 
-export function py2tsAsync(pyInput: string, dependency: string, allowErrors: boolean, caseName: string): Promise<PyConverterResult> {
-    return getTestCompileOptsAsync({ "main.py": pyInput, "main.ts": "// no main" }, dependency, true)
+export function py2tsAsync(pyInput: string, dependency: string, includeCommon: boolean, allowErrors: boolean, caseName: string): Promise<PyConverterResult> {
+    const deps = [...(dependency ? [dependency] : []), ...(!includeCommon ? ["bare"] : [])]
+    return getTestCompileOptsAsync({ "main.py": pyInput, "main.ts": "// no main" }, deps, includeCommon)
         .then(opts => {
             opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
             let stsCompRes = pxtc.compile(opts);
@@ -146,8 +148,9 @@ export function py2tsAsync(pyInput: string, dependency: string, allowErrors: boo
         })
 }
 
-export function stsAsync(tsMain: string): Promise<pxtc.CompileResult> {
-    return getTestCompileOptsAsync({ "main.ts": tsMain }, "bare")
+export function stsAsync(tsMain: string, dependency?: string, includeCommon = false): Promise<pxtc.CompileResult> {
+    const deps = [...(dependency ? [dependency] : []), ...(!includeCommon ? ["bare"] : [])]
+    return getTestCompileOptsAsync({ "main.ts": tsMain }, deps, includeCommon)
         .then(opts => {
             const compiled = pxtc.compile(opts);
             if (compiled.success) {

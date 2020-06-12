@@ -308,7 +308,7 @@ namespace pxt.py {
             return [`@namespace`, `class ${name}:`].concat(stmts || []);
         }
         function emitTypeAliasDecl(s: ts.TypeAliasDeclaration): string[] {
-            let typeStr = pxtc.emitType(s.type)
+            let typeStr = pxtc.emitPyTypeFromTypeNode(s.type)
             let name = getName(s.name)
             return [`${name} = ${typeStr}`]
         }
@@ -765,7 +765,7 @@ namespace pxt.py {
             let nm = s.altName || getName(s.name)
             let typePart = ""
             if (s.type && inclTypesIfAvail) {
-                let typ = pxtc.emitType(s.type)
+                let typ = pxtc.emitPyTypeFromTypeNode(s.type)
 
                 if (typ && typ.indexOf("(TODO") === -1) {
                     typePart = `: ${typ}`
@@ -795,7 +795,7 @@ namespace pxt.py {
                 out = out.concat(expSup)
                 let declStmt: string;
                 if (s.type) {
-                    let translatedType = pxtc.emitType(s.type)
+                    let translatedType = pxtc.emitPyTypeFromTypeNode(s.type)
                     declStmt = `${varNm}: ${translatedType} = ${expToStr(exp)}`
                 } else {
                     declStmt = `${varNm} = ${expToStr(exp)}`

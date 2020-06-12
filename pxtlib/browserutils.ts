@@ -27,7 +27,11 @@ namespace pxt.BrowserUtils {
     export function isIOS(): boolean {
         return hasNavigator() &&
             (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
-            navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+                navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+    }
+
+    export function isAndroid(): boolean {
+        return hasNavigator() && /android/i.test(navigator.userAgent);
     }
 
     //MacIntel on modern Macs
@@ -127,6 +131,9 @@ namespace pxt.BrowserUtils {
     export function isElectron() {
         return isPxtElectron() || isIpcRenderer();
     }
+
+    // this function gets overriden when loading pxtwinrt.js
+    export let isWinRT = () => false;
 
     export function isLocalHost(ignoreFlags?: boolean): boolean {
         try {

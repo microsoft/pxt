@@ -190,6 +190,7 @@ declare namespace pxsim {
         locals: Variables;
         funcInfo: any; // pxtc.FunctionLocationInfo
         breakpointId: number;
+        callLocationId?: number;
         arguments?: FunctionArgumentsInfo;
     }
 

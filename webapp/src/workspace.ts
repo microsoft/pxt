@@ -1183,7 +1183,6 @@ export async function importGithubAsync(id: string): Promise<Header> {
                 header: lf("Initialize GitHub repository for MakeCode?"),
                 body: lf("We need to add a few files to your GitHub repository to make it work with MakeCode."),
                 agreeLbl: lf("Ok"),
-                hideCancel: true,
                 hasCloseIcon: true,
                 helpUrl: "/github/import"
             })

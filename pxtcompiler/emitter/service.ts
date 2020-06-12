@@ -85,7 +85,7 @@ namespace ts.pxtc {
         return r.toLowerCase();
     }
 
-    export function emitType(s: ts.TypeNode): string {
+    export function emitPyTypeFromTypeNode(s: ts.TypeNode): string {
         if (!s || !s.kind) return null;
         switch (s.kind) {
             case ts.SyntaxKind.StringKeyword:
@@ -101,13 +101,13 @@ namespace ts.pxtc {
                 return emitFuncType(s as ts.FunctionTypeNode)
             case ts.SyntaxKind.ArrayType: {
                 let t = s as ts.ArrayTypeNode
-                let elType = emitType(t.elementType)
+                let elType = emitPyTypeFromTypeNode(t.elementType)
                 return `List[${elType}]`
             }
             case ts.SyntaxKind.TypeReference: {
                 let t = s as ts.TypeReferenceNode
-                let nm = t.typeName && t.typeName.getText ? t.typeName.getText() : t.typeName;
-                return `${nm}`
+                let nm = t.typeName && t.typeName.getText ? t.typeName.getText() : "";
+                return nm
             }
             case ts.SyntaxKind.AnyKeyword:
                 return "any"
@@ -119,11 +119,31 @@ namespace ts.pxtc {
         // return s.getText()
     }
 
+    export function emitPyTypeFromTsType(s: ts.Type): string {
+        if (!s || !s.flags) return null;
+        switch (s.flags) {
+            case ts.TypeFlags.String:
+                return "str"
+            case ts.TypeFlags.Number:
+                // Note: "real" python expects this to be "float" or "int", we're intentionally diverging here
+                return "number"
+            case ts.TypeFlags.Boolean:
+                return "bool"
+            case ts.TypeFlags.Void:
+                return "None"
+            case ts.TypeFlags.Any:
+                return "any"
+            default:
+                pxt.tickEvent("depython.todo", { kind: s.flags })
+                return ``
+        }
+    }
+
     function emitFuncType(s: ts.FunctionTypeNode): string {
-        let returnType = emitType(s.type)
+        let returnType = emitPyTypeFromTypeNode(s.type)
         let params = s.parameters
             .map(p => p.type) // python type syntax doesn't allow names
-            .map(emitType)
+            .map(emitPyTypeFromTypeNode)
 
         // "Real" python expects this to be "Callable[[arg1, arg2], ret]", we're intentionally changing to "(arg1, arg2) -> ret"
         return `(${params.join(", ")}) -> ${returnType}`
@@ -190,7 +210,7 @@ namespace ts.pxtc {
     }
 
     function createSymbolInfo(typechecker: TypeChecker, qName: string, stmt: Node): SymbolInfo {
-        function typeOf(tn: TypeNode, n: Node, stripParams = false) {
+        function typeOf(tn: TypeNode, n: Node, stripParams = false): string {
             let t = typechecker.getTypeAtLocation(n)
             if (!t) return "None"
             if (stripParams) {
@@ -306,15 +326,18 @@ namespace ts.pxtc {
                     }
                     if (minVal) options['min'] = { value: minVal };
                     if (maxVal) options['max'] = { value: maxVal };
+                    const pyTypeString = (p.type && emitPyTypeFromTypeNode(p.type))
+                        || (paramType && emitPyTypeFromTsType(paramType))
+                        || "unknown";
+                    const initializer = p.initializer ? p.initializer.getText() :
+                        getExplicitDefault(attributes, n) ||
+                        (p.questionToken ? "undefined" : undefined)
                     return {
                         name: n,
                         description: desc,
                         type: typeOf(p.type, p),
-                        pyTypeString: emitType(p.type),
-                        initializer:
-                            p.initializer ? p.initializer.getText() :
-                                getExplicitDefault(attributes, n) ||
-                                (p.questionToken ? "undefined" : undefined),
+                        pyTypeString,
+                        initializer,
                         default: attributes.paramDefl[n],
                         properties: props,
                         handlerParameters: parameters,
@@ -909,9 +932,19 @@ namespace ts.pxtc.service {
                 }
             }
 
-            if (isSymbol && opts.syntaxInfo.symbols?.length) {
+            if (opts.syntaxInfo.symbols?.length) {
                 const apiInfo = getLastApiInfo(opts).apis;
-                opts.syntaxInfo.auxResult = opts.syntaxInfo.symbols.map(s => displayStringForSymbol(s, isPython, apiInfo))
+                opts.syntaxInfo.symbols = opts.syntaxInfo.symbols.map(s => {
+                    // symbol info gathered during the py->ts compilation phase
+                    // is less precise than the symbol info created when doing
+                    // a pass over ts, so we prefer the latter if available
+                    return apiInfo.byQName[s.qName] || s
+                })
+
+                if (isSymbol) {
+                    opts.syntaxInfo.auxResult = opts.syntaxInfo.symbols.map(s =>
+                        displayStringForSymbol(s, isPython, apiInfo))
+                }
             }
 
             return opts.syntaxInfo

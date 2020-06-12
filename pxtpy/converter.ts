@@ -93,6 +93,7 @@ namespace pxt.py {
 
 
     const builtInTypes: Map<Type> = {
+        "str": tpString,
         "string": tpString,
         "number": tpNumber,
         "boolean": tpBoolean,
@@ -854,6 +855,20 @@ namespace pxt.py {
 
             error(e, 9506, U.lf("cannot find type '{0}'", tpName))
         }
+        else {
+            // translate Python to TS type annotation for arrays
+            // example: List[str] => string[]
+            if (isSubscript(e)/*i.e. [] syntax*/) {
+                let isList = tryGetName(e.value) === "List"
+                if (isList) {
+                    if (isIndex(e.slice)) {
+                        let listTypeArg = compileType(e.slice.value)
+                        let listType = mkArrayType(listTypeArg)
+                        return listType
+                    }
+                }
+            }
+        }
 
         error(e, 9507, U.lf("invalid type syntax"))
         return mkType({})
@@ -1601,7 +1616,24 @@ namespace pxt.py {
                 }
             }
         }
-        return B.mkStmt(B.mkText(pref), B.mkInfix(expr(target), "=", expr(value)))
+
+        let lExp: B.JsNode | undefined = undefined;
+        if (annotation) {
+            // if we have a type annotation, emit it in these cases if the r-value is:
+            //  - null / undefined
+            //  - empty list
+            if (value.kind === "NameConstant" && (value as NameConstant).value === null
+                || value.kind === "List" && (value as List).elts.length === 0) {
+                const annotAsType = compileType(annotation)
+                const annotStr = t2s(annotAsType);
+
+                lExp = B.mkInfix(expr(target), ":", B.mkText(annotStr))
+            }
+        }
+        if (!lExp)
+            lExp = expr(target)
+
+        return B.mkStmt(B.mkText(pref), B.mkInfix(lExp, "=", expr(value)))
 
         function convertName(n: py.Name) {
             // TODO resuse with Name expr
@@ -2110,7 +2142,7 @@ namespace pxt.py {
             return B.mkText(`hex\`${U.toHex(new Uint8Array(n.s))}\``)
         },
         NameConstant: (n: py.NameConstant) => {
-            if (n.value != null) {
+            if (n.value !== null) {
                 if (!n.tsType)
                     error(n, 9558, lf("tsType missing"));
                 unify(n, n.tsType!, tpBoolean)

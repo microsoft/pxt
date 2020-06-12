@@ -745,7 +745,7 @@ export class ProjectView
             this.typecheck();
         }
         this.markdownChangeHandler();
-    }, 2000, false);
+    }, 2000, true);
     private initEditors() {
         this.textEditor = new monaco.Editor(this);
         this.pxtJsonEditor = new pxtjson.Editor(this);
@@ -1227,8 +1227,7 @@ export class ProjectView
             simulator.driver.preload(pxt.appTarget.simulator.aspectRatio);
         this.clearSerial()
         this.firstRun = true
-        // clear caches in all editors
-        compiler.clearCaches();
+        // clear caches in all editors -> compiler.newProjectAsync
         this.allEditors.forEach(editor => editor.clearCaches())
         // always start simulator once at least if autoRun is enabled
         // always disable tracing
@@ -1247,7 +1246,8 @@ export class ProjectView
 
         if (!h.cloudSync && this.cloudSync()) h.cloudSync = true;
 
-        return (h.backupRef ? workspace.restoreFromBackupAsync(h) : Promise.resolve())
+        return compiler.newProjectAsync()
+            .then(() => h.backupRef ? workspace.restoreFromBackupAsync(h) : Promise.resolve())
             .then(() => pkg.loadPkgAsync(h.id))
             .then(() => {
                 if (!this.state || this.state.header != h) {
@@ -1264,8 +1264,20 @@ export class ProjectView
                     h.editor = pkg.mainPkg.config.preferredEditor
                 let file = main.getMainFile();
                 const e = h.editor != pxt.BLOCKS_PROJECT_NAME && this.settings.fileHistory.filter(e => e.id == h.id)[0]
-                if (e)
-                    file = main.lookupFile(e.name) || file
+                if (e) {
+                    const lastEdited = main.lookupFile(e.name);
+
+                    if (lastEdited) {
+                        file = lastEdited
+                    }
+                    else if (pkg.getExtensionOfFileName(e.name) === "ts") {
+                        file = main.lookupFile("this/" + file.getFileNameWithExtension("ts")) || file;
+                    }
+                    else if (pkg.getExtensionOfFileName(e.name) === "py") {
+                        file = main.lookupFile("this/" + file.getFileNameWithExtension("py")) || file;
+                    }
+                }
+
 
                 // no history entry, and there is a virtual file for the current file in the language recorded in the header
                 if ((!e && h.editor && file.getVirtualFileName(h.editor)))
@@ -1325,8 +1337,15 @@ export class ProjectView
 
                 // load side docs
                 const editorForFile = this.pickEditorFor(file);
-                if (pkg?.mainPkg?.config?.documentation)
-                    this.setSideDoc(pkg.mainPkg.config.documentation, editorForFile == this.blocksEditor);
+                const documentation = pkg?.mainPkg?.config?.documentation;
+                if (documentation)
+                    this.setSideDoc(documentation, editorForFile == this.blocksEditor);
+                else {
+                    const readme = main.lookupFile("this/README.md");
+                    // no auto-popup when editing packages locally
+                    if (!h.githubId && readme && readme.content && readme.content.trim())
+                        this.setSideMarkdown(readme.content);
+                }
 
                 // update recentUse on the header
                 return workspace.saveAsync(h)
@@ -2228,6 +2247,7 @@ export class ProjectView
                         agreeLbl: lf("Done"),
                         agreeClass: "cancel",
                         agreeIcon: "cancel",
+                        hasCloseIcon: true,
                     }).then(b => {
                         if (this.isPythonActive()) {
                             pxt.Util.setEditorLanguagePref("py"); // stay in python, else go to blocks
@@ -2569,16 +2589,19 @@ export class ProjectView
         this.toggleSimulatorFullscreen();
     }
 
-    toggleSimulatorFullscreen() {
-        if (!this.state.fullscreen) {
+    setSimulatorFullScreen(enabled: boolean) {
+        if (!enabled) {
             document.addEventListener('keydown', this.closeOnEscape);
             simulator.driver.focus();
         } else {
             document.removeEventListener('keydown', this.closeOnEscape);
         }
         this.closeFlyout();
+        this.setState({ fullscreen: enabled });
+    }
 
-        this.setState({ fullscreen: !this.state.fullscreen });
+    toggleSimulatorFullscreen() {
+        this.setSimulatorFullScreen(!this.state.fullscreen);
     }
 
     closeFlyout() {
@@ -2617,7 +2640,6 @@ export class ProjectView
         core.dialogAsync({
             header: lf("Print Code"),
             hasCloseIcon: true,
-            hideCancel: true,
             size: "large",
             jsx:
                 /* tslint:disable:react-iframe-missing-sandbox */
@@ -2786,8 +2808,8 @@ export class ProjectView
                                 storedState: pkg.mainEditorPkg().getSimState(),
                                 autoRun: this.state.autoRun
                             }, opts.trace)
-                            this.blocksEditor.setBreakpointsMap(resp.breakpoints);
-                            this.textEditor.setBreakpointsMap(resp.breakpoints);
+                            this.blocksEditor.setBreakpointsMap(resp.breakpoints, resp.procCallLocations);
+                            this.textEditor.setBreakpointsMap(resp.breakpoints, resp.procCallLocations);
                             if (!cancellationToken.isCancelled()) {
                                 // running state is set by the simulator once the iframe is loaded
                                 this.setState({ showParts: simulator.driver.hasParts() })
@@ -3160,7 +3182,6 @@ export class ProjectView
         return core.dialogAsync({
             header: options.header,
             body: options.body,
-            hideCancel: true,
             hasCloseIcon: true,
             buttons: options.buttons
         })
@@ -3326,11 +3347,14 @@ export class ProjectView
             const mfn = (fileName || ghid.fileName || "README") + ".md";
 
             let md: string = undefined;
-            const [initialLang, baseLang] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
-            if (initialLang && baseLang) {
+            const [initialLang, baseLang, initialLangLowerCase] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
+            if (initialLang && baseLang && initialLangLowerCase) {
                 //We need to first search base lang and then intial Lang
-                //Example: normalizeLanguageCode en-IN  will return ["en-IN", "en"] and nb will be returned as ["nb"]
-                md = files[`_locales/${initialLang}/${mfn}`] || files[`_locales/${baseLang}/${mfn}`];
+                //Example: normalizeLanguageCode en-IN  will return ["en-IN", "en", "en-in"] and nb will be returned as ["nb"]
+                md = files[`_locales/${initialLang}/${mfn}`]
+                || files[`_locales/${initialLangLowerCase}/${mfn}`]
+                || files[`_locales/${baseLang}/${mfn}`]
+
             } else {
                 md = files[`_locales/${initialLang}/${mfn}`];
             }
@@ -3469,6 +3493,10 @@ export class ProjectView
     showTutorialHint(showFullText?: boolean) {
         let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
         if (tc) tc.showHint(true, showFullText);
+    }
+
+    isTutorial() {
+        return this.state.tutorialOptions != undefined;
     }
 
     getExpandedCardStyle(flyoutOnly?: boolean): any {
@@ -3717,7 +3745,8 @@ export class ProjectView
             flyoutOnly ? "flyoutOnly" : "",
             hideTutorialIteration ? "hideIteration" : "",
             this.editor != this.blocksEditor ? "editorlang-text" : "",
-            'full-abs'
+            this.editor == this.textEditor && this.state.errorListState,
+            'full-abs',
         ];
         const rootClasses = sui.cx(rootClassList);
 
@@ -3830,12 +3859,9 @@ function initLogin() {
 }
 
 function initPacketIO() {
-    pxt.log(`packetio: hook events`)
+    pxt.debug(`packetio: hook events`)
     pxt.packetio.configureEvents(
-        () => {
-            pxt.log(`packetio: ${pxt.packetio.isConnected() ? 'connected' : 'disconnected'}`)
-            data.invalidate("packetio:*")
-        },
+        () => data.invalidate("packetio:*"),
         (buf, isErr) => {
             const data = Util.fromUTF8(Util.uint8ArrayToString(buf))
             //pxt.debug('serial: ' + data)
@@ -4122,6 +4148,12 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
 }
 
 async function importGithubProject(repoid: string, requireSignin?: boolean) {
+    if (!pxt.appTarget.appTheme.githubEditor || pxt.winrt.isWinRT() || pxt.BrowserUtils.isPxtElectron()) {
+        core.warningNotification(lf("Importing GitHub projects not currently supported"));
+        theEditor.openHome();
+        return;
+    }
+
     core.showLoading("loadingheader", lf("importing GitHub project..."));
     try {
         // normalize for precise matching
@@ -4338,7 +4370,6 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(() => {
             pxt.BrowserUtils.initTheme();
             pxt.editor.experiments.syncTheme();
-            cmds.init();
             // editor messages need to be enabled early, in case workspace provider is IFrame
             if (theme.allowParentController
                 || theme.allowPackageExtensions
@@ -4351,13 +4382,13 @@ document.addEventListener("DOMContentLoaded", () => {
             render(); // this sets theEditor
             if (state)
                 theEditor.setState({ editorState: state });
+            return initExtensionsAsync(); // need to happen before cmd init
+        }).then(() => cmds.initAsync())
+        .then(() => {
             initPacketIO();
             initSerial();
             initHashchange();
             socketbridge.tryInit();
-            return initExtensionsAsync();
-        })
-        .then(() => {
             electron.initElectron(theEditor);
             return pxt.winrt.initAsync(importHex);
         })

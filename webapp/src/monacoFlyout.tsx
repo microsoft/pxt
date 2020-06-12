@@ -281,11 +281,13 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         let handler = params && params.find(p => p?.type && p.type.indexOf("=>") >= 0);
         if (handler) {
             description.unshift(<span key="prefix">{lf("run code ")}</span>)
-            if (handler.handlerParameters) {
+            if (compileInfo?.handlerArgs) {
                 // add break between end of block and parameters
                 description.push(<span key="handler_break">{" "}</span>);
-                handler.handlerParameters.forEach((handlerParam) => {
-                    description.push(<span className="argName" key={`handler_${handlerParam.name}`}>{handlerParam.name}</span>);
+                compileInfo.handlerArgs.forEach((arg) => {
+                    if (!arg.inBlockDef) {
+                        description.push(<span className="argName" key={`handler_${arg.name}`}>{arg.name}</span>);
+                    }
                 })
             }
         }

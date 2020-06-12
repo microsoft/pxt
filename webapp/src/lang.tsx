@@ -57,7 +57,6 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                 url: `https://crowdin.com/project/${pxt.appTarget.appTheme.crowdinProject}`
             }],
             agreeLbl: lf("Translate"),
-            hideCancel: true,
             hasCloseIcon: true
         }).then(r => {
             if (r) {
@@ -104,6 +103,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
         const modalSize = languageList.length > 4 ? "large" : "small";
         const translateTheEditor = !pxt.BrowserUtils.isIE()
             && !pxt.shell.isReadOnly()
+            && !pxt.BrowserUtils.isPxtElectron()
             && pxt.appTarget.appTheme.crowdinProject;
 
         return (

@@ -50,9 +50,7 @@ export class File implements pxt.editor.IFile {
     }
 
     getExtension() {
-        let m = /\.([^\.]+)$/.exec(this.name)
-        if (m) return m[1]
-        return ""
+        return getExtensionOfFileName(this.name);
     }
 
     getVirtualFileName(forPrj: string): string {
@@ -825,3 +823,10 @@ data.mountVirtualApi("pkg-status", {
         return ""
     },
 })
+
+
+export function getExtensionOfFileName(filename: string) {
+    let m = /\.([^\.]+)$/.exec(filename)
+    if (m) return m[1]
+    return ""
+}

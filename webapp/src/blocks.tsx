@@ -37,7 +37,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
 
-    setBreakpointsMap(breakpoints: pxtc.Breakpoint[]): void {
+    setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
         let map: pxt.Map<number> = {};
         if (!breakpoints || !this.compilationResult) return;
         breakpoints.forEach(breakpoint => {
@@ -347,15 +347,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
          * @param {string} message The message to display to the user.
          * @param {string} defaultValue The value to initialize the prompt with.
          * @param {!function(string)} callback The callback for handling user reponse.
+         * @param {Object} options
          */
-        Blockly.prompt = function (message, defaultValue, callback) {
+        Blockly.prompt = function (message, defaultValue, callback, options) {
             return core.promptAsync({
                 header: message,
                 initialValue: defaultValue,
                 agreeLbl: lf("Ok"),
-                hideCancel: true,
                 hasCloseIcon: true,
-                size: "tiny"
+                size: "tiny",
+                ...options
             }).then(value => {
                 callback(value);
             })
@@ -908,7 +909,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (stmt) {
             let bid = pxt.blocks.findBlockIdByLine(this.compilationResult.sourceMap, { start: stmt.line, length: stmt.endLine - stmt.line });
             if (bid) {
-                const parent = pxt.blocks.getTopLevelParent(this.editor.getBlockById(bid));
+                const parent = this.editor.getBlockById(bid).getRootBlock();
                 bid = parent?.isCollapsed() ? parent.id : bid;
                 this.editor.highlightBlock(bid);
                 if (brk) {
@@ -1017,7 +1018,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 maxScale: 2.5,
                 minScale: .2,
                 scaleSpeed: 1.5,
-                startScale: pxt.BrowserUtils.isMobile() ? 0.7 : 0.9
+                startScale: pxt.BrowserUtils.isMobile() ? 0.7 : 0.9,
+                pinch: true
             },
             rtl: Util.isUserLanguageRtl()
         };
@@ -1230,7 +1232,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private filterBlocks(subns: string, blocks: toolbox.BlockDefinition[]) {
         return blocks.filter((block => !(block.attributes.blockHidden)
-            && !(block.attributes.deprecated && this.parent.state.tutorialOptions == undefined)
+            && !(block.attributes.deprecated && !this.parent.isTutorial())
             && ((!subns && !block.attributes.subcategory && !block.attributes.advanced)
                 || (subns && ((block.attributes.advanced && subns == lf("more"))
                     || (block.attributes.subcategory && subns == block.attributes.subcategory))))));
@@ -1673,7 +1675,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         function shouldShowBlock(fn: pxtc.SymbolInfo) {
             if (fn.attributes.debug && !pxt.options.debug) return false;
             if (!shadow && fn.attributes.blockHidden) return false;
-            if (fn.attributes.deprecated && that.parent.state.tutorialOptions == undefined) return false;
+            if (fn.attributes.deprecated && !that.parent.isTutorial()) return false;
             let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
             return that.shouldShowBlock(fn.attributes.blockId, ns, shadow);
         }

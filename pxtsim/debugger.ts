@@ -229,6 +229,7 @@ namespace pxsim {
                 locals: dumpHeap(s, heap),
                 funcInfo: info,
                 breakpointId: s.lastBrkId,
+                callLocationId: s.callLocIdx,
                 arguments: argInfo
             };
         }

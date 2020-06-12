@@ -15,8 +15,12 @@ namespace pxtblockly {
     export class FieldTileset extends FieldImages implements Blockly.FieldCustom {
         private static tileCache: pxt.Map<string>;
         private static galleryTiles: TilesetDropdownOption[];
+        private static rebuildLock: boolean;
 
         public static rebuildTileCache(ws: Blockly.Workspace, blocksInfo: pxtc.BlocksInfo) {
+            if (FieldTileset.rebuildLock) return;
+
+            FieldTileset.rebuildLock = true;
             const tiles = getAllTilesetTiles(ws);
 
             if (!FieldTileset.tileCache) FieldTileset.tileCache = {};
@@ -40,10 +44,16 @@ namespace pxtblockly {
                 for (const tile of ts.tiles) {
                     if (tile.qualifiedName) {
                         if (!FieldTileset.tileCache[tile.qualifiedName]) {
-                            FieldTileset.tileCache[tile.qualifiedName] = bitmapToImageURI(pxt.sprite.getBitmap(blocksInfo, tile.qualifiedName), ts.tileWidth, false);
+                            const bitmap = pxt.sprite.getBitmap(blocksInfo, tile.qualifiedName);
+                            if (bitmap) {
+                                FieldTileset.tileCache[tile.qualifiedName] = bitmapToImageURI(bitmap, ts.tileWidth, false);
+                            }
                         }
                         if (!FieldTileset.galleryTiles.some(([, qname]) => qname === tile.qualifiedName)) {
-                            FieldTileset.galleryTiles.push([FieldTileset.getTileImageJSON(tile, ws, blocksInfo), tile.qualifiedName]);
+                            const json = FieldTileset.getTileImageJSON(tile, ws, blocksInfo);
+                            if (json) {
+                                FieldTileset.galleryTiles.push([json, tile.qualifiedName]);
+                            }
                         }
                     }
                 }
@@ -55,12 +65,20 @@ namespace pxtblockly {
 
             for (const galleryRef of tsRefs) {
                 if (!FieldTileset.tileCache[galleryRef]) {
-                    FieldTileset.tileCache[galleryRef] = bitmapToImageURI(pxt.sprite.getBitmap(blocksInfo, galleryRef), 16, false);
+                    const bitmap = pxt.sprite.getBitmap(blocksInfo, galleryRef);
+                    if (bitmap) {
+                        FieldTileset.tileCache[galleryRef] = bitmapToImageURI(bitmap, 16, false);
+                    }
                 }
                 if (!FieldTileset.galleryTiles.some(([, qname]) => qname === galleryRef)) {
-                    FieldTileset.galleryTiles.push([FieldTileset.getTileImageJSON({ qualifiedName: galleryRef, data: null }, ws, blocksInfo), galleryRef]);
+                    const json = FieldTileset.getTileImageJSON({ qualifiedName: galleryRef, data: null }, ws, blocksInfo);
+                    if (json) {
+                        FieldTileset.galleryTiles.push([json, galleryRef]);
+                    }
                 }
             }
+
+            FieldTileset.rebuildLock = false;
         }
 
         public static getTileKey(t: pxt.sprite.TileInfo) {
@@ -80,6 +98,7 @@ namespace pxtblockly {
 
         public static getTileImageJSON(t: pxt.sprite.TileInfo, ws: Blockly.Workspace, blocksInfo: pxtc.BlocksInfo) {
             const uri = FieldTileset.getTileImage(t, ws, blocksInfo);
+            if (!uri) return undefined;
 
             return {
                 src: uri,
@@ -121,6 +140,27 @@ namespace pxtblockly {
             }
         }
 
+        getValue() {
+            const v = super.getValue();
+
+            // If the user decompiled from JavaScript, then they might have passed an image literal
+            // instead of the qualified name of a tile. The decompiler strips out the "img" part
+            // so we need to add it back
+            if (typeof v === "string" && v.indexOf(".") === -1 && v.indexOf(`\``) === -1) {
+                return `img\`${v}\``
+            }
+            return v;
+        }
+
+        getText() {
+            const v = this.getValue();
+
+            if (typeof v === "string" && v.indexOf("`") !== -1) {
+                return v;
+            }
+            return super.getText();
+        }
+
         getOptions(): any[] {
             if (typeof this.menuGenerator_ !== 'function') {
                 this.transparent = constructTransparentTile();
@@ -129,8 +169,7 @@ namespace pxtblockly {
 
             return this.menuGenerator_.call(this);
         }
-
-
+      
         menuGenerator_ = () => {
             if (!this.transparent) {
                 this.transparent = constructTransparentTile();

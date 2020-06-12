@@ -37,6 +37,11 @@ namespace pxt.editor {
         fileHistory: FileHistoryEntry[];
     }
 
+    export enum ErrorListState {
+        HeaderOnly = "errorListHeader",
+        Expanded = "errorListExpanded"
+    }
+
     export interface IAppProps { }
     export interface IAppState {
         active?: boolean; // is this tab visible at all
@@ -88,6 +93,8 @@ namespace pxt.editor {
 
         simSerialActive?: boolean;
         deviceSerialActive?: boolean;
+
+        errorListState?: ErrorListState;
 
         screenshoting?: boolean;
     }
@@ -234,6 +241,7 @@ namespace pxt.editor {
         exitTutorial(): void;
         completeTutorialAsync(): Promise<void>;
         showTutorialHint(): void;
+        isTutorial(): boolean;
         pokeUserActivity(): void;
         stopPokeUserActivity(): void;
         clearUserPoke(): void;
@@ -250,6 +258,7 @@ namespace pxt.editor {
         collapseSimulator(): void;
         toggleSimulatorCollapse(): void;
         toggleSimulatorFullscreen(): void;
+        setSimulatorFullScreen(enabled: boolean): void;
         proxySimulatorMessage(content: string): void;
         toggleTrace(intervalSpeed?: number): void;
         setTrace(enabled: boolean, intervalSpeed?: number): void;

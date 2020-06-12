@@ -240,6 +240,7 @@ namespace ts.pxtc {
         times: pxt.Map<number>;
         //ast?: Program; // Not needed, moved to pxtcompiler
         breakpoints?: Breakpoint[];
+        procCallLocations?: pxtc.LocationInfo[];
         procDebugInfo?: ProcDebugInfo[];
         blocksInfo?: BlocksInfo;
         blockSourceMap?: pxt.blocks.BlockSourceInterval[]; // mappings id,start,end

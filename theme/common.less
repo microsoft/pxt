@@ -121,6 +121,16 @@ pre {
     }
 }
 
+#root {
+    --extra-mobile-sim-padding: 0px;
+    &.errorListHeader {
+        --extra-mobile-sim-padding: @errorListHeaderHeight;
+    }
+    &.errorListExpanded {
+        --extra-mobile-sim-padding: @errorListHeight;
+    }
+}
+
 .transparentEditorTools #editortools {
     background-color: transparent;
     z-index: (@blocklyFlyoutZIndex)-1;
@@ -1093,12 +1103,6 @@ p.ui.font.small {
         left: -2rem;
     }
 
-    #filelist .simtoolbar > .buttons {
-        > .debug-button {
-            display: block !important;
-        }
-    }
-
     #downloadArea {
         // .25rem from padding around editortoolbar in portrait mode
         width: ~"calc(@{blocklyRowWidthTablet} - .25rem)";
@@ -1218,7 +1222,7 @@ p.ui.font.small {
         position:absolute;
         padding: 0;
         margin: 1em;
-        bottom: 4.5rem !important;
+        bottom: ~"calc(4.5rem + var(--extra-mobile-sim-padding))" !important;
         right: 0.5rem;
         top: unset;
         left: unset;
@@ -1228,6 +1232,11 @@ p.ui.font.small {
         background: transparent !important;
         overflow: visible;
         z-index: 20;
+    }
+    #filelist .simtoolbar > .buttons {
+        > .debug-button {
+            display: block !important;
+        }
     }
     .collapsedEditorTools #filelist {
         > div {
@@ -1393,7 +1402,8 @@ p.ui.font.small {
 
     /* Logo */
     .ui.item.logo img {
-        max-height: 2.5rem;
+        height: 2.2rem;
+        width: auto;
         margin-left: 0.4rem;
         margin-right: 0.4rem;
     }

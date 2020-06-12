@@ -84,7 +84,10 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                     return qName
                 }
 
-                const items = (completions.entries || []).map((si, i) => {
+                let entries = completions.entries || [];
+                entries = entries.filter(si => si.name.charAt(0) != "_");
+
+                const items = entries.map((si, i) => {
                     let insertSnippet = stripLocalNamespace(this.python ? si.pySnippet : si.snippet);
                     let qName = stripLocalNamespace(this.python ? si.pyQName : si.qName);
                     let name = this.python ? si.pyName : si.name;
@@ -362,7 +365,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private highlightedBreakpoint: number;
     private editAmendmentsListener: monaco.IDisposable | undefined;
     private errorChangesListeners: pxt.Map<(errors: pxtc.KsDiagnostic[]) => void> = {};
-    private exceptionChangesListeners: pxt.Map<(exception: pxsim.DebuggerBreakpointMessage) => void> = {}
+    private exceptionChangesListeners: pxt.Map<(exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void> = {}
+    private callLocations: pxtc.LocationInfo[];
 
     private handleFlyoutWheel = (e: WheelEvent) => e.stopPropagation();
     private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
@@ -370,10 +374,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     constructor(parent: pxt.editor.IProjectView) {
         super(parent);
 
-        this.resize = this.resize.bind(this);
+        this.setErrorListState = this.setErrorListState.bind(this);
         this.listenToErrorChanges = this.listenToErrorChanges.bind(this);
         this.listenToExceptionChanges = this.listenToExceptionChanges.bind(this)
         this.goToError = this.goToError.bind(this);
+        this.startDebugger = this.startDebugger.bind(this)
     }
 
     hasBlocks() {
@@ -598,9 +603,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     display(): JSX.Element {
-        let showErrorList = pxt.appTarget.appTheme.errorList;
+        const showErrorList = pxt.appTarget.appTheme.errorList;
+        const isAndroid = pxt.BrowserUtils.isAndroid();
         return (
-            <div id="monacoEditorArea" className="monacoEditorArea" style={{ direction: 'ltr' }}>
+            <div id="monacoEditorArea" className={`monacoEditorArea ${isAndroid ? "android" : ""}`} style={{ direction: 'ltr' }}>
                 {this.isVisible && <div className={`monacoToolboxDiv ${(this.toolbox && !this.toolbox.state.visible && !this.isDebugging()) ? 'invisible' : ''}`}>
                     <toolbox.Toolbox ref={this.handleToolboxRef} editorname="monaco" parent={this} />
                     <div id="monacoDebuggerToolbox"></div>
@@ -614,20 +620,21 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setInsertionSnippet={this.setInsertionSnippet}
                             parent={this.parent} />
                     </div>
-                    {showErrorList && <ErrorList onSizeChange={this.resize} listenToErrorChanges={this.listenToErrorChanges}
-                        listenToExceptionChanges={this.listenToExceptionChanges} goToError={this.goToError}/>}
+                    {showErrorList && <ErrorList onSizeChange={this.setErrorListState} listenToErrorChanges={this.listenToErrorChanges}
+                        listenToExceptionChanges={this.listenToExceptionChanges} goToError={this.goToError}
+                        startDebugger={this.startDebugger} />}
                 </div>
             </div>
         )
     }
 
-    listenToExceptionChanges(handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage) => void) {
+    listenToExceptionChanges(handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void) {
         this.exceptionChangesListeners[handlerKey] = handler;
     }
 
     public onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
         for (let listener of pxt.U.values(this.exceptionChangesListeners)) {
-            listener(exception);
+            listener(exception, this.callLocations);
         }
     }
 
@@ -635,7 +642,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.errorChangesListeners[handlerKey] = handler;
     }
 
-    goToError(error: pxtc.KsDiagnostic) {
+    goToError(error: pxtc.LocationInfo) {
         // Use endLine and endColumn to position the cursor
         // when errors do have them
         let line, column;
@@ -650,6 +657,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.editor.revealLineInCenter(line);
         this.editor.setPosition({ column: column, lineNumber: line });
         this.editor.focus();
+    }
+
+    startDebugger() {
+        pxt.tickEvent('errorList.startDebugger', null, { interactiveConsent: true })
+        this.parent.toggleDebugging()
     }
 
     private onErrorChanges(errors: pxtc.KsDiagnostic[]) {
@@ -783,6 +795,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             });
 
             if (monacoToolboxDiv) monacoToolboxDiv.style.height = `100%`;
+        }
+    }
+
+    setErrorListState(newState?: pxt.editor.ErrorListState) {
+        const oldState = this.parent.state.errorListState;
+
+        if (oldState != newState) {
+            this.resize();
+            this.parent.setState({
+                errorListState: newState
+            });
         }
     }
 
@@ -1423,7 +1446,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         });
     }
 
-    setBreakpointsMap(breakpoints: pxtc.Breakpoint[]): void {
+    setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
+        this.callLocations = procCallLocations;
         if (this.isDebugging()) {
             if (!this.breakpoints) {
                 this.breakpoints = new BreakpointCollection(breakpoints, this.pythonSourceMap);
@@ -1743,7 +1767,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private filterBlocks(subns: string, blocks: toolbox.BlockDefinition[]) {
-        return blocks.filter((block => !(block.attributes.blockHidden || block.attributes.deprecated)
+        return blocks.filter((block => !(block.attributes.blockHidden)
+            && !(block.attributes.deprecated && !this.parent.isTutorial())
             && (block.name.indexOf('_') != 0)
             && ((!subns && !block.attributes.subcategory && !block.attributes.advanced)
                 || (subns && ((block.attributes.advanced && subns == lf("more"))
@@ -1753,7 +1778,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private getBuiltinBlocks(ns: string, subns: string) {
         let cat = snippets.getBuiltinCategory(ns);
         let blocks = cat.blocks || [];
-        if (!cat.custom && this.nsMap[ns]) blocks = blocks.concat(this.nsMap[ns].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated)));
+        if (!cat.custom && this.nsMap[ns]) blocks = blocks.concat(this.nsMap[ns].filter(block => !(block.attributes.blockHidden) &&  !(block.attributes.deprecated && !this.parent.isTutorial())));
         return this.filterBlocks(subns, blocks);
     }
 

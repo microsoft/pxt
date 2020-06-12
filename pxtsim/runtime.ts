@@ -194,6 +194,7 @@ namespace pxsim {
         lambdaArgs?: any[];
         caps?: any[];
         lastBrkId?: number;
+        callLocIdx?: number;
         arg0?: any;
         stage2Call?: boolean;
 

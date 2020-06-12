@@ -90,7 +90,7 @@ namespace pxt.winrt {
     /**
      * Most Arduino devices support switching into bootloader by opening the COM port at 1200 baudrate.
      */
-    export function bootloaderViaBaud() {
+    export function bootloaderViaBaud(io: packetio.PacketIO) {
         if (!appTarget || !appTarget.compile || !appTarget.compile.useUF2 ||
             !appTarget.simulator || !appTarget.simulator.boardDefinition || !appTarget.simulator.boardDefinition.bootloaderBaudSwitchInfo) {
             return Promise.reject(new Error("device does not support switching to bootloader via baudrate"));
@@ -113,7 +113,7 @@ namespace pxt.winrt {
                 allSerialDevices = serialDevices;
 
                 if (allSerialDevices.length) {
-                    isSwitchingToBootloader();
+                    io.isSwitchingToBootloader();
                 }
 
                 allSerialDevices.forEach((dev) => {

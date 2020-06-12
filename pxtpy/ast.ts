@@ -418,7 +418,7 @@ namespace pxt.py {
     }
     export interface NameConstant extends Expr {
         kind: "NameConstant";
-        value: boolean | undefined; // undefined=None, True, False
+        value: boolean | null; // null=None, True, False
     }
     export interface Ellipsis extends Expr {
         kind: "Ellipsis";
@@ -458,5 +458,12 @@ namespace pxt.py {
     export interface Tuple extends AssignmentExpr {
         kind: "Tuple";
         elts: Expr[];
+    }
+
+    export function isIndex(e: AST): e is Index {
+        return e.kind === "Index"
+    }
+    export function isSubscript(e: Expr): e is Subscript {
+        return e.kind === "Subscript"
     }
 }
