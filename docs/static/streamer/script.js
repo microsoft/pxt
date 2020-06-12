@@ -131,7 +131,8 @@
             config.hardwareCamLabel && "hardwarecamlabel",
             config.faceCamId === DISPLAY_DEVICE_ID && "facecamdisplay",
             config.hardwareCamId === DISPLAY_DEVICE_ID && "hardwarecamdisplay",
-            config.greenScreen && "greenscreen"
+            config.greenScreen && "greenscreen",
+            config.backgroundImage && "parallax"
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
             showSettings();
@@ -510,9 +511,8 @@ background: #615fc7;
         `
 
         if (config.backgroundImage) {
-            css += `body {
-background: url(${config.backgroundImage}) no-repeat center center fixed; 
-background-size: cover;
+            css += `body.parallax {
+background-image: url(${config.backgroundImage});
 }
 `
         }
@@ -1082,13 +1082,13 @@ background-size: cover;
         const backgroundimageinput = document.getElementById("backgroundimageinput")
         backgroundimageinput.value = config.backgroundImage || ""
         backgroundimageinput.onchange = function (e) {
-            if (/^https:\/\//.test(backgroundimageinput.value)) {
+            config.backgroundImage = undefined;
+            if (/^https:\/\//.test(backgroundimageinput.value))
                 config.backgroundImage = backgroundimageinput.value
-                saveConfig(config);
-                loadStyle();
-                render()
-            }
-        }
+            saveConfig(config);
+            loadStyle();
+            render()
+    }
 
         const twitchinput = document.getElementById("twitchinput")
         twitchinput.value = config.twitch || ""
