@@ -225,9 +225,7 @@
         }
 
         function addSiteButton(url) {
-            addButton("SingleBookmark", url, () => {
-                editor.src = url;
-            }, false)
+            addButton("SingleBookmark", url, () => setSite(url), false)
         }
 
         function addPaintButton(icon, title, tool) {
@@ -238,6 +236,14 @@
             const sceneIndex = scenes.indexOf(`${scene}scene`)
             addButton(icon, title, () => setScene(scene), state.sceneIndex == sceneIndex)
         }
+    }
+
+    function setSite(url) {
+        const config = readConfig();
+        if (config.multiEditor && state.sceneIndex == LEFT_SCENE_INDEX)
+            editor2.src = url;
+        else
+            editor.src = url;
     }
 
     function setScene(scene) {
@@ -502,6 +508,14 @@ background: #615fc7;
         if (hardwareCamFilter)
             css += `#hardwarecamvideo { filter: ${hardwareCamFilter}; }
         `
+
+        if (config.backgroundImage) {
+            css += `body {
+background: url(${config.backgroundImage}) no-repeat center center fixed; 
+background-size: cover;
+}
+`
+        }
 
         editorStyle.innerText = ""
         editorStyle.append(document.createTextNode(css));
@@ -1063,6 +1077,17 @@ background: #615fc7;
             saveConfig(config);
             loadSocial();
             render()
+        }
+
+        const backgroundimageinput = document.getElementById("backgroundimageinput")
+        backgroundimageinput.value = config.backgroundImage || ""
+        backgroundimageinput.onchange = function (e) {
+            if (/^https:\/\//.test(backgroundimageinput.value)) {
+                config.backgroundImage = backgroundimageinput.value
+                saveConfig(config);
+                loadStyle();
+                render()
+            }
         }
 
         const twitchinput = document.getElementById("twitchinput")
