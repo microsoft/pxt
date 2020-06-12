@@ -30,6 +30,28 @@ body.greenscreen {
     background: #00ff00 !important;
 }
 
+/** paralax */
+body.parallax {
+    background-position: 0px 0px;
+    background-size: 130vw;
+    background-repeat: repeat;
+    transition: background-position 1.2s ease-out;
+    transition-delay: 0.1s;
+    background-origin: 50% 50%;
+}
+body.leftscene.parallax {
+    background-position: -17vw 0;
+}
+body.rightscene.parallax {
+    background-position: -15vw 0;
+}
+body.chatscene.parallax {
+    background-position: -13vw -3vh;
+}
+body.countdownscene.parallax {
+    background-position: -15vw -5vh;
+}
+
 /* 
     Style for the boxes.
 
