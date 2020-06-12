@@ -12,7 +12,7 @@
     "microbit": {
         "name": "micro:bit",
         "title": "MakeCode for micro:bit",
-        "url": "https://makecode.microbit.org/beta",
+        "url": "https://makecode.microbit.org/",
         "styles": {
             "primary": "#6633cc",
             "menu": "#3454D1",

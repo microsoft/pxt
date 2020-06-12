@@ -8,6 +8,16 @@ var editor = monaco.editor.create(document.getElementById("container"), {
 });
 var targets = [
     {
+        name: "micro:bit",
+        id: "microbit",
+        shareUrl: "https://makecode.microbit.org/",
+        endpoints: [
+            {
+                name: "",
+                url: "https://makecode.microbit.org/?controller=1"
+            }
+        ]
+    }, {
         name: "Minecraft",
         id: "minecraft",
         shareUrl: "https://minecraft.makecode.com/",
@@ -43,16 +53,6 @@ var targets = [
             {
                 name: "",
                 url: "https://makecode.adafruit.com/beta?controller=1"
-            }
-        ]
-    }, {
-        name: "micro:bit",
-        id: "microbit",
-        shareUrl: "https://makecode.microbit.org/",
-        endpoints: [
-            {
-                name: "",
-                url: "https://makecode.microbit.org/beta?controller=1"
             }
         ]
     }, {
