@@ -3340,11 +3340,16 @@ export class ProjectView
             const mfn = (fileName || ghid.fileName || "README") + ".md";
 
             let md: string = undefined;
-            const [initialLang, baseLang] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
+            const [initialLang, baseLang, initialLangLowerCase] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
             if (initialLang && baseLang) {
                 //We need to first search base lang and then intial Lang
                 //Example: normalizeLanguageCode en-IN  will return ["en-IN", "en"] and nb will be returned as ["nb"]
-                md = files[`_locales/${initialLang}/${mfn}`] || files[`_locales/${baseLang}/${mfn}`];
+                md = files[`_locales/${initialLang}/${mfn}`] || files[`_locales/${baseLang}/${mfn}`]
+
+                //Try lowercase full lang (en-in) if can't find the right locale
+                if (!md && initialLangLowerCase) {
+                    md = files[`_locales/${initialLangLowerCase}/${mfn}`];
+                }
             } else {
                 md = files[`_locales/${initialLang}/${mfn}`];
             }
