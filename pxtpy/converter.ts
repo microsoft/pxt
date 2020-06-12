@@ -355,24 +355,35 @@ namespace pxt.py {
         return sym!
     }
 
-    function defvar(n: string, opts: py.VarDescOptions, scope?: ScopeDef) {
+    function defvar(name: string, opts: py.VarDescOptions, modifier?: VarModifier, scope?: ScopeDef): ScopeSymbolInfo {
         if (!scope)
             scope = currentScope()
-        let v = scope.vars[n]
-        if (!v) {
+        let varScopeSym = scope.vars[name]
+        let varSym = varScopeSym?.symbol;
+        if (!varSym) {
             let pref = getFullName(scope)
-            if (pref) pref += "."
-            let qn = pref + n
-            if (isLocalScope(scope))
-                v = mkSymbol(SK.Variable, n)
+            if (pref) {
+                pref += "."
+            }
+            let qualifiedName = pref + name
+            if (isLocalScope(scope)
+                && (modifier === VarModifier.Global
+                    || modifier === VarModifier.NonLocal)) {
+                varSym = addSymbol(SK.Variable, name)
+            }
+            else if (isLocalScope(scope))
+                varSym = mkSymbol(SK.Variable, name)
             else
-                v = addSymbol(SK.Variable, qn)
-            scope.vars[n] = v
+                varSym = addSymbol(SK.Variable, qualifiedName)
+            varScopeSym = scope.vars[name] = {
+                symbol: varSym,
+                modifier,
+            }
         }
         for (let k of Object.keys(opts)) {
-            (v as any)[k] = (opts as any)[k]
+            (varSym as any)[k] = (opts as any)[k]
         }
-        return v
+        return varScopeSym
     }
 
     function find(t: Type): Type {
@@ -402,7 +413,8 @@ namespace pxt.py {
     function applyTypeMap(s: string): string {
         let over = U.lookup(typeMap, s)
         if (over) return over
-        for (let v of U.values(ctx.currModule.vars)) {
+        for (let scopeVar of U.values(ctx.currModule.vars)) {
+            let v = scopeVar.symbol
             if (!v.isImport)
                 continue
             if (v.expandsTo == s) {
@@ -632,7 +644,9 @@ namespace pxt.py {
             sym.pyAST = n
             if (!sym.pyName)
                 error(null, 9528, U.lf("Symbol '{0}' is missing pyName", sym.qName || sym.name))
-            scope.vars[sym.pyName!] = sym
+            scope.vars[sym.pyName!] = {
+                symbol: sym
+            }
         }
         return n.symInfo
     }
@@ -721,31 +735,34 @@ namespace pxt.py {
         return res.filter(a => !!a)
     }
 
-    function lookupVar(n: string) {
-        let s = currentScope()
+    function lookupVar(n: string): ScopeSymbolInfo | null {
+        let s: ScopeDef | undefined = currentScope()
         let v = U.lookup(s.vars, n)
         if (v) return v
-        // while (s) {
-        //     let v = U.lookup(s.vars, n)
-        //     if (v) return v
-        //     // go to parent, excluding class scopes
-        //     do {
-        //         s = s.parent
-        //     } while (s && s.kind == "ClassDef")
-        // }
+        // TODO(dz): how does this deal with var usage that references global or nonlocal vars that does not require the global/nonlocal keywords?
+
+        while (s) {
+            let v = U.lookup(s.vars, n)
+            if (v) return v
+            // go to parent, excluding class scopes
+            do {
+                s = s.parent
+            } while (s && s.kind == "ClassDef")
+        }
         //if (autoImport && lookupGlobalSymbol(n)) {
         //    return addImport(currentScope(), n, ctx.currModule)
         //}
         return null
     }
 
-    function lookupSymbol(n: string | undefined) {
+    function lookupScopeSymbol(n: string | undefined): ScopeSymbolInfo | undefined | null {
         if (!n)
             return null
 
         const firstDot = n.indexOf(".")
         if (firstDot > 0) {
-            const v = lookupVar(n.slice(0, firstDot))
+            const scopeVar = lookupVar(n.slice(0, firstDot))
+            const v = scopeVar?.symbol;
             // expand name if needed
             if (v && v.pyQName != v.pyName)
                 n = v.pyQName + n.slice(firstDot)
@@ -753,7 +770,16 @@ namespace pxt.py {
             const v = lookupVar(n)
             if (v) return v
         }
-        return lookupGlobalSymbol(n)
+        let globalSym = lookupGlobalSymbol(n)
+        if (!globalSym)
+            return undefined
+        return {
+            symbol: globalSym
+        }
+    }
+
+    function lookupSymbol(n: string | undefined): SymbolInfo | undefined | null {
+        return lookupScopeSymbol(n)?.symbol
     }
 
     function getClassDef(e: py.Expr) {
@@ -910,9 +936,9 @@ namespace pxt.py {
             })
         }
 
-
         let lst = n.symInfo.parameters.map(p => {
-            let v = defvar(p.name, { isParam: true })
+            let scopeV = defvar(p.name, { isParam: true })
+            let v = scopeV?.symbol
             if (!p.pyType)
                 error(n, 9530, U.lf("parameter '{0}' missing pyType", p.name))
             unify(n, getOrSetSymbolType(v), p.pyType!)
@@ -1106,7 +1132,8 @@ namespace pxt.py {
                     unifyClass(n, sym.pyRetType!, ctx.currClass!.symInfo)
                 } else {
                     if (funname == "__get__" || funname == "__set__") {
-                        let vv = n.vars["value"]
+                        let scopeVv = n.vars["value"]
+                        let vv = scopeVv?.symbol
                         if (funname == "__set__" && vv) {
                             let cf = getClassField(ctx.currClass!.symInfo, "__get__")
                             if (cf && cf.pyAST && cf.pyAST.kind == "FunctionDef")
@@ -1330,7 +1357,8 @@ namespace pxt.py {
                 if (it.optional_vars) {
                     let id = tryGetName(it.optional_vars)
                     if (id) {
-                        let v = defvar(id, { isLocal: true })
+                        let scopeV = defvar(id, { isLocal: true })
+                        let v = scopeV?.symbol
                         id = quoteStr(id)
                         res.push(B.mkStmt(B.mkText("const " + id + " = "), devRef))
                         if (!v.pyRetType)
@@ -1472,8 +1500,8 @@ namespace pxt.py {
                     error(n, 9521, U.lf("No binding found for global variable"));
                 }
 
-                // TODO:
-                const sym = defvar(name, { modifier: VarModifier.Global });
+                // TODO(dz):
+                const sym = defvar(name, {}, VarModifier.Global);
 
                 if (sym.firstRefPos! < n.startPos) {
                     error(n, 9522, U.lf("Variable referenced before global declaration"))
@@ -1493,7 +1521,7 @@ namespace pxt.py {
                     error(n, 9523, U.lf("No binding found for nonlocal variable"));
                 }
 
-                const sym = defvar(name, { modifier: VarModifier.NonLocal });
+                const sym = defvar(name, {}, VarModifier.NonLocal);
 
                 if (sym.firstRefPos! < n.startPos) {
                     error(n, 9524, U.lf("Variable referenced before nonlocal declaration"))
@@ -1607,13 +1635,15 @@ namespace pxt.py {
             return res
         }
         if (target.kind === "Name") {
-            const sym = currentScope().vars[nm];
+            const scopeSym = currentScope().vars[nm];
+            const sym = scopeSym?.symbol
 
             // Mark the assignment only if the variable is declared in this scope
-            if (sym && sym.kind === SK.Variable && sym.modifier === undefined) {
-                if (sym.firstAssignPos === undefined || sym.firstAssignPos > target.startPos) {
-                    sym.firstAssignPos = target.startPos
-                    sym.firstAssignDepth = ctx.blockDepth;
+            if (sym && sym.kind === SK.Variable && scopeSym.modifier === undefined) {
+                if (scopeSym.firstAssignPos === undefined
+                    || scopeSym.firstAssignPos > target.startPos) {
+                    scopeSym.firstAssignPos = target.startPos
+                    scopeSym.firstAssignDepth = ctx.blockDepth;
                 }
             }
         }
@@ -1646,19 +1676,23 @@ namespace pxt.py {
     }
 
     function possibleDef(n: py.Name, excludeLet: boolean = false) {
+        // TODO(dz): this handles assignment
         let id = n.id
-        let curr = lookupSymbol(id)
-        let local = currentScope().vars[id];
+        let currScopeVar = lookupScopeSymbol(id)
+        let curr = currScopeVar?.symbol
+        let localScopeVar = currentScope().vars[id];
+        let local = localScopeVar?.symbol
 
         if (n.isdef === undefined) {
             if (!curr || (curr.kind === SK.Variable && curr !== local)) {
                 if (ctx.currClass && !ctx.currFun) {
                     n.isdef = false // field
-                    curr = defvar(id, {})
+                    currScopeVar = defvar(id, {})
                 } else {
                     n.isdef = true
-                    curr = defvar(id, { isLocal: true })
+                    currScopeVar = defvar(id, { isLocal: true })
                 }
+                curr = currScopeVar.symbol
             } else {
                 n.isdef = false
             }
@@ -1670,11 +1704,11 @@ namespace pxt.py {
             unify(n, n.tsType!, curr.pyRetType!)
         }
 
-        if (n.isdef && shouldHoist(curr!, currentScope())) {
+        if (n.isdef && shouldHoist(currScopeVar!, currentScope())) {
             n.isdef = false;
         }
 
-        markUsage(curr, n);
+        markUsage(currScopeVar, n);
 
         if (n.isdef && !excludeLet) {
             return B.mkGroup([B.mkText("let "), quote(id)])
@@ -1696,7 +1730,8 @@ namespace pxt.py {
     function tryGetName(e: py.Expr): string | undefined {
         if (e.kind == "Name") {
             let s = (e as py.Name).id
-            let v = lookupVar(s)
+            let scopeV = lookupVar(s)
+            let v = scopeV?.symbol
             if (v && v.expandsTo) return v.expandsTo
             else return s
         }
@@ -1982,6 +2017,7 @@ namespace pxt.py {
                         recvTp = typeOf(recv)
                         methName = over.n.slice(1)
                         fun = getTypeField(recv, methName)
+                        // TODO(dz)
                         if (fun && fun.kind == SK.Property)
                             return B.mkInfix(expr(recv), ".", B.mkText(methName))
                     } else {
@@ -2229,12 +2265,13 @@ namespace pxt.py {
                 return B.mkText("this")
             }
 
-            let v = lookupName(n)
+            let scopeV = lookupName(n)
+            let v = scopeV?.symbol
             if (v && v.isImport) {
                 return quote(v.name) // it's import X = Y.Z.X, use X not Y.Z.X
             }
 
-            markUsage(v, n);
+            markUsage(scopeV, n);
 
             if (n.ctx.indexOf("Load") >= 0) {
                 if (v && !v.qName)
@@ -2247,50 +2284,51 @@ namespace pxt.py {
         Tuple: mkArrayExpr,
     }
 
-    function lookupName(n: py.Name): SymbolInfo {
-        let v = lookupSymbol(n.id)
-        if (!v) {
+    function lookupName(n: py.Name): ScopeSymbolInfo {
+        let scopeV = lookupScopeSymbol(n.id)
+        let v = scopeV?.symbol
+        if (!scopeV) {
             // check if the symbol has an override py<->ts mapping
             let over = U.lookup(py2TsFunMap, n.id)
             if (over) {
-                v = lookupSymbol(over.n)
+                scopeV = lookupScopeSymbol(over.n)
             }
         }
-        if (v) {
+        if (scopeV && v) {
             n.symbolInfo = v
             if (!n.tsType)
                 error(n, 9562, lf("missing tsType"));
             unify(n, n.tsType!, getOrSetSymbolType(v))
             if (v.isImport)
-                return v
+                return scopeV
             addCaller(n, v)
             if (n.forTargetEndPos && v.forVariableEndPos !== n.forTargetEndPos) {
                 if (v.forVariableEndPos)
                     // defined in more than one 'for'; make sure it's hoisted
-                    v.lastRefPos = v.forVariableEndPos + 1
+                    scopeV.lastRefPos = v.forVariableEndPos + 1
                 else
                     v.forVariableEndPos = n.forTargetEndPos
             }
         } else if (currIteration > 0) {
             error(n, 9516, U.lf("name '{0}' is not defined", n.id))
         }
-        return v!
+        return scopeV!
     }
 
-    function markUsage(s: SymbolInfo | null | undefined, location: py.AST) {
+    function markUsage(s: ScopeSymbolInfo | null | undefined, location: py.AST) {
         if (s) {
             if (s.modifier === VarModifier.Global) {
                 const declaringScope = topScope();
 
-                if (declaringScope && declaringScope.vars[s.name]) {
-                    s = declaringScope.vars[s.name];
+                if (declaringScope && declaringScope.vars[s.symbol.name]) {
+                    s = declaringScope.vars[s.symbol.name];
                 }
             }
             else if (s.modifier === VarModifier.NonLocal) {
-                const declaringScope = findNonlocalDeclaration(s.name, currentScope());
+                const declaringScope = findNonlocalDeclaration(s.symbol.name, currentScope());
 
                 if (declaringScope) {
-                    s = declaringScope.vars[s.name];
+                    s = declaringScope.vars[s.symbol.name];
                 }
             }
 
@@ -2379,23 +2417,23 @@ namespace pxt.py {
 
     function collectHoistedDeclarations(scope: py.ScopeDef) {
         const hoisted: B.JsNode[] = [];
-        let current: SymbolInfo;
+        let current: ScopeSymbolInfo;
         for (const varName of Object.keys(scope.vars)) {
             current = scope.vars[varName];
 
             if (shouldHoist(current, scope)) {
-                hoisted.push(declareVariable(current));
+                hoisted.push(declareVariable(current?.symbol));
             }
         }
         return hoisted;
     }
 
-    function shouldHoist(sym: SymbolInfo, scope: py.ScopeDef): boolean {
+    function shouldHoist(sym: ScopeSymbolInfo, scope: py.ScopeDef): boolean {
         let result =
-            sym.kind === SK.Variable
-            && !sym.isParam
+            sym.symbol.kind === SK.Variable
+            && !sym.symbol.isParam
             && sym.modifier === undefined
-            && (sym.lastRefPos! > sym.forVariableEndPos!
+            && (sym.lastRefPos! > sym.symbol.forVariableEndPos!
                 || sym.firstRefPos! < sym.firstAssignPos!
                 || sym.firstAssignDepth! > scope.blockDepth!)
             && !(isTopLevelScope(scope) && sym.firstAssignDepth! === 0);
@@ -2597,7 +2635,9 @@ namespace pxt.py {
         }
         for (let s: ScopeDef | undefined = infoScope; !!s; s = s.parent) {
             if (s && s.vars)
-                U.values(s.vars).forEach(addSym)
+                U.values(s.vars)
+                    .map(v => v.symbol)
+                    .forEach(addSym)
         }
         apis.forEach(addSym)
 

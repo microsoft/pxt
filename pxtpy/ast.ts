@@ -43,14 +43,16 @@ namespace pxt.py {
         isLocal?: boolean;
         isParam?: boolean;
         isImport?: SymbolInfo;
-        modifier?: VarModifier;
+        // TODO(dz):
+        // modifier?: VarModifier;
         forVariableEndPos?: number;
 
+        // TODO(dz): remove?
         /* usage information */
-        firstRefPos?: number;
-        lastRefPos?: number;
-        firstAssignPos?: number;
-        firstAssignDepth?: number;
+        // firstRefPos?: number;
+        // lastRefPos?: number;
+        // firstAssignPos?: number;
+        // firstAssignDepth?: number;
     }
 
     // based on grammar at https://docs.python.org/3/library/ast.html
@@ -163,8 +165,20 @@ namespace pxt.py {
         value: Expr;
     }
 
+    // TODO(dz): finalize
+    export interface ScopeSymbolInfo {
+        /* usage information */
+        firstRefPos?: number;
+        lastRefPos?: number;
+        firstAssignPos?: number;
+        firstAssignDepth?: number;
+        /* global/nonlocal */
+        modifier?: VarModifier;
+
+        symbol: SymbolInfo,
+    }
     export interface ScopeDef extends Stmt {
-        vars: Map<SymbolInfo>;
+        vars: Map<ScopeSymbolInfo>;
         parent?: ScopeDef;
         blockDepth?: number;
     }
