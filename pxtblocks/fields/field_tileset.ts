@@ -126,7 +126,7 @@ namespace pxtblockly {
                 this.transparent = constructTransparentTile();
                 return [this.transparent];
             }
-            
+
             return this.menuGenerator_.call(this);
         }
 
