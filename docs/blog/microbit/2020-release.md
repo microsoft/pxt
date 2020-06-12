@@ -6,6 +6,10 @@ We are happy to announce that our **2020 MakeCode for the micro:bit release** is
 
 Many of the important new features were announced in the post for the [beta](/blog/microbit/2020-beta) but we'll share them again here.
 
+https://youtu.be/jjTUjrlw8vQ
+
+https://youtu.be/RpK4Cg42eNk
+
 ## New features for this release
 
 Here’s a run-down of the new features in the 2020 release:
