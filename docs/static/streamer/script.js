@@ -225,9 +225,7 @@
         }
 
         function addSiteButton(url) {
-            addButton("SingleBookmark", url, () => {
-                editor.src = url;
-            }, false)
+            addButton("SingleBookmark", url, () => setSite(url), false)
         }
 
         function addPaintButton(icon, title, tool) {
@@ -238,6 +236,14 @@
             const sceneIndex = scenes.indexOf(`${scene}scene`)
             addButton(icon, title, () => setScene(scene), state.sceneIndex == sceneIndex)
         }
+    }
+
+    function setSite(url) {
+        const config = readConfig();
+        if (config.multiEditor && state.sceneIndex == LEFT_SCENE_INDEX)
+            editor2.src = url;
+        else
+            editor.src = url;
     }
 
     function setScene(scene) {
