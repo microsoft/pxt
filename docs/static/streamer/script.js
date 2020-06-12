@@ -755,7 +755,7 @@ background-image: url(${config.backgroundImage});
         window.history.replaceState('', '', '#')
     }
 
-    async function startStream(el, deviceId, rotate) {
+    async function startStream(el, deviceId, rotate, greenscreen) {
         stopStream(el.srcObject)
         console.log(`trying device ${deviceId}`)
         if (deviceId === DISPLAY_DEVICE_ID) {
@@ -788,14 +788,21 @@ background-image: url(${config.backgroundImage});
             el.classList.remove("rotate");
 
         // time to get serious
-        el.style.opacity = 0;
-        const seriously = new Seriously();
-        const source = seriously.source("#facecamvideo");
-        const target = seriously.target('#facecamcanvas');
-        edge = seriously.effect("ascii");
-        edge.source = source;
-        target.source = edge;
-        seriously.go();            
+        if (greenscreen) {
+            el.style.opacity = 0;
+            el.classList.add("greenscreen")
+            const seriously = new Seriously();
+            const source = seriously.source("#facecamvideo");
+            const target = seriously.target('#facecamcanvas');
+            const chroma = seriously.effect("chroma");
+            chroma.clipBlack = 0.5;
+            chroma.source = source;
+            target.source = chroma;
+            seriously.go();        
+        } else {
+            el.style.opacity = 1;
+            el.classList.remove("greenscreen")
+        }
     }
 
     function stopRecording() {
