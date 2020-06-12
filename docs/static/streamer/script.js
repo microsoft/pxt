@@ -72,6 +72,17 @@
         settings.classList.remove("hidden")
     }
 
+    async function hideSettings() {
+        settings.classList.add("hidden")
+    }
+
+    function toggleSettings() {
+        if (/hidden/.test(settings.className))
+            showSettings();
+        else
+            hideSettings();
+    }
+
     function readConfig() {
         try {
             const cfg = JSON.parse(localStorage["streamer.config"]);
@@ -184,7 +195,7 @@
             else
                 addButton("Record2", "Start recording", startRecording)
         }
-        addButton("Settings", "Show settings", showSettings);
+        addButton("Settings", "Show settings", toggleSettings);
 
         function addSep() {
             const sep = document.createElement("div")
@@ -675,8 +686,8 @@ background: #615fc7;
         introvideo.onclick = function(e) {                        
             tickEvent("streamer.introvideo", undefined, { interactiveConsent: true })
             stopEvent(e)
-            loadSettings()            
-            settings.classList.add("hidden")
+            loadSettings()      
+            hideSettings()      
             introvideo.requestPictureInPicture()
                 .then(() => introvideo.play())
         }
@@ -848,7 +859,7 @@ background: #615fc7;
         settingsclose.onclick = function (e) {
             tickEvent("streamer.settingsclose", undefined, { interactiveConsent: true })
             stopEvent(e)
-            settings.classList.add("hidden")
+            hideSettings()
         }
         const editorselect = document.getElementById("editorselect");
         editorselect.innerHTML = "" // remove all web cams
