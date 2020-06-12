@@ -158,7 +158,7 @@
         if (state.paint) {
             addPaintButton("ArrowTallUpLeft", "Draw arrow (Alt+Shift+A)", "arrow")
             addPaintButton("RectangleShape", "Draw rectangle (Alt+Shift+R)", "rect")
-            addPaintButton("PenWorkspace", "Draw freeform", "pen")
+            addPaintButton("Highlight", "Draw freeform", "pen")
             addButton("WhiteBoardApp32", "Paint screen in white", whiteboard)
             emojis.forEach(emoji => {
                 const btn = document.createElement("button")
@@ -174,7 +174,7 @@
             addButton("EraseTool", "Clear all drawings", clearPaint)
             addButton("ChromeClose", "Exit paint mode", togglePaint)
         } else {
-            addButton("PenWorkspace", "Paint mode  (Alt+Shift+1)", togglePaint)
+            addButton("EditCreate", "Paint mode  (Alt+Shift+1)", togglePaint)
             addSep()
             addSceneButton("OpenPane", "Move webcam left (Alt+Shift+2)", "left")
             addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
@@ -347,6 +347,7 @@
             painttoolCtx.lineCap = 'round';
             painttoolCtx.strokeStyle = '#ffe135';
             if (state.painttool == 'pen') {
+                painttoolCtx.strokeStyle = 'rgba(255, 255, 0, 0.6)';
                 painttoolCtx.beginPath();
                 painttoolCtx.moveTo(mouse.x, mouse.y);
             }
