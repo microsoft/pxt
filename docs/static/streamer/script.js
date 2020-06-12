@@ -179,7 +179,7 @@
 
             if (config.extraSites && config.extraSites.length) {
                 config.extraSites.forEach(addSiteButton)
-                addButton("ChromeClose", "Reload editor", loadEditor)               
+                addButton("Code", "Reload MakeCode editor", loadEditor)               
                 addSep();
             }
 
@@ -227,7 +227,7 @@
         }
 
         function addSiteButton(url) {
-            addButton("OpenPane", url, () => {
+            addButton("SingleBookmark", url, () => {
                 editor.src = url;
             }, false)
         }
