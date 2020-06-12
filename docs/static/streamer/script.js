@@ -159,7 +159,6 @@
             addPaintButton("ArrowTallUpLeft", "Draw arrow (Alt+Shift+A)", "arrow")
             addPaintButton("RectangleShape", "Draw rectangle (Alt+Shift+R)", "rect")
             addPaintButton("Highlight", "Draw freeform", "pen")
-            addButton("WhiteBoardApp32", "Paint screen in white", whiteboard)
             emojis.forEach(emoji => {
                 const btn = document.createElement("button")
                 btn.className = "emoji"
@@ -171,6 +170,7 @@
                 }, false)
                 toolbox.append(btn)
             })
+            addButton("WhiteBoardApp32", "Paint screen in white", whiteboard)
             addButton("EraseTool", "Clear all drawings", clearPaint)
             addButton("ChromeClose", "Exit paint mode", togglePaint)
         } else {
