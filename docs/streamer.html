@@ -4,49 +4,11 @@
     <meta charset="UTF-8">
     <title>Microsoft MakeCode Streamer</title>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+    <link href="/static/streamer/fabric-icons-inline.css" rel="stylesheet">
     <style>
 /*
 Use https://uifabricicons.azurewebsites.net/
 */
-/*
-  Your use of the content in the files referenced here is subject to the terms of the license at https://aka.ms/fabric-assets-license
-*/
-@font-face {
-  font-family: 'FabricMDL2Icons';
-  src: url('data:application/octet-stream;base64,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') format('truetype');
-}
-
-.ms-Icon {
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-font-smoothing: antialiased;
-  display: inline-block;
-  font-family: 'FabricMDL2Icons';
-  font-style: normal;
-  font-weight: normal;
-  speak: none;
-}
-
-.ms-Icon--ArrowUpRightMirrored8:before { content: "\EEEF"; }
-.ms-Icon--PenWorkspace:before { content: "\EDC6"; }
-.ms-Icon--Record2:before { content: "\EA3F"; }
-.ms-Icon--OpenPaneMirrored:before { content: "\EA5B"; }
-.ms-Icon--Robot:before { content: "\E99A"; }
-.ms-Icon--OfficeChat:before { content: "\F70F"; }
-.ms-Icon--WhiteBoardApp32:before { content: "\F674"; }
-.ms-Icon--CircleShapeSolid:before { content: "\F63C"; }
-.ms-Icon--ArrowTallUpLeft:before { content: "\F2BD"; }
-.ms-Icon--RectangleShape:before { content: "\F1A9"; }
-.ms-Icon--Timer:before { content: "\E91E"; }
-.ms-Icon--Remove:before { content: "\E738"; }
-.ms-Icon--Settings:before { content: "\E713"; }
-.ms-Icon--Stop:before { content: "\E71A"; }
-.ms-Icon--Add:before { content: "\E710"; }
-.ms-Icon--Contact:before { content: "\E77B"; }
-.ms-Icon--EraseTool:before { content: "\E75C"; }
-.ms-Icon--ChromeClose:before { content: "\E8BB"; }
-.ms-Icon--OpenPane:before { content: "\E8A0"; }
-
-  
 /* 
     Style for the background. 
     
@@ -62,6 +24,10 @@ body {
     padding-top: 56.25%;
     position: relative;
     width: 100%;            
+}
+
+body.greenscreen {
+    background: #00ff00 !important;
 }
 
 /* 
@@ -313,7 +279,8 @@ body.chatscene #settings {
     padding: 1% 0 1% 0;
 }
 
-#settings .field input {
+#settings .field input,
+#settings .field textarea {
     width: 100%;
     font-size: 90%;
 }
@@ -834,8 +801,8 @@ body.countdownscene.hardware #hardwarecam {
 
 <body class="rightscene">
     <div id="container" class="container">
-    <iframe class="box animated" id="editor" allow="usb;camera"></iframe>
-    <iframe class="box animated" id="editor2" allow="usb;camera"></iframe>
+    <iframe class="box animated" id="editor" allow="usb;camera" sandbox="allow-scripts allow-same-origin allow-top-navigation"></iframe>
+    <iframe class="box animated" id="editor2" allow="usb;camera" sandbox="allow-scripts allow-same-origin allow-top-navigation"></iframe>
     <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
     <div class="box animated clickeable" id="facecam">
         <video autoplay playsinline id="facecamvideo"></video>
@@ -847,13 +814,6 @@ body.countdownscene.hardware #hardwarecam {
     </div>
     <div class="box animated" id="title">title</div>
     <div class="animated" id="countdown">5:00</div>
-    <canvas id="paint" class=""></canvas>
-    <canvas id="painttool" class=""></canvas>
-    <div class="box animated" id="social">
-        <div id="toolbox">
-        </div>
-        <div id="banner"></div>
-    </div>
     <div class="box animated hidden" id="selectapp">
         <p>You need to share your screen with MakeCode to record it.</p>
         <p>Go to <b>Application Window</b>, select <b>Microsoft MakeCode Streamer</b>
@@ -889,14 +849,26 @@ body.countdownscene.hardware #hardwarecam {
             <input type="checkbox" id="multicheckbox"></input>
             <label for="multicheckbox">Multi editors</label>
         </div>
-        <h2>Labels</h2>
         <div class="field">
-            <label for="titleinput">Stream title</label>
+            <label for="extrasitesarea">Extra web sites (must be https://..., one per line)</label>
+            <textarea id="extrasitesarea" rows="2"></textarea>
+        </div>
+        <h2>Style</h2>
+        <div class="field">
+            <label for="titleinput">Title</label>
             <input id="titleinput" placeholder="My awesome stream" />
         </div>
         <div class="field">
-            <label for="bannerinput">Stream banner</label>
+            <label for="bannerinput">Banner</label>
             <input id="bannerinput" placeholder="Text that displays near the icons" />
+        </div>
+        <div class="field">
+            <label for="backgroundimageinput">Background image (must be https://...)</label>
+            <input id="backgroundimageinput" type="url" />
+        </div>
+        <div class="field">
+            <input type="checkbox" id="greenscreencheckbox"></input>
+            <label for="greenscreencheckbox">Green background (Chroma Key)</label>
         </div>
         <h2>Face camera</h2>
         <div class="field">
@@ -955,7 +927,7 @@ body.countdownscene.hardware #hardwarecam {
             <label for="emojisinput">Emojis (😄🤔😭👀)</label>
             <input id="emojisinput" placeholder="Emojis" />
         </div>
-        <h2>Streaming chats</h2>
+        <h2>Streaming</h2>
         <div class="field">
             <label for="mixerinput">Mixer (optional)</label>
             <input id="mixerinput" placeholder="Mixer.com account (/account)" />
@@ -990,6 +962,13 @@ body.countdownscene.hardware #hardwarecam {
         <div class="message details">Resize your browser to match 1920x1080 (180p, HD) or 1280x720 (720p, SD).</div>
         <div class="error details mic">Select a microphone in the settings.</div>
         <div class="error details micdelay">Tune your microphone delay to sync video and audio.</div>
+    </div>
+    <canvas id="paint" class=""></canvas>
+    <canvas id="painttool" class=""></canvas>
+    <div class="box animated" id="social">
+        <div id="toolbox">
+        </div>
+        <div id="banner"></div>
     </div>
 </div>
     <!-- @include tracking.html -->

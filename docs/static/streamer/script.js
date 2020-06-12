@@ -72,6 +72,17 @@
         settings.classList.remove("hidden")
     }
 
+    async function hideSettings() {
+        settings.classList.add("hidden")
+    }
+
+    function toggleSettings() {
+        if (/hidden/.test(settings.className))
+            showSettings();
+        else
+            hideSettings();
+    }
+
     function readConfig() {
         try {
             const cfg = JSON.parse(localStorage["streamer.config"]);
@@ -119,7 +130,8 @@
             config.faceCamLabel && "facecamlabel",
             config.hardwareCamLabel && "hardwarecamlabel",
             config.faceCamId === DISPLAY_DEVICE_ID && "facecamdisplay",
-            config.hardwareCamId === DISPLAY_DEVICE_ID && "hardwarecamdisplay"
+            config.hardwareCamId === DISPLAY_DEVICE_ID && "hardwarecamdisplay",
+            config.greenScreen && "greenscreen"
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
             showSettings();
@@ -146,8 +158,7 @@
         if (state.paint) {
             addPaintButton("ArrowTallUpLeft", "Draw arrow (Alt+Shift+A)", "arrow")
             addPaintButton("RectangleShape", "Draw rectangle (Alt+Shift+R)", "rect")
-            addPaintButton("PenWorkspace", "Draw freeform", "pen")
-            addButton("WhiteBoardApp32", "Paint screen in white", whiteboard)
+            addPaintButton("Highlight", "Draw freeform", "pen")
             emojis.forEach(emoji => {
                 const btn = document.createElement("button")
                 btn.className = "emoji"
@@ -159,19 +170,26 @@
                 }, false)
                 toolbox.append(btn)
             })
+            addButton("WhiteBoardApp32", "Paint screen in white", whiteboard)
             addButton("EraseTool", "Clear all drawings", clearPaint)
             addButton("ChromeClose", "Exit paint mode", togglePaint)
         } else {
-            addSceneButton("OpenPane", "Move webcam left (Alt+Shift+1)", "left")
-            addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+2)", "right")
-            addSceneButton("Contact", "Webcam large (Alt+Shift+3)", "chat")
-            addSceneButton("Timer", "Show countdown (Alt+Shift+4)", "countdown")
+            addButton("EditCreate", "Paint mode  (Alt+Shift+1)", togglePaint)
+            addSep()
+            if (config.extraSites && config.extraSites.length) {
+                config.extraSites.forEach(addSiteButton)
+                addButton("Code", "Reload MakeCode editor", loadEditor)               
+                addSep();
+            }
+            addSceneButton("OpenPane", "Move webcam left (Alt+Shift+2)", "left")
+            addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
+            addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
+            addSceneButton("Timer", "Show countdown (Alt+Shift+5)", "countdown")
             addSep()
             if (config.hardwareCamId)
-                addButton("Robot", "Hardware webcam (Alt+Shift+5)", toggleHardware, state.hardware)
+                addButton("Robot", "Hardware webcam (Alt+Shift+6)", toggleHardware, state.hardware)
             if (config.mixer || config.twitch)
-                addButton("OfficeChat", "Chat  (Alt+Shift+6)", toggleChat, state.chat)
-            addButton("PenWorkspace", "Paint mode  (Alt+Shift+7)", togglePaint)
+                addButton("OfficeChat", "Chat  (Alt+Shift+7)", toggleChat, state.chat)
         }
 
         addSep()
@@ -182,7 +200,7 @@
             else
                 addButton("Record2", "Start recording", startRecording)
         }
-        addButton("Settings", "Show settings", showSettings);
+        addButton("Settings", "Show settings", toggleSettings);
 
         function addSep() {
             const sep = document.createElement("div")
@@ -206,6 +224,10 @@
             return btn;
         }
 
+        function addSiteButton(url) {
+            addButton("SingleBookmark", url, () => setSite(url), false)
+        }
+
         function addPaintButton(icon, title, tool) {
             addButton(icon, title, () => setPaintTool(tool), state.painttool == tool);
         }
@@ -214,6 +236,14 @@
             const sceneIndex = scenes.indexOf(`${scene}scene`)
             addButton(icon, title, () => setScene(scene), state.sceneIndex == sceneIndex)
         }
+    }
+
+    function setSite(url) {
+        const config = readConfig();
+        if (config.multiEditor && state.sceneIndex == LEFT_SCENE_INDEX)
+            editor2.src = url;
+        else
+            editor.src = url;
     }
 
     function setScene(scene) {
@@ -334,6 +364,7 @@
             painttoolCtx.lineCap = 'round';
             painttoolCtx.strokeStyle = '#ffe135';
             if (state.painttool == 'pen') {
+                painttoolCtx.strokeStyle = 'rgba(255, 255, 0, 0.6)';
                 painttoolCtx.beginPath();
                 painttoolCtx.moveTo(mouse.x, mouse.y);
             }
@@ -383,12 +414,13 @@
                 ctx.lineTo(mouse.x, mouse.y);
                 ctx.stroke();
             } else if (state.painttool == 'emoji') {
-                const p1 = mouse, p2 = head;
+                const p1 = head, p2 = mouse;
                 const dx = p2.x - p1.x
                 const dy = p2.y - p1.y
-                const len = Math.max(64, (Math.sqrt(dx * dx + dy * dy) * 0.9) | 0);
+                const len = Math.max(64, (Math.sqrt(dx * dx + dy * dy) ) | 0);
                 ctx.translate(p2.x, p2.y);
                 ctx.rotate(Math.atan2(dy, dx) - Math.PI / 2);
+                ctx.translate(0, -len/2)
 
                 ctx.font = `${len}px serif`;
                 ctx.textAlign = 'center'
@@ -476,6 +508,14 @@ background: #615fc7;
         if (hardwareCamFilter)
             css += `#hardwarecamvideo { filter: ${hardwareCamFilter}; }
         `
+
+        if (config.backgroundImage) {
+            css += `body {
+background: url(${config.backgroundImage}) no-repeat center center fixed; 
+background-size: cover;
+}
+`
+        }
 
         editorStyle.innerText = ""
         editorStyle.append(document.createTextNode(css));
@@ -673,8 +713,8 @@ background: #615fc7;
         introvideo.onclick = function(e) {                        
             tickEvent("streamer.introvideo", undefined, { interactiveConsent: true })
             stopEvent(e)
-            loadSettings()            
-            settings.classList.add("hidden")
+            loadSettings()      
+            hideSettings()      
             introvideo.requestPictureInPicture()
                 .then(() => introvideo.play())
         }
@@ -846,7 +886,7 @@ background: #615fc7;
         settingsclose.onclick = function (e) {
             tickEvent("streamer.settingsclose", undefined, { interactiveConsent: true })
             stopEvent(e)
-            settings.classList.add("hidden")
+            hideSettings()
         }
         const editorselect = document.getElementById("editorselect");
         editorselect.innerHTML = "" // remove all web cams
@@ -872,6 +912,16 @@ background: #615fc7;
             loadEditor()
         }
 
+        const extrasitesarea = document.getElementById("extrasitesarea")
+        extrasitesarea.value = (config.extraSites || []).join('\n');
+        extrasitesarea.onchange = function (e) {
+            config.extraSites = (extrasitesarea.value || "").split('\n')
+                .filter(line => /^https:\/\//.test(line))
+                .map(line => line.trim());
+            saveConfig(config);
+            loadToolbox();
+            render()
+        }        
         const facecamselect = document.getElementById("facecamselect");
         facecamselect.innerHTML = "" // remove all web cams
         {
@@ -1029,6 +1079,17 @@ background: #615fc7;
             render()
         }
 
+        const backgroundimageinput = document.getElementById("backgroundimageinput")
+        backgroundimageinput.value = config.backgroundImage || ""
+        backgroundimageinput.onchange = function (e) {
+            if (/^https:\/\//.test(backgroundimageinput.value)) {
+                config.backgroundImage = backgroundimageinput.value
+                saveConfig(config);
+                loadStyle();
+                render()
+            }
+        }
+
         const twitchinput = document.getElementById("twitchinput")
         twitchinput.value = config.twitch || ""
         twitchinput.onchange = function (e) {
@@ -1050,6 +1111,13 @@ background: #615fc7;
             state.chat = !!config.mixer;
             loadSocial();
             loadChat();
+            render()
+        }
+        const greenscreencheckbox = document.getElementById("greenscreencheckbox")
+        greenscreencheckbox.checked = !!config.greenScreen
+        greenscreencheckbox.onchange = function () {
+            config.greenScreen = !!greenscreencheckbox.checked
+            saveConfig(config)
             render()
         }
 
@@ -1118,29 +1186,29 @@ background: #615fc7;
             switch(ev.keyCode) {
                 // scenes
                 case 49: // 1
-                    ev.preventDefault();
-                    setScene("left");
+                    togglePaint(ev);
                     break;
                 case 50: // 2
                     ev.preventDefault();
-                    setScene("right"); 
+                    setScene("left");
                     break;
                 case 51: // 3
                     ev.preventDefault();
-                    setScene("chat"); 
+                    setScene("right"); 
                     break;
                 case 52: // 4
                     ev.preventDefault();
-                    setScene("countdown"); 
+                    setScene("chat"); 
                     break;
                 case 53: // 5
-                    toggleHardware(ev);
+                    ev.preventDefault();
+                    setScene("countdown"); 
                     break;
                 case 54: // 6
-                    toggleChat(ev);
+                    toggleHardware(ev);
                     break;
                 case 55: // 7
-                    togglePaint(ev);
+                    toggleChat(ev);
                     break;
                 
                 // paint tools
