@@ -4,55 +4,11 @@
     <meta charset="UTF-8">
     <title>Microsoft MakeCode Streamer</title>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+    <link href="/static/streamer/fabric-icons-inline.css" rel="stylesheet">
     <style>
 /*
 Use https://uifabricicons.azurewebsites.net/
 */
-/*
-  Your use of the content in the files referenced here is subject to the terms of the license at https://aka.ms/fabric-assets-license
-*/
-@font-face {
-  font-family: 'FabricMDL2Icons';
-  src: url('data:application/octet-stream;base64,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') format('truetype');
-}
-
-.ms-Icon {
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-font-smoothing: antialiased;
-  display: inline-block;
-  font-family: 'FabricMDL2Icons';
-  font-style: normal;
-  font-weight: normal;
-  speak: none;
-}
-
-.ms-Icon--ArrowUpRightMirrored8:before { content: "\EEEF"; }
-.ms-Icon--PenWorkspace:before { content: "\EDC6"; }
-.ms-Icon--Record2:before { content: "\EA3F"; }
-.ms-Icon--OpenPaneMirrored:before { content: "\EA5B"; }
-.ms-Icon--Robot:before { content: "\E99A"; }
-.ms-Icon--OfficeChat:before { content: "\F70F"; }
-.ms-Icon--WhiteBoardApp32:before { content: "\F674"; }
-.ms-Icon--CircleShapeSolid:before { content: "\F63C"; }
-.ms-Icon--ArrowTallUpLeft:before { content: "\F2BD"; }
-.ms-Icon--DoubleColumn:before { content: "\F1D4"; }
-.ms-Icon--CircleShape:before { content: "\F1A5"; }
-.ms-Icon--RectangleShape:before { content: "\F1A9"; }
-.ms-Icon--EditCreate:before { content: "\F3C9"; }
-.ms-Icon--Remove:before { content: "\E738"; }
-.ms-Icon--Settings:before { content: "\E713"; }
-.ms-Icon--Video:before { content: "\E714"; }
-.ms-Icon--Stop:before { content: "\E71A"; }
-.ms-Icon--Contact:before { content: "\E77B"; }
-.ms-Icon--EraseTool:before { content: "\E75C"; }
-.ms-Icon--Add:before { content: "\E710"; }
-.ms-Icon--OpenPane:before { content: "\E8A0"; }
-.ms-Icon--ChromeClose:before { content: "\E8BB"; }
-.ms-Icon--Timer:before { content: "\E91E"; }
-.ms-Icon--Highlight:before { content: "\E7E6"; }
-
-
-  
 /* 
     Style for the background. 
     
@@ -323,7 +279,8 @@ body.chatscene #settings {
     padding: 1% 0 1% 0;
 }
 
-#settings .field input {
+#settings .field input,
+#settings .field textarea {
     width: 100%;
     font-size: 90%;
 }
@@ -844,8 +801,8 @@ body.countdownscene.hardware #hardwarecam {
 
 <body class="rightscene">
     <div id="container" class="container">
-    <iframe class="box animated" id="editor" allow="usb;camera"></iframe>
-    <iframe class="box animated" id="editor2" allow="usb;camera"></iframe>
+    <iframe class="box animated" id="editor" allow="usb;camera" sandbox="allow-scripts allow-same-origin"></iframe>
+    <iframe class="box animated" id="editor2" allow="usb;camera" sandbox="allow-scripts allow-same-origin"></iframe>
     <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
     <div class="box animated clickeable" id="facecam">
         <video autoplay playsinline id="facecamvideo"></video>
@@ -892,13 +849,17 @@ body.countdownscene.hardware #hardwarecam {
             <input type="checkbox" id="multicheckbox"></input>
             <label for="multicheckbox">Multi editors</label>
         </div>
+        <div class="field">
+            <label for="extrasitesarea">Extra web sites (must be https://, one per line)</label>
+            <textarea id="extrasitesarea" rows="2"></textarea>
+        </div>
         <h2>Labels</h2>
         <div class="field">
-            <label for="titleinput">Stream title</label>
+            <label for="titleinput">Title</label>
             <input id="titleinput" placeholder="My awesome stream" />
         </div>
         <div class="field">
-            <label for="bannerinput">Stream banner</label>
+            <label for="bannerinput">Banner</label>
             <input id="bannerinput" placeholder="Text that displays near the icons" />
         </div>
         <h2>Face camera</h2>

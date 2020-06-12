@@ -7,6 +7,10 @@
   "hashFontFileName": true,
   "glyphs": [
     {
+      "name": "SingleBookmark",
+      "unicode": "EDFF"
+    },
+    {
       "name": "ArrowUpRightMirrored8",
       "unicode": "EEEF"
     },
@@ -21,6 +25,10 @@
     {
       "name": "OpenPaneMirrored",
       "unicode": "EA5B"
+    },
+    {
+      "name": "Code",
+      "unicode": "E943"
     },
     {
       "name": "Robot",
