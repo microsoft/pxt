@@ -3341,15 +3341,13 @@ export class ProjectView
 
             let md: string = undefined;
             const [initialLang, baseLang, initialLangLowerCase] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
-            if (initialLang && baseLang) {
+            if (initialLang && baseLang && initialLangLowerCase) {
                 //We need to first search base lang and then intial Lang
-                //Example: normalizeLanguageCode en-IN  will return ["en-IN", "en"] and nb will be returned as ["nb"]
-                md = files[`_locales/${initialLang}/${mfn}`] || files[`_locales/${baseLang}/${mfn}`]
+                //Example: normalizeLanguageCode en-IN  will return ["en-IN", "en", "en-in"] and nb will be returned as ["nb"]
+                md = files[`_locales/${initialLang}/${mfn}`]
+                || files[`_locales/${initialLangLowerCase}/${mfn}`]
+                || files[`_locales/${baseLang}/${mfn}`]
 
-                //Try lowercase full lang (en-in) if can't find the right locale
-                if (!md && initialLangLowerCase) {
-                    md = files[`_locales/${initialLangLowerCase}/${mfn}`];
-                }
             } else {
                 md = files[`_locales/${initialLang}/${mfn}`];
             }

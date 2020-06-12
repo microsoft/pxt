@@ -762,18 +762,17 @@ namespace pxt {
             if (files.indexOf(fn) > -1) {
                 r = JSON.parse(this.readFile(fn)) as Map<string>;
             }
-            else if (baseLang) {
-                fn = `_locales/${baseLang}/${filename}-strings.json`;
-                if (files.indexOf(fn) > -1) {
+            else if (initialLangLowerCase) {
+                fn = `_locales/${initialLangLowerCase}/${filename}-strings.json`;
+                if (files.indexOf(fn) > -1)
                     r = JSON.parse(this.readFile(fn)) as Map<string>;
-                }
-                else if (initialLangLowerCase) {
-                    fn = `_locales/${initialLangLowerCase}/${filename}-strings.json`;
-                    if (files.indexOf(fn) > -1)
+                else if (baseLang) {
+                    fn = `_locales/${baseLang}/${filename}-strings.json`;
+                    if (files.indexOf(fn) > -1) {
                         r = JSON.parse(this.readFile(fn)) as Map<string>;
+                    }
                 }
             }
-
             return r;
         }
     }
