@@ -3,7 +3,7 @@ namespace pxt.Cloud {
     import Util = pxtc.Util;
 
     // hit /api/ to stay on same domain and avoid CORS
-    export let apiRoot = pxt.BrowserUtils.isLocalHost() || Util.isNodeJS ? "https://www.makecode.com/api/" : "/api/";
+    export let apiRoot = (pxt.BrowserUtils.isLocalHost() || Util.isNodeJS) ? "https://www.makecode.com/api/" : "/api/";
     export let accessToken = "";
     export let localToken = "";
     let _isOnline = true;
@@ -71,7 +71,7 @@ namespace pxt.Cloud {
     }
 
     export function privateRequestAsync(options: Util.HttpRequestOptions) {
-        options.url = pxt.webConfig && pxt.webConfig.isStatic && !options.forceLiveEndpoint ? pxt.webConfig.relprefix + options.url : apiRoot + options.url;
+        options.url = pxt.webConfig?.isStatic && !options.forceLiveEndpoint ? pxt.webConfig.relprefix + options.url : apiRoot + options.url;
         options.allowGzipPost = true
         if (!Cloud.isOnline()) {
             return offlineError(options.url);

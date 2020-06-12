@@ -84,7 +84,10 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                     return qName
                 }
 
-                const items = (completions.entries || []).map((si, i) => {
+                let entries = completions.entries || [];
+                entries = entries.filter(si => si.name.charAt(0) != "_");
+
+                const items = entries.map((si, i) => {
                     let insertSnippet = stripLocalNamespace(this.python ? si.pySnippet : si.snippet);
                     let qName = stripLocalNamespace(this.python ? si.pyQName : si.qName);
                     let name = this.python ? si.pyName : si.name;
@@ -639,7 +642,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.errorChangesListeners[handlerKey] = handler;
     }
 
-    goToError(error: pxtc.KsDiagnostic) {
+    goToError(error: pxtc.LocationInfo) {
         // Use endLine and endColumn to position the cursor
         // when errors do have them
         let line, column;

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Microsoft MakeCode Streamer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
     <style>
 /*
 Use https://uifabricicons.azurewebsites.net/
@@ -52,7 +53,7 @@ Use https://uifabricicons.azurewebsites.net/
     Generate your custom css gradients at https://cssgradient.io/ 
 */
 body {
-    font-family: monospace;
+    font-family: 'Open Sans', sans-serif;
     overflow: hidden;
     width:100%;
     height:100%;
@@ -61,21 +62,6 @@ body {
     padding-top: 56.25%;
     position: relative;
     width: 100%;            
-}
-
-footer {
-    font-size: 70%;
-    color: white;
-    position: absolute;
-    bottom: 0.5%;
-    left: 1%;
-    opacity: 90%;
-    text-shadow: black 1px 1px;
-}
-
-footer>a {
-    color: white;
-    text-decoration: none;
 }
 
 /* 
@@ -91,11 +77,30 @@ footer>a {
 .animated {
     transition: left 0.5s, right 0.5s, bottom 0.5s, top 0.5s, width 0.5s, height 0.5s, opacity 1s;
 }
+button:hover {
+    outline: solid 5px rgba(0,0,100, 0.2);    
+}
+.clickeable {
+    cursor:pointer;
+}
+.clickeable:hover {
+    box-shadow:
+  0 11.6px 0.9px -20px rgba(0, 0, 0, 0.028),
+  0 18.5px 3.1px -20px rgba(0, 0, 0, 0.042),
+  0 40px 14px -20px rgba(0, 0, 0, 0.07)
+;
+}
 
 .hidden {
     display: none;
 }
-
+.fadeout {
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 10s 2s, opacity 2s linear;
+  transition-delay: 10s;
+  transition-property: visibility, opacity;
+}
 .rotate {
     transform: rotate(180deg);
     transform-origin: 50% 50%;
@@ -174,9 +179,6 @@ footer>a {
     height: 76%;
     vertical-align: text-bottom;
 }
-#banner {
-    margin: 0.5vh;
-}
 canvas {
     display: none;
 }
@@ -196,6 +198,14 @@ body.loading {
     filter: blur(0.2vw);
 }
 
+.pip {
+    padding: 0.5vw;
+}
+.pip video {
+    width: 10vw;
+    display: block;
+}
+
 /**
 title, countdown
 */
@@ -210,6 +220,7 @@ title, countdown
     vertical-align: middle;
     color: white;
     background: #615fc7;
+    opacity: 0;
 }
 #countdown {
     position: absolute;
@@ -221,6 +232,8 @@ title, countdown
     transition-delay: 0.5s;
     font-size: 12vw;
     color:white;
+    opacity: 0;
+    text-shadow: black 2px 2px 1px;
 }
 
 /**
@@ -257,15 +270,43 @@ Settings
     position: absolute;
     left: 16%;
     top: 16%;
-    width: 58%;
-    height: 58%;
+    width: 60%;
+    height: 74%;
     background: #ccc;
-    padding: 3rem;
+    padding: 2vw;
     overflow-y: auto;
+}
+
+#selectapp {
+    position: absolute;
+    left: 16%;
+    bottom: 5%;
+    width: 50%;
+    height: 10%;
+    background: #ccc;
+    padding: 2vw;
+    overflow-y: auto;
+}
+
+body.leftscene #settings {
+    left: 32%;
+    top: 3%;
+}
+
+body.rightscene #settings {
+    left: 5%;
+    top: 3%;
+}
+body.chatscene #settings {
+    top: 51%;
+    height: 26%;
 }
 
 #settings h2 {
     margin: 0;  
+    border-top: solid 1px #888;
+    margin-top: 1vw;
+    padding-top: 1vw;
 }
 
 #settings .field {
@@ -323,6 +364,26 @@ Settings
     width: 30%;
     bottom: 1.5%;
     right: 1%;
+    overflow: hidden;
+}
+#facecam video,
+#hardwarecam video {
+    width: 100%;
+}
+.videolabel  {
+    display: none;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: calc(100% - 1vw);
+    font-size: 1vw;
+    padding: 0.5vw;
+    border-top: 0.5rem solid;
+    left: 0;
+}
+body.facecamlabel #facecamlabel.videolabel,
+body.hardwarecamlabel #hardwarecamlabel.videolabel {
+    display: block;
 }
 #hardwarecam {
     width: 0;
@@ -332,6 +393,16 @@ Settings
 }
 body.hardware #hardwarecam {
     opacity: 100%;
+}
+
+/** application clipping */
+body.hardwarecamdisplay #hardwarecamvideo,
+body.facecamdisplay #facecamvideo {
+    clip-path: polygon(10% 20%, 90% 20%, 90% 100%, 10% 100%);
+    width: 130%;
+    left: -10%;
+    margin-left: -15%;
+    margin-top: -20%;
 }
 
 /*
@@ -358,13 +429,11 @@ body.hardware #hardwarecam {
     float:right;
 }
 
-span.social {
+#banner {
     font-size: 2vw;
     color: white;
     flex-grow: 1;
     margin-left: 1%;
-    text-align: center;
-    cursor: pointer;
 }
 video.error {
     background: rgba(255, 0, 0, 0.5)
@@ -385,15 +454,17 @@ body.rightscene #editor {
 
 body.rightscene #facecam {
     right: 1%;
-    width: 28%;
+    width: 24%;
 }
 
 body.rightscene.chat #chat {
     right: 1%;
     width: 28%;
-    height: 54%;
+    height: 55%;
 }
-
+body.rightscene.chat #facecam {
+    width: 28%;
+}
 body.rightscene.chat #editor {
     width: 67%;
     top: 1%;
@@ -401,10 +472,16 @@ body.rightscene.chat #editor {
 }
 
 /* right + hardware */
+body.rightscene.hardware #facecam {
+    width: 22%;
+}
 body.rightscene.hardware #hardwarecam {
     right: 1%;
-    width: 22%;
-    bottom: 42%;
+    width: 20%;
+    bottom: 34%;
+}
+body.rightscene.hardware #editor {
+    width: 88%
 }
 
 /* right + hardware + chat */
@@ -435,6 +512,9 @@ body.rightscene.multi #editor2 {
     width: 28%;
     left: 70%;
     height: 54%;
+}
+body.rightscene.multi #facecam {
+    width: 28%;
 }
 
 /* right + chat + multi */
@@ -506,10 +586,9 @@ body.leftscene #editor {
     left: 4%;
     height: 87%;
 }
-
 body.leftscene #facecam {
-    right: 70%;
-    width: 28%;
+    right: 74%;
+    width: 24%;
 }
 
 body.leftscene #hardwarecam {
@@ -524,11 +603,22 @@ body.leftscene #social {
     bottom: 1.5%;
 }
 
+/* left + hardware */
 body.leftscene.hardware #hardwarecam {
+    right: 78%;
+    width: 20%;
+    bottom: 34%;
+}
+body.leftscene.hardware #facecam {
     right: 76%;
     width: 22%;
-    bottom: 42%;
 }
+body.leftscene.hardware #editor {
+    left: 10%;
+    width: 88%
+
+}
+
 
 /* left + hardware + chat */
 body.leftscene.hardware.chat #editor {
@@ -542,7 +632,7 @@ body.leftscene.hardware.chat #chat {
 }
 body.leftscene.hardware.chat #hardwarecam {
     width:22%;
-    bottom: 35%;
+    bottom: 34%;
     right: 77%;
 }
 body.leftscene.hardware.chat #facecam {
@@ -596,7 +686,7 @@ body.leftscene.chat #facecam {
 
 body.leftscene.chat #chat {
     right: 70%;
-    height: 54%;
+    height: 55%;
     width: 28%;
 }
 
@@ -650,9 +740,9 @@ body.leftscene.hardware.multi.chat #facecam {
 
 /* chatscene: facecam and stream chat */
 body.chatscene #facecam {
-    bottom: 19%;
-    right: 38%;
-    width: 52%;
+    bottom: 10%;
+    right: 20%;
+    width: 64%;
 }
 
 body.chatscene #editor {
@@ -661,7 +751,22 @@ body.chatscene #editor {
 body.chatscene #editor2 {
     right: -100%;
 }
-
+body.chatscene #title {
+    width: 46%;
+    top: 1.5%;
+    right: 41%;
+    font-size: 2vw;    
+    opacity: 100%;
+}
+body.chatscene #social {
+    left: 15%;
+    width: 64%;
+}
+body.chatscene.chat #facecam {
+    bottom: 19%;
+    right: 38%;
+    width: 52%;
+}
 body.chatscene.chat #chat {
     top: 9%;
     right: 1%;
@@ -669,21 +774,16 @@ body.chatscene.chat #chat {
     height: 80%;
     opacity: 100%;
 }
-
-body.chatscene #social {
-    left: 4%;
-    bottom: 9%;
-}
-
 body.chatscene.hardware #facecam {
     bottom: 19%;
-    right: 49%;
+    right: 51%;
     width: 46%;
 }
 body.chatscene.hardware #hardwarecam {
     width: 46%;
+    height: calc(46% * 4 /3);    
     bottom: 19%;
-    right: 1%;            
+    right: 2%;            
 }
 
 body.chatscene.hardware.chat #facecam {
@@ -691,12 +791,13 @@ body.chatscene.hardware.chat #facecam {
 }
 body.chatscene.hardware.chat #hardwarecam {
     width: 30%;
+    height: calc(30% * 4 /3);    
     bottom: 9%;
-    right: 1%; 
+    right: 2%; 
 }
 body.chatscene.hardware.chat #chat {
     top: 1%;
-    right: 1%;
+    right: 2%;
     width: 30%;
     height: 43%;
 }
@@ -713,8 +814,10 @@ body.countdownscene #hardwarecam {
 }
 body.countdownscene #title {
     top: 36%;
+    opacity: 100%;
 }
 body.countdownscene #countdown {
+    opacity: 100%;
     bottom: 20%;
 }
 body.countdownscene #social {
@@ -734,8 +837,14 @@ body.countdownscene.hardware #hardwarecam {
     <iframe class="box animated" id="editor" allow="usb;camera"></iframe>
     <iframe class="box animated" id="editor2" allow="usb;camera"></iframe>
     <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
-    <video class="box animated" autoplay="true" id="facecam"></video>
-    <video class="box animated" autoplay="true" id="hardwarecam"></video>
+    <div class="box animated clickeable" id="facecam">
+        <video autoplay playsinline id="facecamvideo"></video>
+        <div class="videolabel" id="facecamlabel"></div>
+    </div>
+    <div class="box animated clickeable" id="hardwarecam">
+        <video autoplay playsinline id="hardwarecamvideo"></video>
+        <div class="videolabel" id="hardwarecamlabel"></div>
+    </div>
     <div class="box animated" id="title">title</div>
     <div class="animated" id="countdown">5:00</div>
     <canvas id="paint" class=""></canvas>
@@ -745,13 +854,33 @@ body.countdownscene.hardware #hardwarecam {
         </div>
         <div id="banner"></div>
     </div>
+    <div class="box animated hidden" id="selectapp">
+        <p>You need to share your screen with MakeCode to record it.</p>
+        <p>Go to <b>Application Window</b>, select <b>Microsoft MakeCode Streamer</b>
+        and click <b>Share</b>.</p>
+        <p>Press the <b>stop</b> button when you are done recording.</p>
+    </div>
     <div class="box animated hidden" id="settings">
+        <datalist id="tickmarks">
+            <option value="0"></option>
+            <option value="10"></option>
+            <option value="20"></option>
+            <option value="30"></option>
+            <option value="40"></option>
+            <option value="50"></option>
+            <option value="60"></option>
+            <option value="70"></option>
+            <option value="80"></option>
+            <option value="90"></option>
+            <option value="100"></option>
+        </datalist>        
         <button id="settingsclose">close</button>
-        <h2>MakeCode Streamer</h2>
-        <div class="field">
-            <label for="titleinput">Stream title</label>
-            <input id="titleinput" placeholder="My awesome stream" />
-        </div>
+        <h1>MakeCode Streamer</h1>
+        <button class="pip" title="Watch the introduction video!">
+            <video id="introvideo" preload="metadata" poster="/static/streamer/intro.png" src="/static/streamer/intro.mp4"></video>
+            <label>Take the tour!</label>
+        </button>
+        <h2>Editor</h2>
         <div class="field">
             <label for="editorselect">Choose your editor</label>
             <select id="editorselect"></select>
@@ -760,30 +889,67 @@ body.countdownscene.hardware #hardwarecam {
             <input type="checkbox" id="multicheckbox"></input>
             <label for="multicheckbox">Multi editors</label>
         </div>
-        <h2>Video</h2>
+        <h2>Labels</h2>
+        <div class="field">
+            <label for="titleinput">Stream title</label>
+            <input id="titleinput" placeholder="My awesome stream" />
+        </div>
+        <div class="field">
+            <label for="bannerinput">Stream banner</label>
+            <input id="bannerinput" placeholder="Text that displays near the icons" />
+        </div>
+        <h2>Face camera</h2>
         <div class="field">
             <label for="facecamselect">Choose a Face Webcam</label>
             <select id="facecamselect"></select>
             <div class="error hidden facecamerror" id="facecamerror">Connection error. Make sure the camera is not blocked or used by another application.</div>
         </div>
         <div class="field">
+            <label for="facecamlabelinput">Camera label</label>
+            <input id="facecamlabelinput" placeholder="My name, social accounts" />
+        </div>
+        <div class="field">
+            <label for="facecamcontrast">Contrast</label>
+            <input type="range" id="facecamcontrast" min="0" max="100" step="1" list="tickmarks">
+        </div>
+        <div class="field">
+            <label for="facecambrightness">Brightness</label>
+            <input type="range" id="facecambrightness" min="0" max="100" step="1" list="tickmarks">
+        </div>
+        <div class="field">
+            <label for="facecamsaturate">Saturate</label>
+            <input type="range" id="facecamsaturate" min="0" max="100" step="1" list="tickmarks">
+        </div>
+        <div class="field">
             <input type="checkbox" id="facerotatecameracheckbox"></input>
             <label for="facerotatecameracheckbox">Rotate camera 180</label>
         </div>
+        <h2>Document camera</h2>
         <div class="field">
-            <label for="hardwarecamselect">Choose a Hardware Webcam</label>
+            <label for="hardwarecamselect">Choose a document Webcam</label>
             <select id="hardwarecamselect"></select>
             <div class="error hidden" id="hardwarecamerror">Connection error. Make sure the camera is not blocked or used by another application.</div>
         </div>
         <div class="field">
+            <label for="hardwarecamlabelinput">Camera label</label>
+            <input id="hardwarecamlabelinput" placeholder="Cam description" />
+        </div>
+        <div class="field">
             <input type="checkbox" id="hardwarerotatecameracheckbox"></input>
             <label for="hardwarerotatecameracheckbox">Rotate camera 180</label>
+        </div>        
+        <div class="field"> 
+            <label for="hardwarecamcontrast">Contrast</label>
+            <input type="range" id="hardwarecamcontrast" min="0" max="100" step="1" list="tickmarks">
         </div>
-        <h2>Social accounts</h2>
         <div class="field">
-            <label for="twitterinput">Twitter (optional)</label>
-            <input id="twitterinput" placeholder="Twitter handle (@account)" />
+            <label for="hardwarecambrightness">Brightness</label>
+            <input type="range" id="hardwarecambrightness" min="0" max="100" step="1" list="tickmarks">
         </div>
+        <div class="field">
+            <label for="hardwarecamsaturate">Saturate</label>
+            <input type="range" id="hardwarecamsaturate" min="0" max="100" step="1" list="tickmarks">
+        </div>       
         <h2>Paint</h2>
         <div class="field">
             <label for="emojisinput">Emojis (😄🤔😭👀)</label>
@@ -810,7 +976,13 @@ body.countdownscene.hardware #hardwarecam {
             <input id="micdelayinput" type="number" placeholder="200" />
             <div class="error hidden micdelay">Record your video and clap. Adjust the delay so that the video and the audio are in sync.</div>
         </div>
-        <p>When starting the recording, select the current browser tab.</p>
+        <h2>Legal</h2>
+        <div class="field">
+            <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp; Cookies</a>|
+            <a class="item" href="https://makecode.com/termsofuse" target="_blank" rel="noopener">Terms Of Use</a>|
+            <a class="item" href="https://makecode.com/trademarks" target="_blank" rel="noopener">Trademarks</a>|
+            <span class="item">© 2020 Microsoft</span>
+        </div>        
     </div>
     <div class="box animated hidden" id="recorder">
         <span>click to start recording</span>
@@ -820,15 +992,8 @@ body.countdownscene.hardware #hardwarecam {
         <div class="error details micdelay">Tune your microphone delay to sync video and audio.</div>
     </div>
 </div>
-<footer>
-    <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp; Cookies</a>|
-    <a class="item" href="https://makecode.com/termsofuse" target="_blank" rel="noopener">Terms Of Use</a>|
-    <a class="item" href="https://makecode.com/trademarks" target="_blank" rel="noopener">Trademarks</a>|
-    <span class="item">© 2020 Microsoft</span>
-</footer>
-
     <!-- @include tracking.html -->
-<script src="/streamer/script.js"></script>
+<script src="/static/streamer/script.js"></script>
 </body>
 
 </html>

@@ -68,7 +68,7 @@ namespace pxtblockly {
     }
 
     function promptAndCreateKind(ws: Blockly.Workspace, opts: pxtc.KindInfo, message: string, cb: (newValue: string) => void) {
-        Blockly.prompt(message, opts.promptHint, response => {
+        Blockly.prompt(message, null, response => {
             if (response) {
                 let nameIsValid = false;
                 if (pxtc.isIdentifierStart(response.charCodeAt(0), 2)) {
@@ -103,7 +103,7 @@ namespace pxtblockly {
 
                 cb(createVariableForKind(ws, opts, response));
             }
-        });
+        }, { placeholder: opts.promptHint });
     }
 
 

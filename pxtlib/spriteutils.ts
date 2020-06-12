@@ -287,6 +287,8 @@ namespace pxt.sprite {
 
     export function getBitmap(blocksInfo: pxtc.BlocksInfo, qName: string) {
         const sym = blocksInfo.apis.byQName[qName];
+        if (!sym) return null;
+
         const jresURL = sym.attributes.jresURL;
         let data = atob(jresURL.slice(jresURL.indexOf(",") + 1))
         let magic = data.charCodeAt(0);

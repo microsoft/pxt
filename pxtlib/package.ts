@@ -604,18 +604,19 @@ namespace pxt {
             }
 
 
-            const loadDepsRecursive = (deps: pxt.Map<string>, from: Package, isCpp = false) => {
-                return U.mapStringMapAsync(deps || from.dependencies(isCpp), (id, ver) => {
+            const loadDepsRecursive = async (deps: pxt.Map<string>, from: Package, isCpp = false) => {
+                if (!deps) deps = from.dependencies(isCpp)
+                for (let id of Object.keys(deps)) {
+                    const ver = deps[id] || "*"
                     if (id == "hw" && pxt.hwVariant)
                         id = "hw---" + pxt.hwVariant
                     let mod = from.resolveDep(id)
-                    ver = ver || "*"
                     if (mod) {
                         if (mod.invalid()) {
                             // failed to resolve dependency, ignore
                             mod.level = Math.min(mod.level, from.level + 1)
                             mod.addedBy.push(from)
-                            return Promise.resolve();
+                            continue
                         }
 
                         if (mod._verspec != ver && !/^file:/.test(mod._verspec) && !/^file:/.test(ver))
@@ -624,7 +625,6 @@ namespace pxt {
                             mod.level = Math.min(mod.level, from.level + 1)
                             mod.addedBy.push(from)
                         }
-                        return Promise.resolve()
                     } else {
                         let mod = new Package(id, ver, from.parent, from)
                         if (isCpp)
@@ -632,9 +632,9 @@ namespace pxt {
                         from.parent.deps[id] = mod
                         // we can have "core---nrf52" to be used instead of "core" in other packages
                         from.parent.deps[id.replace(/---.*/, "")] = mod
-                        return mod.loadAsync(isInstall)
+                        await mod.loadAsync(isInstall)
                     }
-                })
+                }
             }
 
             return initPromise
