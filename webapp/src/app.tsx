@@ -1337,8 +1337,15 @@ export class ProjectView
 
                 // load side docs
                 const editorForFile = this.pickEditorFor(file);
-                if (pkg?.mainPkg?.config?.documentation)
-                    this.setSideDoc(pkg.mainPkg.config.documentation, editorForFile == this.blocksEditor);
+                const documentation = pkg?.mainPkg?.config?.documentation;
+                if (documentation)
+                    this.setSideDoc(documentation, editorForFile == this.blocksEditor);
+                else {
+                    const readme = main.lookupFile("this/README.md");
+                    // no auto-popup when editing packages locally
+                    if (!h.githubId && readme && readme.content && readme.content.trim())
+                        this.setSideMarkdown(readme.content);
+                }
 
                 // update recentUse on the header
                 return workspace.saveAsync(h)
