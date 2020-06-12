@@ -163,16 +163,17 @@
             addButton("EraseTool", "Clear all drawings", clearPaint)
             addButton("ChromeClose", "Exit paint mode", togglePaint)
         } else {
-            addSceneButton("OpenPane", "Move webcam left (Alt+Shift+1)", "left")
-            addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+2)", "right")
-            addSceneButton("Contact", "Webcam large (Alt+Shift+3)", "chat")
-            addSceneButton("Timer", "Show countdown (Alt+Shift+4)", "countdown")
+            addButton("PenWorkspace", "Paint mode  (Alt+Shift+1)", togglePaint)
+            addSep()
+            addSceneButton("OpenPane", "Move webcam left (Alt+Shift+2)", "left")
+            addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
+            addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
+            addSceneButton("Timer", "Show countdown (Alt+Shift+5)", "countdown")
             addSep()
             if (config.hardwareCamId)
-                addButton("Robot", "Hardware webcam (Alt+Shift+5)", toggleHardware, state.hardware)
+                addButton("Robot", "Hardware webcam (Alt+Shift+6)", toggleHardware, state.hardware)
             if (config.mixer || config.twitch)
-                addButton("OfficeChat", "Chat  (Alt+Shift+6)", toggleChat, state.chat)
-            addButton("PenWorkspace", "Paint mode  (Alt+Shift+7)", togglePaint)
+                addButton("OfficeChat", "Chat  (Alt+Shift+7)", toggleChat, state.chat)
         }
 
         addSep()
@@ -1126,29 +1127,29 @@ background: #615fc7;
             switch(ev.keyCode) {
                 // scenes
                 case 49: // 1
-                    ev.preventDefault();
-                    setScene("left");
+                    togglePaint(ev);
                     break;
                 case 50: // 2
                     ev.preventDefault();
-                    setScene("right"); 
+                    setScene("left");
                     break;
                 case 51: // 3
                     ev.preventDefault();
-                    setScene("chat"); 
+                    setScene("right"); 
                     break;
                 case 52: // 4
                     ev.preventDefault();
-                    setScene("countdown"); 
+                    setScene("chat"); 
                     break;
                 case 53: // 5
-                    toggleHardware(ev);
+                    ev.preventDefault();
+                    setScene("countdown"); 
                     break;
                 case 54: // 6
-                    toggleChat(ev);
+                    toggleHardware(ev);
                     break;
                 case 55: // 7
-                    togglePaint(ev);
+                    toggleChat(ev);
                     break;
                 
                 // paint tools
