@@ -1,33 +1,10 @@
-# MakeCode for the micro:bit – 2020 Beta Release
+# MakeCode for the micro:bit – 2020 Release
 
-**Posted on April 28th, 2020 by [Jaqster](https://github.com/jaqster)**
+**Posted on June 12th, 2020 by [Jaqster](https://github.com/jaqster)**
 
-### ~ reminder
+We are happy to announce that our **2020 MakeCode for the micro:bit release** is now available at https://makecode.microbit.org!
 
-#### Release Update!
-
-The **MakeCode for the micro:bit 2020 Release** is live!
-
-- **[MakeCode for the micro:bit](https://makecode.microbit.org/)**
-
-### ~
-
-It’s springtime, and even though all of us are working from home these days, the release cycle doesn’t stop! We are happy to announce the Beta for our 2020 MakeCode for the micro:bit release which is still scheduled to ship for general availability in June.
-
-Thank you to everyone who has helped us identify bugs and suggested new features throughout the year. And a special "Thank You" to our translators and proofreaders who have helped us localize in 28 different languages!
-
-https://youtu.be/RpK4Cg42eNk
-
-## Try the Beta!
-
-This year’s update has a lot of juicy new features and improvements, which are listed below. Please try out the Beta and let us know what you think!
-
-- **[MakeCode for the micro:bit Beta](https://makecode.microbit.org/beta)**
-
-Any bugs you find, please log them in GitHub: https://github.com/Microsoft/pxt-microbit/issues
-
-Any other comments, suggestions, and feedback, please create a support ticket at
-https://support.microbit.org/en/support/tickets/new.
+Many of the important new features were announced in the post for the [beta](/blog/microbit/2020-beta) but we'll share them again here.
 
 ## New features for this release
 
