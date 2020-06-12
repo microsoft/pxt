@@ -155,7 +155,6 @@ namespace pxt.py {
         value: Expr;
     }
 
-    // TODO(dz): finalize
     export interface ScopeSymbolInfo {
         /* usage information */
         firstRefPos?: number;

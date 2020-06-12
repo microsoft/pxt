@@ -739,8 +739,6 @@ namespace pxt.py {
         let s: ScopeDef | undefined = currentScope()
         let v = U.lookup(s.vars, n)
         if (v) return v
-        // TODO(dz): how does this deal with var usage that references global or nonlocal vars that does not require the global/nonlocal keywords?
-
         while (s) {
             let v = U.lookup(s.vars, n)
             if (v) return v
@@ -1500,7 +1498,6 @@ namespace pxt.py {
                     error(n, 9521, U.lf("No binding found for global variable"));
                 }
 
-                // TODO(dz):
                 const sym = defvar(name, {}, VarModifier.Global);
 
                 if (sym.firstRefPos! < n.startPos) {
@@ -1676,7 +1673,6 @@ namespace pxt.py {
     }
 
     function possibleDef(n: py.Name, excludeLet: boolean = false) {
-        // TODO(dz): this handles assignment
         let id = n.id
         let currScopeVar = lookupScopeSymbol(id)
         let curr = currScopeVar?.symbol
@@ -2017,7 +2013,6 @@ namespace pxt.py {
                         recvTp = typeOf(recv)
                         methName = over.n.slice(1)
                         fun = getTypeField(recv, methName)
-                        // TODO(dz)
                         if (fun && fun.kind == SK.Property)
                             return B.mkInfix(expr(recv), ".", B.mkText(methName))
                     } else {
