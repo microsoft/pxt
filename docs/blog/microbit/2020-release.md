@@ -2,7 +2,7 @@
 
 **Posted on June 12th, 2020 by [Jaqster](https://github.com/jaqster)**
 
-We are happy to announce that our **2020 MakeCode for the micro:bit release** is now available at https://makecode.microbit.org!
+We are happy to announce that our **2020 MakeCode for the micro:bit release** is now available live at https://makecode.microbit.org!
 
 Many of the important new features were announced in the post for the [beta](/blog/microbit/2020-beta) but we'll share them again here.
 
