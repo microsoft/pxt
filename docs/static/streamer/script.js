@@ -778,6 +778,7 @@ background-image: url(${config.backgroundImage});
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
             el.srcObject = stream;
         }
+
         el.muted = true;
         el.volume = 0; // don't use sound!
         el.onloadedmetadata = (e) => el.play();
@@ -785,6 +786,16 @@ background-image: url(${config.backgroundImage});
             el.classList.add("rotate")
         else
             el.classList.remove("rotate");
+
+        // time to get serious
+        el.style.opacity = 0;
+        const seriously = new Seriously();
+        const source = seriously.source("#facecamvideo");
+        const target = seriously.target('#facecamcanvas');
+        edge = seriously.effect("ascii");
+        edge.source = source;
+        target.source = edge;
+        seriously.go();            
     }
 
     function stopRecording() {
