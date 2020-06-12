@@ -11,6 +11,7 @@ namespace pxt {
         "license",
         "dependencies",
         "files",
+        "conditionalFiles",
         "testFiles",
         "testDependencies",
         "public",
@@ -697,10 +698,19 @@ namespace pxt {
         }
 
         getFiles() {
+            let res: string[]
             if (this.level == 0 && !this.ignoreTests)
-                return this.config.files.concat(this.config.testFiles || [])
+                res = this.config.files.concat(this.config.testFiles || [])
             else
-                return this.config.files.slice(0);
+                res = this.config.files.slice(0);
+            const cf = this.config.conditionalFiles
+            if (cf) {
+                for (const pkgId of Object.keys(cf)) {
+                    if (this.parent.resolveDep(pkgId))
+                        U.pushRange(res, cf[pkgId])
+                }
+            }
+            return res
         }
 
         addSnapshot(files: Map<string>, exts: string[] = [""]) {
@@ -1153,7 +1163,12 @@ namespace pxt {
     }
 
     export function allPkgFiles(cfg: PackageConfig) {
-        return [pxt.CONFIG_NAME].concat(cfg.files || []).concat(cfg.testFiles || [])
+        let res = [pxt.CONFIG_NAME].concat(cfg.files || [])
+        if (cfg.testFiles)
+            U.pushRange(res, cfg.testFiles)
+        if (cfg.conditionalFiles)
+            U.pushRange(res, U.concat(U.values(cfg.conditionalFiles)))
+        return res
     }
 
     export function isPkgBeta(cfg: { description?: string; }): boolean {

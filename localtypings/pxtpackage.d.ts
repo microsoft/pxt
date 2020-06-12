@@ -49,6 +49,7 @@ declare namespace pxt {
         files: string[];
         simFiles?: string[];
         testFiles?: string[];
+        conditionalFiles?: Map<string[]>; // files loaded only when relevant extension is already present
         preferredEditor?: string; // tsprj, blocksprj, pyprj
         languageRestriction?: pxt.editor.LanguageRestriction; // language restrictions that have been placed on the package
         testDependencies?: pxt.Map<string>;

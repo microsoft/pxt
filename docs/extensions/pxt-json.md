@@ -34,6 +34,8 @@ interface PackageConfig {
     installedVersion?: string;
     targetVersions?: TargetVersions; // versions of the target/pxt the extension was compiled against
 
+    conditionalFiles?: Map<string[]>; // files loaded only when relevant extension is already present
+    
     testFiles?: string[];
     testDependencies?: Map<string>;
     simFiles?: string[];
@@ -108,6 +110,43 @@ They usually contain unit tests for extension.
 Similarly, dependencies from `testDependencies` are only included when compiled
 as top-level. The ``testDependencies`` can be added for multiple targets
 and will only be added if they can be resolved.
+
+## Conditional files
+
+While not very common,
+in some extensions certain functionality should be only enabled when another
+extension is already present in the project.
+For example, a `weather` sensor package may have code for streaming weather
+data over radio, but that should be only enabled when there's already the `radio`
+extension in the project (to avoid problems on boards without radio, or when
+Bluetooth disables radio).
+Another solution to this problem is to create a new package `weather-radio`,
+which depends on `weather` and `radio`.
+This is advisable, when the additional functionality is sizable, otherwise
+it's better to keep the number of packages down.
+
+Example configuration:
+```typescript-ignore
+  ...
+  "files": [
+      "weather-reading.ts",
+      "README.md"
+  ],
+  "conditionalFiles": {
+      "radio": ["weather-radio.ts"],
+      "jacdac": ["weather-jacdac.ts", "jd-helper.ts"]
+  },
+  ...
+```
+
+Here, the file `weather-radio.ts` will be only included when `radio` is referenced in
+the project, and files `weather-jacdac.ts` and `jd-helper.ts` will be only included when
+`jacdac` is present.
+
+Typically, you would add `radio` and `jacdac` as `testDependencies`, so you can see
+the entire extension in the editor.
+There is no point in adding them as regular `dependencies` - that would negate the
+effects of `conditionalFiles` and always include both the dependencies and files.
 
 ## C++ dependencies
 
