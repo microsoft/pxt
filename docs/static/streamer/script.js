@@ -792,8 +792,8 @@ background-image: url(${config.backgroundImage});
             el.style.opacity = 0;
             el.classList.add("greenscreen")
             const seriously = new Seriously();
-            const source = seriously.source("#facecamvideo");
-            const target = seriously.target('#facecamcanvas');
+            const source = seriously.source(el.id);
+            const target = seriously.target(el.id + "serious");
             const chroma = seriously.effect("chroma");
             chroma.clipBlack = 0.5;
             chroma.source = source;
