@@ -43,16 +43,6 @@ namespace pxt.py {
         isLocal?: boolean;
         isParam?: boolean;
         isImport?: SymbolInfo;
-        // TODO(dz):
-        // modifier?: VarModifier;
-        forVariableEndPos?: number;
-
-        // TODO(dz): remove?
-        /* usage information */
-        // firstRefPos?: number;
-        // lastRefPos?: number;
-        // firstAssignPos?: number;
-        // firstAssignDepth?: number;
     }
 
     // based on grammar at https://docs.python.org/3/library/ast.html
@@ -172,6 +162,7 @@ namespace pxt.py {
         lastRefPos?: number;
         firstAssignPos?: number;
         firstAssignDepth?: number;
+        forVariableEndPos?: number;
         /* global/nonlocal */
         modifier?: VarModifier;
 

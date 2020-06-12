@@ -2302,12 +2302,12 @@ namespace pxt.py {
             if (v.isImport)
                 return scopeV
             addCaller(n, v)
-            if (n.forTargetEndPos && v.forVariableEndPos !== n.forTargetEndPos) {
-                if (v.forVariableEndPos)
+            if (n.forTargetEndPos && scopeV.forVariableEndPos !== n.forTargetEndPos) {
+                if (scopeV.forVariableEndPos)
                     // defined in more than one 'for'; make sure it's hoisted
-                    scopeV.lastRefPos = v.forVariableEndPos + 1
+                    scopeV.lastRefPos = scopeV.forVariableEndPos + 1
                 else
-                    v.forVariableEndPos = n.forTargetEndPos
+                    scopeV.forVariableEndPos = n.forTargetEndPos
             }
         } else if (currIteration > 0) {
             error(n, 9516, U.lf("name '{0}' is not defined", n.id))
@@ -2433,7 +2433,7 @@ namespace pxt.py {
             sym.symbol.kind === SK.Variable
             && !sym.symbol.isParam
             && sym.modifier === undefined
-            && (sym.lastRefPos! > sym.symbol.forVariableEndPos!
+            && (sym.lastRefPos! > sym.forVariableEndPos!
                 || sym.firstRefPos! < sym.firstAssignPos!
                 || sym.firstAssignDepth! > scope.blockDepth!)
             && !(isTopLevelScope(scope) && sym.firstAssignDepth! === 0);
