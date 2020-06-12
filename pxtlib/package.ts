@@ -755,19 +755,24 @@ namespace pxt {
         bundledStringsForFile(lang: string, filename: string): Map<string> {
             let r: Map<string> = {};
 
-            let [initialLang, baseLang] = pxt.Util.normalizeLanguageCode(lang);
+            let [initialLang, baseLang, initialLangLowerCase] = pxt.Util.normalizeLanguageCode(lang);
             const files = this.config.files;
 
             let fn = `_locales/${initialLang}/${filename}-strings.json`;
             if (files.indexOf(fn) > -1) {
                 r = JSON.parse(this.readFile(fn)) as Map<string>;
             }
-            else if (baseLang) {
-                fn = `_locales/${baseLang}/${filename}-strings.json`;
+            else if (initialLangLowerCase) {
+                fn = `_locales/${initialLangLowerCase}/${filename}-strings.json`;
                 if (files.indexOf(fn) > -1)
                     r = JSON.parse(this.readFile(fn)) as Map<string>;
+                else if (baseLang) {
+                    fn = `_locales/${baseLang}/${filename}-strings.json`;
+                    if (files.indexOf(fn) > -1) {
+                        r = JSON.parse(this.readFile(fn)) as Map<string>;
+                    }
+                }
             }
-
             return r;
         }
     }
