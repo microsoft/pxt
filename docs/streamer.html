@@ -853,7 +853,7 @@ body.countdownscene.hardware #hardwarecam {
             <label for="extrasitesarea">Extra web sites (must be https://..., one per line)</label>
             <textarea id="extrasitesarea" rows="2"></textarea>
         </div>
-        <h2>Labels</h2>
+        <h2>Style</h2>
         <div class="field">
             <label for="titleinput">Title</label>
             <input id="titleinput" placeholder="My awesome stream" />
@@ -865,6 +865,10 @@ body.countdownscene.hardware #hardwarecam {
         <div class="field">
             <label for="backgroundimageinput">Background image (must be https://...)</label>
             <input id="backgroundimageinput" type="url" />
+        </div>
+        <div class="field">
+            <input type="checkbox" id="greenscreencheckbox"></input>
+            <label for="greenscreencheckbox">Green background (Chroma Key)</label>
         </div>
         <h2>Face camera</h2>
         <div class="field">
@@ -931,10 +935,6 @@ body.countdownscene.hardware #hardwarecam {
         <div class="field">
             <label for="twitchinput">Twitch (optional)</label>
             <input id="twitchinput" placeholder="Twitch.tv account (/account)" />
-        </div>
-        <div class="field">
-            <input type="checkbox" id="greenscreencheckbox"></input>
-            <label for="greenscreencheckbox">Green background (Chroma Key)</label>
         </div>
         <h2>Recording</h2>
         <div class="error hidden displaymedia">This browser does not support recording the screen.</div>
