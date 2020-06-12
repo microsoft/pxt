@@ -119,7 +119,8 @@
             config.faceCamLabel && "facecamlabel",
             config.hardwareCamLabel && "hardwarecamlabel",
             config.faceCamId === DISPLAY_DEVICE_ID && "facecamdisplay",
-            config.hardwareCamId === DISPLAY_DEVICE_ID && "hardwarecamdisplay"
+            config.hardwareCamId === DISPLAY_DEVICE_ID && "hardwarecamdisplay",
+            config.greenScreen && "greenscreen"
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
             showSettings();
@@ -1050,6 +1051,13 @@ background: #615fc7;
             state.chat = !!config.mixer;
             loadSocial();
             loadChat();
+            render()
+        }
+        const greenscreencheckbox = document.getElementById("greenscreencheckbox")
+        greenscreencheckbox.checked = !!config.greenScreen
+        greenscreencheckbox.onchange = function () {
+            config.greenScreen = !!greenscreencheckbox.checked
+            saveConfig(config)
             render()
         }
 
