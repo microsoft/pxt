@@ -176,6 +176,13 @@
         } else {
             addButton("EditCreate", "Paint mode  (Alt+Shift+1)", togglePaint)
             addSep()
+
+            if (config.extraSites && config.extraSites.length) {
+                config.extraSites.forEach(addSiteButton)
+                addButton("ChromeClose", "Reload editor", loadEditor)               
+                addSep();
+            }
+
             addSceneButton("OpenPane", "Move webcam left (Alt+Shift+2)", "left")
             addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
             addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
@@ -217,6 +224,12 @@
             i.className = `ms-Icon ms-Icon--${icon}`
             toolbox.append(btn)
             return btn;
+        }
+
+        function addSiteButton(url) {
+            addButton("OpenPane", url, () => {
+                editor.src = url;
+            }, false)
         }
 
         function addPaintButton(icon, title, tool) {
@@ -887,6 +900,16 @@ background: #615fc7;
             loadEditor()
         }
 
+        const extrasitesarea = document.getElementById("extrasitesarea")
+        extrasitesarea.value = (config.extraSites || []).join('\n');
+        extrasitesarea.onchange = function (e) {
+            config.extraSites = (extrasitesarea.value || "").split('\n')
+                .filter(line => /^https:\/\//.test(line))
+                .map(line => line.trim());
+            saveConfig(config);
+            loadToolbox();
+            render()
+        }        
         const facecamselect = document.getElementById("facecamselect");
         facecamselect.innerHTML = "" // remove all web cams
         {

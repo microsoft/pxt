@@ -323,7 +323,8 @@ body.chatscene #settings {
     padding: 1% 0 1% 0;
 }
 
-#settings .field input {
+#settings .field input,
+#settings .field textarea {
     width: 100%;
     font-size: 90%;
 }
@@ -844,8 +845,8 @@ body.countdownscene.hardware #hardwarecam {
 
 <body class="rightscene">
     <div id="container" class="container">
-    <iframe class="box animated" id="editor" allow="usb;camera"></iframe>
-    <iframe class="box animated" id="editor2" allow="usb;camera"></iframe>
+    <iframe class="box animated" id="editor" allow="usb;camera" sandbox="allow-scripts allow-same-origin"></iframe>
+    <iframe class="box animated" id="editor2" allow="usb;camera" sandbox="allow-scripts allow-same-origin"></iframe>
     <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
     <div class="box animated clickeable" id="facecam">
         <video autoplay playsinline id="facecamvideo"></video>
@@ -892,13 +893,17 @@ body.countdownscene.hardware #hardwarecam {
             <input type="checkbox" id="multicheckbox"></input>
             <label for="multicheckbox">Multi editors</label>
         </div>
+        <div class="field">
+            <label for="extrasitesarea">Extra web sites (must be https://, one per line)</label>
+            <textarea id="extrasitesarea" rows="2"></textarea>
+        </div>
         <h2>Labels</h2>
         <div class="field">
-            <label for="titleinput">Stream title</label>
+            <label for="titleinput">Title</label>
             <input id="titleinput" placeholder="My awesome stream" />
         </div>
         <div class="field">
-            <label for="bannerinput">Stream banner</label>
+            <label for="bannerinput">Banner</label>
             <input id="bannerinput" placeholder="Text that displays near the icons" />
         </div>
         <h2>Face camera</h2>
