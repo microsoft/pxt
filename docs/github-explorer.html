@@ -77,39 +77,15 @@
     <script type="text/javascript"
         src="https://pxt.azureedge.net/blob/fc2f56f46189a2e8be3743a1a5abed3b676f9318/doccdn/semantic.js"></script>
     <script>
+(async function () {        
         const api = "https://api.github.com";
 
-        const targets = {
-            "ev3": {
-                name: "LEGO® MINDSTORMS® Education EV3",
-                url: "https://makecode.mindstorms.com/beta"
-            },
-            "arcade": {
-                name: "Arcade",
-                url: "https://arcade.makecode.com/beta"
-            },
-            "microbit": {
-                name: "micro:bit",
-                url: "https://makecode.microbit.org/beta"
-            },
-            "adafruit": {
-                name: "Adafruit Circuit Playground Express",
-                url: "https://makecode.adafruit.com/beta",
-                icon: "https://pxt.azureedge.net/blob/1215b9ef46d3e04bc9923a1a333d92db92eb5419/static/logo.square.black.svg"
-            },
-            "minecraft": {
-                name: "Minecraft",
-                icon: "https://minecraft.makecode.com/favicon.ico",
-                url: "https://minecraft.makecode.com/beta?github=1"
-            },
-            "maker": {
-                name: "Maker",
-                url: "https://maker.makecode.com"
-            },
-            "calliopemini": {
-                name: "Calliope Mini",
-                url: "https://makecode.calliope.cc/beta"
-            }
+        const targets = await fetchJSON("/editors.json");
+
+        async function fetchJSON(url) {
+            const resp = await fetch(url)
+            const json = await resp.json();
+            return json;
         }
 
         function trackClick(id) {
@@ -357,6 +333,7 @@
                 })
 
         });
+})();
     </script>
 </head>
 
