@@ -169,7 +169,7 @@ namespace pxtblockly {
 
             return this.menuGenerator_.call(this);
         }
-      
+
         menuGenerator_ = () => {
             if (!this.transparent) {
                 this.transparent = constructTransparentTile();
