@@ -176,13 +176,11 @@
         } else {
             addButton("EditCreate", "Paint mode  (Alt+Shift+1)", togglePaint)
             addSep()
-
             if (config.extraSites && config.extraSites.length) {
                 config.extraSites.forEach(addSiteButton)
                 addButton("Code", "Reload MakeCode editor", loadEditor)               
                 addSep();
             }
-
             addSceneButton("OpenPane", "Move webcam left (Alt+Shift+2)", "left")
             addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
             addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
