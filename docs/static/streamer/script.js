@@ -611,7 +611,7 @@ background-image: url(${config.backgroundImage});
             state.faceCamError = false;
             body.classList.add("loading");
             facecam.classList.remove("error");
-            await startStream(facecam, config.faceCamId, config.faceCamRotate);
+            await startStream(facecam, config.faceCamId, config.faceCamRotate, config.faceCamGreenScreen);
             console.log(`face cam started`)
             if (!config.faceCamId)
                 stopStream(facecam.srcObject); // request permission only
@@ -637,7 +637,7 @@ background-image: url(${config.backgroundImage});
         if (config.hardwareCamId) {
             try {
                 state.hardwareCamError = false;
-                await startStream(hardwarecam, config.hardwareCamId, config.hardwareCamRotate);
+                await startStream(hardwarecam, config.hardwareCamId, config.hardwareCamRotate, config.hardwareCamGreenScreen);
                 console.log(`hardware cam started`)
                 return; // success!
             }
@@ -790,18 +790,25 @@ background-image: url(${config.backgroundImage});
         // time to get serious
         if (greenscreen) {
             el.style.opacity = 0;
-            el.classList.add("greenscreen")
+            el.parentElement.classList.add("greenscreen")
             const seriously = new Seriously();
-            const source = seriously.source(el.id);
-            const target = seriously.target(el.id + "serious");
+            const source = seriously.source(el);
+            const target = seriously.target(document.getElementById(el.id + "serious"));
             const chroma = seriously.effect("chroma");
             chroma.clipBlack = 0.5;
             chroma.source = source;
             target.source = chroma;
-            seriously.go();        
+            seriously.go();
+
+            el.seriously = seriously;
         } else {
             el.style.opacity = 1;
-            el.classList.remove("greenscreen")
+            el.parentElement.classList.remove("greenscreen")
+
+            if (el.seriously) {
+                el.seriously.stop();
+                el.seriously = undefined;
+            }
         }
     }
 
@@ -981,6 +988,16 @@ background-image: url(${config.backgroundImage});
             render()
             loadFaceCam().then(() => loadSettings())
         }
+
+        const facecamgreenscreencheckbox = document.getElementById("facecamgreenscreencheckbox")
+        facecamgreenscreencheckbox.checked = !!config.faceCamGreenScreen
+        facecamgreenscreencheckbox.onchange = function () {
+            config.faceCamGreenScreen = !!facecamgreenscreencheckbox.checked
+            saveConfig(config)
+            render()
+            loadFaceCam().then(() => loadSettings())
+        }
+
         config.faceCamFilter = config.faceCamFilter || {};
         ["contrast", "brightness", "saturate"].forEach(function(k) {
             const elid = "facecam" + k;
@@ -1038,6 +1055,14 @@ background-image: url(${config.backgroundImage});
         hardwarerotatecheckbox.onchange = function () {
             config.hardwareCamRotate = !!hardwarerotatecheckbox.checked
             saveConfig(config)
+            loadHardwareCam().then(() => loadSettings())
+        }
+        const hardwarecamgreenscreencheckbox = document.getElementById("hardwarecamgreenscreencheckbox")
+        hardwarecamgreenscreencheckbox.checked = !!config.hardwareCamGreenScreen
+        hardwarecamgreenscreencheckbox.onchange = function () {
+            config.hardwareCamGreenScreen = !!hardwarecamgreenscreencheckbox.checked
+            saveConfig(config)
+            render()
             loadHardwareCam().then(() => loadSettings())
         }
         config.hardwareCamFilter = config.hardwareCamFilter || {};
