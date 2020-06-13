@@ -26,6 +26,28 @@ body {
     width: 100%;            
 }
 
+@media (min-aspect-ratio: 16/9) {
+    .container {
+        padding-top: unset;
+        position: relative;
+        height: 100%;            
+    }
+}
+@media (max-aspect-ratio: 16/9) {
+    .container {
+        padding-top: 56.25%;
+        position: relative;
+        width: 100%;            
+    }
+}
+@media (aspect-ratio: 16/9) {
+    .container {
+        padding-top: unset;
+        position: relative;
+        height: 100%;            
+    }
+}
+
 body.greenscreen {
     background: #00ff00 !important;
 }
