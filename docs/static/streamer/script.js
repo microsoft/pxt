@@ -791,6 +791,7 @@ background-image: url(${config.backgroundImage});
         if (greenscreen) {
             el.style.opacity = 0;
             el.parentElement.classList.add("greenscreen")
+            // https://github.com/brianchirls/Seriously.js/
             const seriously = new Seriously();
             const source = seriously.source(el);
             const target = seriously.target(document.getElementById(el.id + "serious"));
