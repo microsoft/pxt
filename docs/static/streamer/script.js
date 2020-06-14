@@ -276,6 +276,7 @@
 
     function setScene(scene) {
         tickEvent("streamer.scene", { scene: scene }, { interactiveConsent: true });
+        const config = readConfig();
         const lastScene = state.sceneIndex;
         const sceneIndex = scenes.indexOf(`${scene}scene`);
         if (state.sceneIndex !== sceneIndex) {
@@ -283,17 +284,25 @@
             resetTransition(facecamlabel, "fadeout")
             resetTransition(hardwarecamlabel, "fadeout")
         }
-        if (scene === "countdown")
+        if (scene === "countdown") {
             startCountdown();
-        else {
+            if (config.endVideo) {
+                endvideo.classList.remove("hidden");
+                endvideo.onclick = () => endvideo.stop();
+                endvideo.onended = () => {
+                    endvideo.classList.add("hidden");
+                }
+                endvideo.play();
+            }
+        } else {
             stopCountdown();
-            if (lastScene == COUNTDOWN_SCENE_INDEX && startvideo.src) {
+            if (lastScene == COUNTDOWN_SCENE_INDEX && config.startVideo) {
                 startvideo.classList.remove("hidden");
-                startvideo.play();
                 startvideo.onclick = () => startvideo.stop();
                 startvideo.onended = () => {
                     startvideo.classList.add("hidden");
                 }
+                startvideo.play();
             }
         }
         render();
