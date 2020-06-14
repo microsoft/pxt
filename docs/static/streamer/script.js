@@ -88,8 +88,8 @@
         try {
             const cfg = JSON.parse(localStorage["streamer.config"]);
             if (cfg) {
-                if (!config.paintColors)
-                    config.paintColors = defaultColors.slice(0)
+                if (!cfg.paintColors)
+                    cfg.paintColors = defaultColors.slice(0)
                 return cfg;
             }
         } catch (e) {
@@ -229,7 +229,7 @@
         function addColorButton(color) {
             const btn = addButton("CircleShapeSolid", color, function() {
                 tickEvent("streamer.color", { color }, { interactiveConsent: true })
-                state.paintColor = paintColor;
+                state.paintColor = color;
                 loadToolbox();
             }, state.paintColor === color);
             btn.style.color = color;
