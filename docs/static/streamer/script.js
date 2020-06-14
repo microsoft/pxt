@@ -23,6 +23,8 @@
     const countdown = document.getElementById('countdown')
     const titleEl = document.getElementById('title')
     const subtitles = document.getElementById('subtitles')
+    const startvideo = document.getElementById('startvideo');
+    const endvideo = document.getElementById('endvideo');
 
     const frames = [editor, editor2];
     const paintColors = ["#ffe135", "#00d9ff", "#cf1fdb"];
@@ -61,6 +63,7 @@
         loadEditor()
         loadChat()
         loadSocial()
+        loadVideos()
         setScene("right")
         render()
         handleHashChange();
@@ -482,6 +485,11 @@
         }
 
         loadStyle();
+    }
+
+    function loadVideos() {
+        startvideo.src = config.startVideo;
+        endvideo.src = config.endVideo;
     }
 
     function loadStyle() {
@@ -1170,7 +1178,29 @@ background-image: url(${config.backgroundImage});
             saveConfig(config);
             loadStyle();
             render()
-    }
+        }
+
+        const startvideoinput = document.getElementById("startvideoinput")
+        startvideoinput.value = config.startVideo || ""
+        startvideoinput.onchange = function (e) {
+            config.startVideo = undefined;
+            if (/^https:\/\//.test(startvideoinput.value))
+                config.startVideo = startvideoinput.value
+            saveConfig(config);
+            loadVideos();
+            render()
+        }
+
+        const endvideoinput = document.getElementById("endvideoinput")
+        endvideoinput.value = config.endVideo || ""
+        endvideoinput.onchange = function (e) {
+            config.endVideo = undefined;
+            if (/^https:\/\//.test(endvideoinput.value))
+                config.endVideo = endvideoinput.value
+            saveConfig(config);
+            loadVideos();
+            render()
+        }
 
         const twitchinput = document.getElementById("twitchinput")
         twitchinput.value = config.twitch || ""
