@@ -24,7 +24,7 @@
     const titleEl = document.getElementById('title')
 
     const frames = [editor, editor2];
-    const defaultColors = ["#ffe135", "#00d9ff", "#ff6a00"];
+    const defaultColors = ["#ffe135", "#00d9ff", "#cf1fdb"];
 
     const scenes = ["leftscene", "rightscene", "chatscene", "countdownscene"];
     const LEFT_SCENE_INDEX = scenes.indexOf("leftscene")
@@ -40,7 +40,8 @@
         hardware: false,
         painttool: "arrow",
         recording: undefined,
-        timerEnd: undefined        
+        timerEnd: undefined,
+        paintColor: defaultColors[0]      
     }
 
     initMessages();
@@ -162,7 +163,7 @@
             if (config.emojis)
                 for (let i = 0; i < config.emojis.length; i += 2)
                     emojis[i >> 1] = config.emojis.substr(i, 2);
-            const colors = config.paintColors || defaultColors;
+            const colors = config.paintColors;
             addPaintButton("ArrowTallUpLeft", "Draw arrow (Alt+Shift+A)", "arrow")
             addPaintButton("RectangleShape", "Draw rectangle (Alt+Shift+R)", "rect")
             addPaintButton("Highlight", "Draw freeform", "pen")
@@ -187,22 +188,23 @@
             addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
             addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
             addSceneButton("Timer", "Show countdown (Alt+Shift+5)", "countdown")
+            if(config.hardwareCamId || config.mixer || config.twitch) {
+                addSep()
+                if (config.hardwareCamId)
+                    addButton("Robot", "Hardware webcam (Alt+Shift+6)", toggleHardware, state.hardware)
+                if (config.mixer || config.twitch)
+                    addButton("OfficeChat", "Chat  (Alt+Shift+7)", toggleChat, state.chat)
+            }
             addSep()
-            if (config.hardwareCamId)
-                addButton("Robot", "Hardware webcam (Alt+Shift+6)", toggleHardware, state.hardware)
-            if (config.mixer || config.twitch)
-                addButton("OfficeChat", "Chat  (Alt+Shift+7)", toggleChat, state.chat)
-        }
 
-        addSep()
-
-        if (!!navigator.mediaDevices.getDisplayMedia) {
-            if (state.recording)
-                addButton("Stop", "Stop recording", stopRecording)
-            else
-                addButton("Record2", "Start recording", startRecording)
+            if (!!navigator.mediaDevices.getDisplayMedia) {
+                if (state.recording)
+                    addButton("Stop", "Stop recording", stopRecording)
+                else
+                    addButton("Record2", "Start recording", startRecording)
+            }
+            addButton("Settings", "Show settings", toggleSettings);
         }
-        addButton("Settings", "Show settings", toggleSettings);
 
         function addSep() {
             const sep = document.createElement("div")
@@ -384,12 +386,6 @@
             painttoolCtx.lineWidth = Math.max(10, (paint.width / 100) | 0);
             painttoolCtx.lineJoin = 'round';
             painttoolCtx.lineCap = 'round';
-
-            if (!state.paintColor) {
-                const config = readConfig();
-                state.paintColor = colors.paintColors[0];
-            }
-
             painttoolCtx.strokeStyle = state.paintColor;
             painttoolCtx.globalAlpha = 1;
             if (state.painttool == 'pen') {
