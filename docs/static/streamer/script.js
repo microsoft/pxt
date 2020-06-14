@@ -822,6 +822,7 @@ background-image: url(${config.backgroundImage});
     function initSubtitles() {
         if (typeof webkitSpeechRecognition === "undefined") return;
 
+        let hideInterval;
         const speech = state.speech = new webkitSpeechRecognition();
         speech.continuous = true;
         speech.maxAlternatives = 1;
@@ -851,11 +852,14 @@ background-image: url(${config.backgroundImage});
             console.log(results)
             subtitles.innerText = results[ev.resultIndex][0].transcript;
             show();
+            if (hideInterval) clearTimeout(hideInterval)
+            hideInterval = setTimeout(hide, 10000);
         }
         function show() {
             subtitles.classList.remove("hidden")
         }
         function hide() {
+            hideInterval = undefined;
             subtitles.classList.add("hidden")
             loadToolbox();
         }
