@@ -22,6 +22,7 @@
     const screensize = document.getElementById('screensize')
     const countdown = document.getElementById('countdown')
     const titleEl = document.getElementById('title')
+    const subtitles = document.getElementById('subtitles')
 
     const frames = [editor, editor2];
     const paintColors = ["#ffe135", "#00d9ff", "#cf1fdb"];
@@ -47,6 +48,7 @@
     initMessages();
     initResize();
     initVideos();
+    initSubtitles();
     loadPaint();
     loadEditor()
     await firstLoadFaceCam()
@@ -120,7 +122,6 @@
 
         const config = readConfig();
 
-        const displayMedia = 
         body.className = [
             scenes[state.sceneIndex],
             state.hardware && "hardware",
@@ -192,7 +193,8 @@
                     addButton("OfficeChat", "Chat  (Alt+Shift+7)", toggleChat, state.chat)
             }
             addSep()
-
+            if (state.speech)
+                addButton("ClosedCaption", "Captions", toggleSpeech, state.speechRunning)
             if (!!navigator.mediaDevices.getDisplayMedia) {
                 if (state.recording)
                     addButton("Stop", "Stop recording", stopRecording)
@@ -815,6 +817,63 @@ background-image: url(${config.backgroundImage});
         state.recording = undefined;
         if (stop) stop();
         render();
+    }
+
+    function initSubtitles() {
+        // not supported in Edge
+        if (typeof webkitSpeechRecognition === "undefined" || /Edg\//.test(navigator.userAgent)) return;
+
+        let hideInterval;
+        const speech = state.speech = new webkitSpeechRecognition();
+        speech.continuous = true;
+        speech.maxAlternatives = 1;
+        speech.interimResults = false;
+        speech.onstart = () => {
+            console.log("speech: started")
+            state.speechRunning = true;
+            loadToolbox();
+        }
+        speech.onend = () => {
+            console.log("speech: stopped")
+            state.speechRunning = false;
+            hide();
+        }
+        speech.onerror = (ev) => {
+            console.log("speech: error")
+            console.log(ev)
+            hide();
+        }
+        speech.onnomatch = (ev) => {
+            console.log("speech: no match")
+            console.log(ev)
+            hide();
+        }
+        speech.onresult = (ev) => {
+            const results = ev.results;
+            console.log(results)
+            subtitles.innerText = results[ev.resultIndex][0].transcript;
+            show();
+            if (hideInterval) clearTimeout(hideInterval)
+            hideInterval = setTimeout(hide, 10000);
+        }
+        function show() {
+            subtitles.classList.remove("hidden")
+        }
+        function hide() {
+            hideInterval = undefined;
+            subtitles.classList.add("hidden")
+            loadToolbox();
+        }
+    }
+
+    function toggleSpeech() {
+        const speech = state.speech;
+        if (!speech) return;
+        if (state.speechRunning) {
+            speech.stop();
+        } else {
+            speech.start();
+        }
     }
 
     async function startRecording() {
