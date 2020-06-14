@@ -236,6 +236,8 @@
         function addEmojiButton(emoji) {
             const btn = document.createElement("button")
             btn.className = "emoji"
+            if (emoji === state.emoji)
+                btn.classList.add("active")
             btn.innerText = emoji;
             btn.addEventListener("pointerdown", function (e) {
                 tickEvent("streamer.emoji", { emoji }, { interactiveConsent: true })
