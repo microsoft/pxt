@@ -33,7 +33,12 @@
     "maker": {
         "name": "Maker",
         "title": "MakeCode Maker",
-        "url": "https://maker.makecode.com"
+        "url": "https://maker.makecode.com",
+        "styles": {
+            "primary": "#1f1f1f",
+            "menu": "#444",
+            "background": "linear-gradient(45deg, #cccccc 0%, #333333 100%)"
+        }
     },
     "ev3": {
         "name": "LEGO® MINDSTORMS® Education EV3",
