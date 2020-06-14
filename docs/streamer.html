@@ -225,7 +225,7 @@ body.loading {
     min-height: 100%;
     width: auto;
     height: auto;
-    z-index: -100;
+    z-index: 100;
     transform: translateX(-50%) translateY(-50%);
 }
 
@@ -876,11 +876,11 @@ body.countdownscene.hardware #hardwarecam {
     <iframe class="box animated" id="editor2" allow="usb;camera" sandbox="allow-scripts allow-same-origin allow-top-navigation"></iframe>
     <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
     <div class="box animated clickeable" id="facecam">
-        <video autoplay playsinline id="facecamvideo"></video>
+        <video autoplay playsinline preload="auto" id="facecamvideo"></video>
         <div class="videolabel" id="facecamlabel"></div>
     </div>
     <div class="box animated clickeable" id="hardwarecam">
-        <video autoplay playsinline id="hardwarecamvideo"></video>
+        <video autoplay playsinline preload="auto" id="hardwarecamvideo"></video>
         <div class="videolabel" id="hardwarecamlabel"></div>
     </div>
     <div class="box animated" id="title">title</div>

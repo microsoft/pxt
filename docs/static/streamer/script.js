@@ -276,6 +276,7 @@
 
     function setScene(scene) {
         tickEvent("streamer.scene", { scene: scene }, { interactiveConsent: true });
+        const lastScene = state.sceneIndex;
         const sceneIndex = scenes.indexOf(`${scene}scene`);
         if (state.sceneIndex !== sceneIndex) {
             state.sceneIndex = scenes.indexOf(`${scene}scene`);
@@ -284,8 +285,17 @@
         }
         if (scene === "countdown")
             startCountdown();
-        else
+        else {
             stopCountdown();
+            if (lastScene == COUNTDOWN_SCENE_INDEX && startvideo.src) {
+                startvideo.classList.remove("hidden");
+                startvideo.play();
+                startvideo.onclick = () => startvideo.stop();
+                startvideo.onended = () => {
+                    startvideo.classList.add("hidden");
+                }
+            }
+        }
         render();
     }
 
@@ -488,6 +498,7 @@
     }
 
     function loadVideos() {
+        const config = readConfig();
         startvideo.src = config.startVideo;
         endvideo.src = config.endVideo;
     }
