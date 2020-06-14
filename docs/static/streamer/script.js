@@ -820,7 +820,8 @@ background-image: url(${config.backgroundImage});
     }
 
     function initSubtitles() {
-        if (typeof webkitSpeechRecognition === "undefined") return;
+        // not supported in Edge
+        if (typeof webkitSpeechRecognition === "undefined" || /Edg\//.test(navigator.userAgent)) return;
 
         let hideInterval;
         const speech = state.speech = new webkitSpeechRecognition();
