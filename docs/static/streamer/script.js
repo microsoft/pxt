@@ -22,8 +22,10 @@
     const screensize = document.getElementById('screensize')
     const countdown = document.getElementById('countdown')
     const titleEl = document.getElementById('title')
+    const subtitles = document.getElementById('subtitles')
 
     const frames = [editor, editor2];
+    const paintColors = ["#ffe135", "#00d9ff", "#cf1fdb"];
 
     const scenes = ["leftscene", "rightscene", "chatscene", "countdownscene"];
     const LEFT_SCENE_INDEX = scenes.indexOf("leftscene")
@@ -39,12 +41,14 @@
         hardware: false,
         painttool: "arrow",
         recording: undefined,
-        timerEnd: undefined
+        timerEnd: undefined,
+        paintColor: paintColors[0]      
     }
 
     initMessages();
     initResize();
     initVideos();
+    initSubtitles();
     loadPaint();
     loadEditor()
     await firstLoadFaceCam()
@@ -86,8 +90,9 @@
     function readConfig() {
         try {
             const cfg = JSON.parse(localStorage["streamer.config"]);
-            if (cfg)
+            if (cfg) {
                 return cfg;
+            }
         } catch (e) {
             console.log(e)
         }
@@ -117,7 +122,6 @@
 
         const config = readConfig();
 
-        const displayMedia = 
         body.className = [
             scenes[state.sceneIndex],
             state.hardware && "hardware",
@@ -145,10 +149,6 @@
         toolbox.innerHTML = ""
 
         const currentScene = scenes[state.sceneIndex];
-        const emojis = [];
-        if (config.emojis)
-            for (let i = 0; i < config.emojis.length; i += 2)
-                emojis[i >> 1] = config.emojis.substr(i, 2);
 
         if (currentScene == "countdownscene") {
             addButton("Add", "Add 1 minute to countdown", () => updateCountdown(60))
@@ -157,22 +157,21 @@
         }
 
         if (state.paint) {
+            const emojis = [];
+            if (config.emojis)
+                for (let i = 0; i < config.emojis.length; i += 2)
+                    emojis[i >> 1] = config.emojis.substr(i, 2);
             addPaintButton("ArrowTallUpLeft", "Draw arrow (Alt+Shift+A)", "arrow")
             addPaintButton("RectangleShape", "Draw rectangle (Alt+Shift+R)", "rect")
             addPaintButton("Highlight", "Draw freeform", "pen")
-            emojis.forEach(emoji => {
-                const btn = document.createElement("button")
-                btn.className = "emoji"
-                btn.innerText = emoji;
-                btn.addEventListener("pointerdown", function (e) {
-                    tickEvent("streamer.emoji", { emoji }, { interactiveConsent: true })
-                    state.emoji = emoji;
-                    setPaintTool("emoji")
-                }, false)
-                toolbox.append(btn)
-            })
+            addSep()
+            paintColors.forEach(addColorButton);
+            addSep()
+            emojis.forEach(addEmojiButton);
+            addSep()
             addButton("WhiteBoardApp32", "Paint screen in white", whiteboard)
             addButton("EraseTool", "Clear all drawings", clearPaint)
+            addSep()
             addButton("ChromeClose", "Exit paint mode", togglePaint)
         } else {
             addButton("EditCreate", "Paint mode  (Alt+Shift+1)", togglePaint)
@@ -186,22 +185,24 @@
             addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
             addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
             addSceneButton("Timer", "Show countdown (Alt+Shift+5)", "countdown")
+            if(config.hardwareCamId || config.mixer || config.twitch) {
+                addSep()
+                if (config.hardwareCamId)
+                    addButton("Robot", "Hardware webcam (Alt+Shift+6)", toggleHardware, state.hardware)
+                if (config.mixer || config.twitch)
+                    addButton("OfficeChat", "Chat  (Alt+Shift+7)", toggleChat, state.chat)
+            }
             addSep()
-            if (config.hardwareCamId)
-                addButton("Robot", "Hardware webcam (Alt+Shift+6)", toggleHardware, state.hardware)
-            if (config.mixer || config.twitch)
-                addButton("OfficeChat", "Chat  (Alt+Shift+7)", toggleChat, state.chat)
+            if (state.speech)
+                addButton("ClosedCaption", "Captions", toggleSpeech, state.speechRunning)
+            if (!!navigator.mediaDevices.getDisplayMedia) {
+                if (state.recording)
+                    addButton("Stop", "Stop recording", stopRecording)
+                else
+                    addButton("Record2", "Start recording", startRecording)
+            }
+            addButton("Settings", "Show settings", toggleSettings);
         }
-
-        addSep()
-
-        if (!!navigator.mediaDevices.getDisplayMedia) {
-            if (state.recording)
-                addButton("Stop", "Stop recording", stopRecording)
-            else
-                addButton("Record2", "Start recording", startRecording)
-        }
-        addButton("Settings", "Show settings", toggleSettings);
 
         function addSep() {
             const sep = document.createElement("div")
@@ -223,6 +224,29 @@
             i.className = `ms-Icon ms-Icon--${icon}`
             toolbox.append(btn)
             return btn;
+        }
+
+        function addColorButton(color) {
+            const btn = addButton("CircleShapeSolid", color, function() {
+                tickEvent("streamer.color", { color }, { interactiveConsent: true })
+                state.paintColor = color;
+                loadToolbox();
+            }, state.paintColor === color);
+            btn.style.color = color;
+        }
+
+        function addEmojiButton(emoji) {
+            const btn = document.createElement("button")
+            btn.className = "emoji"
+            if (emoji === state.emoji)
+                btn.classList.add("active")
+            btn.innerText = emoji;
+            btn.addEventListener("pointerdown", function (e) {
+                tickEvent("streamer.emoji", { emoji }, { interactiveConsent: true })
+                state.emoji = emoji;
+                setPaintTool("emoji")
+            }, false)
+            toolbox.append(btn)
         }
 
         function addSiteButton(url) {
@@ -363,9 +387,10 @@
             painttoolCtx.lineWidth = Math.max(10, (paint.width / 100) | 0);
             painttoolCtx.lineJoin = 'round';
             painttoolCtx.lineCap = 'round';
-            painttoolCtx.strokeStyle = '#ffe135';
+            painttoolCtx.strokeStyle = state.paintColor;
+            painttoolCtx.globalAlpha = 1;
             if (state.painttool == 'pen') {
-                painttoolCtx.strokeStyle = 'rgba(255, 255, 0, 0.6)';
+                painttoolCtx.globalAlpha = 0.6;
                 painttoolCtx.beginPath();
                 painttoolCtx.moveTo(mouse.x, mouse.y);
             }
@@ -818,6 +843,63 @@ background-image: url(${config.backgroundImage});
         state.recording = undefined;
         if (stop) stop();
         render();
+    }
+
+    function initSubtitles() {
+        // not supported in Edge
+        if (typeof webkitSpeechRecognition === "undefined" || /Edg\//.test(navigator.userAgent)) return;
+
+        let hideInterval;
+        const speech = state.speech = new webkitSpeechRecognition();
+        speech.continuous = true;
+        speech.maxAlternatives = 1;
+        speech.interimResults = false;
+        speech.onstart = () => {
+            console.log("speech: started")
+            state.speechRunning = true;
+            loadToolbox();
+        }
+        speech.onend = () => {
+            console.log("speech: stopped")
+            state.speechRunning = false;
+            hide();
+        }
+        speech.onerror = (ev) => {
+            console.log("speech: error")
+            console.log(ev)
+            hide();
+        }
+        speech.onnomatch = (ev) => {
+            console.log("speech: no match")
+            console.log(ev)
+            hide();
+        }
+        speech.onresult = (ev) => {
+            const results = ev.results;
+            console.log(results)
+            subtitles.innerText = results[ev.resultIndex][0].transcript;
+            show();
+            if (hideInterval) clearTimeout(hideInterval)
+            hideInterval = setTimeout(hide, 10000);
+        }
+        function show() {
+            subtitles.classList.remove("hidden")
+        }
+        function hide() {
+            hideInterval = undefined;
+            subtitles.classList.add("hidden")
+            loadToolbox();
+        }
+    }
+
+    function toggleSpeech() {
+        const speech = state.speech;
+        if (!speech) return;
+        if (state.speechRunning) {
+            speech.stop();
+        } else {
+            speech.start();
+        }
     }
 
     async function startRecording() {

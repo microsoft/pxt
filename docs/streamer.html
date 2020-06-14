@@ -28,6 +28,28 @@ body {
     width: 100%;            
 }
 
+@media (min-aspect-ratio: 16/9) {
+    .container {
+        padding-top: unset;
+        position: relative;
+        height: 100%;            
+    }
+}
+@media (max-aspect-ratio: 16/9) {
+    .container {
+        padding-top: 56.25%;
+        position: relative;
+        width: 100%;            
+    }
+}
+@media (aspect-ratio: 16/9) {
+    .container {
+        padding-top: unset;
+        position: relative;
+        height: 100%;            
+    }
+}
+
 body.greenscreen {
     background: #00ff00 !important;
 }
@@ -54,11 +76,11 @@ body.countdownscene.parallax {
     background-position: -15vw -5vh;
 }
 
-/* 
-    Style for the boxes.
+/* some web sites are transparent... */
+iframe {
+    background: white;
+}
 
-    https://alligator.io/css/gradient-borders-pure-css/ 
-*/
 .box {
     border: 0.5rem solid;
     border-radius: 0.5rem;
@@ -350,6 +372,20 @@ body.chatscene #settings {
     height: 87%;
     top: 1%;
     transition-delay: 0.3s;
+}
+
+#subtitles {
+    font-size: 2vw;
+    position:absolute;
+    border-radius: 0.5rem;
+    min-height:3vw;
+    left: 30%;
+    text-align: center;
+    width:40%;
+    bottom: 14%;
+    background: black;
+    color: white;
+    padding: 1vw;
 }
 
 /*
@@ -855,6 +891,7 @@ body.countdownscene.hardware #hardwarecam {
     </div>
     <div class="box animated" id="title">title</div>
     <div class="animated" id="countdown">5:00</div>
+    <div class="animated hidden" id="subtitles"></div>
     <div class="box animated hidden" id="selectapp">
         <p>You need to share your screen with MakeCode to record it.</p>
         <p>Go to <b>Application Window</b>, select <b>Microsoft MakeCode Streamer</b>
