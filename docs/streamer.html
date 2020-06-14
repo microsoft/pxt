@@ -876,17 +876,17 @@ body.countdownscene.hardware #hardwarecam {
     <iframe class="box animated" id="editor2" allow="usb;camera" sandbox="allow-scripts allow-same-origin allow-top-navigation"></iframe>
     <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
     <div class="box animated clickeable" id="facecam">
-        <video autoplay playsinline preload="auto" id="facecamvideo"></video>
+        <video autoplay playsinline id="facecamvideo"></video>
         <div class="videolabel" id="facecamlabel"></div>
     </div>
     <div class="box animated clickeable" id="hardwarecam">
-        <video autoplay playsinline preload="auto" id="hardwarecamvideo"></video>
+        <video autoplay playsinline id="hardwarecamvideo"></video>
         <div class="videolabel" id="hardwarecamlabel"></div>
     </div>
     <div class="box animated" id="title">title</div>
     <div class="animated" id="countdown">5:00</div>
-    <video class="hidden stinger" id="startvideo" playsinline autoplay></video>
-    <video class="hidden stinger" id="endvideo" playsinline autoplay></video>
+    <video class="hidden stinger" id="startvideo" playsinline autoplay preload="auto" controls></video>
+    <video class="hidden stinger" id="endvideo" playsinline autoplay preload="auto" controls></video>
     <div class="animated hidden" id="subtitles"></div>
     <div class="box animated hidden" id="selectapp">
         <p>You need to share your screen with MakeCode to record it.</p>
