@@ -47,6 +47,7 @@
     initMessages();
     initResize();
     initVideos();
+    initCaptions();
     loadPaint();
     loadEditor()
     await firstLoadFaceCam()
@@ -120,7 +121,6 @@
 
         const config = readConfig();
 
-        const displayMedia = 
         body.className = [
             scenes[state.sceneIndex],
             state.hardware && "hardware",
@@ -192,7 +192,8 @@
                     addButton("OfficeChat", "Chat  (Alt+Shift+7)", toggleChat, state.chat)
             }
             addSep()
-
+            if (state.speech)
+                addButton("Record2", "Captions", startSpeech)
             if (!!navigator.mediaDevices.getDisplayMedia) {
                 if (state.recording)
                     addButton("Stop", "Stop recording", stopRecording)
@@ -815,6 +816,26 @@ background-image: url(${config.backgroundImage});
         state.recording = undefined;
         if (stop) stop();
         render();
+    }
+
+    function initCaptions() {
+        const speech = state.speech = new webkitSpeechRecognition();
+        speech.continuous = true;
+        speech.maxAlternatives = 1;
+        speech.onstart = () => {
+            console.log("speech: started")
+        }
+        speech.onresult = (result) => {
+            console.log(result)
+        }
+    }
+
+    function startSpeech() {
+        const speech = state.speech;
+        if (speech) {
+            console.log("speech: start")
+            speech.start();
+        }
     }
 
     async function startRecording() {
