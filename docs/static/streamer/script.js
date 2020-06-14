@@ -24,6 +24,7 @@
     const titleEl = document.getElementById('title')
 
     const frames = [editor, editor2];
+    const defaultColors = ["#ffe135", "#00d9ff", "#ff6a00"];
 
     const scenes = ["leftscene", "rightscene", "chatscene", "countdownscene"];
     const LEFT_SCENE_INDEX = scenes.indexOf("leftscene")
@@ -39,7 +40,7 @@
         hardware: false,
         painttool: "arrow",
         recording: undefined,
-        timerEnd: undefined
+        timerEnd: undefined        
     }
 
     initMessages();
@@ -86,8 +87,11 @@
     function readConfig() {
         try {
             const cfg = JSON.parse(localStorage["streamer.config"]);
-            if (cfg)
+            if (cfg) {
+                if (!config.paintColors)
+                    config.paintColors = defaultColors.slice(0)
                 return cfg;
+            }
         } catch (e) {
             console.log(e)
         }
@@ -100,7 +104,8 @@
             mixer: "",
             emojis: "😄🤔😭👀",
             micDelay: 200,
-            title: "STARTING SOON"
+            title: "STARTING SOON",
+            paintColors: defaultColors.slice(0)
         }
         saveConfig(cfg)
         return cfg;
@@ -145,10 +150,6 @@
         toolbox.innerHTML = ""
 
         const currentScene = scenes[state.sceneIndex];
-        const emojis = [];
-        if (config.emojis)
-            for (let i = 0; i < config.emojis.length; i += 2)
-                emojis[i >> 1] = config.emojis.substr(i, 2);
 
         if (currentScene == "countdownscene") {
             addButton("Add", "Add 1 minute to countdown", () => updateCountdown(60))
@@ -157,22 +158,22 @@
         }
 
         if (state.paint) {
+            const emojis = [];
+            if (config.emojis)
+                for (let i = 0; i < config.emojis.length; i += 2)
+                    emojis[i >> 1] = config.emojis.substr(i, 2);
+            const colors = config.paintColors || defaultColors;
             addPaintButton("ArrowTallUpLeft", "Draw arrow (Alt+Shift+A)", "arrow")
             addPaintButton("RectangleShape", "Draw rectangle (Alt+Shift+R)", "rect")
             addPaintButton("Highlight", "Draw freeform", "pen")
-            emojis.forEach(emoji => {
-                const btn = document.createElement("button")
-                btn.className = "emoji"
-                btn.innerText = emoji;
-                btn.addEventListener("pointerdown", function (e) {
-                    tickEvent("streamer.emoji", { emoji }, { interactiveConsent: true })
-                    state.emoji = emoji;
-                    setPaintTool("emoji")
-                }, false)
-                toolbox.append(btn)
-            })
+            addSep()
+            colors.forEach(addColorButton);
+            addSep()
+            emojis.forEach(addEmojiButton);
+            addSep()
             addButton("WhiteBoardApp32", "Paint screen in white", whiteboard)
             addButton("EraseTool", "Clear all drawings", clearPaint)
+            addSep()
             addButton("ChromeClose", "Exit paint mode", togglePaint)
         } else {
             addButton("EditCreate", "Paint mode  (Alt+Shift+1)", togglePaint)
@@ -223,6 +224,26 @@
             i.className = `ms-Icon ms-Icon--${icon}`
             toolbox.append(btn)
             return btn;
+        }
+
+        function addColorButton(color) {
+            const btn = addButton("CircleShapeSolid", color, function() {
+                tickEvent("streamer.color", { color }, { interactiveConsent: true })
+                state.paintColor = paintColor;
+                loadToolbox();
+            }, state.paintColor === color);
+            btn.style.color = color;
+        }
+
+        function addEmojiButton(emoji) {
+            const btn = document.createElement("button")
+            btn.className = "emoji"
+            btn.innerText = emoji;
+            btn.addEventListener("pointerdown", function (e) {
+                tickEvent("streamer.emoji", { emoji }, { interactiveConsent: true })
+                setPaintTool("emoji")
+            }, false)
+            toolbox.append(btn)
         }
 
         function addSiteButton(url) {
@@ -363,9 +384,16 @@
             painttoolCtx.lineWidth = Math.max(10, (paint.width / 100) | 0);
             painttoolCtx.lineJoin = 'round';
             painttoolCtx.lineCap = 'round';
-            painttoolCtx.strokeStyle = '#ffe135';
+
+            if (!state.paintColor) {
+                const config = readConfig();
+                state.paintColor = colors.paintColors[0];
+            }
+
+            painttoolCtx.strokeStyle = state.paintColor;
+            painttoolCtx.globalAlpha = 1;
             if (state.painttool == 'pen') {
-                painttoolCtx.strokeStyle = 'rgba(255, 255, 0, 0.6)';
+                painttoolCtx.globalAlpha = 0.6;
                 painttoolCtx.beginPath();
                 painttoolCtx.moveTo(mouse.x, mouse.y);
             }
