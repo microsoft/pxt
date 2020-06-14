@@ -367,6 +367,19 @@ body.chatscene #settings {
     transition-delay: 0.3s;
 }
 
+#subtitles {
+    position:absolute;
+    border-radius: 0.5rem;
+    height: 3%;
+    left: 30%;
+    text-align: center;
+    width:40%;
+    bottom: 14%;
+    background: black;
+    color: white;
+    padding: 1vw;
+}
+
 /*
     Face camera            
 */
@@ -858,6 +871,7 @@ body.countdownscene.hardware #hardwarecam {
     </div>
     <div class="box animated" id="title">title</div>
     <div class="animated" id="countdown">5:00</div>
+    <div class="animated hidden" id="subtitles"></div>
     <div class="box animated hidden" id="selectapp">
         <p>You need to share your screen with MakeCode to record it.</p>
         <p>Go to <b>Application Window</b>, select <b>Microsoft MakeCode Streamer</b>

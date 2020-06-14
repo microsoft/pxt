@@ -22,6 +22,7 @@
     const screensize = document.getElementById('screensize')
     const countdown = document.getElementById('countdown')
     const titleEl = document.getElementById('title')
+    const subtitles = document.getElementById('subtitles')
 
     const frames = [editor, editor2];
     const paintColors = ["#ffe135", "#00d9ff", "#cf1fdb"];
@@ -47,7 +48,7 @@
     initMessages();
     initResize();
     initVideos();
-    initCaptions();
+    initSubtitles();
     loadPaint();
     loadEditor()
     await firstLoadFaceCam()
@@ -193,7 +194,7 @@
             }
             addSep()
             if (state.speech)
-                addButton("Record2", "Captions", startSpeech)
+                addButton("ClosedCaption", "Captions", toggleSpeech, state.speechRunning)
             if (!!navigator.mediaDevices.getDisplayMedia) {
                 if (state.recording)
                     addButton("Stop", "Stop recording", stopRecording)
@@ -818,22 +819,54 @@ background-image: url(${config.backgroundImage});
         render();
     }
 
-    function initCaptions() {
+    function initSubtitles() {
+        if (typeof webkitSpeechRecognition === "undefined") return;
+
         const speech = state.speech = new webkitSpeechRecognition();
         speech.continuous = true;
         speech.maxAlternatives = 1;
+        speech.interimResults = false;
         speech.onstart = () => {
             console.log("speech: started")
+            state.speechRunning = true;
+            loadToolbox();
         }
-        speech.onresult = (result) => {
-            console.log(result)
+        speech.onend = () => {
+            console.log("speech: stopped")
+            state.speechRunning = false;
+            hide();
+        }
+        speech.onerror = (ev) => {
+            console.log("speech: error")
+            console.log(ev)
+            hide();
+        }
+        speech.onnomatch = (ev) => {
+            console.log("speech: no match")
+            console.log(ev)
+            hide();
+        }
+        speech.onresult = (ev) => {
+            const results = ev.results;
+            console.log(results)
+            subtitles.innerText = results[ev.resultIndex][0].transcript;
+            show();
+        }
+        function show() {
+            subtitles.classList.remove("hidden")
+        }
+        function hide() {
+            subtitles.classList.add("hidden")
+            loadToolbox();
         }
     }
 
-    function startSpeech() {
+    function toggleSpeech() {
         const speech = state.speech;
-        if (speech) {
-            console.log("speech: start")
+        if (!speech) return;
+        if (state.speechRunning) {
+            speech.stop();
+        } else {
             speech.start();
         }
     }
