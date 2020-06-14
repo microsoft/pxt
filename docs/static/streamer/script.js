@@ -24,7 +24,7 @@
     const titleEl = document.getElementById('title')
 
     const frames = [editor, editor2];
-    const defaultColors = ["#ffe135", "#00d9ff", "#cf1fdb"];
+    const paintColors = ["#ffe135", "#00d9ff", "#cf1fdb"];
 
     const scenes = ["leftscene", "rightscene", "chatscene", "countdownscene"];
     const LEFT_SCENE_INDEX = scenes.indexOf("leftscene")
@@ -41,7 +41,7 @@
         painttool: "arrow",
         recording: undefined,
         timerEnd: undefined,
-        paintColor: defaultColors[0]      
+        paintColor: paintColors[0]      
     }
 
     initMessages();
@@ -89,8 +89,6 @@
         try {
             const cfg = JSON.parse(localStorage["streamer.config"]);
             if (cfg) {
-                if (!cfg.paintColors)
-                    cfg.paintColors = defaultColors.slice(0)
                 return cfg;
             }
         } catch (e) {
@@ -105,8 +103,7 @@
             mixer: "",
             emojis: "😄🤔😭👀",
             micDelay: 200,
-            title: "STARTING SOON",
-            paintColors: defaultColors.slice(0)
+            title: "STARTING SOON"
         }
         saveConfig(cfg)
         return cfg;
@@ -163,12 +160,11 @@
             if (config.emojis)
                 for (let i = 0; i < config.emojis.length; i += 2)
                     emojis[i >> 1] = config.emojis.substr(i, 2);
-            const colors = config.paintColors;
             addPaintButton("ArrowTallUpLeft", "Draw arrow (Alt+Shift+A)", "arrow")
             addPaintButton("RectangleShape", "Draw rectangle (Alt+Shift+R)", "rect")
             addPaintButton("Highlight", "Draw freeform", "pen")
             addSep()
-            colors.forEach(addColorButton);
+            paintColors.forEach(addColorButton);
             addSep()
             emojis.forEach(addEmojiButton);
             addSep()
@@ -243,6 +239,7 @@
             btn.innerText = emoji;
             btn.addEventListener("pointerdown", function (e) {
                 tickEvent("streamer.emoji", { emoji }, { interactiveConsent: true })
+                state.emoji = emoji;
                 setPaintTool("emoji")
             }, false)
             toolbox.append(btn)
