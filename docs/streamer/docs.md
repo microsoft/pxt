@@ -60,7 +60,7 @@ Streamer simplifies the setup of scenes in your streaming software, you only hav
 
 Choose the MakeCode you wish to use. For some editors, like the micro:bit, you may want to use 2 editors at the same time (for radio coding for example).
 
-## Face camera and document camera
+### Face camera and document camera
 
 The face camera is the primary web cam that points at you, the document camera would typically be filming a table or a device.
 
@@ -76,5 +76,9 @@ The camera feed maybe be rotated backwards, this is quite common when using a do
 
 A green screen is a way to minimize the oclusion of your webcam over the code editor. Any green screen drapped placed behind you will work, make sure it is well lighted.
 
-## Paint tools
+### Paint tools
 
+The paint tools overlay 2d graphics on top of the video stream. You can use arrows, rectangle,
+pen, highlighter, etc...
+
+In settings, you can specify which emojis you want to be used.
