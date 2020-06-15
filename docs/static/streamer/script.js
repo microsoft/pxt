@@ -51,6 +51,7 @@
     initResize();
     initVideos();
     initSubtitles();
+    initAccessibility();
     loadPaint();
     loadEditor()
     await firstLoadFaceCam()
@@ -216,8 +217,9 @@
 
         function addButton(icon, title, handler, active) {
             const btn = document.createElement("button")
+            accessify(btn);
             btn.title = title
-            btn.addEventListener("pointerdown", function (e) {
+            btn.addEventListener("click", function (e) {
                 tickEvent("streamer.button", { button: icon }, { interactiveConsent: true })
                 handler(e)
             }, false)
@@ -241,11 +243,12 @@
 
         function addEmojiButton(emoji) {
             const btn = document.createElement("button")
+            accessify(btn);
             btn.className = "emoji"
             if (emoji === state.emoji)
                 btn.classList.add("active")
             btn.innerText = emoji;
-            btn.addEventListener("pointerdown", function (e) {
+            btn.addEventListener("click", function (e) {
                 tickEvent("streamer.emoji", { emoji }, { interactiveConsent: true })
                 state.emoji = emoji;
                 setPaintTool("emoji")
@@ -397,12 +400,12 @@
         const mouse = { x: 0, y: 0 };
         let head = { x: 0, y: 0 }
 
-        painttool.addEventListener('mousemove', function (e) {
+        painttool.addEventListener('pointermove', function (e) {
             mouse.x = e.pageX - this.offsetLeft;
             mouse.y = e.pageY - this.offsetTop;
         }, false);
 
-        painttool.addEventListener('mousedown', function (e) {
+        painttool.addEventListener('pointerdown', function (e) {
             head.x = e.pageX - this.offsetLeft;
             head.y = e.pageY - this.offsetTop;
             painttoolCtx.lineWidth = Math.max(10, (paint.width / 100) | 0);
@@ -418,13 +421,13 @@
                 painttoolCtx.beginPath();
                 painttoolCtx.moveTo(mouse.x, mouse.y);
             }
-            painttool.addEventListener('mousemove', onPaint, false);
+            painttool.addEventListener('pointermove', onPaint, false);
         }, false);
 
-        painttool.addEventListener('mouseup', function () {
+        painttool.addEventListener('pointerup', function () {
             paintCtx.drawImage(painttool, 0, 0)
             painttoolCtx.clearRect(0, 0, painttool.width, painttool.height)
-            painttool.removeEventListener('mousemove', onPaint, false);
+            painttool.removeEventListener('pointermove', onPaint, false);
         }, false);
 
         function onPaint() {
@@ -753,8 +756,8 @@ background-image: url(${config.backgroundImage});
     }
 
     function initVideos() {
-        facecam.onclick = swapLeftRight;
-        hardwarecam.onclick = swapVideos;
+        facecam.parentElement.onclick = swapLeftRight;
+        hardwarecam.parentElement.onclick = swapVideos;
         
         function swapLeftRight(e) {
             if (state.sceneIndex == LEFT_SCENE_INDEX)
@@ -775,15 +778,15 @@ background-image: url(${config.backgroundImage});
                 fp.classList.add("hardwarecam")
                 hp.classList.remove("hardwarecam")
                 hp.classList.add("facecam")
-                facecam.onclick = swapVideos;
-                hardwarecam.onclick = swapLeftRight;
+                fp.onclick = swapVideos;
+                hp.onclick = swapLeftRight;
             } else {
                 fp.classList.remove("hardwarecam")
                 fp.classList.add("facecam")
                 hp.classList.remove("facecam")
                 hp.classList.add("hardwarecam")
-                facecam.onclick = swapLeftRight;
-                hardwarecam.onclick = swapVideos;
+                fp.onclick = swapLeftRight;
+                hp.onclick = swapVideos;
             }
         }
 
@@ -1392,6 +1395,26 @@ background-image: url(${config.backgroundImage});
             render()            
         }
     };
+
+    function accessify(el) {
+        el.tabIndex = 0;
+        el.onkeypress = e => {
+            const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
+            if (charCode === 13 /* enter */ || charCode === 32 /* space */) {
+                e.preventDefault();
+                e.currentTarget.click();
+            }
+        }
+    }
+
+    function initAccessibility() {
+        const clickeable = document.getElementsByClassName("clickeable");
+        for(let i = 0; i < clickeable.length; ++i) {
+            const c = clickeable[i];
+            accessify(c);
+        }
+            
+    }
 
     function tickEvent(id, data, opts) {
         if (typeof pxt === "undefined" || !pxt.aiTrackException || !pxt.aiTrackEvent) return;
