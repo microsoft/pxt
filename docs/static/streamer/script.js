@@ -837,34 +837,42 @@ background-image: url(${config.backgroundImage});
 
         el.muted = true;
         el.volume = 0; // don't use sound!
-        el.onloadedmetadata = (e) => el.play();
+        el.onloadedmetadata = (e) => {
+            el.play();
+            toggleGreenScreen();
+        }
         if (rotate)
             el.classList.add("rotate")
         else
             el.classList.remove("rotate");
 
-        // time to get serious
-        if (greenscreen) {
-            el.style.opacity = 0;
-            el.parentElement.classList.add("greenscreen")
-            // https://github.com/brianchirls/Seriously.js/
-            const seriously = new Seriously();
-            const source = seriously.source(el);
-            const target = seriously.target(document.getElementById(el.id + "serious"));
-            const chroma = seriously.effect("chroma");
-            chroma.clipBlack = 0.5;
-            chroma.source = source;
-            target.source = chroma;
-            seriously.go();
+        function toggleGreenScreen() {
+            // time to get serious
+            if (greenscreen) {
+                el.style.opacity = 0;
+                el.parentElement.classList.add("greenscreen")
+                // https://github.com/brianchirls/Seriously.js/
+                const canvas = document.getElementById(el.id + "serious");
+                canvas.width = el.videoWidth;
+                canvas.height = el.videoHeight;
+                const seriously = new Seriously();
+                const source = seriously.source(el);
+                const target = seriously.target(canvas);
+                const chroma = seriously.effect("chroma");
+                chroma.clipBlack = 0.5;
+                chroma.source = source;
+                target.source = chroma;
+                seriously.go();
 
-            el.seriously = seriously;
-        } else {
-            el.style.opacity = 1;
-            el.parentElement.classList.remove("greenscreen")
+                el.seriously = seriously;
+            } else {
+                el.style.opacity = 1;
+                el.parentElement.classList.remove("greenscreen")
 
-            if (el.seriously) {
-                el.seriously.stop();
-                el.seriously = undefined;
+                if (el.seriously) {
+                    el.seriously.stop();
+                    el.seriously = undefined;
+                }
             }
         }
     }
