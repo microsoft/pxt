@@ -1,8 +1,10 @@
-# MakeCode Streamer
+# MakeCode Streamer BETA
 
-**Streamer**, https://makecode.com/streamer, is a web application that simplifies the creation of 
+**Streamer BETA**, https://makecode.com/streamer, is an experimantal web application that simplifies the creation of 
 interactive, high quality coding videos. Streamer is designed for teachers, students or
 generally anyone who would want to do any kind of online MakeCode coding.
+
+* got feedback or questions? https://forum.makecode.com/t/introducing-makecode-streamer/2437
 
 https://youtu.be/P59Q0i6Zkrg
 
