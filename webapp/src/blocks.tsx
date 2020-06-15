@@ -654,7 +654,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let flyoutOnly = this.parent.state.editorState && this.parent.state.editorState.hasCategories === false;
         return (
             <div>
-                <ErrorList listenToBlockErrorChanges={this.listenToBlockErrorChanges}/>
+                <ErrorList isInBlocksEditor={true} listenToBlockErrorChanges={this.listenToBlockErrorChanges}/>
                 <div id="blocksEditor"></div>
                 <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
             </div>
@@ -921,7 +921,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             }
         })
-        this.onBlockErrorChanges(this.compilationResult.diagnostics)
+        this.onBlockErrorChanges(this.compilationResult.diagnostics);
         this.setBreakpointsFromBlocks();
     }
 

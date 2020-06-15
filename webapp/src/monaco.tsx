@@ -617,7 +617,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setInsertionSnippet={this.setInsertionSnippet}
                             parent={this.parent} />
                     </div>
-                    {showErrorList && <ErrorList onSizeChange={this.setErrorListState} listenToErrorChanges={this.listenToErrorChanges}
+                    {showErrorList && <ErrorList isInBlocksEditor={false} onSizeChange={this.setErrorListState}
+                        listenToErrorChanges={this.listenToErrorChanges}
                         listenToExceptionChanges={this.listenToExceptionChanges} goToError={this.goToError}
                         startDebugger={this.startDebugger} />}
                 </div>
