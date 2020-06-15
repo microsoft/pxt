@@ -54,3 +54,8 @@ As part of a returning an assignment, a student could record video "walking" thr
 
 Streamer simplifies the setup of scenes in your streaming software, you only have one scene :) You can definitely integrate Streamer in your exisiting OBS/StreamLabs/...
 
+## How to use Streamer?
+
+### Editor
+
+Choose the MakeCode you wish to use. For some editors, like the micro:bit, you may want to use 2 editors at the same time (for radio coding for example).
