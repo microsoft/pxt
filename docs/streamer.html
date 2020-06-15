@@ -397,15 +397,15 @@ body.chatscene #settings {
 /*
     Face camera            
 */
-#facecam, #hardwarecam {
+.facecam, .hardwarecam {
     position: absolute;
     width: 30%;
     bottom: 1.5%;
     right: 1%;
     overflow: hidden;
 }
-#facecam video,
-#hardwarecam video {
+.facecam video,
+.hardwarecam video {
     width: 100%;
 }
 .videolabel  {
@@ -419,23 +419,23 @@ body.chatscene #settings {
     border-top: 0.5rem solid;
     left: 0;
 }
-body.facecamlabel #facecamlabel.videolabel,
-body.hardwarecamlabel #hardwarecamlabel.videolabel {
+body.facecamlabel .facecamlabel.videolabel,
+body.hardwarecamlabel .hardwarecamlabel.videolabel {
     display: block;
 }
-#hardwarecam {
+.hardwarecam {
     width: 0;
     right: -1rem;
     opacity: 0;
     transition-delay: 0.1s;
 }
-body.hardware #hardwarecam {
+body.hardware .hardwarecam {
     opacity: 100%;
 }
 
 /** application clipping */
-body.hardwarecamdisplay #hardwarecamvideo,
-body.facecamdisplay #facecamvideo {
+body.hardwarecamdisplay .hardwarecamvideo,
+body.facecamdisplay .facecamvideo {
     clip-path: polygon(10% 20%, 90% 20%, 90% 100%, 10% 100%);
     width: 130%;
     left: -10%;
@@ -490,7 +490,7 @@ body.rightscene #editor {
     left: 1%;
 }
 
-body.rightscene #facecam {
+body.rightscene .facecam {
     right: 1%;
     width: 24%;
 }
@@ -500,7 +500,7 @@ body.rightscene.chat #chat {
     width: 28%;
     height: 55%;
 }
-body.rightscene.chat #facecam {
+body.rightscene.chat .facecam {
     width: 28%;
 }
 body.rightscene.chat #editor {
@@ -510,10 +510,10 @@ body.rightscene.chat #editor {
 }
 
 /* right + hardware */
-body.rightscene.hardware #facecam {
+body.rightscene.hardware .facecam {
     width: 22%;
 }
-body.rightscene.hardware #hardwarecam {
+body.rightscene.hardware .hardwarecam {
     right: 1%;
     width: 20%;
     bottom: 34%;
@@ -532,12 +532,12 @@ body.rightscene.hardware.chat #chat {
     height: 30%;    
 }
 
-body.rightscene.hardware.chat #hardwarecam {
+body.rightscene.hardware.chat .hardwarecam {
     width:22%;
     bottom: 34%;
 }
 
-body.rightscene.hardware.chat #facecam {
+body.rightscene.hardware.chat .facecam {
     width:22%;
 }
 
@@ -551,7 +551,7 @@ body.rightscene.multi #editor2 {
     left: 70%;
     height: 54%;
 }
-body.rightscene.multi #facecam {
+body.rightscene.multi .facecam {
     width: 28%;
 }
 
@@ -571,18 +571,18 @@ body.rightscene.multi.chat #chat {
     right: 1%;
     height: 63%;
 }
-body.rightscene.multi.chat #facecam {
+body.rightscene.multi.chat .facecam {
     width: 22%;
     right: 1%;
 }
 
 /* right + multi + hardware */
-body.rightscene.multi.hardware #facecam {
+body.rightscene.multi.hardware .facecam {
     right: 1%;
     width: 25%;
     bottom: 7%;
 }
-body.rightscene.multi.hardware #hardwarecam {
+body.rightscene.multi.hardware .hardwarecam {
     right: 21%;
     width: 22%;
     bottom: 1.5%;
@@ -608,12 +608,12 @@ body.rightscene.hardware.multi.chat #chat {
     width: 22%;
     height: 30%;    
 }
-body.rightscene.hardware.multi.chat #hardwarecam {
+body.rightscene.hardware.multi.chat .hardwarecam {
     right: 1%;
     width: 22%;
     bottom: 35%;
 }
-body.rightscene.hardware.multi.chat #facecam {
+body.rightscene.hardware.multi.chat .facecam {
     right: 1%;
     width: 22%;
     bottom: 1.5%;
@@ -624,12 +624,12 @@ body.leftscene #editor {
     left: 4%;
     height: 87%;
 }
-body.leftscene #facecam {
+body.leftscene .facecam {
     right: 74%;
     width: 24%;
 }
 
-body.leftscene #hardwarecam {
+body.leftscene .hardwarecam {
     bottom: 10%;
     right: 1%;
 }
@@ -642,12 +642,12 @@ body.leftscene #social {
 }
 
 /* left + hardware */
-body.leftscene.hardware #hardwarecam {
+body.leftscene.hardware .hardwarecam {
     right: 78%;
     width: 20%;
     bottom: 34%;
 }
-body.leftscene.hardware #facecam {
+body.leftscene.hardware .facecam {
     right: 76%;
     width: 22%;
 }
@@ -668,12 +668,12 @@ body.leftscene.hardware.chat #chat {
     height: 30%;    
     right: 77%;
 }
-body.leftscene.hardware.chat #hardwarecam {
+body.leftscene.hardware.chat .hardwarecam {
     width:22%;
     bottom: 34%;
     right: 77%;
 }
-body.leftscene.hardware.chat #facecam {
+body.leftscene.hardware.chat .facecam {
     width:22%;
     right: 77%;
 }
@@ -690,18 +690,18 @@ body.leftscene.multi #editor2 {
     left: 31%;
 }
 
-body.leftscene.multi #facecam {
+body.leftscene.multi .facecam {
     right: 70%;
     width: 28%;
 }
 
 /* left + multi + hardware */
-body.leftscene.multi.hardware #facecam {
+body.leftscene.multi.hardware .facecam {
     right: 73%;
     width: 25%;
     bottom: 7%;
 }
-body.leftscene.multi.hardware #hardwarecam {
+body.leftscene.multi.hardware .hardwarecam {
     right: 56%;
     width: 22%;
     bottom: 1.5%;
@@ -717,7 +717,7 @@ body.leftscene.chat #editor {
     width: 67%;
 }
 
-body.leftscene.chat #facecam {
+body.leftscene.chat .facecam {
     right: 70%;
     width: 28%;
 }
@@ -744,7 +744,7 @@ body.leftscene.multi.chat #chat {
     right: 77%;
     height: 63%;
 }
-body.leftscene.multi.chat #facecam {
+body.leftscene.multi.chat .facecam {
     width: 22%;
     right: 77%;
 }
@@ -765,19 +765,19 @@ body.leftscene.hardware.multi.chat #chat {
     height: 30%;    
     right: 77%;
 }
-body.leftscene.hardware.multi.chat #hardwarecam {
+body.leftscene.hardware.multi.chat .hardwarecam {
     width:22%;
     bottom: 35%;
     right: 77%;
 }
-body.leftscene.hardware.multi.chat #facecam {
+body.leftscene.hardware.multi.chat .facecam {
     width:22%;
     right: 77%;
     bottom: 1.5%;
 }
 
 /* chatscene: facecam and stream chat */
-body.chatscene #facecam {
+body.chatscene .facecam {
     bottom: 10%;
     right: 20%;
     width: 64%;
@@ -800,7 +800,7 @@ body.chatscene #social {
     left: 15%;
     width: 64%;
 }
-body.chatscene.chat #facecam {
+body.chatscene.chat .facecam {
     bottom: 19%;
     right: 38%;
     width: 52%;
@@ -812,22 +812,22 @@ body.chatscene.chat #chat {
     height: 80%;
     opacity: 100%;
 }
-body.chatscene.hardware #facecam {
+body.chatscene.hardware .facecam {
     bottom: 19%;
     right: 51%;
     width: 46%;
 }
-body.chatscene.hardware #hardwarecam {
+body.chatscene.hardware .hardwarecam {
     width: 46%;
     height: calc(46% * 4 /3);    
     bottom: 19%;
     right: 2%;            
 }
 
-body.chatscene.hardware.chat #facecam {
+body.chatscene.hardware.chat .facecam {
     right: 41%;    
 }
-body.chatscene.hardware.chat #hardwarecam {
+body.chatscene.hardware.chat .hardwarecam {
     width: 30%;
     height: calc(30% * 4 /3);    
     bottom: 9%;
@@ -846,8 +846,8 @@ body.countdownscene #editor {
 }
 body.countdownscene #editor2,
 body.countdownscene #chat,
-body.countdownscene #facecam,
-body.countdownscene #hardwarecam {
+body.countdownscene .facecam,
+body.countdownscene .hardwarecam {
     right: -100%;
 }
 body.countdownscene #title {
@@ -861,7 +861,7 @@ body.countdownscene #countdown {
 body.countdownscene #social {
     left: 18%;
 }
-body.countdownscene.hardware #hardwarecam {
+body.countdownscene.hardware .hardwarecam {
     right: -10%;
     width: 120%;
     bottom: -10%;
@@ -875,11 +875,11 @@ body.countdownscene.hardware #hardwarecam {
     <iframe class="box animated" id="editor" allow="usb;camera" sandbox="allow-scripts allow-same-origin allow-top-navigation"></iframe>
     <iframe class="box animated" id="editor2" allow="usb;camera" sandbox="allow-scripts allow-same-origin allow-top-navigation"></iframe>
     <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
-    <div class="box animated clickeable" id="facecam">
+    <div class="box animated clickeable facecam" id="facecam">
         <video autoplay playsinline id="facecamvideo"></video>
         <div class="videolabel" id="facecamlabel"></div>
     </div>
-    <div class="box animated clickeable" id="hardwarecam">
+    <div class="box animated clickeable hardwarecam" id="hardwarecam">
         <video autoplay playsinline id="hardwarecamvideo"></video>
         <div class="videolabel" id="hardwarecamlabel"></div>
     </div>
