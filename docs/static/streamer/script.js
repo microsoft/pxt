@@ -289,7 +289,6 @@
             startCountdown();
             if (config.endVideo) {
                 endvideo.classList.remove("hidden");
-                endvideo.onclick = () => endvideo.stop();
                 endvideo.onended = () => {
                     endvideo.classList.add("hidden");
                 }
@@ -299,7 +298,6 @@
             stopCountdown();
             if (lastScene == COUNTDOWN_SCENE_INDEX && config.startVideo) {
                 startvideo.classList.remove("hidden");
-                startvideo.onclick = () => startvideo.stop();
                 startvideo.onended = () => {
                     startvideo.classList.add("hidden");
                 }
