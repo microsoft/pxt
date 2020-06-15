@@ -22,8 +22,13 @@
     const screensize = document.getElementById('screensize')
     const countdown = document.getElementById('countdown')
     const titleEl = document.getElementById('title')
+    const subtitles = document.getElementById('subtitles')
+    const startvideo = document.getElementById('startvideo');
+    const endvideo = document.getElementById('endvideo');
+    const backgroundvideo = document.getElementById('backgroundvideo')
 
     const frames = [editor, editor2];
+    const paintColors = ["#ffe135", "#00d9ff", "#cf1fdb"];
 
     const scenes = ["leftscene", "rightscene", "chatscene", "countdownscene"];
     const LEFT_SCENE_INDEX = scenes.indexOf("leftscene")
@@ -39,12 +44,15 @@
         hardware: false,
         painttool: "arrow",
         recording: undefined,
-        timerEnd: undefined
+        timerEnd: undefined,
+        paintColor: paintColors[0]
     }
 
     initMessages();
     initResize();
     initVideos();
+    initSubtitles();
+    initAccessibility();
     loadPaint();
     loadEditor()
     await firstLoadFaceCam()
@@ -57,6 +65,7 @@
         loadEditor()
         loadChat()
         loadSocial()
+        loadVideos()
         setScene("right")
         render()
         handleHashChange();
@@ -86,8 +95,9 @@
     function readConfig() {
         try {
             const cfg = JSON.parse(localStorage["streamer.config"]);
-            if (cfg)
+            if (cfg) {
                 return cfg;
+            }
         } catch (e) {
             console.log(e)
         }
@@ -117,7 +127,6 @@
 
         const config = readConfig();
 
-        const displayMedia = 
         body.className = [
             scenes[state.sceneIndex],
             state.hardware && "hardware",
@@ -131,7 +140,8 @@
             config.hardwareCamLabel && "hardwarecamlabel",
             config.faceCamId === DISPLAY_DEVICE_ID && "facecamdisplay",
             config.hardwareCamId === DISPLAY_DEVICE_ID && "hardwarecamdisplay",
-            config.greenScreen && "greenscreen"
+            config.greenScreen && "greenscreen",
+            config.backgroundVideo ? "backgroundvideo" : config.backgroundImage && "parallax"
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
             showSettings();
@@ -144,10 +154,6 @@
         toolbox.innerHTML = ""
 
         const currentScene = scenes[state.sceneIndex];
-        const emojis = [];
-        if (config.emojis)
-            for (let i = 0; i < config.emojis.length; i += 2)
-                emojis[i >> 1] = config.emojis.substr(i, 2);
 
         if (currentScene == "countdownscene") {
             addButton("Add", "Add 1 minute to countdown", () => updateCountdown(60))
@@ -156,51 +162,53 @@
         }
 
         if (state.paint) {
+            const emojis = [];
+            if (config.emojis)
+                for (let i = 0; i < config.emojis.length; i += 2)
+                    emojis[i >> 1] = config.emojis.substr(i, 2);
             addPaintButton("ArrowTallUpLeft", "Draw arrow (Alt+Shift+A)", "arrow")
             addPaintButton("RectangleShape", "Draw rectangle (Alt+Shift+R)", "rect")
-            addPaintButton("Highlight", "Draw freeform", "pen")
-            emojis.forEach(emoji => {
-                const btn = document.createElement("button")
-                btn.className = "emoji"
-                btn.innerText = emoji;
-                btn.addEventListener("pointerdown", function (e) {
-                    tickEvent("streamer.emoji", { emoji }, { interactiveConsent: true })
-                    state.emoji = emoji;
-                    setPaintTool("emoji")
-                }, false)
-                toolbox.append(btn)
-            })
+            addPaintButton("PenWorkspace", "Draw freeform", "pen")
+            addPaintButton("Highlight", "Highligh", "highlight")
+            addSep()
+            paintColors.forEach(addColorButton);
+            addSep()
+            emojis.forEach(addEmojiButton);
+            addSep()
             addButton("WhiteBoardApp32", "Paint screen in white", whiteboard)
             addButton("EraseTool", "Clear all drawings", clearPaint)
+            addSep()
             addButton("ChromeClose", "Exit paint mode", togglePaint)
         } else {
             addButton("EditCreate", "Paint mode  (Alt+Shift+1)", togglePaint)
             addSep()
             if (config.extraSites && config.extraSites.length) {
                 config.extraSites.forEach(addSiteButton)
-                addButton("Code", "Reload MakeCode editor", loadEditor)               
+                addButton("Code", "Reload MakeCode editor", loadEditor)
                 addSep();
             }
             addSceneButton("OpenPane", "Move webcam left (Alt+Shift+2)", "left")
             addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
             addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
             addSceneButton("Timer", "Show countdown (Alt+Shift+5)", "countdown")
+            if (config.hardwareCamId || config.mixer || config.twitch) {
+                addSep()
+                if (config.hardwareCamId)
+                    addButton("Robot", "Hardware webcam (Alt+Shift+6)", toggleHardware, state.hardware)
+                if (config.mixer || config.twitch)
+                    addButton("OfficeChat", "Chat  (Alt+Shift+7)", toggleChat, state.chat)
+            }
             addSep()
-            if (config.hardwareCamId)
-                addButton("Robot", "Hardware webcam (Alt+Shift+6)", toggleHardware, state.hardware)
-            if (config.mixer || config.twitch)
-                addButton("OfficeChat", "Chat  (Alt+Shift+7)", toggleChat, state.chat)
+            if (state.speech)
+                addButton("ClosedCaption", "Captions", toggleSpeech, state.speechRunning)
+            if (!!navigator.mediaDevices.getDisplayMedia) {
+                if (state.recording)
+                    addButton("Stop", "Stop recording", stopRecording)
+                else
+                    addButton("Record2", "Start recording", startRecording)
+            }
+            addButton("Settings", "Show settings", toggleSettings);
         }
-
-        addSep()
-
-        if (!!navigator.mediaDevices.getDisplayMedia) {
-            if (state.recording)
-                addButton("Stop", "Stop recording", stopRecording)
-            else
-                addButton("Record2", "Start recording", startRecording)
-        }
-        addButton("Settings", "Show settings", toggleSettings);
 
         function addSep() {
             const sep = document.createElement("div")
@@ -210,8 +218,9 @@
 
         function addButton(icon, title, handler, active) {
             const btn = document.createElement("button")
+            accessify(btn);
             btn.title = title
-            btn.addEventListener("pointerdown", function (e) {
+            btn.addEventListener("click", function (e) {
                 tickEvent("streamer.button", { button: icon }, { interactiveConsent: true })
                 handler(e)
             }, false)
@@ -222,6 +231,30 @@
             i.className = `ms-Icon ms-Icon--${icon}`
             toolbox.append(btn)
             return btn;
+        }
+
+        function addColorButton(color) {
+            const btn = addButton("CircleShapeSolid", color, function () {
+                tickEvent("streamer.color", { color }, { interactiveConsent: true })
+                state.paintColor = color;
+                loadToolbox();
+            }, state.paintColor === color);
+            btn.style.color = color;
+        }
+
+        function addEmojiButton(emoji) {
+            const btn = document.createElement("button")
+            accessify(btn);
+            btn.className = "emoji"
+            if (emoji === state.emoji)
+                btn.classList.add("active")
+            btn.innerText = emoji;
+            btn.addEventListener("click", function (e) {
+                tickEvent("streamer.emoji", { emoji }, { interactiveConsent: true })
+                state.emoji = emoji;
+                setPaintTool("emoji")
+            }, false)
+            toolbox.append(btn)
         }
 
         function addSiteButton(url) {
@@ -248,16 +281,33 @@
 
     function setScene(scene) {
         tickEvent("streamer.scene", { scene: scene }, { interactiveConsent: true });
+        const config = readConfig();
+        const lastScene = state.sceneIndex;
         const sceneIndex = scenes.indexOf(`${scene}scene`);
         if (state.sceneIndex !== sceneIndex) {
             state.sceneIndex = scenes.indexOf(`${scene}scene`);
             resetTransition(facecamlabel, "fadeout")
             resetTransition(hardwarecamlabel, "fadeout")
         }
-        if (scene === "countdown")
+        if (scene === "countdown") {
             startCountdown();
-        else
+            if (config.endVideo) {
+                endvideo.classList.remove("hidden");
+                endvideo.onended = () => {
+                    endvideo.classList.add("hidden");
+                }
+                endvideo.play();
+            }
+        } else {
             stopCountdown();
+            if (lastScene == COUNTDOWN_SCENE_INDEX && config.startVideo) {
+                startvideo.classList.remove("hidden");
+                startvideo.onended = () => {
+                    startvideo.classList.add("hidden");
+                }
+                startvideo.play();
+            }
+        }
         render();
     }
 
@@ -351,30 +401,34 @@
         const mouse = { x: 0, y: 0 };
         let head = { x: 0, y: 0 }
 
-        painttool.addEventListener('mousemove', function (e) {
+        painttool.addEventListener('pointermove', function (e) {
             mouse.x = e.pageX - this.offsetLeft;
             mouse.y = e.pageY - this.offsetTop;
         }, false);
 
-        painttool.addEventListener('mousedown', function (e) {
+        painttool.addEventListener('pointerdown', function (e) {
             head.x = e.pageX - this.offsetLeft;
             head.y = e.pageY - this.offsetTop;
             painttoolCtx.lineWidth = Math.max(10, (paint.width / 100) | 0);
             painttoolCtx.lineJoin = 'round';
             painttoolCtx.lineCap = 'round';
-            painttoolCtx.strokeStyle = '#ffe135';
-            if (state.painttool == 'pen') {
-                painttoolCtx.strokeStyle = 'rgba(255, 255, 0, 0.6)';
+            painttoolCtx.strokeStyle = state.paintColor;
+            painttoolCtx.globalAlpha = 1;
+            if (state.painttool == 'pen' || state.painttool == 'highlight') {
+                if (state.painttool == 'highlight') {
+                    painttoolCtx.globalAlpha = 0.5;
+                    painttoolCtx.lineWidth = Math.max(20, (paint.width / 50) | 0);
+                }
                 painttoolCtx.beginPath();
                 painttoolCtx.moveTo(mouse.x, mouse.y);
             }
-            painttool.addEventListener('mousemove', onPaint, false);
+            painttool.addEventListener('pointermove', onPaint, false);
         }, false);
 
-        painttool.addEventListener('mouseup', function () {
+        painttool.addEventListener('pointerup', function () {
             paintCtx.drawImage(painttool, 0, 0)
             painttoolCtx.clearRect(0, 0, painttool.width, painttool.height)
-            painttool.removeEventListener('mousemove', onPaint, false);
+            painttool.removeEventListener('pointermove', onPaint, false);
         }, false);
 
         function onPaint() {
@@ -382,7 +436,6 @@
             ctx.clearRect(0, 0, painttool.width, painttool.height)
             ctx.save();
             if (state.painttool == 'arrow') {
-
                 const p1 = mouse, p2 = head;
                 const size = ctx.lineWidth * 2;
                 // Rotate the context to point along the path
@@ -410,17 +463,17 @@
                 ctx.beginPath();
                 ctx.rect(head.x, head.y, mouse.x - head.x, mouse.y - head.y)
                 ctx.stroke()
-            } else if (state.painttool == 'pen') {
+            } else if (state.painttool == 'pen' || state.painttool == 'highlight') {
                 ctx.lineTo(mouse.x, mouse.y);
                 ctx.stroke();
             } else if (state.painttool == 'emoji') {
                 const p1 = head, p2 = mouse;
                 const dx = p2.x - p1.x
                 const dy = p2.y - p1.y
-                const len = Math.max(64, (Math.sqrt(dx * dx + dy * dy) ) | 0);
+                const len = Math.max(64, (Math.sqrt(dx * dx + dy * dy)) | 0);
                 ctx.translate(p2.x, p2.y);
                 ctx.rotate(Math.atan2(dy, dx) - Math.PI / 2);
-                ctx.translate(0, -len/2)
+                ctx.translate(0, -len / 2)
 
                 ctx.font = `${len}px serif`;
                 ctx.textAlign = 'center'
@@ -456,6 +509,12 @@
         }
 
         loadStyle();
+    }
+
+    function loadVideos() {
+        const config = readConfig();
+        startvideo.src = config.startVideo;
+        endvideo.src = config.endVideo;
     }
 
     function loadStyle() {
@@ -509,12 +568,16 @@ background: #615fc7;
             css += `#hardwarecamvideo { filter: ${hardwareCamFilter}; }
         `
 
-        if (config.backgroundImage) {
-            css += `body {
-background: url(${config.backgroundImage}) no-repeat center center fixed; 
-background-size: cover;
+        if (config.backgroundVideo) {
+            backgroundvideo.src = config.backgroundVideo;
+        } else {
+            backgroundvideo.src = undefined;
+            if (config.backgroundImage) {
+                css += `body.parallax {
+background-image: url(${config.backgroundImage});
 }
 `
+            }
         }
 
         editorStyle.innerText = ""
@@ -611,7 +674,7 @@ background-size: cover;
             state.faceCamError = false;
             body.classList.add("loading");
             facecam.classList.remove("error");
-            await startStream(facecam, config.faceCamId, config.faceCamRotate);
+            await startStream(facecam, config.faceCamId, config.faceCamRotate, config.faceCamGreenScreen);
             console.log(`face cam started`)
             if (!config.faceCamId)
                 stopStream(facecam.srcObject); // request permission only
@@ -637,7 +700,7 @@ background-size: cover;
         if (config.hardwareCamId) {
             try {
                 state.hardwareCamError = false;
-                await startStream(hardwarecam, config.hardwareCamId, config.hardwareCamRotate);
+                await startStream(hardwarecam, config.hardwareCamId, config.hardwareCamRotate, config.hardwareCamGreenScreen);
                 console.log(`hardware cam started`)
                 return; // success!
             }
@@ -699,22 +762,46 @@ background-size: cover;
     }
 
     function initVideos() {
-        facecam.onclick = swapLeftRight;
-        hardwarecam.onclick = swapLeftRight;
-        
+        facecam.parentElement.onclick = swapLeftRight;
+        hardwarecam.parentElement.onclick = swapVideos;
+
         function swapLeftRight(e) {
             if (state.sceneIndex == LEFT_SCENE_INDEX)
                 setScene("right")
             else if (state.sceneIndex == RIGHT_SCENE_INDEX)
                 setScene("left")
+            else if (state.sceneIndex == CHAT_SCENE_INDEX)
+                swapVideos();
+        }
+
+        function swapVideos() {
+            if (!state.hardware) return;
+
+            const fp = facecam.parentElement;
+            const hp = hardwarecam.parentElement;
+            if (fp.classList.contains("facecam")) {
+                fp.classList.remove("facecam")
+                fp.classList.add("hardwarecam")
+                hp.classList.remove("hardwarecam")
+                hp.classList.add("facecam")
+                fp.onclick = swapVideos;
+                hp.onclick = swapLeftRight;
+            } else {
+                fp.classList.remove("hardwarecam")
+                fp.classList.add("facecam")
+                hp.classList.remove("facecam")
+                hp.classList.add("hardwarecam")
+                fp.onclick = swapLeftRight;
+                hp.onclick = swapVideos;
+            }
         }
 
         const introvideo = document.getElementById("introvideo");
-        introvideo.onclick = function(e) {                        
+        introvideo.onclick = function (e) {
             tickEvent("streamer.introvideo", undefined, { interactiveConsent: true })
             stopEvent(e)
-            loadSettings()      
-            hideSettings()      
+            loadSettings()
+            hideSettings()
             introvideo.requestPictureInPicture()
                 .then(() => introvideo.play())
         }
@@ -748,14 +835,14 @@ background-size: cover;
         if (m) {
             const action = m[1];
             const arg = m[2];
-            switch(action) {
+            switch (action) {
                 case "editor": setEditor(arg); break;
             }
         }
         window.history.replaceState('', '', '#')
     }
 
-    async function startStream(el, deviceId, rotate) {
+    async function startStream(el, deviceId, rotate, greenscreen) {
         stopStream(el.srcObject)
         console.log(`trying device ${deviceId}`)
         if (deviceId === DISPLAY_DEVICE_ID) {
@@ -778,13 +865,47 @@ background-size: cover;
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
             el.srcObject = stream;
         }
+
         el.muted = true;
         el.volume = 0; // don't use sound!
-        el.onloadedmetadata = (e) => el.play();
+        el.onloadedmetadata = (e) => {
+            el.play();
+            toggleGreenScreen();
+        }
         if (rotate)
             el.classList.add("rotate")
         else
             el.classList.remove("rotate");
+
+        function toggleGreenScreen() {
+            // time to get serious
+            if (greenscreen) {
+                el.style.opacity = 0;
+                el.parentElement.classList.add("greenscreen")
+                // https://github.com/brianchirls/Seriously.js/
+                const canvas = document.getElementById(el.id + "serious");
+                canvas.width = el.videoWidth;
+                canvas.height = el.videoHeight;
+                const seriously = new Seriously();
+                const source = seriously.source(el);
+                const target = seriously.target(canvas);
+                const chroma = seriously.effect("chroma");
+                chroma.clipBlack = 0.5;
+                chroma.source = source;
+                target.source = chroma;
+                seriously.go();
+
+                el.seriously = seriously;
+            } else {
+                el.style.opacity = 1;
+                el.parentElement.classList.remove("greenscreen")
+
+                if (el.seriously) {
+                    el.seriously.stop();
+                    el.seriously = undefined;
+                }
+            }
+        }
     }
 
     function stopRecording() {
@@ -792,6 +913,63 @@ background-size: cover;
         state.recording = undefined;
         if (stop) stop();
         render();
+    }
+
+    function initSubtitles() {
+        // not supported in Edge
+        if (typeof webkitSpeechRecognition === "undefined" || /Edg\//.test(navigator.userAgent)) return;
+
+        let hideInterval;
+        const speech = state.speech = new webkitSpeechRecognition();
+        speech.continuous = true;
+        speech.maxAlternatives = 1;
+        speech.interimResults = false;
+        speech.onstart = () => {
+            console.log("speech: started")
+            state.speechRunning = true;
+            loadToolbox();
+        }
+        speech.onend = () => {
+            console.log("speech: stopped")
+            state.speechRunning = false;
+            hide();
+        }
+        speech.onerror = (ev) => {
+            console.log("speech: error")
+            console.log(ev)
+            hide();
+        }
+        speech.onnomatch = (ev) => {
+            console.log("speech: no match")
+            console.log(ev)
+            hide();
+        }
+        speech.onresult = (ev) => {
+            const results = ev.results;
+            console.log(results)
+            subtitles.innerText = results[ev.resultIndex][0].transcript;
+            show();
+            if (hideInterval) clearTimeout(hideInterval)
+            hideInterval = setTimeout(hide, 10000);
+        }
+        function show() {
+            subtitles.classList.remove("hidden")
+        }
+        function hide() {
+            hideInterval = undefined;
+            subtitles.classList.add("hidden")
+            loadToolbox();
+        }
+    }
+
+    function toggleSpeech() {
+        const speech = state.speech;
+        if (!speech) return;
+        if (state.speechRunning) {
+            speech.stop();
+        } else {
+            speech.start();
+        }
     }
 
     async function startRecording() {
@@ -921,7 +1099,7 @@ background-size: cover;
             saveConfig(config);
             loadToolbox();
             render()
-        }        
+        }
         const facecamselect = document.getElementById("facecamselect");
         facecamselect.innerHTML = "" // remove all web cams
         {
@@ -938,15 +1116,14 @@ background-size: cover;
             if (config.faceCamId == cam.deviceId && cam.deviceId)
                 option.selected = true;
         })
-        if (!!navigator.mediaDevices.getDisplayMedia)
-        {
+        if (!!navigator.mediaDevices.getDisplayMedia) {
             const option = document.createElement("option")
             option.value = DISPLAY_DEVICE_ID
             option.text = "Application"
             if (config.faceCamId === option.value)
                 option.selected = true
             facecamselect.add(option)
-        }        
+        }
         facecamselect.onchange = function () {
             const selected = facecamselect.options[facecamselect.selectedIndex];
             config.faceCamId = selected.value;
@@ -963,12 +1140,22 @@ background-size: cover;
             render()
             loadFaceCam().then(() => loadSettings())
         }
+
+        const facecamgreenscreencheckbox = document.getElementById("facecamgreenscreencheckbox")
+        facecamgreenscreencheckbox.checked = !!config.faceCamGreenScreen
+        facecamgreenscreencheckbox.onchange = function () {
+            config.faceCamGreenScreen = !!facecamgreenscreencheckbox.checked
+            saveConfig(config)
+            render()
+            loadFaceCam().then(() => loadSettings())
+        }
+
         config.faceCamFilter = config.faceCamFilter || {};
-        ["contrast", "brightness", "saturate"].forEach(function(k) {
+        ["contrast", "brightness", "saturate"].forEach(function (k) {
             const elid = "facecam" + k;
             const el = document.getElementById(elid);
             el.valueAsNumber = config.faceCamFilter[k];
-            el.onchange = function() {
+            el.onchange = function () {
                 config.faceCamFilter[k] = el.valueAsNumber;
                 saveConfig(config);
                 loadStyle();
@@ -998,8 +1185,7 @@ background-size: cover;
             if (config.hardwareCamId == cam.deviceId && cam.deviceId)
                 option.selected = true;
         })
-        if (!!navigator.mediaDevices.getDisplayMedia)
-        {
+        if (!!navigator.mediaDevices.getDisplayMedia) {
             const option = document.createElement("option")
             option.value = DISPLAY_DEVICE_ID
             option.text = "Application"
@@ -1022,17 +1208,25 @@ background-size: cover;
             saveConfig(config)
             loadHardwareCam().then(() => loadSettings())
         }
+        const hardwarecamgreenscreencheckbox = document.getElementById("hardwarecamgreenscreencheckbox")
+        hardwarecamgreenscreencheckbox.checked = !!config.hardwareCamGreenScreen
+        hardwarecamgreenscreencheckbox.onchange = function () {
+            config.hardwareCamGreenScreen = !!hardwarecamgreenscreencheckbox.checked
+            saveConfig(config)
+            render()
+            loadHardwareCam().then(() => loadSettings())
+        }
         config.hardwareCamFilter = config.hardwareCamFilter || {};
-        ["contrast", "brightness", "saturate"].forEach(function(k) {
+        ["contrast", "brightness", "saturate"].forEach(function (k) {
             const elid = "hardwarecam" + k;
             const el = document.getElementById(elid);
             el.valueAsNumber = config.hardwareCamFilter[k];
-            el.onchange = function() {
+            el.onchange = function () {
                 config.hardwareCamFilter[k] = el.valueAsNumber;
                 saveConfig(config);
                 loadStyle();
             }
-        })        
+        })
         const hardwarecamerror = document.getElementById("hardwarecamerror")
         if (config.hardwareCamId && state.hardwareCamError)
             hardwarecamerror.classList.remove("hidden")
@@ -1082,12 +1276,45 @@ background-size: cover;
         const backgroundimageinput = document.getElementById("backgroundimageinput")
         backgroundimageinput.value = config.backgroundImage || ""
         backgroundimageinput.onchange = function (e) {
-            if (/^https:\/\//.test(backgroundimageinput.value)) {
+            config.backgroundImage = undefined;
+            if (/^https:\/\//.test(backgroundimageinput.value))
                 config.backgroundImage = backgroundimageinput.value
-                saveConfig(config);
-                loadStyle();
-                render()
-            }
+            saveConfig(config);
+            loadStyle();
+            render()
+        }
+
+        const backgroundvideoinput = document.getElementById("backgroundvideoinput")
+        backgroundvideoinput.value = config.backgroundVideo || ""
+        backgroundvideoinput.onchange = function (e) {
+            config.backgroundVideo = undefined;
+            if (/^https:\/\//.test(backgroundvideoinput.value))
+                config.backgroundVideo = backgroundvideoinput.value
+            saveConfig(config);
+            loadStyle();
+            render()
+        }
+
+        const startvideoinput = document.getElementById("startvideoinput")
+        startvideoinput.value = config.startVideo || ""
+        startvideoinput.onchange = function (e) {
+            config.startVideo = undefined;
+            if (/^https:\/\//.test(startvideoinput.value))
+                config.startVideo = startvideoinput.value
+            saveConfig(config);
+            loadVideos();
+            render()
+        }
+
+        const endvideoinput = document.getElementById("endvideoinput")
+        endvideoinput.value = config.endVideo || ""
+        endvideoinput.onchange = function (e) {
+            config.endVideo = undefined;
+            if (/^https:\/\//.test(endvideoinput.value))
+                config.endVideo = endvideoinput.value
+            saveConfig(config);
+            loadVideos();
+            render()
         }
 
         const twitchinput = document.getElementById("twitchinput")
@@ -1168,7 +1395,7 @@ background-size: cover;
     function setEditor(editor) {
         const editorConfig = editorConfigs[editor];
         if (!editorConfig) return;
-        
+
         const config = readConfig();
         config.editor = editor;
         if (editorConfig)
@@ -1180,10 +1407,10 @@ background-size: cover;
         render()
     }
 
-    document.onkeyup = function(ev) {
+    document.onkeyup = function (ev) {
         // always active
         if (ev.shiftKey && ev.altKey) {
-            switch(ev.keyCode) {
+            switch (ev.keyCode) {
                 // scenes
                 case 49: // 1
                     togglePaint(ev);
@@ -1194,15 +1421,15 @@ background-size: cover;
                     break;
                 case 51: // 3
                     ev.preventDefault();
-                    setScene("right"); 
+                    setScene("right");
                     break;
                 case 52: // 4
                     ev.preventDefault();
-                    setScene("chat"); 
+                    setScene("chat");
                     break;
                 case 53: // 5
                     ev.preventDefault();
-                    setScene("countdown"); 
+                    setScene("countdown");
                     break;
                 case 54: // 6
                     toggleHardware(ev);
@@ -1210,7 +1437,7 @@ background-size: cover;
                 case 55: // 7
                     toggleChat(ev);
                     break;
-                
+
                 // paint tools
                 case 65: // a
                     setPaintTool(ev, "arrow"); break;
@@ -1220,7 +1447,7 @@ background-size: cover;
         }
         // special keys
         if (state.sceneIndex == COUNTDOWN_SCENE_INDEX) {
-            switch(ev.keyCode) {
+            switch (ev.keyCode) {
                 case 38: // arrow up
                     updateCountdown(60); break;
                 case 40: // arrow down
@@ -1232,9 +1459,29 @@ background-size: cover;
             state.painttool = name
             if (!state.paint)
                 togglePaint(ev);
-            render()            
+            render()
         }
     };
+
+    function accessify(el) {
+        el.tabIndex = 0;
+        el.onkeypress = e => {
+            const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
+            if (charCode === 13 /* enter */ || charCode === 32 /* space */) {
+                e.preventDefault();
+                e.currentTarget.click();
+            }
+        }
+    }
+
+    function initAccessibility() {
+        const clickeable = document.getElementsByClassName("clickeable");
+        for (let i = 0; i < clickeable.length; ++i) {
+            const c = clickeable[i];
+            accessify(c);
+        }
+
+    }
 
     function tickEvent(id, data, opts) {
         if (typeof pxt === "undefined" || !pxt.aiTrackException || !pxt.aiTrackEvent) return;

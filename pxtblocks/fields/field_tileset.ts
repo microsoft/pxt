@@ -121,9 +121,6 @@ namespace pxtblockly {
             super(text, options, validator);
             this.blocksInfo = options.blocksInfo;
 
-            if (!text) {
-                this.setValue(this.getOptions()[0][1]);
-            }
         }
 
         init() {
@@ -137,6 +134,9 @@ namespace pxtblockly {
                     // TODO: Other tile sizes
                     saveTilesetTile(this.sourceBlock_.workspace, { projectId: 0, data: new pxt.sprite.Bitmap(16, 16).data() });
                 }
+            }
+            else if (this.sourceBlock_ && this.sourceBlock_.isInFlyout) {
+                this.setValue(this.getOptions()[0][1]);
             }
         }
 
@@ -161,14 +161,18 @@ namespace pxtblockly {
             return super.getText();
         }
 
+        getOptions(): any[] {
+            if (typeof this.menuGenerator_ !== 'function') {
+                this.transparent = constructTransparentTile();
+                return [this.transparent];
+            }
+
+            return this.menuGenerator_.call(this);
+        }
+
         menuGenerator_ = () => {
             if (!this.transparent) {
-                this.transparent = [{
-                    src: mkTransparentTileImage(16),
-                    width: PREVIEW_SIDE_LENGTH,
-                    height: PREVIEW_SIDE_LENGTH,
-                    alt: pxt.U.lf("transparency")
-                }, "myTiles.tile0"];
+                this.transparent = constructTransparentTile();
             }
 
             let options: TilesetDropdownOption[] = [this.transparent];
@@ -189,6 +193,15 @@ namespace pxtblockly {
 
             return options;
         }
+    }
+
+    function constructTransparentTile(): TilesetDropdownOption {
+        return [{
+            src: mkTransparentTileImage(16),
+            width: PREVIEW_SIDE_LENGTH,
+            height: PREVIEW_SIDE_LENGTH,
+            alt: pxt.U.lf("transparency")
+        }, "myTiles.tile0"];
     }
 
     function mkTransparentTileImage(sideLength: number) {

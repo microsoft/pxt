@@ -1337,8 +1337,15 @@ export class ProjectView
 
                 // load side docs
                 const editorForFile = this.pickEditorFor(file);
-                if (pkg?.mainPkg?.config?.documentation)
-                    this.setSideDoc(pkg.mainPkg.config.documentation, editorForFile == this.blocksEditor);
+                const documentation = pkg?.mainPkg?.config?.documentation;
+                if (documentation)
+                    this.setSideDoc(documentation, editorForFile == this.blocksEditor);
+                else {
+                    const readme = main.lookupFile("this/README.md");
+                    // no auto-popup when editing packages locally
+                    if (!h.githubId && readme && readme.content && readme.content.trim())
+                        this.setSideMarkdown(readme.content);
+                }
 
                 // update recentUse on the header
                 return workspace.saveAsync(h)
@@ -3340,11 +3347,14 @@ export class ProjectView
             const mfn = (fileName || ghid.fileName || "README") + ".md";
 
             let md: string = undefined;
-            const [initialLang, baseLang] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
-            if (initialLang && baseLang) {
+            const [initialLang, baseLang, initialLangLowerCase] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
+            if (initialLang && baseLang && initialLangLowerCase) {
                 //We need to first search base lang and then intial Lang
-                //Example: normalizeLanguageCode en-IN  will return ["en-IN", "en"] and nb will be returned as ["nb"]
-                md = files[`_locales/${initialLang}/${mfn}`] || files[`_locales/${baseLang}/${mfn}`];
+                //Example: normalizeLanguageCode en-IN  will return ["en-IN", "en", "en-in"] and nb will be returned as ["nb"]
+                md = files[`_locales/${initialLang}/${mfn}`]
+                || files[`_locales/${initialLangLowerCase}/${mfn}`]
+                || files[`_locales/${baseLang}/${mfn}`]
+
             } else {
                 md = files[`_locales/${initialLang}/${mfn}`];
             }
