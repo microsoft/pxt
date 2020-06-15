@@ -586,7 +586,7 @@ namespace pxt {
                     .then(fixes => {
                         if (fixes) {
                             // worst case scenario with double load
-                            pxt.tickEvent("package.doubleload", fixes);
+                            Object.keys(fixes).forEach(key => pxt.tickEvent("package.doubleload", { "extension": key }))
                             pxt.log(`upgraded, downloading again`);
                             pxt.debug(fixes);
                             return this.downloadAsync();
