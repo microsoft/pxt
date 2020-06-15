@@ -7,3 +7,5 @@ def next_choice(forward):
     x = len(choices)
 
 print(x)
+next_choice(2)
+print(x)

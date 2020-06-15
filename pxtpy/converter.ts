@@ -375,10 +375,11 @@ namespace pxt.py {
                 varSym = mkSymbol(SK.Variable, name)
             else
                 varSym = addSymbol(SK.Variable, qualifiedName)
-            varScopeSym = scope.vars[name] = {
+            varScopeSym = {
                 symbol: varSym,
                 modifier,
-            }
+            };
+            scope.vars[name] = varScopeSym;
         }
         for (let k of Object.keys(opts)) {
             (varSym as any)[k] = (opts as any)[k]
@@ -1130,12 +1131,12 @@ namespace pxt.py {
                     unifyClass(n, sym.pyRetType!, ctx.currClass!.symInfo)
                 } else {
                     if (funname == "__get__" || funname == "__set__") {
-                        let scopeVv = n.vars["value"]
-                        let vv = scopeVv?.symbol
-                        if (funname == "__set__" && vv) {
+                        let scopeValueVar = n.vars["value"]
+                        let valueVar = scopeValueVar?.symbol
+                        if (funname == "__set__" && valueVar) {
                             let cf = getClassField(ctx.currClass!.symInfo, "__get__")
                             if (cf && cf.pyAST && cf.pyAST.kind == "FunctionDef")
-                                unify(n, vv.pyRetType!, cf.pyRetType!)
+                                unify(n, valueVar.pyRetType!, cf.pyRetType!)
                         }
                         funname = funname.replace(/_/g, "")
                     }
