@@ -73,6 +73,19 @@ body.chatscene.parallax {
 body.countdownscene.parallax {
     background-position: -15vw -5vh;
 }
+/** background video */
+#backgroundvideo {
+    display: none;
+    object-fit: cover;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;    
+}
+body.backgroundvideo #backgroundvideo {
+    display:block;
+}
 
 /* some web sites are transparent... */
 iframe {
@@ -879,6 +892,7 @@ body.countdownscene.hardware .hardwarecam {
 </head>
 
 <body class="rightscene">
+    <video id="backgroundvideo" playsinline autoplay muted loop></video>
     <div id="container" class="container">
     <iframe class="box animated" id="editor" allow="usb;camera" sandbox="allow-scripts allow-same-origin allow-top-navigation"></iframe>
     <iframe class="box animated" id="editor2" allow="usb;camera" sandbox="allow-scripts allow-same-origin allow-top-navigation"></iframe>
@@ -999,6 +1013,10 @@ body.countdownscene.hardware .hardwarecam {
         <div class="field">
             <label for="backgroundimageinput">Background image (must be https://...)</label>
             <input id="backgroundimageinput" type="url" />
+        </div>
+        <div class="field">
+            <label for="backgroundvideoinput">Background video (must be https://...)</label>
+            <input id="backgroundvideoinput" type="url" />
         </div>
         <div class="field">
             <input type="checkbox" id="greenscreencheckbox"></input>
