@@ -5,6 +5,8 @@
     <title>Microsoft MakeCode Streamer</title>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
     <link href="/static/streamer/fabric-icons-inline.css" rel="stylesheet">
+    <script src="/static/streamer/seriously.js"></script>
+    <script src="/static/streamer/seriously.chroma.js"></script>
     <style>
 /*
 Use https://uifabricicons.azurewebsites.net/
@@ -95,6 +97,11 @@ iframe {
 .box {
     border: 0.5rem solid;
     border-radius: 0.5rem;
+}
+.box.greenscreen {
+    border-top: none;
+    border-left: none;
+    border-right: none;
 }
 
 .animated {
@@ -432,8 +439,18 @@ body.chatscene #settings {
     border-top: 0.5rem solid;
     left: 0;
 }
-body.facecamlabel .facecamlabel.videolabel,
-body.hardwarecamlabel .hardwarecamlabel.videolabel {
+.videocanvas {
+    display: none;
+    position:absolute;
+    width:100%;
+    height:100%;
+    bottom:0;    
+}
+.box.greenscreen .videocanvas {
+    display:block;
+}
+body.facecamlabel #facecamlabel.videolabel,
+body.hardwarecamlabel #hardwarecamlabel.videolabel {
     display: block;
 }
 .hardwarecam {
@@ -899,10 +916,12 @@ body.countdownscene.hardware .hardwarecam {
     <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
     <div class="box animated clickeable facecam" id="facecam">
         <video autoplay playsinline id="facecamvideo"></video>
+        <canvas id="facecamvideoserious" class="videocanvas"></canvas>
         <div class="videolabel" id="facecamlabel"></div>
     </div>
     <div class="box animated clickeable hardwarecam" id="hardwarecam">
         <video autoplay playsinline id="hardwarecamvideo"></video>
+        <canvas id="hardwarecamvideoserious" width="640" height="480" class="videocanvas"></canvas>
         <div class="videolabel" id="hardwarecamlabel"></div>
     </div>
     <div class="box animated" id="title">title</div>
@@ -971,6 +990,10 @@ body.countdownscene.hardware .hardwarecam {
             <input type="checkbox" id="facerotatecameracheckbox"></input>
             <label for="facerotatecameracheckbox">Rotate camera 180</label>
         </div>
+        <div class="field">
+            <input type="checkbox" id="facecamgreenscreencheckbox"></input>
+            <label for="facecamgreenscreencheckbox">Erase green screen</label>
+        </div>
         <h2>Document camera</h2>
         <div class="field">
             <label for="hardwarecamselect">Choose a document Webcam</label>
@@ -981,10 +1004,6 @@ body.countdownscene.hardware .hardwarecam {
             <label for="hardwarecamlabelinput">Camera label</label>
             <input id="hardwarecamlabelinput" placeholder="Cam description" />
         </div>
-        <div class="field">
-            <input type="checkbox" id="hardwarerotatecameracheckbox"></input>
-            <label for="hardwarerotatecameracheckbox">Rotate camera 180</label>
-        </div>        
         <div class="field"> 
             <label for="hardwarecamcontrast">Contrast</label>
             <input type="range" id="hardwarecamcontrast" min="0" max="100" step="1" list="tickmarks">
@@ -996,7 +1015,15 @@ body.countdownscene.hardware .hardwarecam {
         <div class="field">
             <label for="hardwarecamsaturate">Saturate</label>
             <input type="range" id="hardwarecamsaturate" min="0" max="100" step="1" list="tickmarks">
-        </div>     
+        </div>
+        <div class="field">
+            <input type="checkbox" id="hardwarerotatecameracheckbox"></input>
+            <label for="hardwarerotatecameracheckbox">Rotate camera 180</label>
+        </div>        
+        <div class="field">
+            <input type="checkbox" id="hardwarecamgreenscreencheckbox"></input>
+            <label for="hardwarecamgreenscreencheckbox">Erase green screen</label>
+        </div>
         <h2>Style</h2>
         <div class="field">
             <label for="titleinput">Title</label>
