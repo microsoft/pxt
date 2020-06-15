@@ -318,17 +318,19 @@ namespace pxt {
             return regex.test(ts);
         }
 
-        private upgradePackagesAsync() {
+        private upgradePackagesAsync(): Promise<pxt.Map<string>> {
             if (!this.config)
                 this.loadConfig();
             return pxt.packagesConfigAsync()
                 .then(packagesConfig => {
                     let numfixes = 0
+                    let fixes: pxt.Map<string> = {};
                     U.iterMap(this.config.dependencies, (pkg, ver) => {
                         if (pxt.github.isGithubId(ver)) {
                             const upgraded = pxt.github.upgradedPackageReference(packagesConfig, ver)
                             if (upgraded && upgraded != ver) {
                                 pxt.log(`upgrading dep ${pkg}: ${ver} -> ${upgraded}`);
+                                fixes[ver] = upgraded;
                                 this.config.dependencies[pkg] = upgraded
                                 numfixes++
                             }
@@ -336,6 +338,7 @@ namespace pxt {
                     })
                     if (numfixes)
                         this.saveConfig()
+                    return numfixes && fixes;
                 })
         }
 
@@ -567,11 +570,31 @@ namespace pxt {
                 initPromise = initPromise.then(() => this.parseConfig(str))
             }
 
-            if (this.level == 0)
-                initPromise = initPromise.then(() => this.upgradePackagesAsync())
+            // if we are installing this script, we haven't yet downloaded the config
+            // do upgrade later
+            if (this.level == 0 && !isInstall) {
+                initPromise = initPromise.then(() => this.upgradePackagesAsync().then(() => { }))
+            }
 
             if (isInstall)
                 initPromise = initPromise.then(() => this.downloadAsync())
+
+            // we are installing the script, and we've download the original version and we haven't upgraded it yet
+            // do upgrade and reload as needed
+            if (this.level == 0 && isInstall) {
+                initPromise = initPromise.then(() => this.upgradePackagesAsync())
+                    .then(fixes => {
+                        if (fixes) {
+                            // worst case scenario with double load
+                            Object.keys(fixes).forEach(key => pxt.tickEvent("package.doubleload", { "extension": key }))
+                            pxt.log(`upgraded, downloading again`);
+                            pxt.debug(fixes);
+                            return this.downloadAsync();
+                        }
+                        // nothing to do here
+                        else return Promise.resolve();
+                    })
+            }
 
             if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
                 if (this.level == 0)
