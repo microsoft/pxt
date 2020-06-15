@@ -3,8 +3,10 @@
 
 namespace pxt.blocks {
     export interface BlockSnippet {
-        xml: string[];
-        extensions?: string[];
+        target: string; // pxt.appTarget.id
+        versions: pxt.TargetVersions;
+        xml: string[]; // xml for each top level block
+        extensions?: string[]; // currently unpopulated. list of extensions used in screenshotted projects
     }
 
     /**

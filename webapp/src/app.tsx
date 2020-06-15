@@ -1510,7 +1510,7 @@ export class ProjectView
             pxt.lzmaDecompressAsync(buf))
             .then(contents => {
                 let parsedContents = JSON.parse(contents);
-                if (parsedContents.xml) {
+                if (parsedContents.target && parsedContents.target == pxt.appTarget.id) {
                     let blockSnippet = parsedContents as pxt.blocks.BlockSnippet;
                     blockSnippet.xml.forEach(xml => {
                         let text = pxt.Util.htmlUnescape(xml.replace(/^"|"$/g, ""));
@@ -2942,10 +2942,10 @@ export class ProjectView
             });
     }
 
-    blocksScreenshotAsync(pixelDensity?: number): Promise<string> {
+    blocksScreenshotAsync(pixelDensity?: number, encodeBlocks?: boolean): Promise<string> {
         if (pxt.blocks.layout.screenshotEnabled()
             && this.blocksEditor && this.blocksEditor.isReady && this.blocksEditor.editor)
-            return pxt.blocks.layout.screenshotAsync(this.blocksEditor.editor, pixelDensity)
+            return pxt.blocks.layout.screenshotAsync(this.blocksEditor.editor, pixelDensity, encodeBlocks)
         return Promise.resolve(undefined);
     }
 

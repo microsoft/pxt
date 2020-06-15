@@ -177,6 +177,8 @@ namespace pxt.blocks.layout {
         let blockSnippet: BlockSnippet;
         if (encodeBlocks) {
             blockSnippet = {
+                target: pxt.appTarget.id,
+                versions: pxt.appTarget.versions,
                 xml: pxt.blocks.saveBlocksXml(ws).map(text => pxt.Util.htmlEscape(text))
             };
         }

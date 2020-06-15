@@ -497,7 +497,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         // continue with commit
         let commitId = await workspace.commitAsync(header, {
             message: this.state.description,
-            blocksScreenshotAsync: () => this.props.parent.blocksScreenshotAsync(1),
+            blocksScreenshotAsync: () => this.props.parent.blocksScreenshotAsync(1, true),
             blocksDiffScreenshotAsync: () => {
                 const f = pkg.mainEditorPkg().sortedFiles().find(f => f.name == "main.blocks");
                 const diff = pxt.blocks.diffXml(f.baseGitContent, f.content);
