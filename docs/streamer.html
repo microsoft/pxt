@@ -223,6 +223,19 @@ body.loading {
     display: block;
 }
 
+/** video */
+.stinger { 
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    z-index: 100;
+    transform: translateX(-50%) translateY(-50%);
+}
+
 /**
 title, countdown
 */
@@ -891,6 +904,8 @@ body.countdownscene.hardware #hardwarecam {
     </div>
     <div class="box animated" id="title">title</div>
     <div class="animated" id="countdown">5:00</div>
+    <video class="hidden stinger" id="startvideo" playsinline preload="auto" controls></video>
+    <video class="hidden stinger" id="endvideo" playsinline preload="auto" controls></video>
     <div class="animated hidden" id="subtitles"></div>
     <div class="box animated hidden" id="selectapp">
         <p>You need to share your screen with MakeCode to record it.</p>
@@ -1008,6 +1023,14 @@ body.countdownscene.hardware #hardwarecam {
             <input type="checkbox" id="greenscreencheckbox"></input>
             <label for="greenscreencheckbox">Green background (Chroma Key)</label>
         </div>          
+        <div class="field">
+            <label for="startvideoinput">Intro video (must be https://...). Will play when leaving the countdown view.</label>
+            <input id="startvideoinput" type="url" />
+        </div>
+        <div class="field">
+            <label for="endvideoinput">End video (must be https://...). Will play when entering the countdown video.</label>
+            <input id="endvideoinput" type="url" />
+        </div>
         <h2>Paint</h2>
         <div class="field">
             <label for="emojisinput">Emojis (😄🤔😭👀)</label>

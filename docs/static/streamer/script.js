@@ -23,6 +23,8 @@
     const countdown = document.getElementById('countdown')
     const titleEl = document.getElementById('title')
     const subtitles = document.getElementById('subtitles')
+    const startvideo = document.getElementById('startvideo');
+    const endvideo = document.getElementById('endvideo');
 
     const frames = [editor, editor2];
     const paintColors = ["#ffe135", "#00d9ff", "#cf1fdb"];
@@ -61,6 +63,7 @@
         loadEditor()
         loadChat()
         loadSocial()
+        loadVideos()
         setScene("right")
         render()
         handleHashChange();
@@ -163,7 +166,8 @@
                     emojis[i >> 1] = config.emojis.substr(i, 2);
             addPaintButton("ArrowTallUpLeft", "Draw arrow (Alt+Shift+A)", "arrow")
             addPaintButton("RectangleShape", "Draw rectangle (Alt+Shift+R)", "rect")
-            addPaintButton("Highlight", "Draw freeform", "pen")
+            addPaintButton("PenWorkspace", "Draw freeform", "pen")
+            addPaintButton("Highlight", "Highligh", "highlight")
             addSep()
             paintColors.forEach(addColorButton);
             addSep()
@@ -273,16 +277,35 @@
 
     function setScene(scene) {
         tickEvent("streamer.scene", { scene: scene }, { interactiveConsent: true });
+        const config = readConfig();
+        const lastScene = state.sceneIndex;
         const sceneIndex = scenes.indexOf(`${scene}scene`);
         if (state.sceneIndex !== sceneIndex) {
             state.sceneIndex = scenes.indexOf(`${scene}scene`);
             resetTransition(facecamlabel, "fadeout")
             resetTransition(hardwarecamlabel, "fadeout")
         }
-        if (scene === "countdown")
+        if (scene === "countdown") {
             startCountdown();
-        else
+            if (config.endVideo) {
+                endvideo.classList.remove("hidden");
+                endvideo.onclick = () => endvideo.stop();
+                endvideo.onended = () => {
+                    endvideo.classList.add("hidden");
+                }
+                endvideo.play();
+            }
+        } else {
             stopCountdown();
+            if (lastScene == COUNTDOWN_SCENE_INDEX && config.startVideo) {
+                startvideo.classList.remove("hidden");
+                startvideo.onclick = () => startvideo.stop();
+                startvideo.onended = () => {
+                    startvideo.classList.add("hidden");
+                }
+                startvideo.play();
+            }
+        }
         render();
     }
 
@@ -389,8 +412,11 @@
             painttoolCtx.lineCap = 'round';
             painttoolCtx.strokeStyle = state.paintColor;
             painttoolCtx.globalAlpha = 1;
-            if (state.painttool == 'pen') {
-                painttoolCtx.globalAlpha = 0.6;
+            if (state.painttool == 'pen' || state.painttool == 'highlight') {
+                if (state.painttool == 'highlight') {
+                    painttoolCtx.globalAlpha = 0.5;
+                    painttoolCtx.lineWidth = Math.max(20, (paint.width / 50) | 0);
+                }
                 painttoolCtx.beginPath();
                 painttoolCtx.moveTo(mouse.x, mouse.y);
             }
@@ -408,7 +434,6 @@
             ctx.clearRect(0, 0, painttool.width, painttool.height)
             ctx.save();
             if (state.painttool == 'arrow') {
-
                 const p1 = mouse, p2 = head;
                 const size = ctx.lineWidth * 2;
                 // Rotate the context to point along the path
@@ -436,7 +461,7 @@
                 ctx.beginPath();
                 ctx.rect(head.x, head.y, mouse.x - head.x, mouse.y - head.y)
                 ctx.stroke()
-            } else if (state.painttool == 'pen') {
+            } else if (state.painttool == 'pen' || state.painttool == 'highlight') {
                 ctx.lineTo(mouse.x, mouse.y);
                 ctx.stroke();
             } else if (state.painttool == 'emoji') {
@@ -482,6 +507,12 @@
         }
 
         loadStyle();
+    }
+
+    function loadVideos() {
+        const config = readConfig();
+        startvideo.src = config.startVideo;
+        endvideo.src = config.endVideo;
     }
 
     function loadStyle() {
@@ -1214,7 +1245,29 @@ background-image: url(${config.backgroundImage});
             saveConfig(config);
             loadStyle();
             render()
-    }
+        }
+
+        const startvideoinput = document.getElementById("startvideoinput")
+        startvideoinput.value = config.startVideo || ""
+        startvideoinput.onchange = function (e) {
+            config.startVideo = undefined;
+            if (/^https:\/\//.test(startvideoinput.value))
+                config.startVideo = startvideoinput.value
+            saveConfig(config);
+            loadVideos();
+            render()
+        }
+
+        const endvideoinput = document.getElementById("endvideoinput")
+        endvideoinput.value = config.endVideo || ""
+        endvideoinput.onchange = function (e) {
+            config.endVideo = undefined;
+            if (/^https:\/\//.test(endvideoinput.value))
+                config.endVideo = endvideoinput.value
+            saveConfig(config);
+            loadVideos();
+            render()
+        }
 
         const twitchinput = document.getElementById("twitchinput")
         twitchinput.value = config.twitch || ""
