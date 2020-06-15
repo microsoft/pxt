@@ -59,3 +59,22 @@ Streamer simplifies the setup of scenes in your streaming software, you only hav
 ### Editor
 
 Choose the MakeCode you wish to use. For some editors, like the micro:bit, you may want to use 2 editors at the same time (for radio coding for example).
+
+## Face camera and document camera
+
+The face camera is the primary web cam that points at you, the document camera would typically be filming a table or a device.
+
+### Contrast, brightness, saturation
+
+Don't hesitate to improve your video quality by tweaking those settings. Getting a good light source is the best way to increase your video quality (not an expensive camera).
+
+### Rotation
+
+The camera feed maybe be rotated backwards, this is quite common when using a document camera point down. Using the ``rotate 180 degrees`` to fix the orientation of the camera.
+
+### Green screen
+
+A green screen is a way to minimize the oclusion of your webcam over the code editor. Any green screen drapped placed behind you will work, make sure it is well lighted.
+
+## Paint tools
+
