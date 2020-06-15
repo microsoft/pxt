@@ -166,7 +166,8 @@
                     emojis[i >> 1] = config.emojis.substr(i, 2);
             addPaintButton("ArrowTallUpLeft", "Draw arrow (Alt+Shift+A)", "arrow")
             addPaintButton("RectangleShape", "Draw rectangle (Alt+Shift+R)", "rect")
-            addPaintButton("Highlight", "Draw freeform", "pen")
+            addPaintButton("PenWorkspace", "Draw freeform", "pen")
+            addPaintButton("Highlight", "Highligh", "highlight")
             addSep()
             paintColors.forEach(addColorButton);
             addSep()
@@ -411,8 +412,11 @@
             painttoolCtx.lineCap = 'round';
             painttoolCtx.strokeStyle = state.paintColor;
             painttoolCtx.globalAlpha = 1;
-            if (state.painttool == 'pen') {
-                painttoolCtx.globalAlpha = 0.6;
+            if (state.painttool == 'pen' || state.painttool == 'highlight') {
+                if (state.painttool == 'highlight') {
+                    painttoolCtx.globalAlpha = 0.5;
+                    painttoolCtx.lineWidth = Math.max(20, (paint.width / 50) | 0);
+                }
                 painttoolCtx.beginPath();
                 painttoolCtx.moveTo(mouse.x, mouse.y);
             }
@@ -430,7 +434,6 @@
             ctx.clearRect(0, 0, painttool.width, painttool.height)
             ctx.save();
             if (state.painttool == 'arrow') {
-
                 const p1 = mouse, p2 = head;
                 const size = ctx.lineWidth * 2;
                 // Rotate the context to point along the path
@@ -458,7 +461,7 @@
                 ctx.beginPath();
                 ctx.rect(head.x, head.y, mouse.x - head.x, mouse.y - head.y)
                 ctx.stroke()
-            } else if (state.painttool == 'pen') {
+            } else if (state.painttool == 'pen' || state.painttool == 'highlight') {
                 ctx.lineTo(mouse.x, mouse.y);
                 ctx.stroke();
             } else if (state.painttool == 'emoji') {
