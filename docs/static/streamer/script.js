@@ -754,13 +754,37 @@ background-image: url(${config.backgroundImage});
 
     function initVideos() {
         facecam.onclick = swapLeftRight;
-        hardwarecam.onclick = swapLeftRight;
+        hardwarecam.onclick = swapVideos;
         
         function swapLeftRight(e) {
             if (state.sceneIndex == LEFT_SCENE_INDEX)
                 setScene("right")
             else if (state.sceneIndex == RIGHT_SCENE_INDEX)
                 setScene("left")
+            else if (state.sceneIndex == CHAT_SCENE_INDEX)
+                swapVideos();
+        }
+
+        function swapVideos() {
+            if (!state.hardware) return;
+
+            const fp = facecam.parentElement;
+            const hp = hardwarecam.parentElement;
+            if (fp.classList.contains("facecam")) {
+                fp.classList.remove("facecam")
+                fp.classList.add("hardwarecam")
+                hp.classList.remove("hardwarecam")
+                hp.classList.add("facecam")
+                facecam.onclick = swapVideos;
+                hardwarecam.onclick = swapLeftRight;
+            } else {
+                fp.classList.remove("hardwarecam")
+                fp.classList.add("facecam")
+                hp.classList.remove("facecam")
+                hp.classList.add("hardwarecam")
+                facecam.onclick = swapLeftRight;
+                hardwarecam.onclick = swapVideos;
+            }
         }
 
         const introvideo = document.getElementById("introvideo");
