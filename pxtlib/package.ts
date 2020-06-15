@@ -570,26 +570,29 @@ namespace pxt {
                 initPromise = initPromise.then(() => this.parseConfig(str))
             }
 
+            // if we are installing this script, we haven't yet downloaded the config
+            // do upgrade later
             if (this.level == 0 && !isInstall) {
-                // if we are installing this script, we haven't yet downloaded the config
-                // do upgrade later
                 initPromise = initPromise.then(() => this.upgradePackagesAsync().then(() => { }))
             }
 
             if (isInstall)
                 initPromise = initPromise.then(() => this.downloadAsync())
 
+            // we are installing the script, and we've download the original version and we haven't upgraded it yet
+            // do upgrade and reload as needed
             if (this.level == 0 && isInstall) {
-                // we are installing the script, and we've download the original version
-                // do upgrade and reload as needed
                 initPromise = initPromise.then(() => this.upgradePackagesAsync())
                     .then(fixes => {
                         if (fixes) {
+                            // worst case scenario with double load
                             pxt.tickEvent("package.doubleload", fixes);
                             pxt.log(`upgraded, downloading again`);
                             pxt.debug(fixes);
                             return this.downloadAsync();
-                        } else return Promise.resolve();
+                        }
+                        // nothing to do here
+                        else return Promise.resolve();
                     })
             }
 
