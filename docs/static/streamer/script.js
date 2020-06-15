@@ -25,6 +25,7 @@
     const subtitles = document.getElementById('subtitles')
     const startvideo = document.getElementById('startvideo');
     const endvideo = document.getElementById('endvideo');
+    const backgroundvideo = document.getElementById('backgroundvideo')
 
     const frames = [editor, editor2];
     const paintColors = ["#ffe135", "#00d9ff", "#cf1fdb"];
@@ -140,7 +141,7 @@
             config.faceCamId === DISPLAY_DEVICE_ID && "facecamdisplay",
             config.hardwareCamId === DISPLAY_DEVICE_ID && "hardwarecamdisplay",
             config.greenScreen && "greenscreen",
-            config.backgroundImage && "parallax"
+            config.backgroundVideo ? "backgroundvideo" : config.backgroundImage && "parallax"
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
             showSettings();
@@ -567,7 +568,9 @@ background: #615fc7;
             css += `#hardwarecamvideo { filter: ${hardwareCamFilter}; }
         `
 
-        if (config.backgroundImage) {
+        if (config.backgroundVideo) {
+            backgroundvideo.src = config.backgroundVideo;
+        } else if (config.backgroundImage) {
             css += `body.parallax {
 background-image: url(${config.backgroundImage});
 }
@@ -1223,6 +1226,17 @@ background-image: url(${config.backgroundImage});
             config.backgroundImage = undefined;
             if (/^https:\/\//.test(backgroundimageinput.value))
                 config.backgroundImage = backgroundimageinput.value
+            saveConfig(config);
+            loadStyle();
+            render()
+        }
+
+        const backgroundvideoinput = document.getElementById("backgroundvideoinput")
+        backgroundvideoinput.value = config.backgroundVideo || ""
+        backgroundvideoinput.onchange = function (e) {
+            config.backgroundVideo = undefined;
+            if (/^https:\/\//.test(backgroundvideoinput.value))
+                config.backgroundVideo = backgroundvideoinput.value
             saveConfig(config);
             loadStyle();
             render()
