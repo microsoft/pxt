@@ -4,7 +4,7 @@
 interactive, high quality coding videos. Streamer is designed for teachers, students or
 generally anyone who would want to do any kind of online MakeCode coding.
 
-[![Streamer introduction](/static/streamer/intro.png)](/static/streamer/intro.mp4)
+https://youtu.be/P59Q0i6Zkrg
 
 ## Why Streamer?
 
