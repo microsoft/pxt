@@ -2181,7 +2181,16 @@ namespace pxt.py {
         },
         Subscript: (n: py.Subscript) => {
             if (n.slice.kind == "Index") {
-                unifyTypeOf(n, typeOf(n.value));
+                const objType = find(typeOf(n.value));
+                if (isArrayType(n.value)) {
+                    // indexing into an array
+                    const eleType = objType.typeArgs![0];
+                    unifyTypeOf(n, eleType)
+                } else {
+                    // indexing into an object
+                    unifyTypeOf(n, tpAny)
+                }
+
                 let idx = (n.slice as py.Index).value
                 if (currIteration > 2 && isFree(typeOf(idx))) {
                     unifyTypeOf(idx, tpNumber)

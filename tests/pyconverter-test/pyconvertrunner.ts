@@ -35,9 +35,9 @@ initGlobals();
 pxt.setAppTarget(util.testAppTarget);
 
 const isDisabled = (file: string): boolean =>
-    path.basename(file).indexOf("TODO") >= 0
+    path.basename(file).indexOf("TODO_") >= 0
 const isWhitelisted = (file: string): boolean =>
-    path.basename(file).indexOf("ONLY") >= 0
+    path.basename(file).indexOf("ONLY_") >= 0
 
 // TODO: deduplicate this code with decompilerrunner.ts
 describe("pyconverter", () => {
@@ -98,7 +98,9 @@ function fail(msg: string) {
 function pyconverterTestAsync(pyFilename: string) {
     return new Promise((resolve, reject) => {
         const basename = path.basename(pyFilename);
-        const baselineFile = path.join(baselineDir, util.replaceFileExtension(basename, ".ts"))
+        let baselineFile = path.join(baselineDir, util.replaceFileExtension(basename, ".ts"))
+        baselineFile = baselineFile.replace("ONLY_", "")
+        baselineFile = baselineFile.replace("TODO_", "")
 
         let baselineExists: boolean;
         try {
