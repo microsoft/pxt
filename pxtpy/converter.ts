@@ -2219,6 +2219,9 @@ namespace pxt.py {
                     // indexing into an array
                     const eleType = objType.typeArgs![0];
                     unifyTypeOf(n, eleType)
+                } else if (objType.primType === "string") {
+                    // indexing into a string
+                    unifyTypeOf(n, objType)
                 } else if (currIteration > 2 && isFree(typeOf(n))) {
                     // indexing into an object
                     unifyTypeOf(n, tpAny)
