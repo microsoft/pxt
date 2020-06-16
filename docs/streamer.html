@@ -134,6 +134,9 @@ button:hover {
 .hidden {
     display: none;
 }
+.opaque {
+    opacity: 1 !important;
+}
 .fadeout {
   visibility: hidden;
   opacity: 0;
@@ -432,15 +435,24 @@ body.chatscene #settings {
     padding: 1vw;
 }
 
-/*
-    Face camera            
-*/
+/* zindex */
 .facecam {
     z-index: 3;
 }
 .hardwarecam {
     z-index: 2;
 }
+.paint {
+    z-index:4;
+}
+#toolbox {
+    z-index: 5;
+}
+
+
+/*
+    Face camera            
+*/
 .facecam, .hardwarecam {
     position: absolute;
     width: 30%;
@@ -1141,9 +1153,9 @@ body.countdownscene.hardware .hardwarecam {
         <div class="error details mic">Select a microphone in the settings.</div>
         <div class="error details micdelay">Tune your microphone delay to sync video and audio.</div>
     </div>
-    <canvas id="paint" class=""></canvas>
-    <canvas id="painttool" class=""></canvas>
-    <div class="box animated" id="toolbox"></div>
+    <canvas id="paint" class="paint"></canvas>
+    <canvas id="painttool" class="paint"></canvas>
+    <div class="box animated opaque" id="toolbox"></div>
 </div>
     <!-- @include tracking.html -->
 <script src="/static/streamer/script.js"></script>

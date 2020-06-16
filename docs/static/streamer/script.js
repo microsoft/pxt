@@ -222,6 +222,7 @@
             btn.title = title
             btn.addEventListener("click", function (e) {
                 tickEvent("streamer.button", { button: icon }, { interactiveConsent: true })
+                toolbox.classList.remove("opaque")
                 handler(e)
             }, false)
             const i = document.createElement("i")
