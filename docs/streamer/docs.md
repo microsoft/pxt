@@ -84,3 +84,36 @@ The paint tools overlay 2d graphics on top of the video stream. You can use arro
 pen, highlighter, etc...
 
 In settings, you can specify which emojis you want to be used.
+
+### Captions
+
+#### ~ hint
+
+This feature relies on an experiment web api only available in Chrome.
+
+#### ~
+
+Turn on captioning, to display speech recognized sub titles. Quality may vary :)
+
+## Recording
+
+### How to
+
+Click on the record icon, you will be prompted to select a screen. Select the current browser tab then resize the window to a 16/9 ratio,
+like 1920x1080. Once your recording is done, click stop to generate the ``.webm`` file to your ``Downloads`` folder.
+
+### Microphone delay offset
+
+The video output and your microphone typically have a delay that needs to be compensated. To compute the delay, record a video and clap!
+Then measure the time between the clap sound and the video. That's your offset!
+
+## Advanced
+
+## Styling
+
+You can specify the title, subtitle, video subtitles and various other places. You can specify a background image or video.
+
+The introduction video will automatically run once when transitioning from the countdown scene to any other view. This is typically a branding video.
+
+The ending video will automatically run when transition from the any sence to the countdown scene. This is the time to wrap up your demo and eventually
+stop the recording.
