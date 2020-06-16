@@ -10,7 +10,6 @@
     const hardwarecam = document.getElementById("hardwarecamvideo");
     const hardwarecamlabel = document.getElementById("hardwarecamlabel");
     const chat = document.getElementById("chat");
-    const banner = document.getElementById("banner");
     const settings = document.getElementById("settings");
     const editorStyle = document.getElementById("editorstyle");
     const toolbox = document.getElementById("toolbox")
@@ -223,6 +222,7 @@
             btn.title = title
             btn.addEventListener("click", function (e) {
                 tickEvent("streamer.button", { button: icon }, { interactiveConsent: true })
+                toolbox.classList.remove("opaque")
                 handler(e)
             }, false)
             const i = document.createElement("i")
@@ -539,7 +539,7 @@ border-right-color: ${styles.menu};
 border-left-color: ${styles.menu};
 color: white;
 }
-#social {
+#toolbox {
 background: ${styles.primary};
 }
 `
@@ -556,7 +556,7 @@ border-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
 background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
 color: white;
 }
-#social {
+#toolbox {
 background: #615fc7;
 }
 `
@@ -564,11 +564,11 @@ background: #615fc7;
 
         const faceCamFilter = camFilter(config.faceCamFilter)
         if (faceCamFilter)
-            css += `.facecam { filter: ${faceCamFilter}; }
+            css += `#facecam { filter: ${faceCamFilter}; }
 `
         const hardwareCamFilter = camFilter(config.hardwareCamFilter)
         if (hardwareCamFilter)
-            css += `.hardwarecam { filter: ${hardwareCamFilter}; }
+            css += `#hardwarecam { filter: ${hardwareCamFilter}; }
         `
 
         if (config.backgroundVideo) {
@@ -618,9 +618,6 @@ background-image: url(${config.backgroundImage});
 
     function loadSocial() {
         const config = readConfig();
-        banner.innerHTML = ''
-        if (config.banner)
-            banner.innerText = config.banner;
 
         if (!config.mixer && !config.twitch)
             state.chat = false;
@@ -765,21 +762,22 @@ background-image: url(${config.backgroundImage});
     }
 
     function initVideos() {
-        facecam.parentElement.onclick = swapLeftRight;
-        hardwarecam.parentElement.onclick = swapVideos;
+        facecam.parentElement.onclick = () => onClick(facecam.parentElement);
+        hardwarecam.parentElement.onclick = () => onClick(hardwarecam.parentElement);
 
         function swapLeftRight(e) {
             if (state.sceneIndex == LEFT_SCENE_INDEX)
                 setScene("right")
             else if (state.sceneIndex == RIGHT_SCENE_INDEX)
                 setScene("left")
-            else if (state.sceneIndex == CHAT_SCENE_INDEX)
+            else if (state.sceneIndex == CHAT_SCENE_INDEX) {
                 swapVideos();
+                updateSwap();
+            }
         }
 
         function swapVideos() {
             if (!state.hardware) return;
-
             const fp = facecam.parentElement;
             const hp = hardwarecam.parentElement;
             if (fp.classList.contains("facecam")) {
@@ -787,16 +785,20 @@ background-image: url(${config.backgroundImage});
                 fp.classList.add("hardwarecam")
                 hp.classList.remove("hardwarecam")
                 hp.classList.add("facecam")
-                fp.onclick = swapVideos;
-                hp.onclick = swapLeftRight;
             } else {
                 fp.classList.remove("hardwarecam")
                 fp.classList.add("facecam")
                 hp.classList.remove("facecam")
                 hp.classList.add("hardwarecam")
-                fp.onclick = swapLeftRight;
-                hp.onclick = swapVideos;
             }
+        }
+
+        function onClick(el) {
+            const isfacecam = el.classList.contains("facecam");
+            if (!isfacecam && state.hardware)
+                swapVideos();
+            else
+                swapLeftRight();
         }
 
         const introvideo = document.getElementById("introvideo");
@@ -1274,16 +1276,6 @@ background-image: url(${config.backgroundImage});
         titleinput.onchange = function (e) {
             config.title = (titleinput.value || "");
             titleinput.value = config.title
-            saveConfig(config);
-            loadSocial();
-            render()
-        }
-
-        const bannerinput = document.getElementById("bannerinput")
-        bannerinput.value = config.banner || ""
-        bannerinput.onchange = function (e) {
-            config.banner = (bannerinput.value || "");
-            bannerinput.value = config.banner
             saveConfig(config);
             loadSocial();
             render()

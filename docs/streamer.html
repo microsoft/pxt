@@ -134,6 +134,9 @@ button:hover {
 .hidden {
     display: none;
 }
+.opaque {
+    opacity: 1 !important;
+}
 .fadeout {
   visibility: hidden;
   opacity: 0;
@@ -401,7 +404,7 @@ body.chatscene #settings {
 #editor {
     position: absolute;
     width: 94%;
-    height: 87%;
+    height: 92%;
     top: 1%;
     transition-delay: 0.2s;
 }
@@ -413,7 +416,7 @@ body.chatscene #settings {
 #editor2 {
     position: absolute;
     width: 50%;
-    height: 87%;
+    height: 92%;
     top: 1%;
     transition-delay: 0.3s;
 }
@@ -430,6 +433,23 @@ body.chatscene #settings {
     background: black;
     color: white;
     padding: 1vw;
+}
+
+/* zindex */
+.hardwarecam {
+    z-index: 1;
+}
+.facecam {
+    z-index: 2;
+}
+#title {
+    z-index: 3;
+}
+.paint {
+    z-index:4;
+}
+#toolbox {
+    z-index: 5;
 }
 
 /*
@@ -499,22 +519,22 @@ body.facecamdisplay .facecamvideo {
 #chat {
     position: absolute;
     height: 60%;
-    top: 1%;
+    top: 2%;
     right: -100%;    
     transition-delay: 0.3s;
 }
 
-#social {
+#toolbox {
     position: absolute;
-    width: 60%;
     height: 5%;
-    left: 1%;
+    left: 5%;
     bottom: 1.5%;
     background: #615fc7;
     transition-delay: 0.1s;
+    opacity: 0.1;
 }
-#toolbox {
-    float:right;
+#toolbox:hover {
+    opacity: 1;
 }
 
 #banner {
@@ -555,8 +575,8 @@ body.rightscene.chat .facecam {
 }
 body.rightscene.chat #editor {
     width: 67%;
-    top: 1%;
-    height: 87%;
+    top: 2%;
+    height: 95%;
 }
 
 /* right + hardware */
@@ -627,17 +647,17 @@ body.rightscene.multi.chat .facecam {
 }
 
 /* right + multi + hardware */
-body.rightscene.multi.hardware .facecam {
+body.rightscene.multi.hardware .hardwarecam {
     right: 1%;
     width: 25%;
-    bottom: 7%;
+    bottom: 5%;
 }
-body.rightscene.multi.hardware .hardwarecam {
+body.rightscene.multi.hardware .facecam {
     right: 21%;
     width: 22%;
     bottom: 1.5%;
 }
-body.rightscene.multi.hardware #social {
+body.rightscene.multi.hardware #toolbox {
     width: 53%;
     left: 1%;
 }
@@ -646,12 +666,12 @@ body.rightscene.multi.hardware #social {
 body.rightscene.hardware.multi.chat #editor {
     width: 36%;
     left: 1%;
-    height: 88%;
+    height: 95%;
 }
 body.rightscene.hardware.multi.chat #editor2 {
     width: 36%;
     left: 38.5%;
-    height: 88%;
+    height: 95%;
 }
 body.rightscene.hardware.multi.chat #chat {
     right: 1%;
@@ -672,7 +692,7 @@ body.rightscene.hardware.multi.chat .facecam {
 /* leftscene: browser with facecam on left left */
 body.leftscene #editor {
     left: 4%;
-    height: 87%;
+    height: 92%;
 }
 body.leftscene .facecam {
     right: 74%;
@@ -684,10 +704,10 @@ body.leftscene .hardwarecam {
     right: 1%;
 }
 
-body.leftscene #social {
-    width: 55%;
+body.leftscene #toolbox {
     height: 5%;
-    left: 43%;
+    left: unset;
+    right: 5%;
     bottom: 1.5%;
 }
 
@@ -746,25 +766,26 @@ body.leftscene.multi .facecam {
 }
 
 /* left + multi + hardware */
-body.leftscene.multi.hardware .facecam {
+body.leftscene.multi.hardware .hardwarecam {
     right: 73%;
     width: 25%;
-    bottom: 7%;
+    bottom: 5%;
 }
-body.leftscene.multi.hardware .hardwarecam {
+body.leftscene.multi.hardware .facecam {
     right: 56%;
     width: 22%;
     bottom: 1.5%;
 }
-body.leftscene.multi.hardware #social {
-    width: 53%;
-    left: 45%;
+body.leftscene.multi.hardware #toolbox {
+    right: 45%;
+    left: unset;
 }
 
 /** leftscene + chat **/
 body.leftscene.chat #editor {
     left: 31%;
     width: 67%;
+    height: 95%;
 }
 
 body.leftscene.chat .facecam {
@@ -828,7 +849,7 @@ body.leftscene.hardware.multi.chat .facecam {
 
 /* chatscene: facecam and stream chat */
 body.chatscene .facecam {
-    bottom: 10%;
+    bottom: 5%;
     right: 20%;
     width: 64%;
 }
@@ -846,12 +867,11 @@ body.chatscene #title {
     font-size: 2vw;    
     opacity: 100%;
 }
-body.chatscene #social {
-    left: 15%;
-    width: 64%;
+body.chatscene #toolbox {
+    left: 36%;
 }
 body.chatscene.chat .facecam {
-    bottom: 10%;
+    bottom: 5%;
     right: 34%;
     width: 64%;
 }
@@ -860,12 +880,12 @@ body.chatscene.chat #chat {
     top: 2%;
     right: 1%;
     width: 30%;
-    height: 87%;
+    height: 91%;
     opacity: 100%;
 }
 
 body.chatscene.hardware .facecam {
-    bottom: 10%;
+    bottom: 5%;
     right: 34%;
     width: 64%;
     height: calc(64% * 4 / 3);    
@@ -873,7 +893,7 @@ body.chatscene.hardware .facecam {
 body.chatscene.hardware .hardwarecam {
     width: 30%;
     height: calc(30% * 4 / 3);    
-    bottom: 10%;
+    bottom: 5%;
     right: 2%; 
 }
 
@@ -881,22 +901,22 @@ body.chatscene.hardware.chat .facecam {
     right: 34%;
     width: 64%;
     height: calc(64% * 4 / 3);    
-    bottom: 10%;    
+    bottom: 5%;    
 }
 body.chatscene.hardware.chat .hardwarecam {
     width: 30%;
     height: calc(30% * 4 / 3);    
-    bottom: 10%;
+    bottom: 5%;
     right: 2%; 
 }
 body.chatscene.hardware.chat #chat {
     top: 2%;
     right: 2%;
     width: 30%;
-    height: 43%;
+    height: 47%;
 }
 body.chatscene.hardware.chat #title {
-    top: 1%;
+    top: 2%;
 }
 
 /* timer scene */
@@ -928,7 +948,7 @@ body.countdownscene #countdown {
     opacity: 100%;
     bottom: 20%;
 }
-body.countdownscene #social {
+body.countdownscene #toolbox {
     left: 18%;
 }
 body.countdownscene.hardware .hardwarecam {
@@ -1065,10 +1085,6 @@ body.countdownscene.hardware .hardwarecam {
             <input id="titleinput" placeholder="My awesome stream" />
         </div>
         <div class="field">
-            <label for="bannerinput">Banner</label>
-            <input id="bannerinput" placeholder="Text that displays near the icons" />
-        </div>
-        <div class="field">
             <label for="extrasitesarea">Extra web sites (must be https://..., one per line)</label>
             <textarea id="extrasitesarea" rows="2"></textarea>
         </div>
@@ -1139,13 +1155,9 @@ body.countdownscene.hardware .hardwarecam {
         <div class="error details mic">Select a microphone in the settings.</div>
         <div class="error details micdelay">Tune your microphone delay to sync video and audio.</div>
     </div>
-    <canvas id="paint" class=""></canvas>
-    <canvas id="painttool" class=""></canvas>
-    <div class="box animated" id="social">
-        <div id="toolbox">
-        </div>
-        <div id="banner"></div>
-    </div>
+    <canvas id="paint" class="paint"></canvas>
+    <canvas id="painttool" class="paint"></canvas>
+    <div class="box animated opaque" id="toolbox"></div>
 </div>
     <!-- @include tracking.html -->
 <script src="/static/streamer/script.js"></script>
