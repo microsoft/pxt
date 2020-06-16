@@ -34,21 +34,30 @@ initGlobals();
 // Just needs to exist
 pxt.setAppTarget(util.testAppTarget);
 
+const isDisabled = (file: string): boolean =>
+    path.basename(file).indexOf("TODO") >= 0
+const isWhitelisted = (file: string): boolean =>
+    path.basename(file).indexOf("ONLY") >= 0
+
 // TODO: deduplicate this code with decompilerrunner.ts
 describe("pyconverter", () => {
     let filenames = util.getFilesByExt(casesDir, ".py")
 
-    // FYI: uncomment these lines to whitelist or blacklist tests for easier development
-    // let whitelist = ["string_length", "game"]
-    // let blacklist = [
-    //     "shadowing",
-    //     "always_decompile_renames",
-    //     "always_decompile_renames_expressions",
-    //     "always_unsupported_operators",
-    // ]
-    // filenames = filenames
-    //     .filter(f => !blacklist.some(s => f.indexOf(s) > 0))
-    //     .filter(f => whitelist.some(s => f.indexOf(s) > 0))
+    console.dir(filenames)
+
+    // diable files using a "TODO_" prefix
+    let disabledTests = filenames.filter(f => isDisabled(f))
+    for (let d of disabledTests) {
+        console.warn("Skiping disabled test: " + d)
+    }
+    filenames = filenames.filter(f => !isDisabled(f))
+
+    // whitelist files using a "ONLY_" prefix
+    let whitelisted = filenames.filter(isWhitelisted)
+    if (whitelisted.length) {
+        filenames = whitelisted
+        console.warn("Skipping all tests except:\n" + filenames.join("\n"))
+    }
 
     filenames.forEach(filename => {
         it("should convert " + path.basename(filename), () => {
@@ -56,16 +65,33 @@ describe("pyconverter", () => {
         });
     });
 
-    describe("errors", () => {
-        let errorFiles = util.getFilesByExt(errorsDir, ".py");
-
-        errorFiles.forEach(filename => {
-            it("should error " + path.basename(filename), () => {
-                return pyerrorTest(filename);
-            });
-        });
-    })
 });
+
+describe("errors", () => {
+    let filenames = util.getFilesByExt(casesDir, ".py")
+    let errFilenames = util.getFilesByExt(errorsDir, ".py");
+
+    // disable files using a "TODO_" prefix
+    let disabledTests = errFilenames.filter(f => isDisabled(f))
+    for (let d of disabledTests) {
+        console.warn("Skiping disabled test: " + d)
+    }
+    errFilenames = errFilenames.filter(f => !isDisabled(f))
+
+    // whitelist files using a "ONLY_" prefix
+    let whitelisted = errFilenames.filter(isWhitelisted)
+    let regWhitelisted = filenames.filter(isWhitelisted)
+    if (whitelisted.length || regWhitelisted.length) {
+        errFilenames = whitelisted
+        console.warn("Skipping all error tests except:\n" + errFilenames.join("\n"))
+    }
+
+    errFilenames.forEach(filename => {
+        it("should error " + path.basename(filename), () => {
+            return pyerrorTest(filename);
+        });
+    });
+})
 
 function fail(msg: string) {
     chai.assert(false, msg);
