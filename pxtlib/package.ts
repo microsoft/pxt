@@ -1172,10 +1172,7 @@ namespace pxt {
     }
 
     export function allPkgFiles(cfg: PackageConfig) {
-        let res = [pxt.CONFIG_NAME].concat(cfg.files || [])
-        if (cfg.testFiles)
-            U.pushRange(res, cfg.testFiles)
-        return res
+        return [pxt.CONFIG_NAME].concat(cfg.files || []).concat(cfg.testFiles || [])
     }
 
     export function isPkgBeta(cfg: { description?: string; }): boolean {
