@@ -561,11 +561,11 @@ background: #615fc7;
 
         const faceCamFilter = camFilter(config.faceCamFilter)
         if (faceCamFilter)
-            css += `#facecamvideo { filter: ${faceCamFilter}; }
+            css += `.facecam { filter: ${faceCamFilter}; }
 `
         const hardwareCamFilter = camFilter(config.hardwareCamFilter)
         if (hardwareCamFilter)
-            css += `#hardwarecamvideo { filter: ${hardwareCamFilter}; }
+            css += `.hardwarecam { filter: ${hardwareCamFilter}; }
         `
 
         if (config.backgroundVideo) {
