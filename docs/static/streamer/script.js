@@ -26,6 +26,7 @@
     const startvideo = document.getElementById('startvideo');
     const endvideo = document.getElementById('endvideo');
     const backgroundvideo = document.getElementById('backgroundvideo')
+    const backgroundpage = document.getElementById('backgroundpage')
 
     const frames = [editor, editor2];
     const paintColors = ["#ffe135", "#00d9ff", "#cf1fdb"];
@@ -141,7 +142,9 @@
             config.faceCamId === DISPLAY_DEVICE_ID && "facecamdisplay",
             config.hardwareCamId === DISPLAY_DEVICE_ID && "hardwarecamdisplay",
             config.greenScreen && "greenscreen",
-            config.backgroundVideo ? "backgroundvideo" : config.backgroundImage && "parallax"
+            config.backgroundPage && "backgroundpage",
+            config.backgroundVideo && "backgroundvideo",
+            config.backgroundImage && "parallax",
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
             showSettings();
@@ -570,16 +573,13 @@ background: #615fc7;
             css += `.hardwarecam { filter: ${hardwareCamFilter}; }
         `
 
-        if (config.backgroundVideo) {
-            backgroundvideo.src = config.backgroundVideo;
-        } else {
-            backgroundvideo.src = undefined;
-            if (config.backgroundImage) {
+        backgroundpage.src = config.backgroundpage;
+        backgroundvideo.src = config.backgroundVideo;
+        if (config.backgroundImage) {
                 css += `body.parallax {
 background-image: url(${config.backgroundImage});
 }
 `
-            }
         }
 
         editorStyle.innerText = ""

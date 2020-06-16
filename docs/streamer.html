@@ -99,6 +99,20 @@ body.backgroundvideo #backgroundvideo {
     display:block;
 }
 
+/** backgound page **/
+#backgroundpage {
+    display: none;
+    object-fit: cover;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;    
+}
+body.backgroundpage #backgroundpage {
+    display:block;
+}
+
 /* some web sites are transparent... */
 iframe {
     background: white;
@@ -930,6 +944,7 @@ body.countdownscene.hardware .hardwarecam {
 </head>
 
 <body class="rightscene">
+    <iframe id="backgroundsim" sandbox="allow-scripts allow-same-origin"></video>
     <video id="backgroundvideo" playsinline autoplay muted loop></video>
     <div id="container" class="container">
     <iframe class="box animated" id="editor" allow="usb;camera" sandbox="allow-scripts allow-same-origin allow-top-navigation"></iframe>
@@ -1068,6 +1083,10 @@ body.countdownscene.hardware .hardwarecam {
         <div class="field">
             <label for="backgroundvideoinput">Background video (must be https://...)</label>
             <input id="backgroundvideoinput" type="url" />
+        </div>
+        <div class="field">
+            <label for="backgroundpageinput">Background web page (must be https://...)</label>
+            <input id="backgroundpageinput" type="url" />
         </div>
         <div class="field">
             <input type="checkbox" id="greenscreencheckbox"></input>
