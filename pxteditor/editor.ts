@@ -289,7 +289,7 @@ namespace pxt.editor {
         loadBlocklyAsync(): Promise<void>;
         isBlocksEditor(): boolean;
         isTextEditor(): boolean;
-        blocksScreenshotAsync(pixelDensity?: number): Promise<string>;
+        blocksScreenshotAsync(pixelDensity?: number, encodeBlocks?: boolean): Promise<string>;
         renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<EditorMessageRenderBlocksResponse>;
         renderPythonAsync(req: EditorMessageRenderPythonRequest): Promise<EditorMessageRenderPythonResponse>;
 
@@ -571,4 +571,3 @@ namespace pxt.editor {
         return _initEditorExtensionsPromise;
     }
 }
-
