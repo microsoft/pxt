@@ -510,22 +510,17 @@ body.facecamdisplay .facecamvideo {
     transition-delay: 0.3s;
 }
 
-#social {
+#toolbox {
     position: absolute;
-    width: 60%;
     height: 5%;
-    left: 1%;
+    left: 5%;
     bottom: 1.5%;
     background: #615fc7;
     transition-delay: 0.1s;
     opacity: 0.1;
 }
-#social:hover {
+#toolbox:hover {
     opacity: 1;
-}
-
-#toolbox {
-    float:right;
 }
 
 #banner {
@@ -648,7 +643,7 @@ body.rightscene.multi.hardware .facecam {
     width: 22%;
     bottom: 1.5%;
 }
-body.rightscene.multi.hardware #social {
+body.rightscene.multi.hardware #toolbox {
     width: 53%;
     left: 1%;
 }
@@ -695,10 +690,10 @@ body.leftscene .hardwarecam {
     right: 1%;
 }
 
-body.leftscene #social {
-    width: 55%;
+body.leftscene #toolbox {
     height: 5%;
-    left: 43%;
+    left: unset;
+    right: 5%;
     bottom: 1.5%;
 }
 
@@ -767,9 +762,9 @@ body.leftscene.multi.hardware .facecam {
     width: 22%;
     bottom: 1.5%;
 }
-body.leftscene.multi.hardware #social {
-    width: 53%;
-    left: 45%;
+body.leftscene.multi.hardware #toolbox {
+    right: 45%;
+    left: unset;
 }
 
 /** leftscene + chat **/
@@ -858,9 +853,8 @@ body.chatscene #title {
     font-size: 2vw;    
     opacity: 100%;
 }
-body.chatscene #social {
+body.chatscene #toolbox {
     left: 15%;
-    width: 64%;
 }
 body.chatscene.chat .facecam {
     bottom: 10%;
@@ -940,7 +934,7 @@ body.countdownscene #countdown {
     opacity: 100%;
     bottom: 20%;
 }
-body.countdownscene #social {
+body.countdownscene #toolbox {
     left: 18%;
 }
 body.countdownscene.hardware .hardwarecam {
@@ -1077,10 +1071,6 @@ body.countdownscene.hardware .hardwarecam {
             <input id="titleinput" placeholder="My awesome stream" />
         </div>
         <div class="field">
-            <label for="bannerinput">Banner</label>
-            <input id="bannerinput" placeholder="Text that displays near the icons" />
-        </div>
-        <div class="field">
             <label for="extrasitesarea">Extra web sites (must be https://..., one per line)</label>
             <textarea id="extrasitesarea" rows="2"></textarea>
         </div>
@@ -1153,11 +1143,7 @@ body.countdownscene.hardware .hardwarecam {
     </div>
     <canvas id="paint" class=""></canvas>
     <canvas id="painttool" class=""></canvas>
-    <div class="box animated" id="social">
-        <div id="toolbox">
-        </div>
-        <div id="banner"></div>
-    </div>
+    <div class="box animated" id="toolbox"></div>
 </div>
     <!-- @include tracking.html -->
 <script src="/static/streamer/script.js"></script>

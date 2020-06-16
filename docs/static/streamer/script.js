@@ -10,7 +10,6 @@
     const hardwarecam = document.getElementById("hardwarecamvideo");
     const hardwarecamlabel = document.getElementById("hardwarecamlabel");
     const chat = document.getElementById("chat");
-    const banner = document.getElementById("banner");
     const settings = document.getElementById("settings");
     const editorStyle = document.getElementById("editorstyle");
     const toolbox = document.getElementById("toolbox")
@@ -539,7 +538,7 @@ border-right-color: ${styles.menu};
 border-left-color: ${styles.menu};
 color: white;
 }
-#social {
+#toolbox {
 background: ${styles.primary};
 }
 `
@@ -556,7 +555,7 @@ border-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
 background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
 color: white;
 }
-#social {
+#toolbox {
 background: #615fc7;
 }
 `
@@ -618,9 +617,6 @@ background-image: url(${config.backgroundImage});
 
     function loadSocial() {
         const config = readConfig();
-        banner.innerHTML = ''
-        if (config.banner)
-            banner.innerText = config.banner;
 
         if (!config.mixer && !config.twitch)
             state.chat = false;
@@ -1279,16 +1275,6 @@ background-image: url(${config.backgroundImage});
         titleinput.onchange = function (e) {
             config.title = (titleinput.value || "");
             titleinput.value = config.title
-            saveConfig(config);
-            loadSocial();
-            render()
-        }
-
-        const bannerinput = document.getElementById("bannerinput")
-        bannerinput.value = config.banner || ""
-        bannerinput.onchange = function (e) {
-            config.banner = (bannerinput.value || "");
-            bannerinput.value = config.banner
             saveConfig(config);
             loadSocial();
             render()
