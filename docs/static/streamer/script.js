@@ -564,11 +564,11 @@ background: #615fc7;
 
         const faceCamFilter = camFilter(config.faceCamFilter)
         if (faceCamFilter)
-            css += `.facecam { filter: ${faceCamFilter}; }
+            css += `#facecam { filter: ${faceCamFilter}; }
 `
         const hardwareCamFilter = camFilter(config.hardwareCamFilter)
         if (hardwareCamFilter)
-            css += `.hardwarecam { filter: ${hardwareCamFilter}; }
+            css += `#hardwarecam { filter: ${hardwareCamFilter}; }
         `
 
         if (config.backgroundVideo) {
@@ -765,22 +765,22 @@ background-image: url(${config.backgroundImage});
     }
 
     function initVideos() {
-        facecam.parentElement.onclick = swapLeftRight;
-        hardwarecam.parentElement.onclick = swapVideos;
+        facecam.parentElement.onclick = () => onClick(facecam.parentElement);
+        hardwarecam.parentElement.onclick = () => onClick(hardwarecam.parentElement);
 
         function swapLeftRight(e) {
             if (state.sceneIndex == LEFT_SCENE_INDEX)
                 setScene("right")
             else if (state.sceneIndex == RIGHT_SCENE_INDEX)
                 setScene("left")
-            else if (state.sceneIndex == CHAT_SCENE_INDEX)
+            else if (state.sceneIndex == CHAT_SCENE_INDEX) {
                 swapVideos();
+                updateSwap();
+            }
         }
 
         function swapVideos() {
             if (!state.hardware) return;
-
-            const config = readConfig();
             const fp = facecam.parentElement;
             const hp = hardwarecam.parentElement;
             if (fp.classList.contains("facecam")) {
@@ -788,29 +788,21 @@ background-image: url(${config.backgroundImage});
                 fp.classList.add("hardwarecam")
                 hp.classList.remove("hardwarecam")
                 hp.classList.add("facecam")
-                if (config.multiEditor)
-                    swapHp();
-                else
-                    swapFp();
             } else {
                 fp.classList.remove("hardwarecam")
                 fp.classList.add("facecam")
                 hp.classList.remove("facecam")
                 hp.classList.add("hardwarecam")
-                if (config.multiEditor)
-                    swapFp();
-                else
-                    swapHp();
             }
+        }
 
-            function swapFp() {
-                fp.onclick = swapVideos;
-                hp.onclick = swapLeftRight;
-            }
-            function swapHp() {
-                fp.onclick = swapLeftRight;
-                hp.onclick = swapVideos;                
-            }
+        function onClick(el) {
+            const config = readConfig();
+            const isfacecam = el.classList.contains("facecam");
+            if (isfacecam && config.multiEditor && state.hardware)
+                swapVideos();
+            else
+                swapLeftRight();
         }
 
         const introvideo = document.getElementById("introvideo");
