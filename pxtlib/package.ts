@@ -13,6 +13,7 @@ namespace pxt {
         "files",
         "testFiles",
         "testDependencies",
+        "fileDependencies",
         "public",
         "targetVersions",
         "supportedTargets",
@@ -719,11 +720,29 @@ namespace pxt {
                 });
         }
 
+        static depWarnings: Map<boolean> = {}
         getFiles() {
+            let res: string[]
             if (this.level == 0 && !this.ignoreTests)
-                return this.config.files.concat(this.config.testFiles || [])
+                res = this.config.files.concat(this.config.testFiles || [])
             else
-                return this.config.files.slice(0);
+                res = this.config.files.slice(0);
+            const fd = this.config.fileDependencies
+            if (this.config.fileDependencies)
+                res = res.filter(fn => {
+                    let cond = U.lookup(fd, fn)
+                    if (!cond) return true
+                    cond = cond.trim()
+                    if (!cond) return true
+                    if (/^[\w-]+$/.test(cond))
+                        return !!this.parent.resolveDep(cond)
+                    if (!Package.depWarnings[cond]) {
+                        Package.depWarnings[cond] = true
+                        pxt.log(`invalid dependency expression: ${cond} in ${this.id}/${fn}`)
+                    }
+                    return false
+                })
+            return res
         }
 
         addSnapshot(files: Map<string>, exts: string[] = [""]) {
