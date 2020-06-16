@@ -2,6 +2,12 @@
 /// <reference path="../built/pxtlib.d.ts" />
 
 namespace pxt.blocks {
+    export interface BlockSnippet {
+        target: string; // pxt.appTarget.id
+        versions: pxt.TargetVersions;
+        xml: string[]; // xml for each top level block
+        extensions?: string[]; // currently unpopulated. list of extensions used in screenshotted projects
+    }
 
     /**
      * Converts a DOM into workspace without triggering any Blockly event. Returns the new block ids
@@ -47,10 +53,19 @@ namespace pxt.blocks {
         }
     }
 
+    // Saves entire workspace, including variables, into an xml string
     export function saveWorkspaceXml(ws: Blockly.Workspace, keepIds?: boolean): string {
         const xml = Blockly.Xml.workspaceToDom(ws, !keepIds);
         const text = Blockly.Xml.domToText(xml);
         return text;
+    }
+
+    // Saves only the blocks xml by iterating over the top blocks
+    export function saveBlocksXml(ws: Blockly.Workspace, keepIds?: boolean): string[] {
+        let topBlocks = ws.getTopBlocks(false);
+        return topBlocks.map(block => {
+            return Blockly.Xml.domToText(Blockly.Xml.blockToDom(block, !keepIds));
+        });
     }
 
     export function getDirectChildren(parent: Element, tag: string) {
@@ -75,6 +90,19 @@ namespace pxt.blocks {
     export function getFirstChildWithAttr(parent: Document | Element, tag: string, attr: string, value: string) {
         const res = getChildrenWithAttr(parent, tag, attr, value);
         return res.length ? res[0] : undefined;
+    }
+
+    export function loadBlocksXml(ws: Blockly.WorkspaceSvg, text: string) {
+        let xmlBlock = Blockly.Xml.textToDom(text);
+        let block = Blockly.Xml.domToBlock(xmlBlock, ws) as Blockly.BlockSvg;
+        if (ws.getMetrics) {
+            let metrics = ws.getMetrics() as Blockly.Metrics;
+            let blockDimensions = block.getHeightWidth();
+            block.moveBy(
+              metrics.viewLeft + (metrics.viewWidth / 2) - (blockDimensions.width / 2),
+              metrics.viewTop + (metrics.viewHeight / 2) - (blockDimensions.height / 2)
+            );
+        }
     }
 
     /**
