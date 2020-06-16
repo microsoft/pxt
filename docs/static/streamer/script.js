@@ -454,10 +454,10 @@
 
                 // arrowhead
                 ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(-size, -size);
-                ctx.moveTo(0, 0);
-                ctx.lineTo(-size, size);
+                ctx.moveTo(-len, 0);
+                ctx.lineTo(size - len, size);
+                ctx.moveTo(-len, 0);
+                ctx.lineTo(size - len, -size);
                 ctx.stroke();
             } else if (state.painttool == 'rect') {
                 ctx.beginPath();

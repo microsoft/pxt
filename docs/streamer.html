@@ -326,7 +326,15 @@ Settings
     width: 60%;
     height: 74%;
     background: #ccc;
-    padding: 2vw;
+    padding: 1vw;
+}
+
+#settings .header h1 {
+    margin-top: 0;
+}
+
+#settings .contents {
+    height: calc(100% - 3vw);
     overflow-y: auto;
 }
 
@@ -368,7 +376,7 @@ body.chatscene #settings {
 
 #settings .field input,
 #settings .field textarea {
-    width: 100%;
+    width: calc(100% - 1vw);
     font-size: 90%;
 }
 
@@ -377,14 +385,14 @@ body.chatscene #settings {
 }
 
 #settings .field select {
-    width: 100%;
+    width: calc(100% - 1vw);
     font-size: 90%;
 }
 
 #settings #settingsclose {
     position: absolute;
-    right: 2%;
-    top: 2%;
+    top: 1%;
+    right: 1%;
 }
 
 /*
@@ -841,8 +849,8 @@ body.chatscene #social {
     width: 64%;
 }
 body.chatscene.chat .facecam {
-    bottom: 9%;
-    right: 33%;
+    bottom: 10%;
+    right: 34%;
     width: 64%;
 }
 
@@ -853,33 +861,34 @@ body.chatscene.chat #chat {
     height: 87%;
     opacity: 100%;
 }
+
 body.chatscene.hardware .facecam {
-    bottom: 19%;
-    right: 51%;
-    width: 46%;
-    height: calc(46% * 4 / 3);    
+    bottom: 10%;
+    right: 34%;
+    width: 64%;
+    height: calc(64% * 4 / 3);    
 }
 body.chatscene.hardware .hardwarecam {
-    width: 46%;
-    height: calc(46% * 4 / 3);    
-    bottom: 19%;
-    right: 2%;            
+    width: 30%;
+    height: calc(30% * 4 / 3);    
+    bottom: 10%;
+    right: 2%; 
 }
 
 body.chatscene.hardware.chat .facecam {
     right: 34%;
     width: 64%;
     height: calc(64% * 4 / 3);    
-    bottom: 9%;    
+    bottom: 10%;    
 }
 body.chatscene.hardware.chat .hardwarecam {
     width: 30%;
     height: calc(30% * 4 / 3);    
-    bottom: 9%;
+    bottom: 10%;
     right: 2%; 
 }
 body.chatscene.hardware.chat #chat {
-    top: 1%;
+    top: 2%;
     right: 2%;
     width: 30%;
     height: 43%;
@@ -958,9 +967,12 @@ body.countdownscene.hardware .hardwarecam {
             <option value="80"></option>
             <option value="90"></option>
             <option value="100"></option>
-        </datalist>        
-        <button id="settingsclose">close</button>
-        <h1>MakeCode Streamer BETA <a href="/streamer/docs" target="_blank">docs</a> <a href="https://forum.makecode.com/t/introducing-makecode-streamer/2437" target="_blank">forum</a></h1>
+        </datalist>
+        <div class="header">
+            <h1>MakeCode Streamer BETA <a href="/streamer/docs" target="_blank">docs</a> <a href="https://forum.makecode.com/t/introducing-makecode-streamer/2437" target="_blank">forum</a></h1>
+            <button id="settingsclose">close</button>
+        </div>
+        <div class="contents">
         <button class="pip" title="Watch the introduction video!">
             <video id="introvideo" preload="metadata" poster="/static/streamer/intro.png" src="/static/streamer/intro.mp4"></video>
             <label>Take the tour!</label>
@@ -1099,7 +1111,8 @@ body.countdownscene.hardware .hardwarecam {
             <a class="item" href="https://makecode.com/termsofuse" target="_blank" rel="noopener">Terms Of Use</a>|
             <a class="item" href="https://makecode.com/trademarks" target="_blank" rel="noopener">Trademarks</a>|
             <span class="item">© 2020 Microsoft</span>
-        </div>        
+        </div>            
+        </div>
     </div>
     <div class="box animated hidden" id="recorder">
         <span>click to start recording</span>
