@@ -322,7 +322,7 @@ Settings
 #settings {
     position: absolute;
     left: 16%;
-    top: 16%;
+    top: 8%;
     width: 60%;
     height: 74%;
     background: #ccc;
@@ -903,6 +903,17 @@ body.chatscene.hardware.chat #title {
 body.countdownscene #editor {
     left: -100%;
 }
+body.countdownscene.countdowneditor #editor {
+    top: -1%;
+    left: 0%;
+    width: 101%;
+    height: 102%;
+    overflow: hidden;
+    border: none;
+    border-radius: 0;
+    filter: blur(10px);
+}
+
 body.countdownscene #editor2,
 body.countdownscene #chat,
 body.countdownscene .facecam,
@@ -1073,13 +1084,18 @@ body.countdownscene.hardware .hardwarecam {
             <input type="checkbox" id="greenscreencheckbox"></input>
             <label for="greenscreencheckbox">Green background (Chroma Key)</label>
         </div>          
+        <h2>Countdown</h2>
         <div class="field">
             <label for="startvideoinput">Intro video (must be https://...). Will play when leaving the countdown view.</label>
             <input id="startvideoinput" type="url" />
         </div>
         <div class="field">
-            <label for="endvideoinput">End video (must be https://...). Will play when entering the countdown video.</label>
+            <label for="endvideoinput">End video (must be https://...). Will play when entering the countdown view.</label>
             <input id="endvideoinput" type="url" />
+        </div>
+        <div class="field">
+            <input type="checkbox" id="countdowneditorcheckbox"></input>
+            <label for="countdowneditorcheckbox">Show editor in background</label>
         </div>
         <h2>Paint</h2>
         <div class="field">

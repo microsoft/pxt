@@ -141,7 +141,8 @@
             config.faceCamId === DISPLAY_DEVICE_ID && "facecamdisplay",
             config.hardwareCamId === DISPLAY_DEVICE_ID && "hardwarecamdisplay",
             config.greenScreen && "greenscreen",
-            config.backgroundVideo ? "backgroundvideo" : config.backgroundImage && "parallax"
+            config.backgroundVideo ? "backgroundvideo" : config.backgroundImage && "parallax",
+            config.countdownEditor && "countdowneditor",
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
             showSettings();
@@ -1331,6 +1332,14 @@ background-image: url(${config.backgroundImage});
             loadVideos();
             render()
         }
+
+        const countdowneditorcheckbox = document.getElementById("countdowneditorcheckbox")
+        countdowneditorcheckbox.checked = !!config.countdownEditor
+        countdowneditorcheckbox.onchange = function () {
+            config.countdownEditor = !!countdowneditorcheckbox.checked
+            saveConfig(config)
+            render()
+        }        
 
         const twitchinput = document.getElementById("twitchinput")
         twitchinput.value = config.twitch || ""
