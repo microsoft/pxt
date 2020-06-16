@@ -733,7 +733,7 @@ export class ProjectView
 
                     this.maybeShowPackageErrors();
                 });
-        }, 1000, false);
+        }, 2000, false);
 
     private markdownChangeHandler = Util.debounce(() => {
         if (this.state.currFile && /\.md$/i.test(this.state.currFile.name))
@@ -745,7 +745,7 @@ export class ProjectView
             this.typecheck();
         }
         this.markdownChangeHandler();
-    }, 2000, true);
+    }, 500, false);
     private initEditors() {
         this.textEditor = new monaco.Editor(this);
         this.pxtJsonEditor = new pxtjson.Editor(this);
