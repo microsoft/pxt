@@ -43,8 +43,6 @@ const isWhitelisted = (file: string): boolean =>
 describe("pyconverter", () => {
     let filenames = util.getFilesByExt(casesDir, ".py")
 
-    console.dir(filenames)
-
     // diable files using a "TODO_" prefix
     let disabledTests = filenames.filter(f => isDisabled(f))
     for (let d of disabledTests) {
