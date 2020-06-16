@@ -561,11 +561,11 @@ background: #615fc7;
 
         const faceCamFilter = camFilter(config.faceCamFilter)
         if (faceCamFilter)
-            css += `#facecamvideo { filter: ${faceCamFilter}; }
+            css += `.facecam { filter: ${faceCamFilter}; }
 `
         const hardwareCamFilter = camFilter(config.hardwareCamFilter)
         if (hardwareCamFilter)
-            css += `#hardwarecamvideo { filter: ${hardwareCamFilter}; }
+            css += `.hardwarecam { filter: ${hardwareCamFilter}; }
         `
 
         if (config.backgroundVideo) {
@@ -831,14 +831,27 @@ background-image: url(${config.backgroundImage});
 
     function handleHashChange() {
         const hash = window.location.hash;
-        const m = /^#([^:]+):(.+)$/.exec(hash);
-        if (m) {
-            const action = m[1];
-            const arg = m[2];
-            switch (action) {
-                case "editor": setEditor(arg); break;
+        const parts = (hash || "").replace(/^#/, '').split('|');
+        parts.forEach(part => {
+            const m = /^([^:]+):(.+)$/.exec(part);
+            if (m) {
+                const action = m[1];
+                const arg = m[2];
+                switch (action) {
+                    case "editor": setEditor(arg); break;
+                    case "doc": {
+                        // only same domain as editor
+                        const config = readConfig();
+                        const editorConfig = editorConfigs[config.editor]
+                        config.multiEditor = true;
+                        const doc = editorConfig.url.trim(/\/\w+$/) + "/" + arg.trim(/^\//);
+                        editor2.src = doc;
+                        render();
+                        break;
+                    } 
+                }
             }
-        }
+        })
         window.history.replaceState('', '', '#')
     }
 
