@@ -780,6 +780,7 @@ background-image: url(${config.backgroundImage});
         function swapVideos() {
             if (!state.hardware) return;
 
+            const config = readConfig();
             const fp = facecam.parentElement;
             const hp = hardwarecam.parentElement;
             if (fp.classList.contains("facecam")) {
@@ -787,15 +788,28 @@ background-image: url(${config.backgroundImage});
                 fp.classList.add("hardwarecam")
                 hp.classList.remove("hardwarecam")
                 hp.classList.add("facecam")
-                fp.onclick = swapVideos;
-                hp.onclick = swapLeftRight;
+                if (config.multiEditor)
+                    swapHp();
+                else
+                    swapFp();
             } else {
                 fp.classList.remove("hardwarecam")
                 fp.classList.add("facecam")
                 hp.classList.remove("facecam")
                 hp.classList.add("hardwarecam")
+                if (config.multiEditor)
+                    swapFp();
+                else
+                    swapHp();
+            }
+
+            function swapFp() {
+                fp.onclick = swapVideos;
+                hp.onclick = swapLeftRight;
+            }
+            function swapHp() {
                 fp.onclick = swapLeftRight;
-                hp.onclick = swapVideos;
+                hp.onclick = swapVideos;                
             }
         }
 
