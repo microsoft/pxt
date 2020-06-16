@@ -797,9 +797,8 @@ background-image: url(${config.backgroundImage});
         }
 
         function onClick(el) {
-            const config = readConfig();
             const isfacecam = el.classList.contains("facecam");
-            if (isfacecam && config.multiEditor && state.hardware)
+            if (!isfacecam && state.hardware)
                 swapVideos();
             else
                 swapLeftRight();
