@@ -34,7 +34,7 @@ interface PackageConfig {
     installedVersion?: string;
     targetVersions?: TargetVersions; // versions of the target/pxt the extension was compiled against
 
-    conditionalFiles?: Map<string[]>; // files loaded only when relevant extension is already present
+    fileDependencies?: Map<string>; // exclude certain files if dependencies are not fulfilled
     
     testFiles?: string[];
     testDependencies?: Map<string>;
@@ -111,7 +111,7 @@ Similarly, dependencies from `testDependencies` are only included when compiled
 as top-level. The ``testDependencies`` can be added for multiple targets
 and will only be added if they can be resolved.
 
-## Conditional files
+## File dependencies
 
 While not very common,
 in some extensions certain functionality should be only enabled when another
@@ -130,11 +130,15 @@ Example configuration:
   ...
   "files": [
       "weather-reading.ts",
+      "weather-radio.ts",
+      "weather-jacdac.ts", 
+      "jd-helper.ts",
       "README.md"
   ],
-  "conditionalFiles": {
-      "radio": ["weather-radio.ts"],
-      "jacdac": ["weather-jacdac.ts", "jd-helper.ts"]
+  "fileDependencies": {
+      "weather-radio.ts": "radio",
+      "weather-jacdac.ts": "jacdac",
+      "jd-helper.ts": "jacdac"
   },
   ...
 ```
@@ -146,7 +150,10 @@ the project, and files `weather-jacdac.ts` and `jd-helper.ts` will be only inclu
 Typically, you would add `radio` and `jacdac` as `testDependencies`, so you can see
 the entire extension in the editor.
 There is no point in adding them as regular `dependencies` - that would negate the
-effects of `conditionalFiles` and always include both the dependencies and files.
+effects of `fileDependencies` and always include both the dependencies and files.
+
+In future, we may allow things like `"radio >= 1.2.3"`, but for now the package identifier is
+the only thing supported.
 
 ## C++ dependencies
 

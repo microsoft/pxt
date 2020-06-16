@@ -11,9 +11,9 @@ namespace pxt {
         "license",
         "dependencies",
         "files",
-        "conditionalFiles",
         "testFiles",
         "testDependencies",
+        "fileDependencies",
         "public",
         "targetVersions",
         "supportedTargets",
@@ -697,19 +697,28 @@ namespace pxt {
                 });
         }
 
+        static depWarnings: Map<boolean> = {}
         getFiles() {
             let res: string[]
             if (this.level == 0 && !this.ignoreTests)
                 res = this.config.files.concat(this.config.testFiles || [])
             else
                 res = this.config.files.slice(0);
-            const cf = this.config.conditionalFiles
-            if (cf) {
-                for (const pkgId of Object.keys(cf)) {
-                    if (this.parent.resolveDep(pkgId))
-                        U.pushRange(res, cf[pkgId])
-                }
-            }
+            const fd = this.config.fileDependencies
+            if (this.config.fileDependencies)
+                res = res.filter(fn => {
+                    let cond = U.lookup(fd, fn)
+                    if (!cond) return true
+                    cond = cond.trim()
+                    if (!cond) return true
+                    if (/^[\w-]+$/.test(cond))
+                        return !!this.parent.resolveDep(cond)
+                    if (!Package.depWarnings[cond]) {
+                        Package.depWarnings[cond] = true
+                        pxt.log(`invalid dependency expression: ${cond} in ${this.id}/${fn}`)
+                    }
+                    return false
+                })
             return res
         }
 
@@ -1166,8 +1175,6 @@ namespace pxt {
         let res = [pxt.CONFIG_NAME].concat(cfg.files || [])
         if (cfg.testFiles)
             U.pushRange(res, cfg.testFiles)
-        if (cfg.conditionalFiles)
-            U.pushRange(res, U.concat(U.values(cfg.conditionalFiles)))
         return res
     }
 
