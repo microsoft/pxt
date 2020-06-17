@@ -1528,11 +1528,11 @@ background-image: url(${config.backgroundImage});
         }
         const config = readConfig();
         const props = {
+            target: "streamer",
             editor: config.editor,
         };
         const measures = {
             multiEditor: config.multiEditor ? 1 : 0,
-            twitter: config.twitter ? 1 : 0,
             mixer: config.mixer ? 1 : 0,
             twitch: config.twitch ? 1 : 0
         };
