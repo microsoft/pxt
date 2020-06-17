@@ -383,8 +383,14 @@ body.chatscene #settings {
     font-size: 90%;
 }
 
-#settings .field input[type="checkbox"] {
+#settings .field input[type="checkbox"]
+{
     width: unset;
+}
+#settings .field input[type="color"]
+{
+    margin-left: 0.5rem;
+    width: 2rem;
 }
 
 #settings .field select {
@@ -1104,10 +1110,23 @@ body.countdownscene.hardware .hardwarecam {
             <input type="checkbox" id="fullscreeneditorcheckbox"></input>
             <label for="fullscreeneditorcheckbox">Full screen editor (no margins)</label>
         </div>
+        <h3>Boxes</h3>
         <div class="field">
-            <label for="backgroundcolorinput">Background color (#aaaaaa)</label>
-            <input id="backgroundcolorinput" type="text" pattern="#[a-fA-F0-9]{6}" />
+            <label for="bordercolorinput">Box border color</label>
+            <input id="bordercolorinput" type="color" />
+            <button id="bordercolorclear">clear</button>
         </div>
+        <div class="field">
+            <label for="borderbackgroundinput">Box background color</label>
+            <input id="borderbackgroundinput" type="color" />
+            <button id="borderbackgroundclear">clear</button>
+        </div>
+        <h3>Background</h3>
+        <div class="field">
+            <label for="backgroundcolorinput">Background color</label>
+            <input id="backgroundcolorinput" type="color" />
+            <button id="backgroundcolorclear">clear</button>
+        </div>        
         <div class="field">
             <label for="backgroundimageinput">Background image (must be https://...)</label>
             <input id="backgroundimageinput" type="url" />
@@ -1120,14 +1139,7 @@ body.countdownscene.hardware .hardwarecam {
             <input type="checkbox" id="greenscreencheckbox"></input>
             <label for="greenscreencheckbox">Green background (Chroma Key)</label>
         </div>          
-        <div class="field">
-            <label for="bordercolorinput">Box border color (#aaaaaa)</label>
-            <input id="bordercolorinput" type="text" pattern="#[a-fA-F0-9]{6}" />
-        </div>
-        <div class="field">
-            <label for="borderbackgroundinput">Box background color (#aaaaaa)</label>
-            <input id="borderbackgroundinput" type="text" pattern="#[a-fA-F0-9]{6}" />
-        </div>
+
         <h2>Countdown</h2>
         <div class="field">
             <label for="startvideoinput">Intro video (must be https://...). Will play when leaving the countdown view.</label>

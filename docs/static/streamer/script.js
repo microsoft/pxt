@@ -1329,6 +1329,13 @@ background-image: url(${config.backgroundImage});
             saveConfig(config);
             loadStyle();
         }
+        const backgroundcolorclear = document.getElementById("backgroundcolorclear");
+        backgroundcolorclear.onclick = function(e) {
+            config.styleBackground = undefined;
+            saveConfig(config);
+            loadStyle();
+            loadSettings();
+        }
 
         const bordercolorinput = document.getElementById("bordercolorinput")
         bordercolorinput.value = config.styleBorder || ""
@@ -1339,6 +1346,13 @@ background-image: url(${config.backgroundImage});
             saveConfig(config);
             loadStyle();
         }
+        const bordercolorclear = document.getElementById("bordercolorclear");
+        bordercolorclear.onclick = function(e) {
+            config.styleBorder = undefined;
+            saveConfig(config);
+            loadStyle();
+            loadSettings();
+        }
 
         const borderbackgroundinput = document.getElementById("borderbackgroundinput")
         borderbackgroundinput.value = config.stylePrimary || ""
@@ -1348,6 +1362,13 @@ background-image: url(${config.backgroundImage});
                 config.stylePrimary = borderbackgroundinput.value
             saveConfig(config);
             loadStyle();
+        }
+        const borderbackgroundclear = document.getElementById("borderbackgroundclear");
+        borderbackgroundclear.onclick = function(e) {
+            config.stylePrimary = undefined;
+            saveConfig(config);
+            loadStyle();
+            loadSettings();
         }
 
         const countdowneditorcheckbox = document.getElementById("countdowneditorcheckbox")
