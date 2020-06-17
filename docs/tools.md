@@ -17,12 +17,6 @@
     "imageUrl": "/static/tools/playground.png"
 },
 {
-    "name": "Tutorial tool",
-    "description": "Live editing of MakeCode tutorials",
-    "url": "/tutorial-tool",
-    "imageUrl": "/static/tools/tutorial-tool.png"
-},
-{
     "name": "Multi",
     "description": "Code with any two MakeCode editors",
     "url": "/multi",
@@ -31,12 +25,18 @@
 ]
 ```
 
-## Experimental
+## Beta
 
 ```codecard
 [
 {
-    "name": "Streamer",
+    "name": "Tutorial tool (beta)",
+    "description": "Live editing of MakeCode tutorials",
+    "url": "/tutorial-tool",
+    "imageUrl": "/static/tools/tutorial-tool.png"
+},
+{
+    "name": "Streamer (beta)",
     "description": "Control scenes, webcams and editors to take your online coding to the next level",
     "url": "/streamer",
     "imageUrl": "/static/tools/streamer.png"
