@@ -894,7 +894,7 @@ background-image: url(${config.backgroundImage});
                 const target = seriously.target(canvas);
                 const chroma = seriously.effect("chroma");
                 const contour = seriously.effect("contour");
-                chroma.clipBlack = 0.5;
+                chroma.clipBlack = 0.6;
                 chroma.source = source;
                 contour.source = chroma;
                 target.source = contour;

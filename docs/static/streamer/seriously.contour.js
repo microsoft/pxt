@@ -63,8 +63,9 @@
 				'		fi += 1.0;',
                 '	};',
                 
-                // skip if no transparent pixesl
-                '   if (transparents == 0 || transparents == n * n) {',
+				// skip if no transparent pixesl
+				'   const int error = 2;',				
+                '   if (transparents < error * error || transparents == n * n) {',
                 '       gl_FragColor = texture2D(source, vTexCoord).rgba;',
                 '   } else {',
                 '       gl_FragColor = color;',
