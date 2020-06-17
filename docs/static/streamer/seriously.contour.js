@@ -25,18 +25,7 @@
 			this.uniforms.pixelHeight = 1 / this.height;
 		},
 		shader: function (inputs, shaderSource) {
-			var defines;
-
-			if (inputs.mode === 'sobel') {
-				defines = '#define N_MATRICES 2\n' +
-					'#define SOBEL\n';
-			} else {
-				//frei-chen
-				defines = '#define N_MATRICES 9\n';
-			}
-
 			shaderSource.fragment = [
-				defines,
 				'precision mediump float;',
 
 				'varying vec2 vTexCoord;',
