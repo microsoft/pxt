@@ -469,10 +469,10 @@ body.rightscene.slim #editor {
     right: 0 !important;
     top: 0 !important;
     bottom: 0 !important;
-    width: 100%;
-    height: 100%;
-    border: none;
-    border-radius: 0;
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    border-radius: 0 !important;
 }
 
 /*
@@ -1037,6 +1037,10 @@ body.countdownscene.hardware .hardwarecam {
         <div class="field">
             <label for="editorselect">Choose your editor</label>
             <select id="editorselect"></select>
+        </div>
+        <div class="field">
+            <input type="checkbox" id="fullscreeneditorcheckbox"></input>
+            <label for="fullscreeneditorcheckbox">Full screen editor (no margins)</label>
         </div>
         <div class="field">
             <input type="checkbox" id="multicheckbox"></input>

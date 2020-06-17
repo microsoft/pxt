@@ -142,6 +142,7 @@
             config.greenScreen && "greenscreen",
             config.backgroundVideo ? "backgroundvideo" : config.backgroundImage && "parallax",
             config.countdownEditor && "countdowneditor",
+            config.fullScreenEditor && "slim"
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
             showSettings();
@@ -1099,6 +1100,14 @@ background-image: url(${config.backgroundImage});
             setEditor(selected.value);
         }
 
+        const fullscreeneditorcheckbox = document.getElementById("fullscreeneditorcheckbox")
+        fullscreeneditorcheckbox.checked = !!config.multiEditor
+        fullscreeneditorcheckbox.onchange = function () {
+            config.fullScreenEditor = !!fullscreeneditorcheckbox.checked
+            saveConfig(config)
+            render()
+        }
+        
         const multicheckbox = document.getElementById("multicheckbox")
         multicheckbox.checked = !!config.multiEditor
         multicheckbox.onchange = function () {
