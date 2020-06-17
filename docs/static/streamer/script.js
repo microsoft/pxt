@@ -27,7 +27,7 @@
     const backgroundvideo = document.getElementById('backgroundvideo')
 
     const frames = [editor, editor2];
-    const paintColors = ["#ffe135", "#00d9ff", "#cf1fdb"];
+    const paintColors = ["#ffe135", "#00d9ff", "#cf1fdb", "#ee0000"];
 
     const scenes = ["leftscene", "rightscene", "chatscene", "countdownscene"];
     const LEFT_SCENE_INDEX = scenes.indexOf("leftscene")
@@ -420,6 +420,8 @@
                 }
                 painttoolCtx.beginPath();
                 painttoolCtx.moveTo(mouse.x, mouse.y);
+            } else if (state.painttool == 'arrow') {
+                painttoolCtx.lineWidth = 30;
             }
             painttool.addEventListener('pointermove', onPaint, false);
         }, false);
@@ -436,7 +438,7 @@
             ctx.save();
             if (state.painttool == 'arrow') {
                 const p1 = mouse, p2 = head;
-                const size = ctx.lineWidth * 2;
+                const size = painttoolCtx.lineWidth * 3;
                 // Rotate the context to point along the path
                 const dx = p2.x - p1.x
                 const dy = p2.y - p1.y
@@ -444,20 +446,26 @@
                 ctx.translate(p2.x, p2.y);
                 ctx.rotate(Math.atan2(dy, dx));
 
-                // line
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(-len, 0);
-                ctx.closePath();
-                ctx.stroke();
+                const strokeStyle = painttoolCtx.strokeStyle;
+                painttoolCtx.strokeStyle = '#ffffff'
+                for(let l = 0; l < 2 ; ++l) {
+                    // line
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(-len, 0);
+                    ctx.closePath();
+                    ctx.stroke();
 
-                // arrowhead
-                ctx.beginPath();
-                ctx.moveTo(-len, 0);
-                ctx.lineTo(size - len, size);
-                ctx.moveTo(-len, 0);
-                ctx.lineTo(size - len, -size);
-                ctx.stroke();
+                    // arrowhead
+                    ctx.beginPath();
+                    ctx.moveTo(-len, 0);
+                    ctx.lineTo(size - len, size / 1.61);
+                    ctx.moveTo(-len, 0);
+                    ctx.lineTo(size - len, -size  / 1.61);
+                    ctx.stroke();
+                    painttoolCtx.lineWidth *= 0.7;
+                    painttoolCtx.strokeStyle = strokeStyle;
+                }
             } else if (state.painttool == 'rect') {
                 ctx.beginPath();
                 ctx.rect(head.x, head.y, mouse.x - head.x, mouse.y - head.y)
