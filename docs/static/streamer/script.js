@@ -893,11 +893,11 @@ background-image: url(${config.backgroundImage});
                 const source = seriously.source(el);
                 const target = seriously.target(canvas);
                 const chroma = seriously.effect("chroma");
-                const edge = seriously.effect("edge");
+                const contour = seriously.effect("contour");
                 chroma.clipBlack = 0.5;
                 chroma.source = source;
-                edge.source = chroma;
-                target.source = edge;
+                contour.source = chroma;
+                target.source = contour;
                 seriously.go();
 
                 el.seriously = seriously;
