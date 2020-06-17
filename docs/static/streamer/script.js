@@ -142,7 +142,7 @@
             config.greenScreen && "greenscreen",
             config.backgroundVideo ? "backgroundvideo" : config.backgroundImage && "parallax",
             config.countdownEditor && "countdowneditor",
-            config.fullScreenEditor && "slim"
+            config.fullScreenEditor && !config.multiEditor && "slim"
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
             showSettings();
