@@ -55,21 +55,16 @@
     loadPaint();
     loadEditor()
     loadToolbox()
+    loadChat()
+    loadSocial()
     await firstLoadFaceCam()
     await loadHardwareCam()
     await loadSettings()
-    load();
+    loadVideos()
     tickEvent("streamer.load")
-
-    function load() {
-        loadEditor()
-        loadChat()
-        loadSocial()
-        loadVideos()
-        setScene("right")
-        render()
-        handleHashChange();
-    }
+    setScene("right")
+    render()
+    handleHashChange();
 
     function saveConfig(config) {
         if (!config) throw "missing config"
