@@ -767,6 +767,7 @@ background-image: url(${config.backgroundImage});
         hardwarecam.parentElement.onclick = () => onClick(hardwarecam.parentElement);
 
         function swapLeftRight(e) {
+            tickEvent("streamer.swapleftright")
             if (state.sceneIndex == LEFT_SCENE_INDEX)
                 setScene("right")
             else if (state.sceneIndex == RIGHT_SCENE_INDEX)
@@ -779,6 +780,7 @@ background-image: url(${config.backgroundImage});
 
         function swapVideos() {
             if (!state.hardware) return;
+            tickEvent("streamer.swapvideos", undefined, { interactiveConsent: true })
             const fp = facecam.parentElement;
             const hp = hardwarecam.parentElement;
             if (fp.classList.contains("facecam")) {
@@ -985,8 +987,10 @@ background-image: url(${config.backgroundImage});
         const speech = state.speech;
         if (!speech) return;
         if (state.speechRunning) {
+            tickEvent("streamer.speech.stop", undefined, { interactiveConsent: true })
             speech.stop();
         } else {
+            tickEvent("streamer.speech.start", undefined, { interactiveConsent: true })
             speech.start();
         }
     }
