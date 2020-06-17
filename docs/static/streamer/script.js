@@ -1101,7 +1101,7 @@ background-image: url(${config.backgroundImage});
         }
 
         const fullscreeneditorcheckbox = document.getElementById("fullscreeneditorcheckbox")
-        fullscreeneditorcheckbox.checked = !!config.multiEditor
+        fullscreeneditorcheckbox.checked = !!config.fullScreenEditor
         fullscreeneditorcheckbox.onchange = function () {
             config.fullScreenEditor = !!fullscreeneditorcheckbox.checked
             saveConfig(config)
@@ -1340,7 +1340,7 @@ background-image: url(${config.backgroundImage});
             config.countdownEditor = !!countdowneditorcheckbox.checked
             saveConfig(config)
             render()
-        }        
+        }
 
         const twitchinput = document.getElementById("twitchinput")
         twitchinput.value = config.twitch || ""
