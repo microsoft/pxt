@@ -1323,7 +1323,7 @@ background-image: url(${config.backgroundImage});
         const backgroundcolorinput = document.getElementById("backgroundcolorinput")
         backgroundcolorinput.value = config.styleBackground || ""
         backgroundcolorinput.onchange = function (e) {
-            config.styleMenu = undefined;
+            config.styleBackground = undefined;
             if (/^#[a-fA-F0-9]{6}$/.test(backgroundcolorinput.value))
                 config.styleBackground = backgroundcolorinput.value
             saveConfig(config);
@@ -1333,7 +1333,7 @@ background-image: url(${config.backgroundImage});
         const bordercolorinput = document.getElementById("bordercolorinput")
         bordercolorinput.value = config.styleBorder || ""
         bordercolorinput.onchange = function (e) {
-            config.styleMenu = undefined;
+            config.styleBorder = undefined;
             if (/^#[a-fA-F0-9]{6}$/.test(bordercolorinput.value))
                 config.styleBorder = bordercolorinput.value
             saveConfig(config);
