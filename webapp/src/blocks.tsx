@@ -653,8 +653,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let flyoutOnly = this.parent.state.editorState && this.parent.state.editorState.hasCategories === false;
         return (
             <div>
-                <ErrorList isInBlocksEditor={true} listenToBlockErrorChanges={this.listenToBlockErrorChanges}/>
                 <div id="blocksEditor"></div>
+                <ErrorList isInBlocksEditor={true} listenToBlockErrorChanges={this.listenToBlockErrorChanges}/>
                 <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
             </div>
         )
