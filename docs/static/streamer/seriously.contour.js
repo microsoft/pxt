@@ -42,6 +42,7 @@
 				'varying vec2 vTexCoord;',
 
 				'uniform sampler2D source;',
+				'uniform vec4 color;',
 				'uniform float pixelWidth;',
 				'uniform float pixelHeight;',
 
@@ -66,7 +67,7 @@
                 '   if (transparents == 0 || transparents == n * n) {',
                 '       gl_FragColor = texture2D(source, vTexCoord).rgba;',
                 '   } else {',
-                '       gl_FragColor = vec4(1.,1.,1.,1.);',
+                '       gl_FragColor = color;',
                 '   }',
 				'}'
 			].join('\n');
@@ -81,7 +82,12 @@
 			source: {
 				type: 'image',
 				uniform: 'source'
-			}
+			},
+			color: {
+				type: 'color',
+				uniform: 'color',
+				defaultValue: [1, 1, 1, 1]
+			}			
 		},
 		description: 'Edge Detect',
 		title: 'Edge Detect'
