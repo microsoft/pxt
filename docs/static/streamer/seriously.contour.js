@@ -90,7 +90,7 @@
 				defaultValue: [1, 1, 1, 1]
 			}			
 		},
-		description: 'Edge Detect',
-		title: 'Edge Detect'
+		description: 'Transparency contour',
+		title: 'Transparency contour'
 	});
 }));
