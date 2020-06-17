@@ -767,7 +767,7 @@ background-image: url(${config.backgroundImage});
         hardwarecam.parentElement.onclick = () => onClick(hardwarecam.parentElement);
 
         function swapLeftRight(e) {
-            tickEvent("streamer.swapleftright")
+            tickEvent("streamer.swapleftright", undefined, { interactiveConsent: true })
             if (state.sceneIndex == LEFT_SCENE_INDEX)
                 setScene("right")
             else if (state.sceneIndex == RIGHT_SCENE_INDEX)
