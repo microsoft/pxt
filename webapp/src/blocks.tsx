@@ -45,7 +45,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         this.listenToBlockErrorChanges = this.listenToBlockErrorChanges.bind(this)
     }
-
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
         let map: pxt.Map<number> = {};
         if (!breakpoints || !this.compilationResult) return;
