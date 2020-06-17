@@ -46,6 +46,8 @@
 				'uniform float pixelHeight;',
 
 				'void main(void) {',
+				// this effect assumes the image has been through a chrome-key kind of effect
+				// and looks for the boundary of transparent pixels
                 // fetch the neightborhood and paint white if it is not full white or transparent
 				'   int transparents = 0;',
 				'   const int n = 16;',
