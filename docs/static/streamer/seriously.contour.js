@@ -92,55 +92,30 @@
 				'uniform sampler2D source;',
 				'uniform float pixelWidth;',
 				'uniform float pixelHeight;',
-				'uniform mat3 G[9];',
 
 				'void main(void) {',
-				'	mat3 I;',
-                '	float dp3, cnv[9];',
-                '   vec4 pix;',
-				'	vec3 tc;',
 
                 // fetch the 3x3 neighbourhood and use the RGB vector's length as intensity value
                 // make sure one of them is transparent
-                '   int transparents = 0;',
+				'   int transparents = 0;',
+				'   const int n = 16;',
 				'	float fi = 0.0, fj = 0.0;',
-				'	for (int i = 0; i < 3; i++) {',
+				'	for (int i = 0; i < n; i++) {',
 				'		fj = 0.0;',
-                '		for (int j = 0; j < 3; j++) {',
-                '           pix = texture2D(source, vTexCoord + vec2((fi - 1.0) * pixelWidth, (fj - 1.0) * pixelHeight)).rgba;',
+                '		for (int j = 0; j < n; j++) {',
+                '           vec4 pix = texture2D(source, vTexCoord + vec2((fi - 1.0) * pixelWidth, (fj - 1.0) * pixelHeight)).rgba;',
                 '           if (pix.a == 0.) transparents += 1;',
-                '			I[i][j] = length(pix);',
 				'			fj += 1.0;',
 				'		};',
 				'		fi += 1.0;',
                 '	};',
                 
                 // skip if no transparent pixesl
-                '   if (transparents == 0 || transparents == 9) {',
+                '   if (transparents == 0 || transparents == n * n) {',
                 '       gl_FragColor = texture2D(source, vTexCoord).rgba;',
-                '       return;',
+                '   } else {',
+                '       gl_FragColor = vec4(1.,1.,1.,1.);',
                 '   }',
-
-				// calculate the convolution values for all the masks
-
-				'	for (int i = 0; i < N_MATRICES; i++) {',
-				'		dp3 = dot(G[i][0], I[0]) + dot(G[i][1], I[1]) + dot(G[i][2], I[2]);',
-				'		cnv[i] = dp3 * dp3;',
-				'	};',
-
-				//Sobel
-				'#ifdef SOBEL',
-				'	tc = vec3(0.5 * sqrt(cnv[0]*cnv[0]+cnv[1]*cnv[1]));',
-				'#else',
-
-				//Frei-Chen
-				// Line detector
-				'	float M = (cnv[4] + cnv[5]) + (cnv[6] + cnv[7]);',
-				'	float S = (cnv[0] + cnv[1]) + (cnv[2] + cnv[3]) + (cnv[4] + cnv[5]) + (cnv[6] + cnv[7]) + cnv[8];',
-				'	tc = vec3(sqrt(M/S));',
-				'#endif',
-
-				'	gl_FragColor = vec4(tc, 1.0);',
 				'}'
 			].join('\n');
 
