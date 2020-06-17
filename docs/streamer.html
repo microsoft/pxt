@@ -938,6 +938,8 @@ body.countdownscene.countdowneditor #editor {
     overflow: hidden;
     border: none;
     border-radius: 0;
+}
+body.countdownscene.countdowneditorblur #editor {
     filter: blur(10px);
 }
 
@@ -1120,6 +1122,10 @@ body.countdownscene.hardware .hardwarecam {
         <div class="field">
             <input type="checkbox" id="countdowneditorcheckbox"></input>
             <label for="countdowneditorcheckbox">Show editor in background</label>
+        </div>
+        <div class="field">
+            <input type="checkbox" id="countdownblureditorcheckbox"></input>
+            <label for="countdownblureditorcheckbox">Blur editor in background</label>
         </div>
         <h2>Paint</h2>
         <div class="field">

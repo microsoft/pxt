@@ -142,6 +142,7 @@
             config.greenScreen && "greenscreen",
             config.backgroundVideo ? "backgroundvideo" : config.backgroundImage && "parallax",
             config.countdownEditor && "countdowneditor",
+            config.countdownEditorBlur && "countdowneditorblur",
             config.fullScreenEditor && !config.multiEditor && "slim"
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
@@ -1342,6 +1343,14 @@ background-image: url(${config.backgroundImage});
         countdowneditorcheckbox.checked = !!config.countdownEditor
         countdowneditorcheckbox.onchange = function () {
             config.countdownEditor = !!countdowneditorcheckbox.checked
+            saveConfig(config)
+            render()
+        }
+
+        const countdownblureditorcheckbox = document.getElementById("countdownblureditorcheckbox")
+        countdownblureditorcheckbox.checked = !!config.countdownEditorBlur
+        countdownblureditorcheckbox.onchange = function () {
+            config.countdownEditorBlur = !!countdownblureditorcheckbox.checked
             saveConfig(config)
             render()
         }
