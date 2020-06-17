@@ -767,7 +767,7 @@ background-image: url(${config.backgroundImage});
         hardwarecam.parentElement.onclick = () => onClick(hardwarecam.parentElement);
 
         function swapLeftRight(e) {
-            tickEvent("streamer.swapleftright", undefined, { interactiveConsent: true })
+            tickEvent("streamer.swap.leftright", undefined, { interactiveConsent: true })
             if (state.sceneIndex == LEFT_SCENE_INDEX)
                 setScene("right")
             else if (state.sceneIndex == RIGHT_SCENE_INDEX)
@@ -780,7 +780,7 @@ background-image: url(${config.backgroundImage});
 
         function swapVideos() {
             if (!state.hardware) return;
-            tickEvent("streamer.swapvideos", undefined, { interactiveConsent: true })
+            tickEvent("streamer.swap.videos", undefined, { interactiveConsent: true })
             const fp = facecam.parentElement;
             const hp = hardwarecam.parentElement;
             if (fp.classList.contains("facecam")) {
