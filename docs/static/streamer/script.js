@@ -521,45 +521,30 @@
         const editorConfig = editorConfigs[config.editor];
         // update page style
         let css = "";
-        const styles = editorConfig && editorConfig.styles;
-        if (styles) {
-            css =
-                `body {
-background: ${styles.background};
-}
-.box {
-border-color: ${styles.menu};
-}
-.videolabel {
-background: ${styles.primary};
-border-top-color: ${styles.menu};
-border-right-color: ${styles.menu};
-border-left-color: ${styles.menu};
-color: white;
-}
-#toolbox {
-background: ${styles.primary};
-}
-`
-        } else {
-            css =
-                `body {
-background: rgb(99, 93, 198);
-background: linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1) 100%);
-}
-.box {
-border-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
-}
-.videolabel {
-background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red) 1;
-color: white;
-}
-#toolbox {
-background: #615fc7;
-}
-`
-        }
+        const styles = editorConfig && editorConfig.styles || {};
 
+        let primary = config.stylePrimary || styles.primary || "#615fc7"
+        let menu = config.styleBorder || styles.menu || "#615fc7"
+        let background = config.styleBackground || styles.background || "rgb(99, 93, 198)";
+
+            css =
+                `body {
+background: ${background};
+}
+.box {
+border-color: ${menu};
+}
+.videolabel {
+background: ${primary};
+border-top-color: ${menu};
+border-right-color: ${menu};
+border-left-color: ${menu};
+color: white;
+}
+#toolbox, #title {
+background: ${primary};
+}
+`
         const faceCamFilter = camFilter(config.faceCamFilter)
         if (faceCamFilter)
             css += `#facecam { filter: ${faceCamFilter}; }
@@ -1335,6 +1320,57 @@ background-image: url(${config.backgroundImage});
             render()
         }
 
+        const backgroundcolorinput = document.getElementById("backgroundcolorinput")
+        backgroundcolorinput.value = config.styleBackground || ""
+        backgroundcolorinput.onchange = function (e) {
+            config.styleBackground = undefined;
+            if (/^#[a-fA-F0-9]{6}$/.test(backgroundcolorinput.value))
+                config.styleBackground = backgroundcolorinput.value
+            saveConfig(config);
+            loadStyle();
+        }
+        const backgroundcolorclear = document.getElementById("backgroundcolorclear");
+        backgroundcolorclear.onclick = function(e) {
+            config.styleBackground = undefined;
+            saveConfig(config);
+            loadStyle();
+            loadSettings();
+        }
+
+        const bordercolorinput = document.getElementById("bordercolorinput")
+        bordercolorinput.value = config.styleBorder || ""
+        bordercolorinput.onchange = function (e) {
+            config.styleBorder = undefined;
+            if (/^#[a-fA-F0-9]{6}$/.test(bordercolorinput.value))
+                config.styleBorder = bordercolorinput.value
+            saveConfig(config);
+            loadStyle();
+        }
+        const bordercolorclear = document.getElementById("bordercolorclear");
+        bordercolorclear.onclick = function(e) {
+            config.styleBorder = undefined;
+            saveConfig(config);
+            loadStyle();
+            loadSettings();
+        }
+
+        const borderbackgroundinput = document.getElementById("borderbackgroundinput")
+        borderbackgroundinput.value = config.stylePrimary || ""
+        borderbackgroundinput.onchange = function (e) {
+            config.stylePrimary = undefined;
+            if (/^#[a-fA-F0-9]{6}$/.test(borderbackgroundinput.value))
+                config.stylePrimary = borderbackgroundinput.value
+            saveConfig(config);
+            loadStyle();
+        }
+        const borderbackgroundclear = document.getElementById("borderbackgroundclear");
+        borderbackgroundclear.onclick = function(e) {
+            config.stylePrimary = undefined;
+            saveConfig(config);
+            loadStyle();
+            loadSettings();
+        }
+
         const countdowneditorcheckbox = document.getElementById("countdowneditorcheckbox")
         countdowneditorcheckbox.checked = !!config.countdownEditor
         countdowneditorcheckbox.onchange = function () {
@@ -1424,6 +1460,7 @@ background-image: url(${config.backgroundImage});
             micdelayinput.value = config.micDelay
             saveConfig(config);
         }
+        
     }
 
     function setEditor(editor) {
