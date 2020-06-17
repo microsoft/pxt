@@ -54,6 +54,7 @@
     initAccessibility();
     loadPaint();
     loadEditor()
+    loadToolbox()
     await firstLoadFaceCam()
     await loadHardwareCam()
     await loadSettings()
@@ -108,7 +109,7 @@
             hardwareCamLabel: "",
             mixer: "",
             emojis: "😄🤔😭👀",
-            micDelay: 200,
+            micDelay: 300,
             title: "STARTING SOON"
         }
         saveConfig(cfg)
@@ -1528,11 +1529,12 @@ background-image: url(${config.backgroundImage});
         }
         const config = readConfig();
         const props = {
+            target: "streamer",
             editor: config.editor,
         };
         const measures = {
+            hardwareCam: config.hardwareCamId ? 1 : 0,            
             multiEditor: config.multiEditor ? 1 : 0,
-            twitter: config.twitter ? 1 : 0,
             mixer: config.mixer ? 1 : 0,
             twitch: config.twitch ? 1 : 0
         };
