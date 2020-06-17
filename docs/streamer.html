@@ -452,11 +452,27 @@ body.chatscene #settings {
 .paint {
     z-index:6;
 }
-#toolbox {
+#recorder {
     z-index: 7;
 }
-#recorder {
+#settings {
     z-index: 8;
+}
+#toolbox {
+    z-index: 10;
+}
+
+/** full editor */
+body.leftscene.slim #editor,
+body.rightscene.slim #editor {
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    border-radius: 0 !important;
 }
 
 /*
@@ -1021,6 +1037,10 @@ body.countdownscene.hardware .hardwarecam {
         <div class="field">
             <label for="editorselect">Choose your editor</label>
             <select id="editorselect"></select>
+        </div>
+        <div class="field">
+            <input type="checkbox" id="fullscreeneditorcheckbox"></input>
+            <label for="fullscreeneditorcheckbox">Full screen editor (no margins)</label>
         </div>
         <div class="field">
             <input type="checkbox" id="multicheckbox"></input>
