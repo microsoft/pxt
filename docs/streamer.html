@@ -452,11 +452,27 @@ body.chatscene #settings {
 .paint {
     z-index:6;
 }
-#toolbox {
+#recorder {
     z-index: 7;
 }
-#recorder {
+#settings {
     z-index: 8;
+}
+#toolbox {
+    z-index: 10;
+}
+
+/** full editor */
+body.leftscene.slim #editor,
+body.rightscene.slim #editor {
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 0;
 }
 
 /*
