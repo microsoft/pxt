@@ -908,9 +908,11 @@ background-image: url(${config.backgroundImage});
                 const source = seriously.source(el);
                 const target = seriously.target(canvas);
                 const chroma = seriously.effect("chroma");
+                const edge = seriously.effect("edge");
                 chroma.clipBlack = 0.5;
                 chroma.source = source;
-                target.source = chroma;
+                edge.source = chroma;
+                target.source = edge;
                 seriously.go();
 
                 el.seriously = seriously;
