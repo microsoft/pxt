@@ -54,6 +54,7 @@
     initAccessibility();
     loadPaint();
     loadEditor()
+    loadToolbox()
     await firstLoadFaceCam()
     await loadHardwareCam()
     await loadSettings()
