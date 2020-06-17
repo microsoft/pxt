@@ -15,10 +15,10 @@ export interface ErrorListProps {
 }
 export interface ErrorListState {
     isCollapsed: boolean,
-    errors: pxtc.KsDiagnostic[],
+    errors?: pxtc.KsDiagnostic[],
     exception?: pxsim.DebuggerBreakpointMessage,
     callLocations?: pxtc.LocationInfo[],
-    blockErrors: pxt.blocks.BlockDiagnostic[]
+    blockErrors?: pxt.blocks.BlockDiagnostic[]
 }
 
 export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
@@ -53,11 +53,11 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
     render() {
         const {isCollapsed, errors, exception, blockErrors} = this.state;
-        const errorsAvailable = true; //!!errors?.length || !!exception; TEMP
+        const errorsAvailable = !!errors?.length || !!exception || !!blockErrors?.length;
         const collapseTooltip = lf("Collapse Error List");
 
-        //const errorListContent = !isCollapsed ? (exception ? this.generateStackTraces(exception) : this.getCompilerErrors(errors)) : undefined;
-        const errorListContent = blockErrors ? this.listBlockErrors(blockErrors) : undefined;
+        const errorListContent = !isCollapsed ? (this.props.isInBlocksEditor ? this.listBlockErrors(blockErrors)
+            : (exception ? this.generateStackTraces(exception) : this.getCompilerErrors(errors))) : undefined;
 
         return (
             <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''} ${this.props.isInBlocksEditor ? 'errorListBlocks' : ''}`} hidden={!errorsAvailable}>
@@ -84,7 +84,6 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
         const noValueToDisplay = !(errors?.length || exception);
 
-        // TEMP
         if (this.props.onSizeChange) {
             this.props.onSizeChange(
                 noValueToDisplay ?
