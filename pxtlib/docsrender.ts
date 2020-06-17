@@ -903,7 +903,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
                 case "text":
                     let lastTocEntry = currentStack[currentStack.length - 1]
                     if (token.text.indexOf("[") >= 0) {
-                        token.text.replace(/^\[(.*)\]\((.*)\)$/i, function (full: string, name: string, path: string) {
+                        token.text.replace(/\[(.*?)\]\((.*?)\)/i, function (full: string, name: string, path: string) {
                             lastTocEntry.name = name;
                             lastTocEntry.path = path.replace('.md', '');
                         });
