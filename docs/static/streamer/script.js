@@ -108,7 +108,7 @@
             hardwareCamLabel: "",
             mixer: "",
             emojis: "😄🤔😭👀",
-            micDelay: 200,
+            micDelay: 300,
             title: "STARTING SOON"
         }
         saveConfig(cfg)
@@ -1532,6 +1532,7 @@ background-image: url(${config.backgroundImage});
             editor: config.editor,
         };
         const measures = {
+            hardwareCam: config.hardwareCamId ? 1 : 0,            
             multiEditor: config.multiEditor ? 1 : 0,
             mixer: config.mixer ? 1 : 0,
             twitch: config.twitch ? 1 : 0
