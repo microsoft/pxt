@@ -17,60 +17,12 @@
 }(window, function (Seriously) {
 	'use strict';
 
-	//	Adapted from http://rastergrid.com/blog/2011/01/frei-chen-edge-detector/
-	var sqrt = Math.sqrt,
-		i, j,
-		flatMatrices = [],
-		matrices,
-		freiChenMatrixConstants,
-		sobelMatrixConstants;
-
-	//initialize shader matrix arrays
-	function multiplyArray(factor, a) {
-		var i;
-		for (i = 0; i < a.length; i++) {
-			a[i] *= factor;
-		}
-		return a;
-	}
-
-	matrices = [
-		multiplyArray(1.0 / (2.0 * sqrt(2.0)), [ 1.0, sqrt(2.0), 1.0, 0.0, 0.0, 0.0, -1.0, -sqrt(2.0), -1.0 ]),
-		multiplyArray(1.0 / (2.0 * sqrt(2.0)), [1.0, 0.0, -1.0, sqrt(2.0), 0.0, -sqrt(2.0), 1.0, 0.0, -1.0]),
-		multiplyArray(1.0 / (2.0 * sqrt(2.0)), [0.0, -1.0, sqrt(2.0), 1.0, 0.0, -1.0, -sqrt(2.0), 1.0, 0.0]),
-		multiplyArray(1.0 / (2.0 * sqrt(2.0)), [sqrt(2.0), -1.0, 0.0, -1.0, 0.0, 1.0, 0.0, 1.0, -sqrt(2.0)]),
-		multiplyArray(1.0 / 2.0, [0.0, 1.0, 0.0, -1.0, 0.0, -1.0, 0.0, 1.0, 0.0]),
-		multiplyArray(1.0 / 2.0, [-1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, -1.0]),
-		multiplyArray(1.0 / 6.0, [1.0, -2.0, 1.0, -2.0, 4.0, -2.0, 1.0, -2.0, 1.0]),
-		multiplyArray(1.0 / 6.0, [-2.0, 1.0, -2.0, 1.0, 4.0, 1.0, -2.0, 1.0, -2.0]),
-		multiplyArray(1.0 / 3.0, [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
-	];
-
-	for (i = 0; i < matrices.length; i++) {
-		for (j = 0; j < matrices[i].length; j++) {
-			flatMatrices.push(matrices[i][j]);
-		}
-	}
-
-	freiChenMatrixConstants = new Float32Array(flatMatrices);
-
-	sobelMatrixConstants = new Float32Array([
-		1.0, 2.0, 1.0, 0.0, 0.0, 0.0, -1.0, -2.0, -1.0,
-		1.0, 0.0, -1.0, 2.0, 0.0, -2.0, 1.0, 0.0, -1.0
-	]);
-
 	Seriously.plugin('contour', {
 		initialize: function (initialize) {
 			initialize();
 
 			this.uniforms.pixelWidth = 1 / this.width;
 			this.uniforms.pixelHeight = 1 / this.height;
-
-			if (this.inputs.mode === 'sobel') {
-				this.uniforms.G = sobelMatrixConstants;
-			} else {
-				this.uniforms.G = freiChenMatrixConstants;
-			}
 		},
 		shader: function (inputs, shaderSource) {
 			var defines;
@@ -129,22 +81,6 @@
 			source: {
 				type: 'image',
 				uniform: 'source'
-			},
-			mode: {
-				type: 'enum',
-				shaderDirty: true,
-				defaultValue: 'sobel',
-				options: [
-					['sobel', 'Sobel'],
-					['frei-chen', 'Frei-Chen']
-				],
-				update: function () {
-					if (this.inputs.mode === 'sobel') {
-						this.uniforms.G = sobelMatrixConstants;
-					} else {
-						this.uniforms.G = freiChenMatrixConstants;
-					}
-				}
 			}
 		},
 		description: 'Edge Detect',
