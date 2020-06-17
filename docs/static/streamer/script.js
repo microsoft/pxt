@@ -421,7 +421,7 @@
                 painttoolCtx.beginPath();
                 painttoolCtx.moveTo(mouse.x, mouse.y);
             } else if (state.painttool == 'arrow') {
-                painttoolCtx.lineWidth = 30;
+                painttoolCtx.lineWidth = 42;
             }
             painttool.addEventListener('pointermove', onPaint, false);
         }, false);
