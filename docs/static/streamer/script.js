@@ -541,7 +541,7 @@ border-right-color: ${menu};
 border-left-color: ${menu};
 color: white;
 }
-#toolbox {
+#toolbox, #title {
 background: ${primary};
 }
 `
