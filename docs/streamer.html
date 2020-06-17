@@ -550,11 +550,12 @@ body.facecamdisplay .facecamvideo {
 #toolbox {
     position: absolute;
     height: 5%;
-    left: 5%;
+    left: 35%;
     bottom: 1.5%;
     background: #615fc7;
-    transition-delay: 0.1s;
-    opacity: 0.1;
+    transition-delay: 0s;
+    transition: opacity 0.3s;
+    opacity: 0.15;
 }
 #toolbox:hover {
     opacity: 1;
@@ -680,10 +681,6 @@ body.rightscene.multi.hardware .facecam {
     width: 22%;
     bottom: 1.5%;
 }
-body.rightscene.multi.hardware #toolbox {
-    width: 53%;
-    left: 1%;
-}
 
 /** left + chat + hardware + chat + multi */
 body.rightscene.hardware.multi.chat #editor {
@@ -725,13 +722,6 @@ body.leftscene .facecam {
 body.leftscene .hardwarecam {
     bottom: 10%;
     right: 1%;
-}
-
-body.leftscene #toolbox {
-    height: 5%;
-    left: unset;
-    right: 5%;
-    bottom: 1.5%;
 }
 
 /* left + hardware */
@@ -798,10 +788,6 @@ body.leftscene.multi.hardware .facecam {
     right: 56%;
     width: 22%;
     bottom: 1.5%;
-}
-body.leftscene.multi.hardware #toolbox {
-    right: 45%;
-    left: unset;
 }
 
 /** leftscene + chat **/
@@ -890,9 +876,7 @@ body.chatscene #title {
     font-size: 2vw;    
     opacity: 100%;
 }
-body.chatscene #toolbox {
-    left: 36%;
-}
+
 body.chatscene.chat .facecam {
     bottom: 5%;
     right: 34%;
@@ -970,9 +954,6 @@ body.countdownscene #title {
 body.countdownscene #countdown {
     opacity: 100%;
     bottom: 20%;
-}
-body.countdownscene #toolbox {
-    left: 18%;
 }
 body.countdownscene.hardware .hardwarecam {
     right: -10%;
