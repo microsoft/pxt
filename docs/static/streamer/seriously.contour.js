@@ -46,9 +46,7 @@
 				'uniform float pixelHeight;',
 
 				'void main(void) {',
-
-                // fetch the 3x3 neighbourhood and use the RGB vector's length as intensity value
-                // make sure one of them is transparent
+                // fetch the neightborhood and paint white if it is not full white or transparent
 				'   int transparents = 0;',
 				'   const int n = 16;',
 				'	float fi = 0.0, fj = 0.0;',
