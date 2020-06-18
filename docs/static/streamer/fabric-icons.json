@@ -39,6 +39,10 @@
       "unicode": "E99A"
     },
     {
+      "name": "PictureCenter",
+      "unicode": "F522"
+    },
+    {
       "name": "OfficeChat",
       "unicode": "F70F"
     },
@@ -69,6 +73,10 @@
     {
       "name": "EditCreate",
       "unicode": "F3C9"
+    },
+    {
+      "name": "ImagePixel",
+      "unicode": "F30C"
     },
     {
       "name": "Remove",
