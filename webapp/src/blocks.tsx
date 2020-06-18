@@ -675,7 +675,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let flyoutOnly = this.parent.state.editorState && this.parent.state.editorState.hasCategories === false;
         return (
             <div className="blocksAndErrorList">
-                <div className="blocksEditorOuter" >
+                <div className="blocksEditorOuter">
                     <div id="blocksEditor"></div>
                     <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
                 </div>

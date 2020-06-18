@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import * as sui from "./sui";
-import { prototype } from "react-modal";
 
 export interface ErrorListProps {
     isInBlocksEditor: boolean;
@@ -59,11 +58,13 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         const errorListContent = !isCollapsed ? (this.props.isInBlocksEditor ? this.listBlockErrors(blockErrors)
             : (exception ? this.generateStackTraces(exception) : this.getCompilerErrors(errors))) : undefined;
 
+        const errorCount = this.props.isInBlocksEditor ? blockErrors.length : exception ? 1 : errors.length;
+
         return (
             <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''} ${this.props.isInBlocksEditor ? 'errorListBlocks' : ''}`} hidden={!errorsAvailable}>
                 <div className="errorListHeader" role="button" aria-label={lf("{0} error list", isCollapsed ? lf("Expand") : lf("Collapse"))} onClick={this.onCollapseClick} onKeyDown={sui.fireClickOnEnter} tabIndex={0}>
                     <h4>{lf("Problems")}</h4>
-                    <div className="ui red circular label countBubble">{exception ? 1 : errors.length}</div>
+                    <div className="ui red circular label countBubble">{errorCount}</div>
                     <div className="toggleButton"><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`}/></div>
                 </div>
                 {!isCollapsed && <div className="errorListInner">
@@ -193,7 +194,7 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
         const message = blockError ? lf("{0}", blockError.message) : undefined
 
         return <div className={`item ${stackframe ? 'stackframe' : ''}`} role="button"
-                    onClick={this.onErrorListItemClick}
+                    onClick={this.onErrorListItemClick ? this.onErrorListItemClick : undefined}
                     onKeyDown={sui.fireClickOnEnter}
                     aria-label={lf("Go to {0}: {1}", stackframe ? '' : 'error', message)}
                     tabIndex={0}>
