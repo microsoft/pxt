@@ -5,6 +5,7 @@ import * as sui from "./sui";
 import { prototype } from "react-modal";
 
 export interface ErrorListProps {
+    isInBlocksEditor: boolean;
     onSizeChange?: (state: pxt.editor.ErrorListState) => void;
     listenToErrorChanges?: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void;
     listenToBlockErrorChanges?: (key: string, onErrorChanges: (errors: pxt.blocks.BlockDiagnostic[]) => void) => void;
@@ -42,12 +43,9 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         this.generateStackTraces = this.generateStackTraces.bind(this)
         this.listBlockErrors = this.listBlockErrors.bind(this)
 
-        if (props.listenToBlockErrorChanges) {
+        if (props.isInBlocksEditor) {
             props.listenToBlockErrorChanges("errorList", this.onBlockErrorsChanged)
-        }
-
-        // used for monaco errors TEMP
-        if (props.listenToErrorChanges && props.listenToExceptionChanges) {
+        } else {
             props.listenToErrorChanges("errorList", this.onErrorsChanged);
             props.listenToExceptionChanges("errorList", this.onExceptionDetected);
         }
@@ -62,7 +60,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         const errorListContent = blockErrors ? this.listBlockErrors(blockErrors) : undefined;
 
         return (
-            <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''}`} hidden={!errorsAvailable}>
+            <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''} ${this.props.isInBlocksEditor ? 'errorListBlocks' : ''}`} hidden={!errorsAvailable}>
                 <div className="errorListHeader" role="button" aria-label={lf("{0} error list", isCollapsed ? lf("Expand") : lf("Collapse"))} onClick={this.onCollapseClick} onKeyDown={sui.fireClickOnEnter} tabIndex={0}>
                     <h4>{lf("Problems")}</h4>
                     <div className="ui red circular label countBubble">{exception ? 1 : errors.length}</div>
@@ -132,8 +130,6 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             callLocations
         })
     }
-
-
 
     getCompilerErrors(errors: pxtc.KsDiagnostic[]) {
         function errorKey(error: pxtc.KsDiagnostic): string {

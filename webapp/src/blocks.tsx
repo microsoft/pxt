@@ -46,7 +46,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.listenToBlockErrorChanges = this.listenToBlockErrorChanges.bind(this)
         this.onErrorListResize = this.onErrorListResize.bind(this)
     }
-
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
         let map: pxt.Map<number> = {};
         if (!breakpoints || !this.compilationResult) return;
@@ -680,7 +679,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     <div id="blocksEditor"></div>
                     <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
                 </div>
-                <ErrorList listenToBlockErrorChanges={this.listenToBlockErrorChanges}
+                <ErrorList isInBlocksEditor={true} listenToBlockErrorChanges={this.listenToBlockErrorChanges}
                     onSizeChange={this.onErrorListResize} />
             </div>
         )
@@ -950,7 +949,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             }
         })
-        this.onBlockErrorChanges(this.compilationResult.diagnostics)
+        this.onBlockErrorChanges(this.compilationResult.diagnostics);
         this.setBreakpointsFromBlocks();
     }
 
