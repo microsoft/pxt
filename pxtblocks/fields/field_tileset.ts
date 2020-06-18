@@ -17,7 +17,6 @@ namespace pxtblockly {
         protected selected: pxt.Tile;
         protected blocksInfo: pxtc.BlocksInfo;
         protected transparent: TilesetDropdownOption;
-        protected proj: pxt.TilemapProject;
 
         constructor(text: string, options: FieldImageDropdownOptions, validator?: Function) {
             super(text, options, validator);
@@ -27,8 +26,6 @@ namespace pxtblockly {
 
         init() {
             super.init();
-
-            this.proj = pxt.react.getTilemapProject();
 
             if (this.sourceBlock_ && this.sourceBlock_.isInFlyout) {
                 this.setValue(this.getOptions()[0][1]);
@@ -75,7 +72,7 @@ namespace pxtblockly {
             if (this.sourceBlock_) {
                 // projectId 0 is reserved for transparency, which is always included
 
-                const tiles = this.proj.getProjectTiles(16);
+                const tiles = pxt.react.getTilemapProject().getProjectTiles(16);
 
                 options = options.concat(tiles.tiles.map(t => [{
                     src: bitmapToImageURI(pxt.sprite.Bitmap.fromData(t.bitmap), PREVIEW_SIDE_LENGTH, false),

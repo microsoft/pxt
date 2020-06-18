@@ -20,10 +20,15 @@ namespace pxt {
         tileSets: TileSet[];
     }
 
+    export interface ProjectTilemap {
+        id: string;
+        data: pxt.sprite.TilemapData;
+    }
+
     export class TilemapProject {
         protected extensionTileSets: TileSetCollection[];
         protected projectTileSet: TileSetCollection;
-        protected projectTilemaps: JRes[];
+        protected projectTilemaps: ProjectTilemap[];
         protected takenNames: pxt.Map<boolean>;
 
         constructor(protected pack: MainPackage) {
@@ -41,7 +46,15 @@ namespace pxt {
 
         public getProjectTiles(tileWidth: number): TileSet | null {
             if (this.projectTileSet) {
-                return this.projectTileSet.tileSets.find(tileSet => tileSet.tileWidth === tileWidth)
+                const res = this.projectTileSet.tileSets.find(tileSet => tileSet.tileWidth === tileWidth);
+
+                if (!res) {
+                    // This will create a new tileset with the correct width
+                    this.createNewTile(new pxt.sprite.Bitmap(tileWidth, tileWidth).data())
+                    return this.getProjectTiles(tileWidth);
+                }
+
+                return res;
             }
             return null;
         }
@@ -68,10 +81,10 @@ namespace pxt {
                 }
             }
 
-            this.projectTileSet.tileSets.push({
-                tileWidth: data.width,
-                tiles: [newTile]
-            });
+            const newTileset = this.createTileset(data.width);
+            newTileset.tiles.push(newTile);
+
+            this.projectTileSet.tileSets.push(newTileset);
 
             return newTile;
         }
@@ -110,7 +123,8 @@ namespace pxt {
             }
 
             for (const tilemap of this.projectTilemaps) {
-                blob[tilemap.id] = tilemap;
+                const jres = this.encodeTilemap(tilemap.data, tilemap.id);
+                blob[jres.id] = jres;
             }
 
             blob["*"] = {
@@ -141,7 +155,68 @@ namespace pxt {
             }
         }
 
-        public decodeTilemap(jres: JRes) {
+        public getTilemap(id: string) {
+            for (const tm of this.projectTilemaps) {
+                if (tm.id === id) {
+                    return tm.data;
+                }
+            }
+            return null;
+        }
+
+        public createNewTilemap(name: string, tileWidth: number, width = 16, height = 16) {
+            let index = 0;
+            let base = name;
+
+            while (this.takenNames[name]) {
+                name = base  + "_" + index;
+                ++index;
+            }
+
+            const newMap = this.blankTilemap(tileWidth, width, height);
+            this.projectTilemaps.push({
+                id: name,
+                data: newMap
+            });
+
+            return newMap;
+        }
+
+        public blankTilemap(tileWidth: number, width = 16, height = 16) {
+            const tilemap = new pxt.sprite.Tilemap(width, height);
+            const layers = new pxt.sprite.Bitmap(width, height);
+            const tileset = {
+                tileWidth,
+                tiles: [this.getTransparency(tileWidth)]
+            };
+
+            return new pxt.sprite.TilemapData(tilemap, tileset, layers.data());
+        }
+
+        public resolveTile(id: string): Tile {
+            const all = [this.projectTileSet].concat(this.extensionTileSets);
+
+            for (const tileSets of all) {
+                const found = getTile(tileSets, id);
+                if (found) return found;
+            }
+
+            return null;
+        }
+
+        public getTransparency(tileWidth: number) {
+            for (const tileSet of this.projectTileSet.tileSets) {
+                if (tileSet.tileWidth === tileWidth) {
+                    return tileSet.tiles[0];
+                }
+            }
+
+            const newTileSet = this.createTileset(tileWidth);
+            this.projectTileSet.tileSets.push(newTileSet);
+            return newTileSet.tiles[0];
+        }
+
+        protected decodeTilemap(jres: JRes) {
             const hex = atob(jres.data);
             const bytes = U.fromHex(hex);
 
@@ -162,17 +237,6 @@ namespace pxt {
             const layers = new pxt.sprite.Bitmap(tmWidth, tmHeight, 0, 0, new Uint8ClampedArray(bitmapData)).data();
 
             return new pxt.sprite.TilemapData(tilemap, tileset, layers);
-        }
-
-        public resolveTile(id: string): Tile {
-            const all = [this.projectTileSet].concat(this.extensionTileSets);
-
-            for (const tileSets of all) {
-                const found = getTile(tileSets, id);
-                if (found) return found;
-            }
-
-            return null;
         }
 
         protected readTileSets(pack: MainPackage) {
@@ -196,7 +260,11 @@ namespace pxt {
                         extensionID: "this",
                         tileSets: []
                     };
-                    this.projectTilemaps = getTilemaps(pack);
+                    this.projectTilemaps = getTilemaps(pack)
+                        .map(tm => ({
+                            id: tm.id,
+                            data: this.decodeTilemap(tm)
+                        }));
                 }
             }
 
@@ -205,6 +273,34 @@ namespace pxt {
 
             this.takenNames = {};
             for (const id of Object.keys(allJRes)) this.takenNames[id] = true;
+        }
+
+        protected createTileset(tileWidth: number) {
+            const tileSet: TileSet = {
+                tileWidth,
+                tiles: []
+            };
+
+            const baseID = "transparency" + tileWidth;
+
+            let transparencyID = baseID;
+            let index = 1;
+
+            while (this.resolveTile(transparencyID)) {
+                transparencyID = baseID + "_" + index;
+                ++index;
+            }
+
+            // Always create a transparent tile
+            const bitmap = new pxt.sprite.Bitmap(16, 16).data();
+            tileSet.tiles.push({
+                id: transparencyID,
+                bitmap: bitmap,
+                data: pxt.sprite.base64EncodeBitmap(bitmap),
+                isProjectTile: true
+            });
+
+            return tileSet;
         }
     }
 

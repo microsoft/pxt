@@ -157,6 +157,8 @@ export class EditorPackage {
     private simStateSaveScheduled = false;
     protected transpileCache: CachedTranspile[] = [];
 
+    tilemap: pxt.TilemapProject;
+
     id: string;
     outputPkg: EditorPackage;
     assetsPkg: EditorPackage;

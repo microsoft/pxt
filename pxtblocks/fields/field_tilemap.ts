@@ -35,8 +35,6 @@ namespace pxtblockly {
         private lightMode: boolean;
         private undoRedoState: any;
 
-        private project: pxt.TilemapProject;
-
         isGreyBlock: boolean;
 
         constructor(text: string, params: any, validator?: Function) {
@@ -78,6 +76,10 @@ namespace pxtblockly {
         showEditor_() {
             if (this.isGreyBlock) return;
 
+            if (this.sourceBlock_) {
+                upgradeTilemapsInWorkspace(this.sourceBlock_.workspace, pxt.react.getTilemapProject());
+            }
+
             (this.params as any).blocksInfo = this.blocksInfo;
 
             const fv = pxt.react.getFieldEditorView("tilemap-editor", this.state, this.params);
@@ -93,6 +95,20 @@ namespace pxtblockly {
                     const old = this.getValue();
 
                     this.state = result;
+
+                    const project = pxt.react.getTilemapProject();
+
+                    for (let i = 0; i < result.tileset.tiles.length; i++) {
+                        const tile = result.tileset.tiles[i];
+
+                        if (tile.id.startsWith("*")) {
+                            const newTile = project.createNewTile(tile.bitmap);
+                            result.tileset.tiles[i] = newTile;
+                        }
+                        else if (!tile.data) {
+                            result.tileset.tiles[i] = project.resolveTile(tile.id);
+                        }
+                    }
 
                     this.redrawPreview();
 
@@ -169,7 +185,7 @@ namespace pxtblockly {
         private parseBitmap(newText: string) {
             if (!this.blocksInfo) return;
 
-            const tilemap = pxt.sprite.decodeTilemap(newText, "typescript", this.project);
+            const tilemap = pxt.sprite.decodeTilemap(newText, "typescript", pxt.react.getTilemapProject());
 
             // Ignore invalid bitmaps
             if (checkTilemap(tilemap)) {
@@ -184,13 +200,7 @@ namespace pxtblockly {
 
         protected initState() {
             if (!this.state) {
-                this.project = pxt.react.getTilemapProject();
-                upgradeTilemapsInWorkspace(this.sourceBlock_.workspace, this.project);
-                this.state = new pxt.sprite.TilemapData(
-                    new pxt.sprite.Tilemap(this.params.initWidth, this.params.initHeight),
-                    { tiles: [], tileWidth: 16 },
-                    new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight).data()
-                );
+                this.state = pxt.react.getTilemapProject().blankTilemap(16, this.params.initWidth, this.params.initHeight);
             }
         }
 
