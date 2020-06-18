@@ -286,7 +286,7 @@
     }
 
     function setScene(scene) {
-        tickEvent("streamer.scene", { scene: scene }, { interactiveConsent: true });
+        tickEvent("streamer.scene", { scene: scene });
         const config = readConfig();
         const lastScene = state.sceneIndex;
         const sceneIndex = scenes.indexOf(`${scene}scene`);
@@ -842,6 +842,9 @@ background-image: url(${config.backgroundImage});
         };
 
         window.onhashchange = handleHashChange;
+        window.addEventListener("error", function(message, source, lineno, colno, error) {
+            trackException(error, "error");
+        });
         window.addEventListener("unhandledrejection", function(ev) {
             trackException(ev.reason, "promise");
         });
