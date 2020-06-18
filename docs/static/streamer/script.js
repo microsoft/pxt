@@ -130,6 +130,8 @@
             config.multiEditor && "multi",
             state.paint && "paint",
             state.micError && "micerror",
+            state.recording && "recording",
+            state.screenshoting && "screenshoting",
             config.micDelay === undefined && "micdelayerror",
             !navigator.mediaDevices.getDisplayMedia && "displaymediaerror",
             config.faceCamLabel && "facecamlabel",
@@ -190,7 +192,8 @@
             addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
             addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
             addSceneButton("Timer", "Show countdown (Alt+Shift+5)", "countdown")
-            addSceneButton("PictureCenter", "Thumbnail mode (Alt+Shift+6)", "thumbnail")
+            if (config.faceCamGreenScreen)
+                addSceneButton("PictureCenter", "Thumbnail mode (Alt+Shift+6)", "thumbnail")
             if (config.hardwareCamId || config.mixer || config.twitch) {
                 addSep()
                 if (config.hardwareCamId)
@@ -198,17 +201,19 @@
                 if (config.mixer || config.twitch)
                     addButton("OfficeChat", "Chat  (Alt+Shift+8)", toggleChat, state.chat)
             }
-            addSep()
-            if (state.speech)
-                addButton("ClosedCaption", "Captions", toggleSpeech, state.speechRunning)
-            if (!!navigator.mediaDevices.getDisplayMedia) {
-                if (state.recording)
-                    addButton("Stop", "Stop recording", stopRecording)
-                else
-                    addButton("Record2", "Start recording", startRecording)
-            }
-            addButton("Settings", "Show settings", toggleSettings);
         }
+
+        addSep()
+        if (state.speech)
+            addButton("ClosedCaption", "Captions", toggleSpeech, state.speechRunning)
+        if (!!navigator.mediaDevices.getDisplayMedia) {
+            addButton("BrowserScreenShot", "Take screenshot", takeScreenshot);
+            if (state.recording)
+                addButton("Stop", "Stop recording", stopRecording)
+            else
+                addButton("Record2", "Start recording", startRecording)
+        }
+        addButton("Settings", "Show settings", toggleSettings);
 
         function addSep() {
             const sep = document.createElement("div")
@@ -330,18 +335,25 @@
         startCountdown();
     }
 
-    function startCountdown() {
+    function startCountdown(duration, callback) {
         if (!state.timerInterval) {
             if (state.timerEnd === undefined)
                 state.timerEnd = Date.now() + 300000;
             state.timerInterval = setInterval(renderCountdown, 100);
         }
+        if (duration !== undefined)
+            state.timerEnd = Date.now() + duration;
+        state.timerCallback = callback;
     }
 
     function stopCountdown() {
-        if (state.timerInterval)
+        if (state.timerInterval) {
             clearInterval(state.timerInterval);
-        state.timerInterval = undefined;
+            state.timerInterval = undefined;
+            if (state.timerCallback)
+                state.timerCallback();
+            state.timerCallback = undefined;
+        }
     }
 
     function renderCountdown() {
@@ -351,9 +363,13 @@
                 remaining = 0;
                 stopCountdown();
             }
-            const minutes = Math.floor(remaining / 60);
-            const seconds = remaining % 60;
-            countdown.innerText = `${minutes}:${pad(seconds)}`
+            if (remaining) {
+                const minutes = Math.floor(remaining / 60);
+                const seconds = remaining % 60;
+                countdown.innerText = (minutes || seconds > 10) ? `${minutes}:${pad(seconds)}` : seconds;
+            } else {
+                countdown.innerText = "";
+            }
         } else {
             countdown.innerText = ""
         }
@@ -989,23 +1005,80 @@ background-image: url(${config.backgroundImage});
         }
     }
 
-    async function startRecording() {
-        const config = readConfig();
-        state.recording = undefined;
-        let stream;
+    async function getDisplayStream(cursor) {
         try {
             selectapp.classList.remove("hidden");
-            stream = await navigator.mediaDevices.getDisplayMedia({
+            const stream = await navigator.mediaDevices.getDisplayMedia({
                 video: {
                     displaySurface: "browser",
-                    cursor: "always"
+                    cursor: cursor ? "always" : "never"
                 }
             });
+            return stream;
         }
         finally {
             selectapp.classList.add("hidden");
         }
+    }
 
+    async function takeScreenshot() {
+        if (state.screenshoting || state.recording) return;
+
+        let stream = state.screenshotStream;
+        if (!stream) {
+            stream = state.screenshotStream = await getDisplayStream(false);
+            stream.onerror = clean;
+            stream.oninactive = clean;
+            stream.onended = clean;
+            const video = state.screenshotVideo = document.createElement("video");
+            video.oncanplay = () => {
+                video.play();
+            }
+            video.onabort = clean;
+            video.onerror = clean;
+            video.srcObject = stream;
+        }
+
+        state.screenshoting = true;
+        startCountdown(6000, screenshotVideo);
+        render();
+
+        function clean() {
+            state.screenshoting = false;
+            state.screenshotVideo = undefined;
+            stopStream(state.screenshotStream);
+            state.screenshotStream = undefined;
+            state.timerCallback = undefined;
+            stopCountdown();
+            render();
+        }
+    }
+
+    function screenshotVideo() {
+        if (!state.screenshoting) return;
+        const video = state.screenshotVideo;
+        if (!video) return;
+
+        state.screenshoting = false;
+        countdown.style.display = "none"
+        toolbox.style.display = "none"
+        render();    
+        setTimeout(function() {
+            const cvs = document.createElement("canvas");
+            cvs.width = video.videoWidth;
+            cvs.height = video.videoHeight;
+            const ctx = cvs.getContext("2d");
+            ctx.drawImage(video, 0, 0);
+            cvs.toBlob(img => downloadBlob(img, "screenshot.png", "image/png"));
+            countdown.style.display = "block"
+            toolbox.style.display = "block"
+        }, 200) // let browser hide countdown
+    }
+
+    async function startRecording() {
+        const config = readConfig();
+        state.recording = undefined;
+        const stream = await getDisplayStream(true);
         try {
             state.micError = false;
             const audioStream = await startMicrophone();
@@ -1044,7 +1117,6 @@ background-image: url(${config.backgroundImage});
         }
         render();
 
-
         function download() {
             // makesure to close all streams
             recorder.classList.add('hidden')
@@ -1059,17 +1131,20 @@ background-image: url(${config.backgroundImage});
             const blob = new Blob(chunks, {
                 type: "video/webm"
             });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            document.body.appendChild(a);
-            a.style = "display: none";
-            a.href = url;
-            a.download = "recording.webm";
-            a.click();
-            window.URL.revokeObjectURL(url);
-
+            downloadBlob(blob, "recording.webm");
             render();
         }
+    }
+
+    function downloadBlob(blob, name) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        document.body.appendChild(a);
+        a.style = "display: none";
+        a.href = url;
+        a.download = name;
+        a.click();
+        window.URL.revokeObjectURL(url);
     }
 
     async function loadSettings() {
