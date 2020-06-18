@@ -44,6 +44,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         super(parent);
 
         this.listenToBlockErrorChanges = this.listenToBlockErrorChanges.bind(this)
+        this.onErrorListResize = this.onErrorListResize.bind(this)
     }
 
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
@@ -651,14 +652,42 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     display(): JSX.Element {
+        /*
+        TODO:
+        In monaco we have:
+        <div id="monacoEditorRightArea" className="monacoEditorRightArea">
+            <div id='monacoEditorInner'>
+                ...
+            </div>
+            <ErrorList />
+        </div>
+
+        .monacoEditorRightArea {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        #monacoEditorInner {
+            position: relative !important;
+            display: inline-block;
+            overflow: hidden;
+        }
+        */
         let flyoutOnly = this.parent.state.editorState && this.parent.state.editorState.hasCategories === false;
         return (
-            <div>
-                <ErrorList listenToBlockErrorChanges={this.listenToBlockErrorChanges}/>
-                <div id="blocksEditor"></div>
-                <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
+            <div className="blocksAndErrorList">
+                <div className="blocksEditorOuter" >
+                    <div id="blocksEditor"></div>
+                    <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
+                </div>
+                <ErrorList listenToBlockErrorChanges={this.listenToBlockErrorChanges}
+                    onSizeChange={this.onErrorListResize} />
             </div>
         )
+    }
+
+    onErrorListResize() {
+        this.parent.fireResize();
     }
 
     listenToBlockErrorChanges(handlerKey: string, handler: (errors: pxt.blocks.BlockDiagnostic[]) => void) {
