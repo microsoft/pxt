@@ -913,6 +913,10 @@ background-image: url(${config.backgroundImage});
                 el.parentElement.classList.add("greenscreen")
                 // https://github.com/brianchirls/Seriously.js/
                 const canvas = document.getElementById(el.id + "serious");
+                if (rotate)
+                    canvas.classList.add("rotate")
+                else
+                    canvas.classList.remove("rotate");    
                 canvas.width = el.videoWidth;
                 canvas.height = el.videoHeight;
                 const seriously = new Seriously();
