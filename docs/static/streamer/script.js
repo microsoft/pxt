@@ -49,6 +49,7 @@
     let editorConfigs;
 
     try {
+        tickEvent("streamer.load.start")
         body.classList.add("loading");
         console.log(`loading...`)
         editorConfigs = await fetchJSON("editors.json");
@@ -68,14 +69,14 @@
         await loadHardwareCam()
         await loadSettings()
         loadVideos()
-        tickEvent("streamer.load")
         setScene("right")
         render()
         handleHashChange();
+        tickEvent("streamer.load.ok")
     } catch (e) {
+        tickEvent("streamer.load.error")
         trackException(e);
         console.error(e)
-        body.classList.remove("loading");
     }
 
     function saveConfig(config) {
