@@ -616,24 +616,6 @@ body.chat #chat {
     opacity: 90%;
 }
 
-/* thumbnail scene */
-body.thumbnailscene .facecam {
-    bottom: -25%;
-    height: unset;
-    width: 100%;
-    left: -25%;
-}
-body.thumbnailscene.hardware .hardwarecam {
-    top: -25%;
-    height: unset;
-    width: 100%;
-    right: -25%;
-}
-body.thumbnailscene #editor {
-    right: -20%;
-    top: 1%;
-}
-
 /* rightscene: browser with facecam on right */
 body.rightscene #editor {
     left: 1%;
@@ -1016,6 +998,50 @@ body.countdownscene.hardware .hardwarecam {
     right: -10%;
     width: 120%;
     bottom: -10%;
+}
+
+
+/* thumbnail */
+body.leftscene.thumbnail .facecam,
+body.rightscene.thumbnail .facecam {
+    bottom: -25%;
+    height: unset;
+    width: 100%;
+    clip-path: unset;
+}
+body.leftscene.thumbnail.hardware .hardwarecam,
+body.rightscene.thumbnail.hardware .hardwarecam {
+    top: -25%;
+    height: unset;    
+    bottom: unset;
+    width: 100%;
+    clip-path: unset;
+}
+body.leftscene.thumbnail #editor,
+body.rightscene.thumbnail #editor {
+    top: 1%;
+    left: unset;
+    right: unset;
+}
+
+body.leftscene.thumbnail .facecam {
+    left: -25%;
+}
+body.leftscene.thumbnail.hardware .hardwarecam {
+    right: -25%;
+}
+body.leftscene.thumbnail #editor {
+    right: -20%;
+}
+
+body.rightscene.thumbnail .facecam {
+    left: 25%;
+}
+body.rightscene.thumbnail.hardware .hardwarecam {
+    right: 20%;
+}
+body.rightscene.thumbnail #editor {
+    right: 20%;
 }
     </style>
     <style id="editorstyle"></style>
