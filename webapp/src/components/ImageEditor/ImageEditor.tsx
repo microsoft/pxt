@@ -178,7 +178,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                     const tile = (state.store.present as TilemapState).tileset.tiles[index];
                     this.setState({
                         editingTile: true,
-                        editTileValue: pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(tile.data), "typescript")
+                        editTileValue: pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(tile.bitmap), "typescript")
                     });
                 }
                 else {

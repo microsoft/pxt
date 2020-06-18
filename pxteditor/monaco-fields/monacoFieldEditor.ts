@@ -10,6 +10,10 @@ namespace pxt.editor {
         contentDiv(): HTMLDivElement;
         getText(range: monaco.Range): string;
         blocksInfo(): pxtc.BlocksInfo;
+
+        package(): pxt.MainPackage;
+        writeFileAsync(filename: string, content: string): Promise<void>;
+        readFile(filename: string): string;
     }
 
     export interface MonacoFieldEditor {

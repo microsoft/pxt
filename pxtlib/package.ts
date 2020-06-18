@@ -228,7 +228,8 @@ namespace pxt {
                             dataEncoding: v.dataEncoding || base.dataEncoding || "base64",
                             icon,
                             namespace: ns,
-                            mimeType
+                            mimeType,
+                            tilemapTile: v.tilemapTile
                         }
                     }
                 }

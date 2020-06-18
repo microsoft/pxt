@@ -21,17 +21,19 @@ namespace pxt.editor {
             this.editrange = editrange;
             this.host = host;
 
-            this.fv = pxt.react.getFieldEditorView(this.getFieldEditorId(), this.textToValue(host.getText(editrange)), this.getOptions());
+            return this.initAsync().then(() => {
+                this.fv = pxt.react.getFieldEditorView(this.getFieldEditorId(), this.textToValue(host.getText(editrange)), this.getOptions());
 
-            this.fv.onHide(() => {
-                this.onClosed();
-            });
+                this.fv.onHide(() => {
+                    this.onClosed();
+                });
 
-            this.fv.show();
+                this.fv.show();
 
-            return new Promise((resolve, reject) => {
-                this.resolver = resolve;
-                this.rejecter = reject;
+                return new Promise((resolve, reject) => {
+                    this.resolver = resolve;
+                    this.rejecter = reject;
+                });
             });
         }
 
@@ -50,6 +52,10 @@ namespace pxt.editor {
 
         dispose() {
             this.onClosed();
+        }
+
+        protected initAsync(): Promise<void> {
+            return Promise.resolve();
         }
 
         protected textToValue(text: string): U {

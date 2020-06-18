@@ -3,6 +3,7 @@
 
 import * as compiler from "./compiler";
 import * as blocklyFieldView from "./blocklyFieldView";
+import * as pkg from "./package";
 
 interface OwnedRange {
     line: number;
@@ -82,6 +83,20 @@ export class ViewZoneEditorHost implements pxt.editor.MonacoFieldEditorHost, mon
         }
     }
 
+    package() {
+        return pkg.mainPkg;
+    }
+
+    writeFileAsync(filename: string, content: string): Promise<void> {
+        const epkg = pkg.mainEditorPkg();
+
+        return epkg.setContentAsync(filename, content);
+    }
+
+    readFile(filename: string): string {
+        return this.package().host().readFile(pkg.mainPkg, filename);
+    }
+
     protected showViewZoneAsync(): Promise<void> {
         if (this._deferredShow) return Promise.resolve();
         return new Promise(resolve => {
@@ -134,6 +149,20 @@ export class ModalEditorHost implements pxt.editor.MonacoFieldEditorHost {
 
     blocksInfo(): pxtc.BlocksInfo {
         return this.blocks;
+    }
+
+    package() {
+        return pkg.mainPkg;
+    }
+
+    writeFileAsync(filename: string, content: string): Promise<void> {
+        const epkg = pkg.mainEditorPkg();
+
+        return epkg.setContentAsync(filename, content);
+    }
+
+    readFile(filename: string): string {
+        return this.package().host().readFile(pkg.mainPkg, filename);
     }
 
     showAsync(fileType: pxt.editor.FileType, editor: monaco.editor.IStandaloneCodeEditor): Promise<pxt.editor.TextEdit> {

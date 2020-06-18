@@ -5,6 +5,7 @@ import * as ReactDOM from "react-dom";
 
 import { ImageFieldEditor } from "./components/ImageFieldEditor";
 import { TilemapFieldEditor } from "./components/TilemapFieldEditor";
+import { mainPkg } from "./package";
 
 export interface EditorBounds {
     top: number;
@@ -206,6 +207,10 @@ export function init() {
         if (cachedBounds) current.resize(cachedBounds);
 
         return current;
+    }
+
+    pxt.react.getTilemapProject = () => {
+        return new pxt.TilemapProject(mainPkg)
     }
 }
 

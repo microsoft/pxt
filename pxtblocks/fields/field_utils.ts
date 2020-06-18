@@ -102,20 +102,7 @@ namespace pxtblockly {
                 if (tile) {
                     if (!tileColors[tile]) {
                         const tileInfo = data.tileset.tiles[tile];
-
-                        if (tileInfo.data) {
-                            tileColors[tile] = pxt.sprite.computeAverageColor(pxt.sprite.Bitmap.fromData(tileInfo.data), colors);
-                        }
-                        else {
-                            const bitmap = pxt.sprite.getBitmap(blocksInfo, tileInfo.qualifiedName);
-
-                            if (bitmap) {
-                                tileColors[tile] = pxt.sprite.computeAverageColor(bitmap, colors);
-                            }
-                            else {
-                                tileColors[tile] = "#ffffff";
-                            }
-                        }
+                        tileColors[tile] = pxt.sprite.computeAverageColor(pxt.sprite.Bitmap.fromData(tileInfo.bitmap), colors);
                     }
 
                     context.fillStyle = tileColors[tile];
@@ -131,13 +118,7 @@ namespace pxtblockly {
         return canvas.toDataURL();
     }
 
-    export function saveTilesetTile(ws: Blockly.Workspace, tile: pxt.sprite.TileInfo) {
-        deleteTilesetTileIfExists(ws, tile);
-
-        ws.createVariable(pxt.sprite.tileToBlocklyVariable(tile), pxt.sprite.BLOCKLY_TILESET_TYPE);
-    }
-
-    export function deleteTilesetTileIfExists(ws: Blockly.Workspace, tile: pxt.sprite.TileInfo) {
+    function deleteTilesetTileIfExists(ws: Blockly.Workspace, tile: pxt.sprite.legacy.LegacyTileInfo) {
         const existing = ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE);
 
         for (const model of existing) {
@@ -146,10 +127,6 @@ namespace pxtblockly {
                 break;
             }
         }
-    }
-
-    export function getAllTilesetTiles(ws: Blockly.Workspace): pxt.sprite.TileInfo[] {
-        return ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE).map(model => pxt.sprite.blocklyVariableToTile(model.name));
     }
 
     export interface FieldEditorReference<U extends Blockly.Field> {
@@ -165,6 +142,40 @@ namespace pxtblockly {
 
     export function getAllBlocksWithTilesets(ws: Blockly.Workspace): FieldEditorReference<FieldTileset>[] {
         return getAllFieldsCore(ws, f => f instanceof FieldTileset);
+    }
+
+    export function upgradeTilemapsInWorkspace(ws: Blockly.Workspace, proj: pxt.TilemapProject) {
+        const allTiles = ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE).map(model => pxt.sprite.legacy.blocklyVariableToTile(model.name));
+        if (!allTiles.length) return;
+
+        let mapping: pxt.Tile[] = [];
+
+        for (const tile of allTiles) {
+            if (tile.qualifiedName) {
+                mapping[tile.projectId] = proj.resolveTile(tile.qualifiedName);
+            }
+            else if (tile.data) {
+                mapping[tile.projectId] = proj.createNewTile(tile.data);
+            }
+            deleteTilesetTileIfExists(ws, tile);
+        }
+
+        const tilemaps = getAllBlocksWithTilemaps(ws);
+
+        for (const tilemap of tilemaps) {
+            const value = tilemap.ref.getValue();
+            const legacy = pxt.sprite.legacy.decodeTilemap(value, "typescript");
+
+            const newData = new pxt.sprite.TilemapData(
+                legacy.tilemap, {
+                    tileWidth: legacy.tileset.tileWidth,
+                    tiles: legacy.tileset.tiles.map(t => mapping[t.projectId])
+                },
+                legacy.layers
+            );
+
+            tilemap.ref.setValue(pxt.sprite.encodeTilemap(newData, "typescript"));
+        }
     }
 
     function getAllFieldsCore<U extends Blockly.Field>(ws: Blockly.Workspace, predicate: (field: Blockly.Field) => boolean): FieldEditorReference<U>[] {

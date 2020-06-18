@@ -550,14 +550,14 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         }
     }
 
-    protected generateTile(index: number, tileset: pxt.sprite.TileSet) {
+    protected generateTile(index: number, tileset: pxt.TileSet) {
         if (!tileset.tiles[index]) {
             return null;
         }
         const tileImage = document.createElement("canvas");
         tileImage.width = tileset.tileWidth * TILE_SCALE;
         tileImage.height = tileset.tileWidth * TILE_SCALE;
-        this.drawBitmap(pxt.sprite.Bitmap.fromData(tileset.tiles[index].data), 0, 0, true, TILE_SCALE, tileImage);
+        this.drawBitmap(pxt.sprite.Bitmap.fromData(tileset.tiles[index].bitmap), 0, 0, true, TILE_SCALE, tileImage);
         this.tileCache[index] = tileImage;
         return tileImage;
     }
