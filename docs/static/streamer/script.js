@@ -683,7 +683,7 @@ background-image: url(${config.backgroundImage});
             state.faceCamError = false;
             body.classList.add("loading");
             facecam.classList.remove("error");
-            await startStream(facecam, config.faceCamId, config.faceCamRotate, config.faceCamGreenScreen);
+            await startStream(facecam, config.faceCamId, config.faceCamRotate, config.faceCamGreenScreen, config.faceCamContour);
             console.log(`face cam started`)
             if (!config.faceCamId)
                 stopStream(facecam.srcObject); // request permission only
@@ -709,7 +709,7 @@ background-image: url(${config.backgroundImage});
         if (config.hardwareCamId) {
             try {
                 state.hardwareCamError = false;
-                await startStream(hardwarecam, config.hardwareCamId, config.hardwareCamRotate, config.hardwareCamGreenScreen);
+                await startStream(hardwarecam, config.hardwareCamId, config.hardwareCamRotate, config.hardwareCamGreenScreen, config.hardwareCamContour);
                 console.log(`hardware cam started`)
                 return; // success!
             }
@@ -842,7 +842,9 @@ background-image: url(${config.backgroundImage});
         };
 
         window.onhashchange = handleHashChange;
-
+        window.addEventListener("unhandledrejection", function(ev) {
+            trackException(ev.reason, "promise");
+        });
     }
 
     function handleHashChange() {
@@ -871,7 +873,7 @@ background-image: url(${config.backgroundImage});
         window.history.replaceState('', '', '#')
     }
 
-    async function startStream(el, deviceId, rotate, greenscreen) {
+    async function startStream(el, deviceId, rotate, greenscreen, contourColor) {
         stopStream(el.srcObject)
         console.log(`trying device ${deviceId}`)
         if (deviceId === DISPLAY_DEVICE_ID) {
@@ -913,6 +915,10 @@ background-image: url(${config.backgroundImage});
                 el.parentElement.classList.add("greenscreen")
                 // https://github.com/brianchirls/Seriously.js/
                 const canvas = document.getElementById(el.id + "serious");
+                if (rotate)
+                    canvas.classList.add("rotate")
+                else
+                    canvas.classList.remove("rotate");    
                 canvas.width = el.videoWidth;
                 canvas.height = el.videoHeight;
                 const seriously = new Seriously();
@@ -923,6 +929,12 @@ background-image: url(${config.backgroundImage});
                 chroma.clipBlack = 0.6;
                 chroma.source = source;
                 contour.source = chroma;
+                let c = parseColor(contourColor);
+                if (c) {
+                    c = c.map(v => v / 0xff);
+                    c.push(1);
+                    contour.color = c
+                }
                 target.source = contour;
                 seriously.go();
 
@@ -936,6 +948,27 @@ background-image: url(${config.backgroundImage});
                     el.seriously = undefined;
                 }
             }
+        }
+
+        function parseColor(c) {
+            if (!c) return;
+            let m = /^#([a-f0-9]{3})$/i.exec(c);
+            if( m) {
+                return [
+                    parseInt(m[1].charAt(0),16)*0x11,
+                    parseInt(m[1].charAt(1),16)*0x11,
+                    parseInt(m[1].charAt(2),16)*0x11
+                ];
+            }
+            m = /^#([a-f0-9]{6})$/i.exec(c);
+            if( m) {
+                return [
+                    parseInt(m[1].substr(0,2),16),
+                    parseInt(m[1].substr(2,2),16),
+                    parseInt(m[1].substr(4,2),16)
+                ];
+            }            
+            return undefined;
         }
     }
 
@@ -1249,6 +1282,21 @@ background-image: url(${config.backgroundImage});
             render()
             loadFaceCam().then(() => loadSettings())
         }
+        const facecamcontourinput = document.getElementById("facecamcontourinput")
+        facecamcontourinput.value = config.faceCamContour || ""
+        facecamcontourinput.onchange = function (e) {
+            config.faceCamContour = undefined;
+            if (/^#[a-fA-F0-9]{6}$/.test(facecamcontourinput.value))
+                config.faceCamContour = facecamcontourinput.value
+            saveConfig(config);
+            loadFaceCam().then(() => loadSettings())
+        }
+        const facecamcontourclear = document.getElementById("facecamcontourclear");
+        facecamcontourclear.onclick = function(e) {
+            config.faceCamContour = undefined;
+            saveConfig(config);
+            loadFaceCam().then(() => loadSettings())
+        }        
 
         config.faceCamFilter = config.faceCamFilter || {};
         ["contrast", "brightness", "saturate"].forEach(function (k) {
@@ -1316,6 +1364,22 @@ background-image: url(${config.backgroundImage});
             render()
             loadHardwareCam().then(() => loadSettings())
         }
+        const hardwarecamcontourinput = document.getElementById("hardwarecamcontourinput")
+        hardwarecamcontourinput.value = config.hardwareCamContour || ""
+        hardwarecamcontourinput.onchange = function (e) {
+            config.hardwareCamContour = undefined;
+            if (/^#[a-fA-F0-9]{6}$/.test(hardwarecamcontourinput.value))
+                config.hardwareCamContour = hardwarecamcontourinput.value
+            saveConfig(config);
+            loadHardwareCam().then(() => loadSettings())
+        }
+        const hardwarecamcontourclear = document.getElementById("hardwarecamcontourclear");
+        hardwarecamcontourclear.onclick = function(e) {
+            config.hardwareCamContour = undefined;
+            saveConfig(config);
+            loadHardwareCam().then(() => loadSettings())
+        }        
+
         config.hardwareCamFilter = config.hardwareCamFilter || {};
         ["contrast", "brightness", "saturate"].forEach(function (k) {
             const elid = "hardwarecam" + k;
@@ -1650,6 +1714,16 @@ background-image: url(${config.backgroundImage});
         if (opts && opts.interactiveConsent && typeof mscc !== "undefined" && !mscc.hasConsent()) {
             mscc.setConsent();
         }
+        const args = tickProps(data);
+        pxt.aiTrackEvent(id, args[0], args[1]);
+    }
+
+    function trackException(err, id, data) {
+        const args = tickProps(data);
+        pxt.aiTrackException(err, id, args[0]);
+    }
+
+    function tickProps(data) {
         const config = readConfig();
         const props = {
             target: "streamer",
@@ -1667,6 +1741,6 @@ background-image: url(${config.backgroundImage});
                 else if (typeof data[k] == "number") measures[k] = data[k];
                 else props[k] = JSON.stringify(data[k] || '');
             });
-        pxt.aiTrackEvent(id, props, measures);
+        return [props, measures];
     }
 })()
