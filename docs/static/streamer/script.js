@@ -192,7 +192,8 @@
             addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
             addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
             addSceneButton("Timer", "Show countdown (Alt+Shift+5)", "countdown")
-            addSceneButton("PictureCenter", "Thumbnail mode (Alt+Shift+6)", "thumbnail")
+            if (config.faceCamGreenScreen)
+                addSceneButton("PictureCenter", "Thumbnail mode (Alt+Shift+6)", "thumbnail")
             if (config.hardwareCamId || config.mixer || config.twitch) {
                 addSep()
                 if (config.hardwareCamId)
