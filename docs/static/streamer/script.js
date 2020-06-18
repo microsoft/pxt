@@ -202,6 +202,7 @@
             if (state.speech)
                 addButton("ClosedCaption", "Captions", toggleSpeech, state.speechRunning)
             if (!!navigator.mediaDevices.getDisplayMedia) {
+                addButton("BrowserScreenShot", "Take screenshot", takeScreenshot);
                 if (state.recording)
                     addButton("Stop", "Stop recording", stopRecording)
                 else
@@ -989,23 +990,46 @@ background-image: url(${config.backgroundImage});
         }
     }
 
-    async function startRecording() {
-        const config = readConfig();
-        state.recording = undefined;
-        let stream;
+    async function getDisplayStream(cursor) {
         try {
             selectapp.classList.remove("hidden");
-            stream = await navigator.mediaDevices.getDisplayMedia({
+            const stream = await navigator.mediaDevices.getDisplayMedia({
                 video: {
                     displaySurface: "browser",
-                    cursor: "always"
+                    cursor: cursor ? "always" : "never"
                 }
             });
+            return stream;
         }
         finally {
             selectapp.classList.add("hidden");
         }
+    }
 
+    async function takeScreenshot() {
+        const stream = await getDisplayStream(true);
+        const video = document.createElement("video");
+        video.oncanplay = () => {
+            video.play();
+            // start countdown
+            screenshotVideo(video);
+        }
+        video.srcObject = stream;
+    }
+
+    function screenshotVideo(video) {
+        const cvs = document.createElement("canvas");
+        cvs.width = video.videoWidth;
+        cvs.height = video.videoHeight;
+        const ctx = cvs.getContext("2d");
+        ctx.drawImage(video, 0, 0);
+        cvs.toBlob(img => downloadBlob(img, "screenshot.png", "image/png"));
+    }
+
+    async function startRecording() {
+        const config = readConfig();
+        state.recording = undefined;
+        const stream = getDisplayStream(true);
         try {
             state.micError = false;
             const audioStream = await startMicrophone();
@@ -1044,7 +1068,6 @@ background-image: url(${config.backgroundImage});
         }
         render();
 
-
         function download() {
             // makesure to close all streams
             recorder.classList.add('hidden')
@@ -1059,17 +1082,20 @@ background-image: url(${config.backgroundImage});
             const blob = new Blob(chunks, {
                 type: "video/webm"
             });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            document.body.appendChild(a);
-            a.style = "display: none";
-            a.href = url;
-            a.download = "recording.webm";
-            a.click();
-            window.URL.revokeObjectURL(url);
-
+            downloadBlob(blob, "recording.webm");
             render();
         }
+    }
+
+    function downloadBlob(blob, name) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        document.body.appendChild(a);
+        a.style = "display: none";
+        a.href = url;
+        a.download = name;
+        a.click();
+        window.URL.revokeObjectURL(url);
     }
 
     async function loadSettings() {
