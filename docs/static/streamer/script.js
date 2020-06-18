@@ -134,8 +134,10 @@
             state.screenshoting && "screenshoting",
             config.micDelay === undefined && "micdelayerror",
             !navigator.mediaDevices.getDisplayMedia && "displaymediaerror",
-            config.faceCamLabel && "facecamlabel",
-            config.hardwareCamLabel && "hardwarecamlabel",
+            config.faceCamLabel && !config.faceCamCircular && "facecamlabel",
+            config.hardwareCamLabel && !config.hardwareCamCircular && "hardwarecamlabel",
+            config.faceCamCircular && "facecamcircular",
+            config.hardwareCamCircular && "hardwarecamcircular",
             config.faceCamId === DISPLAY_DEVICE_ID && "facecamdisplay",
             config.hardwareCamId === DISPLAY_DEVICE_ID && "hardwarecamdisplay",
             config.greenScreen && "greenscreen",
@@ -1276,7 +1278,14 @@ background-image: url(${config.backgroundImage});
             render()
             loadFaceCam().then(() => loadSettings())
         }
-
+        const facecamcircularcheckbox = document.getElementById("facecamcircularcheckbox")
+        facecamcircularcheckbox.checked = !!config.faceCamCircular
+        facecamcircularcheckbox.onchange = function () {
+            config.faceCamCircular = !!facecamcircularcheckbox.checked
+            saveConfig(config)
+            render()
+            loadFaceCam().then(() => loadSettings())
+        }
         const facecamgreenscreencheckbox = document.getElementById("facecamgreenscreencheckbox")
         facecamgreenscreencheckbox.checked = !!config.faceCamGreenScreen
         facecamgreenscreencheckbox.onchange = function () {
@@ -1358,6 +1367,14 @@ background-image: url(${config.backgroundImage});
             config.hardwareCamRotate = !!hardwarerotatecheckbox.checked
             saveConfig(config)
             loadHardwareCam().then(() => loadSettings())
+        }
+        const hardwarecamcircularcheckbox = document.getElementById("hardwarecamcircularcheckbox")
+        hardwarecamcircularcheckbox.checked = !!config.hardwareCamCircular
+        hardwarecamcircularcheckbox.onchange = function () {
+            config.hardwareCamCircular = !!hardwarecamcircularcheckbox.checked
+            saveConfig(config)
+            render()
+            loadFaceCam().then(() => loadSettings())
         }
         const hardwarecamgreenscreencheckbox = document.getElementById("hardwarecamgreenscreencheckbox")
         hardwarecamgreenscreencheckbox.checked = !!config.hardwareCamGreenScreen

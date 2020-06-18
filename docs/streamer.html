@@ -528,14 +528,10 @@ body.slim .container {
     height:100%;
     bottom:0;    
 }
-body.facecamcircle .facecam,
-body.hardwarecamcircle .hardwarecam {
+body.facecamcircular .facecam,
+body.hardwarecamcircular .hardwarecam {
     border:none;
     clip-path: circle(42% at 50% 50%);
-}
-body.facecamcircle .videolabel,
-body.hardwarecamcircle .videolabel {
-    display: none;
 }
 
 .box.greenscreen .videocanvas {
@@ -1093,6 +1089,10 @@ body.countdownscene.hardware .hardwarecam {
             <input id="facecamlabelinput" placeholder="My name, social accounts" />
         </div>
         <div class="field">
+            <input type="checkbox" id="facecamcircularcheckbox"></input>
+            <label for="facecamcircularcheckbox">Circular</label>
+        </div>
+        <div class="field">
             <label for="facecamcontrast">Contrast</label>
             <input type="range" id="facecamcontrast" min="0" max="100" step="1" list="tickmarks">
         </div>
@@ -1126,6 +1126,10 @@ body.countdownscene.hardware .hardwarecam {
         <div class="field">
             <label for="hardwarecamlabelinput">Camera label</label>
             <input id="hardwarecamlabelinput" placeholder="Cam description" />
+        </div>
+        <div class="field">
+            <input type="checkbox" id="hardwarecamcircularcheckbox"></input>
+            <label for="hardwarecamcircularcheckbox">Circular</label>
         </div>
         <div class="field"> 
             <label for="hardwarecamcontrast">Contrast</label>
