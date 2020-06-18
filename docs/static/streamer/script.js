@@ -194,9 +194,9 @@
             if (config.hardwareCamId || config.mixer || config.twitch) {
                 addSep()
                 if (config.hardwareCamId)
-                    addButton("Robot", "Hardware webcam (Alt+Shift+6)", toggleHardware, state.hardware)
+                    addButton("Robot", "Hardware webcam (Alt+Shift+7)", toggleHardware, state.hardware)
                 if (config.mixer || config.twitch)
-                    addButton("OfficeChat", "Chat  (Alt+Shift+7)", toggleChat, state.chat)
+                    addButton("OfficeChat", "Chat  (Alt+Shift+8)", toggleChat, state.chat)
             }
             addSep()
             if (state.speech)
@@ -1515,9 +1515,13 @@ background-image: url(${config.backgroundImage});
                     setScene("countdown");
                     break;
                 case 54: // 6
-                    toggleHardware(ev);
+                    ev.preventDefault();
+                    setScene("thumbnail");
                     break;
                 case 55: // 7
+                    toggleHardware(ev);
+                    break;
+                case 56: // 8
                     toggleChat(ev);
                     break;
 
