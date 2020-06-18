@@ -1028,10 +1028,13 @@ background-image: url(${config.backgroundImage});
         if (!stream) {
             stream = state.screenshotStream = await getDisplayStream(false);
             stream.onerror = clean;
+            stream.oninactive = clean;
+            stream.onended = clean;
             const video = state.screenshotVideo = document.createElement("video");
             video.oncanplay = () => {
                 video.play();
             }
+            video.onabort = clean;
             video.onerror = clean;
             video.srcObject = stream;
         }
@@ -1041,9 +1044,11 @@ background-image: url(${config.backgroundImage});
         render();
 
         function clean() {
+            state.screenshoting = false;
             state.screenshotVideo = undefined;
             stopStream(state.screenshotStream);
             state.screenshotStream = undefined;
+            state.timerCallback = undefined;
             stopCountdown();
             render();
         }
