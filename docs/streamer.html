@@ -1102,6 +1102,11 @@ body.countdownscene.hardware .hardwarecam {
             <input type="checkbox" id="facecamgreenscreencheckbox"></input>
             <label for="facecamgreenscreencheckbox">Erase green screen</label>
         </div>
+        <div class="field">
+            <label for="facecamcontourinput">Silhouette contour color (when erasing green screen)</label>
+            <input id="facecamcontourinput" type="color" />
+            <button id="facecamcontourclear">clear</button>
+        </div>
         <h2>Document camera</h2>
         <div class="field">
             <label for="hardwarecamselect">Choose a document Webcam</label>
@@ -1131,6 +1136,11 @@ body.countdownscene.hardware .hardwarecam {
         <div class="field">
             <input type="checkbox" id="hardwarecamgreenscreencheckbox"></input>
             <label for="hardwarecamgreenscreencheckbox">Erase green screen</label>
+        </div>
+        <div class="field">
+            <label for="hardwarecamcontourinput">Silhouette contour color (when erasing green screen)</label>
+            <input id="hardwarecamcontourinput" type="color" />
+            <button id="hardwarecamcontourclear">clear</button>
         </div>
         <h2>Style</h2>
         <div class="field">
@@ -1173,8 +1183,7 @@ body.countdownscene.hardware .hardwarecam {
         <div class="field">
             <input type="checkbox" id="greenscreencheckbox"></input>
             <label for="greenscreencheckbox">Green background (Chroma Key)</label>
-        </div>          
-
+        </div>
         <h2>Countdown</h2>
         <div class="field">
             <label for="startvideoinput">Intro video (must be https://...). Will play when leaving the countdown view.</label>
