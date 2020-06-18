@@ -1072,7 +1072,7 @@ background-image: url(${config.backgroundImage});
     async function startRecording() {
         const config = readConfig();
         state.recording = undefined;
-        const stream = getDisplayStream(true);
+        const stream = await getDisplayStream(true);
         try {
             state.micError = false;
             const audioStream = await startMicrophone();
