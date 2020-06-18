@@ -200,18 +200,19 @@
                 if (config.mixer || config.twitch)
                     addButton("OfficeChat", "Chat  (Alt+Shift+8)", toggleChat, state.chat)
             }
-            addSep()
-            if (state.speech)
-                addButton("ClosedCaption", "Captions", toggleSpeech, state.speechRunning)
-            if (!!navigator.mediaDevices.getDisplayMedia) {
-                addButton("BrowserScreenShot", "Take screenshot", takeScreenshot);
-                if (state.recording)
-                    addButton("Stop", "Stop recording", stopRecording)
-                else
-                    addButton("Record2", "Start recording", startRecording)
-            }
-            addButton("Settings", "Show settings", toggleSettings);
         }
+
+        addSep()
+        if (state.speech)
+            addButton("ClosedCaption", "Captions", toggleSpeech, state.speechRunning)
+        if (!!navigator.mediaDevices.getDisplayMedia) {
+            addButton("BrowserScreenShot", "Take screenshot", takeScreenshot);
+            if (state.recording)
+                addButton("Stop", "Stop recording", stopRecording)
+            else
+                addButton("Record2", "Start recording", startRecording)
+        }
+        addButton("Settings", "Show settings", toggleSettings);
 
         function addSep() {
             const sep = document.createElement("div")
@@ -1020,6 +1021,8 @@ background-image: url(${config.backgroundImage});
     }
 
     async function takeScreenshot() {
+        if (state.screenshoting || state.recording) return;
+
         let stream = state.screenshotStream;
         if (!stream) {
             stream = state.screenshotStream = await getDisplayStream(false);
@@ -1052,6 +1055,7 @@ background-image: url(${config.backgroundImage});
 
         state.screenshoting = false;
         countdown.style.display = "none"
+        toolbox.style.display = "none"
         render();    
         setTimeout(function() {
             const cvs = document.createElement("canvas");
@@ -1061,7 +1065,8 @@ background-image: url(${config.backgroundImage});
             ctx.drawImage(video, 0, 0);
             cvs.toBlob(img => downloadBlob(img, "screenshot.png", "image/png"));
             countdown.style.display = "block"
-        }, 700) // let browser hide countdown
+            toolbox.style.display = "block"
+        }, 200) // let browser hide countdown
     }
 
     async function startRecording() {
