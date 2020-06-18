@@ -842,7 +842,9 @@ background-image: url(${config.backgroundImage});
         };
 
         window.onhashchange = handleHashChange;
-
+        window.addEventListener("unhandledrejection", function(ev) {
+            trackException(ev.reason, "promise");
+        });
     }
 
     function handleHashChange() {
@@ -1712,6 +1714,16 @@ background-image: url(${config.backgroundImage});
         if (opts && opts.interactiveConsent && typeof mscc !== "undefined" && !mscc.hasConsent()) {
             mscc.setConsent();
         }
+        const args = tickProps(data);
+        pxt.aiTrackEvent(id, args[0], args[1]);
+    }
+
+    function trackException(err, id, data) {
+        const args = tickProps(data);
+        pxt.aiTrackException(err, id, data);
+    }
+
+    function tickProps(data) {
         const config = readConfig();
         const props = {
             target: "streamer",
@@ -1729,6 +1741,6 @@ background-image: url(${config.backgroundImage});
                 else if (typeof data[k] == "number") measures[k] = data[k];
                 else props[k] = JSON.stringify(data[k] || '');
             });
-        pxt.aiTrackEvent(id, props, measures);
+        return [props, measures];
     }
 })()
