@@ -29,12 +29,11 @@
     const frames = [editor, editor2];
     const paintColors = ["#ffe135", "#00d9ff", "#cf1fdb", "#ee0000"];
 
-    const scenes = ["leftscene", "rightscene", "chatscene", "countdownscene", "thumbnailscene"];
+    const scenes = ["leftscene", "rightscene", "chatscene", "countdownscene"];
     const LEFT_SCENE_INDEX = scenes.indexOf("leftscene")
     const RIGHT_SCENE_INDEX = scenes.indexOf("rightscene")
     const CHAT_SCENE_INDEX = scenes.indexOf("chatscene")
     const COUNTDOWN_SCENE_INDEX = scenes.indexOf("countdownscene")
-    const THUMBNAIL_SCENE_INDEX = scenes.indexOf("thumbnailscene")
     const DISPLAY_DEVICE_ID = "display"
     const state = {
         sceneIndex: -1,
@@ -44,6 +43,7 @@
         painttool: "arrow",
         recording: undefined,
         timerEnd: undefined,
+        thumbnail: false,
         paintColor: paintColors[0]
     }
     let editorConfigs;
@@ -144,6 +144,7 @@
             state.micError && "micerror",
             state.recording && "recording",
             state.screenshoting && "screenshoting",
+            state.thumbnail && "thumbnail",
             config.micDelay === undefined && "micdelayerror",
             !navigator.mediaDevices.getDisplayMedia && "displaymediaerror",
             config.faceCamLabel && !config.faceCamCircular && "facecamlabel",
@@ -206,10 +207,10 @@
             addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
             addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
             addSceneButton("Timer", "Show countdown (Alt+Shift+5)", "countdown")
-            if (config.faceCamGreenScreen)
-                addSceneButton("PictureCenter", "Thumbnail mode (Alt+Shift+6)", "thumbnail")
             if (config.hardwareCamId || config.mixer || config.twitch) {
                 addSep()
+                if (config.faceCamGreenScreen || config.hardwareCamGreenScreen)
+                    addButton("PictureCenter", "Toggle thumbnail mode (Alt+Shift+6)", toggleThumbnail, state.thumbnail)
                 if (config.hardwareCamId)
                     addButton("Robot", "Hardware webcam (Alt+Shift+7)", toggleHardware, state.hardware)
                 if (config.mixer || config.twitch)
@@ -398,6 +399,11 @@
         state.paint = !state.paint;
         clearPaint();
         updatePaintSize();
+        render();
+    }
+
+    function toggleThumbnail() {
+        state.thumbnail = !state.thumbnail;
         render();
     }
 
@@ -1687,7 +1693,7 @@ background-image: url(${config.backgroundImage});
                     break;
                 case 54: // 6
                     ev.preventDefault();
-                    setScene("thumbnail");
+                    toggleThumbnail();
                     break;
                 case 55: // 7
                     toggleHardware(ev);
