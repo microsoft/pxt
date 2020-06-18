@@ -1720,7 +1720,7 @@ background-image: url(${config.backgroundImage});
 
     function trackException(err, id, data) {
         const args = tickProps(data);
-        pxt.aiTrackException(err, id, data);
+        pxt.aiTrackException(err, id, args[0]);
     }
 
     function tickProps(data) {
