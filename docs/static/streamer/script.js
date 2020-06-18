@@ -130,6 +130,8 @@
             config.multiEditor && "multi",
             state.paint && "paint",
             state.micError && "micerror",
+            state.recording && "recording",
+            state.screenshoting && "screenshoting",
             config.micDelay === undefined && "micdelayerror",
             !navigator.mediaDevices.getDisplayMedia && "displaymediaerror",
             config.faceCamLabel && "facecamlabel",
@@ -331,18 +333,25 @@
         startCountdown();
     }
 
-    function startCountdown() {
+    function startCountdown(duration, callback) {
         if (!state.timerInterval) {
             if (state.timerEnd === undefined)
                 state.timerEnd = Date.now() + 300000;
             state.timerInterval = setInterval(renderCountdown, 100);
         }
+        if (duration !== undefined)
+            state.timerEnd = Date.now() + duration;
+        state.timerCallback = callback;
     }
 
     function stopCountdown() {
-        if (state.timerInterval)
+        if (state.timerInterval) {
             clearInterval(state.timerInterval);
-        state.timerInterval = undefined;
+            state.timerInterval = undefined;
+            if (state.timerCallback)
+                state.timerCallback();
+            state.timerCallback = undefined;
+        }
     }
 
     function renderCountdown() {
@@ -352,9 +361,13 @@
                 remaining = 0;
                 stopCountdown();
             }
-            const minutes = Math.floor(remaining / 60);
-            const seconds = remaining % 60;
-            countdown.innerText = `${minutes}:${pad(seconds)}`
+            if (remaining) {
+                const minutes = Math.floor(remaining / 60);
+                const seconds = remaining % 60;
+                countdown.innerText = (minutes || seconds > 10) ? `${minutes}:${pad(seconds)}` : seconds;
+            } else {
+                countdown.innerText = "";
+            }
         } else {
             countdown.innerText = ""
         }
@@ -1007,23 +1020,48 @@ background-image: url(${config.backgroundImage});
     }
 
     async function takeScreenshot() {
-        const stream = await getDisplayStream(true);
-        const video = document.createElement("video");
-        video.oncanplay = () => {
-            video.play();
-            // start countdown
-            screenshotVideo(video);
+        let stream = state.screenshotStream;
+        if (!stream) {
+            stream = state.screenshotStream = await getDisplayStream(false);
+            stream.onerror = clean;
+            const video = state.screenshotVideo = document.createElement("video");
+            video.oncanplay = () => {
+                video.play();
+            }
+            video.onerror = clean;
+            video.srcObject = stream;
         }
-        video.srcObject = stream;
+
+        state.screenshoting = true;
+        startCountdown(6000, screenshotVideo);
+        render();
+
+        function clean() {
+            state.screenshotVideo = undefined;
+            stopStream(state.screenshotStream);
+            state.screenshotStream = undefined;
+            stopCountdown();
+            render();
+        }
     }
 
-    function screenshotVideo(video) {
-        const cvs = document.createElement("canvas");
-        cvs.width = video.videoWidth;
-        cvs.height = video.videoHeight;
-        const ctx = cvs.getContext("2d");
-        ctx.drawImage(video, 0, 0);
-        cvs.toBlob(img => downloadBlob(img, "screenshot.png", "image/png"));
+    function screenshotVideo() {
+        if (!state.screenshoting) return;
+        const video = state.screenshotVideo;
+        if (!video) return;
+
+        state.screenshoting = false;
+        countdown.style.display = "none"
+        render();    
+        setTimeout(function() {
+            const cvs = document.createElement("canvas");
+            cvs.width = video.videoWidth;
+            cvs.height = video.videoHeight;
+            const ctx = cvs.getContext("2d");
+            ctx.drawImage(video, 0, 0);
+            cvs.toBlob(img => downloadBlob(img, "screenshot.png", "image/png"));
+            countdown.style.display = "block"
+        }, 700) // let browser hide countdown
     }
 
     async function startRecording() {
