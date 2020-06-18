@@ -29,11 +29,12 @@
     const frames = [editor, editor2];
     const paintColors = ["#ffe135", "#00d9ff", "#cf1fdb", "#ee0000"];
 
-    const scenes = ["leftscene", "rightscene", "chatscene", "countdownscene"];
+    const scenes = ["leftscene", "rightscene", "chatscene", "countdownscene", "thumbnailscene"];
     const LEFT_SCENE_INDEX = scenes.indexOf("leftscene")
     const RIGHT_SCENE_INDEX = scenes.indexOf("rightscene")
     const CHAT_SCENE_INDEX = scenes.indexOf("chatscene")
     const COUNTDOWN_SCENE_INDEX = scenes.indexOf("countdownscene")
+    const THUMBNAIL_SCENE_INDEX = scenes.indexOf("thumbnailscene")
     const DISPLAY_DEVICE_ID = "display"
     const editorConfigs = await fetchJSON("/editors.json");
     const state = {
@@ -189,6 +190,7 @@
             addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
             addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
             addSceneButton("Timer", "Show countdown (Alt+Shift+5)", "countdown")
+            addSceneButton("PictureCenter", "Thumbnail mode (Alt+Shift+6)", "thumbnail")
             if (config.hardwareCamId || config.mixer || config.twitch) {
                 addSep()
                 if (config.hardwareCamId)
