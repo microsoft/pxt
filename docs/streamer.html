@@ -528,6 +528,16 @@ body.slim .container {
     height:100%;
     bottom:0;    
 }
+body.facecamcircle .facecam,
+body.hardwarecamcircle .hardwarecam {
+    border:none;
+    clip-path: circle(42% at 50% 50%);
+}
+body.facecamcircle .videolabel,
+body.hardwarecamcircle .videolabel {
+    display: none;
+}
+
 .box.greenscreen .videocanvas {
     display:block;
 }
