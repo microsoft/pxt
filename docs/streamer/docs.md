@@ -109,7 +109,7 @@ Then measure the time between the clap sound and the video. That's your offset!
 
 ### File format
 
-Streamer will save your recording as a ".webm" file with the "h264" codec. Many popular video editting tools don't support this, like iMovie. One way to get around this is to convert it into a more standard format like .mp4. To do this, we recommend using a popular command line tool called "ffmpeg". 
+Streamer will save your recording as a ".webm" file with the "h264" codec. .webm files can be uploaded to YouTube or viewed in Chrome or Edge but some popular video editting tools don't support this, like iMovie. One way to get around this is to convert it into a more standard format like .mp4. To do this, we recommend using a popular command line tool called "ffmpeg". 
 
 #### Installing ffmpeg
 
