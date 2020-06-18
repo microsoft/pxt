@@ -107,6 +107,27 @@ like 1920x1080. Once your recording is done, click stop to generate the ``.webm`
 The video output and your microphone typically have a delay that needs to be compensated. To compute the delay, record a video and clap!
 Then measure the time between the clap sound and the video. That's your offset!
 
+### File format
+
+Streamer will save your recording as a ".webm" file with the "h264" codec. Many popular video editting tools don't support this, like iMovie. One way to get around this is to convert it into a more standard format like .mp4. To do this, we recommend using a popular command line tool called "ffmpeg". 
+
+#### Installing ffmpeg
+
+Here are a few links to get you started.
+
+Windows: https://video.stackexchange.com/questions/20495/how-do-i-set-up-and-use-ffmpeg-in-windows
+Mac: https://superuser.com/questions/624561/install-ffmpeg-on-os-x
+
+or try searching "install ffmpeg" in your favorite search engine
+
+#### Converting to .mp4
+
+Once ffmpeg is installed, you can run this command:
+```
+ffmpeg -i sample.webm -c:v copy sample.mp4
+```
+from the command line.
+
 ## Advanced
 
 ## Styling
