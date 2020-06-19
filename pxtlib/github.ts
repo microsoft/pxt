@@ -651,6 +651,16 @@ namespace pxt.github {
         fork?: boolean;
     }
 
+    export function isDefaultBranch(branch: string, repo?: GitRepo) {
+        if (repo && repo.defaultBranch)
+            return branch === repo.defaultBranch;
+        return /^(main|master)$/.test(branch);
+    }
+
+    export function isDefaultOrReleaseBranch(branch: string, repo?: GitRepo) {
+        return isDefaultBranch(branch) || /^v\d+\.\d+\.\d+$/.test(branch);
+    }
+
     export function listUserReposAsync(): Promise<GitRepo[]> {
         const q = `{
   viewer {

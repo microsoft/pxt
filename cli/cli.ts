@@ -400,18 +400,18 @@ function ciAsync() {
         fs.writeFileSync(npmrc, cfg)
     }
 
-    const latest = branch == "master" ? "latest" : "git-" + branch
-    // upload locs on build on master
-    const masterOrReleaseBranchRx = /^(master|v\d+\.\d+\.\d+)$/;
-    const apiStringBranchRx = pxt.appTarget.uploadApiStringsBranchRx
-        ? new RegExp(pxt.appTarget.uploadApiStringsBranchRx)
-        : masterOrReleaseBranchRx;
+    const defaultBranch = pxt.github.isDefaultBranch(branch)
+    const latest = defaultBranch ? "latest" : "git-" + branch
+    // upload locs on build on default or releases
+    const apiStringBranchRx: (t: string) => boolean = ((t:string) => new RegExp(pxt.appTarget.uploadApiStringsBranchRx).test(t))
+        ? ((t: string) => new RegExp(pxt.appTarget.uploadApiStringsBranchRx).test(t))
+        : ((t: string) => pxt.github.isDefaultOrReleaseBranch(t));
     const uploadDocs = !pullRequest
         && !!pxt.appTarget.uploadDocs
-        && masterOrReleaseBranchRx.test(branch);
+        && pxt.github.isDefaultOrReleaseBranch(branch);
     const uploadApiStrings = !pullRequest
         && (!!pxt.appTarget.uploadDocs || pxt.appTarget.uploadApiStringsBranchRx)
-        && apiStringBranchRx.test(branch);
+        && apiStringBranchRx(branch);
 
     pxt.log(`tag: ${tag}`);
     pxt.log(`branch: ${branch}`);
@@ -432,7 +432,7 @@ function ciAsync() {
             .then(isTaggedCommit => {
                 pxt.log(`is tagged commit: ${isTaggedCommit}`);
                 let p = npmPublishAsync();
-                if (branch === "master" && isTaggedCommit) {
+                if (defaultBranch && isTaggedCommit) {
                     if (uploadDocs)
                         p = p
                             .then(() => buildWebStringsAsync())
@@ -1588,14 +1588,14 @@ function ciBuildInfo(): CiBuildInfo {
 
         pxt.log(`event name: ${eventName}`);
 
-        // PR: not on master or not a release number
+        // PR: not on default or not a release number
         return {
             ci: "githubactions",
             branch,
             tag,
             commit,
             commitUrl: "https://github.com/" + repoSlug + "/commits/" + commit,
-            pullRequest: !(branch == "master" || /^v\d+\.\d+\.\d+$/.test(tag))
+            pullRequest: !pxt.github.isDefaultOrReleaseBranch(branch)
         }
     }
 }
@@ -5027,32 +5027,6 @@ function writeProjects(prjs: SavedProject[], outDir: string): string[] {
     return dirs;
 }
 
-function cherryPickAsync(parsed: commandParser.ParsedCommand) {
-    const commit = parsed.args[0];
-    const name = parsed.flags["name"] || commit.slice(0, 7);
-    let majorVersion = parseInt(pxtVersion().split('.')[0]);
-    const gitAsync = (args: string[]) => nodeutil.spawnAsync({
-        cmd: "git",
-        args
-    })
-
-    let branches: string[] = [];
-    for (let i = majorVersion - 1; i >= 0; --i) branches.push("v" + i);
-    pxt.log(`cherry picking ${commit} into ${branches.join(', ')}`)
-
-    let p = gitAsync(["pull"]);
-    branches.forEach(branch => {
-        const pr = `cp/${branch}${name}`;
-        p = p.then(() => gitAsync(["checkout", branch]))
-            .then(() => gitAsync(["pull"]))
-            .then(() => gitAsync(["checkout", "-b", pr]))
-            .then(() => gitAsync(["cherry-pick", commit]))
-            .then(() => gitAsync(["push", "--set-upstream", "origin", pr]));
-    })
-
-    return p.catch(() => gitAsync(["checkout", "master"]));
-}
-
 function checkDocsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     return internalCheckDocsAsync(
         true,
@@ -6155,21 +6129,6 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             }
         }
     }, c => pyconv.convertAsync(c.args, !!c.flags["internal"]))
-
-    p.defineCommand({
-        name: "cherrypick",
-        aliases: ["cp"],
-        help: "recursively cherrypicks and push branches",
-        argString: "<commit>",
-        advanced: true,
-        flags: {
-            "name": {
-                description: "name of the branch",
-                type: "string",
-                argument: "name"
-            }
-        }
-    }, cherryPickAsync);
 
     p.defineCommand({
         name: "decompile",
