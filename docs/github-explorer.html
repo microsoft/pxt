@@ -131,7 +131,7 @@
             login
         }
         nameWithOwner
-        object(expression: "master:pxt.json") {
+        object(expression: "HEAD:pxt.json") {
           ... on Blob {
             text
           }
@@ -239,7 +239,7 @@
 
                                 const url = targets[repo.target].url +
                                     `?nocookiebanner=1&${readOnly ? 'controller=1&readonly=1&ws=mem&' : 'editorLayout=ide&nosandbox=1'}#pub:github:`
-                                    + repo.nameWithOwner + "#master";
+                                    + repo.nameWithOwner;
                                 $("#makecodecolumn").attr("src", url);
                             })
 
