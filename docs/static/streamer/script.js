@@ -660,15 +660,51 @@ background-image: url(${config.backgroundImage});
         if (config.mixer) {
             chat.src = `https://mixer.com/embed/chat/${config.mixer}?composer=false`;
             if (!chat.parentElement)
-                container.insertBefore(chat, facecamcontainer)
+                container.insertBefore(chat, facecamcontainer);
+            startCarina(config.mixer);
         }
         else if (config.twitch) {
+            closeCarina()
             chat.src = `https://www.twitch.tv/embed/${config.twitch}/chat?parent=makecode.com`;
             if (!chat.parentElement)
                 container.insertBefore(chat, facecamcontainer)
         }
-        else // remove from dom
+        else { // remove from dom
             chat.remove();
+            closeCarina()
+        }
+    }
+
+    function closeCarina() {
+        const ca = state.carina;
+        if (ca) ca.close();
+        state.carina = undefined;
+    }
+
+    async function startCarina(channel) {
+        closeCarina();
+        const id = await fetchJSON(`https://mixer.com/api/v1/channels/${channel}?fields=id`)
+        console.log("mixer id", id);
+        state.carina = new carina.Carina().open();
+        state.carina.subscribe(`channel:${id.id}:followed`, function (data) {
+            console.log('mixer followed', data);
+            /* user:
+                avatarUrl: "https://uploads.mixer.com/avatar/z7v10xwc-29142604.jpg"
+                channel: {id: 23018662, token: "pelikhan", userId: 29142604, audience: "family", badgeId: null, …}
+                createdAt: "2018-01-19T15:35:58-08:00"
+                experience: 722
+                id: 29142604
+                level: 17
+                social: {twitter: "https://www.twitter.com/pelikhan", verified: null}
+                sparks: 18022
+                updatedAt: "2020-05-03T23:07:03.415-07:00"
+                username: "pelikhan"
+                verified: true
+            */
+        });
+        state.carina.subscribe(`channel:${id.id}:update`, function (data) {
+            console.log('mixer update', data);
+        });
     }
 
     async function listCameras() {
