@@ -224,10 +224,11 @@ button:hover {
     height: 76%;
     vertical-align: text-bottom;
 }
-canvas {
+
+canvas.paint {
     display: none;
 }
-.paint canvas {
+.paint canvas.paint {
     display: block;
     position:absolute;
     width: 100%;
@@ -237,6 +238,11 @@ canvas {
 }
 .paint {
     cursor:pointer !important;
+}
+
+canvas.colorpicker {
+    display: block;
+    cursor: cursor;
 }
 
 body.loading {
@@ -1139,10 +1145,10 @@ body.rightscene.thumbnail #editor {
         </div>
         <h3>Green screen</h3>
         <div class="field">
-            <label for="facecamscreeninput">Screen color (color to erase)</label>
-            <input id="facecamscreeninput" type="color" />
+            <label for="facecamscreeninput">Screen color (click image to select)</label>
             <button id="facecamscreenclear">clear</button>
         </div>
+        <canvas class="colorpicker" id="facecamscreencanvas"></canvas>
         <div class="field">
             <label for="facecamcontourinput">Silhouette contour color (when erasing green screen)</label>
             <input id="facecamcontourinput" type="color" />

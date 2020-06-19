@@ -1423,24 +1423,31 @@ background-image: url(${config.backgroundImage});
             loadFaceCam().then(() => loadSettings())
         }
 
-        const facecamscreeninput = document.getElementById("facecamscreeninput")
-        facecamscreeninput.value = config.faceCamGreenScreen || ""
-        facecamscreeninput.onchange = function (e) {
+        const facecamscreenclear = document.getElementById("facecamscreenclear");
+        facecamscreenclear.onclick = function (e) {
             config.faceCamGreenScreen = undefined;
-            if (/^#[a-fA-F0-9]{6}$/.test(facecamscreeninput.value))
-                config.faceCamGreenScreen = facecamscreeninput.value
+            saveConfig(config);
+            loadFaceCam().then(() => loadSettings())
+        }
+        const facecamscreencanvas = document.getElementById("facecamscreencanvas");
+        facecamscreencanvas.width = 320; 
+        facecamscreencanvas.height = facecamscreencanvas.width / facecam.videoWidth * facecam.videoHeight;
+        const facecamscreenctx = facecamscreencanvas.getContext('2d');
+        facecamscreenctx.drawImage(facecam, 0, 0, facecam.videoWidth, facecam.videoHeight, 0, 0, facecamscreencanvas.width, facecamscreencanvas.height);
+        facecamscreencanvas.onclick = (e) => {
+            const x = e.offsetX;
+            const y = e.offsetY;
+            const rgb = facecamscreenctx.getImageData(x, y, 1, 1).data;
+            config.faceCamGreenScreen = "#" +
+                ("0" + rgb[0].toString(16)).slice(-2) +
+                ("0" + rgb[1].toString(16)).slice(-2) +
+                ("0" + rgb[2].toString(16)).slice(-2);
             saveConfig(config);
             // already running?
             if (config.faceCamGreenScreen && facecam.seriously && facecam.seriously.chroma)
                 facecam.seriously.chroma.screen = toSeriousColor(config.faceCamGreenScreen);
             else
                 loadFaceCam().then(() => loadSettings())
-        }
-        const facecamscreenclear = document.getElementById("facecamscreenclear");
-        facecamscreenclear.onclick = function (e) {
-            config.faceCamGreenScreen = undefined;
-            saveConfig(config);
-            loadFaceCam().then(() => loadSettings())
         }
 
         const facecamcontourinput = document.getElementById("facecamcontourinput")
