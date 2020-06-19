@@ -678,9 +678,15 @@ background-image: url(${config.backgroundImage});
     }
 
     async function startMixer(channel) {
-        const id = await fetchJSON(`https://mixer.com/api/v1/channels/${channel}?fields=id`)
-        console.log("mixer id", id);
-        startMixerChatWs(id.id);
+        const ch = await fetchJSON(`https://mixer.com/api/v1/channels/${channel}?fields=id,numFollowers,name`)
+        console.log("mixer", ch);
+        const config = readConfig();
+        if (ch.name != config.title) {
+            config.title = ch.name;
+            saveConfig(config);
+            loadSocial();    
+        }
+        startMixerChatWs(ch.id);
     }
 
     function closeMixer() {
