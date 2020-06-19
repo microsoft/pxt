@@ -1051,20 +1051,28 @@ background-image: url(${config.backgroundImage});
                 canvas.width = el.videoWidth;
                 canvas.height = el.videoHeight;
                 const seriously = new Seriously();
-                const source = seriously.source(el);
-                const target = seriously.target(canvas);
+                let source = seriously.source(el);
+
+                // source -> chroma key
                 const chroma = seriously.effect("chroma");
-                const contour = seriously.effect("contour");
                 chroma.clipBlack = 0.6;
                 chroma.source = source;
-                contour.source = chroma;
-                let c = parseColor(contourColor);
-                if (c) {
-                    c = c.map(v => v / 0xff);
+                source = chroma;
+
+                // optional chroma -> contour
+                if (contourColor) {
+                    const contour = seriously.effect("contour");
+                    const c = parseColor(contourColor).map(v => v / 0xff);
                     c.push(1);
                     contour.color = c
+                    contour.source = source;
+                    source = contour;
                 }
-                target.source = contour;
+
+                // pipe to canvas
+                const target = seriously.target(canvas);
+                target.source = source;
+
                 seriously.go();
 
                 el.seriously = seriously;
