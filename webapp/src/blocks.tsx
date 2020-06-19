@@ -651,36 +651,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     display(): JSX.Element {
-        /*
-        TODO:
-        In monaco we have:
-        <div id="monacoEditorRightArea" className="monacoEditorRightArea">
-            <div id='monacoEditorInner'>
-                ...
-            </div>
-            <ErrorList />
-        </div>
-
-        .monacoEditorRightArea {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-        #monacoEditorInner {
-            position: relative !important;
-            display: inline-block;
-            overflow: hidden;
-        }
-        */
         let flyoutOnly = this.parent.state.editorState && this.parent.state.editorState.hasCategories === false;
+        let showErrorList = pxt.appTarget.appTheme.blocksErrorList;
         return (
             <div className="blocksAndErrorList">
                 <div className="blocksEditorOuter">
                     <div id="blocksEditor"></div>
                     <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
                 </div>
-                <ErrorList isInBlocksEditor={true} listenToBlockErrorChanges={this.listenToBlockErrorChanges}
-                    onSizeChange={this.onErrorListResize} />
+                {showErrorList && <ErrorList isInBlocksEditor={true} listenToBlockErrorChanges={this.listenToBlockErrorChanges}
+                    onSizeChange={this.onErrorListResize} />}
             </div>
         )
     }
