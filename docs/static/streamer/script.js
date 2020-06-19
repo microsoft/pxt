@@ -452,7 +452,7 @@
             mouse.x = e.pageX - this.offsetLeft;
             mouse.y = e.pageY - this.offsetTop;
             pushPaintEvent("move", mouse, head);
-        }            
+        }
 
         clearPaint();
     }
@@ -474,8 +474,8 @@
     function popPaintEvent() {
         const evs = state.paint;
         if (!evs) return;
-        while(ev = evs.pop()) {
-            if(ev.type == "down" || ev.type == "whiteboard") {
+        while (ev = evs.pop()) {
+            if (ev.type == "down" || ev.type == "whiteboard") {
                 clearPaint();
                 applyPaintEvents(evs)
                 break;
@@ -485,7 +485,7 @@
 
     function applyPaintEvents(events) {
         events.forEach(ev => {
-            switch(ev.type) {
+            switch (ev.type) {
                 case "move": move(ev); break; // skip
                 case "down": down(ev); break;
                 case "up": commitPaint(); break;
@@ -500,7 +500,7 @@
             paintCtx.rect(0, 0, paint.width, paint.height)
             paintCtx.fill()
             paintCtx.restore()
-        }        
+        }
 
         function down(ev) {
             const mouse = ev.mouse;
@@ -1051,20 +1051,30 @@ background-image: url(${config.backgroundImage});
                 canvas.width = el.videoWidth;
                 canvas.height = el.videoHeight;
                 const seriously = new Seriously();
-                const source = seriously.source(el);
-                const target = seriously.target(canvas);
+                let source = seriously.source(el);
+
+                // source -> chroma key
                 const chroma = seriously.effect("chroma");
-                const contour = seriously.effect("contour");
                 chroma.clipBlack = 0.6;
+                const screenColor = toSeriousColor(greenscreen);
+                if (screenColor) chroma.screen = screenColor
                 chroma.source = source;
-                contour.source = chroma;
-                let c = parseColor(contourColor);
-                if (c) {
-                    c = c.map(v => v / 0xff);
-                    c.push(1);
-                    contour.color = c
+                seriously.chroma = chroma;
+                source = chroma;
+
+                // optional chroma -> contour
+                if (contourColor) {
+                    const contour = seriously.effect("contour");
+                    contour.source = source;
+                    seriously.contour = contour;
+                    seriously.contour.color = toSeriousColor(contourColor);
+                    source = contour;
                 }
-                target.source = contour;
+
+                // pipe to canvas
+                const target = seriously.target(canvas);
+                target.source = source;
+
                 seriously.go();
 
                 el.seriously = seriously;
@@ -1078,29 +1088,36 @@ background-image: url(${config.backgroundImage});
                 }
             }
         }
-
-        function parseColor(c) {
-            if (!c) return;
-            let m = /^#([a-f0-9]{3})$/i.exec(c);
-            if (m) {
-                return [
-                    parseInt(m[1].charAt(0), 16) * 0x11,
-                    parseInt(m[1].charAt(1), 16) * 0x11,
-                    parseInt(m[1].charAt(2), 16) * 0x11
-                ];
-            }
-            m = /^#([a-f0-9]{6})$/i.exec(c);
-            if (m) {
-                return [
-                    parseInt(m[1].substr(0, 2), 16),
-                    parseInt(m[1].substr(2, 2), 16),
-                    parseInt(m[1].substr(4, 2), 16)
-                ];
-            }
-            return undefined;
-        }
     }
 
+    function toSeriousColor(color) {
+        const c = parseColor(color);
+        if (!c) return undefined;
+        const cf = c.map(v => v / 0xff);
+        cf.push(1);
+        return cf;
+    }
+
+    function parseColor(c) {
+        if (!c) return undefined;
+        let m = /^#([a-f0-9]{3})$/i.exec(c);
+        if (m) {
+            return [
+                parseInt(m[1].charAt(0), 16) * 0x11,
+                parseInt(m[1].charAt(1), 16) * 0x11,
+                parseInt(m[1].charAt(2), 16) * 0x11
+            ];
+        }
+        m = /^#([a-f0-9]{6})$/i.exec(c);
+        if (m) {
+            return [
+                parseInt(m[1].substr(0, 2), 16),
+                parseInt(m[1].substr(2, 2), 16),
+                parseInt(m[1].substr(4, 2), 16)
+            ];
+        }
+        return undefined;
+    }
     function stopRecording() {
         const stop = state.recording;
         state.recording = undefined;
@@ -1364,12 +1381,7 @@ background-image: url(${config.backgroundImage});
         }
         const facecamselect = document.getElementById("facecamselect");
         facecamselect.innerHTML = "" // remove all web cams
-        {
-            const option = document.createElement("option")
-            option.value = ""
-            option.text = "Off"
-            facecamselect.add(option)
-        }
+        // no Off option
         cams.forEach(cam => {
             const option = document.createElement("option")
             option.value = cam.deviceId
@@ -1410,14 +1422,49 @@ background-image: url(${config.backgroundImage});
             render()
             loadFaceCam().then(() => loadSettings())
         }
-        const facecamgreenscreencheckbox = document.getElementById("facecamgreenscreencheckbox")
-        facecamgreenscreencheckbox.checked = !!config.faceCamGreenScreen
-        facecamgreenscreencheckbox.onchange = function () {
-            config.faceCamGreenScreen = !!facecamgreenscreencheckbox.checked
-            saveConfig(config)
-            render()
+
+        const facecamscreeninput = document.getElementById("facecamscreeninput")
+        facecamscreeninput.value = config.faceCamGreenScreen || ""
+        facecamscreeninput.onchange = function (e) {
+            config.faceCamGreenScreen = undefined;
+            if (/^#[a-fA-F0-9]{6}$/.test(facecamscreeninput.value))
+                config.faceCamGreenScreen = facecamscreeninput.value
+            saveConfig(config);
+            // already running?
+            if (config.faceCamGreenScreen && facecam.seriously && facecam.seriously.chroma)
+                facecam.seriously.chroma.screen = toSeriousColor(config.faceCamGreenScreen);
+            else
+                loadFaceCam().then(() => loadSettings())
+        }        
+        const facecamscreenclear = document.getElementById("facecamscreenclear");
+        facecamscreenclear.onclick = function (e) {
+            config.faceCamGreenScreen = undefined;
+            saveConfig(config);
             loadFaceCam().then(() => loadSettings())
         }
+        const facecamscreencanvas = document.getElementById("facecamscreencanvas");
+        facecamscreencanvas.width = 320; 
+        facecamscreencanvas.height = facecamscreencanvas.width / facecam.videoWidth * facecam.videoHeight;
+        const facecamscreenctx = facecamscreencanvas.getContext('2d');
+        facecamscreenctx.drawImage(facecam, 0, 0, facecam.videoWidth, facecam.videoHeight, 0, 0, facecamscreencanvas.width, facecamscreencanvas.height);
+        facecamscreencanvas.onclick = (e) => {
+            const x = e.offsetX;
+            const y = e.offsetY;
+            const rgb = facecamscreenctx.getImageData(x, y, 1, 1).data;
+            config.faceCamGreenScreen = "#" +
+                ("0" + rgb[0].toString(16)).slice(-2) +
+                ("0" + rgb[1].toString(16)).slice(-2) +
+                ("0" + rgb[2].toString(16)).slice(-2);
+            saveConfig(config);
+            // already running?
+            if (config.faceCamGreenScreen && facecam.seriously && facecam.seriously.chroma) {
+                facecam.seriously.chroma.screen = toSeriousColor(config.faceCamGreenScreen);
+                loadSettings()
+            }
+            else
+                loadFaceCam().then(() => loadSettings())
+        }
+
         const facecamcontourinput = document.getElementById("facecamcontourinput")
         facecamcontourinput.value = config.faceCamContour || ""
         facecamcontourinput.onchange = function (e) {
@@ -1425,7 +1472,11 @@ background-image: url(${config.backgroundImage});
             if (/^#[a-fA-F0-9]{6}$/.test(facecamcontourinput.value))
                 config.faceCamContour = facecamcontourinput.value
             saveConfig(config);
-            loadFaceCam().then(() => loadSettings())
+            // already running?
+            if (config.faceCamContour && facecam.seriously && facecam.seriously.contour)
+                facecam.seriously.contour.color = toSeriousColor(config.faceCamContour);
+            else
+                loadFaceCam().then(() => loadSettings())
         }
         const facecamcontourclear = document.getElementById("facecamcontourclear");
         facecamcontourclear.onclick = function (e) {
@@ -1500,14 +1551,50 @@ background-image: url(${config.backgroundImage});
             render()
             loadFaceCam().then(() => loadSettings())
         }
-        const hardwarecamgreenscreencheckbox = document.getElementById("hardwarecamgreenscreencheckbox")
-        hardwarecamgreenscreencheckbox.checked = !!config.hardwareCamGreenScreen
-        hardwarecamgreenscreencheckbox.onchange = function () {
-            config.hardwareCamGreenScreen = !!hardwarecamgreenscreencheckbox.checked
-            saveConfig(config)
-            render()
+
+        const hardwarecamscreeninput = document.getElementById("hardwarecamscreeninput")
+        hardwarecamscreeninput.value = config.hardwareCamGreenScreen || ""
+        hardwarecamscreeninput.onchange = function (e) {
+            config.hardwareCamGreenScreen = undefined;
+            if (/^#[a-fA-F0-9]{6}$/.test(hardwarecamscreeninput.value))
+                config.hardwareCamGreenScreen = hardwarecamscreeninput.value
+            saveConfig(config);
+            // already running?
+            if (config.hardwareCamGreenScreen && hardwarecam.seriously && hardwarecam.seriously.chroma)
+                hardwarecam.seriously.chroma.screen = toSeriousColor(config.hardwareCamGreenScreen);
+            else
+                loadHardwareCam().then(() => loadSettings())
+        }
+
+        const hardwarecamscreencanvas = document.getElementById("hardwarecamscreencanvas");
+        hardwarecamscreencanvas.width = 320; 
+        hardwarecamscreencanvas.height = hardwarecamscreencanvas.width / hardwarecam.videoWidth * hardwarecam.videoHeight;
+        const hardwarecamscreenctx = hardwarecamscreencanvas.getContext('2d');
+        hardwarecamscreenctx.drawImage(hardwarecam, 0, 0, hardwarecam.videoWidth, hardwarecam.videoHeight, 0, 0, hardwarecamscreencanvas.width, hardwarecamscreencanvas.height);
+        hardwarecamscreencanvas.onclick = (e) => {
+            const x = e.offsetX;
+            const y = e.offsetY;
+            const rgb = hardwarecamscreenctx.getImageData(x, y, 1, 1).data;
+            config.hardwareCamGreenScreen = "#" +
+                ("0" + rgb[0].toString(16)).slice(-2) +
+                ("0" + rgb[1].toString(16)).slice(-2) +
+                ("0" + rgb[2].toString(16)).slice(-2);
+            saveConfig(config);
+            // already running?
+            if (config.hardwareCamGreenScreen && hardwarecam.seriously && hardwarecam.seriously.chroma) {
+                hardwarecam.seriously.chroma.screen = toSeriousColor(config.hardwareCamGreenScreen);
+                loadSettings()
+            }
+            else
+                loadHardwareCam().then(() => loadSettings())
+        }
+        const hardwarecamscreenclear = document.getElementById("hardwarecamscreenclear");
+        hardwarecamscreenclear.onclick = function (e) {
+            config.hardwareCamGreenScreen = undefined;
+            saveConfig(config);
             loadHardwareCam().then(() => loadSettings())
         }
+
         const hardwarecamcontourinput = document.getElementById("hardwarecamcontourinput")
         hardwarecamcontourinput.value = config.hardwareCamContour || ""
         hardwarecamcontourinput.onchange = function (e) {
@@ -1515,7 +1602,11 @@ background-image: url(${config.backgroundImage});
             if (/^#[a-fA-F0-9]{6}$/.test(hardwarecamcontourinput.value))
                 config.hardwareCamContour = hardwarecamcontourinput.value
             saveConfig(config);
-            loadHardwareCam().then(() => loadSettings())
+            // already running?
+            if (config.hardwareCamContour && hardwarecam.seriously && hardwarecam.seriously.contour)
+                hardwarecam.seriously.contour.color = toSeriousColor(config.hardwareCamContour);
+            else
+                loadHardwareCam().then(() => loadSettings())
         }
         const hardwarecamcontourclear = document.getElementById("hardwarecamcontourclear");
         hardwarecamcontourclear.onclick = function (e) {

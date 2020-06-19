@@ -224,10 +224,11 @@ button:hover {
     height: 76%;
     vertical-align: text-bottom;
 }
-canvas {
+
+canvas.paint {
     display: none;
 }
-.paint canvas {
+.paint canvas.paint {
     display: block;
     position:absolute;
     width: 100%;
@@ -237,6 +238,11 @@ canvas {
 }
 .paint {
     cursor:pointer !important;
+}
+
+canvas.colorpicker {
+    display: block;
+    cursor: cursor;
 }
 
 body.loading {
@@ -1116,10 +1122,7 @@ body.rightscene.thumbnail #editor {
             <label for="facecamlabelinput">Camera label</label>
             <input id="facecamlabelinput" placeholder="My name, social accounts" />
         </div>
-        <div class="field">
-            <input type="checkbox" id="facecamcircularcheckbox"></input>
-            <label for="facecamcircularcheckbox">Circular</label>
-        </div>
+        <h3>Adjustments</h3>
         <div class="field">
             <label for="facecamcontrast">Contrast</label>
             <input type="range" id="facecamcontrast" min="0" max="100" step="1" list="tickmarks">
@@ -1133,13 +1136,20 @@ body.rightscene.thumbnail #editor {
             <input type="range" id="facecamsaturate" min="0" max="100" step="1" list="tickmarks">
         </div>
         <div class="field">
+            <input type="checkbox" id="facecamcircularcheckbox"></input>
+            <label for="facecamcircularcheckbox">Circular</label>
+        </div>
+        <div class="field">
             <input type="checkbox" id="facerotatecameracheckbox"></input>
             <label for="facerotatecameracheckbox">Rotate camera 180</label>
         </div>
+        <h3>Green screen</h3>
         <div class="field">
-            <input type="checkbox" id="facecamgreenscreencheckbox"></input>
-            <label for="facecamgreenscreencheckbox">Erase green screen</label>
+            <label for="facecamscreeninput">Screen color (click image to select)</label>
+            <input id="facecamscreeninput" type="color" />
+            <button id="facecamscreenclear">clear</button>
         </div>
+        <canvas class="colorpicker" id="facecamscreencanvas"></canvas>
         <div class="field">
             <label for="facecamcontourinput">Silhouette contour color (when erasing green screen)</label>
             <input id="facecamcontourinput" type="color" />
@@ -1155,10 +1165,7 @@ body.rightscene.thumbnail #editor {
             <label for="hardwarecamlabelinput">Camera label</label>
             <input id="hardwarecamlabelinput" placeholder="Cam description" />
         </div>
-        <div class="field">
-            <input type="checkbox" id="hardwarecamcircularcheckbox"></input>
-            <label for="hardwarecamcircularcheckbox">Circular</label>
-        </div>
+        <h3>Adjustments</h3>
         <div class="field"> 
             <label for="hardwarecamcontrast">Contrast</label>
             <input type="range" id="hardwarecamcontrast" min="0" max="100" step="1" list="tickmarks">
@@ -1172,13 +1179,20 @@ body.rightscene.thumbnail #editor {
             <input type="range" id="hardwarecamsaturate" min="0" max="100" step="1" list="tickmarks">
         </div>
         <div class="field">
+            <input type="checkbox" id="hardwarecamcircularcheckbox"></input>
+            <label for="hardwarecamcircularcheckbox">Circular</label>
+        </div>
+        <div class="field">
             <input type="checkbox" id="hardwarerotatecameracheckbox"></input>
             <label for="hardwarerotatecameracheckbox">Rotate camera 180</label>
         </div>        
+        <h3>Green screen</h3>
         <div class="field">
-            <input type="checkbox" id="hardwarecamgreenscreencheckbox"></input>
-            <label for="hardwarecamgreenscreencheckbox">Erase green screen</label>
+            <label for="hardwarecamscreeninput">Screen color (click to select)</label>
+            <input id="hardwarecamscreeninput" type="color" />
+            <button id="hardwarecamscreenclear">clear</button>
         </div>
+        <canvas class="colorpicker" id="hardwarecamscreencanvas"></canvas>
         <div class="field">
             <label for="hardwarecamcontourinput">Silhouette contour color (when erasing green screen)</label>
             <input id="hardwarecamcontourinput" type="color" />
@@ -1213,7 +1227,7 @@ body.rightscene.thumbnail #editor {
             <label for="backgroundcolorinput">Background color</label>
             <input id="backgroundcolorinput" type="color" />
             <button id="backgroundcolorclear">clear</button>
-        </div>        
+        </div>
         <div class="field">
             <label for="backgroundimageinput">Background image (must be https://...)</label>
             <input id="backgroundimageinput" type="url" />
