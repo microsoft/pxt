@@ -162,6 +162,11 @@ namespace pxt.editor.experiments {
                 id: "errorList",
                 name: lf("Error List"),
                 description: lf("Show an error list panel for JavaScript and Python.")
+            },
+            {
+                id: "blocksErrorList",
+                name: lf("Blocks Error List"),
+                description: lf("Show an error list panel for Blocks")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
