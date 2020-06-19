@@ -441,6 +441,8 @@
         painttool.addEventListener('pointerdown', function (e) {
             head.x = e.pageX - this.offsetLeft;
             head.y = e.pageY - this.offsetTop;
+            mouse.x = head.x;
+            mouse.y = head.y;
             pushEvent("down");
             painttool.addEventListener('pointermove', onMove, false);
         }, false);
@@ -450,7 +452,7 @@
             painttool.removeEventListener('pointermove', onMove, false);
         }, false);
 
-        function onMove() {
+        function onMove(e) {
             mouse.x = e.pageX - this.offsetLeft;
             mouse.y = e.pageY - this.offsetTop;
             pushEvent("move");
@@ -472,6 +474,14 @@
         clearPaint();
     }
 
+    function undoPaintEvent() {
+        const evs = state.paint;
+        if (evs && evs.pop()) {
+            clearPaint();
+            applyPaintEvents(evs)
+        }
+    }
+
     function applyPaintEvents(events) {
         events.forEach(ev => {
             switch(ev.type) {
@@ -487,7 +497,6 @@
             const mouse = ev.mouse;
             const tool = ev.tool;
             const color = ev.color;
-            const emoji = ev.emoji;
 
             painttoolCtx.lineWidth = Math.max(10, (paint.width / 100) | 0);
             painttoolCtx.lineJoin = 'round';
@@ -495,7 +504,7 @@
             painttoolCtx.strokeStyle = color;
             painttoolCtx.globalAlpha = 1;
             if (tool == 'pen' || tool == 'highlight') {
-                if (painttool == 'highlight') {
+                if (tool == 'highlight') {
                     painttoolCtx.globalAlpha = 0.5;
                     painttoolCtx.lineWidth = Math.max(20, (paint.width / 50) | 0);
                 }
@@ -557,6 +566,7 @@
                 ctx.lineTo(mouse.x, mouse.y);
                 ctx.stroke();
             } else if (tool == 'emoji') {
+                const emoji = ev.emoji;
                 const p1 = head, p2 = mouse;
                 const dx = p2.x - p1.x
                 const dy = p2.y - p1.y
