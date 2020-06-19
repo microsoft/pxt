@@ -188,13 +188,12 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
     render() {
         const {error, stackframe, location, blockError} = this.props
 
-        // const message = stackframe ? lf("at {0} (line {1})", stackframe.funcInfo.functionName, location.line + 1)
-        //     : lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText)
-
-        const message = blockError ? lf("{0}", blockError.message) : undefined
+        const message = blockError ? lf("{0}", blockError.message)
+            : stackframe ? lf("at {0} (line {1})", stackframe.funcInfo.functionName, location.line + 1)
+            : lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText)
 
         return <div className={`item ${stackframe ? 'stackframe' : ''}`} role="button"
-                    onClick={this.onErrorListItemClick ? this.onErrorListItemClick : undefined}
+                    onClick={!blockError ? this.onErrorListItemClick : undefined}
                     onKeyDown={sui.fireClickOnEnter}
                     aria-label={lf("Go to {0}: {1}", stackframe ? '' : 'error', message)}
                     tabIndex={0}>
