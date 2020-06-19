@@ -5529,7 +5529,6 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
                 let tag = pxt.semver.sortLatestTags(tags)[0];
                 if (!tag) {
                     reportWarning({ repo: fullname, title: "create a release", body: "You need to create a release in this repository. Follow the instructions at https://makecode.com/extensions/versioning." });
-                    tag = "master";
                 }
                 else {
                     reportLog(`  release: ${tag}`)
