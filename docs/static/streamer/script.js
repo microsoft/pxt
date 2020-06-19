@@ -681,6 +681,7 @@ background-image: url(${config.backgroundImage});
         state.carina = undefined;
     }
 
+    // https://dev.mixer.com/reference/constellation/events/live/user%20followed
     async function startCarina(channel) {
         closeCarina();
         const id = await fetchJSON(`https://mixer.com/api/v1/channels/${channel}?fields=id`)
@@ -688,7 +689,8 @@ background-image: url(${config.backgroundImage});
         state.carina = new carina.Carina().open();
         state.carina.subscribe(`channel:${id.id}:followed`, function (data) {
             console.log('mixer followed', data);
-            /* user:
+            /* following: true/false,
+               user:
                 avatarUrl: "https://uploads.mixer.com/avatar/z7v10xwc-29142604.jpg"
                 channel: {id: 23018662, token: "pelikhan", userId: 29142604, audience: "family", badgeId: null, …}
                 createdAt: "2018-01-19T15:35:58-08:00"
