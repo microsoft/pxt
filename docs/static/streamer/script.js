@@ -191,8 +191,8 @@
             addSep()
             emojis.forEach(addEmojiButton);
             addSep()
-            addButton("WhiteBoardApp32", "Paint screen in white", whiteboard)
-            addButton("EraseTool", "Clear all drawings", clearPaint)
+            addButton("WhiteBoardApp32", "Paint screen in white", () => pushPaintEvent("whiteboard"))
+            addButton("EraseTool", "Undo last drawing", popPaintEvent)
             addSep()
             addButton("ChromeClose", "Exit paint mode", togglePaint)
         } else {
@@ -412,18 +412,14 @@
         loadToolbox();
     }
 
-    function whiteboard() {
-        paintCtx.save()
-        paintCtx.beginPath();
-        paintCtx.fillStyle = "rgba(255, 255, 255, 0.9)"
-        paintCtx.rect(0, 0, paint.width, paint.height)
-        paintCtx.fill()
-        paintCtx.restore()
+    function commitPaint() {
+        paintCtx.drawImage(painttool, 0, 0)
+        painttoolCtx.clearRect(0, 0, painttool.width, painttool.height)
     }
 
     function clearPaint() {
+        painttoolCtx.clearRect(0, 0, painttool.width, painttool.height);
         paintCtx.clearRect(0, 0, paint.width, paint.height);
-        painttoolCtx.clearRect(0, 0, paint.width, paint.height);
     }
 
     function updatePaintSize() {
@@ -443,42 +439,47 @@
             head.y = e.pageY - this.offsetTop;
             mouse.x = head.x;
             mouse.y = head.y;
-            pushEvent("down");
+            pushPaintEvent("down", mouse, head);
             painttool.addEventListener('pointermove', onMove, false);
         }, false);
 
         painttool.addEventListener('pointerup', function () {
-            pushEvent("up");
+            pushPaintEvent("up", mouse, head);
             painttool.removeEventListener('pointermove', onMove, false);
         }, false);
 
         function onMove(e) {
             mouse.x = e.pageX - this.offsetLeft;
             mouse.y = e.pageY - this.offsetTop;
-            pushEvent("move");
+            pushPaintEvent("move", mouse, head);
         }            
-
-        function pushEvent(ev) {
-            const r = {
-                type: ev,
-                tool: state.painttool,
-                emoji: state.emoji,
-                color: state.paintColor,
-                mouse: { x: mouse.x, y: mouse.y },
-                head: { x: head.x, y: head.y }
-            };
-            state.paint.push(r)
-            applyPaintEvents([r]);
-        }
 
         clearPaint();
     }
 
-    function undoPaintEvent() {
+    function pushPaintEvent(ev, mouse, head) {
+        const r = {
+            type: ev,
+            tool: state.painttool,
+            emoji: state.emoji,
+            color: state.paintColor,
+        };
+        if (mouse)
+            r.mouse = { x: mouse.x, y: mouse.y };
+        if (head)
+            r.head = { x: head.x, y: head.y }
+        state.paint.push(r)
+        applyPaintEvents([r]);
+    }
+    function popPaintEvent() {
         const evs = state.paint;
-        if (evs && evs.pop()) {
-            clearPaint();
-            applyPaintEvents(evs)
+        if (!evs) return;
+        while(ev = evs.pop()) {
+            if(ev.type == "down" || ev.type == "whiteboard") {
+                clearPaint();
+                applyPaintEvents(evs)
+                break;
+            }
         }
     }
 
@@ -487,11 +488,19 @@
             switch(ev.type) {
                 case "move": move(ev); break; // skip
                 case "down": down(ev); break;
-                case "up": up(ev); break;
-                case "clear": clearPaint(); break;
+                case "up": commitPaint(); break;
                 case "whiteboard": whiteboard(); break;
             }
         })
+
+        function whiteboard() {
+            paintCtx.save()
+            paintCtx.beginPath();
+            paintCtx.fillStyle = "rgba(255, 255, 255, 0.9)"
+            paintCtx.rect(0, 0, paint.width, paint.height)
+            paintCtx.fill()
+            paintCtx.restore()
+        }        
 
         function down(ev) {
             const mouse = ev.mouse;
@@ -513,11 +522,6 @@
             } else if (tool == 'arrow') {
                 painttoolCtx.lineWidth = 42;
             }
-        }
-
-        function up(ev) {
-            paintCtx.drawImage(painttool, 0, 0)
-            painttoolCtx.clearRect(0, 0, painttool.width, painttool.height)
         }
 
         function move(ev) {
