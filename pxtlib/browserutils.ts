@@ -665,7 +665,7 @@ namespace pxt.BrowserUtils {
     class MemTranslationDb implements ITranslationDb {
         translations: pxt.Map<ITranslationDbEntry> = {};
         key(lang: string, filename: string, branch: string) {
-            return `${lang}|${filename}|${branch || "master"}`;
+            return `${lang}|${filename}|${branch || "default"}`;
         }
         get(lang: string, filename: string, branch: string): ITranslationDbEntry {
             return this.translations[this.key(lang, filename, branch)];

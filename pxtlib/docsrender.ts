@@ -531,7 +531,7 @@ namespace pxt.docs {
         if (opts.repo)
             markdown += `
 \`\`\`package
-${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.tag || "master"}
+${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}${opts.repo.tag ? `#${opts.repo.tag}` : ""}
 \`\`\`
 `;
 
