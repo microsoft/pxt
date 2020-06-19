@@ -631,7 +631,8 @@ background-image: url(${config.backgroundImage});
 
     function toggleChat(e) {
         tickEvent("streamer.togglechat", undefined, { interactiveConsent: true });
-        stopEvent(e)
+        if (e)
+            stopEvent(e)
         const config = readConfig();
         state.chat = !state.chat && (config.mixer || config.twitch);
         render();
@@ -639,7 +640,8 @@ background-image: url(${config.backgroundImage});
 
     function toggleHardware(e) {
         tickEvent("streamer.togglehardware", undefined, { interactiveConsent: true });
-        stopEvent(e)
+        if (e)
+            stopEvent(e)
         const config = readConfig();
         state.hardware = !state.hardware && config.hardwareCamId;
         render();
@@ -660,15 +662,63 @@ background-image: url(${config.backgroundImage});
         if (config.mixer) {
             chat.src = `https://mixer.com/embed/chat/${config.mixer}?composer=false`;
             if (!chat.parentElement)
-                container.insertBefore(chat, facecamcontainer)
+                container.insertBefore(chat, facecamcontainer);
+            startMixer(config.mixer);
         }
         else if (config.twitch) {
+            stopMixer()
             chat.src = `https://www.twitch.tv/embed/${config.twitch}/chat?parent=makecode.com`;
             if (!chat.parentElement)
                 container.insertBefore(chat, facecamcontainer)
         }
-        else // remove from dom
+        else { // remove from dom
             chat.remove();
+            stopMixer()
+        }
+    }
+
+    async function startMixer(channel) {
+        const ch = await fetchJSON(`https://mixer.com/api/v1/channels/${channel}?fields=id,numFollowers,name`)
+        console.log("mixer", ch);
+        const config = readConfig();
+        if (ch.name != config.title) {
+            config.title = ch.name;
+            saveConfig(config);
+            loadSocial();
+        }
+        startMixerChatWs(ch.id);
+    }
+
+    function stopMixer() {
+        const ws = state.mixerChatWs;
+        state.mixerChatWs = undefined;
+        try {
+            if (ws) ws.close();
+        } catch (e) { }
+    }
+
+    let chatId = 0;
+    function startMixerChatWs(id) {
+        const chat = state.mixerChatWs = new WebSocket("wss://chat.mixer.com/?version=1.0");
+        chat.onopen = function (evt) {
+            console.log(`mixer chat open`)
+            chat.send(JSON.stringify({ "type": "method", "method": "optOutEvents", "arguments": ["UserJoin", "UserLeave", "DeleteMessage"], "id": chatId++ }))
+            chat.send(JSON.stringify({ "type": "method", "method": "auth", "arguments": [id, null, null, null], "id": chatId++ }))
+        }
+        chat.onmessage = function (evt) {
+            const data = JSON.parse(evt.data);
+            console.log(data);
+            if (!state.chat && data
+                && data.type === "event") {
+                if (data.event === "ChatMessage")
+                    toggleChat();
+            }
+        }
+        chat.onclose = function (evt) {
+            console.log('mixer chat close')
+            state.mixerChatWs = undefined;
+            chat = undefined;
+        }
     }
 
     async function listCameras() {

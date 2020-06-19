@@ -128,6 +128,14 @@ ffmpeg -i sample.webm -c:v copy sample.mp4
 ```
 from the command line.
 
+## Streaming
+
+### Mixer
+
+Enter your Mixer channel name in the text box. For example, if your url is ``https://makecode.com/MakeCode``, enter ``MakeCode``.
+
+Streamer will display a chat icon that allows to toggle on/off an embedded chat. Streamer will also automatically show the chat whenever a new message is entered in the chat by a user.
+
 ## Advanced
 
 ## Styling
