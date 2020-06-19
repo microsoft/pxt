@@ -136,7 +136,7 @@ namespace pxt.tutorial {
 
             if (!src) return src;
             return src
-                .replace(/```(typescript|spy|python|blocks|ghost|template)((?:.|[\r\n])+)```/, function (m, type, code) {
+                .replace(/```(typescript|spy|python|blocks|ghost|template)((?:.|[\r\n])+)```/, function (m, type, code: string) {
                     const fileA = lastSrc;
 
                     const hidden = /^(template|ghost)$/.test(type);
@@ -145,14 +145,27 @@ namespace pxt.tutorial {
                     if (hasHighlight) code = code.replace(highlightRx, '');
 
                     lastSrc = code;
+                    // shortcut when there is nothing to do
                     if (!fileA || hasHighlight || hidden)
-                        return m; // leave unchanged or reuse highlight info
-                    else
+                        return m;
+                    else {
+                        // rough all different approximation
+                        // check that at least 1 line is different in the diff for snippet > 1 line
+                        const fileALines = fileA.split(/\r?\n/g);
+                        if (fileALines.length > 1) {
+                            const fileALineSet = pxt.Util.toSet(fileALines, line => line);
+                            const atLeastOneDifferentLine = code.split(/\r?\n/g).some(line => fileALineSet[line]);
+                            if (!atLeastOneDifferentLine)
+                                return m; // all lines are different, don't show diff
+                        }
+
+                        // ok full diff
                         return `\`\`\`${diffClasses[type]}
 ${fileA}
 ----------
 ${code}
-\`\`\``
+\`\`\``;
+                    }
                 })
         }
     }
