@@ -107,6 +107,14 @@ like 1920x1080. Once your recording is done, click stop to generate the ``.webm`
 The video output and your microphone typically have a delay that needs to be compensated. To compute the delay, record a video and clap!
 Then measure the time between the clap sound and the video. That's your offset!
 
+## Streaming
+
+### Mixer
+
+Enter your Mixer channel name in the text box. For example, if your url is ``https://makecode.com/MakeCode``, enter ``MakeCode``.
+
+Streamer will display a chat icon that allows to toggle on/off an embedded chat. Streamer will also automatically show the chat whenever a new message is entered in the chat by a user.
+
 ## Advanced
 
 ## Styling
