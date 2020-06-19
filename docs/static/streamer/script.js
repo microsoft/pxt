@@ -697,13 +697,12 @@ background-image: url(${config.backgroundImage});
         } catch (e) { }
     }
 
-    let chatId = 0;
     function startMixerChatWs(id) {
         const chat = state.mixerChatWs = new WebSocket("wss://chat.mixer.com/?version=1.0");
         chat.onopen = function (evt) {
             console.log(`mixer chat open`)
-            chat.send(JSON.stringify({ "type": "method", "method": "optOutEvents", "arguments": ["UserJoin", "UserLeave", "DeleteMessage"], "id": chatId++ }))
-            chat.send(JSON.stringify({ "type": "method", "method": "auth", "arguments": [id, null, null, null], "id": chatId++ }))
+            chat.send(JSON.stringify({ "type": "method", "method": "optOutEvents", "arguments": ["UserJoin", "UserLeave", "DeleteMessage"], "id": 0 }))
+            chat.send(JSON.stringify({ "type": "method", "method": "auth", "arguments": [id, null, null, null], "id": 1 }))
         }
         chat.onmessage = function (evt) {
             const data = JSON.parse(evt.data);
