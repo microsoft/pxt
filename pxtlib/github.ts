@@ -613,7 +613,7 @@ namespace pxt.github {
         forks: number;
         open_issues: number;
         watchers: number;
-        default_branch: string; // "master",
+        default_branch: string;
         score: number; // 6.7371006
 
         // non-github, added to track search request

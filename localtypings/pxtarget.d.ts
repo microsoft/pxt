@@ -210,7 +210,7 @@ declare namespace pxt {
         codalTarget?: string | {
             name: string; // "codal-arduino-uno"
             url: string; // "https://github.com/lancaster-university/codal-arduino-uno"
-            branch: string; // "master"
+            branch: string; // "main"
             type: string; // "git"
             branches?: pxt.Map<string>; // overrides repo url -> commit sha
         };

@@ -548,7 +548,7 @@ export async function prAsync(hd: Header, commitId: string, msg: string) {
     const branchName = await pxt.github.getNewBranchNameAsync(parsed.fullName, "merge-")
     await pxt.github.createNewBranchAsync(parsed.fullName, branchName, commitId)
     const url = await pxt.github.createPRFromBranchAsync(parsed.fullName, parsed.tag, branchName, msg)
-    // force user back to master - we will instruct them to merge PR in github.com website
+    // force user back to default branch - we will instruct them to merge PR in github.com website
     // and sync here to get the changes
     let headCommit = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
     await githubUpdateToAsync(hd, {
@@ -638,7 +638,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     // add compiled javascript to be run in github pages
     if (pxt.appTarget.appTheme.githubCompiledJs
         && options.binaryJs
-        && (!parsed.tag || parsed.tag == "master")) {
+        && (!parsed.tag || pxt.github.isDefaultBranch(parsed.tag))) {
         const v = cfg.version || "0.0.0";
         const opts: compiler.CompileOptions = {
             jsMetaVersion: v
