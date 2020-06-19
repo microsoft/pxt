@@ -684,7 +684,7 @@ background-image: url(${config.backgroundImage});
         if (ch.name != config.title) {
             config.title = ch.name;
             saveConfig(config);
-            loadSocial();    
+            loadSocial();
         }
         startMixerChatWs(ch.id);
     }
@@ -692,7 +692,9 @@ background-image: url(${config.backgroundImage});
     function stopMixer() {
         const ws = state.mixerChatWs;
         state.mixerChatWs = undefined;
-        if (ws) ws.close();
+        try {
+            if (ws) ws.close();
+        } catch (e) { }
     }
 
     let chatId = 0;
@@ -706,10 +708,10 @@ background-image: url(${config.backgroundImage});
         chat.onmessage = function (evt) {
             const data = JSON.parse(evt.data);
             console.log(data);
-            if (!state.chat && data 
+            if (!state.chat && data
                 && data.type === "event") {
-                if(data.event === "ChatMessage")
-                toggleChat();
+                if (data.event === "ChatMessage")
+                    toggleChat();
             }
         }
         chat.onclose = function (evt) {
