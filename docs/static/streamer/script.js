@@ -396,7 +396,7 @@
     }
 
     function togglePaint() {
-        state.paint = !state.paint;
+        state.paint = state.paint ? undefined : [];
         clearPaint();
         updatePaintSize();
         render();
@@ -438,43 +438,88 @@
         const mouse = { x: 0, y: 0 };
         let head = { x: 0, y: 0 }
 
-        painttool.addEventListener('pointermove', function (e) {
-            mouse.x = e.pageX - this.offsetLeft;
-            mouse.y = e.pageY - this.offsetTop;
-        }, false);
-
         painttool.addEventListener('pointerdown', function (e) {
             head.x = e.pageX - this.offsetLeft;
             head.y = e.pageY - this.offsetTop;
+            pushEvent("down");
+            painttool.addEventListener('pointermove', onMove, false);
+        }, false);
+
+        painttool.addEventListener('pointerup', function () {
+            pushEvent("up");
+            painttool.removeEventListener('pointermove', onMove, false);
+        }, false);
+
+        function onMove() {
+            mouse.x = e.pageX - this.offsetLeft;
+            mouse.y = e.pageY - this.offsetTop;
+            pushEvent("move");
+        }            
+
+        function pushEvent(ev) {
+            const r = {
+                type: ev,
+                tool: state.painttool,
+                emoji: state.emoji,
+                color: state.paintColor,
+                mouse: { x: mouse.x, y: mouse.y },
+                head: { x: head.x, y: head.y }
+            };
+            state.paint.push(r)
+            applyPaintEvents([r]);
+        }
+
+        clearPaint();
+    }
+
+    function applyPaintEvents(events) {
+        events.forEach(ev => {
+            switch(ev.type) {
+                case "move": move(ev); break; // skip
+                case "down": down(ev); break;
+                case "up": up(ev); break;
+                case "clear": clearPaint(); break;
+                case "whiteboard": whiteboard(); break;
+            }
+        })
+
+        function down(ev) {
+            const mouse = ev.mouse;
+            const tool = ev.tool;
+            const color = ev.color;
+            const emoji = ev.emoji;
+
             painttoolCtx.lineWidth = Math.max(10, (paint.width / 100) | 0);
             painttoolCtx.lineJoin = 'round';
             painttoolCtx.lineCap = 'round';
-            painttoolCtx.strokeStyle = state.paintColor;
+            painttoolCtx.strokeStyle = color;
             painttoolCtx.globalAlpha = 1;
-            if (state.painttool == 'pen' || state.painttool == 'highlight') {
-                if (state.painttool == 'highlight') {
+            if (tool == 'pen' || tool == 'highlight') {
+                if (painttool == 'highlight') {
                     painttoolCtx.globalAlpha = 0.5;
                     painttoolCtx.lineWidth = Math.max(20, (paint.width / 50) | 0);
                 }
                 painttoolCtx.beginPath();
                 painttoolCtx.moveTo(mouse.x, mouse.y);
-            } else if (state.painttool == 'arrow') {
+            } else if (tool == 'arrow') {
                 painttoolCtx.lineWidth = 42;
             }
-            painttool.addEventListener('pointermove', onPaint, false);
-        }, false);
+        }
 
-        painttool.addEventListener('pointerup', function () {
+        function up(ev) {
             paintCtx.drawImage(painttool, 0, 0)
             painttoolCtx.clearRect(0, 0, painttool.width, painttool.height)
-            painttool.removeEventListener('pointermove', onPaint, false);
-        }, false);
+        }
 
-        function onPaint() {
+        function move(ev) {
+            const mouse = ev.mouse;
+            const head = ev.head;
+            const tool = ev.tool;
+
             const ctx = painttoolCtx
             ctx.clearRect(0, 0, painttool.width, painttool.height)
             ctx.save();
-            if (state.painttool == 'arrow') {
+            if (tool == 'arrow') {
                 const p1 = mouse, p2 = head;
                 const size = painttoolCtx.lineWidth * 3;
                 // Rotate the context to point along the path
@@ -504,14 +549,14 @@
                     painttoolCtx.lineWidth *= 0.7;
                     painttoolCtx.strokeStyle = strokeStyle;
                 }
-            } else if (state.painttool == 'rect') {
+            } else if (tool == 'rect') {
                 ctx.beginPath();
                 ctx.rect(head.x, head.y, mouse.x - head.x, mouse.y - head.y)
                 ctx.stroke()
-            } else if (state.painttool == 'pen' || state.painttool == 'highlight') {
+            } else if (tool == 'pen' || tool == 'highlight') {
                 ctx.lineTo(mouse.x, mouse.y);
                 ctx.stroke();
-            } else if (state.painttool == 'emoji') {
+            } else if (tool == 'emoji') {
                 const p1 = head, p2 = mouse;
                 const dx = p2.x - p1.x
                 const dy = p2.y - p1.y
@@ -522,12 +567,10 @@
 
                 ctx.font = `${len}px serif`;
                 ctx.textAlign = 'center'
-                ctx.fillText(state.emoji, 0, 0);
+                ctx.fillText(emoji, 0, 0);
             }
             ctx.restore();
         }
-
-        clearPaint();
     }
 
     function loadEditor() {
