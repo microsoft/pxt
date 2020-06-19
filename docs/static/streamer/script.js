@@ -1423,6 +1423,19 @@ background-image: url(${config.backgroundImage});
             loadFaceCam().then(() => loadSettings())
         }
 
+        const facecamscreeninput = document.getElementById("facecamscreeninput")
+        facecamscreeninput.value = config.faceCamGreenScreen || ""
+        facecamscreeninput.onchange = function (e) {
+            config.faceCamGreenScreen = undefined;
+            if (/^#[a-fA-F0-9]{6}$/.test(facecamscreeninput.value))
+                config.faceCamGreenScreen = facecamscreeninput.value
+            saveConfig(config);
+            // already running?
+            if (config.faceCamGreenScreen && facecam.seriously && facecam.seriously.chroma)
+                facecam.seriously.chroma.screen = toSeriousColor(config.faceCamGreenScreen);
+            else
+                loadFaceCam().then(() => loadSettings())
+        }        
         const facecamscreenclear = document.getElementById("facecamscreenclear");
         facecamscreenclear.onclick = function (e) {
             config.faceCamGreenScreen = undefined;
@@ -1444,8 +1457,10 @@ background-image: url(${config.backgroundImage});
                 ("0" + rgb[2].toString(16)).slice(-2);
             saveConfig(config);
             // already running?
-            if (config.faceCamGreenScreen && facecam.seriously && facecam.seriously.chroma)
+            if (config.faceCamGreenScreen && facecam.seriously && facecam.seriously.chroma) {
                 facecam.seriously.chroma.screen = toSeriousColor(config.faceCamGreenScreen);
+                loadSettings()
+            }
             else
                 loadFaceCam().then(() => loadSettings())
         }
@@ -1547,6 +1562,29 @@ background-image: url(${config.backgroundImage});
             // already running?
             if (config.hardwareCamGreenScreen && hardwarecam.seriously && hardwarecam.seriously.chroma)
                 hardwarecam.seriously.chroma.screen = toSeriousColor(config.hardwareCamGreenScreen);
+            else
+                loadHardwareCam().then(() => loadSettings())
+        }
+
+        const hardwarecamscreencanvas = document.getElementById("hardwarecamscreencanvas");
+        hardwarecamscreencanvas.width = 320; 
+        hardwarecamscreencanvas.height = hardwarecamscreencanvas.width / hardwarecam.videoWidth * hardwarecam.videoHeight;
+        const hardwarecamscreenctx = hardwarecamscreencanvas.getContext('2d');
+        hardwarecamscreenctx.drawImage(hardwarecam, 0, 0, hardwarecam.videoWidth, hardwarecam.videoHeight, 0, 0, hardwarecamscreencanvas.width, hardwarecamscreencanvas.height);
+        hardwarecamscreencanvas.onclick = (e) => {
+            const x = e.offsetX;
+            const y = e.offsetY;
+            const rgb = hardwarecamscreenctx.getImageData(x, y, 1, 1).data;
+            config.hardwareCamGreenScreen = "#" +
+                ("0" + rgb[0].toString(16)).slice(-2) +
+                ("0" + rgb[1].toString(16)).slice(-2) +
+                ("0" + rgb[2].toString(16)).slice(-2);
+            saveConfig(config);
+            // already running?
+            if (config.hardwareCamGreenScreen && hardwarecam.seriously && hardwarecam.seriously.chroma) {
+                hardwarecam.seriously.chroma.screen = toSeriousColor(config.hardwareCamGreenScreen);
+                loadSettings()
+            }
             else
                 loadHardwareCam().then(() => loadSettings())
         }

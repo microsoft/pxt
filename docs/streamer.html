@@ -1146,6 +1146,7 @@ body.rightscene.thumbnail #editor {
         <h3>Green screen</h3>
         <div class="field">
             <label for="facecamscreeninput">Screen color (click image to select)</label>
+            <input id="facecamscreeninput" type="color" />
             <button id="facecamscreenclear">clear</button>
         </div>
         <canvas class="colorpicker" id="facecamscreencanvas"></canvas>
@@ -1187,10 +1188,11 @@ body.rightscene.thumbnail #editor {
         </div>        
         <h3>Green screen</h3>
         <div class="field">
-            <label for="hardwarecamscreeninput">Screen color (color to erase)</label>
+            <label for="hardwarecamscreeninput">Screen color (click to select)</label>
             <input id="hardwarecamscreeninput" type="color" />
             <button id="hardwarecamscreenclear">clear</button>
         </div>
+        <canvas class="colorpicker" id="hardwarecamscreencanvas"></canvas>
         <div class="field">
             <label for="hardwarecamcontourinput">Silhouette contour color (when erasing green screen)</label>
             <input id="hardwarecamcontourinput" type="color" />
