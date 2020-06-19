@@ -666,14 +666,14 @@ background-image: url(${config.backgroundImage});
             startMixer(config.mixer);
         }
         else if (config.twitch) {
-            closeCarina()
+            stopMixer()
             chat.src = `https://www.twitch.tv/embed/${config.twitch}/chat?parent=makecode.com`;
             if (!chat.parentElement)
                 container.insertBefore(chat, facecamcontainer)
         }
         else { // remove from dom
             chat.remove();
-            closeCarina()
+            stopMixer()
         }
     }
 
@@ -689,7 +689,7 @@ background-image: url(${config.backgroundImage});
         startMixerChatWs(ch.id);
     }
 
-    function closeMixer() {
+    function stopMixer() {
         const ws = state.mixerChatWs;
         state.mixerChatWs = undefined;
         if (ws) ws.close();
