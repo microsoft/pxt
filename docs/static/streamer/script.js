@@ -661,7 +661,7 @@ background-image: url(${config.backgroundImage});
             chat.src = `https://mixer.com/embed/chat/${config.mixer}?composer=false`;
             if (!chat.parentElement)
                 container.insertBefore(chat, facecamcontainer);
-            startCarina(config.mixer);
+            startMixer(config.mixer);
         }
         else if (config.twitch) {
             closeCarina()
@@ -675,19 +675,35 @@ background-image: url(${config.backgroundImage});
         }
     }
 
+    async function startMixer(channel) {
+        const id = await fetchJSON(`https://mixer.com/api/v1/channels/${channel}?fields=id`)
+        console.log("mixer id", id);
+        startCarina(id.id);
+        startChat(id.id);
+    }
+
+    function closeMixer() {
+        closeCarina();
+        closeChat();
+    }
+
     function closeCarina() {
         const ca = state.carina;
-        if (ca) ca.close();
         state.carina = undefined;
+        if (ca) ca.close();
+    }
+
+    function closeChat() {
+        const ws = state.mixerChat;
+        state.mixerChat = undefined;
+        if (ws) ws.close();
     }
 
     // https://dev.mixer.com/reference/constellation/events/live/user%20followed
-    async function startCarina(channel) {
+    async function startCarina(id) {
         closeCarina();
-        const id = await fetchJSON(`https://mixer.com/api/v1/channels/${channel}?fields=id`)
-        console.log("mixer id", id);
         state.carina = new carina.Carina().open();
-        state.carina.subscribe(`channel:${id.id}:followed`, function (data) {
+        state.carina.subscribe(`channel:${id}:followed`, function (data) {
             console.log('mixer followed', data);
             /* following: true/false,
                user:
@@ -707,6 +723,27 @@ background-image: url(${config.backgroundImage});
         state.carina.subscribe(`channel:${id.id}:update`, function (data) {
             console.log('mixer update', data);
         });
+    }
+
+    let chatId = 0;
+    function startChat(id) {
+        const chat = state.mixerChat = new WebSocket("wss://chat.mixer.com/?version=1.0");
+        chat.onopen = function (evt) {
+            console.log(`mixer chat open`)
+            chat.send(JSON.stringify({ "type": "method", "method": "optOutEvents", "arguments": ["UserJoin", "UserLeave"], "id": chatId++ }))
+            chat.send(JSON.stringify({ "type": "method", "method": "auth", "arguments": [id, null, null, null], "id": chatId++ }))
+        }
+        chat.onmessage = function (evt) {
+            console.log(evt.data);
+/*
+{"type":"event","event":"ChatMessage","data":{"channel":14676506,"id":"f63d12d0-b1eb-11ea-ada2-4b028a908213","user_name":"pelikhan","user_id":29142604,"user_roles":["ChannelEditor","Mod","User"],"user_level":17,"user_avatar":"https://uploads.mixer.com/avatar/z7v10xwc-29142604.jpg","message":{"message":[{"type":"text","data":"hi","text":"hi"}],"meta":{}},"user_ascension_level":15}}
+script.js:737 {"type":"event","event":"DeleteMessage","data":{"moderator":{"user_name":"pelikhan","user_id":29142604,"user_roles":["ChannelEditor","Mod","User"],"user_level":17},"id":"f63d12d0-b1eb-11ea-ada2-4b028a908213"}}
+*/
+        }
+        chat.onclose = function (evt) {
+            state.mixerChat = undefined;
+            chat = undefined;
+        }
     }
 
     async function listCameras() {
