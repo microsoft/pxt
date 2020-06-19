@@ -452,7 +452,7 @@
             mouse.x = e.pageX - this.offsetLeft;
             mouse.y = e.pageY - this.offsetTop;
             pushPaintEvent("move", mouse, head);
-        }            
+        }
 
         clearPaint();
     }
@@ -474,8 +474,8 @@
     function popPaintEvent() {
         const evs = state.paint;
         if (!evs) return;
-        while(ev = evs.pop()) {
-            if(ev.type == "down" || ev.type == "whiteboard") {
+        while (ev = evs.pop()) {
+            if (ev.type == "down" || ev.type == "whiteboard") {
                 clearPaint();
                 applyPaintEvents(evs)
                 break;
@@ -485,7 +485,7 @@
 
     function applyPaintEvents(events) {
         events.forEach(ev => {
-            switch(ev.type) {
+            switch (ev.type) {
                 case "move": move(ev); break; // skip
                 case "down": down(ev); break;
                 case "up": commitPaint(); break;
@@ -500,7 +500,7 @@
             paintCtx.rect(0, 0, paint.width, paint.height)
             paintCtx.fill()
             paintCtx.restore()
-        }        
+        }
 
         function down(ev) {
             const mouse = ev.mouse;
@@ -1057,15 +1057,15 @@ background-image: url(${config.backgroundImage});
                 const chroma = seriously.effect("chroma");
                 chroma.clipBlack = 0.6;
                 chroma.source = source;
+                seriously.chroma = chroma;
                 source = chroma;
 
                 // optional chroma -> contour
                 if (contourColor) {
                     const contour = seriously.effect("contour");
-                    const c = parseColor(contourColor).map(v => v / 0xff);
-                    c.push(1);
-                    contour.color = c
                     contour.source = source;
+                    seriously.contour = contour;
+                    setContourColor(seriously, contourColor)
                     source = contour;
                 }
 
@@ -1086,29 +1086,34 @@ background-image: url(${config.backgroundImage});
                 }
             }
         }
-
-        function parseColor(c) {
-            if (!c) return;
-            let m = /^#([a-f0-9]{3})$/i.exec(c);
-            if (m) {
-                return [
-                    parseInt(m[1].charAt(0), 16) * 0x11,
-                    parseInt(m[1].charAt(1), 16) * 0x11,
-                    parseInt(m[1].charAt(2), 16) * 0x11
-                ];
-            }
-            m = /^#([a-f0-9]{6})$/i.exec(c);
-            if (m) {
-                return [
-                    parseInt(m[1].substr(0, 2), 16),
-                    parseInt(m[1].substr(2, 2), 16),
-                    parseInt(m[1].substr(4, 2), 16)
-                ];
-            }
-            return undefined;
-        }
     }
 
+    function setContourColor(seriously, contourColor) {
+        const c = parseColor(contourColor).map(v => v / 0xff);
+        c.push(1);
+        seriously.contour.color = c
+    }
+
+    function parseColor(c) {
+        if (!c) return undefined;
+        let m = /^#([a-f0-9]{3})$/i.exec(c);
+        if (m) {
+            return [
+                parseInt(m[1].charAt(0), 16) * 0x11,
+                parseInt(m[1].charAt(1), 16) * 0x11,
+                parseInt(m[1].charAt(2), 16) * 0x11
+            ];
+        }
+        m = /^#([a-f0-9]{6})$/i.exec(c);
+        if (m) {
+            return [
+                parseInt(m[1].substr(0, 2), 16),
+                parseInt(m[1].substr(2, 2), 16),
+                parseInt(m[1].substr(4, 2), 16)
+            ];
+        }
+        return undefined;
+    }
     function stopRecording() {
         const stop = state.recording;
         state.recording = undefined;
@@ -1372,12 +1377,7 @@ background-image: url(${config.backgroundImage});
         }
         const facecamselect = document.getElementById("facecamselect");
         facecamselect.innerHTML = "" // remove all web cams
-        {
-            const option = document.createElement("option")
-            option.value = ""
-            option.text = "Off"
-            facecamselect.add(option)
-        }
+        // no Off option
         cams.forEach(cam => {
             const option = document.createElement("option")
             option.value = cam.deviceId
@@ -1433,7 +1433,11 @@ background-image: url(${config.backgroundImage});
             if (/^#[a-fA-F0-9]{6}$/.test(facecamcontourinput.value))
                 config.faceCamContour = facecamcontourinput.value
             saveConfig(config);
-            loadFaceCam().then(() => loadSettings())
+            // already running?
+            if (config.faceCamContour && facecam.seriously && facecam.seriously.contour)
+                setContourColor(facecam.seriously, config.faceCamContour)
+            else
+                loadFaceCam().then(() => loadSettings())
         }
         const facecamcontourclear = document.getElementById("facecamcontourclear");
         facecamcontourclear.onclick = function (e) {
@@ -1523,7 +1527,11 @@ background-image: url(${config.backgroundImage});
             if (/^#[a-fA-F0-9]{6}$/.test(hardwarecamcontourinput.value))
                 config.hardwareCamContour = hardwarecamcontourinput.value
             saveConfig(config);
-            loadHardwareCam().then(() => loadSettings())
+            // already running?
+            if (config.hardwareCamContour && hardwarecam.seriously && hardwarecam.seriously.contour)
+                setContourColor(hardwarecam.seriously, config.hardwareCamContour)
+            else
+                loadHardwareCam().then(() => loadSettings())
         }
         const hardwarecamcontourclear = document.getElementById("hardwarecamcontourclear");
         hardwarecamcontourclear.onclick = function (e) {
