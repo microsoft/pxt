@@ -282,7 +282,7 @@
         }
 
         function addPaintButton(icon, title, tool) {
-            addButton(paintbox, icon, title, () => setPaintTool(tool), state.painttool == tool);
+            addButton(paintbox, icon, title, () => setPaintTool(tool),state.paint && state.painttool == tool);
         }
 
         function addSceneButton(icon, title, scene) {
@@ -405,6 +405,7 @@
     function stopPaint() {
         state.paint = undefined;
         clearPaint();
+        loadToolbox();
         render();
     }
 
@@ -656,7 +657,7 @@ border-right-color: ${menu};
 border-left-color: ${menu};
 color: white;
 }
-#toolbox, #title {
+#title {
 background: ${primary};
 }
 `

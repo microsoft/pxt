@@ -221,7 +221,7 @@ button:hover {
     display: inline-block;
     font-size: 1vw;
     width: 2px;
-    height: 76%;
+    height: 2vw;
     vertical-align: text-bottom;
 }
 
@@ -477,7 +477,7 @@ body.chatscene #settings {
 .paint {
     z-index:9;
 }
-.icons {
+#toolcontainer {
     z-index: 10;
 }
 
@@ -581,12 +581,11 @@ body.facecamdisplay .facecamvideo {
 }
 
 .icons {
-    position: absolute;
-    height: 5%;
-    background: #615fc7;
+    text-align: center;
     transition-delay: 0s;
     transition: opacity 0.3s;
     opacity: 0.15;
+    margin-bottom: 1%;
 }
 .icons:hover {
     opacity: 95%;
@@ -597,13 +596,10 @@ body.recording .icons {
 body.recording .icons:hover {
     opacity: 90%;
 }
-#toolbox {
+#toolcontainer {
+    position: absolute;
     left: 35%;
     bottom: 1.5%;
-}
-#paintbox {
-    left: 33%;
-    bottom: 10%;
 }
 
 #banner {
@@ -1303,8 +1299,10 @@ body.rightscene.thumbnail #editor {
     </div>
     <canvas id="paint" class="paint"></canvas>
     <canvas id="painttool" class="paint"></canvas>
-    <div class="box animated icons" id="paintbox"></div>
-    <div class="box animated icons" id="toolbox"></div>
+    <div class="tools" id="toolcontainer">
+        <div class="animated icons" id="paintbox"></div>
+        <div class="animated icons" id="toolbox"></div>    
+    </div>
 </div>
     <!-- @include tracking.html -->
     <script src="/static/streamer/script.js"></script>
