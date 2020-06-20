@@ -302,6 +302,7 @@ body.screenshoting #countdown {
     opacity: 100%;
     bottom: 20%;
     font-size: 36vw;
+    display: block !important;
 }
 
 /**
@@ -584,14 +585,14 @@ body.facecamdisplay .facecamvideo {
     text-align: center;
     transition-delay: 0s;
     transition: opacity 0.3s;
-    opacity: 0.15;
+    opacity: 0.1;
     margin-bottom: 1%;
 }
 .icons:hover {
     opacity: 95%;
 }
 body.recording .icons {
-    opacity: 0.1;
+    opacity: 0.05;
 }
 body.recording .icons:hover {
     opacity: 90%;
@@ -599,7 +600,7 @@ body.recording .icons:hover {
 #toolcontainer {
     position: absolute;
     left: 35%;
-    bottom: 1.5%;
+    bottom: 1%;
 }
 
 #banner {
@@ -642,6 +643,9 @@ body.rightscene.chat #editor {
     width: 67%;
     top: 2%;
     height: 95%;
+}
+body.rightscene #countdown {
+    display: none;
 }
 
 /* right + hardware */
@@ -763,6 +767,9 @@ body.leftscene .facecam {
 body.leftscene .hardwarecam {
     bottom: 10%;
     right: 1%;
+}
+body.leftscene #countdown {
+    display: none;
 }
 
 /* left + hardware */
@@ -965,6 +972,9 @@ body.chatscene.hardware.chat #chat {
 }
 body.chatscene.hardware.chat #title {
     top: 2%;
+}
+body.chatscene #countdown {
+    display: none;
 }
 
 /* timer scene */
