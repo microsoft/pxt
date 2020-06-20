@@ -198,17 +198,15 @@
             addSep(toolbox)
         }
 
-        addButton(toolbox, "EditCreate", "Paint mode  (Alt+Shift+1)", togglePaint)
-        addSep(toolbox)
         if (config.extraSites && config.extraSites.length) {
             config.extraSites.forEach(addSiteButton)
             addButton(toolbox, "Code", "Reload MakeCode editor", loadEditor)
             addSep(toolbox);
         }
-        addSceneButton(toolbox, "OpenPane", "Move webcam left (Alt+Shift+2)", "left")
-        addSceneButton(toolbox, "OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
-        addSceneButton(toolbox, "Contact", "Webcam large (Alt+Shift+4)", "chat")
-        addSceneButton(toolbox, "Timer", "Show countdown (Alt+Shift+5)", "countdown")
+        addSceneButton("OpenPane", "Move webcam left (Alt+Shift+2)", "left")
+        addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
+        addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
+        addSceneButton("Timer", "Show countdown (Alt+Shift+5)", "countdown")
         if (config.hardwareCamId || config.mixer || config.twitch || config.faceCamGreenScreen || config.hardwareCamGreenScreen) {
             addSep(toolbox)
             if (config.faceCamGreenScreen || config.hardwareCamGreenScreen)
@@ -289,7 +287,7 @@
 
         function addSceneButton(icon, title, scene) {
             const sceneIndex = scenes.indexOf(`${scene}scene`)
-            addButton(icon, title, () => setScene(scene), state.sceneIndex == sceneIndex)
+            addButton(toolbox, icon, title, () => setScene(scene), state.sceneIndex == sceneIndex)
         }
     }
 
