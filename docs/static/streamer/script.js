@@ -282,7 +282,7 @@
         }
 
         function addPaintButton(icon, title, tool) {
-            addButton(paintbox, icon, title, () => setPaintTool(tool), state.painttool == tool);
+            addButton(paintbox, icon, title, () => setPaintTool(tool), state.paint && state.painttool == tool);
         }
 
         function addSceneButton(icon, title, scene) {
@@ -376,6 +376,8 @@
             if (remaining < 0) {
                 remaining = 0;
                 stopCountdown();
+                // go to chat view
+                setScene("chat");
             }
             if (remaining) {
                 const minutes = Math.floor(remaining / 60);
@@ -405,6 +407,7 @@
     function stopPaint() {
         state.paint = undefined;
         clearPaint();
+        loadToolbox();
         render();
     }
 
@@ -656,7 +659,7 @@ border-right-color: ${menu};
 border-left-color: ${menu};
 color: white;
 }
-#toolbox, #title {
+#title {
 background: ${primary};
 }
 `
@@ -821,7 +824,7 @@ background-image: url(${config.backgroundImage});
             state.faceCamError = false;
             body.classList.add("loading");
             facecam.classList.remove("error");
-            await startStream(facecam, config.faceCamId, config.faceCamRotate, config.faceCamGreenScreen, config.faceCamContour);
+            await startStream(facecam, config.faceCamId, config.faceCamRotate, config.faceCamGreenScreen, config.faceCamClipBlack, config.faceCamContour);
             console.log(`face cam started`)
             if (!config.faceCamId)
                 stopStream(facecam.srcObject); // request permission only
@@ -847,7 +850,7 @@ background-image: url(${config.backgroundImage});
         if (config.hardwareCamId) {
             try {
                 state.hardwareCamError = false;
-                await startStream(hardwarecam, config.hardwareCamId, config.hardwareCamRotate, config.hardwareCamGreenScreen, config.hardwareCamContour);
+                await startStream(hardwarecam, config.hardwareCamId, config.hardwareCamRotate, config.hardwareCamGreenScreen, config.hardwareCamClipBlack, config.hardwareCamContour);
                 console.log(`hardware cam started`)
                 return; // success!
             }
@@ -1014,7 +1017,7 @@ background-image: url(${config.backgroundImage});
         window.history.replaceState('', '', '#')
     }
 
-    async function startStream(el, deviceId, rotate, greenscreen, contourColor) {
+    async function startStream(el, deviceId, rotate, greenscreen, clipBlack, contourColor) {
         stopStream(el.srcObject)
         console.log(`trying device ${deviceId}`)
         if (deviceId === DISPLAY_DEVICE_ID) {
@@ -1029,7 +1032,9 @@ background-image: url(${config.backgroundImage});
             const constraints = {
                 audio: false,
                 video: {
-                    aspectRatio: 4 / 3
+                    aspectRatio: 4 / 3,
+                    width: { ideal: 1080 },
+                    height: { ideal: 720 }
                 }
             }
             if (deviceId)
@@ -1067,7 +1072,7 @@ background-image: url(${config.backgroundImage});
 
                 // source -> chroma key
                 const chroma = seriously.effect("chroma");
-                chroma.clipBlack = 0.6;
+                chroma.clipBlack = clipBlack || 0.6;
                 const screenColor = toSeriousColor(greenscreen);
                 if (screenColor) chroma.screen = screenColor
                 chroma.source = source;
@@ -1447,7 +1452,7 @@ background-image: url(${config.backgroundImage});
                 facecam.seriously.chroma.screen = toSeriousColor(config.faceCamGreenScreen);
             else
                 loadFaceCam().then(() => loadSettings())
-        }        
+        }
         const facecamscreenclear = document.getElementById("facecamscreenclear");
         facecamscreenclear.onclick = function (e) {
             config.faceCamGreenScreen = undefined;
@@ -1455,7 +1460,7 @@ background-image: url(${config.backgroundImage});
             loadFaceCam().then(() => loadSettings())
         }
         const facecamscreencanvas = document.getElementById("facecamscreencanvas");
-        facecamscreencanvas.width = 320; 
+        facecamscreencanvas.width = 320;
         facecamscreencanvas.height = facecamscreencanvas.width / facecam.videoWidth * facecam.videoHeight;
         const facecamscreenctx = facecamscreencanvas.getContext('2d');
         facecamscreenctx.drawImage(facecam, 0, 0, facecam.videoWidth, facecam.videoHeight, 0, 0, facecamscreencanvas.width, facecamscreencanvas.height);
@@ -1476,7 +1481,17 @@ background-image: url(${config.backgroundImage});
             else
                 loadFaceCam().then(() => loadSettings())
         }
-
+        const facecamgreenclipblack = document.getElementById("facecamgreenclipblack")
+        facecamgreenclipblack.value = config.faceCamClipBlack || 0.6;
+        facecamgreenclipblack.onchange = function (e) {
+            config.faceCamClipBlack = facecamgreenclipblack.value;
+            saveConfig(config);
+            // already running?
+            if (facecam.seriously && facecam.seriously.chroma)
+                facecam.seriously.chroma.clipBlack = config.faceCamClipBlack;
+            else
+                loadFaceCam().then(() => loadSettings())
+        }
         const facecamcontourinput = document.getElementById("facecamcontourinput")
         facecamcontourinput.value = config.faceCamContour || ""
         facecamcontourinput.onchange = function (e) {
@@ -1579,7 +1594,7 @@ background-image: url(${config.backgroundImage});
         }
 
         const hardwarecamscreencanvas = document.getElementById("hardwarecamscreencanvas");
-        hardwarecamscreencanvas.width = 320; 
+        hardwarecamscreencanvas.width = 320;
         hardwarecamscreencanvas.height = hardwarecamscreencanvas.width / hardwarecam.videoWidth * hardwarecam.videoHeight;
         const hardwarecamscreenctx = hardwarecamscreencanvas.getContext('2d');
         hardwarecamscreenctx.drawImage(hardwarecam, 0, 0, hardwarecam.videoWidth, hardwarecam.videoHeight, 0, 0, hardwarecamscreencanvas.width, hardwarecamscreencanvas.height);
@@ -1606,7 +1621,17 @@ background-image: url(${config.backgroundImage});
             saveConfig(config);
             loadHardwareCam().then(() => loadSettings())
         }
-
+        const hardwarecamgreenclipblack = document.getElementById("hardwarecamgreenclipblack")
+        hardwarecamgreenclipblack.value = config.hardwareCamClipBlack || 0.6;
+        hardwarecamgreenclipblack.onchange = function (e) {
+            config.hardwareCamClipBlack = hardwarecamgreenclipblack.value;
+            saveConfig(config);
+            // already running?
+            if (hardwarecam.seriously && hardwarecam.seriously.chroma)
+            hardwarecam.seriously.chroma.clipBlack = config.hardwareCamClipBlack;
+            else
+                loadHardwareCam().then(() => loadSettings())
+        }
         const hardwarecamcontourinput = document.getElementById("hardwarecamcontourinput")
         hardwarecamcontourinput.value = config.hardwareCamContour || ""
         hardwarecamcontourinput.onchange = function (e) {

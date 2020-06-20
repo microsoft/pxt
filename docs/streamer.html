@@ -221,7 +221,7 @@ button:hover {
     display: inline-block;
     font-size: 1vw;
     width: 2px;
-    height: 76%;
+    height: 2vw;
     vertical-align: text-bottom;
 }
 
@@ -302,6 +302,7 @@ body.screenshoting #countdown {
     opacity: 100%;
     bottom: 20%;
     font-size: 36vw;
+    display: block !important;
 }
 
 /**
@@ -477,7 +478,7 @@ body.chatscene #settings {
 .paint {
     z-index:9;
 }
-.icons {
+#toolcontainer {
     z-index: 10;
 }
 
@@ -581,29 +582,25 @@ body.facecamdisplay .facecamvideo {
 }
 
 .icons {
-    position: absolute;
-    height: 5%;
-    background: #615fc7;
+    text-align: center;
     transition-delay: 0s;
     transition: opacity 0.3s;
-    opacity: 0.15;
+    opacity: 0.1;
+    margin-bottom: 1%;
 }
 .icons:hover {
     opacity: 95%;
 }
 body.recording .icons {
-    opacity: 0.1;
+    opacity: 0.05;
 }
 body.recording .icons:hover {
     opacity: 90%;
 }
-#toolbox {
+#toolcontainer {
+    position: absolute;
     left: 35%;
-    bottom: 1.5%;
-}
-#paintbox {
-    left: 33%;
-    bottom: 10%;
+    bottom: 1%;
 }
 
 #banner {
@@ -646,6 +643,9 @@ body.rightscene.chat #editor {
     width: 67%;
     top: 2%;
     height: 95%;
+}
+body.rightscene #countdown {
+    display: none;
 }
 
 /* right + hardware */
@@ -767,6 +767,9 @@ body.leftscene .facecam {
 body.leftscene .hardwarecam {
     bottom: 10%;
     right: 1%;
+}
+body.leftscene #countdown {
+    display: none;
 }
 
 /* left + hardware */
@@ -970,6 +973,9 @@ body.chatscene.hardware.chat #chat {
 body.chatscene.hardware.chat #title {
     top: 2%;
 }
+body.chatscene #countdown {
+    display: none;
+}
 
 /* timer scene */
 body.countdownscene #editor {
@@ -1153,6 +1159,10 @@ body.rightscene.thumbnail #editor {
         </div>
         <canvas class="colorpicker" id="facecamscreencanvas"></canvas>
         <div class="field">
+            <label for="facecamgreenclipblack">Sensitivity</label>
+            <input type="range" id="facecamgreenclipblack" min="0" max="1" step="0.01">
+        </div>
+        <div class="field">
             <label for="facecamcontourinput">Silhouette contour color (when erasing green screen)</label>
             <input id="facecamcontourinput" type="color" />
             <button id="facecamcontourclear">clear</button>
@@ -1195,6 +1205,10 @@ body.rightscene.thumbnail #editor {
             <button id="hardwarecamscreenclear">clear</button>
         </div>
         <canvas class="colorpicker" id="hardwarecamscreencanvas"></canvas>
+        <div class="field">
+            <label for="hardwarecamgreenclipblack">Sensitivity</label>
+            <input type="range" id="hardwarecamgreenclipblack" min="0" max="1" step="0.01">
+        </div>
         <div class="field">
             <label for="hardwarecamcontourinput">Silhouette contour color (when erasing green screen)</label>
             <input id="hardwarecamcontourinput" type="color" />
@@ -1303,8 +1317,10 @@ body.rightscene.thumbnail #editor {
     </div>
     <canvas id="paint" class="paint"></canvas>
     <canvas id="painttool" class="paint"></canvas>
-    <div class="box animated icons" id="paintbox"></div>
-    <div class="box animated icons" id="toolbox"></div>
+    <div class="tools" id="toolcontainer">
+        <div class="animated icons" id="paintbox"></div>
+        <div class="animated icons" id="toolbox"></div>    
+    </div>
 </div>
     <!-- @include tracking.html -->
     <script src="/static/streamer/script.js"></script>
