@@ -12,7 +12,8 @@
     const chat = document.getElementById("chat");
     const settings = document.getElementById("settings");
     const editorStyle = document.getElementById("editorstyle");
-    const toolbox = document.getElementById("toolbox")
+    const toolbox = document.getElementById("toolbox");
+    const paintbox = document.getElementById("paintbox");
     const paint = document.getElementById('paint');
     const paintCtx = paint.getContext('2d');
     const painttool = document.getElementById('painttool');
@@ -40,7 +41,7 @@
         left: false,
         chat: false,
         hardware: false,
-        painttool: "arrow",
+        painttool: undefined,
         recording: undefined,
         timerEnd: undefined,
         thumbnail: false,
@@ -167,82 +168,82 @@
 
     function loadToolbox() {
         const config = readConfig();
-        toolbox.innerHTML = ""
+        toolbox.innerHTML = "";
+        paintbox.innerHTML = "";
 
+        // paint
+        const emojis = [];
+        if (config.emojis)
+            for (let i = 0; i < config.emojis.length; i += 2)
+                emojis[i >> 1] = config.emojis.substr(i, 2);
+        addPaintButton("ArrowTallUpLeft", "Draw arrow (Alt+Shift+A)", "arrow")
+        addPaintButton("RectangleShape", "Draw rectangle (Alt+Shift+R)", "rect")
+        addPaintButton("PenWorkspace", "Draw freeform", "pen")
+        addPaintButton("Highlight", "Highligh", "highlight")
+        addSep(paintbox)
+        paintColors.forEach(addColorButton);
+        addSep(paintbox)
+        emojis.forEach(addEmojiButton);
+        addSep(paintbox)
+        addButton(paintbox, "WhiteBoardApp32", "Paint screen in white", () => pushPaintEvent("whiteboard"))
+        addButton(paintbox, "EraseTool", "Undo last drawing", popPaintEvent)
+        addSep(paintbox)
+        addButton(paintbox, "ChromeClose", "Exit paint mode", stopPaint)
+
+        // tools
         const currentScene = scenes[state.sceneIndex];
-
         if (currentScene == "countdownscene") {
-            addButton("Add", "Add 1 minute to countdown", () => updateCountdown(60))
-            addButton("Remove", "Remove 1 minute from countdown", () => updateCountdown(-60))
-            addSep()
+            addButton(toolbox, "Add", "Add 1 minute to countdown", () => updateCountdown(60))
+            addButton(toolbox, "Remove", "Remove 1 minute from countdown", () => updateCountdown(-60))
+            addSep(toolbox)
         }
 
-        if (state.paint) {
-            const emojis = [];
-            if (config.emojis)
-                for (let i = 0; i < config.emojis.length; i += 2)
-                    emojis[i >> 1] = config.emojis.substr(i, 2);
-            addPaintButton("ArrowTallUpLeft", "Draw arrow (Alt+Shift+A)", "arrow")
-            addPaintButton("RectangleShape", "Draw rectangle (Alt+Shift+R)", "rect")
-            addPaintButton("PenWorkspace", "Draw freeform", "pen")
-            addPaintButton("Highlight", "Highligh", "highlight")
-            addSep()
-            paintColors.forEach(addColorButton);
-            addSep()
-            emojis.forEach(addEmojiButton);
-            addSep()
-            addButton("WhiteBoardApp32", "Paint screen in white", () => pushPaintEvent("whiteboard"))
-            addButton("EraseTool", "Undo last drawing", popPaintEvent)
-            addSep()
-            addButton("ChromeClose", "Exit paint mode", togglePaint)
-        } else {
-            addButton("EditCreate", "Paint mode  (Alt+Shift+1)", togglePaint)
-            addSep()
-            if (config.extraSites && config.extraSites.length) {
-                config.extraSites.forEach(addSiteButton)
-                addButton("Code", "Reload MakeCode editor", loadEditor)
-                addSep();
-            }
-            addSceneButton("OpenPane", "Move webcam left (Alt+Shift+2)", "left")
-            addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
-            addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
-            addSceneButton("Timer", "Show countdown (Alt+Shift+5)", "countdown")
-            if (config.hardwareCamId || config.mixer || config.twitch || config.faceCamGreenScreen || config.hardwareCamGreenScreen) {
-                addSep()
-                if (config.faceCamGreenScreen || config.hardwareCamGreenScreen)
-                    addButton("PictureCenter", "Toggle thumbnail mode (Alt+Shift+6)", toggleThumbnail, state.thumbnail)
-                if (config.hardwareCamId)
-                    addButton("Robot", "Hardware webcam (Alt+Shift+7)", toggleHardware, state.hardware)
-                if (config.mixer || config.twitch)
-                    addButton("OfficeChat", "Chat  (Alt+Shift+8)", toggleChat, state.chat)
-            }
+        addButton(toolbox, "EditCreate", "Paint mode  (Alt+Shift+1)", togglePaint)
+        addSep(toolbox)
+        if (config.extraSites && config.extraSites.length) {
+            config.extraSites.forEach(addSiteButton)
+            addButton(toolbox, "Code", "Reload MakeCode editor", loadEditor)
+            addSep(toolbox);
+        }
+        addSceneButton(toolbox, "OpenPane", "Move webcam left (Alt+Shift+2)", "left")
+        addSceneButton(toolbox, "OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
+        addSceneButton(toolbox, "Contact", "Webcam large (Alt+Shift+4)", "chat")
+        addSceneButton(toolbox, "Timer", "Show countdown (Alt+Shift+5)", "countdown")
+        if (config.hardwareCamId || config.mixer || config.twitch || config.faceCamGreenScreen || config.hardwareCamGreenScreen) {
+            addSep(toolbox)
+            if (config.faceCamGreenScreen || config.hardwareCamGreenScreen)
+                addButton(toolbox, "PictureCenter", "Toggle thumbnail mode (Alt+Shift+6)", toggleThumbnail, state.thumbnail)
+            if (config.hardwareCamId)
+                addButton(toolbox, "Robot", "Hardware webcam (Alt+Shift+7)", toggleHardware, state.hardware)
+            if (config.mixer || config.twitch)
+                addButton(toolbox, "OfficeChat", "Chat  (Alt+Shift+8)", toggleChat, state.chat)
         }
 
-        addSep()
+        addSep(toolbox)
         if (state.speech)
-            addButton("ClosedCaption", "Captions", toggleSpeech, state.speechRunning)
+            addButton(toolbox, "ClosedCaption", "Captions", toggleSpeech, state.speechRunning)
         if (!!navigator.mediaDevices.getDisplayMedia) {
-            addButton("BrowserScreenShot", "Take screenshot", takeScreenshot);
+            addButton(toolbox, "BrowserScreenShot", "Take screenshot", takeScreenshot);
             if (state.recording)
-                addButton("Stop", "Stop recording", stopRecording)
+                addButton(toolbox, "Stop", "Stop recording", stopRecording)
             else
-                addButton("Record2", "Start recording", startRecording)
+                addButton(toolbox, "Record2", "Start recording", startRecording)
         }
-        addButton("Settings", "Show settings", toggleSettings);
+        addButton(toolbox, "Settings", "Show settings", toggleSettings);
 
-        function addSep() {
+        function addSep(container) {
             const sep = document.createElement("div")
             sep.className = "sep"
-            toolbox.append(sep)
+            container.append(sep)
         }
 
-        function addButton(icon, title, handler, active) {
+        function addButton(container, icon, title, handler, active) {
             const btn = document.createElement("button")
             accessify(btn);
             btn.title = title
             btn.addEventListener("click", function (e) {
                 tickEvent("streamer.button", { button: icon }, { interactiveConsent: true })
-                toolbox.classList.remove("opaque")
+                container.classList.remove("opaque")
                 handler(e)
             }, false)
             const i = document.createElement("i")
@@ -250,12 +251,12 @@
             if (active)
                 btn.classList.add("active")
             i.className = `ms-Icon ms-Icon--${icon}`
-            toolbox.append(btn)
+            container.append(btn)
             return btn;
         }
 
         function addColorButton(color) {
-            const btn = addButton("CircleShapeSolid", color, function () {
+            const btn = addButton(paintbox, "CircleShapeSolid", color, function () {
                 tickEvent("streamer.color", { color }, { interactiveConsent: true })
                 state.paintColor = color;
                 loadToolbox();
@@ -275,15 +276,15 @@
                 state.emoji = emoji;
                 setPaintTool("emoji")
             }, false)
-            toolbox.append(btn)
+            paintbox.append(btn)
         }
 
         function addSiteButton(url) {
-            addButton("SingleBookmark", url, () => setSite(url), false)
+            addButton(toolbox, "SingleBookmark", url, () => setSite(url), false)
         }
 
         function addPaintButton(icon, title, tool) {
-            addButton(icon, title, () => setPaintTool(tool), state.painttool == tool);
+            addButton(paintbox, icon, title, () => setPaintTool(tool), state.painttool == tool);
         }
 
         function addSceneButton(icon, title, scene) {
@@ -395,11 +396,23 @@
         }
     }
 
-    function togglePaint() {
-        state.paint = state.paint ? undefined : [];
+    function startPaint() {
+        if (state.paint) return;
+        state.paint = [];
         clearPaint();
         updatePaintSize();
         render();
+    }
+
+    function stopPaint() {
+        state.paint = undefined;
+        clearPaint();
+        render();
+    }
+
+    function togglePaint() {
+        if (state.paint) stopPaint();
+        else startPaint();
     }
 
     function toggleThumbnail() {
@@ -408,6 +421,7 @@
     }
 
     function setPaintTool(tool) {
+        startPaint();
         state.painttool = tool;
         loadToolbox();
     }

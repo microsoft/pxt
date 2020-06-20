@@ -197,7 +197,7 @@ button:hover {
     color: black;
     text-align: left;
 }
-#toolbox > button {
+.icons > button {
     height: 2vw;
     width: 2vw;
     border-radius: 1vw;
@@ -209,14 +209,14 @@ button:hover {
     opacity: 40%;
     vertical-align: bottom;
 }
-#toolbox > button:hover {
+.icons > button:hover {
     opacity: 100%;
 }
-#toolbox > button.active {
+.icons > button.active {
     background: white;
     color: black;
 }
-#toolbox > div.sep {
+.icons > div.sep {
     border-left: solid 2px grey;
     display: inline-block;
     font-size: 1vw;
@@ -465,9 +465,6 @@ body.chatscene #settings {
 #countdown {
     z-index: 4;
 }
-.paint {
-    z-index:6;
-}
 #recorder {
     z-index: 7;
 }
@@ -477,7 +474,10 @@ body.chatscene #settings {
 #settings {
     z-index: 8;
 }
-#toolbox {
+.paint {
+    z-index:9;
+}
+.icons {
     z-index: 10;
 }
 
@@ -580,28 +580,30 @@ body.facecamdisplay .facecamvideo {
     transition-delay: 0.3s;
 }
 
-#toolbox {
+.icons {
     position: absolute;
     height: 5%;
-    left: 35%;
-    bottom: 1.5%;
     background: #615fc7;
     transition-delay: 0s;
     transition: opacity 0.3s;
     opacity: 0.15;
 }
-body.recording #toolbox {
-    bottom: 10%;
-    opacity: 0.1;
-}
-#toolbox:hover {
+.icons:hover {
     opacity: 95%;
 }
-body.recording #toolbox:hover {
+body.recording .icons {
+    opacity: 0.1;
+}
+body.recording .icons:hover {
     opacity: 90%;
 }
-body.paint #toolbox {
-    left: 30%;
+#toolbox {
+    left: 35%;
+    bottom: 1.5%;
+}
+#paintbox {
+    left: 33%;
+    bottom: 10%;
 }
 
 #banner {
@@ -1056,8 +1058,8 @@ body.rightscene.thumbnail #editor {
 <body class="rightscene">
     <video id="backgroundvideo" playsinline autoplay muted loop></video>
     <div id="container" class="container">
-    <iframe class="box animated" id="editor" allow="usb;camera" sandbox="allow-scripts allow-same-origin allow-top-navigation"></iframe>
-    <iframe class="box animated" id="editor2" allow="usb;camera" sandbox="allow-scripts allow-same-origin allow-top-navigation"></iframe>
+    <iframe class="box animated" id="editor" allow="usb;camera" sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads"></iframe>
+    <iframe class="box animated" id="editor2" allow="usb;camera" sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads"></iframe>
     <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
     <div class="box animated clickeable facecam" id="facecam">
         <video autoplay playsinline id="facecamvideo"></video>
@@ -1301,7 +1303,8 @@ body.rightscene.thumbnail #editor {
     </div>
     <canvas id="paint" class="paint"></canvas>
     <canvas id="painttool" class="paint"></canvas>
-    <div class="box animated opaque" id="toolbox"></div>
+    <div class="box animated icons" id="paintbox"></div>
+    <div class="box animated icons" id="toolbox"></div>
 </div>
     <!-- @include tracking.html -->
     <script src="/static/streamer/script.js"></script>
