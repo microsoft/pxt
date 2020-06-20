@@ -200,7 +200,7 @@ button:hover {
 .icons > button {
     height: 2vw;
     width: 2vw;
-    border-radius: 1vw;
+    border-radius: 2vw;
     font-size: 1vw;
     background: black;
     color: white;
@@ -208,9 +208,16 @@ button:hover {
     cursor: pointer;
     opacity: 40%;
     vertical-align: bottom;
+    transform: opacity 0.1s;
+}
+.icons:hover > button {
+    opacity: 0.8;
 }
 .icons > button:hover {
-    opacity: 100%;
+    opacity: 1;
+    transform: scale(1.3) rotate(10deg);
+    border:none;
+    outline: none;
 }
 .icons > button.active {
     background: white;
@@ -593,6 +600,7 @@ body.facecamdisplay .facecamvideo {
 }
 .icons:hover {
     opacity: 95%;
+    background: rgba(255, 255, 255, 0.2)
 }
 body.recording .icons {
     opacity: 0.05;

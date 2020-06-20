@@ -662,10 +662,6 @@ color: white;
 #title {
 background: ${primary};
 }
-.icons:hover {
-    background: ${primary};
-    border: solid 3px ${menu};
-}
 `
         const faceCamFilter = camFilter(config.faceCamFilter)
         if (faceCamFilter)
