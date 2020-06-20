@@ -824,7 +824,7 @@ background-image: url(${config.backgroundImage});
             state.faceCamError = false;
             body.classList.add("loading");
             facecam.classList.remove("error");
-            await startStream(facecam, config.faceCamId, config.faceCamRotate, config.faceCamGreenScreen, config.faceCamContour);
+            await startStream(facecam, config.faceCamId, config.faceCamRotate, config.faceCamGreenScreen, config.faceCamClipBlack, config.faceCamContour);
             console.log(`face cam started`)
             if (!config.faceCamId)
                 stopStream(facecam.srcObject); // request permission only
@@ -850,7 +850,7 @@ background-image: url(${config.backgroundImage});
         if (config.hardwareCamId) {
             try {
                 state.hardwareCamError = false;
-                await startStream(hardwarecam, config.hardwareCamId, config.hardwareCamRotate, config.hardwareCamGreenScreen, config.hardwareCamContour);
+                await startStream(hardwarecam, config.hardwareCamId, config.hardwareCamRotate, config.hardwareCamGreenScreen, config.hardwareCamClipBlack, config.hardwareCamContour);
                 console.log(`hardware cam started`)
                 return; // success!
             }
@@ -1017,7 +1017,7 @@ background-image: url(${config.backgroundImage});
         window.history.replaceState('', '', '#')
     }
 
-    async function startStream(el, deviceId, rotate, greenscreen, contourColor) {
+    async function startStream(el, deviceId, rotate, greenscreen, clipBlack, contourColor) {
         stopStream(el.srcObject)
         console.log(`trying device ${deviceId}`)
         if (deviceId === DISPLAY_DEVICE_ID) {
@@ -1072,7 +1072,7 @@ background-image: url(${config.backgroundImage});
 
                 // source -> chroma key
                 const chroma = seriously.effect("chroma");
-                chroma.clipBlack = 0.6;
+                chroma.clipBlack = clipBlack || 0.6;
                 const screenColor = toSeriousColor(greenscreen);
                 if (screenColor) chroma.screen = screenColor
                 chroma.source = source;
@@ -1481,7 +1481,17 @@ background-image: url(${config.backgroundImage});
             else
                 loadFaceCam().then(() => loadSettings())
         }
-
+        const facecamgreenclipblack = document.getElementById("facecamgreenclipblack")
+        facecamgreenclipblack.value = config.faceCamClipBlack || 0.6;
+        facecamgreenclipblack.onchange = function (e) {
+            config.faceCamClipBlack = facecamgreenclipblack.value;
+            saveConfig(config);
+            // already running?
+            if (facecam.seriously && facecam.seriously.chroma)
+                facecam.seriously.chroma.clipBlack = config.faceCamClipBlack;
+            else
+                loadFaceCam().then(() => loadSettings())
+        }
         const facecamcontourinput = document.getElementById("facecamcontourinput")
         facecamcontourinput.value = config.faceCamContour || ""
         facecamcontourinput.onchange = function (e) {
@@ -1611,7 +1621,17 @@ background-image: url(${config.backgroundImage});
             saveConfig(config);
             loadHardwareCam().then(() => loadSettings())
         }
-
+        const hardwarecamgreenclipblack = document.getElementById("hardwarecamgreenclipblack")
+        hardwarecamgreenclipblack.value = config.hardwareCamClipBlack || 0.6;
+        hardwarecamgreenclipblack.onchange = function (e) {
+            config.hardwareCamClipBlack = hardwarecamgreenclipblack.value;
+            saveConfig(config);
+            // already running?
+            if (hardwarecam.seriously && hardwarecam.seriously.chroma)
+            hardwarecam.seriously.chroma.clipBlack = config.hardwareCamClipBlack;
+            else
+                loadHardwareCam().then(() => loadSettings())
+        }
         const hardwarecamcontourinput = document.getElementById("hardwarecamcontourinput")
         hardwarecamcontourinput.value = config.hardwareCamContour || ""
         hardwarecamcontourinput.onchange = function (e) {
