@@ -282,7 +282,7 @@
         }
 
         function addPaintButton(icon, title, tool) {
-            addButton(paintbox, icon, title, () => setPaintTool(tool),state.paint && state.painttool == tool);
+            addButton(paintbox, icon, title, () => setPaintTool(tool), state.paint && state.painttool == tool);
         }
 
         function addSceneButton(icon, title, scene) {
@@ -1032,7 +1032,9 @@ background-image: url(${config.backgroundImage});
             const constraints = {
                 audio: false,
                 video: {
-                    aspectRatio: 4 / 3
+                    aspectRatio: 4 / 3,
+                    width: { ideal: 1080 },
+                    height: { ideal: 720 }
                 }
             }
             if (deviceId)
@@ -1450,7 +1452,7 @@ background-image: url(${config.backgroundImage});
                 facecam.seriously.chroma.screen = toSeriousColor(config.faceCamGreenScreen);
             else
                 loadFaceCam().then(() => loadSettings())
-        }        
+        }
         const facecamscreenclear = document.getElementById("facecamscreenclear");
         facecamscreenclear.onclick = function (e) {
             config.faceCamGreenScreen = undefined;
@@ -1458,7 +1460,7 @@ background-image: url(${config.backgroundImage});
             loadFaceCam().then(() => loadSettings())
         }
         const facecamscreencanvas = document.getElementById("facecamscreencanvas");
-        facecamscreencanvas.width = 320; 
+        facecamscreencanvas.width = 320;
         facecamscreencanvas.height = facecamscreencanvas.width / facecam.videoWidth * facecam.videoHeight;
         const facecamscreenctx = facecamscreencanvas.getContext('2d');
         facecamscreenctx.drawImage(facecam, 0, 0, facecam.videoWidth, facecam.videoHeight, 0, 0, facecamscreencanvas.width, facecamscreencanvas.height);
@@ -1582,7 +1584,7 @@ background-image: url(${config.backgroundImage});
         }
 
         const hardwarecamscreencanvas = document.getElementById("hardwarecamscreencanvas");
-        hardwarecamscreencanvas.width = 320; 
+        hardwarecamscreencanvas.width = 320;
         hardwarecamscreencanvas.height = hardwarecamscreencanvas.width / hardwarecam.videoWidth * hardwarecam.videoHeight;
         const hardwarecamscreenctx = hardwarecamscreencanvas.getContext('2d');
         hardwarecamscreenctx.drawImage(hardwarecam, 0, 0, hardwarecam.videoWidth, hardwarecam.videoHeight, 0, 0, hardwarecamscreencanvas.width, hardwarecamscreencanvas.height);
