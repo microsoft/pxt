@@ -851,6 +851,7 @@ background-image: url(${config.backgroundImage});
         if (config.hardwareCamId) {
             try {
                 state.hardwareCamError = false;
+                hardwarecam.parentElement.classList.remove("hidden");
                 await startStream(hardwarecam, config.hardwareCamId, config.hardwareCamRotate, config.hardwareCamGreenScreen, config.hardwareCamClipBlack, config.hardwareCamContour);
                 console.log(`hardware cam started`)
                 return; // success!
@@ -865,6 +866,7 @@ background-image: url(${config.backgroundImage});
             }
         } else {
             state.hardwareCamError = false
+            hardwarecam.parentElement.classList.add("hidden");
             stopStream(hardwarecam.srcObject)
         }
     }
