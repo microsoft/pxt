@@ -915,6 +915,8 @@ background-image: url(${config.backgroundImage});
     }
 
     function initVideos() {
+        accessify(facecam.parentElement)
+        accessify(hardwarecam.parentElement)
         facecam.parentElement.onclick = () => onClick(facecam.parentElement);
         hardwarecam.parentElement.onclick = () => onClick(hardwarecam.parentElement);
 
@@ -1966,6 +1968,7 @@ background-image: url(${config.backgroundImage});
 
     function accessify(el) {
         el.tabIndex = 0;
+        el.role = "button";
         el.onkeypress = e => {
             const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
             if (charCode === 13 /* enter */ || charCode === 32 /* space */) {
