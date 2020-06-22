@@ -312,7 +312,7 @@
             resetTransition(hardwarecamlabel, "fadeout")
         }
         if (scene === "countdown") {
-            startCountdown();
+            startCountdown(300000);
             if (config.endVideo) {
                 endvideo.classList.remove("hidden");
                 endvideo.onended = () => {
@@ -352,13 +352,13 @@
     }
 
     function startCountdown(duration, callback) {
+        if (duration !== undefined)
+            state.timerEnd = Date.now() + duration;
         if (!state.timerInterval) {
             if (state.timerEnd === undefined)
                 state.timerEnd = Date.now() + 300000;
             state.timerInterval = setInterval(renderCountdown, 100);
         }
-        if (duration !== undefined)
-            state.timerEnd = Date.now() + duration;
         state.timerCallback = callback;
     }
 
