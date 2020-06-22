@@ -771,13 +771,13 @@ background-image: url(${config.backgroundImage});
     }
 
     function startMixerChatWs(id) {
-        const chat = state.mixerChatWs = new WebSocket("wss://chat.mixer.com/?version=1.0");
-        chat.onopen = function (evt) {
+        let chatWs = state.mixerChatWs = new WebSocket("wss://chat.mixer.com/?version=1.0");
+        chatWs.onopen = function (evt) {
             console.log(`mixer chat open`)
-            chat.send(JSON.stringify({ "type": "method", "method": "optOutEvents", "arguments": ["UserJoin", "UserLeave", "DeleteMessage"], "id": 0 }))
-            chat.send(JSON.stringify({ "type": "method", "method": "auth", "arguments": [id, null, null, null], "id": 1 }))
+            chatWs.send(JSON.stringify({ "type": "method", "method": "optOutEvents", "arguments": ["UserJoin", "UserLeave", "DeleteMessage"], "id": 0 }))
+            chatWs.send(JSON.stringify({ "type": "method", "method": "auth", "arguments": [id, null, null, null], "id": 1 }))
         }
-        chat.onmessage = function (evt) {
+        chatWs.onmessage = function (evt) {
             const data = JSON.parse(evt.data);
             console.log(data);
             if (!state.chat && data
@@ -786,10 +786,10 @@ background-image: url(${config.backgroundImage});
                     toggleChat();
             }
         }
-        chat.onclose = function (evt) {
+        chatWs.onclose = function (evt) {
             console.log('mixer chat close')
             state.mixerChatWs = undefined;
-            chat = undefined;
+            chatWs = undefined;
         }
     }
 
