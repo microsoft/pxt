@@ -570,6 +570,7 @@ function addNewTile(t: pxt.TileSet, data: pxt.sprite.BitmapData, id?: number, qn
         // Transparency is always index 0
         tiles.push({
             id: fakeId,
+            isProjectTile: true,
             bitmap: new pxt.sprite.Bitmap(t.tileWidth, t.tileWidth).data(),
             data: null
         })
@@ -579,6 +580,7 @@ function addNewTile(t: pxt.TileSet, data: pxt.sprite.BitmapData, id?: number, qn
         tiles.push({
             id: fakeId,
             bitmap: data,
+            isProjectTile: true,
             data: null
         });
     }
@@ -592,6 +594,7 @@ function addNewTile(t: pxt.TileSet, data: pxt.sprite.BitmapData, id?: number, qn
     else {
         tiles.push({
             id: fakeId,
+            isProjectTile: true,
             bitmap: data,
             data: null
          });

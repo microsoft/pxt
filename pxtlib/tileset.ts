@@ -26,6 +26,8 @@ namespace pxt {
     }
 
     export class TilemapProject {
+        public needsRebuild = true;
+
         protected extensionTileSets: TileSetCollection[];
         protected projectTileSet: TileSetCollection;
         protected projectTilemaps: ProjectTilemap[];
@@ -60,12 +62,14 @@ namespace pxt {
         }
 
         public createNewTile(data: pxt.sprite.BitmapData) {
-            const prefix = "tile";
+            this.needsRebuild = true;
+            const prefix = pxt.sprite.TILE_NAMESPACE + "." + pxt.sprite.TILE_PREFIX;
 
             let index = 0;
-            while (true) {
-                if (!this.takenNames[prefix + index]) break;
+            while (this.takenNames[prefix + index]) {
+                ++index;
             }
+            this.takenNames[prefix + index] = true;
 
             const newTile = {
                 id: prefix + index,
@@ -90,6 +94,7 @@ namespace pxt {
         }
 
         public updateTile(id: string, data: pxt.sprite.BitmapData) {
+            this.needsRebuild = true;
             for (const tileSet of this.projectTileSet.tileSets) {
                 for (const tile of tileSet.tiles) {
                     if (tile.id === id) {
@@ -102,6 +107,7 @@ namespace pxt {
         }
 
         public deleteTile(id: string) {
+            this.needsRebuild = true;
             for (const tileSet of this.projectTileSet.tileSets) {
                 tileSet.tiles = tileSet.tiles.filter(t => t.id !== id);
             }
@@ -115,7 +121,9 @@ namespace pxt {
             const blob: pxt.Map<any> = {};
 
             for (const tile of tiles) {
-                blob[tile.id] = {
+                // Get the last part of the fully qualified name
+                const id = tile.id.substr(tile.id.lastIndexOf(".") + 1);
+                blob[id] = {
                     data: tile.data,
                     mimeType: IMAGE_MIME_TYPE,
                     tilemapTile: true
@@ -130,10 +138,10 @@ namespace pxt {
             blob["*"] = {
                 "mimeType": "image/x-mkcd-f4",
                 "dataEncoding": "base64",
-                "namespace": "myTiles"
+                "namespace": pxt.sprite.TILE_NAMESPACE
             };
 
-            return JSON.stringify(blob, null, 4);
+            return blob;
         }
 
         public encodeTilemap(tilemap: sprite.TilemapData, id: string): JRes {
@@ -165,6 +173,7 @@ namespace pxt {
         }
 
         public createNewTilemap(name: string, tileWidth: number, width = 16, height = 16) {
+            this.needsRebuild = true;
             let index = 0;
             let base = name;
 
@@ -172,6 +181,8 @@ namespace pxt {
                 name = base  + "_" + index;
                 ++index;
             }
+
+            this.takenNames[name] = true;
 
             const newMap = this.blankTilemap(tileWidth, width, height);
             this.projectTilemaps.push({
@@ -260,13 +271,14 @@ namespace pxt {
                         extensionID: "this",
                         tileSets: []
                     };
-                    this.projectTilemaps = getTilemaps(pack)
-                        .map(tm => ({
-                            id: tm.id,
-                            data: this.decodeTilemap(tm)
-                        }));
                 }
             }
+
+            this.projectTilemaps = getTilemaps(pack)
+                .map(tm => ({
+                    id: tm.id,
+                    data: this.decodeTilemap(tm)
+                }));
 
             // FIXME: we a re re-parsing the jres here
             const allJRes = pack.getJRes();
@@ -276,12 +288,13 @@ namespace pxt {
         }
 
         protected createTileset(tileWidth: number) {
+            this.needsRebuild = true;
             const tileSet: TileSet = {
                 tileWidth,
                 tiles: []
             };
 
-            const baseID = "transparency" + tileWidth;
+            const baseID = pxt.sprite.TILE_NAMESPACE + ".transparency" + tileWidth;
 
             let transparencyID = baseID;
             let index = 1;
@@ -393,5 +406,25 @@ namespace pxt {
             }
         }
         return null;
+    }
+
+    export function emitTilemapsFromJRes(jres: pxt.Map<JRes>) {
+        const entries = Object.keys(jres);
+
+        const indent = "    ";
+        let out = "";
+        for (const key of entries) {
+            if (key === "*") continue;
+
+            const entry = jres[key];
+
+            if (entry.tilemapTile) {
+                // FIXME: we should get the "image.ofBuffer" and blockIdentity from pxtarget probably
+                out += `${indent}//% fixedInstance jres blockIdentity=images._tile\n`
+                out += `${indent}export const ${key} = image.ofBuffer(hex\`\`);\n`
+            }
+        }
+
+        return `namespace ${pxt.sprite.TILE_NAMESPACE} {\n${out}\n}\n`
     }
 }

@@ -875,6 +875,12 @@ namespace pxt {
             return this._jres
         }
 
+        updateJRes() {
+            if (this._jres) {
+                this.parseJRes(this._jres);
+            }
+        }
+
         // undefined == uncached
         // null == cached but no hit
         // array == means something go found...

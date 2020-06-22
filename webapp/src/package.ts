@@ -157,7 +157,7 @@ export class EditorPackage {
     private simStateSaveScheduled = false;
     protected transpileCache: CachedTranspile[] = [];
 
-    tilemap: pxt.TilemapProject;
+    tilemapProject: pxt.TilemapProject;
 
     id: string;
     outputPkg: EditorPackage;
@@ -466,6 +466,18 @@ export class EditorPackage {
     lookupFile(name: string) {
         if (name.indexOf("pxt_modules/") === 0) name = name.slice(12);
         return this.filterFiles(f => f.getName() == name)[0]
+    }
+
+    buildTilemapsAsync() {
+        if (!this.tilemapProject?.needsRebuild) return Promise.resolve();
+        this.tilemapProject.needsRebuild = false;
+
+        const jres = this.tilemapProject.getProjectTilesetJRes();
+        const ts = pxt.emitTilemapsFromJRes(jres);
+
+        return this.setContentAsync("tilemap.jres", JSON.stringify(jres, null, 4))
+            .then(() => this.setContentAsync("_tilemap.ts", ts))
+            .then(() => mainPkg.updateJRes())
     }
 
     cacheTranspile(fromLanguage: pxtc.CodeLang, fromText: string, toLanguage: pxtc.CodeLang, toText: string) {

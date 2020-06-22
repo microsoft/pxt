@@ -212,11 +212,11 @@ export function init() {
     pxt.react.getTilemapProject = () => {
         const epkg = pkg.mainEditorPkg();
 
-        if (!epkg.tilemap) {
-            epkg.tilemap = new pxt.TilemapProject(pkg.mainPkg);
+        if (!epkg.tilemapProject) {
+            epkg.tilemapProject = new pxt.TilemapProject(pkg.mainPkg);
         }
 
-        return epkg.tilemap;
+        return epkg.tilemapProject;
     }
 }
 
