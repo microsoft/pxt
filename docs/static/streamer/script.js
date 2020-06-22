@@ -379,7 +379,8 @@
                 remaining = 0;
                 stopCountdown();
                 // go to chat view
-                setScene("chat");
+                if (state.sceneIndex === COUNTDOWN_SCENE_INDEX)
+                    setScene("chat");
             }
             if (remaining) {
                 const minutes = Math.floor(remaining / 60);
