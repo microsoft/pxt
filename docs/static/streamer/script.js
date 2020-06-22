@@ -145,7 +145,7 @@
             state.micError && "micerror",
             state.recording && "recording",
             state.screenshoting && "screenshoting",
-            state.thumbnail && "thumbnail",
+            (config.faceCamGreenScreen || config.hardwareCamGreenScreen) && state.thumbnail && "thumbnail",
             config.micDelay === undefined && "micdelayerror",
             !navigator.mediaDevices.getDisplayMedia && "displaymediaerror",
             config.faceCamLabel && !config.faceCamCircular && "facecamlabel",
@@ -198,11 +198,6 @@
             addSep(toolbox)
         }
 
-        if (config.extraSites && config.extraSites.length) {
-            config.extraSites.forEach(addSiteButton)
-            addButton(toolbox, "Code", "Reload MakeCode editor", loadEditor)
-            addSep(toolbox);
-        }
         addSceneButton("OpenPane", "Move webcam left (Alt+Shift+2)", "left")
         addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
         addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
@@ -217,6 +212,12 @@
                 addButton(toolbox, "OfficeChat", "Chat  (Alt+Shift+8)", toggleChat, state.chat)
         }
 
+        if (config.extraSites && config.extraSites.length) {
+            addSep(toolbox);
+            config.extraSites.forEach(addSiteButton)
+            addButton(toolbox, "Code", "Reload MakeCode editor", loadEditor)
+        }
+
         addSep(toolbox)
         if (state.speech)
             addButton(toolbox, "ClosedCaption", "Captions", toggleSpeech, state.speechRunning)
@@ -227,6 +228,7 @@
             else
                 addButton(toolbox, "Record2", "Start recording", startRecording)
         }
+        
         addButton(toolbox, "Settings", "Show settings", toggleSettings);
 
         function addSep(container) {
@@ -771,13 +773,13 @@ background-image: url(${config.backgroundImage});
     }
 
     function startMixerChatWs(id) {
-        const chat = state.mixerChatWs = new WebSocket("wss://chat.mixer.com/?version=1.0");
-        chat.onopen = function (evt) {
+        let chatWs = state.mixerChatWs = new WebSocket("wss://chat.mixer.com/?version=1.0");
+        chatWs.onopen = function (evt) {
             console.log(`mixer chat open`)
-            chat.send(JSON.stringify({ "type": "method", "method": "optOutEvents", "arguments": ["UserJoin", "UserLeave", "DeleteMessage"], "id": 0 }))
-            chat.send(JSON.stringify({ "type": "method", "method": "auth", "arguments": [id, null, null, null], "id": 1 }))
+            chatWs.send(JSON.stringify({ "type": "method", "method": "optOutEvents", "arguments": ["UserJoin", "UserLeave", "DeleteMessage"], "id": 0 }))
+            chatWs.send(JSON.stringify({ "type": "method", "method": "auth", "arguments": [id, null, null, null], "id": 1 }))
         }
-        chat.onmessage = function (evt) {
+        chatWs.onmessage = function (evt) {
             const data = JSON.parse(evt.data);
             console.log(data);
             if (!state.chat && data
@@ -786,10 +788,10 @@ background-image: url(${config.backgroundImage});
                     toggleChat();
             }
         }
-        chat.onclose = function (evt) {
+        chatWs.onclose = function (evt) {
             console.log('mixer chat close')
             state.mixerChatWs = undefined;
-            chat = undefined;
+            chatWs = undefined;
         }
     }
 
@@ -851,6 +853,7 @@ background-image: url(${config.backgroundImage});
         if (config.hardwareCamId) {
             try {
                 state.hardwareCamError = false;
+                hardwarecam.parentElement.classList.remove("hidden");
                 await startStream(hardwarecam, config.hardwareCamId, config.hardwareCamRotate, config.hardwareCamGreenScreen, config.hardwareCamClipBlack, config.hardwareCamContour);
                 console.log(`hardware cam started`)
                 return; // success!
@@ -865,6 +868,7 @@ background-image: url(${config.backgroundImage});
             }
         } else {
             state.hardwareCamError = false
+            hardwarecam.parentElement.classList.add("hidden");
             stopStream(hardwarecam.srcObject)
         }
     }
@@ -913,6 +917,8 @@ background-image: url(${config.backgroundImage});
     }
 
     function initVideos() {
+        accessify(facecam.parentElement)
+        accessify(hardwarecam.parentElement)
         facecam.parentElement.onclick = () => onClick(facecam.parentElement);
         hardwarecam.parentElement.onclick = () => onClick(hardwarecam.parentElement);
 
@@ -1964,6 +1970,7 @@ background-image: url(${config.backgroundImage});
 
     function accessify(el) {
         el.tabIndex = 0;
+        el.role = "button";
         el.onkeypress = e => {
             const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
             if (charCode === 13 /* enter */ || charCode === 32 /* space */) {

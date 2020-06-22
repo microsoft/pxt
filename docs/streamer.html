@@ -34,32 +34,12 @@ body {
 h1 a {
     font-size: 1rem;
 }
-.container {
-    padding-top: 56.25%;
-    position: relative;
-    width: 100%;            
-}
 
-@media (min-aspect-ratio: 16/9) {
-    .container {
-        padding-top: unset;
-        position: relative;
-        height: 100%;            
-    }
-}
-@media (max-aspect-ratio: 16/9) {
-    .container {
-        padding-top: 56.25%;
-        position: relative;
-        width: 100%;            
-    }
-}
-@media (aspect-ratio: 16/9) {
-    .container {
-        padding-top: unset;
-        position: relative;
-        height: 100%;            
-    }
+.container {
+    position: relative;
+    overflow: hidden;    
+    width: 100%;
+    height: 100%;
 }
 
 body.greenscreen {
@@ -194,13 +174,29 @@ button:hover {
     margin: 1rem 0rem 1rem 0rem;
     padding: 1rem;
     background: #a0f0a0;
-    color: black;
+    color: black;    
     text-align: left;
+}
+
+#toolcontainer {
+    position: absolute;
+    left: 50%;
+    bottom: 1%;
+}
+.icons {
+    position: relative;
+    left: -50%;
+    text-align: center;
+    opacity: 0.3;
+    margin-bottom: 1%;
+    border-radius: 0.5vw;
+    transition-delay: 0s;
+    transition: opacity 1s;
 }
 .icons > button {
     height: 2vw;
     width: 2vw;
-    border-radius: 2vw;
+    border-radius: 3vw;
     font-size: 1vw;
     background: black;
     color: white;
@@ -210,14 +206,28 @@ button:hover {
     vertical-align: bottom;
     transform: opacity 0.1s;
 }
+.icons:hover {
+    opacity: 95%;
+    background: rgba(255, 255, 255, 0.8)
+}
 .icons:hover > button {
     opacity: 0.8;
 }
 .icons > button:hover {
     opacity: 1;
-    transform: scale(1.3) rotate(10deg);
-    border:none;
+    transform: scale(1.35) rotate(10deg);
     outline: none;
+}
+@media (hover: none) { /* no mouse */
+    .icons {
+        background: rgba(255, 255, 255, 0.2);
+        opacity: 0.8;
+    }
+    .icons > button {
+        height: 3vw;
+        width: 3vw;
+        font-size: 1.5vw;
+    }
 }
 .icons > button.active {
     background: white;
@@ -237,6 +247,7 @@ canvas.paint {
 }
 .paint canvas.paint {
     display: block;
+    touch-action: none;
     position:absolute;
     width: 100%;
     height: 100%;
@@ -352,12 +363,16 @@ Settings
     padding: 1vw;
 }
 
+#settings .header {
+    height: 3rem;
+}
+
 #settings .header h1 {
     margin-top: 0;
 }
 
 #settings .contents {
-    height: calc(100% - 3vw);
+    height: calc(100% - 3rem);
     overflow-y: auto;
 }
 
@@ -381,8 +396,8 @@ body.rightscene #settings {
     top: 3%;
 }
 body.chatscene #settings {
-    top: 51%;
-    height: 26%;
+    left: 2%;
+    top: 10%;
 }
 
 #settings h2 {
@@ -430,7 +445,7 @@ body.chatscene #settings {
     position: absolute;
     width: 94%;
     height: 92%;
-    top: 1%;
+    top: 2%;
     transition-delay: 0.2s;
 }
 
@@ -442,7 +457,7 @@ body.chatscene #settings {
     position: absolute;
     width: 50%;
     height: 92%;
-    top: 1%;
+    top: 2%;
     transition-delay: 0.3s;
 }
 
@@ -461,6 +476,12 @@ body.chatscene #settings {
 }
 
 /* zindex */
+#editor {
+    z-index: -1;
+}
+#editor2 {
+    z-index: -1;
+}
 .hardwarecam {
     z-index: 1;
 }
@@ -539,7 +560,6 @@ body.slim .container {
     display: none;
     position:absolute;
     width:100%;
-    height:100%;
     bottom:0;    
 }
 body.leftscene.facecamcircular .facecam,
@@ -568,8 +588,8 @@ body.hardware .hardwarecam {
 }
 
 /** application clipping */
-body.hardwarecamdisplay .hardwarecamvideo,
-body.facecamdisplay .facecamvideo {
+body.hardwarecamdisplay .hardwarecam > video,
+body.facecamdisplay .facecam > video {
     clip-path: polygon(10% 20%, 90% 20%, 90% 100%, 10% 100%);
     width: 130%;
     left: -10%;
@@ -587,33 +607,6 @@ body.facecamdisplay .facecamvideo {
     right: -100%;    
     transition-delay: 0.3s;
 }
-
-.icons {
-    position: relative;
-    left: -50%;
-    text-align: center;
-    transition-delay: 0s;
-    transition: opacity 0.3s;
-    opacity: 0.1;
-    margin-bottom: 1%;
-    border-radius: 0.5vw;
-}
-.icons:hover {
-    opacity: 95%;
-    background: rgba(255, 255, 255, 0.2)
-}
-body.recording .icons {
-    opacity: 0.05;
-}
-body.recording .icons:hover {
-    opacity: 90%;
-}
-#toolcontainer {
-    position: absolute;
-    left: 50%;
-    bottom: 1%;
-}
-
 #banner {
     font-size: 2vw;
     color: white;
@@ -917,9 +910,10 @@ body.leftscene.hardware.multi.chat .facecam {
 
 /* chatscene: facecam and stream chat */
 body.chatscene .facecam {
-    bottom: 5%;
+    bottom: 10%;
     right: 20%;
     width: 64%;
+    max-height: 74%;
 }
 
 body.chatscene #editor {
@@ -937,7 +931,7 @@ body.chatscene #title {
 }
 
 body.chatscene.chat .facecam {
-    bottom: 5%;
+    bottom: 10%;
     right: 34%;
     width: 64%;
 }
@@ -1078,12 +1072,12 @@ body.rightscene.thumbnail #editor {
     <iframe class="box animated" id="editor" allow="usb;camera" sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads"></iframe>
     <iframe class="box animated" id="editor2" allow="usb;camera" sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads"></iframe>
     <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
-    <div class="box animated clickeable facecam" id="facecam">
+    <div role="button" class="box animated clickeable facecam" id="facecam">
         <video autoplay playsinline id="facecamvideo"></video>
         <canvas id="facecamvideoserious" class="videocanvas"></canvas>
         <div class="videolabel" id="facecamlabel"></div>
     </div>
-    <div class="box animated clickeable hardwarecam" id="hardwarecam">
+    <div role="button" class="box animated clickeable hardwarecam" id="hardwarecam">
         <video autoplay playsinline id="hardwarecamvideo"></video>
         <canvas id="hardwarecamvideoserious" width="640" height="480" class="videocanvas"></canvas>
         <div class="videolabel" id="hardwarecamlabel"></div>
@@ -1129,11 +1123,12 @@ body.rightscene.thumbnail #editor {
         </div>
         <div class="field">
             <input type="checkbox" id="multicheckbox"></input>
-            <label for="multicheckbox">Multi editors</label>
+            <label for="multicheckbox">Multi editors. Edit two programs with connected simulators.</label>
         </div>
         <h2>Face camera</h2>
+        <p>Select your primary camera. Note the video stream is not mirrored.</p>
         <div class="field">
-            <label for="facecamselect">Choose a Face Webcam</label>
+            <label for="facecamselect">Choose a video source</label>
             <select id="facecamselect"></select>
             <div class="error hidden facecamerror" id="facecamerror">Connection error. Make sure the camera is not blocked or used by another application.</div>
         </div>
@@ -1179,8 +1174,9 @@ body.rightscene.thumbnail #editor {
             <button id="facecamcontourclear">clear</button>
         </div>
         <h2>Document camera</h2>
+        <p>Select a secondary camera to display a document or physical device. To inline a Teams/Skype/... video stream, select <emph>Application</emph> and share your messaging application.</p>
         <div class="field">
-            <label for="hardwarecamselect">Choose a document Webcam</label>
+            <label for="hardwarecamselect">Choose a video source</label>
             <select id="hardwarecamselect"></select>
             <div class="error hidden" id="hardwarecamerror">Connection error. Make sure the camera is not blocked or used by another application.</div>
         </div>
@@ -1290,15 +1286,17 @@ body.rightscene.thumbnail #editor {
             <input id="emojisinput" placeholder="Emojis" />
         </div>
         <h2>Streaming</h2>
+        <p>Integrate the chats of your streaming services.</p>
         <div class="field">
-            <label for="mixerinput">Mixer (optional)</label>
+            <label for="mixerinput">Mixer channel. The chat window can be displayed. You still need to use OBS or other software to stream it.</label>
             <input id="mixerinput" placeholder="Mixer.com account" />
         </div>
         <div class="field">
-            <label for="twitchinput">Twitch (optional)</label>
+            <label for="twitchinput">Twitch.tv channel. The chat window can be displayed. You still need to use OBS or other software to stream it.</label>
             <input id="twitchinput" placeholder="Twitch.tv account" />
         </div>
         <h2>Recording</h2>
+        <p>Record your browser to a .webm file that can be uploaded to video services.</p>
         <div class="error hidden displaymedia">This browser does not support recording the screen.</div>
         <div class="field">
             <label for="micselect">Choose a Microphone</label>
@@ -1319,7 +1317,7 @@ body.rightscene.thumbnail #editor {
         </div>            
         </div>
     </div>
-    <div class="box animated hidden" id="recorder">
+    <div role="button" class="box animated hidden" id="recorder" tabindex="0">
         <span>click to start recording</span>
         <span id="screensize">0x0</span>
         <div class="message details">Resize your browser to match 1920x1080 (180p, HD) or 1280x720 (720p, SD).</div>
