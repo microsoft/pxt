@@ -1125,11 +1125,12 @@ body.rightscene.thumbnail #editor {
         </div>
         <div class="field">
             <input type="checkbox" id="multicheckbox"></input>
-            <label for="multicheckbox">Multi editors</label>
+            <label for="multicheckbox">Multi editors. Edit two programs with connected simulators.</label>
         </div>
         <h2>Face camera</h2>
+        <p>Select your primary camera. Note the video stream is not mirrored.</p>
         <div class="field">
-            <label for="facecamselect">Choose a Face Webcam</label>
+            <label for="facecamselect">Choose a video source</label>
             <select id="facecamselect"></select>
             <div class="error hidden facecamerror" id="facecamerror">Connection error. Make sure the camera is not blocked or used by another application.</div>
         </div>
@@ -1175,8 +1176,9 @@ body.rightscene.thumbnail #editor {
             <button id="facecamcontourclear">clear</button>
         </div>
         <h2>Document camera</h2>
+        <p>Select a secondary camera to display a document or physical device. To inline a Teams/Skype/... video stream, select <emph>Application</emph> and share your messaging application.</p>
         <div class="field">
-            <label for="hardwarecamselect">Choose a document Webcam</label>
+            <label for="hardwarecamselect">Choose a video source</label>
             <select id="hardwarecamselect"></select>
             <div class="error hidden" id="hardwarecamerror">Connection error. Make sure the camera is not blocked or used by another application.</div>
         </div>
