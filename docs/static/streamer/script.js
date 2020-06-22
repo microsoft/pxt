@@ -145,7 +145,7 @@
             state.micError && "micerror",
             state.recording && "recording",
             state.screenshoting && "screenshoting",
-            state.thumbnail && "thumbnail",
+            (config.faceCamGreenScreen || config.hardwareCamGreenScreen) && state.thumbnail && "thumbnail",
             config.micDelay === undefined && "micdelayerror",
             !navigator.mediaDevices.getDisplayMedia && "displaymediaerror",
             config.faceCamLabel && !config.faceCamCircular && "facecamlabel",
@@ -198,11 +198,6 @@
             addSep(toolbox)
         }
 
-        if (config.extraSites && config.extraSites.length) {
-            config.extraSites.forEach(addSiteButton)
-            addButton(toolbox, "Code", "Reload MakeCode editor", loadEditor)
-            addSep(toolbox);
-        }
         addSceneButton("OpenPane", "Move webcam left (Alt+Shift+2)", "left")
         addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
         addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
@@ -217,6 +212,12 @@
                 addButton(toolbox, "OfficeChat", "Chat  (Alt+Shift+8)", toggleChat, state.chat)
         }
 
+        if (config.extraSites && config.extraSites.length) {
+            addSep(toolbox);
+            config.extraSites.forEach(addSiteButton)
+            addButton(toolbox, "Code", "Reload MakeCode editor", loadEditor)
+        }
+
         addSep(toolbox)
         if (state.speech)
             addButton(toolbox, "ClosedCaption", "Captions", toggleSpeech, state.speechRunning)
@@ -227,6 +228,7 @@
             else
                 addButton(toolbox, "Record2", "Start recording", startRecording)
         }
+        
         addButton(toolbox, "Settings", "Show settings", toggleSettings);
 
         function addSep(container) {
