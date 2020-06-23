@@ -8,7 +8,7 @@
  */
 
 //% color="#ff0000" icon="\uf0a4"
-namespace basic {
+namespace color {
 
     //% block
     export function foo() {

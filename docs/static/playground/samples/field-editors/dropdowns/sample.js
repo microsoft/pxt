@@ -1,6 +1,6 @@
 
 //% color="#FFAB19"
-namespace control {
+namespace time {
 
     //% block="pause $ms"
     //% ms.shadow="timePicker"
@@ -21,7 +21,7 @@ namespace control {
     //% colorSecondary="#FFFFFF"
     //% word.fieldEditor="textdropdown"
     //% word.fieldOptions.decompileLiterals=true
-    //% word.fieldOptions.values='[["Hi"], ["Hello!"]]'
+    //% word.fieldOptions.values='hi,hello'
     export function __wordPicker(word: string): string {
         return word;
     }

@@ -5,7 +5,7 @@
  */
 
 //% color="#AA278D"
-namespace basic {
+namespace sample {
     /**
      * This API will have a variable shadow block with the
      * name "someName" pre-filled

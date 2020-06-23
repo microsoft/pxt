@@ -5,7 +5,7 @@
  */
 
 //% color="#AA278D"
-namespace basic {
+namespace formatting {
 
     //% block="fooooooo"
     export function foo() {

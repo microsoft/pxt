@@ -4,7 +4,7 @@
  */
 
 //% color="#AA278D"
-namespace basic {
+namespace test {
     //% block
     //% x.defl=42
     export function foo(x: number) {

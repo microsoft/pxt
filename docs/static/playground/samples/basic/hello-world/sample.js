@@ -6,7 +6,7 @@
  */
 
 //% color="#AA278D" weight=100
-namespace basic {
+namespace hello {
     //% block
     export function helloWorld() {
 

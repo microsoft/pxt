@@ -29,6 +29,12 @@ interface SampleInfo {
     js?: string;
 }
 
+// interface defined in pxteditor\workspace.ts
+interface Project {
+    header?: any;
+    text?: { [ key: string ]: string };
+}
+
 const targets: TargetInfo[] = [
     {
         name: "Arcade",
@@ -36,8 +42,7 @@ const targets: TargetInfo[] = [
         endpoints: [
             {
                 name: "beta",
-                //url: "https://arcade.makecode.com/beta?controller=1"
-                url: "http://localhost:3232/index.html?controller=1#local_token=76f20c04-e78f-41cf-acab-0ace74d21597&"
+                url: "https://arcade.makecode.com/beta?controller=1"
             },
             {
                 name: "released",
@@ -99,14 +104,18 @@ const targets: TargetInfo[] = [
     }
 ];
 
+const CUSTOM_FILE = "_custom.ts";
+
 let selectedEndpoint: string;
 let selectedId: string;
+let baseProjects: { [key: string] : Project } = {};
 
 editor.onDidChangeModelContent(debounce(() => {
     localStorage.setItem(STORAGE_KEY, editor.getValue());
 }, 500));
 // @ts-ignore
-monaco.languages?.typescript?.typescriptDefaults.setDiagnosticsOptions({ noSemanticValidation: true });
+monaco.languages?.typescript?.typescriptDefaults.setDiagnosticsOptions(
+    { noSemanticValidation: true });
 
 const iframe = document.createElement("iframe");
 document.getElementById("makecode-editor").appendChild(iframe);
@@ -117,7 +126,7 @@ initSamples();
 
 document.getElementById("run-button").addEventListener("click", () => {
     const ts = editor.getValue();
-    sendMessage("importcustomblocks", ts);
+    sendMessage("importproject", ts);
 })
 
 window.addEventListener("message", receiveMessage, false);
@@ -161,6 +170,7 @@ function initSamples() {
         sampleChapter.appendChild(sampleOption);
     });
 
+    // check if sample js loaded, otherwise send xhr
     function loadSample(sampleId, callback) {
         let sample = PLAY_SAMPLES.find(e => e.id == sampleId);
         if (!sample) {
@@ -204,7 +214,7 @@ function initSamples() {
             }
             editor.setValue(sample.js);
             editor.setScrollTop(0);
-            sendMessage("importcustomblocks", sample.js);
+            sendMessage("importproject", sample.js);
         });
     }
 
@@ -242,21 +252,35 @@ function sendMessage(action: string, ts?: string) {
         action: action
     };
 
-    if (action == 'importcustomblocks') {
-        msg.ts = ts;
-        msg.response = true;
+    let project = baseProjects[selectedEndpoint];
+    if (action == 'importproject') {
+        if (project) {
+            // add custom file name to pxt.json
+            const config = JSON.parse(project.text["pxt.json"]);
+            if (config.files.indexOf(CUSTOM_FILE) < 0) {
+                config.files.push(CUSTOM_FILE);
+                project.text["pxt.json"] = JSON.stringify(config);
+            }
+            // add/update custom file
+            project.text[CUSTOM_FILE] = ts;
+
+            msg.project = project;
+        }
     }
     iframe.contentWindow.postMessage(msg, "*")
 }
 
 function receiveMessage(ev: any) {
     const msg = ev.data;
-    console.log("recv", msg)
     if (msg.type == "pxthost") {
         if (msg.action == "workspacesync") {
             // no project
             msg.projects = [];
             iframe.contentWindow.postMessage(msg, "*")
+            return;
+        } else if (msg.action == "workspacesave") {
+            if (!baseProjects[selectedEndpoint])
+                baseProjects[selectedEndpoint] = msg.project
             return;
         }
     }

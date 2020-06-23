@@ -4,7 +4,7 @@
  */
 
 //% color="#4C97FF"
-namespace basic {
+namespace blocks {
 
     /**
      * This is a statement block
