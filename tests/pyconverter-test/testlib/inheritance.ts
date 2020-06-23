@@ -8,10 +8,12 @@ export class ScreenEffect implements BackgroundEffect {
     }
 }
 
-export function gameOver(win: boolean = false, effect?: BackgroundEffect): void {
+namespace game {
+    export function over(win: boolean = false, effect?: BackgroundEffect): void {
 
+    }
 }
 
-export namespace effects {
+namespace effects {
     export const confetti = new ScreenEffect();
 }

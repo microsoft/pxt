@@ -14,7 +14,8 @@
         "templateStrings.ts",
         "classHandlerParameter.ts",
         "globals.ts",
-        "spritekind.ts"
+        "spritekind.ts",
+        "inheritance.ts"
     ],
     "public": true,
     "dependencies": {},
