@@ -22,6 +22,8 @@ If you haven't signed in yet with GitHub, you will be redirected to the GitHub s
 
 Advanced users can use a [developer token](/github/token) so that they can work directly with GitHub without having to sign in with the app.
 
+If you don't already have a GitHub account, you will need to [sign up](/github/sign-up) for one first.
+
 ### ~
 
 ## Step 2 - Make code changes
