@@ -574,6 +574,8 @@ namespace pxt.py {
                 }
                 t0.union = t1
             } else {
+                // TODO(dz):
+                console.dir({ a, t0, t1, c0, c1 })
                 typeError(a, t0, t1)
             }
         } else if (c0 && !c1) {

@@ -1,0 +1,1 @@
+gameOver(true, effects.confetti)
