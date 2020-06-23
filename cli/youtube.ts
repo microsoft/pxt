@@ -40,18 +40,6 @@ async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
         card.imageUrl = cimg;
     }
 
-    // mixer channel
-    const mixerRx = /(https:\/\/)?(mixer.com\/\w+)/.exec(playlist.snippet.description);
-    if (!!mixerRx) {
-        // reverse videos to show latest first
-        cards.reverse();
-        cards.unshift({
-            "name": "Live Coding",
-            "description": "Subscribe to our mixer.com live coding stream.",
-            "url": `https://${mixerRx[2]}`,
-            "imageUrl": `${assets}/live.png`
-        })
-    }
     // trailing card
     cards.push({
         "name": "PlayList",
