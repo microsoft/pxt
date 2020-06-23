@@ -1701,6 +1701,23 @@ export class ProjectView
         }
     }
 
+    importCustomBlocksAsync(ts: string) {
+        try {
+            let prj = pxt.appTarget.blocksprj;
+            prj.files["_custom.ts"] = ts ;
+            prj.config.files.push("_custom.ts");
+            return this.createProjectAsync({
+                name: "untitled",
+                preferredEditor: pxt.BLOCKS_PROJECT_NAME,
+                prj
+            });
+        }
+        catch (e) {
+            Util.userError(lf("Could not import blocks"));
+            return Promise.reject(e);
+        }
+    }
+
     initDragAndDrop() {
         draganddrop.setupDragAndDrop(document.body,
             file => file.size < 1000000 && this.isHexFile(file.name) || this.isBlocksFile(file.name),

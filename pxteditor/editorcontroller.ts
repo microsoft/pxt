@@ -44,6 +44,7 @@ namespace pxt.editor {
         | "newproject"
         | "importproject"
         | "importtutorial"
+        | "importcustomblocks"
         | "proxytosim" // EditorMessageSimulatorMessageProxyRequest
         | "undo"
         | "redo"
@@ -177,6 +178,12 @@ namespace pxt.editor {
         action: "importtutorial";
         // markdown to load
         markdown: string;
+    }
+
+    export interface EditorMessageImportCustomBlocksRequest extends EditorMessageRequest {
+        action: "importcustomblocks";
+        // custom.ts file to load
+        ts: string;
     }
 
     export interface EditorMessageRenderBlocksRequest extends EditorMessageRequest {
@@ -363,6 +370,11 @@ namespace pxt.editor {
                                     const load = data as EditorMessageImportTutorialRequest;
                                     return Promise.resolve()
                                         .then(() => projectView.importTutorialAsync(load.markdown));
+                                }
+                                case "importcustomblocks": {
+                                    const load = data as EditorMessageImportCustomBlocksRequest;
+                                    return Promise.resolve()
+                                        .then(() => projectView.importCustomBlocksAsync(load.ts));
                                 }
                                 case "proxytosim": {
                                     const simmsg = data as EditorMessageSimulatorMessageProxyRequest;
