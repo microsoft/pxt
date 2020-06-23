@@ -1,5 +1,7 @@
-// Here are the different types of blocks
-// supported by MakeCode
+/**
+ * Here are the different types of blocks supported
+ * by MakeCode
+ */
 
 //% color="#4C97FF"
 namespace basic {

@@ -1,8 +1,8 @@
-//
-// For better readability, you should rewrite the function signature
-// in a "natural language" way. You can refer to each variable in any
-// order using the $VARIABLE syntax.
-//
+/**
+ * For better readability, you should rewrite the function
+ * signature in a "natural language" way. You can refer to
+ * each variable in any order using the $VARIABLE syntax.
+ */
 
 //% color="#AA278D"
 namespace basic {
