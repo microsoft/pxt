@@ -98,6 +98,28 @@ namespace pxtblockly {
 
                     const project = pxt.react.getTilemapProject();
 
+                    const lastRevision = project.revision();
+                    project.pushUndo();
+
+                    if (result.deletedTiles) {
+                        for (const deleted of result.deletedTiles) {
+                            project.deleteTile(deleted);
+                        }
+                    }
+
+                    if (result.editedTiles) {
+                        for (const edit of result.editedTiles) {
+                            const editedIndex = result.tileset.tiles.findIndex(t => t.id === edit);
+                            const edited = result.tileset.tiles[editedIndex];
+
+                            // New tiles start with *. We haven't created them yet so ignore
+                            if (edited.id.startsWith("*")) continue;
+                            if (edited) {
+                                result.tileset.tiles[editedIndex] = project.updateTile(edited.id, edited.bitmap)
+                            }
+                        }
+                    }
+
                     for (let i = 0; i < result.tileset.tiles.length; i++) {
                         const tile = result.tileset.tiles[i];
 
@@ -115,8 +137,12 @@ namespace pxtblockly {
                     this.undoRedoState = fv.getPersistentData();
 
                     if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
+                        Blockly.Events.setGroup(true)
                         Blockly.Events.fire(new Blockly.Events.BlockChange(
                             this.sourceBlock_, 'field', this.name, old, this.getValue()));
+                        Blockly.Events.fire(new BlocklyTilemapChange(
+                            this.sourceBlock_, 'tilemap-revision', this.name, lastRevision, project.revision()));
+                        Blockly.Events.setGroup(false)
                     }
                 }
             });
@@ -179,6 +205,15 @@ namespace pxtblockly {
                     .at(PADDING + BG_PADDING, PADDING + BG_PADDING)
                     .size(PREVIEW_WIDTH, PREVIEW_WIDTH);
                 this.fieldGroup_.appendChild(img.el);
+            }
+        }
+
+        refreshTileset() {
+            if (this.state) {
+                const project = pxt.react.getTilemapProject();
+                for (let i = 0; i < this.state.tileset.tiles.length; i++) {
+                    this.state.tileset.tiles[i] = project.resolveTile(this.state.tileset.tiles[i].id);
+                }
             }
         }
 
@@ -290,5 +325,32 @@ namespace pxtblockly {
         }
 
         return true;
+    }
+
+
+    class BlocklyTilemapChange extends Blockly.Events.Change {
+        run(forward: boolean) {
+            if (forward) {
+                pxt.react.getTilemapProject().redo();
+            }
+            else {
+                pxt.react.getTilemapProject().undo();
+            }
+
+            const ws = this.getEventWorkspace_();
+            const tilemaps = getAllBlocksWithTilemaps(ws);
+
+            for (const t of tilemaps) {
+                t.ref.refreshTileset();
+                t.ref.redrawPreview();
+            }
+
+            // Fire an event to force a recompile, but make sure it doesn't end up on the undo stack
+            const ev = new BlocklyTilemapChange(
+                ws.getBlockById(this.blockId), 'tilemap-revision', "revision", null, pxt.react.getTilemapProject().revision());
+            ev.recordUndo = false;
+
+            Blockly.Events.fire(ev)
+        }
     }
 }

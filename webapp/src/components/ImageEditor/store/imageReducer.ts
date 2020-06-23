@@ -68,6 +68,8 @@ export interface EditorState {
 
     isTilemap: boolean;
     referencedTiles?: number[];
+    deletedTiles?: string[];
+    editedTiles?: string[];
 
     // The state below this comment is not persisted between editor reloads
     previewAnimating: boolean;
@@ -449,14 +451,22 @@ const editorReducer = (state: EditorState, action: any): EditorState => {
         case actions.DELETE_TILE:
             return {
                 ...state,
+                deletedTiles: (state.deletedTiles || []).concat([action.id]),
                 selectedColor: action.index === state.selectedColor ? 0 : state.selectedColor,
                 backgroundColor: action.index === state.backgroundColor ? 0 : state.backgroundColor
             };
         case actions.OPEN_TILE_EDITOR:
             const editType = action.index ? "edit" : "new";
             tickEvent(`open-tile-editor-${editType}`);
+
+            let editedTiles = state.editedTiles;
+            if (action.id && (!editedTiles || editedTiles.indexOf(action.id) === -1)) {
+                editedTiles = (editedTiles || []).concat([action.id])
+            }
+
             return {
                 ...state,
+                editedTiles: editedTiles,
                 editingTile: {
                     type: editType,
                     tilesetIndex: action.index

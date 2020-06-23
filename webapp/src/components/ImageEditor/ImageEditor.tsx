@@ -132,7 +132,12 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         const tilemapState = state.store.present as TilemapState;
         const { floating, overlayLayers, layerOffsetX, layerOffsetY } = tilemapState.tilemap;
         const layers = applyBitmapData(overlayLayers[0], floating && floating.overlayLayers && floating.overlayLayers[0], layerOffsetX, layerOffsetY);
-        return new pxt.sprite.TilemapData(imageStateToTilemap(tilemapState.tilemap), tilemapState.tileset, layers);
+
+        const out = new pxt.sprite.TilemapData(imageStateToTilemap(tilemapState.tilemap), tilemapState.tileset, layers);
+        out.deletedTiles = state.editor.deletedTiles;
+        out.editedTiles = state.editor.editedTiles;
+
+        return out;
     }
 
     getPersistentData(): ImageEditorSaveState {

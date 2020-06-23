@@ -25,16 +25,32 @@ namespace pxt {
         data: pxt.sprite.TilemapData;
     }
 
+    export interface TilemapSnapshot {
+        revision: number;
+        projectTilemaps?: ProjectTilemap[];
+        projectTileSet?: TileSetCollection;
+        takenNames?: pxt.Map<boolean>
+    }
+
     export class TilemapProject {
         public needsRebuild = true;
 
         protected extensionTileSets: TileSetCollection[];
-        protected projectTileSet: TileSetCollection;
-        protected projectTilemaps: ProjectTilemap[];
-        protected takenNames: pxt.Map<boolean>;
+        protected state: TilemapSnapshot;
+
+        protected undoStack: TilemapSnapshot[];
+        protected redoStack: TilemapSnapshot[];
+
+        protected nextID = 0;
 
         constructor(protected pack: MainPackage) {
+            this.state = {
+                revision: this.nextID++
+            };
+
             this.readTileSets(pack);
+            this.undoStack = [];
+            this.redoStack = [];
         }
 
         public getGalleryTiles(tileWidth: number): TileSet[] | null {
@@ -47,8 +63,8 @@ namespace pxt {
         }
 
         public getProjectTiles(tileWidth: number): TileSet | null {
-            if (this.projectTileSet) {
-                const res = this.projectTileSet.tileSets.find(tileSet => tileSet.tileWidth === tileWidth);
+            if (this.state.projectTileSet) {
+                const res = this.state.projectTileSet.tileSets.find(tileSet => tileSet.tileWidth === tileWidth);
 
                 if (!res) {
                     // This will create a new tileset with the correct width
@@ -66,10 +82,10 @@ namespace pxt {
             const prefix = pxt.sprite.TILE_NAMESPACE + "." + pxt.sprite.TILE_PREFIX;
 
             let index = 0;
-            while (this.takenNames[prefix + index]) {
+            while (this.state.takenNames[prefix + index]) {
                 ++index;
             }
-            this.takenNames[prefix + index] = true;
+            this.state.takenNames[prefix + index] = true;
 
             const newTile = {
                 id: prefix + index,
@@ -78,7 +94,7 @@ namespace pxt {
                 isProjectTile: true
             };
 
-            for (const tileSet of this.projectTileSet.tileSets) {
+            for (const tileSet of this.state.projectTileSet.tileSets) {
                 if (tileSet.tileWidth === data.width) {
                     tileSet.tiles.push(newTile);
                     return newTile
@@ -88,27 +104,29 @@ namespace pxt {
             const newTileset = this.createTileset(data.width);
             newTileset.tiles.push(newTile);
 
-            this.projectTileSet.tileSets.push(newTileset);
+            this.state.projectTileSet.tileSets.push(newTileset);
 
             return newTile;
         }
 
         public updateTile(id: string, data: pxt.sprite.BitmapData) {
             this.needsRebuild = true;
-            for (const tileSet of this.projectTileSet.tileSets) {
+            for (const tileSet of this.state.projectTileSet.tileSets) {
                 for (const tile of tileSet.tiles) {
                     if (tile.id === id) {
                         tile.bitmap = data;
                         tile.data = pxt.sprite.base64EncodeBitmap(data);
-                        return;
+                        return tile;
                     }
                 }
             }
+
+            return null;
         }
 
         public deleteTile(id: string) {
             this.needsRebuild = true;
-            for (const tileSet of this.projectTileSet.tileSets) {
+            for (const tileSet of this.state.projectTileSet.tileSets) {
                 tileSet.tiles = tileSet.tiles.filter(t => t.id !== id);
             }
         }
@@ -116,7 +134,7 @@ namespace pxt {
         public getProjectTilesetJRes() {
             // FIXME: Need to only include tiles from tilemap.jres. Otherwise we're
             // going to get duplicate entries for extra JRes files (e.g. in github projects)
-            const tiles = getAllTiles(this.projectTileSet);
+            const tiles = getAllTiles(this.state.projectTileSet);
 
             const blob: pxt.Map<any> = {};
 
@@ -130,7 +148,7 @@ namespace pxt {
                 }
             }
 
-            for (const tilemap of this.projectTilemaps) {
+            for (const tilemap of this.state.projectTilemaps) {
                 const jres = this.encodeTilemap(tilemap.data, tilemap.id);
                 blob[jres.id] = jres;
             }
@@ -164,7 +182,7 @@ namespace pxt {
         }
 
         public getTilemap(id: string) {
-            for (const tm of this.projectTilemaps) {
+            for (const tm of this.state.projectTilemaps) {
                 if (tm.id === id) {
                     return tm.data;
                 }
@@ -177,15 +195,15 @@ namespace pxt {
             let index = 0;
             let base = name;
 
-            while (this.takenNames[name]) {
+            while (this.state.takenNames[name]) {
                 name = base  + "_" + index;
                 ++index;
             }
 
-            this.takenNames[name] = true;
+            this.state.takenNames[name] = true;
 
             const newMap = this.blankTilemap(tileWidth, width, height);
-            this.projectTilemaps.push({
+            this.state.projectTilemaps.push({
                 id: name,
                 data: newMap
             });
@@ -205,7 +223,7 @@ namespace pxt {
         }
 
         public resolveTile(id: string): Tile {
-            const all = [this.projectTileSet].concat(this.extensionTileSets);
+            const all = [this.state.projectTileSet].concat(this.extensionTileSets);
 
             for (const tileSets of all) {
                 const found = getTile(tileSets, id);
@@ -216,15 +234,59 @@ namespace pxt {
         }
 
         public getTransparency(tileWidth: number) {
-            for (const tileSet of this.projectTileSet.tileSets) {
+            for (const tileSet of this.state.projectTileSet.tileSets) {
                 if (tileSet.tileWidth === tileWidth) {
                     return tileSet.tiles[0];
                 }
             }
 
             const newTileSet = this.createTileset(tileWidth);
-            this.projectTileSet.tileSets.push(newTileSet);
+            this.state.projectTileSet.tileSets.push(newTileSet);
             return newTileSet.tiles[0];
+        }
+
+        protected cloneState(): TilemapSnapshot {
+            return {
+                ...this.state,
+                projectTileSet: {
+                    ...this.state.projectTileSet,
+                    tileSets: this.state.projectTileSet.tileSets.map(t => ({ ...t, tiles: t.tiles.map(cloneTile) }))
+                },
+                projectTilemaps: this.state.projectTilemaps.slice(),
+                takenNames: {
+                    ...this.state.takenNames
+                }
+            }
+        }
+
+        public undo() {
+            if (this.undoStack.length) {
+                const undo = this.undoStack.pop();
+                this.redoStack.push(this.state);
+                this.state = undo;
+                this.needsRebuild = true;
+            }
+        }
+
+        public redo() {
+            if (this.redoStack.length) {
+                const redo = this.redoStack.pop();
+                this.undoStack.push(this.state);
+                this.state = redo;
+                this.needsRebuild = true;
+            }
+        }
+
+        public pushUndo() {
+            if (this.undoStack.length && this.undoStack[this.undoStack.length - 1].revision === this.state.revision) return;
+            this.redoStack = [];
+            this.undoStack.push(this.state);
+            this.state = this.cloneState();
+            this.state.revision = this.nextID++;
+        }
+
+        public revision() {
+            return this.state.revision;
         }
 
         protected decodeTilemap(jres: JRes) {
@@ -260,21 +322,21 @@ namespace pxt {
 
                 if (tiles) {
                     if (isProject) {
-                        this.projectTileSet = tiles
+                        this.state.projectTileSet = tiles
                     }
                     else {
                         this.extensionTileSets.push(tiles);
                     }
                 }
                 else if (isProject) {
-                    this.projectTileSet = {
+                    this.state.projectTileSet = {
                         extensionID: "this",
                         tileSets: []
                     };
                 }
             }
 
-            this.projectTilemaps = getTilemaps(pack)
+            this.state.projectTilemaps = getTilemaps(pack)
                 .map(tm => ({
                     id: tm.id,
                     data: this.decodeTilemap(tm)
@@ -283,8 +345,8 @@ namespace pxt {
             // FIXME: we a re re-parsing the jres here
             const allJRes = pack.getJRes();
 
-            this.takenNames = {};
-            for (const id of Object.keys(allJRes)) this.takenNames[id] = true;
+            this.state.takenNames = {};
+            for (const id of Object.keys(allJRes)) this.state.takenNames[id] = true;
         }
 
         protected createTileset(tileWidth: number) {
@@ -425,6 +487,16 @@ namespace pxt {
             }
         }
 
-        return `namespace ${pxt.sprite.TILE_NAMESPACE} {\n${out}\n}\n`
+        const warning = lf("Auto-generated code. Do not edit.");
+
+        return `// ${warning}\nnamespace ${pxt.sprite.TILE_NAMESPACE} {\n${out}\n}\n// ${warning}\n`
+    }
+
+
+    function cloneTile(tile: Tile) {
+        return {
+            ...tile,
+            bitmap: pxt.sprite.Bitmap.fromData(tile.bitmap).copy().data()
+        }
     }
 }

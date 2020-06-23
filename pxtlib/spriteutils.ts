@@ -182,6 +182,9 @@ namespace pxt.sprite {
         // Used to make sure the user doesn't delete a tile used elsewhere in their project
         projectReferences: number[];
 
+        editedTiles: string[];
+        deletedTiles: string[];
+
         constructor(public tilemap: Tilemap, public tileset: TileSet, public layers: BitmapData) {}
     }
 

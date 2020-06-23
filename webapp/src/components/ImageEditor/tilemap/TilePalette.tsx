@@ -34,8 +34,8 @@ export interface TilePaletteProps {
     dispatchChangeDrawingMode: (drawingMode: TileDrawingMode) => void;
     dispatchCreateNewTile: (bitmap: pxt.sprite.BitmapData, foreground: number, background: number, qualifiedName?: string) => void;
     dispatchSetGalleryOpen: (open: boolean) => void;
-    dispatchOpenTileEditor: (editIndex?: number) => void;
-    dispatchDeleteTile: (index: number) => void;
+    dispatchOpenTileEditor: (editIndex?: number, editID?: string) => void;
+    dispatchDeleteTile: (index: number, id: string) => void;
     dispatchShowAlert: (title: string, text: string, options?: AlertOption[]) => void;
     dispatchHideAlert: () => void;
 }
@@ -356,9 +356,10 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     protected tileEditHandler = () => {
         const { tileset, selected, dispatchOpenTileEditor } = this.props;
 
-        if (!tileset.tiles[selected] || !tileset.tiles[selected].isProjectTile || selected === 0) return;
+        const tileToEdit = tileset.tiles[selected];
+        if (!tileToEdit?.isProjectTile || selected === 0) return;
 
-        dispatchOpenTileEditor(selected);
+        dispatchOpenTileEditor(selected, tileToEdit.id);
     }
 
     protected tileDuplicateHandler = () => {
@@ -392,7 +393,11 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     protected deleteTile = () => {
-        this.props.dispatchDeleteTile(this.props.selected);
+        const deleted = this.props.tileset.tiles[this.props.selected];
+
+        if (deleted) {
+            this.props.dispatchDeleteTile(this.props.selected, deleted.id);
+        }
     }
 
     protected canvasClickHandler = (ev: React.MouseEvent<HTMLCanvasElement>) => {
