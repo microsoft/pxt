@@ -17,7 +17,7 @@ export interface TilePaletteProps {
     selected: number;
     backgroundColor: number;
 
-    referencedTiles: number[];
+    referencedTiles: string[];
 
     category: TileCategory;
     page: number;
@@ -269,14 +269,13 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             dispatchChangeTilePaletteCategory(this.categories.indexOf(category) as TileCategory);
             dispatchChangeTilePalettePage(page);
         } else {
-            // FIXME riknoll
             // For custom tile, find the page
-            // const categoryTiles = this.getCustomTiles().map(([t, i]) => t);
-            // if (!categoryTiles) return;
-            // const page = Math.max(Math.floor(categoryTiles.findIndex(t => t.projectId == tile.projectId) / TILES_PER_PAGE), 0);
+            const categoryTiles = this.getCustomTiles().map(([t, i]) => t);
+            if (!categoryTiles) return;
+            const page = Math.max(Math.floor(categoryTiles.findIndex(t => t.id == tile.id) / TILES_PER_PAGE), 0);
 
-            // dispatchSetGalleryOpen(false);
-            // dispatchChangeTilePalettePage(page);
+            dispatchSetGalleryOpen(false);
+            dispatchChangeTilePalettePage(page);
         }
     }
 
@@ -378,14 +377,13 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         if (!selected || !info || !info.isProjectTile) return;
 
 
-        // FIXME riknoll
         // tile cannot be deleted because it is referenced in the code
-        // if (referencedTiles && referencedTiles.indexOf(info.projectId) !== -1) {
-        //     dispatchShowAlert(lf("Unable to delete"),
-        //         lf("This tile is used in your game. Remove all blocks using the tile before deleting."),
-        //         [{ label: lf("Cancel"), onClick: dispatchHideAlert }]);
-        //     return;
-        // }
+        if (referencedTiles && referencedTiles.indexOf(info.id) !== -1) {
+            dispatchShowAlert(lf("Unable to delete"),
+                lf("This tile is used in your game. Remove all blocks using the tile before deleting."),
+                [{ label: lf("Cancel"), onClick: dispatchHideAlert }]);
+            return;
+        }
 
         dispatchShowAlert(lf("Are you sure?"),
             lf("Deleting this tile will remove it from all other tile maps in your game."),

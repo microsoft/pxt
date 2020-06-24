@@ -180,7 +180,7 @@ namespace pxt.sprite {
         nextId = 0;
 
         // Used to make sure the user doesn't delete a tile used elsewhere in their project
-        projectReferences: number[];
+        projectReferences: string[];
 
         editedTiles: string[];
         deletedTiles: string[];

@@ -82,6 +82,8 @@ namespace pxtblockly {
 
             (this.params as any).blocksInfo = this.blocksInfo;
 
+            this.state.projectReferences = getAllReferencedTiles(this.sourceBlock_.workspace, this.sourceBlock_.id);
+
             const fv = pxt.react.getFieldEditorView("tilemap-editor", this.state, this.params);
 
             if (this.undoRedoState) {
@@ -95,6 +97,7 @@ namespace pxtblockly {
                     const old = this.getValue();
 
                     this.state = result;
+                    this.state.projectReferences = null;
 
                     const project = pxt.react.getTilemapProject();
 
@@ -138,10 +141,15 @@ namespace pxtblockly {
 
                     if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
                         Blockly.Events.setGroup(true)
+
                         Blockly.Events.fire(new Blockly.Events.BlockChange(
                             this.sourceBlock_, 'field', this.name, old, this.getValue()));
-                        Blockly.Events.fire(new BlocklyTilemapChange(
-                            this.sourceBlock_, 'tilemap-revision', this.name, lastRevision, project.revision()));
+
+                        if (lastRevision !== project.revision()) {
+                            Blockly.Events.fire(new BlocklyTilemapChange(
+                                this.sourceBlock_, 'tilemap-revision', this.name, lastRevision, project.revision()));
+                        }
+
                         Blockly.Events.setGroup(false)
                     }
                 }
@@ -325,6 +333,27 @@ namespace pxtblockly {
         }
 
         return true;
+    }
+
+    function getAllReferencedTiles(workspace: Blockly.Workspace, excludeBlockID: string) {
+        let all: pxt.Map<boolean> = {};
+
+        const allMaps = getAllBlocksWithTilemaps(workspace);
+
+        for (const map of allMaps) {
+            if (map.block.id === excludeBlockID) continue;
+
+            for (const tile of map.ref.getTileset().tiles) {
+                all[tile.id] = true;
+            }
+        }
+
+        const allTiles = getAllBlocksWithTilesets(workspace);
+        for (const tilesetField of allTiles) {
+            all[tilesetField.ref.getValue()] = true;
+        }
+
+        return Object.keys(all);
     }
 
 

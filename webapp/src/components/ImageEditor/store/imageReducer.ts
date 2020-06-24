@@ -67,7 +67,7 @@ export interface EditorState {
     tileGalleryOpen?: boolean;
 
     isTilemap: boolean;
-    referencedTiles?: number[];
+    referencedTiles?: string[];
     deletedTiles?: string[];
     editedTiles?: string[];
 

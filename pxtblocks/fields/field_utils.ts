@@ -102,7 +102,7 @@ namespace pxtblockly {
                 if (tile) {
                     if (!tileColors[tile]) {
                         const tileInfo = data.tileset.tiles[tile];
-                        tileColors[tile] = pxt.sprite.computeAverageColor(pxt.sprite.Bitmap.fromData(tileInfo.bitmap), colors);
+                        tileColors[tile] = tileInfo ? pxt.sprite.computeAverageColor(pxt.sprite.Bitmap.fromData(tileInfo.bitmap), colors) : "#dedede";
                     }
 
                     context.fillStyle = tileColors[tile];

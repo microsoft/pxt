@@ -78,7 +78,7 @@ namespace pxt {
         }
 
         public createNewTile(data: pxt.sprite.BitmapData) {
-            this.needsRebuild = true;
+            this.onChange();
             const prefix = pxt.sprite.TILE_NAMESPACE + "." + pxt.sprite.TILE_PREFIX;
 
             let index = 0;
@@ -110,7 +110,7 @@ namespace pxt {
         }
 
         public updateTile(id: string, data: pxt.sprite.BitmapData) {
-            this.needsRebuild = true;
+            this.onChange();
             for (const tileSet of this.state.projectTileSet.tileSets) {
                 for (const tile of tileSet.tiles) {
                     if (tile.id === id) {
@@ -125,7 +125,7 @@ namespace pxt {
         }
 
         public deleteTile(id: string) {
-            this.needsRebuild = true;
+            this.onChange();
             for (const tileSet of this.state.projectTileSet.tileSets) {
                 tileSet.tiles = tileSet.tiles.filter(t => t.id !== id);
             }
@@ -191,7 +191,7 @@ namespace pxt {
         }
 
         public createNewTilemap(name: string, tileWidth: number, width = 16, height = 16) {
-            this.needsRebuild = true;
+            this.onChange()
             let index = 0;
             let base = name;
 
@@ -282,7 +282,6 @@ namespace pxt {
             this.redoStack = [];
             this.undoStack.push(this.state);
             this.state = this.cloneState();
-            this.state.revision = this.nextID++;
         }
 
         public revision() {
@@ -295,7 +294,7 @@ namespace pxt {
 
             const tileset: TileSet = {
                 tileWidth: bytes[0],
-                tiles: jres.tileset.map(id => this.resolveTile(id))
+                tiles: jres.tileset.map(id => this.resolveTile(id) || { id } as any)
             };
 
             const tilemapStart = 1;
@@ -376,6 +375,11 @@ namespace pxt {
             });
 
             return tileSet;
+        }
+
+        protected onChange() {
+            this.needsRebuild = true;
+            this.state.revision = this.nextID++;
         }
     }
 
