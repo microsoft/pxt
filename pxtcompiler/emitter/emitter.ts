@@ -2734,10 +2734,11 @@ ${lbl}: .short 0xffff
             pxtInfo(node).callInfo = callInfo;
 
             function handleHexLike(pp: (s: string) => string) {
-                if (node.template.kind != SK.NoSubstitutionTemplateLiteral)
-                    throw unhandled(node, lf("substitution not supported in hex literal", attrs.shim), 9265);
                 res = parseHexLiteral(node, pp((node.template as ts.LiteralExpression).text))
             }
+
+            if (node.template.kind != SK.NoSubstitutionTemplateLiteral)
+                throw unhandled(node, lf("substitution not supported in hex literal", attrs.shim), 9265);
 
             switch (attrs.shim) {
                 case "@hex":
@@ -2747,6 +2748,9 @@ ${lbl}: .short 0xffff
                     handleHexLike(f4PreProcess)
                     break
                 default:
+                    if (attrs.shim === undefined && attrs.helper) {
+                        return emitTaggedTemplateHelper(node.template, attrs);
+                    }
                     throw unhandled(node, lf("invalid shim '{0}' on tagged template", attrs.shim), 9265)
             }
             if (attrs.helper) {
@@ -2764,6 +2768,33 @@ ${lbl}: .short 0xffff
         }
         function emitParenExpression(node: ParenthesizedExpression) {
             return emitExpr(node.expression)
+        }
+
+        function emitTaggedTemplateHelper(node: NoSubstitutionTemplateLiteral, attrs: CommentAttrs) {
+            let syms = checker.getSymbolsInScope(node, SymbolFlags.Module)
+            let helperStmt: Statement
+            for (let sym of syms) {
+                if (sym.name == "helpers") {
+                    for (let d of sym.declarations || [sym.valueDeclaration]) {
+                        if (d.kind == SK.ModuleDeclaration) {
+                            for (let stmt of ((d as ModuleDeclaration).body as ModuleBlock).statements) {
+                                if (stmt.symbol.name == attrs.helper) {
+                                    helperStmt = stmt;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (!helperStmt)
+                userError(9215, lf("helpers.{0} not found", attrs.helper))
+            if (helperStmt.kind != SK.FunctionDeclaration)
+                userError(9216, lf("helpers.{0} isn't a function", attrs.helper))
+            const decl = <FunctionDeclaration>helperStmt;
+            markFunctionUsed(decl);
+
+            let r = mkProcCall(decl, node, [emitStringLiteral(node.text)]);
+            return r
         }
 
         function getParameters(node: FunctionLikeDeclaration) {
