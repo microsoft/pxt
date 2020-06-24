@@ -76,7 +76,7 @@ const targets: TargetInfo[] = [
             }
         ],
     }, {
-        name: "Micro:bit",
+        name: "micro:bit",
         id: "microbit",
         endpoints: [
             {
