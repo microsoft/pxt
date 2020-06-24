@@ -13,6 +13,7 @@ namespace pxt {
         "files",
         "testFiles",
         "testDependencies",
+        "fileDependencies",
         "public",
         "targetVersions",
         "supportedTargets",
@@ -319,17 +320,19 @@ namespace pxt {
             return regex.test(ts);
         }
 
-        private upgradePackagesAsync() {
+        private upgradePackagesAsync(): Promise<pxt.Map<string>> {
             if (!this.config)
                 this.loadConfig();
             return pxt.packagesConfigAsync()
                 .then(packagesConfig => {
                     let numfixes = 0
+                    let fixes: pxt.Map<string> = {};
                     U.iterMap(this.config.dependencies, (pkg, ver) => {
                         if (pxt.github.isGithubId(ver)) {
                             const upgraded = pxt.github.upgradedPackageReference(packagesConfig, ver)
                             if (upgraded && upgraded != ver) {
                                 pxt.log(`upgrading dep ${pkg}: ${ver} -> ${upgraded}`);
+                                fixes[ver] = upgraded;
                                 this.config.dependencies[pkg] = upgraded
                                 numfixes++
                             }
@@ -337,6 +340,7 @@ namespace pxt {
                     })
                     if (numfixes)
                         this.saveConfig()
+                    return numfixes && fixes;
                 })
         }
 
@@ -568,11 +572,31 @@ namespace pxt {
                 initPromise = initPromise.then(() => this.parseConfig(str))
             }
 
-            if (this.level == 0)
-                initPromise = initPromise.then(() => this.upgradePackagesAsync())
+            // if we are installing this script, we haven't yet downloaded the config
+            // do upgrade later
+            if (this.level == 0 && !isInstall) {
+                initPromise = initPromise.then(() => this.upgradePackagesAsync().then(() => { }))
+            }
 
             if (isInstall)
                 initPromise = initPromise.then(() => this.downloadAsync())
+
+            // we are installing the script, and we've download the original version and we haven't upgraded it yet
+            // do upgrade and reload as needed
+            if (this.level == 0 && isInstall) {
+                initPromise = initPromise.then(() => this.upgradePackagesAsync())
+                    .then(fixes => {
+                        if (fixes) {
+                            // worst case scenario with double load
+                            Object.keys(fixes).forEach(key => pxt.tickEvent("package.doubleload", { "extension": key }))
+                            pxt.log(`upgraded, downloading again`);
+                            pxt.debug(fixes);
+                            return this.downloadAsync();
+                        }
+                        // nothing to do here
+                        else return Promise.resolve();
+                    })
+            }
 
             if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
                 if (this.level == 0)
@@ -697,11 +721,33 @@ namespace pxt {
                 });
         }
 
+        static depWarnings: Map<boolean> = {}
         getFiles() {
+            let res: string[]
             if (this.level == 0 && !this.ignoreTests)
-                return this.config.files.concat(this.config.testFiles || [])
+                res = this.config.files.concat(this.config.testFiles || [])
             else
-                return this.config.files.slice(0);
+                res = this.config.files.slice(0);
+            const fd = this.config.fileDependencies
+            if (this.config.fileDependencies)
+                res = res.filter(fn => {
+                    let cond = U.lookup(fd, fn)
+                    if (!cond) return true
+                    cond = cond.trim()
+                    if (!cond) return true
+                    if (/^[\w-]+$/.test(cond)) {
+                        const dep = this.parent.resolveDep(cond)
+                        if (dep && !dep.cppOnly)
+                            return true
+                        return false
+                    }
+                    if (!Package.depWarnings[cond]) {
+                        Package.depWarnings[cond] = true
+                        pxt.log(`invalid dependency expression: ${cond} in ${this.id}/${fn}`)
+                    }
+                    return false
+                })
+            return res
         }
 
         addSnapshot(files: Map<string>, exts: string[] = [""]) {

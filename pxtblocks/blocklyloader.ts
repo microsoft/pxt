@@ -1573,7 +1573,7 @@ namespace pxt.blocks {
                     enabled: topBlocks.length > 0 || topComments.length > 0,
                     callback: () => {
                         pxt.tickEvent("blocks.context.screenshot", undefined, { interactiveConsent: true });
-                        pxt.blocks.layout.screenshotAsync(this)
+                        pxt.blocks.layout.screenshotAsync(this, null, true)
                             .done((uri) => {
                                 if (pxt.BrowserUtils.isSafari())
                                     uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');

@@ -1,8 +1,18 @@
 {
     "arcade": {
-        "name": "Arcade",
+        "name": "Arcade BETA",
         "title": "MakeCode Arcade",
         "url": "https://arcade.makecode.com/beta",
+        "styles": {
+            "primary": "#6B4F76",
+            "menu": "#F76820",
+            "background": "linear-gradient(90deg, #B1E3DA 0%, #E91E63 100%)"
+        }
+    },
+    "arcadestable": {
+        "name": "Arcade",
+        "title": "MakeCode Arcade",
+        "url": "https://arcade.makecode.com/",
         "styles": {
             "primary": "#6B4F76",
             "menu": "#F76820",

@@ -6,6 +6,7 @@
 * [Blog](/blog)
 * [Online Learning](/online-learning)
 * [Contact Us](/contact)
+* [Tools](/tools)
 * [Technical Docs](/docs)
     * [JS Editor Features](/js/editor)
     * [Programming Language](/language)
