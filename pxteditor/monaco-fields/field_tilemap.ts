@@ -24,13 +24,16 @@ namespace pxt.editor {
             const name = match[1];
 
             if (name) {
-                let proj = project.getTilemap(name);
+                let id = ts.pxtc.escapeIdentifier(name)
+                let proj = project.getTilemap(id);
 
                 if (!proj) {
-                    proj = project.createNewTilemap(name, 16, 16, 16);
+                    const [ name, map ] = project.createNewTilemap(id, 16, 16, 16);
+                    proj = map;
+                    id = name;
                 }
 
-                this.tilemapName = name;
+                this.tilemapName = id;
 
                 return proj
             }
@@ -40,15 +43,48 @@ namespace pxt.editor {
 
         protected resultToText(result: pxt.sprite.TilemapData): string {
             const project = pxt.react.getTilemapProject();
+            project.pushUndo();
+
+            if (result.deletedTiles) {
+                for (const deleted of result.deletedTiles) {
+                    project.deleteTile(deleted);
+                }
+            }
+
+            if (result.editedTiles) {
+                for (const edit of result.editedTiles) {
+                    const editedIndex = result.tileset.tiles.findIndex(t => t.id === edit);
+                    const edited = result.tileset.tiles[editedIndex];
+
+                    // New tiles start with *. We haven't created them yet so ignore
+                    if (edited.id.startsWith("*")) continue;
+                    if (edited) {
+                        result.tileset.tiles[editedIndex] = project.updateTile(edited.id, edited.bitmap)
+                    }
+                }
+            }
+
+            for (let i = 0; i < result.tileset.tiles.length; i++) {
+                const tile = result.tileset.tiles[i];
+
+                if (tile.id.startsWith("*")) {
+                    const newTile = project.createNewTile(tile.bitmap);
+                    result.tileset.tiles[i] = newTile;
+                }
+                else if (!tile.data) {
+                    result.tileset.tiles[i] = project.resolveTile(tile.id);
+                }
+            }
+
             if (this.tilemapName) {
                 project.updateTilemap(this.tilemapName, result);
             }
             else {
-                const newMap = project.createNewTilemap(lf("untitled"), result.tileset.tileWidth, result.tilemap.width, result.tilemap.height);
-                newMap.tilemap.apply(result.tilemap);
-                newMap.tileset = result.tileset;
-                newMap.layers = result.layers;
-                this.tilemapName =lf("untitled");
+                const [ name, map ] = project.createNewTilemap(lf("level"), result.tileset.tileWidth, result.tilemap.width, result.tilemap.height);
+                map.tilemap.apply(result.tilemap);
+                map.tileset = result.tileset;
+                map.layers = result.layers;
+                this.tilemapName = name;
             }
 
             return `tilemap\`${this.tilemapName}\``;

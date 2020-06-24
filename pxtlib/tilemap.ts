@@ -1,6 +1,6 @@
 namespace pxt {
     const IMAGE_MIME_TYPE = "image/x-mkcd-f4"
-    const TILEMAP_MIME_TYPE = "application/"
+    const TILEMAP_MIME_TYPE = "application/mkcd-tilemap"
 
     export interface Tile {
         id: string;
@@ -180,7 +180,7 @@ namespace pxt {
             }
         }
 
-        public createNewTilemap(name: string, tileWidth: number, width = 16, height = 16) {
+        public createNewTilemap(name: string, tileWidth: number, width = 16, height = 16): [string, pxt.sprite.TilemapData] {
             this.onChange()
             let index = 0;
             let base = name;
@@ -198,7 +198,7 @@ namespace pxt {
                 data: newMap
             });
 
-            return newMap;
+            return [name, newMap];
         }
 
         public blankTilemap(tileWidth: number, width = 16, height = 16) {
@@ -443,15 +443,6 @@ namespace pxt {
         return allTiles;
     }
 
-    function readNumber(buf: Uint8Array, offset: number, bytes: number) {
-        let start = offset << 1;
-        let res = 0;
-        for (let i = 0; i < bytes; i++) {
-            res |= (buf[start + i]) << (8 * i);
-        }
-        return res;
-    }
-
     function getTile(tileSets: TileSetCollection, id: string) {
         for (const tileSet of tileSets.tileSets) {
             for (const tile of tileSet.tiles) {
@@ -487,7 +478,7 @@ namespace pxt {
         }
 
         if (tilemapEntries.length) {
-            out +=
+            out += "\n" +
                 `${indent}helpers.registerTilemapFactory(function(name: string) {\n` +
                 `${indent}${indent}switch(name) {\n` +
                 tilemapEntries.map(t => `${indent}${indent}${indent}${t}`).join("\n") + "\n" +
