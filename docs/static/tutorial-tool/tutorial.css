@@ -1,0 +1,4 @@
+.input-row {
+    justify-content: space-between;
+    display: inline-flex;
+}

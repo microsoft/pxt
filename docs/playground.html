@@ -13,14 +13,13 @@
 
 <body>
     <nav class="ui menu inverted fixed borderless">
-        <div class="menu left">
-            <div class="ui item">
-                MakeCode Blocks Playground
-            </div>
+        <div class="ui item">
+            MakeCode Blocks Playground
         </div>
 
         <div class="menu right">
-            <a href="/defining-blocks" target="_blank" class="ui item">
+            <a href="/defining-blocks" target="_blank" class="ui primary button">
+                <i class="book icon"></i>
                 Defining Blocks
             </a>
         </div>
@@ -28,14 +27,16 @@
 
     <div class="content">
         <div class="input-row">
-            <div id="sample-container" class="ui action input">
-                <button class="ui small primary labelled icon left attached button" id="run-button">
+            <div id="sample-container" class="ui labeled input">
+                <span class="ui label">Sample</span>
+                <select id="sample-select" class="ui dropdown"></select>
+                <button class="ui primary button input large" id="run-button">
                     <i class="play icon"></i>
                     Run
                 </button>
-                <select id="sample-select" class="ui dropdown"></select>
             </div>
-            <div id="run-container" class="ui action input">
+            <div id="run-container" class="ui labeled input">
+                <span class="ui label">Editor</span>
                 <select id="endpoint-select" class="ui dropdown"></select>
             </div>
         </div>

@@ -16,11 +16,11 @@ var targets = [
         endpoints: [
             {
                 name: "beta",
-                url: "https://arcade.makecode.com/beta?controller=1"
+                url: "https://arcade.makecode.com/beta?controller=1&ws=mem"
             },
             {
                 name: "released",
-                url: "https://arcade.makecode.com?controller=1"
+                url: "https://arcade.makecode.com?controller=1&ws=mem"
             }
         ]
     }, {
@@ -29,11 +29,11 @@ var targets = [
         endpoints: [
             {
                 name: "beta",
-                url: "https://minecraft.makecode.com/beta?ipc=1&inGame=1&controller=1"
+                url: "https://minecraft.makecode.com/beta?ipc=1&inGame=1&controller=1&ws=mem"
             },
             {
                 name: "released",
-                url: "https://minecraft.makecode.com?ipc=1&inGame=1&controller=1"
+                url: "https://minecraft.makecode.com?ipc=1&inGame=1&controller=1&ws=mem"
             }
         ]
     }, {
@@ -42,24 +42,24 @@ var targets = [
         endpoints: [
             {
                 name: "beta",
-                url: "https://makecode.adafruit.com/beta?controller=1"
+                url: "https://makecode.adafruit.com/beta?controller=1&ws=mem"
             },
             {
                 name: "released",
-                url: "https://makecode.adafruit.com?controller=1"
+                url: "https://makecode.adafruit.com?controller=1&ws=mem"
             }
         ]
     }, {
-        name: "Micro:bit",
+        name: "micro:bit",
         id: "microbit",
         endpoints: [
             {
                 name: "beta",
-                url: "https://makecode.microbit.org/beta?controller=1"
+                url: "https://makecode.microbit.org/beta?controller=1&ws=mem"
             },
             {
                 name: "released",
-                url: "https://makecode.microbit.org?controller=1"
+                url: "https://makecode.microbit.org?controller=1&ws=mem"
             }
         ]
     }, {
@@ -68,11 +68,11 @@ var targets = [
         endpoints: [
             {
                 name: "beta",
-                url: "https://makecode.mindstorms.com/beta?controller=1"
+                url: "https://makecode.mindstorms.com/beta?controller=1&ws=mem"
             },
             {
                 name: "released",
-                url: "https://makecode.mindstorms.com?controller=1"
+                url: "https://makecode.mindstorms.com?controller=1&ws=mem"
             }
         ]
     }

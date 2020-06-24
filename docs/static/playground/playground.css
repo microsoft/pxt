@@ -1,9 +1,5 @@
-.input-row {
-    margin: 0 0.5rem;
-}
-
-.editor-row {
-    margin: 0.5rem 0.5rem 0;
+#sample-select {
+    margin-right: 0.5rem;
 }
 
 #monaco-editor {
@@ -13,9 +9,20 @@
 }
 
 #sample-container {
-    width: 15rem;
+    width: 20rem;
 }
 
 #run-container {
-    margin-left: min(calc(55% - 15rem), calc(660px - 15rem));
+    margin-left: min(calc(55% - 20rem), calc(660px - 20rem));
+}
+
+/* Semantic UI overrides */
+.action .primary.button {
+    border-radius: .28571429rem;
+}
+
+.menu .primary.button {
+    border-radius: 0;
+    font-weight: 400;
+    margin: 0;
 }

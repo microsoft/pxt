@@ -30,12 +30,16 @@ body {
     margin-top: 3.5rem;
 }
 
+.input-row {
+    margin: 0 0.5rem;
+}
+
 .editor-row {
     position: relative;
     display: flex;
     flex-direction: row;
     flex-grow: 1;
-    margin-top:0.5rem;
+    margin: 0.5rem 0.5rem 0;
 }
 
 #container {
