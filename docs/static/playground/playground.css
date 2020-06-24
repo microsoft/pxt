@@ -1,3 +1,11 @@
+.input-row {
+    margin: 0 0.5rem;
+}
+
+.editor-row {
+    margin: 0.5rem 0.5rem 0;
+}
+
 #monaco-editor {
     height: 100%;
     width: 55%;
