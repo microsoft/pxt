@@ -84,10 +84,11 @@ export class Editor extends srceditor.Editor {
     }
 
     simStateChanged() {
-        // When realtime is true, chart scrolling is very smooth, but in this mode
-        // scrolling happens regardless of whether the simulator is running.
-        // We're using the chart's `nonRealtimeData` flag as a way to stop chart scrolling
-        // when the simulator is stopped.
+        // We're leveraging the chart's `nonRealtmeData` flag to get both smooth scrolling
+        // and the ability to pause the animation.
+        // When the chart is in realtime mode, scrolling is very smooth but cannot be paused.
+        // In non-realtime mode, scrolling only occurs when new data arrives, but scrolling
+        // is choppy (being tied to new data arriving).
         this.charts.forEach((chart) => chart.setRealtimeData(this.parent.isSimulatorRunning()));
     }
 
