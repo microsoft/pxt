@@ -2390,7 +2390,7 @@ ${lbl}: .short 0xffff
                             for (let d of sym.declarations || [sym.valueDeclaration]) {
                                 if (d.kind == SK.ModuleDeclaration) {
                                     for (let stmt of ((d as ModuleDeclaration).body as ModuleBlock).statements) {
-                                        if (stmt.symbol.name == attrs.helper) {
+                                        if (stmt.symbol?.name == attrs.helper) {
                                             helperStmt = stmt
                                         }
                                     }
@@ -2778,7 +2778,7 @@ ${lbl}: .short 0xffff
                     for (let d of sym.declarations || [sym.valueDeclaration]) {
                         if (d.kind == SK.ModuleDeclaration) {
                             for (let stmt of ((d as ModuleDeclaration).body as ModuleBlock).statements) {
-                                if (stmt.symbol.name == attrs.helper) {
+                                if (stmt.symbol?.name == attrs.helper) {
                                     helperStmt = stmt;
                                 }
                             }

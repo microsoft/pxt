@@ -230,7 +230,8 @@ namespace pxt {
                             icon,
                             namespace: ns,
                             mimeType,
-                            tilemapTile: v.tilemapTile
+                            tilemapTile: v.tilemapTile,
+                            tileset: v.tileset
                         }
                     }
                 }

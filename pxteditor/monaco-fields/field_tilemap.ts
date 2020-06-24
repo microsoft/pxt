@@ -5,6 +5,8 @@ namespace pxt.editor {
     const fieldEditorId = "tilemap-editor";
 
     export class MonacoTilemapEditor extends MonacoReactFieldEditor<pxt.sprite.TilemapData> {
+        protected tilemapName: string;
+
         protected initAsync(): Promise<void> {
             const projectTiles = this.host.readFile("tilemap.jres");
             if (!projectTiles) {
@@ -15,21 +17,41 @@ namespace pxt.editor {
         }
 
         protected textToValue(text: string): pxt.sprite.TilemapData {
-            const tileset = new pxt.TilemapProject(this.host.package());
+            const project = pxt.react.getTilemapProject();
 
             // This matches the regex for the field editor, so it should always match
             const match = /^\s*tilemap\s*`([^`]*)`\s*$/.exec(text);
             const name = match[1];
 
             if (name) {
+                let proj = project.getTilemap(name);
 
+                if (!proj) {
+                    proj = project.createNewTilemap(name, 16, 16, 16);
+                }
+
+                this.tilemapName = name;
+
+                return proj
             }
 
-            return null;
+            return project.blankTilemap(16, 16, 16);
         }
 
         protected resultToText(result: pxt.sprite.TilemapData): string {
-            return pxt.sprite.bitmapToImageLiteral(null, "typescript");
+            const project = pxt.react.getTilemapProject();
+            if (this.tilemapName) {
+                project.updateTilemap(this.tilemapName, result);
+            }
+            else {
+                const newMap = project.createNewTilemap(lf("untitled"), result.tileset.tileWidth, result.tilemap.width, result.tilemap.height);
+                newMap.tilemap.apply(result.tilemap);
+                newMap.tileset = result.tileset;
+                newMap.layers = result.layers;
+                this.tilemapName =lf("untitled");
+            }
+
+            return `tilemap\`${this.tilemapName}\``;
         }
 
         protected getFieldEditorId() {

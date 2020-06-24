@@ -162,25 +162,6 @@ namespace pxt {
             return blob;
         }
 
-        public encodeTilemap(tilemap: sprite.TilemapData, id: string): JRes {
-            // Encoding
-            // tile width (1 byte)
-            // tilemap data (4 + width * height bytes)
-            // wall data (ceiling(width * height / 2 bytes))
-            const tileWidth = pxt.sprite.formatByte(tilemap.tileset.tileWidth, 1);
-            const tilemapData = pxt.sprite.hexEncodeTilemap(tilemap.tilemap);
-            const wallData = pxt.sprite.uint8ArrayToHex(tilemap.layers.data);
-
-            const data = btoa(tileWidth + tilemapData + wallData);
-
-            return {
-                id,
-                mimeType: TILEMAP_MIME_TYPE,
-                data,
-                tileset: tilemap.tileset.tiles.map(t => t.id)
-            }
-        }
-
         public getTilemap(id: string) {
             for (const tm of this.state.projectTilemaps) {
                 if (tm.id === id) {
@@ -188,6 +169,15 @@ namespace pxt {
                 }
             }
             return null;
+        }
+
+        public updateTilemap(id: string, data: pxt.sprite.TilemapData) {
+            for (const tm of this.state.projectTilemaps) {
+                if (tm.id === id) {
+                    this.onChange();
+                    tm.data = data;
+                }
+            }
         }
 
         public createNewTilemap(name: string, tileWidth: number, width = 16, height = 16) {
@@ -288,23 +278,43 @@ namespace pxt {
             return this.state.revision;
         }
 
+        public encodeTilemap(tilemap: sprite.TilemapData, id: string): JRes {
+            const tm = tilemap.tilemap.data();
+            const data = new Uint8ClampedArray(5 + tm.data.length + tilemap.layers.data.length);
+
+            data[0] = tilemap.tileset.tileWidth;
+            data[1] = tm.width & 0xff
+            data[2] = (tm.width >> 8) & 0xff
+            data[3] = tm.height & 0xff
+            data[4] = (tm.height >> 8) & 0xff
+            data.set(tm.data, 5);
+            data.set(tilemap.layers.data, 5 + tm.data.length);
+
+            return {
+                id,
+                mimeType: TILEMAP_MIME_TYPE,
+                data: btoa(pxt.sprite.uint8ArrayToHex(data)),
+                tileset: tilemap.tileset.tiles.map(t => t.id)
+            }
+        }
+
         protected decodeTilemap(jres: JRes) {
             const hex = atob(jres.data);
             const bytes = U.fromHex(hex);
+
+            const tmWidth = bytes[1] | (bytes[2] << 8);
+            const tmHeight = bytes[3] | (bytes[4] << 8);
 
             const tileset: TileSet = {
                 tileWidth: bytes[0],
                 tiles: jres.tileset.map(id => this.resolveTile(id) || { id } as any)
             };
 
-            const tilemapStart = 1;
-
-            const tmWidth = readNumber(bytes, tilemapStart, 2);
-            const tmHeight = readNumber(bytes, tilemapStart + 2, 2);
-            const tmData = bytes.slice(tilemapStart + 4, tilemapStart + 4 + tmWidth * tmHeight);
+            const tilemapStart = 5;
+            const tmData = bytes.slice(tilemapStart, tilemapStart + tmWidth * tmHeight);
 
             const tilemap = new sprite.Tilemap(tmWidth, tmHeight, 0, 0, new Uint8ClampedArray(tmData));
-            const bitmapData = bytes.slice(tilemapStart + 4 + tmWidth * tmHeight);
+            const bitmapData = bytes.slice(tilemapStart + tmData.length);
 
             const layers = new pxt.sprite.Bitmap(tmWidth, tmHeight, 0, 0, new Uint8ClampedArray(bitmapData)).data();
 
@@ -341,7 +351,7 @@ namespace pxt {
                     data: this.decodeTilemap(tm)
                 }));
 
-            // FIXME: we a re re-parsing the jres here
+            // FIXME: we are re-parsing the jres here
             const allJRes = pack.getJRes();
 
             this.state.takenNames = {};
@@ -488,6 +498,10 @@ namespace pxt {
                 // FIXME: we should get the "image.ofBuffer" and blockIdentity from pxtarget probably
                 out += `${indent}//% fixedInstance jres blockIdentity=images._tile\n`
                 out += `${indent}export const ${key} = image.ofBuffer(hex\`\`);\n`
+            }
+
+            if (entry.mimeType === TILEMAP_MIME_TYPE) {
+                out += `${indent}helpers.registerTilemapByName("${key}", hex\`${atob(entry.data)}\`, [${entry.tileset.join(", ")}])\n`
             }
         }
 
