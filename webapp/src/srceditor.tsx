@@ -17,6 +17,7 @@ export class Editor implements pxt.editor.IEditor {
     setVisible(v: boolean) {
         this.isVisible = v;
     }
+    simStateChanged() { }
 
     /*******************************
      Methods called before loadFile

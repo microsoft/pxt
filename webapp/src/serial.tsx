@@ -1,6 +1,5 @@
-/// <reference path="../../localtypings/smoothie.d.ts" />
-
 import * as React from "react"
+import * as Smoothie from "smoothie"
 import * as pkg from "./package"
 import * as core from "./core"
 import * as srceditor from "./srceditor"
@@ -84,6 +83,14 @@ export class Editor extends srceditor.Editor {
         }
     }
 
+    simStateChanged() {
+        // When realtime is true, chart scrolling is very smooth, but in this mode
+        // scrolling happens regardless of whether the simulator is running.
+        // We're using the chart's `nonRealtimeData` flag as a way to stop chart scrolling
+        // when the simulator is stopped.
+        this.charts.forEach((chart) => chart.setRealtimeData(this.parent.isSimulatorRunning()));
+    }
+
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
         window.addEventListener("message", this.processEvent.bind(this), false)
@@ -96,14 +103,6 @@ export class Editor extends srceditor.Editor {
         this.toggleRecording = this.toggleRecording.bind(this);
         this.downloadRaw = this.downloadRaw.bind(this);
         this.downloadCSV = this.downloadCSV.bind(this);
-    }
-
-    private loadSmoothieChartsPromise: Promise<void>
-    private loadSmoothieChartsAsync(): Promise<void> {
-        if (!this.loadSmoothieChartsPromise) {
-            this.loadSmoothieChartsPromise = pxt.BrowserUtils.loadScriptAsync("smoothie/smoothie_compressed.js");
-        }
-        return this.loadSmoothieChartsPromise;
     }
 
     saveMessageForLater(m: pxsim.SimulatorSerialMessage) {
@@ -224,30 +223,28 @@ export class Editor extends srceditor.Editor {
     }
 
     appendGraphEntry(source: string, variable: string, nvalue: number, receivedTime: number) {
-        this.loadSmoothieChartsAsync()
-            .then(() => {
-                //See if there is a "home chart" that this point belongs to -
-                //if not, create a new chart
-                let homeChart: Chart = undefined
-                for (let i = 0; i < this.charts.length; ++i) {
-                    let chart = this.charts[i]
-                    if (chart.shouldContain(source, variable)) {
-                        homeChart = chart
-                        break
-                    }
-                }
-                if (!homeChart) {
-                    homeChart = new Chart(source, variable, this.chartIdx, this.currentLineColors)
-                    this.chartIdx++;
-                    this.charts.push(homeChart)
-                    this.chartRoot.appendChild(homeChart.getElement());
-                    pxt.BrowserUtils.removeClass(this.chartRoot, "nochart");
-                    if (this.consoleRoot) {
-                        pxt.BrowserUtils.removeClass(this.consoleRoot, "nochart");
-                    }
-                }
-                homeChart.addPoint(variable, nvalue, receivedTime)
-            })
+        //See if there is a "home chart" that this point belongs to -
+        //if not, create a new chart
+        let homeChart: Chart = undefined
+        for (let i = 0; i < this.charts.length; ++i) {
+            let chart = this.charts[i]
+            if (chart.shouldContain(source, variable)) {
+                homeChart = chart
+                break
+            }
+        }
+        if (!homeChart) {
+            homeChart = new Chart(source, variable, this.chartIdx, this.currentLineColors)
+            homeChart.setRealtimeData(this.parent.isSimulatorRunning())
+            this.chartIdx++;
+            this.charts.push(homeChart)
+            this.chartRoot.appendChild(homeChart.getElement());
+            pxt.BrowserUtils.removeClass(this.chartRoot, "nochart");
+            if (this.consoleRoot) {
+                pxt.BrowserUtils.removeClass(this.consoleRoot, "nochart");
+            }
+        }
+        homeChart.addPoint(variable, nvalue, receivedTime)
     }
 
     chunkDataIntoLines(data: string): string[] {
@@ -519,16 +516,16 @@ class Chart {
     chartIdx: number;
     canvas: HTMLCanvasElement;
     label: HTMLDivElement;
-    lines: pxt.Map<TimeSeries> = {};
+    lines: pxt.Map<Smoothie.TimeSeries> = {};
     datas: pxt.Map<number[][]> = {};
     source: string;
     variable: string;
-    chart: SmoothieChart;
+    chart: Smoothie.SmoothieChart;
 
     constructor(source: string, variable: string, chartIdx: number, lineColors: string[]) {
         // Initialize chart
         const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme;
-        const chartConfig: IChartOptions = {
+        const chartConfig: Smoothie.IChartOptions = {
             interpolation: 'bezier',
             labels: {
                 disabled: false,
@@ -549,7 +546,7 @@ class Chart {
         }
         this.lineColors = lineColors;
         this.chartIdx = chartIdx;
-        this.chart = new SmoothieChart(chartConfig);
+        this.chart = new Smoothie.SmoothieChart(chartConfig);
         this.rootElement.className = "ui segment";
         this.source = source;
         this.variable = variable.replace(/\..*$/, ''); // keep prefix only
@@ -558,18 +555,18 @@ class Chart {
         this.rootElement.appendChild(this.makeCanvas())
     }
 
-    tooltip(timestamp: number, data: { series: TimeSeries, index: number, value: number }[]): string {
+    tooltip(timestamp: number, data: { series: Smoothie.TimeSeries, index: number, value: number }[]): string {
         return data.map(n => {
             const name = (n.series as any).timeSeries.__name;
             return `<span>${name ? name + ': ' : ''}${n.value}</span>`;
         }).join('<br/>');
     }
 
-    getLine(name: string): TimeSeries {
+    getLine(name: string): Smoothie.TimeSeries {
         let line = this.lines[name];
         if (!line) {
             const lineColor = this.lineColors[this.chartIdx++ % this.lineColors.length]
-            this.lines[name] = line = new TimeSeries();
+            this.lines[name] = line = new Smoothie.TimeSeries();
             (line as any).__name = Util.htmlEscape(name.substring(this.variable.length + 1));
             this.chart.addTimeSeries(line, {
                 strokeStyle: lineColor,
@@ -631,6 +628,10 @@ class Chart {
 
     stop() {
         this.chart.stop()
+    }
+
+    setRealtimeData(realtime: boolean) {
+        this.chart.options.nonRealtimeData = !realtime;
     }
 }
 

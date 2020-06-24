@@ -810,16 +810,17 @@ export class ProjectView
             },
             restartSimulator: () => this.restartSimulator(),
             onStateChanged: (state) => {
+                const simStateChanged = () => this.allEditors.forEach((editor) => editor.simStateChanged());
                 switch (state) {
                     case pxsim.SimulatorState.Paused:
                     case pxsim.SimulatorState.Unloaded:
                     case pxsim.SimulatorState.Suspended:
                     case pxsim.SimulatorState.Pending:
                     case pxsim.SimulatorState.Stopped:
-                        this.setState({ simState: pxt.editor.SimState.Stopped });
+                        this.setState({ simState: pxt.editor.SimState.Stopped }, simStateChanged);
                         break;
                     case pxsim.SimulatorState.Running:
-                        this.setState({ simState: pxt.editor.SimState.Running });
+                        this.setState({ simState: pxt.editor.SimState.Running }, simStateChanged);
                         break;
                 }
             },
