@@ -298,29 +298,6 @@ namespace pxt {
             }
         }
 
-        protected decodeTilemap(jres: JRes) {
-            const hex = atob(jres.data);
-            const bytes = U.fromHex(hex);
-
-            const tmWidth = bytes[1] | (bytes[2] << 8);
-            const tmHeight = bytes[3] | (bytes[4] << 8);
-
-            const tileset: TileSet = {
-                tileWidth: bytes[0],
-                tiles: jres.tileset.map(id => this.resolveTile(id) || { id } as any)
-            };
-
-            const tilemapStart = 5;
-            const tmData = bytes.slice(tilemapStart, tilemapStart + tmWidth * tmHeight);
-
-            const tilemap = new sprite.Tilemap(tmWidth, tmHeight, 0, 0, new Uint8ClampedArray(tmData));
-            const bitmapData = bytes.slice(tilemapStart + tmData.length);
-
-            const layers = new pxt.sprite.Bitmap(tmWidth, tmHeight, 0, 0, new Uint8ClampedArray(bitmapData)).data();
-
-            return new pxt.sprite.TilemapData(tilemap, tileset, layers);
-        }
-
         protected readTileSets(pack: MainPackage) {
             const allPackages = pack.sortedDeps();
             this.extensionTileSets = [];
@@ -348,7 +325,7 @@ namespace pxt {
             this.state.projectTilemaps = getTilemaps(pack)
                 .map(tm => ({
                     id: tm.id,
-                    data: this.decodeTilemap(tm)
+                    data: decodeTilemap(tm, id => this.resolveTile(id))
                 }));
 
             // FIXME: we are re-parsing the jres here
@@ -489,6 +466,8 @@ namespace pxt {
 
         const indent = "    ";
         let out = "";
+
+        const tilemapEntries: string[] = [];
         for (const key of entries) {
             if (key === "*") continue;
 
@@ -501,9 +480,22 @@ namespace pxt {
             }
 
             if (entry.mimeType === TILEMAP_MIME_TYPE) {
-                out += `${indent}helpers.registerTilemapByName("${key}", hex\`${atob(entry.data)}\`, [${entry.tileset.join(", ")}])\n`
+                const tm = decodeTilemap(entry);
+
+                tilemapEntries.push(`case "${key}": return ${pxt.sprite.encodeTilemap(tm, "typescript")}`)
             }
         }
+
+        if (tilemapEntries.length) {
+            out +=
+                `${indent}helpers.registerTilemapFactory(function(name: string) {\n` +
+                `${indent}${indent}switch(name) {\n` +
+                tilemapEntries.map(t => `${indent}${indent}${indent}${t}`).join("\n") + "\n" +
+                `${indent}${indent}}\n` +
+                `${indent}${indent}return null;\n` +
+                `${indent}})\n`
+        }
+
 
         const warning = lf("Auto-generated code. Do not edit.");
 
@@ -516,5 +508,28 @@ namespace pxt {
             ...tile,
             bitmap: pxt.sprite.Bitmap.fromData(tile.bitmap).copy().data()
         }
+    }
+
+    function decodeTilemap(jres: JRes, resolveTile?: (id: string) => Tile) {
+        const hex = atob(jres.data);
+        const bytes = U.fromHex(hex);
+
+        const tmWidth = bytes[1] | (bytes[2] << 8);
+        const tmHeight = bytes[3] | (bytes[4] << 8);
+
+        const tileset: TileSet = {
+            tileWidth: bytes[0],
+            tiles: jres.tileset.map(id => (resolveTile && resolveTile(id)) || { id } as any)
+        };
+
+        const tilemapStart = 5;
+        const tmData = bytes.slice(tilemapStart, tilemapStart + tmWidth * tmHeight);
+
+        const tilemap = new sprite.Tilemap(tmWidth, tmHeight, 0, 0, new Uint8ClampedArray(tmData));
+        const bitmapData = bytes.slice(tilemapStart + tmData.length);
+
+        const layers = new pxt.sprite.Bitmap(tmWidth, tmHeight, 0, 0, new Uint8ClampedArray(bitmapData)).data();
+
+        return new pxt.sprite.TilemapData(tilemap, tileset, layers);
     }
 }

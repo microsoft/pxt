@@ -213,12 +213,7 @@ namespace pxt.sprite {
     export function encodeTilemap(t: TilemapData, fileType: "typescript" | "python"): string {
         if (!t) return `null`;
 
-        return `tiles.createTilemap(
-            ${tilemapToTilemapLiteral(t.tilemap)},
-            ${bitmapToImageLiteral(Bitmap.fromData(t.layers), fileType)},
-            [${t.tileset.tiles.map(tile => encodeTile(tile, fileType))}],
-            ${tileWidthToTileScale(t.tileset.tileWidth)}
-        )`
+        return `tiles.createTilemap(${tilemapToTilemapLiteral(t.tilemap)}, ${bitmapToImageLiteral(Bitmap.fromData(t.layers), fileType)}, [${t.tileset.tiles.map(tile => encodeTile(tile, fileType))}], ${tileWidthToTileScale(t.tileset.tileWidth)})`
     }
 
     export function decodeTilemap(literal: string, fileType: "typescript" | "python", proj: TilemapProject): TilemapData {
