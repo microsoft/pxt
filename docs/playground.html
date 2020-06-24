@@ -2,64 +2,62 @@
 <html>
 
 <head>
-	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-	<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
-	<link rel="stylesheet" href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css" type="text/css">
-	<link data-name="vs/editor/editor.main" rel="stylesheet"
-		href="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.css">
-	<link rel="stylesheet" href="/static/shared/iframeeditor.css">
-	<link rel="stylesheet" href="/static/playground/playground.css">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <link rel="stylesheet" href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css" type="text/css">
+    <link data-name="vs/editor/editor.main" rel="stylesheet"
+        href="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.css">
+    <link rel="stylesheet" href="/static/shared/iframeeditor.css">
+    <link rel="stylesheet" href="/static/playground/playground.css">
 </head>
 
 <body>
-	<nav class="ui menu inverted fixed borderless">
-		<div class="menu left">
-			<div class="ui item">
-				MakeCode Blocks Playground
-			</div>
-		</div>
+    <nav class="ui menu inverted fixed borderless">
+        <div class="menu left">
+            <div class="ui item">
+                MakeCode Blocks Playground
+            </div>
+        </div>
 
-		<div class="menu right">
-			<a href="/defining-blocks" target="_blank" class="ui item">
-				Defining Blocks
-			</a>
-		</div>
-	</nav>
+        <div class="menu right">
+            <a href="/defining-blocks" target="_blank" class="ui item">
+                Defining Blocks
+            </a>
+        </div>
+    </nav>
 
-	<div class="content">
-		<div>
-			<div id="sample-container" class="ui action input">
-				<button class="ui small primary labelled icon left attached button" id="run-button">
-					<i class="play icon"></i>
-					Run
-				</button>
-				<select id="sample-select" class="ui dropdown"></select>
-			</div>
-			<div id="run-container" class="ui action input">
-				<select id="endpoint-select" class="ui dropdown"></select>
-			</div>
-		</div>
-		<div class="editor-row">
-			<div id="monaco-editor">
-				<div id="container" style="border:1px solid grey"></div>
-			</div>
-			<div id="makecode-editor" style="border:1px solid grey"></div>
-		</div>
-	</div>
+    <div class="content">
+        <div>
+            <div id="sample-container" class="ui action input">
+                <button class="ui small primary labelled icon left attached button" id="run-button">
+                    <i class="play icon"></i>
+                    Run
+                </button>
+                <select id="sample-select" class="ui dropdown"></select>
+            </div>
+            <div id="run-container" class="ui action input">
+                <select id="endpoint-select" class="ui dropdown"></select>
+            </div>
+        </div>
+        <div class="editor-row">
+            <div id="monaco-editor">
+                <div id="container" style="border:1px solid grey"></div>
+            </div>
+            <div id="makecode-editor" style="border:1px solid grey"></div>
+        </div>
+    </div>
 
-
-	<script type="text/javascript" src="https://pxt.azureedge.net/blob/795d8506c80a04f5ca26f577a8d6152e2fa3e7a6/doccdn/pxtweb.js"></script>
     <!-- @include tracking.html -->
-	<!-- @include thin-footer.html -->
+    <!-- @include thin-footer.html -->
 
-	<script>var require = { paths: { 'vs': 'https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs' } };</script>
-	<script src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/loader.js"></script>
-	<script
-		src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.nls.js"></script>
-	<script
-		src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.js"></script>
-	<script src="/static/playground/samples/all.js"></script>
-	<script src="/static/playground/playground.js"></script>
+    <script>var require = { paths: { 'vs': 'https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs' } };</script>
+    <script src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/loader.js"></script>
+    <script
+        src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.nls.js"></script>
+    <script
+        src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.js"></script>
+    <script src="/static/playground/samples/all.js"></script>
+    <script src="/static/playground/playground.js"></script>
 
 </body>
 </html>
