@@ -491,7 +491,7 @@ namespace pxt.py {
         error(a, 9500, U.lf("types not compatible: {0} and {1}", t2s(t0), t2s(t1)))
     }
 
-    function typeCtor(t: Type): any {
+    function typeCtor(t: Type): string | SymbolInfo | {} | null {
         if (t.primType) return t.primType
         else if (t.classType) return t.classType
         else if (t.moduleType) {
@@ -574,8 +574,6 @@ namespace pxt.py {
                 }
                 t0.union = t1
             } else {
-                // TODO(dz):
-                console.dir({ a, t0, t1, c0, c1 })
                 typeError(a, t0, t1)
             }
         } else if (c0 && !c1) {
@@ -586,6 +584,50 @@ namespace pxt.py {
             t0.union = t1
             // detect late unifications
             // if (currIteration > 2) error(a, `unify ${t2s(t0)} ${t2s(t1)}`)
+        }
+    }
+
+    function narrow(e: Expr, constrainingType: Type): void {
+        // TODO: handle assignablity beyond interfaces and classes, e.g. "any", generics, arrays, ...s
+        const t0 = find(typeOf(e))
+        const t1 = find(constrainingType)
+
+        if (t0 === t1)
+            return;
+
+        const c0 = typeCtor(t0)
+        const c1 = typeCtor(t1)
+
+        if (c0 === c1)
+            return;
+
+        // if we have constructors..
+        if (c0 && c1) {
+            console.log("we have constructors..")
+            // which are symbols..
+            if (isSymbol(c0) && isSymbol(c1)) {
+                console.log("which are symbols..")
+                // and there exists an extends relationship..
+                if (c0.extendsTypes && c0.extendsTypes.length) {
+                    console.log("and there exists an extends relationship..")
+                    // then t0 is narrowed to t1 if and only if t1 is in the extends relationship
+                    if (c0.extendsTypes.some(e => e === c1.qName)) {
+                        console.log("then t0 is narrowed")
+                        return
+                    }
+                }
+            }
+        }
+        // otherwise, we unify
+        // TODO: unification is too strict but should always be sound
+        if (currIteration > 1) {
+            console.log("fallback unification")
+            console.dir({ t0, t1 })
+            unify(e, typeOf(e), t1)
+        }
+
+        function isSymbol(c: string | SymbolInfo | {} | null): c is SymbolInfo {
+            return !!c && !!(c as SymbolInfo).name
         }
     }
 
@@ -2075,8 +2117,9 @@ namespace pxt.py {
                     } else if (arg) {
                         if (!formals[i].pyType)
                             error(n, 9545, lf("formal arg missing py type"));
-                        if (formals[i].pyType!.primType !== "any") {
-                            unifyTypeOf(arg, formals[i].pyType!)
+                        const expectedType = formals[i].pyType!;
+                        if (expectedType.primType !== "any") {
+                            narrow(arg, expectedType)
                         }
                         if (arg.kind == "Name" && shouldInlineFunction(arg.symbolInfo)) {
                             allargs.push(emitFunctionDef(arg.symbolInfo!.pyAST as FunctionDef, true))
@@ -2187,32 +2230,34 @@ namespace pxt.py {
         Ellipsis: (n: py.Ellipsis) => exprTODO(n),
         Constant: (n: py.Constant) => exprTODO(n),
         Attribute: (n: py.Attribute) => {
+            // e.g. in "foo.bar", n.value is ["foo" expression] and n.attr is "bar"
             let lhs = expr(n.value) // run it first, in case it wants to capture infoNode
-            let part = typeOf(n.value)
-            let fd = getTypeField(n.value, n.attr)
-            let nm = n.attr
+            let lhsType = typeOf(n.value)
+            let fieldSymbol = getTypeField(n.value, n.attr)
+            let fieldName = n.attr
             markInfoNode(n, "memberCompletion")
-            if (fd) {
-                n.symbolInfo = fd
-                addCaller(n, fd)
-                if (!n.tsType || !fd.pyRetType)
+            if (fieldSymbol) {
+                n.symbolInfo = fieldSymbol
+                addCaller(n, fieldSymbol)
+                if (!n.tsType || !fieldSymbol.pyRetType)
                     error(n, 9559, lf("tsType or pyRetType missing"));
-                unify(n, n.tsType!, fd.pyRetType!)
-                nm = fd.name
-            } else if (part.moduleType) {
-                let sym = lookupGlobalSymbol(part.moduleType.pyQName + "." + n.attr)
+                unify(n, n.tsType!, fieldSymbol.pyRetType!)
+                fieldName = fieldSymbol.name
+            } else if (lhsType.moduleType) {
+                let sym = lookupGlobalSymbol(lhsType.moduleType.pyQName + "." + n.attr)
                 if (sym) {
                     n.symbolInfo = sym
                     addCaller(n, sym)
                     unifyTypeOf(n, getOrSetSymbolType(sym))
-                    nm = sym.name
+                    fieldName = sym.name
                 } else
-                    error(n, 9514, U.lf("module '{0}' has no attribute '{1}'", part.moduleType.pyQName, n.attr))
+                    error(n, 9514, U.lf("module '{0}' has no attribute '{1}'", lhsType.moduleType.pyQName, n.attr))
             } else {
-                if (currIteration > 2)
+                if (currIteration > 2) {
                     error(n, 9515, U.lf("unknown object type; cannot lookup attribute '{0}'", n.attr))
+                }
             }
-            return B.mkInfix(lhs, ".", B.mkText(quoteStr(nm)))
+            return B.mkInfix(lhs, ".", B.mkText(quoteStr(fieldName)))
         },
         Subscript: (n: py.Subscript) => {
             if (n.slice.kind == "Index") {
