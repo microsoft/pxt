@@ -84,12 +84,12 @@ export class Editor extends srceditor.Editor {
     }
 
     simStateChanged() {
-        // We're leveraging the chart's `nonRealtmeData` flag to get both smooth scrolling
-        // and the ability to pause the animation.
-        // When the chart is in realtime mode, scrolling is very smooth but cannot be paused.
-        // In non-realtime mode, scrolling only occurs when new data arrives, but scrolling
-        // is choppy (being tied to new data arriving).
-        this.charts.forEach((chart) => chart.setRealtimeData(this.parent.isSimulatorRunning()));
+        this.charts.forEach((chart) => chart.setRealtimeData(this.wantRealtimeData()));
+    }
+
+    wantRealtimeData() {
+        // Simulator only: Use the chart's `nonRealtimeData` flag to pause scrolling when the simulator isn't running.
+        return (!this.isSim || this.parent.isSimulatorRunning());
     }
 
     constructor(public parent: pxt.editor.IProjectView) {
@@ -226,17 +226,10 @@ export class Editor extends srceditor.Editor {
     appendGraphEntry(source: string, variable: string, nvalue: number, receivedTime: number) {
         //See if there is a "home chart" that this point belongs to -
         //if not, create a new chart
-        let homeChart: Chart = undefined
-        for (let i = 0; i < this.charts.length; ++i) {
-            let chart = this.charts[i]
-            if (chart.shouldContain(source, variable)) {
-                homeChart = chart
-                break
-            }
-        }
+        let homeChart = this.charts.find((chart) => chart.shouldContain(source, variable));
         if (!homeChart) {
             homeChart = new Chart(source, variable, this.chartIdx, this.currentLineColors)
-            homeChart.setRealtimeData(this.parent.isSimulatorRunning())
+            homeChart.setRealtimeData(this.wantRealtimeData());
             this.chartIdx++;
             this.charts.push(homeChart)
             this.chartRoot.appendChild(homeChart.getElement());
