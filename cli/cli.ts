@@ -2703,6 +2703,7 @@ class Host
                     }
                 }
             }
+            pxt.debug(`resolve failure ${filename}`)
             return null
         }
     }
@@ -2861,6 +2862,9 @@ export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void
     ensurePkgDir();
     const packageName = parsed && parsed.args.length ? parsed.args[0] : undefined;
     const hwvariant = parseHwVariant(parsed);
+    const lnk = parsed.flags["link"] as string
+    if (lnk && !fs.existsSync(lnk))
+        U.userError(`folder not found: ${lnk}`)
     return installPackageNameAsync(packageName)
         .then(() => addDepsAsync())
         .then(() => mainPkg.installAllAsync())
@@ -2869,7 +2873,24 @@ export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void
             if (!fs.existsSync(tscfg) && !fs.existsSync("../" + tscfg)) {
                 nodeutil.writeFileSync(tscfg, pxt.template.TS_CONFIG)
             }
-        });
+        })
+        .then(() => {
+            if (!lnk) return
+            const mod = "pxt_modules"
+            for (const folder of fs.readdirSync(mod)) {
+                const fullfolder = path.join(mod, folder)
+                if (fs.existsSync(path.join(lnk, folder, pxt.CONFIG_NAME))) {
+                    pxt.log(`link ${fullfolder}`)
+                    for (const fn of fs.readdirSync(fullfolder))
+                        fs.unlinkSync(path.join(fullfolder, fn))
+                    fs.writeFileSync(path.join(fullfolder, pxt.CONFIG_NAME), JSON.stringify({
+                        additionalFilePath: path.join("..", "..", lnk, folder)
+                    }, null, 4))
+                }else{
+                    pxt.log(`skip ${fullfolder}`)
+                }
+            }
+        })
 
     function addDepsAsync() {
         return hwvariant ? addDepAsync(hwvariant, "*", true) : Promise.resolve();
@@ -5827,6 +5848,12 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         aliases: ["i"],
         onlineHelp: true,
         flags: {
+            link: {
+                description: "link to local version of libraries",
+                argument: "libs-directory",
+                type: "string",
+                aliases: ["l"]
+            },
             hwvariant: {
                 description: "specify hardware variant",
                 argument: "hwvariant",
