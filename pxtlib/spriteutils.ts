@@ -224,7 +224,7 @@ namespace pxt.sprite {
         }
 
         literal = literal.substr(literal.indexOf("(") + 1);
-        literal = literal.substr(0, literal.lastIndexOf(")") - 1);
+        literal = literal.substr(0, literal.lastIndexOf(")"));
 
         const tm = literal.substr(0, literal.indexOf(","));
         literal = literal.substr(tm.length + 1);

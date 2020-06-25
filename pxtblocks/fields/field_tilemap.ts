@@ -35,6 +35,8 @@ namespace pxtblockly {
         private lightMode: boolean;
         private undoRedoState: any;
 
+        private initText: string;
+
         isGreyBlock: boolean;
 
         constructor(text: string, params: any, validator?: Function) {
@@ -76,13 +78,9 @@ namespace pxtblockly {
         showEditor_() {
             if (this.isGreyBlock) return;
 
-            if (this.sourceBlock_) {
-                upgradeTilemapsInWorkspace(this.sourceBlock_.workspace, pxt.react.getTilemapProject());
-            }
-
             (this.params as any).blocksInfo = this.blocksInfo;
 
-            this.state.projectReferences = getAllReferencedTiles(this.sourceBlock_.workspace, this.sourceBlock_.id);
+            this.state.projectReferences = getAllReferencedTiles(this.sourceBlock_.workspace, this.sourceBlock_.id).map(t => t.id);
 
             const fv = pxt.react.getFieldEditorView("tilemap-editor", this.state, this.params);
 
@@ -170,11 +168,21 @@ namespace pxtblockly {
         getValue() {
             if (this.isGreyBlock) return pxt.Util.htmlUnescape(this.value_);
 
-            return pxt.sprite.encodeTilemap(this.state, "typescript");
+            try {
+                return pxt.sprite.encodeTilemap(this.state, "typescript");
+            }
+            catch (e) {
+                // If encoding failed, this is a legacy tilemap. Should get upgraded when the project is loaded
+                return this.getInitText();
+            }
         }
 
         getTileset() {
             return this.state.tileset;
+        }
+
+        getInitText() {
+            return this.initText;
         }
 
         doValueUpdate_(newValue: string) {
@@ -232,6 +240,7 @@ namespace pxtblockly {
 
             // Ignore invalid bitmaps
             if (checkTilemap(tilemap)) {
+                this.initText = newText;
                 this.state = tilemap;
                 this.isGreyBlock = false;
             }
@@ -334,28 +343,6 @@ namespace pxtblockly {
 
         return true;
     }
-
-    function getAllReferencedTiles(workspace: Blockly.Workspace, excludeBlockID: string) {
-        let all: pxt.Map<boolean> = {};
-
-        const allMaps = getAllBlocksWithTilemaps(workspace);
-
-        for (const map of allMaps) {
-            if (map.block.id === excludeBlockID) continue;
-
-            for (const tile of map.ref.getTileset().tiles) {
-                all[tile.id] = true;
-            }
-        }
-
-        const allTiles = getAllBlocksWithTilesets(workspace);
-        for (const tilesetField of allTiles) {
-            all[tilesetField.ref.getValue()] = true;
-        }
-
-        return Object.keys(all);
-    }
-
 
     class BlocklyTilemapChange extends Blockly.Events.Change {
         run(forward: boolean) {

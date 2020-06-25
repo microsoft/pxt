@@ -148,6 +148,8 @@ namespace pxtblockly {
         const allTiles = ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE).map(model => pxt.sprite.legacy.blocklyVariableToTile(model.name));
         if (!allTiles.length) return;
 
+        Blockly.Events.disable();
+
         let mapping: pxt.Tile[] = [];
 
         for (const tile of allTiles) {
@@ -155,7 +157,7 @@ namespace pxtblockly {
                 mapping[tile.projectId] = proj.resolveTile(tile.qualifiedName);
             }
             else if (tile.data) {
-                mapping[tile.projectId] = proj.createNewTile(tile.data);
+                mapping[tile.projectId] = proj.createNewTile(tile.data, "myTiles.tile" + tile.projectId);
             }
             deleteTilesetTileIfExists(ws, tile);
         }
@@ -163,19 +165,25 @@ namespace pxtblockly {
         const tilemaps = getAllBlocksWithTilemaps(ws);
 
         for (const tilemap of tilemaps) {
-            const value = tilemap.ref.getValue();
-            const legacy = pxt.sprite.legacy.decodeTilemap(value, "typescript");
+            const legacy = pxt.sprite.legacy.decodeTilemap(tilemap.ref.getInitText(), "typescript");
 
             const newData = new pxt.sprite.TilemapData(
                 legacy.tilemap, {
                     tileWidth: legacy.tileset.tileWidth,
-                    tiles: legacy.tileset.tiles.map(t => mapping[t.projectId])
+                    tiles: legacy.tileset.tiles.map(t => {
+                        if (!mapping[t.projectId]) {
+                            mapping[t.projectId] = proj.resolveTile(t.qualifiedName)
+                        }
+                        return mapping[t.projectId];
+                    })
                 },
                 legacy.layers
             );
 
             tilemap.ref.setValue(pxt.sprite.encodeTilemap(newData, "typescript"));
         }
+
+        Blockly.Events.enable();
     }
 
     function getAllFieldsCore<U extends Blockly.Field>(ws: Blockly.Workspace, predicate: (field: Blockly.Field) => boolean): FieldEditorReference<U>[] {
@@ -203,5 +211,31 @@ namespace pxtblockly {
                 getAllFieldsRecursive(block.nextConnection.targetBlock());
             }
         }
+    }
+
+    export function getAllReferencedTiles(workspace: Blockly.Workspace, excludeBlockID?: string) {
+        let all: pxt.Map<pxt.Tile> = {};
+
+        const allMaps = getAllBlocksWithTilemaps(workspace);
+
+        for (const map of allMaps) {
+            if (map.block.id === excludeBlockID) continue;
+
+            for (const tile of map.ref.getTileset().tiles) {
+                all[tile.id] = tile;
+            }
+        }
+
+        const allTiles = getAllBlocksWithTilesets(workspace);
+        const project = pxt.react.getTilemapProject();
+        for (const tilesetField of allTiles) {
+            const id = tilesetField.ref.getValue();
+
+            if (!all[id]) {
+                all[id] = project.resolveTile(id);
+            }
+        }
+
+        return Object.keys(all).map(key => all[key]);
     }
 }

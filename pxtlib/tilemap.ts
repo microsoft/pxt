@@ -77,18 +77,25 @@ namespace pxt {
             return null;
         }
 
-        public createNewTile(data: pxt.sprite.BitmapData) {
+        public createNewTile(data: pxt.sprite.BitmapData, id?: string) {
             this.onChange();
-            const prefix = pxt.sprite.TILE_NAMESPACE + "." + pxt.sprite.TILE_PREFIX;
 
-            let index = 0;
-            while (this.state.takenNames[prefix + index]) {
-                ++index;
+            if (!id || this.state.takenNames[id]) {
+                const prefix = pxt.sprite.TILE_NAMESPACE + "." + pxt.sprite.TILE_PREFIX;
+
+                // Start at 1 because the legacy tilemaps used myTiles.myTile0 for transparency and
+                // we want to be able to count on that
+                let index = 1;
+                while (this.state.takenNames[prefix + index]) {
+                    ++index;
+                }
+                id = prefix + index;
             }
-            this.state.takenNames[prefix + index] = true;
+
+            this.state.takenNames[id] = true;
 
             const newTile = {
-                id: prefix + index,
+                id,
                 data: pxt.sprite.base64EncodeBitmap(data),
                 bitmap: data,
                 isProjectTile: true
