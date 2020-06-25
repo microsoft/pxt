@@ -603,16 +603,12 @@ namespace pxt.py {
 
         // if we have constructors..
         if (c0 && c1) {
-            console.log("we have constructors..")
             // which are symbols..
             if (isSymbol(c0) && isSymbol(c1)) {
-                console.log("which are symbols..")
                 // and there exists an extends relationship..
                 if (c0.extendsTypes && c0.extendsTypes.length) {
-                    console.log("and there exists an extends relationship..")
                     // then t0 is narrowed to t1 if and only if t1 is in the extends relationship
                     if (c0.extendsTypes.some(e => e === c1.qName)) {
-                        console.log("then t0 is narrowed")
                         return
                     }
                 }
@@ -621,8 +617,6 @@ namespace pxt.py {
         // otherwise, we unify
         // TODO: unification is too strict but should always be sound
         if (currIteration > 1) {
-            console.log("fallback unification")
-            console.dir({ t0, t1 })
             unify(e, typeOf(e), t1)
         }
 
