@@ -1966,7 +1966,10 @@ namespace ts.pxtc.service {
         }
 
         doesAddDefinition = args.reduce((p, n) => p || n.addsDefinitions, doesAddDefinition)
-        let snippet = `${fnName}(${args.map(a => a.snippet).join(', ')})`;
+        let snippet = attrs && (python ? attrs.pySnippet : attrs.snippet);
+        if (!snippet) {
+            snippet = `${fnName}(${args.map(a => a.snippet).join(', ')})`; // vivian this is suspicious. what if we dont wanna do that...
+        }
         let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
         insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
 
