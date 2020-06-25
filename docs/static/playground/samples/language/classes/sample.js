@@ -8,9 +8,10 @@ namespace language {
      */
     export class Robot {
         /**
-         * The first argument in the block signature is the "this" pointer.
+         * Use "$this" to define a variable block that
+         * references the "this" pointer.
          */
-        //% block="robot %robot say $message"
+        //% block="robot $this(robot) say $message"
         public say(message: string) {
 
         }

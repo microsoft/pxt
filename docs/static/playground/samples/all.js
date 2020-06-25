@@ -21,7 +21,7 @@
         },
         {
             chapter: "Basic",
-            name: "Setting namespace color",
+            name: "Set namespace color",
             id: "basic-ns-color",
             path: "basic/ns-color"
         },
@@ -39,13 +39,13 @@
         },
         {
             chapter: "Basic",
-            name: "Types of Blocks",
+            name: "Types of blocks",
             id: "basic-types",
             path: "basic/types"
         },
         {
             chapter: "Basic",
-            name: "Input Format",
+            name: "Input format",
             id: "basic-input-format",
             path: "basic/input-format"
         },
@@ -57,7 +57,7 @@
         },
         {
             chapter: "Basic",
-            name: "Setting Variable Names",
+            name: "Set variable names",
             id: "basic-variable-names",
             path: "basic/variable-names"
         },
@@ -111,7 +111,7 @@
         },
         {
             chapter: "Field editors",
-            name: "Turn Ratio",
+            name: "Turn ratio",
             id: "field-editors-turn-ratio",
             path: "field-editors/turnratio"
         },
@@ -129,7 +129,7 @@
         },
         {
             chapter: "Language",
-            name: "Create Enums from Blocks",
+            name: "Creating enums",
             id: "language-create-enums",
             path: "language/create-enums"
         },
