@@ -15,12 +15,14 @@ namespace pxtblockly {
     export class FieldTileset extends FieldImages implements Blockly.FieldCustom {
         protected static referencedTiles: TilesetDropdownOption[];
         protected static cachedRevision: number;
+        protected static cachedWorkspaceId: string;
 
         protected static getReferencedTiles(workspace: Blockly.Workspace) {
             const project = pxt.react.getTilemapProject();
 
-            if (project.revision() !== FieldTileset.cachedRevision) {
+            if (project.revision() !== FieldTileset.cachedRevision || workspace.id != FieldTileset.cachedWorkspaceId) {
                 FieldTileset.cachedRevision = project.revision();
+                FieldTileset.cachedWorkspaceId = workspace.id;
                 const references = getAllReferencedTiles(workspace);
 
                 const projectTiles = project.getProjectTiles(16)
