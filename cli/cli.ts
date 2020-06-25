@@ -2886,7 +2886,7 @@ export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void
                     fs.writeFileSync(path.join(fullfolder, pxt.CONFIG_NAME), JSON.stringify({
                         additionalFilePath: path.join("..", "..", lnk, folder)
                     }, null, 4))
-                }else{
+                } else {
                     pxt.log(`skip ${fullfolder}`)
                 }
             }
