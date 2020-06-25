@@ -245,6 +245,50 @@ namespace pxt.sprite {
         return result;
     }
 
+    export function trimTilemapTileset(t: TilemapData) {
+        const oldTileset = t.tileset.tiles.slice();
+        const tilemap = t.tilemap;
+
+        const used: pxt.Map<boolean> = {};
+
+        // Always keep transparency
+        used[oldTileset[0].id] = true;
+
+        for (let x = 0; x < tilemap.width; x++) {
+            for (let y = 0; y < tilemap.height; y++) {
+                used[oldTileset[tilemap.get(x, y)].id] = true;
+            }
+        }
+
+        // Tiles with names that start with * are new and haven't been recorded in the tilemap
+        const newTileset = oldTileset.filter(tile =>
+            used[tile.id] ||
+            tile.id.charAt(0) === "*" ||
+            t.editedTiles?.indexOf(tile.id) !== -1
+        );
+
+        if (newTileset.length === oldTileset.length) {
+            return;
+        }
+
+        const mapping: number[] = [];
+
+        for (let i = 0; i < oldTileset.length; i++) {
+            mapping.push(newTileset.indexOf(oldTileset[i]))
+        }
+
+
+        for (let x = 0; x < tilemap.width; x++) {
+            for (let y = 0; y < tilemap.height; y++) {
+                tilemap.set(x, y, mapping[tilemap.get(x, y)]);
+            }
+        }
+
+        t.tileset.tiles = newTileset;
+
+        return;
+    }
+
     export function computeAverageColor(bitmap: Bitmap, colors: string[]) {
         const parsedColors = colors.map(colorStringToRGB);
         let color: number[];

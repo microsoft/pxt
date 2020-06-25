@@ -76,6 +76,8 @@ namespace pxt.editor {
                 }
             }
 
+            pxt.sprite.trimTilemapTileset(result);
+
             if (this.tilemapName) {
                 project.updateTilemap(this.tilemapName, result);
             }

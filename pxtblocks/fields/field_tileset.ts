@@ -62,22 +62,6 @@ namespace pxtblockly {
                 }, tile.id])
             }
             return FieldTileset.referencedTiles;
-
-            function tileWeight(id: string) {
-                switch (id) {
-                    case "myTiles.transparency8":
-                    case "myTiles.transparency16":
-                    case "myTiles.transparency32":
-                        return 1;
-                    default:
-                        if (id.startsWith("myTiles.tile")) {
-                            const num = parseInt(id.slice(12));
-
-                            if (!Number.isNaN(num)) return num + 2;
-                        }
-                        return 9999999999;
-                }
-            }
         }
 
         public isFieldCustom_ = true;
@@ -162,5 +146,21 @@ namespace pxtblockly {
         }
 
         return canvas.toDataURL();
+    }
+
+    function tileWeight(id: string) {
+        switch (id) {
+            case "myTiles.transparency8":
+            case "myTiles.transparency16":
+            case "myTiles.transparency32":
+                return 1;
+            default:
+                if (id.startsWith("myTiles.tile")) {
+                    const num = parseInt(id.slice(12));
+
+                    if (!Number.isNaN(num)) return num + 2;
+                }
+                return 9999999999;
+        }
     }
 }

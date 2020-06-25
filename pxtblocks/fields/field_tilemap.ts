@@ -133,22 +133,21 @@ namespace pxtblockly {
                         }
                     }
 
+                    pxt.sprite.trimTilemapTileset(result);
+
                     this.redrawPreview();
 
                     this.undoRedoState = fv.getPersistentData();
 
+                    const newValue = this.getValue();
+
+                    if (old !== newValue) {
+                        project.forceUpdate();
+                    }
+
                     if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
-                        Blockly.Events.setGroup(true)
-
-                        Blockly.Events.fire(new Blockly.Events.BlockChange(
-                            this.sourceBlock_, 'field', this.name, old, this.getValue()));
-
-                        if (lastRevision !== project.revision()) {
-                            Blockly.Events.fire(new BlocklyTilemapChange(
-                                this.sourceBlock_, 'tilemap-revision', this.name, lastRevision, project.revision()));
-                        }
-
-                        Blockly.Events.setGroup(false)
+                        Blockly.Events.fire(new BlocklyTilemapChange(
+                            this.sourceBlock_, 'field', this.name, old, this.getValue(), lastRevision, project.revision()));
                     }
                 }
             });
@@ -344,13 +343,24 @@ namespace pxtblockly {
         return true;
     }
 
-    class BlocklyTilemapChange extends Blockly.Events.Change {
+    class BlocklyTilemapChange extends Blockly.Events.BlockChange {
+
+        constructor(block: Blockly.Block, element: string, name: string, oldValue: any, newValue: any, protected oldRevision: number, protected newRevision: number) {
+            super(block, element, name, oldValue, newValue);
+        }
+
+        isNull() {
+            return this.oldRevision === this.newRevision && super.isNull();
+        }
+
         run(forward: boolean) {
             if (forward) {
                 pxt.react.getTilemapProject().redo();
+                super.run(forward);
             }
             else {
                 pxt.react.getTilemapProject().undo();
+                super.run(forward);
             }
 
             const ws = this.getEventWorkspace_();
@@ -363,7 +373,7 @@ namespace pxtblockly {
 
             // Fire an event to force a recompile, but make sure it doesn't end up on the undo stack
             const ev = new BlocklyTilemapChange(
-                ws.getBlockById(this.blockId), 'tilemap-revision', "revision", null, pxt.react.getTilemapProject().revision());
+                ws.getBlockById(this.blockId), 'tilemap-revision', "revision", null, pxt.react.getTilemapProject().revision(), 0, 0);
             ev.recordUndo = false;
 
             Blockly.Events.fire(ev)

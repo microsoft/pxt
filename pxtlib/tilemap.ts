@@ -305,6 +305,10 @@ namespace pxt {
             }
         }
 
+        public forceUpdate() {
+            this.onChange();
+        }
+
         protected readTileSets(pack: MainPackage) {
             const allPackages = pack.sortedDeps();
             this.extensionTileSets = [];
