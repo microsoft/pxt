@@ -1,5 +1,6 @@
 {
     "arcade": {
+        "id": "arcade-beta",
         "name": "Arcade BETA",
         "title": "MakeCode Arcade",
         "url": "https://arcade.makecode.com/beta",
@@ -10,6 +11,7 @@
         }
     },
     "arcadestable": {
+        "id": "arcade",
         "name": "Arcade",
         "title": "MakeCode Arcade",
         "url": "https://arcade.makecode.com/",
@@ -20,6 +22,7 @@
         }
     },
     "microbit": {
+        "id": "microbit",
         "name": "micro:bit",
         "title": "MakeCode for micro:bit",
         "url": "https://makecode.microbit.org/",
@@ -30,17 +33,19 @@
         }
     },
     "adafruit": {
+        "id": "adafruit-beta",
         "name": "Adafruit Circuit Playground Express",
-        "title": "MakeCode for Circuit Playgroung",
+        "title": "MakeCode for Circuit Playground",
         "url": "https://makecode.adafruit.com/beta",
         "icon": "https://pxt.azureedge.net/blob/1215b9ef46d3e04bc9923a1a333d92db92eb5419/static/logo.square.black.svg",
         "styles": {
             "primary": "#1c1f2b",
             "menu": "#FB48C7",
-            "background": "linear-gradient(45deg, #1c1f2b 0%, #000 100%)" 
+            "background": "linear-gradient(45deg, #1c1f2b 0%, #000 100%)"
         }
     },
     "maker": {
+        "id": "maker",
         "name": "Maker",
         "title": "MakeCode Maker",
         "url": "https://maker.makecode.com",
@@ -51,11 +56,13 @@
         }
     },
     "ev3": {
+        "id": "ev3-beta",
         "name": "LEGO® MINDSTORMS® Education EV3",
         "title": "MakeCode for EV3",
         "url": "https://makecode.mindstorms.com/beta"
     },
     "minecraft": {
+        "id": "minecraft-beta",
         "name": "Minecraft",
         "title": "MakeCode for Minecraft",
         "icon": "https://minecraft.makecode.com/favicon.ico",
@@ -67,11 +74,13 @@
         }
     },
     "calliopemini": {
+        "id": "calliope-beta",
         "name": "Calliope Mini",
         "title": "MakeCode for Calliope",
         "url": "https://makecode.calliope.cc/beta"
     },
     "stm32iotnode": {
+        "id": "stm32",
         "name": "STM32L4 Discovery kit IoT node",
         "title": "MakeCode pour STM32",
         "url": "https://makecode.st.com/"

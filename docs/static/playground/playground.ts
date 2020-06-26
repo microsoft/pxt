@@ -10,15 +10,17 @@ const editor = monaco.editor.create(document.getElementById("container"), {
     minimap: { enabled: false }
 });
 
-interface TargetInfo {
-    name: string;
+// interface defined in docs/editors.json
+interface EndpointInfo {
     id: string;
-    endpoints: TargetEndpoint[];
-}
-
-interface TargetEndpoint {
     name: string;
+    title: string;
     url: string;
+    styles?: {
+        primary?: string;
+        menu?: string;
+        background?: string;
+    }
 }
 
 interface SampleInfo {
@@ -35,79 +37,11 @@ interface Project {
     text?: { [ key: string ]: string };
 }
 
-const targets: TargetInfo[] = [
-    {
-        name: "Arcade",
-        id: "arcade",
-        endpoints: [
-            {
-                name: "beta",
-                url: "https://arcade.makecode.com/beta?controller=1"
-            },
-            {
-                name: "released",
-                url: "https://arcade.makecode.com?controller=1"
-            }
-        ],
-    }, {
-        name: "Minecraft",
-        id: "minecraft",
-        endpoints: [
-            {
-                name: "beta",
-                url: "https://minecraft.makecode.com/beta?ipc=1&inGame=1&controller=1"
-            },
-            {
-                name: "released",
-                url: "https://minecraft.makecode.com?ipc=1&inGame=1&controller=1"
-            }
-        ],
-    }, {
-        name: "Adafruit",
-        id: "adafruit",
-        endpoints: [
-            {
-                name: "beta",
-                url: "https://makecode.adafruit.com/beta?controller=1"
-            },
-            {
-                name: "released",
-                url: "https://makecode.adafruit.com?controller=1"
-            }
-        ],
-    }, {
-        name: "micro:bit",
-        id: "microbit",
-        endpoints: [
-            {
-                name: "beta",
-                url: "https://makecode.microbit.org/beta?controller=1"
-            },
-            {
-                name: "released",
-                url: "https://makecode.microbit.org?controller=1"
-            }
-        ],
-    }, {
-        name: "LEGO EV3",
-        id: "ev3",
-        endpoints: [
-            {
-                name: "beta",
-                url: "https://makecode.mindstorms.com/beta?controller=1"
-            },
-            {
-                name: "released",
-                url: "https://makecode.mindstorms.com?controller=1"
-            }
-        ],
-    }
-];
 
 const CUSTOM_FILE = "custom.ts";
 
+let endpoints: { [key: string]: EndpointInfo };
 let selectedEndpoint: string;
-let selectedId: string;
 let baseProjects: { [key: string] : Project } = {};
 
 editor.onDidChangeModelContent(debounce(() => {
@@ -119,7 +53,6 @@ monaco.languages?.typescript?.typescriptDefaults.setDiagnosticsOptions(
 
 const iframe = document.createElement("iframe");
 document.getElementById("makecode-editor").appendChild(iframe);
-loadIframe(localStorage.getItem(ENDPOINT_KEY));
 
 initEndpoints();
 initSamples();
@@ -138,18 +71,23 @@ window.addEventListener("resize", function() {
 function initEndpoints() {
     const s = document.getElementById("endpoint-select");
 
-    for (const target of targets) {
-        for (const endpoint of target.endpoints) {
+    xhr("editors.json", function() {
+        endpoints = JSON.parse(this.responseText);
+        for (const name of Object.keys(endpoints)) {
+            const endpoint = endpoints[name];
             const opt = document.createElement("option");
-            opt.value = `${target.name}-${endpoint.name}`;
-            opt.innerText = `${target.name} ${endpoint.name}`;
+            opt.value = endpoint.id;
+            opt.innerText = endpoint.name;
             s.appendChild(opt);
         }
-    }
 
-    s.addEventListener("change", ev => {
-        loadIframe((ev.target as HTMLOptionElement).value)
-    });
+        s.addEventListener("change", ev => {
+            loadIframe((ev.target as HTMLOptionElement).value)
+        });
+
+        loadIframe(null);
+    })
+
 }
 
 let PLAY_SAMPLES: SampleInfo[]; // defined in /playground/samples/all.js
@@ -230,19 +168,15 @@ function initSamples() {
 function loadIframe(selected: string) {
     if (selected === selectedEndpoint) return;
 
-    for (const target of targets) {
-        for (const endpoint of target.endpoints) {
-            if (!selected || selected === `${target.name}-${endpoint.name}`) {
-                iframe.setAttribute("src", endpoint.url);
-                selectedEndpoint = `${target.name}-${endpoint.name}`;
-                selectedId = target.id;
-                return;
-            }
+    for (const name of Object.keys(endpoints)) {
+        const endpoint = endpoints[name];
+        if (!selected || selected === endpoint.id) {
+            const separator = endpoint.url.indexOf("?") >= 0 ? "&" : "?";
+            iframe.setAttribute("src", `${endpoint.url}${separator}controller=1`);
+            selectedEndpoint = endpoint.id;
+            return;
         }
     }
-
-    // Load first target
-    loadIframe(null);
 }
 
 function sendMessage(action: string, ts?: string) {
