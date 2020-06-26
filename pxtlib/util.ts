@@ -526,6 +526,7 @@ namespace ts.pxtc.Util {
                 const gap = Date.now() - this.lastPoke
                 delay -= gap
                 if (delay < 0) delay = 0
+                this.lastPoke = null
             }
             clearTimeout(this.timeout)
             this.timeout = setTimeout(this.wrapped, delay)
