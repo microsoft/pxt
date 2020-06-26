@@ -41,7 +41,7 @@ function initEndpoints() {
             var endpoint = endpoints[name_1];
             if (supportedEndpoint(endpoint)) {
                 var opt = document.createElement("option");
-                opt.value = endpoint.id;
+                opt.value = name_1;
                 opt.innerText = endpoint.name;
                 s.appendChild(opt);
             }
@@ -129,10 +129,10 @@ function loadIframe(selected) {
     for (var _i = 0, _a = Object.keys(endpoints); _i < _a.length; _i++) {
         var name_2 = _a[_i];
         var endpoint = endpoints[name_2];
-        if (!selected || selected === endpoint.id) {
+        if (!selected || selected === name_2) {
             var separator = endpoint.url.indexOf("?") >= 0 ? "&" : "?";
             iframe.setAttribute("src", "" + endpoint.url + separator + "controller=1");
-            selectedEndpoint = endpoint.id;
+            selectedEndpoint = name_2;
             return;
         }
     }

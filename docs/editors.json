@@ -1,6 +1,5 @@
 {
     "arcade": {
-        "id": "arcade-beta",
         "name": "Arcade BETA",
         "title": "MakeCode Arcade",
         "url": "https://arcade.makecode.com/beta",
@@ -11,7 +10,6 @@
         }
     },
     "arcadestable": {
-        "id": "arcade",
         "name": "Arcade",
         "title": "MakeCode Arcade",
         "url": "https://arcade.makecode.com/",
@@ -22,13 +20,11 @@
         }
     },
     "microbitbeta": {
-        "id": "microbit-beta",
         "name": "micro:bit BETA",
         "url": "https://makecode.microbit.org/beta",
         "unsupported": ["streamer"]
     },
     "microbit": {
-        "id": "microbit",
         "name": "micro:bit",
         "title": "MakeCode for micro:bit",
         "url": "https://makecode.microbit.org/",
@@ -39,7 +35,6 @@
         }
     },
     "adafruit": {
-        "id": "adafruit-beta",
         "name": "Adafruit Circuit Playground Express BETA",
         "title": "MakeCode for Circuit Playground",
         "url": "https://makecode.adafruit.com/beta",
@@ -51,13 +46,11 @@
         }
     },
     "adafruitstable": {
-        "id": "adafruit",
         "name": "Adafruit Circuit Playground Express",
         "url": "https://makecode.adafruit.com/",
         "unsupported": ["streamer"]
     },
     "maker": {
-        "id": "maker",
         "name": "Maker",
         "title": "MakeCode Maker",
         "url": "https://maker.makecode.com",
@@ -69,19 +62,16 @@
         "unsupported": ["playground"]
     },
     "ev3": {
-        "id": "ev3-beta",
         "name": "LEGO® MINDSTORMS® Education EV3 BETA",
         "title": "MakeCode for EV3",
         "url": "https://makecode.mindstorms.com/beta"
     },
     "ev3stable": {
-        "id": "ev3",
         "name": "LEGO® MINDSTORMS® Education EV3",
         "url": "https://makecode.mindstorms.com/",
         "unsupported": ["streamer"]
     },
     "minecraft": {
-        "id": "minecraft-beta",
         "name": "Minecraft BETA",
         "title": "MakeCode for Minecraft",
         "icon": "https://minecraft.makecode.com/favicon.ico",
@@ -93,20 +83,17 @@
         }
     },
     "minecraftstable": {
-        "id": "minecraft",
         "name": "Minecraft",
         "url": "https://minecraft.makecode.com?github=1",
         "unsupported": ["streamer"]
     },
     "calliopemini": {
-        "id": "calliope-beta",
         "name": "Calliope Mini",
         "title": "MakeCode for Calliope",
         "url": "https://makecode.calliope.cc/beta",
         "unsupported": ["playground"]
     },
     "stm32iotnode": {
-        "id": "stm32",
         "name": "STM32L4 Discovery kit IoT node",
         "title": "MakeCode pour STM32",
         "url": "https://makecode.st.com/",

@@ -12,7 +12,6 @@ const editor = monaco.editor.create(document.getElementById("container"), {
 
 // interface defined in docs/editors.json
 interface EndpointInfo {
-    id: string;
     name: string;
     title: string;
     url: string;
@@ -79,7 +78,7 @@ function initEndpoints() {
             const endpoint = endpoints[name];
             if (supportedEndpoint(endpoint)) {
                 const opt = document.createElement("option");
-                opt.value = endpoint.id;
+                opt.value = name;
                 opt.innerText = endpoint.name;
                 s.appendChild(opt);
             } else {
@@ -176,10 +175,10 @@ function loadIframe(selected: string) {
 
     for (const name of Object.keys(endpoints)) {
         const endpoint = endpoints[name];
-        if (!selected || selected === endpoint.id) {
+        if (!selected || selected === name) {
             const separator = endpoint.url.indexOf("?") >= 0 ? "&" : "?";
             iframe.setAttribute("src", `${endpoint.url}${separator}controller=1`);
-            selectedEndpoint = endpoint.id;
+            selectedEndpoint = name;
             return;
         }
     }
