@@ -484,6 +484,55 @@ namespace ts.pxtc.Util {
         };
     }
 
+    export class AdaptiveDebouncer {
+        private lastPoke = 0
+        private recentGaps: number[] = []
+        private timeout: any
+        private wrapped: () => void
+
+        constructor(
+            public func: () => void,
+            public minDelay = 300,
+            public maxDelay = 2000,
+            public slowdownFactor = 2
+        ) {
+            this.wrapped = () => {
+                this.timeout = null
+                this.func()
+            }
+        }
+
+        poke() {
+            const now = Date.now()
+            if (this.lastPoke) {
+                const gap = now - this.lastPoke
+                if (gap < 10)
+                    return // ignore triggers is quick succession
+                console.log(gap)
+                if (gap < 4000)
+                    this.recentGaps.push(gap)
+                while (this.recentGaps.length > 10)
+                    this.recentGaps.shift()
+            }
+            this.lastPoke = now
+        }
+
+        trigger() {
+            let delay = this.maxDelay
+            if (this.lastPoke) {
+                const gaps = this.recentGaps.slice()
+                gaps.sort()
+                const median = gaps[gaps.length >> 1] || 1
+                delay = Math.min(Math.max((median * this.slowdownFactor) | 0, this.minDelay), this.maxDelay)
+                const gap = Date.now() - this.lastPoke
+                delay -= gap
+                if (delay < 0) delay = 0
+            }
+            clearTimeout(this.timeout)
+            this.timeout = setTimeout(this.wrapped, delay)
+        }
+    }
+
     // Returns a function, that, as long as it continues to be invoked, will only
     // trigger every N milliseconds. If `immediate` is passed, trigger the
     // function on the leading edge, instead of the trailing.

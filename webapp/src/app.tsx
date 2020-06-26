@@ -706,34 +706,39 @@ export class ProjectView
         1000, true);
 
     _slowTypeCheck = 0;
-    private typecheck = pxtc.Util.debounce(
-        () => {
-            if (this.editor.isIncomplete()) return;
-            let start = Util.now();
-            let state = this.editor.snapshotState()
-            compiler.typecheckAsync()
-                .done(resp => {
-                    let end = Util.now();
-                    // if typecheck is slow (>10s)
-                    // and it happened more than 2 times,
-                    // it's a slow machine, go into light mode
-                    if (!pxt.options.light && end - start > 10000 && this._slowTypeCheck++ > 1) {
-                        pxt.tickEvent("light.typecheck")
-                        pxt.options.light = true;
-                    }
-                    this.editor.setDiagnostics(this.editorFile, state);
-                    data.invalidate("open-pkg-meta:" + pkg.mainEditorPkg().getPkgId());
-                    if (this.state.autoRun) {
-                        const output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
-                        if (output && !output.numDiagnosticsOverride
-                            && this.state.autoRun) {
-                            this.autoRunSimulatorDebounced();
-                        }
-                    }
 
-                    this.maybeShowPackageErrors();
-                });
-        }, 2000, false);
+    private typecheckDebouncer = new pxtc.Util.AdaptiveDebouncer(() => {
+        if (this.editor.isIncomplete()) return;
+        const start = Util.now();
+        this.saveFileAsync().done(); // don't wait for saving to backend store to finish before typechecking
+        const state = this.editor.snapshotState()
+        compiler.typecheckAsync()
+            .done(resp => {
+                const end = Util.now();
+                // if typecheck is slow (>10s)
+                // and it happened more than 2 times,
+                // it's a slow machine, go into light mode
+                if (!pxt.options.light && end - start > 10000 && this._slowTypeCheck++ > 1) {
+                    pxt.tickEvent("light.typecheck")
+                    pxt.options.light = true;
+                }
+                this.editor.setDiagnostics(this.editorFile, state);
+                data.invalidate("open-pkg-meta:" + pkg.mainEditorPkg().getPkgId());
+                if (this.state.autoRun) {
+                    const output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
+                    if (output && !output.numDiagnosticsOverride
+                        && this.state.autoRun) {
+                        this.autoRunSimulatorDebounced();
+                    }
+                }
+
+                this.maybeShowPackageErrors();
+            });
+    })
+
+    private typecheck() {
+        this.typecheckDebouncer.trigger()
+    }
 
     private markdownChangeHandler = Util.debounce(() => {
         if (this.state.currFile && /\.md$/i.test(this.state.currFile.name))
@@ -763,7 +768,12 @@ export class ProjectView
             if (this.state.simState != pxt.editor.SimState.Stopped
                 && pxt.appTarget.simulator && pxt.appTarget.simulator.stopOnChange)
                 this.stopSimulator();
-            this.editorChangeHandler();
+
+            if (!this.editor.isIncomplete()) {
+                if (this.editor == this.textEditor)
+                    this.typecheckDebouncer.poke()
+                this.editorChangeHandler();
+            }
         }
         this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
@@ -3361,8 +3371,8 @@ export class ProjectView
                 //We need to first search base lang and then intial Lang
                 //Example: normalizeLanguageCode en-IN  will return ["en-IN", "en", "en-in"] and nb will be returned as ["nb"]
                 md = files[`_locales/${initialLang}/${mfn}`]
-                || files[`_locales/${initialLangLowerCase}/${mfn}`]
-                || files[`_locales/${baseLang}/${mfn}`]
+                    || files[`_locales/${initialLangLowerCase}/${mfn}`]
+                    || files[`_locales/${baseLang}/${mfn}`]
 
             } else {
                 md = files[`_locales/${initialLang}/${mfn}`];
