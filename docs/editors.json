@@ -21,6 +21,12 @@
             "background": "linear-gradient(90deg, #B1E3DA 0%, #E91E63 100%)"
         }
     },
+    "microbitbeta": {
+        "id": "microbit-beta",
+        "name": "micro:bit BETA",
+        "url": "https://makecode.microbit.org/beta",
+        "unsupported": ["streamer"]
+    },
     "microbit": {
         "id": "microbit",
         "name": "micro:bit",
@@ -34,7 +40,7 @@
     },
     "adafruit": {
         "id": "adafruit-beta",
-        "name": "Adafruit Circuit Playground Express",
+        "name": "Adafruit Circuit Playground Express BETA",
         "title": "MakeCode for Circuit Playground",
         "url": "https://makecode.adafruit.com/beta",
         "icon": "https://pxt.azureedge.net/blob/1215b9ef46d3e04bc9923a1a333d92db92eb5419/static/logo.square.black.svg",
@@ -43,6 +49,12 @@
             "menu": "#FB48C7",
             "background": "linear-gradient(45deg, #1c1f2b 0%, #000 100%)"
         }
+    },
+    "adafruitstable": {
+        "id": "adafruit",
+        "name": "Adafruit Circuit Playground Express",
+        "url": "https://makecode.adafruit.com/",
+        "unsupported": ["streamer"]
     },
     "maker": {
         "id": "maker",
@@ -53,17 +65,24 @@
             "primary": "#1f1f1f",
             "menu": "#444",
             "background": "linear-gradient(45deg, #cccccc 0%, #333333 100%)"
-        }
+        },
+        "unsupported": ["playground"]
     },
     "ev3": {
         "id": "ev3-beta",
-        "name": "LEGO® MINDSTORMS® Education EV3",
+        "name": "LEGO® MINDSTORMS® Education EV3 BETA",
         "title": "MakeCode for EV3",
         "url": "https://makecode.mindstorms.com/beta"
     },
+    "ev3stable": {
+        "id": "ev3",
+        "name": "LEGO® MINDSTORMS® Education EV3",
+        "url": "https://makecode.mindstorms.com/",
+        "unsupported": ["streamer"]
+    },
     "minecraft": {
         "id": "minecraft-beta",
-        "name": "Minecraft",
+        "name": "Minecraft BETA",
         "title": "MakeCode for Minecraft",
         "icon": "https://minecraft.makecode.com/favicon.ico",
         "url": "https://minecraft.makecode.com/beta?github=1",
@@ -73,16 +92,24 @@
             "background": "linear-gradient(215deg, #3C3C3C 0%, #C6C6C6 100%)"
         }
     },
+    "minecraftstable": {
+        "id": "minecraft",
+        "name": "Minecraft",
+        "url": "https://minecraft.makecode.com?github=1",
+        "unsupported": ["streamer"]
+    },
     "calliopemini": {
         "id": "calliope-beta",
         "name": "Calliope Mini",
         "title": "MakeCode for Calliope",
-        "url": "https://makecode.calliope.cc/beta"
+        "url": "https://makecode.calliope.cc/beta",
+        "unsupported": ["playground"]
     },
     "stm32iotnode": {
         "id": "stm32",
         "name": "STM32L4 Discovery kit IoT node",
         "title": "MakeCode pour STM32",
-        "url": "https://makecode.st.com/"
+        "url": "https://makecode.st.com/",
+        "unsupported": ["playground"]
     }
 }

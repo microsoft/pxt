@@ -20,7 +20,8 @@ interface EndpointInfo {
         primary?: string;
         menu?: string;
         background?: string;
-    }
+    };
+    unsupported?: string[];
 }
 
 interface SampleInfo {
@@ -39,6 +40,7 @@ interface Project {
 
 
 const CUSTOM_FILE = "custom.ts";
+const PLAYGROUND_ID = "playground";
 
 let endpoints: { [key: string]: EndpointInfo };
 let selectedEndpoint: string;
@@ -75,10 +77,14 @@ function initEndpoints() {
         endpoints = JSON.parse(this.responseText);
         for (const name of Object.keys(endpoints)) {
             const endpoint = endpoints[name];
-            const opt = document.createElement("option");
-            opt.value = endpoint.id;
-            opt.innerText = endpoint.name;
-            s.appendChild(opt);
+            if (supportedEndpoint(endpoint)) {
+                const opt = document.createElement("option");
+                opt.value = endpoint.id;
+                opt.innerText = endpoint.name;
+                s.appendChild(opt);
+            } else {
+                delete endpoints[name];
+            }
         }
 
         s.addEventListener("change", ev => {
@@ -177,6 +183,10 @@ function loadIframe(selected: string) {
             return;
         }
     }
+}
+
+function supportedEndpoint(endpoint: EndpointInfo) {
+    return !(endpoint.unsupported?.indexOf(PLAYGROUND_ID) >= 0);
 }
 
 function sendMessage(action: string, ts?: string) {

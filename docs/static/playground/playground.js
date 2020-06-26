@@ -10,6 +10,7 @@ var editor = monaco.editor.create(document.getElementById("container"), {
     minimap: { enabled: false }
 });
 var CUSTOM_FILE = "custom.ts";
+var PLAYGROUND_ID = "playground";
 var endpoints;
 var selectedEndpoint;
 var baseProjects = {};
@@ -38,10 +39,15 @@ function initEndpoints() {
         for (var _i = 0, _a = Object.keys(endpoints); _i < _a.length; _i++) {
             var name_1 = _a[_i];
             var endpoint = endpoints[name_1];
-            var opt = document.createElement("option");
-            opt.value = endpoint.id;
-            opt.innerText = endpoint.name;
-            s.appendChild(opt);
+            if (supportedEndpoint(endpoint)) {
+                var opt = document.createElement("option");
+                opt.value = endpoint.id;
+                opt.innerText = endpoint.name;
+                s.appendChild(opt);
+            }
+            else {
+                delete endpoints[name_1];
+            }
         }
         s.addEventListener("change", function (ev) {
             loadIframe(ev.target.value);
@@ -130,6 +136,10 @@ function loadIframe(selected) {
             return;
         }
     }
+}
+function supportedEndpoint(endpoint) {
+    var _a;
+    return !(((_a = endpoint.unsupported) === null || _a === void 0 ? void 0 : _a.indexOf(PLAYGROUND_ID)) >= 0);
 }
 function sendMessage(action, ts) {
     var msg = {

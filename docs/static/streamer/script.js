@@ -36,6 +36,7 @@
     const CHAT_SCENE_INDEX = scenes.indexOf("chatscene")
     const COUNTDOWN_SCENE_INDEX = scenes.indexOf("countdownscene")
     const DISPLAY_DEVICE_ID = "display"
+    const STREAMER_ID = "streamer"
     const state = {
         sceneIndex: -1,
         left: false,
@@ -227,7 +228,7 @@
             else
                 addButton(toolbox, "Record2", "Start recording", startRecording)
         }
-        
+
         addButton(toolbox, "Settings", "Show settings", toggleSettings);
 
         function addSep(container) {
@@ -1313,12 +1314,15 @@ background-image: url(${config.backgroundImage});
         const editorselect = document.getElementById("editorselect");
         editorselect.innerHTML = "" // remove all web cams
         Object.keys(editorConfigs).forEach(editorid => {
-            const option = document.createElement("option")
-            option.value = editorid
-            option.text = editorConfigs[editorid].name;
-            editorselect.add(option)
-            if (config.editor == editorid)
-                option.selected = true;
+            const editor = editorConfigs[editorid];
+            if (!editor.unsupported || editor.unsupported.indexOf(STREAMER_ID) < 0) {
+                const option = document.createElement("option")
+                option.value = editorid
+                option.text = editor.name;
+                editorselect.add(option)
+                if (config.editor == editorid)
+                    option.selected = true;
+            }
         })
         editorselect.onchange = function () {
             const selected = editorselect.options[editorselect.selectedIndex];
