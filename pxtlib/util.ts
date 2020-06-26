@@ -508,7 +508,6 @@ namespace ts.pxtc.Util {
                 const gap = now - this.lastPoke
                 if (gap < 10)
                     return // ignore triggers is quick succession
-                console.log(gap)
                 if (gap < 4000)
                     this.recentGaps.push(gap)
                 while (this.recentGaps.length > 10)
