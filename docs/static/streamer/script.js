@@ -1304,6 +1304,12 @@ background-image: url(${config.backgroundImage});
         const cams = await listCameras()
         const mics = await listMicrophones()
 
+        const sections = document.querySelectorAll("div.section>h3")
+        for(let i =0; i < sections.length; ++i) {
+            const section = sections[i];
+            section.onclick = (evt) => evt.target.parentElement.classList.toggle("expanded")
+        }
+
         const settingsclose = document.getElementById("settingsclose")
         settingsclose.onclick = function (e) {
             tickEvent("streamer.settingsclose", undefined, { interactiveConsent: true })

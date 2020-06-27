@@ -13,1056 +13,1195 @@
     <meta name="twitter:creator" content="@MsMakeCode" />
     <meta property="og:url" content="http://makecode.com/streamer" />
     <meta property="og:title" content="MakeCode Streamer BETA" />
-    <meta property="og:description" content="**Streamer BETA** is an experimental web application that simplifies the creation of interactive, high quality coding videos. Streamer is designed for teachers, students or generally anyone who would want to do any kind of online MakeCode coding." />
-    <meta property="og:image" content="https://makecode.com/static/streamer/intro.png" />    
+    <meta property="og:description"
+        content="**Streamer BETA** is an experimental web application that simplifies the creation of interactive, high quality coding videos. Streamer is designed for teachers, students or generally anyone who would want to do any kind of online MakeCode coding." />
+    <meta property="og:image" content="https://makecode.com/static/streamer/intro.png" />
     <style>
-/*
+        /*
 Use https://uifabricicons.azurewebsites.net/
 */
-/* 
+        /* 
     Style for the background. 
     
     Generate your custom css gradients at https://cssgradient.io/ 
 */
-body {
-    font-family: 'Open Sans', sans-serif;
-    overflow: hidden;
-    width:100%;
-    height:100%;
-    margin: 0;
-}
-h1 a {
-    font-size: 1rem;
-}
+        body {
+            font-family: 'Open Sans', sans-serif;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+        }
 
-.container {
-    position: relative;
-    overflow: hidden;    
-    width: 100%;
-    height: 100%;
-}
+        h1 a {
+            font-size: 1rem;
+        }
 
-body.greenscreen {
-    background: #00ff00 !important;
-}
+        .container {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+        }
 
-/** paralax */
-body.parallax {
-    background-position: 0px 0px;
-    background-size: 130vw;
-    background-repeat: repeat;
-    transition: background-position 1.2s ease-out;
-    transition-delay: 0.1s;
-    background-origin: 50% 50%;
-}
-body.leftscene.parallax {
-    background-position: -17vw 0;
-}
-body.rightscene.parallax {
-    background-position: -15vw 0;
-}
-body.chatscene.parallax {
-    background-position: -13vw -3vh;
-}
-body.countdownscene.parallax {
-    background-position: -15vw -5vh;
-}
-/** background video */
-#backgroundvideo {
-    display: none;
-    object-fit: cover;
-    width: 100vw;
-    height: 100vh;
-    position: fixed;
-    top: 0;
-    left: 0;    
-}
-body.backgroundvideo #backgroundvideo {
-    display:block;
-}
+        body.greenscreen {
+            background: #00ff00 !important;
+        }
 
-/* some web sites are transparent... */
-iframe {
-    background: white;
-}
+        /** paralax */
+        body.parallax {
+            background-position: 0px 0px;
+            background-size: 130vw;
+            background-repeat: repeat;
+            transition: background-position 1.2s ease-out;
+            transition-delay: 0.1s;
+            background-origin: 50% 50%;
+        }
 
-.box {
-    border: 0.5rem solid;
-    border-radius: 0.5rem;
-}
-.box.greenscreen {
-    border-top: none;
-    border-left: none;
-    border-right: none;
-}
+        body.leftscene.parallax {
+            background-position: -17vw 0;
+        }
 
-.animated {
-    transition: left 0.5s, right 0.5s, bottom 0.5s, top 0.5s, width 0.5s, height 0.5s, opacity 1s;
-}
-button:hover {
-    outline: solid 5px rgba(0,0,100, 0.2);    
-}
-.clickeable {
-    cursor:pointer;
-}
-.clickeable:hover {
-    box-shadow:
-  0 11.6px 0.9px -20px rgba(0, 0, 0, 0.028),
-  0 18.5px 3.1px -20px rgba(0, 0, 0, 0.042),
-  0 40px 14px -20px rgba(0, 0, 0, 0.07)
-;
-}
+        body.rightscene.parallax {
+            background-position: -15vw 0;
+        }
 
-.hidden {
-    display: none;
-}
-.opaque {
-    opacity: 1 !important;
-}
-.fadeout {
-  visibility: hidden;
-  opacity: 0;
-  transition: visibility 10s 2s, opacity 2s linear;
-  transition-delay: 10s;
-  transition-property: visibility, opacity;
-}
-.rotate {
-    transform: rotate(180deg);
-    transform-origin: 50% 50%;
-}
+        body.chatscene.parallax {
+            background-position: -13vw -3vh;
+        }
 
-.ms-Icon {
-    vertical-align: middle;
-}
+        body.countdownscene.parallax {
+            background-position: -15vw -5vh;
+        }
 
-.item {
-    cursor: pointer;
-}
-.error {
-    border: solid 2px red;
-    border-radius: 5px;
-    margin: 1rem 0rem 1rem 0rem;
-    padding: 1rem;
-    background: #ffb0b0;
-    color: black;
-    text-align: left;
-    opacity: 100%;
-}
+        /** background video */
+        #backgroundvideo {
+            display: none;
+            object-fit: cover;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
 
-.error.mic {
-    display: none;
-}
-.micerror .error.mic {
-    display: block;
-}
-.error.micdelay {
-    display: none;
-}
-.micdelayerror .error.micdelay {
-    display: block;
-}
-.error.displaymedia {
-    display: none;
-}
-.displaymediaerror .error.displaymedia {
-    display: block;
-}
+        body.backgroundvideo #backgroundvideo {
+            display: block;
+        }
 
-.message {
-    border: solid 2px green;
-    border-radius: 5px;
-    margin: 1rem 0rem 1rem 0rem;
-    padding: 1rem;
-    background: #a0f0a0;
-    color: black;    
-    text-align: left;
-}
+        /* some web sites are transparent... */
+        iframe {
+            background: white;
+        }
 
-#toolcontainer {
-    position: absolute;
-    left: 50%;
-    bottom: 1%;
-}
-.icons {
-    position: relative;
-    left: -50%;
-    text-align: center;
-    opacity: 0.3;
-    margin-bottom: 1%;
-    border-radius: 0.5vw;
-    transition-delay: 0s;
-    transition: opacity 1s;
-}
-.icons > button {
-    height: 2vw;
-    width: 2vw;
-    border-radius: 3vw;
-    font-size: 1vw;
-    background: black;
-    color: white;
-    margin: 0.3vw 0.2vw 0.1vw 0.1vw;
-    cursor: pointer;
-    opacity: 40%;
-    vertical-align: bottom;
-    transform: opacity 0.1s;
-}
-.icons:hover {
-    opacity: 95%;
-    background: rgba(255, 255, 255, 0.8)
-}
-.icons:hover > button {
-    opacity: 0.8;
-}
-.icons > button:hover {
-    opacity: 1;
-    transform: scale(1.35) rotate(10deg);
-    outline: none;
-}
-@media (hover: none) { /* no mouse */
-    .icons {
-        background: rgba(255, 255, 255, 0.2);
-        opacity: 0.8;
-    }
-    .icons > button {
-        height: 3vw;
-        width: 3vw;
-        font-size: 1.5vw;
-    }
-}
-.icons > button.active {
-    background: white;
-    color: black;
-}
-.icons > div.sep {
-    border-left: solid 2px grey;
-    display: inline-block;
-    font-size: 1vw;
-    width: 2px;
-    height: 2vw;
-    vertical-align: text-bottom;
-}
+        .box {
+            border: 0.5rem solid;
+            border-radius: 0.5rem;
+        }
 
-canvas.paint {
-    display: none;
-}
-.paint canvas.paint {
-    display: block;
-    touch-action: none;
-    position:absolute;
-    width: 100%;
-    height: 100%;
-    left: 0;
-    top: 0;
-}
-.paint {
-    cursor:pointer !important;
-}
+        .box.greenscreen {
+            border-top: none;
+            border-left: none;
+            border-right: none;
+        }
 
-canvas.colorpicker {
-    display: block;
-    cursor: cursor;
-}
+        .animated {
+            transition: left 0.5s, right 0.5s, bottom 0.5s, top 0.5s, width 0.5s, height 0.5s, opacity 1s;
+        }
 
-body.loading {
-    filter: blur(0.2vw);
-}
+        button:hover {
+            outline: solid 5px rgba(0, 0, 100, 0.2);
+        }
 
-.pip {
-    padding: 0.5vw;
-}
-.pip video {
-    width: 10vw;
-    display: block;
-}
+        .clickeable {
+            cursor: pointer;
+        }
 
-/** video */
-.stinger { 
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    min-width: 100%;
-    min-height: 100%;
-    width: auto;
-    height: auto;
-    z-index: 100;
-    transform: translateX(-50%) translateY(-50%);
-}
+        .clickeable:hover {
+            box-shadow:
+                0 11.6px 0.9px -20px rgba(0, 0, 0, 0.028),
+                0 18.5px 3.1px -20px rgba(0, 0, 0, 0.042),
+                0 40px 14px -20px rgba(0, 0, 0, 0.07);
+        }
 
-/**
+        .hidden {
+            display: none;
+        }
+
+        .opaque {
+            opacity: 1 !important;
+        }
+
+        .fadeout {
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 10s 2s, opacity 2s linear;
+            transition-delay: 10s;
+            transition-property: visibility, opacity;
+        }
+
+        .rotate {
+            transform: rotate(180deg);
+            transform-origin: 50% 50%;
+        }
+
+        .ms-Icon {
+            vertical-align: middle;
+        }
+
+        .item {
+            cursor: pointer;
+        }
+
+        .error {
+            border: solid 2px red;
+            border-radius: 5px;
+            margin: 1rem 0rem 1rem 0rem;
+            padding: 1rem;
+            background: #ffb0b0;
+            color: black;
+            text-align: left;
+            opacity: 100%;
+        }
+
+        .error.mic {
+            display: none;
+        }
+
+        .micerror .error.mic {
+            display: block;
+        }
+
+        .error.micdelay {
+            display: none;
+        }
+
+        .micdelayerror .error.micdelay {
+            display: block;
+        }
+
+        .error.displaymedia {
+            display: none;
+        }
+
+        .displaymediaerror .error.displaymedia {
+            display: block;
+        }
+
+        .message {
+            border: solid 2px green;
+            border-radius: 5px;
+            margin: 1rem 0rem 1rem 0rem;
+            padding: 1rem;
+            background: #a0f0a0;
+            color: black;
+            text-align: left;
+        }
+
+        #toolcontainer {
+            position: absolute;
+            left: 50%;
+            bottom: 1%;
+        }
+
+        .icons {
+            position: relative;
+            left: -50%;
+            text-align: center;
+            opacity: 0.3;
+            margin-bottom: 1%;
+            border-radius: 0.5vw;
+            transition-delay: 0s;
+            transition: opacity 1s;
+        }
+
+        .icons>button {
+            height: 2vw;
+            width: 2vw;
+            border-radius: 3vw;
+            font-size: 1vw;
+            background: black;
+            color: white;
+            margin: 0.3vw 0.2vw 0.1vw 0.1vw;
+            cursor: pointer;
+            opacity: 40%;
+            vertical-align: bottom;
+            transform: opacity 0.1s;
+        }
+
+        .icons:hover {
+            opacity: 95%;
+            background: rgba(255, 255, 255, 0.8)
+        }
+
+        .icons:hover>button {
+            opacity: 0.8;
+        }
+
+        .icons>button:hover {
+            opacity: 1;
+            transform: scale(1.35) rotate(10deg);
+            outline: none;
+        }
+
+        @media (hover: none) {
+
+            /* no mouse */
+            .icons {
+                background: rgba(255, 255, 255, 0.2);
+                opacity: 0.8;
+            }
+
+            .icons>button {
+                height: 3vw;
+                width: 3vw;
+                font-size: 1.5vw;
+            }
+        }
+
+        .icons>button.active {
+            background: white;
+            color: black;
+        }
+
+        .icons>div.sep {
+            border-left: solid 2px grey;
+            display: inline-block;
+            font-size: 1vw;
+            width: 2px;
+            height: 2vw;
+            vertical-align: text-bottom;
+        }
+
+        canvas.paint {
+            display: none;
+        }
+
+        .paint canvas.paint {
+            display: block;
+            touch-action: none;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            left: 0;
+            top: 0;
+        }
+
+        .paint {
+            cursor: pointer !important;
+        }
+
+        canvas.colorpicker {
+            display: block;
+            cursor: cursor;
+        }
+
+        body.loading {
+            filter: blur(0.2vw);
+        }
+
+        .pip {
+            padding: 0.5vw;
+            margin-bottom: 1vw;
+        }
+
+        .pip video {
+            width: 10vw;
+            display: block;
+        }
+
+        /** video */
+        .stinger {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            z-index: 100;
+            transform: translateX(-50%) translateY(-50%);
+        }
+
+        /**
 title, countdown
 */
-#title {
-    position: absolute;
-    width: 70%;
-    top: -50%;
-    right: 15%;
-    transition-delay: 0.4s;
-    font-size: 4vw;
-    text-align: center;
-    vertical-align: middle;
-    color: white;
-    opacity: 0;
-}
-#countdown {
-    position: absolute;
-    bottom: -50%;
-    left: 25%;
-    width: 50%;
-    text-align: center;
-    vertical-align: middle;
-    transition-delay: 0.5s;
-    font-size: 12vw;
-    color:white;
-    opacity: 0;
-    text-shadow: black 2px 2px 1px;
-}
-body.screenshoting #countdown {
-    opacity: 100%;
-    bottom: 20%;
-    font-size: 36vw;
-    display: block !important;
-}
+        #title {
+            position: absolute;
+            width: 70%;
+            top: -50%;
+            right: 15%;
+            transition-delay: 0.4s;
+            font-size: 4vw;
+            text-align: center;
+            vertical-align: middle;
+            color: white;
+            opacity: 0;
+        }
 
-/**
+        #countdown {
+            position: absolute;
+            bottom: -50%;
+            left: 25%;
+            width: 50%;
+            text-align: center;
+            vertical-align: middle;
+            transition-delay: 0.5s;
+            font-size: 12vw;
+            color: white;
+            opacity: 0;
+            text-shadow: black 2px 2px 1px;
+        }
+
+        body.screenshoting #countdown {
+            opacity: 100%;
+            bottom: 20%;
+            font-size: 36vw;
+            display: block !important;
+        }
+
+        /**
 Recorder
 */
-#recorder {
-    position: absolute;
-    left: 20%;
-    top: 30%;
-    width: 60%;
-    height: 14rem;
-    background: #ccc;
-    padding: 1rem 3rem 1rem 3rem;
-    overflow-y: auto;
-    text-align: center;
-    font-size: 3rem;
-    cursor: cursor;
-    opacity: 85%;
-}
-#recorder .details {
-    font-size: 1rem;
-}
-#screensize {
-    font-size: 2rem;
-}
-#recorder:hover {
-    opacity: 100%;
-}
+        #recorder {
+            position: absolute;
+            left: 20%;
+            top: 30%;
+            width: 60%;
+            height: 14rem;
+            background: #ccc;
+            padding: 1rem 3rem 1rem 3rem;
+            overflow-y: auto;
+            text-align: center;
+            font-size: 3rem;
+            cursor: cursor;
+            opacity: 85%;
+        }
 
-/*
+        #recorder .details {
+            font-size: 1rem;
+        }
+
+        #screensize {
+            font-size: 2rem;
+        }
+
+        #recorder:hover {
+            opacity: 100%;
+        }
+
+        /*
 Settings
 */
-#settings {
-    position: absolute;
-    left: 16%;
-    top: 8%;
-    width: 60%;
-    height: 74%;
-    background: #ccc;
-    padding: 1vw;
-}
+        #settings {
+            position: absolute;
+            left: 16%;
+            top: 8%;
+            width: 60%;
+            height: 74%;
+            background: #ccc;
+            padding: 1vw;
+        }
 
-#settings .header {
-    height: 3rem;
-}
+        #settings .header {
+            height: 3rem;
+        }
 
-#settings .header h1 {
-    margin-top: 0;
-}
+        #settings .header h2 {
+            margin-top: 0;
+        }
 
-#settings .contents {
-    height: calc(100% - 3rem);
-    overflow-y: auto;
-}
+        #settings .contents {
+            height: calc(100% - 3rem);
+            overflow-y: auto;
+        }
 
-#selectapp {
-    position: absolute;
-    left: 16%;
-    bottom: 10%;
-    width: 50%;
-    background: #ccc;
-    padding: 2vw;
-    overflow-y: auto;
-}
+        #settings .section {
+            border: solid 1px grey;
+            margin-bottom: 1vw;
+            border-radius: 5px;
+            padding: 0.5rem;
+            background: #eee;
+            margin-right: 1vw;
+        }
 
-body.leftscene #settings {
-    left: 32%;
-    top: 3%;
-}
+        #settings .section div.field,
+        #settings .section h4 {
+            display: none;
+        }
 
-body.rightscene #settings {
-    left: 5%;
-    top: 3%;
-}
-body.chatscene #settings {
-    left: 2%;
-    top: 10%;
-}
+        #settings .section.expanded div.field,
+        #settings .section.expanded h4 {
+            display: block
+        }
 
-#settings h2 {
-    margin: 0;  
-    border-top: solid 1px #888;
-    margin-top: 1vw;
-    padding-top: 1vw;
-}
+        #settings .section h3 {
+            cursor: pointer;
+        }
 
-#settings .field {
-    padding: 1% 0 1% 0;
-}
+        #settings .section h3::before {
+            content: "► ";
+            font-size: 75%;
+            opacity: 0.5;
+        }
 
-#settings .field input,
-#settings .field textarea {
-    width: calc(100% - 1vw);
-    font-size: 90%;
-}
+        #settings .section.expanded h3::before {
+            content: "▼ ";
+        }
 
-#settings .field input[type="checkbox"]
-{
-    width: unset;
-}
-#settings .field input[type="color"]
-{
-    margin-left: 0.5rem;
-    width: 2rem;
-}
+        #selectapp {
+            position: absolute;
+            left: 16%;
+            bottom: 10%;
+            width: 50%;
+            background: #ccc;
+            padding: 2vw;
+            overflow-y: auto;
+        }
 
-#settings .field select {
-    width: calc(100% - 1vw);
-    font-size: 90%;
-}
+        body.leftscene #settings {
+            left: 32%;
+            top: 3%;
+        }
 
-#settings #settingsclose {
-    position: absolute;
-    top: 1%;
-    right: 1%;
-}
+        body.rightscene #settings {
+            left: 5%;
+            top: 3%;
+        }
 
-/*
+        body.chatscene #settings {
+            left: 2%;
+            top: 10%;
+        }
+
+        #settings h3 {
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+
+        #settings .field {
+            padding: 1% 0 1% 0;
+        }
+
+        #settings .field input,
+        #settings .field textarea {
+            width: calc(100% - 1vw);
+            font-size: 90%;
+        }
+
+        #settings .field input[type="checkbox"] {
+            width: unset;
+        }
+
+        #settings .field input[type="color"] {
+            margin-left: 0.5rem;
+            width: 2rem;
+        }
+
+        #settings .field select {
+            width: calc(100% - 1vw);
+            font-size: 90%;
+        }
+
+        #settings #settingsclose {
+            position: absolute;
+            top: 1%;
+            right: 1%;
+        }
+
+        /*
     MakeCode editor box
 */
-#editor {
-    position: absolute;
-    width: 94%;
-    height: 89%;
-    top: 2%;
-    transition-delay: 0.2s;
-}
+        #editor {
+            position: absolute;
+            width: 94%;
+            height: 89%;
+            top: 2%;
+            transition-delay: 0.2s;
+        }
 
-.multi #editor {
-    width: 50%;
-}
+        .multi #editor {
+            width: 50%;
+        }
 
-#editor2 {
-    position: absolute;
-    width: 50%;
-    height: 89%;
-    top: 2%;
-    transition-delay: 0.3s;
-}
+        #editor2 {
+            position: absolute;
+            width: 50%;
+            height: 89%;
+            top: 2%;
+            transition-delay: 0.3s;
+        }
 
-#subtitles {
-    font-size: 2vw;
-    position:absolute;
-    border-radius: 0.5rem;
-    min-height:3vw;
-    left: 30%;
-    text-align: center;
-    width:40%;
-    bottom: 14%;
-    background: black;
-    color: white;
-    padding: 1vw;
-}
+        #subtitles {
+            font-size: 2vw;
+            position: absolute;
+            border-radius: 0.5rem;
+            min-height: 3vw;
+            left: 30%;
+            text-align: center;
+            width: 40%;
+            bottom: 14%;
+            background: black;
+            color: white;
+            padding: 1vw;
+        }
 
-/* zindex */
-#editor {
-    z-index: 0;
-}
-#editor2 {
-    z-index: 0;
-}
-.hardwarecam {
-    z-index: 1;
-}
-.facecam {
-    z-index: 2;
-}
-#title {
-    z-index: 3;
-}
-#countdown {
-    z-index: 4;
-}
-#recorder {
-    z-index: 7;
-}
-#selectapp {
-    z-index: 7;
-}
-#settings {
-    z-index: 8;
-}
-.paint {
-    z-index:9;
-}
-#toolcontainer {
-    z-index: 10;
-}
+        /* zindex */
+        #editor {
+            z-index: 0;
+        }
 
-/** full editor */
-body.leftscene.slim #editor,
-body.rightscene.slim #editor {
-    left: 0 !important;
-    right: 0 !important;
-    top: 0 !important;
-    bottom: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    border: none !important;
-    border-radius: 0 !important;
-}
-body.slim .container {
-    padding: 0;
-    position: inherit !important;
-    width: 100% !important;
-    height: 100% !important;
-}
-body.leftscene.slim #toolcontainer,
-body.rightscene.slim #toolcontainer {
-    bottom: 8%;
-}
+        #editor2 {
+            z-index: 0;
+        }
 
-/*
+        .hardwarecam {
+            z-index: 1;
+        }
+
+        .facecam {
+            z-index: 2;
+        }
+
+        #title {
+            z-index: 3;
+        }
+
+        #countdown {
+            z-index: 4;
+        }
+
+        #recorder {
+            z-index: 7;
+        }
+
+        #selectapp {
+            z-index: 7;
+        }
+
+        #settings {
+            z-index: 8;
+        }
+
+        .paint {
+            z-index: 9;
+        }
+
+        #toolcontainer {
+            z-index: 10;
+        }
+
+        /** full editor */
+        body.leftscene.slim #editor,
+        body.rightscene.slim #editor {
+            left: 0 !important;
+            right: 0 !important;
+            top: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            border: none !important;
+            border-radius: 0 !important;
+        }
+
+        body.slim .container {
+            padding: 0;
+            position: inherit !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        body.leftscene.slim #toolcontainer,
+        body.rightscene.slim #toolcontainer {
+            bottom: 8%;
+        }
+
+        /*
     Face camera            
 */
-.facecam, .hardwarecam {
-    position: absolute;
-    width: 30%;
-    bottom: 1.5%;
-    right: 1%;
-    overflow: hidden;
-}
-.facecam video,
-.hardwarecam video {
-    width: 100%;
-}
-.videolabel  {
-    display: none;
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: calc(100% - 2vw);
-    font-size: 1vw;
-    padding: 0.5vw;
-    border-top: 0.5vw solid;
-    border-right: 0.5vw solid;
-    border-left: 0.5vw solid;
-    left: 0;
-}
-.videocanvas {
-    display: none;
-    position:absolute;
-    width:100%;
-    bottom:0;    
-}
-body.leftscene.facecamcircular .facecam,
-body.leftscene.hardwarecamcircular .hardwarecam,
-body.rightscene.facecamcircular .facecam,
-body.rightscene.hardwarecamcircular .hardwarecam {
-    border:none;
-    clip-path: circle(39% at 50% 50%);
-}
+        .facecam,
+        .hardwarecam {
+            position: absolute;
+            width: 30%;
+            bottom: 1.5%;
+            right: 1%;
+            overflow: hidden;
+        }
 
-.box.greenscreen .videocanvas {
-    display:block;
-}
-body.facecamlabel #facecamlabel.videolabel,
-body.hardwarecamlabel #hardwarecamlabel.videolabel {
-    display: block;
-}
-.hardwarecam {
-    width: 0;
-    right: -1rem;
-    opacity: 0;
-    transition-delay: 0.1s;
-}
-body.hardware .hardwarecam {
-    opacity: 100%;
-}
+        .facecam video,
+        .hardwarecam video {
+            width: 100%;
+        }
 
-/** application clipping */
-body.hardwarecamdisplay .hardwarecam > video,
-body.facecamdisplay .facecam > video {
-    clip-path: polygon(10% 20%, 90% 20%, 90% 100%, 10% 100%);
-    width: 130%;
-    left: -10%;
-    margin-left: -15%;
-    margin-top: -20%;
-}
+        .videolabel {
+            display: none;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: calc(100% - 2vw);
+            font-size: 1vw;
+            padding: 0.5vw;
+            border-top: 0.5vw solid;
+            border-right: 0.5vw solid;
+            border-left: 0.5vw solid;
+            left: 0;
+        }
 
-/*
+        .videocanvas {
+            display: none;
+            position: absolute;
+            width: 100%;
+            bottom: 0;
+        }
+
+        body.leftscene.facecamcircular .facecam,
+        body.leftscene.hardwarecamcircular .hardwarecam,
+        body.rightscene.facecamcircular .facecam,
+        body.rightscene.hardwarecamcircular .hardwarecam {
+            border: none;
+            clip-path: circle(39% at 50% 50%);
+        }
+
+        .box.greenscreen .videocanvas {
+            display: block;
+        }
+
+        body.facecamlabel #facecamlabel.videolabel,
+        body.hardwarecamlabel #hardwarecamlabel.videolabel {
+            display: block;
+        }
+
+        .hardwarecam {
+            width: 0;
+            right: -1rem;
+            opacity: 0;
+            transition-delay: 0.1s;
+        }
+
+        body.hardware .hardwarecam {
+            opacity: 100%;
+        }
+
+        /** application clipping */
+        body.hardwarecamdisplay .hardwarecam>video,
+        body.facecamdisplay .facecam>video {
+            clip-path: polygon(10% 20%, 90% 20%, 90% 100%, 10% 100%);
+            width: 130%;
+            left: -10%;
+            margin-left: -15%;
+            margin-top: -20%;
+        }
+
+        /*
     Chat window
 */
-#chat {
-    position: absolute;
-    height: 60%;
-    top: 2%;
-    right: -100%;    
-    transition-delay: 0.3s;
-}
-#banner {
-    font-size: 2vw;
-    color: white;
-    flex-grow: 1;
-    margin-left: 1%;
-}
-video.error {
-    background: rgba(255, 0, 0, 0.5)
-}
+        #chat {
+            position: absolute;
+            height: 60%;
+            top: 2%;
+            right: -100%;
+            transition-delay: 0.3s;
+        }
 
-/** 
+        #banner {
+            font-size: 2vw;
+            color: white;
+            flex-grow: 1;
+            margin-left: 1%;
+        }
+
+        video.error {
+            background: rgba(255, 0, 0, 0.5)
+        }
+
+        /** 
 * chat visibility
 */
-body.chat #chat {
-    display: block;
-    opacity: 90%;
-}
+        body.chat #chat {
+            display: block;
+            opacity: 90%;
+        }
 
-/* rightscene: browser with facecam on right */
-body.rightscene #editor {
-    left: 1%;
-    height: 92%;
-}
+        /* rightscene: browser with facecam on right */
+        body.rightscene #editor {
+            left: 1%;
+            height: 92%;
+        }
 
-body.rightscene .facecam {
-    right: 1%;
-    width: 24%;
-}
+        body.rightscene .facecam {
+            right: 1%;
+            width: 24%;
+        }
 
-body.rightscene.chat #chat {
-    right: 1%;
-    width: 28%;
-    height: 55%;
-}
-body.rightscene.chat .facecam {
-    width: 28%;
-}
-body.rightscene.chat #editor {
-    width: 67%;
-    top: 2%;
-    height: 95%;
-}
-body.rightscene #countdown {
-    display: none;
-}
+        body.rightscene.chat #chat {
+            right: 1%;
+            width: 28%;
+            height: 55%;
+        }
 
-/* right + hardware */
-body.rightscene.hardware .facecam {
-    width: 22%;
-}
-body.rightscene.hardware .hardwarecam {
-    right: 1%;
-    width: 20%;
-    bottom: 34%;
-}
-body.rightscene.hardware #editor {
-    width: 88%
-}
+        body.rightscene.chat .facecam {
+            width: 28%;
+        }
 
-/* right + hardware + chat */
-body.rightscene.hardware.chat #editor {
-    width: 73%;
-}
+        body.rightscene.chat #editor {
+            width: 67%;
+            top: 2%;
+            height: 95%;
+        }
 
-body.rightscene.hardware.chat #chat {
-    width: 22%;
-    height: 30%;    
-}
+        body.rightscene #countdown {
+            display: none;
+        }
 
-body.rightscene.hardware.chat .hardwarecam {
-    width:22%;
-    bottom: 34%;
-}
+        /* right + hardware */
+        body.rightscene.hardware .facecam {
+            width: 22%;
+        }
 
-body.rightscene.hardware.chat .facecam {
-    width:22%;
-}
+        body.rightscene.hardware .hardwarecam {
+            right: 1%;
+            width: 20%;
+            bottom: 34%;
+        }
 
-/* right + multi */
-body.rightscene.multi #editor {
-    width: 67%;
-}
+        body.rightscene.hardware #editor {
+            width: 88%
+        }
 
-body.rightscene.multi #editor2 {
-    width: 28%;
-    left: 70%;
-    height: 54%;
-}
-body.rightscene.multi .facecam {
-    width: 28%;
-}
+        /* right + hardware + chat */
+        body.rightscene.hardware.chat #editor {
+            width: 73%;
+        }
 
-/* right + chat + multi */
-body.rightscene.multi.chat #editor {
-    width: 36%;
-    left: 1%;
-    height: 88%;
-}
-body.rightscene.multi.chat #editor2 {
-    width: 36%;
-    left: 38.5%;
-    height: 88%;
-}
-body.rightscene.multi.chat #chat {
-    width:22%;
-    right: 1%;
-    height: 63%;
-}
-body.rightscene.multi.chat .facecam {
-    width: 22%;
-    right: 1%;
-}
+        body.rightscene.hardware.chat #chat {
+            width: 22%;
+            height: 30%;
+        }
 
-/* right + multi + hardware */
-body.rightscene.multi.hardware .hardwarecam {
-    right: 1%;
-    width: 25%;
-    bottom: 5%;
-}
-body.rightscene.multi.hardware .facecam {
-    right: 21%;
-    width: 22%;
-    bottom: 1.5%;
-}
+        body.rightscene.hardware.chat .hardwarecam {
+            width: 22%;
+            bottom: 34%;
+        }
 
-/** left + chat + hardware + chat + multi */
-body.rightscene.hardware.multi.chat #editor {
-    width: 36%;
-    left: 1%;
-    height: 95%;
-}
-body.rightscene.hardware.multi.chat #editor2 {
-    width: 36%;
-    left: 38.5%;
-    height: 95%;
-}
-body.rightscene.hardware.multi.chat #chat {
-    right: 1%;
-    width: 22%;
-    height: 30%;    
-}
-body.rightscene.hardware.multi.chat .hardwarecam {
-    right: 1%;
-    width: 22%;
-    bottom: 35%;
-}
-body.rightscene.hardware.multi.chat .facecam {
-    right: 1%;
-    width: 22%;
-    bottom: 1.5%;
-}
+        body.rightscene.hardware.chat .facecam {
+            width: 22%;
+        }
 
-/* leftscene: browser with facecam on left left */
-body.leftscene #editor {
-    left: 4%;
-    height: 92%;
-}
-body.leftscene .facecam {
-    right: 74%;
-    width: 24%;
-}
+        /* right + multi */
+        body.rightscene.multi #editor {
+            width: 67%;
+        }
 
-body.leftscene .hardwarecam {
-    bottom: 10%;
-    right: 1%;
-}
-body.leftscene #countdown {
-    display: none;
-}
+        body.rightscene.multi #editor2 {
+            width: 28%;
+            left: 70%;
+            height: 54%;
+        }
 
-/* left + hardware */
-body.leftscene.hardware .hardwarecam {
-    right: 78%;
-    width: 20%;
-    bottom: 34%;
-}
-body.leftscene.hardware .facecam {
-    right: 76%;
-    width: 22%;
-}
-body.leftscene.hardware #editor {
-    left: 10%;
-    width: 88%
+        body.rightscene.multi .facecam {
+            width: 28%;
+        }
 
-}
+        /* right + chat + multi */
+        body.rightscene.multi.chat #editor {
+            width: 36%;
+            left: 1%;
+            height: 88%;
+        }
 
+        body.rightscene.multi.chat #editor2 {
+            width: 36%;
+            left: 38.5%;
+            height: 88%;
+        }
 
-/* left + hardware + chat */
-body.leftscene.hardware.chat #editor {
-    width: 74%;
-    left: 24%;
-}
-body.leftscene.hardware.chat #chat {
-    width: 22%;
-    height: 30%;    
-    right: 77%;
-}
-body.leftscene.hardware.chat .hardwarecam {
-    width:22%;
-    bottom: 34%;
-    right: 77%;
-}
-body.leftscene.hardware.chat .facecam {
-    width:22%;
-    right: 77%;
-}
+        body.rightscene.multi.chat #chat {
+            width: 22%;
+            right: 1%;
+            height: 63%;
+        }
 
-/* left + multi*/
-body.leftscene.multi #editor {
-    left: 1%;
-    width: 28%;
-    height: 54%;
-}
+        body.rightscene.multi.chat .facecam {
+            width: 22%;
+            right: 1%;
+        }
 
-body.leftscene.multi #editor2 {
-    width: 67%;
-    left: 31%;
-}
+        /* right + multi + hardware */
+        body.rightscene.multi.hardware .hardwarecam {
+            right: 1%;
+            width: 25%;
+            bottom: 5%;
+        }
 
-body.leftscene.multi .facecam {
-    right: 70%;
-    width: 28%;
-}
+        body.rightscene.multi.hardware .facecam {
+            right: 21%;
+            width: 22%;
+            bottom: 1.5%;
+        }
 
-/* left + multi + hardware */
-body.leftscene.multi.hardware .hardwarecam {
-    right: 73%;
-    width: 25%;
-    bottom: 5%;
-}
-body.leftscene.multi.hardware .facecam {
-    right: 56%;
-    width: 22%;
-    bottom: 1.5%;
-}
+        /** left + chat + hardware + chat + multi */
+        body.rightscene.hardware.multi.chat #editor {
+            width: 36%;
+            left: 1%;
+            height: 95%;
+        }
 
-/** leftscene + chat **/
-body.leftscene.chat #editor {
-    left: 31%;
-    width: 67%;
-    height: 95%;
-}
+        body.rightscene.hardware.multi.chat #editor2 {
+            width: 36%;
+            left: 38.5%;
+            height: 95%;
+        }
 
-body.leftscene.chat .facecam {
-    right: 70%;
-    width: 28%;
-}
+        body.rightscene.hardware.multi.chat #chat {
+            right: 1%;
+            width: 22%;
+            height: 30%;
+        }
 
-body.leftscene.chat #chat {
-    right: 70%;
-    height: 55%;
-    width: 28%;
-}
+        body.rightscene.hardware.multi.chat .hardwarecam {
+            right: 1%;
+            width: 22%;
+            bottom: 35%;
+        }
 
-/* left + chat + multi */
-body.leftscene.multi.chat #editor {
-    width: 36%;
-    left: 24%;
-    height: 88%;
-}
-body.leftscene.multi.chat #editor2 {
-    width: 36%;
-    left: 62%;
-    height: 88%;
-}
-body.leftscene.multi.chat #chat {
-    width:22%;
-    right: 77%;
-    height: 63%;
-}
-body.leftscene.multi.chat .facecam {
-    width: 22%;
-    right: 77%;
-}
+        body.rightscene.hardware.multi.chat .facecam {
+            right: 1%;
+            width: 22%;
+            bottom: 1.5%;
+        }
 
-/** left + hardware + chat + multi */
-body.leftscene.hardware.multi.chat #editor {
-    width: 36%;
-    left: 24%;
-    height: 88%;
-}
-body.leftscene.hardware.multi.chat #editor2 {
-    width: 36%;
-    left: 62%;
-    height: 88%;
-}
-body.leftscene.hardware.multi.chat #chat {
-    width: 22%;
-    height: 30%;    
-    right: 77%;
-}
-body.leftscene.hardware.multi.chat .hardwarecam {
-    width:22%;
-    bottom: 35%;
-    right: 77%;
-}
-body.leftscene.hardware.multi.chat .facecam {
-    width:22%;
-    right: 77%;
-    bottom: 1.5%;
-}
+        /* leftscene: browser with facecam on left left */
+        body.leftscene #editor {
+            left: 4%;
+            height: 92%;
+        }
 
-/* chatscene: facecam and stream chat */
-body.chatscene .facecam {
-    bottom: 10%;
-    right: 20%;
-    width: 64%;
-    max-height: 74%;
-}
+        body.leftscene .facecam {
+            right: 74%;
+            width: 24%;
+        }
 
-body.chatscene #editor {
-    left: -100%;
-}
-body.chatscene #editor2 {
-    right: -100%;
-}
-body.chatscene #title {
-    width: 46%;
-    top: 1.5%;
-    right: 41%;
-    font-size: 2vw;    
-    opacity: 100%;
-}
+        body.leftscene .hardwarecam {
+            bottom: 10%;
+            right: 1%;
+        }
 
-body.chatscene.chat .facecam {
-    bottom: 10%;
-    right: 34%;
-    width: 64%;
-}
+        body.leftscene #countdown {
+            display: none;
+        }
 
-body.chatscene.chat #chat {
-    top: 2%;
-    right: 1%;
-    width: 30%;
-    height: 91%;
-    opacity: 100%;
-}
+        /* left + hardware */
+        body.leftscene.hardware .hardwarecam {
+            right: 78%;
+            width: 20%;
+            bottom: 34%;
+        }
 
-body.chatscene.hardware .facecam {
-    bottom: 5%;
-    right: 34%;
-    width: 64%;
-}
-body.chatscene.hardware .hardwarecam {
-    width: 30%;
-    bottom: 5%;
-    right: 2%; 
-}
+        body.leftscene.hardware .facecam {
+            right: 76%;
+            width: 22%;
+        }
 
-body.chatscene.hardware.chat .facecam {
-    right: 34%;
-    width: 64%;
-    bottom: 5%;    
-}
-body.chatscene.hardware.chat .hardwarecam {
-    width: 30%;
-    bottom: 5%;
-    right: 2%; 
-}
-body.chatscene.hardware.chat #chat {
-    top: 2%;
-    right: 2%;
-    width: 30%;
-    height: 47%;
-}
-body.chatscene.hardware.chat #title {
-    top: 2%;
-}
-body.chatscene #countdown {
-    display: none;
-}
-
-/* timer scene */
-body.countdownscene #editor {
-    left: -100%;
-}
-body.countdownscene.countdowneditor #editor {
-    top: -1%;
-    left: 0%;
-    width: 101%;
-    height: 102%;
-    overflow: hidden;
-    border: none;
-    border-radius: 0;
-}
-body.countdownscene.countdowneditorblur #editor {
-    filter: blur(10px);
-}
-
-body.countdownscene #editor2,
-body.countdownscene #chat,
-body.countdownscene .facecam,
-body.countdownscene .hardwarecam {
-    right: -100%;
-}
-body.countdownscene #title {
-    top: 36%;
-    opacity: 100%;
-}
-body.countdownscene #countdown {
-    opacity: 100%;
-    bottom: 20%;
-}
-body.countdownscene.hardware .hardwarecam {
-    right: -10%;
-    width: 120%;
-    bottom: -10%;
-}
+        body.leftscene.hardware #editor {
+            left: 10%;
+            width: 88%
+        }
 
 
-/* thumbnail */
-body.leftscene.thumbnail .facecam,
-body.rightscene.thumbnail .facecam {
-    bottom: -25%;
-    height: unset;
-    width: 100%;
-    clip-path: unset;
-}
-body.leftscene.thumbnail.hardware .hardwarecam,
-body.rightscene.thumbnail.hardware .hardwarecam {
-    top: -25%;
-    height: unset;    
-    bottom: unset;
-    width: 100%;
-    clip-path: unset;
-}
-body.leftscene.thumbnail #editor,
-body.rightscene.thumbnail #editor {
-    top: 1%;
-    left: unset;
-    right: unset;
-}
+        /* left + hardware + chat */
+        body.leftscene.hardware.chat #editor {
+            width: 74%;
+            left: 24%;
+        }
 
-body.leftscene.thumbnail .facecam {
-    left: -25%;
-}
-body.leftscene.thumbnail.hardware .hardwarecam {
-    right: -25%;
-}
-body.leftscene.thumbnail #editor {
-    right: -20%;
-}
+        body.leftscene.hardware.chat #chat {
+            width: 22%;
+            height: 30%;
+            right: 77%;
+        }
 
-body.rightscene.thumbnail .facecam {
-    left: 25%;
-}
-body.rightscene.thumbnail.hardware .hardwarecam {
-    right: 20%;
-}
-body.rightscene.thumbnail #editor {
-    right: 20%;
-}
+        body.leftscene.hardware.chat .hardwarecam {
+            width: 22%;
+            bottom: 34%;
+            right: 77%;
+        }
+
+        body.leftscene.hardware.chat .facecam {
+            width: 22%;
+            right: 77%;
+        }
+
+        /* left + multi*/
+        body.leftscene.multi #editor {
+            left: 1%;
+            width: 28%;
+            height: 54%;
+        }
+
+        body.leftscene.multi #editor2 {
+            width: 67%;
+            left: 31%;
+        }
+
+        body.leftscene.multi .facecam {
+            right: 70%;
+            width: 28%;
+        }
+
+        /* left + multi + hardware */
+        body.leftscene.multi.hardware .hardwarecam {
+            right: 73%;
+            width: 25%;
+            bottom: 5%;
+        }
+
+        body.leftscene.multi.hardware .facecam {
+            right: 56%;
+            width: 22%;
+            bottom: 1.5%;
+        }
+
+        /** leftscene + chat **/
+        body.leftscene.chat #editor {
+            left: 31%;
+            width: 67%;
+            height: 95%;
+        }
+
+        body.leftscene.chat .facecam {
+            right: 70%;
+            width: 28%;
+        }
+
+        body.leftscene.chat #chat {
+            right: 70%;
+            height: 55%;
+            width: 28%;
+        }
+
+        /* left + chat + multi */
+        body.leftscene.multi.chat #editor {
+            width: 36%;
+            left: 24%;
+            height: 88%;
+        }
+
+        body.leftscene.multi.chat #editor2 {
+            width: 36%;
+            left: 62%;
+            height: 88%;
+        }
+
+        body.leftscene.multi.chat #chat {
+            width: 22%;
+            right: 77%;
+            height: 63%;
+        }
+
+        body.leftscene.multi.chat .facecam {
+            width: 22%;
+            right: 77%;
+        }
+
+        /** left + hardware + chat + multi */
+        body.leftscene.hardware.multi.chat #editor {
+            width: 36%;
+            left: 24%;
+            height: 88%;
+        }
+
+        body.leftscene.hardware.multi.chat #editor2 {
+            width: 36%;
+            left: 62%;
+            height: 88%;
+        }
+
+        body.leftscene.hardware.multi.chat #chat {
+            width: 22%;
+            height: 30%;
+            right: 77%;
+        }
+
+        body.leftscene.hardware.multi.chat .hardwarecam {
+            width: 22%;
+            bottom: 35%;
+            right: 77%;
+        }
+
+        body.leftscene.hardware.multi.chat .facecam {
+            width: 22%;
+            right: 77%;
+            bottom: 1.5%;
+        }
+
+        /* chatscene: facecam and stream chat */
+        body.chatscene .facecam {
+            bottom: 10%;
+            right: 20%;
+            width: 64%;
+            max-height: 74%;
+        }
+
+        body.chatscene #editor {
+            left: -100%;
+        }
+
+        body.chatscene #editor2 {
+            right: -100%;
+        }
+
+        body.chatscene #title {
+            width: 46%;
+            top: 1.5%;
+            right: 41%;
+            font-size: 2vw;
+            opacity: 100%;
+        }
+
+        body.chatscene.chat .facecam {
+            bottom: 10%;
+            right: 34%;
+            width: 64%;
+        }
+
+        body.chatscene.chat #chat {
+            top: 2%;
+            right: 1%;
+            width: 30%;
+            height: 91%;
+            opacity: 100%;
+        }
+
+        body.chatscene.hardware .facecam {
+            bottom: 5%;
+            right: 34%;
+            width: 64%;
+        }
+
+        body.chatscene.hardware .hardwarecam {
+            width: 30%;
+            bottom: 5%;
+            right: 2%;
+        }
+
+        body.chatscene.hardware.chat .facecam {
+            right: 34%;
+            width: 64%;
+            bottom: 5%;
+        }
+
+        body.chatscene.hardware.chat .hardwarecam {
+            width: 30%;
+            bottom: 5%;
+            right: 2%;
+        }
+
+        body.chatscene.hardware.chat #chat {
+            top: 2%;
+            right: 2%;
+            width: 30%;
+            height: 47%;
+        }
+
+        body.chatscene.hardware.chat #title {
+            top: 2%;
+        }
+
+        body.chatscene #countdown {
+            display: none;
+        }
+
+        /* timer scene */
+        body.countdownscene #editor {
+            left: -100%;
+        }
+
+        body.countdownscene.countdowneditor #editor {
+            top: -1%;
+            left: 0%;
+            width: 101%;
+            height: 102%;
+            overflow: hidden;
+            border: none;
+            border-radius: 0;
+        }
+
+        body.countdownscene.countdowneditorblur #editor {
+            filter: blur(10px);
+        }
+
+        body.countdownscene #editor2,
+        body.countdownscene #chat,
+        body.countdownscene .facecam,
+        body.countdownscene .hardwarecam {
+            right: -100%;
+        }
+
+        body.countdownscene #title {
+            top: 36%;
+            opacity: 100%;
+        }
+
+        body.countdownscene #countdown {
+            opacity: 100%;
+            bottom: 20%;
+        }
+
+        body.countdownscene.hardware .hardwarecam {
+            right: -10%;
+            width: 120%;
+            bottom: -10%;
+        }
+
+
+        /* thumbnail */
+        body.leftscene.thumbnail .facecam,
+        body.rightscene.thumbnail .facecam {
+            bottom: -25%;
+            height: unset;
+            width: 100%;
+            clip-path: unset;
+        }
+
+        body.leftscene.thumbnail.hardware .hardwarecam,
+        body.rightscene.thumbnail.hardware .hardwarecam {
+            top: -25%;
+            height: unset;
+            bottom: unset;
+            width: 100%;
+            clip-path: unset;
+        }
+
+        body.leftscene.thumbnail #editor,
+        body.rightscene.thumbnail #editor {
+            top: 1%;
+            left: unset;
+            right: unset;
+        }
+
+        body.leftscene.thumbnail .facecam {
+            left: -25%;
+        }
+
+        body.leftscene.thumbnail.hardware .hardwarecam {
+            right: -25%;
+        }
+
+        body.leftscene.thumbnail #editor {
+            right: -20%;
+        }
+
+        body.rightscene.thumbnail .facecam {
+            left: 25%;
+        }
+
+        body.rightscene.thumbnail.hardware .hardwarecam {
+            right: 20%;
+        }
+
+        body.rightscene.thumbnail #editor {
+            right: 20%;
+        }
     </style>
     <style id="editorstyle"></style>
 </head>
@@ -1070,264 +1209,310 @@ body.rightscene.thumbnail #editor {
 <body class="rightscene">
     <video id="backgroundvideo" playsinline autoplay muted loop></video>
     <div id="container" class="container">
-    <iframe class="box animated" id="editor" allow="usb;camera" sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox"></iframe>
-    <iframe class="box animated" id="editor2" allow="usb;camera" sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox"></iframe>
-    <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
-    <div role="button" class="box animated clickeable facecam" id="facecam">
-        <video autoplay playsinline id="facecamvideo"></video>
-        <canvas id="facecamvideoserious" class="videocanvas"></canvas>
-        <div class="videolabel" id="facecamlabel"></div>
+        <iframe class="box animated" id="editor" allow="usb;camera"
+            sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox"></iframe>
+        <iframe class="box animated" id="editor2" allow="usb;camera"
+            sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox"></iframe>
+        <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
+        <div role="button" class="box animated clickeable facecam" id="facecam">
+            <video autoplay playsinline id="facecamvideo"></video>
+            <canvas id="facecamvideoserious" class="videocanvas"></canvas>
+            <div class="videolabel" id="facecamlabel"></div>
+        </div>
+        <div role="button" class="box animated clickeable hardwarecam" id="hardwarecam">
+            <video autoplay playsinline id="hardwarecamvideo"></video>
+            <canvas id="hardwarecamvideoserious" width="640" height="480" class="videocanvas"></canvas>
+            <div class="videolabel" id="hardwarecamlabel"></div>
+        </div>
+        <div class="box animated" id="title">title</div>
+        <div class="animated" id="countdown">5:00</div>
+        <video class="hidden stinger" id="startvideo" playsinline preload="auto" controls></video>
+        <video class="hidden stinger" id="endvideo" playsinline preload="auto" controls></video>
+        <div class="animated hidden" id="subtitles"></div>
+        <div class="box animated hidden" id="selectapp">
+            <p>You need to share your screen with MakeCode to record it.</p>
+            <p>Go to <b>Application Window</b>, select <b>Microsoft MakeCode Streamer</b>
+                and click <b>Share</b>.</p>
+            <p>Press the <b>stop</b> button when you are done recording.</p>
+        </div>
+        <div class="box animated hidden" id="settings">
+            <datalist id="tickmarks">
+                <option value="0"></option>
+                <option value="10"></option>
+                <option value="20"></option>
+                <option value="30"></option>
+                <option value="40"></option>
+                <option value="50"></option>
+                <option value="60"></option>
+                <option value="70"></option>
+                <option value="80"></option>
+                <option value="90"></option>
+                <option value="100"></option>
+            </datalist>
+            <div class="header">
+                <h2>MakeCode Streamer BETA <a href="/streamer/docs" target="_blank">docs</a> <a
+                        href="https://forum.makecode.com/t/introducing-makecode-streamer/2437" target="_blank">forum</a>
+                </h2>
+                <button id="settingsclose">close</button>
+            </div>
+            <div class="contents">
+                <button class="pip" title="Watch the introduction video!">
+                    <video id="introvideo" preload="metadata" poster="/static/streamer/intro.png"
+                        src="/static/streamer/intro.mp4"></video>
+                    <label>Take the tour!</label>
+                </button>
+                <div class="section expanded">
+                    <h3>Editor</h3>
+                    <div class="field">
+                        <label for="editorselect">Choose your editor</label>
+                        <select id="editorselect"></select>
+                    </div>
+                    <div class="field">
+                        <input type="checkbox" id="multicheckbox"></input>
+                        <label for="multicheckbox">Multi editors. Edit two programs with connected simulators.</label>
+                    </div>
+                </div>
+                <div class="section expanded">
+                    <h3>Face camera</h3>
+                    <div class="field">
+                        <p>Select your primary camera. Note the video stream is not mirrored.</p>
+                        <label for="facecamselect">Choose a video source</label>
+                        <select id="facecamselect"></select>
+                        <div class="error hidden facecamerror" id="facecamerror">Connection error. Make sure the camera
+                            is not blocked or used by another application.</div>
+                    </div>
+                    <div class="field">
+                        <label for="facecamlabelinput">Camera label</label>
+                        <input id="facecamlabelinput" placeholder="My name, social accounts" />
+                    </div>
+                    <h4>Adjustments</h4>
+                    <div class="field">
+                        <label for="facecamcontrast">Contrast</label>
+                        <input type="range" id="facecamcontrast" min="0" max="100" step="1" list="tickmarks">
+                    </div>
+                    <div class="field">
+                        <label for="facecambrightness">Brightness</label>
+                        <input type="range" id="facecambrightness" min="0" max="100" step="1" list="tickmarks">
+                    </div>
+                    <div class="field">
+                        <label for="facecamsaturate">Saturate</label>
+                        <input type="range" id="facecamsaturate" min="0" max="100" step="1" list="tickmarks">
+                    </div>
+                    <div class="field">
+                        <input type="checkbox" id="facecamcircularcheckbox"></input>
+                        <label for="facecamcircularcheckbox">Circular</label>
+                    </div>
+                    <div class="field">
+                        <input type="checkbox" id="facerotatecameracheckbox"></input>
+                        <label for="facerotatecameracheckbox">Rotate camera 180</label>
+                    </div>
+                    <h4>Green screen</h4>
+                    <div class="field">
+                        <label for="facecamscreeninput">Screen color (click image to select)</label>
+                        <input id="facecamscreeninput" type="color" />
+                        <button id="facecamscreenclear">clear</button>
+                    </div>
+                    <div class="field">
+                        <canvas class="colorpicker" id="facecamscreencanvas"></canvas>
+                    </div>
+                    <div class="field">
+                        <label for="facecamgreenclipblack">Sensitivity</label>
+                        <input type="range" id="facecamgreenclipblack" min="0" max="1" step="0.01">
+                    </div>
+                    <div class="field">
+                        <label for="facecamcontourinput">Silhouette contour color (when erasing green screen)</label>
+                        <input id="facecamcontourinput" type="color" />
+                        <button id="facecamcontourclear">clear</button>
+                    </div>
+                </div>
+                <div class="section">
+                    <h3>Document camera</h3>
+                    <div class="field">
+                        <p>Select a secondary camera to display a document or physical device. To inline a
+                            Teams/Skype/...
+                            video
+                            stream, select <emph>Application</emph> and share your messaging application.</p>
+                        <label for="hardwarecamselect">Choose a video source</label>
+                        <select id="hardwarecamselect"></select>
+                        <div class="error hidden" id="hardwarecamerror">Connection error. Make sure the camera is not
+                            blocked or used by another application.</div>
+                    </div>
+                    <div class="field">
+                        <label for="hardwarecamlabelinput">Camera label</label>
+                        <input id="hardwarecamlabelinput" placeholder="Cam description" />
+                    </div>
+                    <h4>Adjustments</h4>
+                    <div class="field">
+                        <label for="hardwarecamcontrast">Contrast</label>
+                        <input type="range" id="hardwarecamcontrast" min="0" max="100" step="1" list="tickmarks">
+                    </div>
+                    <div class="field">
+                        <label for="hardwarecambrightness">Brightness</label>
+                        <input type="range" id="hardwarecambrightness" min="0" max="100" step="1" list="tickmarks">
+                    </div>
+                    <div class="field">
+                        <label for="hardwarecamsaturate">Saturate</label>
+                        <input type="range" id="hardwarecamsaturate" min="0" max="100" step="1" list="tickmarks">
+                    </div>
+                    <div class="field">
+                        <input type="checkbox" id="hardwarecamcircularcheckbox"></input>
+                        <label for="hardwarecamcircularcheckbox">Circular</label>
+                    </div>
+                    <div class="field">
+                        <input type="checkbox" id="hardwarerotatecameracheckbox"></input>
+                        <label for="hardwarerotatecameracheckbox">Rotate camera 180</label>
+                    </div>
+                    <h4>Green screen</h4>
+                    <div class="field">
+                        <label for="hardwarecamscreeninput">Screen color (click to select)</label>
+                        <input id="hardwarecamscreeninput" type="color" />
+                        <button id="hardwarecamscreenclear">clear</button>
+                    </div>
+                    <div class="field">
+                        <canvas class="colorpicker" id="hardwarecamscreencanvas"></canvas>
+                    </div>
+                    <div class="field">
+                        <label for="hardwarecamgreenclipblack">Sensitivity</label>
+                        <input type="range" id="hardwarecamgreenclipblack" min="0" max="1" step="0.01">
+                    </div>
+                    <div class="field">
+                        <label for="hardwarecamcontourinput">Silhouette contour color (when erasing green
+                            screen)</label>
+                        <input id="hardwarecamcontourinput" type="color" />
+                        <button id="hardwarecamcontourclear">clear</button>
+                    </div>
+                </div>
+                <div class="section">
+                    <h3>Style</h3>
+                    <div class="field">
+                        <label for="titleinput">Title</label>
+                        <input id="titleinput" placeholder="My awesome stream" />
+                    </div>
+                    <div class="field">
+                        <label for="extrasitesarea">Extra web sites (must be https://..., one per line)</label>
+                        <textarea id="extrasitesarea" rows="2"></textarea>
+                    </div>
+                    <div class="field">
+                        <input type="checkbox" id="fullscreeneditorcheckbox"></input>
+                        <label for="fullscreeneditorcheckbox">Full screen editor (no margins)</label>
+                    </div>
+                    <h4>Boxes</h4>
+                    <div class="field">
+                        <label for="bordercolorinput">Box border color</label>
+                        <input id="bordercolorinput" type="color" />
+                        <button id="bordercolorclear">clear</button>
+                    </div>
+                    <div class="field">
+                        <label for="borderbackgroundinput">Box background color</label>
+                        <input id="borderbackgroundinput" type="color" />
+                        <button id="borderbackgroundclear">clear</button>
+                    </div>
+                    <h4>Background</h4>
+                    <div class="field">
+                        <label for="backgroundcolorinput">Background color</label>
+                        <input id="backgroundcolorinput" type="color" />
+                        <button id="backgroundcolorclear">clear</button>
+                    </div>
+                    <div class="field">
+                        <label for="backgroundimageinput">Background image (must be https://...)</label>
+                        <input id="backgroundimageinput" type="url" />
+                    </div>
+                    <div class="field">
+                        <label for="backgroundvideoinput">Background video (must be https://...)</label>
+                        <input id="backgroundvideoinput" type="url" />
+                    </div>
+                    <div class="field">
+                        <input type="checkbox" id="greenscreencheckbox"></input>
+                        <label for="greenscreencheckbox">Green background (Chroma Key)</label>
+                    </div>
+                </div>
+                <div class="section">
+                    <h3>Countdown</h3>
+                    <div class="field">
+                        <label for="startvideoinput">Intro video (must be https://...). Will play when leaving the
+                            countdown
+                            view.</label>
+                        <input id="startvideoinput" type="url" />
+                    </div>
+                    <div class="field">
+                        <label for="endvideoinput">End video (must be https://...). Will play when entering the
+                            countdown
+                            view.</label>
+                        <input id="endvideoinput" type="url" />
+                    </div>
+                    <div class="field">
+                        <input type="checkbox" id="countdowneditorcheckbox"></input>
+                        <label for="countdowneditorcheckbox">Show editor in background</label>
+                    </div>
+                    <div class="field">
+                        <input type="checkbox" id="countdownblureditorcheckbox"></input>
+                        <label for="countdownblureditorcheckbox">Blur editor in background</label>
+                    </div>
+                </div>
+                <div class="section">
+                    <h3>Paint</h3>
+                    <div class="field">
+                        <label for="emojisinput">Emojis (😄🤔😭👀)</label>
+                        <input id="emojisinput" placeholder="Emojis" />
+                    </div>
+                </div>
+                <div class="section">
+                    <h3>Streaming</h3>
+                    <div class="field">
+                        <p>Integrate the chats of your streaming services.</p>
+                        <label for="twitchinput">Twitch.tv channel. The chat window can be displayed. You still need to
+                            use
+                            OBS or other software to stream it.</label>
+                        <input id="twitchinput" placeholder="Twitch.tv account" />
+                    </div>
+                </div>
+                <div class="section">
+                    <h3>Recording</h3>
+                    <div class="error hidden displaymedia">This browser does not support recording the screen.</div>
+                    <div class="field">
+                        <p>Record your browser to a .webm file that can be uploaded to video services.</p>
+                        <label for="micselect">Choose a Microphone</label>
+                        <select id="micselect"></select>
+                        <div class="error hidden mic">Connection error. Make sure the microphone is not blocked or used
+                            by
+                            another application.</div>
+                    </div>
+                    <div class="field">
+                        <label for="micdelayinput">Sound delay (ms). To tune: record a clap and adjust the delay until
+                            video
+                            and audio are sync.</label>
+                        <input id="micdelayinput" type="number" placeholder="200" />
+                        <div class="error hidden micdelay">Record your video and clap. Adjust the delay so that the
+                            video
+                            and the audio are in sync.</div>
+                    </div>
+                </div>
+                <h3>Legal</h3>
+                <div class="field">
+                    <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp;
+                        Cookies</a>|
+                    <a class="item" href="https://makecode.com/termsofuse" target="_blank" rel="noopener">Terms Of
+                        Use</a>|
+                    <a class="item" href="https://makecode.com/trademarks" target="_blank"
+                        rel="noopener">Trademarks</a>|
+                    <span class="item">© 2020 Microsoft</span>
+                </div>
+            </div>
+        </div>
+        <div role="button" class="box animated hidden" id="recorder" tabindex="0">
+            <span>click to start recording</span>
+            <span id="screensize">0x0</span>
+            <div class="message details">Resize your browser to match 1920x1080 (180p, HD) or 1280x720 (720p, SD).</div>
+            <div class="error details mic">Select a microphone in the settings.</div>
+            <div class="error details micdelay">Tune your microphone delay to sync video and audio.</div>
+        </div>
+        <canvas id="paint" class="paint"></canvas>
+        <canvas id="painttool" class="paint"></canvas>
+        <div class="tools" id="toolcontainer">
+            <div class="animated icons" id="paintbox"></div>
+            <div class="animated icons" id="toolbox"></div>
+        </div>
     </div>
-    <div role="button" class="box animated clickeable hardwarecam" id="hardwarecam">
-        <video autoplay playsinline id="hardwarecamvideo"></video>
-        <canvas id="hardwarecamvideoserious" width="640" height="480" class="videocanvas"></canvas>
-        <div class="videolabel" id="hardwarecamlabel"></div>
-    </div>
-    <div class="box animated" id="title">title</div>
-    <div class="animated" id="countdown">5:00</div>
-    <video class="hidden stinger" id="startvideo" playsinline preload="auto" controls></video>
-    <video class="hidden stinger" id="endvideo" playsinline preload="auto" controls></video>
-    <div class="animated hidden" id="subtitles"></div>
-    <div class="box animated hidden" id="selectapp">
-        <p>You need to share your screen with MakeCode to record it.</p>
-        <p>Go to <b>Application Window</b>, select <b>Microsoft MakeCode Streamer</b>
-        and click <b>Share</b>.</p>
-        <p>Press the <b>stop</b> button when you are done recording.</p>
-    </div>
-    <div class="box animated hidden" id="settings">
-        <datalist id="tickmarks">
-            <option value="0"></option>
-            <option value="10"></option>
-            <option value="20"></option>
-            <option value="30"></option>
-            <option value="40"></option>
-            <option value="50"></option>
-            <option value="60"></option>
-            <option value="70"></option>
-            <option value="80"></option>
-            <option value="90"></option>
-            <option value="100"></option>
-        </datalist>
-        <div class="header">
-            <h1>MakeCode Streamer BETA <a href="/streamer/docs" target="_blank">docs</a> <a href="https://forum.makecode.com/t/introducing-makecode-streamer/2437" target="_blank">forum</a></h1>
-            <button id="settingsclose">close</button>
-        </div>
-        <div class="contents">
-        <button class="pip" title="Watch the introduction video!">
-            <video id="introvideo" preload="metadata" poster="/static/streamer/intro.png" src="/static/streamer/intro.mp4"></video>
-            <label>Take the tour!</label>
-        </button>
-        <h2>Editor</h2>
-        <div class="field">
-            <label for="editorselect">Choose your editor</label>
-            <select id="editorselect"></select>
-        </div>
-        <div class="field">
-            <input type="checkbox" id="multicheckbox"></input>
-            <label for="multicheckbox">Multi editors. Edit two programs with connected simulators.</label>
-        </div>
-        <h2>Face camera</h2>
-        <p>Select your primary camera. Note the video stream is not mirrored.</p>
-        <div class="field">
-            <label for="facecamselect">Choose a video source</label>
-            <select id="facecamselect"></select>
-            <div class="error hidden facecamerror" id="facecamerror">Connection error. Make sure the camera is not blocked or used by another application.</div>
-        </div>
-        <div class="field">
-            <label for="facecamlabelinput">Camera label</label>
-            <input id="facecamlabelinput" placeholder="My name, social accounts" />
-        </div>
-        <h3>Adjustments</h3>
-        <div class="field">
-            <label for="facecamcontrast">Contrast</label>
-            <input type="range" id="facecamcontrast" min="0" max="100" step="1" list="tickmarks">
-        </div>
-        <div class="field">
-            <label for="facecambrightness">Brightness</label>
-            <input type="range" id="facecambrightness" min="0" max="100" step="1" list="tickmarks">
-        </div>
-        <div class="field">
-            <label for="facecamsaturate">Saturate</label>
-            <input type="range" id="facecamsaturate" min="0" max="100" step="1" list="tickmarks">
-        </div>
-        <div class="field">
-            <input type="checkbox" id="facecamcircularcheckbox"></input>
-            <label for="facecamcircularcheckbox">Circular</label>
-        </div>
-        <div class="field">
-            <input type="checkbox" id="facerotatecameracheckbox"></input>
-            <label for="facerotatecameracheckbox">Rotate camera 180</label>
-        </div>
-        <h3>Green screen</h3>
-        <div class="field">
-            <label for="facecamscreeninput">Screen color (click image to select)</label>
-            <input id="facecamscreeninput" type="color" />
-            <button id="facecamscreenclear">clear</button>
-        </div>
-        <canvas class="colorpicker" id="facecamscreencanvas"></canvas>
-        <div class="field">
-            <label for="facecamgreenclipblack">Sensitivity</label>
-            <input type="range" id="facecamgreenclipblack" min="0" max="1" step="0.01">
-        </div>
-        <div class="field">
-            <label for="facecamcontourinput">Silhouette contour color (when erasing green screen)</label>
-            <input id="facecamcontourinput" type="color" />
-            <button id="facecamcontourclear">clear</button>
-        </div>
-        <h2>Document camera</h2>
-        <p>Select a secondary camera to display a document or physical device. To inline a Teams/Skype/... video stream, select <emph>Application</emph> and share your messaging application.</p>
-        <div class="field">
-            <label for="hardwarecamselect">Choose a video source</label>
-            <select id="hardwarecamselect"></select>
-            <div class="error hidden" id="hardwarecamerror">Connection error. Make sure the camera is not blocked or used by another application.</div>
-        </div>
-        <div class="field">
-            <label for="hardwarecamlabelinput">Camera label</label>
-            <input id="hardwarecamlabelinput" placeholder="Cam description" />
-        </div>
-        <h3>Adjustments</h3>
-        <div class="field"> 
-            <label for="hardwarecamcontrast">Contrast</label>
-            <input type="range" id="hardwarecamcontrast" min="0" max="100" step="1" list="tickmarks">
-        </div>
-        <div class="field">
-            <label for="hardwarecambrightness">Brightness</label>
-            <input type="range" id="hardwarecambrightness" min="0" max="100" step="1" list="tickmarks">
-        </div>
-        <div class="field">
-            <label for="hardwarecamsaturate">Saturate</label>
-            <input type="range" id="hardwarecamsaturate" min="0" max="100" step="1" list="tickmarks">
-        </div>
-        <div class="field">
-            <input type="checkbox" id="hardwarecamcircularcheckbox"></input>
-            <label for="hardwarecamcircularcheckbox">Circular</label>
-        </div>
-        <div class="field">
-            <input type="checkbox" id="hardwarerotatecameracheckbox"></input>
-            <label for="hardwarerotatecameracheckbox">Rotate camera 180</label>
-        </div>        
-        <h3>Green screen</h3>
-        <div class="field">
-            <label for="hardwarecamscreeninput">Screen color (click to select)</label>
-            <input id="hardwarecamscreeninput" type="color" />
-            <button id="hardwarecamscreenclear">clear</button>
-        </div>
-        <canvas class="colorpicker" id="hardwarecamscreencanvas"></canvas>
-        <div class="field">
-            <label for="hardwarecamgreenclipblack">Sensitivity</label>
-            <input type="range" id="hardwarecamgreenclipblack" min="0" max="1" step="0.01">
-        </div>
-        <div class="field">
-            <label for="hardwarecamcontourinput">Silhouette contour color (when erasing green screen)</label>
-            <input id="hardwarecamcontourinput" type="color" />
-            <button id="hardwarecamcontourclear">clear</button>
-        </div>
-        <h2>Style</h2>
-        <div class="field">
-            <label for="titleinput">Title</label>
-            <input id="titleinput" placeholder="My awesome stream" />
-        </div>
-        <div class="field">
-            <label for="extrasitesarea">Extra web sites (must be https://..., one per line)</label>
-            <textarea id="extrasitesarea" rows="2"></textarea>
-        </div>
-        <div class="field">
-            <input type="checkbox" id="fullscreeneditorcheckbox"></input>
-            <label for="fullscreeneditorcheckbox">Full screen editor (no margins)</label>
-        </div>
-        <h3>Boxes</h3>
-        <div class="field">
-            <label for="bordercolorinput">Box border color</label>
-            <input id="bordercolorinput" type="color" />
-            <button id="bordercolorclear">clear</button>
-        </div>
-        <div class="field">
-            <label for="borderbackgroundinput">Box background color</label>
-            <input id="borderbackgroundinput" type="color" />
-            <button id="borderbackgroundclear">clear</button>
-        </div>
-        <h3>Background</h3>
-        <div class="field">
-            <label for="backgroundcolorinput">Background color</label>
-            <input id="backgroundcolorinput" type="color" />
-            <button id="backgroundcolorclear">clear</button>
-        </div>
-        <div class="field">
-            <label for="backgroundimageinput">Background image (must be https://...)</label>
-            <input id="backgroundimageinput" type="url" />
-        </div>
-        <div class="field">
-            <label for="backgroundvideoinput">Background video (must be https://...)</label>
-            <input id="backgroundvideoinput" type="url" />
-        </div>
-        <div class="field">
-            <input type="checkbox" id="greenscreencheckbox"></input>
-            <label for="greenscreencheckbox">Green background (Chroma Key)</label>
-        </div>
-        <h2>Countdown</h2>
-        <div class="field">
-            <label for="startvideoinput">Intro video (must be https://...). Will play when leaving the countdown view.</label>
-            <input id="startvideoinput" type="url" />
-        </div>
-        <div class="field">
-            <label for="endvideoinput">End video (must be https://...). Will play when entering the countdown view.</label>
-            <input id="endvideoinput" type="url" />
-        </div>
-        <div class="field">
-            <input type="checkbox" id="countdowneditorcheckbox"></input>
-            <label for="countdowneditorcheckbox">Show editor in background</label>
-        </div>
-        <div class="field">
-            <input type="checkbox" id="countdownblureditorcheckbox"></input>
-            <label for="countdownblureditorcheckbox">Blur editor in background</label>
-        </div>
-        <h2>Paint</h2>
-        <div class="field">
-            <label for="emojisinput">Emojis (😄🤔😭👀)</label>
-            <input id="emojisinput" placeholder="Emojis" />
-        </div>
-        <h2>Streaming</h2>
-        <p>Integrate the chats of your streaming services.</p>
-        <div class="field">
-            <label for="twitchinput">Twitch.tv channel. The chat window can be displayed. You still need to use OBS or other software to stream it.</label>
-            <input id="twitchinput" placeholder="Twitch.tv account" />
-        </div>
-        <h2>Recording</h2>
-        <p>Record your browser to a .webm file that can be uploaded to video services.</p>
-        <div class="error hidden displaymedia">This browser does not support recording the screen.</div>
-        <div class="field">
-            <label for="micselect">Choose a Microphone</label>
-            <select id="micselect"></select>
-            <div class="error hidden mic">Connection error. Make sure the microphone is not blocked or used by another application.</div>
-        </div>
-        <div class="field">
-            <label for="micdelayinput">Sound delay (ms). To tune: record a clap and adjust the delay until video and audio are sync.</label>
-            <input id="micdelayinput" type="number" placeholder="200" />
-            <div class="error hidden micdelay">Record your video and clap. Adjust the delay so that the video and the audio are in sync.</div>
-        </div>
-        <h2>Legal</h2>
-        <div class="field">
-            <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp; Cookies</a>|
-            <a class="item" href="https://makecode.com/termsofuse" target="_blank" rel="noopener">Terms Of Use</a>|
-            <a class="item" href="https://makecode.com/trademarks" target="_blank" rel="noopener">Trademarks</a>|
-            <span class="item">© 2020 Microsoft</span>
-        </div>            
-        </div>
-    </div>
-    <div role="button" class="box animated hidden" id="recorder" tabindex="0">
-        <span>click to start recording</span>
-        <span id="screensize">0x0</span>
-        <div class="message details">Resize your browser to match 1920x1080 (180p, HD) or 1280x720 (720p, SD).</div>
-        <div class="error details mic">Select a microphone in the settings.</div>
-        <div class="error details micdelay">Tune your microphone delay to sync video and audio.</div>
-    </div>
-    <canvas id="paint" class="paint"></canvas>
-    <canvas id="painttool" class="paint"></canvas>
-    <div class="tools" id="toolcontainer">
-        <div class="animated icons" id="paintbox"></div>
-        <div class="animated icons" id="toolbox"></div>    
-    </div>
-</div>
     <!-- @include tracking.html -->
     <script src="/static/streamer/script.js"></script>
 </body>
