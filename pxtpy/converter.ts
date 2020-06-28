@@ -551,9 +551,6 @@ namespace pxt.py {
         unify(e, typeOf(e), t1)
     }
 
-    function unifyOrConstrain(a: AST | undefined, t0: Type, t1: Type, narrow = false): void {
-    }
-
     function unify(a: AST | undefined, t0: Type, t1: Type): void {
         if (t0 === t1)
             return
