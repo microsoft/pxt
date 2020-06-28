@@ -393,9 +393,9 @@ namespace pxt.py {
         return varScopeSym
     }
 
-    function find(t: Type): Type {
+    function canonicalize(t: Type): Type {
         if (t.union) {
-            t.union = find(t.union)
+            t.union = canonicalize(t.union)
             return t.union
         }
         return t
@@ -437,7 +437,7 @@ namespace pxt.py {
     }
 
     function t2s(t: Type): string {
-        t = find(t)
+        t = canonicalize(t)
         const suff = (s: string) => verboseTypes ? s : ""
         if (t.primType) {
             if (t.typeArgs && t.primType == "@array") {
@@ -511,12 +511,12 @@ namespace pxt.py {
     }
 
     function isFree(t: Type) {
-        return !typeCtor(find(t))
+        return !typeCtor(canonicalize(t))
     }
 
     function canUnify(t0: Type, t1: Type): boolean {
-        t0 = find(t0)
-        t1 = find(t1)
+        t0 = canonicalize(t0)
+        t1 = canonicalize(t1)
 
         if (t0 === t1)
             return true
@@ -538,7 +538,7 @@ namespace pxt.py {
     }
 
     function unifyClass(a: AST, t: Type, cd: SymbolInfo) {
-        t = find(t)
+        t = canonicalize(t)
         if (t.classType == cd) return
         if (isFree(t)) {
             t.classType = cd
@@ -558,8 +558,8 @@ namespace pxt.py {
         if (t0 === t1)
             return
 
-        t0 = find(t0)
-        t1 = find(t1)
+        t0 = canonicalize(t0)
+        t1 = canonicalize(t1)
 
         // We don't handle generic types yet, so bail out. Worst case
         // scenario is that we infer some extra types as "any"
@@ -599,8 +599,8 @@ namespace pxt.py {
     function isAssignable(fromT: Type, toT: Type): boolean {
         // TODO: handle assignablity beyond interfaces and classes, e.g. "any", generics, arrays, ...
 
-        const t0 = find(fromT)
-        const t1 = find(toT)
+        const t0 = canonicalize(fromT)
+        const t1 = canonicalize(toT)
 
         if (t0 === t1)
             return true;
@@ -629,8 +629,8 @@ namespace pxt.py {
     }
 
     function narrow(e: Expr, constrainingType: Type): void {
-        const t0 = find(typeOf(e))
-        const t1 = find(constrainingType)
+        const t0 = canonicalize(typeOf(e))
+        const t1 = canonicalize(constrainingType)
 
         if (isAssignable(t0, t1)) {
             return;
@@ -753,7 +753,7 @@ namespace pxt.py {
     }
 
     function getTypesForFieldLookup(recvType: Type): SymbolInfo[] {
-        let t = find(recvType)
+        let t = canonicalize(recvType)
         return [
             t.classType,
             ...resolvePrimTypes(t.primType),
@@ -858,7 +858,7 @@ namespace pxt.py {
 
     function typeOf(e: py.Expr): Type {
         if (e.tsType) {
-            return find(e.tsType)
+            return canonicalize(e.tsType)
         } else {
             e.tsType = mkType()
             return e.tsType
@@ -1222,7 +1222,7 @@ namespace pxt.py {
             let retType = n.returns ? compileType(n.returns) : sym.pyRetType;
             nodes.push(
                 doArgs(n, isMethod),
-                retType && find(retType) != tpVoid ? typeAnnot(retType) : B.mkText(""))
+                retType && canonicalize(retType) != tpVoid ? typeAnnot(retType) : B.mkText(""))
 
             // make sure type is initialized
             getOrSetSymbolType(sym)
@@ -2008,7 +2008,7 @@ namespace pxt.py {
         YieldFrom: (n: py.YieldFrom) => exprTODO(n),
         Compare: (n: py.Compare) => {
             if (n.ops.length == 1 && (n.ops[0] == "In" || n.ops[0] == "NotIn")) {
-                if (find(typeOf(n.comparators[0])) == tpString)
+                if (canonicalize(typeOf(n.comparators[0])) == tpString)
                     unifyTypeOf(n.left, tpString)
                 let idx = B.mkInfix(expr(n.comparators[0]), ".", B.H.mkCall("indexOf", [expr(n.left)]))
                 return B.mkInfix(idx, n.ops[0] == "In" ? ">=" : "<", B.mkText("0"))
@@ -2067,7 +2067,7 @@ namespace pxt.py {
                 if (methName) {
                     nm = t2s(recvTp!) + "." + methName
                     over = U.lookup(py2TsFunMap, nm)
-                    if (!over && typeCtor(find(recvTp!)) == "@array") {
+                    if (!over && typeCtor(canonicalize(recvTp!)) == "@array") {
                         nm = "Array." + methName
                         over = U.lookup(py2TsFunMap, nm)
                     }
@@ -2284,7 +2284,7 @@ namespace pxt.py {
         },
         Subscript: (n: py.Subscript) => {
             if (n.slice.kind == "Index") {
-                const objType = find(typeOf(n.value));
+                const objType = canonicalize(typeOf(n.value));
                 if (isArrayType(n.value)) {
                     // indexing into an array
                     const eleType = objType.typeArgs![0];
@@ -2840,7 +2840,7 @@ namespace pxt.py {
     }
 
     function isArrayType(expr: py.Expr) {
-        const t = find(typeOf(expr));
+        const t = canonicalize(typeOf(expr));
 
         return t && t.primType === "@array";
     }
