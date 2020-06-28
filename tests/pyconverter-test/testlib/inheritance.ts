@@ -1,18 +1,28 @@
-namespace effects {
-    export interface BackgroundEffect {
-        startScreenEffect(): void;
+namespace narrowing {
+    export interface Interface1 {
+        doSomething(): void;
     }
 
-    export class ScreenEffect implements BackgroundEffect {
-        startScreenEffect(duration?: number, particlesPerSecond?: number): void {
+    export class Class1 implements Interface1 {
+        doSomething(): void {
         }
     }
 
-    export const confetti = new ScreenEffect();
+    export const instance = new Class1();
+
+    export function fun1(a: boolean): void {
+    }
+    export function fun2(a: Interface1): void {
+    }
+    export function fun3(a: Class1): void {
+    }
+    export function fun4(a: number[]): void {
+    }
+    export function fun5(a: Interface1[]): void {
+    }
+    export function fun6(a: Class1[]): void {
+    }
 }
 
 namespace game {
-    export function over(win: boolean = false, effect?: effects.BackgroundEffect): void {
-
-    }
 }
