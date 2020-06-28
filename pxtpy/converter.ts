@@ -322,6 +322,12 @@ namespace pxt.py {
     function mkFunType(retTp: Type, argTypes: Type[]) {
         return mkType({ primType: "@fn" + argTypes.length, typeArgs: [retTp].concat(argTypes) })
     }
+    function isFunType(t: Type): boolean {
+        return !!U.startsWith(t.primType || "", "@fn")
+    }
+    function isPrimativeType(t: Type): boolean {
+        return !!t.primType && !U.startsWith(t.primType, "@")
+    }
 
     function instanceType(sym: SymbolInfo): Type {
         getOrSetSymbolType(sym)
@@ -438,7 +444,7 @@ namespace pxt.py {
                 return t2s(t.typeArgs[0]) + "[]"
             }
 
-            if (U.startsWith(t.primType, "@fn") && t.typeArgs)
+            if (isFunType(t) && t.typeArgs)
                 return "(" + t.typeArgs.slice(1).map(t => "_: " + t2s(t)).join(", ") + ") => " + t2s(t.typeArgs[0])
 
             return t.primType + suff("/P")
@@ -545,6 +551,9 @@ namespace pxt.py {
         unify(e, typeOf(e), t1)
     }
 
+    function unifyOrConstrain(a: AST | undefined, t0: Type, t1: Type, narrow = false): void {
+    }
+
     function unify(a: AST | undefined, t0: Type, t1: Type): void {
         if (t0 === t1)
             return
@@ -587,19 +596,20 @@ namespace pxt.py {
         }
     }
 
-    function narrow(e: Expr, constrainingType: Type): void {
-        // TODO: handle assignablity beyond interfaces and classes, e.g. "any", generics, arrays, ...s
-        const t0 = find(typeOf(e))
-        const t1 = find(constrainingType)
+    function isAssignable(fromT: Type, toT: Type): boolean {
+        // TODO: handle assignablity beyond interfaces and classes, e.g. "any", generics, arrays, ...
+
+        const t0 = find(fromT)
+        const t1 = find(toT)
 
         if (t0 === t1)
-            return;
+            return true;
 
         const c0 = typeCtor(t0)
         const c1 = typeCtor(t1)
 
         if (c0 === c1)
-            return;
+            return true;
 
         // if we have constructors..
         if (c0 && c1) {
@@ -609,20 +619,39 @@ namespace pxt.py {
                 if (c0.extendsTypes && c0.extendsTypes.length) {
                     // then t0 is narrowed to t1 if and only if t1 is in the extends relationship
                     if (c0.extendsTypes.some(e => e === c1.qName)) {
-                        return
+                        return true
                     }
                 }
             }
         }
-        // otherwise, we unify
-        // TODO: unification is too strict but should always be sound
-        if (currIteration > 1) {
-            unify(e, typeOf(e), t1)
+
+        return false
+    }
+
+    function narrow(e: Expr, constrainingType: Type): void {
+        const t0 = find(typeOf(e))
+        const t1 = find(constrainingType)
+
+        if (isAssignable(t0, t1)) {
+            return;
         }
 
-        function isSymbol(c: string | SymbolInfo | {} | null): c is SymbolInfo {
-            return !!c && !!(c as SymbolInfo).name
+        // if we don't know if two types are assignable, we can try to unify them ssin common cases
+        // TODO: unification is too strict but should always be sound
+        if (isFunType(t0) || isFunType(t1)
+            || isPrimativeType(t0) || isPrimativeType(t1)) {
+            unify(e, typeOf(e), t1)
+        } else {
+            // if we're not sure about assinability or unification, we do nothing as future
+            // iterations may unify or make assinability clear.
+            // TODO: Ideally what we should do is track a "constraining type" similiar to how we track .union
+            // per type, and ensure the constraints are met as we unify or narrow types. The difficulty is that
+            // this depends on a more accurate assignability check which will take some work to get right.
         }
+    }
+
+    function isSymbol(c: string | SymbolInfo | {} | null): c is SymbolInfo {
+        return !!c && !!(c as SymbolInfo).name
     }
 
     function isGenericType(t: Type) {
