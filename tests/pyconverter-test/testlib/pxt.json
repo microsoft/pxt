@@ -15,7 +15,7 @@
         "classHandlerParameter.ts",
         "globals.ts",
         "spritekind.ts",
-        "inheritance.ts"
+        "narrowing.ts"
     ],
     "public": true,
     "dependencies": {},

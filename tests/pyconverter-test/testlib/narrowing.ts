@@ -23,6 +23,3 @@ namespace narrowing {
     export function fun6(a: Class1[]): void {
     }
 }
-
-namespace game {
-}
