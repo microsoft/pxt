@@ -648,7 +648,7 @@ namespace pxt.py {
     }
 
     function isSymbol(c: string | SymbolInfo | {} | null): c is SymbolInfo {
-        return !!c && !!(c as SymbolInfo).name
+        return !!(c as SymbolInfo)?.name
     }
 
     function isGenericType(t: Type) {
