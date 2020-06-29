@@ -637,7 +637,7 @@ namespace pxt.py {
         // TODO: unification is too strict but should always be sound
         if (isFunType(t0) || isFunType(t1)
             || isPrimativeType(t0) || isPrimativeType(t1)) {
-            unify(e, typeOf(e), t1)
+            unify(e, t0, t1)
         } else {
             // if we're not sure about assinability or unification, we do nothing as future
             // iterations may unify or make assinability clear.
