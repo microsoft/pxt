@@ -139,7 +139,6 @@ namespace pxt.py {
 
     function mapTsType(tp: string): Type {
         // TODO handle specifc generic types like: SparseArray<number[]>
-        // TODO handle union types like: Sprite | particles.ParticleAnchor
 
         // wrapped in (...)
         if (tp[0] == "(" && U.endsWith(tp, ")")) {
@@ -179,6 +178,16 @@ namespace pxt.py {
         // generic
         if (tp == "T" || tp == "U") // TODO hack!
             return mkType({ primType: "'" + tp })
+
+        // union
+        if (tp.indexOf("|") >= 0) {
+            const parts = tp.split("|")
+                .map(p => p.trim())
+            return mkType({
+                primType: "@union",
+                typeArgs: parts.map(mapTsType)
+            })
+        }
 
         // defined by a symbol,
         //  either in external (non-py) APIs (like default/common packages)
@@ -327,6 +336,9 @@ namespace pxt.py {
     }
     function isPrimativeType(t: Type): boolean {
         return !!t.primType && !U.startsWith(t.primType, "@")
+    }
+    function isUnionType(t: Type): boolean {
+        return !!U.startsWith(t.primType || "", "@union")
     }
 
     function instanceType(sym: SymbolInfo): Type {
@@ -608,17 +620,22 @@ namespace pxt.py {
         if (c0 === c1)
             return true;
 
-        // if we have constructors..
         if (c0 && c1) {
-            // which are symbols..
             if (isSymbol(c0) && isSymbol(c1)) {
-                // and there exists an extends relationship..
+                // check extends relationship (e.g. for interfaces & classes)
                 if (c0.extendsTypes && c0.extendsTypes.length) {
-                    // then t0 is narrowed to t1 if and only if t1 is in the extends relationship
                     if (c0.extendsTypes.some(e => e === c1.qName)) {
                         return true
                     }
                 }
+            }
+            // check unions
+            if (isUnionType(t1)) {
+                for (let uT of t1.typeArgs || []) {
+                    if (isAssignable(t0, uT))
+                        return true
+                }
+                return false
             }
         }
 

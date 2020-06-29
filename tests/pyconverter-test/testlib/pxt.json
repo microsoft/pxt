@@ -15,12 +15,8 @@
         "classHandlerParameter.ts",
         "globals.ts",
         "spritekind.ts",
-<<<<<<< HEAD
         "narrowing.ts",
         "advTypes.ts"
-=======
-        "narrowing.ts"
->>>>>>> master
     ],
     "public": true,
     "dependencies": {},
