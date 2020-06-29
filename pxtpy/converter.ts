@@ -459,6 +459,10 @@ namespace pxt.py {
             if (isFunType(t) && t.typeArgs)
                 return "(" + t.typeArgs.slice(1).map(t => "_: " + t2s(t)).join(", ") + ") => " + t2s(t.typeArgs[0])
 
+            if (isUnionType(t) && t.typeArgs) {
+                return t.typeArgs.map(t2s).join(" | ")
+            }
+
             return t.primType + suff("/P")
         }
 
