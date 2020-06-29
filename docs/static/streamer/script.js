@@ -116,7 +116,6 @@
             multiEditor: false,
             faceCamLabel: "",
             hardwareCamLabel: "",
-            mixer: "",
             emojis: "😄🤔😭👀",
             micDelay: 300,
             title: "STARTING SOON"
@@ -202,13 +201,13 @@
         addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
         addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
         addSceneButton("Timer", "Show countdown (Alt+Shift+5)", "countdown")
-        if (config.hardwareCamId || config.mixer || config.twitch || config.faceCamGreenScreen || config.hardwareCamGreenScreen) {
+        if (config.hardwareCamId || config.twitch || config.faceCamGreenScreen || config.hardwareCamGreenScreen) {
             addSep(toolbox)
             if (config.faceCamGreenScreen || config.hardwareCamGreenScreen)
                 addButton(toolbox, "PictureCenter", "Toggle thumbnail mode (Alt+Shift+6)", toggleThumbnail, state.thumbnail)
             if (config.hardwareCamId)
                 addButton(toolbox, "Robot", "Hardware webcam (Alt+Shift+7)", toggleHardware, state.hardware)
-            if (config.mixer || config.twitch)
+            if (config.twitch)
                 addButton(toolbox, "OfficeChat", "Chat  (Alt+Shift+8)", toggleChat, state.chat)
         }
 
@@ -710,7 +709,7 @@ background-image: url(${config.backgroundImage});
         if (e)
             stopEvent(e)
         const config = readConfig();
-        state.chat = !state.chat && (config.mixer || config.twitch);
+        state.chat = !state.chat && config.twitch;
         render();
     }
 
@@ -726,7 +725,7 @@ background-image: url(${config.backgroundImage});
     function loadSocial() {
         const config = readConfig();
 
-        if (!config.mixer && !config.twitch)
+        if (!config.twitch)
             state.chat = false;
 
         const editorConfig = editorConfigs[config.editor]
@@ -735,64 +734,13 @@ background-image: url(${config.backgroundImage});
 
     function loadChat() {
         const config = readConfig();
-        if (config.mixer) {
-            chat.src = `https://mixer.com/embed/chat/${config.mixer}?composer=false`;
-            if (!chat.parentElement)
-                container.insertBefore(chat, facecamcontainer);
-            startMixer(config.mixer);
-        }
-        else if (config.twitch) {
-            stopMixer()
+        if (config.twitch) {
             chat.src = `https://www.twitch.tv/embed/${config.twitch}/chat?parent=makecode.com`;
             if (!chat.parentElement)
                 container.insertBefore(chat, facecamcontainer)
         }
         else { // remove from dom
             chat.remove();
-            stopMixer()
-        }
-    }
-
-    async function startMixer(channel) {
-        const ch = await fetchJSON(`https://mixer.com/api/v1/channels/${channel}?fields=id,numFollowers,name`)
-        console.log("mixer", ch);
-        const config = readConfig();
-        if (ch.name != config.title) {
-            config.title = ch.name;
-            saveConfig(config);
-            loadSocial();
-        }
-        startMixerChatWs(ch.id);
-    }
-
-    function stopMixer() {
-        const ws = state.mixerChatWs;
-        state.mixerChatWs = undefined;
-        try {
-            if (ws) ws.close();
-        } catch (e) { }
-    }
-
-    function startMixerChatWs(id) {
-        let chatWs = state.mixerChatWs = new WebSocket("wss://chat.mixer.com/?version=1.0");
-        chatWs.onopen = function (evt) {
-            console.log(`mixer chat open`)
-            chatWs.send(JSON.stringify({ "type": "method", "method": "optOutEvents", "arguments": ["UserJoin", "UserLeave", "DeleteMessage"], "id": 0 }))
-            chatWs.send(JSON.stringify({ "type": "method", "method": "auth", "arguments": [id, null, null, null], "id": 1 }))
-        }
-        chatWs.onmessage = function (evt) {
-            const data = JSON.parse(evt.data);
-            console.log(data);
-            if (!state.chat && data
-                && data.type === "event") {
-                if (data.event === "ChatMessage")
-                    toggleChat();
-            }
-        }
-        chatWs.onclose = function (evt) {
-            console.log('mixer chat close')
-            state.mixerChatWs = undefined;
-            chatWs = undefined;
         }
     }
 
@@ -1356,6 +1304,12 @@ background-image: url(${config.backgroundImage});
         const cams = await listCameras()
         const mics = await listMicrophones()
 
+        const sections = document.querySelectorAll("div.section>h3")
+        for(let i =0; i < sections.length; ++i) {
+            const section = sections[i];
+            section.onclick = (evt) => evt.target.parentElement.classList.toggle("expanded")
+        }
+
         const settingsclose = document.getElementById("settingsclose")
         settingsclose.onclick = function (e) {
             tickEvent("streamer.settingsclose", undefined, { interactiveConsent: true })
@@ -1830,17 +1784,6 @@ background-image: url(${config.backgroundImage});
             render()
         }
 
-        const mixerinput = document.getElementById("mixerinput")
-        mixerinput.value = config.mixer || ""
-        mixerinput.onchange = function (e) {
-            config.mixer = (mixerinput.value || "").replace(/^https:\/\/mixer.com\//, '').replace(/^\//, '').trim()
-            mixerinput.value = config.mixer
-            saveConfig(config);
-            state.chat = !!config.mixer;
-            loadSocial();
-            loadChat();
-            render()
-        }
         const greenscreencheckbox = document.getElementById("greenscreencheckbox")
         greenscreencheckbox.checked = !!config.greenScreen
         greenscreencheckbox.onchange = function () {
@@ -2013,7 +1956,6 @@ background-image: url(${config.backgroundImage});
         const measures = {
             hardwareCam: config.hardwareCamId ? 1 : 0,
             multiEditor: config.multiEditor ? 1 : 0,
-            mixer: config.mixer ? 1 : 0,
             twitch: config.twitch ? 1 : 0
         };
         if (data)

@@ -734,8 +734,12 @@ namespace pxt {
                     if (!cond) return true
                     cond = cond.trim()
                     if (!cond) return true
-                    if (/^[\w-]+$/.test(cond))
-                        return !!this.parent.resolveDep(cond)
+                    if (/^[\w-]+$/.test(cond)) {
+                        const dep = this.parent.resolveDep(cond)
+                        if (dep && !dep.cppOnly)
+                            return true
+                        return false
+                    }
                     if (!Package.depWarnings[cond]) {
                         Package.depWarnings[cond] = true
                         pxt.log(`invalid dependency expression: ${cond} in ${this.id}/${fn}`)

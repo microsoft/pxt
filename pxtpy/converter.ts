@@ -633,7 +633,7 @@ namespace pxt.py {
             return;
         }
 
-        // if we don't know if two types are assignable, we can try to unify them ssin common cases
+        // if we don't know if two types are assignable, we can try to unify them in common cases
         // TODO: unification is too strict but should always be sound
         if (isFunType(t0) || isFunType(t1)
             || isPrimativeType(t0) || isPrimativeType(t1)) {
@@ -648,7 +648,7 @@ namespace pxt.py {
     }
 
     function isSymbol(c: string | SymbolInfo | {} | null): c is SymbolInfo {
-        return !!c && !!(c as SymbolInfo).name
+        return !!(c as SymbolInfo)?.name
     }
 
     function isGenericType(t: Type) {

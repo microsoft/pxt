@@ -1,6 +1,8 @@
 /**
- * Use weights to control the order of blocks, higher weight means higher in the toolbox
+ * Use weights to control the order of blocks, a higher
+ * weight means higher in the toolbox
  */
+
 //% color="#AA278D"
 namespace blocks {
     /**
