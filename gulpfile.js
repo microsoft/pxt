@@ -598,12 +598,8 @@ const buildAll = gulp.series(
     gulp.parallel(buildcss, buildSVGIcons),
     webapp,
     browserifyWebapp,
-<<<<<<< HEAD
     browserifyAssetEditor,
-    gulp.parallel(semanticjs, copyJquery, copyWebapp, copyPlayground, copySemanticFonts, copyMonaco),
-=======
     gulp.parallel(semanticjs, copyJquery, copyWebapp, copySemanticFonts, copyMonaco),
->>>>>>> 368e06988bbbb236884b40f05724ae650407b6b3
     buildBlocksTestRunner,
     runUglify
 );
