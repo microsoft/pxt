@@ -1,18 +1,43 @@
 {
     "arcade": {
-        "name": "Arcade BETA",
+        "name": "Arcade",
         "title": "MakeCode Arcade",
-        "url": "https://arcade.makecode.com/beta",
+        "url": "https://arcade.makecode.com/",
         "styles": {
             "primary": "#6B4F76",
             "menu": "#F76820",
             "background": "linear-gradient(90deg, #B1E3DA 0%, #E91E63 100%)"
         }
     },
-    "arcadestable": {
-        "name": "Arcade",
+    "microbit": {
+        "name": "micro:bit",
+        "title": "MakeCode for micro:bit",
+        "url": "https://makecode.microbit.org/?github=1",
+        "styles": {
+            "primary": "#6633cc",
+            "menu": "#3454D1",
+            "background": "linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1) 100%)"
+        }
+    },
+    "minecraft": {
+        "name": "Minecraft",
+        "url": "https://minecraft.makecode.com/",
+        "unsupported": ["streamer"]
+    },
+    "adafruit": {
+        "name": "Adafruit Circuit Playground Express",
+        "url": "https://makecode.adafruit.com/",
+        "unsupported": ["streamer"]
+    },
+    "ev3": {
+        "name": "LEGO® MINDSTORMS® Education EV3",
+        "url": "https://makecode.mindstorms.com/",
+        "unsupported": ["streamer"]
+    },
+    "arcadebeta": {
+        "name": "Arcade BETA",
         "title": "MakeCode Arcade",
-        "url": "https://arcade.makecode.com/",
+        "url": "https://arcade.makecode.com/beta",
         "styles": {
             "primary": "#6B4F76",
             "menu": "#F76820",
@@ -24,17 +49,18 @@
         "url": "https://makecode.microbit.org/beta",
         "unsupported": ["streamer"]
     },
-    "microbit": {
-        "name": "micro:bit",
-        "title": "MakeCode for micro:bit",
-        "url": "https://makecode.microbit.org/",
+    "minecraftbeta": {
+        "name": "Minecraft BETA",
+        "title": "MakeCode for Minecraft",
+        "icon": "https://minecraft.makecode.com/favicon.ico",
+        "url": "https://minecraft.makecode.com/beta?github=1",
         "styles": {
-            "primary": "#6633cc",
-            "menu": "#3454D1",
-            "background": "linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1) 100%)"
+            "primary": "#3C3C3C",
+            "menu": "#31ae1f",
+            "background": "linear-gradient(215deg, #3C3C3C 0%, #C6C6C6 100%)"
         }
     },
-    "adafruit": {
+    "adafruitbeta": {
         "name": "Adafruit Circuit Playground Express BETA",
         "title": "MakeCode for Circuit Playground",
         "url": "https://makecode.adafruit.com/beta",
@@ -45,10 +71,10 @@
             "background": "linear-gradient(45deg, #1c1f2b 0%, #000 100%)"
         }
     },
-    "adafruitstable": {
-        "name": "Adafruit Circuit Playground Express",
-        "url": "https://makecode.adafruit.com/",
-        "unsupported": ["streamer"]
+    "ev3beta": {
+        "name": "LEGO® MINDSTORMS® Education EV3 BETA",
+        "title": "MakeCode for EV3",
+        "url": "https://makecode.mindstorms.com/beta"
     },
     "maker": {
         "name": "Maker",
@@ -60,32 +86,6 @@
             "background": "linear-gradient(45deg, #cccccc 0%, #333333 100%)"
         },
         "unsupported": ["playground"]
-    },
-    "ev3": {
-        "name": "LEGO® MINDSTORMS® Education EV3 BETA",
-        "title": "MakeCode for EV3",
-        "url": "https://makecode.mindstorms.com/beta"
-    },
-    "ev3stable": {
-        "name": "LEGO® MINDSTORMS® Education EV3",
-        "url": "https://makecode.mindstorms.com/",
-        "unsupported": ["streamer"]
-    },
-    "minecraft": {
-        "name": "Minecraft BETA",
-        "title": "MakeCode for Minecraft",
-        "icon": "https://minecraft.makecode.com/favicon.ico",
-        "url": "https://minecraft.makecode.com/beta?github=1",
-        "styles": {
-            "primary": "#3C3C3C",
-            "menu": "#31ae1f",
-            "background": "linear-gradient(215deg, #3C3C3C 0%, #C6C6C6 100%)"
-        }
-    },
-    "minecraftstable": {
-        "name": "Minecraft",
-        "url": "https://minecraft.makecode.com?github=1",
-        "unsupported": ["streamer"]
     },
     "calliopemini": {
         "name": "Calliope Mini",
