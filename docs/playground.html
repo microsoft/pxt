@@ -1,70 +1,64 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
-    <meta charset="UTF-8">
-    <title>MakeCode Playground</title>
-    <meta name="Description" content="@description@" />
-
-    <!-- @include playground-head.html -->
-
-    <link data-inline="yes-please" href="/static/playground/spinner.css" rel="stylesheet" />
-    <link data-inline="yes-please" href="/static/playground/playground.css" rel="stylesheet" />
-
-    <link data-name="vs/editor/editor.main" rel="stylesheet" href="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.css">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <link rel="stylesheet" href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css" type="text/css">
+    <link data-name="vs/editor/editor.main" rel="stylesheet"
+        href="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.css">
+    <link rel="stylesheet" href="/static/shared/iframeeditor.css">
+    <link rel="stylesheet" href="/static/playground/playground.css">
 </head>
 
-<body class="playground-page">
-    <pre data-preload="/playground/samples/basic/hello-world/sample.ts"></pre>
-
+<body>
     <nav class="ui menu inverted fixed borderless">
-        <div class="menu left">
-            <div class="ui item">
-                MakeCode Playground
-            </div>
+        <div class="ui item">
+            MakeCode Blocks Playground
         </div>
 
         <div class="menu right">
-            <a href="/docs" class="ui item">
-                Home
-            </a>
-            <a href="/playground" class="ui item">
-                Playground
-            </a>
-            <a href="/defining-blocks" class="ui item">
-                Help defining blocks
-            </a>
-            <a href="https://github.com/microsoft/pxt-sample" class="ui item" style="background-color:black">
-                Sample target
+            <a href="/defining-blocks" target="_blank" class="ui primary button">
+                <i class="book icon"></i>
+                Defining Blocks
             </a>
         </div>
     </nav>
-    <div id="loading">
-        <div class="spinner">
-            <div class="rect1"></div>
-            <div class="rect2"></div>
-            <div class="rect3"></div>
-            <div class="rect4"></div>
-            <div class="rect5"></div>
+
+    <div class="content">
+        <div class="input-row">
+            <div id="sample-container" class="ui labeled input">
+                <span class="ui label">Sample</span>
+                <select id="sample-select" class="ui dropdown"></select>
+                <button class="ui primary button input large" id="run-button">
+                    <i class="play icon"></i>
+                    Run
+                </button>
+            </div>
+            <div id="run-container" class="ui labeled input">
+                <span class="ui label">Editor</span>
+                <select id="endpoint-select" class="ui dropdown"></select>
+            </div>
+        </div>
+        <div class="editor-row">
+            <div id="monaco-editor">
+                <div id="container" style="border:1px solid grey"></div>
+            </div>
+            <div id="makecode-editor" style="border:1px solid grey"></div>
         </div>
     </div>
 
-    <section id="playground">
-    </section>
+    <!-- @include tracking.html -->
+    <!-- @include thin-footer.html -->
 
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.9.1/jquery.min.js" integrity="sha256-wS9gmOZBqsqWxgIVgA8Y9WcQOa7PgSIX+rPA0VL2rbQ="
-        crossorigin="anonymous"></script>
-
-    <!-- @include playground-apptrackingweb.html -->
-    <!-- @include apptracking.html -->
-	<!-- @include thin-footer.html -->
     <script>var require = { paths: { 'vs': 'https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs' } };</script>
     <script src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/loader.js"></script>
-    <script src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.nls.js"></script>
-    <script src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.js"></script>
+    <script
+        src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.nls.js"></script>
+    <script
+        src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.js"></script>
+    <script src="/static/playground/samples/all.js"></script>
+    <script src="/static/playground/playground.js"></script>
 
-    <script data-inline="yes-please" src="/static/playground/samples/all.js" type="text/javascript"></script>
-    <script data-inline="yes-please" src="/static/playground/playground.js" type="text/javascript"></script>
 </body>
-
 </html>
