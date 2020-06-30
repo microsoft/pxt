@@ -1,5 +1,5 @@
 {
-    "arcade": {
+    "arcadestable": {
         "name": "Arcade",
         "title": "MakeCode Arcade",
         "url": "https://arcade.makecode.com/",
@@ -34,7 +34,7 @@
         "url": "https://makecode.mindstorms.com/",
         "unsupported": ["streamer"]
     },
-    "arcadebeta": {
+    "arcade": {
         "name": "Arcade BETA",
         "title": "MakeCode Arcade",
         "url": "https://arcade.makecode.com/beta",
