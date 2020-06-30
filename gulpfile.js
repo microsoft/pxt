@@ -132,7 +132,7 @@ function initWatch() {
         webapp,
         browserifyWebapp,
         browserifyAssetEditor,
-        gulp.parallel(semanticjs, copyJquery, copyWebapp, copyPlayground, copySemanticFonts, copyMonaco)
+        gulp.parallel(semanticjs, copyJquery, copyWebapp, copySemanticFonts, copyMonaco)
     ];
 
     gulp.watch("./pxtlib/**/*", gulp.series(...tasks));
