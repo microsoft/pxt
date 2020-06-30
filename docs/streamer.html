@@ -382,8 +382,8 @@ Recorder
             font-size: 1rem;
         }
 
-        #screensize {
-            font-size: 2rem;
+        .screensize {
+            font-size: 80%;
         }
 
         #recorder:hover {
@@ -1252,6 +1252,7 @@ Settings
             <div class="header">
                 <h2>MakeCode Streamer BETA <a href="/streamer/docs" target="_blank">docs</a> <a
                         href="https://forum.makecode.com/t/introducing-makecode-streamer/2437" target="_blank">forum</a>
+                        <span class="screensize"></span>
                 </h2>
                 <button id="settingsclose">close</button>
             </div>
@@ -1270,6 +1271,14 @@ Settings
                     <div class="field">
                         <input type="checkbox" id="multicheckbox"></input>
                         <label for="multicheckbox">Multi editors. Edit two programs with connected simulators.</label>
+                    </div>
+                    <div class="field">
+                        <label for="titleinput">Title</label>
+                        <input id="titleinput" placeholder="My awesome stream" />
+                    </div>
+                    <div class="field">
+                        <label for="extrasitesarea">Extra web sites (must be https://..., one per line)</label>
+                        <textarea id="extrasitesarea" rows="2"></textarea>
                     </div>
                 </div>
                 <div class="section expanded">
@@ -1385,14 +1394,6 @@ Settings
                 <div class="section">
                     <h3>Style</h3>
                     <div class="field">
-                        <label for="titleinput">Title</label>
-                        <input id="titleinput" placeholder="My awesome stream" />
-                    </div>
-                    <div class="field">
-                        <label for="extrasitesarea">Extra web sites (must be https://..., one per line)</label>
-                        <textarea id="extrasitesarea" rows="2"></textarea>
-                    </div>
-                    <div class="field">
                         <input type="checkbox" id="fullscreeneditorcheckbox"></input>
                         <label for="fullscreeneditorcheckbox">Full screen editor (no margins)</label>
                     </div>
@@ -1501,7 +1502,7 @@ Settings
         </div>
         <div role="button" class="box animated hidden" id="recorder" tabindex="0">
             <span>click to start recording</span>
-            <span id="screensize">0x0</span>
+            <span class="screensize"></span>
             <div class="message details">Resize your browser to match 1920x1080 (180p, HD) or 1280x720 (720p, SD).</div>
             <div class="error details mic">Select a microphone in the settings.</div>
             <div class="error details micdelay">Tune your microphone delay to sync video and audio.</div>

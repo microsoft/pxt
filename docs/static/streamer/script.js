@@ -922,9 +922,14 @@ background-image: url(${config.backgroundImage});
     }
 
     function initResize() {
-        window.onresize = function (e) {
-            screensize.innerText = `(${window.innerWidth}x${window.innerHeight})`
+        function update() {
+            const text =  `(${window.innerWidth}x${window.innerHeight})`
+            const els = document.getElementsByClassName("screensize")
+            for(let i = 0; i < els.length; ++i)
+                els[i].innerText = text
         }
+        window.onresize = update
+        update()
     }
 
     function initMessages() {
