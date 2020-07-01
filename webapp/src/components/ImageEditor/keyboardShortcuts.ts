@@ -2,7 +2,7 @@
 import { Store } from 'react-redux';
 import { ImageEditorTool, ImageEditorStore } from './store/imageReducer';
 import { dispatchChangeZoom, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchChangeImageTool, dispatchSwapBackgroundForeground, dispatchChangeSelectedColor} from './actions/dispatch';
-import mainStore from './store/imageStore';
+import { mainStore } from './store/imageStore';
 let store = mainStore;
 
 export function addKeyListener() {
