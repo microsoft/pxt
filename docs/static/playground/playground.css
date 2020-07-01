@@ -15,14 +15,3 @@
 #run-container {
     margin-left: min(calc(55% - 20rem), calc(660px - 20rem));
 }
-
-/* Semantic UI overrides */
-.action .primary.button {
-    border-radius: .28571429rem;
-}
-
-.menu .primary.button {
-    border-radius: 0;
-    font-weight: 400;
-    margin: 0;
-}
