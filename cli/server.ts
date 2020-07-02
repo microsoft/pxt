@@ -1043,6 +1043,11 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
+        if (pathname == "/--asseteditor") {
+            sendFile(path.join(publicDir, 'asseteditor.html'));
+            return
+        }
+
         if (/\/-[-]*docs.*$/.test(pathname)) {
             sendFile(path.join(publicDir, 'docs.html'));
             return
