@@ -162,6 +162,11 @@ namespace pxt.editor.experiments {
                 id: "errorList",
                 name: lf("Error List"),
                 description: lf("Show an error list panel for JavaScript and Python.")
+            },
+            {
+                id: "openInStreamer",
+                name: lf("Open in Streamer"),
+                description: lf("Open project in streamer to record a video.")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
