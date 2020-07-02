@@ -25,6 +25,7 @@
     const startvideo = document.getElementById('startvideo');
     const endvideo = document.getElementById('endvideo');
     const backgroundvideo = document.getElementById('backgroundvideo')
+    const intro = document.getElementById('intro')
 
     const frames = [editor, editor2];
     const paintColors = ["#ffe135", "#00d9ff", "#cf1fdb", "#ee0000"];
@@ -937,14 +938,23 @@ background-image: url(${config.backgroundImage});
                 swapLeftRight();
         }
 
+        const playpip = document.getElementById("playpip");
         const introvideo = document.getElementById("introvideo");
-        introvideo.onclick = function (e) {
-            tickEvent("streamer.introvideo", undefined, { interactiveConsent: true })
+        playpip.onclick = function (e) {
+            tickEvent("streamer.intro.video", undefined, { interactiveConsent: true })
+            intro.classList.add('hidden')
             stopEvent(e)
             loadSettings()
             hideSettings()
             introvideo.requestPictureInPicture()
                 .then(() => introvideo.play())
+        }
+        const skippip = document.getElementById("skippip")
+        skippip.onclick = function (e) {
+            tickEvent("streamer.intro.skip", undefined, { interactiveConsent: true })
+            intro.remove()
+            loadSettings()
+            hideSettings()
         }
     }
 
