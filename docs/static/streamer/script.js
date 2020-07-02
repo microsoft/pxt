@@ -153,6 +153,7 @@
             config.faceCamCircular && "facecamcircular",
             config.hardwareCamCircular && "hardwarecamcircular",
             config.faceCamId === DISPLAY_DEVICE_ID && "facecamdisplay",
+            config.hardwareCamId && "hashardwarecam",
             config.hardwareCamId === DISPLAY_DEVICE_ID && "hardwarecamdisplay",
             config.greenScreen && "greenscreen",
             config.backgroundVideo ? "backgroundvideo" : config.backgroundImage && "parallax",
@@ -914,6 +915,10 @@ background-image: url(${config.backgroundImage});
         facecamrightbtn.onclick = showRight
         const hardwarecamrightbtn = document.getElementById("hardwarecamrightbtn")
         hardwarecamrightbtn.onclick = showRight
+        const facecamhardwarebtn = document.getElementById("facecamhardwarebtn")
+        facecamhardwarebtn.onclick = toggleHardware
+        const hardwarecamhardwarebtn = document.getElementById("hardwarecamhardwarebtn")
+        hardwarecamhardwarebtn.onclick = toggleHardware
 
         function swapLeftRight(e) {
             tickEvent("streamer.swap.leftright", undefined, { interactiveConsent: true })

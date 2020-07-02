@@ -708,6 +708,10 @@ Settings
             left: calc(50% - 1rem);
             top: 4%;
         }
+        .videohardwarebtn {
+            right: 4%;
+            top: 4%;
+        }
         .videoleftbtn {
             left: 4%;
             top: 50%;
@@ -734,6 +738,9 @@ Settings
         }
 
         body.countdownscene .videobtn {
+            opacity: 0 !important;
+        }
+        body:not(.hashardwarecam) .videohardwarebtn {
             opacity: 0 !important;
         }
 
@@ -1303,6 +1310,9 @@ Settings
             <div id="facecamchatbtn" title="Go to chat scene" class="videobtn videochatbtn animated">
                 <i class="ms-Icon ms-Icon--Contact"></i>
             </div>
+            <div id="facecamhardwarebtn" title="Show/hide document camera" class="videobtn videohardwarebtn animated">
+                <i class="ms-Icon ms-Icon--Robot"></i>
+            </div>
             <div id="facecamleftbtn" title="Move camera left" class="videobtn videoleftbtn animated">
                 <i class="ms-Icon ms-Icon--OpenPane"></i>
             </div>
@@ -1316,6 +1326,9 @@ Settings
             <canvas id="hardwarecamvideoserious" width="640" height="480" class="videocanvas"></canvas>
             <div id="hardwarecamchatbtn" title="Go to chat scene" class="videobtn videochatbtn animated">
                 <i class="ms-Icon ms-Icon--Contact"></i>
+            </div>
+            <div id="hardwarecamhardwarebtn" title="Show/hide document camera" class="videobtn videohardwarebtn animated">
+                <i class="ms-Icon ms-Icon--Robot"></i>
             </div>
             <div id="hardwarecamleftbtn" title="Move camera left" class="videobtn videoleftbtn animated">
                 <i class="ms-Icon ms-Icon--OpenPane"></i>
