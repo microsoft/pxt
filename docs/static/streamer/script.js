@@ -902,6 +902,19 @@ background-image: url(${config.backgroundImage});
         facecam.parentElement.onclick = () => onClick(facecam.parentElement);
         hardwarecam.parentElement.onclick = () => onClick(hardwarecam.parentElement);
 
+        const facecamchatbtn = document.getElementById("facecamchatbtn")
+        facecamchatbtn.onclick = showChat
+        const hardwarecamchatbtn = document.getElementById("hardwarecamchatbtn")
+        hardwarecamchatbtn.onclick = showChat
+        const facecamleftbtn = document.getElementById("facecamleftbtn")
+        facecamleftbtn.onclick = showLeft
+        const hardwarecamleftbtn = document.getElementById("hardwarecamleftbtn")
+        hardwarecamleftbtn.onclick = showLeft
+        const facecamrightbtn = document.getElementById("facecamrightbtn")
+        facecamrightbtn.onclick = showRight
+        const hardwarecamrightbtn = document.getElementById("hardwarecamrightbtn")
+        hardwarecamrightbtn.onclick = showRight
+
         function swapLeftRight(e) {
             tickEvent("streamer.swap.leftright", undefined, { interactiveConsent: true })
             if (state.sceneIndex == LEFT_SCENE_INDEX)
@@ -930,6 +943,24 @@ background-image: url(${config.backgroundImage});
                 hp.classList.remove("facecam")
                 hp.classList.add("hardwarecam")
             }
+        }
+
+        function showChat(e) {
+            tickEvent("streamer.videochatbtn", undefined, { interactiveConsent: true })
+            stopEvent(e)
+            setScene("chat")
+        }
+
+        function showLeft(e) {
+            tickEvent("streamer.videoleftbtn", undefined, { interactiveConsent: true })
+            stopEvent(e)
+            setScene("left")
+        }
+
+        function showRight(e) {
+            tickEvent("streamer.videorightbtn", undefined, { interactiveConsent: true })
+            stopEvent(e)
+            setScene("right")
         }
 
         function onClick(el) {
