@@ -204,6 +204,12 @@ Use https://uifabricicons.azurewebsites.net/
             bottom: 1%;
         }
 
+        #menucontainer {
+            position: absolute;
+            right: 1%;
+            top: 1%;
+        }
+
         .icons {
             position: relative;
             left: -50%;
@@ -741,7 +747,9 @@ Settings
         body.chatscene .videochatscenebtn {
             opacity: 0 !important;
         }
-
+        body.chatscene .videothumbnailbtn {
+            opacity: 0 !important;
+        }
         body.leftscene .videoleftscenebtn {
             opacity: 0 !important;
         }
@@ -1650,6 +1658,8 @@ Settings
         <canvas id="painttool" class="paint"></canvas>
         <div class="tools" id="toolcontainer">
             <div class="animated icons" id="paintbox"></div>
+        </div>
+        <div class="tools" id="menucontainer">
             <div class="animated icons" id="toolbox"></div>
         </div>
         <div class="box" id="intro">
