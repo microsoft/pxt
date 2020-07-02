@@ -673,6 +673,14 @@ Settings
             width: 100%;
         }
 
+        body.thumbnail .facecam video,
+        body.thumbnail .hardwarecam video,
+        body.thumbnail .facecam canvas,
+        body.thumbnail .hardwarecam canvas
+        {
+            transform: scale(-1, 1);
+        }
+
         .videolabel {
             display: none;
             position: absolute;
