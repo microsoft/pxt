@@ -443,9 +443,9 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 label: action,
                 onclick: publish,
                 icon: 'share alternate',
-                loading: actionLoading,
                 title: lf("Open this project in our recording studio"),
-                className: 'primary'
+                className: 'primary',
+                disabled: recordingState != ShareRecordingState.None
             })
         }
 
