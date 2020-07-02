@@ -1242,13 +1242,15 @@ background-image: url(${config.backgroundImage});
     }
 
     async function startRecording() {
+        tickEvent('recorder.prepare')
         const config = readConfig();
         state.recording = undefined;
+        let audioCtx;
         const stream = await getDisplayStream(true);
         try {
             state.micError = false;
             const audioStream = await startMicrophone();
-            const audioCtx = new AudioContext();
+            audioCtx = new AudioContext();
             const audioSource = audioCtx.createMediaStreamSource(audioStream);
             const delay = audioCtx.createDelay(2);
             delay.delayTime.value = (config.micDelay || 0) / 1000;
@@ -1271,6 +1273,7 @@ background-image: url(${config.backgroundImage});
 
         recorder.classList.remove('hidden')
         recorder.onclick = () => {
+            tickEvent('recorder.start')
             recorder.classList.add('hidden')
             mediaRecorder.start();
         }
@@ -1284,13 +1287,18 @@ background-image: url(${config.backgroundImage});
         render();
 
         function download() {
+            tickEvent('recorder.download')
+            console.load(`downloading recorded video`)
             // makesure to close all streams
             recorder.classList.add('hidden')
             try {
+                if (audioCtx)
                 audioCtx.close();
                 stream.getVideoTracks().forEach(track => track.stop())
                 stream.getAudioTracks().forEach(track => track.stop())
-            } catch (e) { }
+            } catch (e) { 
+                console.log(e)
+            }
 
             state.recording = undefined;
 
