@@ -414,7 +414,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             this.setState({ sharingError: undefined, loading: true });
             const streamerUrl = `https://makecode.com/streamer`
             window.location.href =
-                `${targetTheme.openInStreamer}#editorshare:${pxt.appTarget.id}:workspace:${header.id}`
+                `${targetTheme.openInStreamer}#editor:${pxt.appTarget.id}:workspace:${header.id}`
         }
 
         const formats = [
