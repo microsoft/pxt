@@ -199,16 +199,16 @@
             addSep(toolbox)
         }
 
-        addSceneButton("OpenPane", "Move webcam left (Alt+Shift+2)", "left")
-        addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
-        addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
+        //addSceneButton("OpenPane", "Move webcam left (Alt+Shift+2)", "left")
+        //addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
+        //addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
         addSceneButton("Timer", "Show countdown (Alt+Shift+5)", "countdown")
         if (config.hardwareCamId || config.twitch || config.faceCamGreenScreen || config.hardwareCamGreenScreen) {
             addSep(toolbox)
             if (config.faceCamGreenScreen || config.hardwareCamGreenScreen)
                 addButton(toolbox, "PictureCenter", "Toggle thumbnail mode (Alt+Shift+6)", toggleThumbnail, state.thumbnail)
-            if (config.hardwareCamId)
-                addButton(toolbox, "Robot", "Hardware webcam (Alt+Shift+7)", toggleHardware, state.hardware)
+            //if (config.hardwareCamId)
+            //    addButton(toolbox, "Robot", "Hardware webcam (Alt+Shift+7)", toggleHardware, state.hardware)
             if (config.twitch)
                 addButton(toolbox, "OfficeChat", "Chat  (Alt+Shift+8)", toggleChat, state.chat)
         }
@@ -313,14 +313,21 @@
     function setScene(scene) {
         tickEvent("streamer.scene", { scene: scene });
         const config = readConfig();
-        const lastScene = state.sceneIndex;
-        const sceneIndex = scenes.indexOf(`${scene}scene`);
+        const lastSceneIndex = state.sceneIndex;
+        let sceneIndex = scenes.indexOf(`${scene}scene`);
+
+        // click on countdown from countdown exits to chat
+        if (sceneIndex === COUNTDOWN_SCENE_INDEX && lastSceneIndex === sceneIndex) {
+            sceneIndex = CHAT_SCENE_INDEX
+            scene = "chat"
+        }
+
         if (state.sceneIndex !== sceneIndex) {
             state.sceneIndex = scenes.indexOf(`${scene}scene`);
             resetTransition(facecamlabel, "fadeout")
             resetTransition(hardwarecamlabel, "fadeout")
         }
-        if (scene === "countdown") {
+        if (sceneIndex === COUNTDOWN_SCENE_INDEX) {
             startCountdown(300000);
             if (config.endVideo) {
                 endvideo.classList.remove("hidden");
@@ -331,7 +338,7 @@
             }
         } else {
             stopCountdown();
-            if (lastScene == COUNTDOWN_SCENE_INDEX && config.startVideo) {
+            if (lastSceneIndex == COUNTDOWN_SCENE_INDEX && config.startVideo) {
                 startvideo.classList.remove("hidden");
                 startvideo.onended = () => {
                     startvideo.classList.add("hidden");
@@ -696,6 +703,13 @@ color: white;
 }
 #title {
 background: ${primary};
+}
+#countdown {
+    color: ${primary};
+    text-shadow: -3px 3px 1px #fff,
+    3px 3px 1px #fff,
+    3px -3px 1px #fff,
+    -3px -3px 1px #fff;
 }
 `
         const faceCamFilter = camFilter(config.faceCamFilter)
