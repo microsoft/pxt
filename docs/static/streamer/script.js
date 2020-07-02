@@ -1165,20 +1165,20 @@ background-image: url(${config.backgroundImage});
         speech.onresult = (ev) => {
             const results = ev.results;
             const lastResult = results[ev.resultIndex];
-            console.log(`lastResult`, lastResult)
+            //console.log(`lastResult`, lastResult)
             if (lastResult.isFinal) {
-                console.log(`final`)
+                //console.log(`final`)
                 subtitles.innerText = lastResult[0].transcript;
                 nextInterimResult = ev.resultIndex + 1
             } else {
-                console.log(`not final`, results)
+                //console.log(`not final`, results)
                 // collect the intermediate results with good quality
                 let text = ""
                 for(let i = nextInterimResult; i < results.length; ++i) {
                     if (!results[i].isFinal) {
                         const alt = results[i][0]
                         if (alt.confidence < 0.8) {
-                            console.log(alt)
+                            //console.log(alt)
                             // poor quality detection, stop
                             break;
                         } else {
