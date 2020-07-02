@@ -185,7 +185,7 @@
         addSep(paintbox)
         emojis.forEach(addEmojiButton);
         addSep(paintbox)
-        addButton(paintbox, "WhiteBoardApp32", "Paint screen in white", () => pushPaintEvent("whiteboard"))
+        addWhiteboardButton(paintbox)
         addButton(paintbox, "EraseTool", "Undo last drawing", popPaintEvent)
         addSep(paintbox)
         addButton(paintbox, "ChromeClose", "Exit paint mode", stopPaint)
@@ -290,6 +290,14 @@
         function addSceneButton(icon, title, scene) {
             const sceneIndex = scenes.indexOf(`${scene}scene`)
             addButton(toolbox, icon, title, () => setScene(scene), state.sceneIndex == sceneIndex)
+        }
+
+        function addWhiteboardButton(paintbox) {
+            addButton(paintbox, "WhiteBoardApp32", "Paint screen in white", () => {
+                if(!state.paint)
+                    setPaintTool("pen")
+                pushPaintEvent("whiteboard")
+            })
         }
     }
 
@@ -514,7 +522,7 @@
         function whiteboard() {
             paintCtx.save()
             paintCtx.beginPath();
-            paintCtx.fillStyle = "rgba(255, 255, 255, 0.9)"
+            paintCtx.fillStyle = "rgba(255, 255, 255, 0.95)"
             paintCtx.rect(0, 0, paint.width, paint.height)
             paintCtx.fill()
             paintCtx.restore()
