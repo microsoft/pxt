@@ -414,7 +414,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             this.setState({ sharingError: undefined, loading: true });
             const streamerUrl = `https://makecode.com/streamer`
             window.location.href =
-                `${targetTheme.openInStreamer}#editor:${pxt.appTarget.id}:workspace:${header.id}`
+                `${streamerUrl}#editor:${pxt.appTarget.id}:workspace:${header.id}`
         }
 
         const formats = [
@@ -429,16 +429,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             ? lf("Record video") : undefined;
 
         let actions: sui.ModalButton[] = [];
-        if (action) {
-            actions.push({
-                label: action,
-                onclick: publish,
-                icon: 'share alternate',
-                loading: actionLoading,
-                className: 'primary',
-                disabled: recordingState != ShareRecordingState.None
-            })
-        }
         if (streamerAction) {
             actions.push({
                 label: streamerAction,
@@ -446,6 +436,16 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 icon: 'camera',
                 loading: actionLoading,
                 disabled: recordingState != ShareRecordingState.None
+            })
+        }
+        if (action) {
+            actions.push({
+                label: action,
+                onclick: publish,
+                icon: 'share alternate',
+                loading: actionLoading,
+                title: lf("Open this project in our recording studio"),
+                className: 'primary'
             })
         }
 
