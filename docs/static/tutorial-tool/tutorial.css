@@ -1,4 +1,12 @@
-.input-row {
-    justify-content: space-between;
-    display: inline-flex;
+#endpoint-container {
+    width: 23rem;
+}
+
+#share-container {
+    margin-left: calc(800px - 23rem);
+    width: calc(100% - 800px - 12rem);
+}
+
+#share-output {
+    width: 100%;
 }
