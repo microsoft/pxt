@@ -153,12 +153,15 @@
             config.faceCamCircular && "facecamcircular",
             config.hardwareCamCircular && "hardwarecamcircular",
             config.faceCamId === DISPLAY_DEVICE_ID && "facecamdisplay",
+            config.hardwareCamId && "hashardwarecam",
             config.hardwareCamId === DISPLAY_DEVICE_ID && "hardwarecamdisplay",
             config.greenScreen && "greenscreen",
             config.backgroundVideo ? "backgroundvideo" : config.backgroundImage && "parallax",
             config.countdownEditor && "countdowneditor",
             config.countdownEditorBlur && "countdowneditorblur",
-            config.fullScreenEditor && !config.multiEditor && "slim"
+            config.fullScreenEditor && !config.multiEditor && "slim",
+            config.twitch && "haschat",
+            config.faceCamGreenScreen && "hasthumbnail"
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
             showSettings();
@@ -198,19 +201,19 @@
             addSep(toolbox)
         }
 
-        addSceneButton("OpenPane", "Move webcam left (Alt+Shift+2)", "left")
-        addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
-        addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
+        //addSceneButton("OpenPane", "Move webcam left (Alt+Shift+2)", "left")
+        //addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
+        //addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
         addSceneButton("Timer", "Show countdown (Alt+Shift+5)", "countdown")
-        if (config.hardwareCamId || config.twitch || config.faceCamGreenScreen || config.hardwareCamGreenScreen) {
-            addSep(toolbox)
-            if (config.faceCamGreenScreen || config.hardwareCamGreenScreen)
-                addButton(toolbox, "PictureCenter", "Toggle thumbnail mode (Alt+Shift+6)", toggleThumbnail, state.thumbnail)
-            if (config.hardwareCamId)
-                addButton(toolbox, "Robot", "Hardware webcam (Alt+Shift+7)", toggleHardware, state.hardware)
-            if (config.twitch)
-                addButton(toolbox, "OfficeChat", "Chat  (Alt+Shift+8)", toggleChat, state.chat)
-        }
+        //if (config.faceCamGreenScreen || config.hardwareCamGreenScreen) {
+        //    addSep(toolbox)
+        //    if (config.faceCamGreenScreen || config.hardwareCamGreenScreen)
+        //        addButton(toolbox, "PictureCenter", "Toggle thumbnail mode (Alt+Shift+6)", toggleThumbnail, state.thumbnail)
+            //if (config.hardwareCamId)
+            //    addButton(toolbox, "Robot", "Hardware webcam (Alt+Shift+7)", toggleHardware, state.hardware)
+            //if (config.twitch)
+            //    addButton(toolbox, "OfficeChat", "Chat  (Alt+Shift+8)", toggleChat, state.chat)
+        //}
 
         if (config.extraSites && config.extraSites.length) {
             addSep(toolbox);
@@ -229,6 +232,7 @@
                 addButton(toolbox, "Record2", "Start recording", startRecording)
         }
 
+        addSep(toolbox)
         addButton(toolbox, "Settings", "Show settings", toggleSettings);
 
         function addSep(container) {
@@ -312,14 +316,21 @@
     function setScene(scene) {
         tickEvent("streamer.scene", { scene: scene });
         const config = readConfig();
-        const lastScene = state.sceneIndex;
-        const sceneIndex = scenes.indexOf(`${scene}scene`);
+        const lastSceneIndex = state.sceneIndex;
+        let sceneIndex = scenes.indexOf(`${scene}scene`);
+
+        // click on countdown from countdown exits to chat
+        if (sceneIndex === COUNTDOWN_SCENE_INDEX && lastSceneIndex === sceneIndex) {
+            sceneIndex = CHAT_SCENE_INDEX
+            scene = "chat"
+        }
+
         if (state.sceneIndex !== sceneIndex) {
             state.sceneIndex = scenes.indexOf(`${scene}scene`);
             resetTransition(facecamlabel, "fadeout")
             resetTransition(hardwarecamlabel, "fadeout")
         }
-        if (scene === "countdown") {
+        if (sceneIndex === COUNTDOWN_SCENE_INDEX) {
             startCountdown(300000);
             if (config.endVideo) {
                 endvideo.classList.remove("hidden");
@@ -330,7 +341,7 @@
             }
         } else {
             stopCountdown();
-            if (lastScene == COUNTDOWN_SCENE_INDEX && config.startVideo) {
+            if (lastSceneIndex == COUNTDOWN_SCENE_INDEX && config.startVideo) {
                 startvideo.classList.remove("hidden");
                 startvideo.onended = () => {
                     startvideo.classList.add("hidden");
@@ -696,6 +707,13 @@ color: white;
 #title {
 background: ${primary};
 }
+#countdown {
+    color: ${primary};
+    text-shadow: -3px 3px 1px #fff,
+    3px 3px 1px #fff,
+    3px -3px 1px #fff,
+    -3px -3px 1px #fff;
+}
 `
         const faceCamFilter = camFilter(config.faceCamFilter)
         if (faceCamFilter)
@@ -902,10 +920,14 @@ background-image: url(${config.backgroundImage});
         facecam.parentElement.onclick = () => onClick(facecam.parentElement);
         hardwarecam.parentElement.onclick = () => onClick(hardwarecam.parentElement);
 
+        const facecamchatscenebtn = document.getElementById("facecamchatscenebtn")
+        facecamchatscenebtn.onclick = showChat
+        const hardwarecamchatscenebtn = document.getElementById("hardwarecamchatscenebtn")
+        hardwarecamchatscenebtn.onclick = showChat
         const facecamchatbtn = document.getElementById("facecamchatbtn")
-        facecamchatbtn.onclick = showChat
+        facecamchatbtn.onclick = toggleChat
         const hardwarecamchatbtn = document.getElementById("hardwarecamchatbtn")
-        hardwarecamchatbtn.onclick = showChat
+        hardwarecamchatbtn.onclick = toggleChat
         const facecamleftbtn = document.getElementById("facecamleftbtn")
         facecamleftbtn.onclick = showLeft
         const hardwarecamleftbtn = document.getElementById("hardwarecamleftbtn")
@@ -914,6 +936,14 @@ background-image: url(${config.backgroundImage});
         facecamrightbtn.onclick = showRight
         const hardwarecamrightbtn = document.getElementById("hardwarecamrightbtn")
         hardwarecamrightbtn.onclick = showRight
+        const facecamhardwarebtn = document.getElementById("facecamhardwarebtn")
+        facecamhardwarebtn.onclick = toggleHardware
+        const hardwarecamhardwarebtn = document.getElementById("hardwarecamhardwarebtn")
+        hardwarecamhardwarebtn.onclick = toggleHardware
+        const facecamthumbnailbtn = document.getElementById("facecamthumbnailbtn")
+        facecamthumbnailbtn.onclick = toggleThumbnail
+        const hardwarecamthumbnailbtn = document.getElementById("hardwarecamthumbnailbtn")
+        hardwarecamthumbnailbtn.onclick = toggleThumbnail
 
         function swapLeftRight(e) {
             tickEvent("streamer.swap.leftright", undefined, { interactiveConsent: true })
@@ -993,7 +1023,8 @@ background-image: url(${config.backgroundImage});
 
     function initResize() {
         function update() {
-            const text =  `(${window.innerWidth}x${window.innerHeight})`
+            const el = document.firstElementChild;
+            const text =  `(${el.clientWidth}x${el.clientHeight})`
             const els = document.getElementsByClassName("screensize")
             for(let i = 0; i < els.length; ++i)
                 els[i].innerText = text

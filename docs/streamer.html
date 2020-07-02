@@ -204,6 +204,12 @@ Use https://uifabricicons.azurewebsites.net/
             bottom: 1%;
         }
 
+        #menucontainer {
+            position: absolute;
+            right: 1%;
+            top: 1%;
+        }
+
         .icons {
             position: relative;
             left: -50%;
@@ -383,7 +389,10 @@ title, countdown
             font-size: 12vw;
             color: white;
             opacity: 0;
-            text-shadow: black 2px 2px 1px;
+            text-shadow: -2px 2px 0 #555,
+                2px 2px 0 #555,
+                2px -2px 0 #555,
+                -2px -2px 0 #555;
         }
 
         body.screenshoting #countdown {
@@ -664,6 +673,14 @@ Settings
             width: 100%;
         }
 
+        body.thumbnail .facecam video,
+        body.thumbnail .hardwarecam video,
+        body.thumbnail .facecam canvas,
+        body.thumbnail .hardwarecam canvas
+        {
+            transform: scale(-1, 1);
+        }
+
         .videolabel {
             display: none;
             position: absolute;
@@ -693,47 +710,72 @@ Settings
         }
 
         .videobtn i {
-            opacity: 0.7;
             color: black;
             background: white;
             border-radius: 50%;
             padding: 1rem;
         }
         .videobtn:hover {
-            opacity: 1 !important;
-            color: #bbb;
-            transform: scale(1.1);
+            opacity: 0.95 !important;
+            color: #aaa;
+            transform: scale(1.1) rotate(4deg);
         }
-        .videochatbtn {
-            left: calc(50% - 1rem);
+        .videochatscenebtn {
+            left: calc(50% - 2rem);
             top: 4%;
         }
-        .videoleftbtn {
+        .videohardwarebtn {
+            right: 4%;
+            top: 4%;
+        }
+        .videochatbtn {
+            left: 4%;
+            top: 4%;
+        }
+        .videoleftscenebtn {
             left: 4%;
             top: 50%;
         }
-        .videorightbtn {
+        .videorightscenebtn {
             right: 4%;
             top: 50%;
+        }
+        .videothumbnailbtn {
+            left: calc(50% - 2rem);
+            bottom: 4%;
+        }
+        body.thumbnail .videothumbnailbtn {
+            bottom: 30%;
         }
 
         .cam:hover .videobtn {
             opacity: 0.8;
         }
 
-        body.chatscene .videochatbtn {
+        body.chatscene .videochatscenebtn {
+            opacity: 0 !important;
+        }
+        body.chatscene .videothumbnailbtn {
+            opacity: 0 !important;
+        }
+        body.leftscene .videoleftscenebtn {
             opacity: 0 !important;
         }
 
-        body.leftscene .videoleftbtn {
-            opacity: 0 !important;
-        }
-
-        body.rightscene .videorightbtn {
+        body.rightscene .videorightscenebtn {
             opacity: 0 !important;
         }
 
         body.countdownscene .videobtn {
+            opacity: 0 !important;
+        }
+        body:not(.hashardwarecam) .videohardwarebtn {
+            opacity: 0 !important;
+        }
+        body:not(.haschat) .videochatbtn {
+            opacity: 0 !important;
+        }
+        body:not(.hasthumbnail) .videothumbnailbtn {
             opacity: 0 !important;
         }
 
@@ -1300,30 +1342,48 @@ Settings
         <div role="button" class="box animated clickeable cam facecam" id="facecam">
             <video autoplay playsinline id="facecamvideo"></video>
             <canvas id="facecamvideoserious" class="videocanvas"></canvas>
-            <div id="facecamchatbtn" title="Go to chat scene" class="videobtn videochatbtn animated">
+            <div class="videolabel" id="facecamlabel"></div>
+            <div id="facecamchatscenebtn" title="Go to chat scene" class="videobtn videochatscenebtn animated">
                 <i class="ms-Icon ms-Icon--Contact"></i>
             </div>
-            <div id="facecamleftbtn" title="Move camera left" class="videobtn videoleftbtn animated">
+            <div id="facecamhardwarebtn" title="Show/hide document camera" class="videobtn videohardwarebtn animated">
+                <i class="ms-Icon ms-Icon--Robot"></i>
+            </div>
+            <div id="facecamchatbtn" title="Show/hide chat" class="videobtn videochatbtn animated">
+                <i class="ms-Icon ms-Icon--OfficeChat"></i>
+            </div>
+            <div id="facecamleftbtn" title="Move camera left" class="videobtn videoleftscenebtn animated">
                 <i class="ms-Icon ms-Icon--OpenPane"></i>
             </div>
-            <div id="facecamrightbtn" title="Move camera right" class="videobtn videorightbtn animated">
+            <div id="facecamrightbtn" title="Move camera right" class="videobtn videorightscenebtn animated">
                 <i class="ms-Icon ms-Icon--OpenPaneMirrored"></i>
             </div>
-            <div class="videolabel" id="facecamlabel"></div>
+            <div id="facecamthumbnailbtn" title="Toggle thumbnail mode" class="videobtn videothumbnailbtn animated">
+                <i class="ms-Icon ms-Icon--PictureCenter"></i>
+            </div>
         </div>
         <div role="button" class="box animated clickeable cam hardwarecam" id="hardwarecam">
             <video autoplay playsinline id="hardwarecamvideo"></video>
             <canvas id="hardwarecamvideoserious" width="640" height="480" class="videocanvas"></canvas>
-            <div id="hardwarecamchatbtn" title="Go to chat scene" class="videobtn videochatbtn animated">
+            <div class="videolabel" id="hardwarecamlabel"></div>
+            <div id="hardwarecamchatscenebtn" title="Go to chat scene" class="videobtn videochatscenebtn animated">
                 <i class="ms-Icon ms-Icon--Contact"></i>
             </div>
-            <div id="hardwarecamleftbtn" title="Move camera left" class="videobtn videoleftbtn animated">
+            <div id="hardwarecamhardwarebtn" title="Show/hide document camera" class="videobtn videohardwarebtn animated">
+                <i class="ms-Icon ms-Icon--Robot"></i>
+            </div>
+            <div id="hardwarecamchatbtn" title="Show/hide chat" class="videobtn videochatbtn animated">
+                <i class="ms-Icon ms-Icon--OfficeChat"></i>
+            </div>
+            <div id="hardwarecamleftbtn" title="Move camera left" class="videobtn videoleftscenebtn animated">
                 <i class="ms-Icon ms-Icon--OpenPane"></i>
             </div>
-            <div id="hardwarecamrightbtn" title="Move camera right" class="videobtn videorightbtn animated">
+            <div id="hardwarecamrightbtn" title="Move camera right" class="videobtn videorightscenebtn animated">
                 <i class="ms-Icon ms-Icon--OpenPaneMirrored"></i>
             </div>
-            <div class="videolabel" id="hardwarecamlabel"></div>
+            <div id="hardwarecamthumbnailbtn" title="Toggle thumbnail mode" class="videobtn videothumbnailbtn animated">
+                <i class="ms-Icon ms-Icon--PictureCenter"></i>
+            </div>
         </div>
         <div class="box animated" id="title">title</div>
         <div class="animated" id="countdown">5:00</div>
@@ -1606,6 +1666,8 @@ Settings
         <canvas id="painttool" class="paint"></canvas>
         <div class="tools" id="toolcontainer">
             <div class="animated icons" id="paintbox"></div>
+        </div>
+        <div class="tools" id="menucontainer">
             <div class="animated icons" id="toolbox"></div>
         </div>
         <div class="box" id="intro">
