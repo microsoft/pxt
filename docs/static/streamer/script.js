@@ -554,13 +554,14 @@
             const mouse = ev.mouse;
             const head = ev.head;
             const tool = ev.tool;
+            const outline = 0.7
 
             const ctx = painttoolCtx
             ctx.clearRect(0, 0, painttool.width, painttool.height)
             ctx.save();
             if (tool == 'arrow') {
                 const p1 = mouse, p2 = head;
-                const size = painttoolCtx.lineWidth * 3;
+                const size = ctx.lineWidth * 3;
                 // Rotate the context to point along the path
                 const dx = p2.x - p1.x
                 const dy = p2.y - p1.y
@@ -568,8 +569,8 @@
                 ctx.translate(p2.x, p2.y);
                 ctx.rotate(Math.atan2(dy, dx));
 
-                const strokeStyle = painttoolCtx.strokeStyle;
-                painttoolCtx.strokeStyle = '#ffffff'
+                const strokeStyle = ctx.strokeStyle;
+                ctx.strokeStyle = '#ffffff'
                 for (let l = 0; l < 2; ++l) {
                     // line
                     ctx.beginPath();
@@ -585,14 +586,33 @@
                     ctx.moveTo(-len, 0);
                     ctx.lineTo(size - len, -size / 1.61);
                     ctx.stroke();
-                    painttoolCtx.lineWidth *= 0.7;
-                    painttoolCtx.strokeStyle = strokeStyle;
+                    ctx.lineWidth *= outline;
+                    ctx.strokeStyle = strokeStyle;
                 }
             } else if (tool == 'rect') {
+                // out white contour
+                ctx.beginPath();
+                const lineWidth = ctx.lineWidth
+                const strokeStyle = ctx.strokeStyle;
+                ctx.lineWidth *= 1/outline;
+                ctx.strokeStyle = '#ffffff'
+                ctx.rect(head.x, head.y, mouse.x - head.x, mouse.y - head.y)
+                ctx.stroke()
+                ctx.lineWidth = lineWidth
+                ctx.strokeStyle = strokeStyle
+                // inside
                 ctx.beginPath();
                 ctx.rect(head.x, head.y, mouse.x - head.x, mouse.y - head.y)
                 ctx.stroke()
             } else if (tool == 'pen' || tool == 'highlight') {
+                const lineWidth = ctx.lineWidth
+                const strokeStyle = ctx.strokeStyle;
+                ctx.lineWidth *= 1/outline;
+                ctx.strokeStyle = '#ffffff'
+                ctx.lineTo(mouse.x, mouse.y);
+                ctx.stroke()
+                ctx.lineWidth = lineWidth
+                ctx.strokeStyle = strokeStyle
                 ctx.lineTo(mouse.x, mouse.y);
                 ctx.stroke();
             } else if (tool == 'emoji') {
