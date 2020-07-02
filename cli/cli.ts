@@ -992,6 +992,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "runUrl": opts.localDir + "run.html",
             "docsUrl": opts.localDir + "docs.html",
             "multiUrl": opts.localDir + "multi.html",
+            "asseteditorUrl": opts.localDir + "asseteditor.html",
             "isStatic": true,
         }
         const targetImagePaths = targetImages.map(k =>

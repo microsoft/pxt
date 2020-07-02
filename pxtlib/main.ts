@@ -394,6 +394,7 @@ namespace pxt {
         runUrl?: string; // "/beta---run"
         docsUrl?: string; // "/beta---docs"
         multiUrl?: string; // "/beta---multi"
+        asseteditorUrl?: string; // "/beta---asseteditor"
         isStatic?: boolean;
         verprefix?: string; // "v1"
     }

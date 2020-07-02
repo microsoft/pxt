@@ -358,8 +358,8 @@ const browserifyWebapp = () => process.env.PXT_ENV == 'production' ?
     exec('node node_modules/browserify/bin/cmd built/webapp/src/app.js -o built/web/main.js --debug')
 
 const browserifyAssetEditor = () => process.env.PXT_ENV == 'production' ?
-    exec('node node_modules/browserify/bin/cmd ./built/webapp/src/assetEditor.js -g [ envify --NODE_ENV production ] -g uglifyify -o ./built/web/mainAsset.js') :
-    exec('node node_modules/browserify/bin/cmd built/webapp/src/assetEditor.js -o built/web/mainAsset.js --debug')
+    exec('node node_modules/browserify/bin/cmd ./built/webapp/src/assetEditor.js -g [ envify --NODE_ENV production ] -g uglifyify -o ./built/web/pxtasseteditor.js') :
+    exec('node node_modules/browserify/bin/cmd built/webapp/src/assetEditor.js -o built/web/pxtasseteditor.js --debug')
 
 const buildSVGIcons = () => {
     let webfontsGenerator = require('webfonts-generator')
