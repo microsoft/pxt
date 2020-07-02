@@ -707,7 +707,7 @@ Settings
             color: #bbb;
             transform: scale(1.1);
         }
-        .videochatbtn {
+        .videochatscenebtn {
             left: calc(50% - 1rem);
             top: 4%;
         }
@@ -715,11 +715,15 @@ Settings
             right: 4%;
             top: 4%;
         }
-        .videoleftbtn {
+        .videochatbtn {
+            left: 4%;
+            top: 4%;
+        }
+        .videoleftscenebtn {
             left: 4%;
             top: 50%;
         }
-        .videorightbtn {
+        .videorightscenebtn {
             right: 4%;
             top: 50%;
         }
@@ -728,15 +732,15 @@ Settings
             opacity: 0.8;
         }
 
-        body.chatscene .videochatbtn {
+        body.chatscene .videochatscenebtn {
             opacity: 0 !important;
         }
 
-        body.leftscene .videoleftbtn {
+        body.leftscene .videoleftscenebtn {
             opacity: 0 !important;
         }
 
-        body.rightscene .videorightbtn {
+        body.rightscene .videorightscenebtn {
             opacity: 0 !important;
         }
 
@@ -744,6 +748,9 @@ Settings
             opacity: 0 !important;
         }
         body:not(.hashardwarecam) .videohardwarebtn {
+            opacity: 0 !important;
+        }
+        body:not(.haschat) .videochatbtn {
             opacity: 0 !important;
         }
 
@@ -1310,16 +1317,19 @@ Settings
         <div role="button" class="box animated clickeable cam facecam" id="facecam">
             <video autoplay playsinline id="facecamvideo"></video>
             <canvas id="facecamvideoserious" class="videocanvas"></canvas>
-            <div id="facecamchatbtn" title="Go to chat scene" class="videobtn videochatbtn animated">
+            <div id="facecamchatscenebtn" title="Go to chat scene" class="videobtn videochatscenebtn animated">
                 <i class="ms-Icon ms-Icon--Contact"></i>
             </div>
             <div id="facecamhardwarebtn" title="Show/hide document camera" class="videobtn videohardwarebtn animated">
                 <i class="ms-Icon ms-Icon--Robot"></i>
             </div>
-            <div id="facecamleftbtn" title="Move camera left" class="videobtn videoleftbtn animated">
+            <div id="facecamchatbtn" title="Show/hide chat" class="videobtn videochatbtn animated">
+                <i class="ms-Icon ms-Icon--OfficeChat"></i>
+            </div>
+            <div id="facecamleftbtn" title="Move camera left" class="videobtn videoleftscenebtn animated">
                 <i class="ms-Icon ms-Icon--OpenPane"></i>
             </div>
-            <div id="facecamrightbtn" title="Move camera right" class="videobtn videorightbtn animated">
+            <div id="facecamrightbtn" title="Move camera right" class="videobtn videorightscenebtn animated">
                 <i class="ms-Icon ms-Icon--OpenPaneMirrored"></i>
             </div>
             <div class="videolabel" id="facecamlabel"></div>
@@ -1327,16 +1337,19 @@ Settings
         <div role="button" class="box animated clickeable cam hardwarecam" id="hardwarecam">
             <video autoplay playsinline id="hardwarecamvideo"></video>
             <canvas id="hardwarecamvideoserious" width="640" height="480" class="videocanvas"></canvas>
-            <div id="hardwarecamchatbtn" title="Go to chat scene" class="videobtn videochatbtn animated">
+            <div id="hardwarecamchatscenebtn" title="Go to chat scene" class="videobtn videochatscenebtn animated">
                 <i class="ms-Icon ms-Icon--Contact"></i>
             </div>
             <div id="hardwarecamhardwarebtn" title="Show/hide document camera" class="videobtn videohardwarebtn animated">
                 <i class="ms-Icon ms-Icon--Robot"></i>
             </div>
-            <div id="hardwarecamleftbtn" title="Move camera left" class="videobtn videoleftbtn animated">
+            <div id="hardwarecamchatbtn" title="Show/hide chat" class="videobtn videochatbtn animated">
+                <i class="ms-Icon ms-Icon--OfficeChat"></i>
+            </div>
+            <div id="hardwarecamleftbtn" title="Move camera left" class="videobtn videoleftscenebtn animated">
                 <i class="ms-Icon ms-Icon--OpenPane"></i>
             </div>
-            <div id="hardwarecamrightbtn" title="Move camera right" class="videobtn videorightbtn animated">
+            <div id="hardwarecamrightbtn" title="Move camera right" class="videobtn videorightscenebtn animated">
                 <i class="ms-Icon ms-Icon--OpenPaneMirrored"></i>
             </div>
             <div class="videolabel" id="hardwarecamlabel"></div>

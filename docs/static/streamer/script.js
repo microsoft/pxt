@@ -159,7 +159,8 @@
             config.backgroundVideo ? "backgroundvideo" : config.backgroundImage && "parallax",
             config.countdownEditor && "countdowneditor",
             config.countdownEditorBlur && "countdowneditorblur",
-            config.fullScreenEditor && !config.multiEditor && "slim"
+            config.fullScreenEditor && !config.multiEditor && "slim",
+            config.twitch && "haschat"
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
             showSettings();
@@ -203,14 +204,14 @@
         //addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
         //addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
         addSceneButton("Timer", "Show countdown (Alt+Shift+5)", "countdown")
-        if (config.hardwareCamId || config.twitch || config.faceCamGreenScreen || config.hardwareCamGreenScreen) {
+        if (config.faceCamGreenScreen || config.hardwareCamGreenScreen) {
             addSep(toolbox)
             if (config.faceCamGreenScreen || config.hardwareCamGreenScreen)
                 addButton(toolbox, "PictureCenter", "Toggle thumbnail mode (Alt+Shift+6)", toggleThumbnail, state.thumbnail)
             //if (config.hardwareCamId)
             //    addButton(toolbox, "Robot", "Hardware webcam (Alt+Shift+7)", toggleHardware, state.hardware)
-            if (config.twitch)
-                addButton(toolbox, "OfficeChat", "Chat  (Alt+Shift+8)", toggleChat, state.chat)
+            //if (config.twitch)
+            //    addButton(toolbox, "OfficeChat", "Chat  (Alt+Shift+8)", toggleChat, state.chat)
         }
 
         if (config.extraSites && config.extraSites.length) {
@@ -917,10 +918,14 @@ background-image: url(${config.backgroundImage});
         facecam.parentElement.onclick = () => onClick(facecam.parentElement);
         hardwarecam.parentElement.onclick = () => onClick(hardwarecam.parentElement);
 
+        const facecamchatscenebtn = document.getElementById("facecamchatscenebtn")
+        facecamchatscenebtn.onclick = showChat
+        const hardwarecamchatscenebtn = document.getElementById("hardwarecamchatscenebtn")
+        hardwarecamchatscenebtn.onclick = showChat
         const facecamchatbtn = document.getElementById("facecamchatbtn")
-        facecamchatbtn.onclick = showChat
+        facecamchatbtn.onclick = toggleChat
         const hardwarecamchatbtn = document.getElementById("hardwarecamchatbtn")
-        hardwarecamchatbtn.onclick = showChat
+        hardwarecamchatbtn.onclick = toggleChat
         const facecamleftbtn = document.getElementById("facecamleftbtn")
         facecamleftbtn.onclick = showLeft
         const hardwarecamleftbtn = document.getElementById("hardwarecamleftbtn")
