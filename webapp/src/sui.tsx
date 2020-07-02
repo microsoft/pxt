@@ -1350,6 +1350,7 @@ class ModalButtonElement extends data.PureComponent<ModalButton, {}> {
         return <Button
             icon={action.icon}
             text={action.label}
+            title={action.title}
             labelPosition={action.labelPosition}
             className={`approve ${action.icon ? `icon ${action.labelPosition ? action.labelPosition : 'right'} labeled` : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
             onClick={this.handleClick}
