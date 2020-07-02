@@ -160,7 +160,8 @@
             config.countdownEditor && "countdowneditor",
             config.countdownEditorBlur && "countdowneditorblur",
             config.fullScreenEditor && !config.multiEditor && "slim",
-            config.twitch && "haschat"
+            config.twitch && "haschat",
+            config.faceCamGreenScreen && "hasthumbnail"
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
             showSettings();
@@ -204,15 +205,15 @@
         //addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
         //addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
         addSceneButton("Timer", "Show countdown (Alt+Shift+5)", "countdown")
-        if (config.faceCamGreenScreen || config.hardwareCamGreenScreen) {
-            addSep(toolbox)
-            if (config.faceCamGreenScreen || config.hardwareCamGreenScreen)
-                addButton(toolbox, "PictureCenter", "Toggle thumbnail mode (Alt+Shift+6)", toggleThumbnail, state.thumbnail)
+        //if (config.faceCamGreenScreen || config.hardwareCamGreenScreen) {
+        //    addSep(toolbox)
+        //    if (config.faceCamGreenScreen || config.hardwareCamGreenScreen)
+        //        addButton(toolbox, "PictureCenter", "Toggle thumbnail mode (Alt+Shift+6)", toggleThumbnail, state.thumbnail)
             //if (config.hardwareCamId)
             //    addButton(toolbox, "Robot", "Hardware webcam (Alt+Shift+7)", toggleHardware, state.hardware)
             //if (config.twitch)
             //    addButton(toolbox, "OfficeChat", "Chat  (Alt+Shift+8)", toggleChat, state.chat)
-        }
+        //}
 
         if (config.extraSites && config.extraSites.length) {
             addSep(toolbox);
@@ -231,6 +232,7 @@
                 addButton(toolbox, "Record2", "Start recording", startRecording)
         }
 
+        addSep(toolbox)
         addButton(toolbox, "Settings", "Show settings", toggleSettings);
 
         function addSep(container) {
@@ -938,6 +940,10 @@ background-image: url(${config.backgroundImage});
         facecamhardwarebtn.onclick = toggleHardware
         const hardwarecamhardwarebtn = document.getElementById("hardwarecamhardwarebtn")
         hardwarecamhardwarebtn.onclick = toggleHardware
+        const facecamthumbnailbtn = document.getElementById("facecamthumbnailbtn")
+        facecamthumbnailbtn.onclick = toggleThumbnail
+        const hardwarecamthumbnailbtn = document.getElementById("hardwarecamthumbnailbtn")
+        hardwarecamthumbnailbtn.onclick = toggleThumbnail
 
         function swapLeftRight(e) {
             tickEvent("streamer.swap.leftright", undefined, { interactiveConsent: true })
