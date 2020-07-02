@@ -435,6 +435,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 onclick: streamer,
                 icon: 'camera',
                 loading: actionLoading,
+                title: lf("Open this project in our recording studio"),
                 disabled: recordingState != ShareRecordingState.None
             })
         }
@@ -443,7 +444,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 label: action,
                 onclick: publish,
                 icon: 'share alternate',
-                title: lf("Open this project in our recording studio"),
                 className: 'primary',
                 disabled: recordingState != ShareRecordingState.None
             })
