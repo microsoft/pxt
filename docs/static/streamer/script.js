@@ -19,7 +19,6 @@
     const painttool = document.getElementById('painttool');
     const painttoolCtx = painttool.getContext('2d');
     const recorder = document.getElementById('recorder')
-    const screensize = document.getElementById('screensize')
     const countdown = document.getElementById('countdown')
     const titleEl = document.getElementById('title')
     const subtitles = document.getElementById('subtitles')
@@ -1139,8 +1138,10 @@ background-image: url(${config.backgroundImage});
         let hideInterval;
         const speech = state.speech = new webkitSpeechRecognition();
         speech.continuous = true;
+        speech.confidence = 0.7;
         speech.maxAlternatives = 1;
-        speech.interimResults = false;
+        speech.interimResults = true;
+        let nextInterimResult = 0
         speech.onstart = () => {
             console.log("speech: started")
             state.speechRunning = true;
@@ -1163,8 +1164,31 @@ background-image: url(${config.backgroundImage});
         }
         speech.onresult = (ev) => {
             const results = ev.results;
-            console.log(results)
-            subtitles.innerText = results[ev.resultIndex][0].transcript;
+            const lastResult = results[ev.resultIndex];
+            console.log(`lastResult`, lastResult)
+            if (lastResult.isFinal) {
+                console.log(`final`)
+                subtitles.innerText = lastResult[0].transcript;
+                nextInterimResult = ev.resultIndex + 1
+            } else {
+                console.log(`not final`, results)
+                // collect the intermediate results with good quality
+                let text = ""
+                for(let i = nextInterimResult; i < results.length; ++i) {
+                    if (!results[i].isFinal) {
+                        const alt = results[i][0]
+                        if (alt.confidence < 0.8) {
+                            console.log(alt)
+                            // poor quality detection, stop
+                            break;
+                        } else {
+                            text += alt.transcript
+                        }
+                    }
+                }
+                if (text)
+                    subtitles.innerText = text
+            }
             show();
             if (hideInterval) clearTimeout(hideInterval)
             hideInterval = setTimeout(hide, 10000);
