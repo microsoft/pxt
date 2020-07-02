@@ -409,6 +409,13 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 });
             this.forceUpdate();
         }
+        const streamer = () => {
+            pxt.tickEvent("menu.embed.streamer", undefined, { interactiveConsent: true });
+            this.setState({ sharingError: undefined, loading: true });
+            const streamerUrl = `https://makecode.com/streamer`
+            window.location.href =
+                `${targetTheme.openInStreamer}#editor:${pxt.appTarget.id}:workspace:${header.id}`
+        }
 
         const formats = [
             { mode: ShareMode.Code, label: lf("Code") },
@@ -418,6 +425,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
         const action = !ready ? lf("Publish project") : undefined;
         const actionLoading = loading && !this.state.sharingError;
+        const streamerAction = action && targetTheme.openInStreamer && !pxt.BrowserUtils.isSafari()
+            ? lf("Record video") : undefined;
 
         let actions: sui.ModalButton[] = [];
         if (action) {
@@ -427,6 +436,15 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 icon: 'share alternate',
                 loading: actionLoading,
                 className: 'primary',
+                disabled: recordingState != ShareRecordingState.None
+            })
+        }
+        if (streamerAction) {
+            actions.push({
+                label: streamerAction,
+                onclick: streamer,
+                icon: 'camera',
+                loading: actionLoading,
                 disabled: recordingState != ShareRecordingState.None
             })
         }

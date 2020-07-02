@@ -390,7 +390,7 @@ declare namespace pxt {
         openProjectNewDependentTab?: boolean; // allow opening project in a new tab -- connected
         tutorialExplicitHints?: boolean; // allow use explicit hints
         errorList?: boolean; // error list experiment
-        openInStreamer?: boolean;
+        openInStreamer?: string; // url of the streamer interface
     }
 
     interface SocialOptions {
