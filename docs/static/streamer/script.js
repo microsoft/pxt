@@ -1023,7 +1023,8 @@ background-image: url(${config.backgroundImage});
 
     function initResize() {
         function update() {
-            const text =  `(${window.innerWidth}x${window.innerHeight})`
+            const el = document.firstElementChild;
+            const text =  `(${el.clientWidth}x${el.clientHeight})`
             const els = document.getElementsByClassName("screensize")
             for(let i = 0; i < els.length; ++i)
                 els[i].innerText = text
