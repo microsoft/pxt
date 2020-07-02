@@ -19,13 +19,13 @@
     const painttool = document.getElementById('painttool');
     const painttoolCtx = painttool.getContext('2d');
     const recorder = document.getElementById('recorder')
-    const screensize = document.getElementById('screensize')
     const countdown = document.getElementById('countdown')
     const titleEl = document.getElementById('title')
     const subtitles = document.getElementById('subtitles')
     const startvideo = document.getElementById('startvideo');
     const endvideo = document.getElementById('endvideo');
     const backgroundvideo = document.getElementById('backgroundvideo')
+    const intro = document.getElementById('intro')
 
     const frames = [editor, editor2];
     const paintColors = ["#ffe135", "#00d9ff", "#cf1fdb", "#ee0000"];
@@ -185,7 +185,7 @@
         addSep(paintbox)
         emojis.forEach(addEmojiButton);
         addSep(paintbox)
-        addButton(paintbox, "WhiteBoardApp32", "Paint screen in white", () => pushPaintEvent("whiteboard"))
+        addWhiteboardButton(paintbox)
         addButton(paintbox, "EraseTool", "Undo last drawing", popPaintEvent)
         addSep(paintbox)
         addButton(paintbox, "ChromeClose", "Exit paint mode", stopPaint)
@@ -290,6 +290,14 @@
         function addSceneButton(icon, title, scene) {
             const sceneIndex = scenes.indexOf(`${scene}scene`)
             addButton(toolbox, icon, title, () => setScene(scene), state.sceneIndex == sceneIndex)
+        }
+
+        function addWhiteboardButton(paintbox) {
+            addButton(paintbox, "WhiteBoardApp32", "Paint screen in white", () => {
+                if(!state.paint)
+                    setPaintTool("pen")
+                pushPaintEvent("whiteboard")
+            })
         }
     }
 
@@ -514,7 +522,7 @@
         function whiteboard() {
             paintCtx.save()
             paintCtx.beginPath();
-            paintCtx.fillStyle = "rgba(255, 255, 255, 0.9)"
+            paintCtx.fillStyle = "rgba(255, 255, 255, 0.95)"
             paintCtx.rect(0, 0, paint.width, paint.height)
             paintCtx.fill()
             paintCtx.restore()
@@ -546,13 +554,14 @@
             const mouse = ev.mouse;
             const head = ev.head;
             const tool = ev.tool;
+            const outline = 0.7
 
             const ctx = painttoolCtx
             ctx.clearRect(0, 0, painttool.width, painttool.height)
             ctx.save();
             if (tool == 'arrow') {
                 const p1 = mouse, p2 = head;
-                const size = painttoolCtx.lineWidth * 3;
+                const size = ctx.lineWidth * 3;
                 // Rotate the context to point along the path
                 const dx = p2.x - p1.x
                 const dy = p2.y - p1.y
@@ -560,8 +569,8 @@
                 ctx.translate(p2.x, p2.y);
                 ctx.rotate(Math.atan2(dy, dx));
 
-                const strokeStyle = painttoolCtx.strokeStyle;
-                painttoolCtx.strokeStyle = '#ffffff'
+                const strokeStyle = ctx.strokeStyle;
+                ctx.strokeStyle = '#ffffff'
                 for (let l = 0; l < 2; ++l) {
                     // line
                     ctx.beginPath();
@@ -577,14 +586,33 @@
                     ctx.moveTo(-len, 0);
                     ctx.lineTo(size - len, -size / 1.61);
                     ctx.stroke();
-                    painttoolCtx.lineWidth *= 0.7;
-                    painttoolCtx.strokeStyle = strokeStyle;
+                    ctx.lineWidth *= outline;
+                    ctx.strokeStyle = strokeStyle;
                 }
             } else if (tool == 'rect') {
+                // out white contour
+                ctx.beginPath();
+                const lineWidth = ctx.lineWidth
+                const strokeStyle = ctx.strokeStyle;
+                ctx.lineWidth *= 1/outline;
+                ctx.strokeStyle = '#ffffff'
+                ctx.rect(head.x, head.y, mouse.x - head.x, mouse.y - head.y)
+                ctx.stroke()
+                ctx.lineWidth = lineWidth
+                ctx.strokeStyle = strokeStyle
+                // inside
                 ctx.beginPath();
                 ctx.rect(head.x, head.y, mouse.x - head.x, mouse.y - head.y)
                 ctx.stroke()
             } else if (tool == 'pen' || tool == 'highlight') {
+                const lineWidth = ctx.lineWidth
+                const strokeStyle = ctx.strokeStyle;
+                ctx.lineWidth *= 1/outline;
+                ctx.strokeStyle = '#ffffff'
+                ctx.lineTo(mouse.x, mouse.y);
+                ctx.stroke()
+                ctx.lineWidth = lineWidth
+                ctx.strokeStyle = strokeStyle
                 ctx.lineTo(mouse.x, mouse.y);
                 ctx.stroke();
             } else if (tool == 'emoji') {
@@ -606,7 +634,7 @@
         }
     }
 
-    function loadEditor() {
+    function loadEditor(hash) {
         const config = readConfig();
         // update first editor
         const editorConfig = editorConfigs[config.editor];
@@ -619,6 +647,8 @@
         let url = `${editorConfig.url}?editorLayout=ide&nosandbox=1`;
         if (config.multiEditor)
             url += `&nestededitorsim=1`;
+        if (hash)
+            url += `#${hash}`
         editor.src = url;
         if (config.multiEditor) {
             if (!editor2.parentElement)
@@ -872,6 +902,19 @@ background-image: url(${config.backgroundImage});
         facecam.parentElement.onclick = () => onClick(facecam.parentElement);
         hardwarecam.parentElement.onclick = () => onClick(hardwarecam.parentElement);
 
+        const facecamchatbtn = document.getElementById("facecamchatbtn")
+        facecamchatbtn.onclick = showChat
+        const hardwarecamchatbtn = document.getElementById("hardwarecamchatbtn")
+        hardwarecamchatbtn.onclick = showChat
+        const facecamleftbtn = document.getElementById("facecamleftbtn")
+        facecamleftbtn.onclick = showLeft
+        const hardwarecamleftbtn = document.getElementById("hardwarecamleftbtn")
+        hardwarecamleftbtn.onclick = showLeft
+        const facecamrightbtn = document.getElementById("facecamrightbtn")
+        facecamrightbtn.onclick = showRight
+        const hardwarecamrightbtn = document.getElementById("hardwarecamrightbtn")
+        hardwarecamrightbtn.onclick = showRight
+
         function swapLeftRight(e) {
             tickEvent("streamer.swap.leftright", undefined, { interactiveConsent: true })
             if (state.sceneIndex == LEFT_SCENE_INDEX)
@@ -902,6 +945,24 @@ background-image: url(${config.backgroundImage});
             }
         }
 
+        function showChat(e) {
+            tickEvent("streamer.videochatbtn", undefined, { interactiveConsent: true })
+            stopEvent(e)
+            setScene("chat")
+        }
+
+        function showLeft(e) {
+            tickEvent("streamer.videoleftbtn", undefined, { interactiveConsent: true })
+            stopEvent(e)
+            setScene("left")
+        }
+
+        function showRight(e) {
+            tickEvent("streamer.videorightbtn", undefined, { interactiveConsent: true })
+            stopEvent(e)
+            setScene("right")
+        }
+
         function onClick(el) {
             const isfacecam = el.classList.contains("facecam");
             if (!isfacecam && state.hardware)
@@ -910,14 +971,23 @@ background-image: url(${config.backgroundImage});
                 swapLeftRight();
         }
 
+        const playpip = document.getElementById("playpip");
         const introvideo = document.getElementById("introvideo");
-        introvideo.onclick = function (e) {
-            tickEvent("streamer.introvideo", undefined, { interactiveConsent: true })
+        playpip.onclick = function (e) {
+            tickEvent("streamer.intro.video", undefined, { interactiveConsent: true })
+            intro.classList.add('hidden')
             stopEvent(e)
             loadSettings()
             hideSettings()
             introvideo.requestPictureInPicture()
                 .then(() => introvideo.play())
+        }
+        const skippip = document.getElementById("skippip")
+        skippip.onclick = function (e) {
+            tickEvent("streamer.intro.skip", undefined, { interactiveConsent: true })
+            intro.remove()
+            loadSettings()
+            hideSettings()
         }
     }
 
@@ -957,12 +1027,16 @@ background-image: url(${config.backgroundImage});
         const hash = window.location.hash;
         const parts = (hash || "").replace(/^#/, '').split('|');
         parts.forEach(part => {
-            const m = /^([^:]+):(.+)$/.exec(part);
-            if (m) {
-                const action = m[1];
-                const arg = m[2];
+            const frags = part.split(':')
+            if (frags.length >= 2) {
+                const action = frags.shift();
+                const arg = frags.shift();
+                const slug = frags.join(':')
                 switch (action) {
-                    case "editor": setEditor(arg); break;
+                    case "editor": {
+                        intro.remove(); // always hide
+                        setEditor(arg, slug); break;
+                    }
                     case "doc": {
                         // only same domain as editor
                         const config = readConfig();
@@ -1111,8 +1185,10 @@ background-image: url(${config.backgroundImage});
         let hideInterval;
         const speech = state.speech = new webkitSpeechRecognition();
         speech.continuous = true;
+        speech.confidence = 0.7;
         speech.maxAlternatives = 1;
-        speech.interimResults = false;
+        speech.interimResults = true;
+        let nextInterimResult = 0
         speech.onstart = () => {
             console.log("speech: started")
             state.speechRunning = true;
@@ -1135,8 +1211,31 @@ background-image: url(${config.backgroundImage});
         }
         speech.onresult = (ev) => {
             const results = ev.results;
-            console.log(results)
-            subtitles.innerText = results[ev.resultIndex][0].transcript;
+            const lastResult = results[ev.resultIndex];
+            //console.log(`lastResult`, lastResult)
+            if (lastResult.isFinal) {
+                //console.log(`final`)
+                subtitles.innerText = lastResult[0].transcript;
+                nextInterimResult = ev.resultIndex + 1
+            } else {
+                //console.log(`not final`, results)
+                // collect the intermediate results with good quality
+                let text = ""
+                for(let i = nextInterimResult; i < results.length; ++i) {
+                    if (!results[i].isFinal) {
+                        const alt = results[i][0]
+                        if (alt.confidence < 0.8) {
+                            //console.log(alt)
+                            // poor quality detection, stop
+                            break;
+                        } else {
+                            text += alt.transcript
+                        }
+                    }
+                }
+                if (text)
+                    subtitles.innerText = text
+            }
             show();
             if (hideInterval) clearTimeout(hideInterval)
             hideInterval = setTimeout(hide, 10000);
@@ -1234,13 +1333,15 @@ background-image: url(${config.backgroundImage});
     }
 
     async function startRecording() {
+        tickEvent('recorder.prepare')
         const config = readConfig();
         state.recording = undefined;
+        let audioCtx;
         const stream = await getDisplayStream(true);
         try {
             state.micError = false;
             const audioStream = await startMicrophone();
-            const audioCtx = new AudioContext();
+            audioCtx = new AudioContext();
             const audioSource = audioCtx.createMediaStreamSource(audioStream);
             const delay = audioCtx.createDelay(2);
             delay.delayTime.value = (config.micDelay || 0) / 1000;
@@ -1263,6 +1364,7 @@ background-image: url(${config.backgroundImage});
 
         recorder.classList.remove('hidden')
         recorder.onclick = () => {
+            tickEvent('recorder.start')
             recorder.classList.add('hidden')
             mediaRecorder.start();
         }
@@ -1276,13 +1378,18 @@ background-image: url(${config.backgroundImage});
         render();
 
         function download() {
+            tickEvent('recorder.download')
+            console.load(`downloading recorded video`)
             // makesure to close all streams
             recorder.classList.add('hidden')
             try {
+                if (audioCtx)
                 audioCtx.close();
                 stream.getVideoTracks().forEach(track => track.stop())
                 stream.getAudioTracks().forEach(track => track.stop())
-            } catch (e) { }
+            } catch (e) { 
+                console.log(e)
+            }
 
             state.recording = undefined;
 
@@ -1846,16 +1953,14 @@ background-image: url(${config.backgroundImage});
 
     }
 
-    function setEditor(editor) {
+    function setEditor(editor,hash) {
         const editorConfig = editorConfigs[editor];
         if (!editorConfig) return;
 
         const config = readConfig();
         config.editor = editor;
-        if (editorConfig)
-            config.title = editorConfig.title || `MakeCode ${editorConfig.name}`
         saveConfig(config);
-        loadEditor();
+        loadEditor(hash);
         loadSettings();
         loadSocial();
         render()

@@ -229,7 +229,7 @@ Use https://uifabricicons.azurewebsites.net/
             transform: opacity 0.1s;
         }
 
-        .icons:hover {
+        .tools:hover>.icons {
             opacity: 95%;
             background: rgba(255, 255, 255, 0.8)
         }
@@ -300,14 +300,40 @@ Use https://uifabricicons.azurewebsites.net/
             filter: blur(0.2vw);
         }
 
+        /** intro **/
+        #intro {
+            position: absolute;
+            left: 15%;
+            top: 15%;
+            z-index: 1000;
+            background-color: #ccc;
+            padding: 1vw;
+        }
+
         .pip {
+            cursor: pointer;
             padding: 0.5vw;
             margin-bottom: 1vw;
         }
 
         .pip video {
-            width: 10vw;
+            width: 60vw;
             display: block;
+        }
+
+        #takethetour {
+            position: absolute;
+            left: 15vw;
+            top: 50%;
+            text-align: center;
+            font-size: 5vw;
+            color: red;
+            font-weight: bold;
+            text-shadow: -3px 3px 0 #fff,
+                3px 3px 0 #fff,
+                3px -3px 0 #fff,
+                -3px -3px 0 #fff;
+            transform: rotateZ(-30deg);
         }
 
         /** video */
@@ -383,6 +409,7 @@ Recorder
         }
 
         .screensize {
+            margin-left: 0.5rem;
             font-size: 80%;
         }
 
@@ -403,15 +430,15 @@ Settings
             padding: 1vw;
         }
 
-        #settings .header {
+        .header {
             height: 3rem;
         }
 
-        #settings .header h2 {
+        .header h2 {
             margin-top: 0;
         }
 
-        #settings .contents {
+        .contents {
             height: calc(100% - 3rem);
             overflow-y: auto;
         }
@@ -425,9 +452,14 @@ Settings
             margin-right: 1vw;
         }
 
-        #settings .section div.field,
+        #settings .section div.field {
+            display: none;
+            margin: 0 0 0.5rem 0;
+        }
+
         #settings .section h4 {
             display: none;
+            margin: 0.5rem 0 0.5rem 0;
         }
 
         #settings .section.expanded div.field,
@@ -437,16 +469,6 @@ Settings
 
         #settings .section h3 {
             cursor: pointer;
-        }
-
-        #settings .section h3::before {
-            content: "► ";
-            font-size: 75%;
-            opacity: 0.5;
-        }
-
-        #settings .section.expanded h3::before {
-            content: "▼ ";
         }
 
         #selectapp {
@@ -480,7 +502,7 @@ Settings
         }
 
         #settings .field {
-            padding: 1% 0 1% 0;
+            padding: 0.5rem 0 0.5rem 0;
         }
 
         #settings .field input,
@@ -543,6 +565,8 @@ Settings
             bottom: 14%;
             background: black;
             color: white;
+            z-index: 1000;
+            opacity: 0.8;
             padding: 1vw;
         }
 
@@ -652,6 +676,52 @@ Settings
             position: absolute;
             width: 100%;
             bottom: 0;
+        }
+
+        .videobtn {
+            opacity: 0;
+            position: absolute;
+            text-align: center;
+            border-radius: 1rem;            
+        }
+        .videobtn i {
+            opacity: 0.7;
+            color: black;
+            background: white;
+            border-radius: 50%;
+            padding: 1rem;
+        }
+        .videobtn:hover {
+            opacity: 1 !important;
+            color: #bbb;
+            transform: scale(1.1);
+        }
+        .videochatbtn {
+            left: calc(50% - 1rem);
+            top: 4%;
+        }
+        .videoleftbtn {
+            left: 4%;
+            top: 50%;
+        }
+        .videorightbtn {
+            right: 4%;
+            top: 50%;
+        }
+        .cam:hover .videobtn {
+            opacity: 0.8;
+        }
+        body.chatscene .videochatbtn {
+            opacity: 0 !important;
+        }
+        body.leftscene .videoleftbtn {
+            opacity: 0 !important;
+        }
+        body.rightscene .videorightbtn {
+            opacity: 0 !important;
+        }
+        body.countdownscene .videobtn {
+            opacity: 0 !important;
         }
 
         body.leftscene.facecamcircular .facecam,
@@ -1214,14 +1284,32 @@ Settings
         <iframe class="box animated" id="editor2" allow="usb;camera"
             sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox"></iframe>
         <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
-        <div role="button" class="box animated clickeable facecam" id="facecam">
+        <div role="button" class="box animated clickeable cam facecam" id="facecam">
             <video autoplay playsinline id="facecamvideo"></video>
             <canvas id="facecamvideoserious" class="videocanvas"></canvas>
+            <div id="facecamchatbtn" title="Go to chat scene" class="videobtn videochatbtn animated">
+                <i class="ms-Icon ms-Icon--Contact"></i>
+            </div>
+            <div id="facecamleftbtn" title="Move camera left" class="videobtn videoleftbtn animated">
+                <i class="ms-Icon ms-Icon--OpenPane"></i>
+            </div>
+            <div id="facecamrightbtn" title="Move camera right" class="videobtn videorightbtn animated">
+                <i class="ms-Icon ms-Icon--OpenPaneMirrored"></i>
+            </div>
             <div class="videolabel" id="facecamlabel"></div>
         </div>
-        <div role="button" class="box animated clickeable hardwarecam" id="hardwarecam">
+        <div role="button" class="box animated clickeable cam hardwarecam" id="hardwarecam">
             <video autoplay playsinline id="hardwarecamvideo"></video>
             <canvas id="hardwarecamvideoserious" width="640" height="480" class="videocanvas"></canvas>
+            <div id="hardwarecamchatbtn" title="Go to chat scene" class="videobtn videochatbtn animated">
+                <i class="ms-Icon ms-Icon--Contact"></i>
+            </div>
+            <div id="hardwarecamleftbtn" title="Move camera left" class="videobtn videoleftbtn animated">
+                <i class="ms-Icon ms-Icon--OpenPane"></i>
+            </div>
+            <div id="hardwarecamrightbtn" title="Move camera right" class="videobtn videorightbtn animated">
+                <i class="ms-Icon ms-Icon--OpenPaneMirrored"></i>
+            </div>
             <div class="videolabel" id="hardwarecamlabel"></div>
         </div>
         <div class="box animated" id="title">title</div>
@@ -1250,18 +1338,11 @@ Settings
                 <option value="100"></option>
             </datalist>
             <div class="header">
-                <h2>MakeCode Streamer BETA <a href="/streamer/docs" target="_blank">docs</a> <a
-                        href="https://forum.makecode.com/t/introducing-makecode-streamer/2437" target="_blank">forum</a>
-                        <span class="screensize"></span>
-                </h2>
+                <h2>MakeCode Streamer BETA <a href="/streamer/docs" target="_blank">docs</a><span
+                        class="screensize"></span></h2>
                 <button id="settingsclose">close</button>
             </div>
             <div class="contents">
-                <button class="pip" title="Watch the introduction video!">
-                    <video id="introvideo" preload="metadata" poster="/static/streamer/intro.png"
-                        src="/static/streamer/intro.mp4"></video>
-                    <label>Take the tour!</label>
-                </button>
                 <div class="section expanded">
                     <h3>Editor</h3>
                     <div class="field">
@@ -1304,16 +1385,16 @@ Settings
                         <input type="range" id="facecambrightness" min="0" max="100" step="1" list="tickmarks">
                     </div>
                     <div class="field">
-                        <label for="facecamsaturate">Saturate</label>
+                        <label for="facecamsaturate">Saturation</label>
                         <input type="range" id="facecamsaturate" min="0" max="100" step="1" list="tickmarks">
                     </div>
                     <div class="field">
                         <input type="checkbox" id="facecamcircularcheckbox"></input>
-                        <label for="facecamcircularcheckbox">Circular</label>
+                        <label for="facecamcircularcheckbox">Circle shape</label>
                     </div>
                     <div class="field">
                         <input type="checkbox" id="facerotatecameracheckbox"></input>
-                        <label for="facerotatecameracheckbox">Rotate camera 180</label>
+                        <label for="facerotatecameracheckbox">Rotate 180</label>
                     </div>
                     <h4>Green screen</h4>
                     <div class="field">
@@ -1360,16 +1441,16 @@ Settings
                         <input type="range" id="hardwarecambrightness" min="0" max="100" step="1" list="tickmarks">
                     </div>
                     <div class="field">
-                        <label for="hardwarecamsaturate">Saturate</label>
+                        <label for="hardwarecamsaturate">Saturation</label>
                         <input type="range" id="hardwarecamsaturate" min="0" max="100" step="1" list="tickmarks">
                     </div>
                     <div class="field">
                         <input type="checkbox" id="hardwarecamcircularcheckbox"></input>
-                        <label for="hardwarecamcircularcheckbox">Circular</label>
+                        <label for="hardwarecamcircularcheckbox">Circle shape</label>
                     </div>
                     <div class="field">
                         <input type="checkbox" id="hardwarerotatecameracheckbox"></input>
-                        <label for="hardwarerotatecameracheckbox">Rotate camera 180</label>
+                        <label for="hardwarerotatecameracheckbox">Rotate 180</label>
                     </div>
                     <h4>Green screen</h4>
                     <div class="field">
@@ -1503,7 +1584,8 @@ Settings
         <div role="button" class="box animated hidden" id="recorder" tabindex="0">
             <span>click to start recording</span>
             <span class="screensize"></span>
-            <div class="message details">Resize your browser to match 1920x1080 (180p, HD) or 1280x720 (720p, SD).</div>
+            <div class="message details">Resize your browser to match 1920x1080 (1080p, HD) or 1280x720 (720p, SD).
+            </div>
             <div class="error details mic">Select a microphone in the settings.</div>
             <div class="error details micdelay">Tune your microphone delay to sync video and audio.</div>
         </div>
@@ -1512,6 +1594,26 @@ Settings
         <div class="tools" id="toolcontainer">
             <div class="animated icons" id="paintbox"></div>
             <div class="animated icons" id="toolbox"></div>
+        </div>
+        <div class="box" id="intro">
+            <div class="header">
+                <h1>Welcome to Streamer!</h1>
+            </div>
+            <div class="contents">
+                <p>Use this page to produce live or recorded MakeCode videos!
+                    Got a question or a comment ? Try the <a
+                        href="https://forum.makecode.com/t/introducing-makecode-streamer/2437"
+                        target="_blank">forum</a>!
+                </p>
+                <button class="pip" id="playpip" title="Watch the introduction video!">
+                    <video id="introvideo" title="Take the tour!" preload="metadata" poster="/static/streamer/intro.png"
+                        src="/static/streamer/intro.mp4"></video>
+                    <span id="takethetour">TAKE THE TOUR</span>
+                </button>
+                <button class="pip" id="skippip" title="I'm a pro already...">
+                    Skip
+                </button>
+            </div>
         </div>
     </div>
     <!-- @include tracking.html -->
