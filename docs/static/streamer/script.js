@@ -634,7 +634,7 @@
         }
     }
 
-    function loadEditor() {
+    function loadEditor(hash) {
         const config = readConfig();
         // update first editor
         const editorConfig = editorConfigs[config.editor];
@@ -647,6 +647,8 @@
         let url = `${editorConfig.url}?editorLayout=ide&nosandbox=1`;
         if (config.multiEditor)
             url += `&nestededitorsim=1`;
+        if (hash)
+            url += `#${hash}`
         editor.src = url;
         if (config.multiEditor) {
             if (!editor2.parentElement)
@@ -994,12 +996,16 @@ background-image: url(${config.backgroundImage});
         const hash = window.location.hash;
         const parts = (hash || "").replace(/^#/, '').split('|');
         parts.forEach(part => {
-            const m = /^([^:]+):(.+)$/.exec(part);
-            if (m) {
-                const action = m[1];
-                const arg = m[2];
+            const frags = part.split(':')
+            if (frags.length >= 2) {
+                const action = frags.shift();
+                const arg = frags.shift();
+                const slug = frags.join(':')
                 switch (action) {
-                    case "editor": setEditor(arg); break;
+                    case "editor": {
+                        intro.remove(); // always hide
+                        setEditor(arg, slug); break;
+                    }
                     case "doc": {
                         // only same domain as editor
                         const config = readConfig();
@@ -1916,16 +1922,14 @@ background-image: url(${config.backgroundImage});
 
     }
 
-    function setEditor(editor) {
+    function setEditor(editor,hash) {
         const editorConfig = editorConfigs[editor];
         if (!editorConfig) return;
 
         const config = readConfig();
         config.editor = editor;
-        if (editorConfig)
-            config.title = editorConfig.title || `MakeCode ${editorConfig.name}`
         saveConfig(config);
-        loadEditor();
+        loadEditor(hash);
         loadSettings();
         loadSocial();
         render()
