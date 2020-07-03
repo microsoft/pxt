@@ -710,8 +710,9 @@ Settings
         }
 
         .videobtn i {
-            color: black;
-            background: white;
+            color: white;
+            background: black;
+            border: solid 1px #999;
             border-radius: 50%;
             padding: 1rem;
         }
@@ -728,21 +729,39 @@ Settings
             right: 4%;
             top: 4%;
         }
+        body.facecamcircular #facecam .videohardwarebtn,
+        body.hardwarecamcircular #hardwarecam .videohardwarebtn {
+            right: 24%;
+            top: 18%;
+        }
         .videochatbtn {
             left: 4%;
             top: 4%;
         }
         .videoleftscenebtn {
             left: 4%;
-            top: 50%;
+            top: 44%;
+        }
+        body.facecamcircular #facecam .videoleftscenebtn,
+        body.hardwarecamcircular #hardwarecam .videoleftscenebtn {
+            left: 18%;
         }
         .videorightscenebtn {
             right: 4%;
-            top: 50%;
+            top: 44%;
+        }
+        body.facecamcircular #facecam .videorightscenebtn,
+        body.hardwarecamcircular #hardwarecam .videorightscenebtn {
+            right: 18%;
         }
         .videothumbnailbtn {
             left: calc(50% - 2rem);
             bottom: 4%;
+        }
+        body.facecamcircular #facecam .videothumbnailbtn,
+        body.hardwarecamcircular #hardwarecam .videothumbnailbtn {
+            left: 32%;
+            bottom: 8%;
         }
         body.thumbnail .videothumbnailbtn {
             bottom: 30%;
