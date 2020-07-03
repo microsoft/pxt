@@ -292,7 +292,15 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             return;
         }
 
-        const imageData = ev.clipboardData.getData('application/makecode-image');
+        let imageData = ev.clipboardData.getData('application/makecode-image');
+
+        if (!imageData) {
+            const textData = ev.clipboardData.getData("text/plain");
+            if (/^\s*img`(.|\s)+`\s*$/im.test(textData)) {
+                imageData = textData;
+            }
+        }
+
         const image = imageData && pxt.sprite.imageLiteralToBitmap(imageData);
 
         if (image && image.width && image.height) {
