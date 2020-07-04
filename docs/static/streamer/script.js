@@ -1022,16 +1022,26 @@ background-image: url(${config.backgroundImage});
     }
 
     function initResize() {
-        const resolutions = [
-            {
+        const resolutions = [ {
                 w: 1920,
                 h: 1080,
                 name: "HD 1080p"
-            },
-            {
+            }, {
                 w: 1080,
                 h: 720,
                 name: "SD 720p"
+            },{
+                w: 640,
+                h: 360,
+                name: "360p"
+            }, {
+                w: 854,
+                h: 480,
+                name: "480p",
+            }, {
+                w: 2560,
+                h: 1440,
+                name: "1440p"
             }
         ]
 
