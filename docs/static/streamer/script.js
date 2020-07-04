@@ -1022,12 +1022,30 @@ background-image: url(${config.backgroundImage});
     }
 
     function initResize() {
+        const resolutions = [ {
+                w: 1920,
+                h: 1080,
+                name: "HD 1080p"
+            }, {
+                w: 1080,
+                h: 720,
+                name: "SD 720p"
+            }
+        ]
+
         function update() {
             const el = document.firstElementChild;
-            const text =  `(${el.clientWidth}x${el.clientHeight})`
+            const w = el.clientWidth
+            const h = el.clientHeight
+            const resolution = resolutions.filter(r => r.w == w && r.h == h)[0];
+            const text =  `${w}x${h} ${resolution?.name || `- resize to 1920x1080 or 1080x720`}`
             const els = document.getElementsByClassName("screensize")
-            for(let i = 0; i < els.length; ++i)
-                els[i].innerText = text
+            for(let i = 0; i < els.length; ++i) {
+                const el = els[i]
+                el.innerText = text
+                if (resolution) el.classList.add("perfect")
+                else el.classList.remove("perfect")
+            }
         }
         window.onresize = update
         update()
@@ -1493,6 +1511,25 @@ background-image: url(${config.backgroundImage});
             saveConfig(config)
             render()
             loadEditor()
+        }
+
+        const powerpointarea = document.getElementById("powerpointarea")
+        powerpointarea.value = ""
+        powerpointarea.oninput = function (e) {
+            const value = powerpointarea.value || ""
+            const m = /<iframe.*?src="([^"]+)".*?>/i.exec(value)
+            if (m) {
+                const url = decodeURI(m[1]).replace(/&amp;/g, "&");
+                let extraSites = config.extraSites;
+                if (!extraSites) extraSites = config.extraSites = [];
+                if (extraSites.indexOf(url) < 0) {
+                    extraSites.push(url)
+                    saveConfig(config);
+                    loadSettings();
+                    loadToolbox();
+                    render()    
+                }
+            }
         }
 
         const extrasitesarea = document.getElementById("extrasitesarea")

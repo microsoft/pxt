@@ -425,8 +425,15 @@ Recorder
         }
 
         .screensize {
-            margin-left: 0.5rem;
-            font-size: 80%;
+            background: #666;
+            color: white;
+            border-radius: 3px;
+            padding: 0.1rem 0.5rem 0.1rem 0.5rem;
+            font-size: 60%;            
+            margin-left: 1rem;
+        }
+        .screensize.perfect {
+            background: #3b9846;
         }
 
         #recorder:hover {
@@ -764,7 +771,7 @@ Settings
             bottom: 8%;
         }
         body.thumbnail .videothumbnailbtn {
-            bottom: 30%;
+            bottom: 30% !important;
         }
 
         .cam:hover .videobtn {
@@ -1430,8 +1437,7 @@ Settings
                 <option value="100"></option>
             </datalist>
             <div class="header">
-                <h2>MakeCode Streamer BETA <a href="/streamer/docs" target="_blank">docs</a><span
-                        class="screensize"></span></h2>
+                <h2>MakeCode Streamer BETA<span class="screensize"></span></h2>
                 <button id="settingsclose">close</button>
             </div>
             <div class="contents">
@@ -1450,8 +1456,12 @@ Settings
                         <input id="titleinput" placeholder="My awesome stream" />
                     </div>
                     <div class="field">
+                        <label for="powerpointarea">Import Embed Code (In web PowerPoint, go to File->Share->Embed then copy Embed Code)</label>
+                        <textarea id="powerpointarea" rows="3" placeholder="Paste HTML embed code here to extract web site url."></textarea>
+                    </div>
+                    <div class="field">
                         <label for="extrasitesarea">Extra web sites (must be https://..., one per line)</label>
-                        <textarea id="extrasitesarea" rows="2"></textarea>
+                        <textarea id="extrasitesarea" rows="3"></textarea>
                     </div>
                 </div>
                 <div class="section expanded">
@@ -1514,6 +1524,7 @@ Settings
                             Teams/Skype/...
                             video
                             stream, select <emph>Application</emph> and share your messaging application.</p>
+                        <p>Toggle on/off the document camera by clicking the <i class="ms-Icon ms-Icon--Robot"></i> icon on the face camera.</p>
                         <label for="hardwarecamselect">Choose a video source</label>
                         <select id="hardwarecamselect"></select>
                         <div class="error hidden" id="hardwarecamerror">Connection error. Make sure the camera is not
