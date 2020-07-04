@@ -425,8 +425,15 @@ Recorder
         }
 
         .screensize {
-            margin-left: 0.5rem;
-            font-size: 80%;
+            background: #666;
+            color: white;
+            border-radius: 3px;
+            padding: 0.1rem 0.5rem 0.1rem 0.5rem;
+            font-size: 60%;            
+            margin-left: 1rem;
+        }
+        .screensize.perfect {
+            background: #3b9846;
         }
 
         #recorder:hover {
@@ -1430,8 +1437,7 @@ Settings
                 <option value="100"></option>
             </datalist>
             <div class="header">
-                <h2>MakeCode Streamer BETA <a href="/streamer/docs" target="_blank">docs</a><span
-                        class="screensize"></span></h2>
+                <h2>MakeCode Streamer BETA<span class="screensize"></span></h2>
                 <button id="settingsclose">close</button>
             </div>
             <div class="contents">

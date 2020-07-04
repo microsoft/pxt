@@ -1022,12 +1022,32 @@ background-image: url(${config.backgroundImage});
     }
 
     function initResize() {
+        const resolutions = [
+            {
+                w: 1920,
+                h: 1080,
+                name: "HD 1080p"
+            },
+            {
+                w: 1080,
+                h: 720,
+                name: "SD 720p"
+            }
+        ]
+
         function update() {
             const el = document.firstElementChild;
-            const text =  `(${el.clientWidth}x${el.clientHeight})`
+            const w = el.clientWidth
+            const h = el.clientHeight
+            const resolution = resolutions.filter(r => r.w == w && r.h == h)[0];
+            const text =  `${w}x${h} ${resolution?.name || ""}`
             const els = document.getElementsByClassName("screensize")
-            for(let i = 0; i < els.length; ++i)
-                els[i].innerText = text
+            for(let i = 0; i < els.length; ++i) {
+                const el = els[i]
+                el.innerText = text
+                if (resolution) el.classList.add("perfect")
+                else el.classList.remove("perfect")
+            }
         }
         window.onresize = update
         update()
