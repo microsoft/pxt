@@ -1450,8 +1450,12 @@ Settings
                         <input id="titleinput" placeholder="My awesome stream" />
                     </div>
                     <div class="field">
+                        <label for="powerpointarea">Import Embed Code (In web PowerPoint, go to File->Share->Embed then copy Embed Code)</label>
+                        <textarea id="powerpointarea" rows="3" placeholder="Paste HTML embed code here to extract web site url."></textarea>
+                    </div>
+                    <div class="field">
                         <label for="extrasitesarea">Extra web sites (must be https://..., one per line)</label>
-                        <textarea id="extrasitesarea" rows="2"></textarea>
+                        <textarea id="extrasitesarea" rows="3"></textarea>
                     </div>
                 </div>
                 <div class="section expanded">
@@ -1514,6 +1518,7 @@ Settings
                             Teams/Skype/...
                             video
                             stream, select <emph>Application</emph> and share your messaging application.</p>
+                        <p>Toggle on/off the document camera by clicking the <i class="ms-Icon ms-Icon--Robot"></i> icon on the face camera.</p>
                         <label for="hardwarecamselect">Choose a video source</label>
                         <select id="hardwarecamselect"></select>
                         <div class="error hidden" id="hardwarecamerror">Connection error. Make sure the camera is not

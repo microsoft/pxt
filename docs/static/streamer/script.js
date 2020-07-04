@@ -1495,6 +1495,25 @@ background-image: url(${config.backgroundImage});
             loadEditor()
         }
 
+        const powerpointarea = document.getElementById("powerpointarea")
+        powerpointarea.value = ""
+        powerpointarea.oninput = function (e) {
+            const value = powerpointarea.value || ""
+            const m = /<iframe.*?src="([^"]+)".*?>/i.exec(value)
+            if (m) {
+                const url = decodeURI(m[1]).replace(/&amp;/g, "&");
+                let extraSites = config.extraSites;
+                if (!extraSites) extraSites = config.extraSites = [];
+                if (extraSites.indexOf(url) < 0) {
+                    extraSites.push(url)
+                    saveConfig(config);
+                    loadSettings();
+                    loadToolbox();
+                    render()    
+                }
+            }
+        }
+
         const extrasitesarea = document.getElementById("extrasitesarea")
         extrasitesarea.value = (config.extraSites || []).join('\n');
         extrasitesarea.onchange = function (e) {
