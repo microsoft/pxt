@@ -1030,18 +1030,6 @@ background-image: url(${config.backgroundImage});
                 w: 1080,
                 h: 720,
                 name: "SD 720p"
-            },{
-                w: 640,
-                h: 360,
-                name: "360p"
-            }, {
-                w: 854,
-                h: 480,
-                name: "480p",
-            }, {
-                w: 2560,
-                h: 1440,
-                name: "1440p"
             }
         ]
 
@@ -1050,7 +1038,7 @@ background-image: url(${config.backgroundImage});
             const w = el.clientWidth
             const h = el.clientHeight
             const resolution = resolutions.filter(r => r.w == w && r.h == h)[0];
-            const text =  `${w}x${h} ${resolution?.name || ""}`
+            const text =  `${w}x${h} ${resolution?.name || `- resize to 1920x1080 or 1080x720`}`
             const els = document.getElementsByClassName("screensize")
             for(let i = 0; i < els.length; ++i) {
                 const el = els[i]
