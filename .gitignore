@@ -33,3 +33,4 @@ tests/ui-test/debug.log
 tests/ui-test/chromedriver.exe
 tests/ui-test/screenshot/**
 report.*.json
+*.tsbuildinfo

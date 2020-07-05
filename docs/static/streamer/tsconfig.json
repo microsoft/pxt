@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "target": "es2020",
+        "module": "amd",
+        "typeRoots": [],
+        "lib": ["es2015", "ES2020", "dom"],
+        "outFile": "script.js",
+        "newLine": "LF",
+        "rootDir": ".",
+        "sourceMap": false,
+        "incremental": true
+    },
+    "include": [
+        "streamer.ts"
+    ]
+}
