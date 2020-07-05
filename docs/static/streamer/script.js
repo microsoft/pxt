@@ -246,7 +246,7 @@
             const btn = document.createElement("button");
             accessify(btn);
             btn.className = "emoji";
-            if (emoji === state.emoji)
+            if (emoji === state.emoji && state.paint)
                 btn.classList.add("active");
             btn.innerText = emoji;
             btn.addEventListener("click", function (e) {
