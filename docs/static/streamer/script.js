@@ -26,7 +26,7 @@
     const endvideo = document.getElementById('endvideo');
     const backgroundvideo = document.getElementById('backgroundvideo');
     const intro = document.getElementById('intro');
-    const getDisplayMedia = navigator?.mediaDevices?.getDisplayMedia;
+    const hasGetDisplayMedia = !!navigator?.mediaDevices?.getDisplayMedia;
     const frames = [editor, editor2];
     const paintColors = ["#ffe135", "#00d9ff", "#cf1fdb", "#ee0000"];
     const scenes = ["leftscene", "rightscene", "chatscene", "countdownscene"];
@@ -130,7 +130,7 @@
             state.screenshoting && "screenshoting",
             (config.faceCamGreenScreen || config.hardwareCamGreenScreen) && state.thumbnail && "thumbnail",
             config.micDelay === undefined && "micdelayerror",
-            !getDisplayMedia && "displaymediaerror",
+            !hasGetDisplayMedia && "displaymediaerror",
             config.faceCamLabel && !config.faceCamCircular && "facecamlabel",
             config.hardwareCamLabel && !config.hardwareCamCircular && "hardwarecamlabel",
             config.faceCamCircular && "facecamcircular",
@@ -203,7 +203,7 @@
         addSep(toolbox);
         if (state.speech)
             addButton(toolbox, "ClosedCaption", "Captions", toggleSpeech, state.speechRunning);
-        if (getDisplayMedia) {
+        if (hasGetDisplayMedia) {
             addButton(toolbox, "BrowserScreenShot", "Take screenshot", takeScreenshot);
             if (state.recording)
                 addButton(toolbox, "Stop", "Stop recording", stopRecording);
@@ -1037,7 +1037,7 @@ background-image: url(${config.backgroundImage});
         stopStream(el.srcObject);
         console.log(`trying device ${deviceId}`);
         if (deviceId === DISPLAY_DEVICE_ID) {
-            const stream = await getDisplayMedia({
+            const stream = await navigator.mediaDevices?.getDisplayMedia({
                 video: {
                     displaySurface: "application",
                     cursor: "never"
@@ -1243,7 +1243,7 @@ background-image: url(${config.backgroundImage});
     async function getDisplayStream(cursor) {
         try {
             selectapp.classList.remove("hidden");
-            const stream = await getDisplayMedia({
+            const stream = await navigator.mediaDevices?.getDisplayMedia({
                 video: {
                     displaySurface: "browser",
                     cursor: cursor ? "always" : "never"
@@ -1472,7 +1472,7 @@ background-image: url(${config.backgroundImage});
             if (config.faceCamId == cam.deviceId && cam.deviceId)
                 option.selected = true;
         });
-        if (getDisplayMedia) {
+        if (hasGetDisplayMedia) {
             const option = document.createElement("option");
             option.value = DISPLAY_DEVICE_ID;
             option.text = "Application";
@@ -1610,7 +1610,7 @@ background-image: url(${config.backgroundImage});
             if (config.hardwareCamId == cam.deviceId && cam.deviceId)
                 option.selected = true;
         });
-        if (!!getDisplayMedia) {
+        if (hasGetDisplayMedia) {
             const option = document.createElement("option");
             option.value = DISPLAY_DEVICE_ID;
             option.text = "Application";
