@@ -144,6 +144,11 @@ namespace pxtblockly {
         return getAllFieldsCore(ws, f => f instanceof FieldTileset);
     }
 
+    export function needsTilemapUpgrade(ws: Blockly.Workspace) {
+        const allTiles = ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE).map(model => pxt.sprite.legacy.blocklyVariableToTile(model.name));
+        return !!allTiles.length;
+    }
+
     export function upgradeTilemapsInWorkspace(ws: Blockly.Workspace, proj: pxt.TilemapProject) {
         const allTiles = ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE).map(model => pxt.sprite.legacy.blocklyVariableToTile(model.name));
         if (!allTiles.length) return;
@@ -181,6 +186,16 @@ namespace pxtblockly {
             );
 
             tilemap.ref.setValue(pxt.sprite.encodeTilemap(newData, "typescript"));
+        }
+
+        const tilesets = getAllBlocksWithTilesets(ws);
+
+        for (const tileset of tilesets) {
+            // Force a re-render
+            tileset.ref.doValueUpdate_(tileset.ref.getValue());
+            if (tileset.ref.isDirty_) {
+              tileset.ref.forceRerender();
+            }
         }
 
         Blockly.Events.enable();

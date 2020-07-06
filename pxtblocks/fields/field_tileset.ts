@@ -114,6 +114,14 @@ namespace pxtblockly {
         }
 
         menuGenerator_ = () => {
+            if (this.sourceBlock_?.workspace && needsTilemapUpgrade(this.sourceBlock_?.workspace)) {
+                return [[{
+                    src: mkTransparentTileImage(16),
+                    width: PREVIEW_SIDE_LENGTH,
+                    height: PREVIEW_SIDE_LENGTH,
+                    alt: this.getValue()
+                }, this.getValue()]]
+            }
             return FieldTileset.getReferencedTiles(this.sourceBlock_.workspace);
         }
     }
