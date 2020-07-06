@@ -7,48 +7,52 @@
   "hashFontFileName": true,
   "glyphs": [
     {
-      "name": "SingleBookmark",
-      "unicode": "EDFF"
-    },
-    {
-      "name": "ArrowUpRightMirrored8",
-      "unicode": "EEEF"
-    },
-    {
       "name": "PenWorkspace",
       "unicode": "EDC6"
+    },
+    {
+      "name": "MyMoviesTV",
+      "unicode": "EE6C"
+    },
+    {
+      "name": "SingleBookmark",
+      "unicode": "EDFF"
     },
     {
       "name": "ClosedCaption",
       "unicode": "EF84"
     },
     {
+      "name": "ArrowUpRightMirrored8",
+      "unicode": "EEEF"
+    },
+    {
       "name": "Record2",
       "unicode": "EA3F"
     },
     {
-      "name": "OpenPaneMirrored",
-      "unicode": "EA5B"
-    },
-    {
-      "name": "Code",
-      "unicode": "E943"
+      "name": "Timer",
+      "unicode": "E91E"
     },
     {
       "name": "Robot",
       "unicode": "E99A"
     },
     {
+      "name": "Code",
+      "unicode": "E943"
+    },
+    {
+      "name": "OpenPaneMirrored",
+      "unicode": "EA5B"
+    },
+    {
       "name": "BrowserScreenShot",
       "unicode": "EBED"
     },
     {
-      "name": "PictureCenter",
-      "unicode": "F522"
-    },
-    {
-      "name": "OfficeChat",
-      "unicode": "F70F"
+      "name": "EditCreate",
+      "unicode": "F3C9"
     },
     {
       "name": "WhiteBoardApp32",
@@ -59,12 +63,16 @@
       "unicode": "F63C"
     },
     {
-      "name": "ArrowTallUpLeft",
-      "unicode": "F2BD"
+      "name": "OfficeChat",
+      "unicode": "F70F"
     },
     {
-      "name": "DoubleColumn",
-      "unicode": "F1D4"
+      "name": "PictureCenter",
+      "unicode": "F522"
+    },
+    {
+      "name": "ArrowTallUpLeft",
+      "unicode": "F2BD"
     },
     {
       "name": "CircleShape",
@@ -75,16 +83,24 @@
       "unicode": "F1A9"
     },
     {
-      "name": "EditCreate",
-      "unicode": "F3C9"
+      "name": "DoubleColumn",
+      "unicode": "F1D4"
     },
     {
       "name": "ImagePixel",
       "unicode": "F30C"
     },
     {
-      "name": "Remove",
-      "unicode": "E738"
+      "name": "ChevronDown",
+      "unicode": "E70D"
+    },
+    {
+      "name": "ChevronUp",
+      "unicode": "E70E"
+    },
+    {
+      "name": "Add",
+      "unicode": "E710"
     },
     {
       "name": "Settings",
@@ -99,16 +115,8 @@
       "unicode": "E71A"
     },
     {
-      "name": "Contact",
-      "unicode": "E77B"
-    },
-    {
-      "name": "EraseTool",
-      "unicode": "E75C"
-    },
-    {
-      "name": "Add",
-      "unicode": "E710"
+      "name": "Remove",
+      "unicode": "E738"
     },
     {
       "name": "OpenPane",
@@ -119,8 +127,12 @@
       "unicode": "E8BB"
     },
     {
-      "name": "Timer",
-      "unicode": "E91E"
+      "name": "Contact",
+      "unicode": "E77B"
+    },
+    {
+      "name": "EraseTool",
+      "unicode": "E75C"
     },
     {
       "name": "Highlight",
