@@ -14,7 +14,9 @@
         "templateStrings.ts",
         "classHandlerParameter.ts",
         "globals.ts",
-        "spritekind.ts"
+        "spritekind.ts",
+        "narrowing.ts",
+        "advTypes.ts"
     ],
     "public": true,
     "dependencies": {},

@@ -174,9 +174,9 @@ function initConfigAsync(): Promise<void> {
 
     p.then(() => {
         if (atok) {
-            let mm = /^(https?:.*)\?access_token=([\w\.]+)/.exec(atok)
+            let mm = /^(https?:.*)\?access_token=([\w\-\.]+)/.exec(atok)
             if (!mm) {
-                console.error("Invalid accessToken format, expecting something like 'https://example.com/?access_token=0abcd.XXXX'")
+                console.error("Invalid accessToken format, expecting something like 'https://example.com/?access_token=0.abcd.XXXX'")
                 return
             }
             Cloud.apiRoot = mm[1].replace(/\/$/, "").replace(/\/api$/, "") + "/api/"
@@ -992,6 +992,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "runUrl": opts.localDir + "run.html",
             "docsUrl": opts.localDir + "docs.html",
             "multiUrl": opts.localDir + "multi.html",
+            "asseteditorUrl": opts.localDir + "asseteditor.html",
             "isStatic": true,
         }
         const targetImagePaths = targetImages.map(k =>

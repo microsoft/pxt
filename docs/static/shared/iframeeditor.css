@@ -40,6 +40,7 @@ body {
     flex-direction: row;
     flex-grow: 1;
     margin: 0.5rem 0.5rem 0;
+    height: 100%;
 }
 
 #container {
@@ -57,4 +58,15 @@ body {
     height: 100%;
     flex-grow: 1;
     overflow: hidden;
+}
+
+/* Semantic UI overrides */
+.action .primary.button {
+    border-radius: .28571429rem;
+}
+
+.menu .primary.button {
+    border-radius: 0;
+    font-weight: 400;
+    margin: 0;
 }

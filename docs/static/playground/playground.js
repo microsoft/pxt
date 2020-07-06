@@ -9,77 +9,10 @@ var editor = monaco.editor.create(document.getElementById("container"), {
     language: "typescript",
     minimap: { enabled: false }
 });
-var targets = [
-    {
-        name: "Arcade",
-        id: "arcade",
-        endpoints: [
-            {
-                name: "beta",
-                url: "https://arcade.makecode.com/beta?controller=1"
-            },
-            {
-                name: "released",
-                url: "https://arcade.makecode.com?controller=1"
-            }
-        ]
-    }, {
-        name: "Minecraft",
-        id: "minecraft",
-        endpoints: [
-            {
-                name: "beta",
-                url: "https://minecraft.makecode.com/beta?ipc=1&inGame=1&controller=1"
-            },
-            {
-                name: "released",
-                url: "https://minecraft.makecode.com?ipc=1&inGame=1&controller=1"
-            }
-        ]
-    }, {
-        name: "Adafruit",
-        id: "adafruit",
-        endpoints: [
-            {
-                name: "beta",
-                url: "https://makecode.adafruit.com/beta?controller=1"
-            },
-            {
-                name: "released",
-                url: "https://makecode.adafruit.com?controller=1"
-            }
-        ]
-    }, {
-        name: "micro:bit",
-        id: "microbit",
-        endpoints: [
-            {
-                name: "beta",
-                url: "https://makecode.microbit.org/beta?controller=1"
-            },
-            {
-                name: "released",
-                url: "https://makecode.microbit.org?controller=1"
-            }
-        ]
-    }, {
-        name: "LEGO EV3",
-        id: "ev3",
-        endpoints: [
-            {
-                name: "beta",
-                url: "https://makecode.mindstorms.com/beta?controller=1"
-            },
-            {
-                name: "released",
-                url: "https://makecode.mindstorms.com?controller=1"
-            }
-        ]
-    }
-];
 var CUSTOM_FILE = "custom.ts";
+var PLAYGROUND_ID = "playground";
+var endpoints;
 var selectedEndpoint;
-var selectedId;
 var baseProjects = {};
 editor.onDidChangeModelContent(debounce(function () {
     localStorage.setItem(STORAGE_KEY, editor.getValue());
@@ -88,7 +21,6 @@ editor.onDidChangeModelContent(debounce(function () {
 (_b = (_a = monaco.languages) === null || _a === void 0 ? void 0 : _a.typescript) === null || _b === void 0 ? void 0 : _b.typescriptDefaults.setDiagnosticsOptions({ noSemanticValidation: true });
 var iframe = document.createElement("iframe");
 document.getElementById("makecode-editor").appendChild(iframe);
-loadIframe(localStorage.getItem(ENDPOINT_KEY));
 initEndpoints();
 initSamples();
 document.getElementById("run-button").addEventListener("click", function () {
@@ -102,18 +34,25 @@ window.addEventListener("resize", function () {
 });
 function initEndpoints() {
     var s = document.getElementById("endpoint-select");
-    for (var _i = 0, targets_1 = targets; _i < targets_1.length; _i++) {
-        var target = targets_1[_i];
-        for (var _a = 0, _b = target.endpoints; _a < _b.length; _a++) {
-            var endpoint = _b[_a];
-            var opt = document.createElement("option");
-            opt.value = target.name + "-" + endpoint.name;
-            opt.innerText = target.name + " " + endpoint.name;
-            s.appendChild(opt);
+    xhr("editors.json", function () {
+        endpoints = JSON.parse(this.responseText);
+        for (var _i = 0, _a = Object.keys(endpoints); _i < _a.length; _i++) {
+            var name_1 = _a[_i];
+            var endpoint = endpoints[name_1];
+            if (supportedEndpoint(endpoint)) {
+                var opt = document.createElement("option");
+                opt.value = name_1;
+                opt.innerText = endpoint.name;
+                s.appendChild(opt);
+            }
+            else {
+                delete endpoints[name_1];
+            }
         }
-    }
-    s.addEventListener("change", function (ev) {
-        loadIframe(ev.target.value);
+        s.addEventListener("change", function (ev) {
+            loadIframe(ev.target.value);
+        });
+        loadIframe(null);
     });
 }
 var PLAY_SAMPLES; // defined in /playground/samples/all.js
@@ -187,20 +126,20 @@ function initSamples() {
 function loadIframe(selected) {
     if (selected === selectedEndpoint)
         return;
-    for (var _i = 0, targets_2 = targets; _i < targets_2.length; _i++) {
-        var target = targets_2[_i];
-        for (var _a = 0, _b = target.endpoints; _a < _b.length; _a++) {
-            var endpoint = _b[_a];
-            if (!selected || selected === target.name + "-" + endpoint.name) {
-                iframe.setAttribute("src", endpoint.url);
-                selectedEndpoint = target.name + "-" + endpoint.name;
-                selectedId = target.id;
-                return;
-            }
+    for (var _i = 0, _a = Object.keys(endpoints); _i < _a.length; _i++) {
+        var name_2 = _a[_i];
+        var endpoint = endpoints[name_2];
+        if (!selected || selected === name_2) {
+            var separator = endpoint.url.indexOf("?") >= 0 ? "&" : "?";
+            iframe.setAttribute("src", "" + endpoint.url + separator + "controller=1");
+            selectedEndpoint = name_2;
+            return;
         }
     }
-    // Load first target
-    loadIframe(null);
+}
+function supportedEndpoint(endpoint) {
+    var _a;
+    return !(((_a = endpoint.unsupported) === null || _a === void 0 ? void 0 : _a.indexOf(PLAYGROUND_ID)) >= 0);
 }
 function sendMessage(action, ts) {
     var msg = {
