@@ -22,7 +22,13 @@ namespace pxt.editor {
             this.host = host;
 
             return this.initAsync().then(() => {
-                this.fv = pxt.react.getFieldEditorView(this.getFieldEditorId(), this.textToValue(host.getText(editrange)), this.getOptions());
+                const value = this.textToValue(host.getText(editrange));
+
+                if (!value) {
+                    return Promise.resolve(null);
+                }
+
+                this.fv = pxt.react.getFieldEditorView(this.getFieldEditorId(), value, this.getOptions());
 
                 this.fv.onHide(() => {
                     this.onClosed();

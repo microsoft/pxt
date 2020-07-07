@@ -29,6 +29,7 @@ namespace pxt.editor {
         foldMatches?: boolean;
         alwaysBuildOnClose?: boolean;
         glyphCssClass?: string;
+        weight?: number; // higher weight will override lower weight when on same line
         proto: { new(): MonacoFieldEditor };
         heightInPixels?: number;
     }

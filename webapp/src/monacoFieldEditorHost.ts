@@ -284,7 +284,9 @@ export class FieldEditorManager implements monaco.languages.FoldingRangeProvider
 
         if (!this.fieldEditorsEnabled) return;
 
-        this.allFieldEditors().forEach(fe => {
+        const allEditors = this.allFieldEditors().sort((a, b) => (b.weight || 0) - (a.weight || 0));
+
+        allEditors.forEach(fe => {
             const matcher = fe.matcher;
             const matches = model.findMatches(matcher.searchString,
                 true,
@@ -297,6 +299,8 @@ export class FieldEditorManager implements monaco.languages.FoldingRangeProvider
             const decorations: monaco.editor.IModelDeltaDecoration[] = [];
             matches.forEach(match => {
                 const line = match.range.startLineNumber;
+
+                if (this.getInfoForLine(line)) return;
 
                 decorations.push({
                     range: new monaco.Range(line, model.getLineMinColumn(line), line, model.getLineMaxColumn(line)),

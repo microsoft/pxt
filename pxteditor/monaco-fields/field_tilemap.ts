@@ -6,6 +6,7 @@ namespace pxt.editor {
 
     export class MonacoTilemapEditor extends MonacoReactFieldEditor<pxt.sprite.TilemapData> {
         protected tilemapName: string;
+        protected isTilemapLiteral: boolean;
 
         protected initAsync(): Promise<void> {
             const projectTiles = this.host.readFile("tilemap.jres");
@@ -18,6 +19,23 @@ namespace pxt.editor {
 
         protected textToValue(text: string): pxt.sprite.TilemapData {
             const project = pxt.react.getTilemapProject();
+
+            if (/^\s*tiles\s*\./.test(text)) {
+                this.isTilemapLiteral = false;
+
+                if (text) {
+                    try {
+                        const data = pxt.sprite.decodeTilemap(text, "typescript", project);
+                        return data;
+                    }
+                    catch (e) {
+                        // If the user is still typing, they might try to open the editor on an incomplete tilemap
+                    }
+                    return null;
+                 }
+            }
+
+            this.isTilemapLiteral = true;
 
             // This matches the regex for the field editor, so it should always match
             const match = /^\s*tilemap\s*`([^`]*)`\s*$/.exec(text);
@@ -78,18 +96,23 @@ namespace pxt.editor {
 
             pxt.sprite.trimTilemapTileset(result);
 
-            if (this.tilemapName) {
-                project.updateTilemap(this.tilemapName, result);
+            if (this.isTilemapLiteral) {
+                if (this.tilemapName) {
+                    project.updateTilemap(this.tilemapName, result);
+                }
+                else {
+                    const [ name, map ] = project.createNewTilemap(lf("level"), result.tileset.tileWidth, result.tilemap.width, result.tilemap.height);
+                    map.tilemap.apply(result.tilemap);
+                    map.tileset = result.tileset;
+                    map.layers = result.layers;
+                    this.tilemapName = name;
+                }
+
+                return `tilemap\`${this.tilemapName}\``;
             }
             else {
-                const [ name, map ] = project.createNewTilemap(lf("level"), result.tileset.tileWidth, result.tilemap.width, result.tilemap.height);
-                map.tilemap.apply(result.tilemap);
-                map.tileset = result.tileset;
-                map.layers = result.layers;
-                this.tilemapName = name;
+                return pxt.sprite.encodeTilemap(result, "typescript");
             }
-
-            return `tilemap\`${this.tilemapName}\``;
         }
 
         protected getFieldEditorId() {
@@ -101,6 +124,40 @@ namespace pxt.editor {
                 initHeight: 16,
                 blocksInfo: this.host.blocksInfo()
             };
+        }
+
+        protected getCreateTilemapRange() {
+            const start = this.editrange.getStartPosition();
+            let current = this.editrange.getEndPosition();
+            let range: monaco.Range;
+
+            let openParen = 1;
+
+            while (true) {
+                range = new monaco.Range(current.lineNumber, current.column, current.lineNumber + 1, 0);
+                const line = this.host.getText(range);
+
+                for (let i = 0; i < line.length; i++) {
+                    if (line.charAt(i) === "(") {
+                        openParen++;
+                    }
+                    else if (line.charAt(i) === ")") {
+                        openParen --;
+
+                        if (openParen === 0) {
+                            const end = new monaco.Position(current.lineNumber, current.column + i + 2);
+
+                            return monaco.Range.fromPositions(start, end);
+                        }
+                    }
+                }
+
+                current = range.getEndPosition();
+
+                if (current.lineNumber > start.lineNumber + 20) {
+                    return null;
+                }
+            }
         }
     }
 
@@ -118,9 +175,10 @@ namespace pxt.editor {
         alwaysBuildOnClose: true,
         glyphCssClass: "sprite-focus-hover ms-Icon ms-Icon--Nav2DMapView",
         heightInPixels: 510,
+        weight: 5,
         matcher: {
             // match both JS and python
-            searchString: "tilemap\\s*(?:`|\\(\"\"\")(?:[ a-zA-Z0-9\\.]|\\n)*\\s*(?:`|\"\"\"\\))",
+            searchString: "(?:tilemap\\s*(?:`|\\(\"\"\")(?:[ a-zA-Z0-9\\.]|\\n)*\\s*(?:`|\"\"\"\\)))|(?:tiles\\s*\\.\\s*createTilemap\\s*\\([^\\)]+\\))",
             isRegex: true,
             matchCase: true,
             matchWholeWord: false

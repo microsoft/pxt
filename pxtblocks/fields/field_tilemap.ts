@@ -235,7 +235,7 @@ namespace pxtblockly {
         private parseBitmap(newText: string) {
             if (!this.blocksInfo) return;
 
-            const tilemap = pxt.sprite.decodeTilemap(newText, "typescript", pxt.react.getTilemapProject());
+            const tilemap = pxt.sprite.decodeTilemap(newText, "typescript", pxt.react.getTilemapProject()) || emptyTilemap(this.params.initWidth, this.params.initHeight);
 
             // Ignore invalid bitmaps
             if (checkTilemap(tilemap)) {
@@ -378,5 +378,13 @@ namespace pxtblockly {
 
             Blockly.Events.fire(ev)
         }
+    }
+
+    function emptyTilemap(width: number, height: number) {
+        return new pxt.sprite.TilemapData(
+            new pxt.sprite.Tilemap(width, height),
+            {tileWidth: 16, tiles: []},
+            new pxt.sprite.Bitmap(width, height).data()
+        );
     }
 }

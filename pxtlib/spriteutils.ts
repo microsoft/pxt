@@ -220,7 +220,7 @@ namespace pxt.sprite {
         literal = Util.htmlUnescape(literal).trim();
 
         if (!literal.trim()) {
-            return new TilemapData(new Tilemap(16, 16), {tileWidth: 16, tiles: []}, new Bitmap(16, 16).data());
+            return null;
         }
 
         literal = literal.substr(literal.indexOf("(") + 1);
