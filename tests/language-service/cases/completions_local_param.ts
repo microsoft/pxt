@@ -3,3 +3,7 @@ function fib(num: number) {
     ;
     if (nu  // num; number
 }
+
+function foo(sprite: number) {
+    spr // sprite
+}
