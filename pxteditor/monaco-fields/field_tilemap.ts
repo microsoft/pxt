@@ -115,6 +115,7 @@ namespace pxt.editor {
     export const tilemapEditorDefinition: MonacoFieldEditorDefinition = {
         id: fieldEditorId,
         foldMatches: true,
+        alwaysBuildOnClose: true,
         glyphCssClass: "sprite-focus-hover ms-Icon ms-Icon--Nav2DMapView",
         heightInPixels: 510,
         matcher: {

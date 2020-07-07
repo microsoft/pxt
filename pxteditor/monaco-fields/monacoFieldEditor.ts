@@ -27,6 +27,7 @@ namespace pxt.editor {
         id: string;
         matcher: MonacoFindArguments;
         foldMatches?: boolean;
+        alwaysBuildOnClose?: boolean;
         glyphCssClass?: string;
         proto: { new(): MonacoFieldEditor };
         heightInPixels?: number;
