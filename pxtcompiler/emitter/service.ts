@@ -1176,8 +1176,7 @@ namespace ts.pxtc.service {
                 resultSymbols = completionSymbols(pxt.U.values(lastApiInfo.apis.byQName))
 
                 // then use the typescript service to get symbols in scope
-                if (!tsNode)
-                    tsNode = findInnerMostNodeAtPosition(tsAst, wordStartPos);
+                tsNode = findInnerMostNodeAtPosition(tsAst, wordStartPos);
                 if (!tsNode)
                     tsNode = tsAst.getSourceFile()
                 let symSearch = SymbolFlags.Variable;
