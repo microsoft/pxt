@@ -152,7 +152,10 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         // force monaco to use our sorting
                         sortText: `${tosort(i)} ${insertSnippet}`,
                         filterText: filterText,
-                        insertText: completionSnippet || undefined,
+                        // TODO(dz)
+                        insertText: "foo(${1:bar}, ${1})" || undefined,
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        // insertText: completionSnippet || undefined,
                     };
                     return res
                 })
@@ -1778,7 +1781,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private getBuiltinBlocks(ns: string, subns: string) {
         let cat = snippets.getBuiltinCategory(ns);
         let blocks = cat.blocks || [];
-        if (!cat.custom && this.nsMap[ns]) blocks = blocks.concat(this.nsMap[ns].filter(block => !(block.attributes.blockHidden) &&  !(block.attributes.deprecated && !this.parent.isTutorial())));
+        if (!cat.custom && this.nsMap[ns]) blocks = blocks.concat(this.nsMap[ns].filter(block => !(block.attributes.blockHidden) && !(block.attributes.deprecated && !this.parent.isTutorial())));
         return this.filterBlocks(subns, blocks);
     }
 
