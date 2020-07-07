@@ -32,7 +32,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     blockXml: `<block type="device_while">
                     <value name="COND">
                         <shadow type="logic_boolean">
-                        <field name="BOOL">FALSE</field>
+                            <field name="BOOL">FALSE</field>
                         </shadow>
                     </value>
                 </block>`
