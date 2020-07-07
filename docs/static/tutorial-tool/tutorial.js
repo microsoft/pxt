@@ -42,6 +42,10 @@ var targets = [
         endpoints: [
             {
                 name: "",
+                url: "https://arcade.makecode.com/?controller=1"
+            },
+            {
+                name: "beta",
                 url: "https://arcade.makecode.com/beta?controller=1"
             }
         ]
@@ -51,7 +55,7 @@ var targets = [
         shareUrl: "https://makecode.adafruit.com/",
         endpoints: [
             {
-                name: "",
+                name: "beta",
                 url: "https://makecode.adafruit.com/beta?controller=1"
             }
         ]
@@ -110,7 +114,7 @@ function shareScript(md, done) {
                     done(undefined, err);
                 } else {
                     if (resp.text && /application\/json/.test(resp.headers["content-type"]))
-                    resp.json = JSON.parse(resp.text)                
+                    resp.json = JSON.parse(resp.text)
                     // show dialog
                     done(resp);
                 }
