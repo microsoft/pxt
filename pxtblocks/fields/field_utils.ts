@@ -155,14 +155,14 @@ namespace pxtblockly {
 
         Blockly.Events.disable();
 
-        let mapping: pxt.Tile[] = [];
+        let customMapping: pxt.Tile[] = [];
 
         for (const tile of allTiles) {
             if (tile.qualifiedName) {
-                mapping[tile.projectId] = proj.resolveTile(tile.qualifiedName);
+                customMapping[tile.projectId] = proj.resolveTile(tile.qualifiedName);
             }
             else if (tile.data) {
-                mapping[tile.projectId] = proj.createNewTile(tile.data, "myTiles.tile" + tile.projectId);
+                customMapping[tile.projectId] = proj.createNewTile(tile.data, "myTiles.tile" + tile.projectId);
             }
             deleteTilesetTileIfExists(ws, tile);
         }
@@ -172,14 +172,20 @@ namespace pxtblockly {
         for (const tilemap of tilemaps) {
             const legacy = pxt.sprite.legacy.decodeTilemap(tilemap.ref.getInitText(), "typescript");
 
+            const mapping: pxt.Tile[] = [];
+
             const newData = new pxt.sprite.TilemapData(
                 legacy.tilemap, {
                     tileWidth: legacy.tileset.tileWidth,
-                    tiles: legacy.tileset.tiles.map(t => {
-                        if (!mapping[t.projectId]) {
-                            mapping[t.projectId] = proj.resolveTile(t.qualifiedName)
+                    tiles: legacy.tileset.tiles.map((t, index) => {
+                        if (t.projectId != null) {
+                            return customMapping[t.projectId];
                         }
-                        return mapping[t.projectId];
+                        if (!mapping[index]) {
+                            mapping[index] = proj.resolveTile(t.qualifiedName)
+                        }
+
+                        return mapping[index];
                     })
                 },
                 legacy.layers
@@ -194,7 +200,7 @@ namespace pxtblockly {
             // Force a re-render
             tileset.ref.doValueUpdate_(tileset.ref.getValue());
             if (tileset.ref.isDirty_) {
-              tileset.ref.forceRerender();
+                tileset.ref.forceRerender();
             }
         }
 
