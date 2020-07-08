@@ -32,16 +32,12 @@ namespace pxt.blocks {
 
     let placeholders: Map<Map<any>> = {};
 
-    const Regex_Newline = /\n/;
-    const Regex_Newline_g = /\n/g;
-    const Regex_LastIndent = /\n *$/;
-
     export function backtickLit(s: string) {
         return "`" + s.replace(/[\\`${}]/g, f => "\\" + f) + "`"
     }
 
     export function stringLit(s: string) {
-        if (s.length > 20 && Regex_Newline.test(s))
+        if (s.length > 20 && /\n/.test(s))
             return backtickLit(s)
         else return JSON.stringify(s)
     }
@@ -371,7 +367,7 @@ namespace pxt.blocks {
                     break
                 case NT.Prefix:
                     if (n.canIndentInside)
-                        output += n.op.replace(Regex_Newline_g, "\n" + indent + "    ")
+                        output += n.op.replace(/\n/g, "\n" + indent + "    ")
                     else
                         output += n.op
                     n.children.forEach(emit)
@@ -379,7 +375,7 @@ namespace pxt.blocks {
                 case NT.Postfix:
                     n.children.forEach(emit)
                     if (n.canIndentInside)
-                        output += n.op.replace(Regex_Newline_g, "\n" + indent + "    ")
+                        output += n.op.replace(/\n/g, "\n" + indent + "    ")
                     else
                         output += n.op
                     break
@@ -411,15 +407,15 @@ namespace pxt.blocks {
         }
 
         function getCurrentLine() {
-            return (output.match(Regex_Newline_g) || []).length;
+            return (output.match(/\n/g) || []).length;
         }
 
         function write(s: string) {
-            output += s.replace(Regex_Newline_g, "\n" + indent)
+            output += s.replace(/\n/g, "\n" + indent)
         }
 
         function removeLastIndent() {
-            output = output.replace(Regex_LastIndent, "")
+            output = output.replace(/\n *$/, "")
         }
 
         function block(n: JsNode) {
