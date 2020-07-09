@@ -81,6 +81,19 @@ namespace pxtblockly {
             (this.params as any).blocksInfo = this.blocksInfo;
 
             this.state.projectReferences = getAllReferencedTiles(this.sourceBlock_.workspace, this.sourceBlock_.id).map(t => t.id);
+            const project = pxt.react.getTilemapProject();
+
+            const allTiles = project.getProjectTiles(this.state.tileset.tileWidth);
+
+            for (const tile of allTiles.tiles) {
+                if (!this.state.tileset.tiles.some(t => t.id === tile.id)) {
+                    this.state.tileset.tiles.push(tile);
+                }
+            }
+
+            for (const tile of this.state.tileset.tiles) {
+                tile.weight = allTiles.tiles.findIndex(t => t.id === tile.id);
+            }
 
             const fv = pxt.react.getFieldEditorView("tilemap-editor", this.state, this.params);
 
@@ -97,7 +110,7 @@ namespace pxtblockly {
                     this.state = result;
                     this.state.projectReferences = null;
 
-                    const project = pxt.react.getTilemapProject();
+
 
                     const lastRevision = project.revision();
                     project.pushUndo();

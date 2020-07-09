@@ -476,7 +476,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         return this.props.tileset.tiles
             .map((t, i) => ([t, i] as [pxt.Tile, number]))
             .filter(([t]) => t.isProjectTile)
-            // .sort(([a], [b]) => a.projectId - b.projectId);
+            .sort(([a], [b]) => a.weight - b.weight);
     }
 
     protected getTileIndex(g: GalleryTile) {

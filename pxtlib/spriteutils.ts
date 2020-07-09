@@ -181,6 +181,7 @@ namespace pxt.sprite {
 
         // Used to make sure the user doesn't delete a tile used elsewhere in their project
         projectReferences: string[];
+        tileOrder: string[];
 
         editedTiles: string[];
         deletedTiles: string[];
@@ -260,11 +261,13 @@ namespace pxt.sprite {
             }
         }
 
+        const edited = t.editedTiles || [];
+
         // Tiles with names that start with * are new and haven't been recorded in the tilemap
         const newTileset = oldTileset.filter(tile =>
             used[tile.id] ||
             tile.id.charAt(0) === "*" ||
-            t.editedTiles?.indexOf(tile.id) !== -1
+            edited.indexOf(tile.id) !== -1
         );
 
         if (newTileset.length === oldTileset.length) {

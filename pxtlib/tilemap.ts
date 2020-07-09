@@ -8,6 +8,7 @@ namespace pxt {
         bitmap: pxt.sprite.BitmapData;
 
         isProjectTile?: boolean;
+        weight?: number;
     }
 
     export interface TileSet {

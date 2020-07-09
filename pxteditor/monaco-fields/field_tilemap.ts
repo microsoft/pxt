@@ -18,6 +18,24 @@ namespace pxt.editor {
         }
 
         protected textToValue(text: string): pxt.sprite.TilemapData {
+            const tm = this.readTilemap(text);
+
+            const allTiles = pxt.react.getTilemapProject().getProjectTiles(tm.tileset.tileWidth);
+
+            for (const tile of allTiles.tiles) {
+                if (!tm.tileset.tiles.some(t => t.id === tile.id)) {
+                    tm.tileset.tiles.push(tile);
+                }
+            }
+
+            for (const tile of tm.tileset.tiles) {
+                tile.weight = allTiles.tiles.findIndex(t => t.id === tile.id);
+            }
+
+            return tm;
+        }
+
+        protected readTilemap(text: string): pxt.sprite.TilemapData {
             const project = pxt.react.getTilemapProject();
 
             if (/^\s*tiles\s*\./.test(text)) {

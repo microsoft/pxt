@@ -582,7 +582,8 @@ function addNewTile(t: pxt.TileSet, data: pxt.sprite.BitmapData, id?: number, qn
             id: fakeId,
             isProjectTile: true,
             bitmap: new pxt.sprite.Bitmap(t.tileWidth, t.tileWidth).data(),
-            data: null
+            data: null,
+            weight: t.tiles.length
         })
     }
 
@@ -591,14 +592,16 @@ function addNewTile(t: pxt.TileSet, data: pxt.sprite.BitmapData, id?: number, qn
             id: fakeId,
             bitmap: data,
             isProjectTile: true,
-            data: null
+            data: null,
+            weight: t.tiles.length
         });
     }
     else if (qname) {
         tiles.push({
             id: qname,
             bitmap: data,
-            data: null
+            data: null,
+            weight: t.tiles.length
          });
     }
     else {
@@ -606,7 +609,8 @@ function addNewTile(t: pxt.TileSet, data: pxt.sprite.BitmapData, id?: number, qn
             id: fakeId,
             isProjectTile: true,
             bitmap: data,
-            data: null
+            data: null,
+            weight: t.tiles.length
          });
     }
 
