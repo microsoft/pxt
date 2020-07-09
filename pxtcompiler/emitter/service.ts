@@ -1977,16 +1977,17 @@ namespace ts.pxtc.service {
                     if (instanceToUse) {
                         snippetPrefix = `${getName(instanceToUse)}`;
                         namespaceToUse = instanceToUse.namespace;
-                    }
-
-                    if (!namespaceToUse) {
+                    } else {
                         // if blockNamespace exists, e.g., "pins", use it for snippet
                         // else use nsInfo.namespace, e.g., "motors"
                         namespaceToUse = element.attributes.blockNamespace || nsInfo.namespace || "";
                     }
 
+                    if (namespaceToUse)  {
+                        addNamespace = true;
+                    }
+
                     isInstance = true;
-                    addNamespace = true;
                 }
                 else if (element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Property) {
                     const params = pxt.blocks.compileInfo(element);
