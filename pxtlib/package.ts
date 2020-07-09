@@ -229,7 +229,9 @@ namespace pxt {
                             dataEncoding: v.dataEncoding || base.dataEncoding || "base64",
                             icon,
                             namespace: ns,
-                            mimeType
+                            mimeType,
+                            tilemapTile: v.tilemapTile,
+                            tileset: v.tileset
                         }
                     }
                 }
@@ -918,6 +920,12 @@ namespace pxt {
                 }
             }
             return this._jres
+        }
+
+        updateJRes() {
+            if (this._jres) {
+                this.parseJRes(this._jres);
+            }
         }
 
         // undefined == uncached

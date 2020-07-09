@@ -132,7 +132,8 @@ export function emptyCompileResult(): pxtc.CompileResult {
 export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     trg.isNative = options.native
-    return pkg.mainPkg.getCompileOptionsAsync(trg)
+    return pkg.mainEditorPkg().buildTilemapsAsync()
+        .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
         .then(opts => {
             if (options.debug) {
                 opts.breakpoints = true;
@@ -444,7 +445,9 @@ export function snippetAsync(qName: string, python?: boolean): Promise<string> {
 }
 
 export function typecheckAsync() {
-    let p = pkg.mainPkg.getCompileOptionsAsync()
+    const epkg = pkg.mainEditorPkg();
+    let p = epkg.buildTilemapsAsync()
+        .then(() => pkg.mainPkg.getCompileOptionsAsync())
         .then(opts => {
             opts.testMode = true // show errors in all top-level code
             return workerOpAsync("setOptions", { options: opts })

@@ -3,6 +3,7 @@
 
 import * as compiler from "./compiler";
 import * as blocklyFieldView from "./blocklyFieldView";
+import * as pkg from "./package";
 
 interface OwnedRange {
     line: number;
@@ -82,6 +83,20 @@ export class ViewZoneEditorHost implements pxt.editor.MonacoFieldEditorHost, mon
         }
     }
 
+    package() {
+        return pkg.mainPkg;
+    }
+
+    writeFileAsync(filename: string, content: string): Promise<void> {
+        const epkg = pkg.mainEditorPkg();
+
+        return epkg.setContentAsync(filename, content);
+    }
+
+    readFile(filename: string): string {
+        return this.package().host().readFile(pkg.mainPkg, filename);
+    }
+
     protected showViewZoneAsync(): Promise<void> {
         if (this._deferredShow) return Promise.resolve();
         return new Promise(resolve => {
@@ -134,6 +149,20 @@ export class ModalEditorHost implements pxt.editor.MonacoFieldEditorHost {
 
     blocksInfo(): pxtc.BlocksInfo {
         return this.blocks;
+    }
+
+    package() {
+        return pkg.mainPkg;
+    }
+
+    writeFileAsync(filename: string, content: string): Promise<void> {
+        const epkg = pkg.mainEditorPkg();
+
+        return epkg.setContentAsync(filename, content);
+    }
+
+    readFile(filename: string): string {
+        return this.package().host().readFile(pkg.mainPkg, filename);
     }
 
     showAsync(fileType: pxt.editor.FileType, editor: monaco.editor.IStandaloneCodeEditor): Promise<pxt.editor.TextEdit> {
@@ -255,7 +284,9 @@ export class FieldEditorManager implements monaco.languages.FoldingRangeProvider
 
         if (!this.fieldEditorsEnabled) return;
 
-        this.allFieldEditors().forEach(fe => {
+        const allEditors = this.allFieldEditors().sort((a, b) => (b.weight || 0) - (a.weight || 0));
+
+        allEditors.forEach(fe => {
             const matcher = fe.matcher;
             const matches = model.findMatches(matcher.searchString,
                 true,
@@ -268,6 +299,8 @@ export class FieldEditorManager implements monaco.languages.FoldingRangeProvider
             const decorations: monaco.editor.IModelDeltaDecoration[] = [];
             matches.forEach(match => {
                 const line = match.range.startLineNumber;
+
+                if (this.getInfoForLine(line)) return;
 
                 decorations.push({
                     range: new monaco.Range(line, model.getLineMinColumn(line), line, model.getLineMaxColumn(line)),
