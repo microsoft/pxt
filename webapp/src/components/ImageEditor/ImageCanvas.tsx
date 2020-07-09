@@ -297,7 +297,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         if (!imageData) {
             const textData = ev.clipboardData.getData("text/plain");
             // text data 'looks like' an image
-            if (/^\s*img`[\s\da-f.#tngrpoyw]+`\s*$/im.test(textData)) {
+            if (/^\s*img(`|\(""")[\s\da-f.#tngrpoyw]+(`|"""\))\s*$/im.test(textData)) {
                 imageData = textData;
             }
         }
