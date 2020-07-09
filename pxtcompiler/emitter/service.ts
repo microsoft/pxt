@@ -625,6 +625,8 @@ namespace ts.pxtc {
                     si.pyQName = override.n;
                     si.pySnippet = override.snippet;
                     si.pySnippetName = override.n;
+                    // TODO(dz):
+                    si.pySnippetWithMarkers = undefined;
                 } else if (si.namespace) {
                     let par = res.byQName[si.namespace]
                     if (par) {
@@ -1254,6 +1256,7 @@ namespace ts.pxtc.service {
                     if (si.snippetAddsDefinitions
                         || (isPython && !si.pySnippet)
                         || (!isPython && !si.snippet)) {
+                        // TODO(dz):
                         let { snippet, addsDefinitions } = getSnippet(lastApiInfo.apis, takenNames, v.runtime, si, n, isPython);
                         if (isPython)
                             si.pySnippet = snippet
@@ -1736,6 +1739,7 @@ namespace ts.pxtc.service {
     export function getSnippet(apis: ApisInfo, takenNames: pxt.Map<SymbolInfo>, runtimeOps: pxt.RuntimeOptions, fn: SymbolInfo, decl: ts.FunctionLikeDeclaration, python?: boolean, recursionDepth = 0): SnippetResult {
         // TODO: a lot of this is duplicate logic with blocklyloader.ts:buildBlockFromDef; we should
         //  unify these approaches
+        // TODO(dz):
         const PY_INDENT: string = (pxt as any).py.INDENT;
 
         let preStmt = "";
