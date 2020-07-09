@@ -602,6 +602,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return compiler.decompileAsync(blockFile)
     }
 
+    setVisible(v: boolean) {
+        super.setVisible(v);
+        // if we are hiding monaco, clear error list
+        if (!v) this.onErrorChanges([]);
+    }
+
     display(): JSX.Element {
         const showErrorList = pxt.appTarget.appTheme.errorList;
         const isAndroid = pxt.BrowserUtils.isAndroid();

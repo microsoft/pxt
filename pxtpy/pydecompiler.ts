@@ -45,7 +45,7 @@ namespace pxt.py {
     ///
     export const INDENT = "    "
     export function indent(lvl: number): (s: string) => string {
-        return s => `${INDENT.repeat(lvl)}${s}`
+        return s => (s || "").split('\n').map(line => `${INDENT.repeat(lvl)}${line}`).join('\n')
     }
     export const indent1 = indent(1)
 
@@ -1034,6 +1034,12 @@ namespace pxt.py {
                 return exps.map((el, i) => {
                     let sep = el.charAt(el.length - 1) == "," ? "" : ",";
                     if (i == 0) {
+                        let lines = el.split('\n');
+                        // for multiline element, indent all lines after first
+                        if (lines.length > 1) {
+                            let first = lines.shift();
+                            el = first + '\n' + indent1(lines.join('\n'));
+                        }
                         return el + sep;
                     } else if (i == exps.length - 1) {
                         return indent1(el);
@@ -1213,8 +1219,9 @@ namespace pxt.py {
             return asExpRes(`(${expToStr(inner)})`, innerSup)
         }
         function emitMultiLnStrLitExp(s: ts.NoSubstitutionTemplateLiteral | ts.TaggedTemplateExpression): ExpRes {
-            if (ts.isNoSubstitutionTemplateLiteral(s))
-                return asExpRes(`"""${s.text}"""`)
+            if (ts.isNoSubstitutionTemplateLiteral(s)) {
+                return asExpRes(`"""\n${indent1(s.text.trim())}\n"""`)
+            }
 
             let [tag, tagSup] = emitExp(s.tag)
             let [temp, tempSup] = emitExp(s.template)
