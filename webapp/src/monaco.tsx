@@ -1183,6 +1183,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this.fieldEditors) {
             this.fieldEditors = new FieldEditorManager(this.editor);
             monaco.languages.registerFoldingRangeProvider("typescript", this.fieldEditors);
+            monaco.languages.registerFoldingRangeProvider("python", this.fieldEditors);
         }
 
         pxt.appTarget.appTheme.monacoFieldEditors.forEach(name => {
