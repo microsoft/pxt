@@ -1978,9 +1978,7 @@ namespace ts.pxtc.service {
                         snippetPrefix = `${getName(instanceToUse)}`;
                         namespaceToUse = instanceToUse.namespace;
                     } else {
-                        // if blockNamespace exists, e.g., "pins", use it for snippet
-                        // else use nsInfo.namespace, e.g., "motors"
-                        namespaceToUse = element.attributes.blockNamespace || nsInfo.namespace || "";
+                        namespaceToUse = nsInfo.namespace;
                     }
 
                     if (namespaceToUse)  {
