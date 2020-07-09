@@ -1948,31 +1948,43 @@ namespace ts.pxtc.service {
                             .filter(v => v.extendsTypes.reduce((x, y) => x || y.indexOf(name) != -1, false))
                             .reduce((x, y) => x.concat(y.extendsTypes), [])
                     }
-                    // if blockNamespace exists, e.g., "pins", use it for snippet
-                    // else use nsInfo.namespace, e.g., "motors"
-                    namespaceToUse = element.attributes.blockNamespace || nsInfo.namespace || "";
+
                     // all fixed instances for this namespace
                     let fixedInstances = instances.filter(value =>
                         value.kind === pxtc.SymbolKind.Variable &&
                         value.attributes.fixedInstance
                     );
+
+                    let instanceToUse: SymbolInfo;
                     // first try to get fixed instances whose retType matches nsInfo.name
                     // e.g., DigitalPin
-                    let exactInstances = fixedInstances.filter(value =>
+                    const exactInstances = fixedInstances.filter(value =>
                         value.retType == nsInfo.qName)
                         .sort((v1, v2) => v1.name.localeCompare(v2.name));
+
                     if (exactInstances.length) {
-                        snippetPrefix = `${getName(exactInstances[0])}`
+                        instanceToUse = exactInstances[0];
                     } else {
                         // second choice: use fixed instances whose retType extends type of nsInfo.name
                         // e.g., nsInfo.name == AnalogPin and instance retType == PwmPin
-                        let extendedInstances = fixedInstances.filter(value =>
+                        const extendedInstances = fixedInstances.filter(value =>
                             getExtendsTypesFor(nsInfo.qName).indexOf(value.retType) !== -1)
                             .sort((v1, v2) => v1.name.localeCompare(v2.name));
-                        if (extendedInstances.length) {
-                            snippetPrefix = `${getName(extendedInstances[0])}`
-                        }
+
+                        instanceToUse = extendedInstances[0];
                     }
+
+                    if (instanceToUse) {
+                        snippetPrefix = `${getName(instanceToUse)}`;
+                        namespaceToUse = instanceToUse.namespace;
+                    }
+
+                    if (!namespaceToUse) {
+                        // if blockNamespace exists, e.g., "pins", use it for snippet
+                        // else use nsInfo.namespace, e.g., "motors"
+                        namespaceToUse = element.attributes.blockNamespace || nsInfo.namespace || "";
+                    }
+
                     isInstance = true;
                     addNamespace = true;
                 }
