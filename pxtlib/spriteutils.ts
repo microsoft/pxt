@@ -488,15 +488,6 @@ namespace pxt.sprite {
 
     function encodeTile(tile: Tile, fileType: "typescript" | "python") {
         return tile.id;
-        // if (tile.qualifiedName) {
-        //     return `${tile.qualifiedName}`;
-        // }
-        // else if (tile.projectId != undefined) {
-        //     return `${TILE_NAMESPACE}.${TILE_PREFIX}${tile.projectId}`;
-        // }
-        // else {
-        //     return bitmapToImageLiteral(Bitmap.fromData(tile.data), fileType);
-        // }
     }
 
     function decodeTile(literal: string, proj: TilemapProject): Tile {
