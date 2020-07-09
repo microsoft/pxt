@@ -934,11 +934,11 @@ namespace pxt.py {
             // TODO(dz): Impl skip namespaces properly. Right now we just skip the left-most part of a property access
             if (ts.isPropertyAccessExpression(s)) {
                 let nmPart = getName(s.name)
+                let nmRight = nmPart.substr(nmPart.lastIndexOf(".") + 1)
                 if (ts.isIdentifier(s.expression)) {
-                    if (nmPart.indexOf(".") >= 0) nmPart = nmPart.substr(nmPart.lastIndexOf(".") + 1);
-                    return [nmPart]
+                    return [nmRight]
                 }
-                return getSimpleExpNameParts(s.expression).concat([nmPart])
+                return getSimpleExpNameParts(s.expression).concat([nmRight])
             }
             else if (ts.isIdentifier(s)) {
                 return [getName(s)]
