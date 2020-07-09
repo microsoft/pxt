@@ -1758,6 +1758,10 @@ namespace ts.pxtc.service {
 
         const attrs = fn.attributes;
 
+        if (attrs.shim === "TD_ID" && recursionDepth && decl.parameters.length) {
+            return getParameterDefault(decl.parameters[0]);
+        }
+
         const checker = service && service.getProgram().getTypeChecker();
 
         const blocksInfo = blocksInfoOp(apis, runtimeOps.bannedCategories);
