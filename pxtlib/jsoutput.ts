@@ -407,9 +407,7 @@ namespace pxt.blocks {
         }
 
         function getCurrentLine() {
-            let i = 0;
-            output.replace(/\n/g, a => { i++; return a; })
-            return i;
+            return (output.match(/\n/g) || []).length;
         }
 
         function write(s: string) {

@@ -546,9 +546,16 @@ namespace ts.pxtc {
                             res.byQName[qName + "@type"] = si
                             si = existing
                         } else {
-                            si.attributes = parseCommentString(
-                                existing.attributes._source + "\n" +
-                                si.attributes._source)
+                            const foundSrc = existing.attributes._source?.trim();
+                            const newSrc = si.attributes._source?.trim();
+                            let source = foundSrc + "\n" + newSrc;
+                            // Avoid duplicating source if possible
+                            if (!!foundSrc && newSrc?.indexOf(foundSrc) >= 0) {
+                                source = newSrc;
+                            } else if (!!newSrc && foundSrc?.indexOf(newSrc) >= 0) {
+                                source = foundSrc;
+                            }
+                            si.attributes = parseCommentString(source);
                             if (existing.extendsTypes) {
                                 si.extendsTypes = si.extendsTypes || []
                                 existing.extendsTypes.forEach(t => {
@@ -1169,8 +1176,7 @@ namespace ts.pxtc.service {
                 resultSymbols = completionSymbols(pxt.U.values(lastApiInfo.apis.byQName))
 
                 // then use the typescript service to get symbols in scope
-                if (!tsNode)
-                    tsNode = findInnerMostNodeAtPosition(tsAst, wordStartPos);
+                tsNode = findInnerMostNodeAtPosition(tsAst, wordStartPos);
                 if (!tsNode)
                     tsNode = tsAst.getSourceFile()
                 let symSearch = SymbolFlags.Variable;
@@ -1728,6 +1734,8 @@ namespace ts.pxtc.service {
         }
     }
     export function getSnippet(apis: ApisInfo, takenNames: pxt.Map<SymbolInfo>, runtimeOps: pxt.RuntimeOptions, fn: SymbolInfo, decl: ts.FunctionLikeDeclaration, python?: boolean, recursionDepth = 0): SnippetResult {
+        // TODO: a lot of this is duplicate logic with blocklyloader.ts:buildBlockFromDef; we should
+        //  unify these approaches
         const PY_INDENT: string = (pxt as any).py.INDENT;
 
         let preStmt = "";
@@ -1749,6 +1757,10 @@ namespace ts.pxtc.service {
         }
 
         const attrs = fn.attributes;
+
+        if (attrs.shim === "TD_ID" && recursionDepth && decl.parameters.length) {
+            return getParameterDefault(decl.parameters[0]);
+        }
 
         const checker = service && service.getProgram().getTypeChecker();
 
@@ -1781,8 +1793,8 @@ namespace ts.pxtc.service {
                     const defl = getDefaultEnumValue(type, python)
                     return asSnippetRes(defl)
                 }
+                const typeSymbol = getPxtSymbolFromTsSymbol(type.symbol, apis, checker)
                 if (isObjectType(type)) {
-                    const typeSymbol = getPxtSymbolFromTsSymbol(type.symbol, apis, checker)
                     const snip = typeSymbol && typeSymbol.attributes && (python ? typeSymbol.attributes.pySnippet : typeSymbol.attributes.snippet);
                     if (snip) return asSnippetRes(snip);
                     if (type.objectFlags & ts.ObjectFlags.Anonymous) {
@@ -1796,7 +1808,31 @@ namespace ts.pxtc.service {
                 if (type.flags & ts.TypeFlags.NumberLike) {
                     return asSnippetRes("0");
                 }
+
+                // check for fixed instances
+                if (typeSymbol && typeSymbol.attributes.fixedInstances) {
+                    const fixedSyms = getFixedInstancesOf(typeSymbol)
+                    if (fixedSyms.length) {
+                        const defl = fixedSyms[0]
+                        return asSnippetRes(python ? defl.pyQName : defl.qName)
+                    }
+
+                }
                 return null
+            }
+
+            function getFixedInstancesOf(type: SymbolInfo) {
+                return pxt.Util.values(apis.byQName).filter(sym => sym.kind === pxtc.SymbolKind.Variable
+                    && sym.attributes.fixedInstance
+                    && isSubtype(apis, sym.retType, type.qName));
+            }
+
+            function isSubtype(apis: pxtc.ApisInfo, specific: string, general: string) {
+                if (specific == general) return true
+                let inf = apis.byQName[specific]
+                if (inf && inf.extendsTypes)
+                    return inf.extendsTypes.indexOf(general) >= 0
+                return false
             }
 
             function getShadowSymbol(paramName: string): SymbolInfo | null {
@@ -1966,7 +2002,10 @@ namespace ts.pxtc.service {
         }
 
         doesAddDefinition = args.reduce((p, n) => p || n.addsDefinitions, doesAddDefinition)
-        let snippet = `${fnName}(${args.map(a => a.snippet).join(', ')})`;
+        let snippet = attrs && (python ? attrs.pySnippet : attrs.snippet);
+        if (!snippet) {
+            snippet = `${fnName}(${args.map(a => a.snippet).join(', ')})`;
+        }
         let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
         insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
 
