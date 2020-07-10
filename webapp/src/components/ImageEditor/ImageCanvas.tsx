@@ -254,6 +254,11 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                 ev.preventDefault();
             }
 
+            if (ev.key == "Escape" && this.editState?.floating?.image && this.shouldHandleCanvasShortcut()) {
+                this.cancelSelection();
+                ev.preventDefault();
+            }
+
             if ((ev.key === "Backspace" || ev.key === "Delete") && this.editState?.floating?.image && this.shouldHandleCanvasShortcut()) {
                 this.deleteSelection();
                 ev.preventDefault();
@@ -772,6 +777,11 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
         this.editState.mergeFloatingLayer();
         this.editState.copyToLayer(0, 0, this.imageWidth, this.imageHeight, true);
+        this.props.dispatchImageEdit(this.editState.toImageState());
+    }
+
+    protected cancelSelection() {
+        this.editState.mergeFloatingLayer();
         this.props.dispatchImageEdit(this.editState.toImageState());
     }
 
