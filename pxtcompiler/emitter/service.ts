@@ -1752,7 +1752,7 @@ namespace ts.pxtc.service {
         return internalSnippetStringify(snippet)
 
         function internalSnippetStringify(snippet: SnippetNode): string {
-            // The format for monaco snippets is: 
+            // The format for monaco snippets is:
             //      foo(${1:bar}, ${2:baz},  ${1:bar})
             // so both instances of "bar" will start highlighted, then tab will cycle to "baz", etc.
             if (isSnippetReplacePoint(snippet)) {
@@ -1950,6 +1950,15 @@ namespace ts.pxtc.service {
                         if (shadowDef) {
                             return shadowDef
                         }
+                    }
+                }
+
+                const shadowAttrs = shadowSymbol.attributes;
+                if (shadowAttrs.shim === "KIND_GET" && shadowAttrs.blockId) {
+                    const kindNamespace = shadowAttrs.kindNamespace || shadowAttrs.blockNamespace || fn.namespace;
+                    const defaultValueForKind = pxtc.Util.values(apis.byQName).find(api => api.namespace === kindNamespace && api.attributes.isKind);
+                    if (defaultValueForKind) {
+                        return defaultValueForKind.qName;
                     }
                 }
 
