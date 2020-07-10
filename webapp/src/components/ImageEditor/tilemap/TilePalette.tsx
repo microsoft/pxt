@@ -13,11 +13,11 @@ import { AlertOption } from '../Alert';
 
 export interface TilePaletteProps {
     colors: string[];
-    tileset: pxt.sprite.TileSet;
+    tileset: pxt.TileSet;
     selected: number;
     backgroundColor: number;
 
-    referencedTiles: number[];
+    referencedTiles: string[];
 
     category: TileCategory;
     page: number;
@@ -34,8 +34,8 @@ export interface TilePaletteProps {
     dispatchChangeDrawingMode: (drawingMode: TileDrawingMode) => void;
     dispatchCreateNewTile: (bitmap: pxt.sprite.BitmapData, foreground: number, background: number, qualifiedName?: string) => void;
     dispatchSetGalleryOpen: (open: boolean) => void;
-    dispatchOpenTileEditor: (editIndex?: number) => void;
-    dispatchDeleteTile: (index: number) => void;
+    dispatchOpenTileEditor: (editIndex?: number, editID?: string) => void;
+    dispatchDeleteTile: (index: number, id: string) => void;
     dispatchShowAlert: (title: string, text: string, options?: AlertOption[]) => void;
     dispatchHideAlert: () => void;
 }
@@ -149,8 +149,8 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     render() {
         const { colors, selected, backgroundColor, tileset, category, page, drawingMode, galleryOpen } = this.props;
 
-        const fg = tileset.tiles[selected] ? tileset.tiles[selected].data : emptyTile.data();
-        const bg = tileset.tiles[backgroundColor] ? tileset.tiles[backgroundColor].data : emptyTile.data();
+        const fg = tileset.tiles[selected] ? tileset.tiles[selected].bitmap : emptyTile.data();
+        const bg = tileset.tiles[backgroundColor] ? tileset.tiles[backgroundColor].bitmap : emptyTile.data();
         const wall = emptyTile.data();
         this.updateGalleryTiles();
 
@@ -246,7 +246,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             this.categoryTiles = this.categories[category].tiles;
         }
         else {
-            this.categoryTiles = this.getCustomTiles().map(([t, i]) => ({ index: i, bitmap: t.data }));
+            this.categoryTiles = this.getCustomTiles().map(([t, i]) => ({ index: i, bitmap: t.bitmap }));
         }
 
         const startIndex = page * TILES_PER_PAGE;
@@ -259,11 +259,11 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         if (!index || index < 0 || index >= tileset.tiles.length) return;
 
         const tile = tileset.tiles[index];
-        if (!!tile.qualifiedName) {
+        if (!tile.isProjectTile) {
             // For gallery tile, find the category then the page within the category
-            const category = this.categories.find(opt => opt.tiles.findIndex(t => t.qualifiedName == tile.qualifiedName) !== -1);
+            const category = this.categories.find(opt => opt.tiles.findIndex(t => t.qualifiedName == tile.id) !== -1);
             if (!category || !category.tiles) return;
-            const page = Math.max(Math.floor(category.tiles.findIndex(t => t.qualifiedName == tile.qualifiedName) / TILES_PER_PAGE), 0);
+            const page = Math.max(Math.floor(category.tiles.findIndex(t => t.qualifiedName == tile.id) / TILES_PER_PAGE), 0);
 
             dispatchSetGalleryOpen(true);
             dispatchChangeTilePaletteCategory(this.categories.indexOf(category) as TileCategory);
@@ -272,7 +272,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             // For custom tile, find the page
             const categoryTiles = this.getCustomTiles().map(([t, i]) => t);
             if (!categoryTiles) return;
-            const page = Math.max(Math.floor(categoryTiles.findIndex(t => t.projectId == tile.projectId) / TILES_PER_PAGE), 0);
+            const page = Math.max(Math.floor(categoryTiles.findIndex(t => t.id == tile.id) / TILES_PER_PAGE), 0);
 
             dispatchSetGalleryOpen(false);
             dispatchChangeTilePalettePage(page);
@@ -355,17 +355,18 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     protected tileEditHandler = () => {
         const { tileset, selected, dispatchOpenTileEditor } = this.props;
 
-        if (!tileset.tiles[selected] || tileset.tiles[selected].qualifiedName || selected === 0) return;
+        const tileToEdit = tileset.tiles[selected];
+        if (!tileToEdit?.isProjectTile || selected === 0) return;
 
-        dispatchOpenTileEditor(selected);
+        dispatchOpenTileEditor(selected, tileToEdit.id);
     }
 
     protected tileDuplicateHandler = () => {
         const { tileset, selected, backgroundColor, dispatchCreateNewTile } = this.props;
 
-        if (!tileset.tiles[selected] || tileset.tiles[selected].qualifiedName || selected === 0) return;
+        if (!tileset.tiles[selected] || !tileset.tiles[selected].isProjectTile || selected === 0) return;
 
-        dispatchCreateNewTile(tileset.tiles[selected].data, tileset.tiles.length, backgroundColor);
+        dispatchCreateNewTile(tileset.tiles[selected].bitmap, tileset.tiles.length, backgroundColor);
     }
 
     protected tileDeleteAlertHandler = () => {
@@ -373,10 +374,11 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
         const info = tileset.tiles[selected];
 
-        if (!selected || !info || info.qualifiedName) return;
+        if (!selected || !info || !info.isProjectTile) return;
+
 
         // tile cannot be deleted because it is referenced in the code
-        if (referencedTiles && referencedTiles.indexOf(info.projectId) !== -1) {
+        if (referencedTiles && referencedTiles.indexOf(info.id) !== -1) {
             dispatchShowAlert(lf("Unable to delete"),
                 lf("This tile is used in your game. Remove all blocks using the tile before deleting."),
                 [{ label: lf("Cancel"), onClick: dispatchHideAlert }]);
@@ -389,7 +391,11 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     protected deleteTile = () => {
-        this.props.dispatchDeleteTile(this.props.selected);
+        const deleted = this.props.tileset.tiles[this.props.selected];
+
+        if (deleted) {
+            this.props.dispatchDeleteTile(this.props.selected, deleted.id);
+        }
     }
 
     protected canvasClickHandler = (ev: React.MouseEvent<HTMLCanvasElement>) => {
@@ -468,16 +474,16 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     // Returns all custom tiles and their index in the entire tileset, sorted by index.
     protected getCustomTiles() {
         return this.props.tileset.tiles
-            .map((t, i) => ([t, i] as [pxt.sprite.TileInfo, number]))
-            .filter(([t]) => t.projectId != undefined && t.data)
-            .sort(([a], [b]) => a.projectId - b.projectId);
+            .map((t, i) => ([t, i] as [pxt.Tile, number]))
+            .filter(([t]) => t.isProjectTile)
+            .sort(([a], [b]) => a.weight - b.weight);
     }
 
     protected getTileIndex(g: GalleryTile) {
         const { tileset } = this.props;
 
         for (let i = 0; i < tileset.tiles.length; i++) {
-            if (tileset.tiles[i].qualifiedName === g.qualifiedName) return i;
+            if (tileset.tiles[i].id === g.qualifiedName) return i;
         }
 
         return -1;

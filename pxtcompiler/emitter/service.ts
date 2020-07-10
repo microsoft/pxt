@@ -1758,6 +1758,10 @@ namespace ts.pxtc.service {
 
         const attrs = fn.attributes;
 
+        if (attrs.shim === "TD_ID" && recursionDepth && decl.parameters.length) {
+            return getParameterDefault(decl.parameters[0]);
+        }
+
         const checker = service && service.getProgram().getTypeChecker();
 
         const blocksInfo = blocksInfoOp(apis, runtimeOps.bannedCategories);
@@ -2009,7 +2013,10 @@ namespace ts.pxtc.service {
         }
 
         doesAddDefinition = args.reduce((p, n) => p || n.addsDefinitions, doesAddDefinition)
-        let snippet = `${fnName}(${args.map(a => a.snippet).join(', ')})`;
+        let snippet = attrs && (python ? attrs.pySnippet : attrs.snippet);
+        if (!snippet) {
+            snippet = `${fnName}(${args.map(a => a.snippet).join(', ')})`;
+        }
         let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
         insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
 

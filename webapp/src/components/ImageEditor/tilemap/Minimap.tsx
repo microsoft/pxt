@@ -4,7 +4,7 @@ import { ImageEditorStore, TilemapState, TileCategory } from '../store/imageRedu
 
 export interface MinimapProps {
     colors: string[];
-    tileset: pxt.sprite.TileSet;
+    tileset: pxt.TileSet;
     tilemap: pxt.sprite.ImageState;
 }
 
@@ -66,7 +66,7 @@ class MinimapImpl extends React.Component<MinimapProps, {}> {
             if (index >= tileset.tiles.length) {
                 return "#ffffff";
             }
-            const bitmap = pxt.sprite.Bitmap.fromData(tileset.tiles[index].data);
+            const bitmap = pxt.sprite.Bitmap.fromData(tileset.tiles[index].bitmap);
             this.tileColors[index] = pxt.sprite.computeAverageColor(bitmap, colors);
         }
 
