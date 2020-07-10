@@ -760,8 +760,10 @@ declare namespace ts.pxtc {
         pkg?: string;
         snippet?: string;
         snippetName?: string;
+        snippetWithMarkers?: string; // TODO(dz)
         pySnippet?: string;
         pySnippetName?: string;
+        pySnippetWithMarkers?: string; // TODO(dz)
         blockFields?: ParsedBlockDef;
         isReadOnly?: boolean;
         combinedProperties?: string[];
