@@ -1958,7 +1958,7 @@ namespace ts.pxtc.service {
                     const kindNamespace = shadowAttrs.kindNamespace || shadowAttrs.blockNamespace || fn.namespace;
                     const defaultValueForKind = pxtc.Util.values(apis.byQName).find(api => api.namespace === kindNamespace && api.attributes.isKind);
                     if (defaultValueForKind) {
-                        return defaultValueForKind.qName;
+                        return python ? defaultValueForKind.pyQName : defaultValueForKind.qName;
                     }
                 }
 
