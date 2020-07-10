@@ -82,7 +82,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         const imageState = this.getImageState();
         const isPortrait = !imageState || (imageState.bitmap.height > imageState.bitmap.width);
 
-        return <div ref="canvas-bounds" className={`image-editor-canvas ${isPortrait ? "portrait" : "landscape"}`} onContextMenu={this.preventContextMenu}>
+        return <div ref="canvas-bounds" className={`image-editor-canvas ${isPortrait ? "portrait" : "landscape"}`} tabIndex={-1} onContextMenu={this.preventContextMenu}>
             <div className="paint-container">
                 <canvas ref="paint-surface-bg" className="paint-surface" />
                 <canvas ref="paint-surface" className="paint-surface" />
@@ -104,6 +104,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         bindGestureEvents(this.refs["canvas-bounds"] as HTMLDivElement, this);
 
         const canvasBounds = this.refs["canvas-bounds"] as HTMLDivElement;
+        canvasBounds.focus();
 
         canvasBounds.addEventListener("wheel", ev => {
             this.hasInteracted = true
@@ -244,6 +245,18 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             // prevent blockly's ctrl+c / ctrl+v handler
             if ((ev.ctrlKey || ev.metaKey) && (ev.key === 'c' || ev.key === 'v')) {
                 ev.stopPropagation();
+            }
+
+            if ((ev.ctrlKey || ev.metaKey) && ev.key === 'a') {
+                // only handle select all if the canvas has the focus or if nothing has the focus
+                const shouldHandleSelectAll = document.activeElement === this.refs["canvas-bounds"] ||
+                    document.activeElement === document.body ||
+                    !document.activeElement;
+
+                if (shouldHandleSelectAll) {
+                    this.selectAll();
+                    ev.preventDefault();
+                }
             }
 
             // hotkeys for switching temporarily between tools
@@ -751,6 +764,17 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         }
     }
 
+    protected selectAll() {
+        // force marquee tool so selection can be moved
+        if (this.props.tool !== ImageEditorTool.Marquee) {
+            this.props.dispatchChangeImageTool(ImageEditorTool.Marquee);
+        }
+
+        this.editState.mergeFloatingLayer();
+        this.editState.copyToLayer(0, 0, this.imageWidth, this.imageHeight, true);
+        this.props.dispatchImageEdit(this.editState.toImageState());
+    }
+
     protected cloneCanvasStyle(base: HTMLCanvasElement, target: HTMLCanvasElement) {
         target.style.position = base.style.position;
         target.style.width = base.style.width;
@@ -796,6 +820,13 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
     protected isColorSelect() {
         return this.props.tool === ImageEditorTool.ColorSelect;
+    }
+
+    protected shouldHandleCanvasShortcut() {
+        // only handle if focus is in canvas-bounds or if there is no focus
+        return document.activeElement === this.refs["canvas-bounds"] ||
+            document.activeElement === document.body ||
+            !document.activeElement;
     }
 
     protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();
