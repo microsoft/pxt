@@ -288,7 +288,7 @@ namespace pxt.blocks {
 
         function append(s: string) {
             // At runtime sometimes `s` is a number.
-            if (s?.match) {
+            if (typeof(s) === 'string') {
                 currentLine += (s.match(/\n/g) || []).length;
             }
             output += s;
