@@ -1256,12 +1256,18 @@ namespace ts.pxtc.service {
                     if (si.snippetAddsDefinitions
                         || (isPython && !si.pySnippet)
                         || (!isPython && !si.snippet)) {
-                        // TODO(dz):
-                        let { snippet, addsDefinitions } = getSnippet(lastApiInfo.apis, takenNames, v.runtime, si, n, isPython);
-                        if (isPython)
+                        const snippetNode = getSnippet(lastApiInfo.apis, takenNames, v.runtime, si, n, isPython);
+                        const snippet = snippetStringify(snippetNode)
+                        const snippetWithMarkers = snippetStringify(snippetNode, true)
+                        const addsDefinitions = snippetAddsDefinitions(snippetNode)
+                        if (isPython) {
                             si.pySnippet = snippet
-                        else
+                            si.snippetWithMarkers = snippetWithMarkers
+                        }
+                        else {
                             si.snippet = snippet
+                            si.snippetWithMarkers = snippetWithMarkers
+                        }
                         si.snippetAddsDefinitions = addsDefinitions
                     }
                 }
@@ -1362,7 +1368,9 @@ namespace ts.pxtc.service {
                 takenNames = lastApiInfo.apis.byQName
             }
 
-            const { snippet } = ts.pxtc.service.getSnippet(lastApiInfo.apis, takenNames, v.runtime, fn, n as FunctionLikeDeclaration, isPython)
+            const snippetNode = ts.pxtc.service.getSnippet(
+                lastApiInfo.apis, takenNames, v.runtime, fn, n as FunctionLikeDeclaration, isPython)
+            const snippet = snippetStringify(snippetNode)
             return snippet
         },
         blocksInfo: v => blocksInfoOp(v as any, v.blocks && v.blocks.bannedCategories),
@@ -1726,23 +1734,62 @@ namespace ts.pxtc.service {
 . . . . .
 """`;
 
-    interface SnippetResult {
-        snippet: string,
-        addsDefinitions: boolean
+    export type SnippetNode = SnippetReplacePoint | string | SnippetNode[]
+    export interface SnippetReplacePoint {
+        default: SnippetNode;
+        isDefinition?: boolean;
     }
-    function asSnippetRes(snippet: string) {
-        return {
-            snippet,
-            addsDefinitions: false
+    function isSnippetReplacePoint(n: SnippetNode): n is SnippetReplacePoint {
+        return !!(n as SnippetReplacePoint).default
+    }
+    function isSnippetNodeList(n: SnippetNode): n is SnippetNode[] {
+        return typeof (n) === "object" && typeof ((n as SnippetNode[]).length) === "number"
+    }
+    export function snippetStringify(snippet: SnippetNode, emitMonacoReplacementPoints = false): string {
+        // The format for monaco snippets is: 
+        //      foo(${1:bar}, ${2:baz},  ${1:bar})
+        // so both instances of "bar" will start highlighted, then tab will cycle to "baz", etc.
+        const namesToReplacementNumbers: { [key: string]: number } = {}
+        let nextNum = 1
+        if (isSnippetReplacePoint(snippet)) {
+            if (emitMonacoReplacementPoints) {
+                const name = snippetStringify(snippet.default)
+                let num = namesToReplacementNumbers[name]
+                if (!num) {
+                    num = nextNum
+                    nextNum++
+                    namesToReplacementNumbers[name] = num
+                }
+                return "${" + num + ":" + name + "}"
+            } else {
+                return snippetStringify(snippet.default, emitMonacoReplacementPoints)
+            }
+        } else if (isSnippetNodeList(snippet)) {
+            const res = snippet.map(s => snippetStringify(s, emitMonacoReplacementPoints)).join("")
+            return res
+        } else {
+            return snippet
         }
     }
-    export function getSnippet(apis: ApisInfo, takenNames: pxt.Map<SymbolInfo>, runtimeOps: pxt.RuntimeOptions, fn: SymbolInfo, decl: ts.FunctionLikeDeclaration, python?: boolean, recursionDepth = 0): SnippetResult {
+    export function snippetAddsDefinitions(snippet: SnippetNode): boolean {
+        if (isSnippetReplacePoint(snippet)) {
+            return snippet.isDefinition || snippetAddsDefinitions(snippet.default)
+        } else if (isSnippetNodeList(snippet)) {
+            return snippet
+                .map(snippetAddsDefinitions)
+                .reduce((p, n) => p || n, false)
+        } else {
+            return false
+        }
+    }
+
+    export function getSnippet(apis: ApisInfo, takenNames: pxt.Map<SymbolInfo>, runtimeOps: pxt.RuntimeOptions, fn: SymbolInfo, decl: ts.FunctionLikeDeclaration, python?: boolean, recursionDepth = 0): SnippetNode {
         // TODO: a lot of this is duplicate logic with blocklyloader.ts:buildBlockFromDef; we should
         //  unify these approaches
         // TODO(dz):
         const PY_INDENT: string = (pxt as any).py.INDENT;
 
-        let preStmt = "";
+        let preStmt: SnippetNode[] = [];
 
         let fnName = ""
         if (decl.kind == SK.Constructor) {
@@ -1767,13 +1814,11 @@ namespace ts.pxtc.service {
         const blocksInfo = blocksInfoOp(apis, runtimeOps.bannedCategories);
         const blocksById = blocksInfo.blocksById
 
-        let doesAddDefinition = false;
-
         // TODO: move out of getSnippet for general reuse
-        function getParameterDefault(param: ParameterDeclaration): SnippetResult {
+        function getParameterDefault(param: ParameterDeclaration): SnippetNode {
             const typeNode = param.type;
             if (!typeNode)
-                return asSnippetRes(python ? "None" : "null");
+                return python ? "None" : "null"
 
             const name = param.name.kind === SK.Identifier ? (param.name as ts.Identifier).text : undefined;
 
@@ -1782,31 +1827,32 @@ namespace ts.pxtc.service {
                 if (typeNode.kind == SK.StringKeyword) {
                     const defaultName = attrs.paramDefl[name];
                     const snippet = typeNode.kind == SK.StringKeyword && defaultName.indexOf(`"`) != 0 ? `"${defaultName}"` : defaultName;
-                    return asSnippetRes(snippet)
+                    return snippet
                 }
-                return asSnippetRes(attrs.paramDefl[name]);
+                return attrs.paramDefl[name];
             }
 
-            function getDefaultValueOfType(type: ts.Type): SnippetResult | null {
+            function getDefaultValueOfType(type: ts.Type): SnippetNode | undefined {
                 // TODO: generalize this to handle more types
                 if (type.symbol && type.symbol.flags & SymbolFlags.Enum) {
                     const defl = getDefaultEnumValue(type, python)
-                    return asSnippetRes(defl)
+                    return defl
                 }
                 const typeSymbol = getPxtSymbolFromTsSymbol(type.symbol, apis, checker)
                 if (isObjectType(type)) {
                     const snip = typeSymbol && typeSymbol.attributes && (python ? typeSymbol.attributes.pySnippet : typeSymbol.attributes.snippet);
-                    if (snip) return asSnippetRes(snip);
+                    if (snip)
+                        return snip;
                     if (type.objectFlags & ts.ObjectFlags.Anonymous) {
                         const sigs = checker.getSignaturesOfType(type, ts.SignatureKind.Call);
                         if (sigs && sigs.length) {
                             return createDefaultFunction(sigs[0], false);
                         }
-                        return emitFn(name);
+                        return emitEmptyFn(name);
                     }
                 }
                 if (type.flags & ts.TypeFlags.NumberLike) {
-                    return asSnippetRes("0");
+                    return "0";
                 }
 
                 // check for fixed instances
@@ -1814,11 +1860,11 @@ namespace ts.pxtc.service {
                     const fixedSyms = getFixedInstancesOf(typeSymbol)
                     if (fixedSyms.length) {
                         const defl = fixedSyms[0]
-                        return asSnippetRes(python ? defl.pyQName : defl.qName)
+                        return python ? defl.pyQName : defl.qName
                     }
 
                 }
-                return null
+                return undefined
             }
 
             function getFixedInstancesOf(type: SymbolInfo) {
@@ -1894,12 +1940,12 @@ namespace ts.pxtc.service {
             // TODO: move into getDefaultValueOfType
             switch (typeNode.kind) {
                 case SK.StringKeyword:
-                    return asSnippetRes(name == "leds"
+                    return name == "leds"
                         ? (python ? defaultPyImgList : defaultTsImgList)
-                        : `""`);
-                case SK.NumberKeyword: return asSnippetRes("0");
-                case SK.BooleanKeyword: return asSnippetRes(python ? "False" : "false");
-                case SK.ArrayType: return asSnippetRes("[]");
+                        : `""`;
+                case SK.NumberKeyword: return "0";
+                case SK.BooleanKeyword: return python ? "False" : "false";
+                case SK.ArrayType: return "[]";
                 case SK.TypeReference:
                     // handled below
                     break;
@@ -1909,7 +1955,7 @@ namespace ts.pxtc.service {
                     if (functionSignature) {
                         return createDefaultFunction(functionSignature, true);
                     }
-                    return emitFn(name);
+                    return emitEmptyFn(name);
             }
 
             // get default of type
@@ -1921,13 +1967,20 @@ namespace ts.pxtc.service {
             }
 
             // lastly, null or none
-            return asSnippetRes(python ? "None" : "null");
+            return python ? "None" : "null";
         }
 
         const includedParameters = decl.parameters ? decl.parameters
             .filter(param => !param.initializer && !param.questionToken) : []
 
-        const args = includedParameters.map(getParameterDefault)
+        const args = includedParameters
+            .map(getParameterDefault)
+            .map(p =>
+                // make a "replacement point" out of each parameter
+                // e.g. foo(${1:param1}, ${2:param2})
+                ({
+                    default: p
+                }) as SnippetNode)
 
         let snippetPrefix = fn.namespace;
         let isInstance = false;
@@ -2001,26 +2054,30 @@ namespace ts.pxtc.service {
             }
         }
 
-        doesAddDefinition = args.reduce((p, n) => p || n.addsDefinitions, doesAddDefinition)
-        let snippet = `${fnName}(${args.map(a => a.snippet).join(', ')})`;
-        let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
-        insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
+        let argsWithCommas = args.reduce((p: SnippetNode[], n) => [...p, p.length ? "," : "", n], []) as SnippetNode[]
+        let snippet: SnippetNode[] = [fnName, "(", ...argsWithCommas, ")"];
+        let insertText = snippetPrefix ? [snippetPrefix, ".", ...snippet] : snippet;
+        insertText = addNamespace ? [firstWord(namespaceToUse), ".", ...insertText] : insertText;
 
         if (attrs && attrs.blockSetVariable) {
-            doesAddDefinition = true;
             if (python) {
                 const varName = getUniqueName(snakify(attrs.blockSetVariable));
-                insertText = `${varName} = ${insertText}`;
+                const varNode = {
+                    default: varName,
+                    isDefinition: true
+                }
+                insertText = [varNode, " = ", ...insertText];
             } else {
                 const varName = getUniqueName(attrs.blockSetVariable);
-                insertText = `let ${varName} = ${insertText}`;
+                const varNode = {
+                    default: varName,
+                    isDefinition: true
+                }
+                insertText = ["let ", varNode, " = ", ...insertText];
             }
         }
 
-        return {
-            snippet: preStmt + insertText,
-            addsDefinitions: doesAddDefinition
-        }
+        return [preStmt, insertText]
 
         function getSymbolName(symbol: Symbol) {
             if (checker) {
@@ -2041,7 +2098,7 @@ namespace ts.pxtc.service {
             return i < 0 ? s : s.substring(0, i);
         }
 
-        function createDefaultFunction(functionSignature: ts.Signature, isArgument: boolean): SnippetResult {
+        function createDefaultFunction(functionSignature: ts.Signature, isArgument: boolean): SnippetNode {
             let returnValue = "";
 
             let returnType = checker.getReturnTypeOfSignature(functionSignature);
@@ -2071,7 +2128,7 @@ namespace ts.pxtc.service {
                     const t = checker && checker.getTypeAtLocation(p);
                     return !!(t && t.symbol && t.symbol.flags & SymbolFlags.Enum)
                 }).map(p => {
-                    const { snippet } = getParameterDefault(p);
+                    const snippet = snippetStringify(getParameterDefault(p));
                     const str = snippet.toLowerCase()
                     const index = str.lastIndexOf(".");
                     return index !== -1 ? str.substr(index + 1) : str;
@@ -2081,10 +2138,13 @@ namespace ts.pxtc.service {
 
                 n = snakify(n);
                 n = getUniqueName(n)
-                preStmt += `def ${n}${functionArgument}:\n${PY_INDENT}${returnValue || "pass"}\n`;
+                preStmt = [
+                    ...preStmt, preStmt.length ? "\n" : "",
+                    "def ", { default: n, isDefinition: true }, functionArgument, `:\n${PY_INDENT}`,
+                    returnValue || "pass", `\n`
+                ];
                 return {
-                    snippet: n,
-                    addsDefinitions: true
+                    default: n
                 }
             } else {
                 let functionArgument = "()";
@@ -2095,21 +2155,23 @@ namespace ts.pxtc.service {
                     let displayPartsStr = ts.displayPartsToString(displayParts);
                     functionArgument = displayPartsStr.substr(0, displayPartsStr.lastIndexOf(":"));
                 }
-                return asSnippetRes(`function ${functionArgument} {\n    ${returnValue}\n}`);
+                return [`function`, functionArgument, ` {\n${PY_INDENT}`, returnValue, `\n}`];
             }
         }
 
-        function emitFn(n: string): SnippetResult {
+        function emitEmptyFn(n: string): SnippetNode {
             if (python) {
                 n = n || "fn"
                 n = snakify(n);
                 n = getUniqueName(n)
-                preStmt += `def ${n}():\n${PY_INDENT}pass\n`;
+                preStmt = [
+                    ...preStmt, preStmt.length ? "\n" : "",
+                    "def ", { default: n, isDefinition: true }, `():\n${PY_INDENT}pass\n`,
+                ];
                 return {
-                    snippet: n,
-                    addsDefinitions: true
+                    default: n
                 }
-            } else return asSnippetRes(`function () {}`);
+            } else return `function () {}`;
         }
     }
 
