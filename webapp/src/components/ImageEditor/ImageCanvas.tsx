@@ -247,16 +247,14 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                 ev.stopPropagation();
             }
 
-            if ((ev.ctrlKey || ev.metaKey) && ev.key === 'a') {
-                // only handle select all if the canvas has the focus or if nothing has the focus
-                const shouldHandleSelectAll = document.activeElement === this.refs["canvas-bounds"] ||
-                    document.activeElement === document.body ||
-                    !document.activeElement;
+            if ((ev.ctrlKey || ev.metaKey) && ev.key === 'a' && this.shouldHandleCanvasShortcut()) {
+                this.selectAll();
+                ev.preventDefault();
+            }
 
-                if (shouldHandleSelectAll) {
-                    this.selectAll();
-                    ev.preventDefault();
-                }
+            if ((ev.key === "Backspace" || ev.key === "Delete") && this.editState?.floating?.image && this.shouldHandleCanvasShortcut()) {
+                this.deleteSelection();
+                ev.preventDefault();
             }
 
             // hotkeys for switching temporarily between tools
@@ -772,6 +770,11 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
         this.editState.mergeFloatingLayer();
         this.editState.copyToLayer(0, 0, this.imageWidth, this.imageHeight, true);
+        this.props.dispatchImageEdit(this.editState.toImageState());
+    }
+
+    protected deleteSelection() {
+        this.editState.floating = null;
         this.props.dispatchImageEdit(this.editState.toImageState());
     }
 
