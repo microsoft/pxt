@@ -602,6 +602,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return compiler.decompileAsync(blockFile)
     }
 
+    setVisible(v: boolean) {
+        super.setVisible(v);
+        // if we are hiding monaco, clear error list
+        if (!v) this.onErrorChanges([]);
+    }
+
     display(): JSX.Element {
         const showErrorList = pxt.appTarget.appTheme.errorList;
         const isAndroid = pxt.BrowserUtils.isAndroid();
@@ -1547,7 +1553,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    showFieldEditor(range: monaco.Range, fe: pxt.editor.MonacoFieldEditor, viewZoneHeight: number) {
+    showFieldEditor(range: monaco.Range, fe: pxt.editor.MonacoFieldEditor, viewZoneHeight: number, buildAfter: boolean) {
         if (this.feWidget) {
             this.feWidget.close();
         }
@@ -1559,7 +1565,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (edit) {
                     this.editModelAsync(edit.range, edit.replacement)
                         .then(newRange => this.indentRangeAsync(newRange))
-                        .then(() => this.foldFieldEditorRangesAsync());
+                        .then(() => this.foldFieldEditorRangesAsync())
+                        .then(() => {
+                            if (buildAfter) {
+                                simulator.setDirty();
+                            }
+                        })
+                }
+                else if (buildAfter) {
+                    simulator.setDirty();
                 }
             })
     }
@@ -1864,7 +1878,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                     const fe = this.fieldEditors.getFieldEditorById(lineInfo.owner);
                     if (fe) {
-                        this.showFieldEditor(lineInfo.range, new fe.proto(), fe.heightInPixels || 500);
+                        this.showFieldEditor(lineInfo.range, new fe.proto(), fe.heightInPixels || 500, fe.alwaysBuildOnClose);
                     }
                 }
             }

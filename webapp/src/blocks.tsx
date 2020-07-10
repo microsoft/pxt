@@ -222,6 +222,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const xml = Blockly.Xml.textToDom(text);
             pxt.blocks.domToWorkspaceNoEvents(xml, this.editor);
 
+            pxtblockly.upgradeTilemapsInWorkspace(this.editor, pxt.react.getTilemapProject());
+
             this.initLayout();
             this.editor.clearUndo();
             this.reportDeprecatedBlocks();

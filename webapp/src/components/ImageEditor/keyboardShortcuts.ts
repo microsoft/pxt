@@ -1,6 +1,9 @@
-import { ImageEditorTool } from './store/imageReducer';
+
+import { Store } from 'react-redux';
+import { ImageEditorTool, ImageEditorStore } from './store/imageReducer';
 import { dispatchChangeZoom, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchChangeImageTool, dispatchSwapBackgroundForeground, dispatchChangeSelectedColor} from './actions/dispatch';
-import store from './store/imageStore';
+import { mainStore } from './store/imageStore';
+let store = mainStore;
 
 export function addKeyListener() {
     document.addEventListener("keydown", handleKeyDown);
@@ -12,6 +15,10 @@ export function removeKeyListener() {
     document.removeEventListener("keydown", handleKeyDown);
     document.removeEventListener("keydown", handleUndoRedo, true);
     document.removeEventListener("keydown", overrideBlocklyShortcuts, true);
+}
+
+export function setStore(newStore?: Store<ImageEditorStore>) {
+    store = newStore || mainStore;
 }
 
 function handleUndoRedo(event: KeyboardEvent) {
