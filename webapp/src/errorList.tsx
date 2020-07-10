@@ -102,6 +102,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
     onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage, callLocations: pxtc.LocationInfo[]) {
         this.setState({
+            isCollapsed: false,
             exception,
             callLocations
         })

@@ -292,7 +292,17 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             return;
         }
 
-        const imageData = ev.clipboardData.getData('application/makecode-image');
+        let imageData = ev.clipboardData.getData('application/makecode-image');
+
+        if (!imageData) {
+            const textData = ev.clipboardData.getData("text/plain");
+            // text data contains string that 'looks like' an image
+            const res = /img(`|\(""")[\s\da-f.#tngrpoyw]+(`|"""\))/im.exec(textData);
+            if (res) {
+                imageData = res[0];
+            }
+        }
+
         const image = imageData && pxt.sprite.imageLiteralToBitmap(imageData);
 
         if (image && image.width && image.height) {
@@ -550,14 +560,14 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         }
     }
 
-    protected generateTile(index: number, tileset: pxt.sprite.TileSet) {
+    protected generateTile(index: number, tileset: pxt.TileSet) {
         if (!tileset.tiles[index]) {
             return null;
         }
         const tileImage = document.createElement("canvas");
         tileImage.width = tileset.tileWidth * TILE_SCALE;
         tileImage.height = tileset.tileWidth * TILE_SCALE;
-        this.drawBitmap(pxt.sprite.Bitmap.fromData(tileset.tiles[index].data), 0, 0, true, TILE_SCALE, tileImage);
+        this.drawBitmap(pxt.sprite.Bitmap.fromData(tileset.tiles[index].bitmap), 0, 0, true, TILE_SCALE, tileImage);
         this.tileCache[index] = tileImage;
         return tileImage;
     }

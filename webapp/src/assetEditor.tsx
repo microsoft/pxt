@@ -7,6 +7,7 @@ import { ImageFieldEditor } from "./components/ImageFieldEditor";
 
 document.addEventListener("DOMContentLoaded", () => {
     init();
+    window.onmessage = handleMessage;
 })
 
 function init() {
@@ -18,4 +19,8 @@ export class AssetEditor extends React.Component {
     render() {
         return <ImageFieldEditor singleFrame={true} />
     }
+}
+
+function handleMessage(msg: any) {
+    console.log("pxt: " + msg.data.type, msg.data.message);
 }

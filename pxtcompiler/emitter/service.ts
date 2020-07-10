@@ -1786,7 +1786,6 @@ namespace ts.pxtc.service {
     export function getSnippet(apis: ApisInfo, takenNames: pxt.Map<SymbolInfo>, runtimeOps: pxt.RuntimeOptions, fn: SymbolInfo, decl: ts.FunctionLikeDeclaration, python?: boolean, recursionDepth = 0): SnippetNode {
         // TODO: a lot of this is duplicate logic with blocklyloader.ts:buildBlockFromDef; we should
         //  unify these approaches
-        // TODO(dz):
         const PY_INDENT: string = (pxt as any).py.INDENT;
 
         let preStmt: SnippetNode[] = [];
@@ -1808,6 +1807,10 @@ namespace ts.pxtc.service {
         }
 
         const attrs = fn.attributes;
+
+        if (attrs.shim === "TD_ID" && recursionDepth && decl.parameters.length) {
+            return getParameterDefault(decl.parameters[0]);
+        }
 
         const checker = service && service.getProgram().getTypeChecker();
 

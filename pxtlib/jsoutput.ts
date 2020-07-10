@@ -284,6 +284,15 @@ namespace pxt.blocks {
         let output = ""
         let indent = ""
         let variables: Map<string>[] = [{}];
+        let currentLine = 0;
+
+        function append(s: string) {
+            // At runtime sometimes `s` is a number.
+            if (typeof(s) === 'string') {
+                currentLine += (s.match(/\n/g) || []).length;
+            }
+            output += s;
+        }
 
         function flatten(e0: JsNode) {
             function rec(e: JsNode, outPrio: number) {
@@ -340,7 +349,7 @@ namespace pxt.blocks {
 
         // never return empty string - TS compiler service thinks it's an error
         if (!output)
-            output += "\n"
+            append("\n");
 
         return { output, sourceMap }
 
@@ -348,11 +357,11 @@ namespace pxt.blocks {
             if (n.glueToBlock) {
                 removeLastIndent()
                 if (n.glueToBlock == GlueMode.WithSpace) {
-                    output += " "
+                    append(" ");
                 }
             }
 
-            let startLine = getCurrentLine();
+            let startLine = currentLine;
             let startPos = output.length;
 
             switch (n.type) {
@@ -360,30 +369,30 @@ namespace pxt.blocks {
                     U.oops("no infix should be left")
                     break
                 case NT.NewLine:
-                    output += "\n" + indent
+                    append("\n" + indent)
                     break
                 case NT.Block:
                     block(n)
                     break
                 case NT.Prefix:
                     if (n.canIndentInside)
-                        output += n.op.replace(/\n/g, "\n" + indent + "    ")
+                        append(n.op.replace(/\n/g, "\n" + indent + "    "))
                     else
-                        output += n.op
+                        append(n.op)
                     n.children.forEach(emit)
                     break
                 case NT.Postfix:
                     n.children.forEach(emit)
                     if (n.canIndentInside)
-                        output += n.op.replace(/\n/g, "\n" + indent + "    ")
+                        append(n.op.replace(/\n/g, "\n" + indent + "    "))
                     else
-                        output += n.op
+                        append(n.op)
                     break
                 default:
                     break
             }
 
-            let endLine = getCurrentLine();
+            let endLine = currentLine;
             // end position is non-inclusive
             let endPos = Math.max(output.length, 1);
 
@@ -406,18 +415,16 @@ namespace pxt.blocks {
             }
         }
 
-        function getCurrentLine() {
-            let i = 0;
-            output.replace(/\n/g, a => { i++; return a; })
-            return i;
-        }
-
         function write(s: string) {
-            output += s.replace(/\n/g, "\n" + indent)
+            append(s.replace(/\n/g, "\n" + indent))
         }
 
         function removeLastIndent() {
-            output = output.replace(/\n *$/, "")
+            // Note: performance of this regular expression degrades with program size, and could therefore become a perf issue.
+            output = output.replace(/\n *$/, function () {
+                currentLine--;
+                return "";
+            });
         }
 
         function block(n: JsNode) {
