@@ -1262,7 +1262,7 @@ namespace ts.pxtc.service {
                         const addsDefinitions = snippetAddsDefinitions(snippetNode)
                         if (isPython) {
                             si.pySnippet = snippet
-                            si.snippetWithMarkers = snippetWithMarkers
+                            si.pySnippetWithMarkers = snippetWithMarkers
                         }
                         else {
                             si.snippet = snippet
@@ -1740,36 +1740,66 @@ namespace ts.pxtc.service {
         isDefinition?: boolean;
     }
     function isSnippetReplacePoint(n: SnippetNode): n is SnippetReplacePoint {
-        return !!(n as SnippetReplacePoint).default
+        return typeof (n) === "object" && (n as SnippetReplacePoint).default !== undefined
     }
     function isSnippetNodeList(n: SnippetNode): n is SnippetNode[] {
         return typeof (n) === "object" && typeof ((n as SnippetNode[]).length) === "number"
     }
     export function snippetStringify(snippet: SnippetNode, emitMonacoReplacementPoints = false): string {
-        // The format for monaco snippets is: 
-        //      foo(${1:bar}, ${2:baz},  ${1:bar})
-        // so both instances of "bar" will start highlighted, then tab will cycle to "baz", etc.
         const namesToReplacementNumbers: { [key: string]: number } = {}
-        let nextNum = 1
-        if (isSnippetReplacePoint(snippet)) {
-            if (emitMonacoReplacementPoints) {
-                const name = snippetStringify(snippet.default)
-                let num = namesToReplacementNumbers[name]
-                if (!num) {
-                    num = nextNum
-                    nextNum++
-                    namesToReplacementNumbers[name] = num
+        let nextNum: number = 1
+
+        return internalSnippetStringify(snippet)
+
+        function internalSnippetStringify(snippet: SnippetNode): string {
+            // The format for monaco snippets is: 
+            //      foo(${1:bar}, ${2:baz},  ${1:bar})
+            // so both instances of "bar" will start highlighted, then tab will cycle to "baz", etc.
+            if (isSnippetReplacePoint(snippet)) {
+                if (emitMonacoReplacementPoints) {
+                    if (snippetHasReplacementPoints(snippet.default)) {
+                        return internalSnippetStringify(snippet.default)
+                    }
+
+                    const name = snippetStringify(snippet.default, false)
+                    let num = namesToReplacementNumbers[name]
+                    if (!num) {
+                        num = nextNum
+                        nextNum++
+                        namesToReplacementNumbers[name] = num
+                    }
+                    if (name.indexOf(".") >= 0 && name.indexOf(" ") < 0) {
+                        // heuristic: if we're going to have a replacement for a qualified name, only
+                        // replace the last part. E.g. "SpriteEffects.spray" we want "SpriteEffects.${spray}" not "${SpriteEffects.spray}"
+                        let nmParts = name.split(".")
+                        nmParts[nmParts.length - 1] = "${" + num + ":" + nmParts[nmParts.length - 1] + "}"
+                        return nmParts.join(".")
+                    } else {
+                        return "${" + num + ":" + name + "}"
+                    }
+                } else {
+                    return internalSnippetStringify(snippet.default)
                 }
-                return "${" + num + ":" + name + "}"
+            } else if (isSnippetNodeList(snippet)) {
+                return snippet
+                    .map(s => internalSnippetStringify(s))
+                    .join("")
             } else {
-                return snippetStringify(snippet.default, emitMonacoReplacementPoints)
+                return snippet
             }
-        } else if (isSnippetNodeList(snippet)) {
-            const res = snippet.map(s => snippetStringify(s, emitMonacoReplacementPoints)).join("")
-            return res
-        } else {
-            return snippet
         }
+    }
+    export function snippetHasReplacementPoints(snippet: SnippetNode): boolean {
+        if (isSnippetReplacePoint(snippet)) {
+            return true
+        } else if (isSnippetNodeList(snippet)) {
+            return snippet
+                .map(snippetHasReplacementPoints)
+                .reduce((p, n) => p || n, false)
+        } else {
+            return false
+        }
+
     }
     export function snippetAddsDefinitions(snippet: SnippetNode): boolean {
         if (isSnippetReplacePoint(snippet)) {
@@ -2057,7 +2087,7 @@ namespace ts.pxtc.service {
             }
         }
 
-        let argsWithCommas = args.reduce((p: SnippetNode[], n) => [...p, p.length ? "," : "", n], []) as SnippetNode[]
+        let argsWithCommas = args.reduce((p: SnippetNode[], n) => [...p, p.length ? ", " : "", n], []) as SnippetNode[]
         let snippet: SnippetNode[] = [fnName, "(", ...argsWithCommas, ")"];
         let insertText = snippetPrefix ? [snippetPrefix, ".", ...snippet] : snippet;
         insertText = addNamespace ? [firstWord(namespaceToUse), ".", ...insertText] : insertText;
@@ -2144,7 +2174,7 @@ namespace ts.pxtc.service {
                 preStmt = [
                     ...preStmt, preStmt.length ? "\n" : "",
                     "def ", { default: n, isDefinition: true }, functionArgument, `:\n${PY_INDENT}`,
-                    returnValue || "pass", `\n`
+                    { default: returnValue || "pass" }, `\n`
                 ];
                 return {
                     default: n
@@ -2158,7 +2188,7 @@ namespace ts.pxtc.service {
                     let displayPartsStr = ts.displayPartsToString(displayParts);
                     functionArgument = displayPartsStr.substr(0, displayPartsStr.lastIndexOf(":"));
                 }
-                return [`function`, functionArgument, ` {\n${PY_INDENT}`, returnValue, `\n}`];
+                return [`function`, functionArgument, ` {\n${PY_INDENT}`, { default: returnValue }, `\n}`];
             }
         }
 
@@ -2169,7 +2199,7 @@ namespace ts.pxtc.service {
                 n = getUniqueName(n)
                 preStmt = [
                     ...preStmt, preStmt.length ? "\n" : "",
-                    "def ", { default: n, isDefinition: true }, `():\n${PY_INDENT}pass\n`,
+                    "def ", { default: n, isDefinition: true }, `():\n${PY_INDENT}`, { default: `pass` }, `\n`,
                 ];
                 return {
                     default: n
