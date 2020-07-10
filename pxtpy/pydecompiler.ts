@@ -931,7 +931,6 @@ namespace pxt.py {
             return asExpRes(`${expToStr(left)}.${right}`, leftSup);
         }
         function getSimpleExpNameParts(s: ts.Expression): string[] {
-            // TODO(dz): Impl skip namespaces properly. Right now we just skip the left-most part of a property access
             if (ts.isPropertyAccessExpression(s)) {
                 let nmPart = getName(s.name)
                 let nmRight = nmPart.substr(nmPart.lastIndexOf(".") + 1)
