@@ -1616,6 +1616,7 @@ namespace pxt.py {
 
     function convertAssign(n: py.AnnAssign | py.Assign): B.JsNode {
         let annotation: Expr | null;
+        let annotAsType: Type | null;
         let value: Expr | null;
         let target: Expr;
         // TODO handle more than 1 target
@@ -1627,10 +1628,15 @@ namespace pxt.py {
             target = n.targets[0]
             value = n.value
             annotation = null
+            annotAsType = null
         } else if (n.kind === "AnnAssign") {
             target = n.target
             value = n.value || null
             annotation = n.annotation
+            annotAsType = compileType(annotation);
+
+            // process annotated type, unify with target
+            unifyTypeOf(target, annotAsType);
         } else {
             return n;
         }
@@ -1732,13 +1738,12 @@ namespace pxt.py {
         }
 
         let lExp: B.JsNode | undefined = undefined;
-        if (annotation) {
+        if (annotation && annotAsType) {
             // if we have a type annotation, emit it in these cases if the r-value is:
             //  - null / undefined
             //  - empty list
             if (value.kind === "NameConstant" && (value as NameConstant).value === null
                 || value.kind === "List" && (value as List).elts.length === 0) {
-                const annotAsType = compileType(annotation)
                 const annotStr = t2s(annotAsType);
 
                 lExp = B.mkInfix(expr(target), ":", B.mkText(annotStr))
