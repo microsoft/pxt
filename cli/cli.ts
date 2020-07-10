@@ -4690,7 +4690,7 @@ function buildJResSpritesDirectoryAsync(dir: string) {
                 // These are space-separated lists of tags
                 let tags = `${info.tags || ""} ${metaInfo.tags || ""}`.split(" ").filter(t => !!t);
 
-                const isTile = tags.indexOf("tile") !== -1;
+                const isTile = tags.some(t => t === "tile" || t === "?tile");
 
                 if (storeIcon || isTile) {
                     let jres = jresources[key]
