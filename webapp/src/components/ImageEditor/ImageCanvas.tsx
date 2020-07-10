@@ -82,7 +82,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         const imageState = this.getImageState();
         const isPortrait = !imageState || (imageState.bitmap.height > imageState.bitmap.width);
 
-        return <div ref="canvas-bounds" className={`image-editor-canvas ${isPortrait ? "portrait" : "landscape"}`} tabIndex={-1} onContextMenu={this.preventContextMenu}>
+        return <div ref="canvas-bounds" className={`image-editor-canvas ${isPortrait ? "portrait" : "landscape"}`} onContextMenu={this.preventContextMenu}>
             <div className="paint-container">
                 <canvas ref="paint-surface-bg" className="paint-surface" />
                 <canvas ref="paint-surface" className="paint-surface" />
@@ -95,6 +95,9 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     componentDidMount() {
+        // move initial focus off of the blockly surface
+        (document.activeElement as HTMLElement)?.blur();
+
         this.cellWidth = this.props.isTilemap ? this.props.tilemapState.tileset.tileWidth * TILE_SCALE : SCALE;
         this.canvas = this.refs["paint-surface"] as HTMLCanvasElement;
         this.background = this.refs["paint-surface-bg"] as HTMLCanvasElement;
@@ -104,7 +107,6 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         bindGestureEvents(this.refs["canvas-bounds"] as HTMLDivElement, this);
 
         const canvasBounds = this.refs["canvas-bounds"] as HTMLDivElement;
-        canvasBounds.focus();
 
         canvasBounds.addEventListener("wheel", ev => {
             this.hasInteracted = true
@@ -826,10 +828,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     protected shouldHandleCanvasShortcut() {
-        // only handle if focus is in canvas-bounds or if there is no focus
-        return document.activeElement === this.refs["canvas-bounds"] ||
-            document.activeElement === document.body ||
-            !document.activeElement;
+        // canvas shortcuts (select all; delete) should only be handled if the focus is not within a focusable element
+        return document.activeElement === document.body || !document.activeElement;
     }
 
     protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();
