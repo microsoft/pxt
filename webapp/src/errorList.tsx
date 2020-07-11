@@ -3,6 +3,12 @@
 import * as React from "react";
 import * as sui from "./sui";
 
+type GroupedError = {
+    error: pxtc.KsDiagnostic,
+    count: number,
+    index: number
+};
+
 export interface ErrorListProps {
     onSizeChange: (state: pxt.editor.ErrorListState) => void;
     listenToErrorChanges: (key: string, onErrorChanges: (errors: pxtc.KsDiagnostic[]) => void) => void;
@@ -12,7 +18,7 @@ export interface ErrorListProps {
 }
 export interface ErrorListState {
     isCollapsed: boolean,
-    errors: pxtc.KsDiagnostic[],
+    errors: GroupedError[],
     exception?: pxsim.DebuggerBreakpointMessage,
     callLocations?: pxtc.LocationInfo[]
 }
@@ -42,16 +48,17 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
     render() {
         const {isCollapsed, errors, exception} = this.state;
-        const errorsAvailable = !!errors?.length || !!exception;
-        const collapseTooltip = lf("Collapse Error List");
 
+        let errorCount = 0;
+        (errors || []).forEach(e => errorCount += e.count);
+        const errorsAvailable = errorCount > 0 || !!exception;
         const errorListContent = !isCollapsed ? (exception ? this.generateStackTraces(exception) : this.getCompilerErrors(errors)) : undefined;
 
         return (
             <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''}`} hidden={!errorsAvailable}>
                 <div className="errorListHeader" role="button" aria-label={lf("{0} error list", isCollapsed ? lf("Expand") : lf("Collapse"))} onClick={this.onCollapseClick} onKeyDown={sui.fireClickOnEnter} tabIndex={0}>
                     <h4>{lf("Problems")}</h4>
-                    <div className="ui red circular label countBubble">{exception ? 1 : errors.length}</div>
+                    <div className="ui red circular label countBubble">{exception ? 1 : errorCount}</div>
                     <div className="toggleButton"><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`}/></div>
                 </div>
                 {!isCollapsed && <div className="errorListInner">
@@ -94,7 +101,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
     onErrorsChanged(errors: pxtc.KsDiagnostic[]) {
         this.setState({
-            errors,
+            errors: groupErrors(errors),
             isCollapsed: errors?.length == 0 || this.state.isCollapsed,
             exception: null
         }, this.onDisplayStateChange);
@@ -108,7 +115,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         })
     }
 
-    getCompilerErrors(errors: pxtc.KsDiagnostic[]) {
+    getCompilerErrors(errors: GroupedError[]) {
         function errorKey(error: pxtc.KsDiagnostic): string {
             // React likes have a "key" for each element so that it can smartly only
             // re-render what changes. Think of it like a hashcode/
@@ -116,7 +123,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         }
 
         return <div className="ui selection list">
-            {(errors).map((e, index) => <ErrorListItem key={errorKey(e)} index={index} error={e} revealError={this.onErrorMessageClick} />)}
+            {(errors).map((e, index) => <ErrorListItem key={errorKey(e.error)} index={index} error={e} revealError={this.onErrorMessageClick} />)}
         </div>
     }
 
@@ -139,7 +146,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 interface ErrorListItemProps {
     index: number;
     revealError: (location: pxtc.LocationInfo, index: number) => void;
-    error?: pxtc.KsDiagnostic;
+    error?: GroupedError;
     stackframe?: pxsim.StackFrameInfo;
     location?: pxtc.LocationInfo;
 }
@@ -158,20 +165,53 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
     render() {
         const {error, stackframe, location} = this.props
 
-        const message = stackframe ? lf("at {0} (line {1})", stackframe.funcInfo.functionName, location.line + 1)
-            : lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText)
+        const message = stackframe ?
+            stackFrameMessageStringWithLineNumber(stackframe, location) :
+            errorMessageStringWithLineNumber(error.error);
+        const errorCount = stackframe ? 1 : error.count;
 
         return <div className={`item ${stackframe ? 'stackframe' : ''}`} role="button"
                     onClick={this.onErrorListItemClick}
                     onKeyDown={sui.fireClickOnEnter}
                     aria-label={lf("Go to {0}: {1}", stackframe ? '' : 'error', message)}
                     tabIndex={0}>
-            {message}
+            {message} {(errorCount <= 1) ? null : <div className="ui gray circular label countBubble">{errorCount}</div>}
         </div>
     }
 
     onErrorListItemClick() {
-        const location = this.props.stackframe ? this.props.location : this.props.error
+        const location = this.props.stackframe ? this.props.location : this.props.error.error
         this.props.revealError(location, this.props.index)
     }
+}
+
+function errorMessageStringWithLineNumber(error: pxtc.KsDiagnostic) {
+    return lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText);
+}
+
+function stackFrameMessageStringWithLineNumber(stackframe: pxsim.StackFrameInfo, location: pxtc.LocationInfo) {
+    return lf("at {0} (line {1})", stackframe.funcInfo.functionName, location.line + 1);
+}
+
+function groupErrors(errors: pxtc.KsDiagnostic[]) {
+    const grouped: { [key: string]: GroupedError} = {};
+    let index = 0;
+    for (const error of errors) {
+        const key = errorMessageStringWithLineNumber(error);
+        if (!grouped[key]) {
+            grouped[key] = {
+                index: index++,
+                count: 1,
+                error
+            };
+        }
+        else {
+            grouped[key].count++;
+        }
+    }
+    let sorted: GroupedError[] = [];
+    Object.keys(grouped).forEach(key => sorted.push(grouped[key]));
+    sorted = sorted.sort((a, b) => a.index - b.index);
+
+    return sorted;
 }
