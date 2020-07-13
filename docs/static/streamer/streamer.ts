@@ -784,7 +784,30 @@ background: ${primary};
         const ytVideoId = parseYouTubeVideoId(config.backgroundVideo);
         if (ytVideoId) {
             backgroundvideo.src = undefined;
-            backgroundyoutube.src = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1&controls=0&disablekb=1&fs=0&loop=1&playlist=${ytVideoId}&modestbranding=1&rel=0&mute=1`
+            const url = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1&controls=0&disablekb=1&fs=0&loop=1&playlist=${ytVideoId}&modestbranding=1&rel=0&mute=1`
+            if (backgroundyoutube.src !== url)
+                backgroundyoutube.src = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1&controls=0&disablekb=1&fs=0&loop=1&playlist=${ytVideoId}&modestbranding=1&rel=0&mute=1`
+
+            // rescale youtube iframe to cover the entire background
+            const el = document.firstElementChild;
+            const w = el.clientWidth
+            const h = el.clientHeight
+            const ratio = w / h;
+            const hd = 16 / 9;
+            if (ratio > hd) {
+                // the video is going to be 16:9, compensate
+                console.log(`ratio`, ratio)
+                const vh = 100 * ratio / hd
+                backgroundyoutube.style.height = `${vh}vh`
+                backgroundyoutube.style.width = `100vw`
+                backgroundyoutube.style.transform = `translate(0, ${-(vh - 100) / 2}vh)`
+            } else {
+                const vw = 100 / ratio * hd
+                backgroundyoutube.style.height = `100vh`
+                backgroundyoutube.style.width = `${vw}vw`
+                backgroundyoutube.style.transform = `translate(${-(vw - 100) / 2}vh, 0)`
+            }
+
         } else if (config.backgroundVideo) {
             backgroundvideo.src = config.backgroundVideo;
             backgroundyoutube.src = undefined;
@@ -1097,6 +1120,9 @@ background-image: url(${config.backgroundImage});
         ]
 
         function update() {
+            // clear canvas if any
+            clearPaint();
+
             const el = document.firstElementChild;
             const w = el.clientWidth
             const h = el.clientHeight
@@ -1109,6 +1135,9 @@ background-image: url(${config.backgroundImage});
                 if (resolution) el.classList.add("perfect")
                 else el.classList.remove("perfect")
             }
+
+            // update ui
+            loadStyle();
         }
         window.onresize = update
         update()
