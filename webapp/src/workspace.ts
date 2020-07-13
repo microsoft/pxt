@@ -537,6 +537,36 @@ export async function pullAsync(hd: Header, checkOnly = false) {
     }
 }
 
+export async function revertAllAsync(hd: Header) {
+    const files = await getTextAsync(hd.id)
+    const gitjsontext = files[GIT_JSON]
+    if (!gitjsontext)
+        return PullStatus.NoSourceControl
+    const gitjson = JSON.parse(gitjsontext) as GitJson
+    const commit = gitjson.commit;
+    const configEntry = pxt.github.lookupFile(commit, pxt.CONFIG_NAME);
+    const config = pxt.Package.parseAndValidConfig(configEntry && configEntry.blobContent);
+    if (!config)
+        return PullStatus.NoSourceControl
+
+    const revertedFiles: pxt.Map<string> = {};
+    // store pxt.json
+    revertedFiles[pxt.CONFIG_NAME] = configEntry.blobContent;
+    // go through all files and restore content
+    config.files.concat(config.testFiles).forEach(f => {
+        const entry = pxt.github.lookupFile(commit, f);
+        if (!entry || entry.blobContent === undefined) {
+            pxt.log(`cannot revert ${f}, corrupted based commit`)
+            return PullStatus.NoSourceControl
+        }
+        revertedFiles[f] = entry.blobContent;
+    })
+    // save updated file content
+    await forceSaveAsync(hd, revertedFiles)
+
+    return PullStatus.UpToDate;
+}
+
 export async function hasMergeConflictMarkersAsync(hd: Header): Promise<boolean> {
     const files = await getTextAsync(hd.id)
     return !!Object.keys(files).find(k => pxt.diff.hasMergeConflictMarker(files[k]));

@@ -103,21 +103,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         pxt.tickEvent("github.revertall", { ok: 1 })
         this.setState({ needsCommitMessage: false }); // maybe we no longer do
 
-        let needsReload = false;
-        const diffFiles = this.computeDiffFiles();
-        for (const f of diffFiles) {
-            if (f.name == pxt.CONFIG_NAME)
-                needsReload = true;
-            if (f.gitFile == null) {
-                await pkg.mainEditorPkg().removeFileAsync(f.name)
-            } else {
-                await f.file.setContentAsync(f.gitFile)
-            }
-        }
-        if (needsReload)
-            await this.props.parent.reloadHeaderAsync()
-        else
-            this.forceUpdate();
+        const { header } = this.props.parent.state;
+        await workspace.revertAllAsync(header);
+        await this.props.parent.reloadHeaderAsync()
     }
 
     async revertFileAsync(f: DiffFile, deletedFiles: string[], addedFiles: string[], virtualFiles: pkg.File[]) {
@@ -153,8 +141,13 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         } else {
             await f.file.setContentAsync(f.gitFile)
             // revert generated .ts file as well
-            for (const virtualF of virtualFiles.filter(f => !!f))
-                await virtualF.setContentAsync(virtualF.baseGitContent);
+            const pkgfiles = pkg.mainEditorPkg().files;
+            for (const virtualF of virtualFiles) {
+                if (addedFiles.indexOf(virtualF.name) > -1)
+                    await pkg.mainEditorPkg().removeFileAsync(virtualF.name)
+                else
+                    await virtualF.setContentAsync(virtualF.baseGitContent);
+            }
             this.forceUpdate();
         }
     }
@@ -824,7 +817,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
                         <p>
                             {lf("Reverting this file will also remove: {0}", addedFiles.join(", "))}
                         </p>}
-                    {!!cache.revert && virtualFiles.length && !blocksMode && <p>
+                    {!!cache.revert && !!virtualFiles.length && !blocksMode && <p>
                         {lf("Reverting this file will also revert: {0}", virtualFiles.map(f => f.name).join(', '))}
                     </p>}
                 </div>
@@ -863,12 +856,11 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
             // backing .ts for .blocks/.py files
             const files = pkg.mainEditorPkg().files;
             const virtualFile = blocksMode && files[f.file.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
-            if (virtualFile != f.file)
+            if (virtualFile && virtualFile != f.file)
                 virtualFiles.push(virtualFile);
             // erase other generated files
-            for (const vf of pkg.mainEditorPkg().getGeneratedFiles(f.file)) {
+            for (const vf of pkg.mainEditorPkg().getGeneratedFiles(f.file))
                 virtualFiles.push(vf);
-            }
             cache.revert = () => this.props.parent.revertFileAsync(f, deletedFiles, addedFiles, virtualFiles);
         }
         cache.diff = createDiff()
