@@ -124,32 +124,39 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         pxt.tickEvent("github.revert", { ok: 1 })
         this.setState({ needsCommitMessage: false }); // maybe we no longer do
 
+        let needsReload = false;
+        const epkg = pkg.mainEditorPkg();
         if (f.gitFile == null) {
-            await pkg.mainEditorPkg().removeFileAsync(f.name)
-            await this.props.parent.reloadHeaderAsync()
+            needsReload = true;
+            await epkg.removeFileAsync(f.name)
+            for (const virtualF of virtualFiles)
+                await epkg.removeFileAsync(virtualF.name)
         } else if (f.name == pxt.CONFIG_NAME) {
+            needsReload = true;
             const gs = this.getGitJson()
             for (let d of deletedFiles) {
                 const prev = pxt.github.lookupFile(gs.commit, d)
-                pkg.mainEditorPkg().setFile(d, prev && prev.blobContent || "// Cannot restore.")
+                epkg.setFile(d, prev && prev.blobContent || "// Cannot restore.")
             }
             for (let d of addedFiles) {
-                delete pkg.mainEditorPkg().files[d]
+                delete epkg.files[d]
             }
             await f.file.setContentAsync(f.gitFile)
-            await this.props.parent.reloadHeaderAsync()
         } else {
             await f.file.setContentAsync(f.gitFile)
-            // revert generated .ts file as well
-            const pkgfiles = pkg.mainEditorPkg().files;
+            const pkgfiles = epkg.files;
             for (const virtualF of virtualFiles) {
-                if (addedFiles.indexOf(virtualF.name) > -1)
-                    await pkg.mainEditorPkg().removeFileAsync(virtualF.name)
-                else
+                if (virtualF.baseGitContent == null) {
+                    needsReload = true;
+                    await epkg.removeFileAsync(virtualF.name)
+                } else
                     await virtualF.setContentAsync(virtualF.baseGitContent);
             }
-            this.forceUpdate();
         }
+        if (needsReload)
+            await this.props.parent.reloadHeaderAsync()
+        else
+            this.forceUpdate()
     }
 
     private async saveGitJsonAsync(gs: pxt.github.GitJson) {
@@ -1060,8 +1067,8 @@ ${content}
             <div className={`ui ${invertedTheme ? "inverted " : ""} diffheader segment`}>
                 {lf("There are local changes.")}
                 <sui.Button className="small" icon="undo" text={lf("Revert all")}
-                        ariaLabel={lf("Revert all changes")} title={lf("Revert all changes")}
-                        textClass={"landscape only"} onClick={this.revertAllFiles} />
+                    ariaLabel={lf("Revert all changes")} title={lf("Revert all changes")}
+                    textClass={"landscape only"} onClick={this.revertAllFiles} />
             </div>
             {displayDiffFiles.map(df => this.showDiff(df))}
         </div> : <div className={`ui ${invertedTheme ? "inverted " : ""}segment`}>
