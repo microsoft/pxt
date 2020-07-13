@@ -170,14 +170,6 @@ namespace pxt.editor {
         }
     }
 
-    const defaultTileset = `{
-        "*": {
-            "namespace": "myTiles",
-            "mimeType": "image/x-mkcd-f4",
-            "dataEncoding": "base64"
-          }
-    }`
-
     export const tilemapEditorDefinition: MonacoFieldEditorDefinition = {
         id: fieldEditorId,
         foldMatches: true,
