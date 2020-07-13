@@ -209,7 +209,5 @@ function groupErrors(errors: pxtc.KsDiagnostic[]) {
             grouped.get(key).count++;
         }
     }
-    let sorted: GroupedError[] = [];
-    grouped.forEach(value => sorted.push(value));
-    return sorted.sort((a, b) => a.index - b.index);
+    return [...grouped.values()].sort((a, b) => a.index - b.index);
 }
