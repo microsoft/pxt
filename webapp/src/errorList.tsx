@@ -49,15 +49,15 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     render() {
         const {isCollapsed, errors, exception} = this.state;
 
-        const errorCount = exception ? 1 : errors.length;
-        const errorsAvailable = errorCount > 0 || !!exception;
         const errorListContent = !isCollapsed ? (exception ? this.generateStackTraces(exception) : this.getCompilerErrors(errors)) : undefined;
+        const errorsAvailable = !!errors?.length || !!exception;	
+        const collapseTooltip = lf("Collapse Error List");
 
         return (
             <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''}`} hidden={!errorsAvailable}>
                 <div className="errorListHeader" role="button" aria-label={lf("{0} error list", isCollapsed ? lf("Expand") : lf("Collapse"))} onClick={this.onCollapseClick} onKeyDown={sui.fireClickOnEnter} tabIndex={0}>
                     <h4>{lf("Problems")}</h4>
-                    <div className="ui red circular label countBubble">{exception ? 1 : errorCount}</div>
+                    <div className="ui red circular label countBubble">{exception ? 1 : errors.length}</div>
                     <div className="toggleButton"><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`}/></div>
                 </div>
                 {!isCollapsed && <div className="errorListInner">
