@@ -120,11 +120,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 if (!id) {
                     core.errorNotification(lf("Sorry, the project url looks invalid."));
                 } else {
-                    if (pxt.github.isGithubId(id)) {
-                        window.location.hash = "github:" + id;
-                    } else {
-                        window.location.hash = "pub:" + id;
-                    }
+                    window.location.hash = "pub:" + id;
                 }
                 break;
             default:
