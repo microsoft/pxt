@@ -8,15 +8,6 @@ namespace pxt.editor {
         protected tilemapName: string;
         protected isTilemapLiteral: boolean;
 
-        protected initAsync(): Promise<void> {
-            const projectTiles = this.host.readFile("tilemap.jres");
-            if (!projectTiles) {
-                return this.host.writeFileAsync("tilemap.jres", defaultTileset);
-            }
-
-            return Promise.resolve();
-        }
-
         protected textToValue(text: string): pxt.sprite.TilemapData {
             const tm = this.readTilemap(text);
 
