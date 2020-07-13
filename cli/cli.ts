@@ -4218,7 +4218,10 @@ function gdbAsync(c: commandParser.ParsedCommand) {
     ensurePkgDir()
     setBuildEngine();
     return mainPkg.loadAsync()
-        .then(() => gdb.startAsync(c.args))
+        .then(() => {
+            setBuildEngine();
+            return gdb.startAsync(c.args)
+        })
 }
 
 function hwAsync(c: commandParser.ParsedCommand) {
@@ -4514,7 +4517,7 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
         .map(buildJResSpritesDirectoryAsync);
 
     return Promise.all(promises)
-        .then(() => {})
+        .then(() => { })
 }
 
 function buildJResSpritesDirectoryAsync(dir: string) {
