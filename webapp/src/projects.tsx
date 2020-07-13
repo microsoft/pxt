@@ -115,6 +115,18 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             case "tutorial":
                 this.props.parent.startActivity("tutorial", url, scr.name, editorPref);
                 break;
+            case "sharedExample":
+                let id = pxt.github.normalizeRepoId(url) || pxt.Cloud.parseScriptId(url);
+                if (!id) {
+                    core.errorNotification(lf("Sorry, the project url looks invalid."));
+                } else {
+                    if (pxt.github.isGithubId(id)) {
+                        window.location.hash = "github:" + id;
+                    } else {
+                        window.location.hash = "pub:" + id;
+                    }
+                }
+                break;
             default:
                 const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(url); // Tutorial
                 if (m) this.props.parent.startActivity("tutorial", m[1]);
@@ -743,6 +755,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 case "file":
                 case "example":
                 case "codeExample":
+                case "sharedExample":
                 case "tutorial":
                 case "side":
                 case "template":
@@ -768,7 +781,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         let clickLabel = lf("Show Instructions");
         if (cardType == "tutorial")
             clickLabel = lf("Start Tutorial");
-        else if (cardType == "codeExample" || cardType == "example")
+        else if (cardType == "codeExample" || cardType == "example" || cardType == "sharedExample")
             clickLabel = lf("Open Example");
         else if (cardType == "forumUrl")
             clickLabel = lf("Open in Forum");
@@ -785,6 +798,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         switch (type) {
             case "tutorial":
             case "example":
+            case "sharedExample":
                 if (action && action.editor) return action.editor;
                 return "blocks";
             case "codeExample":
@@ -801,6 +815,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         switch (type) {
             case "tutorial":
             case "example":
+            case "sharedExample":
                 icon = "xicon blocks"
                 if (editor) icon = `xicon ${editor}`;
                 break;
