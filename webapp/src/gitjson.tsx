@@ -88,10 +88,36 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     }
 
     async revertAllFilesAsync() {
+        pxt.tickEvent("github.revertall", { start: 1 }, { interactiveConsent: true })
+        const res = await core.confirmAsync({
+            header: lf("Would you like to revert all local changes?"),
+            body: lf("Changes will be lost for good. No undo."),
+            agreeLbl: lf("Revert"),
+            agreeClass: "red",
+            agreeIcon: "trash",
+        })
+
+        if (!res)
+            return
+
+        pxt.tickEvent("github.revertall", { ok: 1 })
+        this.setState({ needsCommitMessage: false }); // maybe we no longer do
+
+        let needsReload = false;
         const diffFiles = this.computeDiffFiles();
-        for (const diffFile of diffFiles)
-            await diffFile.file.setContentAsync(diffFile.file.baseGitContent);
-        this.forceUpdate();
+        for (const f of diffFiles) {
+            if (f.name == pxt.CONFIG_NAME)
+                needsReload = true;
+            if (f.gitFile == null) {
+                await pkg.mainEditorPkg().removeFileAsync(f.name)
+            } else {
+                await f.file.setContentAsync(f.gitFile)
+            }
+        }
+        if (needsReload)
+            await this.props.parent.reloadHeaderAsync()
+        else
+            this.forceUpdate();
     }
 
     async revertFileAsync(f: DiffFile, deletedFiles: string[], addedFiles: string[], virtualFiles: pkg.File[]) {
@@ -1026,7 +1052,6 @@ ${content}
     }
 
     revertAllFiles() {
-        pxt.tickEvent("github.revertall", undefined, { interactiveConsent: true })
         this.props.parent.revertAllFilesAsync()
             .done();
     }
@@ -1039,10 +1064,12 @@ ${content}
         const displayDiffFiles = blocksMode
             && !pxt.options.debug ? diffFiles.filter(f => /\.blocks$/.test(f.name))
             : diffFiles;
-        return diffFiles.length ? <div className="ui filediffs">
+        return diffFiles.length ? <div className="ui section">
             <div className={`ui ${invertedTheme ? "inverted " : ""} diffheader segment`}>
-                {lf("There are {0} modified file{0:s}.", diffFiles.length)}
-                <sui.Button className="floated right" text={lf("Revert all files")} onClick={this.revertAllFiles} />
+                {lf("There are local changes.")}
+                <sui.Button className="small" icon="undo" text={lf("Revert all")}
+                        ariaLabel={lf("Revert all changes")} title={lf("Revert all changes")}
+                        textClass={"landscape only"} onClick={this.revertAllFiles} />
             </div>
             {displayDiffFiles.map(df => this.showDiff(df))}
         </div> : <div className={`ui ${invertedTheme ? "inverted " : ""}segment`}>
