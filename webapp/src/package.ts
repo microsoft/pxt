@@ -20,6 +20,7 @@ export function setupAppTarget(trgbundle: pxt.TargetBundle) {
     pxt.setAppTarget(trgbundle)
 }
 
+const GENERATED_EXTENSION = ".g."
 const TILEMAP_CODE = "tilemap.g.ts";
 const TILEMAP_JRES = "tilemap.g.jres";
 
@@ -223,9 +224,8 @@ export class EditorPackage {
     }
 
     getGeneratedFiles(file: File): File[] {
-        const GENERATED = ".g."
-        if (file.name.indexOf(GENERATED) > -1) {
-            const prefix = file.name.substring(0, file.name.indexOf(GENERATED) + GENERATED.length);
+        if (file.name.indexOf(GENERATED_EXTENSION) > -1) {
+            const prefix = file.name.substring(0, file.name.indexOf(GENERATED_EXTENSION) + GENERATED_EXTENSION.length);
             return Util.values(this.files).filter(vf => vf !== file && pxt.U.startsWith(vf.name, prefix));
         }
         return [];
