@@ -47,10 +47,10 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     }
 
     render() {
-        const {isCollapsed, errors, exception} = this.state;
-        const collapseTooltip = lf("Collapse Error List");
+        const { isCollapsed, errors, exception } = this.state;
         const errorsAvailable = !!errors?.length || !!exception;
-    
+        const collapseTooltip = lf("Collapse Error List");
+
         const errorListContent = !isCollapsed ? (exception ? this.generateStackTraces(exception) : this.getCompilerErrors(errors)) : undefined;
 
         return (
@@ -58,12 +58,12 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                 <div className="errorListHeader" role="button" aria-label={lf("{0} error list", isCollapsed ? lf("Expand") : lf("Collapse"))} onClick={this.onCollapseClick} onKeyDown={sui.fireClickOnEnter} tabIndex={0}>
                     <h4>{lf("Problems")}</h4>
                     <div className="ui red circular label countBubble">{exception ? 1 : errors.length}</div>
-                    <div className="toggleButton"><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`}/></div>
+                    <div className="toggleButton"><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`} /></div>
                 </div>
                 {!isCollapsed && <div className="errorListInner">
                     {exception && <div className="debuggerSuggestion" role="button" onClick={this.props.startDebugger} onKeyDown={sui.fireClickOnEnter} tabIndex={0}>
                         {lf("Debug this project")}
-                        <sui.Icon className="debug-icon" icon="icon bug"/>
+                        <sui.Icon className="debug-icon" icon="icon bug" />
                     </div>}
                     {errorListContent}
                 </div>}
@@ -94,7 +94,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     }
 
     onErrorMessageClick(e: pxtc.LocationInfo, index: number) {
-        pxt.tickEvent('errorlist.goto', {errorIndex: index}, { interactiveConsent: true });
+        pxt.tickEvent('errorlist.goto', { errorIndex: index }, { interactiveConsent: true });
         this.props.goToError(e)
     }
 
@@ -136,7 +136,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
                     if (!location) return null;
 
-                    return <ErrorListItem key={index} index={index} stackframe={sf} location={location} revealError={this.onErrorMessageClick}/>
+                    return <ErrorListItem key={index} index={index} stackframe={sf} location={location} revealError={this.onErrorMessageClick} />
                 })}
             </div>
         </div>;
@@ -163,7 +163,7 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
     }
 
     render() {
-        const {error, stackframe, location} = this.props
+        const { error, stackframe, location } = this.props
 
         const message = stackframe ?
             stackFrameMessageStringWithLineNumber(stackframe, location) :
@@ -171,10 +171,10 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
         const errorCount = stackframe ? 1 : error.count;
 
         return <div className={`item ${stackframe ? 'stackframe' : ''}`} role="button"
-                    onClick={this.onErrorListItemClick}
-                    onKeyDown={sui.fireClickOnEnter}
-                    aria-label={lf("Go to {0}: {1}", stackframe ? '' : 'error', message)}
-                    tabIndex={0}>
+            onClick={this.onErrorListItemClick}
+            onKeyDown={sui.fireClickOnEnter}
+            aria-label={lf("Go to {0}: {1}", stackframe ? '' : 'error', message)}
+            tabIndex={0}>
             {message} {(errorCount <= 1) ? null : <div className="ui gray circular label countBubble">{errorCount}</div>}
         </div>
     }
