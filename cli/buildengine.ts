@@ -336,21 +336,30 @@ function runPlatformioAsync(args: string[]) {
 }
 
 function runDockerAsync(args: string[]) {
-    let fullpath = process.cwd() + "/" + thisBuild.buildPath + "/"
-    let cs = pxt.appTarget.compileService
-    let dargs = cs.dockerArgs || ["-u", "build"]
-    let mountArg = fullpath + ":/src"
+    if (process.env["PXT_NODOCKER"] == "force") {
+        const cmd = args.shift()
+        return nodeutil.spawnAsync({
+            cmd,
+            args,
+            cwd: thisBuild.buildPath
+        })
+    } else {
+        let fullpath = process.cwd() + "/" + thisBuild.buildPath + "/"
+        let cs = pxt.appTarget.compileService
+        let dargs = cs.dockerArgs || ["-u", "build"]
+        let mountArg = fullpath + ":/src"
 
-    // this speeds up docker build a lot on macOS,
-    // see https://docs.docker.com/docker-for-mac/osxfs-caching/
-    if (process.platform == "darwin")
-        mountArg += ":delegated"
+        // this speeds up docker build a lot on macOS,
+        // see https://docs.docker.com/docker-for-mac/osxfs-caching/
+        if (process.platform == "darwin")
+            mountArg += ":delegated"
 
-    return nodeutil.spawnAsync({
-        cmd: "docker",
-        args: ["run", "--rm", "-v", mountArg, "-w", "/src"].concat(dargs).concat([cs.dockerImage]).concat(args),
-        cwd: thisBuild.buildPath
-    })
+        return nodeutil.spawnAsync({
+            cmd: "docker",
+            args: ["run", "--rm", "-v", mountArg, "-w", "/src"].concat(dargs).concat([cs.dockerImage]).concat(args),
+            cwd: thisBuild.buildPath
+        })
+    }
 }
 
 let parseCppInt = pxt.cpp.parseCppInt;
