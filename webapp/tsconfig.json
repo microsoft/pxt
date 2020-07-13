@@ -16,7 +16,6 @@
         "emitDecoratorMetadata": true,
         "declaration": false,
         "preserveConstEnums": true,
-        "downlevelIteration": true,
         "lib": [
             "dom",
             "dom.iterable",
