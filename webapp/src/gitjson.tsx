@@ -87,7 +87,28 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             .then(() => { })
     }
 
-    async revertFileAsync(f: DiffFile, deletedFiles: string[], addedFiles: string[], virtualF: pkg.File) {
+    async revertAllFilesAsync() {
+        pxt.tickEvent("github.revertall", { start: 1 }, { interactiveConsent: true })
+        const res = await core.confirmAsync({
+            header: lf("Would you like to revert all local changes?"),
+            body: lf("Changes will be lost for good. No undo."),
+            agreeLbl: lf("Revert"),
+            agreeClass: "red",
+            agreeIcon: "trash",
+        })
+
+        if (!res)
+            return
+
+        pxt.tickEvent("github.revertall", { ok: 1 })
+        this.setState({ needsCommitMessage: false }); // maybe we no longer do
+
+        const { header } = this.props.parent.state;
+        await workspace.revertAllAsync(header);
+        await this.props.parent.reloadHeaderAsync()
+    }
+
+    async revertFileAsync(f: DiffFile, deletedFiles: string[], addedFiles: string[], virtualFiles: pkg.File[]) {
         pxt.tickEvent("github.revert", { start: 1 }, { interactiveConsent: true })
         const res = await core.confirmAsync({
             header: lf("Would you like to revert changes to {0}?", f.name),
@@ -103,27 +124,39 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         pxt.tickEvent("github.revert", { ok: 1 })
         this.setState({ needsCommitMessage: false }); // maybe we no longer do
 
+        let needsReload = false;
+        const epkg = pkg.mainEditorPkg();
         if (f.gitFile == null) {
-            await pkg.mainEditorPkg().removeFileAsync(f.name)
-            await this.props.parent.reloadHeaderAsync()
+            needsReload = true;
+            await epkg.removeFileAsync(f.name)
+            for (const virtualF of virtualFiles)
+                await epkg.removeFileAsync(virtualF.name)
         } else if (f.name == pxt.CONFIG_NAME) {
+            needsReload = true;
             const gs = this.getGitJson()
             for (let d of deletedFiles) {
                 const prev = pxt.github.lookupFile(gs.commit, d)
-                pkg.mainEditorPkg().setFile(d, prev && prev.blobContent || "// Cannot restore.")
+                epkg.setFile(d, prev && prev.blobContent || "// Cannot restore.")
             }
             for (let d of addedFiles) {
-                delete pkg.mainEditorPkg().files[d]
+                delete epkg.files[d]
             }
             await f.file.setContentAsync(f.gitFile)
-            await this.props.parent.reloadHeaderAsync()
         } else {
             await f.file.setContentAsync(f.gitFile)
-            // revert generated .ts file as well
-            if (virtualF)
-                await virtualF.setContentAsync(virtualF.baseGitContent);
-            this.forceUpdate();
+            const pkgfiles = epkg.files;
+            for (const virtualF of virtualFiles) {
+                if (virtualF.baseGitContent == null) {
+                    needsReload = true;
+                    await epkg.removeFileAsync(virtualF.name)
+                } else
+                    await virtualF.setContentAsync(virtualF.baseGitContent);
+            }
         }
+        if (needsReload)
+            await this.props.parent.reloadHeaderAsync()
+        else
+            this.forceUpdate()
     }
 
     private async saveGitJsonAsync(gs: pxt.github.GitJson) {
@@ -712,6 +745,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
 
     constructor(props: DiffViewProps) {
         super(props);
+        this.revertAllFiles = this.revertAllFiles.bind(this)
     }
 
     private lineDiff(lineA: string, lineB: string): { a: JSX.Element, b: JSX.Element } {
@@ -790,8 +824,8 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
                         <p>
                             {lf("Reverting this file will also remove: {0}", addedFiles.join(", "))}
                         </p>}
-                    {!!cache.revert && virtualF && !blocksMode && <p>
-                        {lf("Reverting this file will also revert: {0}", virtualF.name)}
+                    {!!cache.revert && !!virtualFiles.length && !blocksMode && <p>
+                        {lf("Reverting this file will also revert: {0}", virtualFiles.map(f => f.name).join(', '))}
                     </p>}
                 </div>
                 {jsxEls.diffJSX ?
@@ -822,13 +856,19 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
                 addedFiles = newCfg.filter(fn => oldCfg.indexOf(fn) == -1)
             }
         }
-        // backing .ts for .blocks/.py files
-        let virtualF = blocksMode && pkg.mainEditorPkg().files[f.file.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
-        if (virtualF == f.file) virtualF = undefined;
 
+        const virtualFiles: pkg.File[] = [];
         cache.file = f
         if (this.props.allowRevert) {
-            cache.revert = () => this.props.parent.revertFileAsync(f, deletedFiles, addedFiles, virtualF);
+            // backing .ts for .blocks/.py files
+            const files = pkg.mainEditorPkg().files;
+            const virtualFile = blocksMode && files[f.file.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
+            if (virtualFile && virtualFile != f.file)
+                virtualFiles.push(virtualFile);
+            // erase other generated files
+            for (const vf of pkg.mainEditorPkg().getGeneratedFiles(f.file))
+                virtualFiles.push(vf);
+            cache.revert = () => this.props.parent.revertFileAsync(f, deletedFiles, addedFiles, virtualFiles);
         }
         cache.diff = createDiff()
         return cache.diff;
@@ -1010,6 +1050,11 @@ ${content}
             .done(() => this.props.parent.forceUpdate());
     }
 
+    revertAllFiles() {
+        this.props.parent.revertAllFilesAsync()
+            .done();
+    }
+
     renderCore() {
         const { diffFiles, blocksMode } = this.props;
         const targetTheme = pxt.appTarget.appTheme;
@@ -1018,7 +1063,13 @@ ${content}
         const displayDiffFiles = blocksMode
             && !pxt.options.debug ? diffFiles.filter(f => /\.blocks$/.test(f.name))
             : diffFiles;
-        return displayDiffFiles.length ? <div className="ui">
+        return diffFiles.length ? <div className="ui section">
+            <div className={`ui ${invertedTheme ? "inverted " : ""} diffheader segment`}>
+                {lf("There are local changes.")}
+                <sui.Button className="small" icon="undo" text={lf("Revert all")}
+                    ariaLabel={lf("Revert all changes")} title={lf("Revert all changes")}
+                    textClass={"landscape only"} onClick={this.revertAllFiles} />
+            </div>
             {displayDiffFiles.map(df => this.showDiff(df))}
         </div> : <div className={`ui ${invertedTheme ? "inverted " : ""}segment`}>
                 {lf("No local changes found.")}

@@ -11,6 +11,7 @@ let hostCache = new db.Table("hostcache")
 let extWeight: pxt.Map<number> = {
     "ts": 10,
     "blocks": 20,
+    "jres": 25,
     "json": 30,
     "md": 40,
 }
@@ -19,6 +20,7 @@ export function setupAppTarget(trgbundle: pxt.TargetBundle) {
     pxt.setAppTarget(trgbundle)
 }
 
+const GENERATED_EXTENSION = ".g."
 const TILEMAP_CODE = "tilemap.g.ts";
 const TILEMAP_JRES = "tilemap.g.jres";
 
@@ -219,6 +221,14 @@ export class EditorPackage {
         const ksPkg = this.topPkg.ksPkg;
         const cfg = ksPkg && ksPkg.config;
         return cfg && cfg.languageRestriction;
+    }
+
+    getGeneratedFiles(file: File): File[] {
+        if (file.name.indexOf(GENERATED_EXTENSION) > -1) {
+            const prefix = file.name.substring(0, file.name.indexOf(GENERATED_EXTENSION) + GENERATED_EXTENSION.length);
+            return Util.values(this.files).filter(vf => vf !== file && pxt.U.startsWith(vf.name, prefix));
+        }
+        return [];
     }
 
     afterMainLoadAsync() {
