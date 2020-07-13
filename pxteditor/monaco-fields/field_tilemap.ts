@@ -196,7 +196,7 @@ namespace pxt.editor {
         weight: 5,
         matcher: {
             // match both JS and python
-            searchString: "(?:tilemap\\s*(?:`|\\(\"\"\")(?:[ a-zA-Z0-9\\.]|\\n)*\\s*(?:`|\"\"\"\\)))|(?:tiles\\s*\\.\\s*createTilemap\\s*\\([^\\)]+\\))",
+            searchString: "(?:tilemap\\s*(?:`|\\(\"\"\")(?:[ a-zA-Z0-9_]|\\n)*\\s*(?:`|\"\"\"\\)))|(?:tiles\\s*\\.\\s*createTilemap\\s*\\([^\\)]+\\))",
             isRegex: true,
             matchCase: true,
             matchWholeWord: false
