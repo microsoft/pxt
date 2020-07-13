@@ -19,8 +19,8 @@ export function setupAppTarget(trgbundle: pxt.TargetBundle) {
     pxt.setAppTarget(trgbundle)
 }
 
-const TILEMAP_CODE = "_tilemap.ts";
-const TILEMAP_JRES = "tilemap.jres";
+const TILEMAP_CODE = "tilemap.g.ts";
+const TILEMAP_JRES = "tilemap.g.jres";
 
 export class File implements pxt.editor.IFile {
     inSyncWithEditor = true;

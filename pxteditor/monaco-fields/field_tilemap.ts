@@ -8,15 +8,6 @@ namespace pxt.editor {
         protected tilemapName: string;
         protected isTilemapLiteral: boolean;
 
-        protected initAsync(): Promise<void> {
-            const projectTiles = this.host.readFile("tilemap.jres");
-            if (!projectTiles) {
-                return this.host.writeFileAsync("tilemap.jres", defaultTileset);
-            }
-
-            return Promise.resolve();
-        }
-
         protected textToValue(text: string): pxt.sprite.TilemapData {
             const tm = this.readTilemap(text);
 
@@ -179,14 +170,6 @@ namespace pxt.editor {
         }
     }
 
-    const defaultTileset = `{
-        "*": {
-            "namespace": "myTiles",
-            "mimeType": "image/x-mkcd-f4",
-            "dataEncoding": "base64"
-          }
-    }`
-
     export const tilemapEditorDefinition: MonacoFieldEditorDefinition = {
         id: fieldEditorId,
         foldMatches: true,
@@ -196,7 +179,7 @@ namespace pxt.editor {
         weight: 5,
         matcher: {
             // match both JS and python
-            searchString: "(?:tilemap\\s*(?:`|\\(\"\"\")(?:[ a-zA-Z0-9\\.]|\\n)*\\s*(?:`|\"\"\"\\)))|(?:tiles\\s*\\.\\s*createTilemap\\s*\\([^\\)]+\\))",
+            searchString: "(?:tilemap\\s*(?:`|\\(\"\"\")(?:[ a-zA-Z0-9_]|\\n)*\\s*(?:`|\"\"\"\\)))|(?:tiles\\s*\\.\\s*createTilemap\\s*\\([^\\)]+\\))",
             isRegex: true,
             matchCase: true,
             matchWholeWord: false
