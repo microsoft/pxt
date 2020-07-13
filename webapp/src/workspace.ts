@@ -550,9 +550,8 @@ export async function revertAllAsync(hd: Header) {
         return PullStatus.NoSourceControl
 
     const revertedFiles: pxt.Map<string> = {};
-    // store pxt.json
+    revertedFiles[GIT_JSON] = gitjsontext;
     revertedFiles[pxt.CONFIG_NAME] = configEntry.blobContent;
-    // go through all files and restore content
     for (const f of config.files.concat(config.testFiles)) {
         const entry = pxt.github.lookupFile(commit, f);
         if (!entry || entry.blobContent === undefined) {
@@ -563,7 +562,6 @@ export async function revertAllAsync(hd: Header) {
     }
     // save updated file content
     await forceSaveAsync(hd, revertedFiles)
-
     return PullStatus.UpToDate;
 }
 
