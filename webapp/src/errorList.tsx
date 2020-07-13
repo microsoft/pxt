@@ -48,10 +48,9 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
     render() {
         const {isCollapsed, errors, exception} = this.state;
-
-        const errorListContent = !isCollapsed ? (exception ? this.generateStackTraces(exception) : this.getCompilerErrors(errors)) : undefined;
         const errorsAvailable = !!errors?.length || !!exception;	
         const collapseTooltip = lf("Collapse Error List");
+        const errorListContent = !isCollapsed ? (exception ? this.generateStackTraces(exception) : this.getCompilerErrors(errors)) : undefined;
 
         return (
             <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''}`} hidden={!errorsAvailable}>
