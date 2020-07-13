@@ -221,6 +221,15 @@ export class EditorPackage {
         return cfg && cfg.languageRestriction;
     }
 
+    getGeneratedFiles(file: File): File[] {
+        const GENERATED = ".g."
+        if (file.name.indexOf(GENERATED) > -1) {
+            const prefix = file.name.substring(0, file.name.indexOf(GENERATED) + GENERATED.length);
+            return Util.values(this.files).filter(vf => vf !== file && pxt.U.startsWith(vf.name, prefix));
+        }
+        return [];
+    }
+
     afterMainLoadAsync() {
         if (this.assetsPkg)
             return this.assetsPkg.loadAssetsAsync()
