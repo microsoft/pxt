@@ -553,14 +553,14 @@ export async function revertAllAsync(hd: Header) {
     // store pxt.json
     revertedFiles[pxt.CONFIG_NAME] = configEntry.blobContent;
     // go through all files and restore content
-    config.files.concat(config.testFiles).forEach(f => {
+    for (const f of config.files.concat(config.testFiles)) {
         const entry = pxt.github.lookupFile(commit, f);
         if (!entry || entry.blobContent === undefined) {
             pxt.log(`cannot revert ${f}, corrupted based commit`)
             return PullStatus.NoSourceControl
         }
         revertedFiles[f] = entry.blobContent;
-    })
+    }
     // save updated file content
     await forceSaveAsync(hd, revertedFiles)
 
