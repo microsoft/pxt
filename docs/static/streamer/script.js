@@ -25,6 +25,7 @@
     const startvideo = document.getElementById('startvideo');
     const endvideo = document.getElementById('endvideo');
     const backgroundvideo = document.getElementById('backgroundvideo');
+    const backgroundyoutube = document.getElementById('backgroundyoutube');
     const intro = document.getElementById('intro');
     const hasGetDisplayMedia = !!navigator?.mediaDevices?.getDisplayMedia;
     const frames = [editor, editor2];
@@ -116,9 +117,16 @@
         const json = await resp.json();
         return json;
     }
+    function parseYouTubeVideoId(url) {
+        if (!url)
+            return undefined;
+        const m = /^https:\/\/(?:youtu\.be\/|(?:www.)?youtube.com\/watch\?v=)([a-z0-9_\-]+)$/i.exec(url);
+        return m && m[1];
+    }
     function render() {
         loadToolbox();
         const config = readConfig();
+        const ytVideoId = parseYouTubeVideoId(config.backgroundVideo);
         body.className = [
             scenes[state.sceneIndex],
             state.hardware && "hardware",
@@ -139,7 +147,7 @@
             config.hardwareCamId && "hashardwarecam",
             config.hardwareCamId === DISPLAY_DEVICE_ID && "hardwarecamdisplay",
             config.greenScreen && "greenscreen",
-            config.backgroundVideo ? "backgroundvideo" : config.backgroundImage && "parallax",
+            !!ytVideoId ? "backgroundyoutube" : config.backgroundVideo ? "backgroundvideo" : config.backgroundImage && "parallax",
             config.countdownEditor && "countdowneditor",
             config.countdownEditorBlur && "countdowneditorblur",
             config.fullScreenEditor && !config.multiEditor && "slim",
@@ -677,11 +685,40 @@ background: ${primary};
         if (hardwareCamFilter)
             css += `#hardwarecam { filter: ${hardwareCamFilter}; }
         `;
-        if (config.backgroundVideo) {
+        const ytVideoId = parseYouTubeVideoId(config.backgroundVideo);
+        if (ytVideoId) {
+            backgroundvideo.src = undefined;
+            const url = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1&controls=0&disablekb=1&fs=0&loop=1&playlist=${ytVideoId}&modestbranding=1&rel=0&mute=1`;
+            if (backgroundyoutube.src !== url)
+                backgroundyoutube.src = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1&controls=0&disablekb=1&fs=0&loop=1&playlist=${ytVideoId}&modestbranding=1&rel=0&mute=1`;
+            // rescale youtube iframe to cover the entire background
+            const el = document.firstElementChild;
+            const w = el.clientWidth;
+            const h = el.clientHeight;
+            const ratio = w / h;
+            const hd = 16 / 9;
+            if (ratio > hd) {
+                // the video is going to be 16:9, compensate
+                console.log(`ratio`, ratio);
+                const vh = 100 * ratio / hd;
+                backgroundyoutube.style.height = `${vh}vh`;
+                backgroundyoutube.style.width = `100vw`;
+                backgroundyoutube.style.transform = `translate(0, ${-(vh - 100) / 2}vh)`;
+            }
+            else {
+                const vw = 100 / ratio * hd;
+                backgroundyoutube.style.height = `100vh`;
+                backgroundyoutube.style.width = `${vw}vw`;
+                backgroundyoutube.style.transform = `translate(${-(vw - 100) / 2}vh, 0)`;
+            }
+        }
+        else if (config.backgroundVideo) {
             backgroundvideo.src = config.backgroundVideo;
+            backgroundyoutube.src = undefined;
         }
         else {
             backgroundvideo.src = undefined;
+            backgroundyoutube.src = undefined;
             if (config.backgroundImage) {
                 css += `body.parallax {
 background-image: url(${config.backgroundImage});
@@ -965,6 +1002,8 @@ background-image: url(${config.backgroundImage});
             }
         ];
         function update() {
+            // clear canvas if any
+            clearPaint();
             const el = document.firstElementChild;
             const w = el.clientWidth;
             const h = el.clientHeight;
@@ -979,6 +1018,8 @@ background-image: url(${config.backgroundImage});
                 else
                     el.classList.remove("perfect");
             }
+            // update ui
+            loadStyle();
         }
         window.onresize = update;
         update();
