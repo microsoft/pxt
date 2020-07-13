@@ -1953,6 +1953,15 @@ namespace ts.pxtc.service {
                     }
                 }
 
+                const shadowAttrs = shadowSymbol.attributes;
+                if (shadowAttrs.shim === "KIND_GET" && shadowAttrs.blockId) {
+                    const kindNamespace = shadowAttrs.kindNamespace || fn.namespace;
+                    const defaultValueForKind = pxtc.Util.values(apis.byQName).find(api => api.namespace === kindNamespace && api.attributes.isKind);
+                    if (defaultValueForKind) {
+                        return python ? defaultValueForKind.pyQName : defaultValueForKind.qName;
+                    }
+                }
+
                 // 3 is completely arbitrarily chosen here
                 if (recursionDepth < 3 && lastApiInfo.decls[shadowSymbol.qName]) {
                     let snippet = getSnippet(
