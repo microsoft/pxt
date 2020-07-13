@@ -18,7 +18,7 @@ export interface ErrorListProps {
 }
 export interface ErrorListState {
     isCollapsed: boolean,
-    errors: GroupedError[],
+    errors: pxtc.KsDiagnostic[],
     exception?: pxsim.DebuggerBreakpointMessage,
     callLocations?: pxtc.LocationInfo[]
 }
@@ -49,8 +49,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     render() {
         const {isCollapsed, errors, exception} = this.state;
 
-        let errorCount = 0;
-        (errors || []).forEach(e => errorCount += e.count);
+        const errorCount = exception ? 1 : errors.length;
         const errorsAvailable = errorCount > 0 || !!exception;
         const errorListContent = !isCollapsed ? (exception ? this.generateStackTraces(exception) : this.getCompilerErrors(errors)) : undefined;
 
@@ -101,7 +100,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
     onErrorsChanged(errors: pxtc.KsDiagnostic[]) {
         this.setState({
-            errors: groupErrors(errors),
+            errors,
             isCollapsed: errors?.length == 0 || this.state.isCollapsed,
             exception: null
         }, this.onDisplayStateChange);
@@ -115,15 +114,16 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
         })
     }
 
-    getCompilerErrors(errors: GroupedError[]) {
+    getCompilerErrors(errors: pxtc.KsDiagnostic[]) {
         function errorKey(error: pxtc.KsDiagnostic): string {
             // React likes have a "key" for each element so that it can smartly only
             // re-render what changes. Think of it like a hashcode/
             return `${error.messageText}-${error.fileName}-${error.line}-${error.column}`
         }
 
+        const grouped = groupErrors(errors);
         return <div className="ui selection list">
-            {(errors).map((e, index) => <ErrorListItem key={errorKey(e.error)} index={index} error={e} revealError={this.onErrorMessageClick} />)}
+            {grouped.map((e, index) => <ErrorListItem key={errorKey(e.error)} index={index} error={e} revealError={this.onErrorMessageClick} />)}
         </div>
     }
 
@@ -194,24 +194,22 @@ function stackFrameMessageStringWithLineNumber(stackframe: pxsim.StackFrameInfo,
 }
 
 function groupErrors(errors: pxtc.KsDiagnostic[]) {
-    const grouped: { [key: string]: GroupedError} = {};
+    const grouped = new Map<string, GroupedError>();
     let index = 0;
     for (const error of errors) {
         const key = errorMessageStringWithLineNumber(error);
-        if (!grouped[key]) {
-            grouped[key] = {
+        if (!grouped.has(key)) {
+            grouped.set(key, {
                 index: index++,
                 count: 1,
                 error
-            };
+            });
         }
         else {
-            grouped[key].count++;
+            grouped.get(key).count++;
         }
     }
     let sorted: GroupedError[] = [];
-    Object.keys(grouped).forEach(key => sorted.push(grouped[key]));
-    sorted = sorted.sort((a, b) => a.index - b.index);
-
-    return sorted;
+    grouped.forEach(value => sorted.push(value));
+    return sorted.sort((a, b) => a.index - b.index);
 }
