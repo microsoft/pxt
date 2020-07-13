@@ -11,6 +11,7 @@ let hostCache = new db.Table("hostcache")
 let extWeight: pxt.Map<number> = {
     "ts": 10,
     "blocks": 20,
+    "jres": 25,
     "json": 30,
     "md": 40,
 }
