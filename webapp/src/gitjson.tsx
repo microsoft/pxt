@@ -87,6 +87,13 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             .then(() => { })
     }
 
+    async revertAllFilesAsync() {
+        const diffFiles = this.computeDiffFiles();
+        for (const diffFile of diffFiles)
+            await diffFile.file.setContentAsync(diffFile.file.baseGitContent);
+        this.forceUpdate();
+    }
+
     async revertFileAsync(f: DiffFile, deletedFiles: string[], addedFiles: string[], virtualFiles: pkg.File[]) {
         pxt.tickEvent("github.revert", { start: 1 }, { interactiveConsent: true })
         const res = await core.confirmAsync({
@@ -712,6 +719,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
 
     constructor(props: DiffViewProps) {
         super(props);
+        this.revertAllFiles = this.revertAllFiles.bind(this)
     }
 
     private lineDiff(lineA: string, lineB: string): { a: JSX.Element, b: JSX.Element } {
@@ -791,7 +799,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
                             {lf("Reverting this file will also remove: {0}", addedFiles.join(", "))}
                         </p>}
                     {!!cache.revert && virtualFiles.length && !blocksMode && <p>
-                        {lf("Reverting this file will also revert: {0}", virtualFiles.map(f => f.name).join(', ')}
+                        {lf("Reverting this file will also revert: {0}", virtualFiles.map(f => f.name).join(', '))}
                     </p>}
                 </div>
                 {jsxEls.diffJSX ?
@@ -1017,6 +1025,12 @@ ${content}
             .done(() => this.props.parent.forceUpdate());
     }
 
+    revertAllFiles() {
+        pxt.tickEvent("github.revertall", undefined, { interactiveConsent: true })
+        this.props.parent.revertAllFilesAsync()
+            .done();
+    }
+
     renderCore() {
         const { diffFiles, blocksMode } = this.props;
         const targetTheme = pxt.appTarget.appTheme;
@@ -1025,7 +1039,11 @@ ${content}
         const displayDiffFiles = blocksMode
             && !pxt.options.debug ? diffFiles.filter(f => /\.blocks$/.test(f.name))
             : diffFiles;
-        return displayDiffFiles.length ? <div className="ui">
+        return diffFiles.length ? <div className="ui filediffs">
+            <div className={`ui ${invertedTheme ? "inverted " : ""} diffheader segment`}>
+                {lf("There are {0} modified file{0:s}.", diffFiles.length)}
+                <sui.Button className="floated right" text={lf("Revert all files")} onClick={this.revertAllFiles} />
+            </div>
             {displayDiffFiles.map(df => this.showDiff(df))}
         </div> : <div className={`ui ${invertedTheme ? "inverted " : ""}segment`}>
                 {lf("No local changes found.")}
