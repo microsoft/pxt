@@ -1752,7 +1752,7 @@ namespace ts.pxtc.service {
         return internalSnippetStringify(snippet)
 
         function internalSnippetStringify(snippet: SnippetNode): string {
-            // The format for monaco snippets is: 
+            // The format for monaco snippets is:
             //      foo(${1:bar}, ${2:baz},  ${1:bar})
             // so both instances of "bar" will start highlighted, then tab will cycle to "baz", etc.
             if (isSnippetReplacePoint(snippet)) {
@@ -2098,8 +2098,14 @@ namespace ts.pxtc.service {
             }
         }
 
-        let argsWithCommas = args.reduce((p: SnippetNode[], n) => [...p, p.length ? ", " : "", n], []) as SnippetNode[]
-        let snippet: SnippetNode[] = [fnName, "(", ...argsWithCommas, ")"];
+        const preDefinedSnippet = attrs && (python ? attrs.pySnippet : attrs.snippet);
+        let snippet: SnippetNode[];
+        if (preDefinedSnippet) {
+            snippet = [preDefinedSnippet];
+        } else {
+            const argsWithCommas = args.reduce((p: SnippetNode[], n) => [...p, p.length ? ", " : "", n], []) as SnippetNode[]
+            snippet = [fnName, "(", ...argsWithCommas, ")"];
+        }
         let insertText = snippetPrefix ? [snippetPrefix, ".", ...snippet] : snippet;
         insertText = addNamespace ? [firstWord(namespaceToUse), ".", ...insertText] : insertText;
 
