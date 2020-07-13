@@ -74,6 +74,7 @@ interface StreamerState {
     const startvideo = document.getElementById('startvideo') as HTMLVideoElement;
     const endvideo = document.getElementById('endvideo') as HTMLVideoElement;
     const backgroundvideo = document.getElementById('backgroundvideo') as HTMLVideoElement
+    const backgroundyoutube = document.getElementById('backgroundyoutube') as HTMLIFrameElement
     const intro = document.getElementById('intro')
     const hasGetDisplayMedia = !!(<any>navigator)?.mediaDevices?.getDisplayMedia;
 
@@ -174,10 +175,17 @@ interface StreamerState {
         return json;
     }
 
+    function parseYouTubeVideoId(url) {
+        if (!url) return undefined;
+        const m = /^https:\/\/(?:youtu\.be\/|(?:www.)?youtube.com\/watch\?v=)([a-z0-9_\-]+)$/i.exec(url)
+        return m && m[1];
+    }
+
     function render() {
         loadToolbox();
 
         const config = readConfig();
+        const ytVideoId = parseYouTubeVideoId(config.backgroundVideo);
 
         body.className = [
             scenes[state.sceneIndex],
@@ -199,7 +207,7 @@ interface StreamerState {
             config.hardwareCamId && "hashardwarecam",
             config.hardwareCamId === DISPLAY_DEVICE_ID && "hardwarecamdisplay",
             config.greenScreen && "greenscreen",
-            config.backgroundVideo ? "backgroundvideo" : config.backgroundImage && "parallax",
+            !!ytVideoId ? "backgroundyoutube" : config.backgroundVideo ? "backgroundvideo" : config.backgroundImage && "parallax",
             config.countdownEditor && "countdowneditor",
             config.countdownEditorBlur && "countdowneditorblur",
             config.fullScreenEditor && !config.multiEditor && "slim",
@@ -773,10 +781,16 @@ background: ${primary};
             css += `#hardwarecam { filter: ${hardwareCamFilter}; }
         `
 
-        if (config.backgroundVideo) {
+        const ytVideoId = parseYouTubeVideoId(config.backgroundVideo);
+        if (ytVideoId) {
+            backgroundvideo.src = undefined;
+            backgroundyoutube.src = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1&controls=0&disablekb=1&fs=0&loop=1&playlist=${ytVideoId}&modestbranding=1&rel=0&mute=1`
+        } else if (config.backgroundVideo) {
             backgroundvideo.src = config.backgroundVideo;
+            backgroundyoutube.src = undefined;
         } else {
             backgroundvideo.src = undefined;
+            backgroundyoutube.src = undefined;
             if (config.backgroundImage) {
                 css += `body.parallax {
 background-image: url(${config.backgroundImage});

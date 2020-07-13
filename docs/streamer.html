@@ -75,7 +75,7 @@ Use https://uifabricicons.azurewebsites.net/
         }
 
         /** background video */
-        #backgroundvideo {
+        .backgroundvideo {
             display: none;
             object-fit: cover;
             width: 100vw;
@@ -86,6 +86,9 @@ Use https://uifabricicons.azurewebsites.net/
         }
 
         body.backgroundvideo #backgroundvideo {
+            display: block;
+        }
+        body.backgroundyoutube #backgroundyoutube {
             display: block;
         }
 
@@ -1358,7 +1361,8 @@ Settings
 </head>
 
 <body class="rightscene">
-    <video id="backgroundvideo" playsinline autoplay muted loop></video>
+    <video id="backgroundvideo" class="backgroundvideo" playsinline autoplay muted loop></video>
+    <iframe id="backgroundyoutube" class="backgroundvideo" type="text/html"></iframe>
     <div id="container" class="container">
         <iframe class="box animated" id="editor" allow="usb;camera"
             sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox allow-forms"></iframe>
