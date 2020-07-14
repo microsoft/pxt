@@ -330,7 +330,6 @@ export function pyDecompileAsync(fileName: string): Promise<pxtc.transpile.Trans
         })
         .then(resp => {
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
-            setDiagnostics(resp.diagnostics)
             return resp
         })
 }
