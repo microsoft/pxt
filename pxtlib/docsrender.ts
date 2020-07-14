@@ -25,7 +25,8 @@ namespace pxt.docs {
         "flyoutOnly": "<!-- flyout -->",
         "hideIteration": "<!-- iter -->",
         "codeStart": "<!-- start -->",
-        "codeStop": "<!-- stop -->"
+        "codeStop": "<!-- stop -->",
+        "autoClose": "<!-- autoClose -->"
     }
 
     function replaceAll(replIn: string, x: string, y: string) {

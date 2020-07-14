@@ -1369,7 +1369,7 @@ export class ProjectView
                     const readmeContent = readme.content?.trim();
                     // no auto-popup when editing packages locally
                     // ### @autoOpen false
-                    if (!h.githubId && readmeContent && !/^### @autoOpen false$/im.test(readmeContent))
+                    if (!h.githubId && readmeContent && !/#{2,}\s+@autoOpen\s+false\s*/i.test(readmeContent))
                         this.setSideMarkdown(readme.content);
                 }
 
