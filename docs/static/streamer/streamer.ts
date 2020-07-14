@@ -47,6 +47,45 @@ interface StreamerState {
     recording?: () => void;
 }
 
+interface StreamerConfig {
+    editor: string;
+    multiEditor?: boolean;
+    faceCamLabel?: string;
+    hardwareCamLabel?: string;
+    emojis: string;
+    micDelay?: number;
+    title?: string;
+    backgroundImage?: string;
+    backgroundVideo?: string;
+    faceCamGreenScreen?: string;
+    hardwareCamGreenScreen?: string;
+    faceCamClipBlack?: number;
+    hardwareCamClipBlack?: number;
+    faceCamCircular?: boolean;
+    hardwareCamCircular?: boolean;
+    faceCamId?: string;
+    hardwareCamId?: string;
+    micId?: string;
+    faceCamFilter?: any;
+    hardwareCamFilter?: any;
+    faceCamContour?: string;
+    hardwareCamContour?: string;
+    faceCamRotate?: boolean;
+    hardwareCamRotate?: boolean;
+    greenScreen?: boolean;
+    countdownEditor?: boolean;
+    countdownEditorBlur?: boolean;
+    fullScreenEditor?: boolean;
+    twitch?: string;
+    restream?: string;
+    extraSites?: string[];
+    startVideo?: string;
+    endVideo?: string;
+    stylePrimary?: string;
+    styleBorder?: string;
+    styleBackground?: string;
+}
+
 (async function () {
     const body = document.body;
     const container = document.getElementById("container");
@@ -146,9 +185,9 @@ interface StreamerState {
             hideSettings();
     }
 
-    function readConfig() {
+    function readConfig(): StreamerConfig {
         try {
-            const cfg = JSON.parse(localStorage["streamer.config"]);
+            const cfg = JSON.parse(localStorage["streamer.config"]) as StreamerConfig;
             if (cfg) {
                 return cfg;
             }
@@ -156,7 +195,7 @@ interface StreamerState {
             console.log(e)
         }
 
-        const cfg = {
+        const cfg: StreamerConfig = {
             editor: "microbit",
             multiEditor: false,
             faceCamLabel: "",
@@ -211,7 +250,7 @@ interface StreamerState {
             config.countdownEditor && "countdowneditor",
             config.countdownEditorBlur && "countdowneditorblur",
             config.fullScreenEditor && !config.multiEditor && "slim",
-            config.twitch && "haschat",
+            (config.twitch || config.restream) && "haschat",
             config.faceCamGreenScreen && "hasthumbnail"
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
@@ -844,7 +883,7 @@ background-image: url(${config.backgroundImage});
         if (e)
             stopEvent(e)
         const config = readConfig();
-        state.chat = !state.chat && config.twitch;
+        state.chat = !state.chat && !!(config.twitch || config.restream);
         render();
     }
 
@@ -853,14 +892,14 @@ background-image: url(${config.backgroundImage});
         if (e)
             stopEvent(e)
         const config = readConfig();
-        state.hardware = !state.hardware && config.hardwareCamId;
+        state.hardware = !state.hardware && !!config.hardwareCamId;
         render();
     }
 
     function loadSocial() {
         const config = readConfig();
 
-        if (!config.twitch)
+        if (!(config.twitch || config.restream))
             state.chat = false;
 
         const editorConfig = editorConfigs[config.editor]
@@ -873,8 +912,11 @@ background-image: url(${config.backgroundImage});
             chat.src = `https://www.twitch.tv/embed/${config.twitch}/chat?parent=makecode.com`;
             if (!chat.parentElement)
                 container.insertBefore(chat, facecamcontainer)
-        }
-        else { // remove from dom
+        } else if (config.restream) {
+            chat.src = config.restream;
+            if (!chat.parentElement)
+                container.insertBefore(chat, facecamcontainer)
+        } else { // remove from dom
             chat.remove();
         }
     }
@@ -1723,9 +1765,9 @@ background-image: url(${config.backgroundImage});
                 loadFaceCam().then(() => loadSettings())
         }
         const facecamgreenclipblack = document.getElementById("facecamgreenclipblack") as HTMLInputElement
-        facecamgreenclipblack.value = config.faceCamClipBlack || 0.6;
+        facecamgreenclipblack.value = (config.faceCamClipBlack || 0.6) + "";
         facecamgreenclipblack.onchange = function (e) {
-            config.faceCamClipBlack = facecamgreenclipblack.value;
+            config.faceCamClipBlack = parseFloat(facecamgreenclipblack.value);
             saveConfig(config);
             // already running?
             if ((<any>facecam).seriously?.chroma)
@@ -1864,9 +1906,9 @@ background-image: url(${config.backgroundImage});
             loadHardwareCam().then(() => loadSettings())
         }
         const hardwarecamgreenclipblack = document.getElementById("hardwarecamgreenclipblack") as HTMLInputElement
-        hardwarecamgreenclipblack.value = config.hardwareCamClipBlack || 0.6;
+        hardwarecamgreenclipblack.value = (config.hardwareCamClipBlack || 0.6) + "";
         hardwarecamgreenclipblack.onchange = function (e) {
-            config.hardwareCamClipBlack = hardwarecamgreenclipblack.value;
+            config.hardwareCamClipBlack = parseFloat(hardwarecamgreenclipblack.value);
             saveConfig(config);
             // already running?
             if ((<any>hardwarecam).seriously?.chroma)
@@ -2064,6 +2106,20 @@ background-image: url(${config.backgroundImage});
             render()
         }
 
+        const restreaminput = document.getElementById("restreaminput") as HTMLInputElement
+        restreaminput.value = config.restream || ""
+        restreaminput.onchange = function (e) {
+            config.restream = (restreaminput.value || "")
+            if (config.restream.indexOf("https://chat.restream.io/embed?token=") != 0)
+                config.restream = ""
+            restreaminput.value = config.restream
+            saveConfig(config);
+            state.chat = !!(config.twitch || config.restream);
+            loadSocial();
+            loadChat();
+            render()
+        }
+
         const greenscreencheckbox = document.getElementById("greenscreencheckbox") as HTMLInputElement
         greenscreencheckbox.checked = !!config.greenScreen
         greenscreencheckbox.onchange = function () {
@@ -2108,11 +2164,11 @@ background-image: url(${config.backgroundImage});
             render()
         }
         const micdelayinput = document.getElementById("micdelayinput") as HTMLInputElement
-        micdelayinput.value = config.micDelay || ""
+        micdelayinput.value = (config.micDelay || "") + ""
         micdelayinput.onchange = function (e) {
             const i = parseInt(micdelayinput.value || "0");
             config.micDelay = isNaN(i) ? 0 : i;
-            micdelayinput.value = config.micDelay
+            micdelayinput.value = (config.micDelay || "") + ""
             saveConfig(config);
         }
 
@@ -2235,7 +2291,8 @@ background-image: url(${config.backgroundImage});
         const measures = {
             hardwareCam: config.hardwareCamId ? 1 : 0,
             multiEditor: config.multiEditor ? 1 : 0,
-            twitch: config.twitch ? 1 : 0
+            twitch: config.twitch ? 1 : 0,
+            restream: config.restream ? 1 : 0
         };
         if (data)
             Object.keys(data).forEach(k => {
