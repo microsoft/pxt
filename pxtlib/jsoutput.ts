@@ -105,10 +105,10 @@ namespace pxt.blocks {
     // A series of utility functions for constructing various J* AST nodes.
     export namespace Helpers {
 
-        export function mkArrayLiteral(args: JsNode[]) {
+        export function mkArrayLiteral(args: JsNode[], withNewlines?: boolean) {
             return mkGroup([
                 mkText("["),
-                mkCommaSep(args, false),
+                mkCommaSep(args, withNewlines),
                 mkText("]")
             ])
         }

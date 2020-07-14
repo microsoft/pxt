@@ -755,7 +755,7 @@ namespace pxt.blocks {
         let args = b.inputList.map(input => input.connection && input.connection.targetBlock() ? compileExpression(e, input.connection.targetBlock(), comments) : undefined)
             .filter(e => !!e);
 
-        return H.mkArrayLiteral(args);
+        return H.mkArrayLiteral(args, !b.getInputsInline());
     }
 
     function compileListGet(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
