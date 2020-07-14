@@ -71,6 +71,13 @@
         .ui.selection.list>.item.active {
             border: solid 2px grey;
         }
+        .ui.selection.list>.item>.content {
+            width:18rem;
+        }
+        .ui.selection.list>.item:not(.active) .extra  {
+            display: none;
+        }
+
     </style>
     <script type="text/javascript"
         src="https://pxt.azureedge.net/blob/4d9b3a258759c53e7bc66b6fc554c51e2434437c/doccdn/jquery.js"></script>
@@ -226,11 +233,16 @@
     <div class="content">
         <div class="header"></div>
         <div class="description"></a></div>
+        <div class="extra"><button class="ui right floated button icon" title="Open repository in GitHub.com"><i class="icon external"></i></button></div>        
     </div>
 </div>`);
                             item.find("img").attr("src", icon)
                             item.find(".header").text(repo.name)
                             item.find(".description").text(repo.owner.login)
+                            item.find(".extra>button").click(event => {
+                                event.stopPropagation();
+                                window.open(targets[repo.target].url, "_blank")
+                            })
                             item.click(event => {
                                 trackClick("github.explorer.open")
                                 $('#repoes').children().removeClass('active');
@@ -368,7 +380,7 @@
             <input id="user" class="ui fluid" type="text" placeholder="Enter GitHub user" />
             <i class="search icon"></i>
         </div>
-        <div id="repoes" class="ui selection list"></div>
+        <div id="repoes" class="ui selection aligned list"></div>
     </div>
     <iframe id="makecodecolumn"></iframe>
     <div id="signin">
