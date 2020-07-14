@@ -1775,6 +1775,7 @@ namespace ts.pxtc.service {
     export type SnippetNode = SnippetReplacePoint | string | SnippetNode[]
     export interface SnippetReplacePoint {
         default: SnippetNode;
+        isLiteral?: boolean;
         isDefinition?: boolean;
     }
     function isSnippetReplacePoint(n: SnippetNode): n is SnippetReplacePoint {
@@ -1801,7 +1802,7 @@ namespace ts.pxtc.service {
 
                     const name = snippetStringify(snippet.default, false)
                     let num = namesToReplacementNumbers[name]
-                    if (!num) {
+                    if (!num || snippet.isLiteral) {
                         num = nextNum
                         nextNum++
                         namesToReplacementNumbers[name] = num
@@ -2016,29 +2017,28 @@ namespace ts.pxtc.service {
                 }
             }
 
-            // simple types we can determine defaults for
-            // TODO: move into getDefaultValueOfType
-            switch (typeNode.kind) {
-                case SK.StringKeyword:
-                    return name == "leds"
-                        ? (python ? defaultPyImgList : defaultTsImgList)
-                        : `""`;
-                case SK.NumberKeyword: return "0";
-                case SK.BooleanKeyword: return python ? "False" : "false";
-                case SK.ArrayType: return "[]";
-                case SK.TypeReference:
-                    // handled below
-                    break;
-                case SK.FunctionType:
-                    const tn = typeNode as ts.FunctionTypeNode;
-                    let functionSignature = checker ? checker.getSignatureFromDeclaration(tn) : undefined;
-                    if (functionSignature) {
-                        return createDefaultFunction(functionSignature, true);
-                    }
-                    return emitEmptyFn(name);
+            // HACK: special handling for single-color (e.g. micro:bit) image literal
+            if (typeNode.kind === SK.StringKeyword && name === "leds") {
+                return python ? defaultPyImgList : defaultTsImgList
             }
 
-            // get default of type
+            // handle function types
+            if (typeNode.kind === SK.FunctionType) {
+                const tn = typeNode as ts.FunctionTypeNode;
+                let functionSignature = checker ? checker.getSignatureFromDeclaration(tn) : undefined;
+                if (functionSignature) {
+                    return createDefaultFunction(functionSignature, true);
+                }
+                return emitEmptyFn(name);
+            }
+
+            // simple types we can determine defaults for
+            const basicRes = getBasicKindDefault(typeNode.kind, python)
+            if (basicRes !== undefined) {
+                return basicRes
+            }
+
+            // get default of Typescript type
             let type = checker && checker.getTypeAtLocation(param);
             if (type) {
                 let typeDef = getDefaultValueOfType(type)
@@ -2059,7 +2059,8 @@ namespace ts.pxtc.service {
                 // make a "replacement point" out of each parameter
                 // e.g. foo(${1:param1}, ${2:param2})
                 ({
-                    default: p
+                    default: p,
+                    isLiteral: true
                 }) as SnippetNode)
 
         let snippetPrefix = fn.namespace;
@@ -2269,6 +2270,18 @@ namespace ts.pxtc.service {
                     default: n
                 }
             } else return `function () {}`;
+        }
+    }
+
+    function getBasicKindDefault(kind: SyntaxKind, isPython: boolean): string | undefined {
+        switch (kind) {
+            case SK.StringKeyword: return "";
+            case SK.NumberKeyword: return "0";
+            case SK.BooleanKeyword: return isPython ? "False" : "false";
+            case SK.ArrayType: return "[]";
+            case SK.NullKeyword: return isPython ? "None" : "null";
+            default:
+                return undefined
         }
     }
 
