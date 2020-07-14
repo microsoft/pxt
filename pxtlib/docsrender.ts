@@ -26,7 +26,7 @@ namespace pxt.docs {
         "hideIteration": "<!-- iter -->",
         "codeStart": "<!-- start -->",
         "codeStop": "<!-- stop -->",
-        "autoClose": "<!-- autoClose -->"
+        "autoOpen": "<!-- autoOpen -->"
     }
 
     function replaceAll(replIn: string, x: string, y: string) {
