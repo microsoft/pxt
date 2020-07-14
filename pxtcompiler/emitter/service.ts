@@ -680,6 +680,12 @@ namespace ts.pxtc {
 
 
 namespace ts.pxtc.service {
+    // these weights dictate the relative ordering of certain results in the completion
+    const COMPLETION_KEYWORD_WEIGHT = 0;
+    const COMPLETION_DEFAULT_WEIGHT = 1;
+    const COMPLETION_IN_SCOPE_VAR_WEIGHT = 5;
+    const COMPLETION_MATCHING_PARAM_TYPE_WEIGHT = 10;
+
     let emptyOptions: CompileOptions = {
         fileSystem: {},
         sourceFiles: [],
@@ -1054,13 +1060,13 @@ namespace ts.pxtc.service {
                 // TS
                 const res = transpile.pyToTs(opts)
                 if (res.syntaxInfo && res.syntaxInfo.symbols) {
-                    resultSymbols = completionSymbols(res.syntaxInfo.symbols);
+                    resultSymbols = completionSymbols(res.syntaxInfo.symbols, COMPLETION_DEFAULT_WEIGHT);
                 }
                 if (res.globalNames)
                     lastGlobalNames = res.globalNames
 
                 if (!resultSymbols.length && res.globalNames) {
-                    resultSymbols = completionSymbols(pxt.U.values(res.globalNames))
+                    resultSymbols = completionSymbols(pxt.U.values(res.globalNames), COMPLETION_DEFAULT_WEIGHT)
                 }
 
                 // update our language host
@@ -1126,13 +1132,18 @@ namespace ts.pxtc.service {
                                 .map(prop => qname + "." + prop.getName())
                                 .map(propQname => lastApiInfo.apis.byQName[propQname])
                                 .filter(prop => !!prop)
-                                .map(prop => completionSymbol(prop));
+                                .map(prop => completionSymbol(prop, COMPLETION_DEFAULT_WEIGHT));
 
                             resultSymbols = props;
                             didFindMemberCompletions = true;
                         }
                     }
                 }
+            }
+
+            if (resultSymbols.length === 0) {
+                // if by this point we don't yet have a specialized set of results (like those for member completion or a specific type for a call expression), use all global api symbols as the start (Monaco will filter and sort these based on the prefix user input)
+                resultSymbols = completionSymbols(pxt.U.values(lastApiInfo.apis.byQName), COMPLETION_DEFAULT_WEIGHT)
             }
 
             // special handling for call expressions
@@ -1152,17 +1163,9 @@ namespace ts.pxtc.service {
                             paramIdx = callSym.parameters.length - 1
                         const paramType = getParameterTsType(callSym, paramIdx, blocksInfo)
                         if (paramType) {
-                            // if this is a property access, then weight the results higher if they return the
-                            // correct type for the parameter
-                            if (didFindMemberCompletions) {
-                                const matchingApis = getApisForTsType(paramType, call, tc, resultSymbols);
-
-                                matchingApis.forEach(match => match.weight = 1);
-                            }
-                            else {
-                                const matchingApis = getApisForTsType(paramType, call, tc, completionSymbols(pxt.Util.values(lastApiInfo.apis.byQName)))
-                                resultSymbols = matchingApis
-                            }
+                            // weight the results higher if they return the correct type for the parameter
+                            const matchingApis = getApisForTsType(paramType, call, tc, resultSymbols);
+                            matchingApis.forEach(match => match.weight = COMPLETION_MATCHING_PARAM_TYPE_WEIGHT);
                         }
                     }
                 }
@@ -1170,10 +1173,8 @@ namespace ts.pxtc.service {
 
             if (!isPython && !didFindMemberCompletions) {
                 // TODO: share this with the "syntaxinfo" service
-                // start with global api symbols
-                resultSymbols = completionSymbols(pxt.U.values(lastApiInfo.apis.byQName))
 
-                // then use the typescript service to get symbols in scope
+                // use the typescript service to get symbols in scope
                 tsNode = findInnerMostNodeAtPosition(tsAst, wordStartPos);
                 if (!tsNode)
                     tsNode = tsAst.getSourceFile()
@@ -1196,10 +1197,10 @@ namespace ts.pxtc.service {
                         return pxtSym
                     })
                     .filter(s => !!s)
-                    .map(s => completionSymbol(s))
+                    .map(s => completionSymbol(s, COMPLETION_DEFAULT_WEIGHT))
 
                 // in scope locals should be weighter higher
-                inScopePxtSyms.forEach(s => s.weight += 100)
+                inScopePxtSyms.forEach(s => s.weight += COMPLETION_IN_SCOPE_VAR_WEIGHT)
 
                 resultSymbols = [...resultSymbols, ...inScopePxtSyms]
             }
@@ -1217,7 +1218,7 @@ namespace ts.pxtc.service {
                 }
                 let keywordSymbols = keywords
                     .map(makePxtSymbolFromKeyword)
-                    .map(completionSymbol)
+                    .map(s => completionSymbol(s, COMPLETION_KEYWORD_WEIGHT))
                 resultSymbols = [...resultSymbols, ...keywordSymbols]
             }
 
@@ -1622,8 +1623,8 @@ namespace ts.pxtc.service {
     }
 
     function getCallSymbol(callExp: CallExpression): SymbolInfo {// pxt symbol
-        const callTs = callExp.expression.getText()
-        const api = lastApiInfo.apis.byQName[callTs]
+        const qName = callExp?.pxt?.callInfo?.qName
+        const api = lastApiInfo.apis.byQName[qName]
         return api
     }
 
@@ -1679,7 +1680,7 @@ namespace ts.pxtc.service {
             }
         }
 
-        return [...retApis, ...completionSymbols(enumVals)]
+        return [...retApis, ...completionSymbols(enumVals, COMPLETION_DEFAULT_WEIGHT)]
     }
 
     function runConversionsAndCompileUsingService(): CompileResult {
@@ -2428,11 +2429,11 @@ namespace ts.pxtc.service {
         return compareSymbols(a.symbol, b.symbol);
     }
 
-    function completionSymbol(symbol: SymbolInfo, weight = 0): CompletionSymbol {
+    function completionSymbol(symbol: SymbolInfo, weight: number): CompletionSymbol {
         return { symbol, weight };
     }
 
-    function completionSymbols(symbols: SymbolInfo[], weight = 0): CompletionSymbol[] {
+    function completionSymbols(symbols: SymbolInfo[], weight: number): CompletionSymbol[] {
         return symbols.map(s => completionSymbol(s, weight));
     }
 
