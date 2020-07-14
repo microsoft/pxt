@@ -230,17 +230,20 @@ ${cmds}
 }
 
 function codalBin() {
-    let cs = pxt.appTarget.compileService
-
-    return buildengine.thisBuild.buildPath + "/build/" + (cs.codalBinary ? cs.codalBinary :
-        cs.yottaTarget + "/source/" + cs.yottaBinary.replace(/\.hex$/, "").replace(/-combined$/, ""));
+    const cs = pxt.appTarget.compileService
+    const be = buildengine.thisBuild
+    if (be.outputPath)
+        return be.buildPath + "/" + be.outputPath
+    if (cs.codalBinary)
+        return be.buildPath + "/build/" + cs.codalBinary
+    return be.buildPath + "/build/" + cs.yottaTarget + "/source/" + cs.yottaBinary.replace(/\.hex$/, "").replace(/-combined$/, "")
 }
 
 let cachedMap = ""
 let addrCache: pxt.Map<number>
 function getMap() {
     if (!cachedMap)
-        cachedMap = fs.readFileSync(codalBin() + ".map", "utf8")
+        cachedMap = fs.readFileSync(codalBin().replace(/\.elf$/, "") + ".map", "utf8")
     return cachedMap
 }
 

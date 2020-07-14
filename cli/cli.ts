@@ -4218,19 +4218,28 @@ function gdbAsync(c: commandParser.ParsedCommand) {
     ensurePkgDir()
     setBuildEngine();
     return mainPkg.loadAsync()
-        .then(() => gdb.startAsync(c.args))
+        .then(() => {
+            setBuildEngine();
+            return gdb.startAsync(c.args)
+        })
 }
 
 function hwAsync(c: commandParser.ParsedCommand) {
     ensurePkgDir()
     return mainPkg.loadAsync()
-        .then(() => gdb.hwAsync(c.args))
+        .then(() => {
+            setBuildEngine()
+            return gdb.hwAsync(c.args)
+        })
 }
 
 function dumplogAsync(c: commandParser.ParsedCommand) {
     ensurePkgDir()
     return mainPkg.loadAsync()
-        .then(() => gdb.dumplogAsync())
+        .then(() => {
+            setBuildEngine()
+            return gdb.dumplogAsync()
+        })
 }
 
 function dumpheapAsync(c: commandParser.ParsedCommand) {
@@ -4514,7 +4523,7 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
         .map(buildJResSpritesDirectoryAsync);
 
     return Promise.all(promises)
-        .then(() => {})
+        .then(() => { })
 }
 
 function buildJResSpritesDirectoryAsync(dir: string) {
@@ -5817,7 +5826,7 @@ These apply to the C++ runtime builds:
 
 PXT_FORCE_LOCAL  - compile C++ on the local machine, not the cloud service
 PXT_NODOCKER     - don't use Docker image, and instead use host's
-                   arm-none-eabi-gcc (doesn't apply to Linux targets)
+                   arm-none-eabi-gcc (doesn't apply to Linux targets unless set to 'force')
 PXT_RUNTIME_DEV  - always rebuild the C++ runtime, allowing for modification
                    in the lower level runtime if any
 PXT_ASMDEBUG     - embed additional information in generated binary.asm file

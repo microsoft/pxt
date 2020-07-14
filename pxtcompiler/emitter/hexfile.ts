@@ -195,7 +195,21 @@ namespace ts.pxtc {
             patchSegmentHex(hexlines)
 
             if (hexlines.length <= 2) {
-                ctx.elfInfo = pxt.elf.parse(U.fromHex(hexlines[0]))
+                const bytes = U.fromHex(hexlines[0])
+                if (bytes[2] <= 0x02 && bytes[3] == 0x60) {
+                    const off = 0x60000000
+                    const page = 0x1000
+                    const endpadded = (bytes.length + page - 1) & ~(page - 1)
+                    // it looks we got a bin file
+                    ctx.elfInfo = {
+                        template: bytes,
+                        imageMemStart: off + endpadded,
+                        imageFileStart: endpadded,
+                        phOffset: -1000, // don't patch ph-offset in BIN file
+                    }
+                } else {
+                    ctx.elfInfo = pxt.elf.parse(bytes)
+                }
                 ctx.codeStartAddr = ctx.elfInfo.imageMemStart
                 ctx.codeStartAddrPadded = ctx.elfInfo.imageMemStart
 
