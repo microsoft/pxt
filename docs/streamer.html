@@ -75,7 +75,7 @@ Use https://uifabricicons.azurewebsites.net/
         }
 
         /** background video */
-        .backgroundvideo {
+        .background {
             display: none;
             object-fit: cover;
             width: 100vw;
@@ -1361,8 +1361,8 @@ Settings
 </head>
 
 <body class="rightscene">
-    <video id="backgroundvideo" class="backgroundvideo" playsinline autoplay muted loop></video>
-    <iframe id="backgroundyoutube" class="backgroundvideo" type="text/html"></iframe>
+    <video id="backgroundvideo" class="background" playsinline autoplay muted loop></video>
+    <iframe id="backgroundyoutube" class="background" type="text/html"></iframe>
     <div id="container" class="container">
         <iframe class="box animated" id="editor" allow="usb;camera"
             sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox allow-forms"></iframe>
@@ -1596,7 +1596,9 @@ Settings
                         <input id="borderbackgroundinput" type="color" />
                         <button id="borderbackgroundclear">clear</button>
                     </div>
-                    <h4>Background</h4>
+                </div>
+                <div class="section">
+                    <h3>Background</h3>
                     <div class="field">
                         <label for="backgroundcolorinput">Background color</label>
                         <input id="backgroundcolorinput" type="color" />
@@ -1607,7 +1609,7 @@ Settings
                         <input id="backgroundimageinput" type="url" />
                     </div>
                     <div class="field">
-                        <label for="backgroundvideoinput">Background video (must be https://...)</label>
+                        <label for="backgroundvideoinput">Background video (YouTube url or must be https://...)</label>
                         <input id="backgroundvideoinput" type="url" />
                     </div>
                     <div class="field">
