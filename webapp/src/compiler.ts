@@ -330,6 +330,8 @@ export function pyDecompileAsync(fileName: string): Promise<pxtc.transpile.Trans
         })
         .then(resp => {
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
+            const errors = resp.diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error);
+            reportDiagnosticErrors(errors)
             return resp
         })
 }
