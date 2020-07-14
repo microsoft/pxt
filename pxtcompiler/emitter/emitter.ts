@@ -1547,6 +1547,8 @@ namespace ts.pxtc {
                     } else if (isClassFunction(mem)) {
                         let minf = getFunctionInfo(mem as any)
                         minf.parentClassInfo = info
+                        if (minf.isUsed)
+                            markVTableUsed(info)
                         const key = getName(mem)
                         if (!info.methods.hasOwnProperty(key))
                             info.methods[key] = []
@@ -2546,6 +2548,7 @@ ${lbl}: .short 0xffff
         function markVTableUsed(info: ClassInfo) {
             recordUsage(info.decl)
             if (info.isUsed) return
+            // U.assert(!bin.finalPass)
             const pinfo = pxtInfo(info.decl)
             pinfo.flags |= PxtNodeFlags.IsUsed
             if (info.baseClassInfo) markVTableUsed(info.baseClassInfo)
@@ -4517,8 +4520,10 @@ ${lbl}: .short 0xffff
 
         function emitClassDeclaration(node: ClassDeclaration) {
             const info = getClassInfo(null, node)
-            if (info.isUsed && bin.usedClassInfos.indexOf(info) < 0)
+            if (info.isUsed && bin.usedClassInfos.indexOf(info) < 0) {
+                // U.assert(!bin.finalPass)
                 bin.usedClassInfos.push(info)
+            }
             node.members.forEach(emit)
         }
         function emitInterfaceDeclaration(node: InterfaceDeclaration) {
