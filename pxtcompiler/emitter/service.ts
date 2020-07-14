@@ -681,6 +681,12 @@ namespace ts.pxtc {
 
 
 namespace ts.pxtc.service {
+    // these weights dictate the relative ordering of certain results in the completion
+    const COMPLETION_KEYWORD_WEIGHT = 0;
+    const COMPLETION_DEFAULT_WEIGHT = 1;
+    const COMPLETION_IN_SCOPE_VAR_WEIGHT = 5;
+    const COMPLETION_MATCHING_PARAM_TYPE_WEIGHT = 10;
+
     let emptyOptions: CompileOptions = {
         fileSystem: {},
         sourceFiles: [],
@@ -1026,13 +1032,13 @@ namespace ts.pxtc.service {
                 // TS
                 const res = transpile.pyToTs(opts)
                 if (res.syntaxInfo && res.syntaxInfo.symbols) {
-                    resultSymbols = completionSymbols(res.syntaxInfo.symbols);
+                    resultSymbols = completionSymbols(res.syntaxInfo.symbols, COMPLETION_DEFAULT_WEIGHT);
                 }
                 if (res.globalNames)
                     lastGlobalNames = res.globalNames
 
                 if (!resultSymbols.length && res.globalNames) {
-                    resultSymbols = completionSymbols(pxt.U.values(res.globalNames))
+                    resultSymbols = completionSymbols(pxt.U.values(res.globalNames), COMPLETION_DEFAULT_WEIGHT)
                 }
 
                 // update our language host
@@ -1098,7 +1104,7 @@ namespace ts.pxtc.service {
                                 .map(prop => qname + "." + prop.getName())
                                 .map(propQname => lastApiInfo.apis.byQName[propQname])
                                 .filter(prop => !!prop)
-                                .map(prop => completionSymbol(prop));
+                                .map(prop => completionSymbol(prop, COMPLETION_DEFAULT_WEIGHT));
 
                             resultSymbols = props;
                             didFindMemberCompletions = true;
@@ -1109,7 +1115,7 @@ namespace ts.pxtc.service {
 
             if (resultSymbols.length === 0) {
                 // if we don't have a set of symbols yet, start with all global api symbols
-                resultSymbols = completionSymbols(pxt.U.values(lastApiInfo.apis.byQName))
+                resultSymbols = completionSymbols(pxt.U.values(lastApiInfo.apis.byQName), COMPLETION_DEFAULT_WEIGHT)
             }
 
             // special handling for call expressions
@@ -1162,9 +1168,8 @@ namespace ts.pxtc.service {
                         const paramType = getParameterTsType(callSym, paramIdx, blocksInfo)
                         if (paramType) {
                             // weight the results higher if they return the correct type for the parameter
-                            const MATCHING_TYPE_WEIGHT = 10
                             const matchingApis = getApisForTsType(paramType, call, tc, resultSymbols);
-                            matchingApis.forEach(match => match.weight = MATCHING_TYPE_WEIGHT);
+                            matchingApis.forEach(match => match.weight = COMPLETION_MATCHING_PARAM_TYPE_WEIGHT);
                         }
                     }
                 }
@@ -1196,10 +1201,10 @@ namespace ts.pxtc.service {
                         return pxtSym
                     })
                     .filter(s => !!s)
-                    .map(s => completionSymbol(s))
+                    .map(s => completionSymbol(s, COMPLETION_DEFAULT_WEIGHT))
 
                 // in scope locals should be weighter higher
-                inScopePxtSyms.forEach(s => s.weight += 5)
+                inScopePxtSyms.forEach(s => s.weight += COMPLETION_IN_SCOPE_VAR_WEIGHT)
 
                 resultSymbols = [...resultSymbols, ...inScopePxtSyms]
             }
@@ -1215,10 +1220,9 @@ namespace ts.pxtc.service {
                 } else {
                     keywords = [...ts.pxtc.reservedWords, ...ts.pxtc.keywordTypes]
                 }
-                const KEYWORD_WEIGHT = 0 // less important than other symbols
                 let keywordSymbols = keywords
                     .map(makePxtSymbolFromKeyword)
-                    .map(s => completionSymbol(s, KEYWORD_WEIGHT))
+                    .map(s => completionSymbol(s, COMPLETION_KEYWORD_WEIGHT))
                 resultSymbols = [...resultSymbols, ...keywordSymbols]
             }
 
@@ -1638,7 +1642,7 @@ namespace ts.pxtc.service {
             }
         }
 
-        return [...retApis, ...completionSymbols(enumVals)]
+        return [...retApis, ...completionSymbols(enumVals, COMPLETION_DEFAULT_WEIGHT)]
     }
 
     function runConversionsAndCompileUsingService(): CompileResult {
@@ -2374,11 +2378,11 @@ namespace ts.pxtc.service {
         return compareSymbols(a.symbol, b.symbol);
     }
 
-    function completionSymbol(symbol: SymbolInfo, weight = 0): CompletionSymbol {
+    function completionSymbol(symbol: SymbolInfo, weight: number): CompletionSymbol {
         return { symbol, weight };
     }
 
-    function completionSymbols(symbols: SymbolInfo[], weight = 0): CompletionSymbol[] {
+    function completionSymbols(symbols: SymbolInfo[], weight: number): CompletionSymbol[] {
         return symbols.map(s => completionSymbol(s, weight));
     }
 
