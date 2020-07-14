@@ -1107,6 +1107,11 @@ namespace ts.pxtc.service {
                 }
             }
 
+            if (resultSymbols.length === 0) {
+                // if we don't have a set of symbols yet, start with all global api symbols
+                resultSymbols = completionSymbols(pxt.U.values(lastApiInfo.apis.byQName))
+            }
+
             // special handling for call expressions
             if (tsNode && tsNode.parent && ts.isCallExpression(tsNode.parent)) {
                 const call = tsNode.parent as ts.CallExpression;
@@ -1158,15 +1163,9 @@ namespace ts.pxtc.service {
                         if (paramType) {
                             // if this is a property access, then weight the results higher if they return the
                             // correct type for the parameter
-                            if (didFindMemberCompletions) {
-                                const matchingApis = getApisForTsType(paramType, call, tc, resultSymbols);
-
-                                matchingApis.forEach(match => match.weight = 1);
-                            }
-                            else {
-                                const matchingApis = getApisForTsType(paramType, call, tc, completionSymbols(pxt.Util.values(lastApiInfo.apis.byQName)))
-                                resultSymbols = matchingApis
-                            }
+                            const MATCHING_TYPE_WEIGHT = 10
+                            const matchingApis = getApisForTsType(paramType, call, tc, resultSymbols);
+                            matchingApis.forEach(match => match.weight = MATCHING_TYPE_WEIGHT);
                         }
                     }
                 }
@@ -1174,10 +1173,8 @@ namespace ts.pxtc.service {
 
             if (!isPython && !didFindMemberCompletions) {
                 // TODO: share this with the "syntaxinfo" service
-                // start with global api symbols
-                resultSymbols = completionSymbols(pxt.U.values(lastApiInfo.apis.byQName))
 
-                // then use the typescript service to get symbols in scope
+                // use the typescript service to get symbols in scope
                 tsNode = findInnerMostNodeAtPosition(tsAst, wordStartPos);
                 if (!tsNode)
                     tsNode = tsAst.getSourceFile()
@@ -1203,7 +1200,7 @@ namespace ts.pxtc.service {
                     .map(s => completionSymbol(s))
 
                 // in scope locals should be weighter higher
-                inScopePxtSyms.forEach(s => s.weight += 100)
+                inScopePxtSyms.forEach(s => s.weight += 5)
 
                 resultSymbols = [...resultSymbols, ...inScopePxtSyms]
             }
@@ -1219,9 +1216,10 @@ namespace ts.pxtc.service {
                 } else {
                     keywords = [...ts.pxtc.reservedWords, ...ts.pxtc.keywordTypes]
                 }
+                const KEYWORD_WEIGHT = 0 // less important than other symbols
                 let keywordSymbols = keywords
                     .map(makePxtSymbolFromKeyword)
-                    .map(completionSymbol)
+                    .map(s => completionSymbol(s, KEYWORD_WEIGHT))
                 resultSymbols = [...resultSymbols, ...keywordSymbols]
             }
 
@@ -1584,8 +1582,8 @@ namespace ts.pxtc.service {
     }
 
     function getCallSymbol(callExp: CallExpression): SymbolInfo {// pxt symbol
-        const callTs = callExp.expression.getText()
-        const api = lastApiInfo.apis.byQName[callTs]
+        const qName = callExp?.pxt?.callInfo?.qName
+        const api = lastApiInfo.apis.byQName[qName]
         return api
     }
 
@@ -2080,7 +2078,7 @@ namespace ts.pxtc.service {
                         namespaceToUse = nsInfo.namespace;
                     }
 
-                    if (namespaceToUse)  {
+                    if (namespaceToUse) {
                         addNamespace = true;
                     }
 
