@@ -295,7 +295,7 @@ namespace pxt.py {
             } else if (ts.isContinueStatement(s)) {
                 return ['continue']
             } else {
-                return throwError(s, 3002, `Not implemented: ${ts.SyntaxKind[s.kind]} (${s.kind})`);
+                return throwError(s, 3002, `Not supported in MakeCode Python: ${ts.SyntaxKind[s.kind]} (${s.kind})`);
             }
         }
         function emitModuleDeclaration(s: ts.ModuleDeclaration): string[] {
