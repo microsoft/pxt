@@ -439,3 +439,11 @@ comment with **@highlight**.
     // @highlight
     console.log(":(")
     ```
+
+### autoOpen
+
+To disable auto-opening the README file in MakeCode, add
+
+```
+### @autoOpen false
+```

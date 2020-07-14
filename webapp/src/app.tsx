@@ -1366,8 +1366,10 @@ export class ProjectView
                     this.setSideDoc(documentation, editorForFile == this.blocksEditor);
                 else {
                     const readme = main.lookupFile("this/README.md");
+                    const readmeContent = readme.content?.trim();
                     // no auto-popup when editing packages locally
-                    if (!h.githubId && readme && readme.content && readme.content.trim())
+                    // ### @autoOpen false
+                    if (!h.githubId && readmeContent && !/^### @autoOpen false$/im.test(readmeContent))
                         this.setSideMarkdown(readme.content);
                 }
 
