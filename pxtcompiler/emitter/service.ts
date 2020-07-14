@@ -1114,7 +1114,7 @@ namespace ts.pxtc.service {
             }
 
             if (resultSymbols.length === 0) {
-                // if we don't have a set of symbols yet, start with all global api symbols
+                // if by this point we don't yet have a specialized set of results (like those for member completion or a specific type for a call expression), use all global api symbols as the start (Monaco will filter and sort these based on the prefix user input)
                 resultSymbols = completionSymbols(pxt.U.values(lastApiInfo.apis.byQName), COMPLETION_DEFAULT_WEIGHT)
             }
 
