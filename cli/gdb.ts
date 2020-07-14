@@ -243,7 +243,7 @@ let cachedMap = ""
 let addrCache: pxt.Map<number>
 function getMap() {
     if (!cachedMap)
-        cachedMap = fs.readFileSync(codalBin() + ".map", "utf8")
+        cachedMap = fs.readFileSync(codalBin().replace(/\.elf$/, "") + ".map", "utf8")
     return cachedMap
 }
 
