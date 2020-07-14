@@ -625,7 +625,6 @@ namespace ts.pxtc {
                     si.pyQName = override.n;
                     si.pySnippet = override.snippet;
                     si.pySnippetName = override.n;
-                    // TODO(dz):
                     si.pySnippetWithMarkers = undefined;
                 } else if (si.namespace) {
                     let par = res.byQName[si.namespace]
@@ -2071,7 +2070,7 @@ namespace ts.pxtc.service {
                         namespaceToUse = nsInfo.namespace;
                     }
 
-                    if (namespaceToUse)  {
+                    if (namespaceToUse) {
                         addNamespace = true;
                     }
 
