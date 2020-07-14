@@ -917,16 +917,18 @@ namespace ts.pxtc.service {
                             }
                         }
                         else if (isSignatureReq) {
-                            const pxtCall = tsNode.pxt.callInfo
-                            const pxtSym = opts.apisInfo.byQName[pxtCall.qName]
-                            opts.syntaxInfo.symbols = [pxtSym];
-                            opts.syntaxInfo.beginPos = tsNode.getStart();
-                            opts.syntaxInfo.endPos = tsNode.getEnd();
+                            const pxtCall = tsNode?.pxt?.callInfo
+                            if (pxtCall) {
+                                const pxtSym = opts.apisInfo.byQName[pxtCall.qName]
+                                opts.syntaxInfo.symbols = [pxtSym];
+                                opts.syntaxInfo.beginPos = tsNode.getStart();
+                                opts.syntaxInfo.endPos = tsNode.getEnd();
 
-                            const tsCall = getParentCallExpression(tsNode)
-                            if (tsCall) {
-                                const argIdx = findCurrentCallArgIdx(tsCall, tsNode, v.position)
-                                opts.syntaxInfo.auxResult = argIdx
+                                const tsCall = getParentCallExpression(tsNode)
+                                if (tsCall) {
+                                    const argIdx = findCurrentCallArgIdx(tsCall, tsNode, v.position)
+                                    opts.syntaxInfo.auxResult = argIdx
+                                }
                             }
                         }
                     }
@@ -1579,7 +1581,7 @@ namespace ts.pxtc.service {
 
     function getParentCallExpression(tsNode: Node): ts.CallExpression | undefined {
         while (tsNode && !ts.isCallExpression(tsNode)) {
-            if (ts.isBlock(tsNode.parent))
+            if (ts.isBlock(tsNode))
                 return undefined // we don't want to traverse through a block scope (e.g. an anonymous function)
             tsNode = tsNode.parent
         }
