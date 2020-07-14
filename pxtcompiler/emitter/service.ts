@@ -1161,8 +1161,7 @@ namespace ts.pxtc.service {
                             paramIdx = callSym.parameters.length - 1
                         const paramType = getParameterTsType(callSym, paramIdx, blocksInfo)
                         if (paramType) {
-                            // if this is a property access, then weight the results higher if they return the
-                            // correct type for the parameter
+                            // weight the results higher if they return the correct type for the parameter
                             const MATCHING_TYPE_WEIGHT = 10
                             const matchingApis = getApisForTsType(paramType, call, tc, resultSymbols);
                             matchingApis.forEach(match => match.weight = MATCHING_TYPE_WEIGHT);
