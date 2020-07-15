@@ -410,6 +410,8 @@
     }
     function toggleThumbnail() {
         state.thumbnail = !state.thumbnail;
+        if (state.thumbnail)
+            state.chat = false;
         render();
     }
     function setPaintTool(tool) {
@@ -1095,9 +1097,9 @@ background-image: url(${config.backgroundImage});
             const constraints = {
                 audio: false,
                 video: {
-                    aspectRatio: 4 / 3,
-                    width: { ideal: 1080 },
-                    height: { ideal: 720 }
+                    aspectRatio: 16 / 9,
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 }
                 }
             };
             if (deviceId)

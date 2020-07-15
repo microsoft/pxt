@@ -25,6 +25,16 @@ Use https://uifabricicons.azurewebsites.net/
     
     Generate your custom css gradients at https://cssgradient.io/ 
 */
+        :root {
+            --video-width: 28%;
+            --video-small-width: 24%;
+
+            --chat-side-height: 63%;
+
+            --multi-editor-short: 63%;
+        }
+
+
         body {
             font-family: 'Open Sans', sans-serif;
             overflow: hidden;
@@ -690,6 +700,13 @@ Settings
         {
             transform: scale(-1, 1);
         }
+        body.thumbnail .facecam video.rotate,
+        body.thumbnail .hardwarecam video.rotate,
+        body.thumbnail .facecam canvas.rotate,
+        body.thumbnail .hardwarecam canvas.rotate
+        {
+            transform: rotate(180deg) scale(-1, 1);
+        }
 
         .videolabel {
             display: none;
@@ -741,12 +758,20 @@ Settings
         }
         body.facecamcircular #facecam .videohardwarebtn,
         body.hardwarecamcircular #hardwarecam .videohardwarebtn {
-            right: 24%;
+            right: 28%;
             top: 18%;
         }
         .videochatbtn {
             left: 4%;
             top: 4%;
+        }
+        body.thumbnail .videochatbtn {
+            display: none;
+        }
+        body.facecamcircular #facecam .videochatbtn,
+        body.hardwarecamcircular #hardwarecam .videochatbtn {
+            left: 28%;
+            top: 18%;
         }
         .videoleftscenebtn {
             left: 4%;
@@ -754,7 +779,7 @@ Settings
         }
         body.facecamcircular #facecam .videoleftscenebtn,
         body.hardwarecamcircular #hardwarecam .videoleftscenebtn {
-            left: 18%;
+            left: 23%;
         }
         .videorightscenebtn {
             right: 4%;
@@ -762,7 +787,7 @@ Settings
         }
         body.facecamcircular #facecam .videorightscenebtn,
         body.hardwarecamcircular #hardwarecam .videorightscenebtn {
-            right: 18%;
+            right: 23%;
         }
         .videothumbnailbtn {
             left: calc(50% - 2rem);
@@ -770,7 +795,6 @@ Settings
         }
         body.facecamcircular #facecam .videothumbnailbtn,
         body.hardwarecamcircular #hardwarecam .videothumbnailbtn {
-            left: 32%;
             bottom: 8%;
         }
         body.thumbnail .videothumbnailbtn {
@@ -813,7 +837,7 @@ Settings
         body.rightscene.facecamcircular .facecam,
         body.rightscene.hardwarecamcircular .hardwarecam {
             border: none;
-            clip-path: circle(39% at 50% 50%);
+            clip-path: circle(34% at 50% 50%);
         }
 
         .box.greenscreen .videocanvas {
@@ -884,17 +908,17 @@ Settings
 
         body.rightscene .facecam {
             right: 1%;
-            width: 24%;
+            width: var(--video-width);
         }
 
         body.rightscene.chat #chat {
             right: 1%;
-            width: 28%;
-            height: 55%;
+            width: var(--video-width);
+            height: var(--chat-side-height);
         }
 
         body.rightscene.chat .facecam {
-            width: 28%;
+            width: var(--video-width);
         }
 
         body.rightscene.chat #editor {
@@ -909,12 +933,12 @@ Settings
 
         /* right + hardware */
         body.rightscene.hardware .facecam {
-            width: 22%;
+            width: var(--video-width);
         }
 
         body.rightscene.hardware .hardwarecam {
             right: 1%;
-            width: 20%;
+            width: var(--video-small-width);
             bottom: 34%;
         }
 
@@ -924,21 +948,21 @@ Settings
 
         /* right + hardware + chat */
         body.rightscene.hardware.chat #editor {
-            width: 73%;
+            width: 66%;
         }
 
         body.rightscene.hardware.chat #chat {
-            width: 22%;
+            width: var(--video-width);
             height: 30%;
         }
 
         body.rightscene.hardware.chat .hardwarecam {
-            width: 22%;
+            width: var(--video-width);
             bottom: 34%;
         }
 
         body.rightscene.hardware.chat .facecam {
-            width: 22%;
+            width: var(--video-width);
         }
 
         /* right + multi */
@@ -949,7 +973,7 @@ Settings
         body.rightscene.multi #editor2 {
             width: 28%;
             left: 70%;
-            height: 54%;
+            height: var(--multi-editor-short);
         }
 
         body.rightscene.multi .facecam {
@@ -1031,12 +1055,13 @@ Settings
         }
 
         body.leftscene .facecam {
-            right: 74%;
-            width: 24%;
+            right: 70%;
+            width: var(--video-width);
         }
 
         body.leftscene .hardwarecam {
             bottom: 10%;
+            width: var(--video-small-width);
             right: 1%;
         }
 
@@ -1046,50 +1071,50 @@ Settings
 
         /* left + hardware */
         body.leftscene.hardware .hardwarecam {
-            right: 78%;
-            width: 20%;
+            right: 74%;
+            width: var(--video-small-width);
             bottom: 34%;
         }
 
         body.leftscene.hardware .facecam {
-            right: 76%;
-            width: 22%;
+            right: 70%;
+            width: var(--video-width);
         }
 
         body.leftscene.hardware #editor {
             left: 10%;
-            width: 88%
+            width: 88%;
         }
 
 
         /* left + hardware + chat */
         body.leftscene.hardware.chat #editor {
-            width: 74%;
-            left: 24%;
+            width: 66%;
+            left: 32%;
         }
 
         body.leftscene.hardware.chat #chat {
-            width: 22%;
+            width: var(--video-width);
             height: 30%;
-            right: 77%;
+            right: 70%;
         }
 
         body.leftscene.hardware.chat .hardwarecam {
-            width: 22%;
+            width: var(--video-width);
             bottom: 34%;
-            right: 77%;
+            right: 70%;
         }
 
         body.leftscene.hardware.chat .facecam {
-            width: 22%;
-            right: 77%;
+            width: var(--video-width);
+            right: 70%;
         }
 
         /* left + multi*/
         body.leftscene.multi #editor {
             left: 1%;
             width: 28%;
-            height: 54%;
+            height: var(--multi-editor-short);
         }
 
         body.leftscene.multi #editor2 {
@@ -1129,7 +1154,7 @@ Settings
 
         body.leftscene.chat #chat {
             right: 70%;
-            height: 55%;
+            height: var(--chat-side-height);
             width: 28%;
         }
 
@@ -1311,18 +1336,18 @@ Settings
         /* thumbnail */
         body.leftscene.thumbnail .facecam,
         body.rightscene.thumbnail .facecam {
-            bottom: -25%;
+            bottom: -30%;
             height: unset;
-            width: 100%;
+            width: 120%;
             clip-path: unset;
         }
 
         body.leftscene.thumbnail.hardware .hardwarecam,
         body.rightscene.thumbnail.hardware .hardwarecam {
-            top: -25%;
+            top: -20%;
             height: unset;
             bottom: unset;
-            width: 100%;
+            width: 120%;
             clip-path: unset;
         }
 
