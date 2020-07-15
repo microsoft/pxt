@@ -532,6 +532,8 @@ interface StreamerConfig {
 
     function toggleThumbnail() {
         state.thumbnail = !state.thumbnail;
+        if (state.thumbnail)
+            state.chat = false;
         render();
     }
 
