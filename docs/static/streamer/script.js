@@ -1423,13 +1423,16 @@ background-image: url(${config.backgroundImage});
     }
     function downloadBlob(blob, name) {
         const url = URL.createObjectURL(blob);
+        downloadUrl(url, name);
+        window.URL.revokeObjectURL(url);
+    }
+    function downloadUrl(url, name) {
         const a = document.createElement("a");
         document.body.appendChild(a);
         a.style.display = "none";
         a.href = url;
         a.download = name;
         a.click();
-        window.URL.revokeObjectURL(url);
     }
     async function loadSettings() {
         const config = readConfig();
@@ -1445,6 +1448,20 @@ background-image: url(${config.backgroundImage});
             tickEvent("streamer.settingsclose", undefined, { interactiveConsent: true });
             stopEvent(e);
             hideSettings();
+        };
+        const importsettings = document.getElementById("importsettings");
+        importsettings.onclick = function (e) {
+            tickEvent("streamer.importsettings", undefined, { interactiveConsent: true });
+            stopEvent(e);
+            const config = readConfig();
+        };
+        const exportsettings = document.getElementById("exportsettings");
+        exportsettings.onclick = function (e) {
+            tickEvent("streamer.exportsettings", undefined, { interactiveConsent: true });
+            stopEvent(e);
+            const config = readConfig();
+            const url = `data:text/plain;charset=utf-8,` + encodeURIComponent(JSON.stringify(config, null, 2));
+            downloadUrl(url, "streamer.json");
         };
         const editorselect = document.getElementById("editorselect");
         // tslint:disable-next-line: no-inner-html

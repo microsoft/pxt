@@ -223,7 +223,7 @@ Use https://uifabricicons.azurewebsites.net/
             top: 1%;
         }
 
-        .icons {
+        .tools .icons {
             position: relative;
             left: -50%;
             text-align: center;
@@ -233,6 +233,10 @@ Use https://uifabricicons.azurewebsites.net/
             transition-delay: 0s;
             transition: opacity 1s;
         }
+
+        #settings .header .icons {
+            opacity: 1;
+        }        
 
         .icons>button {
             height: 2vw;
@@ -561,7 +565,7 @@ Settings
             font-size: 90%;
         }
 
-        #settings #settingsclose {
+        #settings .header .icons {
             position: absolute;
             top: 1%;
             right: 1%;
@@ -1466,10 +1470,14 @@ Settings
                 <option value="100"></option>
             </datalist>
             <div class="header">
-                <h2>MakeCode Streamer BETA<span class="screensize"></span></h2>
-                <button id="exportsettingsbtn" title="Export settings to file"><i class="ms-Icon ms-Icon--Save"></i></button>
-                <button id="importsettingsbtn" title="Import settings from file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>
-                <button id="settingsclose">close</button>
+                <h2>MakeCode Streamer BETA
+                <span class="screensize"></span>
+                <span class="icons">
+                    <button id="exportsettings" title="Export settings to file"><i class="ms-Icon ms-Icon--Save"></i></button>
+                    <button id="importsettings" title="Import settings from file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>
+                    <button id="settingsclose" title="Close settings"><i class="ms-Icon ms-Icon--ChromeClose"></i></button>
+                </span>
+                </h2>
             </div>
             <div class="contents">
                 <div class="section expanded">
