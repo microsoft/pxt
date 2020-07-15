@@ -1449,11 +1449,29 @@ background-image: url(${config.backgroundImage});
             stopEvent(e);
             hideSettings();
         };
+        const importsettingsinput = document.getElementById("importsettingsinput");
+        importsettingsinput.onchange = function () {
+            const file = importsettingsinput.files[0];
+            if (!file)
+                return;
+            const reader = new FileReader();
+            reader.addEventListener("load", function () {
+                try {
+                    const config = JSON.parse(reader.result);
+                    saveConfig(config);
+                    window.location.reload();
+                }
+                catch (e) {
+                    console.error(e);
+                }
+            }, false);
+            reader.readAsText(file, 'utf-8');
+        };
         const importsettings = document.getElementById("importsettings");
         importsettings.onclick = function (e) {
             tickEvent("streamer.importsettings", undefined, { interactiveConsent: true });
             stopEvent(e);
-            const config = readConfig();
+            importsettingsinput.click();
         };
         const exportsettings = document.getElementById("exportsettings");
         exportsettings.onclick = function (e) {
