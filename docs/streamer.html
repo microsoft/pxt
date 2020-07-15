@@ -223,7 +223,7 @@ Use https://uifabricicons.azurewebsites.net/
             top: 1%;
         }
 
-        .icons {
+        .tools .icons {
             position: relative;
             left: -50%;
             text-align: center;
@@ -233,6 +233,10 @@ Use https://uifabricicons.azurewebsites.net/
             transition-delay: 0s;
             transition: opacity 1s;
         }
+
+        #settings .header .icons {
+            opacity: 1;
+        }        
 
         .icons>button {
             height: 2vw;
@@ -561,7 +565,7 @@ Settings
             font-size: 90%;
         }
 
-        #settings #settingsclose {
+        #settings .header .icons {
             position: absolute;
             top: 1%;
             right: 1%;
@@ -1466,8 +1470,15 @@ Settings
                 <option value="100"></option>
             </datalist>
             <div class="header">
-                <h2>MakeCode Streamer BETA<span class="screensize"></span></h2>
-                <button id="settingsclose">close</button>
+                <h2>MakeCode Streamer BETA
+                <span class="screensize"></span>
+                <span class="icons">
+                    <button id="exportsettings" title="Export settings to file"><i class="ms-Icon ms-Icon--Save"></i></button>
+                    <input id="importsettingsinput" type="file" accept="application/json" style="display:none"></input>
+                    <button id="importsettings" title="Import settings from file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>
+                    <button id="settingsclose" title="Close settings"><i class="ms-Icon ms-Icon--ChromeClose"></i></button>
+                </span>
+                </h2>
             </div>
             <div class="contents">
                 <div class="section expanded">
@@ -1479,6 +1490,10 @@ Settings
                     <div class="field">
                         <input type="checkbox" id="multicheckbox"></input>
                         <label for="multicheckbox">Multi editors. Edit two programs with connected simulators.</label>
+                    </div>
+                    <div class="field">
+                        <input type="checkbox" id="fullscreeneditorcheckbox"></input>
+                        <label for="fullscreeneditorcheckbox">Full screen editor (no margins)</label>
                     </div>
                     <div class="field">
                         <label for="titleinput">Title</label>
@@ -1605,12 +1620,7 @@ Settings
                     </div>
                 </div>
                 <div class="section">
-                    <h3>Style</h3>
-                    <div class="field">
-                        <input type="checkbox" id="fullscreeneditorcheckbox"></input>
-                        <label for="fullscreeneditorcheckbox">Full screen editor (no margins)</label>
-                    </div>
-                    <h4>Boxes</h4>
+                    <h3>Theme</h3>
                     <div class="field">
                         <label for="bordercolorinput">Box border color</label>
                         <input id="bordercolorinput" type="color" />
@@ -1680,7 +1690,7 @@ Settings
                     </div>
                     <div class="field">
                         <label for="restreaminput">Restream chat embed url. In Restream, click on "Chat" then copy "Embed in stream".</label>
-                        <input id="restreaminput" type="password" placeholder="Restream.io embed url" />
+                        <input id="restreaminput" placeholder="Restream.io embed url" />
                     </div>
                 </div>
                 <div class="section">
