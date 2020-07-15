@@ -3963,8 +3963,10 @@ function enableAnalytics() {
         stats["screen.innerHeight"] = window.innerHeight;
         stats["screen.devicepixelratio"] = pxt.BrowserUtils.devicePixelRatio();
         const body = document.firstElementChild; // body
-        stats["screen.clientWidth"] = body.clientWidth;
-        stats["screen.clientHeight"] = body.clientHeight;
+        if (body) {
+            stats["screen.clientWidth"] = body.clientWidth;
+            stats["screen.clientHeight"] = body.clientHeight;
+        }
     }
     pxt.tickEvent("editor.loaded", stats);
 }
