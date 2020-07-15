@@ -290,6 +290,11 @@ namespace pxt.sprite {
         if (!sym) return null;
 
         const jresURL = sym.attributes.jresURL;
+        return jresToBitmap(jresURL);
+
+    }
+
+    export function jresToBitmap(jresURL: string) {
         let data = atob(jresURL.slice(jresURL.indexOf(",") + 1))
         let magic = data.charCodeAt(0);
         let w = data.charCodeAt(1);
