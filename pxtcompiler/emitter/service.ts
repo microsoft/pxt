@@ -1919,6 +1919,9 @@ namespace ts.pxtc.service {
                     return snippet
                 }
                 return attrs.paramDefl[name];
+            } else {
+                // default to empty string
+                return "\"\"";
             }
 
             function getDefaultValueOfType(type: ts.Type): SnippetNode | undefined {
