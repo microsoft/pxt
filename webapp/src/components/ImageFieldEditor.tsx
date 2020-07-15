@@ -168,7 +168,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
     }
 
     loadJres(jres: string) {
-        this.ref.setCurrentFrame(pxt.sprite.jresToBitmap(jres));
+        this.ref.setCurrentFrame(pxt.sprite.getBitmapFromJResURL(jres));
     }
 
     protected onDoneClick = () => {

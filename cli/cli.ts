@@ -4218,19 +4218,28 @@ function gdbAsync(c: commandParser.ParsedCommand) {
     ensurePkgDir()
     setBuildEngine();
     return mainPkg.loadAsync()
-        .then(() => gdb.startAsync(c.args))
+        .then(() => {
+            setBuildEngine();
+            return gdb.startAsync(c.args)
+        })
 }
 
 function hwAsync(c: commandParser.ParsedCommand) {
     ensurePkgDir()
     return mainPkg.loadAsync()
-        .then(() => gdb.hwAsync(c.args))
+        .then(() => {
+            setBuildEngine()
+            return gdb.hwAsync(c.args)
+        })
 }
 
 function dumplogAsync(c: commandParser.ParsedCommand) {
     ensurePkgDir()
     return mainPkg.loadAsync()
-        .then(() => gdb.dumplogAsync())
+        .then(() => {
+            setBuildEngine()
+            return gdb.dumplogAsync()
+        })
 }
 
 function dumpheapAsync(c: commandParser.ParsedCommand) {
@@ -4499,13 +4508,26 @@ export function buildJResSpritesAsync(parsed: commandParser.ParsedCommand) {
 }
 
 function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
-    const PNG: any = require("pngjs").PNG;
+    const dir = parsed.args[0];
 
-    const dir = parsed.args[0]
     if (!dir)
         U.userError("missing directory argument");
     if (!nodeutil.existsDirSync(dir))
         U.userError(`directory '${dir}' does not exist`);
+
+    const promises = fs.readdirSync(dir)
+        .map(filename => path.join(dir, filename))
+        .filter(filename => nodeutil.existsDirSync(filename))
+        .concat([dir])
+        .filter(filename => nodeutil.fileExistsSync(path.join(filename, "meta.json")))
+        .map(buildJResSpritesDirectoryAsync);
+
+    return Promise.all(promises)
+        .then(() => { })
+}
+
+function buildJResSpritesDirectoryAsync(dir: string) {
+    const PNG: any = require("pngjs").PNG;
 
     // create meta.json file if needed
     const metaInfoPath = path.join(dir, "meta.json");
@@ -4674,22 +4696,32 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
 
                 let storeIcon = false
 
-                if (storeIcon) {
+                // These are space-separated lists of tags
+                let tags = `${info.tags || ""} ${metaInfo.tags || ""}`.split(" ").filter(t => !!t);
+
+                const isTile = tags.some(t => t === "tile" || t === "?tile");
+
+                if (storeIcon || isTile) {
                     let jres = jresources[key]
                     if (!jres) {
                         jres = jresources[key] = {} as any
                     }
                     jres.data = data
-                    jres.icon = 'data:image/png;base64,' + PNG.sync.write(img).toString('base64');
+
+                    if (storeIcon) {
+                        jres.icon = 'data:image/png;base64,' + PNG.sync.write(img).toString('base64');
+                    }
+                    if (isTile) {
+                        jres.tilemapTile = true;
+                    }
                 } else {
                     // use the short form
                     jresources[key] = data as any
                 }
 
                 ts += `    //% fixedInstance jres blockIdentity=${info.blockIdentity || metaInfo.blockIdentity}\n`
-                if (info.tags || metaInfo.tags) {
-                    const tags = `${metaInfo.tags || ""} ${info.tags || ""}`;
-                    ts += `    //% tags="${tags.trim()}"\n`;
+                if (tags.length) {
+                    ts += `    //% tags="${tags.join(" ")}"\n`;
                 }
                 ts += `    export const ${key} = ${metaInfo.creator}(hex\`\`);\n`
 
@@ -5794,7 +5826,7 @@ These apply to the C++ runtime builds:
 
 PXT_FORCE_LOCAL  - compile C++ on the local machine, not the cloud service
 PXT_NODOCKER     - don't use Docker image, and instead use host's
-                   arm-none-eabi-gcc (doesn't apply to Linux targets)
+                   arm-none-eabi-gcc (doesn't apply to Linux targets unless set to 'force')
 PXT_RUNTIME_DEV  - always rebuild the C++ runtime, allowing for modification
                    in the lower level runtime if any
 PXT_ASMDEBUG     - embed additional information in generated binary.asm file

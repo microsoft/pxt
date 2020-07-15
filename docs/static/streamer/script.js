@@ -25,6 +25,7 @@
     const startvideo = document.getElementById('startvideo');
     const endvideo = document.getElementById('endvideo');
     const backgroundvideo = document.getElementById('backgroundvideo');
+    const backgroundyoutube = document.getElementById('backgroundyoutube');
     const intro = document.getElementById('intro');
     const hasGetDisplayMedia = !!navigator?.mediaDevices?.getDisplayMedia;
     const frames = [editor, editor2];
@@ -116,9 +117,16 @@
         const json = await resp.json();
         return json;
     }
+    function parseYouTubeVideoId(url) {
+        if (!url)
+            return undefined;
+        const m = /^https:\/\/(?:youtu\.be\/|(?:www.)?youtube.com\/watch\?v=)([a-z0-9_\-]+)$/i.exec(url);
+        return m && m[1];
+    }
     function render() {
         loadToolbox();
         const config = readConfig();
+        const ytVideoId = parseYouTubeVideoId(config.backgroundVideo);
         body.className = [
             scenes[state.sceneIndex],
             state.hardware && "hardware",
@@ -139,11 +147,11 @@
             config.hardwareCamId && "hashardwarecam",
             config.hardwareCamId === DISPLAY_DEVICE_ID && "hardwarecamdisplay",
             config.greenScreen && "greenscreen",
-            config.backgroundVideo ? "backgroundvideo" : config.backgroundImage && "parallax",
+            !!ytVideoId ? "backgroundyoutube" : config.backgroundVideo ? "backgroundvideo" : config.backgroundImage && "parallax",
             config.countdownEditor && "countdowneditor",
             config.countdownEditorBlur && "countdowneditorblur",
             config.fullScreenEditor && !config.multiEditor && "slim",
-            config.twitch && "haschat",
+            (config.twitch || config.restream) && "haschat",
             config.faceCamGreenScreen && "hasthumbnail"
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
@@ -677,11 +685,40 @@ background: ${primary};
         if (hardwareCamFilter)
             css += `#hardwarecam { filter: ${hardwareCamFilter}; }
         `;
-        if (config.backgroundVideo) {
+        const ytVideoId = parseYouTubeVideoId(config.backgroundVideo);
+        if (ytVideoId) {
+            backgroundvideo.src = undefined;
+            const url = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1&controls=0&disablekb=1&fs=0&loop=1&playlist=${ytVideoId}&modestbranding=1&rel=0&mute=1`;
+            if (backgroundyoutube.src !== url)
+                backgroundyoutube.src = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1&controls=0&disablekb=1&fs=0&loop=1&playlist=${ytVideoId}&modestbranding=1&rel=0&mute=1`;
+            // rescale youtube iframe to cover the entire background
+            const el = document.firstElementChild;
+            const w = el.clientWidth;
+            const h = el.clientHeight;
+            const ratio = w / h;
+            const hd = 16 / 9;
+            if (ratio > hd) {
+                // the video is going to be 16:9, compensate
+                console.log(`ratio`, ratio);
+                const vh = 100 * ratio / hd;
+                backgroundyoutube.style.height = `${vh}vh`;
+                backgroundyoutube.style.width = `100vw`;
+                backgroundyoutube.style.transform = `translate(0, ${-(vh - 100) / 2}vh)`;
+            }
+            else {
+                const vw = 100 / ratio * hd;
+                backgroundyoutube.style.height = `100vh`;
+                backgroundyoutube.style.width = `${vw}vw`;
+                backgroundyoutube.style.transform = `translate(${-(vw - 100) / 2}vh, 0)`;
+            }
+        }
+        else if (config.backgroundVideo) {
             backgroundvideo.src = config.backgroundVideo;
+            backgroundyoutube.src = undefined;
         }
         else {
             backgroundvideo.src = undefined;
+            backgroundyoutube.src = undefined;
             if (config.backgroundImage) {
                 css += `body.parallax {
 background-image: url(${config.backgroundImage});
@@ -708,7 +745,7 @@ background-image: url(${config.backgroundImage});
         if (e)
             stopEvent(e);
         const config = readConfig();
-        state.chat = !state.chat && config.twitch;
+        state.chat = !state.chat && !!(config.twitch || config.restream);
         render();
     }
     function toggleHardware(e) {
@@ -716,12 +753,12 @@ background-image: url(${config.backgroundImage});
         if (e)
             stopEvent(e);
         const config = readConfig();
-        state.hardware = !state.hardware && config.hardwareCamId;
+        state.hardware = !state.hardware && !!config.hardwareCamId;
         render();
     }
     function loadSocial() {
         const config = readConfig();
-        if (!config.twitch)
+        if (!(config.twitch || config.restream))
             state.chat = false;
         const editorConfig = editorConfigs[config.editor];
         titleEl.innerText = config.title || (editorConfig && `MakeCode for ${editorConfig.name}`) || "";
@@ -730,6 +767,11 @@ background-image: url(${config.backgroundImage});
         const config = readConfig();
         if (config.twitch) {
             chat.src = `https://www.twitch.tv/embed/${config.twitch}/chat?parent=makecode.com`;
+            if (!chat.parentElement)
+                container.insertBefore(chat, facecamcontainer);
+        }
+        else if (config.restream) {
+            chat.src = config.restream;
             if (!chat.parentElement)
                 container.insertBefore(chat, facecamcontainer);
         }
@@ -965,6 +1007,8 @@ background-image: url(${config.backgroundImage});
             }
         ];
         function update() {
+            // clear canvas if any
+            clearPaint();
             const el = document.firstElementChild;
             const w = el.clientWidth;
             const h = el.clientHeight;
@@ -979,6 +1023,8 @@ background-image: url(${config.backgroundImage});
                 else
                     el.classList.remove("perfect");
             }
+            // update ui
+            loadStyle();
         }
         window.onresize = update;
         update();
@@ -1546,9 +1592,9 @@ background-image: url(${config.backgroundImage});
                 loadFaceCam().then(() => loadSettings());
         };
         const facecamgreenclipblack = document.getElementById("facecamgreenclipblack");
-        facecamgreenclipblack.value = config.faceCamClipBlack || 0.6;
+        facecamgreenclipblack.value = (config.faceCamClipBlack || 0.6) + "";
         facecamgreenclipblack.onchange = function (e) {
-            config.faceCamClipBlack = facecamgreenclipblack.value;
+            config.faceCamClipBlack = parseFloat(facecamgreenclipblack.value);
             saveConfig(config);
             // already running?
             if (facecam.seriously?.chroma)
@@ -1683,9 +1729,9 @@ background-image: url(${config.backgroundImage});
             loadHardwareCam().then(() => loadSettings());
         };
         const hardwarecamgreenclipblack = document.getElementById("hardwarecamgreenclipblack");
-        hardwarecamgreenclipblack.value = config.hardwareCamClipBlack || 0.6;
+        hardwarecamgreenclipblack.value = (config.hardwareCamClipBlack || 0.6) + "";
         hardwarecamgreenclipblack.onchange = function (e) {
-            config.hardwareCamClipBlack = hardwarecamgreenclipblack.value;
+            config.hardwareCamClipBlack = parseFloat(hardwarecamgreenclipblack.value);
             saveConfig(config);
             // already running?
             if (hardwarecam.seriously?.chroma)
@@ -1868,6 +1914,19 @@ background-image: url(${config.backgroundImage});
             loadChat();
             render();
         };
+        const restreaminput = document.getElementById("restreaminput");
+        restreaminput.value = config.restream || "";
+        restreaminput.onchange = function (e) {
+            config.restream = (restreaminput.value || "");
+            if (config.restream.indexOf("https://chat.restream.io/embed?token=") != 0)
+                config.restream = "";
+            restreaminput.value = config.restream;
+            saveConfig(config);
+            state.chat = !!(config.twitch || config.restream);
+            loadSocial();
+            loadChat();
+            render();
+        };
         const greenscreencheckbox = document.getElementById("greenscreencheckbox");
         greenscreencheckbox.checked = !!config.greenScreen;
         greenscreencheckbox.onchange = function () {
@@ -1910,11 +1969,11 @@ background-image: url(${config.backgroundImage});
             render();
         };
         const micdelayinput = document.getElementById("micdelayinput");
-        micdelayinput.value = config.micDelay || "";
+        micdelayinput.value = (config.micDelay || "") + "";
         micdelayinput.onchange = function (e) {
             const i = parseInt(micdelayinput.value || "0");
             config.micDelay = isNaN(i) ? 0 : i;
-            micdelayinput.value = config.micDelay;
+            micdelayinput.value = (config.micDelay || "") + "";
             saveConfig(config);
         };
     }
@@ -2031,7 +2090,8 @@ background-image: url(${config.backgroundImage});
         const measures = {
             hardwareCam: config.hardwareCamId ? 1 : 0,
             multiEditor: config.multiEditor ? 1 : 0,
-            twitch: config.twitch ? 1 : 0
+            twitch: config.twitch ? 1 : 0,
+            restream: config.restream ? 1 : 0
         };
         if (data)
             Object.keys(data).forEach(k => {

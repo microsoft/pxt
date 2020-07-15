@@ -10,4 +10,5 @@ namespace pxt.react {
     }
 
     export let getFieldEditorView: <U>(fieldEditorId: string, value: U, options: any) => FieldEditorView<U>;
+    export let getTilemapProject: () => TilemapProject;
 }

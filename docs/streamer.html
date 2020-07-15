@@ -75,7 +75,7 @@ Use https://uifabricicons.azurewebsites.net/
         }
 
         /** background video */
-        #backgroundvideo {
+        .background {
             display: none;
             object-fit: cover;
             width: 100vw;
@@ -86,6 +86,9 @@ Use https://uifabricicons.azurewebsites.net/
         }
 
         body.backgroundvideo #backgroundvideo {
+            display: block;
+        }
+        body.backgroundyoutube #backgroundyoutube {
             display: block;
         }
 
@@ -1358,7 +1361,8 @@ Settings
 </head>
 
 <body class="rightscene">
-    <video id="backgroundvideo" playsinline autoplay muted loop></video>
+    <video id="backgroundvideo" class="background" playsinline autoplay muted loop></video>
+    <iframe id="backgroundyoutube" class="background" type="text/html"></iframe>
     <div id="container" class="container">
         <iframe class="box animated" id="editor" allow="usb;camera"
             sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox allow-forms"></iframe>
@@ -1592,7 +1596,9 @@ Settings
                         <input id="borderbackgroundinput" type="color" />
                         <button id="borderbackgroundclear">clear</button>
                     </div>
-                    <h4>Background</h4>
+                </div>
+                <div class="section">
+                    <h3>Background</h3>
                     <div class="field">
                         <label for="backgroundcolorinput">Background color</label>
                         <input id="backgroundcolorinput" type="color" />
@@ -1603,7 +1609,7 @@ Settings
                         <input id="backgroundimageinput" type="url" />
                     </div>
                     <div class="field">
-                        <label for="backgroundvideoinput">Background video (must be https://...)</label>
+                        <label for="backgroundvideoinput">Background video (YouTube url or must be https://...)</label>
                         <input id="backgroundvideoinput" type="url" />
                     </div>
                     <div class="field">
@@ -1644,11 +1650,12 @@ Settings
                 <div class="section">
                     <h3>Streaming</h3>
                     <div class="field">
-                        <p>Integrate the chats of your streaming services.</p>
-                        <label for="twitchinput">Twitch.tv channel. The chat window can be displayed. You still need to
-                            use
-                            OBS or other software to stream it.</label>
+                        <label for="twitchinput">Twitch.tv channel. The chat window can be displayed on screen.</label>
                         <input id="twitchinput" placeholder="Twitch.tv account" />
+                    </div>
+                    <div class="field">
+                        <label for="restreaminput">Restream chat embed url. In Restream, click on "Chat" then copy "Embed in stream".</label>
+                        <input id="restreaminput" type="password" placeholder="Restream.io embed url" />
                     </div>
                 </div>
                 <div class="section">

@@ -1,6 +1,6 @@
 declare namespace pxt {
 
-    type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw" | "forumUrl";
+    type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw" | "forumUrl" | "sharedExample";
     type CodeCardEditorType = "blocks" | "js" | "py";
 
     interface Map<T> {
@@ -178,6 +178,8 @@ declare namespace pxt {
         icon?: string; // URL (usually data-URI) for the icon
         namespace?: string; // used to construct id
         mimeType: string;
+        tilemapTile?: boolean;
+        tileset?: string[];
     }
 
     type SnippetOutputType = 'blocks'

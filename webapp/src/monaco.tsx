@@ -88,13 +88,16 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                 entries = entries.filter(si => si.name.charAt(0) != "_");
 
                 const items = entries.map((si, i) => {
-                    let insertSnippet = stripLocalNamespace(this.python ? si.pySnippet : si.snippet);
+                    let snippetWithMarkers = this.python ? si.pySnippetWithMarkers : si.snippetWithMarkers
+                    const hasMarkers = !!snippetWithMarkers
+                    const snippetWithoutMarkers = this.python ? si.pySnippet : si.snippet
+                    let snippet = hasMarkers ? snippetWithMarkers : snippetWithoutMarkers;
+                    snippet = stripLocalNamespace(snippet);
                     let qName = stripLocalNamespace(this.python ? si.pyQName : si.qName);
                     let name = this.python ? si.pyName : si.name;
-                    let completionSnippet: string | undefined = undefined;
-                    let isMultiLine = insertSnippet && insertSnippet.indexOf("\n") >= 0
+                    let isMultiLine = snippet && snippet.indexOf("\n") >= 0
 
-                    if (this.python && insertSnippet && isMultiLine && pxt.blocks.hasHandler(si)) {
+                    if (this.python && snippet && isMultiLine && pxt.blocks.hasHandler(si)) {
                         // For python, we want to replace the entire line because when creating
                         // new functions these need to be placed before the line the user was typing
                         // unlike with typescript where callbacks use lambdas.
@@ -112,17 +115,17 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         // At the time of this writting, Monaco does not support item completions that replace the
                         // whole line. So we use a custom system of "edit amendments". See monacoEditAmendments.ts
                         // for more.
-                        completionSnippet = amendmentToInsertSnippet(
-                            createLineReplacementPyAmendment(insertSnippet))
+                        snippet = amendmentToInsertSnippet(
+                            createLineReplacementPyAmendment(snippet))
                     } else {
-                        completionSnippet = insertSnippet || qName
+                        snippet = snippet || qName
                         // if we're past the first ".", i.e. we're doing member completion, be sure to
                         // remove what precedes the "." in the full snippet.
                         // E.g. if the user is typing "mobs.", we want to complete with "spawn" (name) not "mobs.spawn" (qName)
-                        if (completions.isMemberCompletion && completionSnippet) {
-                            const nameStart = completionSnippet.lastIndexOf(name);
+                        if (completions.isMemberCompletion && snippet) {
+                            const nameStart = snippet.lastIndexOf(name);
                             if (nameStart !== -1) {
-                                completionSnippet = completionSnippet.substr(nameStart)
+                                snippet = snippet.substr(nameStart)
                             }
                         }
                     }
@@ -148,11 +151,12 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         range,
                         kind: this.tsKindToMonacoKind(si.kind),
                         documentation,
-                        detail: insertSnippet,
+                        detail: snippetWithoutMarkers,
                         // force monaco to use our sorting
-                        sortText: `${tosort(i)} ${insertSnippet}`,
+                        sortText: `${tosort(i)} ${snippet}`,
                         filterText: filterText,
-                        insertText: completionSnippet || undefined,
+                        insertText: snippet || undefined,
+                        insertTextRules: hasMarkers ? monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet : undefined,
                     };
                     return res
                 })
@@ -1183,6 +1187,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this.fieldEditors) {
             this.fieldEditors = new FieldEditorManager(this.editor);
             monaco.languages.registerFoldingRangeProvider("typescript", this.fieldEditors);
+            monaco.languages.registerFoldingRangeProvider("python", this.fieldEditors);
         }
 
         pxt.appTarget.appTheme.monacoFieldEditors.forEach(name => {
@@ -1553,7 +1558,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    showFieldEditor(range: monaco.Range, fe: pxt.editor.MonacoFieldEditor, viewZoneHeight: number) {
+    showFieldEditor(range: monaco.Range, fe: pxt.editor.MonacoFieldEditor, viewZoneHeight: number, buildAfter: boolean) {
         if (this.feWidget) {
             this.feWidget.close();
         }
@@ -1565,7 +1570,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (edit) {
                     this.editModelAsync(edit.range, edit.replacement)
                         .then(newRange => this.indentRangeAsync(newRange))
-                        .then(() => this.foldFieldEditorRangesAsync());
+                        .then(() => this.foldFieldEditorRangesAsync())
+                        .then(() => {
+                            if (buildAfter) {
+                                simulator.setDirty();
+                            }
+                        })
+                }
+                else if (buildAfter) {
+                    simulator.setDirty();
                 }
             })
     }
@@ -1784,7 +1797,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private getBuiltinBlocks(ns: string, subns: string) {
         let cat = snippets.getBuiltinCategory(ns);
         let blocks = cat.blocks || [];
-        if (!cat.custom && this.nsMap[ns]) blocks = blocks.concat(this.nsMap[ns].filter(block => !(block.attributes.blockHidden) &&  !(block.attributes.deprecated && !this.parent.isTutorial())));
+        if (!cat.custom && this.nsMap[ns]) blocks = blocks.concat(this.nsMap[ns].filter(block => !(block.attributes.blockHidden) && !(block.attributes.deprecated && !this.parent.isTutorial())));
         return this.filterBlocks(subns, blocks);
     }
 
@@ -1870,7 +1883,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                     const fe = this.fieldEditors.getFieldEditorById(lineInfo.owner);
                     if (fe) {
-                        this.showFieldEditor(lineInfo.range, new fe.proto(), fe.heightInPixels || 500);
+                        this.showFieldEditor(lineInfo.range, new fe.proto(), fe.heightInPixels || 500, fe.alwaysBuildOnClose);
                     }
                 }
             }

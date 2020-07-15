@@ -601,19 +601,32 @@ export class ProjectView
                         mainPkg.cacheTranspile(fromLanguage, fromText, "py", mainpy);
                         return this.saveVirtualFileAsync(pxt.PYTHON_PROJECT_NAME, mainpy, true);
                     } else {
-                        this.editor.setDiagnostics(this.editorFile, snap);
-                        return Promise.reject(new Error("Failed to convert to Python."));
+                        const e = new Error("Failed to convert to Python.")
+                        pxt.reportException(e);
+                        return Promise.reject(e);
                     }
                 })
                 .then(() => {
                     // on success, update editor pref
                     pxt.Util.setEditorLanguagePref("py");
-                }, e => {
-                    pxt.reportException(e);
-                    core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
+                    return Promise.resolve();
                 });
         }
-        return core.showLoadingAsync("switchtopython", lf("switching to Python..."), convertPromise);
+
+        const convertPromiseOrErrorDialog = convertPromise.then(() => { }, e => {
+            // on failure, show a dialog indicating such
+            return core.confirmAsync({
+                header: lf("Oops, there is a problem converting your code."),
+                body: lf("We are unable to convert your code to Python."),
+                agreeLbl: lf("Done"),
+                agreeClass: "cancel",
+                agreeIcon: "cancel",
+                hasCloseIcon: true,
+            }).then(() => { })
+        })
+
+        core.showLoadingAsync("switchtopython", lf("switching to Python..."), convertPromise);
+        return convertPromiseOrErrorDialog
     }
 
     openSimView() {
@@ -1353,8 +1366,10 @@ export class ProjectView
                     this.setSideDoc(documentation, editorForFile == this.blocksEditor);
                 else {
                     const readme = main.lookupFile("this/README.md");
+                    const readmeContent = readme.content?.trim();
                     // no auto-popup when editing packages locally
-                    if (!h.githubId && readme && readme.content && readme.content.trim())
+                    // ### @autoOpen false
+                    if (!h.githubId && readmeContent && !/#{2,}\s+@autoOpen\s+false\s*/i.test(readmeContent))
                         this.setSideMarkdown(readme.content);
                 }
 

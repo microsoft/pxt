@@ -295,7 +295,7 @@ namespace pxt.py {
             } else if (ts.isContinueStatement(s)) {
                 return ['continue']
             } else {
-                return throwError(s, 3002, `Not implemented: ${ts.SyntaxKind[s.kind]} (${s.kind})`);
+                return throwError(s, 3002, `Not supported in MakeCode Python: ${ts.SyntaxKind[s.kind]} (${s.kind})`);
             }
         }
         function emitModuleDeclaration(s: ts.ModuleDeclaration): string[] {
@@ -931,14 +931,13 @@ namespace pxt.py {
             return asExpRes(`${expToStr(left)}.${right}`, leftSup);
         }
         function getSimpleExpNameParts(s: ts.Expression): string[] {
-            // TODO(dz): Impl skip namespaces properly. Right now we just skip the left-most part of a property access
             if (ts.isPropertyAccessExpression(s)) {
                 let nmPart = getName(s.name)
+                let nmRight = nmPart.substr(nmPart.lastIndexOf(".") + 1)
                 if (ts.isIdentifier(s.expression)) {
-                    if (nmPart.indexOf(".") >= 0) nmPart = nmPart.substr(nmPart.lastIndexOf(".") + 1);
-                    return [nmPart]
+                    return [nmRight]
                 }
-                return getSimpleExpNameParts(s.expression).concat([nmPart])
+                return getSimpleExpNameParts(s.expression).concat([nmRight])
             }
             else if (ts.isIdentifier(s)) {
                 return [getName(s)]
