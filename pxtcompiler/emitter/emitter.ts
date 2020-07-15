@@ -900,6 +900,7 @@ namespace ts.pxtc {
     }
 
     export type VarOrParam = VariableDeclaration | ParameterDeclaration | PropertyDeclaration | BindingElement;
+    export type Captured = VarOrParam | FunctionDeclaration;
     export type TypedDecl = Declaration & { type?: TypeNode }
 
     export interface VariableAddInfo {
@@ -909,7 +910,8 @@ namespace ts.pxtc {
     }
 
     export class FunctionAddInfo {
-        capturedVars: VarOrParam[] = [];
+        capturedVars: Captured[] = [];
+        capturedFuns: FunctionDeclaration[];
         location?: ir.Cell;
         thisParameter?: ParameterDeclaration; // a bit bogus
         virtualParent?: FunctionAddInfo;
@@ -922,6 +924,27 @@ namespace ts.pxtc {
         alreadyEmitted?: boolean;
 
         constructor(public decl: EmittableAsCall) { }
+
+        hasCaptured(v: Captured) {
+            return (this.capturedVars.indexOf(v) >= 0);
+        }
+
+        captureVar(v: Captured) {
+            if (!this.hasCaptured(v))
+                this.capturedVars.push(v)
+        }
+
+        captureFunc(f: FunctionDeclaration, acc: FunctionAddInfo[]) {
+            const par = getEnclosingFunction(f)
+            if (par == null || this.decl == par)
+                return
+            if (!this.capturedFuns) {
+                this.capturedFuns = []
+                acc.push(this)
+            }
+            if (this.capturedFuns.indexOf(f) < 0)
+                this.capturedFuns.push(f)
+        }
 
         get isUsed() {
             return !!(pxtInfo(this.decl).flags & PxtNodeFlags.IsUsed)
@@ -944,6 +967,7 @@ namespace ts.pxtc {
         checker = program.getTypeChecker();
         let startTime = U.cpuUs();
         let usedWorkList: Declaration[] = []
+        let funCaptureList: FunctionAddInfo[] = []
         let irCachesToClear: NodeWithCache[] = []
         let autoCreateFunctions: pxt.Map<boolean> = {} // INCTODO
         let configEntries: pxt.Map<ConfigEntry> = {}
@@ -1043,6 +1067,21 @@ namespace ts.pxtc {
         for (; ;) {
             flushWorkQueue()
             if (fixpointVTables())
+                break
+        }
+
+        for (; ;) {
+            let numdone = 0
+            for (let user of funCaptureList) {
+                for (let ff of user.capturedFuns) {
+                    if (getFunctionInfo(ff).capturedVars.length > 0 && !user.hasCaptured(ff)) {
+                        recordUse(ff, false, user.decl as FunctionLikeDeclaration)
+                        if (user.hasCaptured(ff))
+                            numdone++
+                    }
+                }
+            }
+            if (numdone == 0)
                 break
         }
 
@@ -1208,19 +1247,19 @@ namespace ts.pxtc {
             return info.variableInfo
         }
 
-        function recordUse(v: VarOrParam, written = false) {
+        function recordUse(v: Captured, written = false, usedIn?: FunctionLikeDeclaration) {
+            if (!usedIn) usedIn = proc.action
             let info = getVarInfo(v)
             if (written)
                 info.written = true;
             let varParent = getEnclosingFunction(v)
-            if (varParent == null || varParent == proc.action) {
+            if (varParent == null || varParent == usedIn) {
                 // not captured
             } else {
-                let curr = proc.action
+                let curr = usedIn
                 while (curr && curr != varParent) {
                     let info2 = getFunctionInfo(curr)
-                    if (info2.capturedVars.indexOf(v) < 0)
-                        info2.capturedVars.push(v);
+                    info2.captureVar(v)
                     curr = getEnclosingFunction(curr)
                 }
                 info.captured = true;
@@ -1672,8 +1711,10 @@ ${lbl}: .short 0xffff
             let info = getFunctionInfo(f)
             markUsageOrder(info);
             if (info.location) {
+                recordUse(f)
                 return info.location.load()
             } else {
+                proc.info.captureFunc(f, funCaptureList)
                 assert(!bin.finalPass || info.capturedVars.length == 0, "!bin.finalPass || info.capturedVars.length == 0")
                 info.usedAsValue = true
                 markFunctionUsed(f)
@@ -2320,6 +2361,7 @@ ${lbl}: .short 0xffff
                     }
 
                     markFunctionUsed(decl)
+                    proc.info.captureFunc(decl as FunctionDeclaration, funCaptureList)
                     return emitPlain();
                 }
             }
@@ -2868,7 +2910,7 @@ ${lbl}: .short 0xffff
 
             let caps = info.capturedVars.slice(0)
             let locals = caps.map((v, i) => {
-                let l = new ir.Cell(i, v, getVarInfo(v))
+                let l = v.kind == SK.FunctionDeclaration ? getFunctionInfo(v).location : new ir.Cell(i, v, getVarInfo(v))
                 l.iscap = true
                 return l;
             })
