@@ -170,7 +170,7 @@ namespace pxt.cpp {
             .sort((a, b) => {
                 if (a.id == "this") return 1;
                 else if (b.id == "this") return -1;
-                else return a.id.localeCompare(b.id);
+                else return U.strcmp(a.id, b.id);
             });
 
         for (let pkg of mainPkgDeps) {
