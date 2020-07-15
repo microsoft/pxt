@@ -1897,6 +1897,21 @@ namespace ts.pxtc.service {
 
             // check for explicit default in the attributes
             if (attrs && attrs.paramDefl && attrs.paramDefl[name]) {
+                // if (typeNode.kind == SK.AnyKeyword) {
+                //     if (typeNode.) {
+                //         // try to parse as a number
+                //         typeNode.kind = SK.NumberKeyword;
+                //     } else if () {
+                //         // try to parse as a bool
+                //         typeNode.kind = SK.BooleanKeyword;
+                //     } else if () {
+                //         // try to parse as an enum
+                //         typeNode.kind = SK.EnumKeyword;
+                //     } else if () {
+                //         // And then make it a string
+                //         typeNode.kind = SK.StringKeyword;
+                //     }
+                // }
                 if (typeNode.kind == SK.StringKeyword) {
                     const defaultName = attrs.paramDefl[name];
                     const snippet = typeNode.kind == SK.StringKeyword && defaultName.indexOf(`"`) != 0 ? `"${defaultName}"` : defaultName;
