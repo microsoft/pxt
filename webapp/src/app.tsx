@@ -2447,7 +2447,13 @@ export class ProjectView
                     let fn = pxt.outputName()
                     if (!resp.outfiles[fn]) {
                         pxt.tickEvent("compile.noemit")
-                        core.warningNotification(lf("Compilation failed, please check your code for errors."));
+                        const topDiagnostic = resp.diagnostics?.[0];
+                        // if "cannot download hex file" error
+                        if (topDiagnostic?.code === 9043) {
+                            core.warningNotification(topDiagnostic.messageText as string);
+                        } else {
+                            core.warningNotification(lf("Compilation failed, please check your code for errors."));
+                        }
                         return Promise.resolve(null)
                     }
                     resp.saveOnly = saveOnly
