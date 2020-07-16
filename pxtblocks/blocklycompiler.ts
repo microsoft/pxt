@@ -1261,7 +1261,9 @@ namespace pxt.blocks {
                 }
             }
 
-            return mkText(f);
+            let text = mkText(f)
+            text.canIndentInside = typeof f == "string" && f.indexOf('\n') >= 0;
+            return text;
         }
         else {
             attachPlaceholderIf(e, b, p.definitionName);
