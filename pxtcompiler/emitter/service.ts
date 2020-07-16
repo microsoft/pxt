@@ -2168,8 +2168,11 @@ namespace ts.pxtc.service {
         if (preDefinedSnippet) {
             snippet = [preDefinedSnippet];
         } else {
-            const argsWithCommas = args.reduce((p: SnippetNode[], n) => [...p, p.length ? ", " : "", n], []) as SnippetNode[]
-            snippet = [fnName, "(", ...argsWithCommas, ")"];
+            snippet = [fnName];
+            if (args?.length || element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Function) {
+                const argsWithCommas = args.reduce((p: SnippetNode[], n) => [...p, p.length ? ", " : "", n], []) as SnippetNode[]
+                snippet = snippet.concat(["(", ...argsWithCommas, ")"]);
+            }
         }
         let insertText = snippetPrefix ? [snippetPrefix, ".", ...snippet] : snippet;
         insertText = addNamespace ? [firstWord(namespaceToUse), ".", ...insertText] : insertText;
