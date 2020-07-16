@@ -183,7 +183,7 @@ namespace pxt.blocks.layout {
             };
         }
 
-        return toSvgAsync(ws, encodeBlocks)
+        return toSvgAsync(ws)
             .then(sg => {
                 if (!sg) return Promise.resolve<string>(undefined);
                 return toPngAsyncInternal(
@@ -239,7 +239,7 @@ namespace pxt.blocks.layout {
 
     const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
 
-    export function toSvgAsync(ws: Blockly.WorkspaceSvg, encodeBlocks?: boolean): Promise<{
+    export function toSvgAsync(ws: Blockly.WorkspaceSvg): Promise<{
         width: number; height: number; xml: string;
     }> {
         if (!ws)
@@ -251,7 +251,7 @@ namespace pxt.blocks.layout {
 
         let width = metrics.right - metrics.left;
         let height = metrics.bottom - metrics.top;
-        return blocklyToSvgAsync(sg, metrics.left, metrics.top, width, height, encodeBlocks);
+        return blocklyToSvgAsync(sg, metrics.left, metrics.top, width, height);
     }
 
     export function serializeNode(sg: Node): string {
@@ -298,7 +298,7 @@ namespace pxt.blocks.layout {
         return svg;
     }
 
-    export function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: number, height: number, encodeBlocks?: boolean): Promise<BlockSvg> {
+    export function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: number, height: number): Promise<BlockSvg> {
         if (!sg.childNodes[0])
             return Promise.resolve<BlockSvg>(undefined);
 
@@ -311,11 +311,6 @@ namespace pxt.blocks.layout {
             .replace(/<\/svg>\s*$/i, '') // strip out svg tag
         const svgXml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="${XLINK_NAMESPACE}" width="${width}" height="${height}" viewBox="${x} ${y} ${width} ${height}" class="pxt-renderer">${xmlString}</svg>`;
         const xsg = new DOMParser().parseFromString(svgXml, "image/svg+xml");
-
-        if (encodeBlocks) {
-            const saveIcon = new pxt.svgUtil.Text("\uf0c7").at(x + width - 25, y + 20).setClass("semanticIcon inverted").el;
-            xsg.firstElementChild.appendChild(saveIcon);
-        }
 
         const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
         const isRtl = Util.isUserLanguageRtl();
