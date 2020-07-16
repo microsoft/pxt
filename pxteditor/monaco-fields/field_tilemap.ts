@@ -47,8 +47,8 @@ namespace pxt.editor {
             this.isTilemapLiteral = true;
 
             // This matches the regex for the field editor, so it should always match
-            const match = /^\s*tilemap\s*`([^`]*)`\s*$/.exec(text);
-            const name = match[1];
+            const match = /^\s*tilemap\s*(?:`([^`]*)`)|(?:\(\s*"""([^"]*)"""\s*\))\s*$/.exec(text);
+            const name = (match[1] || match[2] || "").trim();
 
             if (name) {
                 let id = ts.pxtc.escapeIdentifier(name)

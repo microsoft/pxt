@@ -214,7 +214,7 @@ namespace pxt.py {
 
     // img/hex literal
     function isTaggedTemplate(sym: SymbolInfo) {
-        return sym.attributes.shim && sym.attributes.shim[0] == "@"
+        return (sym.attributes.shim && sym.attributes.shim[0] == "@") || sym.attributes.pyConvertToTaggedTemplate;
     }
 
     function getOrSetSymbolType(sym: SymbolInfo): Type {
