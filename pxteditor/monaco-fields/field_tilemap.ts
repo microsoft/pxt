@@ -117,10 +117,10 @@ namespace pxt.editor {
                     this.tilemapName = name;
                 }
 
-                return `tilemap\`${this.tilemapName}\``;
+                return this.fileType === "typescript" ? `tilemap\`${this.tilemapName}\`` : `tilemap("""${this.tilemapName}""")`;
             }
             else {
-                return pxt.sprite.encodeTilemap(result, "typescript");
+                return pxt.sprite.encodeTilemap(result, this.fileType === "typescript" ? "typescript" : "python");
             }
         }
 

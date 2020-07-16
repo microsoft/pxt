@@ -402,6 +402,10 @@ function ensureApisInfoAsync(): Promise<void> {
     else return Promise.resolve()
 }
 
+export function refreshLanguageServiceApisInfo() {
+    refreshApis = true;
+}
+
 export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
     return ensureApisInfoAsync()
         .then(() => {

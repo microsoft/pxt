@@ -489,13 +489,21 @@ export class EditorPackage {
         if (!this.tilemapProject?.needsRebuild) return Promise.resolve();
         this.tilemapProject.needsRebuild = false;
 
+        const existing = this.lookupFile(TILEMAP_CODE);
+
         const jres = this.tilemapProject.getProjectTilesetJRes();
+
+        if (!existing && Object.keys(jres).length === 1) return Promise.resolve();
+
         const ts = pxt.emitTilemapsFromJRes(jres);
+
+        if (existing?.content === ts) return Promise.resolve();
 
         return this.setContentAsync(TILEMAP_JRES, JSON.stringify(jres, null, 4))
             .then(() => this.setContentAsync(TILEMAP_CODE, ts))
             .then(() => {
                 mainPkg.updateJRes();
+                compiler.refreshLanguageServiceApisInfo();
             });
     }
 
