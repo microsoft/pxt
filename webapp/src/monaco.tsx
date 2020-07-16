@@ -146,12 +146,13 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                     // them with commas so that we don't confuse the fuzzy matcher in monaco
                     const filterText = `${label},${documentation},${block}`.replace(/\s/g, ",")
 
+                    const kind = this.tsKindToMonacoKind(si.kind);
                     let res: monaco.languages.CompletionItem = {
                         label: label,
                         range,
-                        kind: this.tsKindToMonacoKind(si.kind),
+                        kind,
                         documentation,
-                        detail: snippetWithoutMarkers,
+                        detail: `(${monaco.languages.CompletionItemKind[kind].toLowerCase()}) ${snippetWithoutMarkers || ""}`,
                         // force monaco to use our sorting
                         sortText: `${tosort(i)} ${snippet}`,
                         filterText: filterText,
