@@ -122,6 +122,6 @@ function initUndef() {
             x = "foo"
     }
     f()
-    assert(x === undefined, "init undef") // triggers
+    assert(x === undefined, "init undef")
 }
 initUndef()
