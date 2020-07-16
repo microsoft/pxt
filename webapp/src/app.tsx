@@ -2447,7 +2447,12 @@ export class ProjectView
                     let fn = pxt.outputName()
                     if (!resp.outfiles[fn]) {
                         pxt.tickEvent("compile.noemit")
-                        core.warningNotification(lf("Compilation failed, please check your code for errors."));
+                        const noHexFileDiagnostic = resp.diagnostics?.find(diag => diag.code === 9043);
+                        if (noHexFileDiagnostic) {
+                            core.warningNotification(noHexFileDiagnostic.messageText as string);
+                        } else {
+                            core.warningNotification(lf("Compilation failed, please check your code for errors."));
+                        }
                         return Promise.resolve(null)
                     }
                     resp.saveOnly = saveOnly
