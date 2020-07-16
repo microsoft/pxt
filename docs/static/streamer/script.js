@@ -1,3 +1,22 @@
+let youTubeReady = false;
+let stringerPlayer;
+function onYouTubeIframeAPIReady() {
+    youTubeReady = true;
+    console.log(`youtube ready`);
+    stringerPlayer = new YT.Player('stingeryoutube', {
+        events: {
+            'onReady': () => {
+                console.log(`stinger youtube ready`);
+                //stingeryoutube.classList.remove("hidden");
+            },
+            'onStateChange': (playerState) => {
+                console.log(`stinger youtube state`, playerState);
+                //if (playerState == 0)
+                //    stingeryoutube.classList.add("hidden");
+            }
+        }
+    });
+}
 (async function () {
     const body = document.body;
     const container = document.getElementById("container");
@@ -2130,10 +2149,10 @@ background-image: url(${config.backgroundImage});
         if (ytVideoId) {
             stingervideo.src = undefined;
             stingervideo.classList.add("hidden");
-            const url = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1&controls=0&disablekb=1&fs=0&modestbranding=1&rel=0&mute=1`;
-            if (stingeryoutube.src !== url)
-                stingeryoutube.src = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1&controls=0&disablekb=1&fs=0&modestbranding=1&rel=0&mute=1`;
-            stingeryoutube.classList.remove("hidden");
+            const url = `https://www.youtube.com/embed/${ytVideoId}?enablejsapi=1&autoplay=1&controls=0&disablekb=1&fs=0&modestbranding=1&rel=0&mute=1`;
+            if (stingeryoutube.src !== url) {
+                stingeryoutube.src = url;
+            }
             // rescale youtube iframe to cover the entire background
             const el = document.firstElementChild;
             const w = el.clientWidth;
