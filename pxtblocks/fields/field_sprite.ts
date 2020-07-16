@@ -34,8 +34,8 @@ namespace pxtblockly {
     const Y_PADDING = 1;
     const BG_PADDING = 4;
     const BG_WIDTH = BG_PADDING * 2 + PREVIEW_WIDTH;
-    const TOTAL_WIDTH = X_PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
     const TOTAL_HEIGHT = Y_PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
+    const TOTAL_WIDTH = X_PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
 
     export class FieldSpriteEditor extends Blockly.Field implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
