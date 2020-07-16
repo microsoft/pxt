@@ -3,6 +3,7 @@ declare let mscc: any;
 declare let Seriously: any;
 declare let webkitSpeechRecognition: any;
 declare let MediaRecorder: any;
+declare let YT: any;
 
 interface Coord {
     x: number;
@@ -110,8 +111,8 @@ interface StreamerConfig {
     const countdown = document.getElementById('countdown') as HTMLDivElement
     const titleEl = document.getElementById('title')
     const subtitles = document.getElementById('subtitles')
-    const startvideo = document.getElementById('startvideo') as HTMLVideoElement;
-    const endvideo = document.getElementById('endvideo') as HTMLVideoElement;
+    const stingervideo = document.getElementById('stingervideo') as HTMLVideoElement
+    const stingeryoutube = document.getElementById('stingeryoutube') as HTMLIFrameElement
     const backgroundvideo = document.getElementById('backgroundvideo') as HTMLVideoElement
     const backgroundyoutube = document.getElementById('backgroundyoutube') as HTMLIFrameElement
     const intro = document.getElementById('intro')
@@ -153,7 +154,6 @@ interface StreamerConfig {
         await firstLoadFaceCam()
         await loadHardwareCam()
         await loadSettings()
-        loadVideos()
         setScene("right")
         render()
         handleHashChange();
@@ -425,20 +425,12 @@ interface StreamerConfig {
         if (sceneIndex === COUNTDOWN_SCENE_INDEX) {
             startCountdown(300000);
             if (config.endVideo) {
-                endvideo.classList.remove("hidden");
-                endvideo.onended = () => {
-                    endvideo.classList.add("hidden");
-                }
-                endvideo.play();
+                startStinger(config.endVideo)
             }
         } else {
             stopCountdown();
             if (lastSceneIndex == COUNTDOWN_SCENE_INDEX && config.startVideo) {
-                startvideo.classList.remove("hidden");
-                startvideo.onended = () => {
-                    startvideo.classList.add("hidden");
-                }
-                startvideo.play();
+                startStinger(config.startVideo)
             }
         }
         render();
@@ -769,12 +761,6 @@ interface StreamerConfig {
         }
 
         loadStyle();
-    }
-
-    function loadVideos() {
-        const config = readConfig();
-        startvideo.src = config.startVideo;
-        endvideo.src = config.endVideo;
     }
 
     function loadStyle() {
@@ -1630,7 +1616,7 @@ background-image: url(${config.backgroundImage});
                     const config = JSON.parse(reader.result as string);
                     saveConfig(config);
                     window.location.reload()
-                } catch(e) {
+                } catch (e) {
                     console.error(e)
                 }
             }, false);
@@ -2051,7 +2037,6 @@ background-image: url(${config.backgroundImage});
             if (/^https:\/\//.test(startvideoinput.value))
                 config.startVideo = startvideoinput.value
             saveConfig(config);
-            loadVideos();
             render()
         }
 
@@ -2062,7 +2047,6 @@ background-image: url(${config.backgroundImage});
             if (/^https:\/\//.test(endvideoinput.value))
                 config.endVideo = endvideoinput.value
             saveConfig(config);
-            loadVideos();
             render()
         }
 
@@ -2340,5 +2324,48 @@ background-image: url(${config.backgroundImage});
                 else props[k] = JSON.stringify(data[k] || '');
             });
         return [props, measures];
+    }
+
+    function startStinger(url: string, done?: () => void) {
+        const ytVideoId = parseYouTubeVideoId(url);
+        if (ytVideoId) {
+            stingervideo.src = undefined;
+            stingervideo.classList.add("hidden");
+
+            const url = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1&controls=0&disablekb=1&fs=0&modestbranding=1&rel=0&mute=1`
+            if (stingeryoutube.src !== url)
+                stingeryoutube.src = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1&controls=0&disablekb=1&fs=0&modestbranding=1&rel=0&mute=1`
+            stingeryoutube.classList.remove("hidden");
+
+            // rescale youtube iframe to cover the entire background
+            const el = document.firstElementChild;
+            const w = el.clientWidth
+            const h = el.clientHeight
+            const ratio = w / h;
+            const hd = 16 / 9;
+            if (ratio > hd) {
+                // the video is going to be 16:9, compensate
+                console.log(`ratio`, ratio)
+                const vh = 100 * ratio / hd
+                stingeryoutube.style.height = `${vh}vh`
+                stingeryoutube.style.width = `100vw`
+                stingeryoutube.style.transform = `translate(0, ${-(vh - 100) / 2}vh)`
+            } else {
+                const vw = 100 / ratio * hd
+                stingeryoutube.style.height = `100vh`
+                stingeryoutube.style.width = `${vw}vw`
+                stingeryoutube.style.transform = `translate(${-(vw - 100) / 2}vh, 0)`
+            }
+
+        } else if (url) {
+            stingervideo.src = url;
+            stingeryoutube.src = undefined;
+            stingeryoutube.classList.add("hidden")
+        } else {
+            stingervideo.src = undefined;
+            stingeryoutube.src = undefined;
+            stingervideo.classList.add("hidden");
+            stingeryoutube.classList.add("hidden")
+        }
     }
 })()
