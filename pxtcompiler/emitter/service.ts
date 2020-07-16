@@ -2169,7 +2169,7 @@ namespace ts.pxtc.service {
             snippet = [preDefinedSnippet];
         } else {
             snippet = [fnName];
-            if (args?.length || element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Function) {
+            if (args?.length || element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Function || element.kind == pxtc.SymbolKind.Class) {
                 const argsWithCommas = args.reduce((p: SnippetNode[], n) => [...p, p.length ? ", " : "", n], []) as SnippetNode[]
                 snippet = snippet.concat(["(", ...argsWithCommas, ")"]);
             }
