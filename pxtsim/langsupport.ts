@@ -283,7 +283,7 @@ namespace pxsim {
     }
 
     export class RefRefLocal extends RefObject {
-        v: any = null;
+        v: any = undefined;
 
         scan(mark: (path: string, v: any) => void) {
             mark("*", this.v)
