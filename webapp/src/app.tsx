@@ -2447,7 +2447,12 @@ export class ProjectView
                     let fn = pxt.outputName()
                     if (!resp.outfiles[fn]) {
                         pxt.tickEvent("compile.noemit")
-                        core.warningNotification(lf("Compilation failed, please check your code for errors."));
+                        const noHexFileDiagnostic = resp.diagnostics?.find(diag => diag.code === 9043);
+                        if (noHexFileDiagnostic) {
+                            core.warningNotification(noHexFileDiagnostic.messageText as string);
+                        } else {
+                            core.warningNotification(lf("Compilation failed, please check your code for errors."));
+                        }
                         return Promise.resolve(null)
                     }
                     resp.saveOnly = saveOnly
@@ -3962,6 +3967,11 @@ function enableAnalytics() {
         stats["screen.innerWidth"] = window.innerWidth;
         stats["screen.innerHeight"] = window.innerHeight;
         stats["screen.devicepixelratio"] = pxt.BrowserUtils.devicePixelRatio();
+        const body = document.firstElementChild; // body
+        if (body) {
+            stats["screen.clientWidth"] = body.clientWidth;
+            stats["screen.clientHeight"] = body.clientHeight;
+        }
     }
     pxt.tickEvent("editor.loaded", stats);
 }

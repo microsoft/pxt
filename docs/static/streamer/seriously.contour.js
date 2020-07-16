@@ -40,7 +40,7 @@
 				// and looks for the boundary of transparent pixels
                 // fetch the neightborhood and paint white if it is not full white or transparent
 				'   int transparents = 0;',
-				'   const int n = 10;',
+				'   const int n = 16;',
 				'	float fi = 0.0, fj = 0.0;',
 				'	for (int i = 0; i < n; i++) {',
 				'		fj = 0.0;',
@@ -54,7 +54,7 @@
                 
 				// skip if no transparent pixesl
 				'   const int error = 2;',				
-                '   if (transparents < error * error || transparents == n * n) {',
+                '   if (transparents < error * error || transparents > n * n - error) {',
                 '       gl_FragColor = texture2D(source, vTexCoord).rgba;',
                 '   } else {',
                 '       gl_FragColor = color;',

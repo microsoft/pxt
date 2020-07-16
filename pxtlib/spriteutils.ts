@@ -401,7 +401,9 @@ namespace pxt.sprite {
     }
 
     export function getGalleryItems(blocksInfo: pxtc.BlocksInfo, qName: string): GalleryItem[] {
-        const syms = getFixedInstanceDropdownValues(blocksInfo.apis, qName);
+        let syms = getFixedInstanceDropdownValues(blocksInfo.apis, qName);
+        syms = syms.filter(s => s.namespace != TILE_NAMESPACE);
+
         generateIcons(syms);
 
         return syms.map(sym => {

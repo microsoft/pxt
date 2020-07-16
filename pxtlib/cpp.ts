@@ -163,7 +163,17 @@ namespace pxt.cpp {
         let sourcePath = "/source/"
         let disabledDeps = ""
         let mainDeps: Package[] = []
-        for (let pkg of mainPkg.sortedDeps(true)) {
+
+        // order shouldn't matter for c++ compilation,
+        // so use a stable order to prevent order changes from fetching a new hex file
+        const mainPkgDeps = mainPkg.sortedDeps(true)
+            .sort((a, b) => {
+                if (a.id == "this") return 1;
+                else if (b.id == "this") return -1;
+                else return U.strcmp(a.id, b.id);
+            });
+
+        for (let pkg of mainPkgDeps) {
             if (pkg.disablesVariant(pxt.appTargetVariant) ||
                 pkg.resolvedDependencies().some(d => d.disablesVariant(pxt.appTargetVariant))) {
                 if (pkg.id != "this") {
@@ -895,8 +905,8 @@ namespace pxt.cpp {
                     U.assert(!seenMain)
                 }
                 // Generally, headers need to be processed before sources, as they contain definitions
-                // (in particular of enums, which are needed to decide if we're doing conversions for 
-                // function arguments). This can still fail if one header uses another and they are 
+                // (in particular of enums, which are needed to decide if we're doing conversions for
+                // function arguments). This can still fail if one header uses another and they are
                 // listed in invalid order...
                 const isHeaderFn = (fn: string) => U.endsWith(fn, ".h")
                 const ext = ".cpp"

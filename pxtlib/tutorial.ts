@@ -296,12 +296,15 @@ ${code}
 
     export function highlight(pre: HTMLElement): void {
         let text = pre.textContent;
-        if (!/@highlight/.test(text)) // shortcut, nothing to do
-            return;
 
         // collapse image python/js literales
         text = text.replace(/img\s*\(\s*"{3}(.|\n)*"{3}\s*\)/g, `""" """`);
-        text = text.replace(/img\s*\(\s*`(.|\n)*`\s*\)/g, "img` `");
+        text = text.replace(/img\s*\s*`(.|\n)*`\s*/g, "img` `");
+
+        if (!/@highlight/.test(text)) { // shortcut, nothing to do
+            pre.textContent = text;
+            return;
+        }
 
         // render lines
         pre.textContent = ""; // clear up and rebuild

@@ -95,6 +95,9 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     componentDidMount() {
+        // move initial focus off of the blockly surface
+        (document.activeElement as HTMLElement)?.blur();
+
         this.cellWidth = this.props.isTilemap ? this.props.tilemapState.tileset.tileWidth * TILE_SCALE : SCALE;
         this.canvas = this.refs["paint-surface"] as HTMLCanvasElement;
         this.background = this.refs["paint-surface-bg"] as HTMLCanvasElement;
@@ -244,6 +247,21 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             // prevent blockly's ctrl+c / ctrl+v handler
             if ((ev.ctrlKey || ev.metaKey) && (ev.key === 'c' || ev.key === 'v')) {
                 ev.stopPropagation();
+            }
+
+            if ((ev.ctrlKey || ev.metaKey) && ev.key === 'a' && this.shouldHandleCanvasShortcut()) {
+                this.selectAll();
+                ev.preventDefault();
+            }
+
+            if (ev.key == "Escape" && this.editState?.floating?.image && this.shouldHandleCanvasShortcut()) {
+                this.cancelSelection();
+                ev.preventDefault();
+            }
+
+            if ((ev.key === "Backspace" || ev.key === "Delete") && this.editState?.floating?.image && this.shouldHandleCanvasShortcut()) {
+                this.deleteSelection();
+                ev.preventDefault();
             }
 
             // hotkeys for switching temporarily between tools
@@ -751,6 +769,27 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         }
     }
 
+    protected selectAll() {
+        // force marquee tool so selection can be moved
+        if (this.props.tool !== ImageEditorTool.Marquee) {
+            this.props.dispatchChangeImageTool(ImageEditorTool.Marquee);
+        }
+
+        this.editState.mergeFloatingLayer();
+        this.editState.copyToLayer(0, 0, this.imageWidth, this.imageHeight, true);
+        this.props.dispatchImageEdit(this.editState.toImageState());
+    }
+
+    protected cancelSelection() {
+        this.editState.mergeFloatingLayer();
+        this.props.dispatchImageEdit(this.editState.toImageState());
+    }
+
+    protected deleteSelection() {
+        this.editState.floating = null;
+        this.props.dispatchImageEdit(this.editState.toImageState());
+    }
+
     protected cloneCanvasStyle(base: HTMLCanvasElement, target: HTMLCanvasElement) {
         target.style.position = base.style.position;
         target.style.width = base.style.width;
@@ -796,6 +835,11 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
     protected isColorSelect() {
         return this.props.tool === ImageEditorTool.ColorSelect;
+    }
+
+    protected shouldHandleCanvasShortcut() {
+        // canvas shortcuts (select all; delete) should only be handled if the focus is not within a focusable element
+        return document.activeElement === document.body || !document.activeElement;
     }
 
     protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();
