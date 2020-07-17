@@ -2417,7 +2417,16 @@ background-image: url(${config.backgroundImage});
             stingerPlayer.stopVideo()
             stingeryoutube.classList.add("hidden")
             stingervideo.src = url;
-            stingervideo.onended = () => stingerEvents.start()
+            stingervideo.onplay = () => {
+                stingervideo.classList.remove("hidden")
+                stingerEvents.start()
+            }
+            stingervideo.onpause = () => {
+                stingervideo.classList.add("hidden")
+            }
+            stingervideo.onended = () => {
+                stingervideo.classList.add("hidden")
+            }
         } else {
             stingervideo.src = undefined;
             stingerPlayer.stopVideo()
