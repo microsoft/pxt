@@ -182,6 +182,7 @@ function onYouTubeIframeAPIReady() {
         paintColor: paintColors[0],
     }
     let editorConfigs;
+    const db = openDb()
 
     try {
         tickEvent("streamer.load.start")
@@ -1671,27 +1672,14 @@ background-image: url(${config.backgroundImage});
         }
 
         const importsettingsinput = document.getElementById("importsettingsinput") as HTMLInputElement
-        importsettingsinput.onchange = function () {
-            const file = importsettingsinput.files[0] as File;
-            if (!file) return;
-            const reader = new FileReader();
-            reader.addEventListener("load", function () {
-                try {
-                    const config = JSON.parse(reader.result as string);
+        const importsettings = document.getElementById("importsettings") as HTMLButtonElement
+        importFileButton("streamer.importsettings", importsettingsinput, importsettings, (file) =>
+            readFileAsText(file)
+                .then(text => {
+                    const config = JSON.parse(text);
                     saveConfig(config);
                     window.location.reload()
-                } catch (e) {
-                    console.error(e)
-                }
-            }, false);
-            reader.readAsText(file, 'utf-8')
-        }
-        const importsettings = document.getElementById("importsettings")
-        importsettings.onclick = function (e) {
-            tickEvent("streamer.importsettings", undefined, { interactiveConsent: true })
-            stopEvent(e)
-            importsettingsinput.click()
-        }
+                }))
 
         const exportsettings = document.getElementById("exportsettings")
         exportsettings.onclick = function (e) {
@@ -2094,6 +2082,16 @@ background-image: url(${config.backgroundImage});
             render()
         }
 
+        importFileButton("streamer.importstartvideo",
+            document.getElementById("startvideoimportinput") as HTMLInputElement,
+            document.getElementById("startvideoimportbtn"),
+            (file) => {
+                db.put("startvideo", file)
+                config.startVideo = "blob:startvideo"
+                saveConfig(config);
+                loadSettings()
+                render()
+            })
         const startvideoinput = document.getElementById("startvideoinput") as HTMLInputElement
         startvideoinput.value = config.startVideo || ""
         startvideoinput.onchange = function (e) {
@@ -2104,6 +2102,16 @@ background-image: url(${config.backgroundImage});
             render()
         }
 
+        importFileButton("streamer.importendvideo",
+            document.getElementById("endvideoimportinput") as HTMLInputElement,
+            document.getElementById("endvideoimportbtn"),
+            (file) => {
+                db.put("endvideo", file)
+                config.endVideo = "blob:endvideo"
+                saveConfig(config);
+                loadSettings()
+                render()
+            })
         const endvideoinput = document.getElementById("endvideoinput") as HTMLInputElement
         endvideoinput.value = config.endVideo || ""
         endvideoinput.onchange = function (e) {
@@ -2261,6 +2269,33 @@ background-image: url(${config.backgroundImage});
 
     }
 
+    function importFileButton(tick: string, input: HTMLInputElement, button: HTMLElement, done: (file: File) => void) {
+        input.onchange = function () {
+            const file = input.files[0] as File;
+            if (file)
+                done(file)
+        }
+        button.onclick = function (e) {
+            tickEvent(tick, undefined, { interactiveConsent: true })
+            stopEvent(e)
+            input.click()
+        }
+    }
+
+    function readFileAsText(file: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.addEventListener("load", function () {
+                try {
+                    resolve(reader.result as string)
+                } catch (e) {
+                    reject(e)
+                }
+            }, false);
+            reader.readAsText(file, 'utf-8')
+        })
+    }
+
     function setEditor(editor, hash?) {
         const editorConfig = editorConfigs[editor];
         if (!editorConfig) return;
@@ -2390,7 +2425,7 @@ background-image: url(${config.backgroundImage});
         return [props, measures];
     }
 
-    function startStinger(url: string, endSceneIndex: number) {
+    async function startStinger(url: string, endSceneIndex: number) {
         stingerEvents.start = () => {
             updateScene(endSceneIndex);
             render()
@@ -2424,6 +2459,12 @@ background-image: url(${config.backgroundImage});
             }
 
         } else if (url) {
+            const blob = url.startsWith("blob:") && url.substr("blob:".length);
+            if (blob) {
+                const file: File = await db.get(blob)
+                url = URL.createObjectURL(file)
+            }
+
             stingerPlayer.stopVideo()
             stingeryoutube.classList.add("hidden")
             stingervideo.src = url;
@@ -2436,7 +2477,10 @@ background-image: url(${config.backgroundImage});
             }
             stingervideo.onended = () => {
                 stingervideo.classList.add("hidden")
+                if (blob)
+                    URL.revokeObjectURL(url)
             }
+
         } else {
             stingervideo.src = undefined;
             stingerPlayer.stopVideo()
@@ -2458,7 +2502,6 @@ background-image: url(${config.backgroundImage});
             db = request.result;
             db.onerror = function (event) {
                 console.log("idb error", event);
-                db = undefined;
             };
         }
         request.onupgradeneeded = function (event) {
@@ -2467,12 +2510,12 @@ background-image: url(${config.backgroundImage});
         };
 
         return {
-            put: (id: string, blob: Blob) => {
+            put: (id: string, file: File) => {
                 const transaction = db.transaction([STORE_BLOBS], "readwrite");
                 const blobs = transaction.objectStore(STORE_BLOBS)
-                blobs.add(blob, id);
+                blobs.put(file, id);
             },
-            get: (id: string) => {
+            get: (id: string): Promise<File> => {
                 return new Promise((resolve, reject) => {
                     const transaction = db.transaction([STORE_BLOBS], "readonly");
                     const blobs = transaction.objectStore(STORE_BLOBS)

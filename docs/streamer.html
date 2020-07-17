@@ -1652,13 +1652,19 @@ Settings
                     <div class="field">
                         <label for="startvideoinput">Intro video (YouTube video or must be https://...). Will play when leaving the
                             countdown
-                            view. YouTube videos are do not support transparency.</label>
+                            view. YouTube videos are do not support transparency.
+                        <input id="startvideoimportinput" type="file" accept="video/mp4, video/webm" style="display:none"></input>
+                        <button id="startvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                
+                        </label>
                         <input id="startvideoinput" type="url" />
                     </div>
                     <div class="field">
                         <label for="endvideoinput">End video (YouTube video or must be https://...). Will play when entering the
                             countdown
-                            view. YouTube videos are do not support transparency.</label>
+                            view. YouTube videos are do not support transparency.
+                            <input id="endvideoimportinput" type="file" accept="video/mp4, video/webm" style="display:none"></input>
+                            <button id="endvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                                            
+                        </label>
                         <input id="endvideoinput" type="url" />
                     </div>
                     <div class="field">

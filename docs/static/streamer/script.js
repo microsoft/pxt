@@ -90,6 +90,7 @@ function onYouTubeIframeAPIReady() {
         paintColor: paintColors[0],
     };
     let editorConfigs;
+    const db = openDb();
     try {
         tickEvent("streamer.load.start");
         body.classList.add("loading");
@@ -1496,29 +1497,13 @@ background-image: url(${config.backgroundImage});
             hideSettings();
         };
         const importsettingsinput = document.getElementById("importsettingsinput");
-        importsettingsinput.onchange = function () {
-            const file = importsettingsinput.files[0];
-            if (!file)
-                return;
-            const reader = new FileReader();
-            reader.addEventListener("load", function () {
-                try {
-                    const config = JSON.parse(reader.result);
-                    saveConfig(config);
-                    window.location.reload();
-                }
-                catch (e) {
-                    console.error(e);
-                }
-            }, false);
-            reader.readAsText(file, 'utf-8');
-        };
         const importsettings = document.getElementById("importsettings");
-        importsettings.onclick = function (e) {
-            tickEvent("streamer.importsettings", undefined, { interactiveConsent: true });
-            stopEvent(e);
-            importsettingsinput.click();
-        };
+        importFileButton("streamer.importsettings", importsettingsinput, importsettings, (file) => readFileAsText(file)
+            .then(text => {
+            const config = JSON.parse(text);
+            saveConfig(config);
+            window.location.reload();
+        }));
         const exportsettings = document.getElementById("exportsettings");
         exportsettings.onclick = function (e) {
             tickEvent("streamer.exportsettings", undefined, { interactiveConsent: true });
@@ -1904,6 +1889,13 @@ background-image: url(${config.backgroundImage});
             loadStyle();
             render();
         };
+        importFileButton("streamer.importstartvideo", document.getElementById("startvideoimportinput"), document.getElementById("startvideoimportbtn"), (file) => {
+            db.put("startvideo", file);
+            config.startVideo = "blob:startvideo";
+            saveConfig(config);
+            loadSettings();
+            render();
+        });
         const startvideoinput = document.getElementById("startvideoinput");
         startvideoinput.value = config.startVideo || "";
         startvideoinput.onchange = function (e) {
@@ -1913,6 +1905,13 @@ background-image: url(${config.backgroundImage});
             saveConfig(config);
             render();
         };
+        importFileButton("streamer.importendvideo", document.getElementById("endvideoimportinput"), document.getElementById("endvideoimportbtn"), (file) => {
+            db.put("endvideo", file);
+            config.endVideo = "blob:endvideo";
+            saveConfig(config);
+            loadSettings();
+            render();
+        });
         const endvideoinput = document.getElementById("endvideoinput");
         endvideoinput.value = config.endVideo || "";
         endvideoinput.onchange = function (e) {
@@ -2058,6 +2057,32 @@ background-image: url(${config.backgroundImage});
             saveConfig(config);
         };
     }
+    function importFileButton(tick, input, button, done) {
+        input.onchange = function () {
+            const file = input.files[0];
+            if (file)
+                done(file);
+        };
+        button.onclick = function (e) {
+            tickEvent(tick, undefined, { interactiveConsent: true });
+            stopEvent(e);
+            input.click();
+        };
+    }
+    function readFileAsText(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.addEventListener("load", function () {
+                try {
+                    resolve(reader.result);
+                }
+                catch (e) {
+                    reject(e);
+                }
+            }, false);
+            reader.readAsText(file, 'utf-8');
+        });
+    }
     function setEditor(editor, hash) {
         const editorConfig = editorConfigs[editor];
         if (!editorConfig)
@@ -2185,7 +2210,7 @@ background-image: url(${config.backgroundImage});
             });
         return [props, measures];
     }
-    function startStinger(url, endSceneIndex) {
+    async function startStinger(url, endSceneIndex) {
         stingerEvents.start = () => {
             updateScene(endSceneIndex);
             render();
@@ -2219,6 +2244,11 @@ background-image: url(${config.backgroundImage});
             }
         }
         else if (url) {
+            const blob = url.startsWith("blob:") && url.substr("blob:".length);
+            if (blob) {
+                const file = await db.get(blob);
+                url = URL.createObjectURL(file);
+            }
             stingerPlayer.stopVideo();
             stingeryoutube.classList.add("hidden");
             stingervideo.src = url;
@@ -2231,6 +2261,8 @@ background-image: url(${config.backgroundImage});
             };
             stingervideo.onended = () => {
                 stingervideo.classList.add("hidden");
+                if (blob)
+                    URL.revokeObjectURL(url);
             };
         }
         else {
@@ -2252,7 +2284,6 @@ background-image: url(${config.backgroundImage});
             db = request.result;
             db.onerror = function (event) {
                 console.log("idb error", event);
-                db = undefined;
             };
         };
         request.onupgradeneeded = function (event) {
@@ -2260,10 +2291,10 @@ background-image: url(${config.backgroundImage});
             db.createObjectStore(STORE_BLOBS);
         };
         return {
-            put: (id, blob) => {
+            put: (id, file) => {
                 const transaction = db.transaction([STORE_BLOBS], "readwrite");
                 const blobs = transaction.objectStore(STORE_BLOBS);
-                blobs.add(blob, id);
+                blobs.put(file, id);
             },
             get: (id) => {
                 return new Promise((resolve, reject) => {
