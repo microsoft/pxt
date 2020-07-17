@@ -18,21 +18,26 @@ function onYouTubeIframeAPIReady() {
             rel: 0
         },
         events: {
-            'onReady': () => {
+            onReady: () => {
                 console.log(`stinger youtube ready`);
                 const stingeryoutube = document.getElementById('stingeryoutube');
             },
-            'onStateChange': (ev) => {
+            onError: () => {
+                const stingeryoutube = document.getElementById('stingeryoutube');
+                stingeryoutube.classList.add("hidden");
+                stingerEvents.end();
+            },
+            onStateChange: (ev) => {
                 const playerState = ev.data;
                 console.log(`stinger youtube state`, playerState);
                 const stingeryoutube = document.getElementById('stingeryoutube');
                 switch (playerState) {
-                    case 1: // playing
+                    case YT.PlayerState.PLAYING: // playing
                         stingeryoutube.classList.remove("hidden");
                         stingerEvents.start();
                         break;
-                    case 0: // ended
-                    case 2: // pause
+                    case YT.PlayerState.ENDED: // ended
+                    case YT.PlayerState.PAUSEd: // pause
                         stingeryoutube.classList.add("hidden");
                         stingerEvents.end();
                         break;
