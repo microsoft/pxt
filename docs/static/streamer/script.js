@@ -1,5 +1,9 @@
 let youTubeReady = false;
 let stingerPlayer;
+const stingerEvents = {
+    start: () => { },
+    end: () => { }
+};
 function onYouTubeIframeAPIReady() {
     youTubeReady = true;
     console.log(`youtube ready`);
@@ -25,10 +29,12 @@ function onYouTubeIframeAPIReady() {
                 switch (playerState) {
                     case 1: // playing
                         stingeryoutube.classList.remove("hidden");
+                        stingerEvents.start();
                         break;
                     case 0: // ended
                     case 2: // pause
                         stingeryoutube.classList.add("hidden");
+                        stingerEvents.end();
                         break;
                 }
             }
@@ -335,24 +341,27 @@ function onYouTubeIframeAPIReady() {
             sceneIndex = CHAT_SCENE_INDEX;
             scene = "chat";
         }
-        if (state.sceneIndex !== sceneIndex) {
-            state.sceneIndex = scenes.indexOf(`${scene}scene`);
-            resetTransition(facecamlabel, "fadeout");
-            resetTransition(hardwarecamlabel, "fadeout");
-        }
         if (sceneIndex === COUNTDOWN_SCENE_INDEX) {
             startCountdown(300000);
             if (config.endVideo) {
-                startStinger(config.endVideo);
+                startStinger(config.endVideo, sceneIndex);
+                return;
             }
         }
         else {
             stopCountdown();
             if (lastSceneIndex == COUNTDOWN_SCENE_INDEX && config.startVideo) {
-                startStinger(config.startVideo);
+                startStinger(config.startVideo, sceneIndex);
+                return;
             }
         }
+        updateScene(sceneIndex);
         render();
+    }
+    function updateScene(sceneIndex) {
+        state.sceneIndex = sceneIndex;
+        resetTransition(facecamlabel, "fadeout");
+        resetTransition(hardwarecamlabel, "fadeout");
     }
     function resetTransition(el, name) {
         el.classList.remove(name);
@@ -2162,7 +2171,12 @@ background-image: url(${config.backgroundImage});
             });
         return [props, measures];
     }
-    function startStinger(url, done) {
+    function startStinger(url, endSceneIndex) {
+        stingerEvents.start = () => {
+            updateScene(endSceneIndex);
+            render();
+        };
+        stingerEvents.end = () => { };
         const stingeryoutube = document.getElementById('stingeryoutube');
         const ytVideoId = parseYouTubeVideoId(url);
         if (ytVideoId) {
@@ -2191,9 +2205,10 @@ background-image: url(${config.backgroundImage});
             }
         }
         else if (url) {
-            stingervideo.src = url;
             stingerPlayer.stopVideo();
             stingeryoutube.classList.add("hidden");
+            stingervideo.src = url;
+            stingervideo.onended = () => stingerEvents.start();
         }
         else {
             stingervideo.src = undefined;
