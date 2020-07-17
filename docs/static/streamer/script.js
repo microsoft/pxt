@@ -54,8 +54,10 @@ function onYouTubeIframeAPIReady() {
     const selectapp = document.getElementById("selectapp");
     const facecamcontainer = document.getElementById("facecam");
     const facecam = document.getElementById("facecamvideo");
+    const facecamoverlay = document.getElementById("facecamoverlay");
     const facecamlabel = document.getElementById("facecamlabel");
     const hardwarecam = document.getElementById("hardwarecamvideo");
+    const hardwarecamoverlay = document.getElementById("hardwarecamoverlay");
     const hardwarecamlabel = document.getElementById("hardwarecamlabel");
     const chat = document.getElementById("chat");
     const settings = document.getElementById("settings");
@@ -109,6 +111,7 @@ function onYouTubeIframeAPIReady() {
         loadSocial();
         await firstLoadFaceCam();
         await loadHardwareCam();
+        await loadCamOverlays();
         await loadSettings();
         setScene("right");
         render();
@@ -900,6 +903,21 @@ background-image: url(${config.backgroundImage});
             body.classList.remove("loading");
         }
     }
+    async function loadCamOverlays() {
+        const config = readConfig();
+        // update overlay
+        if (config.camoverlayVideo) {
+            const url = await resolveBlob(config.camoverlayVideo);
+            facecamoverlay.src = url;
+            hardwarecamoverlay.src = url;
+        }
+        else {
+            const url = facecamoverlay.src;
+            URL.revokeObjectURL(url);
+            facecamoverlay.src = "";
+            hardwarecamoverlay.src = "";
+        }
+    }
     async function loadHardwareCam() {
         // load previous webcam
         const config = readConfig();
@@ -1624,7 +1642,9 @@ background-image: url(${config.backgroundImage});
             if (config.hardwareCamId == config.faceCamId)
                 config.hardwareCamId = undefined; // priority to face cam
             saveConfig(config);
-            loadFaceCam().then(() => loadSettings());
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
         };
         const facerotatecheckbox = document.getElementById("facerotatecameracheckbox");
         facerotatecheckbox.checked = !!config.faceCamRotate;
@@ -1632,7 +1652,9 @@ background-image: url(${config.backgroundImage});
             config.faceCamRotate = !!facerotatecheckbox.checked;
             saveConfig(config);
             render();
-            loadFaceCam().then(() => loadSettings());
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
         };
         const facecamcircularcheckbox = document.getElementById("facecamcircularcheckbox");
         facecamcircularcheckbox.checked = !!config.faceCamCircular;
@@ -1640,7 +1662,9 @@ background-image: url(${config.backgroundImage});
             config.faceCamCircular = !!facecamcircularcheckbox.checked;
             saveConfig(config);
             render();
-            loadFaceCam().then(() => loadSettings());
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
         };
         const facecamscreeninput = document.getElementById("facecamscreeninput");
         facecamscreeninput.value = config.faceCamGreenScreen || "";
@@ -1653,13 +1677,17 @@ background-image: url(${config.backgroundImage});
             if (config.faceCamGreenScreen && facecam.seriously?.chroma)
                 facecam.seriously.chroma.screen = toSeriousColor(config.faceCamGreenScreen);
             else
-                loadFaceCam().then(() => loadSettings());
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings());
         };
         const facecamscreenclear = document.getElementById("facecamscreenclear");
         facecamscreenclear.onclick = function (e) {
             config.faceCamGreenScreen = undefined;
             saveConfig(config);
-            loadFaceCam().then(() => loadSettings());
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
         };
         const facecamscreencanvas = document.getElementById("facecamscreencanvas");
         facecamscreencanvas.width = 320;
@@ -1681,7 +1709,9 @@ background-image: url(${config.backgroundImage});
                 loadSettings();
             }
             else
-                loadFaceCam().then(() => loadSettings());
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings());
         };
         const facecamgreenclipblack = document.getElementById("facecamgreenclipblack");
         facecamgreenclipblack.value = (config.faceCamClipBlack || 0.6) + "";
@@ -1692,7 +1722,9 @@ background-image: url(${config.backgroundImage});
             if (facecam.seriously?.chroma)
                 facecam.seriously.chroma.clipBlack = config.faceCamClipBlack;
             else
-                loadFaceCam().then(() => loadSettings());
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings());
         };
         const facecamcontourinput = document.getElementById("facecamcontourinput");
         facecamcontourinput.value = config.faceCamContour || "";
@@ -1705,13 +1737,17 @@ background-image: url(${config.backgroundImage});
             if (config.faceCamContour && facecam.seriously?.contour)
                 facecam.seriously.contour.color = toSeriousColor(config.faceCamContour);
             else
-                loadFaceCam().then(() => loadSettings());
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings());
         };
         const facecamcontourclear = document.getElementById("facecamcontourclear");
         facecamcontourclear.onclick = function (e) {
             config.faceCamContour = undefined;
             saveConfig(config);
-            loadFaceCam().then(() => loadSettings());
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
         };
         config.faceCamFilter = config.faceCamFilter || {};
         ["contrast", "brightness", "saturate"].forEach(function (k) {

@@ -698,11 +698,17 @@ Settings
         }
         .overlay
         {
+            position: absolute;
+            top: 0;            
+            object-fit: cover;
             pointer-events: none;
             display:none;
         }
         body.hascamoverlay .overlay {
             display: block;
+        }
+        body.hascamoverlay .cam {
+            border: none;
         }
 
         body.thumbnail .facecam .source,
@@ -1407,8 +1413,8 @@ Settings
         <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
         <div role="button" class="box animated clickeable cam facecam" id="facecam">
             <video autoplay playsinline class="source" id="facecamvideo"></video>
-            <canvas id="facecamvideoserious" class="source" class="videocanvas"></canvas>
-            <video autoplay playsinline class="overlay" id="facecamoverlay"></video>
+            <canvas id="facecamvideoserious" class="videocanvas source" class="videocanvas"></canvas>
+            <video autoplay playsinline loop class="overlay" id="facecamoverlay"></video>
             <div class="videolabel" id="facecamlabel"></div>
             <div id="facecamchatscenebtn" title="Go to chat scene" class="videobtn videochatscenebtn animated">
                 <i class="ms-Icon ms-Icon--Contact"></i>
@@ -1431,8 +1437,8 @@ Settings
         </div>
         <div role="button" class="box animated clickeable cam hardwarecam" id="hardwarecam">
             <video autoplay playsinline class="source" id="hardwarecamvideo"></video>
-            <canvas id="hardwarecamvideoserious" class="source" width="640" height="480" class="videocanvas"></canvas>
-            <video autoplay playsinline class="overlay" id="hardwarecamoverlay"></video>
+            <canvas id="hardwarecamvideoserious" class="videocanvas source" width="640" height="480" class="videocanvas"></canvas>
+            <video autoplay playsinline loop class="overlay" id="hardwarecamoverlay"></video>
             <div class="videolabel" id="hardwarecamlabel"></div>
             <div id="hardwarecamchatscenebtn" title="Go to chat scene" class="videobtn videochatscenebtn animated">
                 <i class="ms-Icon ms-Icon--Contact"></i>

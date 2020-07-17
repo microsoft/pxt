@@ -61,7 +61,7 @@ interface StreamerConfig {
     backgroundVideo?: string;
     stingerVideo?: string;
     stingerVideoDelay?: number;
-    camoverlayVideo?: number;
+    camoverlayVideo?: string;
     faceCamGreenScreen?: string;
     hardwareCamGreenScreen?: string;
     faceCamClipBlack?: number;
@@ -148,8 +148,10 @@ function onYouTubeIframeAPIReady() {
     const selectapp = document.getElementById("selectapp");
     const facecamcontainer = document.getElementById("facecam");
     const facecam = document.getElementById("facecamvideo") as HTMLVideoElement;
+    const facecamoverlay = document.getElementById("facecamoverlay") as HTMLVideoElement;
     const facecamlabel = document.getElementById("facecamlabel");
     const hardwarecam = document.getElementById("hardwarecamvideo") as HTMLVideoElement;
+    const hardwarecamoverlay = document.getElementById("hardwarecamoverlay") as HTMLVideoElement;
     const hardwarecamlabel = document.getElementById("hardwarecamlabel");
     const chat = document.getElementById("chat") as HTMLIFrameElement;
     const settings = document.getElementById("settings");
@@ -207,6 +209,7 @@ function onYouTubeIframeAPIReady() {
         loadSocial()
         await firstLoadFaceCam()
         await loadHardwareCam()
+        await loadCamOverlays()
         await loadSettings()
         setScene("right")
         render()
@@ -1057,6 +1060,21 @@ background-image: url(${config.backgroundImage});
         }
     }
 
+    async function loadCamOverlays() {
+        const config = readConfig();
+        // update overlay
+        if (config.camoverlayVideo) {
+            const url = await resolveBlob(config.camoverlayVideo)
+            facecamoverlay.src = url
+            hardwarecamoverlay.src = url
+        } else {
+            const url = facecamoverlay.src;
+            URL.revokeObjectURL(url);
+            facecamoverlay.src = ""
+            hardwarecamoverlay.src = ""
+        }
+    }
+
     async function loadHardwareCam() {
         // load previous webcam
         const config = readConfig();
@@ -1812,7 +1830,9 @@ background-image: url(${config.backgroundImage});
             if (config.hardwareCamId == config.faceCamId)
                 config.hardwareCamId = undefined; // priority to face cam
             saveConfig(config)
-            loadFaceCam().then(() => loadSettings())
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
         const facerotatecheckbox = document.getElementById("facerotatecameracheckbox") as HTMLInputElement
         facerotatecheckbox.checked = !!config.faceCamRotate
@@ -1820,7 +1840,9 @@ background-image: url(${config.backgroundImage});
             config.faceCamRotate = !!facerotatecheckbox.checked
             saveConfig(config)
             render()
-            loadFaceCam().then(() => loadSettings())
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
         const facecamcircularcheckbox = document.getElementById("facecamcircularcheckbox") as HTMLInputElement
         facecamcircularcheckbox.checked = !!config.faceCamCircular
@@ -1828,7 +1850,9 @@ background-image: url(${config.backgroundImage});
             config.faceCamCircular = !!facecamcircularcheckbox.checked
             saveConfig(config)
             render()
-            loadFaceCam().then(() => loadSettings())
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
 
         const facecamscreeninput = document.getElementById("facecamscreeninput") as HTMLInputElement
@@ -1842,13 +1866,17 @@ background-image: url(${config.backgroundImage});
             if (config.faceCamGreenScreen && (<any>facecam).seriously?.chroma)
                 (<any>facecam).seriously.chroma.screen = toSeriousColor(config.faceCamGreenScreen);
             else
-                loadFaceCam().then(() => loadSettings())
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings())
         }
         const facecamscreenclear = document.getElementById("facecamscreenclear") as HTMLButtonElement
         facecamscreenclear.onclick = function (e) {
             config.faceCamGreenScreen = undefined;
             saveConfig(config);
-            loadFaceCam().then(() => loadSettings())
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
         const facecamscreencanvas = document.getElementById("facecamscreencanvas") as HTMLCanvasElement
         facecamscreencanvas.width = 320;
@@ -1870,7 +1898,9 @@ background-image: url(${config.backgroundImage});
                 loadSettings()
             }
             else
-                loadFaceCam().then(() => loadSettings())
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings())
         }
         const facecamgreenclipblack = document.getElementById("facecamgreenclipblack") as HTMLInputElement
         facecamgreenclipblack.value = (config.faceCamClipBlack || 0.6) + "";
@@ -1881,7 +1911,9 @@ background-image: url(${config.backgroundImage});
             if ((<any>facecam).seriously?.chroma)
                 (<any>facecam).seriously.chroma.clipBlack = config.faceCamClipBlack;
             else
-                loadFaceCam().then(() => loadSettings())
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings())
         }
         const facecamcontourinput = document.getElementById("facecamcontourinput") as HTMLInputElement
         facecamcontourinput.value = config.faceCamContour || ""
@@ -1894,13 +1926,17 @@ background-image: url(${config.backgroundImage});
             if (config.faceCamContour && (<any>facecam).seriously?.contour)
                 (<any>facecam).seriously.contour.color = toSeriousColor(config.faceCamContour);
             else
-                loadFaceCam().then(() => loadSettings())
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings())
         }
         const facecamcontourclear = document.getElementById("facecamcontourclear") as HTMLInputElement
         facecamcontourclear.onclick = function (e) {
             config.faceCamContour = undefined;
             saveConfig(config);
-            loadFaceCam().then(() => loadSettings())
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
 
         config.faceCamFilter = config.faceCamFilter || {};
