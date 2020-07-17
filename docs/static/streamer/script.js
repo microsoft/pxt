@@ -260,7 +260,7 @@ function onYouTubeIframeAPIReady() {
         if (config.extraSites && config.extraSites.length) {
             addSep(toolbox);
             config.extraSites.forEach(addSiteButton);
-            addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor));
+            addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor, config.stingerVideoDelay));
         }
         addSep(toolbox);
         if (state.speech)
@@ -346,7 +346,7 @@ function onYouTubeIframeAPIReady() {
                 editor2.src = url;
             else
                 editor.src = url;
-        });
+        }, config.stingerVideoDelay);
     }
     function setScene(scene) {
         tickEvent("streamer.scene", { scene: scene });
@@ -363,7 +363,7 @@ function onYouTubeIframeAPIReady() {
             startCountdown(300000);
             const v = config.endVideo || config.stingerVideo;
             if (v) {
-                startStingerScene(v, sceneIndex);
+                startStingerScene(v, sceneIndex, config.stingerVideoDelay);
                 return;
             }
         }
@@ -371,7 +371,7 @@ function onYouTubeIframeAPIReady() {
             stopCountdown();
             const v = config.endVideo || config.stingerVideo;
             if (lastSceneIndex == COUNTDOWN_SCENE_INDEX && v) {
-                startStingerScene(v, sceneIndex);
+                startStingerScene(v, sceneIndex, config.stingerVideoDelay);
                 return;
             }
         }
@@ -379,7 +379,7 @@ function onYouTubeIframeAPIReady() {
         if (config.stingerVideo &&
             (sceneIndex == CHAT_SCENE_INDEX && isLeftOrRightScene(lastSceneIndex))
             || (isLeftOrRightScene(sceneIndex) && lastSceneIndex == CHAT_SCENE_INDEX)) {
-            startStingerScene(config.stingerVideo, sceneIndex);
+            startStingerScene(config.stingerVideo, sceneIndex, config.stingerVideoDelay);
             return;
         }
         updateScene(sceneIndex);
@@ -1904,6 +1904,14 @@ background-image: url(${config.backgroundImage});
         importVideoButton("start");
         importVideoButton("end");
         importVideoButton("stinger");
+        const stingervideodelayinput = document.getElementById("stringervideodelayinput");
+        stingervideodelayinput.value = (config.stingerVideoDelay || "") + "";
+        stingervideodelayinput.onchange = function (e) {
+            const i = parseInt(stingervideodelayinput.value || "0");
+            config.stingerVideoDelay = isNaN(i) ? 0 : i;
+            stingervideodelayinput.value = (config.stingerVideoDelay || "") + "";
+            saveConfig(config);
+        };
         const backgroundcolorinput = document.getElementById("backgroundcolorinput");
         backgroundcolorinput.value = config.styleBackground || "";
         backgroundcolorinput.onchange = function (e) {
@@ -2215,7 +2223,7 @@ background-image: url(${config.backgroundImage});
             });
         return [props, measures];
     }
-    async function startStingerScene(url, endSceneIndex, transitionDelay = 700) {
+    async function startStingerScene(url, endSceneIndex, transitionDelay) {
         startStinger(url, () => {
             updateScene(endSceneIndex);
             render();

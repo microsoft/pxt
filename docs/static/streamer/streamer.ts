@@ -59,6 +59,7 @@ interface StreamerConfig {
     backgroundImage?: string;
     backgroundVideo?: string;
     stingerVideo?: string;
+    stingerVideoDelay?: number;
     faceCamGreenScreen?: string;
     hardwareCamGreenScreen?: string;
     faceCamClipBlack?: number;
@@ -368,7 +369,7 @@ function onYouTubeIframeAPIReady() {
         if (config.extraSites && config.extraSites.length) {
             addSep(toolbox);
             config.extraSites.forEach(addSiteButton)
-            addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor))
+            addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor, config.stingerVideoDelay))
         }
 
         addSep(toolbox)
@@ -466,7 +467,7 @@ function onYouTubeIframeAPIReady() {
                 editor2.src = url;
             else
                 editor.src = url;
-        })
+        }, config.stingerVideoDelay)
     }
 
     function setScene(scene) {
@@ -486,14 +487,14 @@ function onYouTubeIframeAPIReady() {
             startCountdown(300000);
             const v = config.endVideo || config.stingerVideo
             if (v) {
-                startStingerScene(v, sceneIndex)
+                startStingerScene(v, sceneIndex, config.stingerVideoDelay)
                 return;
             }
         } else {
             stopCountdown();
             const v = config.endVideo || config.stingerVideo
             if (lastSceneIndex == COUNTDOWN_SCENE_INDEX && v) {
-                startStingerScene(v, sceneIndex)
+                startStingerScene(v, sceneIndex, config.stingerVideoDelay)
                 return;
             }
         }
@@ -502,7 +503,7 @@ function onYouTubeIframeAPIReady() {
         if (config.stingerVideo &&
             (sceneIndex == CHAT_SCENE_INDEX && isLeftOrRightScene(lastSceneIndex))
             || (isLeftOrRightScene(sceneIndex) && lastSceneIndex == CHAT_SCENE_INDEX)) {
-            startStingerScene(config.stingerVideo, sceneIndex)
+            startStingerScene(config.stingerVideo, sceneIndex, config.stingerVideoDelay)
             return;
         }
 
@@ -2101,6 +2102,15 @@ background-image: url(${config.backgroundImage});
         importVideoButton("end")
         importVideoButton("stinger")
 
+        const stingervideodelayinput = document.getElementById("stringervideodelayinput") as HTMLInputElement
+        stingervideodelayinput.value = (config.stingerVideoDelay || "") + ""
+        stingervideodelayinput.onchange = function (e) {
+            const i = parseInt(stingervideodelayinput.value || "0");
+            config.stingerVideoDelay = isNaN(i) ? 0 : i;
+            stingervideodelayinput.value = (config.stingerVideoDelay || "") + ""
+            saveConfig(config);
+        }
+
         const backgroundcolorinput = document.getElementById("backgroundcolorinput") as HTMLInputElement
         backgroundcolorinput.value = config.styleBackground || ""
         backgroundcolorinput.onchange = function (e) {
@@ -2430,7 +2440,7 @@ background-image: url(${config.backgroundImage});
         return [props, measures];
     }
 
-    async function startStingerScene(url: string, endSceneIndex: number, transitionDelay = 700) {
+    async function startStingerScene(url: string, endSceneIndex: number, transitionDelay: number) {
         startStinger(url, () => {
             updateScene(endSceneIndex);
             render()
