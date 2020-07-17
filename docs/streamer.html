@@ -8,6 +8,7 @@
     <script src="/static/streamer/seriously.js"></script>
     <script src="/static/streamer/seriously.chroma.js"></script>
     <script src="/static/streamer/seriously.contour.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:site" content="@MsMakeCode" />
     <meta name="twitter:creator" content="@MsMakeCode" />
@@ -85,14 +86,17 @@ Use https://uifabricicons.azurewebsites.net/
         }
 
         /** background video */
-        .background {
-            display: none;
+        .full {
+            display: block;
             object-fit: cover;
             width: 100vw;
             height: 100vh;
             position: fixed;
             top: 0;
             left: 0;
+        }
+        .background {
+            display: none;
         }
 
         body.backgroundvideo #backgroundvideo {
@@ -364,19 +368,6 @@ Use https://uifabricicons.azurewebsites.net/
                 3px -3px 0 #fff,
                 -3px -3px 0 #fff;
             transform: rotateZ(-30deg);
-        }
-
-        /** video */
-        .stinger {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            min-width: 100%;
-            min-height: 100%;
-            width: auto;
-            height: auto;
-            z-index: 100;
-            transform: translateX(-50%) translateY(-50%);
         }
 
         /**
@@ -653,6 +644,10 @@ Settings
 
         .tools {
             z-index: 10;
+        }
+
+        .stinger {
+            z-index: 100;
         }
 
         /** full editor */
@@ -1390,8 +1385,8 @@ Settings
 </head>
 
 <body class="rightscene">
-    <video id="backgroundvideo" class="background" playsinline autoplay muted loop></video>
-    <iframe id="backgroundyoutube" class="background" type="text/html"></iframe>
+    <video id="backgroundvideo" class="full background" playsinline autoplay muted loop></video>
+    <iframe id="backgroundyoutube" class="full background" type="text/html"></iframe>
     <div id="container" class="container">
         <iframe class="box animated" id="editor" allow="usb;camera"
             sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox allow-forms"></iframe>
@@ -1446,8 +1441,8 @@ Settings
         </div>
         <div class="box animated" id="title">title</div>
         <div class="animated" id="countdown">5:00</div>
-        <video class="hidden stinger" id="startvideo" playsinline preload="auto" controls></video>
-        <video class="hidden stinger" id="endvideo" playsinline preload="auto" controls></video>
+        <video class="hidden full stinger" id="stingervideo" playsinline autoplay preload="auto" controls></video>
+        <div class="hidden full stinger" id="stingeryoutube"></div>
         <div class="animated hidden" id="subtitles"></div>
         <div class="box animated hidden" id="selectapp">
             <p>You need to share your screen with MakeCode to record it.</p>
@@ -1655,15 +1650,15 @@ Settings
                 <div class="section">
                     <h3>Countdown</h3>
                     <div class="field">
-                        <label for="startvideoinput">Intro video (must be https://...). Will play when leaving the
+                        <label for="startvideoinput">Intro video (YouTube video or must be https://...). Will play when leaving the
                             countdown
-                            view.</label>
+                            view. YouTube videos are do not support transparency.</label>
                         <input id="startvideoinput" type="url" />
                     </div>
                     <div class="field">
-                        <label for="endvideoinput">End video (must be https://...). Will play when entering the
+                        <label for="endvideoinput">End video (YouTube video or must be https://...). Will play when entering the
                             countdown
-                            view.</label>
+                            view. YouTube videos are do not support transparency.</label>
                         <input id="endvideoinput" type="url" />
                     </div>
                     <div class="field">

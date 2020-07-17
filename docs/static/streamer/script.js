@@ -1,3 +1,51 @@
+let youTubeReady = false;
+let stingerPlayer;
+const stingerEvents = {
+    start: () => { },
+    end: () => { }
+};
+function onYouTubeIframeAPIReady() {
+    youTubeReady = true;
+    console.log(`youtube ready`);
+    stingerPlayer = new YT.Player('stingeryoutube', {
+        playerVars: {
+            mute: 1,
+            autoplay: 1,
+            controls: 0,
+            disablekb: 1,
+            fs: 0,
+            modestbranding: 1,
+            rel: 0
+        },
+        events: {
+            onReady: () => {
+                console.log(`stinger youtube ready`);
+                const stingeryoutube = document.getElementById('stingeryoutube');
+            },
+            onError: () => {
+                const stingeryoutube = document.getElementById('stingeryoutube');
+                stingeryoutube.classList.add("hidden");
+                stingerEvents.end();
+            },
+            onStateChange: (ev) => {
+                const playerState = ev.data;
+                console.log(`stinger youtube state`, playerState);
+                const stingeryoutube = document.getElementById('stingeryoutube');
+                switch (playerState) {
+                    case YT.PlayerState.PLAYING: // playing
+                        stingeryoutube.classList.remove("hidden");
+                        stingerEvents.start();
+                        break;
+                    case YT.PlayerState.ENDED: // ended
+                    case YT.PlayerState.PAUSEd: // pause
+                        stingeryoutube.classList.add("hidden");
+                        stingerEvents.end();
+                        break;
+                }
+            }
+        }
+    });
+}
 (async function () {
     const body = document.body;
     const container = document.getElementById("container");
@@ -22,8 +70,8 @@
     const countdown = document.getElementById('countdown');
     const titleEl = document.getElementById('title');
     const subtitles = document.getElementById('subtitles');
-    const startvideo = document.getElementById('startvideo');
-    const endvideo = document.getElementById('endvideo');
+    const stingervideo = document.getElementById('stingervideo');
+    //const stingeryoutube = document.getElementById('stingeryoutube') as HTMLIFrameElement
     const backgroundvideo = document.getElementById('backgroundvideo');
     const backgroundyoutube = document.getElementById('backgroundyoutube');
     const intro = document.getElementById('intro');
@@ -61,7 +109,6 @@
         await firstLoadFaceCam();
         await loadHardwareCam();
         await loadSettings();
-        loadVideos();
         setScene("right");
         render();
         handleHashChange();
@@ -299,32 +346,27 @@
             sceneIndex = CHAT_SCENE_INDEX;
             scene = "chat";
         }
-        if (state.sceneIndex !== sceneIndex) {
-            state.sceneIndex = scenes.indexOf(`${scene}scene`);
-            resetTransition(facecamlabel, "fadeout");
-            resetTransition(hardwarecamlabel, "fadeout");
-        }
         if (sceneIndex === COUNTDOWN_SCENE_INDEX) {
             startCountdown(300000);
             if (config.endVideo) {
-                endvideo.classList.remove("hidden");
-                endvideo.onended = () => {
-                    endvideo.classList.add("hidden");
-                };
-                endvideo.play();
+                startStinger(config.endVideo, sceneIndex);
+                return;
             }
         }
         else {
             stopCountdown();
             if (lastSceneIndex == COUNTDOWN_SCENE_INDEX && config.startVideo) {
-                startvideo.classList.remove("hidden");
-                startvideo.onended = () => {
-                    startvideo.classList.add("hidden");
-                };
-                startvideo.play();
+                startStinger(config.startVideo, sceneIndex);
+                return;
             }
         }
+        updateScene(sceneIndex);
         render();
+    }
+    function updateScene(sceneIndex) {
+        state.sceneIndex = sceneIndex;
+        resetTransition(facecamlabel, "fadeout");
+        resetTransition(hardwarecamlabel, "fadeout");
     }
     function resetTransition(el, name) {
         el.classList.remove(name);
@@ -639,11 +681,6 @@
             editor2.remove();
         }
         loadStyle();
-    }
-    function loadVideos() {
-        const config = readConfig();
-        startvideo.src = config.startVideo;
-        endvideo.src = config.endVideo;
     }
     function loadStyle() {
         const config = readConfig();
@@ -1865,7 +1902,6 @@ background-image: url(${config.backgroundImage});
             if (/^https:\/\//.test(startvideoinput.value))
                 config.startVideo = startvideoinput.value;
             saveConfig(config);
-            loadVideos();
             render();
         };
         const endvideoinput = document.getElementById("endvideoinput");
@@ -1875,7 +1911,6 @@ background-image: url(${config.backgroundImage});
             if (/^https:\/\//.test(endvideoinput.value))
                 config.endVideo = endvideoinput.value;
             saveConfig(config);
-            loadVideos();
             render();
         };
         const backgroundcolorinput = document.getElementById("backgroundcolorinput");
@@ -2140,5 +2175,60 @@ background-image: url(${config.backgroundImage});
                     props[k] = JSON.stringify(data[k] || '');
             });
         return [props, measures];
+    }
+    function startStinger(url, endSceneIndex) {
+        stingerEvents.start = () => {
+            updateScene(endSceneIndex);
+            render();
+        };
+        stingerEvents.end = () => { };
+        const stingeryoutube = document.getElementById('stingeryoutube');
+        const ytVideoId = parseYouTubeVideoId(url);
+        if (ytVideoId) {
+            stingervideo.src = undefined;
+            stingervideo.classList.add("hidden");
+            stingerPlayer.loadVideoById(ytVideoId, 0);
+            // rescale youtube iframe to cover the entire background
+            const el = document.firstElementChild;
+            const w = el.clientWidth;
+            const h = el.clientHeight;
+            const ratio = w / h;
+            const hd = 16 / 9;
+            if (ratio > hd) {
+                // the video is going to be 16:9, compensate
+                console.log(`ratio`, ratio);
+                const vh = 100 * ratio / hd;
+                stingeryoutube.style.height = `${vh}vh`;
+                stingeryoutube.style.width = `100vw`;
+                stingeryoutube.style.transform = `translate(0, ${-(vh - 100) / 2}vh)`;
+            }
+            else {
+                const vw = 100 / ratio * hd;
+                stingeryoutube.style.height = `100vh`;
+                stingeryoutube.style.width = `${vw}vw`;
+                stingeryoutube.style.transform = `translate(${-(vw - 100) / 2}vh, 0)`;
+            }
+        }
+        else if (url) {
+            stingerPlayer.stopVideo();
+            stingeryoutube.classList.add("hidden");
+            stingervideo.src = url;
+            stingervideo.onplay = () => {
+                stingervideo.classList.remove("hidden");
+                stingerEvents.start();
+            };
+            stingervideo.onpause = () => {
+                stingervideo.classList.add("hidden");
+            };
+            stingervideo.onended = () => {
+                stingervideo.classList.add("hidden");
+            };
+        }
+        else {
+            stingervideo.src = undefined;
+            stingerPlayer.stopVideo();
+            stingervideo.classList.add("hidden");
+            stingeryoutube.classList.add("hidden");
+        }
     }
 })();
