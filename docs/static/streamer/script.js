@@ -171,9 +171,9 @@ function onYouTubeIframeAPIReady() {
         return m && m[1];
     }
     function createYouTubeEmbedUrl(ytVideoId, interactive) {
-        let url = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1&fs=0&loop=1&playlist=${ytVideoId}&modestbranding=1&rel=0`;
+        let url = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1&controls=${interactive ? "1" : "0"}&disablekb=1&fs=0&loop=1&playlist=${ytVideoId}&modestbranding=1&rel=0`;
         if (!interactive)
-            url += "&disablekb=1&controls=0&mute=1";
+            url += "&mute=1";
         return url;
     }
     function render() {
