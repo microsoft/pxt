@@ -1989,14 +1989,18 @@ background-image: url(${config.backgroundImage});
             saveConfig(config)
             state.hardware = !!config.hardwareCamId
             render()
-            loadHardwareCam().then(() => loadSettings())
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
         const hardwarerotatecheckbox = document.getElementById("hardwarerotatecameracheckbox") as HTMLInputElement
         hardwarerotatecheckbox.checked = !!config.hardwareCamRotate
         hardwarerotatecheckbox.onchange = function () {
             config.hardwareCamRotate = !!hardwarerotatecheckbox.checked
             saveConfig(config)
-            loadHardwareCam().then(() => loadSettings())
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
         const hardwarecamcircularcheckbox = document.getElementById("hardwarecamcircularcheckbox") as HTMLInputElement
         hardwarecamcircularcheckbox.checked = !!config.hardwareCamCircular
@@ -2004,7 +2008,9 @@ background-image: url(${config.backgroundImage});
             config.hardwareCamCircular = !!hardwarecamcircularcheckbox.checked
             saveConfig(config)
             render()
-            loadFaceCam().then(() => loadSettings())
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
 
         const hardwarecamscreeninput = document.getElementById("hardwarecamscreeninput") as HTMLInputElement
@@ -2018,7 +2024,9 @@ background-image: url(${config.backgroundImage});
             if (config.hardwareCamGreenScreen && (<any>hardwarecam).seriously?.chroma)
                 (<any>hardwarecam).seriously.chroma.screen = toSeriousColor(config.hardwareCamGreenScreen);
             else
-                loadHardwareCam().then(() => loadSettings())
+                loadHardwareCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings())
         }
 
         const hardwarecamscreencanvas = document.getElementById("hardwarecamscreencanvas") as HTMLCanvasElement
@@ -2047,7 +2055,9 @@ background-image: url(${config.backgroundImage});
         hardwarecamscreenclear.onclick = function (e) {
             config.hardwareCamGreenScreen = undefined;
             saveConfig(config);
-            loadHardwareCam().then(() => loadSettings())
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
         const hardwarecamgreenclipblack = document.getElementById("hardwarecamgreenclipblack") as HTMLInputElement
         hardwarecamgreenclipblack.value = (config.hardwareCamClipBlack || 0.6) + "";
@@ -2058,7 +2068,9 @@ background-image: url(${config.backgroundImage});
             if ((<any>hardwarecam).seriously?.chroma)
                 (<any>hardwarecam).seriously.chroma.clipBlack = config.hardwareCamClipBlack;
             else
-                loadHardwareCam().then(() => loadSettings())
+                loadHardwareCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings())
         }
         const hardwarecamcontourinput = document.getElementById("hardwarecamcontourinput") as HTMLInputElement
         hardwarecamcontourinput.value = config.hardwareCamContour || ""
@@ -2071,13 +2083,17 @@ background-image: url(${config.backgroundImage});
             if (config.hardwareCamContour && (<any>hardwarecam).seriously?.contour)
                 (<any>hardwarecam).seriously.contour.color = toSeriousColor(config.hardwareCamContour);
             else
-                loadHardwareCam().then(() => loadSettings())
+                loadHardwareCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings())
         }
         const hardwarecamcontourclear = document.getElementById("hardwarecamcontourclear") as HTMLButtonElement
         hardwarecamcontourclear.onclick = function (e) {
             config.hardwareCamContour = undefined;
             saveConfig(config);
-            loadHardwareCam().then(() => loadSettings())
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
 
         config.hardwareCamFilter = config.hardwareCamFilter || {};

@@ -1798,14 +1798,18 @@ background-image: url(${config.backgroundImage});
             saveConfig(config);
             state.hardware = !!config.hardwareCamId;
             render();
-            loadHardwareCam().then(() => loadSettings());
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
         };
         const hardwarerotatecheckbox = document.getElementById("hardwarerotatecameracheckbox");
         hardwarerotatecheckbox.checked = !!config.hardwareCamRotate;
         hardwarerotatecheckbox.onchange = function () {
             config.hardwareCamRotate = !!hardwarerotatecheckbox.checked;
             saveConfig(config);
-            loadHardwareCam().then(() => loadSettings());
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
         };
         const hardwarecamcircularcheckbox = document.getElementById("hardwarecamcircularcheckbox");
         hardwarecamcircularcheckbox.checked = !!config.hardwareCamCircular;
@@ -1813,7 +1817,9 @@ background-image: url(${config.backgroundImage});
             config.hardwareCamCircular = !!hardwarecamcircularcheckbox.checked;
             saveConfig(config);
             render();
-            loadFaceCam().then(() => loadSettings());
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
         };
         const hardwarecamscreeninput = document.getElementById("hardwarecamscreeninput");
         hardwarecamscreeninput.value = config.hardwareCamGreenScreen || "";
@@ -1826,7 +1832,9 @@ background-image: url(${config.backgroundImage});
             if (config.hardwareCamGreenScreen && hardwarecam.seriously?.chroma)
                 hardwarecam.seriously.chroma.screen = toSeriousColor(config.hardwareCamGreenScreen);
             else
-                loadHardwareCam().then(() => loadSettings());
+                loadHardwareCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings());
         };
         const hardwarecamscreencanvas = document.getElementById("hardwarecamscreencanvas");
         hardwarecamscreencanvas.width = 320;
@@ -1854,7 +1862,9 @@ background-image: url(${config.backgroundImage});
         hardwarecamscreenclear.onclick = function (e) {
             config.hardwareCamGreenScreen = undefined;
             saveConfig(config);
-            loadHardwareCam().then(() => loadSettings());
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
         };
         const hardwarecamgreenclipblack = document.getElementById("hardwarecamgreenclipblack");
         hardwarecamgreenclipblack.value = (config.hardwareCamClipBlack || 0.6) + "";
@@ -1865,7 +1875,9 @@ background-image: url(${config.backgroundImage});
             if (hardwarecam.seriously?.chroma)
                 hardwarecam.seriously.chroma.clipBlack = config.hardwareCamClipBlack;
             else
-                loadHardwareCam().then(() => loadSettings());
+                loadHardwareCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings());
         };
         const hardwarecamcontourinput = document.getElementById("hardwarecamcontourinput");
         hardwarecamcontourinput.value = config.hardwareCamContour || "";
@@ -1878,13 +1890,17 @@ background-image: url(${config.backgroundImage});
             if (config.hardwareCamContour && hardwarecam.seriously?.contour)
                 hardwarecam.seriously.contour.color = toSeriousColor(config.hardwareCamContour);
             else
-                loadHardwareCam().then(() => loadSettings());
+                loadHardwareCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings());
         };
         const hardwarecamcontourclear = document.getElementById("hardwarecamcontourclear");
         hardwarecamcontourclear.onclick = function (e) {
             config.hardwareCamContour = undefined;
             saveConfig(config);
-            loadHardwareCam().then(() => loadSettings());
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
         };
         config.hardwareCamFilter = config.hardwareCamFilter || {};
         ["contrast", "brightness", "saturate"].forEach(function (k) {
