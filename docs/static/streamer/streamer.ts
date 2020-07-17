@@ -263,10 +263,17 @@ function onYouTubeIframeAPIReady() {
         return json;
     }
 
-    function parseYouTubeVideoId(url) {
+    function parseYouTubeVideoId(url: string) {
         if (!url) return undefined;
         const m = /^https:\/\/(?:youtu\.be\/|(?:www.)?youtube.com\/watch\?v=)([a-z0-9_\-]+)$/i.exec(url)
         return m && m[1];
+    }
+
+    function createYouTubeEmbedUrl(ytVideoId: string, interactive: boolean) {
+        let url = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1&controls=${interactive ? "1" : "0"}&disablekb=1&fs=0&loop=1&playlist=${ytVideoId}&modestbranding=1&rel=0`;
+        if (!interactive)
+            url += "&mute=1"
+        return url;
     }
 
     function render() {
@@ -448,6 +455,9 @@ function onYouTubeIframeAPIReady() {
 
     function setSite(url) {
         const config = readConfig();
+        const ytid = parseYouTubeVideoId(url);
+        if (ytid)
+            url = createYouTubeEmbedUrl(ytid, true)
         if (config.multiEditor && state.sceneIndex == LEFT_SCENE_INDEX)
             editor2.src = url;
         else
@@ -865,9 +875,9 @@ background: ${primary};
         const ytVideoId = parseYouTubeVideoId(config.backgroundVideo);
         if (ytVideoId) {
             backgroundvideo.src = undefined;
-            const url = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1&controls=0&disablekb=1&fs=0&loop=1&playlist=${ytVideoId}&modestbranding=1&rel=0&mute=1`
+            const url = createYouTubeEmbedUrl(ytVideoId, false)
             if (backgroundyoutube.src !== url)
-                backgroundyoutube.src = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1&controls=0&disablekb=1&fs=0&loop=1&playlist=${ytVideoId}&modestbranding=1&rel=0&mute=1`
+                backgroundyoutube.src = url
 
             // rescale youtube iframe to cover the entire background
             const el = document.firstElementChild;
