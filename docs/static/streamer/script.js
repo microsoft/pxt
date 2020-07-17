@@ -356,22 +356,35 @@ function onYouTubeIframeAPIReady() {
             sceneIndex = CHAT_SCENE_INDEX;
             scene = "chat";
         }
+        // handle countdown
         if (sceneIndex === COUNTDOWN_SCENE_INDEX) {
             startCountdown(300000);
-            if (config.endVideo) {
-                startStinger(config.endVideo, sceneIndex, 700);
+            const v = config.endVideo || config.stingerVideo;
+            if (v) {
+                startStinger(v, sceneIndex, 700);
                 return;
             }
         }
         else {
             stopCountdown();
-            if (lastSceneIndex == COUNTDOWN_SCENE_INDEX && config.startVideo) {
-                startStinger(config.startVideo, sceneIndex, 700);
+            const v = config.endVideo || config.stingerVideo;
+            if (lastSceneIndex == COUNTDOWN_SCENE_INDEX && v) {
+                startStinger(v, sceneIndex, 700);
                 return;
             }
         }
+        // stinger animation
+        if (config.stingerVideo &&
+            (sceneIndex == CHAT_SCENE_INDEX && isLeftOrRightScene(lastSceneIndex))
+            || (isLeftOrRightScene(sceneIndex) && lastSceneIndex == CHAT_SCENE_INDEX)) {
+            startStinger(config.stingerVideo, sceneIndex, 700);
+            return;
+        }
         updateScene(sceneIndex);
         render();
+        function isLeftOrRightScene(i) {
+            return i == LEFT_SCENE_INDEX || i == RIGHT_SCENE_INDEX;
+        }
     }
     function updateScene(sceneIndex) {
         state.sceneIndex = sceneIndex;
@@ -1882,36 +1895,9 @@ background-image: url(${config.backgroundImage});
             render();
         };
         importVideoButton("background");
-        const backgroundvideoinput = document.getElementById("backgroundvideoinput");
-        backgroundvideoinput.value = config.backgroundVideo || "";
-        backgroundvideoinput.onchange = function (e) {
-            config.backgroundVideo = undefined;
-            if (/^https:\/\//.test(backgroundvideoinput.value))
-                config.backgroundVideo = backgroundvideoinput.value;
-            saveConfig(config);
-            loadStyle();
-            render();
-        };
         importVideoButton("start");
-        const startvideoinput = document.getElementById("startvideoinput");
-        startvideoinput.value = config.startVideo || "";
-        startvideoinput.onchange = function (e) {
-            config.startVideo = undefined;
-            if (/^https:\/\//.test(startvideoinput.value))
-                config.startVideo = startvideoinput.value;
-            saveConfig(config);
-            render();
-        };
         importVideoButton("end");
-        const endvideoinput = document.getElementById("endvideoinput");
-        endvideoinput.value = config.endVideo || "";
-        endvideoinput.onchange = function (e) {
-            config.endVideo = undefined;
-            if (/^https:\/\//.test(endvideoinput.value))
-                config.endVideo = endvideoinput.value;
-            saveConfig(config);
-            render();
-        };
+        importVideoButton("stinger");
         const backgroundcolorinput = document.getElementById("backgroundcolorinput");
         backgroundcolorinput.value = config.styleBackground || "";
         backgroundcolorinput.onchange = function (e) {
@@ -2056,6 +2042,18 @@ background-image: url(${config.backgroundImage});
                 loadStyle();
                 render();
             });
+            const videoinput = document.getElementById(`${name}videoinput`);
+            const field = `${name}Video`;
+            videoinput.value = config[field] || "";
+            videoinput.onchange = function (e) {
+                config[field] = undefined;
+                if (/^https:\/\//.test(videoinput.value))
+                    config[field] = videoinput.value;
+                saveConfig(config);
+                loadStyle();
+                loadSettings();
+                render();
+            };
         }
     }
     function importFileButton(tick, input, button, done) {
