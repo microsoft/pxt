@@ -71,6 +71,12 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     hide() {
+        if (this.state.qrCodeExpanded) {
+            pxt.tickEvent('share.qrtoggle');
+            const { qrCodeExpanded } = this.state;
+            this.setState({ qrCodeExpanded: !qrCodeExpanded });
+            return;
+        }
         if (this._gifEncoder) {
             this._gifEncoder.cancel();
             this._gifEncoder = undefined;
