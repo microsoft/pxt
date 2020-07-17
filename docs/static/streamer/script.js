@@ -2051,8 +2051,9 @@ background-image: url(${config.backgroundImage});
         };
         function importVideoButton(name) {
             importFileButton(`streamer.importvideo.${name}`, document.getElementById(`${name}videoimportinput`), document.getElementById(`${name}videoimportbtn`), (file) => {
-                db.put(`${name}video`, file);
-                config[name + "Video"] = `blob:${name}video`;
+                const fn = `${name.replace(/\.\w+$/, "")}video`;
+                db.put(fn, file);
+                config[name + "Video"] = `blob:${fn}`;
                 saveConfig(config);
                 loadSettings();
                 loadStyle();

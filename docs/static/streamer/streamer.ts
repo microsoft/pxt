@@ -2265,8 +2265,9 @@ background-image: url(${config.backgroundImage});
                 document.getElementById(`${name}videoimportinput`) as HTMLInputElement,
                 document.getElementById(`${name}videoimportbtn`),
                 (file) => {
-                    db.put(`${name}video`, file)
-                    config[name + "Video"] = `blob:${name}video`
+                    const fn = `${file.name || name}`.replace(/\.\w+$/, "") + "video"
+                    db.put(fn, file)
+                    config[name + "Video"] = `blob:${fn}`
                     saveConfig(config);
                     loadSettings()
                     loadStyle()
