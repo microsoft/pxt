@@ -209,6 +209,7 @@ function onYouTubeIframeAPIReady() {
             (config.twitch || config.restream) && "haschat",
             config.faceCamGreenScreen && "hasthumbnail",
             config.stingerVideo && "hasstinger",
+            config.camoverlayVideo && "hascamoverlay",
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
             showSettings();
@@ -1906,6 +1907,7 @@ background-image: url(${config.backgroundImage});
         importVideoButton("start");
         importVideoButton("end");
         importVideoButton("stinger");
+        importVideoButton("camoverlay");
         const stingervideodelayinput = document.getElementById("stringervideodelayinput");
         stingervideodelayinput.value = (config.stingerVideoDelay || "") + "";
         stingervideodelayinput.onchange = function (e) {
@@ -2051,7 +2053,7 @@ background-image: url(${config.backgroundImage});
         };
         function importVideoButton(name) {
             importFileButton(`streamer.importvideo.${name}`, document.getElementById(`${name}videoimportinput`), document.getElementById(`${name}videoimportbtn`), (file) => {
-                const fn = `${name.replace(/\.\w+$/, "")}video`;
+                const fn = `${name}`.replace(/\.\w+$/, "") + "video";
                 db.put(fn, file);
                 config[name + "Video"] = `blob:${fn}`;
                 saveConfig(config);

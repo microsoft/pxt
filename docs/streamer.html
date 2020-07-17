@@ -696,18 +696,22 @@ Settings
         .hardwarecam video {
             width: 100%;
         }
+        .overlay
+        {
+            pointer-events: none;
+            display:none;
+        }
+        body.hascamoverlay .overlay {
+            display: block;
+        }
 
-        body.thumbnail .facecam video,
-        body.thumbnail .hardwarecam video,
-        body.thumbnail .facecam canvas,
-        body.thumbnail .hardwarecam canvas
+        body.thumbnail .facecam .source,
+        body.thumbnail .facecam .source
         {
             transform: scale(-1, 1);
         }
-        body.thumbnail .facecam video.rotate,
-        body.thumbnail .hardwarecam video.rotate,
-        body.thumbnail .facecam canvas.rotate,
-        body.thumbnail .hardwarecam canvas.rotate
+        body.thumbnail .facecam .source.rotate,
+        body.thumbnail .hardwarecam .source.rotate
         {
             transform: rotate(180deg) scale(-1, 1);
         }
@@ -1402,8 +1406,9 @@ Settings
             sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox allow-forms"></iframe>
         <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
         <div role="button" class="box animated clickeable cam facecam" id="facecam">
-            <video autoplay playsinline id="facecamvideo"></video>
-            <canvas id="facecamvideoserious" class="videocanvas"></canvas>
+            <video autoplay playsinline class="source" id="facecamvideo"></video>
+            <canvas id="facecamvideoserious" class="source" class="videocanvas"></canvas>
+            <video autoplay playsinline class="overlay" id="facecamoverlay"></video>
             <div class="videolabel" id="facecamlabel"></div>
             <div id="facecamchatscenebtn" title="Go to chat scene" class="videobtn videochatscenebtn animated">
                 <i class="ms-Icon ms-Icon--Contact"></i>
@@ -1425,8 +1430,9 @@ Settings
             </div>
         </div>
         <div role="button" class="box animated clickeable cam hardwarecam" id="hardwarecam">
-            <video autoplay playsinline id="hardwarecamvideo"></video>
-            <canvas id="hardwarecamvideoserious" width="640" height="480" class="videocanvas"></canvas>
+            <video autoplay playsinline class="source" id="hardwarecamvideo"></video>
+            <canvas id="hardwarecamvideoserious" class="source" width="640" height="480" class="videocanvas"></canvas>
+            <video autoplay playsinline class="overlay" id="hardwarecamoverlay"></video>
             <div class="videolabel" id="hardwarecamlabel"></div>
             <div id="hardwarecamchatscenebtn" title="Go to chat scene" class="videobtn videochatscenebtn animated">
                 <i class="ms-Icon ms-Icon--Contact"></i>
@@ -1635,6 +1641,15 @@ Settings
                         <button id="borderbackgroundclear">clear</button>
                     </div>
                     <div class="field">
+                        <label for="camoverlayvideoinput">Face and document camera overlay videos (must be https://... or .webm, .mp4 files). Will play between scenes. YouTube NOT supported.
+                            <span class="icons">
+                                <input id="camoverlayvideoimportinput" type="file" accept="video/mp4, video/webm" style="display:none"></input>
+                                <button id="camoverlayvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                
+                            </span>
+                        </label>
+                        <input id="camoverlayvideoinput" type="url" />
+                    </div>
+                    <div class="field">
                         <label for="stingervideoinput">Stinger transition video (must be https://... or .webm, .mp4 files). Will play between scenes. YouTube NOT supported.
                             <span class="icons">
                                 <input id="stingervideoimportinput" type="file" accept="video/mp4, video/webm" style="display:none"></input>
@@ -1646,7 +1661,7 @@ Settings
                     <div class="field">                       
                         <label for="stringervideodelayinput">Stinger transition delay (ms). Time to start transitioning the view, when the stinger is fully covering the screen.</label>
                         <input id="stringervideodelayinput" type="number" placeholder="700" /> 
-                    </div>                    
+                    </div>            
                 </div>
                 <div class="section">
                     <h3>Background</h3>
