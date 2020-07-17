@@ -190,6 +190,7 @@ function onYouTubeIframeAPIReady() {
             state.micError && "micerror",
             state.recording && "recording",
             state.screenshoting && "screenshoting",
+            state.stingering && "stingering",
             (config.faceCamGreenScreen || config.hardwareCamGreenScreen) && state.thumbnail && "thumbnail",
             config.micDelay === undefined && "micdelayerror",
             !hasGetDisplayMedia && "displaymediaerror",
@@ -206,7 +207,8 @@ function onYouTubeIframeAPIReady() {
             config.countdownEditorBlur && "countdowneditorblur",
             config.fullScreenEditor && !config.multiEditor && "slim",
             (config.twitch || config.restream) && "haschat",
-            config.faceCamGreenScreen && "hasthumbnail"
+            config.faceCamGreenScreen && "hasthumbnail",
+            config.stingerVideo && "hasstinger",
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
             showSettings();
@@ -2230,19 +2232,20 @@ background-image: url(${config.backgroundImage});
         }, transitionDelay);
     }
     async function startStinger(url, end, transitionDelay = 700) {
-        if (!url) {
-            end();
-            return;
-        }
         stingerEvents.start = () => {
             setTimeout(() => {
                 end();
             }, transitionDelay || 1000);
         };
-        stingerEvents.end = () => { };
+        stingerEvents.end = () => {
+            state.stingering = false;
+            render();
+        };
         const stingeryoutube = document.getElementById('stingeryoutube');
         const ytVideoId = parseYouTubeVideoId(url);
         if (ytVideoId) {
+            state.stingering = true;
+            render();
             stingervideo.src = undefined;
             stingervideo.classList.add("hidden");
             stingerPlayer.loadVideoById(ytVideoId, 0);
@@ -2268,6 +2271,8 @@ background-image: url(${config.backgroundImage});
             }
         }
         else if (url) {
+            state.stingering = true;
+            render();
             url = await resolveBlob(url);
             stingerPlayer.stopVideo();
             stingeryoutube.classList.add("hidden");
@@ -2291,6 +2296,9 @@ background-image: url(${config.backgroundImage});
             stingerPlayer.stopVideo();
             stingervideo.classList.add("hidden");
             stingeryoutube.classList.add("hidden");
+            state.stingering = false;
+            render();
+            end();
         }
     }
     async function resolveBlob(url) {
