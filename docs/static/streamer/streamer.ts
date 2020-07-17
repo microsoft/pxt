@@ -2340,7 +2340,7 @@ background-image: url(${config.backgroundImage});
                     break;
                 case 54: // 6
                     ev.preventDefault();
-                    toggleThumbnail();
+                    toggleThumbnail(ev);
                     break;
                 case 55: // 7
                     toggleHardware(ev);
