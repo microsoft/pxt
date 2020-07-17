@@ -90,6 +90,7 @@ function onYouTubeIframeAPIReady() {
         paintColor: paintColors[0],
     };
     let editorConfigs;
+    const db = openDb();
     try {
         tickEvent("streamer.load.start");
         body.classList.add("loading");
@@ -189,6 +190,7 @@ function onYouTubeIframeAPIReady() {
             state.micError && "micerror",
             state.recording && "recording",
             state.screenshoting && "screenshoting",
+            state.stingering && "stingering",
             (config.faceCamGreenScreen || config.hardwareCamGreenScreen) && state.thumbnail && "thumbnail",
             config.micDelay === undefined && "micdelayerror",
             !hasGetDisplayMedia && "displaymediaerror",
@@ -205,7 +207,8 @@ function onYouTubeIframeAPIReady() {
             config.countdownEditorBlur && "countdowneditorblur",
             config.fullScreenEditor && !config.multiEditor && "slim",
             (config.twitch || config.restream) && "haschat",
-            config.faceCamGreenScreen && "hasthumbnail"
+            config.faceCamGreenScreen && "hasthumbnail",
+            config.stingerVideo && "hasstinger",
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
             showSettings();
@@ -259,7 +262,7 @@ function onYouTubeIframeAPIReady() {
         if (config.extraSites && config.extraSites.length) {
             addSep(toolbox);
             config.extraSites.forEach(addSiteButton);
-            addButton(toolbox, "Code", "Reload MakeCode editor", loadEditor);
+            addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor, config.stingerVideoDelay));
         }
         addSep(toolbox);
         if (state.speech)
@@ -340,10 +343,12 @@ function onYouTubeIframeAPIReady() {
         const ytid = parseYouTubeVideoId(url);
         if (ytid)
             url = createYouTubeEmbedUrl(ytid, true);
-        if (config.multiEditor && state.sceneIndex == LEFT_SCENE_INDEX)
-            editor2.src = url;
-        else
-            editor.src = url;
+        startStinger(config.stingerVideo, () => {
+            if (config.multiEditor && state.sceneIndex == LEFT_SCENE_INDEX)
+                editor2.src = url;
+            else
+                editor.src = url;
+        }, config.stingerVideoDelay);
     }
     function setScene(scene) {
         tickEvent("streamer.scene", { scene: scene });
@@ -355,22 +360,35 @@ function onYouTubeIframeAPIReady() {
             sceneIndex = CHAT_SCENE_INDEX;
             scene = "chat";
         }
+        // handle countdown
         if (sceneIndex === COUNTDOWN_SCENE_INDEX) {
             startCountdown(300000);
-            if (config.endVideo) {
-                startStinger(config.endVideo, sceneIndex);
+            const v = config.endVideo || config.stingerVideo;
+            if (v) {
+                startStingerScene(v, sceneIndex, config.stingerVideoDelay);
                 return;
             }
         }
         else {
             stopCountdown();
-            if (lastSceneIndex == COUNTDOWN_SCENE_INDEX && config.startVideo) {
-                startStinger(config.startVideo, sceneIndex);
+            const v = config.endVideo || config.stingerVideo;
+            if (lastSceneIndex == COUNTDOWN_SCENE_INDEX && v) {
+                startStingerScene(v, sceneIndex, config.stingerVideoDelay);
                 return;
             }
         }
+        // stinger animation
+        if (config.stingerVideo &&
+            (sceneIndex == CHAT_SCENE_INDEX && isLeftOrRightScene(lastSceneIndex))
+            || (isLeftOrRightScene(sceneIndex) && lastSceneIndex == CHAT_SCENE_INDEX)) {
+            startStingerScene(config.stingerVideo, sceneIndex, config.stingerVideoDelay);
+            return;
+        }
         updateScene(sceneIndex);
         render();
+        function isLeftOrRightScene(i) {
+            return i == LEFT_SCENE_INDEX || i == RIGHT_SCENE_INDEX;
+        }
     }
     function updateScene(sceneIndex) {
         state.sceneIndex = sceneIndex;
@@ -459,11 +477,15 @@ function onYouTubeIframeAPIReady() {
         else
             startPaint();
     }
-    function toggleThumbnail() {
-        state.thumbnail = !state.thumbnail;
-        if (state.thumbnail)
-            state.chat = false;
-        render();
+    function toggleThumbnail(ev) {
+        stopEvent(ev);
+        const config = readConfig();
+        startStinger(config.stingerVideo, () => {
+            state.thumbnail = !state.thumbnail;
+            if (state.thumbnail)
+                state.chat = false;
+            render();
+        }, 700);
     }
     function setPaintTool(tool) {
         startPaint();
@@ -761,8 +783,10 @@ background: ${primary};
             }
         }
         else if (config.backgroundVideo) {
-            backgroundvideo.src = config.backgroundVideo;
-            backgroundyoutube.src = undefined;
+            resolveBlob(config.backgroundVideo).then(vurl => {
+                backgroundvideo.src = vurl;
+                backgroundyoutube.src = undefined;
+            });
         }
         else {
             backgroundvideo.src = undefined;
@@ -1496,29 +1520,13 @@ background-image: url(${config.backgroundImage});
             hideSettings();
         };
         const importsettingsinput = document.getElementById("importsettingsinput");
-        importsettingsinput.onchange = function () {
-            const file = importsettingsinput.files[0];
-            if (!file)
-                return;
-            const reader = new FileReader();
-            reader.addEventListener("load", function () {
-                try {
-                    const config = JSON.parse(reader.result);
-                    saveConfig(config);
-                    window.location.reload();
-                }
-                catch (e) {
-                    console.error(e);
-                }
-            }, false);
-            reader.readAsText(file, 'utf-8');
-        };
         const importsettings = document.getElementById("importsettings");
-        importsettings.onclick = function (e) {
-            tickEvent("streamer.importsettings", undefined, { interactiveConsent: true });
-            stopEvent(e);
-            importsettingsinput.click();
-        };
+        importFileButton("streamer.importsettings", importsettingsinput, importsettings, (file) => readFileAsText(file)
+            .then(text => {
+            const config = JSON.parse(text);
+            saveConfig(config);
+            window.location.reload();
+        }));
         const exportsettings = document.getElementById("exportsettings");
         exportsettings.onclick = function (e) {
             tickEvent("streamer.exportsettings", undefined, { interactiveConsent: true });
@@ -1894,33 +1902,17 @@ background-image: url(${config.backgroundImage});
             loadStyle();
             render();
         };
-        const backgroundvideoinput = document.getElementById("backgroundvideoinput");
-        backgroundvideoinput.value = config.backgroundVideo || "";
-        backgroundvideoinput.onchange = function (e) {
-            config.backgroundVideo = undefined;
-            if (/^https:\/\//.test(backgroundvideoinput.value))
-                config.backgroundVideo = backgroundvideoinput.value;
+        importVideoButton("background");
+        importVideoButton("start");
+        importVideoButton("end");
+        importVideoButton("stinger");
+        const stingervideodelayinput = document.getElementById("stringervideodelayinput");
+        stingervideodelayinput.value = (config.stingerVideoDelay || "") + "";
+        stingervideodelayinput.onchange = function (e) {
+            const i = parseInt(stingervideodelayinput.value || "0");
+            config.stingerVideoDelay = isNaN(i) ? 0 : i;
+            stingervideodelayinput.value = (config.stingerVideoDelay || "") + "";
             saveConfig(config);
-            loadStyle();
-            render();
-        };
-        const startvideoinput = document.getElementById("startvideoinput");
-        startvideoinput.value = config.startVideo || "";
-        startvideoinput.onchange = function (e) {
-            config.startVideo = undefined;
-            if (/^https:\/\//.test(startvideoinput.value))
-                config.startVideo = startvideoinput.value;
-            saveConfig(config);
-            render();
-        };
-        const endvideoinput = document.getElementById("endvideoinput");
-        endvideoinput.value = config.endVideo || "";
-        endvideoinput.onchange = function (e) {
-            config.endVideo = undefined;
-            if (/^https:\/\//.test(endvideoinput.value))
-                config.endVideo = endvideoinput.value;
-            saveConfig(config);
-            render();
         };
         const backgroundcolorinput = document.getElementById("backgroundcolorinput");
         backgroundcolorinput.value = config.styleBackground || "";
@@ -2057,6 +2049,55 @@ background-image: url(${config.backgroundImage});
             micdelayinput.value = (config.micDelay || "") + "";
             saveConfig(config);
         };
+        function importVideoButton(name) {
+            importFileButton(`streamer.importvideo.${name}`, document.getElementById(`${name}videoimportinput`), document.getElementById(`${name}videoimportbtn`), (file) => {
+                const fn = `${name.replace(/\.\w+$/, "")}video`;
+                db.put(fn, file);
+                config[name + "Video"] = `blob:${fn}`;
+                saveConfig(config);
+                loadSettings();
+                loadStyle();
+                render();
+            });
+            const videoinput = document.getElementById(`${name}videoinput`);
+            const field = `${name}Video`;
+            videoinput.value = config[field] || "";
+            videoinput.onchange = function (e) {
+                config[field] = undefined;
+                if (/^https:\/\//.test(videoinput.value))
+                    config[field] = videoinput.value;
+                saveConfig(config);
+                loadStyle();
+                loadSettings();
+                render();
+            };
+        }
+    }
+    function importFileButton(tick, input, button, done) {
+        input.onchange = function () {
+            const file = input.files[0];
+            if (file)
+                done(file);
+        };
+        button.onclick = function (e) {
+            tickEvent(tick, undefined, { interactiveConsent: true });
+            stopEvent(e);
+            input.click();
+        };
+    }
+    function readFileAsText(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.addEventListener("load", function () {
+                try {
+                    resolve(reader.result);
+                }
+                catch (e) {
+                    reject(e);
+                }
+            }, false);
+            reader.readAsText(file, 'utf-8');
+        });
     }
     function setEditor(editor, hash) {
         const editorConfig = editorConfigs[editor];
@@ -2096,7 +2137,7 @@ background-image: url(${config.backgroundImage});
                     break;
                 case 54: // 6
                     ev.preventDefault();
-                    toggleThumbnail();
+                    toggleThumbnail(ev);
                     break;
                 case 55: // 7
                     toggleHardware(ev);
@@ -2185,15 +2226,27 @@ background-image: url(${config.backgroundImage});
             });
         return [props, measures];
     }
-    function startStinger(url, endSceneIndex) {
-        stingerEvents.start = () => {
+    async function startStingerScene(url, endSceneIndex, transitionDelay) {
+        startStinger(url, () => {
             updateScene(endSceneIndex);
             render();
+        }, transitionDelay);
+    }
+    async function startStinger(url, end, transitionDelay = 700) {
+        stingerEvents.start = () => {
+            setTimeout(() => {
+                end();
+            }, transitionDelay || 1000);
         };
-        stingerEvents.end = () => { };
+        stingerEvents.end = () => {
+            state.stingering = false;
+            render();
+        };
         const stingeryoutube = document.getElementById('stingeryoutube');
         const ytVideoId = parseYouTubeVideoId(url);
         if (ytVideoId) {
+            state.stingering = true;
+            render();
             stingervideo.src = undefined;
             stingervideo.classList.add("hidden");
             stingerPlayer.loadVideoById(ytVideoId, 0);
@@ -2219,6 +2272,9 @@ background-image: url(${config.backgroundImage});
             }
         }
         else if (url) {
+            state.stingering = true;
+            render();
+            url = await resolveBlob(url);
             stingerPlayer.stopVideo();
             stingeryoutube.classList.add("hidden");
             stingervideo.src = url;
@@ -2229,8 +2285,11 @@ background-image: url(${config.backgroundImage});
             stingervideo.onpause = () => {
                 stingervideo.classList.add("hidden");
             };
-            stingervideo.onended = () => {
+            stingervideo.onerror = stingervideo.onended = () => {
+                stingerEvents.end();
                 stingervideo.classList.add("hidden");
+                // doesn't hurt
+                URL.revokeObjectURL(url);
             };
         }
         else {
@@ -2238,6 +2297,52 @@ background-image: url(${config.backgroundImage});
             stingerPlayer.stopVideo();
             stingervideo.classList.add("hidden");
             stingeryoutube.classList.add("hidden");
+            state.stingering = false;
+            render();
+            end();
         }
+    }
+    async function resolveBlob(url) {
+        const blob = url.startsWith("blob:") && url.substr("blob:".length);
+        if (blob) {
+            const file = await db.get(blob);
+            url = URL.createObjectURL(file);
+        }
+        return url;
+    }
+    // this database stores video blobs
+    function openDb() {
+        const DB_VERSION = 1;
+        const DB_NAME = "ASSETS";
+        const STORE_BLOBS = "BLOBS";
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        let db;
+        // create or upgrade database
+        request.onsuccess = function (event) {
+            db = request.result;
+            db.onerror = function (event) {
+                console.log("idb error", event);
+            };
+        };
+        request.onupgradeneeded = function (event) {
+            db = request.result;
+            db.createObjectStore(STORE_BLOBS);
+        };
+        return {
+            put: (id, file) => {
+                const transaction = db.transaction([STORE_BLOBS], "readwrite");
+                const blobs = transaction.objectStore(STORE_BLOBS);
+                blobs.put(file, id);
+            },
+            get: (id) => {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_BLOBS], "readonly");
+                    const blobs = transaction.objectStore(STORE_BLOBS);
+                    const request = blobs.get(id);
+                    request.onsuccess = (event) => resolve(event.target.result);
+                    request.onerror = (event) => resolve(event.target.result);
+                });
+            }
+        };
     }
 })();

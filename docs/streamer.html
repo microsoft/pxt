@@ -126,6 +126,11 @@ Use https://uifabricicons.azurewebsites.net/
             transition: left 0.5s, right 0.5s, bottom 0.5s, top 0.5s, width 0.5s, height 0.5s, opacity 1s;
         }
 
+        body.stingering .animated {
+            transition: left 0s, right 0s, bottom 0s, top 0s, width 0s, height 0s, opacity 0s;
+            transition-delay: 0s;
+        }
+
         button:hover {
             outline: solid 5px rgba(0, 0, 100, 0.2);
         }
@@ -1441,7 +1446,7 @@ Settings
         </div>
         <div class="box animated" id="title">title</div>
         <div class="animated" id="countdown">5:00</div>
-        <video class="hidden full stinger" id="stingervideo" playsinline autoplay preload="auto" controls></video>
+        <video class="hidden full stinger" id="stingervideo" playsinline autoplay preload="auto"></video>
         <div class="hidden full stinger" id="stingeryoutube"></div>
         <div class="animated hidden" id="subtitles"></div>
         <div class="box animated hidden" id="selectapp">
@@ -1626,6 +1631,19 @@ Settings
                         <input id="borderbackgroundinput" type="color" />
                         <button id="borderbackgroundclear">clear</button>
                     </div>
+                    <div class="field">
+                        <label for="stingervideoinput">Stinger transition video (must be https://... or .webm, .mp4 files). Will play between scenes. YouTube NOT supported.
+                            <span class="icons">
+                                <input id="stingervideoimportinput" type="file" accept="video/mp4, video/webm" style="display:none"></input>
+                                <button id="stingervideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                
+                            </span>
+                        </label>
+                        <input id="stingervideoinput" type="url" />
+                    </div>
+                    <div class="field">                       
+                        <label for="stringervideodelayinput">Stinger transition delay (ms). Time to start transitioning the view, when the stinger is fully covering the screen.</label>
+                        <input id="stringervideodelayinput" type="number" placeholder="700" /> 
+                    </div>                    
                 </div>
                 <div class="section">
                     <h3>Background</h3>
@@ -1639,7 +1657,12 @@ Settings
                         <input id="backgroundimageinput" type="url" />
                     </div>
                     <div class="field">
-                        <label for="backgroundvideoinput">Background video (YouTube url or must be https://...)</label>
+                        <label for="backgroundvideoinput">Background video (YouTube url or must be https://...)
+                            <span class="icons">
+                                <input id="backgroundvideoimportinput" type="file" accept="video/mp4, video/webm" style="display:none"></input>
+                                <button id="backgroundvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                                            
+                            </span>
+                        </label>
                         <input id="backgroundvideoinput" type="url" />
                     </div>
                     <div class="field">
@@ -1652,13 +1675,23 @@ Settings
                     <div class="field">
                         <label for="startvideoinput">Intro video (YouTube video or must be https://...). Will play when leaving the
                             countdown
-                            view. YouTube videos are do not support transparency.</label>
+                            view. YouTube videos are do not support transparency.
+                            <span class="icons">
+                                <input id="startvideoimportinput" type="file" accept="video/mp4, video/webm" style="display:none"></input>
+                                <button id="startvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                
+                            </span>
+                    </label>
                         <input id="startvideoinput" type="url" />
                     </div>
                     <div class="field">
                         <label for="endvideoinput">End video (YouTube video or must be https://...). Will play when entering the
                             countdown
-                            view. YouTube videos are do not support transparency.</label>
+                            view. YouTube videos are do not support transparency.
+                            <span class="icons">
+                                <input id="endvideoimportinput" type="file" accept="video/mp4, video/webm" style="display:none"></input>
+                                <button id="endvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                                            
+                            </span>
+                        </label>
                         <input id="endvideoinput" type="url" />
                     </div>
                     <div class="field">
