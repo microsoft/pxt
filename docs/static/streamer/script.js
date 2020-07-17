@@ -762,8 +762,10 @@ background: ${primary};
             }
         }
         else if (config.backgroundVideo) {
-            backgroundvideo.src = config.backgroundVideo;
-            backgroundyoutube.src = undefined;
+            resolveBlob(config.backgroundVideo).then(vurl => {
+                backgroundvideo.src = vurl;
+                backgroundyoutube.src = undefined;
+            });
         }
         else {
             backgroundvideo.src = undefined;
@@ -1879,6 +1881,7 @@ background-image: url(${config.backgroundImage});
             loadStyle();
             render();
         };
+        importVideoButton("background");
         const backgroundvideoinput = document.getElementById("backgroundvideoinput");
         backgroundvideoinput.value = config.backgroundVideo || "";
         backgroundvideoinput.onchange = function (e) {
@@ -1889,13 +1892,7 @@ background-image: url(${config.backgroundImage});
             loadStyle();
             render();
         };
-        importFileButton("streamer.importstartvideo", document.getElementById("startvideoimportinput"), document.getElementById("startvideoimportbtn"), (file) => {
-            db.put("startvideo", file);
-            config.startVideo = "blob:startvideo";
-            saveConfig(config);
-            loadSettings();
-            render();
-        });
+        importVideoButton("start");
         const startvideoinput = document.getElementById("startvideoinput");
         startvideoinput.value = config.startVideo || "";
         startvideoinput.onchange = function (e) {
@@ -1905,13 +1902,7 @@ background-image: url(${config.backgroundImage});
             saveConfig(config);
             render();
         };
-        importFileButton("streamer.importendvideo", document.getElementById("endvideoimportinput"), document.getElementById("endvideoimportbtn"), (file) => {
-            db.put("endvideo", file);
-            config.endVideo = "blob:endvideo";
-            saveConfig(config);
-            loadSettings();
-            render();
-        });
+        importVideoButton("end");
         const endvideoinput = document.getElementById("endvideoinput");
         endvideoinput.value = config.endVideo || "";
         endvideoinput.onchange = function (e) {
@@ -2056,6 +2047,16 @@ background-image: url(${config.backgroundImage});
             micdelayinput.value = (config.micDelay || "") + "";
             saveConfig(config);
         };
+        function importVideoButton(name) {
+            importFileButton(`streamer.importvideo.${name}`, document.getElementById(`${name}videoimportinput`), document.getElementById(`${name}videoimportbtn`), (file) => {
+                db.put(`${name}video`, file);
+                config[name + "Video"] = `blob:${name}video`;
+                saveConfig(config);
+                loadSettings();
+                loadStyle();
+                render();
+            });
+        }
     }
     function importFileButton(tick, input, button, done) {
         input.onchange = function () {
@@ -2244,11 +2245,7 @@ background-image: url(${config.backgroundImage});
             }
         }
         else if (url) {
-            const blob = url.startsWith("blob:") && url.substr("blob:".length);
-            if (blob) {
-                const file = await db.get(blob);
-                url = URL.createObjectURL(file);
-            }
+            url = await resolveBlob(url);
             stingerPlayer.stopVideo();
             stingeryoutube.classList.add("hidden");
             stingervideo.src = url;
@@ -2261,8 +2258,8 @@ background-image: url(${config.backgroundImage});
             };
             stingervideo.onended = () => {
                 stingervideo.classList.add("hidden");
-                if (blob)
-                    URL.revokeObjectURL(url);
+                // doesn't hurt
+                URL.revokeObjectURL(url);
             };
         }
         else {
@@ -2271,6 +2268,14 @@ background-image: url(${config.backgroundImage});
             stingervideo.classList.add("hidden");
             stingeryoutube.classList.add("hidden");
         }
+    }
+    async function resolveBlob(url) {
+        const blob = url.startsWith("blob:") && url.substr("blob:".length);
+        if (blob) {
+            const file = await db.get(blob);
+            url = URL.createObjectURL(file);
+        }
+        return url;
     }
     // this database stores video blobs
     function openDb() {

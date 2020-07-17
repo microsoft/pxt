@@ -901,8 +901,10 @@ background: ${primary};
             }
 
         } else if (config.backgroundVideo) {
-            backgroundvideo.src = config.backgroundVideo;
-            backgroundyoutube.src = undefined;
+            resolveBlob(config.backgroundVideo).then(vurl => {
+                backgroundvideo.src = vurl;
+                backgroundyoutube.src = undefined;
+            })
         } else {
             backgroundvideo.src = undefined;
             backgroundyoutube.src = undefined;
@@ -2071,6 +2073,7 @@ background-image: url(${config.backgroundImage});
             render()
         }
 
+        importVideoButton("background")
         const backgroundvideoinput = document.getElementById("backgroundvideoinput") as HTMLInputElement
         backgroundvideoinput.value = config.backgroundVideo || ""
         backgroundvideoinput.onchange = function (e) {
@@ -2082,16 +2085,7 @@ background-image: url(${config.backgroundImage});
             render()
         }
 
-        importFileButton("streamer.importstartvideo",
-            document.getElementById("startvideoimportinput") as HTMLInputElement,
-            document.getElementById("startvideoimportbtn"),
-            (file) => {
-                db.put("startvideo", file)
-                config.startVideo = "blob:startvideo"
-                saveConfig(config);
-                loadSettings()
-                render()
-            })
+        importVideoButton("start")
         const startvideoinput = document.getElementById("startvideoinput") as HTMLInputElement
         startvideoinput.value = config.startVideo || ""
         startvideoinput.onchange = function (e) {
@@ -2102,16 +2096,7 @@ background-image: url(${config.backgroundImage});
             render()
         }
 
-        importFileButton("streamer.importendvideo",
-            document.getElementById("endvideoimportinput") as HTMLInputElement,
-            document.getElementById("endvideoimportbtn"),
-            (file) => {
-                db.put("endvideo", file)
-                config.endVideo = "blob:endvideo"
-                saveConfig(config);
-                loadSettings()
-                render()
-            })
+        importVideoButton("end")
         const endvideoinput = document.getElementById("endvideoinput") as HTMLInputElement
         endvideoinput.value = config.endVideo || ""
         endvideoinput.onchange = function (e) {
@@ -2267,6 +2252,20 @@ background-image: url(${config.backgroundImage});
             saveConfig(config);
         }
 
+
+        function importVideoButton(name: string) {
+            importFileButton(`streamer.importvideo.${name}`,
+                document.getElementById(`${name}videoimportinput`) as HTMLInputElement,
+                document.getElementById(`${name}videoimportbtn`),
+                (file) => {
+                    db.put(`${name}video`, file)
+                    config[name + "Video"] = `blob:${name}video`
+                    saveConfig(config);
+                    loadSettings()
+                    loadStyle()
+                    render()
+                })
+        }
     }
 
     function importFileButton(tick: string, input: HTMLInputElement, button: HTMLElement, done: (file: File) => void) {
@@ -2459,11 +2458,7 @@ background-image: url(${config.backgroundImage});
             }
 
         } else if (url) {
-            const blob = url.startsWith("blob:") && url.substr("blob:".length);
-            if (blob) {
-                const file: File = await db.get(blob)
-                url = URL.createObjectURL(file)
-            }
+            url = await resolveBlob(url)
 
             stingerPlayer.stopVideo()
             stingeryoutube.classList.add("hidden")
@@ -2477,8 +2472,8 @@ background-image: url(${config.backgroundImage});
             }
             stingervideo.onended = () => {
                 stingervideo.classList.add("hidden")
-                if (blob)
-                    URL.revokeObjectURL(url)
+                // doesn't hurt
+                URL.revokeObjectURL(url)
             }
 
         } else {
@@ -2487,6 +2482,15 @@ background-image: url(${config.backgroundImage});
             stingervideo.classList.add("hidden");
             stingeryoutube.classList.add("hidden")
         }
+    }
+
+    async function resolveBlob(url: string) {
+        const blob = url.startsWith("blob:") && url.substr("blob:".length);
+        if (blob) {
+            const file: File = await db.get(blob)
+            url = URL.createObjectURL(file)
+        }
+        return url;
     }
 
     // this database stores video blobs
