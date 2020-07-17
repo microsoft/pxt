@@ -480,13 +480,13 @@ function onYouTubeIframeAPIReady() {
         if (sceneIndex === COUNTDOWN_SCENE_INDEX) {
             startCountdown(300000);
             if (config.endVideo) {
-                startStinger(config.endVideo, sceneIndex)
+                startStinger(config.endVideo, sceneIndex, 700)
                 return;
             }
         } else {
             stopCountdown();
             if (lastSceneIndex == COUNTDOWN_SCENE_INDEX && config.startVideo) {
-                startStinger(config.startVideo, sceneIndex)
+                startStinger(config.startVideo, sceneIndex, 700)
                 return;
             }
         }
