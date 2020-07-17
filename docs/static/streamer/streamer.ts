@@ -2395,7 +2395,7 @@ background-image: url(${config.backgroundImage});
             updateScene(endSceneIndex);
             render()
         }
-        stingerEvents.end = () => {}
+        stingerEvents.end = () => { }
         const stingeryoutube = document.getElementById('stingeryoutube')
         const ytVideoId = parseYouTubeVideoId(url);
         if (ytVideoId) {
@@ -2442,6 +2442,45 @@ background-image: url(${config.backgroundImage});
             stingerPlayer.stopVideo()
             stingervideo.classList.add("hidden");
             stingeryoutube.classList.add("hidden")
+        }
+    }
+
+    // this database stores video blobs
+    function openDb() {
+        const DB_VERSION = 1
+        const DB_NAME = "ASSETS"
+        const STORE_BLOBS = "BLOBS"
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        let db: IDBDatabase;
+
+        // create or upgrade database
+        request.onsuccess = function (event) {
+            db = request.result;
+            db.onerror = function (event) {
+                console.log("idb error", event);
+                db = undefined;
+            };
+        }
+        request.onupgradeneeded = function (event) {
+            db = request.result;
+            db.createObjectStore(STORE_BLOBS);
+        };
+
+        return {
+            put: (id: string, blob: Blob) => {
+                const transaction = db.transaction([STORE_BLOBS], "readwrite");
+                const blobs = transaction.objectStore(STORE_BLOBS)
+                blobs.add(blob, id);
+            },
+            get: (id: string) => {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_BLOBS], "readonly");
+                    const blobs = transaction.objectStore(STORE_BLOBS)
+                    const request = blobs.get(id);
+                    request.onsuccess = (event) => resolve((event.target as any).result)
+                    request.onerror = (event) => resolve((event.target as any).result)
+                })
+            }
         }
     }
 })()
