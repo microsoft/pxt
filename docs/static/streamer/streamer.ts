@@ -2424,10 +2424,12 @@ background-image: url(${config.backgroundImage});
         return [props, measures];
     }
 
-    async function startStinger(url: string, endSceneIndex: number) {
+    async function startStinger(url: string, endSceneIndex: number, transitionDelay?: number) {
         stingerEvents.start = () => {
-            updateScene(endSceneIndex);
-            render()
+            setTimeout(() => {
+                updateScene(endSceneIndex);
+                render()
+            }, transitionDelay || 1000)
         }
         stingerEvents.end = () => { }
         const stingeryoutube = document.getElementById('stingeryoutube')
@@ -2470,12 +2472,12 @@ background-image: url(${config.backgroundImage});
             stingervideo.onpause = () => {
                 stingervideo.classList.add("hidden")
             }
-            stingervideo.onended = () => {
+            stingervideo.onerror = stingervideo.onended = () => {
+                stingerEvents.end()
                 stingervideo.classList.add("hidden")
                 // doesn't hurt
                 URL.revokeObjectURL(url)
             }
-
         } else {
             stingervideo.src = undefined;
             stingerPlayer.stopVideo()
