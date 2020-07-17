@@ -54,8 +54,10 @@ function onYouTubeIframeAPIReady() {
     const selectapp = document.getElementById("selectapp");
     const facecamcontainer = document.getElementById("facecam");
     const facecam = document.getElementById("facecamvideo");
+    const facecamoverlay = document.getElementById("facecamoverlay");
     const facecamlabel = document.getElementById("facecamlabel");
     const hardwarecam = document.getElementById("hardwarecamvideo");
+    const hardwarecamoverlay = document.getElementById("hardwarecamoverlay");
     const hardwarecamlabel = document.getElementById("hardwarecamlabel");
     const chat = document.getElementById("chat");
     const settings = document.getElementById("settings");
@@ -109,6 +111,7 @@ function onYouTubeIframeAPIReady() {
         loadSocial();
         await firstLoadFaceCam();
         await loadHardwareCam();
+        await loadCamOverlays();
         await loadSettings();
         setScene("right");
         render();
@@ -209,6 +212,7 @@ function onYouTubeIframeAPIReady() {
             (config.twitch || config.restream) && "haschat",
             config.faceCamGreenScreen && "hasthumbnail",
             config.stingerVideo && "hasstinger",
+            config.camoverlayVideo && "hascamoverlay",
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
             showSettings();
@@ -897,6 +901,21 @@ background-image: url(${config.backgroundImage});
         }
         finally {
             body.classList.remove("loading");
+        }
+    }
+    async function loadCamOverlays() {
+        const config = readConfig();
+        // update overlay
+        if (config.camoverlayVideo) {
+            const url = await resolveBlob(config.camoverlayVideo);
+            facecamoverlay.src = url;
+            hardwarecamoverlay.src = url;
+        }
+        else {
+            const url = facecamoverlay.src;
+            URL.revokeObjectURL(url);
+            facecamoverlay.src = "";
+            hardwarecamoverlay.src = "";
         }
     }
     async function loadHardwareCam() {
@@ -1623,7 +1642,9 @@ background-image: url(${config.backgroundImage});
             if (config.hardwareCamId == config.faceCamId)
                 config.hardwareCamId = undefined; // priority to face cam
             saveConfig(config);
-            loadFaceCam().then(() => loadSettings());
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
         };
         const facerotatecheckbox = document.getElementById("facerotatecameracheckbox");
         facerotatecheckbox.checked = !!config.faceCamRotate;
@@ -1631,7 +1652,9 @@ background-image: url(${config.backgroundImage});
             config.faceCamRotate = !!facerotatecheckbox.checked;
             saveConfig(config);
             render();
-            loadFaceCam().then(() => loadSettings());
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
         };
         const facecamcircularcheckbox = document.getElementById("facecamcircularcheckbox");
         facecamcircularcheckbox.checked = !!config.faceCamCircular;
@@ -1639,7 +1662,9 @@ background-image: url(${config.backgroundImage});
             config.faceCamCircular = !!facecamcircularcheckbox.checked;
             saveConfig(config);
             render();
-            loadFaceCam().then(() => loadSettings());
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
         };
         const facecamscreeninput = document.getElementById("facecamscreeninput");
         facecamscreeninput.value = config.faceCamGreenScreen || "";
@@ -1652,13 +1677,17 @@ background-image: url(${config.backgroundImage});
             if (config.faceCamGreenScreen && facecam.seriously?.chroma)
                 facecam.seriously.chroma.screen = toSeriousColor(config.faceCamGreenScreen);
             else
-                loadFaceCam().then(() => loadSettings());
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings());
         };
         const facecamscreenclear = document.getElementById("facecamscreenclear");
         facecamscreenclear.onclick = function (e) {
             config.faceCamGreenScreen = undefined;
             saveConfig(config);
-            loadFaceCam().then(() => loadSettings());
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
         };
         const facecamscreencanvas = document.getElementById("facecamscreencanvas");
         facecamscreencanvas.width = 320;
@@ -1680,7 +1709,9 @@ background-image: url(${config.backgroundImage});
                 loadSettings();
             }
             else
-                loadFaceCam().then(() => loadSettings());
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings());
         };
         const facecamgreenclipblack = document.getElementById("facecamgreenclipblack");
         facecamgreenclipblack.value = (config.faceCamClipBlack || 0.6) + "";
@@ -1691,7 +1722,9 @@ background-image: url(${config.backgroundImage});
             if (facecam.seriously?.chroma)
                 facecam.seriously.chroma.clipBlack = config.faceCamClipBlack;
             else
-                loadFaceCam().then(() => loadSettings());
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings());
         };
         const facecamcontourinput = document.getElementById("facecamcontourinput");
         facecamcontourinput.value = config.faceCamContour || "";
@@ -1704,13 +1737,17 @@ background-image: url(${config.backgroundImage});
             if (config.faceCamContour && facecam.seriously?.contour)
                 facecam.seriously.contour.color = toSeriousColor(config.faceCamContour);
             else
-                loadFaceCam().then(() => loadSettings());
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings());
         };
         const facecamcontourclear = document.getElementById("facecamcontourclear");
         facecamcontourclear.onclick = function (e) {
             config.faceCamContour = undefined;
             saveConfig(config);
-            loadFaceCam().then(() => loadSettings());
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
         };
         config.faceCamFilter = config.faceCamFilter || {};
         ["contrast", "brightness", "saturate"].forEach(function (k) {
@@ -1761,14 +1798,18 @@ background-image: url(${config.backgroundImage});
             saveConfig(config);
             state.hardware = !!config.hardwareCamId;
             render();
-            loadHardwareCam().then(() => loadSettings());
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
         };
         const hardwarerotatecheckbox = document.getElementById("hardwarerotatecameracheckbox");
         hardwarerotatecheckbox.checked = !!config.hardwareCamRotate;
         hardwarerotatecheckbox.onchange = function () {
             config.hardwareCamRotate = !!hardwarerotatecheckbox.checked;
             saveConfig(config);
-            loadHardwareCam().then(() => loadSettings());
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
         };
         const hardwarecamcircularcheckbox = document.getElementById("hardwarecamcircularcheckbox");
         hardwarecamcircularcheckbox.checked = !!config.hardwareCamCircular;
@@ -1776,7 +1817,9 @@ background-image: url(${config.backgroundImage});
             config.hardwareCamCircular = !!hardwarecamcircularcheckbox.checked;
             saveConfig(config);
             render();
-            loadFaceCam().then(() => loadSettings());
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
         };
         const hardwarecamscreeninput = document.getElementById("hardwarecamscreeninput");
         hardwarecamscreeninput.value = config.hardwareCamGreenScreen || "";
@@ -1789,7 +1832,9 @@ background-image: url(${config.backgroundImage});
             if (config.hardwareCamGreenScreen && hardwarecam.seriously?.chroma)
                 hardwarecam.seriously.chroma.screen = toSeriousColor(config.hardwareCamGreenScreen);
             else
-                loadHardwareCam().then(() => loadSettings());
+                loadHardwareCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings());
         };
         const hardwarecamscreencanvas = document.getElementById("hardwarecamscreencanvas");
         hardwarecamscreencanvas.width = 320;
@@ -1817,7 +1862,9 @@ background-image: url(${config.backgroundImage});
         hardwarecamscreenclear.onclick = function (e) {
             config.hardwareCamGreenScreen = undefined;
             saveConfig(config);
-            loadHardwareCam().then(() => loadSettings());
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
         };
         const hardwarecamgreenclipblack = document.getElementById("hardwarecamgreenclipblack");
         hardwarecamgreenclipblack.value = (config.hardwareCamClipBlack || 0.6) + "";
@@ -1828,7 +1875,9 @@ background-image: url(${config.backgroundImage});
             if (hardwarecam.seriously?.chroma)
                 hardwarecam.seriously.chroma.clipBlack = config.hardwareCamClipBlack;
             else
-                loadHardwareCam().then(() => loadSettings());
+                loadHardwareCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings());
         };
         const hardwarecamcontourinput = document.getElementById("hardwarecamcontourinput");
         hardwarecamcontourinput.value = config.hardwareCamContour || "";
@@ -1841,13 +1890,17 @@ background-image: url(${config.backgroundImage});
             if (config.hardwareCamContour && hardwarecam.seriously?.contour)
                 hardwarecam.seriously.contour.color = toSeriousColor(config.hardwareCamContour);
             else
-                loadHardwareCam().then(() => loadSettings());
+                loadHardwareCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings());
         };
         const hardwarecamcontourclear = document.getElementById("hardwarecamcontourclear");
         hardwarecamcontourclear.onclick = function (e) {
             config.hardwareCamContour = undefined;
             saveConfig(config);
-            loadHardwareCam().then(() => loadSettings());
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
         };
         config.hardwareCamFilter = config.hardwareCamFilter || {};
         ["contrast", "brightness", "saturate"].forEach(function (k) {
@@ -1906,6 +1959,7 @@ background-image: url(${config.backgroundImage});
         importVideoButton("start");
         importVideoButton("end");
         importVideoButton("stinger");
+        importVideoButton("camoverlay");
         const stingervideodelayinput = document.getElementById("stringervideodelayinput");
         stingervideodelayinput.value = (config.stingerVideoDelay || "") + "";
         stingervideodelayinput.onchange = function (e) {
@@ -2051,7 +2105,7 @@ background-image: url(${config.backgroundImage});
         };
         function importVideoButton(name) {
             importFileButton(`streamer.importvideo.${name}`, document.getElementById(`${name}videoimportinput`), document.getElementById(`${name}videoimportbtn`), (file) => {
-                const fn = `${name.replace(/\.\w+$/, "")}video`;
+                const fn = `${name}`.replace(/\.\w+$/, "") + "video";
                 db.put(fn, file);
                 config[name + "Video"] = `blob:${fn}`;
                 saveConfig(config);

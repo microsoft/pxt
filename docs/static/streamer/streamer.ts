@@ -61,6 +61,7 @@ interface StreamerConfig {
     backgroundVideo?: string;
     stingerVideo?: string;
     stingerVideoDelay?: number;
+    camoverlayVideo?: string;
     faceCamGreenScreen?: string;
     hardwareCamGreenScreen?: string;
     faceCamClipBlack?: number;
@@ -147,8 +148,10 @@ function onYouTubeIframeAPIReady() {
     const selectapp = document.getElementById("selectapp");
     const facecamcontainer = document.getElementById("facecam");
     const facecam = document.getElementById("facecamvideo") as HTMLVideoElement;
+    const facecamoverlay = document.getElementById("facecamoverlay") as HTMLVideoElement;
     const facecamlabel = document.getElementById("facecamlabel");
     const hardwarecam = document.getElementById("hardwarecamvideo") as HTMLVideoElement;
+    const hardwarecamoverlay = document.getElementById("hardwarecamoverlay") as HTMLVideoElement;
     const hardwarecamlabel = document.getElementById("hardwarecamlabel");
     const chat = document.getElementById("chat") as HTMLIFrameElement;
     const settings = document.getElementById("settings");
@@ -206,6 +209,7 @@ function onYouTubeIframeAPIReady() {
         loadSocial()
         await firstLoadFaceCam()
         await loadHardwareCam()
+        await loadCamOverlays()
         await loadSettings()
         setScene("right")
         render()
@@ -314,6 +318,7 @@ function onYouTubeIframeAPIReady() {
             (config.twitch || config.restream) && "haschat",
             config.faceCamGreenScreen && "hasthumbnail",
             config.stingerVideo && "hasstinger",
+            config.camoverlayVideo && "hascamoverlay",
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
             showSettings();
@@ -1052,6 +1057,21 @@ background-image: url(${config.backgroundImage});
         }
         finally {
             body.classList.remove("loading");
+        }
+    }
+
+    async function loadCamOverlays() {
+        const config = readConfig();
+        // update overlay
+        if (config.camoverlayVideo) {
+            const url = await resolveBlob(config.camoverlayVideo)
+            facecamoverlay.src = url
+            hardwarecamoverlay.src = url
+        } else {
+            const url = facecamoverlay.src;
+            URL.revokeObjectURL(url);
+            facecamoverlay.src = ""
+            hardwarecamoverlay.src = ""
         }
     }
 
@@ -1810,7 +1830,9 @@ background-image: url(${config.backgroundImage});
             if (config.hardwareCamId == config.faceCamId)
                 config.hardwareCamId = undefined; // priority to face cam
             saveConfig(config)
-            loadFaceCam().then(() => loadSettings())
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
         const facerotatecheckbox = document.getElementById("facerotatecameracheckbox") as HTMLInputElement
         facerotatecheckbox.checked = !!config.faceCamRotate
@@ -1818,7 +1840,9 @@ background-image: url(${config.backgroundImage});
             config.faceCamRotate = !!facerotatecheckbox.checked
             saveConfig(config)
             render()
-            loadFaceCam().then(() => loadSettings())
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
         const facecamcircularcheckbox = document.getElementById("facecamcircularcheckbox") as HTMLInputElement
         facecamcircularcheckbox.checked = !!config.faceCamCircular
@@ -1826,7 +1850,9 @@ background-image: url(${config.backgroundImage});
             config.faceCamCircular = !!facecamcircularcheckbox.checked
             saveConfig(config)
             render()
-            loadFaceCam().then(() => loadSettings())
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
 
         const facecamscreeninput = document.getElementById("facecamscreeninput") as HTMLInputElement
@@ -1840,13 +1866,17 @@ background-image: url(${config.backgroundImage});
             if (config.faceCamGreenScreen && (<any>facecam).seriously?.chroma)
                 (<any>facecam).seriously.chroma.screen = toSeriousColor(config.faceCamGreenScreen);
             else
-                loadFaceCam().then(() => loadSettings())
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings())
         }
         const facecamscreenclear = document.getElementById("facecamscreenclear") as HTMLButtonElement
         facecamscreenclear.onclick = function (e) {
             config.faceCamGreenScreen = undefined;
             saveConfig(config);
-            loadFaceCam().then(() => loadSettings())
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
         const facecamscreencanvas = document.getElementById("facecamscreencanvas") as HTMLCanvasElement
         facecamscreencanvas.width = 320;
@@ -1868,7 +1898,9 @@ background-image: url(${config.backgroundImage});
                 loadSettings()
             }
             else
-                loadFaceCam().then(() => loadSettings())
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings())
         }
         const facecamgreenclipblack = document.getElementById("facecamgreenclipblack") as HTMLInputElement
         facecamgreenclipblack.value = (config.faceCamClipBlack || 0.6) + "";
@@ -1879,7 +1911,9 @@ background-image: url(${config.backgroundImage});
             if ((<any>facecam).seriously?.chroma)
                 (<any>facecam).seriously.chroma.clipBlack = config.faceCamClipBlack;
             else
-                loadFaceCam().then(() => loadSettings())
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings())
         }
         const facecamcontourinput = document.getElementById("facecamcontourinput") as HTMLInputElement
         facecamcontourinput.value = config.faceCamContour || ""
@@ -1892,13 +1926,17 @@ background-image: url(${config.backgroundImage});
             if (config.faceCamContour && (<any>facecam).seriously?.contour)
                 (<any>facecam).seriously.contour.color = toSeriousColor(config.faceCamContour);
             else
-                loadFaceCam().then(() => loadSettings())
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings())
         }
         const facecamcontourclear = document.getElementById("facecamcontourclear") as HTMLInputElement
         facecamcontourclear.onclick = function (e) {
             config.faceCamContour = undefined;
             saveConfig(config);
-            loadFaceCam().then(() => loadSettings())
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
 
         config.faceCamFilter = config.faceCamFilter || {};
@@ -1951,14 +1989,18 @@ background-image: url(${config.backgroundImage});
             saveConfig(config)
             state.hardware = !!config.hardwareCamId
             render()
-            loadHardwareCam().then(() => loadSettings())
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
         const hardwarerotatecheckbox = document.getElementById("hardwarerotatecameracheckbox") as HTMLInputElement
         hardwarerotatecheckbox.checked = !!config.hardwareCamRotate
         hardwarerotatecheckbox.onchange = function () {
             config.hardwareCamRotate = !!hardwarerotatecheckbox.checked
             saveConfig(config)
-            loadHardwareCam().then(() => loadSettings())
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
         const hardwarecamcircularcheckbox = document.getElementById("hardwarecamcircularcheckbox") as HTMLInputElement
         hardwarecamcircularcheckbox.checked = !!config.hardwareCamCircular
@@ -1966,7 +2008,9 @@ background-image: url(${config.backgroundImage});
             config.hardwareCamCircular = !!hardwarecamcircularcheckbox.checked
             saveConfig(config)
             render()
-            loadFaceCam().then(() => loadSettings())
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
 
         const hardwarecamscreeninput = document.getElementById("hardwarecamscreeninput") as HTMLInputElement
@@ -1980,7 +2024,9 @@ background-image: url(${config.backgroundImage});
             if (config.hardwareCamGreenScreen && (<any>hardwarecam).seriously?.chroma)
                 (<any>hardwarecam).seriously.chroma.screen = toSeriousColor(config.hardwareCamGreenScreen);
             else
-                loadHardwareCam().then(() => loadSettings())
+                loadHardwareCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings())
         }
 
         const hardwarecamscreencanvas = document.getElementById("hardwarecamscreencanvas") as HTMLCanvasElement
@@ -2009,7 +2055,9 @@ background-image: url(${config.backgroundImage});
         hardwarecamscreenclear.onclick = function (e) {
             config.hardwareCamGreenScreen = undefined;
             saveConfig(config);
-            loadHardwareCam().then(() => loadSettings())
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
         const hardwarecamgreenclipblack = document.getElementById("hardwarecamgreenclipblack") as HTMLInputElement
         hardwarecamgreenclipblack.value = (config.hardwareCamClipBlack || 0.6) + "";
@@ -2020,7 +2068,9 @@ background-image: url(${config.backgroundImage});
             if ((<any>hardwarecam).seriously?.chroma)
                 (<any>hardwarecam).seriously.chroma.clipBlack = config.hardwareCamClipBlack;
             else
-                loadHardwareCam().then(() => loadSettings())
+                loadHardwareCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings())
         }
         const hardwarecamcontourinput = document.getElementById("hardwarecamcontourinput") as HTMLInputElement
         hardwarecamcontourinput.value = config.hardwareCamContour || ""
@@ -2033,13 +2083,17 @@ background-image: url(${config.backgroundImage});
             if (config.hardwareCamContour && (<any>hardwarecam).seriously?.contour)
                 (<any>hardwarecam).seriously.contour.color = toSeriousColor(config.hardwareCamContour);
             else
-                loadHardwareCam().then(() => loadSettings())
+                loadHardwareCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings())
         }
         const hardwarecamcontourclear = document.getElementById("hardwarecamcontourclear") as HTMLButtonElement
         hardwarecamcontourclear.onclick = function (e) {
             config.hardwareCamContour = undefined;
             saveConfig(config);
-            loadHardwareCam().then(() => loadSettings())
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
 
         config.hardwareCamFilter = config.hardwareCamFilter || {};
@@ -2104,6 +2158,7 @@ background-image: url(${config.backgroundImage});
         importVideoButton("start")
         importVideoButton("end")
         importVideoButton("stinger")
+        importVideoButton("camoverlay")
 
         const stingervideodelayinput = document.getElementById("stringervideodelayinput") as HTMLInputElement
         stingervideodelayinput.value = (config.stingerVideoDelay || "") + ""
@@ -2265,7 +2320,7 @@ background-image: url(${config.backgroundImage});
                 document.getElementById(`${name}videoimportinput`) as HTMLInputElement,
                 document.getElementById(`${name}videoimportbtn`),
                 (file) => {
-                    const fn = `${file.name || name}`.replace(/\.\w+$/, "") + "video"
+                    const fn = `${name}`.replace(/\.\w+$/, "") + "video"
                     db.put(fn, file)
                     config[name + "Video"] = `blob:${fn}`
                     saveConfig(config);
