@@ -368,7 +368,7 @@ function onYouTubeIframeAPIReady() {
         if (config.extraSites && config.extraSites.length) {
             addSep(toolbox);
             config.extraSites.forEach(addSiteButton)
-            addButton(toolbox, "Code", "Reload MakeCode editor", loadEditor)
+            addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor))
         }
 
         addSep(toolbox)
@@ -460,10 +460,13 @@ function onYouTubeIframeAPIReady() {
         const ytid = parseYouTubeVideoId(url);
         if (ytid)
             url = createYouTubeEmbedUrl(ytid, true)
-        if (config.multiEditor && state.sceneIndex == LEFT_SCENE_INDEX)
-            editor2.src = url;
-        else
-            editor.src = url;
+
+        startStinger(config.stingerVideo, () => {
+            if (config.multiEditor && state.sceneIndex == LEFT_SCENE_INDEX)
+                editor2.src = url;
+            else
+                editor.src = url;
+        })
     }
 
     function setScene(scene) {
@@ -483,14 +486,14 @@ function onYouTubeIframeAPIReady() {
             startCountdown(300000);
             const v = config.endVideo || config.stingerVideo
             if (v) {
-                startStinger(v, sceneIndex, 700)
+                startStingerScene(v, sceneIndex)
                 return;
             }
         } else {
             stopCountdown();
             const v = config.endVideo || config.stingerVideo
             if (lastSceneIndex == COUNTDOWN_SCENE_INDEX && v) {
-                startStinger(v, sceneIndex, 700)
+                startStingerScene(v, sceneIndex)
                 return;
             }
         }
@@ -499,7 +502,7 @@ function onYouTubeIframeAPIReady() {
         if (config.stingerVideo &&
             (sceneIndex == CHAT_SCENE_INDEX && isLeftOrRightScene(lastSceneIndex))
             || (isLeftOrRightScene(sceneIndex) && lastSceneIndex == CHAT_SCENE_INDEX)) {
-            startStinger(config.stingerVideo, sceneIndex, 700)
+            startStingerScene(config.stingerVideo, sceneIndex)
             return;
         }
 
@@ -603,11 +606,15 @@ function onYouTubeIframeAPIReady() {
         else startPaint();
     }
 
-    function toggleThumbnail() {
-        state.thumbnail = !state.thumbnail;
-        if (state.thumbnail)
-            state.chat = false;
-        render();
+    function toggleThumbnail(ev: Event) {
+        stopEvent(ev)
+        const config = readConfig();
+        startStinger(config.stingerVideo, () => {
+            state.thumbnail = !state.thumbnail;
+            if (state.thumbnail)
+                state.chat = false;
+            render();
+        }, 700)
     }
 
     function setPaintTool(tool) {
@@ -2423,11 +2430,22 @@ background-image: url(${config.backgroundImage});
         return [props, measures];
     }
 
-    async function startStinger(url: string, endSceneIndex: number, transitionDelay?: number) {
+    async function startStingerScene(url: string, endSceneIndex: number, transitionDelay = 700) {
+        startStinger(url, () => {
+            updateScene(endSceneIndex);
+            render()
+        }, transitionDelay)
+    }
+
+    async function startStinger(url: string, end: () => void, transitionDelay = 700) {
+        if (!url) {
+            end();
+            return;
+        }
+
         stingerEvents.start = () => {
             setTimeout(() => {
-                updateScene(endSceneIndex);
-                render()
+                end()
             }, transitionDelay || 1000)
         }
         stingerEvents.end = () => { }
