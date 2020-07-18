@@ -266,7 +266,7 @@ function onYouTubeIframeAPIReady() {
         if (config.extraSites && config.extraSites.length) {
             addSep(toolbox);
             config.extraSites.forEach(addSiteButton);
-            addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor, config.stingerVideoDelay));
+            addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor, config.stingerVideoGreenScreen, config.stingerVideoDelay));
         }
         addSep(toolbox);
         if (state.speech)
@@ -352,7 +352,7 @@ function onYouTubeIframeAPIReady() {
                 editor2.src = url;
             else
                 editor.src = url;
-        }, config.stingerVideoDelay);
+        }, config.stingerVideoGreenScreen, config.stingerVideoDelay);
     }
     function setScene(scene) {
         tickEvent("streamer.scene", { scene: scene });
@@ -489,7 +489,7 @@ function onYouTubeIframeAPIReady() {
             if (state.thumbnail)
                 state.chat = false;
             render();
-        }, 700);
+        }, config.stingerVideoGreenScreen, config.stingerVideoDelay);
     }
     function setPaintTool(tool) {
         startPaint();
@@ -1973,6 +1973,23 @@ background-image: url(${config.backgroundImage});
             stingervideodelayinput.value = (config.stingerVideoDelay || "") + "";
             saveConfig(config);
         };
+        const stingervideoscreenclear = document.getElementById("stingervideoscreenclear");
+        stingervideoscreenclear.onclick = function (e) {
+            config.stingerVideoGreenScreen = undefined;
+            saveConfig(config);
+            loadSettings();
+            startStinger(config.stingerVideo, () => { });
+        };
+        const stingervideoscreeninput = document.getElementById("stingervideoscreeninput");
+        stingervideoscreeninput.value = config.stingerVideoGreenScreen || "";
+        stingervideoscreeninput.onchange = function (e) {
+            config.stingerVideoGreenScreen = undefined;
+            if (/^#[a-fA-F0-9]{6}$/.test(stingervideoscreeninput.value))
+                config.stingerVideoGreenScreen = stingervideoscreeninput.value;
+            saveConfig(config);
+            loadSettings();
+            startStinger(config.stingerVideo, () => { }, config.stingerVideoGreenScreen);
+        };
         const backgroundcolorinput = document.getElementById("backgroundcolorinput");
         backgroundcolorinput.value = config.styleBackground || "";
         backgroundcolorinput.onchange = function (e) {
@@ -2285,13 +2302,14 @@ background-image: url(${config.backgroundImage});
             });
         return [props, measures];
     }
-    async function startStingerScene(url, endSceneIndex, transitionDelay) {
+    async function startStingerScene(url, endSceneIndex) {
+        const config = readConfig();
         startStinger(url, () => {
             updateScene(endSceneIndex);
             render();
-        }, transitionDelay);
+        }, config.stingerVideoGreenScreen, config.stingerVideoDelay);
     }
-    async function startStinger(url, end, transitionDelay = 700) {
+    async function startStinger(url, end, greenScreen = "", transitionDelay = 700) {
         stingerEvents.start = () => {
             setTimeout(() => {
                 end();
@@ -2339,9 +2357,13 @@ background-image: url(${config.backgroundImage});
             stingeryoutube.classList.add("hidden");
             stingervideo.src = url;
             stingervideo.onplay = () => {
-                stingervideo.classList.add("hidden");
-                stingervideoserious.classList.remove("hidden");
-                toggleGreenScreen(true, stingervideo);
+                if (greenScreen) {
+                    stingervideoserious.classList.remove("hidden");
+                    startGreenScreen(greenScreen, stingervideo);
+                }
+                else {
+                    stingervideo.classList.remove("hidden");
+                }
                 stingerEvents.start();
             };
             stingervideo.onpause = () => {
@@ -2362,6 +2384,7 @@ background-image: url(${config.backgroundImage});
             stingervideo.classList.add("hidden");
             stingeryoutube.classList.add("hidden");
             state.stingering = false;
+            stopGreenScreen(stingervideo);
             render();
             end();
         }

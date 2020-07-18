@@ -1661,18 +1661,18 @@ Settings
                         <button id="borderbackgroundclear">clear</button>
                     </div>
                     <div class="field">
-                        <label for="camoverlayvideoinput">Face and document camera overlay videos (must be https://... or .webm, .mp4 files). Will play between scenes. YouTube NOT supported.
+                        <label for="camoverlayvideoinput">Face and document camera overlay videos (must be https://... or .webm, .mp4, .mov files). Will play between scenes. YouTube NOT supported.
                             <span class="icons">
-                                <input id="camoverlayvideoimportinput" type="file" accept="video/mp4, video/webm, video/mov" style="display:none"></input>
+                                <input id="camoverlayvideoimportinput" type="file" accept="video/mp4, video/webm, video/quicktime" style="display:none"></input>
                                 <button id="camoverlayvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                
                             </span>
                         </label>
                         <input id="camoverlayvideoinput" type="url" />
                     </div>
                     <div class="field">
-                        <label for="stingervideoinput">Stinger transition video (must be https://... or .webm, .mp4 files). Will play between scenes. YouTube NOT supported.
+                        <label for="stingervideoinput">Stinger transition video (must be https://... or .webm, .mp4, .mov files). Will play between scenes. YouTube NOT supported.
                             <span class="icons">
-                                <input id="stingervideoimportinput" type="file" accept="video/mp4, video/webm, video/mov" style="display:none"></input>
+                                <input id="stingervideoimportinput" type="file" accept="video/mp4, video/webm, video/quicktime" style="display:none"></input>
                                 <button id="stingervideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                
                             </span>
                         </label>
@@ -1682,6 +1682,11 @@ Settings
                         <label for="stringervideodelayinput">Stinger transition delay (ms). Time to start transitioning the view, when the stinger is fully covering the screen.</label>
                         <input id="stringervideodelayinput" type="number" placeholder="700" /> 
                     </div>            
+                    <div class="field">
+                        <label for="stingervideoscreeninput">Stinger green screen color</label>
+                        <input id="stingervideoscreeninput" type="color" />
+                        <button id="stingervideoscreenclear">clear</button>
+                    </div>
                 </div>
                 <div class="section">
                     <h3>Background</h3>
@@ -1697,7 +1702,7 @@ Settings
                     <div class="field">
                         <label for="backgroundvideoinput">Background video (YouTube url or must be https://...)
                             <span class="icons">
-                                <input id="backgroundvideoimportinput" type="file" accept="video/mp4, video/webm, video/mov" style="display:none"></input>
+                                <input id="backgroundvideoimportinput" type="file" accept="video/mp4, video/webm, video/quicktime" style="display:none"></input>
                                 <button id="backgroundvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                                            
                             </span>
                         </label>
@@ -1715,7 +1720,7 @@ Settings
                             countdown
                             view. YouTube videos are do not support transparency.
                             <span class="icons">
-                                <input id="startvideoimportinput" type="file" accept="video/mp4, video/webm, video/mov" style="display:none"></input>
+                                <input id="startvideoimportinput" type="file" accept="video/mp4, video/webm, video/quicktime" style="display:none"></input>
                                 <button id="startvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                
                             </span>
                     </label>
@@ -1726,7 +1731,7 @@ Settings
                             countdown
                             view. YouTube videos are do not support transparency.
                             <span class="icons">
-                                <input id="endvideoimportinput" type="file" accept="video/mp4, video/webm, video/mov" style="display:none"></input>
+                                <input id="endvideoimportinput" type="file" accept="video/mp4, video/webm, video/quicktime" style="display:none"></input>
                                 <button id="endvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                                            
                             </span>
                         </label>

@@ -61,6 +61,7 @@ interface StreamerConfig {
     backgroundVideo?: string;
     stingerVideo?: string;
     stingerVideoDelay?: number;
+    stingerVideoGreenScreen?: string;
     camoverlayVideo?: string;
     faceCamGreenScreen?: string;
     hardwareCamGreenScreen?: string;
@@ -377,7 +378,7 @@ function onYouTubeIframeAPIReady() {
         if (config.extraSites && config.extraSites.length) {
             addSep(toolbox);
             config.extraSites.forEach(addSiteButton)
-            addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor, config.stingerVideoDelay))
+            addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor, config.stingerVideoGreenScreen, config.stingerVideoDelay))
         }
 
         addSep(toolbox)
@@ -475,7 +476,7 @@ function onYouTubeIframeAPIReady() {
                 editor2.src = url;
             else
                 editor.src = url;
-        }, config.stingerVideoDelay)
+        }, config.stingerVideoGreenScreen, config.stingerVideoDelay)
     }
 
     function setScene(scene) {
@@ -623,7 +624,7 @@ function onYouTubeIframeAPIReady() {
             if (state.thumbnail)
                 state.chat = false;
             render();
-        }, 700)
+        }, config.stingerVideoGreenScreen, config.stingerVideoDelay)
     }
 
     function setPaintTool(tool) {
@@ -2176,6 +2177,25 @@ background-image: url(${config.backgroundImage});
             saveConfig(config);
         }
 
+        const stingervideoscreenclear = document.getElementById("stingervideoscreenclear") as HTMLInputElement
+        stingervideoscreenclear.onclick = function (e) {
+            config.stingerVideoGreenScreen = undefined;
+            saveConfig(config);
+            loadSettings()
+            startStinger(config.stingerVideo, () => {})
+        }
+
+        const stingervideoscreeninput = document.getElementById("stingervideoscreeninput") as HTMLInputElement
+        stingervideoscreeninput.value = config.stingerVideoGreenScreen || ""
+        stingervideoscreeninput.onchange = function (e) {
+            config.stingerVideoGreenScreen = undefined;
+            if (/^#[a-fA-F0-9]{6}$/.test(stingervideoscreeninput.value))
+                config.stingerVideoGreenScreen = stingervideoscreeninput.value
+            saveConfig(config);
+            loadSettings()
+            startStinger(config.stingerVideo, () => {}, config.stingerVideoGreenScreen)
+        }
+
         const backgroundcolorinput = document.getElementById("backgroundcolorinput") as HTMLInputElement
         backgroundcolorinput.value = config.styleBackground || ""
         backgroundcolorinput.onchange = function (e) {
@@ -2506,14 +2526,15 @@ background-image: url(${config.backgroundImage});
         return [props, measures];
     }
 
-    async function startStingerScene(url: string, endSceneIndex: number, transitionDelay: number) {
+    async function startStingerScene(url: string, endSceneIndex: number) {
+        const config = readConfig();
         startStinger(url, () => {
             updateScene(endSceneIndex);
             render()
-        }, transitionDelay)
+        }, config.stingerVideoGreenScreen, config.stingerVideoDelay)
     }
 
-    async function startStinger(url: string, end: () => void, transitionDelay = 700) {
+    async function startStinger(url: string, end: () => void, greenScreen: string = "", transitionDelay = 700) {
         stingerEvents.start = () => {
             setTimeout(() => {
                 end()
@@ -2561,9 +2582,12 @@ background-image: url(${config.backgroundImage});
             stingeryoutube.classList.add("hidden")
             stingervideo.src = url;
             stingervideo.onplay = () => {
-                stingervideo.classList.add("hidden")
-                stingervideoserious.classList.remove("hidden")
-                toggleGreenScreen(true, stingervideo);
+                if (greenScreen) {
+                    stingervideoserious.classList.remove("hidden")
+                    startGreenScreen(greenScreen, stingervideo)
+                } else {
+                    stingervideo.classList.remove("hidden")
+                }
                 stingerEvents.start()
             }
             stingervideo.onpause = () => {
@@ -2583,6 +2607,7 @@ background-image: url(${config.backgroundImage});
             stingervideo.classList.add("hidden");
             stingeryoutube.classList.add("hidden")
             state.stingering = false;
+            stopGreenScreen(stingervideo)
             render();
             end();
         }
