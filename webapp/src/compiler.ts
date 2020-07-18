@@ -718,11 +718,20 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
 
             const xml = Blockly.Xml.textToDom(text);
             pxt.blocks.domToWorkspaceNoEvents(xml, ws);
-            patchedFiles["main.blocks"] = text;
+            pxtblockly.upgradeTilemapsInWorkspace(ws, pxt.react.getTilemapProject());
+            const upgradedXml = Blockly.Xml.workspaceToDom(ws);
+            patchedFiles["main.blocks"] = Blockly.Xml.domToText(upgradedXml);
+
             return pxt.blocks.compileAsync(ws, info)
         })
         .then(res => {
             patchedFiles["main.ts"] = res.source;
+            return project.buildTilemapsAsync();
+        })
+        .then(() => {
+            if (project.getAllFiles()["tilemap.g.ts"]) {
+                patchedFiles["tilemap.g.ts"] = project.getAllFiles()["tilemap.g.ts"];
+            }
             return checkPatchAsync(patchedFiles);
         })
         .then(() => {
@@ -775,10 +784,11 @@ interface UpgradeError extends Error {
 
 function checkPatchAsync(patchedFiles?: pxt.Map<string>) {
     const mainPkg = pkg.mainPkg;
-    return mainPkg.getCompileOptionsAsync()
+    return pkg.mainEditorPkg().buildTilemapsAsync()
+        .then(() => mainPkg.getCompileOptionsAsync())
         .then(opts => {
             if (patchedFiles) {
-                Object.keys(opts.fileSystem).forEach(fileName => {
+                Object.keys(patchedFiles).forEach(fileName => {
                     if (patchedFiles[fileName]) {
                         opts.fileSystem[fileName] = patchedFiles[fileName];
                     }
