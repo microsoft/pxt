@@ -2162,11 +2162,11 @@ background-image: url(${config.backgroundImage});
             render()
         }
 
-        importVideoButton("background")
-        importVideoButton("start")
-        importVideoButton("end")
-        importVideoButton("stinger")
-        importVideoButton("camoverlay")
+        importVideoButton("background", true)
+        importVideoButton("start", true)
+        importVideoButton("end", true)
+        importVideoButton("stinger", false)
+        importVideoButton("camoverlay", true)
 
         const stingervideodelayinput = document.getElementById("stringervideodelayinput") as HTMLInputElement
         stingervideodelayinput.value = (config.stingerVideoDelay || "") + ""
@@ -2182,7 +2182,7 @@ background-image: url(${config.backgroundImage});
             config.stingerVideoGreenScreen = undefined;
             saveConfig(config);
             loadSettings()
-            startStinger(config.stingerVideo, () => {})
+            startStinger(config.stingerVideo, () => { })
         }
 
         const stingervideoscreeninput = document.getElementById("stingervideoscreeninput") as HTMLInputElement
@@ -2193,7 +2193,7 @@ background-image: url(${config.backgroundImage});
                 config.stingerVideoGreenScreen = stingervideoscreeninput.value
             saveConfig(config);
             loadSettings()
-            startStinger(config.stingerVideo, () => {}, config.stingerVideoGreenScreen)
+            startStinger(config.stingerVideo, () => { }, config.stingerVideoGreenScreen)
         }
 
         const backgroundcolorinput = document.getElementById("backgroundcolorinput") as HTMLInputElement
@@ -2341,27 +2341,26 @@ background-image: url(${config.backgroundImage});
             saveConfig(config);
         }
 
-
-        function importVideoButton(name: string) {
+        function importVideoButton(name: string, replace: boolean) {
             importFileButton(`streamer.importvideo.${name}`,
                 document.getElementById(`${name}videoimportinput`) as HTMLInputElement,
                 document.getElementById(`${name}videoimportbtn`),
                 async (file) => {
-                    const fn = `${name}`.replace(/\.\w+$/, "") + "video"
+                    const fn = `${replace ? name : file.name}`.replace(/\.\w+$/, "") + "video"
                     db.put(fn, file)
-                    config[name + "Video"] = `blob:${fn}`
+                    const url = `blob:${fn}`;
+                    const current = config[name + "Video"];
+                    config[name + "Video"] = replace || !current ? url : `${current}\n${url}`
                     saveConfig(config);
                     loadSettings()
                     loadStyle()
                     render()
                 })
-            const videoinput = document.getElementById(`${name}videoinput`) as HTMLInputElement
+            const videoinput = document.getElementById(`${name}videoinput`) as HTMLInputElement | HTMLTextAreaElement
             const field = `${name}Video`
             videoinput.value = config[field] || ""
-            videoinput.onchange = function (e) {
-                config[field] = undefined;
-                if (/^https:\/\//.test(videoinput.value))
-                    config[field] = videoinput.value
+            videoinput.oninput = videoinput.onchange = function (e) {
+                config[field] = videoinput.value
                 saveConfig(config);
                 loadStyle()
                 loadSettings()
@@ -2614,6 +2613,11 @@ background-image: url(${config.backgroundImage});
     }
 
     async function resolveBlob(url: string) {
+        if (/\n/.test(url)) {
+            // multiple urls, pick a random one
+            const urls = url.split(/\n/g)
+            url = urls[Math.floor(Math.random() * urls.length)];
+        }
         const blob = url.startsWith("blob:") && url.substr("blob:".length);
         if (blob) {
             const file = await db.get(blob)
