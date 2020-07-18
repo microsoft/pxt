@@ -369,7 +369,7 @@ function onYouTubeIframeAPIReady() {
             startCountdown(300000);
             const v = config.endVideo || config.stingerVideo;
             if (v) {
-                startStingerScene(v, sceneIndex, config.stingerVideoDelay);
+                startStingerScene(v, sceneIndex);
                 return;
             }
         }
@@ -377,7 +377,7 @@ function onYouTubeIframeAPIReady() {
             stopCountdown();
             const v = config.endVideo || config.stingerVideo;
             if (lastSceneIndex == COUNTDOWN_SCENE_INDEX && v) {
-                startStingerScene(v, sceneIndex, config.stingerVideoDelay);
+                startStingerScene(v, sceneIndex);
                 return;
             }
         }
@@ -385,7 +385,7 @@ function onYouTubeIframeAPIReady() {
         if (config.stingerVideo &&
             (sceneIndex == CHAT_SCENE_INDEX && isLeftOrRightScene(lastSceneIndex))
             || (isLeftOrRightScene(sceneIndex) && lastSceneIndex == CHAT_SCENE_INDEX)) {
-            startStingerScene(config.stingerVideo, sceneIndex, config.stingerVideoDelay);
+            startStingerScene(config.stingerVideo, sceneIndex);
             return;
         }
         updateScene(sceneIndex);
