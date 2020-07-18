@@ -2580,7 +2580,8 @@ background-image: url(${config.backgroundImage});
         const blob = url.startsWith("blob:") && url.substr("blob:".length);
         if (blob) {
             const file: File = await db.get(blob)
-            url = URL.createObjectURL(file)
+            if (file)
+                url = URL.createObjectURL(file)
         }
         return url;
     }
