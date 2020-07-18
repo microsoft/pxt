@@ -167,7 +167,7 @@ function onYouTubeIframeAPIReady() {
     const titleEl = document.getElementById('title')
     const subtitles = document.getElementById('subtitles')
     const stingervideo = document.getElementById('stingervideo') as HTMLVideoElement
-    //const stingeryoutube = document.getElementById('stingeryoutube') as HTMLIFrameElement
+    const stingervideoserious = document.getElementById('stingervideoserious') as HTMLVideoElement
     const backgroundvideo = document.getElementById('backgroundvideo') as HTMLVideoElement
     const backgroundyoutube = document.getElementById('backgroundyoutube') as HTMLIFrameElement
     const intro = document.getElementById('intro')
@@ -1369,63 +1369,70 @@ background-image: url(${config.backgroundImage});
         el.volume = 0; // don't use sound!
         el.onloadedmetadata = (e) => {
             el.play();
-            toggleGreenScreen();
+            toggleGreenScreen(greenscreen, el, rotate, clipBlack, contourColor);
         }
         if (rotate)
             el.classList.add("rotate")
         else
             el.classList.remove("rotate");
+    }
 
-        function toggleGreenScreen() {
-            // time to get serious
-            if (greenscreen) {
-                el.style.opacity = 0;
-                el.parentElement.classList.add("greenscreen")
-                // https://github.com/brianchirls/Seriously.js/
-                const canvas = document.getElementById(el.id + "serious") as HTMLCanvasElement;
-                if (rotate)
-                    canvas.classList.add("rotate")
-                else
-                    canvas.classList.remove("rotate");
-                canvas.width = el.videoWidth;
-                canvas.height = el.videoHeight;
-                const seriously = new Seriously();
-                let source = seriously.source(el);
+    function toggleGreenScreen(greenscreen: string, el: HTMLVideoElement, rotate?: boolean, clipBlack?: number, contourColor?: string) {
+        // time to get serious
+        if (greenscreen) {
+            startGreenScreen(greenscreen, el, rotate, clipBlack, contourColor)
+        }
+        else
+            stopGreenScreen(el)
+    }
 
-                // source -> chroma key
-                const chroma = seriously.effect("chroma");
-                chroma.clipBlack = clipBlack || 0.6;
-                const screenColor = toSeriousColor(greenscreen);
-                if (screenColor) chroma.screen = screenColor
-                chroma.source = source;
-                seriously.chroma = chroma;
-                source = chroma;
+    function startGreenScreen(greenscreen: string, el: HTMLVideoElement, rotate?: boolean, clipBlack?: number, contourColor?: string) {
+        el.style.opacity = "0";
+        el.parentElement.classList.add("greenscreen")
+        // https://github.com/brianchirls/Seriously.js/
+        const canvas = document.getElementById(el.id + "serious") as HTMLCanvasElement;
+        if (rotate)
+            canvas.classList.add("rotate")
+        else
+            canvas.classList.remove("rotate");
+        canvas.width = el.videoWidth;
+        canvas.height = el.videoHeight;
+        const seriously = new Seriously();
+        let source = seriously.source(el);
 
-                // optional chroma -> contour
-                if (contourColor) {
-                    const contour = seriously.effect("contour");
-                    contour.source = source;
-                    seriously.contour = contour;
-                    seriously.contour.color = toSeriousColor(contourColor);
-                    source = contour;
-                }
+        // source -> chroma key
+        const chroma = seriously.effect("chroma");
+        chroma.clipBlack = clipBlack || 0.6;
+        const screenColor = toSeriousColor(greenscreen);
+        if (screenColor) chroma.screen = screenColor
+        chroma.source = source;
+        seriously.chroma = chroma;
+        source = chroma;
 
-                // pipe to canvas
-                const target = seriously.target(canvas);
-                target.source = source;
+        // optional chroma -> contour
+        if (contourColor) {
+            const contour = seriously.effect("contour");
+            contour.source = source;
+            seriously.contour = contour;
+            seriously.contour.color = toSeriousColor(contourColor);
+            source = contour;
+        }
 
-                seriously.go();
+        // pipe to canvas
+        const target = seriously.target(canvas);
+        target.source = source;
 
-                el.seriously = seriously;
-            } else {
-                el.style.opacity = 1;
-                el.parentElement.classList.remove("greenscreen")
+        seriously.go();
 
-                if (el.seriously) {
-                    el.seriously.stop();
-                    el.seriously = undefined;
-                }
-            }
+        (el as any).seriously = seriously;
+    }
+
+    function stopGreenScreen(el: HTMLVideoElement) {
+        el.style.opacity = "1";
+        el.parentElement.classList.remove("greenscreen")
+        if ((el as any).seriously) {
+            (el as any).seriously.stop();
+            (el as any).seriously = undefined;
         }
     }
 
@@ -2319,7 +2326,7 @@ background-image: url(${config.backgroundImage});
             importFileButton(`streamer.importvideo.${name}`,
                 document.getElementById(`${name}videoimportinput`) as HTMLInputElement,
                 document.getElementById(`${name}videoimportbtn`),
-                (file) => {
+                async (file) => {
                     const fn = `${name}`.replace(/\.\w+$/, "") + "video"
                     db.put(fn, file)
                     config[name + "Video"] = `blob:${fn}`
@@ -2521,6 +2528,7 @@ background-image: url(${config.backgroundImage});
         if (ytVideoId) {
             state.stingering = true;
             render();
+            stopGreenScreen(stingervideo)
             stingervideo.src = undefined;
             stingervideo.classList.add("hidden");
             stingerPlayer.loadVideoById(ytVideoId, 0)
@@ -2553,15 +2561,19 @@ background-image: url(${config.backgroundImage});
             stingeryoutube.classList.add("hidden")
             stingervideo.src = url;
             stingervideo.onplay = () => {
-                stingervideo.classList.remove("hidden")
+                stingervideo.classList.add("hidden")
+                stingervideoserious.classList.remove("hidden")
+                toggleGreenScreen(true, stingervideo);
                 stingerEvents.start()
             }
             stingervideo.onpause = () => {
                 stingervideo.classList.add("hidden")
+                stingervideoserious.classList.add("hidden")
             }
             stingervideo.onerror = stingervideo.onended = () => {
                 stingerEvents.end()
                 stingervideo.classList.add("hidden")
+                stingervideoserious.classList.add("hidden")
                 // doesn't hurt
                 URL.revokeObjectURL(url)
             }
@@ -2579,7 +2591,7 @@ background-image: url(${config.backgroundImage});
     async function resolveBlob(url: string) {
         const blob = url.startsWith("blob:") && url.substr("blob:".length);
         if (blob) {
-            const file: File = await db.get(blob)
+            const file = await db.get(blob)
             url = URL.createObjectURL(file)
         }
         return url;
@@ -2606,12 +2618,12 @@ background-image: url(${config.backgroundImage});
         };
 
         return {
-            put: (id: string, file: File) => {
+            put: (id: string, file: File | Blob) => {
                 const transaction = db.transaction([STORE_BLOBS], "readwrite");
                 const blobs = transaction.objectStore(STORE_BLOBS)
                 blobs.put(file, id);
             },
-            get: (id: string): Promise<File> => {
+            get: (id: string): Promise<File | Blob> => {
                 return new Promise((resolve, reject) => {
                     const transaction = db.transaction([STORE_BLOBS], "readonly");
                     const blobs = transaction.objectStore(STORE_BLOBS)

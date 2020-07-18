@@ -73,7 +73,7 @@ function onYouTubeIframeAPIReady() {
     const titleEl = document.getElementById('title');
     const subtitles = document.getElementById('subtitles');
     const stingervideo = document.getElementById('stingervideo');
-    //const stingeryoutube = document.getElementById('stingeryoutube') as HTMLIFrameElement
+    const stingervideoserious = document.getElementById('stingervideoserious');
     const backgroundvideo = document.getElementById('backgroundvideo');
     const backgroundyoutube = document.getElementById('backgroundyoutube');
     const intro = document.getElementById('intro');
@@ -1200,58 +1200,63 @@ background-image: url(${config.backgroundImage});
         el.volume = 0; // don't use sound!
         el.onloadedmetadata = (e) => {
             el.play();
-            toggleGreenScreen();
+            toggleGreenScreen(greenscreen, el, rotate, clipBlack, contourColor);
         };
         if (rotate)
             el.classList.add("rotate");
         else
             el.classList.remove("rotate");
-        function toggleGreenScreen() {
-            // time to get serious
-            if (greenscreen) {
-                el.style.opacity = 0;
-                el.parentElement.classList.add("greenscreen");
-                // https://github.com/brianchirls/Seriously.js/
-                const canvas = document.getElementById(el.id + "serious");
-                if (rotate)
-                    canvas.classList.add("rotate");
-                else
-                    canvas.classList.remove("rotate");
-                canvas.width = el.videoWidth;
-                canvas.height = el.videoHeight;
-                const seriously = new Seriously();
-                let source = seriously.source(el);
-                // source -> chroma key
-                const chroma = seriously.effect("chroma");
-                chroma.clipBlack = clipBlack || 0.6;
-                const screenColor = toSeriousColor(greenscreen);
-                if (screenColor)
-                    chroma.screen = screenColor;
-                chroma.source = source;
-                seriously.chroma = chroma;
-                source = chroma;
-                // optional chroma -> contour
-                if (contourColor) {
-                    const contour = seriously.effect("contour");
-                    contour.source = source;
-                    seriously.contour = contour;
-                    seriously.contour.color = toSeriousColor(contourColor);
-                    source = contour;
-                }
-                // pipe to canvas
-                const target = seriously.target(canvas);
-                target.source = source;
-                seriously.go();
-                el.seriously = seriously;
-            }
-            else {
-                el.style.opacity = 1;
-                el.parentElement.classList.remove("greenscreen");
-                if (el.seriously) {
-                    el.seriously.stop();
-                    el.seriously = undefined;
-                }
-            }
+    }
+    function toggleGreenScreen(greenscreen, el, rotate, clipBlack, contourColor) {
+        // time to get serious
+        if (greenscreen) {
+            startGreenScreen(greenscreen, el, rotate, clipBlack, contourColor);
+        }
+        else
+            stopGreenScreen(el);
+    }
+    function startGreenScreen(greenscreen, el, rotate, clipBlack, contourColor) {
+        el.style.opacity = "0";
+        el.parentElement.classList.add("greenscreen");
+        // https://github.com/brianchirls/Seriously.js/
+        const canvas = document.getElementById(el.id + "serious");
+        if (rotate)
+            canvas.classList.add("rotate");
+        else
+            canvas.classList.remove("rotate");
+        canvas.width = el.videoWidth;
+        canvas.height = el.videoHeight;
+        const seriously = new Seriously();
+        let source = seriously.source(el);
+        // source -> chroma key
+        const chroma = seriously.effect("chroma");
+        chroma.clipBlack = clipBlack || 0.6;
+        const screenColor = toSeriousColor(greenscreen);
+        if (screenColor)
+            chroma.screen = screenColor;
+        chroma.source = source;
+        seriously.chroma = chroma;
+        source = chroma;
+        // optional chroma -> contour
+        if (contourColor) {
+            const contour = seriously.effect("contour");
+            contour.source = source;
+            seriously.contour = contour;
+            seriously.contour.color = toSeriousColor(contourColor);
+            source = contour;
+        }
+        // pipe to canvas
+        const target = seriously.target(canvas);
+        target.source = source;
+        seriously.go();
+        el.seriously = seriously;
+    }
+    function stopGreenScreen(el) {
+        el.style.opacity = "1";
+        el.parentElement.classList.remove("greenscreen");
+        if (el.seriously) {
+            el.seriously.stop();
+            el.seriously = undefined;
         }
     }
     function toSeriousColor(color) {
@@ -2104,7 +2109,7 @@ background-image: url(${config.backgroundImage});
             saveConfig(config);
         };
         function importVideoButton(name) {
-            importFileButton(`streamer.importvideo.${name}`, document.getElementById(`${name}videoimportinput`), document.getElementById(`${name}videoimportbtn`), (file) => {
+            importFileButton(`streamer.importvideo.${name}`, document.getElementById(`${name}videoimportinput`), document.getElementById(`${name}videoimportbtn`), async (file) => {
                 const fn = `${name}`.replace(/\.\w+$/, "") + "video";
                 db.put(fn, file);
                 config[name + "Video"] = `blob:${fn}`;
@@ -2301,6 +2306,7 @@ background-image: url(${config.backgroundImage});
         if (ytVideoId) {
             state.stingering = true;
             render();
+            stopGreenScreen(stingervideo);
             stingervideo.src = undefined;
             stingervideo.classList.add("hidden");
             stingerPlayer.loadVideoById(ytVideoId, 0);
@@ -2333,15 +2339,19 @@ background-image: url(${config.backgroundImage});
             stingeryoutube.classList.add("hidden");
             stingervideo.src = url;
             stingervideo.onplay = () => {
-                stingervideo.classList.remove("hidden");
+                stingervideo.classList.add("hidden");
+                stingervideoserious.classList.remove("hidden");
+                toggleGreenScreen(true, stingervideo);
                 stingerEvents.start();
             };
             stingervideo.onpause = () => {
                 stingervideo.classList.add("hidden");
+                stingervideoserious.classList.add("hidden");
             };
             stingervideo.onerror = stingervideo.onended = () => {
                 stingerEvents.end();
                 stingervideo.classList.add("hidden");
+                stingervideoserious.classList.add("hidden");
                 // doesn't hurt
                 URL.revokeObjectURL(url);
             };

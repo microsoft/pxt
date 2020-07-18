@@ -125,7 +125,12 @@ Use https://uifabricicons.azurewebsites.net/
         .animated {
             transition: left 0.5s, right 0.5s, bottom 0.5s, top 0.5s, width 0.5s, height 0.5s, opacity 1s;
         }
-
+        #stinger {
+            display: none;
+        }
+        body.stingering #stinger {
+            display: block;
+        }
         body.stingering .animated {
             transition: left 0s, right 0s, bottom 0s, top 0s, width 0s, height 0s, opacity 0s;
             transition-delay: 0s;
@@ -1467,8 +1472,11 @@ Settings
         </div>
         <div class="box animated" id="title">title</div>
         <div class="animated" id="countdown">5:00</div>
-        <video class="hidden full stinger" id="stingervideo" playsinline autoplay preload="auto"></video>
-        <div class="hidden full stinger" id="stingeryoutube"></div>
+        <div id="stinger">
+            <video id="stingervideo" class="hidden full stinger" playsinline autoplay preload="auto"></video>
+            <canvas id="stingervideoserious" class="hidden full stinger" width="640" height="480"></canvas>    
+            <div class="hidden full stinger" id="stingeryoutube"></div>
+        </div>
         <div class="animated hidden" id="subtitles"></div>
         <div class="box animated hidden" id="selectapp">
             <p>You need to share your screen with MakeCode to record it.</p>
@@ -1655,7 +1663,7 @@ Settings
                     <div class="field">
                         <label for="camoverlayvideoinput">Face and document camera overlay videos (must be https://... or .webm, .mp4 files). Will play between scenes. YouTube NOT supported.
                             <span class="icons">
-                                <input id="camoverlayvideoimportinput" type="file" accept="video/mp4, video/webm" style="display:none"></input>
+                                <input id="camoverlayvideoimportinput" type="file" accept="video/mp4, video/webm, video/mov" style="display:none"></input>
                                 <button id="camoverlayvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                
                             </span>
                         </label>
@@ -1664,7 +1672,7 @@ Settings
                     <div class="field">
                         <label for="stingervideoinput">Stinger transition video (must be https://... or .webm, .mp4 files). Will play between scenes. YouTube NOT supported.
                             <span class="icons">
-                                <input id="stingervideoimportinput" type="file" accept="video/mp4, video/webm" style="display:none"></input>
+                                <input id="stingervideoimportinput" type="file" accept="video/mp4, video/webm, video/mov" style="display:none"></input>
                                 <button id="stingervideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                
                             </span>
                         </label>
@@ -1689,7 +1697,7 @@ Settings
                     <div class="field">
                         <label for="backgroundvideoinput">Background video (YouTube url or must be https://...)
                             <span class="icons">
-                                <input id="backgroundvideoimportinput" type="file" accept="video/mp4, video/webm" style="display:none"></input>
+                                <input id="backgroundvideoimportinput" type="file" accept="video/mp4, video/webm, video/mov" style="display:none"></input>
                                 <button id="backgroundvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                                            
                             </span>
                         </label>
@@ -1707,7 +1715,7 @@ Settings
                             countdown
                             view. YouTube videos are do not support transparency.
                             <span class="icons">
-                                <input id="startvideoimportinput" type="file" accept="video/mp4, video/webm" style="display:none"></input>
+                                <input id="startvideoimportinput" type="file" accept="video/mp4, video/webm, video/mov" style="display:none"></input>
                                 <button id="startvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                
                             </span>
                     </label>
@@ -1718,7 +1726,7 @@ Settings
                             countdown
                             view. YouTube videos are do not support transparency.
                             <span class="icons">
-                                <input id="endvideoimportinput" type="file" accept="video/mp4, video/webm" style="display:none"></input>
+                                <input id="endvideoimportinput" type="file" accept="video/mp4, video/webm, video/mov" style="display:none"></input>
                                 <button id="endvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                                            
                             </span>
                         </label>
