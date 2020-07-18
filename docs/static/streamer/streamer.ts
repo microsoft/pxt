@@ -225,6 +225,17 @@ function onYouTubeIframeAPIReady() {
     function saveConfig(config) {
         if (!config) throw new Error("missing config")
         localStorage["streamer.config"] = JSON.stringify(config)
+
+        // gc videos
+        const blobs = Object.keys(config)
+            .filter(k => /Video$/.test(k))
+            .map<string>(k => config[k])
+            .filter(v => !!v)
+            .map(v => v.split('\n')
+                .filter(l => /^blob:/.test(l))
+                .map(l => l.replace(/^blob:/, ''))
+            ).reduce((all, curr) => all.concat(curr), []);
+        db.gc(blobs)
     }
 
     async function showSettings() {
@@ -1398,6 +1409,7 @@ background-image: url(${config.backgroundImage});
             canvas.classList.remove("rotate");
         canvas.width = el.videoWidth;
         canvas.height = el.videoHeight;
+        cleanSeriously(el)
         const seriously = new Seriously();
         let source = seriously.source(el);
 
@@ -1431,8 +1443,13 @@ background-image: url(${config.backgroundImage});
     function stopGreenScreen(el: HTMLVideoElement) {
         el.style.opacity = "1";
         el.parentElement.classList.remove("greenscreen")
+        cleanSeriously(el)
+    }
+
+    function cleanSeriously(el: HTMLVideoElement) {
         if ((el as any).seriously) {
             (el as any).seriously.stop();
+            (el as any).seriously.destroy();
             (el as any).seriously = undefined;
         }
     }
@@ -2589,11 +2606,7 @@ background-image: url(${config.backgroundImage});
                 }
                 stingerEvents.start()
             }
-            stingervideo.onpause = () => {
-                stingervideo.classList.add("hidden")
-                stingervideoserious.classList.add("hidden")
-            }
-            stingervideo.onerror = stingervideo.onended = () => {
+            stingervideo.onpause = stingervideo.onerror = stingervideo.onended = () => {
                 stingerEvents.end()
                 stingervideo.classList.add("hidden")
                 stingervideoserious.classList.add("hidden")
@@ -2646,7 +2659,7 @@ background-image: url(${config.backgroundImage});
             db.createObjectStore(STORE_BLOBS);
         };
 
-        return {
+        const api = {
             put: (id: string, file: File | Blob) => {
                 const transaction = db.transaction([STORE_BLOBS], "readwrite");
                 const blobs = transaction.objectStore(STORE_BLOBS)
@@ -2660,7 +2673,27 @@ background-image: url(${config.backgroundImage});
                     request.onsuccess = (event) => resolve((event.target as any).result)
                     request.onerror = (event) => resolve((event.target as any).result)
                 })
+            },
+            del: (id: string): Promise<void> => {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_BLOBS], "readwrite");
+                    const blobs = transaction.objectStore(STORE_BLOBS)
+                    const request = blobs.delete(id);
+                    request.onsuccess = (event) => resolve((event.target as any).result)
+                    request.onerror = (event) => resolve((event.target as any).result)
+                })
+            },
+            gc: (urls: string[]) => {
+                const transaction = db.transaction([STORE_BLOBS], "readwrite");
+                const blobs = transaction.objectStore(STORE_BLOBS)
+                const request = blobs.getAllKeys();
+                request.onsuccess = (event) => {
+                    const keys: string[] = (event.target as any).result;
+                    const dead = keys.filter(k => urls.indexOf(k) < 0);
+                    dead.forEach(api.del)
+                }
             }
         }
+        return api;
     }
 })()
