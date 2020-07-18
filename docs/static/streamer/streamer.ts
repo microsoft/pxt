@@ -61,6 +61,7 @@ interface StreamerConfig {
     backgroundVideo?: string;
     stingerVideo?: string;
     stingerVideoDelay?: number;
+    stingerVideoGreenScreen?: string;
     camoverlayVideo?: string;
     faceCamGreenScreen?: string;
     hardwareCamGreenScreen?: string;
@@ -167,7 +168,7 @@ function onYouTubeIframeAPIReady() {
     const titleEl = document.getElementById('title')
     const subtitles = document.getElementById('subtitles')
     const stingervideo = document.getElementById('stingervideo') as HTMLVideoElement
-    //const stingeryoutube = document.getElementById('stingeryoutube') as HTMLIFrameElement
+    const stingervideoserious = document.getElementById('stingervideoserious') as HTMLVideoElement
     const backgroundvideo = document.getElementById('backgroundvideo') as HTMLVideoElement
     const backgroundyoutube = document.getElementById('backgroundyoutube') as HTMLIFrameElement
     const intro = document.getElementById('intro')
@@ -224,6 +225,17 @@ function onYouTubeIframeAPIReady() {
     function saveConfig(config) {
         if (!config) throw new Error("missing config")
         localStorage["streamer.config"] = JSON.stringify(config)
+
+        // gc videos
+        const blobs = Object.keys(config)
+            .filter(k => /Video$/.test(k))
+            .map<string>(k => config[k])
+            .filter(v => !!v)
+            .map(v => v.split('\n')
+                .filter(l => /^blob:/.test(l))
+                .map(l => l.replace(/^blob:/, ''))
+            ).reduce((all, curr) => all.concat(curr), []);
+        db.gc(blobs)
     }
 
     async function showSettings() {
@@ -377,7 +389,7 @@ function onYouTubeIframeAPIReady() {
         if (config.extraSites && config.extraSites.length) {
             addSep(toolbox);
             config.extraSites.forEach(addSiteButton)
-            addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor, config.stingerVideoDelay))
+            addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor, config.stingerVideoGreenScreen, config.stingerVideoDelay))
         }
 
         addSep(toolbox)
@@ -475,7 +487,7 @@ function onYouTubeIframeAPIReady() {
                 editor2.src = url;
             else
                 editor.src = url;
-        }, config.stingerVideoDelay)
+        }, config.stingerVideoGreenScreen, config.stingerVideoDelay)
     }
 
     function setScene(scene) {
@@ -495,14 +507,14 @@ function onYouTubeIframeAPIReady() {
             startCountdown(300000);
             const v = config.endVideo || config.stingerVideo
             if (v) {
-                startStingerScene(v, sceneIndex, config.stingerVideoDelay)
+                startStingerScene(v, sceneIndex)
                 return;
             }
         } else {
             stopCountdown();
             const v = config.endVideo || config.stingerVideo
             if (lastSceneIndex == COUNTDOWN_SCENE_INDEX && v) {
-                startStingerScene(v, sceneIndex, config.stingerVideoDelay)
+                startStingerScene(v, sceneIndex)
                 return;
             }
         }
@@ -511,7 +523,7 @@ function onYouTubeIframeAPIReady() {
         if (config.stingerVideo &&
             (sceneIndex == CHAT_SCENE_INDEX && isLeftOrRightScene(lastSceneIndex))
             || (isLeftOrRightScene(sceneIndex) && lastSceneIndex == CHAT_SCENE_INDEX)) {
-            startStingerScene(config.stingerVideo, sceneIndex, config.stingerVideoDelay)
+            startStingerScene(config.stingerVideo, sceneIndex)
             return;
         }
 
@@ -623,7 +635,7 @@ function onYouTubeIframeAPIReady() {
             if (state.thumbnail)
                 state.chat = false;
             render();
-        }, 700)
+        }, config.stingerVideoGreenScreen, config.stingerVideoDelay)
     }
 
     function setPaintTool(tool) {
@@ -1369,63 +1381,76 @@ background-image: url(${config.backgroundImage});
         el.volume = 0; // don't use sound!
         el.onloadedmetadata = (e) => {
             el.play();
-            toggleGreenScreen();
+            toggleGreenScreen(greenscreen, el, rotate, clipBlack, contourColor);
         }
         if (rotate)
             el.classList.add("rotate")
         else
             el.classList.remove("rotate");
+    }
 
-        function toggleGreenScreen() {
-            // time to get serious
-            if (greenscreen) {
-                el.style.opacity = 0;
-                el.parentElement.classList.add("greenscreen")
-                // https://github.com/brianchirls/Seriously.js/
-                const canvas = document.getElementById(el.id + "serious") as HTMLCanvasElement;
-                if (rotate)
-                    canvas.classList.add("rotate")
-                else
-                    canvas.classList.remove("rotate");
-                canvas.width = el.videoWidth;
-                canvas.height = el.videoHeight;
-                const seriously = new Seriously();
-                let source = seriously.source(el);
+    function toggleGreenScreen(greenscreen: string, el: HTMLVideoElement, rotate?: boolean, clipBlack?: number, contourColor?: string) {
+        // time to get serious
+        if (greenscreen) {
+            startGreenScreen(greenscreen, el, rotate, clipBlack, contourColor)
+        }
+        else
+            stopGreenScreen(el)
+    }
 
-                // source -> chroma key
-                const chroma = seriously.effect("chroma");
-                chroma.clipBlack = clipBlack || 0.6;
-                const screenColor = toSeriousColor(greenscreen);
-                if (screenColor) chroma.screen = screenColor
-                chroma.source = source;
-                seriously.chroma = chroma;
-                source = chroma;
+    function startGreenScreen(greenscreen: string, el: HTMLVideoElement, rotate?: boolean, clipBlack?: number, contourColor?: string) {
+        el.style.opacity = "0";
+        el.parentElement.classList.add("greenscreen")
+        // https://github.com/brianchirls/Seriously.js/
+        const canvas = document.getElementById(el.id + "serious") as HTMLCanvasElement;
+        if (rotate)
+            canvas.classList.add("rotate")
+        else
+            canvas.classList.remove("rotate");
+        canvas.width = el.videoWidth;
+        canvas.height = el.videoHeight;
+        cleanSeriously(el)
+        const seriously = new Seriously();
+        let source = seriously.source(el);
 
-                // optional chroma -> contour
-                if (contourColor) {
-                    const contour = seriously.effect("contour");
-                    contour.source = source;
-                    seriously.contour = contour;
-                    seriously.contour.color = toSeriousColor(contourColor);
-                    source = contour;
-                }
+        // source -> chroma key
+        const chroma = seriously.effect("chroma");
+        chroma.clipBlack = clipBlack || 0.6;
+        const screenColor = toSeriousColor(greenscreen);
+        if (screenColor) chroma.screen = screenColor
+        chroma.source = source;
+        seriously.chroma = chroma;
+        source = chroma;
 
-                // pipe to canvas
-                const target = seriously.target(canvas);
-                target.source = source;
+        // optional chroma -> contour
+        if (contourColor) {
+            const contour = seriously.effect("contour");
+            contour.source = source;
+            seriously.contour = contour;
+            seriously.contour.color = toSeriousColor(contourColor);
+            source = contour;
+        }
 
-                seriously.go();
+        // pipe to canvas
+        const target = seriously.target(canvas);
+        target.source = source;
 
-                el.seriously = seriously;
-            } else {
-                el.style.opacity = 1;
-                el.parentElement.classList.remove("greenscreen")
+        seriously.go();
 
-                if (el.seriously) {
-                    el.seriously.stop();
-                    el.seriously = undefined;
-                }
-            }
+        (el as any).seriously = seriously;
+    }
+
+    function stopGreenScreen(el: HTMLVideoElement) {
+        el.style.opacity = "1";
+        el.parentElement.classList.remove("greenscreen")
+        cleanSeriously(el)
+    }
+
+    function cleanSeriously(el: HTMLVideoElement) {
+        if ((el as any).seriously) {
+            (el as any).seriously.stop();
+            (el as any).seriously.destroy();
+            (el as any).seriously = undefined;
         }
     }
 
@@ -2154,11 +2179,11 @@ background-image: url(${config.backgroundImage});
             render()
         }
 
-        importVideoButton("background")
-        importVideoButton("start")
-        importVideoButton("end")
-        importVideoButton("stinger")
-        importVideoButton("camoverlay")
+        importVideoButton("background", true)
+        importVideoButton("start", true)
+        importVideoButton("end", true)
+        importVideoButton("stinger", false)
+        importVideoButton("camoverlay", true)
 
         const stingervideodelayinput = document.getElementById("stringervideodelayinput") as HTMLInputElement
         stingervideodelayinput.value = (config.stingerVideoDelay || "") + ""
@@ -2167,6 +2192,25 @@ background-image: url(${config.backgroundImage});
             config.stingerVideoDelay = isNaN(i) ? 0 : i;
             stingervideodelayinput.value = (config.stingerVideoDelay || "") + ""
             saveConfig(config);
+        }
+
+        const stingervideoscreenclear = document.getElementById("stingervideoscreenclear") as HTMLInputElement
+        stingervideoscreenclear.onclick = function (e) {
+            config.stingerVideoGreenScreen = undefined;
+            saveConfig(config);
+            loadSettings()
+            startStinger(config.stingerVideo, () => { })
+        }
+
+        const stingervideoscreeninput = document.getElementById("stingervideoscreeninput") as HTMLInputElement
+        stingervideoscreeninput.value = config.stingerVideoGreenScreen || ""
+        stingervideoscreeninput.onchange = function (e) {
+            config.stingerVideoGreenScreen = undefined;
+            if (/^#[a-fA-F0-9]{6}$/.test(stingervideoscreeninput.value))
+                config.stingerVideoGreenScreen = stingervideoscreeninput.value
+            saveConfig(config);
+            loadSettings()
+            startStinger(config.stingerVideo, () => { }, config.stingerVideoGreenScreen)
         }
 
         const backgroundcolorinput = document.getElementById("backgroundcolorinput") as HTMLInputElement
@@ -2314,27 +2358,26 @@ background-image: url(${config.backgroundImage});
             saveConfig(config);
         }
 
-
-        function importVideoButton(name: string) {
+        function importVideoButton(name: string, replace: boolean) {
             importFileButton(`streamer.importvideo.${name}`,
                 document.getElementById(`${name}videoimportinput`) as HTMLInputElement,
                 document.getElementById(`${name}videoimportbtn`),
-                (file) => {
-                    const fn = `${name}`.replace(/\.\w+$/, "") + "video"
+                async (file) => {
+                    const fn = `${replace ? name : file.name}`.replace(/\.\w+$/, "") + "video"
                     db.put(fn, file)
-                    config[name + "Video"] = `blob:${fn}`
+                    const url = `blob:${fn}`;
+                    const current = config[name + "Video"];
+                    config[name + "Video"] = replace || !current ? url : `${current}\n${url}`
                     saveConfig(config);
                     loadSettings()
                     loadStyle()
                     render()
                 })
-            const videoinput = document.getElementById(`${name}videoinput`) as HTMLInputElement
+            const videoinput = document.getElementById(`${name}videoinput`) as HTMLInputElement | HTMLTextAreaElement
             const field = `${name}Video`
             videoinput.value = config[field] || ""
-            videoinput.onchange = function (e) {
-                config[field] = undefined;
-                if (/^https:\/\//.test(videoinput.value))
-                    config[field] = videoinput.value
+            videoinput.oninput = videoinput.onchange = function (e) {
+                config[field] = videoinput.value
                 saveConfig(config);
                 loadStyle()
                 loadSettings()
@@ -2499,14 +2542,15 @@ background-image: url(${config.backgroundImage});
         return [props, measures];
     }
 
-    async function startStingerScene(url: string, endSceneIndex: number, transitionDelay: number) {
+    async function startStingerScene(url: string, endSceneIndex: number) {
+        const config = readConfig();
         startStinger(url, () => {
             updateScene(endSceneIndex);
             render()
-        }, transitionDelay)
+        }, config.stingerVideoGreenScreen, config.stingerVideoDelay)
     }
 
-    async function startStinger(url: string, end: () => void, transitionDelay = 700) {
+    async function startStinger(url: string, end: () => void, greenScreen: string = "", transitionDelay = 700) {
         stingerEvents.start = () => {
             setTimeout(() => {
                 end()
@@ -2521,6 +2565,7 @@ background-image: url(${config.backgroundImage});
         if (ytVideoId) {
             state.stingering = true;
             render();
+            stopGreenScreen(stingervideo)
             stingervideo.src = undefined;
             stingervideo.classList.add("hidden");
             stingerPlayer.loadVideoById(ytVideoId, 0)
@@ -2553,15 +2598,18 @@ background-image: url(${config.backgroundImage});
             stingeryoutube.classList.add("hidden")
             stingervideo.src = url;
             stingervideo.onplay = () => {
-                stingervideo.classList.remove("hidden")
+                if (greenScreen) {
+                    stingervideoserious.classList.remove("hidden")
+                    startGreenScreen(greenScreen, stingervideo)
+                } else {
+                    stingervideo.classList.remove("hidden")
+                }
                 stingerEvents.start()
             }
-            stingervideo.onpause = () => {
-                stingervideo.classList.add("hidden")
-            }
-            stingervideo.onerror = stingervideo.onended = () => {
+            stingervideo.onpause = stingervideo.onerror = stingervideo.onended = () => {
                 stingerEvents.end()
                 stingervideo.classList.add("hidden")
+                stingervideoserious.classList.add("hidden")
                 // doesn't hurt
                 URL.revokeObjectURL(url)
             }
@@ -2571,15 +2619,21 @@ background-image: url(${config.backgroundImage});
             stingervideo.classList.add("hidden");
             stingeryoutube.classList.add("hidden")
             state.stingering = false;
+            stopGreenScreen(stingervideo)
             render();
             end();
         }
     }
 
     async function resolveBlob(url: string) {
+        if (/\n/.test(url)) {
+            // multiple urls, pick a random one
+            const urls = url.split(/\n/g)
+            url = urls[Math.floor(Math.random() * urls.length)];
+        }
         const blob = url.startsWith("blob:") && url.substr("blob:".length);
         if (blob) {
-            const file: File = await db.get(blob)
+            const file = await db.get(blob)
             url = URL.createObjectURL(file)
         }
         return url;
@@ -2605,13 +2659,13 @@ background-image: url(${config.backgroundImage});
             db.createObjectStore(STORE_BLOBS);
         };
 
-        return {
-            put: (id: string, file: File) => {
+        const api = {
+            put: (id: string, file: File | Blob) => {
                 const transaction = db.transaction([STORE_BLOBS], "readwrite");
                 const blobs = transaction.objectStore(STORE_BLOBS)
                 blobs.put(file, id);
             },
-            get: (id: string): Promise<File> => {
+            get: (id: string): Promise<File | Blob> => {
                 return new Promise((resolve, reject) => {
                     const transaction = db.transaction([STORE_BLOBS], "readonly");
                     const blobs = transaction.objectStore(STORE_BLOBS)
@@ -2619,7 +2673,27 @@ background-image: url(${config.backgroundImage});
                     request.onsuccess = (event) => resolve((event.target as any).result)
                     request.onerror = (event) => resolve((event.target as any).result)
                 })
+            },
+            del: (id: string): Promise<void> => {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_BLOBS], "readwrite");
+                    const blobs = transaction.objectStore(STORE_BLOBS)
+                    const request = blobs.delete(id);
+                    request.onsuccess = (event) => resolve((event.target as any).result)
+                    request.onerror = (event) => resolve((event.target as any).result)
+                })
+            },
+            gc: (urls: string[]) => {
+                const transaction = db.transaction([STORE_BLOBS], "readwrite");
+                const blobs = transaction.objectStore(STORE_BLOBS)
+                const request = blobs.getAllKeys();
+                request.onsuccess = (event) => {
+                    const keys: string[] = (event.target as any).result;
+                    const dead = keys.filter(k => urls.indexOf(k) < 0);
+                    dead.forEach(api.del)
+                }
             }
         }
+        return api;
     }
 })()
