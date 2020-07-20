@@ -21,6 +21,7 @@ export interface FieldEditorComponent<U> extends React.Component {
     getPersistentData(): any;
     restorePersistentData(value: any): void;
     onResize?: () => void;
+    loadJres?: (jres: string) => void;
 }
 
 let cachedBounds: EditorBounds;
