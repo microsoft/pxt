@@ -8,10 +8,10 @@ In the 6 months since our last release, a lot of great fixes and features have p
 
 Huge thanks to everyone who has been filing bugs, submitting PR’s and offering us suggestions along the way! Special shout-out to [Jacob Carpenter](https://github.com/jacobcarpenter) who reported a bunch of issues, and also contributed 4 great PR’s for us –
 
-* Adding copy/paste support for marquee selections in the Sprite Editor - [#7060](https://github.com/microsoft/pxt/pull/7060)
-* Adding keyboard shortcuts to the Sprite Editor - [#7293](https://github.com/microsoft/pxt/pull/7293)
+* Adding copy/paste support for marquee selections in the Sprite Editor ([#7060](https://github.com/microsoft/pxt/pull/7060))
+* Adding keyboard shortcuts to the Sprite Editor ([#7293](https://github.com/microsoft/pxt/pull/7293))
 * Adding the Fill function for the Wall tool in the TileMap Editor (woo-hoo! [#6889](https://github.com/microsoft/pxt/pull/6889))
-* Cleaning up the resizing of the Home Page cards - [#7146](https://github.com/microsoft/pxt/pull/7146)
+* Cleaning up the resizing of the Home Page cards ([#7146](https://github.com/microsoft/pxt/pull/7146))
 
 Thank you Jacob! 😊
 
