@@ -729,9 +729,13 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
             return project.buildTilemapsAsync();
         })
         .then(() => {
-            if (project.getAllFiles()["tilemap.g.ts"]) {
-                patchedFiles["tilemap.g.ts"] = project.getAllFiles()["tilemap.g.ts"];
+            const compiledFiles = project.getAllFiles();
+            const generatedFileNames = Object.keys(compiledFiles).filter(el => /\.g\.ts/.test(el));
+
+            for (const fname of generatedFileNames) {
+                patchedFiles[fname] = compiledFiles[fname];
             }
+
             return checkPatchAsync(patchedFiles);
         })
         .then(() => {
