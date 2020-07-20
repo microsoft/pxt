@@ -6,6 +6,7 @@ import { setTelemetryFunction } from './ImageEditor/store/imageReducer';
 
 export interface ImageFieldEditorProps {
     singleFrame: boolean;
+    parentCallback?: () => void;
 }
 
 export interface ImageFieldEditorState {
@@ -96,6 +97,14 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         return null;
     }
 
+    getJres() {
+        if (this.ref && this.props.singleFrame) {
+            const bitmapData = this.ref.getCurrentFrame().data();
+            return pxt.sprite.base64EncodeBitmap(bitmapData);
+        }
+        return "";
+    }
+
     getPersistentData() {
         if (this.ref) {
             return this.ref.getPersistentData();
@@ -179,6 +188,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
 
     protected onDoneClick = () => {
         if (this.closeEditor) this.closeEditor();
+        if (this.props.parentCallback) this.props.parentCallback();
     }
 }
 
