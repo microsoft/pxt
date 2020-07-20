@@ -20,10 +20,12 @@ namespace pxtblockly {
     // 32 is specifically chosen so that we can scale the images for the default
     // sprite sizes without getting browser anti-aliasing
     const PREVIEW_WIDTH = 32;
-    const PADDING = 5;
+    const X_PADDING = 5;
+    const Y_PADDING = 1;
     const BG_PADDING = 4;
     const BG_WIDTH = BG_PADDING * 2 + PREVIEW_WIDTH;
-    const TOTAL_WIDTH = PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
+    const TOTAL_HEIGHT = Y_PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
+    const TOTAL_WIDTH = X_PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
 
     export class FieldTilemap extends Blockly.Field implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
@@ -172,7 +174,7 @@ namespace pxtblockly {
             super.render_();
 
             if (!this.isGreyBlock) {
-                this.size_.height = TOTAL_WIDTH
+                this.size_.height = TOTAL_HEIGHT;
                 this.size_.width = TOTAL_WIDTH;
             }
         }
@@ -219,7 +221,7 @@ namespace pxtblockly {
             }
 
             const bg = new svg.Rect()
-                .at(PADDING, PADDING)
+                .at(X_PADDING, Y_PADDING)
                 .size(BG_WIDTH, BG_WIDTH)
                 .setClass("blocklyTilemapField")
                 .corner(4);
@@ -230,7 +232,7 @@ namespace pxtblockly {
                 const data = tilemapToImageURI(this.state, PREVIEW_WIDTH, this.lightMode, this.blocksInfo);
                 const img = new svg.Image()
                     .src(data)
-                    .at(PADDING + BG_PADDING, PADDING + BG_PADDING)
+                    .at(X_PADDING + BG_PADDING, Y_PADDING + BG_PADDING)
                     .size(PREVIEW_WIDTH, PREVIEW_WIDTH);
                 this.fieldGroup_.appendChild(img.el);
             }

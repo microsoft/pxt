@@ -1003,7 +1003,15 @@ namespace ts.pxtc {
 
         let allStmts: Statement[] = [];
         if (!opts.forceEmit || res.diagnostics.length == 0) {
-            const files = program.getSourceFiles();
+            let files = program.getSourceFiles().slice();
+
+            const main = files.find(sf => sf.fileName === "main.ts");
+
+            if (main) {
+                files = files.filter(sf => sf.fileName !== "main.ts");
+                files.push(main);
+            }
+
             files.forEach(f => {
                 f.statements.forEach(s => {
                     allStmts.push(s)

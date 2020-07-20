@@ -8,6 +8,7 @@
     <script src="/static/streamer/seriously.js"></script>
     <script src="/static/streamer/seriously.chroma.js"></script>
     <script src="/static/streamer/seriously.contour.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:site" content="@MsMakeCode" />
     <meta name="twitter:creator" content="@MsMakeCode" />
@@ -85,14 +86,17 @@ Use https://uifabricicons.azurewebsites.net/
         }
 
         /** background video */
-        .background {
-            display: none;
+        .full {
+            display: block;
             object-fit: cover;
             width: 100vw;
             height: 100vh;
             position: fixed;
             top: 0;
             left: 0;
+        }
+        .background {
+            display: none;
         }
 
         body.backgroundvideo #backgroundvideo {
@@ -120,6 +124,16 @@ Use https://uifabricicons.azurewebsites.net/
 
         .animated {
             transition: left 0.5s, right 0.5s, bottom 0.5s, top 0.5s, width 0.5s, height 0.5s, opacity 1s;
+        }
+        #stinger {
+            display: none;
+        }
+        body.stingering #stinger {
+            display: block;
+        }
+        body.stingering .animated {
+            transition: left 0s, right 0s, bottom 0s, top 0s, width 0s, height 0s, opacity 0s;
+            transition-delay: 0s;
         }
 
         button:hover {
@@ -364,19 +378,6 @@ Use https://uifabricicons.azurewebsites.net/
                 3px -3px 0 #fff,
                 -3px -3px 0 #fff;
             transform: rotateZ(-30deg);
-        }
-
-        /** video */
-        .stinger {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            min-width: 100%;
-            min-height: 100%;
-            width: auto;
-            height: auto;
-            z-index: 100;
-            transform: translateX(-50%) translateY(-50%);
         }
 
         /**
@@ -655,6 +656,10 @@ Settings
             z-index: 10;
         }
 
+        .stinger {
+            z-index: 100;
+        }
+
         /** full editor */
         body.leftscene.slim #editor,
         body.rightscene.slim #editor {
@@ -696,18 +701,34 @@ Settings
         .hardwarecam video {
             width: 100%;
         }
+        .overlay
+        {
+            position: absolute;
+            top: 0;            
+            object-fit: cover;
+            pointer-events: none;
+            display:none;
+        }
+        body.hascamoverlay .overlay {
+            display: block;
+        }
+        body.hascamoverlay .cam {
+            border: none;
+        }
 
-        body.thumbnail .facecam video,
-        body.thumbnail .hardwarecam video,
-        body.thumbnail .facecam canvas,
-        body.thumbnail .hardwarecam canvas
+        body.thumbnail .facecam .overlay,
+        body.thumbnail .facecam .overlay
+        {
+            display: none;
+        }
+
+        body.thumbnail .facecam .source,
+        body.thumbnail .facecam .source
         {
             transform: scale(-1, 1);
         }
-        body.thumbnail .facecam video.rotate,
-        body.thumbnail .hardwarecam video.rotate,
-        body.thumbnail .facecam canvas.rotate,
-        body.thumbnail .hardwarecam canvas.rotate
+        body.thumbnail .facecam .source.rotate,
+        body.thumbnail .hardwarecam .source.rotate
         {
             transform: rotate(180deg) scale(-1, 1);
         }
@@ -795,7 +816,7 @@ Settings
         }
         .videothumbnailbtn {
             left: calc(50% - 2rem);
-            bottom: 4%;
+            bottom: 12%;
         }
         body.facecamcircular #facecam .videothumbnailbtn,
         body.hardwarecamcircular #hardwarecam .videothumbnailbtn {
@@ -805,6 +826,9 @@ Settings
             bottom: 30% !important;
         }
 
+        .cam {
+            outline: 0 !important;
+        }
         .cam:hover .videobtn {
             opacity: 0.8;
         }
@@ -1390,8 +1414,8 @@ Settings
 </head>
 
 <body class="rightscene">
-    <video id="backgroundvideo" class="background" playsinline autoplay muted loop></video>
-    <iframe id="backgroundyoutube" class="background" type="text/html"></iframe>
+    <video id="backgroundvideo" class="full background" playsinline autoplay muted loop></video>
+    <iframe id="backgroundyoutube" class="full background" type="text/html"></iframe>
     <div id="container" class="container">
         <iframe class="box animated" id="editor" allow="usb;camera"
             sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox allow-forms"></iframe>
@@ -1399,8 +1423,9 @@ Settings
             sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox allow-forms"></iframe>
         <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
         <div role="button" class="box animated clickeable cam facecam" id="facecam">
-            <video autoplay playsinline id="facecamvideo"></video>
-            <canvas id="facecamvideoserious" class="videocanvas"></canvas>
+            <video autoplay playsinline class="source" id="facecamvideo"></video>
+            <canvas id="facecamvideoserious" class="videocanvas source" class="videocanvas"></canvas>
+            <video autoplay playsinline loop class="overlay" id="facecamoverlay"></video>
             <div class="videolabel" id="facecamlabel"></div>
             <div id="facecamchatscenebtn" title="Go to chat scene" class="videobtn videochatscenebtn animated">
                 <i class="ms-Icon ms-Icon--Contact"></i>
@@ -1422,8 +1447,9 @@ Settings
             </div>
         </div>
         <div role="button" class="box animated clickeable cam hardwarecam" id="hardwarecam">
-            <video autoplay playsinline id="hardwarecamvideo"></video>
-            <canvas id="hardwarecamvideoserious" width="640" height="480" class="videocanvas"></canvas>
+            <video autoplay playsinline class="source" id="hardwarecamvideo"></video>
+            <canvas id="hardwarecamvideoserious" class="videocanvas source" width="640" height="480" class="videocanvas"></canvas>
+            <video autoplay playsinline loop class="overlay" id="hardwarecamoverlay"></video>
             <div class="videolabel" id="hardwarecamlabel"></div>
             <div id="hardwarecamchatscenebtn" title="Go to chat scene" class="videobtn videochatscenebtn animated">
                 <i class="ms-Icon ms-Icon--Contact"></i>
@@ -1446,8 +1472,11 @@ Settings
         </div>
         <div class="box animated" id="title">title</div>
         <div class="animated" id="countdown">5:00</div>
-        <video class="hidden stinger" id="startvideo" playsinline preload="auto" controls></video>
-        <video class="hidden stinger" id="endvideo" playsinline preload="auto" controls></video>
+        <div id="stinger">
+            <video id="stingervideo" class="hidden full stinger" playsinline autoplay preload="auto"></video>
+            <canvas id="stingervideoserious" class="hidden full stinger" width="640" height="480"></canvas>    
+            <div class="hidden full stinger" id="stingeryoutube"></div>
+        </div>
         <div class="animated hidden" id="subtitles"></div>
         <div class="box animated hidden" id="selectapp">
             <p>You need to share your screen with MakeCode to record it.</p>
@@ -1470,7 +1499,7 @@ Settings
                 <option value="100"></option>
             </datalist>
             <div class="header">
-                <h2>MakeCode Streamer BETA
+                <h2>MakeCode Streamer
                 <span class="screensize"></span>
                 <span class="icons">
                     <button id="exportsettings" title="Export settings to file"><i class="ms-Icon ms-Icon--Save"></i></button>
@@ -1631,6 +1660,33 @@ Settings
                         <input id="borderbackgroundinput" type="color" />
                         <button id="borderbackgroundclear">clear</button>
                     </div>
+                    <div class="field">
+                        <label for="camoverlayvideoinput">Face and document camera overlay videos (must be https://... or .webm, .mp4, .mov files). Will play between scenes. YouTube NOT supported.
+                            <span class="icons">
+                                <input id="camoverlayvideoimportinput" type="file" accept="video/mp4, video/webm, video/quicktime" style="display:none"></input>
+                                <button id="camoverlayvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                
+                            </span>
+                        </label>
+                        <input id="camoverlayvideoinput" type="url" />
+                    </div>
+                    <div class="field">
+                        <label for="stingervideoinput">Stinger transition video (must be https://... or .webm, .mp4, .mov files). Will play between scenes. YouTube NOT supported.
+                            <span class="icons">
+                                <input id="stingervideoimportinput" type="file" accept="video/mp4, video/webm, video/quicktime" style="display:none"></input>
+                                <button id="stingervideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                
+                            </span>
+                        </label>
+                        <textarea id="stingervideoinput" rows="3"></textarea>                        
+                    </div>
+                    <div class="field">                       
+                        <label for="stringervideodelayinput">Stinger transition delay (ms). Time to start transitioning the view, when the stinger is fully covering the screen.</label>
+                        <input id="stringervideodelayinput" type="number" placeholder="700" /> 
+                    </div>            
+                    <div class="field">
+                        <label for="stingervideoscreeninput">Stinger green screen color</label>
+                        <input id="stingervideoscreeninput" type="color" />
+                        <button id="stingervideoscreenclear">clear</button>
+                    </div>
                 </div>
                 <div class="section">
                     <h3>Background</h3>
@@ -1644,7 +1700,12 @@ Settings
                         <input id="backgroundimageinput" type="url" />
                     </div>
                     <div class="field">
-                        <label for="backgroundvideoinput">Background video (YouTube url or must be https://...)</label>
+                        <label for="backgroundvideoinput">Background video (YouTube url or must be https://...)
+                            <span class="icons">
+                                <input id="backgroundvideoimportinput" type="file" accept="video/mp4, video/webm, video/quicktime" style="display:none"></input>
+                                <button id="backgroundvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                                            
+                            </span>
+                        </label>
                         <input id="backgroundvideoinput" type="url" />
                     </div>
                     <div class="field">
@@ -1655,15 +1716,25 @@ Settings
                 <div class="section">
                     <h3>Countdown</h3>
                     <div class="field">
-                        <label for="startvideoinput">Intro video (must be https://...). Will play when leaving the
+                        <label for="startvideoinput">Intro video (YouTube video or must be https://...). Will play when leaving the
                             countdown
-                            view.</label>
+                            view. YouTube videos are do not support transparency.
+                            <span class="icons">
+                                <input id="startvideoimportinput" type="file" accept="video/mp4, video/webm, video/quicktime" style="display:none"></input>
+                                <button id="startvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                
+                            </span>
+                    </label>
                         <input id="startvideoinput" type="url" />
                     </div>
                     <div class="field">
-                        <label for="endvideoinput">End video (must be https://...). Will play when entering the
+                        <label for="endvideoinput">End video (YouTube video or must be https://...). Will play when entering the
                             countdown
-                            view.</label>
+                            view. YouTube videos are do not support transparency.
+                            <span class="icons">
+                                <input id="endvideoimportinput" type="file" accept="video/mp4, video/webm, video/quicktime" style="display:none"></input>
+                                <button id="endvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                                            
+                            </span>
+                        </label>
                         <input id="endvideoinput" type="url" />
                     </div>
                     <div class="field">

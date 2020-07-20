@@ -492,7 +492,7 @@ namespace pxt {
         if (tilemapEntries.length) {
             out += "\n" +
                 `${indent}helpers.registerTilemapFactory(function(name: string) {\n` +
-                `${indent}${indent}switch(name) {\n` +
+                `${indent}${indent}switch(helpers.stringTrim(name)) {\n` +
                 tilemapEntries.map(t => `${indent}${indent}${indent}${t}`).join("\n") + "\n" +
                 `${indent}${indent}}\n` +
                 `${indent}${indent}return null;\n` +
