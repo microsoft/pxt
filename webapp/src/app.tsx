@@ -2255,6 +2255,12 @@ export class ProjectView
         const fromText = this.editorFile.content;
 
         let promise = open ? this.textEditor.loadMonacoAsync() : Promise.resolve();
+
+        // Python uses the virtual file and not the current editor content, so sync content
+        if (fromLanguage == "py") {
+            promise = promise.then(() => this.editorFile.setContentAsync(this.editor.getCurrentSource()));
+        }
+
         promise = promise
             .then(() => {
                 if (open) {
