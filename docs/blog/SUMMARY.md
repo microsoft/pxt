@@ -1,6 +1,7 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [MakeCode Arcade Update](/blog/arcade/update-july-2020)
     * [MakeCode for the micro:bit – 2020 Release](/blog/microbit/2020-release)
     * [MakeCode for the micro:bit – 2020 Beta Release](/blog/microbit/2020-beta)
     * [MakeCode Arcade One Room Game Jam](/blog/arcade/game-jam-2)
