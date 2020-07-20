@@ -179,6 +179,10 @@ namespace pxt {
             return null;
         }
 
+        public getAllTilemaps() {
+            return this.state.projectTilemaps?.slice() || [];
+        }
+
         public updateTilemap(id: string, data: pxt.sprite.TilemapData) {
             for (const tm of this.state.projectTilemaps) {
                 if (tm.id === id) {

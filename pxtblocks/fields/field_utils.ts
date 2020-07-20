@@ -247,8 +247,16 @@ namespace pxtblockly {
             }
         }
 
-        const allTiles = getAllBlocksWithTilesets(workspace);
         const project = pxt.react.getTilemapProject();
+        const projectMaps = project.getAllTilemaps();
+
+        for (const projectMap of projectMaps) {
+            for (const tile of projectMap.data.tileset.tiles) {
+                all[tile.id] = tile;
+            }
+        }
+
+        const allTiles = getAllBlocksWithTilesets(workspace);
         for (const tilesetField of allTiles) {
             const id = tilesetField.ref.getValue();
 
