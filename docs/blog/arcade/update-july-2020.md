@@ -13,7 +13,7 @@ Huge thanks to everyone who has been filing bugs, submitting PR’s and offering
 * Adding the Fill function for the Wall tool in the TileMap Editor (woo-hoo! [#6889](https://github.com/microsoft/pxt/pull/6889))
 * Cleaning up the resizing of the Home Page cards - [#7146](https://github.com/microsoft/pxt/pull/7146)
 
-Thank you Jacob!
+Thank you Jacob! 😊
 
 We also have a new Arcade device that has been released by [TinkerGen – the GameGo](https://www.tinkergen.com/gamego)! Check it out on our [Hardware](https://arcade.makecode.com/hardware) page.
 
