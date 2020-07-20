@@ -3,6 +3,7 @@ declare let mscc: any;
 declare let Seriously: any;
 declare let webkitSpeechRecognition: any;
 declare let MediaRecorder: any;
+declare let YT: any;
 
 interface Coord {
     x: number;
@@ -45,6 +46,7 @@ interface StreamerState {
     screenshotStream?: MediaStream;
     screenshotVideo?: HTMLVideoElement;
     recording?: () => void;
+    stingering?: boolean;
 }
 
 interface StreamerConfig {
@@ -57,6 +59,10 @@ interface StreamerConfig {
     title?: string;
     backgroundImage?: string;
     backgroundVideo?: string;
+    stingerVideo?: string;
+    stingerVideoDelay?: number;
+    stingerVideoGreenScreen?: string;
+    camoverlayVideo?: string;
     faceCamGreenScreen?: string;
     hardwareCamGreenScreen?: string;
     faceCamClipBlack?: number;
@@ -86,6 +92,55 @@ interface StreamerConfig {
     styleBackground?: string;
 }
 
+let youTubeReady = false
+let stingerPlayer;
+const stingerEvents = {
+    start: () => { },
+    end: () => { }
+}
+function onYouTubeIframeAPIReady() {
+    youTubeReady = true;
+    console.log(`youtube ready`)
+    stingerPlayer = new YT.Player('stingeryoutube', {
+        playerVars: {
+            mute: 1,
+            autoplay: 1,
+            controls: 0,
+            disablekb: 1,
+            fs: 0,
+            modestbranding: 1,
+            rel: 0
+        },
+        events: {
+            onReady: () => {
+                console.log(`stinger youtube ready`)
+                const stingeryoutube = document.getElementById('stingeryoutube')
+            },
+            onError: () => {
+                const stingeryoutube = document.getElementById('stingeryoutube')
+                stingeryoutube.classList.add("hidden");
+                stingerEvents.end()
+            },
+            onStateChange: (ev) => {
+                const playerState = ev.data;
+                console.log(`stinger youtube state`, playerState)
+                const stingeryoutube = document.getElementById('stingeryoutube')
+                switch (playerState) {
+                    case YT.PlayerState.PLAYING: // playing
+                        stingeryoutube.classList.remove("hidden");
+                        stingerEvents.start()
+                        break;
+                    case YT.PlayerState.ENDED: // ended
+                    case YT.PlayerState.PAUSEd: // pause
+                        stingeryoutube.classList.add("hidden");
+                        stingerEvents.end()
+                        break;
+                }
+            }
+        }
+    });
+}
+
 (async function () {
     const body = document.body;
     const container = document.getElementById("container");
@@ -94,8 +149,10 @@ interface StreamerConfig {
     const selectapp = document.getElementById("selectapp");
     const facecamcontainer = document.getElementById("facecam");
     const facecam = document.getElementById("facecamvideo") as HTMLVideoElement;
+    const facecamoverlay = document.getElementById("facecamoverlay") as HTMLVideoElement;
     const facecamlabel = document.getElementById("facecamlabel");
     const hardwarecam = document.getElementById("hardwarecamvideo") as HTMLVideoElement;
+    const hardwarecamoverlay = document.getElementById("hardwarecamoverlay") as HTMLVideoElement;
     const hardwarecamlabel = document.getElementById("hardwarecamlabel");
     const chat = document.getElementById("chat") as HTMLIFrameElement;
     const settings = document.getElementById("settings");
@@ -110,8 +167,8 @@ interface StreamerConfig {
     const countdown = document.getElementById('countdown') as HTMLDivElement
     const titleEl = document.getElementById('title')
     const subtitles = document.getElementById('subtitles')
-    const startvideo = document.getElementById('startvideo') as HTMLVideoElement;
-    const endvideo = document.getElementById('endvideo') as HTMLVideoElement;
+    const stingervideo = document.getElementById('stingervideo') as HTMLVideoElement
+    const stingervideoserious = document.getElementById('stingervideoserious') as HTMLVideoElement
     const backgroundvideo = document.getElementById('backgroundvideo') as HTMLVideoElement
     const backgroundyoutube = document.getElementById('backgroundyoutube') as HTMLIFrameElement
     const intro = document.getElementById('intro')
@@ -132,6 +189,7 @@ interface StreamerConfig {
         paintColor: paintColors[0],
     }
     let editorConfigs;
+    const db = openDb()
 
     try {
         tickEvent("streamer.load.start")
@@ -152,8 +210,8 @@ interface StreamerConfig {
         loadSocial()
         await firstLoadFaceCam()
         await loadHardwareCam()
+        await loadCamOverlays()
         await loadSettings()
-        loadVideos()
         setScene("right")
         render()
         handleHashChange();
@@ -167,6 +225,17 @@ interface StreamerConfig {
     function saveConfig(config) {
         if (!config) throw new Error("missing config")
         localStorage["streamer.config"] = JSON.stringify(config)
+
+        // gc videos
+        const blobs = Object.keys(config)
+            .filter(k => /Video$/.test(k))
+            .map<string>(k => config[k])
+            .filter(v => !!v)
+            .map(v => v.split('\n')
+                .filter(l => /^blob:/.test(l))
+                .map(l => l.replace(/^blob:/, ''))
+            ).reduce((all, curr) => all.concat(curr), []);
+        db.gc(blobs)
     }
 
     async function showSettings() {
@@ -214,10 +283,17 @@ interface StreamerConfig {
         return json;
     }
 
-    function parseYouTubeVideoId(url) {
+    function parseYouTubeVideoId(url: string) {
         if (!url) return undefined;
         const m = /^https:\/\/(?:youtu\.be\/|(?:www.)?youtube.com\/watch\?v=)([a-z0-9_\-]+)$/i.exec(url)
         return m && m[1];
+    }
+
+    function createYouTubeEmbedUrl(ytVideoId: string, interactive: boolean) {
+        let url = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1&controls=${interactive ? "1" : "0"}&disablekb=1&fs=0&loop=1&playlist=${ytVideoId}&modestbranding=1&rel=0`;
+        if (!interactive)
+            url += "&mute=1"
+        return url;
     }
 
     function render() {
@@ -235,6 +311,7 @@ interface StreamerConfig {
             state.micError && "micerror",
             state.recording && "recording",
             state.screenshoting && "screenshoting",
+            state.stingering && "stingering",
             (config.faceCamGreenScreen || config.hardwareCamGreenScreen) && state.thumbnail && "thumbnail",
             config.micDelay === undefined && "micdelayerror",
             !hasGetDisplayMedia && "displaymediaerror",
@@ -251,7 +328,9 @@ interface StreamerConfig {
             config.countdownEditorBlur && "countdowneditorblur",
             config.fullScreenEditor && !config.multiEditor && "slim",
             (config.twitch || config.restream) && "haschat",
-            config.faceCamGreenScreen && "hasthumbnail"
+            config.faceCamGreenScreen && "hasthumbnail",
+            config.stingerVideo && "hasstinger",
+            config.camoverlayVideo && "hascamoverlay",
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
             showSettings();
@@ -310,7 +389,7 @@ interface StreamerConfig {
         if (config.extraSites && config.extraSites.length) {
             addSep(toolbox);
             config.extraSites.forEach(addSiteButton)
-            addButton(toolbox, "Code", "Reload MakeCode editor", loadEditor)
+            addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor, config.stingerVideoGreenScreen, config.stingerVideoDelay))
         }
 
         addSep(toolbox)
@@ -399,10 +478,16 @@ interface StreamerConfig {
 
     function setSite(url) {
         const config = readConfig();
-        if (config.multiEditor && state.sceneIndex == LEFT_SCENE_INDEX)
-            editor2.src = url;
-        else
-            editor.src = url;
+        const ytid = parseYouTubeVideoId(url);
+        if (ytid)
+            url = createYouTubeEmbedUrl(ytid, true)
+
+        startStinger(config.stingerVideo, () => {
+            if (config.multiEditor && state.sceneIndex == LEFT_SCENE_INDEX)
+                editor2.src = url;
+            else
+                editor.src = url;
+        }, config.stingerVideoGreenScreen, config.stingerVideoDelay)
     }
 
     function setScene(scene) {
@@ -417,31 +502,43 @@ interface StreamerConfig {
             scene = "chat"
         }
 
-        if (state.sceneIndex !== sceneIndex) {
-            state.sceneIndex = scenes.indexOf(`${scene}scene`);
-            resetTransition(facecamlabel, "fadeout")
-            resetTransition(hardwarecamlabel, "fadeout")
-        }
+        // handle countdown
         if (sceneIndex === COUNTDOWN_SCENE_INDEX) {
             startCountdown(300000);
-            if (config.endVideo) {
-                endvideo.classList.remove("hidden");
-                endvideo.onended = () => {
-                    endvideo.classList.add("hidden");
-                }
-                endvideo.play();
+            const v = config.endVideo || config.stingerVideo
+            if (v) {
+                startStingerScene(v, sceneIndex)
+                return;
             }
         } else {
             stopCountdown();
-            if (lastSceneIndex == COUNTDOWN_SCENE_INDEX && config.startVideo) {
-                startvideo.classList.remove("hidden");
-                startvideo.onended = () => {
-                    startvideo.classList.add("hidden");
-                }
-                startvideo.play();
+            const v = config.endVideo || config.stingerVideo
+            if (lastSceneIndex == COUNTDOWN_SCENE_INDEX && v) {
+                startStingerScene(v, sceneIndex)
+                return;
             }
         }
+
+        // stinger animation
+        if (config.stingerVideo &&
+            (sceneIndex == CHAT_SCENE_INDEX && isLeftOrRightScene(lastSceneIndex))
+            || (isLeftOrRightScene(sceneIndex) && lastSceneIndex == CHAT_SCENE_INDEX)) {
+            startStingerScene(config.stingerVideo, sceneIndex)
+            return;
+        }
+
+        updateScene(sceneIndex);
         render();
+
+        function isLeftOrRightScene(i) {
+            return i == LEFT_SCENE_INDEX || i == RIGHT_SCENE_INDEX
+        }
+    }
+
+    function updateScene(sceneIndex: number) {
+        state.sceneIndex = sceneIndex;
+        resetTransition(facecamlabel, "fadeout")
+        resetTransition(hardwarecamlabel, "fadeout")
     }
 
     function resetTransition(el, name) {
@@ -530,11 +627,15 @@ interface StreamerConfig {
         else startPaint();
     }
 
-    function toggleThumbnail() {
-        state.thumbnail = !state.thumbnail;
-        if (state.thumbnail)
-            state.chat = false;
-        render();
+    function toggleThumbnail(ev: Event) {
+        stopEvent(ev)
+        const config = readConfig();
+        startStinger(config.stingerVideo, () => {
+            state.thumbnail = !state.thumbnail;
+            if (state.thumbnail)
+                state.chat = false;
+            render();
+        }, config.stingerVideoGreenScreen, config.stingerVideoDelay)
     }
 
     function setPaintTool(tool) {
@@ -771,12 +872,6 @@ interface StreamerConfig {
         loadStyle();
     }
 
-    function loadVideos() {
-        const config = readConfig();
-        startvideo.src = config.startVideo;
-        endvideo.src = config.endVideo;
-    }
-
     function loadStyle() {
         const config = readConfig();
         const editorConfig = editorConfigs[config.editor];
@@ -825,9 +920,9 @@ background: ${primary};
         const ytVideoId = parseYouTubeVideoId(config.backgroundVideo);
         if (ytVideoId) {
             backgroundvideo.src = undefined;
-            const url = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1&controls=0&disablekb=1&fs=0&loop=1&playlist=${ytVideoId}&modestbranding=1&rel=0&mute=1`
+            const url = createYouTubeEmbedUrl(ytVideoId, false)
             if (backgroundyoutube.src !== url)
-                backgroundyoutube.src = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1&controls=0&disablekb=1&fs=0&loop=1&playlist=${ytVideoId}&modestbranding=1&rel=0&mute=1`
+                backgroundyoutube.src = url
 
             // rescale youtube iframe to cover the entire background
             const el = document.firstElementChild;
@@ -850,8 +945,10 @@ background: ${primary};
             }
 
         } else if (config.backgroundVideo) {
-            backgroundvideo.src = config.backgroundVideo;
-            backgroundyoutube.src = undefined;
+            resolveBlob(config.backgroundVideo).then(vurl => {
+                backgroundvideo.src = vurl;
+                backgroundyoutube.src = undefined;
+            })
         } else {
             backgroundvideo.src = undefined;
             backgroundyoutube.src = undefined;
@@ -972,6 +1069,21 @@ background-image: url(${config.backgroundImage});
         }
         finally {
             body.classList.remove("loading");
+        }
+    }
+
+    async function loadCamOverlays() {
+        const config = readConfig();
+        // update overlay
+        if (config.camoverlayVideo) {
+            const url = await resolveBlob(config.camoverlayVideo)
+            facecamoverlay.src = url
+            hardwarecamoverlay.src = url
+        } else {
+            const url = facecamoverlay.src;
+            URL.revokeObjectURL(url);
+            facecamoverlay.src = ""
+            hardwarecamoverlay.src = ""
         }
     }
 
@@ -1269,63 +1381,76 @@ background-image: url(${config.backgroundImage});
         el.volume = 0; // don't use sound!
         el.onloadedmetadata = (e) => {
             el.play();
-            toggleGreenScreen();
+            toggleGreenScreen(greenscreen, el, rotate, clipBlack, contourColor);
         }
         if (rotate)
             el.classList.add("rotate")
         else
             el.classList.remove("rotate");
+    }
 
-        function toggleGreenScreen() {
-            // time to get serious
-            if (greenscreen) {
-                el.style.opacity = 0;
-                el.parentElement.classList.add("greenscreen")
-                // https://github.com/brianchirls/Seriously.js/
-                const canvas = document.getElementById(el.id + "serious") as HTMLCanvasElement;
-                if (rotate)
-                    canvas.classList.add("rotate")
-                else
-                    canvas.classList.remove("rotate");
-                canvas.width = el.videoWidth;
-                canvas.height = el.videoHeight;
-                const seriously = new Seriously();
-                let source = seriously.source(el);
+    function toggleGreenScreen(greenscreen: string, el: HTMLVideoElement, rotate?: boolean, clipBlack?: number, contourColor?: string) {
+        // time to get serious
+        if (greenscreen) {
+            startGreenScreen(greenscreen, el, rotate, clipBlack, contourColor)
+        }
+        else
+            stopGreenScreen(el)
+    }
 
-                // source -> chroma key
-                const chroma = seriously.effect("chroma");
-                chroma.clipBlack = clipBlack || 0.6;
-                const screenColor = toSeriousColor(greenscreen);
-                if (screenColor) chroma.screen = screenColor
-                chroma.source = source;
-                seriously.chroma = chroma;
-                source = chroma;
+    function startGreenScreen(greenscreen: string, el: HTMLVideoElement, rotate?: boolean, clipBlack?: number, contourColor?: string) {
+        el.style.opacity = "0";
+        el.parentElement.classList.add("greenscreen")
+        // https://github.com/brianchirls/Seriously.js/
+        const canvas = document.getElementById(el.id + "serious") as HTMLCanvasElement;
+        if (rotate)
+            canvas.classList.add("rotate")
+        else
+            canvas.classList.remove("rotate");
+        canvas.width = el.videoWidth;
+        canvas.height = el.videoHeight;
+        cleanSeriously(el)
+        const seriously = new Seriously();
+        let source = seriously.source(el);
 
-                // optional chroma -> contour
-                if (contourColor) {
-                    const contour = seriously.effect("contour");
-                    contour.source = source;
-                    seriously.contour = contour;
-                    seriously.contour.color = toSeriousColor(contourColor);
-                    source = contour;
-                }
+        // source -> chroma key
+        const chroma = seriously.effect("chroma");
+        chroma.clipBlack = clipBlack || 0.6;
+        const screenColor = toSeriousColor(greenscreen);
+        if (screenColor) chroma.screen = screenColor
+        chroma.source = source;
+        seriously.chroma = chroma;
+        source = chroma;
 
-                // pipe to canvas
-                const target = seriously.target(canvas);
-                target.source = source;
+        // optional chroma -> contour
+        if (contourColor) {
+            const contour = seriously.effect("contour");
+            contour.source = source;
+            seriously.contour = contour;
+            seriously.contour.color = toSeriousColor(contourColor);
+            source = contour;
+        }
 
-                seriously.go();
+        // pipe to canvas
+        const target = seriously.target(canvas);
+        target.source = source;
 
-                el.seriously = seriously;
-            } else {
-                el.style.opacity = 1;
-                el.parentElement.classList.remove("greenscreen")
+        seriously.go();
 
-                if (el.seriously) {
-                    el.seriously.stop();
-                    el.seriously = undefined;
-                }
-            }
+        (el as any).seriously = seriously;
+    }
+
+    function stopGreenScreen(el: HTMLVideoElement) {
+        el.style.opacity = "1";
+        el.parentElement.classList.remove("greenscreen")
+        cleanSeriously(el)
+    }
+
+    function cleanSeriously(el: HTMLVideoElement) {
+        if ((el as any).seriously) {
+            (el as any).seriously.stop();
+            (el as any).seriously.destroy();
+            (el as any).seriously = undefined;
         }
     }
 
@@ -1621,27 +1746,14 @@ background-image: url(${config.backgroundImage});
         }
 
         const importsettingsinput = document.getElementById("importsettingsinput") as HTMLInputElement
-        importsettingsinput.onchange = function () {
-            const file = importsettingsinput.files[0] as File;
-            if (!file) return;
-            const reader = new FileReader();
-            reader.addEventListener("load", function () {
-                try {
-                    const config = JSON.parse(reader.result as string);
+        const importsettings = document.getElementById("importsettings") as HTMLButtonElement
+        importFileButton("streamer.importsettings", importsettingsinput, importsettings, (file) =>
+            readFileAsText(file)
+                .then(text => {
+                    const config = JSON.parse(text);
                     saveConfig(config);
                     window.location.reload()
-                } catch(e) {
-                    console.error(e)
-                }
-            }, false);
-            reader.readAsText(file, 'utf-8')
-        }
-        const importsettings = document.getElementById("importsettings")
-        importsettings.onclick = function (e) {
-            tickEvent("streamer.importsettings", undefined, { interactiveConsent: true })
-            stopEvent(e)
-            importsettingsinput.click()
-        }
+                }))
 
         const exportsettings = document.getElementById("exportsettings")
         exportsettings.onclick = function (e) {
@@ -1743,7 +1855,9 @@ background-image: url(${config.backgroundImage});
             if (config.hardwareCamId == config.faceCamId)
                 config.hardwareCamId = undefined; // priority to face cam
             saveConfig(config)
-            loadFaceCam().then(() => loadSettings())
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
         const facerotatecheckbox = document.getElementById("facerotatecameracheckbox") as HTMLInputElement
         facerotatecheckbox.checked = !!config.faceCamRotate
@@ -1751,7 +1865,9 @@ background-image: url(${config.backgroundImage});
             config.faceCamRotate = !!facerotatecheckbox.checked
             saveConfig(config)
             render()
-            loadFaceCam().then(() => loadSettings())
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
         const facecamcircularcheckbox = document.getElementById("facecamcircularcheckbox") as HTMLInputElement
         facecamcircularcheckbox.checked = !!config.faceCamCircular
@@ -1759,7 +1875,9 @@ background-image: url(${config.backgroundImage});
             config.faceCamCircular = !!facecamcircularcheckbox.checked
             saveConfig(config)
             render()
-            loadFaceCam().then(() => loadSettings())
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
 
         const facecamscreeninput = document.getElementById("facecamscreeninput") as HTMLInputElement
@@ -1773,13 +1891,17 @@ background-image: url(${config.backgroundImage});
             if (config.faceCamGreenScreen && (<any>facecam).seriously?.chroma)
                 (<any>facecam).seriously.chroma.screen = toSeriousColor(config.faceCamGreenScreen);
             else
-                loadFaceCam().then(() => loadSettings())
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings())
         }
         const facecamscreenclear = document.getElementById("facecamscreenclear") as HTMLButtonElement
         facecamscreenclear.onclick = function (e) {
             config.faceCamGreenScreen = undefined;
             saveConfig(config);
-            loadFaceCam().then(() => loadSettings())
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
         const facecamscreencanvas = document.getElementById("facecamscreencanvas") as HTMLCanvasElement
         facecamscreencanvas.width = 320;
@@ -1801,7 +1923,9 @@ background-image: url(${config.backgroundImage});
                 loadSettings()
             }
             else
-                loadFaceCam().then(() => loadSettings())
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings())
         }
         const facecamgreenclipblack = document.getElementById("facecamgreenclipblack") as HTMLInputElement
         facecamgreenclipblack.value = (config.faceCamClipBlack || 0.6) + "";
@@ -1812,7 +1936,9 @@ background-image: url(${config.backgroundImage});
             if ((<any>facecam).seriously?.chroma)
                 (<any>facecam).seriously.chroma.clipBlack = config.faceCamClipBlack;
             else
-                loadFaceCam().then(() => loadSettings())
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings())
         }
         const facecamcontourinput = document.getElementById("facecamcontourinput") as HTMLInputElement
         facecamcontourinput.value = config.faceCamContour || ""
@@ -1825,13 +1951,17 @@ background-image: url(${config.backgroundImage});
             if (config.faceCamContour && (<any>facecam).seriously?.contour)
                 (<any>facecam).seriously.contour.color = toSeriousColor(config.faceCamContour);
             else
-                loadFaceCam().then(() => loadSettings())
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings())
         }
         const facecamcontourclear = document.getElementById("facecamcontourclear") as HTMLInputElement
         facecamcontourclear.onclick = function (e) {
             config.faceCamContour = undefined;
             saveConfig(config);
-            loadFaceCam().then(() => loadSettings())
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
 
         config.faceCamFilter = config.faceCamFilter || {};
@@ -1884,14 +2014,18 @@ background-image: url(${config.backgroundImage});
             saveConfig(config)
             state.hardware = !!config.hardwareCamId
             render()
-            loadHardwareCam().then(() => loadSettings())
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
         const hardwarerotatecheckbox = document.getElementById("hardwarerotatecameracheckbox") as HTMLInputElement
         hardwarerotatecheckbox.checked = !!config.hardwareCamRotate
         hardwarerotatecheckbox.onchange = function () {
             config.hardwareCamRotate = !!hardwarerotatecheckbox.checked
             saveConfig(config)
-            loadHardwareCam().then(() => loadSettings())
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
         const hardwarecamcircularcheckbox = document.getElementById("hardwarecamcircularcheckbox") as HTMLInputElement
         hardwarecamcircularcheckbox.checked = !!config.hardwareCamCircular
@@ -1899,7 +2033,9 @@ background-image: url(${config.backgroundImage});
             config.hardwareCamCircular = !!hardwarecamcircularcheckbox.checked
             saveConfig(config)
             render()
-            loadFaceCam().then(() => loadSettings())
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
 
         const hardwarecamscreeninput = document.getElementById("hardwarecamscreeninput") as HTMLInputElement
@@ -1913,7 +2049,9 @@ background-image: url(${config.backgroundImage});
             if (config.hardwareCamGreenScreen && (<any>hardwarecam).seriously?.chroma)
                 (<any>hardwarecam).seriously.chroma.screen = toSeriousColor(config.hardwareCamGreenScreen);
             else
-                loadHardwareCam().then(() => loadSettings())
+                loadHardwareCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings())
         }
 
         const hardwarecamscreencanvas = document.getElementById("hardwarecamscreencanvas") as HTMLCanvasElement
@@ -1942,7 +2080,9 @@ background-image: url(${config.backgroundImage});
         hardwarecamscreenclear.onclick = function (e) {
             config.hardwareCamGreenScreen = undefined;
             saveConfig(config);
-            loadHardwareCam().then(() => loadSettings())
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
         const hardwarecamgreenclipblack = document.getElementById("hardwarecamgreenclipblack") as HTMLInputElement
         hardwarecamgreenclipblack.value = (config.hardwareCamClipBlack || 0.6) + "";
@@ -1953,7 +2093,9 @@ background-image: url(${config.backgroundImage});
             if ((<any>hardwarecam).seriously?.chroma)
                 (<any>hardwarecam).seriously.chroma.clipBlack = config.hardwareCamClipBlack;
             else
-                loadHardwareCam().then(() => loadSettings())
+                loadHardwareCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings())
         }
         const hardwarecamcontourinput = document.getElementById("hardwarecamcontourinput") as HTMLInputElement
         hardwarecamcontourinput.value = config.hardwareCamContour || ""
@@ -1966,13 +2108,17 @@ background-image: url(${config.backgroundImage});
             if (config.hardwareCamContour && (<any>hardwarecam).seriously?.contour)
                 (<any>hardwarecam).seriously.contour.color = toSeriousColor(config.hardwareCamContour);
             else
-                loadHardwareCam().then(() => loadSettings())
+                loadHardwareCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings())
         }
         const hardwarecamcontourclear = document.getElementById("hardwarecamcontourclear") as HTMLButtonElement
         hardwarecamcontourclear.onclick = function (e) {
             config.hardwareCamContour = undefined;
             saveConfig(config);
-            loadHardwareCam().then(() => loadSettings())
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings())
         }
 
         config.hardwareCamFilter = config.hardwareCamFilter || {};
@@ -2033,37 +2179,38 @@ background-image: url(${config.backgroundImage});
             render()
         }
 
-        const backgroundvideoinput = document.getElementById("backgroundvideoinput") as HTMLInputElement
-        backgroundvideoinput.value = config.backgroundVideo || ""
-        backgroundvideoinput.onchange = function (e) {
-            config.backgroundVideo = undefined;
-            if (/^https:\/\//.test(backgroundvideoinput.value))
-                config.backgroundVideo = backgroundvideoinput.value
+        importVideoButton("background", true)
+        importVideoButton("start", true)
+        importVideoButton("end", true)
+        importVideoButton("stinger", false)
+        importVideoButton("camoverlay", true)
+
+        const stingervideodelayinput = document.getElementById("stringervideodelayinput") as HTMLInputElement
+        stingervideodelayinput.value = (config.stingerVideoDelay || "") + ""
+        stingervideodelayinput.onchange = function (e) {
+            const i = parseInt(stingervideodelayinput.value || "0");
+            config.stingerVideoDelay = isNaN(i) ? 0 : i;
+            stingervideodelayinput.value = (config.stingerVideoDelay || "") + ""
             saveConfig(config);
-            loadStyle();
-            render()
         }
 
-        const startvideoinput = document.getElementById("startvideoinput") as HTMLInputElement
-        startvideoinput.value = config.startVideo || ""
-        startvideoinput.onchange = function (e) {
-            config.startVideo = undefined;
-            if (/^https:\/\//.test(startvideoinput.value))
-                config.startVideo = startvideoinput.value
+        const stingervideoscreenclear = document.getElementById("stingervideoscreenclear") as HTMLInputElement
+        stingervideoscreenclear.onclick = function (e) {
+            config.stingerVideoGreenScreen = undefined;
             saveConfig(config);
-            loadVideos();
-            render()
+            loadSettings()
+            startStinger(config.stingerVideo, () => { })
         }
 
-        const endvideoinput = document.getElementById("endvideoinput") as HTMLInputElement
-        endvideoinput.value = config.endVideo || ""
-        endvideoinput.onchange = function (e) {
-            config.endVideo = undefined;
-            if (/^https:\/\//.test(endvideoinput.value))
-                config.endVideo = endvideoinput.value
+        const stingervideoscreeninput = document.getElementById("stingervideoscreeninput") as HTMLInputElement
+        stingervideoscreeninput.value = config.stingerVideoGreenScreen || ""
+        stingervideoscreeninput.onchange = function (e) {
+            config.stingerVideoGreenScreen = undefined;
+            if (/^#[a-fA-F0-9]{6}$/.test(stingervideoscreeninput.value))
+                config.stingerVideoGreenScreen = stingervideoscreeninput.value
             saveConfig(config);
-            loadVideos();
-            render()
+            loadSettings()
+            startStinger(config.stingerVideo, () => { }, config.stingerVideoGreenScreen)
         }
 
         const backgroundcolorinput = document.getElementById("backgroundcolorinput") as HTMLInputElement
@@ -2211,6 +2358,59 @@ background-image: url(${config.backgroundImage});
             saveConfig(config);
         }
 
+        function importVideoButton(name: string, replace: boolean) {
+            importFileButton(`streamer.importvideo.${name}`,
+                document.getElementById(`${name}videoimportinput`) as HTMLInputElement,
+                document.getElementById(`${name}videoimportbtn`),
+                async (file) => {
+                    const fn = `${replace ? name : file.name}`.replace(/\.\w+$/, "") + "video"
+                    db.put(fn, file)
+                    const url = `blob:${fn}`;
+                    const current = config[name + "Video"];
+                    config[name + "Video"] = replace || !current ? url : `${current}\n${url}`
+                    saveConfig(config);
+                    loadSettings()
+                    loadStyle()
+                    render()
+                })
+            const videoinput = document.getElementById(`${name}videoinput`) as HTMLInputElement | HTMLTextAreaElement
+            const field = `${name}Video`
+            videoinput.value = config[field] || ""
+            videoinput.oninput = videoinput.onchange = function (e) {
+                config[field] = videoinput.value
+                saveConfig(config);
+                loadStyle()
+                loadSettings()
+                render()
+            }
+        }
+    }
+
+    function importFileButton(tick: string, input: HTMLInputElement, button: HTMLElement, done: (file: File) => void) {
+        input.onchange = function () {
+            const file = input.files[0] as File;
+            if (file)
+                done(file)
+        }
+        button.onclick = function (e) {
+            tickEvent(tick, undefined, { interactiveConsent: true })
+            stopEvent(e)
+            input.click()
+        }
+    }
+
+    function readFileAsText(file: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.addEventListener("load", function () {
+                try {
+                    resolve(reader.result as string)
+                } catch (e) {
+                    reject(e)
+                }
+            }, false);
+            reader.readAsText(file, 'utf-8')
+        })
     }
 
     function setEditor(editor, hash?) {
@@ -2252,7 +2452,7 @@ background-image: url(${config.backgroundImage});
                     break;
                 case 54: // 6
                     ev.preventDefault();
-                    toggleThumbnail();
+                    toggleThumbnail(ev);
                     break;
                 case 55: // 7
                     toggleHardware(ev);
@@ -2340,5 +2540,161 @@ background-image: url(${config.backgroundImage});
                 else props[k] = JSON.stringify(data[k] || '');
             });
         return [props, measures];
+    }
+
+    async function startStingerScene(url: string, endSceneIndex: number) {
+        const config = readConfig();
+        startStinger(url, () => {
+            updateScene(endSceneIndex);
+            render()
+        }, config.stingerVideoGreenScreen, config.stingerVideoDelay)
+    }
+
+    async function startStinger(url: string, end: () => void, greenScreen: string = "", transitionDelay = 700) {
+        stingerEvents.start = () => {
+            setTimeout(() => {
+                end()
+            }, transitionDelay || 1000)
+        }
+        stingerEvents.end = () => {
+            state.stingering = false;
+            render();
+        }
+        const stingeryoutube = document.getElementById('stingeryoutube')
+        const ytVideoId = parseYouTubeVideoId(url);
+        if (ytVideoId) {
+            state.stingering = true;
+            render();
+            stopGreenScreen(stingervideo)
+            stingervideo.src = undefined;
+            stingervideo.classList.add("hidden");
+            stingerPlayer.loadVideoById(ytVideoId, 0)
+
+            // rescale youtube iframe to cover the entire background
+            const el = document.firstElementChild;
+            const w = el.clientWidth
+            const h = el.clientHeight
+            const ratio = w / h;
+            const hd = 16 / 9;
+            if (ratio > hd) {
+                // the video is going to be 16:9, compensate
+                console.log(`ratio`, ratio)
+                const vh = 100 * ratio / hd
+                stingeryoutube.style.height = `${vh}vh`
+                stingeryoutube.style.width = `100vw`
+                stingeryoutube.style.transform = `translate(0, ${-(vh - 100) / 2}vh)`
+            } else {
+                const vw = 100 / ratio * hd
+                stingeryoutube.style.height = `100vh`
+                stingeryoutube.style.width = `${vw}vw`
+                stingeryoutube.style.transform = `translate(${-(vw - 100) / 2}vh, 0)`
+            }
+        } else if (url) {
+            state.stingering = true;
+            render();
+            url = await resolveBlob(url)
+
+            stingerPlayer.stopVideo()
+            stingeryoutube.classList.add("hidden")
+            stingervideo.src = url;
+            stingervideo.onplay = () => {
+                if (greenScreen) {
+                    stingervideoserious.classList.remove("hidden")
+                    startGreenScreen(greenScreen, stingervideo)
+                } else {
+                    stingervideo.classList.remove("hidden")
+                }
+                stingerEvents.start()
+            }
+            stingervideo.onpause = stingervideo.onerror = stingervideo.onended = () => {
+                stingerEvents.end()
+                stingervideo.classList.add("hidden")
+                stingervideoserious.classList.add("hidden")
+                // doesn't hurt
+                URL.revokeObjectURL(url)
+            }
+        } else {
+            stingervideo.src = undefined;
+            stingerPlayer.stopVideo()
+            stingervideo.classList.add("hidden");
+            stingeryoutube.classList.add("hidden")
+            state.stingering = false;
+            stopGreenScreen(stingervideo)
+            render();
+            end();
+        }
+    }
+
+    async function resolveBlob(url: string) {
+        if (/\n/.test(url)) {
+            // multiple urls, pick a random one
+            const urls = url.split(/\n/g)
+            url = urls[Math.floor(Math.random() * urls.length)];
+        }
+        const blob = url.startsWith("blob:") && url.substr("blob:".length);
+        if (blob) {
+            const file = await db.get(blob)
+            if (file)
+                url = URL.createObjectURL(file)
+        }
+        return url;
+    }
+
+    // this database stores video blobs
+    function openDb() {
+        const DB_VERSION = 1
+        const DB_NAME = "ASSETS"
+        const STORE_BLOBS = "BLOBS"
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        let db: IDBDatabase;
+
+        // create or upgrade database
+        request.onsuccess = function (event) {
+            db = request.result;
+            db.onerror = function (event) {
+                console.log("idb error", event);
+            };
+        }
+        request.onupgradeneeded = function (event) {
+            db = request.result;
+            db.createObjectStore(STORE_BLOBS);
+        };
+
+        const api = {
+            put: (id: string, file: File | Blob) => {
+                const transaction = db.transaction([STORE_BLOBS], "readwrite");
+                const blobs = transaction.objectStore(STORE_BLOBS)
+                blobs.put(file, id);
+            },
+            get: (id: string): Promise<File | Blob> => {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_BLOBS], "readonly");
+                    const blobs = transaction.objectStore(STORE_BLOBS)
+                    const request = blobs.get(id);
+                    request.onsuccess = (event) => resolve((event.target as any).result)
+                    request.onerror = (event) => resolve((event.target as any).result)
+                })
+            },
+            del: (id: string): Promise<void> => {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction([STORE_BLOBS], "readwrite");
+                    const blobs = transaction.objectStore(STORE_BLOBS)
+                    const request = blobs.delete(id);
+                    request.onsuccess = (event) => resolve((event.target as any).result)
+                    request.onerror = (event) => resolve((event.target as any).result)
+                })
+            },
+            gc: (urls: string[]) => {
+                const transaction = db.transaction([STORE_BLOBS], "readwrite");
+                const blobs = transaction.objectStore(STORE_BLOBS)
+                const request = blobs.getAllKeys();
+                request.onsuccess = (event) => {
+                    const keys: string[] = (event.target as any).result;
+                    const dead = keys.filter(k => urls.indexOf(k) < 0);
+                    dead.forEach(api.del)
+                }
+            }
+        }
+        return api;
     }
 })()

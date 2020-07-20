@@ -619,6 +619,7 @@ declare namespace ts.pxtc {
         callInDebugger?: boolean; // for getters, they will be invoked by the debugger.
         py2tsOverride?: string; // used to map functions in python that have an equivalent (but differently named) ts function
         pyHelper?: string; // used to specify functions on the _py namespace that provide implementations. Should be of the form py_class_methname
+        pyConvertToTaggedTemplate?: boolean; // hint that this function should be emitted as a tagged template when going from py to ts
         argsNullable?: boolean; // allow NULL to be passed to C++ shim function
         maxBgInstances?: string; // if there's less than that number of instances of the current class, it's not reported as a mem leak
 
