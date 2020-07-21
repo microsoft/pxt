@@ -730,9 +730,9 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
         })
         .then(() => {
             const compiledFiles = project.getAllFiles();
-            const generatedFileNames = Object.keys(compiledFiles).filter(el => /\.g\.ts/.test(el));
+            const otherFiles = Object.keys(compiledFiles).filter(el => !/^main\.(blocks|ts|py)$/.test(el));
 
-            for (const fname of generatedFileNames) {
+            for (const fname of otherFiles) {
                 patchedFiles[fname] = compiledFiles[fname];
             }
 
