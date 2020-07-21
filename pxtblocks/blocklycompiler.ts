@@ -1063,9 +1063,9 @@ namespace pxt.blocks {
             n += i;
         }
 
+        e.renames.takenNames[n] = true;
         if (isFunction) {
             e.renames.oldToNewFunctions[name] = n;
-            e.renames.takenNames[n] = true;
         }
         else {
             e.renames.oldToNew[name] = n;
@@ -1821,8 +1821,8 @@ namespace pxt.blocks {
         for (let i = 0; i < sourceMap.length; ++i) {
             let chunk = sourceMap[i];
             if (chunk.startPos <= loc.start
-                    && chunk.endPos >= loc.start + loc.length
-                    && (!bestChunk || bestChunkLength > chunk.endPos - chunk.startPos)) {
+                && chunk.endPos >= loc.start + loc.length
+                && (!bestChunk || bestChunkLength > chunk.endPos - chunk.startPos)) {
                 bestChunk = chunk;
                 bestChunkLength = chunk.endPos - chunk.startPos;
             }
@@ -1841,8 +1841,8 @@ namespace pxt.blocks {
         for (let i = 0; i < sourceMap.length; ++i) {
             let chunk = sourceMap[i];
             if (chunk.startLine <= loc.start
-                    && chunk.endLine > loc.start + loc.length
-                    && (!bestChunk || bestChunkLength > chunk.endLine - chunk.startLine)) {
+                && chunk.endLine > loc.start + loc.length
+                && (!bestChunk || bestChunkLength > chunk.endLine - chunk.startLine)) {
                 bestChunk = chunk;
                 bestChunkLength = chunk.endLine - chunk.startLine;
             }
