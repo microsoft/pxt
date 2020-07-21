@@ -25,17 +25,13 @@ export interface MessageData {
 
 export class AssetEditor extends React.Component {
     private editor: FieldEditorComponent<any>;
-    private currentJres: string;
 
     handleMessage = (msg: Message)  => {
         if (msg.data._fromVscode) {
             if (msg.data.type === "initialize") {
                 this.editor.loadJres(msg.data.message);
-                this.currentJres = msg.data.message;
             } else if (msg.data.type === "update") {
-                this.updateAndSendJres();
-            } else if (msg.data.type === 'updateWebview') {
-                this.editor.loadJres(this.currentJres);
+                this.sendJres();
             }
         }
     }
@@ -58,21 +54,19 @@ export class AssetEditor extends React.Component {
     }
 
     callbackOnDoneClick = () => {
-        this.updateAndSendJres();
+        this.sendJres();
     }
 
-    updateAndSendJres() {
-        this.currentJres = this.editor.getJres();
+    sendJres() {
         const updateMsg: MessageData = {
             type: "update",
-            message: this.currentJres,
-            _fromVscode: false,
+            message: this.editor.getJres(),
         }
         this.postMessage(updateMsg);
     }
 
     render() {
-        return <ImageFieldEditor ref={this.refHandler} singleFrame={true} parentCallback={this.callbackOnDoneClick} />
+        return <ImageFieldEditor ref={this.refHandler} singleFrame={true} doneButtonCallback={this.callbackOnDoneClick} />
     }
 }
 

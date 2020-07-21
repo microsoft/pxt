@@ -6,7 +6,7 @@ import { setTelemetryFunction } from './ImageEditor/store/imageReducer';
 
 export interface ImageFieldEditorProps {
     singleFrame: boolean;
-    parentCallback?: () => void;
+    doneButtonCallback?: () => void;
 }
 
 export interface ImageFieldEditorState {
@@ -188,7 +188,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
 
     protected onDoneClick = () => {
         if (this.closeEditor) this.closeEditor();
-        if (this.props.parentCallback) this.props.parentCallback();
+        if (this.props.doneButtonCallback) this.props.doneButtonCallback();
     }
 }
 
