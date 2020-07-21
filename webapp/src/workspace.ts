@@ -921,6 +921,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         if (!justJSON)
             files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
+
     if (!justJSON) {
         // if any block needs decompilation, don't allow merge error markers
         if (blocksNeedDecompilation && conflicts)
@@ -945,7 +946,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
             meta: {},
             editor: pxt.BLOCKS_PROJECT_NAME,
             target: pxt.appTarget.id,
-            targetVersion: pxt.appTarget.versions.target,
+            targetVersion: cfg.targetVersions?.target || pxt.appTarget.versions.target,
         }, files)
     } else {
         hd.name = cfg.name
@@ -1069,7 +1070,6 @@ export function prepareConfigForGithub(content: string, createRelease?: boolean)
     delete (<any>cfg).installedVersion // cleanup old pxt.json files
     delete cfg.additionalFilePath
     delete cfg.additionalFilePaths
-    delete cfg.targetVersions;
 
     // add list of supported targets
     const supportedTargets = cfg.supportedTargets || [];
@@ -1077,6 +1077,11 @@ export function prepareConfigForGithub(content: string, createRelease?: boolean)
         supportedTargets.push(pxt.appTarget.id);
         supportedTargets.sort(); // keep list stable
         cfg.supportedTargets = supportedTargets;
+    }
+
+    cfg.targetVersions = {
+        ...cfg.targetVersions,
+        target: pxt.appTarget.versions.target
     }
 
     // patch dependencies

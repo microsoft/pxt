@@ -657,7 +657,7 @@ export function applyUpgradesAsync(): Promise<UpgradeResult> {
     const pkgVersion = pxt.semver.parse(epkg.header.targetVersion || "0.0.0");
     const trgVersion = pxt.semver.parse(pxt.appTarget.versions.target);
 
-    if (pxt.semver.cmp(pkgVersion, trgVersion) !== 0) {
+    if (pxt.semver.cmp(pkgVersion, trgVersion) === 0) {
         pxt.debug("Skipping project upgrade")
         return Promise.resolve({
             success: true
