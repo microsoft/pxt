@@ -2025,13 +2025,12 @@ namespace ts.pxtc.service {
             }
 
             function getDefaultValueFromFieldEditor(paramName: string): SnippetNode | null {
-                const blockParam = attrs._def?.parameters?.find((p) => p.name === name);
+                const compileInfo = pxt.blocks.compileInfo(fn)
+                const blockParam = compileInfo.parameters?.find((p) => p.actualName === name)
                 if (!blockParam?.shadowBlockId)
                     return null
                 let sym = blocksById[blockParam.shadowBlockId]
                 if (!sym)
-                    return null
-                if (sym.attributes?.blockId !== blockParam.shadowBlockId)
                     return null
                 const fieldEditor = sym.attributes?.paramFieldEditor
                 if (!fieldEditor)
