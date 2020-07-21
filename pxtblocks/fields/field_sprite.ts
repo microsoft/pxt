@@ -168,6 +168,8 @@ namespace pxtblockly {
     }
 
     function parseFieldOptions(opts: FieldSpriteEditorOptions) {
+        // NOTE: This implementation is duplicated in pxtcompiler/emitter/service.ts
+        // TODO: Refactor to share implementation.
         const parsed: ParsedSpriteEditorOptions = {
             initColor: 1,
             initWidth: 16,
