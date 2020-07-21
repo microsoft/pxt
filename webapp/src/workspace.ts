@@ -937,6 +937,10 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
     gitjson.commit = commit
     files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
 
+    /**
+     * If the repo was last opened in this target, use that version number in the header;
+     * otherwise, use current target version to avoid mismatched updates.
+     */
     const targetVersionToUse = (cfg.targetVersions?.targetId === pxt.appTarget.id && cfg.targetVersions.target) ?
         cfg.targetVersions.target : pxt.appTarget.versions.target;
 
@@ -1082,6 +1086,7 @@ export function prepareConfigForGithub(content: string, createRelease?: boolean)
         cfg.supportedTargets = supportedTargets;
     }
 
+    // track target and target version this was last editted in, so we can apply upgrade rules on import.
     cfg.targetVersions = {
         ...cfg.targetVersions,
         target: pxt.appTarget.versions.target,
