@@ -1857,6 +1857,7 @@ namespace ts.pxtc.service {
         // TODO: a lot of this is duplicate logic with blocklyloader.ts:buildBlockFromDef; we should
         //  unify these approaches
         const PY_INDENT: string = (pxt as any).py.INDENT;
+        const fileType = python ? "python" : "typescript";
 
         let preStmt: SnippetNode[] = [];
 
@@ -1970,6 +1971,83 @@ namespace ts.pxtc.service {
                 return false
             }
 
+            function snippetFromSpriteEditorParams(opts: pxt.Map<string>): SnippetNode | null {
+                // TODO: Generalize this to share implementation with FieldSpriteEditor in field_sprite.ts
+                const parsed = {
+                    initColor: 0,
+                    initWidth: 16,
+                    initHeight: 16,
+                };
+
+                if (opts?.sizes) {
+                    const pairs = opts.sizes.split(";");
+                    const sizes: [number, number][] = [];
+                    for (let i = 0; i < pairs.length; i++) {
+                        const pair = pairs[i].split(",");
+                        if (pair.length !== 2) {
+                            continue;
+                        }
+
+                        let width = parseInt(pair[0]);
+                        let height = parseInt(pair[1]);
+
+                        if (isNaN(width) || isNaN(height)) {
+                            continue;
+                        }
+
+                        const screenSize = runtimeOps?.screenSize;
+                        if (width < 0 && screenSize)
+                            width = screenSize.width;
+                        if (height < 0 && screenSize)
+                            height = screenSize.height;
+
+                        sizes.push([width, height]);
+                    }
+                    if (sizes.length > 0) {
+                        parsed.initWidth = sizes[0][0];
+                        parsed.initHeight = sizes[0][1];
+                    }
+                }
+
+                parsed.initColor = withDefault(opts?.initColor, parsed.initColor);
+                parsed.initWidth = withDefault(opts?.initWidth, parsed.initWidth);
+                parsed.initHeight = withDefault(opts?.initHeight, parsed.initHeight);
+
+                return pxt.sprite.imageLiteralFromDimensions(parsed.initWidth, parsed.initHeight, parsed.initColor, fileType);
+
+                function withDefault(raw: string, def: number) {
+                    const res = parseInt(raw);
+                    if (isNaN(res)) {
+                        return def;
+                    }
+                    return res;
+                }
+            }
+
+            function getDefaultValueFromFieldEditor(paramName: string): SnippetNode | null {
+                const blockParam = attrs._def?.parameters?.find((p) => p.name === name);
+                if (!blockParam?.shadowBlockId)
+                    return null
+                let sym = blocksById[blockParam.shadowBlockId]
+                if (!sym)
+                    return null
+                if (sym.attributes?.blockId !== blockParam.shadowBlockId)
+                    return null
+                const fieldEditor = sym.attributes?.paramFieldEditor
+                if (!fieldEditor)
+                    return null
+                const fieldEditorName = fieldEditor[paramName]
+                if (!fieldEditorName)
+                    return null
+                const fieldEditorOptions = sym.attributes.paramFieldEditorOptions || {}
+                switch (fieldEditorName) {
+                    // TODO: Generalize this to share editor mapping with blocklycustomeditor.ts
+                    case "sprite": return snippetFromSpriteEditorParams(fieldEditorOptions[paramName])
+                    // TODO: Handle other field editor types
+                }
+                return null;
+            }
+
             function getShadowSymbol(paramName: string): SymbolInfo | null {
                 // TODO: generalize and unify this with getCompletions code
                 let shadowBlock = (attrs._shadowOverrides || {})[paramName]
@@ -1993,6 +2071,11 @@ namespace ts.pxtc.service {
                     sym = realSym || sym
                 }
                 return sym
+            }
+
+            let shadowDefFromFieldEditor = getDefaultValueFromFieldEditor(name)
+            if (shadowDefFromFieldEditor) {
+                return shadowDefFromFieldEditor
             }
 
             // check if there's a shadow override defined
