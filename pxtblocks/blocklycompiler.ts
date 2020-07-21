@@ -1040,6 +1040,7 @@ namespace pxt.blocks {
 
     // convert to javascript friendly name
     export function escapeVarName(name: string, e: Environment, isFunction = false): string {
+        // TODO(dz)
         if (!name) return '_';
 
         if (isFunction) {
@@ -1061,6 +1062,7 @@ namespace pxt.blocks {
             }
 
             n += i;
+            console.log("renamed to: " + n) // TODO(dz)
         }
 
         if (isFunction) {
@@ -1516,7 +1518,15 @@ namespace pxt.blocks {
                 // with itself. You can still get collisions if you attempt to define a function with
                 // the same name as a function defined in another file in the user's project (e.g. custom.ts)
                 if (info.pkg && (info.kind === pxtc.SymbolKind.Enum || info.kind === pxtc.SymbolKind.Function || info.kind === pxtc.SymbolKind.Module || info.kind === pxtc.SymbolKind.Variable)) {
-                    e.renames.takenNames[info.qName] = true;
+                    console.log(`taken: ${info.qName} from ${info.fileName} in ${info.pkg}`);
+                    if (info.pkg && info.fileName === "test.ts") {
+                        // don't consider these
+                    } else {
+                        if (e.renames.takenNames[info.qName]) {
+                            console.log("duplicate taken name!")
+                        }
+                        e.renames.takenNames[info.qName] = true;
+                    }
                 }
             });
 
@@ -1821,8 +1831,8 @@ namespace pxt.blocks {
         for (let i = 0; i < sourceMap.length; ++i) {
             let chunk = sourceMap[i];
             if (chunk.startPos <= loc.start
-                    && chunk.endPos >= loc.start + loc.length
-                    && (!bestChunk || bestChunkLength > chunk.endPos - chunk.startPos)) {
+                && chunk.endPos >= loc.start + loc.length
+                && (!bestChunk || bestChunkLength > chunk.endPos - chunk.startPos)) {
                 bestChunk = chunk;
                 bestChunkLength = chunk.endPos - chunk.startPos;
             }
@@ -1841,8 +1851,8 @@ namespace pxt.blocks {
         for (let i = 0; i < sourceMap.length; ++i) {
             let chunk = sourceMap[i];
             if (chunk.startLine <= loc.start
-                    && chunk.endLine > loc.start + loc.length
-                    && (!bestChunk || bestChunkLength > chunk.endLine - chunk.startLine)) {
+                && chunk.endLine > loc.start + loc.length
+                && (!bestChunk || bestChunkLength > chunk.endLine - chunk.startLine)) {
                 bestChunk = chunk;
                 bestChunkLength = chunk.endLine - chunk.startLine;
             }
@@ -2131,6 +2141,7 @@ namespace pxt.blocks {
 
 
         function escapeVarName(name: string): string {
+            // TODO(dz):
             if (!name) return '_';
 
             let n = ts.pxtc.escapeIdentifier(name);
@@ -2143,6 +2154,7 @@ namespace pxt.blocks {
                 }
 
                 n += i;
+                console.log("renamed(2) to: " + n)
             }
 
             return n;
