@@ -1515,7 +1515,7 @@ namespace pxt.blocks {
                 // Otherwise, after the first compile the function will be renamed because it conflicts
                 // with itself. You can still get collisions if you attempt to define a function with
                 // the same name as a function defined in another file in the user's project (e.g. custom.ts)
-                if (info.pkg && (info.kind === pxtc.SymbolKind.Enum || info.kind === pxtc.SymbolKind.Function || info.kind === pxtc.SymbolKind.Module || info.kind === pxtc.SymbolKind.Variable)) {
+                if (info.pkg && (info.kind === pxtc.SymbolKind.Enum || info.kind === pxtc.SymbolKind.Function || info.kind === pxtc.SymbolKind.Module /*|| info.kind === pxtc.SymbolKind.Variable*/)) {
                     e.renames.takenNames[info.qName] = true;
                 }
             });
