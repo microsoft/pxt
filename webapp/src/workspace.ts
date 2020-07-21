@@ -937,6 +937,9 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
     gitjson.commit = commit
     files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
 
+    const targetVersionToUse = (cfg.targetVersions?.targetId === pxt.appTarget.id && cfg.targetVersions.target) ?
+        cfg.targetVersions.target : pxt.appTarget.versions.target;
+
     if (!hd) {
         hd = await installAsync({
             name: cfg.name,
@@ -946,7 +949,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
             meta: {},
             editor: pxt.BLOCKS_PROJECT_NAME,
             target: pxt.appTarget.id,
-            targetVersion: cfg.targetVersions?.target || pxt.appTarget.versions.target,
+            targetVersion: targetVersionToUse,
         }, files)
     } else {
         hd.name = cfg.name
@@ -1081,7 +1084,8 @@ export function prepareConfigForGithub(content: string, createRelease?: boolean)
 
     cfg.targetVersions = {
         ...cfg.targetVersions,
-        target: pxt.appTarget.versions.target
+        target: pxt.appTarget.versions.target,
+        targetId: pxt.appTarget.id
     }
 
     // patch dependencies
