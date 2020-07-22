@@ -3500,6 +3500,7 @@ function testForBuildTargetAsync(useNative: boolean, cachedSHA: string): Promise
 
     return mainPkg.loadAsync()
         .then(() => {
+            mainPkg.ignoreTests = true
             copyCommonFiles();
             setBuildEngine();
             let target = mainPkg.getTargetOptions()
