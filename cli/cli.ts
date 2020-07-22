@@ -4023,6 +4023,7 @@ function setBuildEngine() {
 
 function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = false) {
     ensurePkgDir();
+    console.log("prepBuildOptionsAsync ignoreTests: " + ignoreTests)
     mainPkg.ignoreTests = ignoreTests;
     return mainPkg.loadAsync()
         .then(() => {

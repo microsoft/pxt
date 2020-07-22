@@ -664,8 +664,10 @@ namespace pxt {
         }
 
         getFiles() {
-            if (this.level == 0 && !this.ignoreTests)
+            if (this.level == 0 && !this.ignoreTests) {
+                console.log("test files (ignored) are: " + (this.config.testFiles || []).join(","))
                 return this.config.files.concat(this.config.testFiles || [])
+            }
             else
                 return this.config.files.slice(0);
         }
