@@ -225,12 +225,6 @@ namespace ts.pxtc.Util {
         return r
     }
 
-    export function mapStringMapAsync<T, S>(m: pxt.Map<T>, f: (k: string, v: T) => Promise<S>) {
-        let r: pxt.Map<S> = {}
-        return Promise.all(Object.keys(m).map(k => f(k, m[k]).then(v => r[k] = v)))
-            .then(() => r)
-    }
-
     export function values<T>(m: pxt.Map<T>) {
         return Object.keys(m || {}).map(k => m[k])
     }
@@ -490,6 +484,55 @@ namespace ts.pxtc.Util {
         };
     }
 
+    export class AdaptiveDebouncer {
+        private lastPoke = 0
+        private recentGaps: number[] = []
+        private timeout: any
+        private wrapped: () => void
+
+        constructor(
+            public func: () => void,
+            public minDelay = 300,
+            public maxDelay = 2000,
+            public slowdownFactor = 2
+        ) {
+            this.wrapped = () => {
+                this.timeout = null
+                this.func()
+            }
+        }
+
+        poke() {
+            const now = Date.now()
+            if (this.lastPoke) {
+                const gap = now - this.lastPoke
+                if (gap < 10)
+                    return // ignore triggers is quick succession
+                if (gap < 4000)
+                    this.recentGaps.push(gap)
+                while (this.recentGaps.length > 10)
+                    this.recentGaps.shift()
+            }
+            this.lastPoke = now
+        }
+
+        trigger() {
+            let delay = this.maxDelay
+            if (this.lastPoke) {
+                const gaps = this.recentGaps.slice()
+                gaps.sort()
+                const median = gaps[gaps.length >> 1] || 1
+                delay = Math.min(Math.max((median * this.slowdownFactor) | 0, this.minDelay), this.maxDelay)
+                const gap = Date.now() - this.lastPoke
+                delay -= gap
+                if (delay < 0) delay = 0
+                this.lastPoke = null
+            }
+            clearTimeout(this.timeout)
+            this.timeout = setTimeout(this.wrapped, delay)
+        }
+    }
+
     // Returns a function, that, as long as it continues to be invoked, will only
     // trigger every N milliseconds. If `immediate` is passed, trigger the
     // function on the leading edge, instead of the trailing.
@@ -606,6 +649,7 @@ namespace ts.pxtc.Util {
         allowGzipPost?: boolean;
         responseArrayBuffer?: boolean;
         forceLiveEndpoint?: boolean;
+        successCodes?: number[];
     }
 
     export interface HttpResponse {
@@ -616,18 +660,26 @@ namespace ts.pxtc.Util {
         json?: any;
     }
 
+    // debug flag
+    //export let debugHttpRequests = false;
     export function requestAsync(options: HttpRequestOptions): Promise<HttpResponse> {
+        //if (debugHttpRequests)
+        //    pxt.debug(`>> ${options.method || "GET"} ${options.url.replace(/[?#].*/, "...")}`); // don't leak secrets in logs
         return httpRequestCoreAsync(options)
             .then(resp => {
-                if ((resp.statusCode != 200 && resp.statusCode != 304) && !options.allowHttpErrors) {
-                    let msg = Util.lf("Bad HTTP status code: {0} at {1}; message: {2}",
+                //if (debugHttpRequests)
+                //    pxt.debug(`  << ${resp.statusCode}`);
+                const statusCode = resp.statusCode;
+                const successCodes = options.successCodes || [304, 200, 201, 202];
+                if (successCodes.indexOf(statusCode) < 0 && !options.allowHttpErrors) {
+                    const msg = Util.lf("Bad HTTP status code: {0} at {1}; message: {2}",
                         resp.statusCode, options.url, (resp.text || "").slice(0, 500))
-                    let err: any = new Error(msg)
+                    const err: any = new Error(msg)
                     err.statusCode = resp.statusCode
                     return Promise.reject(err)
                 }
                 if (resp.text && /application\/json/.test(resp.headers["content-type"] as string))
-                    resp.json = JSON.parse(resp.text)
+                    resp.json = U.jsonTryParse(resp.text)
                 return resp
             })
     }
@@ -911,10 +963,15 @@ namespace ts.pxtc.Util {
         localizedName: string;
     }
 
+    // "lang-code": { englishName: "", localizedName: ""},
+    // Crowdin code: https://support.crowdin.com/api/language-codes/
+    // English name and localized name: https://en.wikipedia.org/wiki/List_of_language_names
     export const allLanguages: pxt.Map<Language> = {
         "af": { englishName: "Afrikaans", localizedName: "Afrikaans" },
         "ar": { englishName: "Arabic", localizedName: "العربية" },
+        "az": { englishName: "Azerbaijani", localizedName: "آذربایجان دیلی" },
         "bg": { englishName: "Bulgarian", localizedName: "български" },
+        "bn": { englishName: "Bengali", localizedName: "বাংলা" },
         "ca": { englishName: "Catalan", localizedName: "Català" },
         "cs": { englishName: "Czech", localizedName: "Čeština" },
         "da": { englishName: "Danish", localizedName: "Dansk" },
@@ -923,9 +980,13 @@ namespace ts.pxtc.Util {
         "en": { englishName: "English", localizedName: "English" },
         "es-ES": { englishName: "Spanish (Spain)", localizedName: "Español (España)" },
         "es-MX": { englishName: "Spanish (Mexico)", localizedName: "Español (México)" },
+        "et": { englishName: "Estonian", localizedName: "Eesti" },
+        "eu": { englishName: "Basque", localizedName: "Euskara" },
+        "fa": { englishName: "Persian", localizedName: "فارسی" },
         "fi": { englishName: "Finnish", localizedName: "Suomi" },
         "fr": { englishName: "French", localizedName: "Français" },
         "fr-CA": { englishName: "French (Canada)", localizedName: "Français (Canada)" },
+        "gu-IN": { englishName: "Gujarati", localizedName: "ગુજરાતી" },
         "he": { englishName: "Hebrew", localizedName: "עברית" },
         "hr": { englishName: "Croatian", localizedName: "Hrvatski" },
         "hu": { englishName: "Hungarian", localizedName: "Magyar" },
@@ -934,11 +995,19 @@ namespace ts.pxtc.Util {
         "is": { englishName: "Icelandic", localizedName: "Íslenska" },
         "it": { englishName: "Italian", localizedName: "Italiano" },
         "ja": { englishName: "Japanese", localizedName: "日本語" },
+        "kab": { englishName: "Kabyle", localizedName: "شئعم" },
         "ko": { englishName: "Korean", localizedName: "한국어" },
+        "kmr": { englishName: "Kurmanji (Kurdish)", localizedName: "کورمانجی‎" },
+        "kn": { englishName: "Kannada", localizedName: "ಕನ್ನಡ" },
         "lt": { englishName: "Lithuanian", localizedName: "Lietuvių" },
+        "lv": { englishName: "Latvian", localizedName: "Latviešu" },
+        "ml-IN": { englishName: "Malayalam", localizedName: "മലയാളം" },
+        "mr": { englishName: "Marathi", localizedName: "मराठी" },
         "nl": { englishName: "Dutch", localizedName: "Nederlands" },
         "no": { englishName: "Norwegian", localizedName: "Norsk" },
         "nb": { englishName: "Norwegian Bokmal", localizedName: "Norsk bokmål" },
+        "nn-NO": { englishName: "Norwegian Nynorsk", localizedName: "Norsk nynorsk" },
+        "pa-IN": { englishName: "Punjabi", localizedName: "ਪੰਜਾਬੀ" },
         "pl": { englishName: "Polish", localizedName: "Polski" },
         "pt-BR": { englishName: "Portuguese (Brazil)", localizedName: "Português (Brasil)" },
         "pt-PT": { englishName: "Portuguese (Portugal)", localizedName: "Português (Portugal)" },
@@ -948,10 +1017,16 @@ namespace ts.pxtc.Util {
         "sk": { englishName: "Slovak", localizedName: "Slovenčina" },
         "sl": { englishName: "Slovenian", localizedName: "Slovenski" },
         "sr": { englishName: "Serbian", localizedName: "Srpski" },
+        "su": { englishName: "Sundanese", localizedName: "ᮘᮞ ᮞᮥᮔ᮪ᮓ" },
         "sv-SE": { englishName: "Swedish (Sweden)", localizedName: "Svenska (Sverige)" },
         "ta": { englishName: "Tamil", localizedName: "தமிழ்" },
+        "te": { englishName: "Telugu", localizedName: "తెలుగు" },
+        "th": { englishName: "Thai", localizedName: "ภาษาไทย" },
+        "tl": { englishName: "Tagalog", localizedName: "ᜏᜒᜃᜅ᜔ ᜆᜄᜎᜓᜄ᜔" },
         "tr": { englishName: "Turkish", localizedName: "Türkçe" },
         "uk": { englishName: "Ukrainian", localizedName: "Українська" },
+        "ur-IN": { englishName: "Urdu (India)", localizedName: "اردو (ہندوستان)" },
+        "ur-PK": { englishName: "Urdu (Pakistan)", localizedName: "اردو (پاکستان)" },
         "vi": { englishName: "Vietnamese", localizedName: "Tiếng việt" },
         "zh-CN": { englishName: "Chinese (Simplified)", localizedName: "简体中文" },
         "zh-TW": { englishName: "Chinese (Traditional)", localizedName: "繁体中文" },
@@ -1161,6 +1236,155 @@ namespace ts.pxtc.Util {
         // encode
         if (/xml|svg/.test(mimetype)) return `data:${mimetype},${encodeURIComponent(data)}`
         else return `data:${mimetype || "image/png"};base64,${encodeBase64(toUTF8(data))}`;
+    }
+
+    export const imageMagic = 0x59347a7d // randomly selected
+    export const imageHeaderSize = 36 // has to be divisible by 9
+    export function encodeBlobAsync(canvas: HTMLCanvasElement, blob: Uint8Array) {
+        const neededBytes = imageHeaderSize + blob.length
+        const usableBytes = (canvas.width * canvas.height - 1) * 3
+        let bpp = 1
+        while (bpp < 4) {
+            if (usableBytes * bpp >= neededBytes * 8)
+                break
+            bpp++
+        }
+        let imgCapacity = (usableBytes * bpp) >> 3
+        let missing = neededBytes - imgCapacity
+        let addedLines = 0
+        let addedOffset = canvas.width * canvas.height * 4
+        if (missing > 0) {
+            const bytesPerLine = canvas.width * 3
+            addedLines = Math.ceil(missing / bytesPerLine)
+            const c2 = document.createElement("canvas")
+            c2.width = canvas.width
+            c2.height = canvas.height + addedLines
+            const ctx = c2.getContext("2d")
+            ctx.drawImage(canvas, 0, 0)
+            canvas = c2
+        }
+
+        let header = pxt.HF2.encodeU32LE([
+            imageMagic,
+            blob.length,
+            addedLines,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        ])
+
+        pxt.Util.assert(header.length == imageHeaderSize)
+
+        function encode(img: Uint8ClampedArray, ptr: number, bpp: number, data: ArrayLike<number>) {
+            let shift = 0
+            let dp = 0
+            let v = data[dp++]
+            const bppMask = (1 << bpp) - 1
+            let keepGoing = true
+            while (keepGoing) {
+                let bits = (v >> shift) & bppMask
+                let left = 8 - shift
+                if (left <= bpp) {
+                    if (dp >= data.length) {
+                        if (left == 0) break
+                        else keepGoing = false
+                    }
+                    v = data[dp++]
+                    bits |= (v << left) & bppMask
+                    shift = bpp - left
+                } else {
+                    shift += bpp
+                }
+                img[ptr] = ((img[ptr] & ~bppMask) | bits) & 0xff
+                ptr++
+                if ((ptr & 3) == 3) {
+                    // set alpha to 0xff
+                    img[ptr++] = 0xff
+                }
+            }
+            return ptr
+        }
+
+        const ctx = canvas.getContext("2d")
+        const imgdat = ctx.getImageData(0, 0, canvas.width, canvas.height)
+
+        // first pixel holds bpp (LSB are written first, so we can skip what it writes in second and third pixel)
+        encode(imgdat.data, 0, 1, [bpp])
+        let ptr = 4
+        // next, the header
+        ptr = encode(imgdat.data, ptr, bpp, header)
+        pxt.Util.assert((ptr & 3) == 0)
+        if (addedLines == 0)
+            ptr = encode(imgdat.data, ptr, bpp, blob)
+        else {
+            let firstChunk = imgCapacity - header.length
+            ptr = encode(imgdat.data, ptr, bpp, blob.slice(0, firstChunk))
+            ptr = encode(imgdat.data, addedOffset, 8, blob.slice(firstChunk))
+        }
+        // set remaining alpha
+        ptr |= 3
+        while (ptr < imgdat.data.length) {
+            imgdat.data[ptr] = 0xff
+            ptr += 4
+        }
+
+        ctx.putImageData(imgdat, 0, 0)
+        return canvas;
+    }
+
+    export function decodeBlobAsync(dataURL: string) {
+        return pxt.BrowserUtils.loadCanvasAsync(dataURL)
+            .then(canvas => {
+                const ctx = canvas.getContext("2d")
+                const imgdat = ctx.getImageData(0, 0, canvas.width, canvas.height)
+                const d = imgdat.data
+                const bpp = (d[0] & 1) | ((d[1] & 1) << 1) | ((d[2] & 1) << 2)
+                if (bpp > 5)
+                    return Promise.reject(new Error(lf("Invalid encoded PNG format")))
+
+                function decode(ptr: number, bpp: number, trg: Uint8Array) {
+                    let shift = 0
+                    let i = 0
+                    let acc = 0
+                    const mask = (1 << bpp) - 1
+                    while (i < trg.length) {
+                        acc |= (d[ptr++] & mask) << shift
+                        if ((ptr & 3) == 3)
+                            ptr++ // skip alpha
+                        shift += bpp
+                        if (shift >= 8) {
+                            trg[i++] = acc & 0xff
+                            acc >>= 8
+                            shift -= 8
+                        }
+                    }
+                    return ptr
+                }
+
+                const hd = new Uint8Array(pxt.Util.imageHeaderSize)
+                let ptr = decode(4, bpp, hd)
+                const dhd = pxt.HF2.decodeU32LE(hd)
+                if (dhd[0] != pxt.Util.imageMagic)
+                    return Promise.reject(new Error(lf("Invalid magic in encoded PNG")))
+                const res = new Uint8Array(dhd[1])
+                const addedLines = dhd[2]
+                if (addedLines > 0) {
+                    const origSize = (canvas.height - addedLines) * canvas.width
+                    const imgCap = (origSize - 1) * 3 * bpp >> 3
+                    const tmp = new Uint8Array(imgCap - pxt.Util.imageHeaderSize)
+                    decode(ptr, bpp, tmp)
+                    res.set(tmp)
+                    const added = new Uint8Array(res.length - tmp.length)
+                    decode(origSize * 4, 8, added)
+                    res.set(added, tmp.length)
+                } else {
+                    decode(ptr, bpp, res)
+                }
+                return res
+            })
     }
 }
 

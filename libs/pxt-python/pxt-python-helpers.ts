@@ -2,6 +2,7 @@ namespace _py {
     export const ATTRIBUTE_ERROR: string = "AttributeError";
     export const INDEX_ERROR: string = "IndexError";
     export const VALUE_ERROR: string = "ValueError";
+    export const TYPE_ERROR: string = "TypeError";
 
     export function py_string_capitalize(str: string): string {
         nullCheck(str);
@@ -259,5 +260,86 @@ namespace _py {
             while (index < 0) index += arr.length;
         }
         return index;
+    }
+
+    /**
+     * Returns a sequence of numbers up to but not including the limit
+     * @param first The value to end the sequence before. This value will not show up in the result.
+     *      If more than one argument is passed, this argument is instead used for the first value in the range
+     * @param stop  The value to end the sequence before. This value will not show up in the result
+     * @param step  The value to increase or decrease by for each step in the range. Must be a nonzero integer
+     */
+    export function range(first: number, stop?: number, step?: number) {
+        if (step === undefined) step = 1
+        // step must be a nonzero integer (can be negative)
+        if (step === 0 || (step | 0) !== step) {
+            throw VALUE_ERROR;
+        }
+
+        // If only one argument is given, then start is actually stop
+        if (stop === undefined) {
+            stop = first;
+            first = 0;
+        }
+
+        const res: number[] = [];
+        if (step > 0 && first >= stop || step < 0 && first <= stop) return res;
+
+        let index = first;
+
+        while (step < 0 ? index > stop : index < stop) {
+            res.push(index);
+            index += step
+        }
+
+        return res;
+    }
+
+    function sliceRange(valueLength: number, start?: number, stop?: number, step?: number) {
+        if (step == null) step = 1
+
+        // step must be a nonzero integer (can be negative)
+        if (step === 0 || (step | 0) !== step) {
+            throw _py.VALUE_ERROR;
+        }
+
+        if (step < 0) {
+            if (start == null) {
+                start = valueLength - 1;
+            }
+            if (stop == null) {
+                stop = -1;
+            }
+        }
+        else {
+            if (start == null) {
+                start = 0;
+            }
+            if (stop == null) {
+                stop = valueLength;
+            }
+        }
+
+        return range(start, stop, step)
+    }
+
+    /**
+     * Returns a section of an array according to python's extended slice syntax
+     */
+    export function slice<U>(value: U[], start?: number, stop?: number, step?: number): U[] {
+        if (value == null) {
+            throw TYPE_ERROR;
+        }
+        return sliceRange(value.length, start, stop, step).map(index => value[index]);
+    }
+
+    /**
+     * Returns a section of a string according to python's extended slice syntax
+     */
+    export function stringSlice(value: string, start?: number, stop?: number, step?: number): string {
+        if (value == null) {
+            throw TYPE_ERROR;
+        }
+        return sliceRange(value.length, start, stop, step).map(index => value.charAt(index)).join("");
     }
 }

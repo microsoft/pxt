@@ -6,7 +6,7 @@ namespace pxsim {
         unhideElement?: (el: HTMLElement) => void;
         onDebuggerWarning?: (wrn: DebuggerWarningMessage) => void;
         onDebuggerBreakpoint?: (brk: DebuggerBreakpointMessage) => void;
-        onTraceMessage?: (msg: TraceMessage) => void;
+        onTraceMessage?: (msg: DebuggerBreakpointMessage) => void;
         onDebuggerResume?: () => void;
         onStateChanged?: (state: SimulatorState) => void;
         onSimulatorReady?: () => void;
@@ -40,6 +40,7 @@ namespace pxsim {
 
     export interface SimulatorRunOptions {
         debug?: boolean;
+        trace?: boolean;
         boardDefinition?: pxsim.BoardDefinition;
         parts?: string[];
         fnArgs?: any;
@@ -85,6 +86,10 @@ namespace pxsim {
 
         isDebug() {
             return this._runOptions && !!this._runOptions.debug;
+        }
+
+        isTracing() {
+            return this._runOptions && !!this._runOptions.trace;
         }
 
         hasParts(): boolean {
@@ -689,8 +694,8 @@ namespace pxsim {
                     if (this.options.onDebuggerWarning)
                         this.options.onDebuggerWarning(msg as pxsim.DebuggerWarningMessage);
                     break;
-                case "breakpoint":
-                    let brk = msg as pxsim.DebuggerBreakpointMessage
+                case "breakpoint": {
+                    const brk = msg as pxsim.DebuggerBreakpointMessage
                     if (this.state == SimulatorState.Running) {
                         if (brk.exceptionMessage)
                             this.suspend();
@@ -708,11 +713,14 @@ namespace pxsim {
                         console.error("debugger: trying to pause from " + this.state);
                     }
                     break;
-                case "trace":
-                    if (this.options.onTraceMessage) {
-                        this.options.onTraceMessage(msg as pxsim.TraceMessage);
+                }
+                case "trace": {
+                    const brk = msg as pxsim.DebuggerBreakpointMessage
+                    if (this.state == SimulatorState.Running && this.options.onTraceMessage) {
+                        this.options.onTraceMessage(brk);
                     }
                     break;
+                }
                 default:
                     const seq = msg.req_seq;
                     if (seq) {

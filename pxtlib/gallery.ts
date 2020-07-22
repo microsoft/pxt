@@ -41,7 +41,7 @@ namespace pxt.gallery {
     export function parseExampleMarkdown(name: string, md: string): GalleryProject {
         if (!md) return undefined;
 
-        const m = /```(blocks?|typescript|python|spy)\s+((.|\s)+?)\s*```/i.exec(md);
+        const m = /```(blocks?|typescript|python|spy|sim)\s+((.|\s)+?)\s*```/i.exec(md);
         if (!m) return undefined;
 
         const dependencies = parsePackagesFromMarkdown(md);
@@ -114,10 +114,5 @@ namespace pxt.gallery {
     export function loadGalleryAsync(name: string): Promise<Gallery[]> {
         return pxt.Cloud.markdownAsync(name)
             .then(md => parseGalleryMardown(md))
-    }
-
-    export function loadExampleAsync(name: string, path: string): Promise<GalleryProject> {
-        return pxt.Cloud.markdownAsync(path)
-            .then(md => parseExampleMarkdown(name, md))
     }
 }

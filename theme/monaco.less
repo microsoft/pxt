@@ -8,6 +8,27 @@
 @import (reference) "semantic.less";
 
 /*******************************
+        Monaco Area Layout
+*******************************/
+.monacoEditorArea {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+}
+
+.monacoToolboxDiv {
+    height: 100%;
+}
+
+.monacoEditorRightArea {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+
+/*******************************
         Monaco Editor
 *******************************/
 
@@ -168,6 +189,7 @@
             span {
                 display: inline-block;
                 width: calc(~'100% - 1.75rem');
+                word-wrap: break-word;
             }
 
             .blockHelp {
@@ -221,6 +243,18 @@
             .signature {
                 display: block;
             }
+
+            .blockHandle {
+                border-color: @white;
+                border-width: 4px 4px 4px 0px;
+                border-style: solid;
+            }
+        }
+        &.hover {
+            cursor: grab;
+            .blockHandle {
+                display: block;
+            }
         }
 
         .blockHandle {
@@ -229,9 +263,6 @@
             width: 2rem;
             right: -0.9rem;
             border-radius: 0 1rem 1rem 0;
-            border-color: @white;
-            border-width: 4px 4px 4px 0px;
-            border-style: solid;
             background: @monacoFlyoutColor;
 
             i.bars {
@@ -282,10 +313,10 @@
     padding: 0.6rem;
     color: @white;
     border-radius: 0.25rem;
-    transform: translateX(-50%) translateY(-50%);
     pointer-events: none;
     touch-action: none;
     font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+    white-space: nowrap;
 }
 
 /* Limit color interferences with semantic anchor element */
@@ -317,12 +348,23 @@
     z-index: @monacoHintsZIndex !important;
 }
 
+#monacoEditorArea.android {
+    .monaco-editor .editor-widget {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
+    // on android, the cursor / text area overlay gets offset
+    textarea.inputarea {
+        margin-left: .5rem;
+    }
+}
+
 .line-numbers {
     display:none;
 }
 
 .monacoToolboxDiv {
-    position: absolute;
     display: inline-block;
     overflow-x: visible;
     overflow-y: auto;
@@ -335,6 +377,7 @@
 #monacoEditorInner {
     position: relative !important;
     display: inline-block;
+    overflow: hidden;
 }
 
 /*******************************

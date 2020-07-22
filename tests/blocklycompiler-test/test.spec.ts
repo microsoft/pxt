@@ -38,6 +38,7 @@ pxt.webConfig = {
     workerjs: WEB_PREFIX + "/blb/worker.js",
     monacoworkerjs: undefined,
     gifworkerjs: undefined,
+    serviceworkerjs: undefined,
     pxtVersion: undefined,
     pxtRelId: undefined,
     pxtCdnUrl: undefined,
@@ -49,6 +50,8 @@ pxt.webConfig = {
     targetUrl: undefined,
     targetId: undefined,
     simUrl: undefined,
+    simserviceworkerUrl: undefined,
+    simworkerconfigUrl: undefined,
     partsUrl: undefined,
     runUrl: undefined,
     docsUrl: undefined,
@@ -299,6 +302,10 @@ describe("blockly compiler", function () {
         it("should give variables that are only assigned the empty array a type of number[]", (done: () => void) => {
             blockTestAsync("just_empty_array").then(done, done);
         });
+
+        it("should compile aliases for pop, shift, unshift, and removeAt", (done: () => void) => {
+            blockTestAsync("array_aliases").then(done, done);
+        });
     });
 
     describe("compiling logic", () => {
@@ -422,6 +429,22 @@ describe("blockly compiler", function () {
 
         it("should narrow variable types when used as function call arguments", (done: () => void) => {
             blockTestAsync("function_call_inference").then(done, done);
+        });
+
+        it("should handle return statements", (done: () => void) => {
+            blockTestAsync("return_statement").then(done, done);
+        });
+
+        it("should handle functions that return values", (done: () => void) => {
+            blockTestAsync("function_output").then(done, done);
+        });
+
+        it("should output a return type for recursive functions", (done: () => void) => {
+            blockTestAsync("function_recursion").then(done, done);
+        });
+
+        it("should bail out of type checking when a recursive function calls itself", (done: () => void) => {
+            blockTestAsync("function_bad_recursion").then(done, done);
         });
     });
 

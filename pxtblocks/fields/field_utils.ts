@@ -102,20 +102,7 @@ namespace pxtblockly {
                 if (tile) {
                     if (!tileColors[tile]) {
                         const tileInfo = data.tileset.tiles[tile];
-
-                        if (tileInfo.data) {
-                            tileColors[tile] = pxt.sprite.computeAverageColor(pxt.sprite.Bitmap.fromData(tileInfo.data), colors);
-                        }
-                        else {
-                            const bitmap = pxt.sprite.getBitmap(blocksInfo, tileInfo.qualifiedName);
-
-                            if (bitmap) {
-                                tileColors[tile] = pxt.sprite.computeAverageColor(bitmap, colors);
-                            }
-                            else {
-                                tileColors[tile] = "#ffffff";
-                            }
-                        }
+                        tileColors[tile] = tileInfo ? pxt.sprite.computeAverageColor(pxt.sprite.Bitmap.fromData(tileInfo.bitmap), colors) : "#dedede";
                     }
 
                     context.fillStyle = tileColors[tile];
@@ -131,13 +118,7 @@ namespace pxtblockly {
         return canvas.toDataURL();
     }
 
-    export function saveTilesetTile(ws: Blockly.Workspace, tile: pxt.sprite.TileInfo) {
-        deleteTilesetTileIfExists(ws, tile);
-
-        ws.createVariable(pxt.sprite.tileToBlocklyVariable(tile), pxt.sprite.BLOCKLY_TILESET_TYPE);
-    }
-
-    export function deleteTilesetTileIfExists(ws: Blockly.Workspace, tile: pxt.sprite.TileInfo) {
+    function deleteTilesetTileIfExists(ws: Blockly.Workspace, tile: pxt.sprite.legacy.LegacyTileInfo) {
         const existing = ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE);
 
         for (const model of existing) {
@@ -146,10 +127,6 @@ namespace pxtblockly {
                 break;
             }
         }
-    }
-
-    export function getAllTilesetTiles(ws: Blockly.Workspace): pxt.sprite.TileInfo[] {
-        return ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE).map(model => pxt.sprite.blocklyVariableToTile(model.name));
     }
 
     export interface FieldEditorReference<U extends Blockly.Field> {
@@ -165,6 +142,69 @@ namespace pxtblockly {
 
     export function getAllBlocksWithTilesets(ws: Blockly.Workspace): FieldEditorReference<FieldTileset>[] {
         return getAllFieldsCore(ws, f => f instanceof FieldTileset);
+    }
+
+    export function needsTilemapUpgrade(ws: Blockly.Workspace) {
+        const allTiles = ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE).map(model => pxt.sprite.legacy.blocklyVariableToTile(model.name));
+        return !!allTiles.length;
+    }
+
+    export function upgradeTilemapsInWorkspace(ws: Blockly.Workspace, proj: pxt.TilemapProject) {
+        const allTiles = ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE).map(model => pxt.sprite.legacy.blocklyVariableToTile(model.name));
+        if (!allTiles.length) return;
+
+        Blockly.Events.disable();
+
+        let customMapping: pxt.Tile[] = [];
+
+        for (const tile of allTiles) {
+            if (tile.qualifiedName) {
+                customMapping[tile.projectId] = proj.resolveTile(tile.qualifiedName);
+            }
+            else if (tile.data) {
+                customMapping[tile.projectId] = proj.createNewTile(tile.data, "myTiles.tile" + tile.projectId);
+            }
+            deleteTilesetTileIfExists(ws, tile);
+        }
+
+        const tilemaps = getAllBlocksWithTilemaps(ws);
+
+        for (const tilemap of tilemaps) {
+            const legacy = pxt.sprite.legacy.decodeTilemap(tilemap.ref.getInitText(), "typescript");
+
+            const mapping: pxt.Tile[] = [];
+
+            const newData = new pxt.sprite.TilemapData(
+                legacy.tilemap, {
+                    tileWidth: legacy.tileset.tileWidth,
+                    tiles: legacy.tileset.tiles.map((t, index) => {
+                        if (t.projectId != null) {
+                            return customMapping[t.projectId];
+                        }
+                        if (!mapping[index]) {
+                            mapping[index] = proj.resolveTile(t.qualifiedName)
+                        }
+
+                        return mapping[index];
+                    })
+                },
+                legacy.layers
+            );
+
+            tilemap.ref.setValue(pxt.sprite.encodeTilemap(newData, "typescript"));
+        }
+
+        const tilesets = getAllBlocksWithTilesets(ws);
+
+        for (const tileset of tilesets) {
+            // Force a re-render
+            tileset.ref.doValueUpdate_(tileset.ref.getValue());
+            if (tileset.ref.isDirty_) {
+                tileset.ref.forceRerender();
+            }
+        }
+
+        Blockly.Events.enable();
     }
 
     function getAllFieldsCore<U extends Blockly.Field>(ws: Blockly.Workspace, predicate: (field: Blockly.Field) => boolean): FieldEditorReference<U>[] {
@@ -192,5 +232,39 @@ namespace pxtblockly {
                 getAllFieldsRecursive(block.nextConnection.targetBlock());
             }
         }
+    }
+
+    export function getAllReferencedTiles(workspace: Blockly.Workspace, excludeBlockID?: string) {
+        let all: pxt.Map<pxt.Tile> = {};
+
+        const allMaps = getAllBlocksWithTilemaps(workspace);
+
+        for (const map of allMaps) {
+            if (map.block.id === excludeBlockID) continue;
+
+            for (const tile of map.ref.getTileset().tiles) {
+                all[tile.id] = tile;
+            }
+        }
+
+        const project = pxt.react.getTilemapProject();
+        const projectMaps = project.getAllTilemaps();
+
+        for (const projectMap of projectMaps) {
+            for (const tile of projectMap.data.tileset.tiles) {
+                all[tile.id] = tile;
+            }
+        }
+
+        const allTiles = getAllBlocksWithTilesets(workspace);
+        for (const tilesetField of allTiles) {
+            const id = tilesetField.ref.getValue();
+
+            if (!all[id]) {
+                all[id] = project.resolveTile(id);
+            }
+        }
+
+        return Object.keys(all).map(key => all[key]);
     }
 }

@@ -10,6 +10,23 @@ export const PROVIDER_NAME = "github";
 export class GithubProvider extends cloudsync.ProviderBase {
     constructor() {
         super(PROVIDER_NAME, lf("GitHub"), "icon github", "https://api.github.com");
+        pxt.github.handleGithubNetworkError = (opts: pxt.U.HttpRequestOptions, e: any) => {
+            if (e.statusCode == 401 && pxt.github.token) {
+                pxt.log(`github: invalid token`)
+                this.clearToken();
+                return opts.method == "GET"; // retry gets
+            } else if (e.statusCode == 403) {
+                pxt.log(`github: unauthorized access`)
+            } else if (e.statusCode == 404) {
+                (e as any).needsWritePermission = true;
+            }
+            return false;
+        }
+    }
+
+    clearToken() {
+        pxt.github.token = undefined;
+        super.logout();
     }
 
     logout() {
@@ -21,6 +38,11 @@ export class GithubProvider extends cloudsync.ProviderBase {
 
     hasSync(): boolean {
         return false;
+    }
+
+    hasToken(): boolean {
+        this.loginCheck();
+        return !!this.token();
     }
 
     loginCheck() {
@@ -48,6 +70,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
         pxt.tickEvent("github.login.dialog");
         // auth flow if github provider is prsent
         const oAuthSupported = pxt.appTarget
+            && !pxt.BrowserUtils.isPxtElectron()
             && pxt.appTarget.cloud
             && pxt.appTarget.cloud.cloudProviders
             && !!pxt.appTarget.cloud.cloudProviders[this.name];
@@ -56,7 +79,6 @@ export class GithubProvider extends cloudsync.ProviderBase {
         let form: HTMLElement;
         return core.confirmAsync({
             header: lf("Sign in with GitHub"),
-            hideCancel: true,
             hasCloseIcon: true,
             helpUrl: "/github",
             agreeLbl: lf("Sign in"),
@@ -68,7 +90,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
                 <p>{lf("You can host your code on GitHub and collaborate with friends on projects.")}</p>
                 {!useToken && <p className="ui small">
                     {lf("Looking to use a Developer token instead?")}
-                    <sui.Link className="link" text={lf("Click here")} onClick={showToken} />
+                    <sui.Link className="link" text={lf("Use Developer token")} onClick={showToken} />
                 </p>}
                 {useToken && <ol>
                     <li>
@@ -114,12 +136,18 @@ export class GithubProvider extends cloudsync.ProviderBase {
         }
     }
 
-    private oauthRedirectAsync(route: string): Promise<void> {
+    public authorizeAppAsync(route?: string) {
+        return this.oauthRedirectAsync(route || window.location.hash, true);
+    }
+
+    private oauthRedirectAsync(route: string, consent?: boolean): Promise<void> {
         core.showLoading("ghlogin", lf("Signing you into GitHub..."))
+        route = (route || "").replace(/^#/, "");
         const state = cloudsync.setOauth(this.name, route ? `#github:${route}` : undefined);
         const self = window.location.href.replace(/#.*/, "")
         const login = pxt.Cloud.getServiceUrl() +
             "/oauth/login?state=" + state +
+            (consent ? "&prompt=consent" : "") +
             "&response_type=token&client_id=gh-token&redirect_uri=" +
             encodeURIComponent(self)
         window.location.href = login;
@@ -131,6 +159,10 @@ export class GithubProvider extends cloudsync.ProviderBase {
             return Promise.resolve(undefined);
         return pxt.github.authenticatedUserAsync()
             .then(ghuser => {
+                if (!ghuser) {
+                    pxt.log(`unknown github user`)
+                    return undefined;
+                }
                 return {
                     id: ghuser.login,
                     userName: ghuser.login,
@@ -138,12 +170,6 @@ export class GithubProvider extends cloudsync.ProviderBase {
                     photo: ghuser.avatar_url,
                     profile: `https://github.com/${ghuser.login}`
                 }
-            }).catch(e => {
-                // the token expired or got deleted by the user
-                if (e.statusCode == 401) {
-                    this.setNewToken(undefined);
-                }
-                throw e;
             })
     }
 

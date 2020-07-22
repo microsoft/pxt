@@ -14,6 +14,7 @@ namespace ts.pxtc {
     export const TS_BREAK_TYPE = "break_keyword";
     export const TS_CONTINUE_TYPE = "continue_keyword";
     export const TS_OUTPUT_TYPE = "typescript_expression";
+    export const TS_RETURN_STATEMENT_TYPE = "function_return";
     export const PAUSE_UNTIL_TYPE = "pxt_pause_until";
     export const COLLAPSED_BLOCK = "pxt_collapsed_block"
     export const FUNCTION_DEFINITION_TYPE = "function_definition";
@@ -67,6 +68,7 @@ namespace ts.pxtc {
         isMemberCompletion: boolean;
         isNewIdentifierLocation: boolean;
         isTypeLocation: boolean;
+        namespace: string[];
     }
 
     export interface LocationInfo {
@@ -238,6 +240,7 @@ namespace ts.pxtc {
         times: pxt.Map<number>;
         //ast?: Program; // Not needed, moved to pxtcompiler
         breakpoints?: Breakpoint[];
+        procCallLocations?: pxtc.LocationInfo[];
         procDebugInfo?: ProcDebugInfo[];
         blocksInfo?: BlocksInfo;
         blockSourceMap?: pxt.blocks.BlockSourceInterval[]; // mappings id,start,end
@@ -1471,6 +1474,9 @@ namespace ts.pxtc {
                     setWord(currBlock, 20, f.blocks.length)
                     setWord(currBlock, 28, f.familyId)
                     setWord(currBlock, 512 - 4, UF2_MAGIC_END)
+                    // if bytes are not written, leave them at erase value
+                    for (let i = 32; i < 32 + 256; ++i)
+                        currBlock[i] = 0xff
                     if (f.filename) {
                         U.memcpy(currBlock, 32 + 256, U.stringToUint8Array(U.toUTF8(f.filename)))
                     }
@@ -1556,6 +1562,7 @@ namespace ts.pxtc.service {
         field?: [string, string];
         localizedCategory?: string;
         builtinBlock?: boolean;
+        params?: string;
     }
 
     export interface ProjectSearchOptions {

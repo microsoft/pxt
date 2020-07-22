@@ -6,8 +6,8 @@ import * as compiler from "./compiler";
 export abstract class ToolboxEditor extends srceditor.Editor {
 
     protected blockInfo: pxtc.BlocksInfo;
-    protected blockGroups: pxt.Map<toolbox.GroupDefinition[]>;
-    protected blockIdMap: pxt.Map<string>;
+    protected blockGroupsCache: pxt.Map<toolbox.GroupDefinition[]>;
+    protected blockIdMap: pxt.Map<string[]>;
 
     private searchSubset: pxt.Map<boolean | string>;
 
@@ -20,7 +20,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
         const filters = this.parent.state.editorState && this.parent.state.editorState.filters;
         if (filters) {
             // block-level filters should not apply to shadow blocks (nested)
-            const blockFilter = filters.blocks && (filters.blocks[blockId] || (this.blockIdMap && filters.blocks[this.blockIdMap[blockId]]));
+            const blockFilter = filters.blocks && (filters.blocks[blockId] || (this.blockIdMap && this.blockIdMap[blockId]?.some(id => filters.blocks[id])));
             const categoryFilter = filters.namespaces && filters.namespaces[ns];
             // First try block filters
             if (blockFilter != undefined && blockFilter == pxt.editor.FilterState.Hidden && !shadow) return false;
@@ -76,7 +76,8 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                 let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
 
                 if (fn.attributes.debug && !pxt.options.debug) return;
-                if (fn.attributes.deprecated || fn.attributes.blockHidden) return;
+                if (fn.attributes.blockHidden) return;
+                if (fn.attributes.deprecated && this.parent.state.tutorialOptions == undefined) return;
                 if (this.shouldShowBlock(fn.attributes.blockId, ns)) {
                     // Add to search subset
                     searchSubset[fn.attributes.blockId] = true;
@@ -99,8 +100,10 @@ export abstract class ToolboxEditor extends srceditor.Editor {
             });
     }
 
-    protected clearCaches() {
+    clearCaches() {
+        super.clearCaches();
         this.searchSubset = undefined;
+        this.blockGroupsCache = undefined;
     }
 
     abstract getBuiltinCategory(ns: string): toolbox.ToolboxCategory;
@@ -116,7 +119,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
         let that = this;
 
         function filterNamespaces(namespaces: [string, pxtc.CommentAttrs][]) {
-            return namespaces.filter(([, md]) => !md.deprecated && (isAdvanced ? md.advanced : !md.advanced));
+            return namespaces.filter(([, md]) => !(md.deprecated && that.parent.state.tutorialOptions == undefined) && (isAdvanced ? md.advanced : !md.advanced));
         }
 
         const namespaces = filterNamespaces(this.getNamespaces()
@@ -303,8 +306,8 @@ export abstract class ToolboxEditor extends srceditor.Editor {
 
     getBlockGroups(treeRow: toolbox.ToolboxCategory): toolbox.GroupDefinition[] {
         const ns = treeRow.nameid + (treeRow.subns || "");
-        if (!this.blockGroups) this.blockGroups = {}
-        if (!this.blockGroups[ns]) {
+        if (!this.blockGroupsCache) this.blockGroupsCache = {}
+        if (!this.blockGroupsCache[ns]) {
             const {groups, groupIcons, groupHelp, blocks } = treeRow;
 
             // Parse full list of groups from block attributes
@@ -338,12 +341,12 @@ export abstract class ToolboxEditor extends srceditor.Editor {
             }
             // Only cache if there are no filters
             if (!this.parent.state?.editorState?.filters) {
-                this.blockGroups[ns] = blockGroups;
+                this.blockGroupsCache[ns] = blockGroups;
             } else {
                 return blockGroups;
             }
         }
 
-        return this.blockGroups[ns];
+        return this.blockGroupsCache[ns];
     }
 }

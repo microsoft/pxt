@@ -103,6 +103,8 @@ body#docs.tutorial {
 ******************************/
 
 #tutorialcard .ui.tutorialsegment {
+    display: flex;
+    flex-wrap: wrap;
     width: 100%;
     position: relative;
     padding: 0;
@@ -117,16 +119,6 @@ body#docs.tutorial {
 
 #tutorialcard {
     padding: 0.5rem;
-}
-
-#tutorialcard .ui.tutorialsegment .avatar-image {
-    position: absolute;
-    width: @avatarSize;
-    height: @avatarSize;
-    background-repeat: no-repeat;
-    background-size: contain;
-    background-image: @avatarImage;
-    cursor: pointer;
 }
 
 .tutorial #tutorialcard .ui.buttons {
@@ -145,6 +137,7 @@ body#docs.tutorial {
 .tutorial #tutorialcard .tutorialmessage .content {
     width: 100%;
     font-size: 12pt;
+    padding-left: 1rem;
     height: calc(@tutorialCardHeight - 1rem);
     margin-bottom: 0.4rem;
     overflow-y: hidden;
@@ -164,11 +157,14 @@ body#docs.tutorial {
 }
 
 .tutorial #tutorialcard .tutorialmessage {
-    width: ~'calc(100% - @{avatarMargin} - 0.5rem)';
+    width: 100%;
     padding: 0.5rem;
     height: calc(@tutorialCardHeight - 1.5rem);
-    margin-left: @avatarMargin + 0.35rem;
     overflow: hidden;
+}
+
+.tutorial #tutorialcard.hasHint .tutorialmessage {
+    width: ~'calc(100% - @{avatarMargin} - 0.5rem)';
 }
 
 .tutorial.tutorialExpanded #tutorialcard .tutorialmessage {
@@ -199,12 +195,6 @@ body#docs.tutorial {
 
 #tutorialcard .ui.button.okbutton {
     border-radius: 0.28571429rem;
-}
-
-i.icon.avatar-image {
-    background-repeat: no-repeat;
-    background-size: contain;
-    background-image: @avatarImage;
 }
 
 /* Tutorial blocks */
@@ -276,9 +266,44 @@ code.lang-filterblocks {
 ******************************/
 
 #tutorialcard .ui.button.hintbutton {
-    position: absolute;
+    display: block;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 22.5px !important;
     color: white; // match menubutton color
     border-radius: 50%;
+    transform-style: preserve-3d;
+
+    --bubble-pulse-color: @blue;
+    --bubble-pulse-size: 30px;
+
+    &.flash {
+        border: 2px solid fade(white, 70%) !important;
+
+        &:before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            border-radius: 50%;
+
+            animation-name: bubble-pulse-animation;
+            animation-direction: alternate;
+            animation-iteration-count: infinite;
+            animation-duration: .5s;
+            transform: translateZ(-1px);
+        }
+    }
+}
+
+// use two css variables to customize as needed:
+// * --bubble-pulse-color, the color to use for the pulse; default: @blue
+// * --bubble-pulse-radius, the radius for the pulse; default: 30
+@keyframes bubble-pulse-animation {
+    0% { }
+    20% { box-shadow: 0 0 0 0 var(--bubble-pulse-color, @blue); }
+    100% { box-shadow: 0 0  ~'calc(var(--bubble-pulse-size, 30) * 3 / 4)' var(--bubble-pulse-size, 30) var(--bubble-pulse-color, @blue); }
 }
 
 /*******************************
@@ -309,7 +334,8 @@ code.lang-filterblocks {
     position: absolute;
     max-width: 100%;
     min-width: 300px;
-    top: 6.5rem;
+    top: ~'calc(50% + 3rem)';
+    right: 2rem;
     padding: 10px 26px;
     border-radius: 1.2rem;
     background: @white;
@@ -323,13 +349,12 @@ code.lang-filterblocks {
     position: absolute;
     width: 0;
     height: 0;
-    left: 5px;
-    right: auto;
+    right: 5px;
     top: -24px;
     bottom: auto;
     border: 16px solid;
     border-color: transparent @blue transparent transparent;
-    transform: rotateZ(-45deg);
+    transform: rotateZ(-135deg);
 }
 
 .tutorialhint > div {
@@ -349,7 +374,7 @@ code.lang-filterblocks {
     min-height: 3em;
 }
 
-.shake {
+.shake .icon {
     animation: shake 1.5s ease-in-out;
 }
 
@@ -365,15 +390,16 @@ code.lang-filterblocks {
      Tutorial Tooltip
 *******************************/
 .avatar-container {
-    position: absolute;
-    top: .9rem;
     left: .7rem;
-    width: 100%;
+    height: 100%;
 }
 
 .avatar-container .tooltip {
-    top: 5rem;
-    left: 1.5rem;
+    position: absolute;
+
+    top: ~'calc(50% + 1.8rem)';
+    left: auto;
+    width: 10rem;
     max-width: 175px;
 }
 
@@ -383,12 +409,13 @@ code.lang-filterblocks {
     color: @white;
 }
 
-.hideIteration .avatar-container .tooltip {
-    left: 4.5rem;
+.avatar-container .tooltip:before {
+    right: 3rem;
+    left: auto;
 }
 
 .hideIteration .avatar-container .tooltip:before {
-    left: 27%;
+    right: 2.8rem;
 }
 
 #tutorialcard:not(.showTooltip) .tooltip,
@@ -401,10 +428,11 @@ code.lang-filterblocks {
 *******************************/
 #tutorialcard.seemore {
     .tutorialsegment > button {
+        flex-grow: 0;
         position: relative;
-        top: -0.75rem;
         width: auto;
         margin: auto;
+        margin-top: -0.75rem;
         padding: 0.5rem 0.8rem;
     }
 }
@@ -504,7 +532,7 @@ code.lang-filterblocks {
 /* Tablet */
 @media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
     .avatar-container .tooltip:before {
-        left: 2rem;
+        right: 2.1rem;
     }
 }
 
@@ -514,37 +542,38 @@ code.lang-filterblocks {
         display: none;
     }
 
-    // hide avatar, adjust card width
-    .avatar-image {
-        display: none;
+    #tutorialcard .ui.button.hintbutton {
+        font-size: 12.5px !important;
+        top: 20%;
+        --bubble-pulse-size: 16px;
     }
 
-    .tutorial #tutorialcard .tutorialmessage {
+    .tutorial #tutorialcard.hasHint .tutorialmessage {
         width: ~'calc(100% - @{mobileAvatarMargin} - 0.5rem)';
-        margin-left: @mobileAvatarMargin + 0.35rem;
     }
 
     #tutorialcard:not(.hasHint) .tutorialmessage {
         width: ~'calc(100% - .5rem)';
-        margin-left: 0.35rem;
     }
 
     // mobile hint positioning
     .tutorialhint {
-        top: 3.5rem;
+        top: ~'calc(20% + 2.1rem)';
+        right: -2rem;
     }
 
     .tutorialhint:before {
-        left: -5px;
+        right: 2rem;
+        top: -20px;
     }
 
     // mobile tutorial tooltip positioning
     .avatar-container .tooltip {
-        top: 2rem;
+        top: ~'calc(20% + 1.1rem)';
     }
 
     .avatar-container .tooltip:before {
-        left: 1rem;
+        right: 2.7rem;
     }
 }
 
@@ -560,7 +589,7 @@ code.lang-filterblocks {
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
     .avatar-container .tooltip {
-        left: 5rem;
+        width: 8rem;
     }
 
     #tutorialdropdown {

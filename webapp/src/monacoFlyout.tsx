@@ -17,7 +17,7 @@ interface BlockDragInfo {
 
 export interface MonacoFlyoutProps extends pxt.editor.ISettingsProps {
     fileType?: pxt.editor.FileType;
-    blockIdMap?: pxt.Map<string>;
+    blockIdMap?: pxt.Map<string[]>;
     moveFocusToParent?: () => void;
     insertSnippet?: (position: monaco.Position, insertText: string, inline?: boolean) => void;
     setInsertionSnippet?: (snippet: string) => void;
@@ -30,12 +30,14 @@ export interface MonacoFlyoutState {
     icon?: string;
     groups?: toolbox.GroupDefinition[];
     selectedBlock?: string;
+    hoverBlock?: string;
     hide?: boolean;
 }
 
 export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyoutState> {
     protected dragging: boolean = false;
     protected dragInfo: BlockDragInfo;
+    protected lastSelected: string;
 
     constructor(props: MonacoFlyoutProps) {
         super(props);
@@ -75,8 +77,21 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
     }
 
     protected getBlockClickHandler = (name: string) => {
-        pxt.tickEvent("monaco.toolbox.itemclick", undefined, { interactiveConsent: true });
-        return () => { this.setState({ selectedBlock: name != this.state.selectedBlock ? name : undefined }) };
+        return () => {
+            pxt.tickEvent("monaco.toolbox.itemclick", undefined, { interactiveConsent: true });
+            this.setState({ selectedBlock: name != this.state.selectedBlock ? name : undefined });
+        };
+    }
+
+    protected getBlockMouseOver = (name: string) => {
+        return () => {
+            pxt.tickEvent("monaco.toolbox.itemmouseover");
+            this.setState({ hoverBlock: name != this.state.hoverBlock ? name : undefined});
+        };
+    }
+
+    protected getBlockMouseOut = (name: string) => {
+        return () => { if (name == this.state.hoverBlock ) this.setState({ hoverBlock: undefined }) };
     }
 
     protected getBlockDragStartHandler = (block: toolbox.BlockDefinition, snippet: string, color: string) => {
@@ -109,6 +124,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
             this.dragging = true;
             if (!dragBlock) {
                 const parent = document.getElementById("root");
+                parent.style.overflow = "hidden";
                 dragBlock = document.createElement("div");
                 dragBlock.id = "monacoDraggingBlock";
                 dragBlock.textContent = block.snippetOnly
@@ -139,6 +155,8 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         this.props.setInsertionSnippet(undefined);
         const block = document.getElementById("monacoDraggingBlock");
         if (block) block.remove();
+        const parent = document.getElementById("root");
+        parent.style.overflow = "";
     }
 
     protected getKeyDownHandler = (block?: toolbox.BlockDefinition, snippet?: string, isPython?: boolean) => {
@@ -210,6 +228,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
     protected getBlockStyle = (color: string) => {
         return {
             backgroundColor: color,
+            border: this.props.parent.state.highContrast ? `2px solid ${color}` : "none",
             fontSize: `${this.props.parent.settings.editorFontSize}px`,
             lineHeight: `${this.props.parent.settings.editorFontSize + 16}px`
         };
@@ -226,6 +245,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
 
     protected getBlockDescription(block: toolbox.BlockDefinition, params: pxtc.ParameterDesc[]): JSX.Element[] {
         let description = [];
+        let compileInfo = pxt.blocks.compileInfo(block as pxtc.SymbolInfo)
         let parts = block.attributes._def && block.attributes._def.parts;
         let name = block.qName || block.name;
         if (parts) {
@@ -243,31 +263,54 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                         description.push(<span key={name + i}>{" "}</span>);
                         break;
                     case "param":
-                        let p = params && params.shift();
-                        let val = p && (p.default || p.name) || part.name;
+                        let actualParam = compileInfo?.definitionNameToParam[part.name];
+                        let val = actualParam?.defaultValue
+                            || part.varName
+                            || actualParam?.actualName
+                            || part.name
                         description.push(<span className="argName" key={name + i}>{val}</span>);
                         break;
                 }
             })
         } else {
             // if no blockdef found, use the snippet name
-            description.push(<span key={name}>{block.snippetName || block.name}</span>)
+            description.push(<span key={name}>{this.getSnippetName(block) || block.name}</span>)
         }
 
         // imitates block behavior in adding "run code" before any handler
-        if (params && params.find(p => p.type && p.type.indexOf("=>") >= 0)) description.unshift(<span key="prefix">{lf("run code ")}</span>)
+        let handler = params && params.find(p => p?.type && p.type.indexOf("=>") >= 0);
+        if (handler) {
+            description.unshift(<span key="prefix">{lf("run code ")}</span>)
+            if (compileInfo?.handlerArgs) {
+                // add break between end of block and parameters
+                description.push(<span key="handler_break">{" "}</span>);
+                compileInfo.handlerArgs.forEach((arg) => {
+                    if (!arg.inBlockDef) {
+                        description.push(<span className="argName" key={`handler_${arg.name}`}>{arg.name}</span>);
+                    }
+                })
+            }
+        }
 
         return description;
     }
 
     protected positionDragHandle(): void {
-        let handle = document.querySelector(".monacoBlock.expand .blockHandle") as HTMLDivElement;
-        if (handle) {
-            let parent = handle.parentElement;
+        let hoverHandle = document.querySelector(".monacoBlock.hover .blockHandle") as HTMLDivElement;
+        if (hoverHandle) {
+            let parent = hoverHandle.parentElement;
             let container = document.getElementById("monacoFlyoutWrapper");
-            handle.style.height = `${parent.clientHeight + (SELECTED_BORDER_WIDTH * 2)}px`;
-            handle.style.left = `${parent.clientWidth + SELECTED_BORDER_WIDTH - 1}px`;
-            handle.style.top = `${parent.offsetTop - container.scrollTop}px`;
+            hoverHandle.style.height = `${parent.clientHeight}px`;
+            hoverHandle.style.left = `${parent.clientWidth}px`;
+            hoverHandle.style.top = `${parent.offsetTop - container.scrollTop}px`;
+        }
+        let expandHandle = document.querySelector(".monacoBlock.expand .blockHandle") as HTMLDivElement;
+        if (expandHandle) {
+            let parent = expandHandle.parentElement;
+            let container = document.getElementById("monacoFlyoutWrapper");
+            expandHandle.style.height = `${parent.clientHeight + (SELECTED_BORDER_WIDTH * 2)}px`;
+            expandHandle.style.left = `${parent.clientWidth + SELECTED_BORDER_WIDTH - 1}px`;
+            expandHandle.style.top = `${parent.offsetTop - container.scrollTop}px`;
         }
     }
 
@@ -278,13 +321,13 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         const { ns } = this.state;
         const filters = this.props.parent.state.editorState ? this.props.parent.state.editorState.filters : undefined;
         const categoryState = filters ? (filters.namespaces && filters.namespaces[ns] != undefined ? filters.namespaces[ns] : filters.defaultState) : undefined;
-        const mappedId = this.props.blockIdMap && this.props.blockIdMap[block.attributes.blockId];
+        const mappedIds = this.props.blockIdMap && this.props.blockIdMap[block.attributes.blockId];
 
         let fnState = filters ? filters.defaultState : pxt.editor.FilterState.Visible;
         if (filters && filters.fns && filters.fns[block.name] !== undefined) {
             fnState = filters.fns[block.name];
         } else if (filters && filters.blocks && block.attributes.blockId &&
-            (filters.blocks[block.attributes.blockId] !== undefined || filters.blocks[mappedId] !== undefined)) {
+            (filters.blocks[block.attributes.blockId] !== undefined || mappedIds?.some(id => filters.blocks[id]))) {
             fnState = filters.blocks[block.attributes.blockId];
         } else if (categoryState !== undefined) {
             fnState = categoryState;
@@ -303,6 +346,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
 
         const qName = this.getQName(block) || this.getSnippetName(block);
         const selected = qName == this.state.selectedBlock;
+        const hover = qName == this.state.hoverBlock;
 
         const hasPointer = pxt.BrowserUtils.hasPointerEvents();
         const hasTouch = pxt.BrowserUtils.isTouchEnabled();
@@ -311,11 +355,13 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         const description = block.attributes.jsDoc.replace(/``/g, '"')
             .split("* @param", 1)[0] // drop any kind of parameter annotation
 
-        return <div className={`monacoBlock ${disabled ? "monacoDisabledBlock" : ""} ${selected ? "expand" : ""}`}
+        return <div className={`monacoBlock ${disabled ? "monacoDisabledBlock" : ""} ${selected ? "expand" : ""} ${hover ? "hover" : ""}`}
             style={this.getSelectedStyle()}
             title={block.attributes.jsDoc}
             key={`block_${qName}_${index}`} tabIndex={0} role="listitem"
             onClick={this.getBlockClickHandler(qName)}
+            onMouseOver={this.getBlockMouseOver(qName)}
+            onMouseOut={this.getBlockMouseOut(qName)}
             onKeyDown={this.getKeyDownHandler(block, snippet, isPython)}
             onPointerDown={hasPointer ? dragStartHandler : undefined}
             onMouseDown={!hasPointer ? dragStartHandler : undefined}

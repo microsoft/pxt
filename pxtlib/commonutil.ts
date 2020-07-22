@@ -71,10 +71,15 @@ namespace ts.pxtc.Util {
         return _localizeLang;
     }
 
+    // This function returns normalized language code
+    // For example: zh-CN this returns ["zh-CN", "zh", "zh-cn"]
+    // First two are valid crowdin\makecode locale code,
+    // Last all lowercase one is just for the backup when reading user defined extensions & tutorials.
     export function normalizeLanguageCode(code: string): string[] {
         const langParts = /^(\w{2})-(\w{2}$)/i.exec(code);
         if (langParts && langParts[1] && langParts[2]) {
-            return [`${langParts[1].toLowerCase()}-${langParts[2].toUpperCase()}`, langParts[1].toLowerCase()];
+            return [`${langParts[1].toLowerCase()}-${langParts[2].toUpperCase()}`, langParts[1].toLowerCase(),
+             `${langParts[1].toLowerCase()}-${langParts[2].toLowerCase()}`];
         } else {
             return [(code || "en").toLowerCase()];
         }
@@ -231,6 +236,14 @@ namespace ts.pxtc.Util {
     export function setEditorLanguagePref(lang: string): void {
         if (lang.match(/prj$/)) lang = lang.replace(/prj$/, "")
         localStorage.setItem("editorlangpref", lang);
+    }
+
+    export function getToolboxAnimation(): string {
+        return localStorage.getItem("toolboxanimation");
+    }
+
+    export function setToolboxAnimation(): void {
+        localStorage.setItem("toolboxanimation", "1");
     }
 
     // small deep equals for primitives, objects, arrays. returns error message

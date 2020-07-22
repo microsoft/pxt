@@ -97,7 +97,8 @@ code.lang-shadow::before,
 code.lang-spy::before,
 code.lang-diff::before,
 code.lang-diffspy::before,
-code.lang-diffblocks::before
+code.lang-diffblocks::before,
+code.lang-apis::before
 {
     content:"...";
     position: absolute;
@@ -117,7 +118,8 @@ code.lang-shadow,
 code.lang-spy,
 code.lang-diff,
 code.lang-diffspy,
-code.lang-diffblocks
+code.lang-diffblocks,
+code.lang-apis
 {
     background-color: rgba(0,0,0,0.04);
     color:transparent;
@@ -163,6 +165,11 @@ svg {
     padding-bottom: 3em;
 }
 
+#docs .mainbody table {
+    display: block;
+    overflow-x: auto;
+}
+
 #accessibleMenu .ui.item.link {
     position: absolute;
     height: 4em;
@@ -184,6 +191,7 @@ svg {
     position: absolute;
     /* match with menu bar height */
     top: 3.5em;
+    min-height: calc(100vh - 3.5em);
     -webkit-box-flex: 1;
 
     -webkit-flex: 1 1 auto;
@@ -213,6 +221,15 @@ svg {
     justify-content: space-between;
     align-items: center;
 }
+
+#docs h1, #docs h2,
+#docs h3, #docs h4,
+#docs h5, #docs h6 {
+    /* keep this aligned with top bar menu height;
+    add .5em to keep a small margin*/
+    scroll-margin-top: 4em;
+}
+
 /* first children are left & right div wrappers */
 .fixed.menu div {
     display:flex;

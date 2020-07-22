@@ -1,6 +1,11 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [MakeCode for the micro:bit – 2020 Release](/blog/microbit/2020-release)
+    * [MakeCode for the micro:bit – 2020 Beta Release](/blog/microbit/2020-beta)
+    * [MakeCode Arcade One Room Game Jam](/blog/arcade/game-jam-2)
+    * [Online Learning Resources](/blog/online-learning)
+    * [MakeCode Python is here!](/blog/minecraft/python-release)
     * [MakeCode Arcade Released for General Availability!](/blog/arcade/general-release)
     * [MakeCode with GitHub](/blog/makecode-with-github)
     * [Minecraft Hour of Code](/blog/minecraft/hour-of-code-2019)

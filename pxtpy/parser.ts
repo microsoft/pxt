@@ -224,7 +224,7 @@ namespace pxt.py {
                 shiftToken();
                 outputRange = stmt();
 
-                for (;;) {
+                for (; ;) {
                     if (peekToken().type == TokenType.Dedent) {
                         const isFinal = (isNaN(level) || parseInt(peekToken().value) < level)
                         shiftToken()
@@ -232,6 +232,8 @@ namespace pxt.py {
                             break
                     }
                     U.pushRange(outputRange, stmt());
+
+                    if (peekToken().type == TokenType.EOF) break;
                 }
             }
 
@@ -1184,7 +1186,7 @@ namespace pxt.py {
 
     function shiftAndFake() {
         let r = mkAST("NameConstant") as NameConstant
-        r.value = undefined
+        r.value = null
         shiftToken()
         return finish(r)
     }
@@ -1224,7 +1226,7 @@ namespace pxt.py {
             if (t.value == "None" || t.value == "True" || t.value == "False") {
                 let r = mkAST("NameConstant") as NameConstant
                 shiftToken()
-                r.value = t.value == "True" ? true : t.value == "False" ? false : undefined
+                r.value = t.value == "True" ? true : t.value == "False" ? false : null
                 return finish(r)
             } else {
                 error(9564, U.lf("expecting atom"))

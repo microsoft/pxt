@@ -93,7 +93,7 @@
 <comment pinned="false">Comment</comment>
 </block>
 </next>
-<comment pinned="false">Paragraphs from&#10;&#10;&#10;&#10;single-line comments</comment>
+<comment pinned="false">Paragraphs from&#10;&#10;single-line comments</comment>
 </block>
 </next>
 <comment pinned="false">Whitespace between comments and statement</comment>
@@ -117,7 +117,7 @@
 <comment pinned="false">Multi line with&#10;no asterisks on body</comment>
 </block>
 </next>
-<comment pinned="false">Multiple&#10;&#10;Single-line&#10;&#10;Comments</comment>
+<comment pinned="false">Multiple&#10;Single-line&#10;Comments</comment>
 </block>
 </next>
 <comment pinned="false">Single-line comment</comment>

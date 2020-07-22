@@ -34,102 +34,6 @@ See the micro:bit tutorials [**flashing-heart.md**](https://github.com/Microsoft
 
 ### ~
 
-## Listing on the home screen
-
-To have a tutorial appear on the home screen, you will need to create or use an existing gallery and add a tutorial entry to it.
-
-### Defining galleries
-
-Tutorials typically appear as cards on the [home screen](/targets/home-screen#galleries). Each card category is a markdown file that is referenced from the ``targetconfig.json`` file. The ``galleries`` section in the configuration specifies a map of gallery titles to gallery markdown file paths. You can have as many galleries as you wish to organize your tutorials.
-
-```
-{
-    ...
-    "galleries": {
-        "Tutorials": "projects/tutorials",
-        "Games": "projects/games",
-        ...
-    }
-}
-```
-
-Also, add a direct link to the tutorial in the ``SUMMARY.md`` page to help search engine bots.
-
-### ~ hint
-
-#### A real example
-
-See the micro:bit config https://github.com/Microsoft/pxt-microbit/blob/master/targetconfig.json
-
-### ~
-
-#### Authoring the gallery
-
-A gallery entry for a [tutorial](/targets/home-screen#tutorial) is placed in the markdown file mapped to the category. For the example above, it's in _/projects/tutorials.md_.
-
-The gallery is defined by authoring ``codecards`` in the markdown section. Each ``codecard`` has the following fields:
-
-* **name**: tutorial name
-* **imageUrl**: an optional icon image
-* **url**: tutorial document path
-* **cardType**: set to "tutorial"
-* **description**: description of what the tutorial does
-
-Here's an example entry in _tutorials.md_:
-
-````markdown
-# Tutorials
-
-Here are some cool tutorials to get you started with your Gizmo Board!
-
-## Basic
-
-```codecard
-[{
-  "name": "Flashing Heart",
-  "url":"/projects/flashing-heart",
-  "description": "Make an animated flashing heart.",
-  "imageUrl": "/static/gizmo/projects/a1-display.png",
-  "cardType": "tutorial",
-  "label": "New? Start Here!",
-  "labelClass": "purple ribbon large"
-}, {
-  "name": "Name Tag",
-  "description": "Scroll your name on the screen",
-  "imageUrl": "/static/gizmo/projects/name-tag.png",
-  "url": "/projects/name-tag",
-  "cardType": "tutorial"
-}]
-```
-````
-
-The tutorial document tree has this layout:
-
-```
-/docs/projects/tutorials.md
-/docs/projects/flashing-heart.md
-/docs/projects/name-tag.md
-...
-```
-
-### ~ hint
-
-#### A real example
-
-See the micro:bit tutorial gallery https://github.com/Microsoft/pxt-microbit/blob/master/docs/tutorials.md
-
-### ~
-
-## In context tutorials
-
-In context tutorials are micro-tutorials that run within your current program. They need to be enabled separately. The format is the same as other tutorials.
-
-* (editor maintainer) add a ``recipes: true`` entry in the ``appTheme`` section of your ``pxtarget.json`` editor
-* add a ``/docs/recipes.md`` file that contains the gallery of micro-tutorials
-
-In order to select the proper language (blocks vs JavaScript vs Python), you should add
-a ``"editor": "js"`` entry for JavaScript tutorials and ``"editor": "py"`` entry for Python tutorials to each code card.
-
 ## Tutorial format
 
 The tutorial markdown has a format that the guides the tutorial runner in making a sequence of interactions. A tutorial has a flow model that is either a simple set of steps or groups of steps placed into activity sections. The tutorial author chooses which type of flow to use by setting a metadata option.
@@ -142,12 +46,14 @@ Tutorial metadata is optionally specified at the top of the document. Metadata i
 * **explicitHints**: Indicates explicit hints, in the format ``### ~ tutorialhint``. The default is ``false`` making hints available for each step.
 * **flyoutOnly**: Indicates that the tutorial should display all available blocks in a permanently-visible flyout, instead of the toolbox. The default is ``false``.
 * **hideIteration**: Hides the step controls. This includes the previous, next, and exit tutorial buttons, as well as the step counter in the menu bar. The default is ``false``.
+* **diffs**: enable/disable diffs on all languages
 
 ```markdown
 ### @activities true
 ### @explicitHints true
 ### @flyoutOnly true
 ### @hideIteration true
+### @diffs true
 ```
 
 ### Title
@@ -375,7 +281,7 @@ forever(function() {
 If you want extra blocks to appear in the Toolbox drawers during a step, then you add a ghost blocks section. This informs the user that additional blocks beyond those that are shown in the hint are availble to form a solution.
 
 ````
-Get a ``||input:temperature|| block and place it in the value slot of ``||basic:show number||``. You can also make a temperature message if you want.
+Get a ``||input:temperature||`` block and place it in the value slot of ``||basic:show number||``. You can also make a temperature message if you want.
 
 ```blocks
 forever(function() {
@@ -410,10 +316,11 @@ If the target supports Python, snippets can be written in JavaScript or Python d
 ## Python snippets
 
 Using ``python`` after the triple tick like this:
+
 ````
 ```python
 for i in range(100):
-    mobs.spawn(AnimalMob.CHICKEN, positions.create(0, 10, 0))
+    mobs.spawn(CHICKEN, pos(0, 10, 0))
 ```
 ````
 
@@ -430,7 +337,8 @@ basic.showString("Hello!")
 
 ## Other languages
 
-Note that if the target supports python then snippets written in the usual way like:
+Note that if the target supports python, then snippets are written in the usual way like:
+
 ````
 ```typescript
 basic.showString("Hello!")
@@ -440,51 +348,28 @@ or
 basic.showString("Hello!")
 ```
 ````
-users will have the option of clicking the Python icon to see the snippet in Python just like they can with Blocks and Javascript/Typescript.
 
-## JavaScript and Python tutorial ("Spy tutorials")
+Users will have the option of clicking the Python icon to see the snippet in Python just like they can with Blocks and Javascript/Typescript.
 
-If you author tutorials using ``JavaScript`` or ``spy``, MakeCode is able to automatically
-render them in JavaScript or Python. Overriding the default language is done in the
-``tutorials.md`` page, in the cards section by specifying the ``editor`` field.
+## Adding tutorials to the home screen
+
+To have a tutorial appear on the home screen, you will need to create or use an existing gallery and add a tutorial entry to it. See the
+[home screen](/targets/home-screen#galleries) page for information about creating and adding to home screen galleries.
+
+### JavaScript and Python tutorial ("Spy tutorials")
 
 If you are able to author your tutorial in a language agnostic way, 
-you will be able to have a single source for both JavaScript and Python.
+you will be able to have a single source document for both JavaScript and Python. You can specify a single tutorial for multiple languages using the [otherActions](/targets/home-screen#otheractions) field in the tutorial code card.
 
-````
-```codecard
-[{
-    "name": "Chicken Rain",
-    "cardType": "tutorial",
-    "url": "/tutorials/spy/chicken-rain",
-    ...
-    "otherActions": [{
-        "url": "/tutorials/spy/chicken-rain",
-        "editor": "py",
-        "cardType": "tutorial"
-    }, {
-        "url": "/tutorials/spy/chicken-rain",
-        "editor": "js",
-        "cardType": "tutorial"
-    }]
-}]
-```
-````
+## In context tutorials
 
-Leave ``otherActions`` empty, to automatically populate it.
+In context tutorials are micro-tutorials that run within your current program. They need to be enabled separately. The format is the same as other tutorials.
 
-````
-```codecard
-[{
-    "name": "Chicken Rain",
-    "cardType": "tutorial",
-    "url": "/tutorials/spy/chicken-rain",
-    ...
-    "otherActions": []
-}]
-```
-````
+* (editor maintainer) add a ``recipes: true`` entry in the ``appTheme`` section of your [``pxtarget.json``](/targets/pxtarget#apptheme-apptheme) editor
+* add a ``/docs/recipes.md`` file that contains the gallery of micro-tutorials
 
+In order to select the proper language (blocks vs JavaScript vs Python), you should add
+a ``"editor": "js"`` entry for JavaScript tutorials and ``"editor": "py"`` entry for Python tutorials to each code card.
 
 ## Testing
 

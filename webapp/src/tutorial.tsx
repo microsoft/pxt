@@ -17,7 +17,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 
 /**
  * We'll run this step when we first start the tutorial to figure out what blocks are used so we can
- * filter the toolbox. 
+ * filter the toolbox.
  */
 export function getUsedBlocksAsync(code: string, language?: string): Promise<pxt.Map<number>> {
     if (!code) return Promise.resolve({});
@@ -39,8 +39,10 @@ export function getUsedBlocksAsync(code: string, language?: string): Promise<pxt
                 const allblocks = headless.getAllBlocks();
                 for (let bi = 0; bi < allblocks.length; ++bi) {
                     const blk = allblocks[bi];
-                    if (!blk.isShadow_) usedBlocks[blk.type] = 1;
+                    if (!blk.isShadow()) usedBlocks[blk.type] = 1;
                 }
+                if (pxt.options.debug)
+                    pxt.debug(JSON.stringify(usedBlocks, null, 2));
                 return usedBlocks;
             } else {
                 throw new Error("Failed to decompile");
@@ -223,6 +225,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
     }
 
     showHint(visible: boolean, showFullText?: boolean) {
+        if (visible) Blockly.hideChaff();
         this.setState({ visible, showFullText });
     }
 
@@ -243,8 +246,8 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         if (!step.unplugged) {
             if (!tutorialHint) return <div />;
 
-            return <div className={`tutorialhint ${!visible ? 'hidden' : ''}`} ref={this.setRef}>
-                <md.MarkedContent markdown={this.state.showFullText ? fullText : tutorialHint} parent={this.props.parent} />
+            return <div className={`tutorialhint no-select ${!visible ? 'hidden' : ''}`} ref={this.setRef}>
+                <md.MarkedContent markdown={this.state.showFullText ? fullText : tutorialHint} unboxSnippets={true} parent={this.props.parent} />
             </div>
         } else {
             let onClick = tutorialStep < tutorialStepInfo.length - 1 ? this.next : this.closeHint;
@@ -447,6 +450,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const step = tutorialStepInfo[tutorialStep];
         const unplugged = tutorialStep < tutorialStepInfo.length - 1 && step && !!step.unplugged;
 
+        this.props.parent.clearUserPoke();
+
         if (!unplugged) {
             this.toggleHint();
         }
@@ -547,17 +552,16 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             <div className='ui buttons'>
                 {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
-                    <div className="avatar-container">
-                        <div role="button" className={`avatar-image ${hasHint && this.props.pokeUser ? 'shake' : ''}`} onClick={hintOnClick} onKeyDown={sui.fireClickOnEnter}></div>
-                        {hasHint && <sui.Button className="ui circular small label blue hintbutton hidelightbox" icon="lightbulb outline" tabIndex={-1} onClick={hintOnClick} onKeyDown={sui.fireClickOnEnter} />}
-                        {hasHint && <HintTooltip ref="hinttooltip" pokeUser={this.props.pokeUser} text={tutorialHintTooltip} onClick={hintOnClick} />}
-                        <TutorialHint ref="tutorialhint" parent={this.props.parent} />
-                    </div>
                     <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
                         onClick={hasHint ? hintOnClick : undefined} onKeyDown={hasHint ? sui.fireClickOnEnter : undefined}>
                         <div className="content">
                             {!unplugged && <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} onDidRender={this.onMarkdownDidRender} />}
                         </div>
+                    </div>
+                    <div className="avatar-container">
+                        {(!unplugged && hasHint) && <sui.Button className={`ui circular label blue hintbutton hidelightbox ${hasHint && this.props.pokeUser ? 'shake flash' : ''}`} icon="lightbulb outline" tabIndex={-1} onClick={hintOnClick} onKeyDown={sui.fireClickOnEnter} />}
+                        {(!unplugged && hasHint) && <HintTooltip ref="hinttooltip" pokeUser={this.props.pokeUser} text={tutorialHintTooltip} onClick={hintOnClick} />}
+                        <TutorialHint ref="tutorialhint" parent={this.props.parent} />
                     </div>
                     {this.state.showSeeMore && !tutorialStepExpanded && <sui.Button className="fluid compact lightgrey" icon="chevron down" tabIndex={0} text={lf("More...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} />}
                     {this.state.showSeeMore && tutorialStepExpanded && <sui.Button className="fluid compact lightgrey" icon="chevron up" tabIndex={0} text={lf("Less...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} />}

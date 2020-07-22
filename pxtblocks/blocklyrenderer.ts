@@ -37,11 +37,14 @@ namespace pxt.blocks {
             blocklyDiv.style.height = "1px";
             document.body.appendChild(blocklyDiv);
             workspace = Blockly.inject(blocklyDiv, {
-                scrollbars: false,
+                move: {
+                    scrollbars: false
+                },
                 readOnly: true,
-                sound: false,
+                sounds: false,
                 media: pxt.webConfig.commitCdnUrl + "blockly/media/",
-                rtl: Util.isUserLanguageRtl()
+                rtl: Util.isUserLanguageRtl(),
+                renderer: "pxt"
             }) as Blockly.WorkspaceSvg;
         }
 
@@ -71,7 +74,7 @@ namespace pxt.blocks {
                 break;
         }
 
-        let metrics = workspace.getMetrics();
+        let metrics = workspace.getMetrics() as Blockly.Metrics;
 
         const svg = blocklyDiv.querySelectorAll('svg')[0].cloneNode(true) as SVGSVGElement;
         pxt.blocks.layout.cleanUpBlocklySvg(svg);

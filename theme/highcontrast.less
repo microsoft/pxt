@@ -63,6 +63,7 @@
 
     p {
         color: @HCtextColor !important;
+        background-color: @HCbackground !important;
     }
 
     #tutorialcard .prevbutton,
@@ -100,7 +101,7 @@
         }
     }
 
-    /* Blockly toolbox */
+    /* Toolbox */
     .pxtToolbox:not(.invertedToolbox) {
         span.blocklyTreeLabel {
             color: @HCblocklyTreeLabelColor;
@@ -111,6 +112,40 @@
         .blocklyTreeRow:not(.blocklyTreeSelected):hover,
         .blocklyTreeRow:not(.blocklyTreeSelected):focus {
             background-color: lighten(@HCblocklyToolboxColor, 25.0);
+        }
+    }
+
+    #monacoEditor .monacoDraggableBlock {
+        background: none !important;
+
+        span.argName {
+            border: 1px solid rgba(255, 255, 255, .7);
+        }
+    }
+
+    /* ErrorList */
+    .errorList {
+        background-color: @HCbackground !important;
+        color: @HCtextColor !important;
+
+        .errorListHeader:focus {
+            border: 1px @selected solid !important;
+        }
+
+        .errorListInner {
+            .ui.selection.list > .item {
+                background-color: @HCbackground !important;
+                color: @HCtextColor !important;
+                border: 1px solid @HCtextColor !important;
+
+                &:focus {
+                    border: 1px solid @selected!important;
+                }
+            }
+
+            .debuggerSuggestion {
+                color: @HCtextColor !important;
+            }
         }
     }
 
@@ -131,6 +166,10 @@
         .blockHandle {
             background: @HCblocklySvgColor !important;
         }
+    }
+
+    .blocklyFlyoutButtonBackground {
+        stroke: @HCtextColor !important;
     }
 
     /* Main editor areas */
@@ -196,6 +235,61 @@
         }
     }
 
+    .simtoolbar .debug-button.orange {
+        color: @HCeditorToolsBackground !important;
+        background-color: @HCtextColor !important;
+    }
+
+    /* Debugger toolbox */
+    .debugtoolbar .ui.compact.menu {
+        color: @HCblocklyTreeLabelColor !important;
+        background-color: @HCblocklyToolboxColor !important;
+        border-bottom: solid @HCblocklyTreeLabelColor 1px !important;
+
+        .ui.item.link.dbg-btn {
+            .icon.green, .icon.blue, .ui.text, .xicon  {
+                color: @HCblocklyTreeLabelColor !important;
+            }
+        }
+        .ui.item.link.dbg-btn.disabled {
+            .icon.green, .icon.blue, .ui.text, .xicon, .icon.disabled.icon-and-text {
+                opacity: 1 !important;
+                color: @disabled !important;
+            }
+        }
+        .ui.item.link.dbg-btn.dbg-trace.tracing {
+            background-color: @HCtextColor !important;
+            .xicon  {
+                color: @HCblocklyToolboxColor !important;
+            }
+        }
+    }
+
+    .varExplorer {
+        background-color: @HCblocklyToolboxColor !important;
+
+        .variableTableHeader, .variableTablePlaceholder {
+            color: @HCblocklyTreeLabelColor !important;
+            background-color: @HCblocklyToolboxColor !important;
+        }
+
+        .ui.segment.debugvariables {
+            .item {
+                background-color: @HCblocklyToolboxColor !important;
+
+                .variableAndValue {
+                    .variable.varname, .variable.detail {
+                        color: @HCblocklyTreeLabelColor !important;
+
+                        .varval.number, .varval.string, .varval.boolean, .varval.array, .varval.Sprite {
+                            color: @HCblocklyTreeLabelColor !important;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /* Editor switch toggle */
     .menubar .ui.menu.fixed .item.editor-menuitem .ui.grid {
         background: @HCbackground !important;
@@ -203,7 +297,8 @@
             opacity: 1 !important;
             color: @HCmainMenuInverseTextColor !important;
         }
-        .item.active {
+        .item.active,
+        .menu > .item.selected {
             background: @HCtextColor !important;
             color: @HCmainMenuTextColor !important;
         }
@@ -314,12 +409,14 @@
         color: @HCtextColor !important;
         border-color: @HCtextColor !important;
 
-        .header {
+        .header,
+        span.view-all-button {
             opacity: 1 !important;
-            color: @HCtextColor;
+            color: @HCtextColor !important;
         }
 
-        .homefooter a {
+        .homefooter a,
+        .homefooter i {
             color: @HCtextColor !important
         }
     }
@@ -498,15 +595,15 @@
     }
 
     /* Dropdown */
-    .ui.menu .ui.dropdown .menu,
-    #editortools .ui.dropdown .menu {
+    .ui.dropdown .menu,
+    .ui.menu .ui.dropdown .menu {
         border: 1px solid @HCtextColor !important;
     }
 
+    .ui.dropdown .menu,
+    .ui.dropdown .menu > .item,
     .ui.menu .ui.dropdown .menu,
-    .ui.menu .ui.dropdown .menu > .item,
-    #editortools .ui.dropdown .menu,
-    #editortools .ui.dropdown .menu > .item {
+    .ui.menu .ui.dropdown .menu > .item {
         background: @HCbackground !important;
         color: @HCtextColor !important;
 
@@ -521,10 +618,14 @@
         }
     }
 
-    .ui.menu .ui.dropdown .menu > .divider,
-    #editortools .ui.dropdown .menu > .divider {
+    .ui.dropdown .menu > .divider,
+    .ui.menu .ui.dropdown .menu > .divider {
         background: @HCbackground !important;
         border-top: 1px solid @HCtextColor !important;
+    }
+
+    #editordropdown .menu > .item:not(.selected) {
+        background: transparent !important;
     }
 
     /* Tab list in Modals*/
@@ -543,16 +644,36 @@
     }
 
     /* Tutorial */
-    .ui.message {
+    .ui.tutorialsegment {
         background-color: @HCbackground !important;
         color: @HCtextColor !important;
 
         .tutorialmessage {
-            outline: 1px solid @HCtextColor !important;
             border: none !important;
 
             &:focus {
                 color: @selected !important;
+            }
+
+        }
+
+        .tooltip, .tooltip:before {
+            background-color: @HCbackground;
+            border: 2px solid @HCtextColor;
+            color: @HCtextColor;
+        }
+
+        .tooltip:before {
+            border-color: @HCtextColor transparent transparent @HCtextColor !important;
+        }
+
+        .tutorialhint {
+            border-color: @HCtextColor;
+            background-color: @HCbackground;
+            color: @HCtextColor;
+
+            &:before {
+                border-right-color: @HCtextColor;
             }
         }
     }

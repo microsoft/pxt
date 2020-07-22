@@ -685,6 +685,7 @@ export interface InputProps {
 
 export interface InputState {
     value: string;
+    copied?: boolean;
 }
 
 export class Input extends data.Component<InputProps, InputState> {
@@ -717,6 +718,7 @@ export class Input extends data.Component<InputProps, InputState> {
     }
 
     copy() {
+        this.setState({ copied: false });
         const p = this.props
         const el = ReactDOM.findDOMNode(this);
 
@@ -733,7 +735,9 @@ export class Input extends data.Component<InputProps, InputState> {
         try {
             const success = document.execCommand("copy");
             pxt.debug('copy: ' + success);
+            this.setState({ copied: !!success });
         } catch (e) {
+            this.setState({ copied: false });
         }
     }
 
@@ -746,7 +750,7 @@ export class Input extends data.Component<InputProps, InputState> {
     handleChange(e: React.ChangeEvent<any>) {
         const newValue = (e.target as any).value;
         if (!this.props.readOnly && (!this.state || this.state.value !== newValue)) {
-            this.setState({ value: newValue })
+            this.setState({ value: newValue, copied: false })
         }
         if (this.props.onChange) {
             this.props.onChange(newValue);
@@ -765,40 +769,40 @@ export class Input extends data.Component<InputProps, InputState> {
     }
 
     renderCore() {
-        let p = this.props
-        let copyBtn = p.copy && document.queryCommandSupported('copy')
-            ? <Button className="ui right labeled primary icon button" text={lf("Copy")} icon="copy" onClick={this.copy} />
+        const p = this.props;
+        const { copy, error, ariaLabel, id, label, inputLabel, lines, autoFocus, placeholder, readOnly, autoComplete } = p;
+        const { value, copied } = this.state;
+        const copyBtn = copy && document.queryCommandSupported('copy')
+            ? <Button className={`ui right labeled ${copied ? "green" : "primary"} icon button`} text={copied ? lf("Copied!") : lf("Copy")} icon="copy" onClick={this.copy} />
             : null;
-        const { error } = this.props;
-        const { value } = this.state;
 
         return (
-            <Field ariaLabel={p.ariaLabel} htmlFor={p.id} label={p.label}>
-                <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (p.copy ? " action fluid" : "") + (p.disabled ? " disabled" : "")}>
-                    {p.inputLabel ? (<div className="ui label">{p.inputLabel}</div>) : ""}
-                    {!p.lines || p.lines == 1 ? <input
+            <Field ariaLabel={ariaLabel} htmlFor={id} label={label}>
+                <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (copy ? " action fluid" : "") + (p.disabled ? " disabled" : "")}>
+                    {inputLabel ? (<div className="ui label">{inputLabel}</div>) : ""}
+                    {!lines || lines == 1 ? <input
                         ref='inputField'
-                        autoFocus={p.autoFocus}
-                        id={p.id}
+                        autoFocus={autoFocus}
+                        id={id}
                         className={p.class || ""}
                         type={p.type || "text"}
-                        placeholder={p.placeholder} value={value || ''}
-                        readOnly={!!p.readOnly}
+                        placeholder={placeholder} value={value || ''}
+                        readOnly={!!readOnly}
                         onClick={this.handleClick}
                         onChange={this.handleChange}
                         onKeyDown={this.handleEnterPressed}
-                        autoComplete={p.autoComplete ? "" : "off"}
-                        autoCorrect={p.autoComplete ? "" : "off"}
-                        autoCapitalize={p.autoComplete ? "" : "off"}
-                        spellCheck={p.autoComplete}
+                        autoComplete={autoComplete ? "" : "off"}
+                        autoCorrect={autoComplete ? "" : "off"}
+                        autoCapitalize={autoComplete ? "" : "off"}
+                        spellCheck={autoComplete}
                     />
                         : <textarea
-                            id={p.id}
-                            className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "")}
-                            rows={p.lines}
-                            placeholder={p.placeholder}
+                            id={id}
+                            className={"ui input " + (p.class || "") + (inputLabel ? " labelled" : "")}
+                            rows={lines}
+                            placeholder={placeholder}
                             value={value || ''}
-                            readOnly={!!p.readOnly}
+                            readOnly={!!readOnly}
                             onClick={this.handleClick}
                             onChange={this.handleChange}
                             onKeyDown={this.handleEnterPressed}>
@@ -1101,7 +1105,8 @@ export class Menu extends data.Component<MenuProps, MenuState> {
 ///////////////////////////////////////////////////////////
 
 export interface ModalButton {
-    label: string;
+    label?: string;
+    title?: string;
     icon?: string; // defaults to "checkmark"
     className?: string; // defaults "positive"
     onclick?: () => (Promise<void> | void);
@@ -1262,8 +1267,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
         ])
         const aria = {
             labelledby: header ? this.id + 'title' : undefined,
-            describedby: (!isFullscreen && description) ? this.id + 'description' : this.id + 'desc',
-            modal: 'true'
+            describedby: (!isFullscreen && description) ? this.id + 'description' : this.id + 'desc'
         }
         const customStyles = {
             content: {
@@ -1280,6 +1284,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             overlayClassName={`ui page modals dimmer transition ${overlayClassName} ${isOpen ? 'visible active' : ''}`}
             className={classes}
             style={customStyles}
+            role="dialog"
             aria={aria} {...rest}>
             {header || showBack || helpUrl ? <div id={this.id + 'title'} className={"header " + (headerClass || "")}>
                 <span className="header-title" style={{ margin: `0 ${helpUrl ? '-20rem' : '0'} 0 ${showBack ? '-20rem' : '0'}` }}>{header}</span>
@@ -1310,7 +1315,8 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                                 key={`action_${action.label}`}
                                 icon={action.icon}
                                 text={action.label}
-                                className={`ui button approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
+                                title={action.title || action.label}
+                                className={`ui button approve ${action.icon ? 'icon right' : ''} ${action.label ? 'labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
                                 href={action.url}
                                 target={!action.fileName ? '_blank' : undefined}
                                 download={action.fileName ? pxt.Util.htmlEscape(action.fileName) : undefined}
@@ -1335,7 +1341,7 @@ class ModalButtonElement extends data.PureComponent<ModalButton, {}> {
     }
 
     handleClick() {
-        if (!this.props.disabled)
+        if (!this.props.disabled && this.props.onclick)
             this.props.onclick();
     }
 
@@ -1394,6 +1400,7 @@ export class Dimmer extends UIElement<DimmerProps, DimmerState> {
             shouldCloseOnOverlayClick={closable}
             onRequestClose={onClose}
             overlayClassName={portalClasses}
+            role="dialog"
             {...rest}>
             {children}
         </ReactModal>

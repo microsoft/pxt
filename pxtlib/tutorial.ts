@@ -12,10 +12,16 @@ namespace pxt.tutorial {
         // collect code and infer editor
         const { code, templateCode, editor, language } = computeBodyMetadata(body);
 
-        if (!metadata.noDiffs
-            && (editor != pxt.BLOCKS_PROJECT_NAME || pxt.appTarget.appTheme.tutorialBlocksDiff)
-        )
+        // noDiffs legacy
+        if (metadata.diffs === true // enabled in tutorial
+            || (metadata.diffs !== false && metadata.noDiffs !== true // not disabled
+                && (
+                    (editor == pxt.BLOCKS_PROJECT_NAME && pxt.appTarget.appTheme.tutorialBlocksDiff)  //blocks enabled always
+                    || (editor != pxt.BLOCKS_PROJECT_NAME && pxt.appTarget.appTheme.tutorialTextDiff) // text enabled always
+                ))
+        ) {
             diffify(steps, activities);
+        }
 
         // strip hidden snippets
         steps.forEach(step => {
@@ -39,10 +45,11 @@ namespace pxt.tutorial {
     function computeBodyMetadata(body: string) {
         // collect code and infer editor
         let editor: string = undefined;
-        const regex = /```(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python)?\s*\n([\s\S]*?)\n```/gmi;
+        const regex = /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python)?\s*\n([\s\S]*?)\n```/gmi;
         let code = '';
         let templateCode: string;
         let language: string;
+        let idx = 0;
         // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
         body
             .replace(/((?!.)\s)+/g, "\n")
@@ -72,7 +79,10 @@ namespace pxt.tutorial {
                         templateCode = m2;
                         break;
                 }
-                code += `\n${m1 == "python" ? m2 : "{\n" + m2 + "\n}"}\n`;
+                code += `\n${m1 == "python"
+                    ? "def __wrapper_" + idx + "():\n" + m2.replace(/^/gm, "    ")
+                    : "{\n" + m2 + "\n}"}\n`;
+                idx++
                 return "";
             });
         // default to blocks
@@ -286,12 +296,15 @@ ${code}
 
     export function highlight(pre: HTMLElement): void {
         let text = pre.textContent;
-        if (!/@highlight/.test(text)) // shortcut, nothing to do
-            return;
 
         // collapse image python/js literales
         text = text.replace(/img\s*\(\s*"{3}(.|\n)*"{3}\s*\)/g, `""" """`);
-        text = text.replace(/img\s*\(\s*`(.|\n)*`\s*\)/g, "img` `");
+        text = text.replace(/img\s*\s*`(.|\n)*`\s*/g, "img` `");
+
+        if (!/@highlight/.test(text)) { // shortcut, nothing to do
+            pre.textContent = text;
+            return;
+        }
 
         // render lines
         pre.textContent = ""; // clear up and rebuild

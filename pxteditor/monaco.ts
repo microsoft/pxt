@@ -112,19 +112,20 @@ namespace pxt.vs {
     export function createEditor(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {
         const inverted = pxt.appTarget.appTheme.invertedMonaco;
         const hasFieldEditors = !!(pxt.appTarget.appTheme.monacoFieldEditors && pxt.appTarget.appTheme.monacoFieldEditors.length);
+        const isAndroid = pxt.BrowserUtils.isAndroid();
 
         let editor = monaco.editor.create(element, {
             model: null,
             ariaLabel: Util.lf("JavaScript editor"),
             fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', 'monospace'",
-            scrollBeyondLastLine: false,
+            scrollBeyondLastLine: true,
             language: "typescript",
             mouseWheelZoom: false,
             wordBasedSuggestions: true,
             lineNumbersMinChars: 3,
             formatOnPaste: true,
             folding: hasFieldEditors,
-            glyphMargin: hasFieldEditors,
+            glyphMargin: hasFieldEditors || pxt.appTarget.appTheme.debugger,
             minimap: {
                 enabled: false
             },
@@ -137,8 +138,16 @@ namespace pxt.vs {
             quickSuggestionsDelay: 200,
             theme: inverted ? 'vs-dark' : 'vs',
             renderIndentGuides: true,
-            //accessibilitySupport: 'on',
-            accessibilityHelpUrl: "" //TODO: Add help url explaining how to use the editor with a screen reader
+            accessibilityHelpUrl: "", //TODO: Add help url explaining how to use the editor with a screen reader
+            // disable completions on android
+            quickSuggestions: {
+                "other": !isAndroid,
+                "comments": !isAndroid,
+                "strings": !isAndroid
+           },
+            acceptSuggestionOnCommitCharacter: !isAndroid,
+            acceptSuggestionOnEnter: !isAndroid ? "on" : "off",
+            accessibilitySupport: !isAndroid ? "on" : "off"
         });
 
         editor.layout();

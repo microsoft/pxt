@@ -43,14 +43,6 @@ namespace pxt.py {
         isLocal?: boolean;
         isParam?: boolean;
         isImport?: SymbolInfo;
-        modifier?: VarModifier;
-        forVariableEndPos?: number;
-
-        /* usage information */
-        firstRefPos?: number;
-        lastRefPos?: number;
-        firstAssignPos?: number;
-        firstAssignDepth?: number;
     }
 
     // based on grammar at https://docs.python.org/3/library/ast.html
@@ -163,8 +155,20 @@ namespace pxt.py {
         value: Expr;
     }
 
+    export interface ScopeSymbolInfo {
+        /* usage information */
+        firstRefPos?: number;
+        lastRefPos?: number;
+        firstAssignPos?: number;
+        firstAssignDepth?: number;
+        forVariableEndPos?: number;
+        /* global/nonlocal */
+        modifier?: VarModifier;
+
+        symbol: SymbolInfo,
+    }
     export interface ScopeDef extends Stmt {
-        vars: Map<SymbolInfo>;
+        vars: Map<ScopeSymbolInfo>;
         parent?: ScopeDef;
         blockDepth?: number;
     }
@@ -418,7 +422,7 @@ namespace pxt.py {
     }
     export interface NameConstant extends Expr {
         kind: "NameConstant";
-        value: boolean | undefined; // undefined=None, True, False
+        value: boolean | null; // null=None, True, False
     }
     export interface Ellipsis extends Expr {
         kind: "Ellipsis";
@@ -458,5 +462,12 @@ namespace pxt.py {
     export interface Tuple extends AssignmentExpr {
         kind: "Tuple";
         elts: Expr[];
+    }
+
+    export function isIndex(e: AST): e is Index {
+        return e.kind === "Index"
+    }
+    export function isSubscript(e: Expr): e is Subscript {
+        return e.kind === "Subscript"
     }
 }

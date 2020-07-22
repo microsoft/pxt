@@ -108,17 +108,20 @@ namespace pxtblockly {
             super.doValueUpdate_(this.getValue());
         }
 
+        getText_() {
+            if (this.invalidString) return pxt.Util.lf("Invalid Input");
+            else return this.getValue();
+        }
+
         // This will be run when the field is created (i.e. when it appears on the workspace)
         protected onInit() {
             this.render_();
             this.createMelodyIfDoesntExist();
 
-            if (this.invalidString) {
-                Blockly.FieldLabel.prototype.setText.call(this, pxt.Util.lf("Invalid Input"));
-            } else {
+            if (!this.invalidString) {
                 if (!this.fieldGroup_) {
                     // Build the DOM.
-                    this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null);
+                    this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null) as SVGGElement;
                 }
                 if (!this.visible_) {
                     (this.fieldGroup_ as any).style.display = 'none';
@@ -303,7 +306,7 @@ namespace pxtblockly {
 
         // The height of the preview on the block itself
         protected getPreviewHeight(): number {
-            return Blockly.BlockSvg.FIELD_HEIGHT;
+            return this.constants_.FIELD_BORDER_RECT_HEIGHT;
         }
 
         protected getDropdownBackgroundColour() {
@@ -311,7 +314,7 @@ namespace pxtblockly {
         }
 
         protected getDropdownBorderColour() {
-            return this.sourceBlock_.parentBlock_.getColourTertiary();
+            return (this.sourceBlock_.parentBlock_ as Blockly.BlockSvg).getColourTertiary();
         }
 
         private updateFieldLabel(): void {
@@ -380,6 +383,7 @@ namespace pxtblockly {
                                 else {
                                     tempoBlock.setFieldValue(this.tempoInput.value, "NUM")
                                 }
+                                this.tempoInput.focus();
                             }
                         }
                         break;

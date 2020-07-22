@@ -169,7 +169,10 @@ export interface DialogOptions {
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
+    if (!options.buttons) options.buttons = [];
     if (!options.type) options.type = 'dialog';
+    if (options.hasCloseIcon)
+        options.hideCancel = true;
     if (!options.hideCancel) {
         if (!options.buttons) options.buttons = [];
         options.buttons.push({
@@ -179,9 +182,9 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         })
     }
     if (options.helpUrl) {
-        options.buttons.push({
-            label: lf("Help"),
-            className: "help",
+        options.buttons.unshift({
+            className: "circular help",
+            title: lf("Help"),
             icon: "help",
             url: options.helpUrl
         })
@@ -252,8 +255,6 @@ export function promptAsync(options: PromptOptions): Promise<string> {
 
     let result = options.initialValue || "";
     let oked: boolean = false;
-    if (options.hasCloseIcon)
-        options.hideCancel = true;
 
     options.onInputChanged = (v: string) => { result = v };
 

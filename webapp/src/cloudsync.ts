@@ -330,15 +330,18 @@ export function providers(): Provider[] {
     return identityProviders().filter(p => p.hasSync()).map(p => <Provider>p);
 }
 
-export function githubProvider(): githubprovider.GithubProvider {
-    return identityProviders().filter(p => p.name == githubprovider.PROVIDER_NAME)[0] as githubprovider.GithubProvider;
+export function githubProvider(required?: boolean): githubprovider.GithubProvider {
+    const p = identityProviders().filter(p => p.name == githubprovider.PROVIDER_NAME)[0] as githubprovider.GithubProvider;
+    if (!p && required)
+        U.userError(lf("GitHub not configured in this editor."))
+    return p;
 }
 
 
 // requests token to user if needed
 export async function ensureGitHubTokenAsync() {
     // check that we have a token first
-    await githubProvider().loginAsync();
+    await githubProvider(true).loginAsync();
     if (!pxt.github.token)
         U.userError(lf("Please sign in to GitHub to perform this operation."))
 }
@@ -396,6 +399,9 @@ export async function renameAsync(h: Header, newName: string) {
 }
 
 export function resetAsync() {
+    const ghProvider = githubProvider();
+    const ghNeedsLogout = ghProvider && ghProvider.hasToken();
+
     if (currentProvider)
         currentProvider.logout()
     currentProvider = null
@@ -403,6 +409,10 @@ export function resetAsync() {
     pxt.storage.removeLocal("cloudId")
     clearOauth();
     invalidateData();
+
+    // the user was signed in with github
+    if (ghNeedsLogout)
+        ghProvider.logout();
 
     return Promise.resolve()
 }
@@ -493,7 +503,7 @@ function cloudSyncAsync(): Promise<void> {
     async function resolveConflictAsync(header: Header, cloudHeader: FileInfo) {
         // rename current script
         let text = await ws.getTextAsync(header.id)
-        let newHd = await ws.duplicateAsync(header, text, true)
+        let newHd = await ws.duplicateAsync(header, text)
         header.blobId = null
         header.blobVersion = null
         header.blobCurrent = false
@@ -760,8 +770,36 @@ function githubApiHandler(p: string) {
     return null
 }
 
+function pingApiHandlerAsync(p: string): Promise<any> {
+    const url = data.stripProtocol(p);
+    // special case favicon.ico
+    if (/\.ico$/.test(p)) {
+        const imgUrl = pxt.BrowserUtils.isEdge()
+            ? url
+            : `${url}?v=${Math.random()}&origin=${encodeURIComponent(window.location.origin)}`;
+        const img = document.createElement("img")
+        return new Promise<boolean>((resolve, reject) => {
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            img.src = imgUrl;
+        });
+    }
+    // other request
+    return pxt.Util.requestAsync({
+        url,
+        method: "GET",
+        allowHttpErrors: true
+    }).then(r => r.statusCode === 200 || r.statusCode == 403 || r.statusCode == 400)
+        .catch(e => false)
+}
+
 data.mountVirtualApi("sync", { getSync: syncApiHandler })
 data.mountVirtualApi("github", { getSync: githubApiHandler })
+data.mountVirtualApi("ping", {
+    getAsync: pingApiHandlerAsync,
+    expirationTime: p => 24 * 3600 * 1000,
+    isOffline: () => !pxt.Cloud.isOnline()
+})
 
 function invalidateData() {
     data.invalidate("sync:status")

@@ -53,13 +53,6 @@ mountVirtualApi("gallery", {
     expirationTime: p => 3600 * 1000
 })
 
-mountVirtualApi("td-cloud", {
-    getAsync: p =>
-        Util.httpGetJsonAsync("https://www.touchdevelop.com/api/" + stripProtocol(p))
-            .catch(core.handleNetworkError),
-    expirationTime: p => 60 * 1000,
-})
-
 mountVirtualApi("gh-search", {
     getAsync: query => pxt.targetConfigAsync()
         .then(config => pxt.github.searchAsync(stripProtocol(query), config ? config.packages : undefined))
@@ -71,6 +64,20 @@ mountVirtualApi("gh-search", {
 mountVirtualApi("gh-pkgcfg", {
     getAsync: query =>
         pxt.github.pkgConfigAsync(stripProtocol(query)).catch(core.handleNetworkError),
+    expirationTime: p => 60 * 1000,
+    isOffline: () => !Cloud.isOnline(),
+})
+
+// gh-commits:repo#sha
+mountVirtualApi("gh-commits", {
+    getAsync: query => {
+        const p = stripProtocol(query);
+        const [ repo, sha ] = p.split('#', 2)
+        return pxt.github.getCommitsAsync(repo, sha).catch(e => {
+            core.handleNetworkError(e);
+            return [];
+        })
+    },
     expirationTime: p => 60 * 1000,
     isOffline: () => !Cloud.isOnline(),
 })
@@ -194,8 +201,10 @@ function queue(ce: CacheEntry) {
 
     if (ce.api.isSync)
         final(ce.api.getSync(ce.path))
-    else
-        ce.api.getAsync(ce.path).done(final)
+    else {
+        const p = ce.api.getAsync(ce.path);
+        p.done(final)
+    }
 }
 
 function lookup(path: string) {
@@ -269,6 +278,7 @@ export function stripProtocol(path: string) {
 }
 
 export function invalidate(prefix: string) {
+    prefix = prefix.replace(/:\*$/, ':'); // remove trailing "*";
     Util.values(cachedData).forEach(ce => {
         if (matches(ce, prefix)) {
             ce.lastRefresh = 0;

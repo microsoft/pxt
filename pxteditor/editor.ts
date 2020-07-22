@@ -37,6 +37,11 @@ namespace pxt.editor {
         fileHistory: FileHistoryEntry[];
     }
 
+    export enum ErrorListState {
+        HeaderOnly = "errorListHeader",
+        Expanded = "errorListExpanded"
+    }
+
     export interface IAppProps { }
     export interface IAppState {
         active?: boolean; // is this tab visible at all
@@ -76,13 +81,20 @@ namespace pxt.editor {
         debugging?: boolean;
         bannerVisible?: boolean;
         pokeUserComponent?: string;
+        flashHint?: boolean;
 
         highContrast?: boolean;
         print?: boolean;
         greenScreen?: boolean;
+        accessibleBlocks?: boolean;
 
         home?: boolean;
         hasError?: boolean;
+
+        simSerialActive?: boolean;
+        deviceSerialActive?: boolean;
+
+        errorListState?: ErrorListState;
 
         screenshoting?: boolean;
     }
@@ -165,18 +177,21 @@ namespace pxt.editor {
         photo?: string;
     }
 
+    export type Activity = "tutorial" | "recipe" | "example";
+
     export interface IProjectView {
         state: IAppState;
         setState(st: IAppState): void;
         forceUpdate(): void;
 
         reloadEditor(): void;
-
         openBlocks(): void;
         openJavaScript(giveFocusOnLoading?: boolean): void;
         openPython(giveFocusOnLoading?: boolean): void;
         openSettings(): void;
         openSimView(): void;
+        openSimSerial(): void;
+        openDeviceSerial(): void;
         openPreviousEditor(): void;
 
         switchTypeScript(): void;
@@ -226,8 +241,10 @@ namespace pxt.editor {
         exitTutorial(): void;
         completeTutorialAsync(): Promise<void>;
         showTutorialHint(): void;
+        isTutorial(): boolean;
         pokeUserActivity(): void;
         stopPokeUserActivity(): void;
+        clearUserPoke(): void;
 
         anonymousPublishAsync(screenshotUri?: string): Promise<string>;
 
@@ -241,6 +258,7 @@ namespace pxt.editor {
         collapseSimulator(): void;
         toggleSimulatorCollapse(): void;
         toggleSimulatorFullscreen(): void;
+        setSimulatorFullScreen(enabled: boolean): void;
         proxySimulatorMessage(content: string): void;
         toggleTrace(intervalSpeed?: number): void;
         setTrace(enabled: boolean, intervalSpeed?: number): void;
@@ -260,6 +278,7 @@ namespace pxt.editor {
 
         setBannerVisible(b: boolean): void;
         typecheckNow(): void;
+        shouldPreserveUndoStack(): boolean;
 
         openExtension(extension: string, url: string, consentRequired?: boolean): void;
         handleExtensionRequest(request: ExtensionRequest): void;
@@ -270,13 +289,14 @@ namespace pxt.editor {
         loadBlocklyAsync(): Promise<void>;
         isBlocksEditor(): boolean;
         isTextEditor(): boolean;
-        blocksScreenshotAsync(pixelDensity?: number): Promise<string>;
+        blocksScreenshotAsync(pixelDensity?: number, encodeBlocks?: boolean): Promise<string>;
         renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<EditorMessageRenderBlocksResponse>;
         renderPythonAsync(req: EditorMessageRenderPythonRequest): Promise<EditorMessageRenderPythonResponse>;
 
         toggleHighContrast(): void;
         toggleGreenScreen(): void;
-        pair(): void;
+        toggleAccessibleBlocks(): void;
+        setAccessibleBlocks(enabled: boolean): void;
         launchFullEditor(): void;
 
         settings: EditorSettings;
@@ -288,7 +308,7 @@ namespace pxt.editor {
 
         editor: IEditor;
 
-        startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editor?: string): void;
+        startActivity(activitity: Activity, path: string, title?: string, editor?: string): void;
         showLightbox(): void;
         hideLightbox(): void;
         showKeymap(show: boolean): void;
@@ -311,7 +331,7 @@ namespace pxt.editor {
         showPackageDialog(): void;
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
         checkForHwVariant(): boolean;
-        pair(): Promise<void>;
+        pairAsync(): Promise<void>;
 
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
 
@@ -320,7 +340,8 @@ namespace pxt.editor {
         pushScreenshotHandler(handler: (msg: ScreenshotData) => void): void;
         popScreenshotHandler(): void;
 
-        openDependentEditor(header: pxt.workspace.Header): void;
+        openNewTab(header: pxt.workspace.Header, dependent: boolean): void;
+        createGitHubRepositoryAsync(): Promise<void>;
     }
 
     export interface IHexFileImporter {
@@ -338,6 +359,9 @@ namespace pxt.editor {
     export interface ISettingsProps {
         parent: IProjectView;
         visible?: boolean;
+        collapsed?: boolean;
+        simSerialActive?: boolean;
+        devSerialActive?: boolean;
     }
 
     export interface IFieldCustomOptions {
@@ -367,10 +391,13 @@ namespace pxt.editor {
         deployAsync?: (r: pxtc.CompileResult) => Promise<void>;
         saveOnlyAsync?: (r: ts.pxtc.CompileResult) => Promise<void>;
         saveProjectAsync?: (project: pxt.cpp.HexFile) => Promise<void>;
+        renderBrowserDownloadInstructions?: () => any /* JSX.Element */;
+        renderUsbPairDialog?: (firmwareUrl?: string, failedOnce?: boolean) => any /* JSX.Element */;
         showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>) => Promise<void>;
         toolboxOptions?: IToolboxOptions;
         blocklyPatch?: (pkgTargetVersion: string, dom: Element) => void;
-        webUsbPairDialogAsync?: (confirmAsync: (options: any) => Promise<number>) => Promise<number>;
+        webUsbPairDialogAsync?: (pairAsync: () => Promise<boolean>, confirmAsync: (options: any) => Promise<number>) => Promise<number>;
+        mkPacketIOWrapper?: (io: pxt.packetio.PacketIO) => pxt.packetio.PacketIOWrapper;
 
         // Used with the @tutorialCompleted macro. See docs/writing-docs/tutorials.md for more info
         onTutorialCompleted?: () => void;
@@ -544,4 +571,3 @@ namespace pxt.editor {
         return _initEditorExtensionsPromise;
     }
 }
-

@@ -28,6 +28,7 @@ namespace pxtblockly {
         private offColor: string;
         private static DEFAULT_OFF_COLOR = "#000000";
 
+        private scale = 1;
         // The number of columns
         private matrixWidth: number = 5;
 
@@ -68,6 +69,13 @@ namespace pxtblockly {
             if (this.params.offColor !== undefined) {
                 this.offColor = this.params.offColor;
             }
+
+            if (this.params.scale !== undefined)
+                this.scale = Math.max(0.6, Math.min(2, Number(this.params.scale)));
+            else if (Math.max(this.matrixWidth, this.matrixHeight) > 15)
+                this.scale = 0.85;
+            else if (Math.max(this.matrixWidth, this.matrixHeight) > 10)
+                this.scale = 0.9;
         }
 
         /**
@@ -103,10 +111,10 @@ namespace pxtblockly {
                 this.updateValue();
 
                 if (this.xAxisLabel !== LabelMode.None) {
-                    const y = this.matrixHeight * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_VERTICAL_MARGIN * 2 + FieldMatrix.BOTTOM_MARGIN
+                    const y = this.scale * this.matrixHeight * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_VERTICAL_MARGIN * 2 + FieldMatrix.BOTTOM_MARGIN
                     const xAxis = pxsim.svg.child(this.elt, "g", { transform: `translate(${0} ${y})` });
                     for (let i = 0; i < this.matrixWidth; i++) {
-                        const x = this.getYAxisWidth() + i * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_HORIZONTAL_MARGIN) + FieldMatrix.CELL_WIDTH / 2 + FieldMatrix.CELL_HORIZONTAL_MARGIN / 2;
+                        const x = this.getYAxisWidth() + this.scale * i * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_HORIZONTAL_MARGIN) + FieldMatrix.CELL_WIDTH / 2 + FieldMatrix.CELL_HORIZONTAL_MARGIN / 2;
                         const lbl = pxsim.svg.child(xAxis, "text", { x, class: "blocklyText" })
                         lbl.textContent = this.getLabel(i, this.xAxisLabel);
                     }
@@ -115,13 +123,13 @@ namespace pxtblockly {
                 if (this.yAxisLabel !== LabelMode.None) {
                     const yAxis = pxsim.svg.child(this.elt, "g", {});
                     for (let i = 0; i < this.matrixHeight; i++) {
-                        const y = i * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_WIDTH / 2 + FieldMatrix.CELL_VERTICAL_MARGIN * 2;
+                        const y = this.scale * i * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_WIDTH / 2 + FieldMatrix.CELL_VERTICAL_MARGIN * 2;
                         const lbl = pxsim.svg.child(yAxis, "text", { x: 0, y, class: "blocklyText" })
                         lbl.textContent = this.getLabel(i, this.yAxisLabel);
                     }
                 }
 
-                this.fieldGroup_.appendChild(this.elt);
+                this.fieldGroup_.replaceChild(this.elt, this.fieldGroup_.firstChild);
             }
         }
 
@@ -155,18 +163,18 @@ namespace pxtblockly {
         }
 
         private createCell(x: number, y: number) {
-            const tx = x * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_HORIZONTAL_MARGIN) + FieldMatrix.CELL_HORIZONTAL_MARGIN + this.getYAxisWidth();
-            const ty = y * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_VERTICAL_MARGIN;
+            const tx = this.scale * x * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_HORIZONTAL_MARGIN) + FieldMatrix.CELL_HORIZONTAL_MARGIN + this.getYAxisWidth();
+            const ty = this.scale * y * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_VERTICAL_MARGIN;
 
             const cellG = pxsim.svg.child(this.elt, "g", { transform: `translate(${tx} ${ty})` }) as SVGGElement;
             const cellRect = pxsim.svg.child(cellG, "rect", {
                 'class': `blocklyLed${this.cellState[x][y] ? 'On' : 'Off'}`,
                 'cursor': 'pointer',
-                width: FieldMatrix.CELL_WIDTH, height: FieldMatrix.CELL_WIDTH,
+                width: this.scale * FieldMatrix.CELL_WIDTH, height: this.scale * FieldMatrix.CELL_WIDTH,
                 fill: this.getColor(x, y),
                 'data-x': x,
                 'data-y': y,
-                rx: FieldMatrix.CELL_CORNER_RADIUS }) as SVGRectElement;
+                rx: Math.max(2, this.scale * FieldMatrix.CELL_CORNER_RADIUS) }) as SVGRectElement;
             this.cells[x][y] = cellRect;
 
             if ((this.sourceBlock_.workspace as any).isFlyout) return;
@@ -260,20 +268,20 @@ namespace pxtblockly {
 
 
             // The height and width must be set by the render function
-            this.size_.height = Number(this.matrixHeight) * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_VERTICAL_MARGIN * 2 + FieldMatrix.BOTTOM_MARGIN + this.getXAxisHeight()
-            this.size_.width = Number(this.matrixWidth) * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_HORIZONTAL_MARGIN) + this.getYAxisWidth();
+            this.size_.height = this.scale * Number(this.matrixHeight) * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_VERTICAL_MARGIN * 2 + FieldMatrix.BOTTOM_MARGIN + this.getXAxisHeight()
+            this.size_.width = this.scale * Number(this.matrixWidth) * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_HORIZONTAL_MARGIN) + this.getYAxisWidth();
         }
 
         // The return value of this function is inserted in the code
         getValue() {
             // getText() returns the value that is set by calls to setValue()
-            let text = removeQuotes(this.getText());
+            let text = removeQuotes(this.value_);
             return `\`\n${FieldMatrix.TAB}${text}\n${FieldMatrix.TAB}\``;
         }
 
         // Restores the block state from the text value of the field
         private restoreStateFromString() {
-            let r = this.getText();
+            let r = this.value_ as string;
             if (r) {
                 const rows = r.split("\n").filter(r => rowRegex.test(r));
 
@@ -330,7 +338,7 @@ namespace pxtblockly {
     const allQuotes = ["'", '"', "`"];
 
     function removeQuotes(str: string) {
-        str = str.trim();
+        str = (str || "").trim();
         const start = str.charAt(0);
         if (start === str.charAt(str.length - 1) && allQuotes.indexOf(start) !== -1) {
             return str.substr(1, str.length - 2).trim();

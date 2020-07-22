@@ -1,0 +1,150 @@
+{
+  "fontName": "fabric-icons",
+  "fontFamilyName": "FabricMDL2Icons",
+  "excludeGlyphs": false,
+  "excludeThirdPartyIcons": false,
+  "chunkSubsets": false,
+  "hashFontFileName": true,
+  "glyphs": [
+    {
+      "name": "PenWorkspace",
+      "unicode": "EDC6"
+    },
+    {
+      "name": "ClosedCaption",
+      "unicode": "EF84"
+    },
+    {
+      "name": "MyMoviesTV",
+      "unicode": "EE6C"
+    },
+    {
+      "name": "SingleBookmark",
+      "unicode": "EDFF"
+    },
+    {
+      "name": "ArrowUpRightMirrored8",
+      "unicode": "EEEF"
+    },
+    {
+      "name": "Code",
+      "unicode": "E943"
+    },
+    {
+      "name": "Robot",
+      "unicode": "E99A"
+    },
+    {
+      "name": "OpenFile",
+      "unicode": "E8E5"
+    },
+    {
+      "name": "ChromeClose",
+      "unicode": "E8BB"
+    },
+    {
+      "name": "Timer",
+      "unicode": "E91E"
+    },
+    {
+      "name": "BrowserScreenShot",
+      "unicode": "EBED"
+    },
+    {
+      "name": "Record2",
+      "unicode": "EA3F"
+    },
+    {
+      "name": "OpenPaneMirrored",
+      "unicode": "EA5B"
+    },
+    {
+      "name": "EditCreate",
+      "unicode": "F3C9"
+    },
+    {
+      "name": "WhiteBoardApp32",
+      "unicode": "F674"
+    },
+    {
+      "name": "CircleShapeSolid",
+      "unicode": "F63C"
+    },
+    {
+      "name": "PictureCenter",
+      "unicode": "F522"
+    },
+    {
+      "name": "RectangleShape",
+      "unicode": "F1A9"
+    },
+    {
+      "name": "DoubleColumn",
+      "unicode": "F1D4"
+    },
+    {
+      "name": "CircleShape",
+      "unicode": "F1A5"
+    },
+    {
+      "name": "ImagePixel",
+      "unicode": "F30C"
+    },
+    {
+      "name": "ArrowTallUpLeft",
+      "unicode": "F2BD"
+    },
+    {
+      "name": "ChevronDown",
+      "unicode": "E70D"
+    },
+    {
+      "name": "ChevronUp",
+      "unicode": "E70E"
+    },
+    {
+      "name": "Add",
+      "unicode": "E710"
+    },
+    {
+      "name": "Settings",
+      "unicode": "E713"
+    },
+    {
+      "name": "Video",
+      "unicode": "E714"
+    },
+    {
+      "name": "Highlight",
+      "unicode": "E7E6"
+    },
+    {
+      "name": "OpenPane",
+      "unicode": "E8A0"
+    },
+    {
+      "name": "Remove",
+      "unicode": "E738"
+    },
+    {
+      "name": "Stop",
+      "unicode": "E71A"
+    },
+    {
+      "name": "Save",
+      "unicode": "E74E"
+    },
+    {
+      "name": "Contact",
+      "unicode": "E77B"
+    },
+    {
+      "name": "EraseTool",
+      "unicode": "E75C"
+    },
+    {
+      "name": "OfficeChat",
+      "unicode": "F70F"
+    }
+  ]
+}

@@ -4,8 +4,10 @@ The performance counters are a generic PXT feature, but are currently mostly use
 To enable profiling of a given function, you need to call `control.enablePerfCounter("my perf counter")`
 anywhere in that function.
 The compiler will detect the call and instrument the function.
+If you skip the name of the counter, the name and location of the function will be used.
 
 To enable instrumentation append `?compiler=profile` before `#editor` in the address bar.
+When building from command line, set environment variable `PXT_COMPILE_SWITCHES=profile`.
 
 Now, run your code and look at JavaScript console. You should see output similar to this
 every second:
@@ -43,6 +45,17 @@ Typical timing procedure is to:
 * reduce randomness by setting `RANDOM_SEED = 42` in `namespace userconfig`
 * reload editor; run the game
 * look at the median of medians in the last perf counter output
+
+### Profiling on hardware
+
+It's currently only supported on STM32F4.
+You enable it with `?compiler=profile`, as above.
+
+There will be no automatic dumping of profile counters, but you can use `control.dmesgProfileCounters()`
+which will dump them to DMESG buffer (you can fit maybe 1 or 2 dumps in the buffer).
+Then run `pxt hiddmesg`, while your device is connected over USB, which will show the profile on the console.
+If you have a hardware debugger, you can also run `pxt dmesg`.
+The format is simpler than in JavaScript - it shows the number of calls, total time in microseconds, and the counter name.
 
 ## Profiling memory
 

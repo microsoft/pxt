@@ -228,13 +228,13 @@ namespace pxtblockly {
          * refresh the text to get back into a valid state.
          **/
         protected refreshText() {
-            this.setText(this.getText());
             this.forceRerender();
         }
 
         onHtmlInputChange_(e: any) {
             super.onHtmlInputChange_(e);
             Blockly.DropDownDiv.hideWithoutAnimation();
+            (this as any).htmlInput_.focus();
         }
 
         onFinishEditing_(text: string) {
@@ -364,12 +364,14 @@ namespace pxtblockly {
 
         private updateColor() {
             if (this.sourceBlock_.parentBlock_ && (this.sourceBlock_.isShadow() || hasOnlyOneField(this.sourceBlock_))) {
-                this.primaryColour = this.sourceBlock_.parentBlock_.getColour();
-                this.borderColour = this.sourceBlock_.parentBlock_.getColourTertiary();
+                let b = this.sourceBlock_.parentBlock_ as Blockly.BlockSvg;
+                this.primaryColour = b.getColour();
+                this.borderColour = b.getColourTertiary();
             }
             else {
-                this.primaryColour = this.sourceBlock_.getColourTertiary();
-                this.borderColour = this.sourceBlock_.getColourTertiary();
+                let b = this.sourceBlock_ as Blockly.BlockSvg;
+                this.primaryColour = b.getColourTertiary();
+                this.borderColour = b.getColourTertiary();
             }
         }
 
@@ -526,57 +528,57 @@ namespace pxtblockly {
         private prepareNotes() {
             if (!FieldNote.Notes) {
                 FieldNote.Notes = {
-                    28: { name: lf("C"), prefixedName: lf("Low C"), freq: 131 },
+                    28: { name: lf("{id:note}C"), prefixedName: lf("Low C"), freq: 131 },
                     29: { name: lf("C#"), prefixedName: lf("Low C#"), freq: 139 },
-                    30: { name: lf("D"), prefixedName: lf("Low D"), freq: 147 },
+                    30: { name: lf("{id:note}D"), prefixedName: lf("Low D"), freq: 147 },
                     31: { name: lf("D#"), prefixedName: lf("Low D#"), freq: 156 },
-                    32: { name: lf("E"), prefixedName: lf("Low E"), freq: 165 },
-                    33: { name: lf("F"), prefixedName: lf("Low F"), freq: 175 },
+                    32: { name: lf("{id:note}E"), prefixedName: lf("Low E"), freq: 165 },
+                    33: { name: lf("{id:note}F"), prefixedName: lf("Low F"), freq: 175 },
                     34: { name: lf("F#"), prefixedName: lf("Low F#"), freq: 185 },
-                    35: { name: lf("G"), prefixedName: lf("Low G"), freq: 196 },
+                    35: { name: lf("{id:note}G"), prefixedName: lf("Low G"), freq: 196 },
                     36: { name: lf("G#"), prefixedName: lf("Low G#"), freq: 208 },
-                    37: { name: lf("A"), prefixedName: lf("Low A"), freq: 220 },
+                    37: { name: lf("{id:note}A"), prefixedName: lf("Low A"), freq: 220 },
                     38: { name: lf("A#"), prefixedName: lf("Low A#"), freq: 233 },
-                    39: { name: lf("B"), prefixedName: lf("Low B"), freq: 247 },
+                    39: { name: lf("{id:note}B"), prefixedName: lf("Low B"), freq: 247 },
 
-                    40: { name: lf("C"), prefixedName: lf("Middle C"), freq: 262 },
+                    40: { name: lf("{id:note}C"), prefixedName: lf("Middle C"), freq: 262 },
                     41: { name: lf("C#"), prefixedName: lf("Middle C#"), freq: 277 },
-                    42: { name: lf("D"), prefixedName: lf("Middle D"), freq: 294 },
+                    42: { name: lf("{id:note}D"), prefixedName: lf("Middle D"), freq: 294 },
                     43: { name: lf("D#"), prefixedName: lf("Middle D#"), freq: 311 },
-                    44: { name: lf("E"), prefixedName: lf("Middle E"), freq: 330 },
-                    45: { name: lf("F"), prefixedName: lf("Middle F"), freq: 349 },
+                    44: { name: lf("{id:note}E"), prefixedName: lf("Middle E"), freq: 330 },
+                    45: { name: lf("{id:note}F"), prefixedName: lf("Middle F"), freq: 349 },
                     46: { name: lf("F#"), prefixedName: lf("Middle F#"), freq: 370 },
-                    47: { name: lf("G"), prefixedName: lf("Middle G"), freq: 392 },
+                    47: { name: lf("{id:note}G"), prefixedName: lf("Middle G"), freq: 392 },
                     48: { name: lf("G#"), prefixedName: lf("Middle G#"), freq: 415 },
-                    49: { name: lf("A"), prefixedName: lf("Middle A"), freq: 440 },
+                    49: { name: lf("{id:note}A"), prefixedName: lf("Middle A"), freq: 440 },
                     50: { name: lf("A#"), prefixedName: lf("Middle A#"), freq: 466 },
-                    51: { name: lf("B"), prefixedName: lf("Middle B"), freq: 494 },
+                    51: { name: lf("{id:note}B"), prefixedName: lf("Middle B"), freq: 494 },
 
-                    52: { name: lf("C"), prefixedName: lf("Tenor C"), altPrefixedName: lf("High C"), freq: 523 },
+                    52: { name: lf("{id:note}C"), prefixedName: lf("Tenor C"), altPrefixedName: lf("High C"), freq: 523 },
                     53: { name: lf("C#"), prefixedName: lf("Tenor C#"), altPrefixedName: lf("High C#"), freq: 554 },
-                    54: { name: lf("D"), prefixedName: lf("Tenor D"), altPrefixedName: lf("High D"), freq: 587 },
+                    54: { name: lf("{id:note}D"), prefixedName: lf("Tenor D"), altPrefixedName: lf("High D"), freq: 587 },
                     55: { name: lf("D#"), prefixedName: lf("Tenor D#"), altPrefixedName: lf("High D#"), freq: 622 },
-                    56: { name: lf("E"), prefixedName: lf("Tenor E"), altPrefixedName: lf("High E"), freq: 659 },
-                    57: { name: lf("F"), prefixedName: lf("Tenor F"), altPrefixedName: lf("High F"), freq: 698 },
+                    56: { name: lf("{id:note}E"), prefixedName: lf("Tenor E"), altPrefixedName: lf("High E"), freq: 659 },
+                    57: { name: lf("{id:note}F"), prefixedName: lf("Tenor F"), altPrefixedName: lf("High F"), freq: 698 },
                     58: { name: lf("F#"), prefixedName: lf("Tenor F#"), altPrefixedName: lf("High F#"), freq: 740 },
-                    59: { name: lf("G"), prefixedName: lf("Tenor G"), altPrefixedName: lf("High G"), freq: 784 },
+                    59: { name: lf("{id:note}G"), prefixedName: lf("Tenor G"), altPrefixedName: lf("High G"), freq: 784 },
                     60: { name: lf("G#"), prefixedName: lf("Tenor G#"), altPrefixedName: lf("High G#"), freq: 831 },
-                    61: { name: lf("A"), prefixedName: lf("Tenor A"), altPrefixedName: lf("High A"), freq: 880 },
+                    61: { name: lf("{id:note}A"), prefixedName: lf("Tenor A"), altPrefixedName: lf("High A"), freq: 880 },
                     62: { name: lf("A#"), prefixedName: lf("Tenor A#"), altPrefixedName: lf("High A#"), freq: 932 },
-                    63: { name: lf("B"), prefixedName: lf("Tenor B"), altPrefixedName: lf("High B"), freq: 988 },
+                    63: { name: lf("{id:note}B"), prefixedName: lf("Tenor B"), altPrefixedName: lf("High B"), freq: 988 },
 
-                    64: { name: lf("C"), prefixedName: lf("High C"), freq: 1046 },
+                    64: { name: lf("{id:note}C"), prefixedName: lf("High C"), freq: 1046 },
                     65: { name: lf("C#"), prefixedName: lf("High C#"), freq: 1109 },
-                    66: { name: lf("D"), prefixedName: lf("High D"), freq: 1175 },
+                    66: { name: lf("{id:note}D"), prefixedName: lf("High D"), freq: 1175 },
                     67: { name: lf("D#"), prefixedName: lf("High D#"), freq: 1245 },
-                    68: { name: lf("E"), prefixedName: lf("High E"), freq: 1319 },
-                    69: { name: lf("F"), prefixedName: lf("High F"), freq: 1397 },
+                    68: { name: lf("{id:note}E"), prefixedName: lf("High E"), freq: 1319 },
+                    69: { name: lf("{id:note}F"), prefixedName: lf("High F"), freq: 1397 },
                     70: { name: lf("F#"), prefixedName: lf("High F#"), freq: 1478 },
-                    71: { name: lf("G"), prefixedName: lf("High G"), freq: 1568 },
+                    71: { name: lf("{id:note}G"), prefixedName: lf("High G"), freq: 1568 },
                     72: { name: lf("G#"), prefixedName: lf("High G#"), freq: 1661 },
-                    73: { name: lf("A"), prefixedName: lf("High A"), freq: 1760 },
+                    73: { name: lf("{id:note}A"), prefixedName: lf("High A"), freq: 1760 },
                     74: { name: lf("A#"), prefixedName: lf("High A#"), freq: 1865 },
-                    75: { name: lf("B"), prefixedName: lf("High B"), freq: 1976 }
+                    75: { name: lf("{id:note}B"), prefixedName: lf("High B"), freq: 1976 }
                 }
             }
         }

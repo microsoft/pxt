@@ -221,7 +221,7 @@ s.pc = -1;
         }
         writeRaw(`
 while (true) {
-if (yieldSteps-- < 0 && maybeYield(s, step, r0)) return null;
+if (yieldSteps-- < 0 && maybeYield(s, step, r0) || runtime !== pxsim.runtime) return null;
 switch (step) {
   case 0:
 `)
@@ -306,8 +306,6 @@ switch (step) {
         if (proc.isRoot)
             writeRaw(`${proc.label()}.continuations = [ ${asyncContinuations.join(",")} ]`)
 
-        writeRaw(`${proc.label()}.info = ${JSON.stringify(info)}`)
-
         writeRaw(fnctor(proc.label() + "_mk", proc.label(), maxStack, Object.keys(localsCache)))
         writeRaw(hexlits)
 
@@ -339,19 +337,26 @@ function ${id}(s) {
             let id = s.breakpointInfo.id
             let lbl: number;
             write(`s.lastBrkId = ${id};`)
-            if (bin.options.trace) {
+
+            if (bin.options.breakpoints) {
+                lbl = ++lblIdx
+                let brkCall = `return breakpoint(s, ${lbl}, ${id}, r0);`
+                if (s.breakpointInfo.isDebuggerStmt) {
+                    write(brkCall)
+                }
+                else {
+                    write(`if ((breakpoints[0] && isBreakFrame(s)) || breakpoints[${id}]) ${brkCall}`)
+                    if (bin.options.trace) {
+                        write(`else return trace(${id}, s, ${lbl}, ${proc.label()}.info);`)
+                    }
+                }
+            }
+            else if (bin.options.trace) {
                 lbl = ++lblIdx
                 write(`return trace(${id}, s, ${lbl}, ${proc.label()}.info);`)
             }
             else {
-                if (!bin.options.breakpoints)
-                    return;
-                lbl = ++lblIdx
-                let brkCall = `return breakpoint(s, ${lbl}, ${id}, r0);`
-                if (s.breakpointInfo.isDebuggerStmt)
-                    write(brkCall)
-                else
-                    write(`if ((breakpoints[0] && isBreakFrame(s)) || breakpoints[${id}]) ${brkCall}`)
+                return;
             }
             writeRaw(`  case ${lbl}:`)
         }
@@ -612,6 +617,10 @@ function ${id}(s) {
             })
 
             let callIt = `s.pc = ${lblId}; return ${frameRef};`
+
+            if (procid.callLocationIndex != null) {
+                callIt = `s.callLocIdx = ${procid.callLocationIndex}; ${callIt}`
+            }
 
             if (procid.ifaceIndex != null) {
                 U.assert(callproc == null)

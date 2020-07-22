@@ -19,7 +19,13 @@ interface Variable {
     children?: Variable[];
 }
 
-interface DebuggerVariablesProps  {
+interface PreviewState {
+    id: number;
+    top: number;
+    left: number;
+}
+
+interface DebuggerVariablesProps {
     apis: pxt.Map<pxtc.SymbolInfo>;
     sequence: number;
     breakpoint?: pxsim.DebuggerBreakpointMessage;
@@ -34,6 +40,8 @@ interface DebuggerVariablesState {
     renderedSequence?: number;
 
     frozen?: boolean;
+
+    preview: PreviewState | null;
 }
 
 export class DebuggerVariables extends data.Component<DebuggerVariablesProps, DebuggerVariablesState> {
@@ -45,7 +53,8 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                 variables: []
             },
             stackFrames: [],
-            nextID: 0
+            nextID: 0,
+            preview: null
         };
 
     }
@@ -56,47 +65,92 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                 title: this.state.globalFrame.title,
                 variables: []
             },
-            stackFrames: []
+            stackFrames: [],
+            preview: null
         });
     }
 
     update(frozen = false) {
-        this.setState({ frozen });
+        this.setState({ frozen, preview: frozen ? null : this.state.preview });
     }
 
     componentDidUpdate(prevProps: DebuggerVariablesProps) {
         if (this.props.breakpoint) {
             if (this.props.sequence != this.state.renderedSequence) {
-                this.updateVariables(this.props.breakpoint.globals, this.props.breakpoint.stackframes, this.props.filters);
+                this.updateVariables(this.props.breakpoint, this.props.filters);
             }
         }
         else if (!this.state.frozen) {
-            this.setState({ frozen: true });
+            this.update(true);
         }
     }
 
     renderCore() {
-        const { globalFrame, stackFrames, frozen } = this.state;
+        const { globalFrame, stackFrames, frozen, preview } = this.state;
+        const { activeFrame, breakpoint } = this.props;
         const variableTableHeader = lf("Variables");
         let variables = globalFrame.variables;
 
         // Add in the local variables.
         // TODO: Handle callstack
-        if (stackFrames && stackFrames.length && this.props.activeFrame !== undefined) {
-            variables = stackFrames[this.props.activeFrame].variables.concat(variables);
+        if (stackFrames && stackFrames.length && activeFrame !== undefined) {
+            variables = stackFrames[activeFrame].variables.concat(variables);
         }
 
-        return <DebuggerTable header={variableTableHeader} frozen={frozen}>
-            {this.renderVars(variables)}
-        </DebuggerTable>
+        let placeholderText: string;
+
+        if (frozen) {
+            placeholderText = lf("Code is running...");
+        }
+        else if (!variables.length && !breakpoint?.exceptionMessage) {
+            placeholderText = lf("No variables to show");
+        }
+
+        const tableRows = placeholderText ? [] : this.renderVars(variables);
+
+        if (breakpoint?.exceptionMessage && !frozen) {
+            tableRows.unshift(<DebuggerTableRow
+                leftText={lf("Exception:")}
+                leftClass="exception"
+                key="exception-message"
+                rightText={truncateLength(breakpoint.exceptionMessage)}
+                rightTitle={breakpoint.exceptionMessage}
+            />);
+        }
+
+        const previewVar = this.getVariableById(preview?.id);
+        const previewLabel = previewVar && lf("Current value for '{0}'", previewVar.name);
+
+        return <div>
+            <DebuggerTable header={variableTableHeader} placeholderText={placeholderText}>
+                {tableRows}
+            </DebuggerTable>
+            { preview &&
+                <div id="debugger-preview"
+                    role="tooltip"
+                    className="debugger-preview"
+                    ref={this.handlePreviewRef}
+                    tabIndex={0}
+                    aria-label={previewLabel}
+                    style={{
+                        top: `${preview.top}px`,
+                        left: `${preview.left}px`
+                    }}>
+                        {renderValue(previewVar.value)}
+                    </div>
+            }
+        </div>
     }
 
     renderVars(vars: Variable[], depth = 0, result: JSX.Element[] = []) {
+        const previewed = this.state.preview?.id;
+
         vars.forEach(varInfo => {
             const valueString = renderValue(varInfo.value);
             const typeString = variableType(varInfo);
 
             result.push(<DebuggerTableRow key={varInfo.id}
+                describedBy={varInfo.id === previewed ? "debugger-preview" : undefined}
                 refID={varInfo.id}
                 icon={(varInfo.value && varInfo.value.hasFields) ? (varInfo.children ? "down triangle" : "right triangle") : undefined}
                 leftText={varInfo.name + ":"}
@@ -106,6 +160,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                 rightTitle={shouldShowValueOnHover(typeString) ? valueString : undefined}
                 rightClass={typeString}
                 onClick={this.handleComponentClick}
+                onValueClick={this.handleValueClick}
                 depth={depth}
             />)
 
@@ -116,8 +171,12 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         return result;
     }
 
-    updateVariables(globals: pxsim.Variables, stackFrames: pxsim.StackFrameInfo[], filters?: string[]) {
-        if (!globals) {
+    updateVariables(
+        breakpoint: pxsim.DebuggerBreakpointMessage,
+        filters?: string[]
+    ) {
+        const { globals, environmentGlobals, stackframes } = breakpoint;
+        if (!globals && !environmentGlobals) {
             // freeze the ui
             this.update(true)
             return;
@@ -129,14 +188,17 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         if (filters) {
             updatedGlobals.variables = updatedGlobals.variables.filter(v => filters.indexOf(v.name) !== -1)
         }
+        // inject unfiltered environment variables
+        if (environmentGlobals)
+            updatedGlobals.variables = updatedGlobals.variables.concat(variablesToVariableList(environmentGlobals));
 
         assignVarIds(updatedGlobals.variables);
 
         let updatedFrames: ScopeVariables[];
-        if (stackFrames) {
+        if (stackframes) {
             const oldFrames = this.state.stackFrames;
 
-            updatedFrames = stackFrames.map((sf, index) => {
+            updatedFrames = stackframes.map((sf, index) => {
                 const key = sf.breakpointId + "_" + index;
 
                 for (const frame of oldFrames) {
@@ -177,16 +239,62 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         }
     }
 
+    protected getVariableById(id: number) {
+        if (id === null) return null;
+        for (const v of this.getFullVariableList()) {
+            if (v.id === id) {
+                return v;
+            }
+        }
+        return null;
+    }
+
     protected handleComponentClick = (e: React.SyntheticEvent<HTMLDivElement>, component: DebuggerTableRow) => {
         if (this.state.frozen) return;
 
-        const id = component.props.refID;
+        const variable = this.getVariableById(component.props.refID as number);
 
-        for (const v of this.getFullVariableList()) {
-            if (v.id === id) {
-                this.toggle(v);
-                return;
+        if (variable) {
+            this.toggle(variable);
+
+            if (this.state.preview !== null) {
+                this.setState({
+                    preview: null
+                });
             }
+        }
+    }
+
+    protected handleValueClick = (e: React.SyntheticEvent<HTMLDivElement>, component: DebuggerTableRow) => {
+        if (this.state.frozen) return;
+
+        const id = component.props.refID;
+        const bb = (e.target as HTMLDivElement).getBoundingClientRect();
+        this.setState({
+            preview: {
+                id: id as number,
+                top: bb.top,
+                left: bb.left
+            }
+        });
+    }
+
+    protected handlePreviewRef = (ref: HTMLDivElement) => {
+        if (ref) {
+            const previewed = this.state.preview;
+            ref.focus();
+            ref.addEventListener("blur", () => {
+                if (this.state.preview?.id === previewed.id) {
+                    this.setState({
+                        preview: null
+                    });
+                }
+            });
+            const select = window.getSelection();
+            select.removeAllRanges();
+            const range = document.createRange();
+            range.selectNodeContents(ref);
+            select.addRange(range);
         }
     }
 
@@ -198,7 +306,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
 
         return result;
 
-        function collectVariables(vars: Variable[])  {
+        function collectVariables(vars: Variable[]) {
             vars.forEach(v => {
                 result.push(v);
                 if (v.children) {
@@ -240,8 +348,16 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
     }
 }
 
+function variablesToVariableList(newVars: pxsim.Variables) {
+    const current = Object.keys(newVars).map(varName => ({
+        name: fixVarName(varName),
+        value: newVars[varName]
+    }));
+    return current;
+}
+
 function updateScope(lastScope: ScopeVariables, newVars: pxsim.Variables, params?: Variable[]): ScopeVariables {
-    let current = Object.keys(newVars).map(varName => ({ name: fixVarName(varName), value: newVars[varName] }));
+    let current = variablesToVariableList(newVars);
 
     if (params) {
         current = params.concat(current);

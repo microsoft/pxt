@@ -56,6 +56,10 @@ namespace ts.pxtc.decompiler {
         initializer: string;
     }
 
+    interface DecompilerCallInfo extends pxtc.CallInfo {
+        decompilerBlockAlias?: string;
+    }
+
     const SK = ts.SyntaxKind;
 
     /**
@@ -81,11 +85,12 @@ namespace ts.pxtc.decompiler {
         functionParamIds: pxt.Map<pxt.Map<string>>; // Maps a function name to a map of paramName => paramId
         declaredEnums: pxt.Map<boolean>;
         declaredKinds?: pxt.Map<KindDeclarationInfo>;
-        tileset: pxt.sprite.TileInfo[];
+        tileset: pxt.sprite.legacy.LegacyTileInfo[];
         attrs: (c: pxtc.CallInfo) => pxtc.CommentAttrs;
         compInfo: (c: pxtc.CallInfo) => pxt.blocks.BlockCompileInfo;
         localReporters: PropertyDesc[][]; // A stack of groups of locally scoped argument declarations, to determine whether an argument should decompile as a reporter or a variable
         opts: DecompileBlocksOptions;
+        aliasBlocks: pxt.Map<string>; // A mapping of qualified names to qualified names of blocks that use blockAliasFor
     }
 
     interface KindDeclarationInfo {
@@ -387,7 +392,8 @@ namespace ts.pxtc.decompiler {
             compInfo: compInfo,
             localReporters: [],
             tileset: [],
-            opts: options || {}
+            opts: options || {},
+            aliasBlocks: {}
         };
         const fileText = file.getFullText();
         let output = ""
@@ -398,6 +404,14 @@ namespace ts.pxtc.decompiler {
         const autoDeclarations: [string, ts.Node][] = [];
 
         const getCommentRef = (() => { let currentCommentId = 0; return () => `${currentCommentId++}` })();
+
+        const apis = blocksInfo.apis.byQName;
+        Object.keys(apis).forEach(qName => {
+            const api = apis[qName];
+            if (api.attributes.blockAliasFor && apis[api.attributes.blockAliasFor]) {
+                env.aliasBlocks[api.attributes.blockAliasFor] = api.qName;
+            }
+        });
 
 
         const commentMap = buildCommentMap(file);
@@ -471,7 +485,7 @@ namespace ts.pxtc.decompiler {
                 write(`<variable type="${U.htmlEscape(e.type)}">${U.htmlEscape(e.name)}</variable>`)
             });
             env.tileset.forEach(e => {
-                write(`<variable type="${pxt.sprite.BLOCKLY_TILESET_TYPE}">${pxt.sprite.tileToBlocklyVariable(e)}</variable>`)
+                write(`<variable type="${pxt.sprite.BLOCKLY_TILESET_TYPE}">${pxt.sprite.legacy.tileToBlocklyVariable(e)}</variable>`)
             });
             write("</variables>")
         }
@@ -553,8 +567,8 @@ ${output}</xml>`;
             result.success = false;
         }
 
-        function attrs(callInfo: pxtc.CallInfo): pxtc.CommentAttrs {
-            const blockInfo = blocksInfo.apis.byQName[callInfo.qName];
+        function attrs(callInfo: DecompilerCallInfo): pxtc.CommentAttrs {
+            const blockInfo = blocksInfo.apis.byQName[callInfo.decompilerBlockAlias || callInfo.qName];
             if (blockInfo) {
                 const attributes = blockInfo.attributes;
 
@@ -829,16 +843,18 @@ ${output}</xml>`;
         function emitWorkspaceComment(comment: WorkspaceComment) {
             let maxLineLength = 0;
             const text = formatCommentsForBlocks(comment.comment);
-            const lines = text.split("\n");
-            lines.forEach(line => maxLineLength = Math.max(maxLineLength, line.length));
+            if (text.trim()) {
+                const lines = text.split("\n");
+                lines.forEach(line => maxLineLength = Math.max(maxLineLength, line.length));
 
-            // These are just approximations but they are the best we can do outside the DOM
-            const width = Math.max(Math.min(maxLineLength * 10, maxCommentWidth), minCommentWidth);
-            const height = Math.max(Math.min(lines.length * 40, maxCommentHeight), minCommentHeight);
+                // These are just approximations but they are the best we can do outside the DOM
+                const width = Math.max(Math.min(maxLineLength * 10, maxCommentWidth), minCommentWidth);
+                const height = Math.max(Math.min(lines.length * 40, maxCommentHeight), minCommentHeight);
 
-            write(`<comment h="${height}" w="${width}" data="${U.htmlEscape(comment.refId)}">`)
-            write(U.htmlEscape(text))
-            write(`</comment>`);
+                write(`<comment h="${height}" w="${width}" data="${U.htmlEscape(comment.refId)}">`)
+                write(U.htmlEscape(text))
+                write(`</comment>`);
+            }
         }
 
         function getOutputBlock(n: ts.Node): OutputNode {
@@ -1338,6 +1354,9 @@ ${output}</xml>`;
                         // If the enum declaration made it past the checker then it is emitted elsewhere
                         markCommentsInRange(node, commentMap);
                         return getNext();
+                    case SK.ReturnStatement:
+                        stmt = getReturnStatementBlock(node as ts.ReturnStatement);
+                        break;
                     default:
                         if (next) {
                             error(node, Util.lf("Unsupported statement in block: {0}", SK[node.kind]))
@@ -1541,6 +1560,21 @@ ${output}</xml>`;
             return r;
         }
 
+        function getReturnStatementBlock(node: ts.ReturnStatement): StatementNode {
+            const r = mkStmt(pxtc.TS_RETURN_STATEMENT_TYPE, node);
+            if (node.expression) {
+                r.inputs = [
+                    mkValue("RETURN_VALUE", getOutputBlock(node.expression), numberType)
+                ];
+            }
+            else {
+                r.mutation = {
+                    "no_return_value": "true"
+                };
+            }
+            return r
+        }
+
         function getImageLiteralStatement(node: ts.CallExpression, info: pxtc.CallInfo) {
             let arg = node.arguments[0];
             if (arg.kind != SK.StringLiteral && arg.kind != SK.NoSubstitutionTemplateLiteral) {
@@ -1694,10 +1728,14 @@ ${output}</xml>`;
             }
 
             function checkBooleanCallExpression(n: CallExpression) {
-                const callInfo: pxtc.CallInfo = pxtc.pxtInfo(n.expression).callInfo;
+                const callInfo: pxtc.CallInfo = pxtc.pxtInfo(n).callInfo;
                 if (callInfo) {
                     const api = env.blocks.apis.byQName[callInfo.qName];
                     if (api && api.retType == "boolean") {
+                        return undefined;
+                    }
+                    else if (ts.isIdentifier(n.expression) && env.declaredFunctions[n.expression.text]) {
+                        // User functions have a return type of "any" in blocks so they are safe to decompile
                         return undefined;
                     }
                 }
@@ -1888,7 +1926,7 @@ ${output}</xml>`;
         }
 
         function getCallStatement(node: ts.CallExpression, asExpression: boolean): StatementNode | ExpressionNode {
-            const info: pxtc.CallInfo = pxtc.pxtInfo(node).callInfo
+            const info: DecompilerCallInfo = pxtc.pxtInfo(node).callInfo
             const attributes = attrs(info);
 
             if (info.qName == "Math.pow") {
@@ -1948,7 +1986,15 @@ ${output}</xml>`;
                     const name = getVariableName(node.expression as ts.Identifier);
                     if (env.declaredFunctions[name]) {
                         let r: StatementNode;
-                        r = mkStmt("function_call", node);
+
+                        let isStatement = true;
+
+                        if (info.isExpression) {
+                            const [parent] = getParent(node);
+                            isStatement = parent && parent.kind === SK.ExpressionStatement;
+                        }
+
+                        r = mkStmt(isStatement ? "function_call" : "function_call_output", node);
                         if (info.args.length) {
                             r.mutationChildren = [];
                             r.inputs = [];
@@ -1991,7 +2037,7 @@ ${output}</xml>`;
             }
 
             const args = paramList(info, env.blocks);
-            const api = env.blocks.apis.byQName[info.qName];
+            const api = env.blocks.apis.byQName[info.decompilerBlockAlias || info.qName];
             const comp = pxt.blocks.compileInfo(api);
 
             const r = asExpression ? mkExpr(attributes.blockId, node)
@@ -2433,6 +2479,8 @@ ${output}</xml>`;
                 return checkEnumDeclaration(node as ts.EnumDeclaration, topLevel);
             case SK.ModuleDeclaration:
                 return checkNamespaceDeclaration(node as ts.NamespaceDeclaration);
+            case SK.ReturnStatement:
+                return checkReturnStatement(node as ts.ReturnStatement);
             case SK.BreakStatement:
             case SK.ContinueStatement:
             case SK.DebuggerStatement:
@@ -2595,19 +2643,33 @@ ${output}</xml>`;
         }
 
         function checkCall(n: ts.CallExpression, env: DecompilerEnv, asExpression = false, topLevel = false) {
-            const info: pxtc.CallInfo = pxtc.pxtInfo(n).callInfo;
+            const info: DecompilerCallInfo = pxtc.pxtInfo(n).callInfo;
             if (!info) {
                 return Util.lf("Function call not supported in the blocks");
             }
 
             const attributes = env.attrs(info);
 
+            let userFunction: FunctionDeclaration;
+
+            if (ts.isIdentifier(n.expression)) {
+                userFunction = env.declaredFunctions[n.expression.text];
+            }
+
             if (!asExpression) {
-                if (info.isExpression) {
-                    return Util.lf("No output expressions as statements");
+                if (info.isExpression && !userFunction) {
+                    const alias = env.aliasBlocks[info.qName];
+
+                    if (alias) {
+                        info.decompilerBlockAlias = env.aliasBlocks[info.qName];
+                    }
+                    else {
+                        return Util.lf("No output expressions as statements");
+                    }
                 }
             }
-            else if (info.qName == "Math.pow") {
+
+            if (info.qName == "Math.pow") {
                 return undefined;
             }
             else if (pxt.Util.startsWith(info.qName, "Math.")) {
@@ -2633,17 +2695,13 @@ ${output}</xml>`;
             if (!attributes.blockId || !attributes.block) {
                 const builtin = pxt.blocks.builtinFunctionInfo[info.qName];
                 if (!builtin) {
-                    if (n.expression.kind === SK.Identifier) {
-                        const funcName = (n.expression as ts.Identifier).text;
-                        if (!env.declaredFunctions[funcName]) {
-                            return Util.lf("Call statements must have a valid declared function");
-                        } else if (env.declaredFunctions[funcName].parameters.length !== info.args.length) {
-                            return Util.lf("Function calls in blocks must have the same number of arguments as the function definition");
-                        } else {
-                            return undefined;
-                        }
+                    if (!userFunction) {
+                        return Util.lf("Call statements must have a valid declared function");
+                    } else if (userFunction.parameters.length !== info.args.length) {
+                        return Util.lf("Function calls in blocks must have the same number of arguments as the function definition");
+                    } else {
+                        return undefined;
                     }
-                    return Util.lf("Function call not supported in the blocks");
                 }
                 attributes.blockId = builtin.blockId;
             }
@@ -2937,17 +2995,6 @@ ${output}</xml>`;
                 }
             }
 
-            let fail = false;
-            ts.forEachReturnStatement(n.body, stmt => {
-                if (stmt.expression) {
-                    fail = true;
-                }
-            });
-
-            if (fail) {
-                return Util.lf("Function with return value not supported in blocks")
-            }
-
             return undefined;
         }
 
@@ -2997,6 +3044,31 @@ ${output}</xml>`;
             if (!tilesetCheck) return undefined;
 
             return kindCheck;
+        }
+
+        function checkReturnStatement(n: ts.ReturnStatement) {
+            if (checkIfWithinFunction(n)) {
+                return undefined;
+            }
+            return Util.lf("Return statements can only be used within top-level function declarations");
+
+            function checkIfWithinFunction(n: Node): boolean {
+                const enclosing = ts.getEnclosingBlockScopeContainer(n);
+                if (enclosing) {
+                    switch (enclosing.kind) {
+                        case SK.SourceFile:
+                        case SK.ArrowFunction:
+                        case SK.FunctionExpression:
+                            return false;
+                        case SK.FunctionDeclaration:
+                            return enclosing.parent && enclosing.parent.kind === SK.SourceFile && !checkStatement(enclosing, env, false, true);
+                        default:
+                            return checkIfWithinFunction(enclosing);
+                    }
+                }
+
+                return false;
+            }
         }
     }
 
@@ -3155,20 +3227,6 @@ ${output}</xml>`;
 
     function isDefaultArray(e: Expression) {
         return e.kind === SK.ArrayLiteralExpression && (e as ArrayLiteralExpression).elements.length === 0;
-    }
-
-    function getCallInfo(checker: ts.TypeChecker, node: ts.Node, apiInfo: ApisInfo) {
-        const symb = checker.getSymbolAtLocation(node);
-
-        if (symb) {
-            const qName = checker.getFullyQualifiedName(symb);
-
-            if (qName) {
-                return apiInfo.byQName[qName];
-            }
-        }
-
-        return undefined;
     }
 
     function getObjectBindingProperties(callback: ts.ArrowFunction): [string[], pxt.Map<string>] {
@@ -3678,10 +3736,6 @@ ${output}</xml>`;
                 for (const line of comment.lines) {
                     out += line.trim() + "\n";
                 }
-            }
-
-            if (comment.hasTrailingNewline) {
-                out += "\n";
             }
         }
 

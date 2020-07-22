@@ -5,6 +5,7 @@ namespace pxtblockly {
         public isFieldCustom_ = true;
         protected pythonMode = false;
 
+
         /**
          * Same as parent, but adds a different class to text when disabled
          */
@@ -24,27 +25,24 @@ namespace pxtblockly {
             }
         }
 
-        doValueUpdate_(newValue: string) {
-            super.doValueUpdate_(newValue);
-
-            if (this.pythonMode) this.setPythonText();
-        }
-
         public setPythonEnabled(enabled: boolean) {
             if (enabled === this.pythonMode) return;
 
             this.pythonMode = enabled;
-
-            if (enabled) {
-                this.setPythonText();
-            }
-            else {
-                this.setText(this.getValue());
-            }
+            this.forceRerender();
         }
 
-        protected setPythonText() {
-            this.setText(pxt.Util.lf("<python code>"))
+        getText() {
+            return this.pythonMode ? pxt.Util.lf("<python code>") : this.getValue();
+        }
+
+        applyColour() {
+            if (this.sourceBlock_ && this.constants_.FULL_BLOCK_FIELDS) {
+                if (this.borderRect_) {
+                    this.borderRect_.setAttribute('stroke',
+                        (this.sourceBlock_ as Blockly.BlockSvg).style.colourTertiary);
+                }
+            }
         }
     }
 }

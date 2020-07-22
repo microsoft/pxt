@@ -23,6 +23,11 @@ Projects are kept in the browser's local indexed data store. You can save your p
 
 Read more about [saving](/save) projects.
 
+## Can I restore a previous version of my project?
+
+Yes! Go to the GitHub view and click on ``View commits`` in the [History](/github/history) section. 
+You can review each commit and select to restore your project to that commit.
+
 ## Can I use MakeCode when I'm not connected to the internet? #work-offline
 
 Some MakeCode editors are available as [offline apps](/offline). Also, when MakeCode first loads in the browser, a cached version of MakeCode is stored automatically. If later you want to add an extension to use with your program, you will need to connect again. For more information see the page about using MakeCode [offline](/offline).
@@ -77,6 +82,13 @@ If you want to create your own tutorial, more documentation describing how to do
 ## I am a teacher. Is there anything special I should know?
 
 Yes! We have prepared a list of tips and tricks for teachers. [Check it out](/teachers).
+
+## How do I choose the folder where my downloaded projects are saved?
+
+Most browsers will let you turn on a setting to require the browser to first ask you where you want to save your files before they are downloaded.
+
+* On Microsoft Edge you open the browser menu and select **Settings**. In the "General" settings pane, scroll down to the **Downloads** section. Turn **ON** the "Ask me what to do with each download" setting.
+* In Chrome, you go to the **Settings** item in the browser menu. On the "Settings" page, click on **Advanced** to view more settings. Under the advanced settings find the **Downloads** section. In that section, turn **ON** the "Ask where to save each file before downloading" setting.
 
 ## #specific
 

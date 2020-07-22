@@ -32,7 +32,7 @@ initGlobals();
 // Just needs to exist
 pxt.setAppTarget(util.testAppTarget);
 
-// tests
+// tests files
 const casesDir = path.join(process.cwd(), "tests", "runtime-trace-tests", "cases");
 
 describe("convert between ts<->py ", () => {
@@ -235,14 +235,16 @@ function runNodeJsAsync(nodeArgs: string): Promise<string> {
 }
 
 async function convertTs2Py(tsFile: string): Promise<string> {
-    let pyCode = await util.ts2pyAsync(tsFile)
+    const tsCode = fs.readFileSync(tsFile, "utf8").replace(/\r\n/g, "\n");
+    let pyCode = await util.ts2pyAsync(tsCode, null, false, tsFile)
     const pyFile = path.join(util.replaceFileExtension(tsFile, ".ts.py"));
     writeFileStringSync(pyFile, pyCode)
     return pyFile
 }
 
 async function convertPy2Ts(pyFile: string): Promise<string> {
-    let tsCode = await util.py2tsAsync(pyFile)
+    const pyCode = fs.readFileSync(pyFile, "utf8").replace(/\r\n/g, "\n");
+    let tsCode = await util.py2tsAsync(pyCode, null, false, true, pyFile)
     const tsFile = path.join(util.replaceFileExtension(pyFile, ".py.ts"));
     writeFileStringSync(tsFile, tsCode.ts)
     return tsFile
@@ -257,7 +259,7 @@ function emitJsFiles(prog: ts.Program, file?: ts.SourceFile): string[] {
     return jsFiles
 }
 
-function compileTsToJs(filename: string): ts.Program {
+function compileTsToJs(files: string[]): ts.Program {
     let cOpts: ts.CompilerOptions = {
         noEmitOnError: true,
         noImplicitAny: true,
@@ -265,7 +267,7 @@ function compileTsToJs(filename: string): ts.Program {
         module: ts.ModuleKind.ES2015,
         noLib: true,
         skipLibCheck: true,
-        types: []
+        types: [],
     }
     // TODO: it'd be great to include the python helper fns so we can cover
     // more scenarios however this doesn't work easily since we use custom methods
@@ -273,11 +275,11 @@ function compileTsToJs(filename: string): ts.Program {
     // an implementation for these tests
     // const pyHelpers = ["pxt-python-helpers.ts"]
     //     .map(f => path.resolve("libs", "pxt-python", f), 'utf8')
-    let files = [filename, path.resolve("pxtcompiler/ext-typescript/lib/lib.d.ts")/*, ...pyHelpers*/]
-    return ts.pxtc.plainTscCompileFiles(files, cOpts)
+    let allFiles = [...files, path.resolve("pxtcompiler/ext-typescript/lib/lib.d.ts")/*, ...pyHelpers*/]
+    return ts.pxtc.plainTscCompileFiles(allFiles, cOpts)
 }
 async function compileAndRunTs(filename: string): Promise<string> {
-    let prog = compileTsToJs(filename)
+    let prog = compileTsToJs([filename])
     let diagnostics = ts.pxtc.getProgramDiagnostics(prog)
     let diagMsgs = diagnostics.map(ts.pxtc.getDiagnosticString)
     if (diagMsgs.length)

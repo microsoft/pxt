@@ -7,6 +7,9 @@ import * as sui from "./sui";
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 export interface SimulatorProps extends ISettingsProps {
+    collapsed?: boolean;
+    simSerialActive?: boolean;
+    devSerialActive?: boolean;
 }
 
 export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
@@ -20,12 +23,14 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         if (pxt.BrowserUtils.isIOS())
             this.props.parent.setMute(true);
 
-        this.toggleTrace = this.toggleTrace.bind(this);
         this.toggleMute = this.toggleMute.bind(this);
         this.restartSimulator = this.restartSimulator.bind(this);
         this.openInstructions = this.openInstructions.bind(this);
         this.startStopSimulator = this.startStopSimulator.bind(this);
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
+        this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
+        this.openDeviceSimulator = this.openDeviceSimulator.bind(this);
+        this.openDeviceSerial = this.openDeviceSerial.bind(this);
         this.takeScreenshot = this.takeScreenshot.bind(this);
         this.toggleDebug = this.toggleDebug.bind(this);
     }
@@ -45,11 +50,6 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         this.props.parent.restartSimulator();
     }
 
-    toggleTrace() {
-        pxt.tickEvent("simulator.trace", undefined, { interactiveConsent: true });
-        this.props.parent.toggleTrace();
-    }
-
     toggleDebug() {
         pxt.tickEvent("simulator.debug", undefined, { interactiveConsent: true });
         this.props.parent.toggleDebugging();
@@ -65,13 +65,32 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         this.props.parent.toggleSimulatorFullscreen();
     }
 
+    toggleSimulatorCollapse() {
+        pxt.tickEvent("simulator.toggleCollapse", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
+        this.props.parent.toggleSimulatorCollapse();
+    }
+
+    openDeviceSerial() {
+        pxt.tickEvent("simulator.fullscreen.serial.simulator", { }, { interactiveConsent: true });
+        this.props.parent.toggleSimulatorFullscreen();
+        this.props.parent.openDeviceSerial();
+    }
+
+    openDeviceSimulator() {
+        pxt.tickEvent("simulator.fullscreen.serial.device", { }, { interactiveConsent: true });
+        this.props.parent.toggleSimulatorFullscreen();
+        this.props.parent.openSimSerial();
+    }
+
     takeScreenshot() {
         pxt.tickEvent("simulator.takescreenshot", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
         this.props.parent.downloadScreenshotAsync().done();
     }
 
     renderCore() {
-        const parentState = this.props.parent.state;
+        const { collapsed, devSerialActive, parent, simSerialActive } = this.props;
+
+        const parentState = parent.state;
         if (!parentState.currFile || parentState.home) return <div />
 
         const targetTheme = pxt.appTarget.appTheme;
@@ -89,11 +108,8 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
         const run = true;
         const restart = run && !simOpts.hideRestart;
-        const trace = !!targetTheme.enableTrace;
         // We hide debug button in Monaco because it's not implemented yet.
         const debug = targetTheme.debugger && !inTutorial && !pxt.BrowserUtils.isIE();
-        const tracing = this.props.parent.state.tracing;
-        const traceTooltip = tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo")
         const debugging = parentState.debugging;
         // we need to escape full screen from a tutorial!
         const fullscreen = run && !simOpts.hideFullscreen && !sandbox;
@@ -103,6 +119,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const screenshotClass = !!parentState.screenshoting ? "loading" : "";
         const debugBtnEnabled = !isStarting && !isSimulatorPending;
         const runControlsEnabled = !debugging && !isStarting && !isSimulatorPending;
+        const collapse = !targetTheme.bigRunButton;
 
         const makeTooltip = lf("Open assembly instructions");
         const restartTooltip = lf("Restart the simulator");
@@ -111,18 +128,42 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const fullscreenTooltip = isFullscreen ? lf("Exit fullscreen mode") : lf("Launch in fullscreen");
         const muteTooltip = isMuted ? lf("Unmute audio") : lf("Mute audio");
         const screenshotTooltip = targetTheme.simScreenshotKey ? lf("Take Screenshot (shortcut {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
+        const collapseIconTooltip = collapsed ? lf("Show the simulator") : lf("Hide the simulator");
+        const simSerialTooltip = lf("Open simulator console");
+        const devSerialTooltip = lf("Open device console");
+
+        const showSerialEditorSection = isFullscreen && (simSerialActive || devSerialActive);
 
         return <aside className={"ui item grid centered simtoolbar" + (sandbox ? "" : " portrait ")} role="complementary" aria-label={lf("Simulator toolbar")}>
             <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
                 {make && <sui.Button disabled={debugging} icon='configure' className="secondary" title={makeTooltip} onClick={this.openInstructions} />}
-                {run && !targetTheme.bigRunButton && <PlayButton parent={this.props.parent} simState={parentState.simState} debugging={parentState.debugging} />}
+                {run && !targetTheme.bigRunButton && <PlayButton parent={parent} simState={parentState.simState} debugging={parentState.debugging} />}
+                {fullscreen && <sui.Button key='fullscreenbtn' className="fullscreen-button tablet only hidefullscreen" icon="xicon fullscreen" title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} />}
                 {restart && <sui.Button disabled={!runControlsEnabled} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} />}
                 {run && debug && <sui.Button disabled={!debugBtnEnabled} key='debugbtn' className={`debug-button ${debugging ? "orange" : ""}`} icon="icon bug" title={debugTooltip} onClick={this.toggleDebug} />}
-                {trace && <sui.Button key='trace' className={`trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={this.toggleTrace} />}
+                {collapse && <sui.Button
+                    className={`expand-button portrait only editortools-btn hidefullscreen`}
+                    icon={`${collapsed ? 'play' : 'stop'}`}
+                    title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse}
+                />}
             </div>
             {!isHeadless && <div className={`ui icon tiny buttons computer only`} style={{ padding: "0" }}>
                 {audio && <sui.Button key='mutebtn' className={`mute-button ${isMuted ? 'red' : ''}`} icon={`${isMuted ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={this.toggleMute} />}
-                {simOpts.keymap && <sui.Button key='keymap' className="keymap-button" icon="keyboard" title={keymapTooltip} onClick={this.props.parent.toggleKeymap} />}
+                {simOpts.keymap && <sui.Button key='keymap' className="keymap-button" icon="keyboard" title={keymapTooltip} onClick={parent.toggleKeymap} />}
+            </div>}
+            {showSerialEditorSection && <div className={`ui item tiny buttons full-screen-console`}>
+                {simSerialActive && <sui.Button
+                    icon="list"
+                    className="purple"
+                    title={simSerialTooltip}
+                    onClick={this.openDeviceSimulator}
+                />}
+                {devSerialActive && <sui.Button
+                    icon="usb"
+                    className="purple"
+                    title={devSerialTooltip}
+                    onClick={this.openDeviceSerial}
+                />}
             </div>}
             {!isHeadless && <div className={`ui icon tiny buttons computer only`} style={{ padding: "0" }}>
                 {screenshot && <sui.Button disabled={!isRunning} key='screenshotbtn' className={`screenshot-button ${screenshotClass}`} icon={`icon camera left`} title={screenshotTooltip} onClick={this.takeScreenshot} />}

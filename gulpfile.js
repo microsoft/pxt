@@ -19,7 +19,14 @@ const clean = () => rimraf("built").then(() => rimraf("temp"));
 const update = () => exec("git pull", true).then(() => exec("npm install", true))
 
 
+/** onlineline */
+const onlinelearning = () => {
+    const tasks = ["schedule", "projects"].map(fn =>
+        () => exec(`node node_modules/typescript/bin/tsc ./docs/static/online-learning/${fn}.ts`)
+    );
 
+    gulp.watch("./docs/static/online-learning/*.ts", gulp.series(...tasks));
+};
 /********************************************************
                     TypeScript build
 *********************************************************/
@@ -41,60 +48,63 @@ const cli = () => compileTsProject("cli", "built", true);
 const webapp = () => compileTsProject("webapp", "built/webapp", true);
 
 const pxtblockly = () => gulp.src([
-        "webapp/public/blockly/blockly_compressed.js",
-        "webapp/public/blockly/blocks_compressed.js",
-        "webapp/public/blockly/msg/js/en.js",
-        "built/pxtblocks.js"
-    ])
+    "webapp/public/blockly/blockly_compressed.js",
+    "webapp/public/blockly/blocks_compressed.js",
+    "webapp/public/blockly/msg/js/en.js",
+    "built/pxtblocks.js"
+])
     .pipe(concat("pxtblockly.js"))
     .pipe(gulp.dest("built"));
 
 const pxtapp = () => gulp.src([
-        "node_modules/lzma/src/lzma_worker-min.js",
-        "built/pxtlib.js",
-        "built/pxtwinrt.js",
-        "built/pxteditor.js",
-        "built/pxtsim.js"
-    ])
+    "node_modules/lzma/src/lzma_worker-min.js",
+    "node_modules/dompurify/dist/purify.min.js",
+    "built/pxtlib.js",
+    "built/pxtwinrt.js",
+    "built/pxteditor.js",
+    "built/pxtsim.js"
+])
     .pipe(concat("pxtapp.js"))
     .pipe(gulp.dest("built/web"));
 
 const pxtworker = () => gulp.src([
-        "pxtcompiler/ext-typescript/lib/typescript.js",
-        "node_modules/fuse.js/dist/fuse.min.js",
-        "node_modules/lzma/src/lzma_worker-min.js",
-        "built/pxtlib.js",
-        "built/pxtcompiler.js",
-        "built/pxtpy.js"
-    ])
+    "pxtcompiler/ext-typescript/lib/typescript.js",
+    "node_modules/fuse.js/dist/fuse.min.js",
+    "node_modules/lzma/src/lzma_worker-min.js",
+    "node_modules/dompurify/dist/purify.min.js",
+    "built/pxtlib.js",
+    "built/pxtcompiler.js",
+    "built/pxtpy.js"
+])
     .pipe(concat("pxtworker.js"))
-    .pipe(header(`"use strict";\n`,))
+    .pipe(header(`"use strict";\n`))
     .pipe(gulp.dest("built/web"));
 
 const pxtembed = () => gulp.src([
-        "pxtcompiler/ext-typescript/lib/typescript.js",
-        "node_modules/lzma/src/lzma_worker-min.js",
-        "built/pxtlib.js",
-        "built/pxtcompiler.js",
-        "built/pxtpy.js",
-        "built/pxtblockly.js",
-        "built/pxteditor.js",
-        "built/pxtsim.js",
-        "built/pxtrunner.js"
-    ])
+    "pxtcompiler/ext-typescript/lib/typescript.js",
+    "node_modules/lzma/src/lzma_worker-min.js",
+    "node_modules/dompurify/dist/purify.min.js",
+    "built/pxtlib.js",
+    "built/pxtcompiler.js",
+    "built/pxtpy.js",
+    "built/pxtblockly.js",
+    "built/pxteditor.js",
+    "built/pxtsim.js",
+    "built/pxtrunner.js"
+])
     .pipe(concat("pxtembed.js"))
     .pipe(gulp.dest("built/web"));
 
 const pxtjs = () => gulp.src([
-        "pxtcompiler/ext-typescript/lib/typescript.js",
-        "built/pxtlib.js",
-        "built/pxtcompiler.js",
-        "built/pxtpy.js",
-        "built/pxtsim.js",
-        "built/cli.js"
-    ])
+    "pxtcompiler/ext-typescript/lib/typescript.js",
+    "built/pxtlib.js",
+    "built/pxtcompiler.js",
+    "built/pxtpy.js",
+    "built/pxtsim.js",
+    "built/cli.js"
+])
     .pipe(concat("pxt.js"))
-    .pipe(header( `
+    .pipe(header(`
         "use strict";
         // make sure TypeScript doesn't overwrite our module.exports
         global.savedModuleExports = module.exports;
@@ -120,7 +130,9 @@ function initWatch() {
         gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
         targetjs,
         webapp,
-        browserifyWebapp
+        browserifyWebapp,
+        browserifyAssetEditor,
+        gulp.parallel(semanticjs, copyJquery, copyWebapp, copySemanticFonts, copyMonaco)
     ];
 
     gulp.watch("./pxtlib/**/*", gulp.series(...tasks));
@@ -130,7 +142,7 @@ function initWatch() {
     gulp.watch("./backendutils/**/*", gulp.series(backendutils, ...tasks.slice(2)));
 
     gulp.watch("./pxtpy/**/*", gulp.series(pxtpy, ...tasks.slice(3)));
-    gulp.watch("./pxtblockly/**/*", gulp.series(gulp.series(copyBlockly, pxtblocks, pxtblockly), ...tasks.slice(3)));
+    gulp.watch("./pxtblocks/**/*", gulp.series(gulp.series(copyBlockly, pxtblocks, pxtblockly), ...tasks.slice(3)));
 
     gulp.watch("./pxteditor/**/*", gulp.series(pxteditor, ...tasks.slice(4)));
 
@@ -138,7 +150,7 @@ function initWatch() {
     gulp.watch("./pxtwinrt/**/*", gulp.series(pxtwinrt, ...tasks.slice(5)));
     gulp.watch("./cli/**/*", gulp.series(cli, ...tasks.slice(5)));
 
-    gulp.watch("./webapp/src/**/*", gulp.series(updatestrings, webapp, browserifyWebapp));
+    gulp.watch("./webapp/src/**/*", gulp.series(updatestrings, webapp, browserifyWebapp, browserifyAssetEditor));
 
     gulp.watch(["./theme/**/*.less", "./theme/**/*.overrides", "./theme/**/*.variables", "./svgicons/**/*.svg"], gulp.parallel(buildcss, buildSVGIcons))
 
@@ -175,8 +187,8 @@ function compileTsProject(dirname, destination, useOutdir, filename) {
     let opts = useOutdir ? {
         outDir: path.resolve(destination)
     } : {
-        out: path.resolve(destination, path.basename(filename || dirname) + ".js")
-    };
+            out: path.resolve(destination, path.basename(filename || dirname) + ".js")
+        };
 
     let configPath = path.join(dirname, "tsconfig.json");
     let tsProject = ts.createProject(configPath, opts);
@@ -298,18 +310,18 @@ function runUglify() {
 *********************************************************/
 
 const semanticjs = () => gulp.src(ju.expand([
-        "node_modules/semantic-ui-less/definitions/globals",
-        "node_modules/semantic-ui-less/definitions/modules/accordion.js",
-        "node_modules/semantic-ui-less/definitions/modules/checkbox.js",
-        "node_modules/semantic-ui-less/definitions/modules/dimmer.js",
-        "node_modules/semantic-ui-less/definitions/modules/dropdown.js",
-        "node_modules/semantic-ui-less/definitions/modules/embed.js",
-        "node_modules/semantic-ui-less/definitions/modules/modal.js",
-        "node_modules/semantic-ui-less/definitions/modules/popup.js",
-        "node_modules/semantic-ui-less/definitions/modules/search.js",
-        "node_modules/semantic-ui-less/definitions/modules/sidebar.js",
-        "node_modules/semantic-ui-less/definitions/modules/transition.js",
-        "node_modules/semantic-ui-less/definitions/behaviors"],
+    "node_modules/semantic-ui-less/definitions/globals",
+    "node_modules/semantic-ui-less/definitions/modules/accordion.js",
+    "node_modules/semantic-ui-less/definitions/modules/checkbox.js",
+    "node_modules/semantic-ui-less/definitions/modules/dimmer.js",
+    "node_modules/semantic-ui-less/definitions/modules/dropdown.js",
+    "node_modules/semantic-ui-less/definitions/modules/embed.js",
+    "node_modules/semantic-ui-less/definitions/modules/modal.js",
+    "node_modules/semantic-ui-less/definitions/modules/popup.js",
+    "node_modules/semantic-ui-less/definitions/modules/search.js",
+    "node_modules/semantic-ui-less/definitions/modules/sidebar.js",
+    "node_modules/semantic-ui-less/definitions/modules/transition.js",
+    "node_modules/semantic-ui-less/definitions/behaviors"],
     ".js"))
     .pipe(concat("semantic.js"))
     .pipe(gulp.dest("built/web"));
@@ -332,26 +344,22 @@ const copyWebapp = () =>
         "built/pxtrunner.js",
         "built/pxteditor.js",
         "built/pxtwinrt.js",
-        "built/webapp/src/worker.js"
+        "built/webapp/src/worker.js",
+        "built/webapp/src/serviceworker.js",
+        "built/webapp/src/simulatorserviceworker.js"
     ])
-    .pipe(gulp.dest("built/web"));
+        .pipe(gulp.dest("built/web"));
 
 const copySemanticFonts = () => gulp.src("node_modules/semantic-ui-less/themes/default/assets/fonts/*")
     .pipe(gulp.dest("built/web/fonts"))
 
-const copyPlaygroundHelpers = () => gulp.src("libs/pxt-common/pxt-helpers.ts")
-    .pipe(concat("pxt-helpers.js"))
-    .pipe(gulp.dest("docs/static/playground/pxt-common/"));
-
-const copyPlaygroundCore = () => gulp.src("libs/pxt-common/pxt-core.d.ts")
-    .pipe(concat("pxt-core.d.js"))
-    .pipe(gulp.dest("docs/static/playground/pxt-common/"));
-
-const copyPlayground = gulp.parallel(copyPlaygroundCore, copyPlaygroundHelpers)
-
 const browserifyWebapp = () => process.env.PXT_ENV == 'production' ?
     exec('node node_modules/browserify/bin/cmd ./built/webapp/src/app.js -g [ envify --NODE_ENV production ] -g uglifyify -o ./built/web/main.js') :
     exec('node node_modules/browserify/bin/cmd built/webapp/src/app.js -o built/web/main.js --debug')
+
+const browserifyAssetEditor = () => process.env.PXT_ENV == 'production' ?
+    exec('node node_modules/browserify/bin/cmd ./built/webapp/src/assetEditor.js -g [ envify --NODE_ENV production ] -g uglifyify -o ./built/web/pxtasseteditor.js') :
+    exec('node node_modules/browserify/bin/cmd built/webapp/src/assetEditor.js -o built/web/pxtasseteditor.js --debug')
 
 const buildSVGIcons = () => {
     let webfontsGenerator = require('webfonts-generator')
@@ -408,15 +416,15 @@ const buildSVGIcons = () => {
 *********************************************************/
 
 const copyMonacoBase = () => gulp.src([
-        "node_modules/monaco-editor/min/vs/base/**/*",
-        "!**/codicon.ttf" // We use a different version of this font that's checked into pxt
-    ])
+    "node_modules/monaco-editor/min/vs/base/**/*",
+    "!**/codicon.ttf" // We use a different version of this font that's checked into pxt
+])
     .pipe(gulp.dest("webapp/public/vs/base"));
 
 const copyMonacoEditor = () => gulp.src([
-        "node_modules/monaco-editor/min/vs/editor/**/*",
-        "!**/editor.main.js"
-    ])
+    "node_modules/monaco-editor/min/vs/editor/**/*",
+    "!**/editor.main.js"
+])
     .pipe(gulp.dest("webapp/public/vs/editor"));
 
 const copyMonacoLoader = () => gulp.src("node_modules/monaco-editor/min/vs/loader.js")
@@ -474,9 +482,9 @@ const copyMonaco = gulp.series(gulp.parallel(
 *********************************************************/
 
 const copyBlocklyCompressed = () => gulp.src([
-        "node_modules/pxt-blockly/blocks_compressed.js",
-        "node_modules/pxt-blockly/blockly_compressed.js"
-    ])
+    "node_modules/pxt-blockly/blocks_compressed.js",
+    "node_modules/pxt-blockly/blockly_compressed.js"
+])
     .pipe(gulp.dest("webapp/public/blockly/"));
 
 const copyBlocklyEnJs = () => gulp.src("node_modules/pxt-blockly/msg/js/en.js")
@@ -485,10 +493,13 @@ const copyBlocklyEnJs = () => gulp.src("node_modules/pxt-blockly/msg/js/en.js")
 const copyBlocklyEnJson = () => gulp.src("node_modules/pxt-blockly/msg/json/en.json")
     .pipe(gulp.dest("webapp/public/blockly/msg/json/"));
 
-const copyBlocklyMedia = () => gulp.src("node_modules/pxt-blockly/media")
-    .pipe(gulp.dest("webapp/public/blockly/"))
+const copyBlocklyMedia = () => gulp.src("node_modules/pxt-blockly/media/*")
+    .pipe(gulp.dest("webapp/public/blockly/media"))
 
-const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyEnJs, copyBlocklyEnJson, copyBlocklyMedia);
+const copyBlocklyTypings = () => gulp.src("node_modules/pxt-blockly/typings/blockly.d.ts")
+    .pipe(gulp.dest("localtypings/"))
+
+const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyEnJs, copyBlocklyEnJson, copyBlocklyMedia, copyBlocklyTypings);
 
 
 
@@ -497,10 +508,10 @@ const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyEnJs, copyBl
 *********************************************************/
 
 const lint = () => Promise.all(
-        ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
+    ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
         "pxtpy", "pxtrunner", "pxtsim", "pxtwinrt", "webapp",
         "docfiles/pxtweb"].map(dirname =>
-    exec(`node node_modules/tslint/bin/tslint --project ./${dirname}/tsconfig.json`, true)))
+            exec(`node node_modules/tslint/bin/tslint --project ./${dirname}/tsconfig.json`, true)))
     .then(() => console.log("linted"))
 
 const testdecompiler = testTask("decompile-test", "decompilerunner.js");
@@ -511,6 +522,7 @@ const testpydecomp = testTask("pydecompile-test", "pydecompilerunner.js");
 const testpycomp = testTask("pyconverter-test", "pyconvertrunner.js");
 const testpytraces = testTask("runtime-trace-tests", "tracerunner.js");
 const testtutorials = testTask("tutorial-test", "tutorialrunner.js");
+const testlanguageservice = testTask("language-service", "languageservicerunner.js");
 
 const buildKarmaRunner = () => compileTsProject("tests/blocklycompiler-test", "built/tests/", true);
 const runKarma = () => {
@@ -534,10 +546,11 @@ const testAll = gulp.series(
     testlang,
     testerr,
     testfmt,
-    // testpydecomp,
+    testpydecomp,
     testpycomp,
     testpytraces,
     testtutorials,
+    testlanguageservice,
     karma
 )
 
@@ -545,13 +558,13 @@ function testTask(testFolder, testFile) {
     const buildTs = () => compileTsProject("tests/" + testFolder, "built/tests", true);
 
     const buildTestRunner = () => gulp.src([
-            "pxtcompiler/ext-typescript/lib/typescript.js",
-            "built/pxtlib.js",
-            "built/pxtcompiler.js",
-            "built/pxtpy.js",
-            "built/pxtsim.js",
-            "built/tests/" + testFolder + "/" + testFile,
-        ])
+        "pxtcompiler/ext-typescript/lib/typescript.js",
+        "built/pxtlib.js",
+        "built/pxtcompiler.js",
+        "built/pxtpy.js",
+        "built/pxtsim.js",
+        "built/tests/" + testFolder + "/" + testFile,
+    ])
         .pipe(concat("runner.js"))
         .pipe(header(`
             "use strict";
@@ -574,6 +587,7 @@ function testTask(testFolder, testFile) {
 const buildAll = gulp.series(
     updatestrings,
     copyTypescriptServices,
+    copyBlocklyTypings,
     gulp.parallel(pxtlib, pxtweb),
     gulp.parallel(pxtcompiler, pxtsim, backendutils),
     gulp.parallel(pxtpy, gulp.series(copyBlockly, pxtblocks, pxtblockly)),
@@ -584,7 +598,8 @@ const buildAll = gulp.series(
     gulp.parallel(buildcss, buildSVGIcons),
     webapp,
     browserifyWebapp,
-    gulp.parallel(semanticjs, copyJquery, copyWebapp, copyPlayground, copySemanticFonts, copyMonaco),
+    browserifyAssetEditor,
+    gulp.parallel(semanticjs, copyJquery, copyWebapp, copySemanticFonts, copyMonaco),
     buildBlocksTestRunner,
     runUglify
 );
@@ -613,3 +628,10 @@ exports.update = update;
 exports.uglify = runUglify;
 exports.watch = initWatch;
 exports.watchCli = initWatchCli;
+exports.testlanguageservice = testlanguageservice;
+exports.onlinelearning = onlinelearning;
+
+console.log(`pxt build how to:`)
+console.log(`run "gulp watch" in pxt folder`)
+console.log(`run "pxt serve" in target folder in new command prompt`)
+console.log();

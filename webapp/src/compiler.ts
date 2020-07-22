@@ -15,7 +15,8 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.Sourc
     //  TS errors to PY
     let tsErrToPyLoc: (err: pxtc.LocationInfo) => pxtc.LocationInfo = undefined;
     if (diagnostics.length > 0
-        && mainPkg.filterFiles(f => f.name === "main.ts" || f.name === "main.py").length === 2
+        && mainPkg.files["main.ts"]
+        && mainPkg.files["main.py"]
         && sourceMap) {
         const tsFile = mainPkg.files["main.ts"].content
         const pyFile = mainPkg.files["main.py"].content
@@ -26,7 +27,7 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.Sourc
     for (let diagnostic of diagnostics) {
         if (diagnostic.fileName) {
             output += `${diagnostic.category == ts.pxtc.DiagnosticCategory.Error ? lf("error") : diagnostic.category == ts.pxtc.DiagnosticCategory.Warning ? lf("warning") : lf("message")}: ${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.column + 1}): `;
-            let f = mainPkg.filterFiles(f => f.getTypeScriptName() == diagnostic.fileName)[0]
+            let f = mainPkg.filterFiles(f => f.getTextFileName() == diagnostic.fileName)[0]
             if (f) {
                 f.diagnostics.push(diagnostic)
 
@@ -131,7 +132,8 @@ export function emptyCompileResult(): pxtc.CompileResult {
 export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     trg.isNative = options.native
-    return pkg.mainPkg.getCompileOptionsAsync(trg)
+    return pkg.mainEditorPkg().buildTilemapsAsync()
+        .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
         .then(opts => {
             if (options.debug) {
                 opts.breakpoints = true;
@@ -213,12 +215,13 @@ function compileCoreAsync(opts: pxtc.CompileOptions): Promise<pxtc.CompileResult
     return workerOpAsync("compile", { options: opts })
 }
 
-export function py2tsAsync(): Promise<pxtc.transpile.TranspileResult> {
+export function py2tsAsync(force = false): Promise<pxtc.transpile.TranspileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     return waitForFirstTypecheckAsync()
         .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
         .then(opts => {
             opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+
             return workerOpAsync("py2ts", { options: opts })
         })
 }
@@ -264,15 +267,16 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
         })
 }
 
-// TS -> blocks
-export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
+// TS -> blocks, load blocs before calling this api
+export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo, dopts?: { snippetMode?: boolean }): Promise<pxtc.CompileResult> {
     const snippetTs = "main.ts";
     const snippetBlocks = "main.blocks";
-    let trg = pkg.mainPkg.getTargetOptions()
+    const trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
             opts.fileSystem[snippetTs] = code;
             opts.fileSystem[snippetBlocks] = "";
+            opts.snippetMode = (dopts && dopts.snippetMode) || false;
 
             if (opts.sourceFiles.indexOf(snippetTs) === -1) {
                 opts.sourceFiles.push(snippetTs);
@@ -326,7 +330,8 @@ export function pyDecompileAsync(fileName: string): Promise<pxtc.transpile.Trans
         })
         .then(resp => {
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
-            setDiagnostics(resp.diagnostics)
+            const errors = resp.diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error);
+            reportDiagnosticErrors(errors)
             return resp
         })
 }
@@ -358,7 +363,7 @@ function pyDecompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Prom
     return workerOpAsync("pydecompile", { options: opts, fileName: fileName })
 }
 
-export function workerOpAsync(op: string, arg: pxtc.service.OpArg) {
+export function workerOpAsync<T extends keyof pxtc.service.ServiceOps>(op: T, arg: pxtc.service.OpArg): Promise<any> {
     const startTm = Date.now()
     pxt.debug("worker op: " + op)
     return pxt.worker.getWorker(pxt.webConfig.workerjs)
@@ -397,6 +402,10 @@ function ensureApisInfoAsync(): Promise<void> {
     else return Promise.resolve()
 }
 
+export function refreshLanguageServiceApisInfo() {
+    refreshApis = true;
+}
+
 export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
     return ensureApisInfoAsync()
         .then(() => {
@@ -428,14 +437,22 @@ export function formatAsync(input: string, pos: number) {
 }
 
 export function snippetAsync(qName: string, python?: boolean): Promise<string> {
-    return workerOpAsync("snippet", {
+    let initStep = Promise.resolve();
+    if (python) {
+        // To make sure that the service is working with the most recent version of the file,
+        // run a typecheck
+        initStep = typecheckAsync().then(() => { })
+    }
+    return initStep.then(() => workerOpAsync("snippet", {
         snippet: { qName, python },
         runtime: pxt.appTarget.runtime
-    }).then(res => res as string)
+    })).then(res => res as string)
 }
 
 export function typecheckAsync() {
-    let p = pkg.mainPkg.getCompileOptionsAsync()
+    const epkg = pkg.mainEditorPkg();
+    let p = epkg.buildTilemapsAsync()
+        .then(() => pkg.mainPkg.getCompileOptionsAsync())
         .then(opts => {
             opts.testMode = true // show errors in all top-level code
             return workerOpAsync("setOptions", { options: opts })
@@ -660,7 +677,7 @@ export function applyUpgradesAsync(): Promise<UpgradeResult> {
     const pkgVersion = pxt.semver.parse(epkg.header.targetVersion || "0.0.0");
     const trgVersion = pxt.semver.parse(pxt.appTarget.versions.target);
 
-    if (pkgVersion.major === trgVersion.major && pkgVersion.minor === trgVersion.minor) {
+    if (pxt.semver.cmp(pkgVersion, trgVersion) === 0) {
         pxt.debug("Skipping project upgrade")
         return Promise.resolve({
             success: true
@@ -721,11 +738,24 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
 
             const xml = Blockly.Xml.textToDom(text);
             pxt.blocks.domToWorkspaceNoEvents(xml, ws);
-            patchedFiles["main.blocks"] = text;
+            pxtblockly.upgradeTilemapsInWorkspace(ws, pxt.react.getTilemapProject());
+            const upgradedXml = Blockly.Xml.workspaceToDom(ws);
+            patchedFiles["main.blocks"] = Blockly.Xml.domToText(upgradedXml);
+
             return pxt.blocks.compileAsync(ws, info)
         })
         .then(res => {
             patchedFiles["main.ts"] = res.source;
+            return project.buildTilemapsAsync();
+        })
+        .then(() => {
+            const compiledFiles = project.getAllFiles();
+            const otherFiles = Object.keys(compiledFiles).filter(el => !/^main\.(blocks|ts|py)$/.test(el));
+
+            for (const fname of otherFiles) {
+                patchedFiles[fname] = compiledFiles[fname];
+            }
+
             return checkPatchAsync(patchedFiles);
         })
         .then(() => {
@@ -778,10 +808,11 @@ interface UpgradeError extends Error {
 
 function checkPatchAsync(patchedFiles?: pxt.Map<string>) {
     const mainPkg = pkg.mainPkg;
-    return mainPkg.getCompileOptionsAsync()
+    return pkg.mainEditorPkg().buildTilemapsAsync()
+        .then(() => mainPkg.getCompileOptionsAsync())
         .then(opts => {
             if (patchedFiles) {
-                Object.keys(opts.fileSystem).forEach(fileName => {
+                Object.keys(patchedFiles).forEach(fileName => {
                     if (patchedFiles[fileName]) {
                         opts.fileSystem[fileName] = patchedFiles[fileName];
                     }
@@ -860,7 +891,7 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.U
             let cleanupOperation = Promise.resolve();
             if (backup) {
                 backup.isDeleted = true;
-                cleanupOperation = workspace.saveAsync(backup)
+                cleanupOperation = workspace.forceSaveAsync(backup)
             }
 
             return cleanupOperation
@@ -935,7 +966,7 @@ class ApiInfoIndexedDb {
                 const db = r.result as IDBDatabase;
                 db.createObjectStore(ApiInfoIndexedDb.TABLE, { keyPath: ApiInfoIndexedDb.KEYPATH });
             }, () => {
-                // quota exceeeded, nuke db
+                // quota exceeeded, clear db
                 pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName())
             });
             return idbWrapper.openAsync()

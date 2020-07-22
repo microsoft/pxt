@@ -2,6 +2,7 @@ templater.sh
 web/_temp
 webapp/public/blockly
 webapp/public/closure-library
+localtypings/blockly.d.ts
 node_modules
 *.sw?
 built
@@ -31,3 +32,5 @@ tests/ui-test/package-lock.json
 tests/ui-test/debug.log
 tests/ui-test/chromedriver.exe
 tests/ui-test/screenshot/**
+report.*.json
+*.tsbuildinfo

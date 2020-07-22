@@ -26,7 +26,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 
 function openTutorial(parent: pxt.editor.IProjectView, path: string) {
     pxt.tickEvent(`docs`, { path }, { interactiveConsent: true });
-    parent.startTutorial(path);
+    parent.startActivity("tutorial", path);
 }
 
 function openDocs(parent: pxt.editor.IProjectView, path: string) {
@@ -95,12 +95,14 @@ class DocsMenuItem extends sui.StatelessUIElement<DocsMenuItemProps> {
 export interface SettingsMenuProps extends ISettingsProps {
     highContrast: boolean;
     greenScreen: boolean;
+    accessibleBlocks: boolean;
 }
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface SettingsMenuState {
     highContrast?: boolean;
     greenScreen?: boolean;
+    accessibleBlocks?: boolean;
 }
 
 export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenuState> {
@@ -120,6 +122,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
+        this.toggleAccessibleBlocks = this.toggleAccessibleBlocks.bind(this);
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showShareDialog = this.showShareDialog.bind(this);
         this.pair = this.pair.bind(this);
@@ -187,6 +190,11 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.props.parent.toggleGreenScreen();
     }
 
+    toggleAccessibleBlocks() {
+        pxt.tickEvent("menu.toggleaccessibleblocks", undefined, { interactiveConsent: true });
+        this.props.parent.toggleAccessibleBlocks();
+    }
+
     showResetDialog() {
         pxt.tickEvent("menu.reset", undefined, { interactiveConsent: true });
         pxt.tickEvent("reset"); // Deprecated, will Feb 2018.
@@ -195,7 +203,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     pair() {
         pxt.tickEvent("menu.pair");
-        this.props.parent.pair();
+        this.props.parent.pairAsync();
     }
 
     pairBluetooth() {
@@ -233,16 +241,20 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         if (nextProps.greenScreen !== undefined) {
             newState.greenScreen = nextProps.greenScreen;
         }
+        if (nextProps.accessibleBlocks !== undefined) {
+            newState.accessibleBlocks = nextProps.accessibleBlocks;
+        }
         if (Object.keys(newState).length > 0) this.setState(newState)
     }
 
     shouldComponentUpdate(nextProps: SettingsMenuProps, nextState: SettingsMenuState, nextContext: any): boolean {
         return this.state.highContrast != nextState.highContrast
-            || this.state.greenScreen != nextState.greenScreen;
+            || this.state.greenScreen != nextState.greenScreen
+            || this.state.accessibleBlocks != nextState.accessibleBlocks;
     }
 
     renderCore() {
-        const { highContrast, greenScreen } = this.state;
+        const { highContrast, greenScreen, accessibleBlocks } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const packages = pxt.appTarget.cloud && !!pxt.appTarget.cloud.packages;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
@@ -258,7 +270,9 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
         // Electron does not currently support webusb
         const githubUser = !readOnly && !isController && this.getData("github:user") as pxt.editor.UserInfo;
-        const showPairDevice = pxt.usb.isEnabled && !pxt.BrowserUtils.isElectron();
+        const showPairDevice = pxt.usb.isEnabled;
+
+        const showCenterDivider = targetTheme.selectLanguage || targetTheme.highContrast || showGreenScreen || githubUser;
 
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
             {showProjectSettings ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} /> : undefined}
@@ -272,6 +286,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} /> : undefined}
+            {targetTheme.accessibleBlocks ? <sui.Item role="menuitem" text={accessibleBlocks ? lf("Accessible Blocks Off") : lf("Accessible Blocks On")} onClick={this.toggleAccessibleBlocks} /> : undefined}
             {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} /> : undefined}
             {docItems && renderDocItems(this.props.parent, docItems, "ui mobile only inherit")}
             {githubUser ? <div className="ui divider"></div> : undefined}
@@ -281,7 +296,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
                 </div>
                 {lf("Sign out")}
             </div> : undefined}
-            <div className="ui divider"></div>
+            {showCenterDivider && <div className="ui divider"></div>}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
             {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} /> : undefined}
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
@@ -495,7 +510,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const { debugging, home, header, highContrast, greenScreen, simState, tutorialOptions } = this.props.parent.state;
+        const { debugging, home, header, highContrast, greenScreen, accessibleBlocks, simState, tutorialOptions } = this.props.parent.state;
         if (home) return <div />; // Don't render if we're on the home screen
 
         const targetTheme = pxt.appTarget.appTheme;
@@ -533,7 +548,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const tsOnly = !inAltEditor && languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly;
         const pyOnly = !inAltEditor && languageRestriction === pxt.editor.LanguageRestriction.PythonOnly;
         const showToggle = !inAltEditor && !targetTheme.blocksOnly
-                && (sandbox || !(tsOnly || pyOnly)); // show if sandbox or not single language
+            && (sandbox || !(tsOnly || pyOnly)); // show if sandbox or not single language
         const editor = this.props.parent.isPythonActive() ? "Python" : (this.props.parent.isJavaScriptActive() ? "JavaScript" : "Blocks");
 
         /* tslint:disable:react-a11y-anchors */
@@ -566,7 +581,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
             <div className="right menu">
                 {debugging ? <sui.ButtonMenuItem className="exit-debugmode-btn" role="menuitem" icon="external" text={lf("Exit Debug Mode")} textClass="landscape only" onClick={this.toggleDebug} /> : undefined}
                 {docMenu ? <container.DocsMenu parent={this.props.parent} editor={editor} /> : undefined}
-                {sandbox || inTutorial || debugging ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} />}
+                {sandbox || inTutorial || debugging ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} accessibleBlocks={accessibleBlocks} />}
                 {showCloud ? <cloud.UserMenu parent={this.props.parent} /> : undefined}
                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} /> : undefined}
                 {inTutorial && tutorialReportId ? <sui.ButtonMenuItem className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report Abuse")} textClass="landscape only" onClick={this.showReportAbuse} /> : undefined}
@@ -607,6 +622,10 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         this.popOut = this.popOut.bind(this);
     }
 
+    private rootDocsUrl(): string {
+        return (pxt.webConfig.docsUrl || '/--docs') + "#";
+    }
+
     public static notify(message: pxsim.SimulatorMessage) {
         let sd = document.getElementById("sidedocsframe") as HTMLIFrameElement;
         if (sd && sd.contentWindow) sd.contentWindow.postMessage(message, "*");
@@ -614,20 +633,19 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
     setPath(path: string, blocksEditor: boolean) {
         this.openingSideDoc = true;
-        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
+        const docsUrl = this.rootDocsUrl();
         const mode = blocksEditor ? "blocks" : "js";
-        const url = `${docsUrl}#doc:${path}:${mode}:${pxt.Util.localeInfo()}`;
+        const url = `${docsUrl}doc:${path}:${mode}:${pxt.Util.localeInfo()}`;
         this.setUrl(url);
     }
 
     setMarkdown(md: string) {
-        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
+        const docsUrl = this.rootDocsUrl();
         // always render blocks by default when sending custom markdown
         // to side bar
         const mode = "blocks" // this.props.parent.isBlocksEditor() ? "blocks" : "js";
-        const url = `${docsUrl}#md:${encodeURIComponent(md)}:${mode}:${pxt.Util.localeInfo()}`;
-        this.setUrl(url);
-        this.collapse();
+        const url = `${docsUrl}md:${encodeURIComponent(md)}:${mode}:${pxt.Util.localeInfo()}`;
+        this.props.parent.setState({ sideDocsLoadUrl: url });
     }
 
     private setUrl(url: string) {
@@ -636,6 +654,10 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
     collapse() {
         this.props.parent.setState({ sideDocsCollapsed: true });
+    }
+
+    isCollapsed() {
+        return !!this.state.sideDocsCollapsed;
     }
 
     popOut() {
@@ -684,6 +706,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
         if (!docsUrl) return null;
 
+        const url = sideDocsCollapsed ? this.rootDocsUrl() : docsUrl;
         /* tslint:disable:react-iframe-missing-sandbox */
         return <div>
             <button id="sidedocstoggle" role="button" aria-label={sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation")} className="ui icon button large" onClick={this.toggleVisibility}>
@@ -691,7 +714,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             </button>
             <div id="sidedocs">
                 <div id="sidedocsframe-wrapper">
-                    <iframe id="sidedocsframe" src={docsUrl} title={lf("Documentation")} aria-atomic="true" aria-live="assertive"
+                    <iframe id="sidedocsframe" src={url} title={lf("Documentation")} aria-atomic="true" aria-live="assertive"
                         sandbox={`allow-scripts allow-same-origin allow-forms ${lockedEditor ? "" : "allow-popups"}`} />
                 </div>
                 {!lockedEditor && <div className="ui app hide" id="sidedocsbar">

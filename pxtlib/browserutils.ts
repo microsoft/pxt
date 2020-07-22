@@ -25,7 +25,13 @@ namespace pxt.BrowserUtils {
     }
 
     export function isIOS(): boolean {
-        return hasNavigator() && /iPad|iPhone|iPod/.test(navigator.userAgent);
+        return hasNavigator() &&
+            (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+    }
+
+    export function isAndroid(): boolean {
+        return hasNavigator() && /android/i.test(navigator.userAgent);
     }
 
     //MacIntel on modern Macs
@@ -126,12 +132,15 @@ namespace pxt.BrowserUtils {
         return isPxtElectron() || isIpcRenderer();
     }
 
-    export function isLocalHost(): boolean {
+    // this function gets overriden when loading pxtwinrt.js
+    export let isWinRT = () => false;
+
+    export function isLocalHost(ignoreFlags?: boolean): boolean {
         try {
             return typeof window !== "undefined"
                 && /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href)
-                && !/nolocalhost=1/.test(window.location.href)
-                && !(pxt.webConfig && pxt.webConfig.isStatic);
+                && (ignoreFlags || !/nolocalhost=1/.test(window.location.href))
+                && !(pxt?.webConfig?.isStatic);
         } catch (e) { return false; }
     }
 
@@ -209,6 +218,7 @@ namespace pxt.BrowserUtils {
 
     let hasLoggedBrowser = false
 
+    // Note that IE11 is no longer supported in any target. Redirect handled in docfiles/pxtweb/browserRedirect.ts
     export function isBrowserSupported(): boolean {
         if (!navigator) {
             return true; //All browsers define this, but we can't make any predictions if it isn't defined, so assume the best
@@ -218,8 +228,10 @@ namespace pxt.BrowserUtils {
         if (/bot|crawler|spider|crawling/i.test(navigator.userAgent))
             return true;
 
-        //Check target theme to see if this browser is supported
-        if (pxt.appTarget.unsupportedBrowsers && pxt.appTarget.unsupportedBrowsers.some(b => b.id == browser())) {
+        // Check target theme to see if this browser is supported
+        const unsupportedBrowsers = pxt.appTarget?.unsupportedBrowsers
+            || (window as any).pxtTargetBundle?.unsupportedBrowsers as BrowserOptions[];
+        if (unsupportedBrowsers?.some(b => b.id == browser())) {
             return false
         }
 
@@ -232,8 +244,7 @@ namespace pxt.BrowserUtils {
         const isRecentEdge = isEdge();
         const isRecentSafari = isSafari() && v >= 9;
         const isRecentOpera = (isOpera() && isChrome()) && v >= 21;
-        const isRecentIE = isIE() && v >= 11;
-        const isModernBrowser = isRecentChrome || isRecentFirefox || isRecentEdge || isRecentSafari || isRecentOpera || isRecentIE
+        const isModernBrowser = isRecentChrome || isRecentFirefox || isRecentEdge || isRecentSafari || isRecentOpera
 
         //In the future this should check for the availability of features, such
         //as web workers
@@ -816,7 +827,7 @@ namespace pxt.BrowserUtils {
                     const db = r.result as IDBDatabase;
                     db.createObjectStore(IndexedDbTranslationDb.TABLE, { keyPath: IndexedDbTranslationDb.KEYPATH });
                 }, () => {
-                    // quota exceeeded, nuke db
+                    // quota exceeeded, delete db
                     clearTranslationDbAsync().catch(e => { });
                 });
                 return idbWrapper.openAsync()
@@ -1080,5 +1091,11 @@ namespace pxt.BrowserUtils {
             expiration.setTime(expiration.getTime() + (pxt.Util.langCookieExpirationDays * 24 * 60 * 60 * 1000));
             document.cookie = `${pxt.Util.pxtLangCookieId}=${langId}; expires=${expiration.toUTCString()}; path=/`;
         }
+    }
+
+    export function cacheBustingUrl(url: string): string {
+        if (!url) return url;
+        if (/[?&]rnd=/.test(url)) return url; // already busted
+        return `${url}${url.indexOf('?') > 0 ? "&" : "?"}rnd=${Math.random()}`
     }
 }

@@ -21,7 +21,9 @@ namespace pxt.template {
   platform: @PLATFORM@
   home_url: @HOMEURL@
 theme: jekyll-theme-slate
-include: assets
+include:
+  - assets
+  - README.md
 `,
             "Makefile": `all: deploy
 
@@ -36,12 +38,12 @@ test:
 `,
             "Gemfile": `source 'https://rubygems.org'
 gem 'github-pages', group: :jekyll_plugins`,
-            "README.md":
-                `> ${lf("Open this page at {0}",
-                    "[https://@REPOOWNER@.github.io/@REPONAME@/](https://@REPOOWNER@.github.io/@REPONAME@/)"
-                )}
+            "README.md": `
+> ${lf("Open this page at {0}",
+                "[https://@REPOOWNER@.github.io/@REPONAME@/](https://@REPOOWNER@.github.io/@REPONAME@/)"
+            )}
 
-## ${lf("Use this extension")}
+## ${lf("Use as Extension")}
 
 ${lf("This repository can be added as an **extension** in MakeCode.")}
 
@@ -50,7 +52,7 @@ ${lf("This repository can be added as an **extension** in MakeCode.")}
 * ${lf("click on **Extensions** under the gearwheel menu")}
 * ${lf("search for **https://github.com/@REPO@** and import")}
 
-## ${lf("Edit this extension")} ![${lf("Build status badge")}](https://github.com/@REPO@/workflows/MakeCode/badge.svg)
+## ${lf("Edit this project")} ![${lf("Build status badge")}](https://github.com/@REPO@/workflows/MakeCode/badge.svg)
 
 ${lf("To edit this repository in MakeCode.")}
 
@@ -72,7 +74,8 @@ ${lf("This image may take a few minutes to refresh.")}
 `,
 
             ".gitignore":
-                `built
+                `# MakeCode
+built
 node_modules
 yotta_modules
 yotta_targets
@@ -81,6 +84,7 @@ _site
 *.db
 *.tgz
 .header.json
+.simstate.json
 `,
             ".vscode/settings.json":
                 `{
@@ -230,12 +234,13 @@ jobs:
         const configMap = JSON.parse(files[pxt.CONFIG_NAME])
         if (options)
             Util.jsonMergeFrom(configMap, options);
-        Object.keys(pxt.webConfig).forEach(k => configMap[k.toLowerCase()] = (<any>pxt.webConfig)[k]);
-        configMap["platform"] = pxt.appTarget.platformid || pxt.appTarget.id
-        configMap["target"] = pxt.appTarget.id
-        configMap["docs"] = pxt.appTarget.appTheme.homeUrl || "./";
-        configMap["homeurl"] = pxt.appTarget.appTheme.homeUrl || "???";
-
+        if (pxt.webConfig) { // CLI
+            Object.keys(pxt.webConfig).forEach(k => configMap[k.toLowerCase()] = (<any>pxt.webConfig)[k]);
+            configMap["platform"] = pxt.appTarget.platformid || pxt.appTarget.id
+            configMap["target"] = pxt.appTarget.id
+            configMap["docs"] = pxt.appTarget.appTheme.homeUrl || "./";
+            configMap["homeurl"] = pxt.appTarget.appTheme.homeUrl || "???";
+        }
         U.iterMap(files, (k, v) => {
             v = v.replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
             files[k] = v

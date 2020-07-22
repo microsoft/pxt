@@ -139,7 +139,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         onTraceMessage: function (msg) {
             let brkInfo = lastCompileResult.breakpoints[msg.breakpointId]
-            if (config) config.highlightStatement(brkInfo)
+            if (config) config.highlightStatement(brkInfo, msg)
         },
         onDebuggerWarning: function (wrn) {
             for (let id of wrn.breakpointIds) {
@@ -264,7 +264,7 @@ export interface RunOptions {
 }
 
 export function run(pkg: pxt.MainPackage, debug: boolean,
-    res: pxtc.CompileResult, options: RunOptions) {
+    res: pxtc.CompileResult, options: RunOptions, trace: boolean) {
     const js = res.outfiles[pxtc.BINARY_JS]
     const boardDefinition = pxt.appTarget.simulator.boardDefinition;
     const parts = pxtc.computeUsedParts(res, true);
@@ -277,6 +277,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         mute,
         parts,
         debug,
+        trace,
         fnArgs,
         highContrast,
         light,

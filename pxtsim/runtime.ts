@@ -166,6 +166,14 @@ namespace pxsim {
             }
             return res;
         }
+
+        export function isLocalHost(): boolean {
+            try {
+                return typeof window !== "undefined"
+                    && /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href)
+                    && !/nolocalhost=1/.test(window.location.href);
+            } catch (e) { return false; }
+        }
     }
 
     export interface Map<T> {
@@ -186,6 +194,7 @@ namespace pxsim {
         lambdaArgs?: any[];
         caps?: any[];
         lastBrkId?: number;
+        callLocIdx?: number;
         arg0?: any;
         stage2Call?: boolean;
 
@@ -408,7 +417,10 @@ namespace pxsim {
             createBuffer: BufferMethods.createBuffer,
         }
         myRT.control = {
-            inBackground: thread.runInBackground
+            inBackground: thread.runInBackground,
+            createBuffer: BufferMethods.createBuffer,
+            dmesg: (s: string) => console.log("DMESG: " + s),
+            __log: (pri: number, s: string) => console.log("LOG: " + s.trim()),
         }
     }
 
@@ -622,6 +634,7 @@ namespace pxsim {
         lastPauseTimestamp = 0;
         id: string;
         globals: any = {};
+        environmentGlobals: any = {};
         currFrame: StackFrame;
         otherFrames: StackFrame[] = [];
         entry: LabelFn;
@@ -1124,6 +1137,7 @@ namespace pxsim {
 
                 const { msg, heap } = getBreakpointMsg(s, brkId, userGlobals);
                 dbgHeap = heap;
+                injectEnvironmentGlobals(msg, heap);
                 Runtime.postMessage(msg)
                 breakpoints[0] = 0;
                 breakFrame = null;
@@ -1168,11 +1182,9 @@ namespace pxsim {
             function trace(brkId: number, s: StackFrame, retPc: number, info: any) {
                 setupResume(s, retPc);
                 if (info.functionName === "<main>" || info.fileName === "main.ts") {
-                    Runtime.postMessage({
-                        type: "debugger",
-                        subtype: "trace",
-                        breakpointId: brkId,
-                    } as TraceMessage)
+                    const { msg } = getBreakpointMsg(s, brkId, userGlobals);
+                    msg.subtype = "trace";
+                    Runtime.postMessage(msg)
                     thread.pause(tracePauseMs || 1)
                 }
                 else {
@@ -1265,7 +1277,8 @@ namespace pxsim {
                         __this.errorHandler(e)
                     else {
                         console.error("Simulator crashed, no error handler", e.stack)
-                        const { msg } = getBreakpointMsg(p, p.lastBrkId, userGlobals)
+                        const { msg, heap } = getBreakpointMsg(p, p.lastBrkId, userGlobals)
+                        injectEnvironmentGlobals(msg, heap);
                         msg.exceptionMessage = e.message
                         msg.exceptionStack = e.stack
                         Runtime.postMessage(msg)

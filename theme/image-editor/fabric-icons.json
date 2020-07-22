@@ -5,103 +5,10 @@
   "excludeThirdPartyIcons": false,
   "chunkSubsets": false,
   "hashFontFileName": true,
-  "subsetChunkSettings": {},
   "glyphs": [
     {
-      "name": "ChevronDown",
-      "unicode": "E70D"
-    },
-    {
-      "name": "Edit",
-      "unicode": "E70F"
-    },
-    {
-      "name": "Add",
-      "unicode": "E710"
-    },
-    {
-      "name": "Cancel",
-      "unicode": "E711"
-    },
-    {
-      "name": "Stop",
-      "unicode": "E71A"
-    },
-    {
-      "name": "ZoomOut",
-      "unicode": "E71F"
-    },
-    {
-      "name": "Lock",
-      "unicode": "E72E"
-    },
-    {
-      "name": "Delete",
-      "unicode": "E74D"
-    },
-    {
-      "name": "ReturnKey",
-      "unicode": "E751"
-    },
-    {
-      "name": "EraseTool",
-      "unicode": "E75C"
-    },
-    {
-      "name": "Play",
-      "unicode": "E768"
-    },
-    {
-      "name": "Pause",
-      "unicode": "E769"
-    },
-    {
-      "name": "Unlock",
-      "unicode": "E785"
-    },
-    {
-      "name": "Redo",
-      "unicode": "E7A6"
-    },
-    {
-      "name": "Undo",
-      "unicode": "E7A7"
-    },
-    {
-      "name": "Crop",
-      "unicode": "E7A8"
-    },
-    {
-      "name": "Warning",
-      "unicode": "E7BA"
-    },
-    {
-      "name": "Move",
-      "unicode": "E7C2"
-    },
-    {
-      "name": "MapLayers",
-      "unicode": "E81E"
-    },
-    {
-      "name": "ZoomIn",
-      "unicode": "E8A3"
-    },
-    {
-      "name": "SelectAll",
-      "unicode": "E8B3"
-    },
-    {
-      "name": "Cut",
-      "unicode": "E8C6"
-    },
-    {
-      "name": "Copy",
-      "unicode": "E8C8"
-    },
-    {
-      "name": "Clock",
-      "unicode": "E917"
+      "name": "Eyedropper",
+      "unicode": "EF3C"
     },
     {
       "name": "CircleRing",
@@ -112,8 +19,12 @@
       "unicode": "EAD0"
     },
     {
-      "name": "Eyedropper",
-      "unicode": "EF3C"
+      "name": "Line",
+      "unicode": "F4FC"
+    },
+    {
+      "name": "BorderDash",
+      "unicode": "F50A"
     },
     {
       "name": "RectangleShape",
@@ -132,12 +43,104 @@
       "unicode": "F321"
     },
     {
-      "name": "Line",
-      "unicode": "F4FC"
+      "name": "Lock",
+      "unicode": "E72E"
     },
     {
-      "name": "BorderDash",
-      "unicode": "F50A"
+      "name": "Stop",
+      "unicode": "E71A"
+    },
+    {
+      "name": "ZoomOut",
+      "unicode": "E71F"
+    },
+    {
+      "name": "Cancel",
+      "unicode": "E711"
+    },
+    {
+      "name": "Pause",
+      "unicode": "E769"
+    },
+    {
+      "name": "Delete",
+      "unicode": "E74D"
+    },
+    {
+      "name": "ReturnKey",
+      "unicode": "E751"
+    },
+    {
+      "name": "EraseTool",
+      "unicode": "E75C"
+    },
+    {
+      "name": "Play",
+      "unicode": "E768"
+    },
+    {
+      "name": "Unlock",
+      "unicode": "E785"
+    },
+    {
+      "name": "Add",
+      "unicode": "E710"
+    },
+    {
+      "name": "ChevronDown",
+      "unicode": "E70D"
+    },
+    {
+      "name": "Edit",
+      "unicode": "E70F"
+    },
+    {
+      "name": "Cut",
+      "unicode": "E8C6"
+    },
+    {
+      "name": "Copy",
+      "unicode": "E8C8"
+    },
+    {
+      "name": "ZoomIn",
+      "unicode": "E8A3"
+    },
+    {
+      "name": "SelectAll",
+      "unicode": "E8B3"
+    },
+    {
+      "name": "Clock",
+      "unicode": "E917"
+    },
+    {
+      "name": "Warning",
+      "unicode": "E7BA"
+    },
+    {
+      "name": "Move",
+      "unicode": "E7C2"
+    },
+    {
+      "name": "Redo",
+      "unicode": "E7A6"
+    },
+    {
+      "name": "Undo",
+      "unicode": "E7A7"
+    },
+    {
+      "name": "Crop",
+      "unicode": "E7A8"
+    },
+    {
+      "name": "Nav2DMapView",
+      "unicode": "E800"
+    },
+    {
+      "name": "MapLayers",
+      "unicode": "E81E"
     }
   ]
 }

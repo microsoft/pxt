@@ -157,10 +157,20 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         return res;
     }
 
-    fetchLocal(): pxt.workspace.Header[] {
+    fetchLocalRepositories(): pxt.workspace.Header[] {
         if (this.state.mode != ScriptSearchMode.Extensions) return [];
-        return workspace.getHeaders()
-            .filter(h => !!h.githubId)
+        let query = this.state.searchFor;
+        const { header } = this.props.parent.state;
+
+        let r = workspace.getHeaders()
+            .filter(h => !!h.githubId);
+        if (header)
+            r = r.filter(h => h.id != header.id) // don't self-reference
+        if (query) {
+            query = query.toLocaleLowerCase();
+            r = r.filter(h => h.name.toLocaleLowerCase().indexOf(query) > -1) // search filter
+        }
+        return r;
     }
 
     fetchBundled(): pxt.PackageConfig[] {
@@ -349,7 +359,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const bundles = this.fetchBundled();
         const ghdata = this.fetchGhData();
         const urldata = this.fetchUrlData();
-        const local = this.fetchLocal();
+        const local = this.fetchLocalRepositories();
         const experiments = this.fetchExperiments();
         const isSearching = searchFor && (ghdata.status === data.FetchStatus.Pending || urldata.status === data.FetchStatus.Pending);
         const disableFileAccessinMaciOs = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());

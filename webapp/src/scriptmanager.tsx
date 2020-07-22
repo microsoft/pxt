@@ -47,6 +47,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         this.handleDelete = this.handleDelete.bind(this);
         this.handleOpen = this.handleOpen.bind(this);
         this.handleOpenNewTab = this.handleOpenNewTab.bind(this);
+        this.handleOpenNewLinkedTab = this.handleOpenNewLinkedTab.bind(this);
         this.handleDuplicate = this.handleDuplicate.bind(this);
         this.handleSwitchView = this.handleSwitchView.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
@@ -129,7 +130,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 if (selected[index]) {
                     // Delete each selected project
                     header.isDeleted = true;
-                    promises.push(workspace.saveAsync(header, {}));
+                    promises.push(workspace.forceSaveAsync(header, {}));
                 }
             })
             this.setState({ selected: {} })
@@ -154,7 +155,13 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
     handleOpenNewTab() {
         pxt.tickEvent("scriptmanager.newtab", undefined, { interactiveConsent: true });
         const header = this.getSelectedHeader();
-        this.props.parent.openDependentEditor(header);
+        this.props.parent.openNewTab(header, false);
+    }
+
+    handleOpenNewLinkedTab() {
+        pxt.tickEvent("scriptmanager.newlinkedtab", undefined, { interactiveConsent: true });
+        const header = this.getSelectedHeader();
+        this.props.parent.openNewTab(header, true);
     }
 
     handleDuplicate() {
@@ -171,30 +178,20 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             size: "tiny"
         };
         return core.promptAsync(opts).then(res => {
-            if (res === null) return Promise.resolve(false); // null means cancelled, empty string means ok (but no value entered)
-            let files: pxt.Map<string>;
+            if (res === null)
+                return false; // null means cancelled
             return workspace.getTextAsync(header.id)
-                .then(text => {
-                    files = text;
-                    // Duplicate the existing header
-                    return workspace.duplicateAsync(header, text, false);
-                })
-                .then((clonedHeader) => {
+                .then(text => workspace.duplicateAsync(header, text, res))
+                .then(clonedHeader => {
                     // If we're cloud synced, update the cloudSync flag
                     if (this.props.parent.cloudSync()) clonedHeader.cloudSync = true;
 
-                    // Update the name of the new header
-                    clonedHeader.name = res;
                     delete clonedHeader.blobId
                     delete clonedHeader.blobVersion
                     delete clonedHeader.blobCurrent
-                    // Set the name in the pxt.json (config)
-                    let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
-                    cfg.name = clonedHeader.name
-                    files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
-                    return clonedHeader;
+
+                    return workspace.saveAsync(clonedHeader);
                 })
-                .then((clonedHeader) => workspace.saveAsync(clonedHeader, files))
                 .then(() => {
                     data.invalidate("headers:");
                     data.invalidate(`headers:${this.state.searchFor}`);
@@ -321,10 +318,12 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         const isSearching = false;
         const hasHeaders = !searchFor ? headers.length > 0 : true;
         const selectedAll = headers.length > 0 && headers.length == Object.keys(selected).length;
-        const openDependent = pxt.appTarget.appTheme.openProjectNewTab
+        const openNewTab = pxt.appTarget.appTheme.openProjectNewTab
             && !pxt.BrowserUtils.isElectron()
             && !pxt.BrowserUtils.isUwpEdge()
-            && !pxt.BrowserUtils.isIOS()
+            && !pxt.BrowserUtils.isIOS();
+        const openDependent = openNewTab
+            && pxt.appTarget.appTheme.openProjectNewDependentTab
             && !/nestededitorsim=1/.test(window.location.href); // don't nest dependent editors
 
         let headerActions: JSX.Element[];
@@ -340,11 +339,18 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             />);
             if (Object.keys(selected).length > 0) {
                 if (Object.keys(selected).length == 1) {
-                    headerActions.push(<sui.Button key="edit" icon="edit outline" className="icon"
-                        text={lf("Open")} textClass="landscape only" title={lf("Open Project")} onClick={this.handleOpen} />);
-                    if (openDependent)
-                        headerActions.push(<sui.Button key="editnew" icon="external alternate" className="icon"
-                            text={lf("New Tab")} textClass="landscape only" title={lf("Open Project in a new tab")} onClick={this.handleOpenNewTab} />);
+                    const openBtn = <sui.Button key="edit" icon="edit outline" className="icon"
+                        text={lf("Open")} textClass="landscape only" title={lf("Open Project")} onClick={this.handleOpen} />;
+                    if (!openNewTab)
+                        headerActions.push(openBtn);
+                    else headerActions.push(<div className="ui buttons">{openBtn}
+                        <sui.DropdownMenu className="floating button" icon="dropdown">
+                            <sui.Item key="editnewtab" icon="external alternate" className="icon"
+                                text={lf("New Tab")} title={lf("Open Project in a new tab")} onClick={this.handleOpenNewTab} />
+                            {openDependent && <sui.Item key="editnewlinkedtab" icon="external alternate" className="icon"
+                                text={lf("New Connected Tab")} title={lf("Open Project in a new tab with a connected simulator")} onClick={this.handleOpenNewLinkedTab} />}
+                        </sui.DropdownMenu>
+                    </div>);
                     headerActions.push(<sui.Button key="clone" icon="clone outline" className="icon"
                         text={lf("Duplicate")} textClass="landscape only" title={lf("Duplicate Project")} onClick={this.handleDuplicate} />);
                 }
@@ -372,7 +378,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 {hasHeaders && view == 'grid' ?
                     <div role="button" className="ui container fluid" style={{ height: "100%" }} onClick={this.handleAreaClick} onKeyDown={this.handleKeyDown}>
                         <div className="sort-by">
-                            <div role="menu" className="ui menu compact buttons">
+                            <div role="menu" className="ui compact buttons">
                                 <sui.DropdownMenu role="menuitem" text={sortedBy == 'time' ? lf("Last Modified") : lf("Name")} title={lf("Sort by dropdown")} className={`inline button ${darkTheme ? 'inverted' : ''}`}>
                                     <sui.Item role="menuitem" icon={sortedBy == 'name' ? 'check' : undefined} className={`${sortedBy != 'name' ? 'no-icon' : ''} ${darkTheme ? 'inverted' : ''}`} text={lf("Name")} tabIndex={-1} onClick={this.handleSortName} />
                                     <sui.Item role="menuitem" icon={sortedBy == 'time' ? 'check' : undefined} className={`${sortedBy != 'time' ? 'no-icon' : ''} ${darkTheme ? 'inverted' : ''}`} text={lf("Last Modified")} tabIndex={-1} onClick={this.handleSortTime} />

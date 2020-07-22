@@ -22,6 +22,7 @@ namespace pxt.runner {
         simulatorClass?: string;
         linksClass?: string;
         namespacesClass?: string;
+        apisClass?: string;
         codeCardClass?: string;
         tutorial?: boolean;
         snippetReplaceParent?: boolean;
@@ -51,6 +52,7 @@ namespace pxt.runner {
             simulatorClass: 'lang-sim',
             linksClass: 'lang-cards',
             namespacesClass: 'lang-namespaces',
+            apisClass: 'lang-apis',
             codeCardClass: 'lang-codecard',
             packageClass: 'lang-package',
             projectClass: 'lang-project',
@@ -151,12 +153,12 @@ namespace pxt.runner {
     }
 
     function appendJs($parent: JQuery, $js: JQuery, woptions: WidgetOptions) {
-        $parent.append($(`<div class="ui content js"><div class="subheading"><i class="ui icon xicon js"/>JavaScript</div></div>`).append($js));
+        $parent.append($(`<div class="ui content js"><div class="subheading"><i class="ui icon xicon js"></i>JavaScript</div></div>`).append($js));
         highlight($js);
     }
 
     function appendPy($parent: JQuery, $py: JQuery, woptions: WidgetOptions) {
-        $parent.append($(`<div class="ui content py"><div class="subheading"><i class="ui icon xicon python"/>Python</div></div>`).append($py));
+        $parent.append($(`<div class="ui content py"><div class="subheading"><i class="ui icon xicon python"></i>Python</div></div>`).append($py));
         highlight($py);
     }
 
@@ -242,9 +244,10 @@ namespace pxt.runner {
         if (woptions.run && !theme.hideDocsSimulator) {
             let $runBtn = snippetBtn(lf("Run"), "play icon").click(() => {
                 pxt.tickEvent("docs.btn", { button: "sim" });
-                if ($c.find('.sim')[0])
+                if ($c.find('.sim')[0]) {
                     $c.find('.sim').remove(); // remove previous simulators
-                else {
+                    scrollJQueryIntoView($c);
+                } else {
                     let padding = '81.97%';
                     if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
                     const deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
@@ -252,6 +255,8 @@ namespace pxt.runner {
                     const data = encodeURIComponent($js.text());
                     let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" data-code="${data}" allowfullscreen="allowfullscreen" sandbox="allow-popups allow-forms allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
                     $c.append($embed);
+
+                    scrollJQueryIntoView($embed);
                 }
             })
             $menu.append($runBtn);
@@ -278,11 +283,14 @@ namespace pxt.runner {
             if (!$svg) return;
             const $svgBtn = snippetBtn(lf("Blocks"), BLOCKS_ICON).click(() => {
                 pxt.tickEvent("docs.btn", { button: "blocks" });
-                if ($c.find('.blocks')[0])
+                if ($c.find('.blocks')[0]) {
                     $c.find('.blocks').remove();
-                else {
+                    scrollJQueryIntoView($c);
+                } else {
                     if ($js) appendBlocks($js.parent(), $svg);
                     else appendBlocks($c, $svg);
+
+                    scrollJQueryIntoView($svg);
                 }
             })
             $menu.append($svgBtn);
@@ -295,11 +303,14 @@ namespace pxt.runner {
             else {
                 const $jsBtn = snippetBtn("JavaScript", JS_ICON).click(() => {
                     pxt.tickEvent("docs.btn", { button: "js" });
-                    if ($c.find('.js')[0])
+                    if ($c.find('.js')[0]) {
                         $c.find('.js').remove();
-                    else {
+                        scrollJQueryIntoView($c);
+                    } else {
                         if ($svg) appendJs($svg.parent(), $js, woptions);
                         else appendJs($c, $js, woptions);
+
+                        scrollJQueryIntoView($js);
                     }
                 })
                 $menu.append($jsBtn);
@@ -313,15 +324,25 @@ namespace pxt.runner {
             } else {
                 const $pyBtn = snippetBtn("Python", PY_ICON).click(() => {
                     pxt.tickEvent("docs.btn", { button: "py" });
-                    if ($c.find('.py')[0])
+                    if ($c.find('.py')[0]) {
                         $c.find('.py').remove();
-                    else {
+                        scrollJQueryIntoView($c);
+                    } else {
                         if ($svg) appendPy($svg.parent(), $py, woptions);
                         else appendPy($c, $py, woptions);
+
+                        scrollJQueryIntoView($py);
                     }
                 })
                 $menu.append($pyBtn);
             }
+        }
+
+        function scrollJQueryIntoView($toScrollTo: JQuery<HTMLElement>) {
+            $toScrollTo[0]?.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
         }
     }
 
@@ -335,7 +356,8 @@ namespace pxt.runner {
         const existingFilters: Map<boolean> = {};
         return consumeNext()
             .then(() => {
-                Blockly.Workspace.getAll().forEach(el => el.dispose())
+                Blockly.Workspace.getAll().forEach(el => el.dispose());
+                pxt.blocks.cleanRenderingWorkspace();
             });
 
         function consumeNext(): Promise<void> {
@@ -443,20 +465,21 @@ namespace pxt.runner {
             const symbolInfo = r.apiInfo.byQName[info.qName];
             if (!symbolInfo) return;
             let block = Blockly.Blocks[symbolInfo.attributes.blockId];
-            let xml = block && block.codeCard ? block.codeCard.blocksXml : undefined;
+            let xml = block?.codeCard?.blocksXml || undefined;
 
-            const blocksHtml = xml ? pxt.blocks.render(xml) : r.compileBlocks && r.compileBlocks.success ? r.blocksSvg : undefined;
+            const blocksHtml = xml ? pxt.blocks.render(xml) : r.compileBlocks?.success ? r.blocksSvg : undefined;
             const s = blocksHtml ? $(blocksHtml as HTMLElement) : undefined
-            let sig = info.decl.getText().replace(/^export/, '');
-            sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
-            const js = $('<code class="lang-typescript highlight"/>').text(sig);
-            // TODO python
-            const py: JQuery = undefined;// $('<code class="lang-python highlight"/>').text(sig);
+            let jsSig = ts.pxtc.service.displayStringForSymbol(symbolInfo, /** python **/ false, r.apiInfo)
+                .split("\n")[1] + ";";
+            const js = $('<code class="lang-typescript highlight"/>').text(jsSig);
+
+            const pySig = pxt.appTarget?.appTheme?.python && ts.pxtc.service.displayStringForSymbol(symbolInfo, /** python **/ true, r.apiInfo).split("\n")[1];
+            const py: JQuery = pySig && $('<code class="lang-python highlight"/>').text(pySig);
             if (options.snippetReplaceParent) c = c.parent();
             // add an html widge that allows to translate the block
             if (pxt.Util.isTranslationMode()) {
                 const trs = $('<div class="ui segment" />');
-                trs.append($(`<div class="ui header"><i class="ui xicon globe" /></div>`));
+                trs.append($(`<div class="ui header"><i class="ui xicon globe"></i></div>`));
                 if (symbolInfo.attributes.translationId)
                     trs.append($('<div class="ui message">').text(symbolInfo.attributes.translationId));
                 if (symbolInfo.attributes.jsDoc)
@@ -662,10 +685,17 @@ namespace pxt.runner {
         return renderNextDiffAsync(cls);
     }
 
+    let decompileApiPromise: Promise<DecompileResult>;
+    function decompileApiAsync(options: ClientRenderOptions): Promise<DecompileResult> {
+        if (!decompileApiPromise)
+            decompileApiPromise = pxt.runner.decompileSnippetAsync('', options);
+        return decompileApiPromise;
+    }
+
     function renderNamespaces(options: ClientRenderOptions): Promise<void> {
         if (pxt.appTarget.id == "core") return Promise.resolve();
 
-        return pxt.runner.decompileSnippetAsync('', options)
+        return decompileApiAsync(options)
             .then((r) => {
                 let res: pxt.Map<string> = {};
                 const info = r.compileBlocks.blocksInfo;
@@ -789,6 +819,73 @@ namespace pxt.runner {
         return render();
     }
 
+    function renderApisAsync(options: ClientRenderOptions, replaceParent: boolean): Promise<void> {
+        const cls = options.apisClass;
+        if (!cls) return Promise.resolve();
+
+        const apisEl = $('.' + cls);
+        if (!apisEl.length) return Promise.resolve();
+
+        return decompileApiAsync(options)
+            .then((r) => {
+                const info = r.compileBlocks.blocksInfo;
+                const symbols = pxt.Util.values(info.apis.byQName)
+                    .filter(symbol => !symbol.attributes.hidden && !!symbol.attributes.jsDoc && !/^__/.test(symbol.name));
+                apisEl.each((i, e) => {
+                    let c = $(e);
+                    const namespaces = pxt.Util.toDictionary(c.text().split('\n'), n => n); // list of namespace to list apis for.
+                    const csymbols = symbols.filter(symbol => !!namespaces[symbol.namespace])
+                    if (!csymbols.length) return;
+
+                    csymbols.sort((l,r) => {
+                        // render cards first
+                        const lcard = !l.attributes.blockHidden && Blockly.Blocks[l.attributes.blockId];
+                        const rcard = !r.attributes.blockHidden && Blockly.Blocks[r.attributes.blockId]
+                        if (!!lcard != !!rcard) return -(lcard ? 1 : 0) + (rcard ? 1 : 0);
+
+                        // sort alphabetically
+                        return l.name.localeCompare(r.name);
+                    })
+
+                    const ul = $('<div />').addClass('ui divided items');
+                    ul.attr("role", "listbox");
+                    csymbols.forEach(symbol => addSymbolCardItem(ul, symbol, "item"));
+                    if (replaceParent) c = c.parent();
+                    c.replaceWith(ul)
+                })
+            });
+    }
+
+    function addCardItem(ul: JQuery, card: pxt.CodeCard) {
+        if (!card) return;
+        const mC = /^\/(v\d+)/.exec(card.url);
+        const mP = /^\/(v\d+)/.exec(window.location.pathname);
+        const inEditor = /#doc/i.test(window.location.href);
+        if (card.url && !mC && mP && !inEditor) card.url = `/${mP[1]}/${card.url}`;
+        ul.append(pxt.docs.codeCard.render(card, { hideHeader: true, shortName: true }));
+    }
+
+    function addSymbolCardItem(ul: JQuery, symbol: pxtc.SymbolInfo, cardStyle?: string) {
+        const attributes = symbol.attributes;
+        const block = !attributes.blockHidden && Blockly.Blocks[attributes.blockId];
+        const card = block?.codeCard;
+        if (card) {
+            const ccard = U.clone(block.codeCard) as pxt.CodeCard;
+            if (cardStyle) ccard.style = cardStyle;
+            addCardItem(ul, ccard);
+        }
+        else {
+            // default to text
+            // no block available here
+            addCardItem(ul, {
+                name: symbol.qName,
+                description: attributes.jsDoc,
+                url: attributes.help || undefined,
+                style: cardStyle
+            })
+        }
+    }
+
     function renderLinksAsync(options: ClientRenderOptions, cls: string, replaceParent: boolean, ns: boolean): Promise<void> {
         return renderNextSnippetAsync(cls, (c, r) => {
             const cjs = r.compileProgram;
@@ -797,23 +894,17 @@ namespace pxt.runner {
             const stmts = file.statements.slice(0);
             const ul = $('<div />').addClass('ui cards');
             ul.attr("role", "listbox");
-            const addItem = (card: pxt.CodeCard) => {
-                if (!card) return;
-                const mC = /^\/(v\d+)/.exec(card.url);
-                const mP = /^\/(v\d+)/.exec(window.location.pathname);
-                const inEditor = /#doc/i.test(window.location.href);
-                if (card.url && !mC && mP && !inEditor) card.url = `/${mP[1]}/${card.url}`;
-                ul.append(pxt.docs.codeCard.render(card, { hideHeader: true, shortName: true }));
-            }
             stmts.forEach(stmt => {
-                let info = decompileCallInfo(stmt);
+                const kind = stmt.kind;
+                const info = decompileCallInfo(stmt);
                 if (info && r.apiInfo && r.apiInfo.byQName[info.qName]) {
-                    const attributes = r.apiInfo.byQName[info.qName].attributes;
-                    let block = Blockly.Blocks[attributes.blockId];
+                    const symbol = r.apiInfo.byQName[info.qName];
+                    const attributes = symbol.attributes;
+                    const block = Blockly.Blocks[attributes.blockId];
                     if (ns) {
-                        let ii = r.compileBlocks.blocksInfo.apis.byQName[info.qName];
-                        let nsi = r.compileBlocks.blocksInfo.apis.byQName[ii.namespace];
-                        addItem({
+                        const ii = symbol;
+                        const nsi = r.compileBlocks.blocksInfo.apis.byQName[ii.namespace];
+                        addCardItem(ul, {
                             name: nsi.attributes.blockNamespace || nsi.name,
                             url: nsi.attributes.help || ("reference/" + (nsi.attributes.blockNamespace || nsi.name).toLowerCase()),
                             description: nsi.attributes.jsDoc,
@@ -823,27 +914,17 @@ namespace pxt.runner {
                                     ? `<xml xmlns="http://www.w3.org/1999/xhtml"><block type="${attributes.blockId}"></block></xml>`
                                     : undefined
                         })
-                    } else if (block) {
-                        let card = U.clone(block.codeCard) as pxt.CodeCard;
-                        if (card) {
-                            addItem(card);
-                        }
                     } else {
-                        // no block available here
-                        addItem({
-                            name: info.qName,
-                            description: attributes.jsDoc,
-                            url: attributes.help || undefined
-                        })
+                        addSymbolCardItem(ul, symbol);
                     }
                 } else
-                    switch (stmt.kind) {
-                        case ts.SyntaxKind.ExpressionStatement:
-                            let es = stmt as ts.ExpressionStatement;
+                    switch (kind) {
+                        case ts.SyntaxKind.ExpressionStatement: {
+                            const es = stmt as ts.ExpressionStatement;
                             switch (es.expression.kind) {
                                 case ts.SyntaxKind.TrueKeyword:
                                 case ts.SyntaxKind.FalseKeyword:
-                                    addItem({
+                                    addCardItem(ul, {
                                         name: "Boolean",
                                         url: "blocks/logic/boolean",
                                         description: lf("True or false values"),
@@ -855,8 +936,9 @@ namespace pxt.runner {
                                     break;
                             }
                             break;
+                        }
                         case ts.SyntaxKind.IfStatement:
-                            addItem({
+                            addCardItem(ul, {
                                 name: ns ? "Logic" : "if",
                                 url: "blocks/logic" + (ns ? "" : "/if"),
                                 description: ns ? lf("Logic operators and constants") : lf("Conditional statement"),
@@ -864,7 +946,7 @@ namespace pxt.runner {
                             });
                             break;
                         case ts.SyntaxKind.WhileStatement:
-                            addItem({
+                            addCardItem(ul, {
                                 name: ns ? "Loops" : "while",
                                 url: "blocks/loops" + (ns ? "" : "/while"),
                                 description: ns ? lf("Loops and repetition") : lf("Repeat code while a condition is true."),
@@ -872,7 +954,7 @@ namespace pxt.runner {
                             });
                             break;
                         case ts.SyntaxKind.ForOfStatement:
-                            addItem({
+                            addCardItem(ul, {
                                 name: ns ? "Loops" : "for of",
                                 url: "blocks/loops" + (ns ? "" : "/for-of"),
                                 description: ns ? lf("Loops and repetition") : lf("Repeat code for each item in a list."),
@@ -880,7 +962,7 @@ namespace pxt.runner {
                             });
                             break;
                         case ts.SyntaxKind.BreakStatement:
-                            addItem({
+                            addCardItem(ul, {
                                 name: ns ? "Loops" : "break",
                                 url: "blocks/loops" + (ns ? "" : "/break"),
                                 description: ns ? lf("Loops and repetition") : lf("Break out of the current loop."),
@@ -888,14 +970,14 @@ namespace pxt.runner {
                             });
                             break;
                         case ts.SyntaxKind.ContinueStatement:
-                            addItem({
+                            addCardItem(ul, {
                                 name: ns ? "Loops" : "continue",
                                 url: "blocks/loops" + (ns ? "" : "/continue"),
                                 description: ns ? lf("Loops and repetition") : lf("Skip iteration and continue the current loop."),
                                 blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="continue_keyboard"></block></xml>'
                             });
                             break;
-                        case ts.SyntaxKind.ForStatement:
+                        case ts.SyntaxKind.ForStatement: {
                             let fs = stmt as ts.ForStatement;
                             // look for the 'repeat' loop style signature in the condition expression, explicitly: (let i = 0; i < X; i++)
                             // for loops will have the '<=' conditional.
@@ -905,14 +987,14 @@ namespace pxt.runner {
                                     fs.condition.getChildAt(1).kind == ts.SyntaxKind.LessThanToken);
                             }
                             if (forloop) {
-                                addItem({
+                                addCardItem(ul, {
                                     name: ns ? "Loops" : "for",
                                     url: "blocks/loops" + (ns ? "" : "/for"),
                                     description: ns ? lf("Loops and repetition") : lf("Repeat code for a given number of times using an index."),
                                     blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_simple_for"></block></xml>'
                                 });
                             } else {
-                                addItem({
+                                addCardItem(ul, {
                                     name: ns ? "Loops" : "repeat",
                                     url: "blocks/loops" + (ns ? "" : "/repeat"),
                                     description: ns ? lf("Loops and repetition") : lf("Repeat code for a given number of times."),
@@ -920,8 +1002,9 @@ namespace pxt.runner {
                                 });
                             }
                             break;
+                        }
                         case ts.SyntaxKind.VariableStatement:
-                            addItem({
+                            addCardItem(ul, {
                                 name: ns ? "Variables" : "variable declaration",
                                 url: "blocks/variables" + (ns ? "" : "/assign"),
                                 description: ns ? lf("Variables") : lf("Assign a value to a named variable."),
@@ -929,7 +1012,7 @@ namespace pxt.runner {
                             });
                             break;
                         default:
-                            pxt.debug(`card kind: ${stmt.kind}`)
+                            pxt.debug(`card kind: ${kind}`)
                     }
             })
 
@@ -1163,6 +1246,7 @@ namespace pxt.runner {
             .then(() => renderInlineBlocksAsync(options))
             .then(() => renderLinksAsync(options, options.linksClass, options.snippetReplaceParent, false))
             .then(() => renderLinksAsync(options, options.namespacesClass, options.snippetReplaceParent, true))
+            .then(() => renderApisAsync(options, options.snippetReplaceParent))
             .then(() => renderSignaturesAsync(options))
             .then(() => renderSnippetsAsync(options))
             .then(() => renderBlocksAsync(options))

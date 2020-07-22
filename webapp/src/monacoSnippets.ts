@@ -105,6 +105,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     snippetName: "let",
                     snippet: `let item: number`,
                     pySnippet: `item = 0`,
+                    pySnippetName: `item = 0`,
                     snippetOnly: true,
                     attributes: {
                         blockId: 'variables_set',
@@ -249,13 +250,14 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     retType: "number"
                 },
                 {
-                    name: "Math.randomRange",
-                    snippetName: "randomRange",
-                    snippet: `Math.randomRange(0, 10)`,
+                    name: "randint",
+                    snippetName: "randint",
+                    snippet: `randint(0, 10)`,
                     pySnippetName: `randint`,
                     pySnippet: `randint(0, 10)`,
                     attributes: {
                         weight: 65,
+                        blockId: "device_random",
                         jsDoc: lf("Returns a random number between min and max")
                     },
                     retType: "number"
@@ -603,12 +605,14 @@ export function getPauseUntil() {
 
 // Map of defined snippets to blockIds, for when multiple
 // blocks (eg "for index" and "repeat") map to the same snippet
-let _blockIdMap: pxt.Map<string>;
+let _blockIdMap: pxt.Map<string[]>;
 export function blockIdMap() {
     if (!_blockIdMap) {
         _blockIdMap = {
-            "pxt_controls_for": "controls_repeat_ext"
+            "pxt_controls_for": ["controls_repeat_ext"]
         }
+        const targetIds = pxt.appTarget.blockIdMap;
+        if (targetIds) Object.keys(targetIds).forEach(id => _blockIdMap[id] = targetIds[id]);
     }
     return _blockIdMap;
 }

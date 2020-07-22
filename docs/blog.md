@@ -1,8 +1,48 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode for the micro:bit – 2020 Release](/blog/microbit/2020-release)
+
+June 12th, 2020 by [Jaqster](https://github.com/jaqster)
+
+The 2020 MakeCode for the micro:bit release is now available. Many of the important new features were announced in the post about the beta but we'll share them with you again here.
+
+**[Continue reading this blog post](/blog/microbit/2020-release)**
+
+## [MakeCode for the micro:bit – 2020 Beta Release](/blog/microbit/2020-beta)
+
+April 28th, 2020 by [Jaqster](https://github.com/jaqster)
+
+We are happy to announce the Beta for our 2020 MakeCode for the micro:bit release which is still scheduled to ship for general availability in June.
+
+**[Continue reading this blog post](/blog/microbit/2020-beta)**
+
+## [MakeCode Arcade One Room Game Jam](/blog/arcade/game-jam-2)
+
+April 7th, 2020
+
+Submissions from the second MakeCode Arcade game jam are in. We've been delighted and amazed by the creativity and craft on display in these games! Check out some of our favorite entries from the jam.
+
+**[Continue reading this blog post](/blog/arcade/game-jam-2)**
+
+## [Online Learning Resources](/blog/online-learning)
+
+March 10th, 2020
+
+Many schools have closed or might soon close to help prevent the spread of illness. Both educators and students may need to find ways to promote and continue learning without a classroom. 
+To help families, **the MakeCode team will be live streaming coding lessons**.
+We thought that it might be helpful to again highlight the learning resources we have with MakeCode that support online learning.
+**[Continue reading this blog post](/blog/online-learning)**
+
+## [MakeCode Python is here!](/blog/minecraft/python-release)
+
+February 19th, 2020 by [Jaqster](https://github.com/jaqster)
+
+Microsoft MakeCode already supports Blocks and the JavaScript programming language, and now we’re happy to also announce support for Python!
+**[Continue reading this blog post](/blog/minecraft/python-release)**
+
 ## [MakeCode Arcade Released for General Availability!](/blog/arcade/general-release)
 
-January 6th, 2019 by [Jaqster](https://github.com/jaqster)
+January 6th, 2020 by [Jaqster](https://github.com/jaqster)
 
 Ringing in the New Year with a New Release! The MakeCode team is very happy and proud to announce that MakeCode Arcade has been officially released for general availability today!
 **[Continue reading this blog post](/blog/arcade/general-release)**

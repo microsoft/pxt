@@ -7,6 +7,12 @@ If you have any tags, PXT will pick the one with
 the highest [Semantic Version](http://semver.org) precedence (the biggest version
 number). Thus, it's good to have tags like `v0.0.0`, `v0.1.7` etc.
 
+## ~hint
+
+The tag **must be** formatted ``vMAJOR.MINOR.PATCH``.
+
+## ~
+
 If there are no tags, PXT will pick the latest commit from the default branch
 (usually `master`).
 
@@ -20,10 +26,17 @@ In both cases, the specific version is hard-coded into the user's extension. The
 }
 ```
 
-You can use `pxt bump` to bump version of an extension. It will `git pull`, update the patch
-version level (but will ask you for an override), create a git tag and push.
+You can use the GitHub integration in MakeCode to create a release (if supported).
 
-## Resolving incompatibile versions
+You can use `pxt bump` to bump version of an extension. It will `git pull`, update the patch version level (but will ask you for an override), create a git tag and push.
+
+You can also create a tag from git:
+```
+git tag v0.3.10 # don't forget to update the version here
+git push --tags
+```
+
+## Resolving incompatible versions
 
 If an extension version used by a project isn't current, errors might occur when the editor trys to load the project. Extension versions used by the project may be incompatible with the current editor. If errors occur in an extension when the editor trys to load a project, the user is prompted to have the edtior attempt an action to try and resolve them. These actions are:
 

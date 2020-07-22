@@ -41,7 +41,9 @@
         .ui.divider {
             margin-bottom: 5px;
         }
-
+        .ui.section {
+            margin-top: 1rem;
+        }
         .ui.segment.diff {
             padding: 0;
         }
@@ -115,6 +117,21 @@
 .inverted-theme {
     #githubEditor {
         color: @githubInvertedTextColor;
+        .ui.transparent.segment {
+            border: 1px solid @mainMenuInvertedBackground;
+        }
+        .ui.basic.button > .ui.text,
+        .ui.header {
+            color: @githubInvertedTextColor !important;
+        }
+        .ui.items>.link.item {
+            .meta, .description {
+                color: @githubInvertedTextColor !important;
+            }
+        }
+        .diffheader {
+            background: @mainMenuInvertedBackground !important;
+        }
         table.diffview {
             .change code {
                 color: @githubInvertedTextColor !important;
@@ -134,6 +151,10 @@
                 .ch-removed {
                     background: @diffInvertedRemovedTokenBackground !important;
                 }
+            }
+
+            .diff-unchanged {
+                background: @diffInvertedUnchangedBackground !important;
             }
         
             .line-a,

@@ -32,7 +32,7 @@ namespace pxtblockly {
             }
 
             // Build the DOM.
-            this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null);
+            this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null) as SVGGElement;
             if (!this.visible_) {
                 (this.fieldGroup_ as any).style.display = 'none';
             }
@@ -69,7 +69,7 @@ namespace pxtblockly {
                     'dy': '0.6ex',
                     'y': size.height / 2
                 },
-                this.fieldGroup_);
+                this.fieldGroup_) as SVGTextElement;
 
             this.updateEditable();
             (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(this.fieldGroup_);
@@ -87,7 +87,6 @@ namespace pxtblockly {
 
         updateSize_() {
             this.size_.width = 30;
-            this.arrowWidth_ = 0;
         }
 
         /**
@@ -130,8 +129,8 @@ namespace pxtblockly {
             }
         }
 
-        updateTextNode_() {
-            super.updateTextNode_();
+        updateDisplay_(newValue: string) {
+            super.updateDisplay_(newValue);
             if (this.textElement_)
                 pxt.BrowserUtils.addClass(this.textElement_ as SVGElement, 'blocklyToggleText');
         }

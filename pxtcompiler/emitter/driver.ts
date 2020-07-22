@@ -257,13 +257,7 @@ namespace ts.pxtc {
         const semStart = U.cpuUs()
 
         if (res.diagnostics.length == 0) {
-            if (opts.skipPxtModulesTSC) {
-                const allDiag = program.getSourceFiles().map(f =>
-                    isPxtModulesFilename(f.fileName) ? [] : program.getSemanticDiagnostics(f))
-                res.diagnostics = patchUpDiagnostics(U.concatArrayLike(allDiag), opts.ignoreFileResolutionErrors)
-            } else {
-                res.diagnostics = patchUpDiagnostics(program.getSemanticDiagnostics(), opts.ignoreFileResolutionErrors);
-            }
+            res.diagnostics = patchUpDiagnostics(program.getSemanticDiagnostics(), opts.ignoreFileResolutionErrors);
         }
 
         const emitStart = U.cpuUs()
@@ -300,13 +294,13 @@ namespace ts.pxtc {
         const apis = getApiInfo(program, opts.jres);
         const blocksInfo = pxtc.getBlocksInfo(apis, opts.bannedCategories);
         const decompileOpts: decompiler.DecompileBlocksOptions = {
-            snippetMode: false,
+            snippetMode: opts.snippetMode || false,
             alwaysEmitOnStart: opts.alwaysDecompileOnStart,
             includeGreyBlockMessages,
             generateSourceMap: !!opts.ast,
             allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"]
         };
-        let [renameMap, _] = pxtc.decompiler.buildRenameMap(program, file)
+        const [renameMap, _] = pxtc.decompiler.buildRenameMap(program, file)
         const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, decompileOpts, renameMap);
         return bresp;
     }

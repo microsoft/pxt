@@ -1,2 +1,0 @@
-namespaceWithAlias.argsWithAlias(FOO)
-BAR()

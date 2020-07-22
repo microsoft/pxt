@@ -25,6 +25,7 @@ pxt.webConfig = {
     workerjs: WEB_PREFIX + "/blb/worker.js",
     monacoworkerjs: undefined,
     gifworkerjs: undefined,
+    serviceworkerjs: undefined,
     pxtVersion: undefined,
     pxtRelId: undefined,
     pxtCdnUrl: undefined,
@@ -36,9 +37,12 @@ pxt.webConfig = {
     targetUrl: undefined,
     targetId: undefined,
     simUrl: undefined,
+    simserviceworkerUrl: undefined,
+    simworkerconfigUrl: undefined,
     partsUrl: undefined,
     runUrl: undefined,
     docsUrl: undefined,
+    multiUrl: undefined,
     isStatic: undefined,
 };
 

@@ -46,21 +46,6 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
                 this.reject = rej;
             }
         );
-
-        // Enable copyable
-        const btn = this.refs["copybtn"] as sui.Button;
-        if (btn) {
-            const btnDom = ReactDOM.findDOMNode(btn) as HTMLElement;
-            btnDom.addEventListener('click', () => {
-                try {
-                    const inp = this.refs["linkinput"] as HTMLInputElement;
-                    inp.focus();
-                    inp.setSelectionRange(0, inp.value.length);
-                    document.execCommand("copy");
-                } catch (e) {
-                }
-            })
-        }
     }
 
     modalDidOpen(ref: HTMLElement) {
@@ -126,26 +111,25 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
                 closeOnEscape={!options.hideCancel}
                 modalDidOpen={this.modalDidOpen}
             >
-                {options.type == 'prompt' ? <div className="ui fluid icon input">
-                    <input
-                        autoFocus
-                        className={`ui input ${inputError ? "error" : ""}`}
-                        type="text"
-                        ref="promptInput"
-                        onChange={this.handleInputChange}
-                        value={inputValue}
-                        placeholder={options.placeholder}
-                        aria-label={options.placeholder}
-                    />
-                </div> : undefined}
-                {inputError ? <div className="ui error message">{inputError}</div> : undefined}
+                {options.type == 'prompt' && <div className="ui">
+                    <div className="ui fluid icon input">
+                        <input
+                            autoFocus
+                            className={`ui input ${inputError ? "error" : ""}`}
+                            type="text"
+                            ref="promptInput"
+                            onChange={this.handleInputChange}
+                            value={inputValue}
+                            placeholder={options.placeholder}
+                            aria-label={options.placeholder}
+                        />
+                    </div>
+                    {!!inputError && <div className="ui error message">{inputError}</div>}
+                </div>}
                 {options.jsx}
-                {options.jsxd ? options.jsxd() : undefined}
-                {options.body ? <p>{options.body}</p> : undefined}
-                {options.copyable ? <div className="ui fluid action input">
-                    <input ref="linkinput" className="linkinput" readOnly spellCheck={false} type="text" value={`${options.copyable}`} />
-                    <sui.Button ref="copybtn" labelPosition='right' color="teal" className='copybtn' data-content={lf("Copied!")} />
-                </div> : undefined}
+                {!!options.jsxd && options.jsxd()}
+                {!!options.body && <p>{options.body}</p>}
+                {!!options.copyable && <sui.Input copy={true} readOnly={true} value={options.copyable} selectOnClick={true} autoComplete={false} />}
             </sui.Modal >)
         /* tslint:enable:react-no-dangerous-html */
     }

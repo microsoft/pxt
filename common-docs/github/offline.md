@@ -1,6 +1,6 @@
 # Offline for GitHub extensions
 
-If you plan to use your extension without Internet (offline), you will need to save your extension to a file and share it with your users.
+If you plan to use your extension later without the Internet (offline), you will first need to save your extension to a file and share it with your users.
 
 ## How to export
 

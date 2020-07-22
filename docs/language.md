@@ -114,6 +114,7 @@ is constructed right after last used variable have been defined.
 For functions defined before usage, the closure is constructed at the
 point of definition.)
 Both of the following examples will yield a compile error.
+
 ```typescript
 function foo1() {
     bar()
@@ -129,7 +130,6 @@ function foo1() {
     function bar() { let y = x } 
 }
 ```
-
 
 For JS-only targets we may implement the following:
 
@@ -282,7 +282,6 @@ and dynamic maps.
 * `Object.keys()` is currently not implemented for classes; when it will be
   the order of fields will be static declaration order
 * how to validate types of C++ classes (Pin mostly)?
-
 
 # Python
 

@@ -85,22 +85,10 @@ namespace pxt.editor.experiments {
                 feedbackUrl: "https://github.com/microsoft/pxt/issues/5390"
             },
             {
-                id: "pythonToolbox",
-                name: lf("Toolbox for Static Python"),
-                description: lf("Use the code toolbox in Static Python"),
-                feedbackUrl: "https://github.com/microsoft/pxt/issues/6291"
-            },
-            {
                 id: "simGif",
                 name: lf("Simulator Gifs"),
                 description: lf("Download gifs of the simulator"),
                 feedbackUrl: "https://github.com/microsoft/pxt/issues/5297"
-            },
-            {
-                id: "autoWebUSBDownload",
-                name: lf("WebUSB Download"),
-                description: lf("Automatically try to download via WebUSB"),
-                feedbackUrl: "https://github.com/microsoft/pxt/issues/5344"
             },
             {
                 id: "qrCode",
@@ -157,7 +145,23 @@ namespace pxt.editor.experiments {
             {
                 id: "openProjectNewTab",
                 name: lf("Open in New Tab"),
+                description: lf("Open an editor in a new tab.")
+            },
+            {
+                id: "openProjectNewDependentTab",
+                name: lf("Open in New Connected Tab"),
                 description: lf("Open connected editors in different browser tabs.")
+            },
+            {
+                id: "accessibleBlocks",
+                name: lf("Accessible Blocks"),
+                description: lf("Use the WASD keys to move and modify blocks."),
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/6850"
+            },
+            {
+                id: "errorList",
+                name: lf("Error List"),
+                description: lf("Show an error list panel for JavaScript and Python.")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }

@@ -33,7 +33,8 @@
     #docs {
         position: inherit !important; /* otherwise prints a single page */
 
-        .ui.segment, .ui.centered.card, .ui.content, iframe, .nobreak, pre, code, blockquote {
+        .ui.segment, .ui.centered.card, .ui.content, iframe, .nobreak, pre, code, blockquote,
+        .ui.item, .ui.card {
             page-break-inside: avoid;
         }
         h1, h2, h3, h4, h5, h6, img {
@@ -101,40 +102,48 @@
     }
 
     /** blockly **/
-    .blocklyPath {
-        stroke-width: 3px !important;
-        stroke: black !important;
-        fill: white !important;
-    }
-    .blocklyBlockBackground, .blocklyLedOff {
-        stroke-width: 2px !important;
-        stroke: black !important;
-        fill: white !important;        
-    }
-    .blocklyText, .blocklyDropdownText {
-        fill: black !important;
-    }
-    .blocklyLedOn {
-        stroke-width: 2px !important;
-        stroke: black !important;
-        fill: black !important;
-    }
-    /* comments */
-    .blocklyCommentRect {
-        fill: white !important;
-        stroke: black !important;
-    }
-    .blocklyCommentTextarea {
-        overflow: hidden !important;
-    }
-    .blocklyCommentTarget, .blocklyCommentHandleTarget, .blocklyResizeSE {
-        display: none !important;
-    }
-    .blocklyToggleRect {
-        fill: white !important;
-    }
-    .blocklyText.blocklyToggleText {
-        fill: black !important;
+    svg, .pxt-renderer {
+        .blocklyPath {
+            stroke-width: 3px !important;
+            stroke: black !important;
+            fill: white !important;
+        }
+        .blocklyBlockBackground, .blocklyLedOff {
+            stroke-width: 2px !important;
+            stroke: black !important;
+            fill: white !important;
+        }
+        .blocklyText, .blocklyDropdownText {
+            fill: black !important;
+        }
+        .blocklyLedOn {
+            stroke-width: 2px !important;
+            stroke: black !important;
+            fill: black !important;
+        }
+        .blocklyOutlinePath,
+        .blocklyFieldRect.blocklyDropdownRect {
+            stroke-width: 2px !important;
+            stroke: black !important;
+            fill: transparent !important;
+        }
+        /* comments */
+        .blocklyCommentRect {
+            fill: white !important;
+            stroke: black !important;
+        }
+        .blocklyCommentTextarea {
+            overflow: hidden !important;
+        }
+        .blocklyCommentTarget, .blocklyCommentHandleTarget, .blocklyResizeSE {
+            display: none !important;
+        }
+        .blocklyToggleRect {
+            fill: white !important;
+        }
+        .blocklyText.blocklyToggleText {
+            fill: black !important;
+        }
     }
 
     .codesnippet {

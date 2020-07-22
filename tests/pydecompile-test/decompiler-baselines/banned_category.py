@@ -1,0 +1,1 @@
+banned.should_not_decompile()

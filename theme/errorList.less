@@ -1,0 +1,120 @@
+@import 'themes/pxt/globals/site.variables';
+
+// Expanded error list
+.errorList {
+    position: relative;
+    max-height: @errorListHeight;
+    min-height: @errorListHeight;
+    border-top: 2px @errorListBorderColor solid;
+
+    *:focus {
+        outline: none;
+    }
+
+    .errorListHeader {
+        padding: 0.75em 1em;
+        height: @errorListHeaderHeight;
+        margin-bottom: 0;
+
+        &:hover {
+            cursor: pointer;
+        }
+
+        &:not(:hover):not(:focus) > .toggleButton > i {
+            opacity: 0.5;
+        }
+
+        h4 {
+            margin: 0;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .countBubble {
+            margin-left: 1em;
+        }
+
+        &:hover > .toggleButton > i , &:focus > .toggleButton > i{
+            font-size: 1.4em;
+        }
+
+        .toggleButton {
+            float: right;
+            position: relative;
+            vertical-align: middle;
+
+            i {
+                font-size: 1.3em;
+            }
+        }
+    }
+
+    .errorListInner {
+        height: @errorListInnerHeight;
+        padding: 0 0 1em 0;
+        overflow-y: auto;
+
+        .exceptionMessage {
+            color: black;
+            padding: 0.5em 1em;
+            width: 70%;
+        }
+
+        // errors
+        .ui.selection.list {
+            color: black;
+            cursor: pointer;
+            margin: 0;
+
+            .item {
+                border-radius: unset;
+                padding: 0.5em 1em;
+                color: black;
+
+                &:hover, &:focus {
+                    background-color: @errorListMessageHoverColor !important;
+                }
+
+                &:nth-child(even):not(:hover) {
+                    background-color: @errorListEven;
+                }
+
+                &:nth-child(odd):not(:hover) {
+                    background-color: @errorListOdd;
+                }
+
+                &.stackframe {
+                    padding-left: 2em;
+                }
+            }
+        }
+
+        .debuggerSuggestion {
+            float: right;
+            height: fit-content;
+            width: fit-content;
+            padding-top: 0.5em;
+            margin-right: 0.5em;
+            color: @errorListDebugSuggestionColor;
+            cursor: pointer;
+
+            &:hover, &:focus {
+                opacity: 0.75;
+            }
+
+            .debug-icon {
+                margin-left: 0.5em;
+                vertical-align: text-top;
+            }
+        }
+    }
+}
+
+// collapsed error list
+.errorList.errorListSummary {
+    min-height: unset;
+
+    &:hover {
+        background-color: @errorListMessageHoverColor;
+    }
+}

@@ -83,6 +83,43 @@ namespace pxt.usb {
         packetSize: number;
     }
 
+    export interface USBControlTransferParameters {
+        requestType: USBRequestType;
+        recipient: USBRecipient;
+        request: number;
+        value: number;
+        index: number;
+    }
+
+    export interface USBInTransferResult {
+        data: { buffer: ArrayBuffer; };
+        status: USBTransferStatus;
+    }
+
+    export interface USBOutTransferResult {
+        bytesWritten: number;
+        status: USBTransferStatus;
+    }
+
+    export interface USBIsochronousInTransferPacket {
+        data: DataView;
+        status: USBTransferStatus;
+    }
+
+    export interface USBIsochronousInTransferResult {
+        data: DataView;
+        packets: USBIsochronousInTransferPacket[];
+    }
+
+    export interface USBIsochronousOutTransferPacket {
+        bytesWritten: number;
+        status: USBTransferStatus;
+    }
+
+    export interface USBIsochronousOutTransferResult {
+        packets: USBIsochronousOutTransferPacket[];
+    }
+
     export interface USBDevice {
         vendorId: number; // VID.*
         productId: number; // 589
@@ -122,30 +159,78 @@ namespace pxt.usb {
         reset(): Promise<void>;
     }
 
-    class HID implements HF2.PacketIO {
+    class WebUSBHID implements pxt.packetio.PacketIO {
+        lastKnownDeviceSerialNumber: string;
+        dev: USBDevice;
         ready = false;
+        connecting = false;
         iface: USBInterface;
         altIface: USBAlternateInterface;
         epIn: USBEndpoint;
         epOut: USBEndpoint;
         readLoopStarted = false;
+        onDeviceConnectionChanged = (connect: boolean) => { };
+        onConnectionChanged = () => { };
         onData = (v: Uint8Array) => { };
         onError = (e: Error) => { };
         onEvent = (v: Uint8Array) => { };
+        enabled = false;
 
-        constructor(public dev: USBDevice) {
-            (navigator as any).usb.addEventListener('disconnect', (event: any) => {
-                if (event.device == this.dev) {
-                    this.log("Device disconnected")
-                    this.clearDev()
-                }
-            });
+        constructor() {
+            this.handleUSBConnected = this.handleUSBConnected.bind(this);
+            this.handleUSBDisconnected = this.handleUSBDisconnected.bind(this);
+        }
+
+        enable(): void {
+            if (this.enabled) return;
+
+            this.enabled = true;
+            this.log("registering webusb events");
+            (navigator as any).usb.addEventListener('disconnect', this.handleUSBDisconnected, false);
+            (navigator as any).usb.addEventListener('connect', this.handleUSBConnected, false);
+        }
+
+        disable() {
+            if (!this.enabled) return;
+
+            this.enabled = false;
+            this.log(`unregistering webusb events`);
+            (navigator as any).usb.removeEventListener('disconnect', this.handleUSBDisconnected);
+            (navigator as any).usb.removeEventListener('connect', this.handleUSBConnected);
+        }
+
+        disposeAsync(): Promise<void> {
+            this.disable();
+            return Promise.resolve();
+        }
+
+        private handleUSBDisconnected(event: any) {
+            this.log("device disconnected")
+            if (event.device == this.dev) {
+                this.log("clear device")
+                this.clearDev();
+                if (this.onDeviceConnectionChanged)
+                    this.onDeviceConnectionChanged(false);
+            }
+        }
+        private handleUSBConnected(event: any) {
+            const newdev = event.device as USBDevice;
+            this.log(`device connected ${newdev.serialNumber}`)
+            if (!this.dev && !this.connecting) {
+                this.log("attach device")
+                if (this.onDeviceConnectionChanged)
+                    this.onDeviceConnectionChanged(true);
+            }
         }
 
         private clearDev() {
-            this.dev = null
-            this.epIn = null
-            this.epOut = null
+            if (this.dev) {
+                this.dev = null
+                this.epIn = null
+                this.epOut = null
+                if (this.onConnectionChanged)
+                    this.onConnectionChanged();
+            }
         }
 
         error(msg: string) {
@@ -153,14 +238,12 @@ namespace pxt.usb {
         }
 
         log(msg: string) {
-            msg = "WebUSB: " + msg
-            pxt.log(msg)
-            //pxt.debug(msg)
+            pxt.debug("webusb: " + msg)
         }
 
         disconnectAsync() {
-            if (!this.dev) return Promise.resolve()
             this.ready = false
+            if (!this.dev) return Promise.resolve()
             this.log("close device")
             return this.dev.close()
                 .catch(e => {
@@ -174,13 +257,78 @@ namespace pxt.usb {
 
         reconnectAsync() {
             this.log("reconnect")
+            this.setConnecting(true);
             return this.disconnectAsync()
-                .then(getDeviceAsync)
-                .then(dev => {
-                    this.log("got device: " + dev.manufacturerName + " " + dev.productName)
-                    this.dev = dev
-                    return this.initAsync()
-                })
+                .then(tryGetDevicesAsync)
+                .then(devs => this.connectAsync(devs))
+                .finally(() => this.setConnecting(false));
+        }
+
+        private setConnecting(v: boolean) {
+            if (v != this.connecting) {
+                this.connecting = v;
+                if (this.onConnectionChanged)
+                    this.onConnectionChanged();
+            }
+        }
+
+        isConnecting(): boolean {
+            return this.connecting;
+        }
+
+        isConnected(): boolean {
+            return !!this.dev && this.ready;
+        }
+
+        private async connectAsync(devs: USBDevice[]) {
+            this.log(`trying to connect (${devs.length} devices)`)
+            // no devices...
+            if (devs.length == 0) {
+                const e = new Error("Device not found.");
+                (e as any).type = "devicenotfound";
+                throw e;
+            }
+
+            this.setConnecting(true);
+            try {
+                // move last known device in front
+                // if we have a race with another tab when reconnecting, wait a bit if device unknown
+                if (this.lastKnownDeviceSerialNumber) {
+                    const lastDev = devs.find(d => d.serialNumber === this.lastKnownDeviceSerialNumber);
+                    if (lastDev) {
+                        this.log(`last known device spotted`);
+                        devs.splice(devs.indexOf(lastDev), 1);
+                        devs.unshift(lastDev);
+                    } else {
+                        // give another frame a chance to grab the device
+                        this.log(`delay for last known device`)
+                        await Promise.delay(2000);
+                    }
+                }
+
+                // try to connect to one of the devices
+                for (let i = 0; i < devs.length; ++i) {
+                    const dev = devs[i];
+                    this.dev = dev;
+                    this.log(`connect device: ${dev.manufacturerName} ${dev.productName}`)
+                    this.log(`serial number: ${dev.serialNumber} ${this.lastKnownDeviceSerialNumber === dev.serialNumber ? "(last known device)" : ""} `);
+                    try {
+                        await this.initAsync();
+                        // success, stop trying
+                        return;
+                    } catch (e) {
+                        this.dev = undefined; // clean state
+                        this.log(`connection failed, ${e.message}`);
+                        // try next
+                    }
+                }
+                // failed to connect, all devices are locked or broken
+                const e = new Error(U.lf("Device in use or not found."));
+                (e as any).type = "devicelocked";
+                throw e;
+            } finally {
+                this.setConnecting(false);
+            }
         }
 
         sendPacketAsync(pkt: Uint8Array) {
@@ -272,7 +420,7 @@ namespace pxt.usb {
                 .then(final)
         }
 
-        initAsync() {
+        initAsync(): Promise<void> {
             if (!this.dev)
                 return Promise.reject(new Error("Disconnected"))
             let dev = this.dev
@@ -318,99 +466,45 @@ namespace pxt.usb {
                 })
                 .then(() => {
                     this.log("device ready")
-                    this.ready = true
+                    this.lastKnownDeviceSerialNumber = this.dev.serialNumber;
+                    this.ready = true;
                     if (this.epIn || isHF2)
-                        this.readLoop()
+                        this.readLoop();
+                    if (this.onConnectionChanged)
+                        this.onConnectionChanged();
                 })
         }
     }
 
-    export interface USBControlTransferParameters {
-        requestType: USBRequestType;
-        recipient: USBRecipient;
-        request: number;
-        value: number;
-        index: number;
-    }
-
-    export interface USBInTransferResult {
-        data: { buffer: ArrayBuffer; };
-        status: USBTransferStatus;
-    }
-
-    export interface USBOutTransferResult {
-        bytesWritten: number;
-        status: USBTransferStatus;
-    }
-
-    export interface USBIsochronousInTransferPacket {
-        data: DataView;
-        status: USBTransferStatus;
-    }
-
-    export interface USBIsochronousInTransferResult {
-        data: DataView;
-        packets: USBIsochronousInTransferPacket[];
-    }
-
-    export interface USBIsochronousOutTransferPacket {
-        bytesWritten: number;
-        status: USBTransferStatus;
-    }
-
-    export interface USBIsochronousOutTransferResult {
-        packets: USBIsochronousOutTransferPacket[];
-    }
-
-    export function pairAsync(): Promise<void> {
+    export function pairAsync(): Promise<boolean> {
         return ((navigator as any).usb.requestDevice({
             filters: filters
-        }) as Promise<USBDevice>).then(dev => {
-            // try connecting to it
-            return mkPacketIOAsync()
-        }).then(io => io.reconnectAsync())
+        }) as Promise<USBDevice>)
+            .then(dev => !!dev)
+            .catch(e => {
+                // user cancelled
+                if (e.name == "NotFoundError")
+                    return undefined;
+                throw e;
+            })
     }
 
-    export function isPairedAsync(): Promise<boolean> {
-        if (!isEnabled) return Promise.resolve(false);
-
-        return getDeviceAsync()
-            .then((dev) => {
-                return true;
-            })
-            .catch(() => {
-                return false;
+    function tryGetDevicesAsync(): Promise<USBDevice[]> {
+        log(`webusb: get devices`)
+        return ((navigator as any).usb.getDevices() as Promise<USBDevice[]>)
+            .then<USBDevice[]>((devs: USBDevice[]) => {
+                devs = devs || [];
+                return devs;
             });
     }
 
-    function getDeviceAsync(): Promise<USBDevice> {
-        return ((navigator as any).usb.getDevices() as Promise<USBDevice[]>)
-            .then<USBDevice>((devs: USBDevice[]) => {
-                if (!devs || !devs.length) {
-                    let err: any = new Error(U.lf("No USB device selected or connected; try pairing!"))
-                    err.isUserError = true
-                    err.type = "devicenotfound"
-                    throw err;
-                }
-                return devs[0]
-            })
-    }
-
-    let getDevPromise: Promise<HF2.PacketIO>
-    export function mkPacketIOAsync() {
-        if (!getDevPromise)
-            getDevPromise = getDeviceAsync()
-                .then(dev => {
-                    let h = new HID(dev)
-                    return h.initAsync()
-                        .then(() => h)
-                })
-                .catch(e => {
-                    getDevPromise = null
-                    return Promise.reject(e)
-                })
-
-        return getDevPromise
+    let _hid: WebUSBHID;
+    export function mkWebUSBHIDPacketIOAsync(): Promise<pxt.packetio.PacketIO> {
+        pxt.debug(`packetio: mk webusb io`)
+        if (!_hid)
+            _hid = new WebUSBHID();
+        _hid.enable();
+        return Promise.resolve(_hid);
     }
 
     export let isEnabled = false
@@ -421,6 +515,9 @@ namespace pxt.usb {
     }
 
     export function isAvailable() {
+        if (pxt.BrowserUtils.isElectron() || pxt.BrowserUtils.isWinRT())
+            return false;
+
         if (!!(navigator as any).usb) {
             // Windows versions:
             // 5.1 - XP, 6.0 - Vista, 6.1 - Win7, 6.2 - Win8, 6.3 - Win8.1, 10.0 - Win10

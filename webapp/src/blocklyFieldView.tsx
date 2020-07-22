@@ -5,6 +5,7 @@ import * as ReactDOM from "react-dom";
 
 import { ImageFieldEditor } from "./components/ImageFieldEditor";
 import { TilemapFieldEditor } from "./components/TilemapFieldEditor";
+import * as pkg from "./package";
 
 export interface EditorBounds {
     top: number;
@@ -20,6 +21,8 @@ export interface FieldEditorComponent<U> extends React.Component {
     getPersistentData(): any;
     restorePersistentData(value: any): void;
     onResize?: () => void;
+    loadJres?: (jres: string) => void;
+    getJres?: () => string;
 }
 
 let cachedBounds: EditorBounds;
@@ -206,6 +209,16 @@ export function init() {
         if (cachedBounds) current.resize(cachedBounds);
 
         return current;
+    }
+
+    pxt.react.getTilemapProject = () => {
+        const epkg = pkg.mainEditorPkg();
+
+        if (!epkg.tilemapProject) {
+            epkg.tilemapProject = new pxt.TilemapProject(pkg.mainPkg);
+        }
+
+        return epkg.tilemapProject;
     }
 }
 

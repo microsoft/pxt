@@ -154,8 +154,8 @@ namespace pxt.blocks {
                     if (!isNaN(val)) {
                         const delta = val - (state.getNumber(numVisibleAttr) || 0);
                         if (state.getBoolean(inputInitAttr)) {
-                            if ((b as Blockly.BlockSvg).rendered) {
-                                updateShape(delta, true);
+                            if ((b as Blockly.BlockSvg).rendered || b.isInsertionMarker()) {
+                                updateShape(delta, true, b.isInsertionMarker());
                             }
                             else {
                                 state.setValue(numVisibleAttr, addDelta(delta));
@@ -298,6 +298,146 @@ namespace pxt.blocks {
                     block.render();
                 });
             }
+        }
+    }
+
+    export function initReturnStatement(b: Blockly.Block) {
+        const returnDef = pxt.blocks.getBlockDefinition("function_return");
+
+        const buttonAddName = "0_add_button";
+        const buttonRemName = "0_rem_button";
+
+        Blockly.Extensions.apply('inline-svgs', b, false);
+
+        let returnValueVisible = true;
+        updateShape();
+
+        // When the value input is removed, we disconnect the block that was connected to it. This
+        // is the id of whatever block was last connected
+        let lastConnectedId: string;
+
+        b.domToMutation = saved => {
+            if (saved.hasAttribute("last_connected_id")) {
+                lastConnectedId = saved.getAttribute("last_connected_id");
+            }
+            returnValueVisible = hasReturnValue(saved);
+            updateShape();
+        }
+
+        b.mutationToDom = () => {
+            const mutation = document.createElement("mutation");
+            setReturnValue(mutation, !!b.getInput("RETURN_VALUE"));
+
+            if (lastConnectedId) {
+                mutation.setAttribute("last_connected_id", lastConnectedId);
+            }
+
+            return mutation;
+        }
+
+        function updateShape() {
+            const returnValueInput = b.getInput("RETURN_VALUE");
+
+            if (returnValueVisible) {
+                if (!returnValueInput) {
+                    // Remove any labels
+                    while (b.getInput("")) b.removeInput("");
+
+                    b.jsonInit({
+                        "message0": returnDef.block["message_with_value"],
+                        "args0": [
+                            {
+                                "type": "input_value",
+                                "name": "RETURN_VALUE",
+                                "check": null
+                            }
+                        ],
+                        "previousStatement": null,
+                        "colour": pxt.toolbox.getNamespaceColor('functions')
+                    });
+                }
+                if (b.getInput(buttonAddName)) {
+                    b.removeInput(buttonAddName);
+                }
+                if (!b.getInput(buttonRemName)) {
+                    addMinusButton();
+                }
+
+                if (lastConnectedId) {
+                    const lastConnected = b.workspace.getBlockById(lastConnectedId);
+                    if (lastConnected && lastConnected.outputConnection && !lastConnected.outputConnection.targetBlock()) {
+                        b.getInput("RETURN_VALUE").connection.connect(lastConnected.outputConnection);
+                    }
+                    lastConnectedId = undefined;
+                }
+            }
+            else {
+                if (returnValueInput) {
+                    const target = returnValueInput.connection.targetBlock()
+                    if (target) {
+                        if (target.isShadow()) target.setShadow(false);
+                        returnValueInput.connection.disconnect();
+                        lastConnectedId = target.id;
+                    }
+                    b.removeInput("RETURN_VALUE");
+                    b.jsonInit({
+                        "message0": returnDef.block["message_no_value"],
+                        "args0": [],
+                        "previousStatement": null,
+                        "colour": pxt.toolbox.getNamespaceColor('functions')
+                    })
+                }
+                if (b.getInput(buttonRemName)) {
+                    b.removeInput(buttonRemName);
+                }
+                if (!b.getInput(buttonAddName)) {
+                    addPlusButton();
+                }
+            }
+
+            b.setInputsInline(true);
+        }
+
+        function setReturnValue(mutation: Element, hasReturnValue: boolean) {
+            mutation.setAttribute("no_return_value", hasReturnValue ? "false" : "true")
+        }
+
+        function hasReturnValue(mutation: Element) {
+            return mutation.getAttribute("no_return_value") !== "true"
+        }
+
+        function addPlusButton() {
+            addButton(buttonAddName, (b as any).ADD_IMAGE_DATAURI, lf("Add return value"));
+        }
+
+        function addMinusButton() {
+            addButton(buttonRemName, (b as any).REMOVE_IMAGE_DATAURI, lf("Remove return value"));
+        }
+
+        function mutationString() {
+            return Blockly.Xml.domToText(b.mutationToDom());
+        }
+
+        function fireMutationChange(pre: string, post: string) {
+            if (pre !== post)
+                Blockly.Events.fire(new Blockly.Events.BlockChange(b, "mutation", null, pre, post));
+        }
+
+        function addButton(name: string, uri: string, alt: string) {
+            b.appendDummyInput(name)
+                .appendField(new Blockly.FieldImage(uri, 24, 24, alt, () => {
+                    const oldMutation = mutationString();
+                    returnValueVisible = !returnValueVisible;
+
+                    const preUpdate = mutationString()
+                    fireMutationChange(oldMutation, preUpdate);
+
+                    updateShape();
+
+                    const postUpdate = mutationString();
+                    fireMutationChange(preUpdate, postUpdate);
+
+                }, false))
         }
     }
 

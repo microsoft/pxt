@@ -1,15 +1,24 @@
-import { ImageEditorTool } from './store/imageReducer';
-import { dispatchChangeZoom, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchChangeImageTool, dispatchSwapBackgroundForeground } from './actions/dispatch';
-import store from './store/imageStore';
+
+import { Store } from 'react-redux';
+import { ImageEditorTool, ImageEditorStore } from './store/imageReducer';
+import { dispatchChangeZoom, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchChangeImageTool, dispatchSwapBackgroundForeground, dispatchChangeSelectedColor} from './actions/dispatch';
+import { mainStore } from './store/imageStore';
+let store = mainStore;
 
 export function addKeyListener() {
     document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("keydown", handleUndoRedo, true);
+    document.addEventListener("keydown", overrideBlocklyShortcuts, true);
 }
 
 export function removeKeyListener() {
     document.removeEventListener("keydown", handleKeyDown);
     document.removeEventListener("keydown", handleUndoRedo, true);
+    document.removeEventListener("keydown", overrideBlocklyShortcuts, true);
+}
+
+export function setStore(newStore?: Store<ImageEditorStore>) {
+    store = newStore || mainStore;
 }
 
 function handleUndoRedo(event: KeyboardEvent) {
@@ -21,6 +30,12 @@ function handleUndoRedo(event: KeyboardEvent) {
     } else if (event.key === "Redo" || (controlOrMeta && event.key === "y")) {
         redo();
         event.preventDefault();
+        event.stopPropagation();
+    }
+}
+
+function overrideBlocklyShortcuts(event: KeyboardEvent) {
+    if (event.key === "Backspace" || event.key === "Delete") {
         event.stopPropagation();
     }
 }
@@ -59,6 +74,17 @@ function handleKeyDown(event: KeyboardEvent) {
             swapForegroundBackground();
             break;
     }
+
+    const editorState = store.getState().editor;
+
+    if (!editorState.isTilemap && /^Digit\d$/.test(event.code)) {
+        const keyAsNum = +event.code.slice(-1);
+        const color = keyAsNum + (event.shiftKey ? 9 : 0);
+        // TODO: if we need to generalize for different numbers of colors,
+        // will need to fix the magic 16 here
+        if (color >= 0 && color < 16)
+            setColor(color);
+    }
 }
 
 function undo() {
@@ -71,6 +97,10 @@ function redo() {
 
 function setTool(tool: ImageEditorTool) {
     dispatchAction(dispatchChangeImageTool(tool));
+}
+
+function setColor(selectedColor: number) {
+    dispatchAction(dispatchChangeSelectedColor(selectedColor))
 }
 
 function zoom(delta: number) {

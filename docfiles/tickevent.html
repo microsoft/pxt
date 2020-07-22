@@ -1,0 +1,16 @@
+<script type="text/javascript">
+    window.pxtTickEvent = function(id, data) {
+        if (window.appInsights && window.appInsights.trackEvent) {
+            const props = {};
+            const measures = {};
+            if (data) {
+                Object.keys(data).forEach(k => {
+                    if (typeof data[k] == "string") props[k] = data[k];
+                    else if (typeof data[k] == "number") measures[k] = data[k];
+                    else props[k] = JSON.stringify(data[k] || '');
+                });
+            }
+            window.appInsights.trackEvent(id, data, measures);
+        }
+    }
+</script>

@@ -2,14 +2,14 @@
 
 ### ~ hint
 
-This is a draft reflecting the design of STS - not exactly what is implemented, but quite close.
+This is a draft reflecting the design of Static TypeScript (STS) - not exactly what is implemented, but quite close.
 Comments welcome. 
 
 ### ~ 
 
 [TypeScript](http://typescriptlang.org) is a typed superset of JavaScript designed to enable JavaScript developers 
 to take advantage of code intellisense,
-static checking and refactoring made possible by types.  TypeScript is gradually typed, meaning that types are optional. 
+static checking and refactoring made possible by types. TypeScript is gradually typed, meaning that types are optional. 
 Type inference helps to assign types to untyped code.
 
 In this document, we define a subset of TypeScript called Static TypeScript (STS, for short), 

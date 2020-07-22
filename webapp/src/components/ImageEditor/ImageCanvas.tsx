@@ -95,6 +95,9 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     componentDidMount() {
+        // move initial focus off of the blockly surface
+        (document.activeElement as HTMLElement)?.blur();
+
         this.cellWidth = this.props.isTilemap ? this.props.tilemapState.tileset.tileWidth * TILE_SCALE : SCALE;
         this.canvas = this.refs["paint-surface"] as HTMLCanvasElement;
         this.background = this.refs["paint-surface-bg"] as HTMLCanvasElement;
@@ -120,8 +123,11 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             if (!this.edit) this.updateCursorLocation(null);
         });
 
-        document.addEventListener("keydown", this.onKeyDown);
+        document.addEventListener("keydown", this.onKeyDown, true);
         document.addEventListener("keyup", this.onKeyUp);
+
+        document.addEventListener("copy", this.onCopy);
+        document.addEventListener("paste", this.onPaste);
 
         const imageState = this.getImageState();
         this.editState = getEditState(imageState, this.props.isTilemap, this.props.drawingMode);
@@ -162,8 +168,11 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
     componentWillUnmount() {
         this.tileCache = [];
-        document.removeEventListener("keydown", this.onKeyDown);
+        document.removeEventListener("keydown", this.onKeyDown, true);
         document.removeEventListener("keyup", this.onKeyUp);
+
+        document.removeEventListener("copy", this.onCopy);
+        document.removeEventListener("paste", this.onPaste);
     }
 
     onClick(coord: ClientCoordinates, isRightClick?: boolean): void {
@@ -235,6 +244,26 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected onKeyDown = (ev: KeyboardEvent): void => {
         this.hasInteracted = true
         if (!ev.repeat) {
+            // prevent blockly's ctrl+c / ctrl+v handler
+            if ((ev.ctrlKey || ev.metaKey) && (ev.key === 'c' || ev.key === 'v')) {
+                ev.stopPropagation();
+            }
+
+            if ((ev.ctrlKey || ev.metaKey) && ev.key === 'a' && this.shouldHandleCanvasShortcut()) {
+                this.selectAll();
+                ev.preventDefault();
+            }
+
+            if (ev.key == "Escape" && this.editState?.floating?.image && this.shouldHandleCanvasShortcut()) {
+                this.cancelSelection();
+                ev.preventDefault();
+            }
+
+            if ((ev.key === "Backspace" || ev.key === "Delete") && this.editState?.floating?.image && this.shouldHandleCanvasShortcut()) {
+                this.deleteSelection();
+                ev.preventDefault();
+            }
+
             // hotkeys for switching temporarily between tools
             this.lastTool = this.props.tool;
             switch (ev.keyCode) {
@@ -259,6 +288,51 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             this.props.dispatchChangeImageTool(this.lastTool);
             this.lastTool = null;
             this.updateCursor(false, false);
+        }
+    }
+
+    protected onCopy = (ev: ClipboardEvent) => {
+        if (this.props.isTilemap) {
+            return;
+        }
+
+        if (this.props.tool === ImageEditorTool.Marquee && this.editState?.floating?.image) {
+            ev.preventDefault();
+
+            const imageData = pxt.sprite.bitmapToImageLiteral(this.editState.floating.image, 'typescript');
+            ev.clipboardData.setData('application/makecode-image', imageData);
+            ev.clipboardData.setData('text/plain', imageData);
+        }
+    }
+
+    protected onPaste = (ev: ClipboardEvent) => {
+        if (this.props.isTilemap) {
+            return;
+        }
+
+        let imageData = ev.clipboardData.getData('application/makecode-image');
+
+        if (!imageData) {
+            const textData = ev.clipboardData.getData("text/plain");
+            // text data contains string that 'looks like' an image
+            const res = /img(`|\(""")[\s\da-f.#tngrpoyw]+(`|"""\))/im.exec(textData);
+            if (res) {
+                imageData = res[0];
+            }
+        }
+
+        const image = imageData && pxt.sprite.imageLiteralToBitmap(imageData);
+
+        if (image && image.width && image.height) {
+            ev.preventDefault();
+
+            // force marquee tool so the pasted selection can be moved
+            if (this.props.tool !== ImageEditorTool.Marquee) {
+                this.props.dispatchChangeImageTool(ImageEditorTool.Marquee);
+            }
+
+            this.editState.setFloatingLayer(image);
+            this.props.dispatchImageEdit(this.editState.toImageState());
         }
     }
 
@@ -354,16 +428,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             this.edit.doEdit(this.editState);
             this.edit = undefined;
 
-            dispatchImageEdit({
-                bitmap: this.editState.image.data(),
-                layerOffsetX: this.editState.layerOffsetX,
-                layerOffsetY: this.editState.layerOffsetY,
-                floating: this.editState.floating && {
-                    bitmap: this.editState.floating.image ? this.editState.floating.image.data() : undefined,
-                    overlayLayers: this.editState.floating.overlayLayers ? this.editState.floating.overlayLayers.map(el => el.data()) : undefined
-                },
-                overlayLayers: this.editState.overlayLayers ? this.editState.overlayLayers.map(el => el.data()) : undefined
-            });
+            dispatchImageEdit(this.editState.toImageState());
         }
     }
 
@@ -513,14 +578,14 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         }
     }
 
-    protected generateTile(index: number, tileset: pxt.sprite.TileSet) {
+    protected generateTile(index: number, tileset: pxt.TileSet) {
         if (!tileset.tiles[index]) {
             return null;
         }
         const tileImage = document.createElement("canvas");
         tileImage.width = tileset.tileWidth * TILE_SCALE;
         tileImage.height = tileset.tileWidth * TILE_SCALE;
-        this.drawBitmap(pxt.sprite.Bitmap.fromData(tileset.tiles[index].data), 0, 0, true, TILE_SCALE, tileImage);
+        this.drawBitmap(pxt.sprite.Bitmap.fromData(tileset.tiles[index].bitmap), 0, 0, true, TILE_SCALE, tileImage);
         this.tileCache[index] = tileImage;
         return tileImage;
     }
@@ -704,6 +769,27 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         }
     }
 
+    protected selectAll() {
+        // force marquee tool so selection can be moved
+        if (this.props.tool !== ImageEditorTool.Marquee) {
+            this.props.dispatchChangeImageTool(ImageEditorTool.Marquee);
+        }
+
+        this.editState.mergeFloatingLayer();
+        this.editState.copyToLayer(0, 0, this.imageWidth, this.imageHeight, true);
+        this.props.dispatchImageEdit(this.editState.toImageState());
+    }
+
+    protected cancelSelection() {
+        this.editState.mergeFloatingLayer();
+        this.props.dispatchImageEdit(this.editState.toImageState());
+    }
+
+    protected deleteSelection() {
+        this.editState.floating = null;
+        this.props.dispatchImageEdit(this.editState.toImageState());
+    }
+
     protected cloneCanvasStyle(base: HTMLCanvasElement, target: HTMLCanvasElement) {
         target.style.position = base.style.position;
         target.style.width = base.style.width;
@@ -749,6 +835,11 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
     protected isColorSelect() {
         return this.props.tool === ImageEditorTool.ColorSelect;
+    }
+
+    protected shouldHandleCanvasShortcut() {
+        // canvas shortcuts (select all; delete) should only be handled if the focus is not within a focusable element
+        return document.activeElement === document.body || !document.activeElement;
     }
 
     protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();

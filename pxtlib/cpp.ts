@@ -156,26 +156,51 @@ namespace pxt.cpp {
     }
 
     export function getExtensionInfo(mainPkg: MainPackage): pxtc.ExtensionInfo {
-        let pkgSnapshot: Map<string> = {
+        const pkgSnapshot: Map<string> = {
             "__appVariant": pxt.appTargetVariant || ""
         }
-        let constsName = "dal.d.ts"
+        const constsName = "dal.d.ts"
         let sourcePath = "/source/"
+        let disabledDeps = ""
+        let mainDeps: Package[] = []
 
-        let mainDeps = mainPkg.sortedDeps(true)
+        // order shouldn't matter for c++ compilation,
+        // so use a stable order to prevent order changes from fetching a new hex file
+        const mainPkgDeps = mainPkg.sortedDeps(true)
+            .sort((a, b) => {
+                if (a.id == "this") return 1;
+                else if (b.id == "this") return -1;
+                else return U.strcmp(a.id, b.id);
+            });
 
-        for (let pkg of mainDeps) {
+        for (let pkg of mainPkgDeps) {
+            if (pkg.disablesVariant(pxt.appTargetVariant) ||
+                pkg.resolvedDependencies().some(d => d.disablesVariant(pxt.appTargetVariant))) {
+                if (pkg.id != "this") {
+                    if (disabledDeps)
+                        disabledDeps += ", "
+                    disabledDeps += pkg.id
+                }
+                pxt.debug(`disable variant ${pxt.appTargetVariant} due to ${pkg.id}`)
+                continue
+            }
+            mainDeps.push(pkg)
             pkg.addSnapshot(pkgSnapshot, [constsName, ".h", ".cpp"])
         }
 
         const key = JSON.stringify(pkgSnapshot)
-        if (prevExtInfos[key]) {
+        const prevInfo = prevExtInfos[key]
+        if (prevInfo) {
             pxt.debug("Using cached extinfo")
-            return prevExtInfos[key]
+            const r = U.flatClone(prevInfo)
+            r.disabledDeps = disabledDeps
+            return r
         }
 
         pxt.debug("Generating new extinfo")
         const res = pxtc.emptyExtInfo();
+
+        res.disabledDeps = disabledDeps
 
         let compileService = appTarget.compileService;
         if (!compileService)
@@ -185,7 +210,7 @@ namespace pxt.cpp {
             }
         compileService = U.clone(compileService)
 
-        let compile = appTarget.compile
+        let compile = mainPkg.getTargetOptions()
         if (!compile)
             compile = {
                 isNative: false,
@@ -880,8 +905,8 @@ namespace pxt.cpp {
                     U.assert(!seenMain)
                 }
                 // Generally, headers need to be processed before sources, as they contain definitions
-                // (in particular of enums, which are needed to decide if we're doing conversions for 
-                // function arguments). This can still fail if one header uses another and they are 
+                // (in particular of enums, which are needed to decide if we're doing conversions for
+                // function arguments). This can still fail if one header uses another and they are
                 // listed in invalid order...
                 const isHeaderFn = (fn: string) => U.endsWith(fn, ".h")
                 const ext = ".cpp"
@@ -900,9 +925,8 @@ namespace pxt.cpp {
                             U.userError(lf("C++ file {0} is missing in extension {1}.", fn, pkg.config.name))
                         fileName = fullName
 
-                        // parseCpp() will remove doc comments, to prevent excessive recompilation
-                        // pxt.debug("Parse C++: " + fullName)
                         parseCpp(src, isHeader)
+                        src = src.replace(/^[ \t]*/mg, "") // shrink the files
                         res.extensionFiles[sourcePath + fullName] = src
 
                         if (pkg.level == 0)

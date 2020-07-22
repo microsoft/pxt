@@ -88,8 +88,9 @@ In that folder, you'll find various `.json` files. These files contain the strin
 
 #### 3. Create the translations
 
-- Under the `_locales/` folder, create a new folder and name it the ISO code for the language you want to translate to
+- Under the `_locales/` folder, create a new folder and name it as the ISO locale code for the language you want to translate to
 >   For example, `_locales/fr/` for French, `_locales/es/` for Spanish, etc.
+- Locale code is **case sensitive**. Please find the exact locale code from the list assigned to `availableLocales` in: https://github.com/microsoft/pxt-microbit/blob/master/pxtarget.json 
 - Copy all the `.json` files under `_locales/` and paste them into your new language folder
 - Open the `.json` files from under your language folder and edit the string values inside them
 >   The files are in the following format:

@@ -18,6 +18,8 @@ let bmpMode = false
 const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer | string> = Promise.promisify(child_process.exec)
 
 function getBMPSerialPortsAsync(): Promise<string[]> {
+    if (process.env["PXT_IGNORE_BMP"])
+        return Promise.resolve([])
     if (process.platform == "win32") {
         return execAsync("wmic PATH Win32_SerialPort get DeviceID, PNPDeviceID")
             .then((buf: Buffer) => {
@@ -135,7 +137,7 @@ function fatal(msg: string) {
     U.userError(msg)
 }
 
-function getOpenOcdPath(cmds = "") {
+function getOpenOcdPath(cmds = "", showLog = false) {
     function latest(tool: string) {
         let dir = path.join(pkgDir, "tools/", tool, "/")
         if (!fs.existsSync(dir)) fatal(dir + " doesn't exists; " + tool + " not installed in Arduino?")
@@ -207,15 +209,10 @@ gdb_memory_map disable
 $_TARGETNAME configure -event gdb-attach {
     echo "Halting target"
     halt
-}
-
-$_TARGETNAME configure -event gdb-detach {
-    echo "Resetting target"
-    reset
 }`
 
     fs.writeFileSync("built/debug.cfg", `
-log_output built/openocd.log
+${showLog ? "" : "log_output built/openocd.log"}
 ${script}
 ${cmds}
 `)
@@ -233,17 +230,20 @@ ${cmds}
 }
 
 function codalBin() {
-    let cs = pxt.appTarget.compileService
-
-    return buildengine.thisBuild.buildPath + "/build/" + (cs.codalBinary ? cs.codalBinary :
-        cs.yottaTarget + "/source/" + cs.yottaBinary.replace(/\.hex$/, "").replace(/-combined$/, ""));
+    const cs = pxt.appTarget.compileService
+    const be = buildengine.thisBuild
+    if (be.outputPath)
+        return be.buildPath + "/" + be.outputPath
+    if (cs.codalBinary)
+        return be.buildPath + "/build/" + cs.codalBinary
+    return be.buildPath + "/build/" + cs.yottaTarget + "/source/" + cs.yottaBinary.replace(/\.hex$/, "").replace(/-combined$/, "")
 }
 
 let cachedMap = ""
 let addrCache: pxt.Map<number>
 function getMap() {
     if (!cachedMap)
-        cachedMap = fs.readFileSync(codalBin() + ".map", "utf8")
+        cachedMap = fs.readFileSync(codalBin().replace(/\.elf$/, "") + ".map", "utf8")
     return cachedMap
 }
 
@@ -307,10 +307,54 @@ async function initGdbServerAsync() {
     })
 }
 
-async function getMemoryAsync(addr: number, bytes: number) {
+async function flashAsync() {
+    const r = pxtc.UF2.toBin(fs.readFileSync("built/binary.uf2"))
+    fs.writeFileSync("built/binary.bin", r.buf)
+    let toolPaths = getOpenOcdPath(`
+        program built/binary.bin ${r.start} verify reset exit
+    `, true)
+    let oargs = toolPaths.args
+    await nodeutil.spawnAsync({
+        cmd: oargs[0],
+        args: oargs.slice(1)
+    })
+}
+
+async function resetAsync(bootMode: boolean) {
+    let bi = getBootInfo()
+    if (gdbServer) {
+        if (bootMode && bi.addr)
+            await gdbServer.write32Async(bi.addr, bi.boot)
+        await gdbServer.sendCmdAsync("R00", null)
+    } else {
+        let cmd = "init\nhalt\n"
+        if (bootMode && bi.addr) {
+            cmd += `set M(0) ${bi.boot}\narray2mem M 32 ${bi.addr} 1\n`
+        }
+        cmd += `reset run\nshutdown`
+        let toolPaths = getOpenOcdPath(cmd, true)
+        let oargs = toolPaths.args
+        await nodeutil.spawnAsync({
+            cmd: oargs[0],
+            args: oargs.slice(1)
+        })
+    }
+}
+
+async function getMemoryAsync(addr: number, bytes: number): Promise<Buffer> {
     if (gdbServer) {
         return gdbServer.readMemAsync(addr, bytes)
             .then((b: Uint8Array) => Buffer.from(b))
+    }
+
+    const maxMem = 32 * 1024
+
+    if (bytes > maxMem) {
+        let bufs: Buffer[] = []
+        for (let ptr = 0; ptr < bytes; ptr += maxMem) {
+            bufs.push(await getMemoryAsync(addr + ptr, Math.min(maxMem, bytes - ptr)))
+        }
+        return Buffer.concat(bufs)
     }
 
     let toolPaths = getOpenOcdPath(`
@@ -366,15 +410,24 @@ function VAR_BLOCK_WORDS(vt: number) {
     return (((vt) << 12) >> (12 + 2))
 }
 
-export async function dumpMemAsync(filename: string) {
+export async function dumpMemAsync(args: string[]) {
     await initGdbServerAsync()
 
     let memStart = findAddr("_sdata", true) || findAddr("__data_start__")
     memStart &= ~0xffff
     let memEnd = findAddr("_estack", true) || findAddr("__StackTop")
+
+    if (!isNaN(parseInt(args[0]))) {
+        memStart = parseInt(args[0])
+        memEnd = parseInt(args[1])
+        args.shift()
+        args.shift()
+    }
+
     console.log(`memory: ${hex(memStart)} - ${hex(memEnd)}`)
+
     let mem = await getMemoryAsync(memStart, memEnd - memStart)
-    fs.writeFileSync(filename, mem)
+    fs.writeFileSync(args[0], mem)
 }
 
 export async function dumpheapAsync(filename?: string) {
@@ -900,14 +953,10 @@ export async function hwAsync(cmds: string[]) {
     switch (cmds[0]) {
         case "rst":
         case "reset":
-            await gdbServer.sendCmdAsync("R00", null)
+            await resetAsync(false)
             break
         case "boot":
-            let bi = getBootInfo()
-            if (bi.addr) {
-                await gdbServer.write32Async(bi.addr, bi.boot)
-            }
-            await gdbServer.sendCmdAsync("R00", null)
+            await resetAsync(true)
             break
         case "log":
         case "dmesg":
@@ -930,6 +979,12 @@ function getBootInfo() {
         r.boot = 0xf01669ef
     }
 
+    if (/nrf52/.test(pxt.appTarget.compile.openocdScript)) {
+        r.addr = 0x20007F7C
+        r.app = 0x4ee5677e
+        r.boot = 0x5A1AD5
+    }
+
     return r
 }
 
@@ -942,6 +997,7 @@ export async function startAsync(gdbArgs: string[]) {
     let trg = ""
     let monReset = "monitor reset"
     let monResetHalt = "monitor reset halt"
+    const pyOCD = !!process.env["PXT_PYOCD"]
 
     if (bmpPort) {
         bmpMode = true
@@ -957,12 +1013,23 @@ export async function startAsync(gdbArgs: string[]) {
         mapsrc = "set substitute-path /src " + buildengine.thisBuild.buildPath
     }
 
+    if (gdbArgs[0] == "flash") {
+        await flashAsync()
+        return
+    }
+
     let toolPaths = getOpenOcdPath()
 
+
     if (!bmpMode) {
-        let oargs = toolPaths.args
-        trg = "target remote | " + oargs.map(s => `"${s.replace(/\\/g, "/")}"`).join(" ")
-        pxt.log("starting openocd: " + oargs.join(" "))
+        if (pyOCD) {
+            trg = "target extended-remote localhost:3333"
+            pxt.log("will connect to pyocd at localhost:3333")
+        } else {
+            let oargs = toolPaths.args
+            trg = "target remote | " + oargs.map(s => `"${s.replace(/\\/g, "/")}"`).join(" ")
+            pxt.log("starting openocd: " + oargs.join(" "))
+        }
     }
 
     let binfo = getBootInfo()
