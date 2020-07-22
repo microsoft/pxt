@@ -921,6 +921,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         if (!justJSON)
             files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
+
     if (!justJSON) {
         // if any block needs decompilation, don't allow merge error markers
         if (blocksNeedDecompilation && conflicts)
@@ -936,6 +937,13 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
     gitjson.commit = commit
     files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
 
+    /**
+     * If the repo was last opened in this target, use that version number in the header;
+     * otherwise, use current target version to avoid mismatched updates.
+     */
+    const targetVersionToUse = (cfg.targetVersions?.targetId === pxt.appTarget.id && cfg.targetVersions.target) ?
+        cfg.targetVersions.target : pxt.appTarget.versions.target;
+
     if (!hd) {
         hd = await installAsync({
             name: cfg.name,
@@ -945,7 +953,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
             meta: {},
             editor: pxt.BLOCKS_PROJECT_NAME,
             target: pxt.appTarget.id,
-            targetVersion: pxt.appTarget.versions.target,
+            targetVersion: targetVersionToUse,
         }, files)
     } else {
         hd.name = cfg.name
@@ -1069,7 +1077,6 @@ export function prepareConfigForGithub(content: string, createRelease?: boolean)
     delete (<any>cfg).installedVersion // cleanup old pxt.json files
     delete cfg.additionalFilePath
     delete cfg.additionalFilePaths
-    delete cfg.targetVersions;
 
     // add list of supported targets
     const supportedTargets = cfg.supportedTargets || [];
@@ -1077,6 +1084,13 @@ export function prepareConfigForGithub(content: string, createRelease?: boolean)
         supportedTargets.push(pxt.appTarget.id);
         supportedTargets.sort(); // keep list stable
         cfg.supportedTargets = supportedTargets;
+    }
+
+    // track target and target version this was last editted in, so we can apply upgrade rules on import.
+    cfg.targetVersions = {
+        ...cfg.targetVersions,
+        target: pxt.appTarget.versions.target,
+        targetId: pxt.appTarget.id
     }
 
     // patch dependencies
