@@ -1393,7 +1393,7 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
         U.userError("Oops, typescript does not seem to be installed, did you run 'npm install'?");
     }
 
-    pxt.log(`building ${p}...`)
+    pxt.log(`building (buildFolderAsync) ${p}...`)
     dirsToWatch.push(p)
     return nodeutil.spawnAsync({
         cmd: "node",
@@ -1441,7 +1441,7 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
         U.userError("Oops, typescript does not seem to be installed, did you run 'npm install'?");
     }
 
-    pxt.log(`building ${p}...`)
+    pxt.log(`building (buildFolderAndBrowserifyAsync) ${p}...`)
     dirsToWatch.push(p)
     return nodeutil.spawnAsync({
         cmd: "node",
@@ -2068,6 +2068,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
 
     let builtInfo: pxt.Map<pxt.PackageApiInfo> = {};
 
+    console.log("apiInfoPath: " + apiInfoPath)
     if (!pxt.appTarget.appTheme.disableAPICache && fs.existsSync(apiInfoPath)) {
         builtInfo = nodeutil.readJson(apiInfoPath);
     }
@@ -2076,7 +2077,10 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     const corepkg = "libs/" + pxt.appTarget.corepkg;
 
     return buildWebStringsAsync()
-        .then(() => options.quick ? null : internalGenDocsAsync(false, true))
+        .then(() => {
+            console.log("finished buildWebStringsAsync")
+            return options.quick ? null : internalGenDocsAsync(false, true)
+        })
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
             pxt.log(`building bundled ${dirname}`);
             let isPrj = /prj$/.test(dirname);
@@ -2096,12 +2100,23 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                         pxt.appTarget.simulator.dynamicBoardDefinition)
                         isPrj = true
                 })
-                .then(() => options.quick ? null : testForBuildTargetAsync(isPrj || (!options.skipCore && isCore), builtInfo[dirname] && builtInfo[dirname].sha))
+                .then(() => {
+                    if (options.quick)
+                        return null
+                    const useNative = isPrj || (!options.skipCore && isCore)
+                    const cacheSHA = builtInfo[dirname] && builtInfo[dirname].sha
+                    return testForBuildTargetAsync(useNative, cacheSHA)
+                })
                 .then(res => {
                     if (!res)
                         return;
 
                     const { options, api, sha: packageSha } = res;
+
+                    // Delete symbols from test files
+                    if (api)
+                        deleteTestSymbols(api.byQName)
+
                     // For the projects, we need to save the base HEX file to the offline HEX cache
                     if (isPrj && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
                         if (!options) {
@@ -2151,6 +2166,14 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                 res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
             })
 
+            // Trim symbols from test files
+            Object.keys(builtInfo)
+                .map(k => {
+                    console.log("deleting in " + k)
+                    return builtInfo[k]
+                })
+                .forEach(info => deleteTestSymbols(info.apis.byQName));
+
             // Trim redundant API info from packages
             const coreInfo = builtInfo[corepkg];
 
@@ -2163,9 +2186,15 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                         .forEach(bi => bi.apis.byQName = {});
                 }
 
-                Object.keys(builtInfo).filter(k => k !== corepkg).map(k => builtInfo[k]).forEach(info => {
-                    deleteRedundantSymbols(coreInfo.apis.byQName, info.apis.byQName)
-                });
+                // TODO(dz):
+                Object.keys(builtInfo)
+                    .filter(k => k !== corepkg)
+                    .map(k => {
+                        return builtInfo[k]
+                    })
+                    .forEach(info => {
+                        deleteRedundantSymbols(coreInfo.apis.byQName, info.apis.byQName)
+                    });
             }
 
             nodeutil.writeFileSync(apiInfoPath, nodeutil.stringify(builtInfo));
@@ -2240,6 +2269,20 @@ function deleteRedundantSymbols(core: pxt.Map<pxtc.SymbolInfo | pxt.JRes>, trg: 
         }
 
         return true;
+    }
+}
+
+function deleteTestSymbols(apis: pxt.Map<pxtc.SymbolInfo>) {
+    for (const key of Object.keys(apis)) {
+        let sym = apis[key];
+        if (key.indexOf("mySprite") >= 0 || sym.qName.indexOf("mySprite") >= 0) {
+            console.log("Should be deleted: ")
+            console.dir({ sym })
+        }
+        if (sym.fileName === "test.ts") {
+            console.log(`deleting: ${sym.qName}!`)
+            delete apis[key];
+        }
     }
 }
 
@@ -4123,7 +4166,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
     let compileOptions: pxtc.CompileOptions;
     let compileResult: pxtc.CompileResult;
     ensurePkgDir();
-    pxt.log(`building ${process.cwd()}`)
+    pxt.log(`building (buildCoreAsync) ${process.cwd()}`)
     const config = nodeutil.readPkgConfig(process.cwd());
     return prepBuildOptionsAsync(buildOpts.mode, false, buildOpts.ignoreTests)
         .then((opts) => {
@@ -4622,7 +4665,8 @@ function internalGenDocsAsync(docs: boolean, locs: boolean, fileFilter?: string,
         docs,
         locs,
         fileFilter,
-        createOnly
+        createOnly,
+        ignoreTests: true
     }).then((compileOpts) => { });
 
     // from target location?

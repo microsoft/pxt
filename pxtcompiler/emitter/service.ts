@@ -612,7 +612,15 @@ namespace ts.pxtc {
         }
 
         for (let srcFile of program.getSourceFiles()) {
+            if (srcFile.fileName.indexOf("animation") >= 0)
+                console.log("collectDecls for: " + srcFile.fileName)
             srcFile.statements.forEach(collectDecls)
+        }
+
+        let foo = qNameToNode["mySprite"]
+        if (foo) {
+            console.log(`found mySprite`)
+            // console.dir({ node: foo })
         }
 
         let toclose: SymbolInfo[] = []

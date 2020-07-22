@@ -54,6 +54,7 @@ namespace pxt {
     let apiInfo: Map<PackageApiInfo>;
     export function setBundledApiInfo(inf: Map<PackageApiInfo>) {
         for (const pkgName of Object.keys(inf)) {
+            console.log("setBundleApiInfo for " + pkgName)
             const byQName = inf[pkgName].apis.byQName
             for (const apiName of Object.keys(byQName)) {
                 const sym = byQName[apiName]
