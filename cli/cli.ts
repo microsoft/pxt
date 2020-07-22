@@ -4816,7 +4816,8 @@ function internalGenDocsAsync(docs: boolean, locs: boolean, fileFilter?: string,
         docs,
         locs,
         fileFilter,
-        createOnly
+        createOnly,
+        ignoreTests: true
     }).then((compileOpts) => { });
 
     // from target location?
