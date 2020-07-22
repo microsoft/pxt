@@ -1522,6 +1522,7 @@ namespace pxt.blocks {
                         console.log(`taken: ${info.qName} from ${info.fileName} in ${info.pkg}`);
                     if (info.pkg && info.fileName === "test.ts") {
                         // don't consider these
+                        console.log("skipping test sym!")
                     } else {
                         if (e.renames.takenNames[info.qName]) {
                             console.log(`duplicate taken name ${info.qName}!`)
