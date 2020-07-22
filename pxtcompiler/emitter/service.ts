@@ -368,6 +368,9 @@ namespace ts.pxtc {
                 }),
                 snippet: ts.isFunctionLike(stmt) ? null : undefined
             }
+            if (r.qName.indexOf("mySprite") >= 0) {
+                console.log(`creating symbol ${qName} from file ${r.fileName}`)
+            }
 
             switch (r.kind) {
                 case SymbolKind.EnumMember:

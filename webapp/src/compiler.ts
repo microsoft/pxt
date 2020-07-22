@@ -566,11 +566,11 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
             const entry = await db.getAsync(dep);
 
             if (!entry) {
-                pxt.debug(`Could not find cached API info for ${dep.getKsPkg().config.name}, waiting for full compile`);
+                pxt.log(`Could not find cached API info for ${dep.getKsPkg().config.name}, waiting for full compile`);
                 return null;
             }
             else {
-                pxt.debug(`Fetched cached API info for ${dep.getKsPkg().config.name}`);
+                pxt.log(`Fetched cached API info for ${dep.getKsPkg().config.name}`);
                 usedPackageInfo.push({
                     dirname: dep.getKsPkg().config.name,
                     info: entry
@@ -642,7 +642,7 @@ async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo
             }
 
             await db.setAsync(dep, entry);
-            pxt.debug(`Stored API info for ${dep}`);
+            pxt.log(`Stored API info for ${dep}`);
         }
     }
 }

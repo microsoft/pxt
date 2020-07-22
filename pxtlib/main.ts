@@ -86,6 +86,8 @@ namespace pxt {
                     isInstance: !!sym.isInstance,
                     isReadOnly: !!sym.isReadOnly,
                 }
+                if (newsym.qName.indexOf("mySprite") >= 0)
+                    console.log(`creating new symbol for ${newsym.qName}`)
                 const attr = newsym.attributes
                 if (!attr.paramDefl) attr.paramDefl = {}
                 if (!attr.callingConvention) attr.callingConvention = 0

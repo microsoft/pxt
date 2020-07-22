@@ -453,6 +453,8 @@ namespace ts.pxtc {
                     retType: isGet ? s.retType : "void",
                     combinedProperties: []
                 }
+                if (ex.qName.indexOf("mySprite") >= 0)
+                    console.log(`setting ${ex.qName} filename to ${s.fileName}`)
                 ex.attributes.block =
                     isGet ? U.lf("%{0} %property", paramName) :
                         isSet ? U.lf("set %{0} %property to %{1}", paramName, paramValue) :
