@@ -460,13 +460,30 @@ export function getBlocksAsync(): Promise<pxtc.BlocksInfo> {
         return getCachedApiInfoAsync(pkg.mainEditorPkg(), pxt.getBundledApiInfo())
             .then(apis => {
                 if (apis) {
+                    Object.keys(apis.byQName)
+                        .filter(s => s.indexOf("mySprite") >= 0)
+                        .map(k => apis.byQName[k])
+                        .forEach(i => console.log(`(getCachedApiInfoAsync) getting ${i.qName} from ${i.fileName} in ${i.pkg}`))
+
                     return ts.pxtc.localizeApisAsync(apis, pkg.mainPkg)
                         .then(apis => {
-                            return cachedBlocks = pxtc.getBlocksInfo(apis, bannedCategories)
+
+                            cachedBlocks = pxtc.getBlocksInfo(apis, bannedCategories)
+
+                            Object.keys(cachedBlocks.apis.byQName)
+                                .filter(s => s.indexOf("mySprite") >= 0)
+                                .map(k => apis.byQName[k])
+                                .forEach(i => console.log(`cachedBlocks.apis has ${i.qName} from ${i.fileName} in ${i.pkg}`))
+                            return cachedBlocks
                         });
                 }
                 else {
                     return getApisInfoAsync().then(info => {
+
+                        Object.keys(apis.byQName)
+                            .filter(s => s.indexOf("mySprite") >= 0)
+                            .map(k => apis.byQName[k])
+                            .forEach(i => console.log(`(getApisInfoAsync) getting ${i.qName} from ${i.fileName} in ${i.pkg}`))
                         const bannedCategories = pkg.mainPkg.resolveBannedCategories();
                         cachedBlocks = pxtc.getBlocksInfo(info, bannedCategories);
 
@@ -474,6 +491,8 @@ export function getBlocksAsync(): Promise<pxtc.BlocksInfo> {
                     }).then(() => cachedBlocks)
                 }
             })
+    } else {
+        console.log("using cached blocks")
     }
 
     return Promise.resolve(cachedBlocks);
@@ -499,6 +518,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
     // If the project has a TypeScript file beside main.ts, it could export blocks so we can't use the cache
     const files = project.getAllFiles();
     if (Object.keys(files).some(filename => filename != "main.ts" && filename.indexOf("/") === -1 && pxt.Util.endsWith(filename, ".ts"))) {
+        console.log(`returining null for ${Object.keys(files).join(",")}`)
         return null;
     }
 

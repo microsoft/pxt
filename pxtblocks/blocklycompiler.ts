@@ -1518,7 +1518,7 @@ namespace pxt.blocks {
                 // with itself. You can still get collisions if you attempt to define a function with
                 // the same name as a function defined in another file in the user's project (e.g. custom.ts)
                 if (info.pkg && (info.kind === pxtc.SymbolKind.Enum || info.kind === pxtc.SymbolKind.Function || info.kind === pxtc.SymbolKind.Module || info.kind === pxtc.SymbolKind.Variable)) {
-                    if (info.qName.indexOf("mySprite") >= 0)
+                    if (info.qName.indexOf("mySprite") >= 0) // TODO(dz)
                         console.log(`taken: ${info.qName} from ${info.fileName} in ${info.pkg}`);
                     if (info.pkg && info.fileName === "test.ts") {
                         // don't consider these
