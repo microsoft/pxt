@@ -284,7 +284,7 @@ namespace pxt.blocks {
         if (!symbol || !b) return;
 
         let comp = compileInfo(symbol);
-        symbol.parameters.forEach((p, i) => {
+        symbol.parameters?.forEach((p, i) => {
             let ptype = info.apis.byQName[p.type];
             if (ptype && ptype.kind == pxtc.SymbolKind.Enum) {
                 let field = getFirstChildWithAttr(block, "field", "name", comp.actualNameToParam[p.name].definitionName);
