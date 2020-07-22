@@ -481,6 +481,7 @@ namespace pxt {
         private parseConfig(cfgSrc: string, targetVersion?: string) {
             try {
                 const cfg = <PackageConfig>JSON.parse(cfgSrc);
+                cfg.files.filter(f => f.indexOf("test") >= 0).forEach(f => console.log("PARSED CONFIG incl: " + f))
                 this.config = cfg;
             } catch (e) {
                 this.configureAsInvalidPackage(lf("Syntax error in pxt.json"));
@@ -724,14 +725,23 @@ namespace pxt {
 
         static depWarnings: Map<boolean> = {}
         getFiles() {
-            let res: string[]
+            let res = this.config.files.slice(0);
             if (this.level == 0 && !this.ignoreTests) {
-                console.log("test files (ignored) are: " + (this.config.testFiles || []).join(","))
-                res = this.config.files.concat(this.config.testFiles || [])
+                res = [...res, ...this.config.testFiles || []]
             }
-            else
-                res = this.config.files.slice(0);
-            res.filter(f => f.indexOf("test") >= 0).forEach(f => console.log("INCLUDING TEST FILE: " + f))
+            else {
+                // Note that ideally we shouldn't have test files in the normal files
+                // list but unfortunately lots of consumers use the .files property directly
+                // and sometimes leak test files into it.
+                if (this.config.testFiles?.length)
+                    res = res.filter(f => !this.config.testFiles.some(t => t == f))
+            }
+            let bad_test_files = res.filter(f => f.indexOf("test") >= 0);
+            bad_test_files.forEach(f => console.log("INCLUDING TEST FILE: " + f))
+            if (bad_test_files.length) {
+                console.log("test files: " + (this.config.testFiles || []).join(","))
+                console.log(`level: ${this.level}, ignoreTests: ${this.ignoreTests}`)
+            }
             const fd = this.config.fileDependencies
             if (this.config.fileDependencies)
                 res = res.filter(fn => {

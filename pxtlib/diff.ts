@@ -315,11 +315,11 @@ namespace pxt.diff {
     export function parseDiffMarker(ln: string): DiffMarker {
         const m = /^@@ -(\d+),(\d+) \+(\d+),(\d+)/.exec(ln)
         return m && {
-                oldStart: parseInt(m[1]) - 1,
-                oldLength: parseInt(m[2]),
-                newStart: parseInt(m[3]) - 1,
-                newLength: parseInt(m[4])
-            }
+            oldStart: parseInt(m[1]) - 1,
+            oldLength: parseInt(m[2]),
+            newStart: parseInt(m[3]) - 1,
+            newLength: parseInt(m[4])
+        }
     }
 
     export interface RenderOptions extends DiffOptions {
@@ -656,6 +656,10 @@ namespace pxt.diff {
         // include corepkg if no dependencies
         if (!Object.keys(dependencies).length)
             dependencies[pxt.appTarget.corepkg] = "*";
+
+        commitFiles
+            .filter(f => f.indexOf("test") >= 0)
+            .forEach(f => console.log("!!! CREATING CONFIG W TEST: " + f))
 
         // yay, we have a new cfg
         const cfg: pxt.PackageConfig = {

@@ -368,7 +368,11 @@ export class EditorPackage {
         let p = Promise.resolve();
         if (!f) {
             f = this.setFile(n, v);
-            p = p.then(() => this.updateConfigAsync(cfg => cfg.files.indexOf(n) < 0 ? cfg.files.push(n) : 0))
+            p = p.then(() => this.updateConfigAsync(cfg => {
+                if (n.indexOf("test") >= 0)
+                    console.log("ADDING TEST FILE!!!") // TODO(dz)
+                return cfg.files.indexOf(n) < 0 ? cfg.files.push(n) : 0
+            }))
             p.then(() => this.savePkgAsync())
         }
         return p.then(() => f.setContentAsync(v));

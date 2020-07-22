@@ -1164,7 +1164,11 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
         Object.keys(currFiles)
             .filter(f => /\.(blocks|ts|py|asm|md|json)$/.test(f))
             .filter(f => f != pxt.CONFIG_NAME)
-            .forEach(f => files.push(f));
+            .forEach(f => {
+                if (f.indexOf("test") >= 0)
+                    console.log("Adding test file! " + f);
+                files.push(f)
+            });
     }
     // update test file if needed
     const testFiles = pxtjson.testFiles || (pxtjson.testFiles = []);

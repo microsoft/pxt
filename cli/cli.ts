@@ -2960,6 +2960,8 @@ function addDepAsync(name: string, ver: string, hw: boolean) {
 function addFile(name: string, cont: string) {
     let ff = mainPkg.getFiles()
     if (ff.indexOf(name) < 0) {
+        if (name.indexOf("test") >= 0)
+            console.log("ADDING TEST FILE!! " + name) // TODO(dz)
         mainPkg.config.files.push(name)
         mainPkg.saveConfig()
         console.log(U.lf("Added {0} to files in {1}.", name, pxt.CONFIG_NAME))
@@ -3542,6 +3544,7 @@ function testForBuildTargetAsync(useNative: boolean, cachedSHA: string): Promise
 
     return mainPkg.loadAsync()
         .then(() => {
+            mainPkg.ignoreTests = true
             copyCommonFiles();
             setBuildEngine();
             let target = mainPkg.getTargetOptions()
@@ -3563,7 +3566,7 @@ function testForBuildTargetAsync(useNative: boolean, cachedSHA: string): Promise
                 pxt.debug("  skip native build of non-project")
 
                 if (cachedSHA !== sha && !pxt.appTarget.appTheme.disableAPICache) {
-                    pxt.log(`Updating cached API info for ${opts.name}`);
+                    pxt.log(`Updating cached API info (1) for ${opts.name}`);
                     const res = pxtc.compile(opts);
                     api = pxtc.getApiInfo(res.ast, opts.jres);
                 }
@@ -3577,7 +3580,7 @@ function testForBuildTargetAsync(useNative: boolean, cachedSHA: string): Promise
                 simulatorCoverage(res, opts)
 
                 if (cachedSHA !== sha && !pxt.appTarget.appTheme.disableAPICache) {
-                    pxt.log(`Updating cached API info for ${opts.name}`);
+                    pxt.log(`Updating cached API info (2) for ${opts.name}`);
                     api = pxtc.getApiInfo(res.ast, opts.jres);
                 }
             }
@@ -3753,6 +3756,8 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
                 let files = mainPkg.config.files
                 let idx = files.indexOf(tsf)
                 U.assert(idx >= 0)
+                if (fn.indexOf("test") >= 0)
+                    console.log("!!! adding TEST FILE! " + fn)
                 files[idx] = fn
                 mainPkg.config.name = fn.replace(/\.ts$/, "")
                 mainPkg.config.description = `Generated from ${ti.base} with ${fn}`
