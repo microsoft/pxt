@@ -193,24 +193,7 @@ namespace pxt {
         }
 
         public createNewTilemap(name: string, tileWidth: number, width = 16, height = 16): [string, pxt.sprite.TilemapData] {
-            this.onChange()
-            let index = 0;
-            let base = name;
-
-            while (this.state.takenNames[name]) {
-                name = base  + "_" + index;
-                ++index;
-            }
-
-            this.state.takenNames[name] = true;
-
-            const newMap = this.blankTilemap(tileWidth, width, height);
-            this.state.projectTilemaps.push({
-                id: name,
-                data: newMap
-            });
-
-            return [name, newMap];
+            return this.createNewTilemapFromData(this.blankTilemap(tileWidth, width, height), name)
         }
 
         public blankTilemap(tileWidth: number, width = 16, height = 16) {
@@ -245,6 +228,29 @@ namespace pxt {
             const newTileSet = this.createTileset(tileWidth);
             this.state.projectTileSet.tileSets.push(newTileSet);
             return newTileSet.tiles[0];
+        }
+
+        public createNewTilemapFromData(data: pxt.sprite.TilemapData, name?: string): [string, pxt.sprite.TilemapData] {
+            this.onChange()
+
+            if (!name) name = lf("level");
+
+            let index = 0;
+            let base = name;
+
+            while (this.state.takenNames[name]) {
+                name = base  + "_" + index;
+                ++index;
+            }
+
+            this.state.takenNames[name] = true;
+
+            this.state.projectTilemaps.push({
+                id: name,
+                data: data
+            });
+
+            return [name, data];
         }
 
         protected cloneState(): TilemapSnapshot {
