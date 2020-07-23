@@ -821,12 +821,15 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             case "forumUrl":
                 icon = "comments"
                 break;
+            case "forumExample":
+                icon = "pencil"
+                break;
             case "template":
             default:
                 if (youTubeId || youTubePlaylistId) icon = "youtube";
                 break;
         }
-        return this.isLink() && type != "example" // TODO (shakao)  migrate forumurl to otherAction json in md
+        return this.isLink() && type != "forumExample" // TODO (shakao)  migrate forumurl to otherAction json in md
             ? <sui.Link role="button" className="link button attached" icon={icon} href={this.getUrl()} target="_blank" tabIndex={-1} />
             : <sui.Item role="button" className="button attached" icon={icon} onClick={onClick} tabIndex={-1} />
     }
@@ -850,7 +853,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         return <div className={`card-action ui items ${editor || ""}`} key={key}>
             {this.getActionIcon(onClick, type, editor)}
             {title && <div className="card-action-title">{title}</div>}
-            {this.isLink() && type != "example" ? // TODO (shakao)  migrate forumurl to otherAction json in md
+            {this.isLink() && type != "forumExample" ? // TODO (shakao)  migrate forumurl to otherAction json in md
                 <sui.Link
                     href={this.getUrl()}
                     refCallback={autoFocus ? this.linkRef : undefined}
@@ -965,7 +968,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     })}
                     {cardType === "forumUrl" &&
                         // TODO (shakao) migrate forumurl to otherAction json in md
-                        this.getActionCard(lf("Open in Editor"), "example", this.handleOpenForumUrlInEditor)
+                        this.getActionCard(lf("Open in Editor"), "forumExample", this.handleOpenForumUrlInEditor)
                     }
                 </div>
             </div>
