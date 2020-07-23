@@ -1286,15 +1286,13 @@ namespace ts.pxtc.service {
                 }
             }
 
-            // swap aliases, filter symbols and add snippets
+            // swap aliases, filter symbols
             resultSymbols
                 .map(sym => sym.symbol.attributes.alias ? completionSymbol(lastApiInfo.apis.byQName[sym.symbol.attributes.alias], sym.weight) : sym)
                 .filter(shouldUseSymbol)
                 .forEach(sym => {
                     entries[sym.symbol.qName] = sym
-                    patchSymbolWithSnippet(sym.symbol)
                 })
-
             resultSymbols = pxt.Util.values(entries)
                 .filter(a => !!a && !!a.symbol)
 
@@ -1305,6 +1303,9 @@ namespace ts.pxtc.service {
             if (resultSymbols.length > MAX_SYMBOLS) {
                 resultSymbols = resultSymbols.splice(0, MAX_SYMBOLS)
             }
+
+            // add in snippets if not present already
+            resultSymbols.forEach(sym => patchSymbolWithSnippet(sym.symbol))
 
             r.entries = resultSymbols.map(sym => sym.symbol);
 
