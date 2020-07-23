@@ -159,7 +159,7 @@ namespace pxt {
                         report += `\n`
                     }
                 }
-                console.log(report || "nothing to report")
+                console.log(report)
             }
             perfReportLogged = true
         }
