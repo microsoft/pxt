@@ -1035,7 +1035,7 @@ namespace ts.pxtc.service {
             const partialWord = isMemberCompletion ? src.slice(dotIdx + 1, wordEndPos) : src.slice(wordStartPos, wordEndPos)
 
             const MAX_SYMBOLS_BEFORE_FILTER = 50
-            const MAX_SYMBOLS = 200
+            const MAX_SYMBOLS = 100
 
             if (isMemberCompletion)
                 complPosition = dotIdx
@@ -1085,7 +1085,7 @@ namespace ts.pxtc.service {
                 // convert our location from python to typescript
                 if (res.sourceMap) {
                     const pySrc = src
-                    const tsSrc = res.outfiles[tsFilename]
+                    const tsSrc = res.outfiles[tsFilename] || ""
                     const srcMap = pxtc.BuildSourceMapHelpers(res.sourceMap, tsSrc, pySrc)
 
                     const smallest = srcMap.py.smallestOverlap(span)
