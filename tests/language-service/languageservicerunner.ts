@@ -114,22 +114,30 @@ function getTestCases() {
                     }
                 }
 
-                let relativeCompletionPosition = endsInDot ? lastNonWhitespace + 1 : lastNonWhitespace
+                let relativeCompletionPosition = lastNonWhitespace + 1
 
                 const completionPosition = position + relativeCompletionPosition;
+
+                const lineText = line.substr(0, commentIndex);
+
+                // Find word start and end
+                let wordStartPos = fileText.slice(0, completionPosition).search(/[a-zA-Z\d]+\s*$/)
+                let wordEndPos = wordStartPos + fileText.slice(wordStartPos).search(/[^a-zA-Z\d]/)
+                if (wordStartPos < 0 || wordEndPos < 0) {
+                    wordStartPos = completionPosition
+                    wordEndPos = completionPosition
+                }
 
                 testCases.push({
                     fileName,
                     fileText,
-                    lineText: line.substr(0, commentIndex),
+                    lineText,
                     isPython,
                     expectedSymbols,
                     unwantedSymbols,
                     position: completionPosition,
-                    // TODO: we could be smarter about the word start and end position, but
-                    //  this works for all cases we care about so far.
-                    wordStartPos: completionPosition,
-                    wordEndPos: completionPosition,
+                    wordStartPos,
+                    wordEndPos,
                 })
             }
 
