@@ -1032,6 +1032,11 @@ namespace ts.pxtc.service {
 
             const isMemberCompletion = dotIdx !== -1
 
+            const partialWord = isMemberCompletion ? src.slice(dotIdx + 1, wordEndPos) : src.slice(wordStartPos, wordEndPos)
+
+            const MAX_SYMBOLS_BEFORE_FILTER = 50
+            const MAX_SYMBOLS = 200
+
             if (isMemberCompletion)
                 complPosition = dotIdx
 
@@ -1088,6 +1093,13 @@ namespace ts.pxtc.service {
                         tsPos = smallest.ts.startPos
                     }
                 }
+
+                // filter based on word match if we get too many (ideally we'd leave this filtering for monaco as it's
+                // better at fuzzy matching and fluidly changing but for performance reasons we want to do it here)
+                if (!isMemberCompletion && resultSymbols.length > MAX_SYMBOLS_BEFORE_FILTER) {
+                    resultSymbols = resultSymbols
+                        .filter(s => (isPython ? s.symbol.pyQName : s.symbol.qName).indexOf(partialWord) >= 0)
+                }
             } else {
                 tsPos = position
                 opts.ast = true;
@@ -1141,9 +1153,12 @@ namespace ts.pxtc.service {
                 }
             }
 
+            const allSymbols = pxt.U.values(lastApiInfo.apis.byQName)
+
             if (resultSymbols.length === 0) {
-                // if by this point we don't yet have a specialized set of results (like those for member completion or a specific type for a call expression), use all global api symbols as the start (Monaco will filter and sort these based on the prefix user input)
-                resultSymbols = completionSymbols(pxt.U.values(lastApiInfo.apis.byQName), COMPLETION_DEFAULT_WEIGHT)
+                // if by this point we don't yet have a specialized set of results (like those for member completion), use all global api symbols as the start and filter by matching prefix if possible
+                let wordMatching = allSymbols.filter(s => (isPython ? s.pyQName : s.qName).indexOf(partialWord) >= 0)
+                resultSymbols = completionSymbols(wordMatching, COMPLETION_DEFAULT_WEIGHT)
             }
 
             // special handling for call expressions
@@ -1163,7 +1178,7 @@ namespace ts.pxtc.service {
                             paramIdx = callSym.parameters.length - 1
                         const paramType = getParameterTsType(callSym, paramIdx, blocksInfo)
                         if (paramType) {
-                            // weight the results higher if they return the correct type for the parameter
+                            /// weight the results higher if they return the correct type for the parameter
                             const matchingApis = getApisForTsType(paramType, call, tc, resultSymbols);
                             matchingApis.forEach(match => match.weight = COMPLETION_MATCHING_PARAM_TYPE_WEIGHT);
                         }
@@ -1171,6 +1186,7 @@ namespace ts.pxtc.service {
                 }
             }
 
+            // gather local variables that won't have pxt symbol info
             if (!isPython && !didFindMemberCompletions) {
                 // TODO: share this with the "syntaxinfo" service
 
@@ -1282,9 +1298,14 @@ namespace ts.pxtc.service {
             resultSymbols = pxt.Util.values(entries)
                 .filter(a => !!a && !!a.symbol)
 
+            // sort entries
             resultSymbols.sort(compareCompletionSymbols);
 
-            // sort entries
+            // limit the number of entries
+            if (resultSymbols.length > MAX_SYMBOLS) {
+                resultSymbols = resultSymbols.splice(0, MAX_SYMBOLS)
+            }
+
             r.entries = resultSymbols.map(sym => sym.symbol);
 
             return r;

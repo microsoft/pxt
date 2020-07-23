@@ -138,16 +138,19 @@ namespace pxt {
                 performance.clearMeasures(`${name} elapsed`)
             }
         }
-        export function report() {
+        export function report(filter: string = null) {
             if (enabled) {
                 let report = `performance report:\n`
                 for (let [msg, time] of stats.milestones) {
-                    let pretty = prettyStr(time)
-                    report += `\t\t${msg} @ ${pretty}\n`
+                    if (!filter || msg.indexOf(filter) >= 0) {
+                        let pretty = prettyStr(time)
+                        report += `\t\t${msg} @ ${pretty}\n`
+                    }
                 }
                 report += `\n`
                 for (let [msg, start, duration] of stats.durations) {
-                    if (duration > 50) {
+                    let filterIncl = filter && msg.indexOf(filter) >= 0
+                    if ((duration > 50 && !filter) || filterIncl) {
                         let pretty = prettyStr(duration)
                         report += `\t\t${msg} took ~ ${pretty}`
                         if (duration > 1000) {
@@ -156,7 +159,7 @@ namespace pxt {
                         report += `\n`
                     }
                 }
-                console.log(report)
+                console.log(report || "nothing to report")
             }
             perfReportLogged = true
         }
