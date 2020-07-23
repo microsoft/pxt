@@ -1233,6 +1233,7 @@ namespace ts.pxtc.service {
                     keywords = [...ts.pxtc.reservedWords, ...ts.pxtc.keywordTypes]
                 }
                 let keywordSymbols = keywords
+                    .filter(k => k.indexOf(partialWord) >= 0)
                     .map(makePxtSymbolFromKeyword)
                     .map(s => completionSymbol(s, COMPLETION_KEYWORD_WEIGHT))
                 resultSymbols = [...resultSymbols, ...keywordSymbols]
