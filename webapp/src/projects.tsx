@@ -607,6 +607,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             scr={selectedElement}
                             onClick={this.props.onClick}
                             cardType={selectedElement.cardType}
+                            editor={selectedElement.editor}
                             tags={selectedElement.tags}
                             otherActions={selectedElement.otherActions}
                         />
@@ -721,6 +722,7 @@ export interface ProjectsDetailProps extends ISettingsProps {
     scr?: any;
     onClick: (scr: any, action?: pxt.CodeCardAction) => void;
     cardType: pxt.CodeCardType;
+    editor?: pxt.CodeCardEditorType;
     tags?: string[];
     otherActions?: pxt.CodeCardAction[];
 }
@@ -790,16 +792,14 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         return clickLabel;
     }
 
-    protected getActionEditor(type: string, action?: pxt.CodeCardAction): pxt.CodeCardEditorType {
+    protected getActionEditor(type: string, editor?: pxt.CodeCardEditorType): pxt.CodeCardEditorType {
         switch (type) {
             case "tutorial":
             case "example":
             case "sharedExample":
-                if (action && action.editor) return action.editor;
-                return "blocks";
+                return editor || "blocks";
             case "codeExample":
-                if (action && action.editor) return action.editor;
-                return "js";
+                return editor || "js";
             default:
                 return null;
         }
@@ -844,8 +844,8 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         }
     }
 
-    protected getActionCard(text: string, type: string, onClick: any, autoFocus?: boolean, action?: pxt.CodeCardAction, key?: string): JSX.Element {
-        const editor = this.getActionEditor(type, action);
+    protected getActionCard(text: string, type: string, onClick: any, autoFocus?: boolean, editor?: pxt.CodeCardEditorType, key?: string): JSX.Element {
+        editor = this.getActionEditor(type, editor);
         const title = this.getActionTitle(editor);
         return <div className={`card-action ui items ${editor || ""}`} key={key}>
             {this.getActionIcon(onClick, type, editor)}
@@ -911,7 +911,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     renderCore() {
-        const { name, description, largeImageUrl, videoUrl,
+        const { name, description, largeImageUrl, videoUrl, editor,
             youTubeId, youTubePlaylistId, buttonLabel, cardType, tags, otherActions } = this.props;
 
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
@@ -961,11 +961,11 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     {this.getActionCard(clickLabel, cardType, this.handleDetailClick, true)}
                     {otherActions && otherActions.map((el, i) => {
                         let onClick = this.handleActionClick(el);
-                        return this.getActionCard(clickLabel, el.cardType || cardType, onClick, false, el, `action${i}`);
+                        return this.getActionCard(clickLabel, el.cardType || cardType, onClick, false, el.editor, `action${i}`);
                     })}
                     {cardType === "forumUrl" &&
                         // TODO (shakao) migrate forumurl to otherAction json in md
-                        this.getActionCard(lf("Open in Editor"), "example", this.handleOpenForumUrlInEditor)
+                        this.getActionCard(lf("Open in Editor"), "example", this.handleOpenForumUrlInEditor, false, editor)
                     }
                 </div>
             </div>
