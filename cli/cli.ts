@@ -3179,6 +3179,8 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
     let newcards = 0;
     let cards: pxt.CodeCard[] = [];
     let lastCard: pxt.CodeCard = undefined;
+    let embedUrl = pxt.appTarget.appTheme.embedUrl
+        + (pxt.appTarget.appTheme.embedUrl.slice(-1) != '/' ? '/' : '');
     // parse existing cards
     if (md) {
         md.replace(rx, (m, c) => {
@@ -3213,6 +3215,10 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                             card.name = card.name
                                 .replace(/^\s*(introducing|presenting):?\s*/i, '');
                             card.description = "";
+                            card.otherActions = [{
+                                url: `${embedUrl}${id}`, // eg `https://arcade.makecode.com/${id}`
+                                cardType: "sharedExample"
+                            }]
                             cards.push(card);
 
                             const pfn = `./docs/static/discourse/${id}.`;
