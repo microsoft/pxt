@@ -99,10 +99,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     chgGallery(scr: pxt.CodeCard, action?: pxt.CodeCardAction) {
         let editor: string = (action && action.editor) || "blocks";
         if (editor == "js") editor = "ts";
-        pxt.tickEvent("projects.gallery", { name: scr.name, cardType: scr.cardType, editor });
         const url = action ? action.url : scr.url;
+        const type = action?.cardType || scr.cardType
         const editorPref = editor + "prj";
-        switch (scr.cardType) {
+        pxt.tickEvent("projects.gallery", { name: scr.name, cardType: type, editor });
+        switch (type) {
             case "template":
                 const prj = pxt.Util.clone(pxt.appTarget.blocksprj);
                 prj.config.dependencies = {}; // clear all dependencies
@@ -737,16 +738,16 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         }
 
         this.handleDetailClick = this.handleDetailClick.bind(this);
-        this.handleOpenForumUrlInEditor = this.handleOpenForumUrlInEditor.bind(this);
         this.linkRef = React.createRef<HTMLAnchorElement>();
     }
 
-    protected isLink() {
+    protected isLink(actionType?: pxt.CodeCardType) {
         const { cardType, url, youTubeId, youTubePlaylistId } = this.props;
+        const type = actionType || cardType;
 
-        return isCodeCardWithLink(cardType) && (youTubeId || youTubePlaylistId || url);
+        return isCodeCardWithLink(type) && (youTubeId || youTubePlaylistId || url);
 
-        function isCodeCardWithLink(value: string) {
+        function isCodeCardWithLink(value: pxt.CodeCardType) {
             switch (value) {
                 case "file":
                 case "example":
@@ -777,10 +778,12 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         let clickLabel = lf("Show Instructions");
         if (cardType == "tutorial")
             clickLabel = lf("Start Tutorial");
-        else if (cardType == "codeExample" || cardType == "example" || cardType == "sharedExample")
+        else if (cardType == "codeExample" || cardType == "example")
             clickLabel = lf("Open Example");
         else if (cardType == "forumUrl")
             clickLabel = lf("Open in Forum");
+        else if (cardType == "sharedExample")
+            clickLabel = lf("Open in Editor");
         else if (cardType == "template")
             clickLabel = lf("New Project");
         else if (youTubeId)
@@ -794,42 +797,43 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         switch (type) {
             case "tutorial":
             case "example":
-            case "sharedExample":
                 if (action && action.editor) return action.editor;
                 return "blocks";
             case "codeExample":
                 if (action && action.editor) return action.editor;
                 return "js";
+            case "sharedExample":
+                return action?.editor;
             default:
                 return null;
         }
     }
 
-    protected getActionIcon(onClick: any, type: string, editor?: pxt.CodeCardEditorType): JSX.Element {
+    protected getActionIcon(onClick: any, type: pxt.CodeCardType, editor?: pxt.CodeCardEditorType): JSX.Element {
         const { youTubeId, youTubePlaylistId } = this.props;
         let icon = "file text";
         switch (type) {
             case "tutorial":
             case "example":
-            case "sharedExample":
                 icon = "xicon blocks"
                 if (editor) icon = `xicon ${editor}`;
                 break;
             case "codeExample":
                 icon = `xicon ${editor || "js"}`;
                 break;
+            case "sharedExample":
+                icon = "pencil"
+                if (editor) icon = `xicon ${editor}`;
+                break;
             case "forumUrl":
                 icon = "comments"
-                break;
-            case "forumExample":
-                icon = "pencil"
                 break;
             case "template":
             default:
                 if (youTubeId || youTubePlaylistId) icon = "youtube";
                 break;
         }
-        return this.isLink() && type != "forumExample" // TODO (shakao)  migrate forumurl to otherAction json in md
+        return this.isLink(type)
             ? <sui.Link role="button" className="link button attached" icon={icon} href={this.getUrl()} target="_blank" tabIndex={-1} />
             : <sui.Item role="button" className="button attached" icon={icon} onClick={onClick} tabIndex={-1} />
     }
@@ -847,13 +851,13 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         }
     }
 
-    protected getActionCard(text: string, type: string, onClick: any, autoFocus?: boolean, action?: pxt.CodeCardAction, key?: string): JSX.Element {
+    protected getActionCard(text: string, type: pxt.CodeCardType, onClick: any, autoFocus?: boolean, action?: pxt.CodeCardAction, key?: string): JSX.Element {
         const editor = this.getActionEditor(type, action);
         const title = this.getActionTitle(editor);
         return <div className={`card-action ui items ${editor || ""}`} key={key}>
             {this.getActionIcon(onClick, type, editor)}
             {title && <div className="card-action-title">{title}</div>}
-            {this.isLink() && type != "forumExample" ? // TODO (shakao)  migrate forumurl to otherAction json in md
+            {this.isLink(type) ?
                 <sui.Link
                     href={this.getUrl()}
                     refCallback={autoFocus ? this.linkRef : undefined}
@@ -869,7 +873,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     onClick={onClick}
                     onKeyDown={sui.fireClickOnEnter}
                     autoFocus={autoFocus}
-                    title={lf("Open in {0}", title)}
+                    title={lf("Open in {0}", title || lf("Editor"))}
                 />}
         </div>
     }
@@ -882,21 +886,6 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     handleActionClick(action?: pxt.CodeCardAction) {
         const { scr, onClick } = this.props;
         return () => onClick(scr, action);
-    }
-
-    handleOpenForumUrlInEditor() {
-        pxt.tickEvent('projects.actions.forum', undefined, { interactiveConsent: true });
-        const { url } = this.props;
-        pxt.discourse.extractSharedIdFromPostUrl(url)
-            .then(projectId => {
-                // if we have a projectid, load it
-                if (projectId)
-                    window.location.hash = "pub:" + projectId; // triggers reload
-                else {
-                    core.warningNotification(lf("Oops, we could not find the program in the forum."));
-                }
-            })
-            .catch(core.handleNetworkError)
     }
 
     isYouTubeOnline(): boolean {
@@ -914,9 +903,10 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     renderCore() {
-        const { name, description, largeImageUrl, videoUrl,
-            youTubeId, youTubePlaylistId, buttonLabel, cardType, tags, otherActions } = this.props;
+        const { name, description, largeImageUrl, videoUrl, url,
+            youTubeId, youTubePlaylistId, buttonLabel, cardType, tags } = this.props;
 
+        const otherActions = this.props.otherActions || [];
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
         const descriptions = description && description.split("\n");
         const image = largeImageUrl || (youTubeId && `https://img.youtube.com/vi/${youTubeId}/0.jpg`);
@@ -964,12 +954,9 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     {this.getActionCard(clickLabel, cardType, this.handleDetailClick, true)}
                     {otherActions && otherActions.map((el, i) => {
                         let onClick = this.handleActionClick(el);
-                        return this.getActionCard(clickLabel, el.cardType || cardType, onClick, false, el, `action${i}`);
+                        let label = el.cardType ? this.getClickLabel(el.cardType) : clickLabel;
+                        return this.getActionCard(label, el.cardType || cardType, onClick, false, el, `action${i}`);
                     })}
-                    {cardType === "forumUrl" &&
-                        // TODO (shakao) migrate forumurl to otherAction json in md
-                        this.getActionCard(lf("Open in Editor"), "forumExample", this.handleOpenForumUrlInEditor)
-                    }
                 </div>
             </div>
         </div>;
