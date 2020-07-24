@@ -151,6 +151,7 @@ function onYouTubeIframeAPIReady() {
     const facecam = document.getElementById("facecamvideo") as HTMLVideoElement;
     const facecamoverlay = document.getElementById("facecamoverlay") as HTMLVideoElement;
     const facecamlabel = document.getElementById("facecamlabel");
+    const hardwarecamcontainer = document.getElementById("hardwarecam");
     const hardwarecam = document.getElementById("hardwarecamvideo") as HTMLVideoElement;
     const hardwarecamoverlay = document.getElementById("hardwarecamoverlay") as HTMLVideoElement;
     const hardwarecamlabel = document.getElementById("hardwarecamlabel");
@@ -1054,7 +1055,7 @@ background-image: url(${config.backgroundImage});
         try {
             state.faceCamError = false;
             body.classList.add("loading");
-            facecam.classList.remove("error");
+            facecamcontainer.classList.remove("error");
             await startStream(facecam, config.faceCamId, config.faceCamRotate, config.faceCamGreenScreen, config.faceCamClipBlack, config.faceCamContour);
             console.log(`face cam started`)
             if (!config.faceCamId)
@@ -1064,7 +1065,7 @@ background-image: url(${config.backgroundImage});
         catch (e) {
             tickEvent("streamer.facecam.error")
             stopStream(facecam.srcObject);
-            facecam.classList.add("error");
+            facecamcontainer.classList.add("error");
             state.faceCamError = true;
             saveConfig(config)
             console.log(`could not start face cam`, e)
@@ -1096,7 +1097,8 @@ background-image: url(${config.backgroundImage});
         if (config.hardwareCamId) {
             try {
                 state.hardwareCamError = false;
-                hardwarecam.parentElement.classList.remove("hidden");
+                hardwarecamcontainer.classList.remove("hidden");
+                hardwarecamcontainer.classList.remove("error");
                 await startStream(hardwarecam, config.hardwareCamId, config.hardwareCamRotate, config.hardwareCamGreenScreen, config.hardwareCamClipBlack, config.hardwareCamContour);
                 console.log(`hardware cam started`)
                 return; // success!
@@ -1105,13 +1107,14 @@ background-image: url(${config.backgroundImage});
                 tickEvent("streamer.hardwarecam.error")
                 stopStream(hardwarecam.srcObject)
                 state.hardwareCamError = true;
+                hardwarecamcontainer.classList.add("error");
                 saveConfig(config)
                 console.log(`could not start web cam`, e)
                 render()
             }
         } else {
             state.hardwareCamError = false
-            hardwarecam.parentElement.classList.add("hidden");
+            hardwarecamcontainer.classList.add("hidden");
             stopStream(hardwarecam.srcObject)
         }
     }
