@@ -56,6 +56,7 @@ function onYouTubeIframeAPIReady() {
     const facecam = document.getElementById("facecamvideo");
     const facecamoverlay = document.getElementById("facecamoverlay");
     const facecamlabel = document.getElementById("facecamlabel");
+    const hardwarecamcontainer = document.getElementById("hardwarecam");
     const hardwarecam = document.getElementById("hardwarecamvideo");
     const hardwarecamoverlay = document.getElementById("hardwarecamoverlay");
     const hardwarecamlabel = document.getElementById("hardwarecamlabel");
@@ -92,7 +93,7 @@ function onYouTubeIframeAPIReady() {
         paintColor: paintColors[0],
     };
     let editorConfigs;
-    const db = openDb();
+    const db = await openDbAsync();
     try {
         tickEvent("streamer.load.start");
         body.classList.add("loading");
@@ -101,6 +102,7 @@ function onYouTubeIframeAPIReady() {
         console.log(`found ${Object.keys(editorConfigs).length} editors`);
         initMessages();
         initResize();
+        initFocus();
         initVideos();
         initSubtitles();
         initAccessibility();
@@ -117,6 +119,7 @@ function onYouTubeIframeAPIReady() {
         render();
         handleHashChange();
         tickEvent("streamer.load.ok");
+        cleanVideos();
     }
     catch (e) {
         tickEvent("streamer.load.error");
@@ -127,7 +130,9 @@ function onYouTubeIframeAPIReady() {
         if (!config)
             throw new Error("missing config");
         localStorage["streamer.config"] = JSON.stringify(config);
-        // gc videos
+    }
+    function cleanVideos() {
+        const config = readConfig();
         const blobs = Object.keys(config)
             .filter(k => /Video$/.test(k))
             .map(k => config[k])
@@ -892,7 +897,7 @@ background-image: url(${config.backgroundImage});
         try {
             state.faceCamError = false;
             body.classList.add("loading");
-            facecam.classList.remove("error");
+            facecamcontainer.classList.remove("error");
             await startStream(facecam, config.faceCamId, config.faceCamRotate, config.faceCamGreenScreen, config.faceCamClipBlack, config.faceCamContour);
             console.log(`face cam started`);
             if (!config.faceCamId)
@@ -902,7 +907,7 @@ background-image: url(${config.backgroundImage});
         catch (e) {
             tickEvent("streamer.facecam.error");
             stopStream(facecam.srcObject);
-            facecam.classList.add("error");
+            facecamcontainer.classList.add("error");
             state.faceCamError = true;
             saveConfig(config);
             console.log(`could not start face cam`, e);
@@ -933,7 +938,8 @@ background-image: url(${config.backgroundImage});
         if (config.hardwareCamId) {
             try {
                 state.hardwareCamError = false;
-                hardwarecam.parentElement.classList.remove("hidden");
+                hardwarecamcontainer.classList.remove("hidden");
+                hardwarecamcontainer.classList.remove("error");
                 await startStream(hardwarecam, config.hardwareCamId, config.hardwareCamRotate, config.hardwareCamGreenScreen, config.hardwareCamClipBlack, config.hardwareCamContour);
                 console.log(`hardware cam started`);
                 return; // success!
@@ -942,6 +948,7 @@ background-image: url(${config.backgroundImage});
                 tickEvent("streamer.hardwarecam.error");
                 stopStream(hardwarecam.srcObject);
                 state.hardwareCamError = true;
+                hardwarecamcontainer.classList.add("error");
                 saveConfig(config);
                 console.log(`could not start web cam`, e);
                 render();
@@ -949,7 +956,7 @@ background-image: url(${config.backgroundImage});
         }
         else {
             state.hardwareCamError = false;
-            hardwarecam.parentElement.classList.add("hidden");
+            hardwarecamcontainer.classList.add("hidden");
             stopStream(hardwarecam.srcObject);
         }
     }
@@ -1094,6 +1101,20 @@ background-image: url(${config.backgroundImage});
             loadSettings();
             hideSettings();
         };
+    }
+    async function repairCams() {
+        if (state.faceCamError)
+            await loadFaceCam();
+        if (state.hardwareCamError && state.hardware)
+            await loadHardwareCam();
+    }
+    function initFocus() {
+        document.addEventListener("visibilitychange", function () {
+            if (document.visibilityState === 'visible') {
+                console.log(`visible`);
+                repairCams();
+            }
+        }, false);
     }
     function initResize() {
         const resolutions = [{
@@ -1780,6 +1801,10 @@ background-image: url(${config.backgroundImage});
             };
         });
         const facecamerror = document.getElementById("facecamerror");
+        facecamerror.onclick = () => {
+            repairCams();
+            loadSettings();
+        };
         if (state.faceCamError)
             facecamerror.classList.remove("hidden");
         else
@@ -1933,6 +1958,10 @@ background-image: url(${config.backgroundImage});
             };
         });
         const hardwarecamerror = document.getElementById("hardwarecamerror");
+        hardwarecamerror.onclick = () => {
+            repairCams();
+            loadSettings();
+        };
         if (config.hardwareCamId && state.hardwareCamError)
             hardwarecamerror.classList.remove("hidden");
         else
@@ -2414,45 +2443,51 @@ background-image: url(${config.backgroundImage});
         return url;
     }
     // this database stores video blobs
-    function openDb() {
+    function openDbAsync() {
         const DB_VERSION = 1;
         const DB_NAME = "ASSETS";
         const STORE_BLOBS = "BLOBS";
         const request = indexedDB.open(DB_NAME, DB_VERSION);
         let db;
-        // create or upgrade database
-        request.onsuccess = function (event) {
-            db = request.result;
-            db.onerror = function (event) {
-                console.log("idb error", event);
-            };
-        };
-        request.onupgradeneeded = function (event) {
-            db = request.result;
-            db.createObjectStore(STORE_BLOBS);
-        };
         const api = {
             put: (id, file) => {
-                const transaction = db.transaction([STORE_BLOBS], "readwrite");
-                const blobs = transaction.objectStore(STORE_BLOBS);
-                blobs.put(file, id);
+                try {
+                    const transaction = db.transaction([STORE_BLOBS], "readwrite");
+                    const blobs = transaction.objectStore(STORE_BLOBS);
+                    blobs.put(file, id);
+                }
+                catch (e) {
+                    console.error(`idb: put ${id} failed`);
+                }
             },
             get: (id) => {
                 return new Promise((resolve, reject) => {
-                    const transaction = db.transaction([STORE_BLOBS], "readonly");
-                    const blobs = transaction.objectStore(STORE_BLOBS);
-                    const request = blobs.get(id);
-                    request.onsuccess = (event) => resolve(event.target.result);
-                    request.onerror = (event) => resolve(event.target.result);
+                    try {
+                        const transaction = db.transaction([STORE_BLOBS], "readonly");
+                        const blobs = transaction.objectStore(STORE_BLOBS);
+                        const request = blobs.get(id);
+                        request.onsuccess = (event) => resolve(event.target.result);
+                        request.onerror = (event) => resolve(event.target.result);
+                    }
+                    catch (e) {
+                        console.error(`idb: get ${id} failed`);
+                        reject(e);
+                    }
                 });
             },
             del: (id) => {
                 return new Promise((resolve, reject) => {
-                    const transaction = db.transaction([STORE_BLOBS], "readwrite");
-                    const blobs = transaction.objectStore(STORE_BLOBS);
-                    const request = blobs.delete(id);
-                    request.onsuccess = (event) => resolve(event.target.result);
-                    request.onerror = (event) => resolve(event.target.result);
+                    try {
+                        const transaction = db.transaction([STORE_BLOBS], "readwrite");
+                        const blobs = transaction.objectStore(STORE_BLOBS);
+                        const request = blobs.delete(id);
+                        request.onsuccess = (event) => resolve(event.target.result);
+                        request.onerror = (event) => resolve(event.target.result);
+                    }
+                    catch (e) {
+                        console.error(`idb: del ${id}`);
+                        reject(e);
+                    }
                 });
             },
             gc: (urls) => {
@@ -2462,10 +2497,29 @@ background-image: url(${config.backgroundImage});
                 request.onsuccess = (event) => {
                     const keys = event.target.result;
                     const dead = keys.filter(k => urls.indexOf(k) < 0);
+                    if (dead.length)
+                        console.log(`dead videos`, dead);
                     dead.forEach(api.del);
                 };
             }
         };
-        return api;
+        return new Promise((resolve, reject) => {
+            // create or upgrade database
+            request.onsuccess = function (event) {
+                db = request.result;
+                db.onerror = function (event) {
+                    console.log("idb error", event);
+                };
+                resolve(api);
+            };
+            request.onupgradeneeded = function (event) {
+                db = request.result;
+                db.createObjectStore(STORE_BLOBS);
+                db.onerror = function (event) {
+                    console.log("idb error", event);
+                };
+                resolve(api);
+            };
+        });
     }
 })();

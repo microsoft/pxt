@@ -189,6 +189,7 @@ Use https://uifabricicons.azurewebsites.net/
             color: black;
             text-align: left;
             opacity: 100%;
+            cursor: cursor;
         }
 
         .error.mic {
@@ -916,8 +917,13 @@ Settings
             margin-left: 1%;
         }
 
-        video.error {
+        .cam.error {
             background: rgba(255, 0, 0, 0.5)
+        }
+
+        .cam.error > video,
+        .cam.error > canvas {
+            opacity: 0.1;
         }
 
         /** 
@@ -1544,7 +1550,7 @@ Settings
                         <label for="facecamselect">Choose a video source</label>
                         <select id="facecamselect"></select>
                         <div class="error hidden facecamerror" id="facecamerror">Connection error. Make sure the camera
-                            is not blocked or used by another application.</div>
+                            is not blocked or used by another application. If you are in a Teams/Skype/Zoom/... meeting, turn off your video and click here to try again.</div>
                     </div>
                     <div class="field">
                         <label for="facecamlabelinput">Camera label</label>
@@ -1601,7 +1607,7 @@ Settings
                         <label for="hardwarecamselect">Choose a video source</label>
                         <select id="hardwarecamselect"></select>
                         <div class="error hidden" id="hardwarecamerror">Connection error. Make sure the camera is not
-                            blocked or used by another application.</div>
+                            blocked or used by another application. If you are in a Teams/Skype/Zoom/... meeting, turn off your video and click here to try again.</div>
                     </div>
                     <div class="field">
                         <label for="hardwarecamlabelinput">Camera label</label>
