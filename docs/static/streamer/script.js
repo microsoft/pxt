@@ -1801,7 +1801,10 @@ background-image: url(${config.backgroundImage});
             };
         });
         const facecamerror = document.getElementById("facecamerror");
-        facecamerror.onclick = () => repairCams();
+        facecamerror.onclick = () => {
+            repairCams();
+            loadSettings();
+        };
         if (state.faceCamError)
             facecamerror.classList.remove("hidden");
         else
@@ -1955,7 +1958,10 @@ background-image: url(${config.backgroundImage});
             };
         });
         const hardwarecamerror = document.getElementById("hardwarecamerror");
-        hardwarecamerror.onclick = () => repairCams();
+        hardwarecamerror.onclick = () => {
+            repairCams();
+            loadSettings();
+        };
         if (config.hardwareCamId && state.hardwareCamError)
             hardwarecamerror.classList.remove("hidden");
         else
