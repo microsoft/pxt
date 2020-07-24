@@ -189,7 +189,7 @@ function onYouTubeIframeAPIReady() {
         paintColor: paintColors[0],
     }
     let editorConfigs;
-    const db = openDb()
+    const db = await openDbAsync()
 
     try {
         tickEvent("streamer.load.start")
@@ -216,6 +216,7 @@ function onYouTubeIframeAPIReady() {
         render()
         handleHashChange();
         tickEvent("streamer.load.ok")
+        cleanVideos()
     } catch (e) {
         tickEvent("streamer.load.error")
         trackException(e, "load");
@@ -225,8 +226,10 @@ function onYouTubeIframeAPIReady() {
     function saveConfig(config) {
         if (!config) throw new Error("missing config")
         localStorage["streamer.config"] = JSON.stringify(config)
+    }
 
-        // gc videos
+    function cleanVideos() {
+        const config = readConfig();
         const blobs = Object.keys(config)
             .filter(k => /Video$/.test(k))
             .map<string>(k => config[k])
@@ -2641,24 +2644,17 @@ background-image: url(${config.backgroundImage});
     }
 
     // this database stores video blobs
-    function openDb() {
+    function openDbAsync(): Promise<{
+        put: (id: string, file: File | Blob) => void;
+        get: (id: string) => Promise<File | Blob>;
+        del: (id: string) => Promise<void>;
+        gc: (urls: string[]) => void;
+    }> {
         const DB_VERSION = 1
         const DB_NAME = "ASSETS"
         const STORE_BLOBS = "BLOBS"
         const request = indexedDB.open(DB_NAME, DB_VERSION);
         let db: IDBDatabase;
-
-        // create or upgrade database
-        request.onsuccess = function (event) {
-            db = request.result;
-            db.onerror = function (event) {
-                console.log("idb error", event);
-            };
-        }
-        request.onupgradeneeded = function (event) {
-            db = request.result;
-            db.createObjectStore(STORE_BLOBS);
-        };
 
         const api = {
             put: (id: string, file: File | Blob) => {
@@ -2691,10 +2687,30 @@ background-image: url(${config.backgroundImage});
                 request.onsuccess = (event) => {
                     const keys: string[] = (event.target as any).result;
                     const dead = keys.filter(k => urls.indexOf(k) < 0);
+                    if (dead.length)
+                        console.log(`dead videos`, dead)
                     dead.forEach(api.del)
                 }
             }
         }
-        return api;
+
+        return new Promise((resolve, reject) => {
+            // create or upgrade database
+            request.onsuccess = function (event) {
+                db = request.result;
+                db.onerror = function (event) {
+                    console.log("idb error", event);
+                };
+                resolve(api);
+            }
+            request.onupgradeneeded = function (event) {
+                db = request.result;
+                db.createObjectStore(STORE_BLOBS);
+                db.onerror = function (event) {
+                    console.log("idb error", event);
+                };
+                resolve(api);
+            };
+        })
     }
 })()

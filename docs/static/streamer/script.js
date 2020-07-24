@@ -92,7 +92,7 @@ function onYouTubeIframeAPIReady() {
         paintColor: paintColors[0],
     };
     let editorConfigs;
-    const db = openDb();
+    const db = await openDbAsync();
     try {
         tickEvent("streamer.load.start");
         body.classList.add("loading");
@@ -117,6 +117,7 @@ function onYouTubeIframeAPIReady() {
         render();
         handleHashChange();
         tickEvent("streamer.load.ok");
+        cleanVideos();
     }
     catch (e) {
         tickEvent("streamer.load.error");
@@ -127,7 +128,9 @@ function onYouTubeIframeAPIReady() {
         if (!config)
             throw new Error("missing config");
         localStorage["streamer.config"] = JSON.stringify(config);
-        // gc videos
+    }
+    function cleanVideos() {
+        const config = readConfig();
         const blobs = Object.keys(config)
             .filter(k => /Video$/.test(k))
             .map(k => config[k])
@@ -2414,23 +2417,12 @@ background-image: url(${config.backgroundImage});
         return url;
     }
     // this database stores video blobs
-    function openDb() {
+    function openDbAsync() {
         const DB_VERSION = 1;
         const DB_NAME = "ASSETS";
         const STORE_BLOBS = "BLOBS";
         const request = indexedDB.open(DB_NAME, DB_VERSION);
         let db;
-        // create or upgrade database
-        request.onsuccess = function (event) {
-            db = request.result;
-            db.onerror = function (event) {
-                console.log("idb error", event);
-            };
-        };
-        request.onupgradeneeded = function (event) {
-            db = request.result;
-            db.createObjectStore(STORE_BLOBS);
-        };
         const api = {
             put: (id, file) => {
                 const transaction = db.transaction([STORE_BLOBS], "readwrite");
@@ -2462,10 +2454,29 @@ background-image: url(${config.backgroundImage});
                 request.onsuccess = (event) => {
                     const keys = event.target.result;
                     const dead = keys.filter(k => urls.indexOf(k) < 0);
+                    if (dead.length)
+                        console.log(`dead videos`, dead);
                     dead.forEach(api.del);
                 };
             }
         };
-        return api;
+        return new Promise((resolve, reject) => {
+            // create or upgrade database
+            request.onsuccess = function (event) {
+                db = request.result;
+                db.onerror = function (event) {
+                    console.log("idb error", event);
+                };
+                resolve(api);
+            };
+            request.onupgradeneeded = function (event) {
+                db = request.result;
+                db.createObjectStore(STORE_BLOBS);
+                db.onerror = function (event) {
+                    console.log("idb error", event);
+                };
+                resolve(api);
+            };
+        });
     }
 })();
