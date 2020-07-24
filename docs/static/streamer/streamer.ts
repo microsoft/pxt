@@ -201,6 +201,7 @@ function onYouTubeIframeAPIReady() {
 
         initMessages();
         initResize();
+        initFocus();
         initVideos();
         initSubtitles();
         initAccessibility();
@@ -1269,6 +1270,22 @@ background-image: url(${config.backgroundImage});
         }
     }
 
+    async function repairCams() {
+        if (state.faceCamError)
+            await loadFaceCam();
+        if (state.hardwareCamError && state.hardware)
+            await loadHardwareCam();
+    }
+
+    function initFocus() {
+        document.addEventListener("visibilitychange", function () {
+            if (document.visibilityState === 'visible') {
+                console.log(`visible`)
+                repairCams()
+            }
+        }, false);
+    }
+
     function initResize() {
         const resolutions = [{
             w: 1920,
@@ -1982,6 +1999,7 @@ background-image: url(${config.backgroundImage});
             }
         })
         const facecamerror = document.getElementById("facecamerror") as HTMLDivElement
+        facecamerror.onclick = () => repairCams();
         if (state.faceCamError)
             facecamerror.classList.remove("hidden")
         else
@@ -2139,6 +2157,7 @@ background-image: url(${config.backgroundImage});
             }
         })
         const hardwarecamerror = document.getElementById("hardwarecamerror") as HTMLDivElement
+        hardwarecamerror.onclick = () => repairCams();
         if (config.hardwareCamId && state.hardwareCamError)
             hardwarecamerror.classList.remove("hidden")
         else
