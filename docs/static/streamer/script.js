@@ -2451,26 +2451,43 @@ background-image: url(${config.backgroundImage});
         let db;
         const api = {
             put: (id, file) => {
-                const transaction = db.transaction([STORE_BLOBS], "readwrite");
-                const blobs = transaction.objectStore(STORE_BLOBS);
-                blobs.put(file, id);
+                try {
+                    const transaction = db.transaction([STORE_BLOBS], "readwrite");
+                    const blobs = transaction.objectStore(STORE_BLOBS);
+                    blobs.put(file, id);
+                }
+                catch (e) {
+                    console.error(`idb: put ${id} failed`);
+                }
             },
             get: (id) => {
                 return new Promise((resolve, reject) => {
-                    const transaction = db.transaction([STORE_BLOBS], "readonly");
-                    const blobs = transaction.objectStore(STORE_BLOBS);
-                    const request = blobs.get(id);
-                    request.onsuccess = (event) => resolve(event.target.result);
-                    request.onerror = (event) => resolve(event.target.result);
+                    try {
+                        const transaction = db.transaction([STORE_BLOBS], "readonly");
+                        const blobs = transaction.objectStore(STORE_BLOBS);
+                        const request = blobs.get(id);
+                        request.onsuccess = (event) => resolve(event.target.result);
+                        request.onerror = (event) => resolve(event.target.result);
+                    }
+                    catch (e) {
+                        console.error(`idb: get ${id} failed`);
+                        reject(e);
+                    }
                 });
             },
             del: (id) => {
                 return new Promise((resolve, reject) => {
-                    const transaction = db.transaction([STORE_BLOBS], "readwrite");
-                    const blobs = transaction.objectStore(STORE_BLOBS);
-                    const request = blobs.delete(id);
-                    request.onsuccess = (event) => resolve(event.target.result);
-                    request.onerror = (event) => resolve(event.target.result);
+                    try {
+                        const transaction = db.transaction([STORE_BLOBS], "readwrite");
+                        const blobs = transaction.objectStore(STORE_BLOBS);
+                        const request = blobs.delete(id);
+                        request.onsuccess = (event) => resolve(event.target.result);
+                        request.onerror = (event) => resolve(event.target.result);
+                    }
+                    catch (e) {
+                        console.error(`idb: del ${id}`);
+                        reject(e);
+                    }
                 });
             },
             gc: (urls) => {
