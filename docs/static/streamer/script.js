@@ -277,6 +277,10 @@ function onYouTubeIframeAPIReady() {
         //if (config.twitch)
         //    addButton(toolbox, "OfficeChat", "Chat  (Alt+Shift+8)", toggleChat, state.chat)
         //}
+        if (document.fullscreenEnabled) {
+            addSep(toolbox);
+            addButton(toolbox, "FullView", "Toggle full screen", toggleFullscreen);
+        }
         if (config.extraSites && config.extraSites.length) {
             addSep(toolbox);
             config.extraSites.forEach(addSiteButton);
@@ -354,6 +358,14 @@ function onYouTubeIframeAPIReady() {
                     setPaintTool("pen");
                 pushPaintEvent("whiteboard");
             });
+        }
+    }
+    async function toggleFullscreen() {
+        if (document.fullscreen) {
+            await document.exitFullscreen();
+        }
+        else {
+            await document.firstElementChild.requestFullscreen();
         }
     }
     function setSite(url) {
