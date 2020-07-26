@@ -298,7 +298,7 @@ ${code}
         let text = pre.textContent;
 
         // collapse image python/js literales
-        text = text.replace(/img\s*\(\s*"{3}(.|\n)*"{3}\s*\)/g, `""" """`);
+        text = text.replace(/img\s*\(\s*"{3}(.|\n)*"{3}\s*\)/g, `img(""" """)`);
         text = text.replace(/img\s*\s*`(.|\n)*`\s*/g, "img` `");
 
         if (!/@highlight/.test(text)) { // shortcut, nothing to do
