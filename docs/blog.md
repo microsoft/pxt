@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode Arcade Update](/blog/arcade/update-july-2020)
+
+July 17th, 2020 by [Jaqster](https://github.com/jaqster)
+
+Hard to believe it was only January when we released MakeCode Arcade for General Availability. So much has happened since then...
+
+**[Continue reading this blog post](/blog/arcade/update-july-2020)**
+
 ## [MakeCode for the micro:bit – 2020 Release](/blog/microbit/2020-release)
 
 June 12th, 2020 by [Jaqster](https://github.com/jaqster)
