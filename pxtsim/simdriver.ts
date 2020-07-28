@@ -544,8 +544,10 @@ namespace pxsim {
             msg.frameCounter = ++this.frameCounter;
             msg.options = {
                 theme: this.themes[this.nextFrameId++ % this.themes.length],
-                player: mc
+                player: mc,
+                clientOrServer: /(server|client)=1/.exec(window.location.href)?.[1]
             };
+
             msg.id = `${msg.options.theme}-${this.nextId()}`;
             frame.dataset['runid'] = this.runId;
             frame.dataset['runtimeid'] = msg.id;
