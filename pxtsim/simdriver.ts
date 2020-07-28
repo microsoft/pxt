@@ -260,7 +260,8 @@ namespace pxsim {
                 // don't start extra frames
                 const parentWindow = window.parent && window.parent !== window.window
                     ? window.parent : window.opener;
-                if (this.options.nestedEditorSim && parentWindow) {
+                if (parentWindow) //Hack: always pipe it through - this.options.nestedEditorSim &&
+                {
                     // if message comes from parent already, don't echo
                     if (source !== parentWindow)
                         parentWindow.postMessage(msg, "*");
