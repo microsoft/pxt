@@ -72,4 +72,6 @@ function averageScore( ) {
 
 ## See also #seealso
  
-[call](/types/function/call)
+[call](/types/function/call),
+[return](/types/function/define)
+
