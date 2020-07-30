@@ -200,10 +200,6 @@ namespace pxtblockly {
             }
         }
 
-        getTilemapID() {
-            return this.tilemapId;
-        }
-
         getTileset() {
             return this.state.tileset;
         }
