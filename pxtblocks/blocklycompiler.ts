@@ -1256,6 +1256,10 @@ namespace pxt.blocks {
                 const project = pxt.react.getTilemapProject();
                 const tmString = field.getValue();
 
+                if (tmString.startsWith("tilemap`")) {
+                    return mkText(tmString);
+                }
+
                 if (e.options.emitTilemapLiterals) {
                     try {
                         const data = pxt.sprite.decodeTilemap(tmString, "typescript", project);
