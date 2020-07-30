@@ -598,7 +598,7 @@ namespace pxt.sprite {
         return result;
     }
 
-    export function bitmapToImageLiteral(bitmap: Bitmap, fileType: "typescript" | "python"): string {
+    function imageLiteralPrologue(fileType: "typescript" | "python"): string {
         let res = '';
         switch (fileType) {
             case "python":
@@ -608,6 +608,40 @@ namespace pxt.sprite {
                 res = "img`";
                 break;
         }
+        return res;
+    }
+
+    function imageLiteralEpilogue(fileType: "typescript" | "python"): string {
+        let res = '';
+        switch (fileType) {
+            case "python":
+                res += "\"\"\")";
+                break;
+            default:
+                res += "`";
+                break;
+        }
+        return res;
+    }
+
+    export function imageLiteralFromDimensions(width: number, height: number, color: number, fileType: "typescript" | "python"): string {
+        let res = imageLiteralPrologue(fileType);
+
+        for (let r = 0; r < height; r++) {
+            res += "\n"
+            for (let c = 0; c < width; c++) {
+                res += hexChars[color] + " ";
+            }
+        }
+
+        res += "\n";
+        res += imageLiteralEpilogue(fileType);
+
+        return res;
+    }
+
+    export function bitmapToImageLiteral(bitmap: Bitmap, fileType: "typescript" | "python"): string {
+        let res = imageLiteralPrologue(fileType);
 
         if (bitmap) {
             for (let r = 0; r < bitmap.height; r++) {
@@ -619,15 +653,7 @@ namespace pxt.sprite {
         }
 
         res += "\n";
-
-        switch (fileType) {
-            case "python":
-                res += "\"\"\")";
-                break;
-            default:
-                res += "`";
-                break;
-        }
+        res += imageLiteralEpilogue(fileType);
 
         return res;
     }

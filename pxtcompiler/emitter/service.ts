@@ -1032,6 +1032,11 @@ namespace ts.pxtc.service {
 
             const isMemberCompletion = dotIdx !== -1
 
+            const partialWord = isMemberCompletion ? src.slice(dotIdx + 1, wordEndPos) : src.slice(wordStartPos, wordEndPos)
+
+            const MAX_SYMBOLS_BEFORE_FILTER = 50
+            const MAX_SYMBOLS = 100
+
             if (isMemberCompletion)
                 complPosition = dotIdx
 
@@ -1080,13 +1085,20 @@ namespace ts.pxtc.service {
                 // convert our location from python to typescript
                 if (res.sourceMap) {
                     const pySrc = src
-                    const tsSrc = res.outfiles[tsFilename]
+                    const tsSrc = res.outfiles[tsFilename] || ""
                     const srcMap = pxtc.BuildSourceMapHelpers(res.sourceMap, tsSrc, pySrc)
 
                     const smallest = srcMap.py.smallestOverlap(span)
                     if (smallest) {
                         tsPos = smallest.ts.startPos
                     }
+                }
+
+                // filter based on word match if we get too many (ideally we'd leave this filtering for monaco as it's
+                // better at fuzzy matching and fluidly changing but for performance reasons we want to do it here)
+                if (!isMemberCompletion && resultSymbols.length > MAX_SYMBOLS_BEFORE_FILTER) {
+                    resultSymbols = resultSymbols
+                        .filter(s => (isPython ? s.symbol.pyQName : s.symbol.qName).indexOf(partialWord) >= 0)
                 }
             } else {
                 tsPos = position
@@ -1141,9 +1153,12 @@ namespace ts.pxtc.service {
                 }
             }
 
+            const allSymbols = pxt.U.values(lastApiInfo.apis.byQName)
+
             if (resultSymbols.length === 0) {
-                // if by this point we don't yet have a specialized set of results (like those for member completion or a specific type for a call expression), use all global api symbols as the start (Monaco will filter and sort these based on the prefix user input)
-                resultSymbols = completionSymbols(pxt.U.values(lastApiInfo.apis.byQName), COMPLETION_DEFAULT_WEIGHT)
+                // if by this point we don't yet have a specialized set of results (like those for member completion), use all global api symbols as the start and filter by matching prefix if possible
+                let wordMatching = allSymbols.filter(s => (isPython ? s.pyQName : s.qName).indexOf(partialWord) >= 0)
+                resultSymbols = completionSymbols(wordMatching, COMPLETION_DEFAULT_WEIGHT)
             }
 
             // special handling for call expressions
@@ -1171,6 +1186,7 @@ namespace ts.pxtc.service {
                 }
             }
 
+            // gather local variables that won't have pxt symbol info
             if (!isPython && !didFindMemberCompletions) {
                 // TODO: share this with the "syntaxinfo" service
 
@@ -1217,6 +1233,7 @@ namespace ts.pxtc.service {
                     keywords = [...ts.pxtc.reservedWords, ...ts.pxtc.keywordTypes]
                 }
                 let keywordSymbols = keywords
+                    .filter(k => k.indexOf(partialWord) >= 0)
                     .map(makePxtSymbolFromKeyword)
                     .map(s => completionSymbol(s, COMPLETION_KEYWORD_WEIGHT))
                 resultSymbols = [...resultSymbols, ...keywordSymbols]
@@ -1270,21 +1287,27 @@ namespace ts.pxtc.service {
                 }
             }
 
-            // swap aliases, filter symbols and add snippets
+            // swap aliases, filter symbols
             resultSymbols
                 .map(sym => sym.symbol.attributes.alias ? completionSymbol(lastApiInfo.apis.byQName[sym.symbol.attributes.alias], sym.weight) : sym)
                 .filter(shouldUseSymbol)
                 .forEach(sym => {
                     entries[sym.symbol.qName] = sym
-                    patchSymbolWithSnippet(sym.symbol)
                 })
-
             resultSymbols = pxt.Util.values(entries)
                 .filter(a => !!a && !!a.symbol)
 
+            // sort entries
             resultSymbols.sort(compareCompletionSymbols);
 
-            // sort entries
+            // limit the number of entries
+            if (resultSymbols.length > MAX_SYMBOLS) {
+                resultSymbols = resultSymbols.splice(0, MAX_SYMBOLS)
+            }
+
+            // add in snippets if not present already
+            resultSymbols.forEach(sym => patchSymbolWithSnippet(sym.symbol))
+
             r.entries = resultSymbols.map(sym => sym.symbol);
 
             return r;
@@ -1857,6 +1880,7 @@ namespace ts.pxtc.service {
         // TODO: a lot of this is duplicate logic with blocklyloader.ts:buildBlockFromDef; we should
         //  unify these approaches
         const PY_INDENT: string = (pxt as any).py.INDENT;
+        const fileType = python ? "python" : "typescript";
 
         let preStmt: SnippetNode[] = [];
 
@@ -1970,6 +1994,82 @@ namespace ts.pxtc.service {
                 return false
             }
 
+            function snippetFromSpriteEditorParams(opts: pxt.Map<string>): SnippetNode | null {
+                // TODO: Generalize this to share implementation with FieldSpriteEditor in field_sprite.ts
+                const parsed = {
+                    initColor: 0,
+                    initWidth: 16,
+                    initHeight: 16,
+                };
+
+                if (opts?.sizes) {
+                    const pairs = opts.sizes.split(";");
+                    const sizes: [number, number][] = [];
+                    for (let i = 0; i < pairs.length; i++) {
+                        const pair = pairs[i].split(",");
+                        if (pair.length !== 2) {
+                            continue;
+                        }
+
+                        let width = parseInt(pair[0]);
+                        let height = parseInt(pair[1]);
+
+                        if (isNaN(width) || isNaN(height)) {
+                            continue;
+                        }
+
+                        const screenSize = runtimeOps?.screenSize;
+                        if (width < 0 && screenSize)
+                            width = screenSize.width;
+                        if (height < 0 && screenSize)
+                            height = screenSize.height;
+
+                        sizes.push([width, height]);
+                    }
+                    if (sizes.length > 0) {
+                        parsed.initWidth = sizes[0][0];
+                        parsed.initHeight = sizes[0][1];
+                    }
+                }
+
+                parsed.initColor = withDefault(opts?.initColor, parsed.initColor);
+                parsed.initWidth = withDefault(opts?.initWidth, parsed.initWidth);
+                parsed.initHeight = withDefault(opts?.initHeight, parsed.initHeight);
+
+                return pxt.sprite.imageLiteralFromDimensions(parsed.initWidth, parsed.initHeight, parsed.initColor, fileType);
+
+                function withDefault(raw: string, def: number) {
+                    const res = parseInt(raw);
+                    if (isNaN(res)) {
+                        return def;
+                    }
+                    return res;
+                }
+            }
+
+            function getDefaultValueFromFieldEditor(paramName: string): SnippetNode | null {
+                const compileInfo = pxt.blocks.compileInfo(fn)
+                const blockParam = compileInfo.parameters?.find((p) => p.actualName === name)
+                if (!blockParam?.shadowBlockId)
+                    return null
+                let sym = blocksById[blockParam.shadowBlockId]
+                if (!sym)
+                    return null
+                const fieldEditor = sym.attributes?.paramFieldEditor
+                if (!fieldEditor)
+                    return null
+                const fieldEditorName = fieldEditor[paramName]
+                if (!fieldEditorName)
+                    return null
+                const fieldEditorOptions = sym.attributes.paramFieldEditorOptions || {}
+                switch (fieldEditorName) {
+                    // TODO: Generalize this to share editor mapping with blocklycustomeditor.ts
+                    case "sprite": return snippetFromSpriteEditorParams(fieldEditorOptions[paramName])
+                    // TODO: Handle other field editor types
+                }
+                return null;
+            }
+
             function getShadowSymbol(paramName: string): SymbolInfo | null {
                 // TODO: generalize and unify this with getCompletions code
                 let shadowBlock = (attrs._shadowOverrides || {})[paramName]
@@ -1993,6 +2093,11 @@ namespace ts.pxtc.service {
                     sym = realSym || sym
                 }
                 return sym
+            }
+
+            let shadowDefFromFieldEditor = getDefaultValueFromFieldEditor(name)
+            if (shadowDefFromFieldEditor) {
+                return shadowDefFromFieldEditor
             }
 
             // check if there's a shadow override defined

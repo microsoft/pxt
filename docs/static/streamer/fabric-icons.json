@@ -15,12 +15,12 @@
       "unicode": "EF84"
     },
     {
-      "name": "MyMoviesTV",
-      "unicode": "EE6C"
-    },
-    {
       "name": "SingleBookmark",
       "unicode": "EDFF"
+    },
+    {
+      "name": "MyMoviesTV",
+      "unicode": "EE6C"
     },
     {
       "name": "ArrowUpRightMirrored8",
@@ -31,20 +31,24 @@
       "unicode": "E943"
     },
     {
-      "name": "Robot",
-      "unicode": "E99A"
+      "name": "Timer",
+      "unicode": "E91E"
     },
     {
-      "name": "OpenFile",
-      "unicode": "E8E5"
+      "name": "Robot",
+      "unicode": "E99A"
     },
     {
       "name": "ChromeClose",
       "unicode": "E8BB"
     },
     {
-      "name": "Timer",
-      "unicode": "E91E"
+      "name": "OpenPane",
+      "unicode": "E8A0"
+    },
+    {
+      "name": "OpenFile",
+      "unicode": "E8E5"
     },
     {
       "name": "BrowserScreenShot",
@@ -63,10 +67,6 @@
       "unicode": "F3C9"
     },
     {
-      "name": "WhiteBoardApp32",
-      "unicode": "F674"
-    },
-    {
       "name": "CircleShapeSolid",
       "unicode": "F63C"
     },
@@ -75,16 +75,20 @@
       "unicode": "F522"
     },
     {
-      "name": "RectangleShape",
-      "unicode": "F1A9"
-    },
-    {
       "name": "DoubleColumn",
       "unicode": "F1D4"
     },
     {
+      "name": "FullView",
+      "unicode": "F1A2"
+    },
+    {
       "name": "CircleShape",
       "unicode": "F1A5"
+    },
+    {
+      "name": "RectangleShape",
+      "unicode": "F1A9"
     },
     {
       "name": "ImagePixel",
@@ -93,6 +97,14 @@
     {
       "name": "ArrowTallUpLeft",
       "unicode": "F2BD"
+    },
+    {
+      "name": "Highlight",
+      "unicode": "E7E6"
+    },
+    {
+      "name": "Contact",
+      "unicode": "E77B"
     },
     {
       "name": "ChevronDown",
@@ -115,32 +127,24 @@
       "unicode": "E714"
     },
     {
-      "name": "Highlight",
-      "unicode": "E7E6"
-    },
-    {
-      "name": "OpenPane",
-      "unicode": "E8A0"
+      "name": "Stop",
+      "unicode": "E71A"
     },
     {
       "name": "Remove",
       "unicode": "E738"
     },
     {
-      "name": "Stop",
-      "unicode": "E71A"
+      "name": "EraseTool",
+      "unicode": "E75C"
     },
     {
       "name": "Save",
       "unicode": "E74E"
     },
     {
-      "name": "Contact",
-      "unicode": "E77B"
-    },
-    {
-      "name": "EraseTool",
-      "unicode": "E75C"
+      "name": "WhiteBoardApp32",
+      "unicode": "F674"
     },
     {
       "name": "OfficeChat",

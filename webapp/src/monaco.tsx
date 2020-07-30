@@ -68,7 +68,6 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
         const wordStartOffset = model.getOffsetAt({ lineNumber: position.lineNumber, column: word.startColumn })
         const wordEndOffset = model.getOffsetAt({ lineNumber: position.lineNumber, column: word.endColumn })
 
-
         return compiler.completionsAsync(fileName, offset, wordStartOffset, wordEndOffset, source)
             .then(completions => {
                 function stripLocalNamespace(qName: string): string {

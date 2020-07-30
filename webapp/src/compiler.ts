@@ -657,7 +657,7 @@ export function applyUpgradesAsync(): Promise<UpgradeResult> {
     const pkgVersion = pxt.semver.parse(epkg.header.targetVersion || "0.0.0");
     const trgVersion = pxt.semver.parse(pxt.appTarget.versions.target);
 
-    if (pkgVersion.major === trgVersion.major && pkgVersion.minor === trgVersion.minor) {
+    if (pxt.semver.cmp(pkgVersion, trgVersion) === 0) {
         pxt.debug("Skipping project upgrade")
         return Promise.resolve({
             success: true
@@ -718,11 +718,24 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
 
             const xml = Blockly.Xml.textToDom(text);
             pxt.blocks.domToWorkspaceNoEvents(xml, ws);
-            patchedFiles["main.blocks"] = text;
+            pxtblockly.upgradeTilemapsInWorkspace(ws, pxt.react.getTilemapProject());
+            const upgradedXml = Blockly.Xml.workspaceToDom(ws);
+            patchedFiles["main.blocks"] = Blockly.Xml.domToText(upgradedXml);
+
             return pxt.blocks.compileAsync(ws, info)
         })
         .then(res => {
             patchedFiles["main.ts"] = res.source;
+            return project.buildTilemapsAsync();
+        })
+        .then(() => {
+            const compiledFiles = project.getAllFiles();
+            const otherFiles = Object.keys(compiledFiles).filter(el => !/^main\.(blocks|ts|py)$/.test(el));
+
+            for (const fname of otherFiles) {
+                patchedFiles[fname] = compiledFiles[fname];
+            }
+
             return checkPatchAsync(patchedFiles);
         })
         .then(() => {
@@ -775,10 +788,11 @@ interface UpgradeError extends Error {
 
 function checkPatchAsync(patchedFiles?: pxt.Map<string>) {
     const mainPkg = pkg.mainPkg;
-    return mainPkg.getCompileOptionsAsync()
+    return pkg.mainEditorPkg().buildTilemapsAsync()
+        .then(() => mainPkg.getCompileOptionsAsync())
         .then(opts => {
             if (patchedFiles) {
-                Object.keys(opts.fileSystem).forEach(fileName => {
+                Object.keys(patchedFiles).forEach(fileName => {
                     if (patchedFiles[fileName]) {
                         opts.fileSystem[fileName] = patchedFiles[fileName];
                     }

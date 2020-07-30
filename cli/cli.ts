@@ -1039,7 +1039,8 @@ function uploadCoreAsync(opts: UploadOptions) {
         "sim.manifest",
         "sim.webmanifest",
         "workerConfig.js",
-        "multi.html"
+        "multi.html",
+        "asseteditor.html"
     ]
 
     nodeutil.mkdirP("built/uploadrepl")
@@ -3499,6 +3500,7 @@ function testForBuildTargetAsync(useNative: boolean, cachedSHA: string): Promise
 
     return mainPkg.loadAsync()
         .then(() => {
+            mainPkg.ignoreTests = true
             copyCommonFiles();
             setBuildEngine();
             let target = mainPkg.getTargetOptions()
@@ -4815,7 +4817,8 @@ function internalGenDocsAsync(docs: boolean, locs: boolean, fileFilter?: string,
         docs,
         locs,
         fileFilter,
-        createOnly
+        createOnly,
+        ignoreTests: true
     }).then((compileOpts) => { });
 
     // from target location?

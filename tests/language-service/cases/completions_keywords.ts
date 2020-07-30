@@ -1,6 +1,6 @@
 whi // while
 
-; i // if
+; if // if
 
 ; func // function
 

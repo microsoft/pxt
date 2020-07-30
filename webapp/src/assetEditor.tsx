@@ -27,8 +27,12 @@ export class AssetEditor extends React.Component {
     private editor: FieldEditorComponent<any>;
 
     handleMessage = (msg: Message)  => {
-        if (msg.data._fromVscode && msg.data.type === "update") {
-            this.editor.loadJres(msg.data.message);
+        if (msg.data._fromVscode) {
+            if (msg.data.type === "initialize") {
+                this.editor.loadJres(msg.data.message);
+            } else if (msg.data.type === "update") {
+                this.sendJres();
+            }
         }
     }
 
@@ -49,8 +53,20 @@ export class AssetEditor extends React.Component {
         window.removeEventListener("message", this.handleMessage, null);
     }
 
+    callbackOnDoneClick = () => {
+        this.sendJres();
+    }
+
+    sendJres() {
+        const updateMsg: MessageData = {
+            type: "update",
+            message: this.editor.getJres(),
+        }
+        this.postMessage(updateMsg);
+    }
+
     render() {
-        return <ImageFieldEditor ref={this.refHandler} singleFrame={true} />
+        return <ImageFieldEditor ref={this.refHandler} singleFrame={true} doneButtonCallback={this.callbackOnDoneClick} />
     }
 }
 

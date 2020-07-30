@@ -373,13 +373,15 @@ export class ProjectView
         if (!this.editorFile)
             return Promise.resolve()
         return this.saveTypeScriptAsync()
-            .then(() => {
-                let txt = this.editor.getCurrentSource()
-                if (txt != this.editorFile.content)
-                    simulator.setDirty();
-                if (this.editor.isIncomplete()) return Promise.resolve();
-                return this.editorFile.setContentAsync(txt);
-            });
+            .then(() => this.setFileContentAsync());
+    }
+
+    setFileContentAsync(): Promise<void> {
+        let txt = this.editor.getCurrentSource()
+        if (txt != this.editorFile.content)
+            simulator.setDirty();
+        if (this.editor.isIncomplete()) return Promise.resolve();
+        return this.editorFile.setContentAsync(txt);
     }
 
     isEmbedSimActive(): boolean {
@@ -805,8 +807,6 @@ export class ProjectView
             orphanException: brk => {
                 // TODO: start debugging session
                 // TODO: user friendly error message
-                //core.warningNotification(lf("Program Error: {0}", brk.exceptionMessage));
-                //this.currentEditor.onExceptionDetected(brk)
                 this.editor?.onExceptionDetected(brk)
             },
             highlightStatement: (stmt, brk) => {
@@ -2266,7 +2266,7 @@ export class ProjectView
 
         // Python uses the virtual file and not the current editor content, so sync content
         if (fromLanguage == "py") {
-            promise = promise.then(() => this.editorFile.setContentAsync(this.editor.getCurrentSource()));
+            promise = promise.then(() => this.setFileContentAsync());
         }
 
         promise = promise
