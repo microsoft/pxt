@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function init() {
     const assetDiv = document.getElementById("asset-editor-field-div") as HTMLDivElement;
     ReactDOM.render(<AssetEditor />, assetDiv);
+    relabelDoneButtonToSave();
 }
 export interface Message {
     data: MessageData;
@@ -68,5 +69,10 @@ export class AssetEditor extends React.Component {
     render() {
         return <ImageFieldEditor ref={this.refHandler} singleFrame={true} doneButtonCallback={this.callbackOnDoneClick} />
     }
+}
+
+function relabelDoneButtonToSave() {
+    let button = document.getElementsByClassName('image-editor-confirm')[0] as HTMLDivElement;
+    button.innerText = "Save";
 }
 
