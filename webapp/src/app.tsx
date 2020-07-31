@@ -3174,14 +3174,14 @@ export class ProjectView
                     return (ghid.tag ? Promise.resolve(ghid.tag) : pxt.github.latestVersionAsync(ghid.fullName, config, true))
                         .then(tag => {
                             if (!tag) {
-                                // pxt.log(`tutorial github tag not found at ${ghid.fullName}`);
-                                // return undefined;
                                 /**
                                  * DIFF: in /beta and above, this path returns undefined,
                                  * but I'm just returning based off main branch to minimize
                                  * the chance of breaking existing tutorials with the patch /
                                  * give time to check existing tutorials for release.
                                  */
+                                pxt.log(`tutorial github tag not found at ${ghid.fullName}`);
+                                // return undefined;
                                 return pxt.github.downloadPackageAsync(ghid.fullName, config);
                             }
                             ghid.tag = tag;
