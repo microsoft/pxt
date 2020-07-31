@@ -640,7 +640,10 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         })
         if (options.createRelease) {
             await pxt.github.createReleaseAsync(parsed.fullName, options.createRelease, newCommit)
-            await pxt.github.enablePagesAsync(parsed.fullName); // ensure pages are on
+             // ensure pages are on
+            await pxt.github.enablePagesAsync(parsed.fullName);
+            // clear the cloud cache
+            await pxt.github.listRefsAsync(parsed.fullName, "tags", true);
         }
         return ""
     }

@@ -267,7 +267,7 @@ namespace pxt.github {
     export interface CreateCommitReq {
         message: string;
         parents: string[]; // shas
-        tree: string; // sha		
+        tree: string; // sha
     }
 
     function ghPostAsync(path: string, data: any, headers?: any, method?: string) {
@@ -431,17 +431,18 @@ namespace pxt.github {
         return repoInfo.fullName + "#" + branchName
     }
 
-    export function listRefsAsync(repopath: string, namespace = "tags"): Promise<string[]> {
-        return listRefsExtAsync(repopath, namespace)
+    export function listRefsAsync(repopath: string, namespace = "tags", noCache?: boolean): Promise<string[]> {
+        return listRefsExtAsync(repopath, namespace, noCache)
             .then(res => Object.keys(res.refs))
     }
 
-    export function listRefsExtAsync(repopath: string, namespace = "tags"): Promise<RefsResult> {
+    export function listRefsExtAsync(repopath: string, namespace = "tags", noCache?: boolean): Promise<RefsResult> {
         let head: string = null
+
         const fetch = !useProxy() ?
-            ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/" + namespace + "/?per_page=100") :
+            ghGetJsonAsync(`https://api.github.com/repos/${repopath}/git/refs/${namespace}/?per_page=100"`) :
             // no CDN caching here
-            U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${repopath}/refs`)
+            U.httpGetJsonAsync(pxt.BrowserUtils.cacheBustingUrl(`${pxt.Cloud.apiRoot}gh/${repopath}/refs${noCache ? "?nocache=1" : ""}`))
                 .then(r => {
                     let res = Object.keys(r.refs)
                         .filter(k => U.startsWith(k, "refs/" + namespace + "/"))
@@ -827,7 +828,7 @@ namespace pxt.github {
         return stringifyRepo(gid);
     }
 
-    export function latestVersionAsync(path: string, config: PackagesConfig): Promise<string> {
+    export function latestVersionAsync(path: string, config: PackagesConfig, noCache?: boolean): Promise<string> {
         let parsed = parseRepoId(path)
 
         if (!parsed) return Promise.resolve<string>(null);
@@ -835,7 +836,7 @@ namespace pxt.github {
         return repoAsync(parsed.fullName, config)
             .then(scr => {
                 if (!scr) return undefined;
-                return listRefsExtAsync(scr.fullName, "tags")
+                return listRefsExtAsync(scr.fullName, "tags", noCache)
                     .then(refsRes => {
                         let tags = Object.keys(refsRes.refs)
                         // only look for semver tags
@@ -885,7 +886,7 @@ namespace pxt.github {
 
     /**
      * Executes a GraphQL query against GitHub v4 api
-     * @param query 
+     * @param query
      */
     export function ghGraphQLQueryAsync(query: string): Promise<any> {
         const payload = JSON.stringify({
@@ -902,8 +903,8 @@ namespace pxt.github {
 
     /**
      * Finds the first PR associated with a branch
-     * @param reponame 
-     * @param headName 
+     * @param reponame
+     * @param headName
      */
     export function findPRNumberforBranchAsync(reponame: string, headName: string): Promise<PullRequest> {
         const repoId = parseRepoId(reponame);
