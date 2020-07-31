@@ -607,15 +607,21 @@ namespace pxt.github {
         // status failed, try enabling pages
         if (!url) {
             // enable pages
-            const r = await ghPostAsync(`https://api.github.com/repos/${repo}/pages`, {
-                source: {
-                    branch: "master",
-                    path: ""
-                }
-            }, {
-                "Accept": "application/vnd.github.switcheroo-preview+json"
-            });
-            url = r.html_url;
+            try {
+                const r = await ghPostAsync(`https://api.github.com/repos/${repo}/pages`, {
+                    source: {
+                        branch: "master",
+                        path: "/"
+                    }
+                }, {
+                    "Accept": "application/vnd.github.switcheroo-preview+json"
+                });
+                url = r.html_url;
+            }
+            catch (e) {// this is still an experimental api subject to changes
+                pxt.tickEvent("github.pages.error");
+                pxt.reportException(e);
+            }
         }
 
         // we have a URL, update project
