@@ -173,7 +173,7 @@ namespace pxt {
         public getTilemap(id: string) {
             for (const tm of this.state.projectTilemaps) {
                 if (tm.id === id) {
-                    return tm.data;
+                    return tm.data.cloneData();
                 }
             }
             return null;
@@ -187,7 +187,7 @@ namespace pxt {
             for (const tm of this.state.projectTilemaps) {
                 if (tm.id === id) {
                     this.onChange();
-                    tm.data = data;
+                    tm.data = data.cloneData();
                 }
             }
         }
@@ -260,7 +260,7 @@ namespace pxt {
                     ...this.state.projectTileSet,
                     tileSets: this.state.projectTileSet.tileSets.map(t => ({ ...t, tiles: t.tiles.map(cloneTile) }))
                 },
-                projectTilemaps: this.state.projectTilemaps.slice(),
+                projectTilemaps: this.state.projectTilemaps.map(tm => ({...tm})),
                 takenNames: {
                     ...this.state.takenNames
                 }

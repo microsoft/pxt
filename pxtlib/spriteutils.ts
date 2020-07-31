@@ -187,6 +187,20 @@ namespace pxt.sprite {
         deletedTiles: string[];
 
         constructor(public tilemap: Tilemap, public tileset: TileSet, public layers: BitmapData) {}
+
+        cloneData() {
+            const tm = this.tilemap.copy();
+            const tileset: TileSet = {
+                tileWidth: this.tileset.tileWidth,
+                tiles: this.tileset.tiles.map(t => ({
+                    ...t,
+                    bitmap: Bitmap.fromData(t.bitmap).copy().data()
+                }))
+            }
+            const layers = Bitmap.fromData(this.layers).copy().data();
+
+            return new TilemapData(tm, tileset, layers);
+        }
     }
 
     export class Bitmask {
