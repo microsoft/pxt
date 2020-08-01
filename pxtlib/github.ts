@@ -990,11 +990,11 @@ namespace pxt.github {
             return null
 
         const m = /^min:(.*)/.exec(upgr)
-        if (m && pxt.semver.parse(m[1])) {
+        const minV = m && pxt.semver.tryParse(m[1]);
+        if (minV) {
             const parsed = parseRepoId(id)
-            const minV = pxt.semver.parse(m[1])
-            const currV = pxt.semver.parse(parsed.tag)
-            if (currV && pxt.semver.cmp(currV, minV) < 0) {
+            const currV = pxt.semver.tryParse(parsed.tag)
+            if (minV && currV && pxt.semver.cmp(currV, minV) < 0) {
                 parsed.tag = m[1]
                 pxt.debug(`upgrading ${id} to ${m[1]}`)
                 return stringifyRepo(parsed)
