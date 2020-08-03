@@ -38,6 +38,7 @@ namespace pxtblockly {
         private undoRedoState: any;
 
         private initText: string;
+        private tilemapId: string;
 
         isGreyBlock: boolean;
 
@@ -150,6 +151,10 @@ namespace pxtblockly {
 
                     pxt.sprite.trimTilemapTileset(result);
 
+                    if (this.tilemapId) {
+                        project.updateTilemap(this.tilemapId, result);
+                    }
+
                     this.redrawPreview();
 
                     this.undoRedoState = fv.getPersistentData();
@@ -181,6 +186,10 @@ namespace pxtblockly {
 
         getValue() {
             if (this.isGreyBlock) return pxt.Util.htmlUnescape(this.value_);
+
+            if (this.tilemapId) {
+                return `tilemap\`${this.tilemapId}\``;
+            }
 
             try {
                 return pxt.sprite.encodeTilemap(this.state, "typescript");
@@ -239,8 +248,11 @@ namespace pxtblockly {
         }
 
         refreshTileset() {
-            if (this.state) {
-                const project = pxt.react.getTilemapProject();
+            const project = pxt.react.getTilemapProject();
+            if (this.tilemapId) {
+                this.state = project.getTilemap(this.tilemapId);
+            }
+            else if (this.state) {
                 for (let i = 0; i < this.state.tileset.tiles.length; i++) {
                     this.state.tileset.tiles[i] = project.resolveTile(this.state.tileset.tiles[i].id);
                 }
@@ -249,6 +261,18 @@ namespace pxtblockly {
 
         private parseBitmap(newText: string) {
             if (!this.blocksInfo) return;
+
+            const match = /^\s*tilemap\s*`([^`]*)`\s*$/.exec(newText);
+
+            if (match) {
+                const tilemapId = match[1].trim();
+                this.state = pxt.react.getTilemapProject().getTilemap(tilemapId);
+
+                if (this.state) {
+                    this.tilemapId = tilemapId;
+                    return;
+                }
+            }
 
             const tilemap = pxt.sprite.decodeTilemap(newText, "typescript", pxt.react.getTilemapProject()) || emptyTilemap(this.params.initWidth, this.params.initHeight);
 
@@ -315,45 +339,12 @@ namespace pxtblockly {
             return res;
         }
     }
-
-    function deleteTile(localIndex: number, tilemap: pxt.sprite.Tilemap) {
-        for (let x = 0; x < tilemap.width; x++) {
-            for (let y = 0; y < tilemap.height; y++) {
-                const value = tilemap.get(x, y);
-                if (value === localIndex) {
-                    tilemap.set(x, y, 0)
-                }
-                else if (value > localIndex) {
-                    tilemap.set(x, y, value - 1);
-                }
-            }
-        }
-    }
-
     function checkTilemap(tilemap: pxt.sprite.TilemapData) {
         if (!tilemap || !tilemap.tilemap || !tilemap.tilemap.width || !tilemap.tilemap.height) return false;
 
         if (!tilemap.layers || tilemap.layers.width !== tilemap.tilemap.width || tilemap.layers.height !== tilemap.tilemap.height) return false;
 
         if (!tilemap.tileset) return false;
-
-        return true;
-    }
-
-    function checkLegacyTilemap(tilemap: pxt.sprite.legacy.LegacyTilemapData, galleryItems: pxt.sprite.GalleryItem[]) {
-        if (!tilemap || !tilemap.tilemap || !tilemap.tilemap.width || !tilemap.tilemap.height) return false;
-
-        if (!tilemap.layers || tilemap.layers.width !== tilemap.tilemap.width || tilemap.layers.height !== tilemap.tilemap.height) return false;
-
-        if (!tilemap.tileset) return false;
-
-        for (const tile of tilemap.tileset.tiles) {
-            if (tile && (tile.projectId >= 0 || (tile.qualifiedName && galleryItems.some(g => g.qName === tile.qualifiedName)))) {
-                continue;
-            }
-
-            return false;
-        }
 
         return true;
     }

@@ -112,7 +112,7 @@ export class Editor implements pxt.editor.IEditor {
      * Serializes code to typescript.
      * @returns undefined if there is nothing to save
      */
-    saveToTypeScriptAsync(): Promise<string> {
+    saveToTypeScriptAsync(willOpenTypeScript = false): Promise<string> {
         return Promise.resolve(undefined);
     }
 

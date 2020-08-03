@@ -123,6 +123,7 @@ export class ProjectView
 
     private runToken: pxt.Util.CancellationToken;
     private updatingEditorFile: boolean;
+    private openingTypeScript: boolean;
     private preserveUndoStack: boolean;
 
     // component ID strings
@@ -910,6 +911,10 @@ export class ProjectView
                     }
                 }
                 this.saveSettings();
+                if (this.openingTypeScript) {
+                    // File saved in saveTypeScriptAsync
+                    return Promise.resolve();
+                }
                 // save file before change
                 return this.saveFileAsync();
             }).then(() => {
@@ -946,6 +951,9 @@ export class ProjectView
             .finally(() => {
                 this.updatingEditorFile = false;
                 this.preserveUndoStack = false;
+                if (this.isJavaScriptActive()) {
+                    this.openingTypeScript = false;
+                }
                 // not all editor views are really "React compliant"
                 // so force an update to ensure a proper first rendering
                 this.forceUpdate();
@@ -2264,12 +2272,13 @@ export class ProjectView
         promise = promise
             .then(() => {
                 if (open) {
+                    this.openingTypeScript = true;
                     const cached = mainPkg.getCachedTranspile(fromLanguage, fromText, "ts");
                     if (cached) {
                         return Promise.resolve(cached);
                     }
 
-                    return this.editor.saveToTypeScriptAsync()
+                    return this.editor.saveToTypeScriptAsync(true)
                         .then(src => {
                             if (src !== undefined) {
                                 mainPkg.cacheTranspile(fromLanguage, fromText, "ts", src);

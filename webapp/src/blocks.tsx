@@ -106,11 +106,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    saveToTypeScriptAsync(): Promise<string> {
+    saveToTypeScriptAsync(willOpenTypeScript = false): Promise<string> {
         if (!this.typeScriptSaveable) return Promise.resolve(undefined);
         this.clearHighlightedStatements();
         try {
-            return pxt.blocks.compileAsync(this.editor, this.blockInfo)
+            return pxt.blocks.compileAsync(this.editor, this.blockInfo, { emitTilemapLiterals: willOpenTypeScript })
                 .then((compilationResult) => {
                     this.compilationResult = compilationResult;
                     pxt.tickActivity("blocks.compile");

@@ -173,7 +173,7 @@ namespace pxt {
         public getTilemap(id: string) {
             for (const tm of this.state.projectTilemaps) {
                 if (tm.id === id) {
-                    return tm.data;
+                    return tm.data.cloneData();
                 }
             }
             return null;
@@ -187,30 +187,13 @@ namespace pxt {
             for (const tm of this.state.projectTilemaps) {
                 if (tm.id === id) {
                     this.onChange();
-                    tm.data = data;
+                    tm.data = data.cloneData();
                 }
             }
         }
 
         public createNewTilemap(name: string, tileWidth: number, width = 16, height = 16): [string, pxt.sprite.TilemapData] {
-            this.onChange()
-            let index = 0;
-            let base = name;
-
-            while (this.state.takenNames[name]) {
-                name = base  + "_" + index;
-                ++index;
-            }
-
-            this.state.takenNames[name] = true;
-
-            const newMap = this.blankTilemap(tileWidth, width, height);
-            this.state.projectTilemaps.push({
-                id: name,
-                data: newMap
-            });
-
-            return [name, newMap];
+            return this.createNewTilemapFromData(this.blankTilemap(tileWidth, width, height), name)
         }
 
         public blankTilemap(tileWidth: number, width = 16, height = 16) {
@@ -247,6 +230,29 @@ namespace pxt {
             return newTileSet.tiles[0];
         }
 
+        public createNewTilemapFromData(data: pxt.sprite.TilemapData, name?: string): [string, pxt.sprite.TilemapData] {
+            this.onChange()
+
+            if (!name) name = lf("level");
+
+            let index = 0;
+            let base = name;
+
+            while (this.state.takenNames[name]) {
+                name = base  + "_" + index;
+                ++index;
+            }
+
+            this.state.takenNames[name] = true;
+
+            this.state.projectTilemaps.push({
+                id: name,
+                data: data
+            });
+
+            return [name, data];
+        }
+
         protected cloneState(): TilemapSnapshot {
             return {
                 ...this.state,
@@ -254,7 +260,7 @@ namespace pxt {
                     ...this.state.projectTileSet,
                     tileSets: this.state.projectTileSet.tileSets.map(t => ({ ...t, tiles: t.tiles.map(cloneTile) }))
                 },
-                projectTilemaps: this.state.projectTilemaps.slice(),
+                projectTilemaps: this.state.projectTilemaps.map(tm => ({...tm})),
                 takenNames: {
                     ...this.state.takenNames
                 }
