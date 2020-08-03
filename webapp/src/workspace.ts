@@ -588,7 +588,7 @@ export async function prAsync(hd: Header, commitId: string, msg: string) {
 }
 
 export function bumpedVersion(cfg: pxt.PackageConfig) {
-    let v = pxt.semver.parse(cfg.version || "0.0.0")
+    let v = pxt.semver.parse(cfg.version, "0.0.0")
     v.patch++
     return pxt.semver.stringify(v)
 }
