@@ -31,7 +31,6 @@ interface NewsList {
 const newslist: NewsList = {
     "title": "New live streams!",
     "items": [
-        
     ]
 };
 
@@ -100,6 +99,15 @@ const lessons: Lesson[] = [
         "days": [Day.Tuesday]
     },
     {
+        "title": "MAKE'ayla with Mikayla Buford",
+        "description": "Join Mikayla Buford as she builds MakeCode project each week!",
+        "url": "https://www.youtube.com/playlist?list=PLMMBk9hE-Seoq3GYYmHH93FE_-yhw1C1P",
+        "img": "/static/online-learning/img/maykala.png",
+        "time": 12,
+        "startDay": 1,
+        "days": [Day.Friday]
+    },
+    {
         "title": "DreamSpace HomeSpace",
         "description": "Join Microsoft Ireland in their HomeSpace tutorial series on your favourite MakeCode platforms: micro:bit, Arcade and Minecraft.",
         "url": "https://aka.ms/dshomespace",
@@ -118,6 +126,7 @@ function makeNewsList() {
         return;
     }
     const newsContainer = document.createElement("div");
+    // tslint:disable-next-line: no-inner-html
     newsContainer.innerHTML = "<h3>" + newslist.title + "</h3>";
     for (const newsItem of newslist.items) {
         const streamlink = document.createElement("a")
