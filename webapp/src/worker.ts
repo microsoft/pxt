@@ -378,7 +378,14 @@ if (typeof Object.assign != 'function') {
     });
 }
 
+let totalSentChars = 0
 onmessage = ev => {
+    console.log(ev.data.op)
+    const sending = JSON.stringify(ev.data.arg)
+    console.log(`sending: ${sending.length}`)
+    totalSentChars += sending.length
+    console.log(`totalSentChars: ${totalSentChars}`)
+    // console.log()
     let res = pxtc.service.performOperation(ev.data.op, ev.data.arg)
     pm({
         op: ev.data.op,

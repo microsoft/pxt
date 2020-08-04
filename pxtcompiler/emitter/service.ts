@@ -716,13 +716,59 @@ namespace ts.pxtc.service {
         }
 
         setOpts(o: CompileOptions) {
-            Util.iterMap(o.fileSystem, (fn, v) => {
-                if (this.opts.fileSystem[fn] != v) {
-                    this.fileVersions[fn] = (this.fileVersions[fn] || 0) + 1
+            Util.iterMap(o.fileSystem, (filename, value) => {
+                // update file versions
+                if (this.opts.fileSystem[filename] != value) {
+                    this.fileVersions[filename] = (this.fileVersions[filename] || 0) + 1
                 }
             })
-            this.opts = o
             this.projectVer++
+
+            // replace the compile options
+            this.opts = o
+        }
+
+        updateOpts(o: CompileOptions) {
+            // TODO(dz): tracking changes
+            let updated: { [key: string]: boolean } = {
+                "fileSystem": true,
+                "jres": true
+            }
+            Util.iterMap(o as any, (key, value) => {
+                if ((this.opts as any)[key] !== value) {
+                    if (key !== "fileSystem" && key != "jres") {
+                        console.log(`updating ${key}: ${value}`)
+                        updated[key] = true
+                    }
+                }
+            })
+            Util.iterMap(this.opts as any, (key, value) => {
+                if (key in updated === false) {
+                    console.log(`not updated ${key}: ${value}`)
+                }
+            })
+            // TODO(dz):
+
+            Util.iterMap(o.fileSystem, (filename, value) => {
+                if (this.opts.fileSystem[filename] != value) {
+                    // update file versions
+                    this.fileVersions[filename] = (this.fileVersions[filename] || 0) + 1
+                }
+            })
+            this.projectVer++
+
+            // update the compile options
+            let oldFileSystem = this.opts.fileSystem
+            let oldJres = this.opts.jres
+            Object.assign(this.opts, o)
+            if (oldFileSystem) {
+                this.opts.fileSystem = oldFileSystem
+                Object.assign(this.opts.fileSystem, o.fileSystem)
+            }
+            if (oldJres) {
+                this.opts.jres = oldJres
+                Object.assign(this.opts.jres, o.jres)
+            }
         }
 
         getCompilationSettings(): CompilerOptions {
@@ -827,6 +873,7 @@ namespace ts.pxtc.service {
     export interface ServiceOps {
         reset: () => void;
         setOptions: (v: OpArg) => void;
+        updateOptions: (v: OpArg) => void;
         syntaxInfo: (v: OpArg) => SyntaxInfo;
         getCompletions: (v: OpArg) => CompletionInfo;
         compile: (v: OpArg) => CompileResult;
@@ -877,6 +924,10 @@ namespace ts.pxtc.service {
 
         setOptions: v => {
             host.setOpts(v.options)
+        },
+
+        updateOptions: v => {
+            host.updateOpts(v.options)
         },
 
         syntaxInfo: v => {
@@ -1314,17 +1365,17 @@ namespace ts.pxtc.service {
         },
 
         compile: v => {
-            host.setOpts(v.options)
+            host.updateOpts(v.options)
             const res = runConversionsAndCompileUsingService()
             timesToMs(res);
             return res
         },
         decompile: v => {
-            host.setOpts(v.options)
+            host.updateOpts(v.options)
             return decompile(service.getProgram(), v.options, v.fileName, false);
         },
         pydecompile: v => {
-            host.setOpts(v.options)
+            host.updateOpts(v.options)
             return transpile.tsToPy(service.getProgram(), v.fileName);
 
         },
