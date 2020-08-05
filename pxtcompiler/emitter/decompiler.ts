@@ -413,7 +413,6 @@ namespace ts.pxtc.decompiler {
             }
         });
 
-
         const commentMap = buildCommentMap(file);
 
         const checkTopNode = (topLevelNode: Node) => {
@@ -1787,7 +1786,7 @@ ${output}</xml>`;
             }
 
             const statement = getStatementBlock(n.statement);
-            r.handlers = [{ name: "DO", statement  }];
+            r.handlers = [{ name: "DO", statement }];
             return r;
 
             function checkForVariableUsages(node: Node): boolean {
@@ -1806,7 +1805,7 @@ ${output}</xml>`;
             const r = mkStmt("pxt_controls_for_of", n);
             r.inputs = [getValue("LIST", n.expression), getDraggableVariableBlock("VAR", renamed)];
             const statement = getStatementBlock(n.statement);
-            r.handlers = [{ name: "DO", statement  }];
+            r.handlers = [{ name: "DO", statement }];
 
             return r
         }
