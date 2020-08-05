@@ -13,7 +13,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 {
                     name: "loops_while",
                     snippetName: "while",
-                    snippet: `while(true) {\n\n}`,
+                    snippet: `while (true) {\n\n}`,
                     pySnippet: `while True:\n    pass`,
                     attributes: {
                         blockId: 'device_while',
@@ -24,7 +24,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 {
                     name: "loops_for",
                     snippetName: "for",
-                    snippet: `for(let i = 0; i < 5; i++) {\n\n}`,
+                    snippet: `for (let i = 0; i < 5; i++) {\n\n}`,
                     pySnippet: `for i in range(4):\n    pass`,
                     attributes: {
                         blockId: 'pxt_controls_for',
