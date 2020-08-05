@@ -73,7 +73,7 @@ ${info.id}_IfaceVT:
             }
         }
 
-        descs += "  .word 0, 0 ; the end\n"
+        descs += "  .word 0, 0, 0, 0 ; the end\n"
         offset += descSize
 
         for (let i = 0; i < mapping.length; ++i) {

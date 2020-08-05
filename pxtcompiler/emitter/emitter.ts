@@ -1435,9 +1435,12 @@ namespace ts.pxtc {
             inf.vtable = tbl
             inf.itable = []
 
+            const fieldNames: pxt.Map<boolean> = {}
+
             for (let fld of inf.allfields) {
                 let fname = getName(fld)
                 let finfo = fieldIndexCore(inf, fld, false)
+                fieldNames[fname] = true
                 inf.itable.push({
                     name: fname,
                     info: (finfo.idx + 1) * (isStackMachine() ? 1 : 4),
@@ -1461,6 +1464,7 @@ namespace ts.pxtc {
                             ex.setProc = proc
                         else if (isGet && !ex.proc)
                             ex.proc = proc
+                        ex.info = 0
                     } else {
                         inf.itable.push({
                             name: n,
