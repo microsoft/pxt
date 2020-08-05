@@ -39,7 +39,7 @@ namespace ts.pxtc {
             mapping.push(0)
 
         let s = `
-${info.id}_VT_start:
+${vtName(info)}_start:
         .short ${info.allfields.length * 8 + 8}  ; size in bytes
         .byte ${pxt.ValTypeObject}, ${pxt.VTABLE_MAGIC} ; magic
         .short ${mapping.length} ; entries in iface hashmap
@@ -112,12 +112,20 @@ ${info.id}_IfaceVT:
         return `${t >>> 0}, ${(t / 0x100000000) | 0}`
     }
 
+    let additionalClassInfos: pxt.Map<ClassInfo> = {}
+    function vtName(info: ClassInfo) {
+        if (!info.classNo)
+            additionalClassInfos[info.id] = info
+        return info.id + "_VT"
+    }
+
     /* tslint:disable:no-trailing-whitespace */
     export function vmEmit(bin: Binary, opts: CompileOptions) {
         let vmsource = `; VM start
 ${hexfile.hexPrelude()}
 `
 
+        additionalClassInfos = {}
         const ctx: EmitCtx = {
             dblText: [],
             dbls: {},
@@ -180,9 +188,16 @@ _start_${name}:
         })
         vmsource += "_code_end:\n\n"
         vmsource += "_helpers_end:\n\n"
+
         bin.usedClassInfos.forEach(info => {
-            section(info.id + "_VT", SectionType.VTable, () => vtableToVM(info, opts, bin))
+            section(vtName(info), SectionType.VTable, () => vtableToVM(info, opts, bin))
         })
+        U.values(additionalClassInfos).forEach(info => {
+            info.itable = []
+            info.classNo = 0xfff0
+            section(vtName(info), SectionType.VTable, () => vtableToVM(info, opts, bin))
+        })
+        additionalClassInfos = {}
 
         let idx = 0
         section("ifaceMemberNames", SectionType.IfaceMemberNames, () =>
@@ -279,7 +294,7 @@ _start_${name}:
 
         emitAll()
         resText = ""
-        for (let t of alltmps) t.currUses = 0
+        for (let t of alltmps) t.reset()
         final = true
         U.assert(argDepth == 0)
         emitAll()
@@ -382,7 +397,7 @@ _start_${name}:
 
         function emitInstanceOf(info: ClassInfo, tp: string) {
             if (tp == "bool") {
-                write(`checkinst ${info.id}_VT`)
+                write(`checkinst ${vtName(info)}`)
             } else if (tp == "validate") {
                 U.oops()
             } else {
@@ -481,7 +496,7 @@ _start_${name}:
                 case EK.FieldAccess:
                     let info = e.data as FieldAccessInfo
                     emitExpr(e.args[0])
-                    write(`ldfld ${info.idx}, ${info.classInfo.id}_VT`)
+                    write(`ldfld ${info.idx}, ${vtName(info.classInfo)}`)
                     break
                 case EK.Store:
                     return emitStore(e.args[0], e.args[1])
@@ -596,7 +611,7 @@ _start_${name}:
             if (calledProc && calledProc.inlineBody) {
                 const inlined = calledProc.inlineSelf(topExpr.args)
                 if (pxt.options.debug) {
-                    console.log("INLINE", inlined.toString())
+                    console.log("INLINE", topExpr.toString(), "->", inlined.toString())
                 }
                 return emitExpr(inlined)
             }
@@ -655,7 +670,7 @@ _start_${name}:
                     emitExpr(trg.args[0])
                     push()
                     emitExpr(src)
-                    write(`stfld ${info.idx}, ${info.classInfo.id}_VT`)
+                    write(`stfld ${info.idx}, ${vtName(info.classInfo)}`)
                     argDepth--
                     break;
                 default: oops();
