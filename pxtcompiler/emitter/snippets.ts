@@ -28,6 +28,7 @@ namespace ts.pxtc.service {
     function isSnippetNodeList(n: SnippetNode): n is SnippetNode[] {
         return typeof (n) === "object" && typeof ((n as SnippetNode[]).length) === "number"
     }
+
     export function snippetStringify(snippet: SnippetNode, emitMonacoReplacementPoints = false): string {
         const namesToReplacementNumbers: { [key: string]: number } = {}
         let nextNum: number = 1
@@ -72,6 +73,7 @@ namespace ts.pxtc.service {
             }
         }
     }
+
     export function snippetHasReplacementPoints(snippet: SnippetNode): boolean {
         if (isSnippetReplacePoint(snippet)) {
             return true
@@ -96,9 +98,19 @@ namespace ts.pxtc.service {
         }
     }
 
-    export function getSnippet(apis: ApisInfo, takenNames: pxt.Map<SymbolInfo>, runtimeOps: pxt.RuntimeOptions, fn: SymbolInfo, decl: ts.FunctionLikeDeclaration, python?: boolean, recursionDepth = 0): SnippetNode {
+    export interface SnippetContext {
+        apis: ApisInfo;
+        blocksInfo: BlocksInfo;
+        takenNames: pxt.Map<SymbolInfo>;
+        checker: ts.TypeChecker;
+        screenSize?: pxt.Size;
+    }
+
+    export function getSnippet(context: SnippetContext, fn: SymbolInfo, decl: ts.FunctionLikeDeclaration, python?: boolean, recursionDepth = 0): SnippetNode {
         // TODO: a lot of this is duplicate logic with blocklyloader.ts:buildBlockFromDef; we should
         //  unify these approaches
+        let { apis, takenNames, blocksInfo, screenSize, checker } = context;
+
         const PY_INDENT: string = (pxt as any).py.INDENT;
         const fileType = python ? "python" : "typescript";
 
@@ -114,291 +126,15 @@ namespace ts.pxtc.service {
         if (python)
             fnName = snakify(fnName);
 
-        // TODO(dz):
-        function getUniqueName(inName: string): string {
-            if (takenNames[inName])
-                return ts.pxtc.decompiler.getNewName(inName, takenNames, false)
-            return inName
-        }
-
         const attrs = fn.attributes;
 
         if (attrs.shim === "TD_ID" && recursionDepth && decl.parameters.length) {
             return getParameterDefault(decl.parameters[0]);
         }
 
-        const checker = service && service.getProgram().getTypeChecker();
-
-        const blocksInfo = blocksInfoOp(apis, runtimeOps.bannedCategories);
         const blocksById = blocksInfo.blocksById
 
         // TODO: move out of getSnippet for general reuse
-        // TODO(ddz):
-        function getParameterDefault(param: ParameterDeclaration): SnippetNode {
-            const typeNode = param.type;
-            if (!typeNode)
-                return python ? "None" : "null"
-
-            const name = param.name.kind === SK.Identifier ? (param.name as ts.Identifier).text : undefined;
-
-            // check for explicit default in the attributes
-            if (attrs && attrs.paramDefl && attrs.paramDefl[name]) {
-                if (typeNode.kind == SK.AnyKeyword) {
-                    const defaultName = attrs.paramDefl[name].toUpperCase();
-                    if (!Number.isNaN(+defaultName)) {
-                        // try to parse as a number
-                        typeNode.kind = SK.NumberKeyword;
-                    } else if (defaultName == "FALSE" || defaultName == "TRUE") {
-                        // try to parse as a bool
-                        typeNode.kind = SK.BooleanKeyword;
-                    } else if (defaultName.includes(".")) {
-                        // try to parse as an enum
-                        typeNode.kind = SK.EnumKeyword;
-                    } else {
-                        // otherwise it'll be a string
-                        typeNode.kind = SK.StringKeyword;
-                    }
-                }
-                if (typeNode.kind == SK.StringKeyword) {
-                    const defaultName = attrs.paramDefl[name];
-                    const snippet = typeNode.kind == SK.StringKeyword && defaultName.indexOf(`"`) != 0 ? `"${defaultName}"` : defaultName;
-                    return snippet
-                }
-                return attrs.paramDefl[name];
-            }
-
-            // TODO(dz):
-            function getDefaultValueOfType(type: ts.Type): SnippetNode | undefined {
-                // TODO: generalize this to handle more types
-                if (type.symbol && type.symbol.flags & SymbolFlags.Enum) {
-                    const defl = getDefaultEnumValue(type, python)
-                    return defl
-                }
-                const typeSymbol = getPxtSymbolFromTsSymbol(type.symbol, apis, checker)
-                if (isObjectType(type)) {
-                    const snip = typeSymbol && typeSymbol.attributes && (python ? typeSymbol.attributes.pySnippet : typeSymbol.attributes.snippet);
-                    if (snip)
-                        return snip;
-                    if (type.objectFlags & ts.ObjectFlags.Anonymous) {
-                        const sigs = checker.getSignaturesOfType(type, ts.SignatureKind.Call);
-                        if (sigs && sigs.length) {
-                            return createDefaultFunction(sigs[0], false);
-                        }
-                        return emitEmptyFn(name);
-                    }
-                }
-                if (type.flags & ts.TypeFlags.NumberLike) {
-                    return "0";
-                }
-
-                // check for fixed instances
-                if (typeSymbol && typeSymbol.attributes.fixedInstances) {
-                    const fixedSyms = getFixedInstancesOf(typeSymbol)
-                    if (fixedSyms.length) {
-                        const defl = fixedSyms[0]
-                        return python ? defl.pyQName : defl.qName
-                    }
-
-                }
-                return undefined
-            }
-
-            // TODO(dz):
-            function getFixedInstancesOf(type: SymbolInfo) {
-                return pxt.Util.values(apis.byQName).filter(sym => sym.kind === pxtc.SymbolKind.Variable
-                    && sym.attributes.fixedInstance
-                    && isSubtype(apis, sym.retType, type.qName));
-            }
-
-            // TODO(dz):
-            function isSubtype(apis: pxtc.ApisInfo, specific: string, general: string) {
-                if (specific == general) return true
-                let inf = apis.byQName[specific]
-                if (inf && inf.extendsTypes)
-                    return inf.extendsTypes.indexOf(general) >= 0
-                return false
-            }
-
-            // TODO(dz):
-            function snippetFromSpriteEditorParams(opts: pxt.Map<string>): SnippetNode | null {
-                // TODO: Generalize this to share implementation with FieldSpriteEditor in field_sprite.ts
-                const parsed = {
-                    initColor: 0,
-                    initWidth: 16,
-                    initHeight: 16,
-                };
-
-                if (opts?.sizes) {
-                    const pairs = opts.sizes.split(";");
-                    const sizes: [number, number][] = [];
-                    for (let i = 0; i < pairs.length; i++) {
-                        const pair = pairs[i].split(",");
-                        if (pair.length !== 2) {
-                            continue;
-                        }
-
-                        let width = parseInt(pair[0]);
-                        let height = parseInt(pair[1]);
-
-                        if (isNaN(width) || isNaN(height)) {
-                            continue;
-                        }
-
-                        const screenSize = runtimeOps?.screenSize;
-                        if (width < 0 && screenSize)
-                            width = screenSize.width;
-                        if (height < 0 && screenSize)
-                            height = screenSize.height;
-
-                        sizes.push([width, height]);
-                    }
-                    if (sizes.length > 0) {
-                        parsed.initWidth = sizes[0][0];
-                        parsed.initHeight = sizes[0][1];
-                    }
-                }
-
-                parsed.initColor = withDefault(opts?.initColor, parsed.initColor);
-                parsed.initWidth = withDefault(opts?.initWidth, parsed.initWidth);
-                parsed.initHeight = withDefault(opts?.initHeight, parsed.initHeight);
-
-                return pxt.sprite.imageLiteralFromDimensions(parsed.initWidth, parsed.initHeight, parsed.initColor, fileType);
-
-                function withDefault(raw: string, def: number) {
-                    const res = parseInt(raw);
-                    if (isNaN(res)) {
-                        return def;
-                    }
-                    return res;
-                }
-            }
-
-            // TODO(dz):
-            function getDefaultValueFromFieldEditor(paramName: string): SnippetNode | null {
-                const compileInfo = pxt.blocks.compileInfo(fn)
-                const blockParam = compileInfo.parameters?.find((p) => p.actualName === name)
-                if (!blockParam?.shadowBlockId)
-                    return null
-                let sym = blocksById[blockParam.shadowBlockId]
-                if (!sym)
-                    return null
-                const fieldEditor = sym.attributes?.paramFieldEditor
-                if (!fieldEditor)
-                    return null
-                const fieldEditorName = fieldEditor[paramName]
-                if (!fieldEditorName)
-                    return null
-                const fieldEditorOptions = sym.attributes.paramFieldEditorOptions || {}
-                switch (fieldEditorName) {
-                    // TODO: Generalize this to share editor mapping with blocklycustomeditor.ts
-                    case "sprite": return snippetFromSpriteEditorParams(fieldEditorOptions[paramName])
-                    // TODO: Handle other field editor types
-                }
-                return null;
-            }
-
-            // TODO(dz):
-            function getShadowSymbol(paramName: string): SymbolInfo | null {
-                // TODO: generalize and unify this with getCompletions code
-                let shadowBlock = (attrs._shadowOverrides || {})[paramName]
-                if (!shadowBlock) {
-                    const comp = pxt.blocks.compileInfo(fn);
-                    for (const param of comp.parameters) {
-                        if (param.actualName === paramName) {
-                            shadowBlock = param.shadowBlockId;
-                            break;
-                        }
-                    }
-                }
-                if (!shadowBlock)
-                    return null
-                let sym = blocksById[shadowBlock]
-                if (!sym)
-                    return null
-                if (sym.attributes.shim === "TD_ID" && sym.parameters.length) {
-                    let realName = sym.parameters[0].type
-                    let realSym = apis.byQName[realName]
-                    sym = realSym || sym
-                }
-                return sym
-            }
-
-            let shadowDefFromFieldEditor = getDefaultValueFromFieldEditor(name)
-            if (shadowDefFromFieldEditor) {
-                return shadowDefFromFieldEditor
-            }
-
-            // check if there's a shadow override defined
-            let shadowSymbol = getShadowSymbol(name)
-            if (shadowSymbol) {
-                let tsSymbol = getTsSymbolFromPxtSymbol(shadowSymbol, param, SymbolFlags.Enum)
-                if (tsSymbol) {
-                    let shadowType = checker.getTypeOfSymbolAtLocation(tsSymbol, param)
-                    if (shadowType) {
-                        let shadowDef = getDefaultValueOfType(shadowType)
-                        if (shadowDef) {
-                            return shadowDef
-                        }
-                    }
-                }
-
-                const shadowAttrs = shadowSymbol.attributes;
-                if (shadowAttrs.shim === "KIND_GET" && shadowAttrs.blockId) {
-                    const kindNamespace = shadowAttrs.kindNamespace || fn.namespace;
-                    const defaultValueForKind = pxtc.Util.values(apis.byQName).find(api => api.namespace === kindNamespace && api.attributes.isKind);
-                    if (defaultValueForKind) {
-                        return python ? defaultValueForKind.pyQName : defaultValueForKind.qName;
-                    }
-                }
-
-                // 3 is completely arbitrarily chosen here
-                if (recursionDepth < 3 && lastApiInfo.decls[shadowSymbol.qName]) {
-                    let snippet = getSnippet(
-                        apis,
-                        takenNames,
-                        runtimeOps,
-                        shadowSymbol,
-                        lastApiInfo.decls[shadowSymbol.qName] as ts.FunctionLikeDeclaration,
-                        python,
-                        recursionDepth + 1
-                    );
-
-                    if (snippet) return snippet;
-                }
-            }
-
-            // HACK: special handling for single-color (e.g. micro:bit) image literal
-            if (typeNode.kind === SK.StringKeyword && name === "leds") {
-                return python ? defaultPyImgList : defaultTsImgList
-            }
-
-            // handle function types
-            if (typeNode.kind === SK.FunctionType) {
-                const tn = typeNode as ts.FunctionTypeNode;
-                let functionSignature = checker ? checker.getSignatureFromDeclaration(tn) : undefined;
-                if (functionSignature) {
-                    return createDefaultFunction(functionSignature, true);
-                }
-                return emitEmptyFn(name);
-            }
-
-            // simple types we can determine defaults for
-            const basicRes = getBasicKindDefault(typeNode.kind, python)
-            if (basicRes !== undefined) {
-                return basicRes
-            }
-
-            // get default of Typescript type
-            let type = checker && checker.getTypeAtLocation(param);
-            if (type) {
-                let typeDef = getDefaultValueOfType(type)
-                if (typeDef)
-                    return typeDef
-            }
-
-            // lastly, null or none
-            return python ? "None" : "null";
-        }
 
         const includedParameters = decl.parameters ? decl.parameters
             .filter(param => !param.initializer && !param.questionToken) : []
@@ -529,6 +265,269 @@ namespace ts.pxtc.service {
         }
 
         return [preStmt, insertText]
+
+        function getUniqueName(inName: string): string {
+            if (takenNames[inName])
+                return ts.pxtc.decompiler.getNewName(inName, takenNames, false)
+            return inName
+        }
+
+        function getParameterDefault(param: ParameterDeclaration): SnippetNode {
+            const typeNode = param.type;
+            if (!typeNode)
+                return python ? "None" : "null"
+
+            const name = param.name.kind === SK.Identifier ? (param.name as ts.Identifier).text : undefined;
+
+            // check for explicit default in the attributes
+            if (attrs && attrs.paramDefl && attrs.paramDefl[name]) {
+                if (typeNode.kind == SK.AnyKeyword) {
+                    const defaultName = attrs.paramDefl[name].toUpperCase();
+                    if (!Number.isNaN(+defaultName)) {
+                        // try to parse as a number
+                        typeNode.kind = SK.NumberKeyword;
+                    } else if (defaultName == "FALSE" || defaultName == "TRUE") {
+                        // try to parse as a bool
+                        typeNode.kind = SK.BooleanKeyword;
+                    } else if (defaultName.includes(".")) {
+                        // try to parse as an enum
+                        typeNode.kind = SK.EnumKeyword;
+                    } else {
+                        // otherwise it'll be a string
+                        typeNode.kind = SK.StringKeyword;
+                    }
+                }
+                if (typeNode.kind == SK.StringKeyword) {
+                    const defaultName = attrs.paramDefl[name];
+                    const snippet = typeNode.kind == SK.StringKeyword && defaultName.indexOf(`"`) != 0 ? `"${defaultName}"` : defaultName;
+                    return snippet
+                }
+                return attrs.paramDefl[name];
+            }
+
+            let shadowDefFromFieldEditor = getDefaultValueFromFieldEditor(name)
+            if (shadowDefFromFieldEditor) {
+                return shadowDefFromFieldEditor
+            }
+
+            // check if there's a shadow override defined
+            let shadowSymbol = getShadowSymbol(name)
+            if (shadowSymbol) {
+                let tsSymbol = getTsSymbolFromPxtSymbol(shadowSymbol, param, SymbolFlags.Enum)
+                if (tsSymbol) {
+                    let shadowType = checker.getTypeOfSymbolAtLocation(tsSymbol, param)
+                    if (shadowType) {
+                        let shadowDef = getDefaultValueOfType(shadowType)
+                        if (shadowDef) {
+                            return shadowDef
+                        }
+                    }
+                }
+
+                const shadowAttrs = shadowSymbol.attributes;
+                if (shadowAttrs.shim === "KIND_GET" && shadowAttrs.blockId) {
+                    const kindNamespace = shadowAttrs.kindNamespace || fn.namespace;
+                    const defaultValueForKind = pxtc.Util.values(apis.byQName).find(api => api.namespace === kindNamespace && api.attributes.isKind);
+                    if (defaultValueForKind) {
+                        return python ? defaultValueForKind.pyQName : defaultValueForKind.qName;
+                    }
+                }
+
+                // 3 is completely arbitrarily chosen here
+                if (recursionDepth < 3 && lastApiInfo.decls[shadowSymbol.qName]) {
+                    let snippet = getSnippet(
+                        context,
+                        shadowSymbol,
+                        lastApiInfo.decls[shadowSymbol.qName] as ts.FunctionLikeDeclaration,
+                        python,
+                        recursionDepth + 1
+                    );
+
+                    if (snippet) return snippet;
+                }
+            }
+
+            // HACK: special handling for single-color (e.g. micro:bit) image literal
+            if (typeNode.kind === SK.StringKeyword && name === "leds") {
+                return python ? defaultPyImgList : defaultTsImgList
+            }
+
+            // handle function types
+            if (typeNode.kind === SK.FunctionType) {
+                const tn = typeNode as ts.FunctionTypeNode;
+                let functionSignature = checker ? checker.getSignatureFromDeclaration(tn) : undefined;
+                if (functionSignature) {
+                    return createDefaultFunction(functionSignature, true);
+                }
+                return emitEmptyFn(name);
+            }
+
+            // simple types we can determine defaults for
+            const basicRes = getBasicKindDefault(typeNode.kind, python)
+            if (basicRes !== undefined) {
+                return basicRes
+            }
+
+            // get default of Typescript type
+            let type = checker && checker.getTypeAtLocation(param);
+            if (type) {
+                let typeDef = getDefaultValueOfType(type)
+                if (typeDef)
+                    return typeDef
+            }
+
+            // lastly, null or none
+            return python ? "None" : "null";
+        }
+
+        function getDefaultValueOfType(type: ts.Type): SnippetNode | undefined {
+            // TODO: generalize this to handle more types
+            if (type.symbol && type.symbol.flags & SymbolFlags.Enum) {
+                const defl = getDefaultEnumValue(type, python)
+                return defl
+            }
+            const typeSymbol = getPxtSymbolFromTsSymbol(type.symbol, apis, checker)
+            if (isObjectType(type)) {
+                const snip = typeSymbol && typeSymbol.attributes && (python ? typeSymbol.attributes.pySnippet : typeSymbol.attributes.snippet);
+                if (snip)
+                    return snip;
+                if (type.objectFlags & ts.ObjectFlags.Anonymous) {
+                    const sigs = checker.getSignaturesOfType(type, ts.SignatureKind.Call);
+                    if (sigs && sigs.length) {
+                        return createDefaultFunction(sigs[0], false);
+                    }
+                    return emitEmptyFn(name);
+                }
+            }
+            if (type.flags & ts.TypeFlags.NumberLike) {
+                return "0";
+            }
+
+            // check for fixed instances
+            if (typeSymbol && typeSymbol.attributes.fixedInstances) {
+                const fixedSyms = getFixedInstancesOf(typeSymbol)
+                if (fixedSyms.length) {
+                    const defl = fixedSyms[0]
+                    return python ? defl.pyQName : defl.qName
+                }
+
+            }
+            return undefined
+        }
+
+        function getFixedInstancesOf(type: SymbolInfo) {
+            return pxt.Util.values(apis.byQName).filter(sym => sym.kind === pxtc.SymbolKind.Variable
+                && sym.attributes.fixedInstance
+                && isSubtype(apis, sym.retType, type.qName));
+        }
+
+        function isSubtype(apis: pxtc.ApisInfo, specific: string, general: string) {
+            if (specific == general) return true
+            let inf = apis.byQName[specific]
+            if (inf && inf.extendsTypes)
+                return inf.extendsTypes.indexOf(general) >= 0
+            return false
+        }
+
+        function snippetFromSpriteEditorParams(opts: pxt.Map<string>): SnippetNode | null {
+            // TODO: Generalize this to share implementation with FieldSpriteEditor in field_sprite.ts
+            const parsed = {
+                initColor: 0,
+                initWidth: 16,
+                initHeight: 16,
+            };
+
+            if (opts?.sizes) {
+                const pairs = opts.sizes.split(";");
+                const sizes: [number, number][] = [];
+                for (let i = 0; i < pairs.length; i++) {
+                    const pair = pairs[i].split(",");
+                    if (pair.length !== 2) {
+                        continue;
+                    }
+
+                    let width = parseInt(pair[0]);
+                    let height = parseInt(pair[1]);
+
+                    if (isNaN(width) || isNaN(height)) {
+                        continue;
+                    }
+
+                    if (width < 0 && screenSize)
+                        width = screenSize.width;
+                    if (height < 0 && screenSize)
+                        height = screenSize.height;
+
+                    sizes.push([width, height]);
+                }
+                if (sizes.length > 0) {
+                    parsed.initWidth = sizes[0][0];
+                    parsed.initHeight = sizes[0][1];
+                }
+            }
+
+            parsed.initColor = withDefault(opts?.initColor, parsed.initColor);
+            parsed.initWidth = withDefault(opts?.initWidth, parsed.initWidth);
+            parsed.initHeight = withDefault(opts?.initHeight, parsed.initHeight);
+
+            return pxt.sprite.imageLiteralFromDimensions(parsed.initWidth, parsed.initHeight, parsed.initColor, fileType);
+
+            function withDefault(raw: string, def: number) {
+                const res = parseInt(raw);
+                if (isNaN(res)) {
+                    return def;
+                }
+                return res;
+            }
+        }
+
+        function getDefaultValueFromFieldEditor(paramName: string): SnippetNode | null {
+            const compileInfo = pxt.blocks.compileInfo(fn)
+            const blockParam = compileInfo.parameters?.find((p) => p.actualName === name)
+            if (!blockParam?.shadowBlockId)
+                return null
+            let sym = blocksById[blockParam.shadowBlockId]
+            if (!sym)
+                return null
+            const fieldEditor = sym.attributes?.paramFieldEditor
+            if (!fieldEditor)
+                return null
+            const fieldEditorName = fieldEditor[paramName]
+            if (!fieldEditorName)
+                return null
+            const fieldEditorOptions = sym.attributes.paramFieldEditorOptions || {}
+            switch (fieldEditorName) {
+                // TODO: Generalize this to share editor mapping with blocklycustomeditor.ts
+                case "sprite": return snippetFromSpriteEditorParams(fieldEditorOptions[paramName])
+                // TODO: Handle other field editor types
+            }
+            return null;
+        }
+
+        function getShadowSymbol(paramName: string): SymbolInfo | null {
+            // TODO: generalize and unify this with getCompletions code
+            let shadowBlock = (attrs._shadowOverrides || {})[paramName]
+            if (!shadowBlock) {
+                const comp = pxt.blocks.compileInfo(fn);
+                for (const param of comp.parameters) {
+                    if (param.actualName === paramName) {
+                        shadowBlock = param.shadowBlockId;
+                        break;
+                    }
+                }
+            }
+            if (!shadowBlock)
+                return null
+            let sym = blocksById[shadowBlock]
+            if (!sym)
+                return null
+            if (sym.attributes.shim === "TD_ID" && sym.parameters.length) {
+                let realName = sym.parameters[0].type
+                let realSym = apis.byQName[realName]
+                sym = realSym || sym
+            }
+            return sym
+        }
 
         function getSymbolName(symbol: Symbol) {
             if (checker) {

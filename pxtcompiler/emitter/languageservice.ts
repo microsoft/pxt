@@ -566,7 +566,16 @@ namespace ts.pxtc.service {
         }
 
         // add in snippets if not present already
-        resultSymbols.forEach(sym => patchSymbolWithSnippet(sym.symbol, isPython, takenNames, v.runtime))
+        const { bannedCategories, screenSize } = v.runtime;
+        const blocksInfo = blocksInfoOp(lastApiInfo.apis, bannedCategories)
+        const context: SnippetContext = {
+            takenNames,
+            blocksInfo,
+            screenSize,
+            apis: lastApiInfo.apis,
+            checker: service?.getProgram()?.getTypeChecker()
+        }
+        resultSymbols.forEach(sym => patchSymbolWithSnippet(sym.symbol, isPython, context))
 
         r.entries = resultSymbols.map(sym => sym.symbol);
 
@@ -587,7 +596,7 @@ namespace ts.pxtc.service {
         return use
     }
 
-    function patchSymbolWithSnippet(si: SymbolInfo, isPython: boolean, takenNames: pxt.Map<SymbolInfo>, runtimeOps: pxt.RuntimeOptions) {
+    function patchSymbolWithSnippet(si: SymbolInfo, isPython: boolean, context: SnippetContext) {
         const n = lastApiInfo.decls[si.qName];
         if (isFunctionLike(n)) {
             // snippet/pySnippet might have been set already, but even if it has,
@@ -596,7 +605,7 @@ namespace ts.pxtc.service {
             if (si.snippetAddsDefinitions
                 || (isPython && !si.pySnippet)
                 || (!isPython && !si.snippet)) {
-                const snippetNode = getSnippet(lastApiInfo.apis, takenNames, runtimeOps, si, n, isPython);
+                const snippetNode = getSnippet(context, si, n, isPython);
                 const snippet = snippetStringify(snippetNode)
                 const snippetWithMarkers = snippetStringify(snippetNode, true)
                 const addsDefinitions = snippetAddsDefinitions(snippetNode)

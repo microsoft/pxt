@@ -1,0 +1,3 @@
+// testNamespace.someFunction
+testNamespace.someFunction("")
+

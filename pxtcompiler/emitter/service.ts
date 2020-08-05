@@ -179,37 +179,7 @@ namespace ts.pxtc {
         }
     }
 
-    // TODO(dz): tsop
-    function isExported(decl: Declaration) {
-        if (decl.modifiers && decl.modifiers.some(m => m.kind == SK.PrivateKeyword || m.kind == SK.ProtectedKeyword))
-            return false;
 
-        let symbol = decl.symbol
-
-        if (!symbol)
-            return false;
-
-        while (true) {
-            let parSymbol: Symbol = (symbol as any).parent
-            if (parSymbol) symbol = parSymbol
-            else break
-        }
-
-        let topDecl = symbol.valueDeclaration || symbol.declarations[0]
-
-        if (topDecl.kind == SK.VariableDeclaration)
-            topDecl = topDecl.parent.parent as Declaration
-
-        if (topDecl.parent && topDecl.parent.kind == SK.SourceFile)
-            return true;
-        else
-            return false;
-    }
-
-    // TODO(dz): tsop
-    function isReadonly(decl: Declaration) {
-        return decl.modifiers && decl.modifiers.some(m => m.kind == SK.ReadonlyKeyword)
-    }
 
     function createSymbolInfo(typechecker: TypeChecker, qName: string, stmt: Node): SymbolInfo {
         function typeOf(tn: TypeNode, n: Node, stripParams = false): string {
@@ -1051,6 +1021,9 @@ namespace ts.pxtc.service {
             return lastApiInfo.apis;
         },
         snippet: v => {
+            // TODO(dz):
+            // uses v.snippet
+            // uses v.runtime
             const o = v.snippet;
             if (!lastApiInfo) return undefined;
             const fn = lastApiInfo.apis.byQName[o.qName];
@@ -1068,8 +1041,19 @@ namespace ts.pxtc.service {
                 takenNames = lastApiInfo.apis.byQName
             }
 
-            const snippetNode = ts.pxtc.service.getSnippet(
-                lastApiInfo.apis, takenNames, v.runtime, fn, n as FunctionLikeDeclaration, isPython)
+            const { bannedCategories, screenSize } = v.runtime;
+            const { apis } = lastApiInfo;
+            const blocksInfo = blocksInfoOp(apis, bannedCategories);
+            const checker = service && service.getProgram().getTypeChecker();
+            const snippetContext = {
+                apis,
+                blocksInfo,
+                takenNames,
+                bannedCategories,
+                screenSize,
+                checker,
+            }
+            const snippetNode = getSnippet(snippetContext, fn, n as FunctionLikeDeclaration, isPython)
             const snippet = snippetStringify(snippetNode)
             return snippet
         },
