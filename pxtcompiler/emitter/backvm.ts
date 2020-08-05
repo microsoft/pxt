@@ -433,8 +433,10 @@ _start_${name}:
                     return
                 case EK.SharedRef:
                     let arg = e.args[0]
-                    U.assert(!!arg.currUses) // not first use
-                    U.assert(arg.currUses < arg.totalUses)
+                    if (!arg.currUses || arg.currUses >= arg.totalUses) {
+                        console.log(arg.sharingInfo())
+                        U.assert(false)
+                    }
                     arg.currUses++
                     let idx = currTmps.indexOf(arg)
                     if (idx < 0) {
@@ -591,8 +593,13 @@ _start_${name}:
             let calledProcId = topExpr.data as ir.ProcId
             let calledProc = calledProcId.proc
 
-            if (calledProc && calledProc.inlineBody)
-                return emitExpr(calledProc.inlineSelf(topExpr.args))
+            if (calledProc && calledProc.inlineBody) {
+                const inlined = calledProc.inlineSelf(topExpr.args)
+                if (pxt.options.debug) {
+                    console.log("INLINE", inlined.toString())
+                }
+                return emitExpr(inlined)
+            }
 
             let numPush = 0
             const args = topExpr.args.slice()

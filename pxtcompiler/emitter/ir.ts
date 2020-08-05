@@ -226,7 +226,7 @@ namespace ts.pxtc.ir {
                         return `SHARED_REF(#${a0.getId()})`
 
                     case EK.SharedDef:
-                        return `SHARED_DEF(#${a0.getId()}: ${str(a0)})`
+                        return `SHARED_DEF(#${a0.getId()} u(${a0.totalUses}): ${str(a0)})`
 
                     case EK.FieldAccess:
                         return `${str(a0)}.${(e.data as FieldAccessInfo).name}`
