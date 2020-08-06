@@ -483,7 +483,7 @@ namespace ts.pxtc.service {
 
         function getDefaultValueFromFieldEditor(paramName: string): SnippetNode | null {
             const compileInfo = pxt.blocks.compileInfo(fn)
-            const blockParam = compileInfo.parameters?.find((p) => p.actualName === name)
+            const blockParam = compileInfo.parameters?.find((p) => p.actualName === paramName)
             if (!blockParam?.shadowBlockId)
                 return null
             let sym = blocksById[blockParam.shadowBlockId]

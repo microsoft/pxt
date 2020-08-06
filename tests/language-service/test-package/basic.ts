@@ -1,6 +1,6 @@
 namespace testNamespace {
-    export function someFunction(someParam: string) {
-
+    export function someFunction(someParam: string, someNum: number, someBool: boolean) {
+        return someParam
     }
 
     export let someString: string;
@@ -17,4 +17,9 @@ namespace testNamespace {
     export class SomeClass {
         e: SomeEnum;
     }
+
+    export function registerSomeEvent(param1: number, handler: () => void, param2: boolean) {
+        handler()
+    }
+
 }

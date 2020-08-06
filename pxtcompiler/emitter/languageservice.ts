@@ -80,7 +80,7 @@ namespace ts.pxtc.service {
 
     export function getBasicKindDefault(kind: SyntaxKind, isPython: boolean): string | undefined {
         switch (kind) {
-            case SK.StringKeyword: return "";
+            case SK.StringKeyword: return "\"\"";
             case SK.NumberKeyword: return "0";
             case SK.BooleanKeyword: return isPython ? "False" : "false";
             case SK.ArrayType: return "[]";

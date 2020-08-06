@@ -24,24 +24,6 @@ function initGlobals() {
 initGlobals();
 pxt.setAppTarget(util.testAppTarget);
 
-describe("language service", () => {
-    const completionCases = getCompletionTestCases();
-
-    for (const testCase of completionCases) {
-        it("get completions " + testCase.fileName + testCase.position, () => {
-            return runCompletionTestCaseAsync(testCase);
-        });
-    }
-
-    const snippetCases = getSnippetTestCases();
-
-    for (const testCase of snippetCases) {
-        it(`snippet for ${testCase.qName} in ${testCase.fileName}`, () => {
-            return runSnippetTestCaseAsync(testCase);
-        });
-    }
-})
-
 enum FileCheck {
     Keep,
     Only,
@@ -130,7 +112,7 @@ function getSnippetTestCasesInFile(fileName: string): SnippetTestCase[] {
     The non-comment content is the expected snippet result.
     */
     const lines = fileText.split("\n");
-    const startsWithComment = (l: string) => l.substr(-commentString.length) === commentString;
+    const startsWithComment = (l: string) => l.substr(0, commentString.length) === commentString;
     const linesAndTypes = lines.map(l => [l, startsWithComment(l)] as [string, boolean])
 
     let currentCommentLine = ""
@@ -150,6 +132,11 @@ function getSnippetTestCasesInFile(fileName: string): SnippetTestCase[] {
             // add to current test case
             currentCaseLines.push(line)
         }
+    }
+    // finish last current test case
+    if (currentCommentLine) {
+        const testCase = makeTestCase(currentCommentLine, currentCaseLines.join("\n"));
+        testCases.push(testCase);
     }
 
     return testCases;
@@ -360,3 +347,20 @@ function snippetOp(qName: string, python: boolean): pxtc.service.OpError | strin
 }
 
 
+
+describe("language service", () => {
+    const completionCases = getCompletionTestCases();
+    for (const testCase of completionCases) {
+        it("get completions " + testCase.fileName + testCase.position, () => {
+            return runCompletionTestCaseAsync(testCase);
+        });
+    }
+
+    const snippetCases = getSnippetTestCases();
+    console.dir({ snippetCases }) // TODO(dz)
+    for (const testCase of snippetCases) {
+        it(`snippet for ${testCase.qName} in ${testCase.fileName}`, () => {
+            return runSnippetTestCaseAsync(testCase);
+        });
+    }
+})
