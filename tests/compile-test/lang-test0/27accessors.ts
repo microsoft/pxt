@@ -244,7 +244,7 @@ namespace WithArgs {
     bar(31, new Baz())
     qux(41)
     qux(51)
-    bar(61, new Qux())
+    bar(61, new Qux()) // this currently fails on VM
     msg("WithArgs OK")
 }
 

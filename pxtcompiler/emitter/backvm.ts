@@ -39,7 +39,7 @@ namespace ts.pxtc {
             mapping.push(0)
 
         let s = `
-${info.id}_VT_start:
+${vtName(info)}_start:
         .short ${info.allfields.length * 8 + 8}  ; size in bytes
         .byte ${pxt.ValTypeObject}, ${pxt.VTABLE_MAGIC} ; magic
         .short ${mapping.length} ; entries in iface hashmap
@@ -63,17 +63,18 @@ ${info.id}_IfaceVT:
         let offsets: pxt.Map<number> = {}
         for (let e of info.itable) {
             offsets[e.idx + ""] = offset
-            descs += `  .short ${e.idx}, ${e.info} ; ${e.name}\n`
+            const desc = !e.proc ? 0 : e.proc.isGetter() ? 1 : 2
+            descs += `  .short ${e.idx}, ${desc} ; ${e.name}\n`
             descs += `  .word ${e.proc ? e.proc.vtLabel() + "@fn" : e.info}\n`
             offset += descSize
             if (e.setProc) {
-                descs += `  .short ${e.idx}, 0 ; set ${e.name}\n`
+                descs += `  .short ${e.idx}, 2 ; set ${e.name}\n`
                 descs += `  .word ${e.setProc.vtLabel()}@fn\n`
                 offset += descSize
             }
         }
 
-        descs += "  .word 0, 0 ; the end\n"
+        descs += "  .word 0, 0, 0, 0 ; the end\n"
         offset += descSize
 
         for (let i = 0; i < mapping.length; ++i) {
@@ -112,12 +113,20 @@ ${info.id}_IfaceVT:
         return `${t >>> 0}, ${(t / 0x100000000) | 0}`
     }
 
+    let additionalClassInfos: pxt.Map<ClassInfo> = {}
+    function vtName(info: ClassInfo) {
+        if (!info.classNo)
+            additionalClassInfos[info.id] = info
+        return info.id + "_VT"
+    }
+
     /* tslint:disable:no-trailing-whitespace */
     export function vmEmit(bin: Binary, opts: CompileOptions) {
         let vmsource = `; VM start
 ${hexfile.hexPrelude()}
 `
 
+        additionalClassInfos = {}
         const ctx: EmitCtx = {
             dblText: [],
             dbls: {},
@@ -180,9 +189,16 @@ _start_${name}:
         })
         vmsource += "_code_end:\n\n"
         vmsource += "_helpers_end:\n\n"
+
         bin.usedClassInfos.forEach(info => {
-            section(info.id + "_VT", SectionType.VTable, () => vtableToVM(info, opts, bin))
+            section(vtName(info), SectionType.VTable, () => vtableToVM(info, opts, bin))
         })
+        U.values(additionalClassInfos).forEach(info => {
+            info.itable = []
+            info.classNo = 0xfff0
+            section(vtName(info), SectionType.VTable, () => vtableToVM(info, opts, bin))
+        })
+        additionalClassInfos = {}
 
         let idx = 0
         section("ifaceMemberNames", SectionType.IfaceMemberNames, () =>
@@ -279,7 +295,7 @@ _start_${name}:
 
         emitAll()
         resText = ""
-        for (let t of alltmps) t.currUses = 0
+        for (let t of alltmps) t.reset()
         final = true
         U.assert(argDepth == 0)
         emitAll()
@@ -382,7 +398,7 @@ _start_${name}:
 
         function emitInstanceOf(info: ClassInfo, tp: string) {
             if (tp == "bool") {
-                write(`checkinst ${info.id}_VT`)
+                write(`checkinst ${vtName(info)}`)
             } else if (tp == "validate") {
                 U.oops()
             } else {
@@ -433,8 +449,10 @@ _start_${name}:
                     return
                 case EK.SharedRef:
                     let arg = e.args[0]
-                    U.assert(!!arg.currUses) // not first use
-                    U.assert(arg.currUses < arg.totalUses)
+                    if (!arg.currUses || arg.currUses >= arg.totalUses) {
+                        console.log(arg.sharingInfo())
+                        U.assert(false)
+                    }
                     arg.currUses++
                     let idx = currTmps.indexOf(arg)
                     if (idx < 0) {
@@ -479,7 +497,7 @@ _start_${name}:
                 case EK.FieldAccess:
                     let info = e.data as FieldAccessInfo
                     emitExpr(e.args[0])
-                    write(`ldfld ${info.idx}, ${info.classInfo.id}_VT`)
+                    write(`ldfld ${info.idx}, ${vtName(info.classInfo)}`)
                     break
                 case EK.Store:
                     return emitStore(e.args[0], e.args[1])
@@ -591,8 +609,13 @@ _start_${name}:
             let calledProcId = topExpr.data as ir.ProcId
             let calledProc = calledProcId.proc
 
-            if (calledProc && calledProc.inlineBody)
-                return emitExpr(calledProc.inlineSelf(topExpr.args))
+            if (calledProc && calledProc.inlineBody) {
+                const inlined = calledProc.inlineSelf(topExpr.args)
+                if (pxt.options.debug) {
+                    console.log("INLINE", topExpr.toString(), "->", inlined.toString())
+                }
+                return emitExpr(inlined)
+            }
 
             let numPush = 0
             const args = topExpr.args.slice()
@@ -648,7 +671,7 @@ _start_${name}:
                     emitExpr(trg.args[0])
                     push()
                     emitExpr(src)
-                    write(`stfld ${info.idx}, ${info.classInfo.id}_VT`)
+                    write(`stfld ${info.idx}, ${vtName(info.classInfo)}`)
                     argDepth--
                     break;
                 default: oops();
