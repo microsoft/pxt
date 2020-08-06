@@ -47,6 +47,7 @@ namespace pxt.blocks {
                 for (let j = 0; j < diff; j++) {
                     const arg = handlerArgs[actuallyVisible + j];
                     i.insertFieldAt(i.fieldRow.length - 1, new Blockly.FieldVariable(arg.name), "HANDLER_" + arg.name);
+                    (b as Blockly.BlockSvg).initSvg(); // call initSvg on block to initialize new fields
                 }
             }
             else {
