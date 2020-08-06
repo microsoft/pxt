@@ -1662,7 +1662,7 @@ background-image: url(${config.backgroundImage});
         extrasitesarea.value = (config.extraSites || []).join('\n');
         extrasitesarea.onchange = function (e) {
             config.extraSites = (extrasitesarea.value || "").split('\n')
-                .filter(line => /^https:\/\//.test(line))
+                .filter(line => /^https?:\/\//.test(line))
                 .map(line => line.trim());
             saveConfig(config);
             loadToolbox();
