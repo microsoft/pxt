@@ -11,6 +11,10 @@
       "unicode": "EDC6"
     },
     {
+      "name": "ArrowUpRightMirrored8",
+      "unicode": "EEEF"
+    },
+    {
       "name": "ClosedCaption",
       "unicode": "EF84"
     },
@@ -23,8 +27,8 @@
       "unicode": "EE6C"
     },
     {
-      "name": "ArrowUpRightMirrored8",
-      "unicode": "EEEF"
+      "name": "BrowserScreenShot",
+      "unicode": "EBED"
     },
     {
       "name": "Code",
@@ -51,16 +55,12 @@
       "unicode": "E8E5"
     },
     {
-      "name": "BrowserScreenShot",
-      "unicode": "EBED"
+      "name": "OpenPaneMirrored",
+      "unicode": "EA5B"
     },
     {
       "name": "Record2",
       "unicode": "EA3F"
-    },
-    {
-      "name": "OpenPaneMirrored",
-      "unicode": "EA5B"
     },
     {
       "name": "EditCreate",
@@ -79,16 +79,16 @@
       "unicode": "F1D4"
     },
     {
+      "name": "RectangleShape",
+      "unicode": "F1A9"
+    },
+    {
       "name": "FullView",
       "unicode": "F1A2"
     },
     {
       "name": "CircleShape",
       "unicode": "F1A5"
-    },
-    {
-      "name": "RectangleShape",
-      "unicode": "F1A9"
     },
     {
       "name": "ImagePixel",
@@ -99,12 +99,24 @@
       "unicode": "F2BD"
     },
     {
-      "name": "Highlight",
-      "unicode": "E7E6"
+      "name": "Reset",
+      "unicode": "E423"
     },
     {
       "name": "Contact",
       "unicode": "E77B"
+    },
+    {
+      "name": "Highlight",
+      "unicode": "E7E6"
+    },
+    {
+      "name": "Stop",
+      "unicode": "E71A"
+    },
+    {
+      "name": "Video",
+      "unicode": "E714"
     },
     {
       "name": "ChevronDown",
@@ -123,24 +135,16 @@
       "unicode": "E713"
     },
     {
-      "name": "Video",
-      "unicode": "E714"
-    },
-    {
-      "name": "Stop",
-      "unicode": "E71A"
-    },
-    {
-      "name": "Remove",
-      "unicode": "E738"
-    },
-    {
       "name": "EraseTool",
       "unicode": "E75C"
     },
     {
       "name": "Save",
       "unicode": "E74E"
+    },
+    {
+      "name": "Remove",
+      "unicode": "E738"
     },
     {
       "name": "WhiteBoardApp32",

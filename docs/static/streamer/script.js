@@ -155,6 +155,18 @@ function onYouTubeIframeAPIReady() {
         else
             hideSettings();
     }
+    function defaultConfig() {
+        const cfg = {
+            editor: "microbit",
+            multiEditor: false,
+            faceCamLabel: "",
+            hardwareCamLabel: "",
+            emojis: "😄🤔😭👀",
+            micDelay: 300,
+            title: "STARTING SOON"
+        };
+        return cfg;
+    }
     function readConfig() {
         try {
             const cfg = JSON.parse(localStorage["streamer.config"]);
@@ -165,15 +177,7 @@ function onYouTubeIframeAPIReady() {
         catch (e) {
             console.log(e);
         }
-        const cfg = {
-            editor: "microbit",
-            multiEditor: false,
-            faceCamLabel: "",
-            hardwareCamLabel: "",
-            emojis: "😄🤔😭👀",
-            micDelay: 300,
-            title: "STARTING SOON"
-        };
+        const cfg = defaultConfig();
         saveConfig(cfg);
         return cfg;
     }
@@ -1589,6 +1593,15 @@ background-image: url(${config.backgroundImage});
             tickEvent("streamer.settingsclose", undefined, { interactiveConsent: true });
             stopEvent(e);
             hideSettings();
+        };
+        const settingsreset = document.getElementById("settingsreset");
+        settingsreset.onclick = function (e) {
+            tickEvent("streamer.settingsclear", undefined, { interactiveConsent: true });
+            stopEvent(e);
+            if (confirm("This command will erase all your settings, are you sure?")) {
+                saveConfig(defaultConfig());
+                window.location.reload();
+            }
         };
         const importsettingsinput = document.getElementById("importsettingsinput");
         const importsettings = document.getElementById("importsettings");
