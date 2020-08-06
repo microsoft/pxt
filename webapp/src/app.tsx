@@ -1374,7 +1374,7 @@ export class ProjectView
                     this.setSideDoc(documentation, editorForFile == this.blocksEditor);
                 else {
                     const readme = main.lookupFile("this/README.md");
-                    const readmeContent = readme.content?.trim();
+                    const readmeContent = readme?.content?.trim();
                     // no auto-popup when editing packages locally
                     // ### @autoOpen false
                     if (!h.githubId && readmeContent && !/#{2,}\s+@autoOpen\s+false\s*/i.test(readmeContent))
