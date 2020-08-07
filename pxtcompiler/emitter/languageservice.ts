@@ -306,6 +306,28 @@ namespace ts.pxtc.service {
         const span: PosSpan = { startPos: wordStartPos, endPos: wordEndPos }
 
         const isPython = /\.py$/.test(fileName);
+
+        const r: CompletionInfo = {
+            entries: [],
+            isMemberCompletion: false,
+            isNewIdentifierLocation: true,
+            isTypeLocation: false,
+            namespace: [],
+        };
+
+        // get line text
+        let lastNl = src.lastIndexOf("\n", position - 1)
+        lastNl = Math.max(0, lastNl)
+        const lineText = src.substring(lastNl + 1, position)
+
+        // are we on a line comment, if so don't show completions
+        // NOTE: multi-line comments and string literals are handled
+        //  later as they require parsing
+        const lineCommentStr = isPython ? "#" : "//"
+        if (lineText.trim().startsWith(lineCommentStr)) {
+            return r;
+        }
+
         let dotIdx = -1
         let complPosition = -1
         for (let i = position - 1; i >= 0; --i) {
@@ -327,10 +349,8 @@ namespace ts.pxtc.service {
             complPosition = position
         }
 
-        let lastNl = src.lastIndexOf("\n", position)
-        lastNl = Math.max(0, lastNl)
-
         const isMemberCompletion = dotIdx !== -1
+        r.isMemberCompletion = isMemberCompletion
 
         const partialWord = isMemberCompletion ? src.slice(dotIdx + 1, wordEndPos) : src.slice(wordStartPos, wordEndPos)
 
@@ -341,13 +361,6 @@ namespace ts.pxtc.service {
             complPosition = dotIdx
 
         const entries: pxt.Map<CompletionSymbol> = {};
-        const r: CompletionInfo = {
-            entries: [],
-            isMemberCompletion: isMemberCompletion,
-            isNewIdentifierLocation: true,
-            isTypeLocation: false,
-            namespace: [],
-        };
 
         let opts = cloneCompileOpts(host.opts)
         opts.fileSystem[fileName] = src
@@ -411,6 +424,8 @@ namespace ts.pxtc.service {
         const tsAst = prog.getSourceFile(tsFilename)
         const tc = prog.getTypeChecker()
         let tsNode = findInnerMostNodeAtPosition(tsAst, tsPos);
+
+        let comments = ts.getLeadingCommentRangesOfNode(tsNode, tsAst)
 
         // determine the current namespace
         r.namespace = getCurrentNamespaces(tsNode)
