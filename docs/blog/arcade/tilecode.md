@@ -10,7 +10,7 @@
 
 ### From Board Games to Retro Video Games
 
-We draw inspiration from board games with pieces that can move from one square of the board to a nearby square. Board games like checkers (also known as draughts) have been played for thousands of years of human history.  Board games are affordable, and their rules are generally simple to understand, but the game play can be very involving and rewarding. Over time, new games have been created by modifying the game rules of existing board games. 
+We draw inspiration from board games with pieces that can move from one square of the board to a nearby square. Board games like checkers (also known as draughts) have been played for thousands of years of human history.  Board games are affordable, and their rules are generally simple to understand, but the game play can be very involving and rewarding. Over time, new games have been created by modifying the game rules of existing board games.
 
 ![checkers and video games](/static/blog/arcade/tilecode/checkersVideoGames.GIF)
 
@@ -37,7 +37,7 @@ The When section visually describes a pattern/predicate over the 3x3 local neigh
 
 ![When-Do Rule](/static/blog/arcade/tilecode/helloMotionGrass.PNG)
 
-You can read the above rule as: 
+You can read the above rule as:
 -	**when** the user presses the right-dpad button
 -	**and** there is a player sprite on the tile map
 -	**and** there is grass on the tile to the right of the player
@@ -45,10 +45,18 @@ You can read the above rule as:
 
 Today, many beginner game creation environments use block-based programming that emphasizes the **structured control-flow** constructs of modern programming languages. In contrast, TileCode uses **cellular automata** as its basic programming model, in which parallel pattern matching (against the tile map) is the main focus, extended to work with movable sprites, as well as fixed tiles. TileCode encourages the user to explore the relationship between the data on the tile map and how the rules fire based on the patterns present in the tile map. 
 
-## Opportunities for Creativity and Personal Expression 
+## Opportunities for Creativity and Personal Expression
+TileCode presents a unique opportunity for youth to develop their own pixel art for the tiles and sprites. It also engages users in new ways of thinking about game world design and the ways of creating different maps for different logic and levels of games or interactive stories. In future iterations of the platform we aim to provide users to share their art, games and tile worlds they create and encourage further opportunites for collaborative learning and play.
+
+(image of boxels here)
+
+## Design with and for children
+We are currently running a series of co-design workshops with families in order to better understand how children and parents make sense of video-games mechanics and what are the most intuitive strategies for them to go about creating their own video-games or to modify existing games. These workshops inform our future design of TileCode and its new features which build directly on childrens intuitive models of video-games logic.
+
+(image of kids video game timeline here)
 
 ## Learn More About TileCode
 
 Click on the two images below to watch a 30 second video (left) and a 5 minute video (right) about TileCode:
-  
+
 [![short video](/static/blog/arcade/tilecode/youtube1.PNG)](https://www.youtube.com/watch?v=3FNAsZw13Ro){:target="_blank"} [![long video](/static/blog/arcade/tilecode/youtube2.PNG)](https://www.youtube.com/watch?v=ZUZNi3dbtLI){:target="_blank"} 
