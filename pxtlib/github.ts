@@ -914,7 +914,10 @@ namespace pxt.github {
     // parse https://github.com/[company]/[project](/filepath)(#tag)
     export function parseRepoId(repo: string): ParsedRepo {
         if (!repo) return undefined;
+        // clean out whitespaces
         repo = repo.trim();
+        // trim trailing /
+        repo = repo.replace(/\/$/, '')
 
         // convert github pages into github repo
         const mgh = /^https:\/\/([^./#]+)\.github\.io\/([^/#]+)\/?$/i.exec(repo);
