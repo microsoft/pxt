@@ -48,13 +48,13 @@ You can read the above rule as:
 - **and** there is grass on the tile to the right of the player
 - **do** send the player sprite a move-right command
 
-TileCode encourages the user to explore the relationship between the data on the map and how the rules fire based on the patterns present in this map. From the TileCode rule editor (shown above), the user can play the game, return to the rule editor to change the rule and see its affect on game play. She can also visit the tile map (the initial program input) and make changes that would enable or disable the firing of a rule.
+TileCode encourages the user to explore the relationship between the data on the map and how the rules fire based on the patterns present in this map. From the TileCode rule editor (shown above), the user can play the game, return to the rule editor to change the rule and see its effect on game play. She can also visit the tile map (the initial program input) and make changes that would enable or disable the firing of a rule.
 
 ### Opportunities for Creativity and Personal Expression
 
 > "What an individual can learn, and how he learns it, depends on what models he has available.” - Seymour Papert, "Gears of my childhood".
 
-TileCode presents a unique opportunity for youth to develop their own pixel art for tile backgrounds and sprites. It also engages users in new ways of thinking about game world design and the ways of creating different maps for different logic and levels of games or interactive stories. We draw inspiration from teachers who have students use basic classroom materials to express and refine their game designs before they get in front of a computer:
+TileCode presents a unique opportunity for youth to develop their own pixel art for tile backgrounds and sprites. It also engages users in new ways of thinking about game world design and the ways of creating different maps for different logic and levels of games. We draw inspiration from teachers who have students use basic classroom materials to express and refine their game designs before they get in front of a computer:
 
 ![Children drawing a game timeline](/static/blog/arcade/tilecode/tilecode_kids_gamedesign.jpg) 
 
