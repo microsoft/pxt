@@ -39,23 +39,27 @@ The When section visually describes a pattern/predicate over the 3x3 local neigh
 ![When-Do Rule](/static/blog/arcade/tilecode/helloMotionGrass.PNG)
 
 You can read the above rule as:
--	**when** the user presses the right-dpad button
--	**and** there is a player sprite on the tile map
--	**and** there is grass on the tile to the right of the player
--	**do** send the player sprite a move-right command
+- **when** the user presses the right-dpad button
+- **and** there is a player sprite on the tile map
+- **and** there is grass on the tile to the right of the player
+- **do** send the player sprite a move-right command
+
+### Cellular Automata
 
 Today, many beginner game creation environments use block-based programming that emphasizes the **structured control-flow** constructs of modern programming languages. In contrast, TileCode uses **cellular automata** as its basic programming model, in which parallel pattern matching (against the tile map) is the main focus, extended to work with movable sprites, as well as fixed tiles. TileCode encourages the user to explore the relationship between the data on the tile map and how the rules fire based on the patterns present in the tile map. 
 
-## Opportunities for Creativity and Personal Expression
+### Opportunities for Creativity and Personal Expression
+
 TileCode presents a unique opportunity for youth to develop their own pixel art for the tiles and sprites. It also engages users in new ways of thinking about game world design and the ways of creating different maps for different logic and levels of games or interactive stories. In future iterations of the platform we aim to provide users to share their art, games and tile worlds they create and encourage further opportunites for collaborative learning and play.
 
 (image of boxels here)
 
-## Design with and for children
-We are currently running a series of co-design workshops with families in order to better understand how children and parents make sense of video-games mechanics and what are the most intuitive strategies for them to go about creating their own video-games or to modify existing games. These workshops inform our future design of TileCode and its new features which build directly on childrens intuitive models of video-games logic.
+### Design With And For Children
+
+We are currently running a series of co-design workshops with families in order to better understand how children and parents make sense of video game mechanics and what are the most intuitive strategies for them to go about creating their own video games or to modify existing games. These workshops will inform our future design of TileCode and its new features which build directly on childrens intuitive models of video game mechanics.
 
 (image of kids video game timeline here)
 
-## Learn More About TileCode
+### Learn More About TileCode
 
 Visit the [TileCode Home Page](https://microsoft.github.io/tilecode) to learn more about TileCode, how to install the TileCode UF2 file on a MakeCode Arcade Device, and use the MakeCode Arcade simulator in the web browser.
