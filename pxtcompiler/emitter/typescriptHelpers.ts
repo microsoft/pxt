@@ -1,13 +1,5 @@
 namespace ts.pxtc {
 
-    export function isInComment(tsNode: Node): boolean {
-        const pred = (n: Node) => {
-            // if (
-        }
-        // TODO(dz)
-        return false
-    }
-
     export function getParentCallExpression(tsNode: Node): ts.CallExpression | undefined {
         const pred = (n: Node) => {
             if (ts.isCallExpression(n))
