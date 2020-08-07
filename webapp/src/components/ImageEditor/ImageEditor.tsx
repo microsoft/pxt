@@ -84,7 +84,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                     <TopBar singleFrame={singleFrame} />
                     <div className="image-editor-content">
                         <SideBar />
-                        <ImageCanvas />
+                        <ImageCanvas suppressShortcuts={editingTile} />
                         {isAnimationEditor && !singleFrame ? <Timeline /> : undefined}
                     </div>
                     <BottomBar singleFrame={singleFrame} onDoneClick={this.onDoneClick} />

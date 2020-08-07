@@ -32,6 +32,8 @@ export interface ImageCanvasProps {
     tilemapState?: TilemapState;
     imageState?: pxt.sprite.ImageState;
     prevFrame?: pxt.sprite.ImageState;
+
+    suppressShortcuts: boolean;
 }
 
 /**
@@ -839,7 +841,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
     protected shouldHandleCanvasShortcut() {
         // canvas shortcuts (select all; delete) should only be handled if the focus is not within a focusable element
-        return document.activeElement === document.body || !document.activeElement;
+        return !this.props.suppressShortcuts && document.activeElement === document.body || !document.activeElement;
     }
 
     protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();
