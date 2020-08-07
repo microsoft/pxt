@@ -58,11 +58,15 @@ Today, many beginner game creation environments use block-based programming that
 
 > "What an individual can learn, and how he learns it, depends on what models he has available.” - Seymour Papert, "Gears of my childhood".
 
-TileCode presents a unique opportunity for youth to develop their own pixel art for tile backgrounds and sprites. It also engages users in new ways of thinking about game world design and the ways of creating different maps for different logic and levels of games or interactive stories. In future iterations of the platform we aim to provide users to share their art, games and tile worlds they create and encourage further opportunites for collaborative learning and play.
+TileCode presents a unique opportunity for youth to develop their own pixel art for tile backgrounds and sprites. It also engages users in new ways of thinking about game world design and the ways of creating different maps for different logic and levels of games or interactive stories. We draw inspiration from teachers who have students use basic classroom materials to express and refine their game designs before they get in front of a computer:
 
-We are currently running a series of co-design workshops with families in order to better understand how children and parents make sense of video game mechanics and what are the most intuitive strategies for them to go about creating their own video games or to modify existing games. These workshops will inform our future design of TileCode and its new features which build directly on childrens intuitive models of video game mechanics.
+![Children drawing a game timeline](/static/blog/arcade/tilecode/tilecode_kids_gamedesign.jpg) 
 
-![Children drawing a game timeline](/static/blog/arcade/tilecode/tilecode_kids_gamedesign.jpg)
+Photo source: https://globalnews.ca/news/2901130/vancouver-video-game-creators-teaching-kids-to-be-critical-thinkers/
+
+We are currently running a series of co-design workshops with families in order to better understand how children and parents make sense of video game mechanics and what are the most intuitive strategies for them to go about creating their own video games or to modify existing games. 
+
+These workshops will inform our future design of TileCode and its new features which build directly on childrens intuitive models of video game mechanics. In future version of the TileCode app, we also aim to provide users to share their art, games and tile worlds they create and encourage further opportunites for collaborative learning and play.
 
 ## Powerful Computational Ideas on Low-powered Gaming Handhelds
 
