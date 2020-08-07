@@ -640,11 +640,12 @@ namespace pxt.sprite {
 
     export function imageLiteralFromDimensions(width: number, height: number, color: number, fileType: "typescript" | "python"): string {
         let res = imageLiteralPrologue(fileType);
+        const paddingBetweenPixels = (width * height > 300) ? "" : " ";
 
         for (let r = 0; r < height; r++) {
             res += "\n"
             for (let c = 0; c < width; c++) {
-                res += hexChars[color] + " ";
+                res += hexChars[color] + paddingBetweenPixels;
             }
         }
 
@@ -658,10 +659,12 @@ namespace pxt.sprite {
         let res = imageLiteralPrologue(fileType);
 
         if (bitmap) {
+            const paddingBetweenPixels = (bitmap.width * bitmap.height > 300) ? "" : " ";
+
             for (let r = 0; r < bitmap.height; r++) {
                 res += "\n"
                 for (let c = 0; c < bitmap.width; c++) {
-                    res += hexChars[bitmap.get(c, r)] + " ";
+                    res += hexChars[bitmap.get(c, r)] + paddingBetweenPixels;
                 }
             }
         }
