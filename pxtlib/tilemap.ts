@@ -44,12 +44,11 @@ namespace pxt {
 
         protected nextID = 0;
 
-        constructor(protected pack: MainPackage) {
+        constructor() {
             this.state = {
                 revision: this.nextID++
             };
 
-            this.readTileSets(pack);
             this.undoStack = [];
             this.redoStack = [];
         }
@@ -320,7 +319,7 @@ namespace pxt {
             this.onChange();
         }
 
-        protected readTileSets(pack: MainPackage) {
+        loadPackage(pack: MainPackage) {
             const allPackages = pack.sortedDeps();
             this.extensionTileSets = [];
 
