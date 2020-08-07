@@ -64,6 +64,6 @@ We are currently running a series of co-design workshops with families in order 
 
 ![Children drawing a game timeline](/static/blog/arcade/tilecode/tilecode_kids_gamedesign.jpg)
 
-## Powerful Ideas on Low-powered Gaming Handhelds
+## Powerful Computational Ideas on Low-powered Gaming Handhelds
 
-TileCode demonstrates that battery-powered gaming handhelds need not confine their users in a ``cage of consumption''.  Motivated by the rich and long history of board games and their evolution by players themselves, TileCode points the way to a future of video game devices that invites players to become producers on the very same devices they use to play.
+TileCode demonstrates that battery-powered gaming handhelds need not confine their users in a ``cage of consumption''.  Motivated by the rich and long history of board games and their evolution by players themselves, TileCode points the way to a future of video game devices that invites players to become producers on the very same devices they use to play. We encourage you to explore [TileCode](https://microsoft.github.io/tilecode) today!
