@@ -294,7 +294,6 @@ namespace ts.pxtc.service {
     }
 
     export function getCompletions(v: OpArg) {
-        // TODO: break out into seperate file
         const { fileName, fileContent, position, wordStartPos, wordEndPos, runtime } = v
         let src: string = fileContent
         if (fileContent) {
@@ -424,8 +423,20 @@ namespace ts.pxtc.service {
         const tsAst = prog.getSourceFile(tsFilename)
         const tc = prog.getTypeChecker()
         let tsNode = findInnerMostNodeAtPosition(tsAst, tsPos);
+        const commentMap = pxtc.decompiler.buildCommentMap(tsAst);
 
-        let comments = ts.getLeadingCommentRangesOfNode(tsNode, tsAst)
+        // abort if we're in a comment
+        const inComment = commentMap.some(range => range.start <= position && position <= range.end)
+        if (inComment) {
+            return r;
+        }
+
+        // abort if we're in a string literal
+        const stringLiteralKinds = [SK.StringLiteral, SK.FirstTemplateToken, SK.NoSubstitutionTemplateLiteral];
+        const inLiteral = stringLiteralKinds.some(k => tsNode.kind === k)
+        if (inLiteral) {
+            return r;
+        }
 
         // determine the current namespace
         r.namespace = getCurrentNamespaces(tsNode)
