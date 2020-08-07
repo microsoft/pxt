@@ -2,7 +2,7 @@
 
 # TileCode
 
-## Design, Code and Play Games on MakeCode Arcade Devices
+## Design, Code, and Play Games on MakeCode Arcade Devices
 
 **Posted on August 10, 2020 by Thomas Ball and Stefania Druga**
 
@@ -26,7 +26,7 @@ We seek to reduce the gap between game mechanics and game programming so more pe
 
 ### TileCode: Design and Coding
 
-As shown below, TileCode has 8 eight game slots. For each game, TileCode allows users to select and edit sprites and tile backgrounds and to create a game level by editing a tile map:
+As shown below, TileCode has eight game slots. For each game, TileCode allows users to select and edit sprites and tile backgrounds and to create a game level by editing a tile map:
 
 ![TileCode screens](/static/blog/arcade/tilecode/tileCodeScreens.GIF)
 
@@ -49,6 +49,4 @@ Today, many beginner game creation environments use block-based programming that
 
 ## Learn More About TileCode
 
-Click on the two images below to watch a 30 second video (left) and a 5 minute video (right) about TileCode:
-  
-[![short video](/static/blog/arcade/tilecode/youtube1.PNG)](https://www.youtube.com/watch?v=3FNAsZw13Ro){:target="_blank"} [![long video](/static/blog/arcade/tilecode/youtube2.PNG)](https://www.youtube.com/watch?v=ZUZNi3dbtLI){:target="_blank"} 
+Visit the [TileCode Home Page](https://microsoft.github.io/tilecode) to learn more about TileCode, how to install the TileCode UF2 file on a MakeCode Arcade Device, and use the MakeCode Arcade simulator in the web browser.
