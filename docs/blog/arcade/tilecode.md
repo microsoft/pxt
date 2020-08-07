@@ -6,21 +6,21 @@
 
 **Posted on August 10, 2020 by Thomas Ball and Stefania Druga**
 
-[TileCode](https://microsoft.github.io/tilecode) is a novel game creation app that allows you to design, code, and play video games directly on low-cost [MakeCode Arcade gaming handhelds](https://arcade.makecode.com/hardware) as well as in the web browser using the MakeCode Arcade game simulator.
+[TileCode](https://microsoft.github.io/tilecode) is a novel game creation app that allows you to design, code, and play video games directly on low-cost [MakeCode Arcade gaming handhelds](https://arcade.makecode.com/hardware) as well as in the web browser using the [MakeCode Arcade game simulator](https://arcade.makecode.com).
 
 ### From Board Games to Retro Video Games
 
-We draw inspiration from board games with pieces that can move from one square of the board to a nearby square. Board games like checkers (also known as draughts) have been played for thousands of years of human history.  Board games are affordable, and their rules are generally simple to understand, but the game play can be very involving and rewarding. Over time, new games have been created by modifying the game rules of existing board games.
+We draw inspiration from board games with pieces that can move from one square of the board to a nearby square. Board games like checkers (also known as draughts) have been played for thousands of years of human history.  These games are affordable, and their rules are generally simple to understand, but the game play can be very involving and rewarding. Over time, new games have been created by modifying the game rules of existing board games.
 
 ![board games](/static/blog/arcade/tilecode/boardGames.GIF)
 
-In contrast, video games have been with us for just over half a century, yet constitute a multi-billion-dollar industry with billions of users.  Gaming devices are devices of consumption, while game production requires the use of separate computers, contributing to a digital divide. 
+In contrast, video games have been with us for just over half a century, yet constitute a multi-billion-dollar industry with billions of users.  Gaming devices are devices of consumption, while game production requires the use of separate computers, contributing to a digital divide.
 
 ![TileCode screens](/static/blog/arcade/tilecode/handhels.GIF)
 
 ### TileCode Vision
 
-TileCode leverages the concepts of board games (squares, pieces that move, and rules about legal moves) to bring forward computational ideas through the medium of video games based on cellular automata. This allows players to start with simple rules and make their own games and game worlds which can quickly evolve into more complex emergent combinations of rules based on a strong logical/semantic foundation. 
+TileCode leverages the concepts of board games (squares, pieces that move, and rules about legal moves) to bring forward computational ideas through the medium of video games based on cellular automata. This allows players to start with simple rules and make their own games and game worlds which can quickly evolve into more complex emergent combinations of rules based on a strong logical/semantic foundation. In this way, TileCode aims to enable children to be creators of video games and not passive consumers.  
 
 Users start with a *low floor* as they are able to simply play a game and change one rule or elements of the game world. Once familiar with the platform, players are provided with *wide walls* for creating many different types of games or interactive stories. Ultimately the platform presents opportunities for *high ceiling* learning activities allowing users to implement more challenging games such as Snake where the state of both sprites and tiles has to be accounted for.
 
@@ -33,13 +33,13 @@ We seek to reduce the gap between game mechanics and game programming so more pe
 
 ### TileCode: Design and Coding
 
-As shown below, TileCode has eight game slots. For each game, TileCode allows users to select and edit sprites and tile backgrounds and to create a game level by editing a tile map:
+As shown below, TileCode has eight game slots. For each game, TileCode allows users to select and edit game characters(sprites) and game background (tiles) and to create a game level by editing the game map:
 
 ![TileCode screens](/static/blog/arcade/tilecode/tileCodeScreens.GIF)
 
-Each sprite is centered on a tile and each tile displays a background image. A sprite can move in one of four directions (left, right, up, down) to an adjacent tile. 
+Each sprite is centered on a tile and each tile displays a background image. A sprite can move in one of four directions (left, right, up, down) to an nearby tile.
 
-Today, many beginner game creation environments use block-based programming that emphasizes the **structured control-flow** constructs of modern programming languages. In contrast, TileCode uses **cellular automata** as its basic programming model, in which parallel pattern matching (against the tile map) is the main focus, extended to work with movable sprites, as well as fixed tiles. 
+Today, many beginner game creation environments use block-based programming that emphasizes the **structured control-flow** constructs of modern programming languages. In contrast, TileCode uses **cellular automata** as its basic programming model, in which parallel pattern matching (against the tile map) is the main focus, extended to work with movable sprites, as well as fixed tiles.
 
 More precisely, a TileCode program is a set of rules, each of which is associated with a sprite. A rule takes the form of a ``When-Do'' pair, as shown below.
 The **When** section visually describes a pattern/predicate over the 3x3 local neighborhood around the central sprite (the player sprite, in this case) to be matched against the tile map.  The **Do** section contains commands that are sent to the identified sprite when the pattern matches.
@@ -52,7 +52,7 @@ You can read the above rule as:
 - **and** there is grass on the tile to the right of the player
 - **do** send the player sprite a move-right command
 
-TileCode encourages the user to explore the relationship between the data on the tile map and how the rules fire based on the patterns present in the tile map. From the TileCode rule editor (shown above), the user can play the game, return to the rule editor to change the rule and see its affect on game play. She can also visit the tile map (the initial program input) and make changes that would enable or disable the firing of a rule.
+TileCode encourages the user to explore the relationship between the data on the map and how the rules fire based on the patterns present in this map. From the TileCode rule editor (shown above), the user can play the game, return to the rule editor to change the rule and see its affect on game play. She can also visit the tile map (the initial program input) and make changes that would enable or disable the firing of a rule.
 
 ### Opportunities for Creativity and Personal Expression
 
