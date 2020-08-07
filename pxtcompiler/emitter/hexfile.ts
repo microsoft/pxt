@@ -192,8 +192,6 @@ namespace ts.pxtc {
                 return
             }
 
-            patchSegmentHex(hexlines)
-
             if (hexlines.length <= 2) {
                 const bytes = U.fromHex(hexlines[0])
                 if (bytes[2] <= 0x02 && bytes[3] == 0x60) {
@@ -225,6 +223,8 @@ namespace ts.pxtc {
                 checkFuns()
                 return
             }
+
+            patchSegmentHex(hexlines)
 
             let i = 0;
             let upperAddr = "0000"
