@@ -295,6 +295,8 @@ function runSnippetTestCaseAsync(testCase: SnippetTestCase): Promise<void> {
                 return;
             }
 
+            chai.assert(typeof result === "string", `Lang service returned non-string result: ${result}`)
+
             const match = util.compareBaselines(result, expectedSnippet, {
                 whitespaceSensitive: false
             })
@@ -357,7 +359,6 @@ describe("language service", () => {
     }
 
     const snippetCases = getSnippetTestCases();
-    console.dir({ snippetCases }) // TODO(dz)
     for (const testCase of snippetCases) {
         it(`snippet for ${testCase.qName} in ${testCase.fileName}`, () => {
             return runSnippetTestCaseAsync(testCase);
