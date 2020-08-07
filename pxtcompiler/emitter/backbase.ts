@@ -1183,7 +1183,7 @@ ${baseLabel}_nochk:
                 this.checkSubtype(classNo, ".fail", "r4")
 
             // on linux we use 32 bits for array size
-            const ldrSize = target.stackAlign || isBuffer ? "ldr" : "ldrh"
+            const ldrSize = isStackMachine() || target.runtimeIsARM || isBuffer ? "ldr" : "ldrh"
 
             this.write(`
                 asrs r1, r1, #1
