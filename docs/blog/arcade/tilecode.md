@@ -64,6 +64,6 @@ We are currently running a series of co-design workshops with families in order 
 
 ![Children drawing a game timeline](/static/blog/arcade/tilecode/tilecode_kids_gamedesign.jpg)
 
-### Learn More About TileCode
+## Powerful Ideas on Low-powered Gaming Handhelds
 
-Visit the [TileCode Home Page](https://microsoft.github.io/tilecode) to learn more about TileCode, how to install the TileCode UF2 file on a MakeCode Arcade Device, and use the MakeCode Arcade simulator in the web browser. 
+TileCode demonstrates that battery-powered gaming handhelds need not confine their users in a ``cage of consumption''.  Motivated by the rich and long history of board games and their evolution by players themselves, TileCode points the way to a future of video game devices that invites players to become producers on the very same devices they use to play.
