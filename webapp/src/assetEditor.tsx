@@ -5,6 +5,9 @@ import * as ReactDOM from "react-dom";
 
 import { ImageFieldEditor } from "./components/ImageFieldEditor";
 import { FieldEditorComponent } from "./blocklyFieldView";
+import { TilemapFieldEditor } from "./components/TilemapFieldEditor";
+import { setTelemetryFunction } from './components/ImageEditor/store/imageReducer';
+
 
 document.addEventListener("DOMContentLoaded", () => {
     init();
@@ -13,8 +16,12 @@ document.addEventListener("DOMContentLoaded", () => {
 function init() {
     const assetDiv = document.getElementById("asset-editor-field-div") as HTMLDivElement;
     ReactDOM.render(<AssetEditor />, assetDiv);
-    relabelDoneButtonToSave();
 }
+
+interface AssetEditorState {
+    viewType: "sprite" | "tilemap";
+}
+
 export interface Message {
     data: MessageData;
 }
@@ -22,15 +29,37 @@ export interface MessageData {
     type: string;
     message?: string;
     _fromVscode?: boolean;
+    name?: string;
 }
 
-export class AssetEditor extends React.Component {
+export class AssetEditor extends React.Component<{}, AssetEditorState> {
     private editor: FieldEditorComponent<any>;
+
+    constructor(props: {}) {
+        super(props);
+
+        let view: "sprite" | "tilemap";
+        view = "sprite";
+        const v = /view(?:[:=])([a-zA-Z]+)/i.exec(window.location.href)
+        if (v && v[1] === "tilemap") {
+            view = "tilemap";
+        }
+        this.state = {
+            viewType: view
+        };
+
+        setTelemetryFunction(tickAssetEditorEvent);
+    }
 
     handleMessage = (msg: Message)  => {
         if (msg.data._fromVscode) {
             if (msg.data.type === "initialize") {
-                this.editor.loadJres(msg.data.message);
+                if (this.state.viewType === "sprite") {
+                    this.editor.loadJRes(msg.data.message);
+                } else if (this.state.viewType === "tilemap") {
+                    // TODO: create a way to update tilemap from JSON
+                    this.editor.loadJRes(msg.data.message, msg.data.name);
+                }
             } else if (msg.data.type === "update") {
                 this.sendJres();
             }
@@ -39,11 +68,17 @@ export class AssetEditor extends React.Component {
 
     refHandler = (e: FieldEditorComponent<any>) => {
         this.editor = e;
+        if (this.state.viewType === "tilemap") {
+            const tmProject = new pxt.TilemapProject({});
+            const emptyTM = tmProject.blankTilemap(16);
+            this.editor.init(emptyTM, () => {});
+        }
     }
 
     componentDidMount() {
         window.addEventListener("message", this.handleMessage, null);
-        this.postMessage({type: "ready"});
+        this.postMessage({type: "ready", message: this.state.viewType});
+        tickAssetEditorEvent("asset-editor-shown");
     }
 
     postMessage(msgData: MessageData) {
@@ -61,18 +96,22 @@ export class AssetEditor extends React.Component {
     sendJres() {
         const updateMsg: MessageData = {
             type: "update",
-            message: this.editor.getJres(),
+            message: this.editor.getJRes(),
         }
         this.postMessage(updateMsg);
     }
 
     render() {
+        if (this.state.viewType === "tilemap") {
+            return <TilemapFieldEditor ref={ this.refHandler } doneButtonCallback={this.callbackOnDoneClick} />
+        }
         return <ImageFieldEditor ref={this.refHandler} singleFrame={true} doneButtonCallback={this.callbackOnDoneClick} />
     }
+
 }
 
-function relabelDoneButtonToSave() {
-    let button = document.getElementsByClassName('image-editor-confirm')[0] as HTMLDivElement;
-    button.innerText = "Save";
+function tickAssetEditorEvent(event: string) {
+    pxt.tickEvent("asset.editor", {
+        action: event
+    });
 }
-

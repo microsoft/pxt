@@ -38,6 +38,8 @@ export class Dropdown extends React.Component<DropdownProps, DropdownState> {
         const { options, selected } = this.props;
         const { open } = this.state;
 
+        if (!options) return <div></div>;
+
         const selectedOption = options[selected];
 
         return <div className="image-editor-dropdown-outer">

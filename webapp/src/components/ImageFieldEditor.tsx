@@ -117,7 +117,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         return null;
     }
 
-    getJres() {
+    getJRes() {
         if (this.ref && this.props.singleFrame) {
             const bitmapData = this.ref.getCurrentFrame().data();
             return pxt.sprite.base64EncodeBitmap(bitmapData);
@@ -235,7 +235,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         });
     }
 
-    loadJres(jres: string) {
+    loadJRes(jres: string) {
         if (jres) {
             try {
                 this.ref.setCurrentFrame(pxt.sprite.getBitmapFromJResURL(jres));

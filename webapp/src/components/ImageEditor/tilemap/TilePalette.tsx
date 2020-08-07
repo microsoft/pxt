@@ -238,7 +238,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     protected updateGalleryTiles() {
         const { page, category, galleryOpen } = this.props;
 
-        if (galleryOpen) {
+        if (this.categories && galleryOpen) {
             this.categoryTiles = this.categories[category].tiles;
         }
         else {
@@ -535,7 +535,7 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
         colors: state.colors,
         drawingMode: editor.drawingMode,
         gallery: editor.tileGallery,
-        galleryOpen: editor.tileGalleryOpen,
+        galleryOpen: editor.tileGallery ? editor.tileGalleryOpen : false,
         referencedTiles: editor.referencedTiles
     };
 }

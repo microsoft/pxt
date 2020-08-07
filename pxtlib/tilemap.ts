@@ -461,7 +461,7 @@ namespace pxt {
         const tiles: Tile[] = [];
 
         for (const key of Object.keys(allJRes)) {
-            const entry = allJRes[key];
+            const entry = (allJRes as Map<JRes>)[key];
 
             if (entry.tilemapTile) {
                 const tile: Tile = {
@@ -507,7 +507,7 @@ namespace pxt {
     function getTilemaps(allJRes: Map<JRes>): JRes[] {
         const res: JRes[] = [];
         for (const key of Object.keys(allJRes)) {
-            const entry = allJRes[key];
+            const entry = (allJRes as Map<JRes>)[key];
             if (entry.mimeType === TILEMAP_MIME_TYPE) {
                 res.push(entry);
             }
