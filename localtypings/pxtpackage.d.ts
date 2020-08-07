@@ -87,6 +87,7 @@ declare namespace pxt {
         firmwareUrl?: string; // link to documentation page about upgrading firmware
         disablesVariants?: string[]; // don't build these variants, when this extension is enabled
         utf8?: boolean; // force compilation with UTF8 enabled
+        disableTargetTemplateFiles?: boolean; // do not override target template files when commiting to github
     }
 
     interface PackageExtension {
