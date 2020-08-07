@@ -20,11 +20,11 @@ In contrast, video games have been with us for just over half a century, yet con
 
 ### TileCode Vision
 
-TileCode aims to enable children to be creators of video games and not just consumers. TileCode leverages the concepts of board games (squares, pieces that move, and rules about legal moves) to bring introduce computational concepts through the medium of video games. This allows players to start with simple rules and make their own games and game worlds which can then evolve into more complex sets of rules based on a strong logical/semantic foundation.
+TileCode aims to enable children to be creators of video games and not just consumers. TileCode leverages the concepts of board games (squares, pieces that move, and rules about legal moves) to introduce computational concepts through the medium of video games. 
 
-Users start with a *low floor* as they are able to simply play a game and change one rule or elements of the game world. Once familiar with the platform, players are provided with *wide walls* for creating many different types of games or interactive stories. Ultimately the platform presents opportunities for *high ceiling* learning activities allowing users to implement more challenging games.
+Users start with a *low floor* as they are able to simply play a game and change one rule or elements of the game world. Once familiar with the application, players are provided with *wide walls* for creating different types of games. Ultimately, TileCode presents opportunities for *high ceiling* learning activities allowing users to implement more challenging games.
 
-With TileCode, we enable the process of game creation to take place on gaming handhelds themselves, rather than tablets/laptops/desktops, using just the **four-way direction pad** and the **A and B buttons** common to most handhelds,
+TileCode enables the process of game creation to take place on gaming handhelds themselves, rather than tablets/laptops/desktops, using just the **four-way direction pad** and the **A and B buttons** common to most handhelds,
 as shown above. With TileCode, we’ve already created a variety of retro video games, including Snake, Bejeweled, Pac-Man, Boulder Dash, and Sokoban.
 
 ### TileCode: Design and Coding
