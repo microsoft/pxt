@@ -1,20 +1,9 @@
-// TODO(dz):
-// areas: snippets, completions, ?
-// ts ast and typechecker traversal
-// ts -> pxt
-// pxt -> ts
-
 namespace ts.pxtc.service {
     // these weights dictate the relative ordering of certain results in the completion
     const COMPLETION_KEYWORD_WEIGHT = 0;
     const COMPLETION_DEFAULT_WEIGHT = 1;
     const COMPLETION_IN_SCOPE_VAR_WEIGHT = 5;
     const COMPLETION_MATCHING_PARAM_TYPE_WEIGHT = 10;
-
-    // TODO(dz):
-    // interface 
-    // class
-    // function and return
 
     export function getCallSymbol(callExp: CallExpression): SymbolInfo {// pxt symbol
         const qName = callExp?.pxt?.callInfo?.qName

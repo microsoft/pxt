@@ -1021,9 +1021,6 @@ namespace ts.pxtc.service {
             return lastApiInfo.apis;
         },
         snippet: v => {
-            // TODO(dz):
-            // uses v.snippet
-            // uses v.runtime
             const o = v.snippet;
             if (!lastApiInfo) return undefined;
             const fn = lastApiInfo.apis.byQName[o.qName];
