@@ -358,6 +358,8 @@
 @errorListInnerHeight: (@errorListHeight - @errorListHeaderHeight);
 @errorListMessageHoverColor: rgba(0, 0, 0, 0.1);
 @errorListBorderColor: #e5e5e5;
-@errorListOdd: @homeScreenBackground;
-@errorListEven: darken(@errorListOdd, 3%);
-@errorListDebugSuggestionColor:rgb(52, 84, 209); // TODO: maybe change to display color based on editor
+@errorListEven: rgba(0, 0, 0, 0.03);
+@errorListDebugSuggestionColor: rgb(52, 84, 209); // TODO: maybe change to display color based on editor
+@errorListInvertedEven: rgba(255, 255, 255, 0.03);
+@errorListInvertedTextColor: white;
+@errorListInvertedMessageHoverColor: rgba(255, 255, 255, 0.1);
