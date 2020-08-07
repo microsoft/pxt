@@ -12,15 +12,16 @@
 
 We draw inspiration from board games with pieces that can move from one square of the board to a nearby square. Board games like checkers (also known as draughts) have been played for thousands of years of human history.  Board games are affordable, and their rules are generally simple to understand, but the game play can be very involving and rewarding. Over time, new games have been created by modifying the game rules of existing board games. 
 
-![checkers and video games](/static/blog/arcade/tilecode/checkersVideoGames.GIF)
+![board games](/static/blog/arcade/tilecode/boardGames.GIF)
 
 In contrast, video games have been with us for just over half a century, yet constitute a multi-billion-dollar industry with billions of users.  Gaming devices are devices of consumption, while game production requires the use of separate computers, contributing to a digital divide. 
 
-With TileCode, we enable the process of game creation to take place on gaming handhelds themselves, rather than tablets/laptops/desktops, using just the **four-way direction pad** and the **A and B buttons** common to most handhelds:
-
 ![TileCode screens](/static/blog/arcade/tilecode/handhels.GIF)
 
-As shown in the banner picture, we’ve already created a variety of retro video games in TileCode, including Snake, Bejeweled, Pac-Man, Boulder Dash, and Sokoban.
+### TileCode Vision
+
+With TileCode, we enable the process of game creation to take place on gaming handhelds themselves, rather than tablets/laptops/desktops, using just the **four-way direction pad** and the **A and B buttons** common to most handhelds,
+as shown above. With TileCode, we’ve already created a variety of retro video games in TileCode, including Snake, Bejeweled, Pac-Man, Boulder Dash, and Sokoban.
 
 We seek to reduce the gap between game mechanics and game programming so more people can participate in game creation. In particular, we seek to engage children in game programming and exploration of computing concepts through a game ontology that allows a range of games to be designed and coded via a simple and intuitive user interface and programming model.  
 
