@@ -5,8 +5,6 @@
 ## Design, Code, and Play Games on MakeCode Arcade Devices
 
 **Posted on August 10, 2020 by Thomas Ball and Stefania Druga**
-> "What an individual can learn, and how he learns it, depends on what models he has available.” - Seymour Papert, "Gears of my childhood".
-
 
 [TileCode](https://microsoft.github.io/tilecode) is a novel game creation app that allows you to design, code, and play video games directly on low-cost [MakeCode Arcade gaming handhelds](https://arcade.makecode.com/hardware) as well as in the web browser using the MakeCode Arcade game simulator.
 
@@ -20,12 +18,13 @@ In contrast, video games have been with us for just over half a century, yet con
 
 ![TileCode screens](/static/blog/arcade/tilecode/handhels.GIF)
 
-TileCode is aiming to bring back powerful computation ideas from old board games through the medium of video-games which is highly attractive for youth. It allows players to start with simple rules and make their own games and game worlds which can quickly evolve into more complex emergent combinations of logic. Users start with a low floor as they are able to simply play a game and change one rule or elements of the game world. Once familiar with the platform players are provided with wide walls for creating many different types of games or interactive stories. Ultimately the platform presents opportunities for high ceiling learning activities allowing users to implement more challenging games such as snake where the state of both sprites and tiles has to be accounted for.
+### TileCode Vision
+
+TileCode leverages the concepts of board games (squares, pieces that move, and rules about legal moves) to bring forward computational ideas through the medium of video games based on cellular automata. This allows players to start with simple rules and make their own games and game worlds which can quickly evolve into more complex emergent combinations of rules based on a strong logical/semantic foundation. 
+
+Users start with a *low floor* as they are able to simply play a game and change one rule or elements of the game world. Once familiar with the platform, players are provided with *wide walls* for creating many different types of games or interactive stories. Ultimately the platform presents opportunities for *high ceiling* learning activities allowing users to implement more challenging games such as Snake where the state of both sprites and tiles has to be accounted for.
 
 ![Design principles](/static/blog/arcade/tilecode/design_principles.png)
-
-
-### TileCode Vision
 
 With TileCode, we enable the process of game creation to take place on gaming handhelds themselves, rather than tablets/laptops/desktops, using just the **four-way direction pad** and the **A and B buttons** common to most handhelds,
 as shown above. With TileCode, we’ve already created a variety of retro video games in TileCode, including Snake, Bejeweled, Pac-Man, Boulder Dash, and Sokoban.
@@ -57,18 +56,14 @@ Today, many beginner game creation environments use block-based programming that
 
 ### Opportunities for Creativity and Personal Expression
 
-TileCode presents a unique opportunity for youth to develop their own pixel art for the tiles and sprites. It also engages users in new ways of thinking about game world design and the ways of creating different maps for different logic and levels of games or interactive stories. In future iterations of the platform we aim to provide users to share their art, games and tile worlds they create and encourage further opportunites for collaborative learning and play.
-![Children creating pixel art](/static/blog/arcade/tilecode/tilecode_bloxels.jpg)
+> "What an individual can learn, and how he learns it, depends on what models he has available.” - Seymour Papert, "Gears of my childhood".
 
-
-
-### Design With And For Children
+TileCode presents a unique opportunity for youth to develop their own pixel art for tile backgrounds and sprites. It also engages users in new ways of thinking about game world design and the ways of creating different maps for different logic and levels of games or interactive stories. In future iterations of the platform we aim to provide users to share their art, games and tile worlds they create and encourage further opportunites for collaborative learning and play.
 
 We are currently running a series of co-design workshops with families in order to better understand how children and parents make sense of video game mechanics and what are the most intuitive strategies for them to go about creating their own video games or to modify existing games. These workshops will inform our future design of TileCode and its new features which build directly on childrens intuitive models of video game mechanics.
 
 ![Children drawing a game timeline](/static/blog/arcade/tilecode/tilecode_kids_gamedesign.jpg)
 
-
 ### Learn More About TileCode
 
-Visit the [TileCode Home Page](https://microsoft.github.io/tilecode) to learn more about TileCode, how to install the TileCode UF2 file on a MakeCode Arcade Device, and use the MakeCode Arcade simulator in the web browser.
+Visit the [TileCode Home Page](https://microsoft.github.io/tilecode) to learn more about TileCode, how to install the TileCode UF2 file on a MakeCode Arcade Device, and use the MakeCode Arcade simulator in the web browser. 
