@@ -421,10 +421,12 @@ namespace ts.pxtc.service {
         }
 
         // abort if we're in a string literal
-        const stringLiteralKinds = [SK.StringLiteral, SK.FirstTemplateToken, SK.NoSubstitutionTemplateLiteral];
-        const inLiteral = stringLiteralKinds.some(k => tsNode.kind === k)
-        if (inLiteral) {
-            return r;
+        if (tsNode) {
+            const stringLiteralKinds = [SK.StringLiteral, SK.FirstTemplateToken, SK.NoSubstitutionTemplateLiteral];
+            const inLiteral = stringLiteralKinds.some(k => tsNode.kind === k)
+            if (inLiteral) {
+                return r;
+            }
         }
 
         // determine the current namespace
