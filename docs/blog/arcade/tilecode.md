@@ -4,15 +4,15 @@
 
 **Posted on August 10, 2020 by Thomas Ball and Stefania Druga**
 
-[TileCode](https://microsoft.github.io/tilecode) is a novel game creation app that allows you to design, code, and play video games directly on low-cost [MakeCode Arcade gaming handhelds](https://arcade.makecode.com/hardware) as well as in the web browser.
+[TileCode](https://microsoft.github.io/tilecode) is a novel game creation app that allows you to design, code, and play video games directly on low-cost [MakeCode Arcade gaming handhelds](https://arcade.makecode.com/hardware), as well as in the web browser.
 
 ### From Board Games to Retro Video Games
 
-We draw inspiration from board games with pieces that can move from one square of the board to a nearby square. Board games like checkers (also known as draughts) have been played for thousands of years of human history.  These games are affordable, and their rules are generally simple to understand, but the game play can be very involving and rewarding. Over time, new games have been created by modifying the game rules of existing board games.
+We draw inspiration from board games with pieces that can move from one square of the board to a nearby square. Board games like checkers (also known as draughts) have been played for thousands of years of human history.  These games are **affordable**, and their rules are generally **simple** to understand, but the game play can be very **involving and rewarding**. Over time, new games have been created by **modifying** the game rules of existing board games.
 
 ![board games](/static/blog/arcade/tilecode/boardGames.GIF)
 
-In contrast, video games have been with us for just over half a century, yet constitute a multi-billion-dollar industry with billions of users.  Gaming devices are devices of consumption, while game production requires the use of separate computers, contributing to a digital divide.
+In contrast, video games have been with us for just over half a century and constitute a multi-billion-dollar industry with billions of users. Handheld gaming devices, such as shown below, are primarily devices of consumption, which also is the case for game consoles. Game production generally requires the use of separate compute, contributing to a digital divide.
 
 ![TileCode screens](/static/blog/arcade/tilecode/handhels.GIF)
 
