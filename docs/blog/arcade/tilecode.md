@@ -1,8 +1,6 @@
-![checkers and video games](/static/blog/arcade/tilecode/meowbit.GIF)
+![meowbit and video games](/static/blog/arcade/tilecode/meowbit.GIF)
 
-# TileCode
-
-## Design, Code, and Play Games on MakeCode Arcade Devices
+## TileCode: Design, Code, and Play Games on MakeCode Arcade Devices
 
 **Posted on August 10, 2020 by Thomas Ball and Stefania Druga**
 
@@ -66,4 +64,4 @@ These workshops will inform our future design of TileCode and its new features w
 
 ## Powerful Computational Ideas on Low-powered Gaming Handhelds
 
-TileCode demonstrates that battery-powered gaming handhelds need not confine their users in a ``cage of consumption''.  Motivated by the rich and long history of board games and their evolution by players themselves, TileCode points the way to a future of video game devices that invites players to become producers on the very same devices they use to play. We encourage you to explore [TileCode](https://microsoft.github.io/tilecode) today!
+TileCode demonstrates that battery-powered gaming handhelds need not confine their users in a "cage of consumption".  Motivated by the rich and long history of board games and their evolution by players themselves, TileCode points the way to a future of video game devices that invites players to become producers on the very same devices they use to play. We encourage you to explore [TileCode](https://microsoft.github.io/tilecode) today!
