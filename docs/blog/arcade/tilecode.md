@@ -25,11 +25,11 @@ as shown above. With TileCode, we’ve already created a variety of retro video 
 
 ### TileCode: Design and Coding
 
-As shown on the TileCode home screen (below-left), there are eight game slots available to program (on device, game assets are stored in non-volatile flash; in the browser, game assets are stored in browser local storage). For each game, TileCode allows users to select and edit game characters (sprites) and game background (tiles) and to create a game level by editing the game map, as shown in the three other screens:
+As shown on the TileCode home screen (below-left), there are eight game slots available to program (on an Arcade device, game assets are stored in the device's non-volatile flash memory; in the browser, game assets are stored in browser local storage). For each game, TileCode allows users to select and edit game characters (sprites) and game background (tiles) and to create a game level by editing the game map, as shown in the three other screens:
 
 ![TileCode screens](/static/blog/arcade/tilecode/tileCodeScreens.GIF)
 
-A TileCode program is a set of rules, each of which is associated with a sprite. A rule takes the form of a ``When-Do'' pair, as shown below on the left in the rule editor screen. The **When** section visually describes a pattern/predicate over the 3x3 local neighborhood around the central sprite (the player sprite, in this case) to be matched against the tile map.  The **Do** section contains commands that are sent to the identified sprite when the pattern matches.
+A TileCode program is a set of rules, each of which is associated with a sprite. A rule takes the form of a **When-Do** pair, as shown below on the left in the rule editor screen below (labelled "code"). The **When** section visually describes a pattern/predicate over the 3x3 local neighborhood around the central sprite (the player sprite, in this case) to be matched against the tile map.  The **Do** section contains commands that are sent to the identified sprite when the pattern matches.
 
 ![When-Do Rule](/static/blog/arcade/tilecode/editPlayMap.GIF)
 
@@ -39,7 +39,7 @@ You can read the above rule as:
 - **and** there is grass on the tile to the right of the player
 - **do** send the player sprite a move-right command
 
-TileCode encourages the user to explore the relationship between the data on the map and how the rules fire based on the patterns present in this map. From the TileCode rule editor (shown above), the user can play the game, return to the rule editor to change the rule and see its effect on game play. She can also visit the tile map (the initial program input) editor and make changes that would enable or disable the firing of a rule. (Many beginner game creation environments use block-based programming that emphasizes the **structured control-flow** constructs of modern programming languages. In contrast, TileCode uses **cellular automata** as its basic programming model, in which parallel pattern matching (against the tile map) is the main focus, extended to work with movable sprites, as well as fixed tiles.)
+TileCode encourages the user to explore the relationship between the data on the map and how the rules fire based on the patterns present in this map. From the TileCode rule editor (shown above), the user can play the game, return to the rule editor to change the rule and see its effect on game play. She can also visit the tile map (the initial program input) editor and make changes that would enable or disable the firing of a rule. (Many beginner game creation environments use block-based programming that emphasizes the **structured control-flow** constructs of modern programming languages. In contrast, TileCode uses **cellular automata** as its basic programming model, in which parallel pattern matching against the tile map is the main focus).
 
 ### Opportunities for Creativity and Personal Expression
 
@@ -51,9 +51,7 @@ TileCode presents a unique opportunity for youth to develop their own pixel art 
 
 Photo source: https://globalnews.ca/news/2901130/vancouver-video-game-creators-teaching-kids-to-be-critical-thinkers/
 
-We are currently running a series of co-design workshops with families in order to better understand how children and parents make sense of video game mechanics and what are the most intuitive strategies for them to go about creating their own video games or to modify existing games. 
-
-These workshops will inform our future design of TileCode and its new features which build directly on childrens intuitive models of video game mechanics. In future version of the TileCode app, we also aim to provide users to share their art, games and tile worlds they create and encourage further opportunites for collaborative learning and play.
+We are currently running a series of co-design workshops with families in order to better understand how children and parents make sense of video game mechanics and what are the most intuitive strategies for them to go about creating their own video games or to modify existing games. These workshops will inform our future design of TileCode and its new features which build directly on childrens intuitive models of video game mechanics. In future version of the TileCode app, we also aim to provide users to share their art, games and tile worlds they create and encourage further opportunites for collaborative learning and play.
 
 ## Powerful Computational Ideas on Low-powered Gaming Handhelds
 
