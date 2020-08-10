@@ -18,20 +18,16 @@ In contrast, video games have been with us for just over half a century, yet con
 
 ### TileCode Vision
 
-TileCode aims to enable children to be creators of video games and not just consumers. TileCode leverages the concepts of board games (squares, pieces that move, and rules about legal moves) to introduce computational concepts through the medium of video games. 
-
-Users start with a *low floor* as they are able to simply play a game and change one rule or elements of the game world. Once familiar with the application, players are provided with *wide walls* for creating different types of games. Ultimately, TileCode presents opportunities for *high ceiling* learning activities allowing users to implement more challenging games.
+TileCode aims to enable children to be creators of video games and not just consumers. TileCode leverages the concepts of board games (squares, pieces that move, and rules about legal moves) to introduce computational concepts through the medium of video games. Users start with a *low floor* as they are able to simply play a game and change one rule or elements of the game world. Once familiar with the application, players are provided with *wide walls* for creating different types of games. Ultimately, TileCode presents opportunities for *high ceiling* learning activities allowing users to implement more challenging games.
 
 TileCode enables the process of game creation to take place on gaming handhelds themselves, rather than tablets/laptops/desktops, using just the **four-way direction pad** and the **A and B buttons** common to most handhelds,
 as shown above. With TileCode, we’ve already created a variety of retro video games, including Snake, Bejeweled, Pac-Man, Boulder Dash, and Sokoban.
 
 ### TileCode: Design and Coding
 
-As shown on the TileCode home screen (below-left), there are eight game slots available to program (on device, game assets are stored in non-volatile flash; in the browser, game assets are stored in browser local storage). For each game, TileCode allows users to select and edit game characters (sprites) and game background (tiles) and to create a game level by editing the game map:
+As shown on the TileCode home screen (below-left), there are eight game slots available to program (on device, game assets are stored in non-volatile flash; in the browser, game assets are stored in browser local storage). For each game, TileCode allows users to select and edit game characters (sprites) and game background (tiles) and to create a game level by editing the game map, as shown in the three other screens:
 
 ![TileCode screens](/static/blog/arcade/tilecode/tileCodeScreens.GIF)
-
-Each sprite is centered on a tile and each tile displays a background image. A sprite can move in one of four directions (left, right, up, down) to an nearby tile.
 
 A TileCode program is a set of rules, each of which is associated with a sprite. A rule takes the form of a ``When-Do'' pair, as shown below on the left in the rule editor screen. The **When** section visually describes a pattern/predicate over the 3x3 local neighborhood around the central sprite (the player sprite, in this case) to be matched against the tile map.  The **Do** section contains commands that are sent to the identified sprite when the pattern matches.
 
