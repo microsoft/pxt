@@ -14,9 +14,13 @@ import * as dialogs from "./dialogs";
 import * as blocklyFieldView from "./blocklyFieldView";
 import { CreateFunctionDialog } from "./createFunction";
 import { initializeSnippetExtensions } from './snippetBuilder';
+import * as gamepads from "./gamepads";
 
 import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
+
+type ProjectView = pxt.editor.IProjectView;
+type GamepadDirection = 'up' | 'down' | 'left' | 'right' | 'in' | 'out';
 
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: Blockly.WorkspaceSvg;
@@ -28,6 +32,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     compilationResult: pxt.blocks.BlockCompilationResult;
     isFirstBlocklyLoad = true;
     functionsDialog: CreateFunctionDialog = null;
+    gamepadService: gamepads.Service;
+    gamepadScrollSpeeder = 0;
+    gamepadHighlightedBlock: Blockly.BlockSvg;
+    gamepadBlockDragger: Blockly.BlockDragger;
+    gamepadDragMoveCoord = gamepads.Vector2.Zero();
 
     showCategories: boolean = true;
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
@@ -36,6 +45,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected debuggerToolbox: DebuggerToolbox;
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
+
+    constructor(public parent: ProjectView) {
+        super(parent);
+        this.gamepadService = gamepads.getService();
+        this.gamepadService.onButtonPressed(this.gamepadButtonPressed.bind(this));
+        this.gamepadService.onButtonReleased(this.gamepadButtonReleased.bind(this));
+        this.gamepadService.onStickChanged(this.gamepadStickChanged.bind(this));
+        this.gamepadService.onTriggerChanged(this.gamepadTriggerChanged.bind(this));
+    }
 
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
         let map: pxt.Map<number> = {};
@@ -88,6 +106,222 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 e.stopPropagation();
             }
         }
+    }
+
+    gamepadButtonPressed(player: number, button: gamepads.ControllerButton) {
+        if (!this.isVisible || this.parent.state?.gamepadFocus !== pxt.editor.GamepadFocus.Editor) return;
+        if (button === gamepads.ControllerButton.Start) {
+            // Toggle between toolbox and editor
+            if (this.toolbox?.hasInputFocus()) {
+                this.hideFlyout();
+                this.editor.markFocused();
+            } else {
+                this.focusToolbox();
+            }
+        } else {
+            if (this.toolbox?.hasInputFocus()) {
+                // Pass event to toolbox
+                this.toolbox.gamepadButtonPressed(player, button);
+            } else {
+                if (button === gamepads.ControllerButton.RightStick) this.editor.zoomToFit();
+                else if (button === gamepads.ControllerButton.Up) this.gamepadNavigate('up');
+                else if (button === gamepads.ControllerButton.Down) this.gamepadNavigate('down');
+                else if (button === gamepads.ControllerButton.Left) this.gamepadNavigate('left');
+                else if (button === gamepads.ControllerButton.Right) this.gamepadNavigate('right');
+                else if (button === gamepads.ControllerButton.RightShoulder) this.gamepadNavigate('in');
+                else if (button === gamepads.ControllerButton.LeftShoulder) this.gamepadNavigate('out');
+                else if (button === gamepads.ControllerButton.A && this.gamepadHighlightedBlock) {
+                    if (!this.gamepadBlockDragger) this.gamepadStartDragging();
+                    else this.gamepadStopDragging();
+                } else if (button === gamepads.ControllerButton.X && this.gamepadHighlightedBlock && !this.gamepadBlockDragger) {
+                    this.gamepadHighlightedBlock.dispose(true, true);
+                    this.gamepadHighlightedBlock = null;
+                }
+            }
+        }
+    }
+
+    gamepadButtonReleased(player: number, button: gamepads.ControllerButton) {
+        if (!this.isVisible || this.parent.state?.gamepadFocus !== pxt.editor.GamepadFocus.Editor) return;
+        if (button === gamepads.ControllerButton.LeftStick) {
+            // Consume this event
+        } else {
+            if (this.toolbox?.hasInputFocus() || this.toolbox?.state.selectedItem) {
+                // Pass event to toolbox
+                // this.toolbox.gamepadButtonReleased(player, button);
+            } else {
+
+            }
+        }
+    }
+
+    gamepadScaledStep(baseSpeed: number, step: gamepads.Vector2): gamepads.Vector2 {
+        const scaledSpeed = baseSpeed / Math.min(1, Math.max(this.editor.scale * this.editor.scale, 0.2));
+        return new gamepads.Vector2(
+            scaledSpeed * step.x * step.x * -Math.sign(step.x),
+            scaledSpeed * step.y * step.y * -Math.sign(step.y));
+    }
+
+    gamepadStickChanged(player: number, stick: gamepads.ControllerStick, value: gamepads.Vector2) {
+        if (!this.isVisible || this.parent.state?.gamepadFocus !== pxt.editor.GamepadFocus.Editor) return;
+        if (this.toolbox?.hasInputFocus()) {
+            // Pass event to toolbox
+            // this.toolbox.gamepadStickChanged(player, trigger, value);
+        } else {
+            if (stick === gamepads.ControllerStick.Right) {
+                // Right stick: Scroll workspace
+                if (value.x === 0 && value.y === 0) {
+                    // Reset scroll speeder on zero-stick sample (zero-stick is sent as a final sample after stick input stops)
+                    this.gamepadScrollSpeeder = 0;
+                } else {
+                    // Gradually increase scroll speed
+                    this.gamepadScrollSpeeder = Math.min(this.gamepadScrollSpeeder + 1, 30);
+                }
+                const scrollSpeed = 8.0 + this.gamepadScrollSpeeder;
+                const step = this.gamepadScaledStep(scrollSpeed, value);
+                this.editor.scroll(this.editor.scrollX + step.x, this.editor.scrollY + step.y);
+            } else if (stick === gamepads.ControllerStick.Left && this.gamepadBlockDragger) {
+                this.gamepadDragMoveBy(value);
+            }
+        }
+    }
+
+    gamepadTriggerChanged(player: number, trigger: gamepads.ControllerTrigger, value: number) {
+        if (!this.isVisible || this.parent.state?.gamepadFocus !== pxt.editor.GamepadFocus.Editor) return;
+        if (this.toolbox?.hasInputFocus()) {
+            // Pass event to toolbox
+            // this.toolbox.gamepadTriggerChanged(player, trigger, value);
+        } else {
+            // Zoom workspace in/out
+            if (trigger === gamepads.ControllerTrigger.Right) {
+                this.zoomIn(value * value)
+            } else if (trigger === gamepads.ControllerTrigger.Left) {
+                this.zoomOut(value * value);
+            }
+        }
+    }
+
+    gamepadNavigate(direction: GamepadDirection) {
+        if (this.gamepadBlockDragger) {
+            switch (direction) {
+                case 'up': this.gamepadDragMoveBy(new gamepads.Vector2(0, -1)); break;
+                case 'down': this.gamepadDragMoveBy(new gamepads.Vector2(0, 1)); break;
+                case 'left': this.gamepadDragMoveBy(new gamepads.Vector2(-1, 0)); break;
+                case 'right': this.gamepadDragMoveBy(new gamepads.Vector2(1, 0)); break;
+            }
+            return;
+        }
+
+        if (!this.gamepadHighlightedBlock) {
+            const topLevelBlocks = this.editor.getTopBlocks(true) as Blockly.BlockSvg[];
+            if (topLevelBlocks.length) {
+                this.gamepadHighlightedBlock = topLevelBlocks[0];
+            }
+        } else {
+            if (direction === 'in') {
+                const childBlocks = (this.gamepadHighlightedBlock.getChildren(true) as Blockly.BlockSvg[])
+                    .filter((block) => !block.isShadow());
+                if (childBlocks.length) {
+                    this.gamepadHighlightedBlock = childBlocks[0];
+                } else {
+                    const childBlocks = (this.gamepadHighlightedBlock.getChildren(true) as Blockly.BlockSvg[])
+                        .filter((block) => block.isShadow());
+                    if (childBlocks.length) {
+                        this.gamepadHighlightedBlock = childBlocks[0];
+                    }
+                }
+            } else if (direction === 'out') {
+                const parentBLock = this.gamepadHighlightedBlock.getSurroundParent() as Blockly.BlockSvg;
+                if (parentBLock) {
+                    this.gamepadHighlightedBlock = parentBLock;
+                }
+            } else if (direction === 'down') {
+                const nextBlock = this.gamepadHighlightedBlock.getNextBlock() as Blockly.BlockSvg;
+                if (nextBlock) {
+                    this.gamepadHighlightedBlock = nextBlock;
+                } else {
+                    const topLevelBlocks = this.editor.getTopBlocks(false) as Blockly.BlockSvg[];
+                    const downBlocks = topLevelBlocks
+                        .filter((block) => block.id !== this.gamepadHighlightedBlock.id)
+                        .filter((block) => block.getRelativeToSurfaceXY().y >= this.gamepadHighlightedBlock.getRelativeToSurfaceXY().y)
+                        .sort((a, b) => Math.abs(this.gamepadHighlightedBlock.getRelativeToSurfaceXY().x - a.getRelativeToSurfaceXY().x) - Math.abs(this.gamepadHighlightedBlock.getRelativeToSurfaceXY().x - b.getRelativeToSurfaceXY().x));
+                    if (downBlocks.length) {
+                        this.gamepadHighlightedBlock = downBlocks[0];
+                    }
+                }
+            } else if (direction === 'up') {
+                const prevBlock = this.gamepadHighlightedBlock.getPreviousBlock() as Blockly.BlockSvg;
+                if (prevBlock) {
+                    this.gamepadHighlightedBlock = prevBlock;
+                } else {
+                    const topLevelBlocks = this.editor.getTopBlocks(false) as Blockly.BlockSvg[];
+                    const upBlocks = topLevelBlocks
+                        .filter((block) => block.id !== this.gamepadHighlightedBlock.id)
+                        .filter((block) => block.getRelativeToSurfaceXY().y < this.gamepadHighlightedBlock.getRelativeToSurfaceXY().y)
+                        .sort((a, b) => Math.abs(this.gamepadHighlightedBlock.getRelativeToSurfaceXY().x - a.getRelativeToSurfaceXY().x) - Math.abs(this.gamepadHighlightedBlock.getRelativeToSurfaceXY().x - b.getRelativeToSurfaceXY().x));
+                    if (upBlocks.length) {
+                        this.gamepadHighlightedBlock = upBlocks[0];
+                    }
+                }
+            } else if (direction === 'left') {
+                const topLevelBlocks = this.editor.getTopBlocks(false) as Blockly.BlockSvg[];
+                const leftBlocks = topLevelBlocks
+                    .filter((block) => block.id !== this.gamepadHighlightedBlock.id)
+                    .filter((block) => block.getRelativeToSurfaceXY().x < this.gamepadHighlightedBlock.getRelativeToSurfaceXY().x)
+                    .sort((a, b) => Math.abs(this.gamepadHighlightedBlock.getRelativeToSurfaceXY().y - a.getRelativeToSurfaceXY().y) - Math.abs(this.gamepadHighlightedBlock.getRelativeToSurfaceXY().y - b.getRelativeToSurfaceXY().y));
+                if (leftBlocks.length) {
+                    this.gamepadHighlightedBlock = leftBlocks[0];
+                }
+            } else if (direction === 'right') {
+                const topLevelBlocks = this.editor.getTopBlocks(false) as Blockly.BlockSvg[];
+                const rightBlocks = topLevelBlocks
+                    .filter((block) => block.id !== this.gamepadHighlightedBlock.id)
+                    .filter((block) => block.getRelativeToSurfaceXY().x >= this.gamepadHighlightedBlock.getRelativeToSurfaceXY().x)
+                    .sort((a, b) => Math.abs(this.gamepadHighlightedBlock.getRelativeToSurfaceXY().y - a.getRelativeToSurfaceXY().y) - Math.abs(this.gamepadHighlightedBlock.getRelativeToSurfaceXY().y - b.getRelativeToSurfaceXY().y));
+                if (rightBlocks.length) {
+                    this.gamepadHighlightedBlock = rightBlocks[0];
+                }
+            }
+        }
+        if (this.gamepadHighlightedBlock) {
+            this.editor.highlightBlock(this.gamepadHighlightedBlock.id);
+            this.editor.centerOnBlock(this.gamepadHighlightedBlock.id, true);
+        }
+    }
+
+    gamepadStartDragging() {
+        this.gamepadBlockDragger = new Blockly.BlockDragger(
+            this.gamepadHighlightedBlock,
+            this.editor,
+            this.gamepadHighlightedBlock.getRelativeToSurfaceXY());
+        this.gamepadBlockDragger.startBlockDrag(
+            this.gamepadHighlightedBlock.getRelativeToSurfaceXY(),
+            false);
+    }
+
+    gamepadDragMoveBy(delta: gamepads.Vector2) {
+        const event = new CustomEvent('gamepad-dragmove', {
+            bubbles: true,
+            cancelable: true
+        });
+        const step = this.gamepadScaledStep(4.0, gamepads.Vector2.Negate(delta));
+        this.gamepadDragMoveCoord = gamepads.Vector2.Add(this.gamepadDragMoveCoord, step);
+        this.gamepadBlockDragger.dragBlock(
+            event, new Blockly.utils.Coordinate(this.gamepadDragMoveCoord.x, this.gamepadDragMoveCoord.y));
+    }
+
+    gamepadStopDragging() {
+        const event = new CustomEvent('gamepad-enddrag', {
+            bubbles: true,
+            cancelable: true
+        });
+        this.gamepadBlockDragger.endBlockDrag(
+            event,
+            new Blockly.utils.Coordinate(this.gamepadDragMoveCoord.x, this.gamepadDragMoveCoord.y));
+        this.gamepadBlockDragger.dispose();
+        this.gamepadBlockDragger = null;
+        this.editor.highlightBlock(this.gamepadHighlightedBlock.id);
+
     }
 
     setVisible(v: boolean) {
@@ -617,14 +851,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.parent.forceUpdate();
     }
 
-    zoomIn() {
+    zoomIn(amount = 0.8) {
         if (!this.editor) return;
-        this.editor.zoomCenter(0.8);
+        this.editor.zoomCenter(amount);
     }
 
-    zoomOut() {
+    zoomOut(amount = 0.8) {
         if (!this.editor) return;
-        this.editor.zoomCenter(-0.8);
+        this.editor.zoomCenter(-amount);
     }
 
     setScale(scale: number) {
@@ -1143,6 +1377,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.editor.toolbox_.getFlyout().hide();
         }
         if (this.toolbox) this.toolbox.clear();
+    }
+
+    public focusEditor() {
+        this.editor.markFocused();
     }
 
     ///////////////////////////////////////////////////////////

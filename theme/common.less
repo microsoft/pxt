@@ -176,8 +176,16 @@ pre {
     margin-top: 0;
     margin-bottom: 0;
     width: 100%;
-    background-color: @simulatorBackground;
+    background-color: blue;
     z-index: @simulatorZIndex;
+}
+
+#filelist .gamepad-focus-badge {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    pointer-events: none;
+    object-fit: contain;
 }
 
 #filelist .simtoolbar {

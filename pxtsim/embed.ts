@@ -171,6 +171,16 @@ namespace pxsim {
         parts: (string | ArrayBuffer)[];
     }
 
+    export interface GamepadFocusMessage extends SimulatorMessage {
+        type: "gamepad-focus";
+        focus: boolean;
+    }
+
+    export interface GamepadEnabledMessage extends SimulatorMessage {
+        type: "gamepad-enabled";
+        enabled: boolean;
+    }
+
     export interface TutorialStepInfo {
         fullscreen?: boolean;
         contentMd?: string;

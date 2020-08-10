@@ -5,6 +5,7 @@ import * as data from "./data"
 import * as editor from "./toolboxeditor"
 import * as sui from "./sui"
 import * as core from "./core"
+import * as gamepads from "./gamepads";
 
 import Util = pxt.Util;
 
@@ -212,14 +213,8 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
             // Hide flyout
             this.closeFlyout();
-            if (parent.parent.state?.accessibleBlocks) {
-                Blockly.navigation.setState(Blockly.navigation.STATE_WS);
-            }
         } else {
             let handled = false;
-            if (parent.parent.state?.accessibleBlocks) {
-                Blockly.navigation.setState(Blockly.navigation.STATE_TOOLBOX);
-            }
             if (customClick) {
                 handled = customClick(parent);
                 if (handled) return;
@@ -252,6 +247,11 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         }
     }
 
+    hasInputFocus() {
+        if (!this.rootElement) return false;
+        return this.rootElement.contains(document.activeElement) || this.state.selectedItem;
+    }
+
     selectFirstItem() {
         if (this.items[0]) {
             this.setSelection(this.items[0], 0, true);
@@ -261,6 +261,20 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
     moveFocusToFlyout() {
         const { parent } = this.props;
         parent.moveFocusToFlyout();
+    }
+
+    gamepadButtonPressed(player: number, button: gamepads.ControllerButton) {
+        if (this.selectedItem) {
+            if (button === gamepads.ControllerButton.Up || button === gamepads.ControllerButton.LeftStickUp) this.selectedItem.navigate('up');
+            if (button === gamepads.ControllerButton.Left || button === gamepads.ControllerButton.LeftStickLeft) this.selectedItem.navigate('left');
+            if (button === gamepads.ControllerButton.Down || button === gamepads.ControllerButton.LeftStickDown) this.selectedItem.navigate('down');
+            if (button === gamepads.ControllerButton.Right || button === gamepads.ControllerButton.LeftStickRight) this.selectedItem.navigate('right');
+        }
+        if (button === gamepads.ControllerButton.B) {
+            const { parent } = this.props;
+            this.closeFlyout();
+            parent.focusEditor();
+        }
     }
 
     componentWillReceiveProps(props: ToolboxProps) {
@@ -552,7 +566,6 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
 
     handleKeyDown(e: React.KeyboardEvent<HTMLElement>) {
         const { toolbox } = this.props;
-        const isRtl = Util.isUserLanguageRtl();
 
         const accessibleBlocksEnabled = (Blockly.getMainWorkspace() as any).keyboardAccessibilityMode;
         const blocklyNavigationState = (Blockly.navigation as any).currentState_ as number;
@@ -566,13 +579,11 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         const charCode = core.keyCodeFromEvent(e);
         if (!accessibleBlocksEnabled || blocklyNavigationState != 1) {
             if (charCode == keyMap["DOWN"]) {
-                this.nextItem();
+                this.navigate('down');
             } else if (charCode == keyMap["UP"]) {
-                this.previousItem();
-            } else if ((charCode == keyMap["RIGHT"] && !isRtl)
-                || (charCode == keyMap["LEFT"] && isRtl)) {
-                // Focus inside flyout
-                toolbox.moveFocusToFlyout();
+                this.navigate('up');
+            } else if (charCode == keyMap["RIGHT"]) {
+                this.navigate('right');
             } else if (charCode == 27) { // ESCAPE
                 // Close the flyout
                 toolbox.closeFlyout();
@@ -588,11 +599,38 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
             } else if (!accessibleBlocksEnabled) {
                 toolbox.setSearch();
             }
-        } else if (accessibleBlocksEnabled && blocklyNavigationState == 1
-            && ((charCode == keyMap["LEFT"] && !isRtl)
-            || (charCode == keyMap["RIGHT"] && isRtl))) {
-            this.focusElement();
+        } else if (accessibleBlocksEnabled && blocklyNavigationState == 1 && charCode == keyMap["LEFT"]) {
+            this.navigate('left');
             e.stopPropagation();
+        }
+    }
+
+    navigate(dir: 'up' | 'down' | 'left' | 'right') {
+        const { toolbox } = this.props;
+        const isRtl = Util.isUserLanguageRtl();
+
+        // For RTL swap 'left' and 'right'
+        if (dir === 'left' && isRtl) dir = 'right';
+        else if (dir === 'right' && isRtl) dir = 'left';
+
+        switch (dir) {
+            case 'up': {
+                this.previousItem();
+                break;
+            }
+            case 'down': {
+                this.nextItem();
+                break;
+            }
+            case 'left': {
+                this.focusElement();
+                break;
+            }
+            case 'right': {
+                // Focus inside flyout
+                toolbox.moveFocusToFlyout();
+                break;
+            }
         }
     }
 

@@ -1216,6 +1216,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.parent.setState({ hideEditorFloats: false });
     }
 
+    public focusEditor() {
+        this.editor.focus();
+    }
+
     updateToolbox() {
         let appTheme = pxt.appTarget.appTheme;
         if (!appTheme.monacoToolbox || pxt.shell.isReadOnly() || !this.editor) return;

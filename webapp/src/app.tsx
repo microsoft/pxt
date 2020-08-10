@@ -53,6 +53,8 @@ import * as draganddrop from "./draganddrop";
 import * as notification from "./notification";
 import * as electron from "./electron";
 import * as blocklyFieldView from "./blocklyFieldView";
+import * as gamepads from "./gamepads";
+import { GamepadFocusBadge } from "./gamepadFocusBadge";
 
 type IAppProps = pxt.editor.IAppProps;
 type IAppState = pxt.editor.IAppState;
@@ -115,6 +117,7 @@ export class ProjectView
     chooseHwDialog: projects.ChooseHwDialog;
     prevEditorId: string;
     screenshotHandlers: ((msg: pxt.editor.ScreenshotData) => void)[] = [];
+    gamepadService: gamepads.Service;
 
     private lastChangeTime: number;
     private reload: boolean;
@@ -146,7 +149,10 @@ export class ProjectView
             collapseEditorTools: simcfg.headless,
             highContrast: isHighContrast,
             simState: pxt.editor.SimState.Stopped,
-            autoRun: this.autoRunOnStart()
+            autoRun: this.autoRunOnStart(),
+            gamepadFocus: pxt.editor.GamepadFocus.Simulator,
+            gamepadActive: false,
+            gamepadEnabled: document.hasFocus() // Not perfect
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -166,6 +172,60 @@ export class ProjectView
 
         // add user hint IDs and callback to hint manager
         this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
+
+        // Setup gamepad input
+        this.gamepadService = gamepads.getService();
+        this.gamepadService.onButtonPressed(this.handleGamepadButtonPressed.bind(this));
+        this.gamepadService.onStatusChanged(this.handleGamepadsStatusChanged.bind(this));
+
+        // Only read gamepads when window is in foreground.
+        window.addEventListener('focus', () => {
+            this.setState({
+                gamepadEnabled: true
+            });
+        });
+        window.addEventListener('blur', () => {
+            this.setState({
+                gamepadEnabled: false
+            });
+        });
+    }
+
+    private handleGamepadButtonPressed(player: number, button: gamepads.ControllerButton) {
+        if (button === gamepads.ControllerButton.Back) {
+            this.cycleGamepadFocus();
+        }
+    }
+
+    private handleGamepadsStatusChanged(active: boolean) {
+        this.setState({
+            gamepadActive: active
+        });
+    }
+
+    private cycleGamepadFocus() {
+        let gamepadFocus = this.state.gamepadFocus + 1;
+        gamepadFocus %= pxt.editor.GamepadFocus.COUNT;
+        this.setState({
+            gamepadFocus
+        });
+    }
+
+    private shouldReadGamepads(gamepadFocus: pxt.editor.GamepadFocus): boolean {
+        return this.state.gamepadActive && this.state.active && (this.state.gamepadFocus === gamepadFocus);
+    }
+
+    private updateSimulatorGamepadStatus() {
+        // Let the simulator know if it should read gamepads.
+        simulator.driver.postMessage({
+            type: 'gamepad-focus',
+            focus: this.shouldReadGamepads(pxt.editor.GamepadFocus.Simulator)
+        } as pxsim.GamepadFocusMessage);
+        // Let the simulator know if it should read gamepads.
+        simulator.driver.postMessage({
+            type: 'gamepad-enabled',
+            enabled: this.state.gamepadEnabled
+        } as pxsim.GamepadEnabledMessage);
     }
 
     private autoRunOnStart(): boolean {
@@ -331,6 +391,9 @@ export class ProjectView
         this.editor.domUpdate();
         simulator.setState(this.state.header ? this.state.header.editor : '', this.state.tutorialOptions && !!this.state.tutorialOptions.tutorial)
         this.editor.resize();
+
+        this.updateSimulatorGamepadStatus();
+        gamepads.setEnabled(this.state.gamepadEnabled);
 
         let p = Promise.resolve();
         if (this.editor && this.editor.isReady) {
@@ -3827,6 +3890,11 @@ export class ProjectView
                 </div>}
                 <div id="simulator" className="simulator">
                     <div id="filelist" className="ui items">
+                        <GamepadFocusBadge
+                            marginFix="-1em -2em"
+                            zIndex={1000}
+                            opacity={(this.state.gamepadEnabled ? 1.0 : 0.5)}
+                            visible={this.shouldReadGamepads(pxt.editor.GamepadFocus.Simulator)} />
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0}>
                         </div>
                         <simtoolbar.SimulatorToolbar
@@ -3849,7 +3917,12 @@ export class ProjectView
                     </div>
                 </div>
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
-                    {showCollapseButton && <sui.Button id='computertogglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
+                    <GamepadFocusBadge
+                        marginFix="0em 0em"
+                        zIndex={1000}
+                        opacity={(this.state.gamepadEnabled ? 1.0 : 0.5)}
+                        visible={this.shouldReadGamepads(pxt.editor.GamepadFocus.Editor)} />
+                {showCollapseButton && <sui.Button id='computertogglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
                     {this.allEditors.map(e => e.displayOuter(expandedStyle))}
                 </div>
                 {inHome ? <div id="homescreen" className="full-abs">

@@ -98,5 +98,11 @@
         "title": "MakeCode pour STM32",
         "url": "https://makecode.st.com/",
         "unsupported": ["playground"]
+    },
+    "localhost5555": {
+        "name": "localhost",
+        "title": "MakeCode localhost",
+        "url": "http://localhost:5555/index.html#editor",
+        "unsupported": ["playground"]
     }
 }

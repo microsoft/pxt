@@ -42,6 +42,12 @@ namespace pxt.editor {
         Expanded = "errorListExpanded"
     }
 
+    export enum GamepadFocus {
+        Simulator = 0,
+        Editor = 1,
+        COUNT = 2
+    }
+
     export interface IAppProps { }
     export interface IAppState {
         active?: boolean; // is this tab visible at all
@@ -97,6 +103,13 @@ namespace pxt.editor {
         errorListState?: ErrorListState;
 
         screenshoting?: boolean;
+
+        // Where gamepad input will be handled
+        gamepadFocus?: GamepadFocus;
+        // Whether or not any gamepads are detected
+        gamepadActive?: boolean;
+        // Whether or not gamepad input should be ignored globally
+        gamepadEnabled?: boolean;
     }
 
     export interface EditorState {
