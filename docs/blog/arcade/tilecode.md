@@ -27,18 +27,15 @@ as shown above. With TileCode, we’ve already created a variety of retro video 
 
 ### TileCode: Design and Coding
 
-As shown below, TileCode has eight game slots. For each game, TileCode allows users to select and edit game characters(sprites) and game background (tiles) and to create a game level by editing the game map:
+As shown on the TileCode home screen (below-left), there are eight game slots available to program (on device, game assets are stored in non-volatile flash; in the browser, game assets are stored in browser local storage). For each game, TileCode allows users to select and edit game characters (sprites) and game background (tiles) and to create a game level by editing the game map:
 
 ![TileCode screens](/static/blog/arcade/tilecode/tileCodeScreens.GIF)
 
 Each sprite is centered on a tile and each tile displays a background image. A sprite can move in one of four directions (left, right, up, down) to an nearby tile.
 
-Today, many beginner game creation environments use block-based programming that emphasizes the **structured control-flow** constructs of modern programming languages. In contrast, TileCode uses **cellular automata** as its basic programming model, in which parallel pattern matching (against the tile map) is the main focus, extended to work with movable sprites, as well as fixed tiles.
+A TileCode program is a set of rules, each of which is associated with a sprite. A rule takes the form of a ``When-Do'' pair, as shown below on the left in the rule editor screen. The **When** section visually describes a pattern/predicate over the 3x3 local neighborhood around the central sprite (the player sprite, in this case) to be matched against the tile map.  The **Do** section contains commands that are sent to the identified sprite when the pattern matches.
 
-More precisely, a TileCode program is a set of rules, each of which is associated with a sprite. A rule takes the form of a ``When-Do'' pair, as shown below.
-The **When** section visually describes a pattern/predicate over the 3x3 local neighborhood around the central sprite (the player sprite, in this case) to be matched against the tile map.  The **Do** section contains commands that are sent to the identified sprite when the pattern matches.
-
-![When-Do Rule](/static/blog/arcade/tilecode/helloMotionGrass.PNG)
+![When-Do Rule](/static/blog/arcade/tilecode/editPlayMap.GIF)
 
 You can read the above rule as:
 - **when** the user presses the right-dpad button
@@ -46,7 +43,7 @@ You can read the above rule as:
 - **and** there is grass on the tile to the right of the player
 - **do** send the player sprite a move-right command
 
-TileCode encourages the user to explore the relationship between the data on the map and how the rules fire based on the patterns present in this map. From the TileCode rule editor (shown above), the user can play the game, return to the rule editor to change the rule and see its effect on game play. She can also visit the tile map (the initial program input) and make changes that would enable or disable the firing of a rule.
+TileCode encourages the user to explore the relationship between the data on the map and how the rules fire based on the patterns present in this map. From the TileCode rule editor (shown above), the user can play the game, return to the rule editor to change the rule and see its effect on game play. She can also visit the tile map (the initial program input) editor and make changes that would enable or disable the firing of a rule. (Many beginner game creation environments use block-based programming that emphasizes the **structured control-flow** constructs of modern programming languages. In contrast, TileCode uses **cellular automata** as its basic programming model, in which parallel pattern matching (against the tile map) is the main focus, extended to work with movable sprites, as well as fixed tiles.)
 
 ### Opportunities for Creativity and Personal Expression
 
