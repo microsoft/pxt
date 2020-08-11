@@ -33,11 +33,7 @@ A TileCode program is a set of rules, each of which is associated with a sprite.
 
 ![When-Do Rule](/static/blog/arcade/tilecode/editPlayMap.GIF)
 
-You can read the above rule as:
-- **When** the user presses the right-dpad button
-- **and** there is a player sprite on the tile map
-- **and** there is grass on the tile to the right of the player
-- **Do** send the player sprite a move-right command
+The rule above fires when the user presses the right-dpad button, and there is a player sprite on the tile map, and there is grass on the tile to the right of the player, sending the player sprite a move-right command.
 
 TileCode encourages the user to explore the relationship between the data on the map and how the rules fire based on the patterns present in this map. From the rule coding screen (shown above), the user can play the game, return to coding screen to change the rule and see its effect on game play. She can also visit the tile map (the initial program input) editor and make changes that would enable or disable the firing of a rule. (Many beginner game creation environments use block-based programming that emphasizes the **structured control-flow** constructs of modern programming languages. In contrast, TileCode uses **cellular automata** as its basic programming model, in which parallel pattern matching against the tile map is the main focus).
 
