@@ -731,33 +731,34 @@ namespace pxt {
                 res = this.config.files.slice(0);
             const fd = this.config.fileDependencies
             if (fd) {
-                const checkCond = (cond: string): boolean => {
-                    if (!cond) return true
-                    cond = cond.trim()
-                    if (!cond) return true
-                    if (cond[0] == "!")
-                        return !checkCond(cond.slice(1))
-                    const spl = cond.split(":")
-                    if (spl.length == 2) {
-                        switch (spl[0]) {
-                            case "target":
-                                return spl[1] == pxt.appTarget.id
-                            default:
-                                break
+                res = res.filter(fn => {
+                    const checkCond = (cond: string): boolean => {
+                        if (!cond) return true
+                        cond = cond.trim()
+                        if (!cond) return true
+                        if (cond[0] == "!")
+                            return !checkCond(cond.slice(1))
+                        const spl = cond.split(":")
+                        if (spl.length == 2) {
+                            switch (spl[0]) {
+                                case "target":
+                                    return spl[1] == pxt.appTarget.id
+                                default:
+                                    break
+                            }
+                        } else if (/^[\w-]+$/.test(cond)) {
+                            const dep = this.parent.resolveDep(cond)
+                            if (dep && !dep.cppOnly)
+                                return true
+                            return false
                         }
-                    } else if (/^[\w-]+$/.test(cond)) {
-                        const dep = this.parent.resolveDep(cond)
-                        if (dep && !dep.cppOnly)
-                            return true
+                        if (!Package.depWarnings[cond]) {
+                            Package.depWarnings[cond] = true
+                            pxt.log(`invalid dependency expression: ${cond} in ${this.id}/${fn}`)
+                        }
                         return false
                     }
-                    if (!Package.depWarnings[cond]) {
-                        Package.depWarnings[cond] = true
-                        pxt.log(`invalid dependency expression: ${cond} in ${this.id}/${fn}`)
-                    }
-                    return false
-                }
-                res = res.filter(fn => {
+
                     const cond = U.lookup(fd, fn)
                     const dysj = cond.split("||")
                     return dysj.some(d => d.split("&&").every(checkCond))
