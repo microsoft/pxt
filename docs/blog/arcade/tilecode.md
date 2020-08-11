@@ -4,21 +4,21 @@
 
 **Posted on August 10, 2020 by Thomas Ball and Stefania Druga**
 
-[TileCode](https://microsoft.github.io/tilecode) is a novel game creation app that allows you to design, code, and play video games directly on low-cost [MakeCode Arcade gaming handhelds](https://arcade.makecode.com/hardware), as well as in the web browser.
+[TileCode](https://microsoft.github.io/tilecode) is a game creation app that allows you to design, code, and play video games directly on low-cost [Microsoft MakeCode Arcade gaming handhelds](https://arcade.makecode.com/hardware), as well as in the web browser.
 
 ### From Board Games to Retro Video Games
 
-We draw inspiration from board games with pieces that can move from one square of the board to a nearby square. Board games like checkers (also known as draughts) have been played for thousands of years of human history.  These games are **affordable**, and their rules are generally **simple** to understand, but the game play can be very **involving and rewarding**. Over time, new games have been created by **modifying** the game rules of existing board games.
+We draw inspiration from board games with pieces that can move from one square of the board to a nearby square. Board games like checkers (also known as draughts) have been played for thousands of years of human history.  These games are affordable, and their rules are generally simple to understand, but the game play can be very involving and rewarding. Over time, new games have been created by modifying the game rules of existing board games.
 
 ![board games](/static/blog/arcade/tilecode/boardGames.GIF)
 
-In contrast, video games have been with us for just over half a century and constitute a multi-billion-dollar industry with billions of users. Handheld gaming devices, such as shown below, are primarily devices of consumption, which also is the case for game consoles. Game production generally requires the use of separate compute, contributing to a digital divide.
+In contrast, video games have been with us for just over half a century, yet constitute a multi-billion-dollar industry with billions of users. Handheld gaming devices, such as shown below, as well as game consoles are primarily devices of consumption. Game production generally requires the use of a different computer, contributing to a digital divide that needlessly separates producers and consumers.
 
 ![TileCode screens](/static/blog/arcade/tilecode/handhels.GIF)
 
 ### TileCode Vision
 
-TileCode aims to enable children to be creators of video games and not just consumers. TileCode leverages the concepts of board games (squares, pieces that move, and rules about legal moves) to introduce computational concepts through the medium of video games. Users start with a *low floor* as they are able to simply play a game and change one rule or elements of the game world. Once familiar with the application, players are provided with *wide walls* for creating different types of games. Ultimately, TileCode presents opportunities for *high ceiling* learning activities allowing users to implement more challenging games.
+TileCode aims to enable children to be creators of video games and not just consumers. TileCode leverages the concepts of board games (a board is a grid of squares, board pieces move from square to square, and game rules define the permitted moves) to introduce computational concepts through the medium of video games. Users start with a *low floor* as they are able to simply play a game and change one rule or elements of the game world. Once familiar with the application, players are provided with *wide walls* for creating different types of games. Ultimately, TileCode presents opportunities for *high ceiling* learning activities allowing users to implement more challenging games.
 
 TileCode enables the process of game creation to take place on gaming handhelds themselves, rather than tablets/laptops/desktops, using just the **four-way direction pad** and the **A and B buttons** common to most handhelds,
 as shown above. With TileCode, we’ve already created a variety of retro video games, including Snake, Bejeweled, Pac-Man, Boulder Dash, and Sokoban.
