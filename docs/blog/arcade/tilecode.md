@@ -1,4 +1,4 @@
-![meowbit and video games](/static/blog/arcade/tilecode/meowbit.GIF)
+![tilecode banner](/static/blog/arcade/tilecode/banner.JPG)
 
 ## TileCode: Design, Code, and Play Games on MakeCode Arcade Devices
 
