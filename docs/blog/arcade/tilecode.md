@@ -18,10 +18,10 @@ In contrast, video games have been with us for just over half a century, yet con
 
 ### TileCode Vision
 
-TileCode aims to enables everyone to be creators of video games and not just consumers. TileCode leverages the concepts of board games (a board is a grid of squares, board pieces move from square to square, and game rules define the permitted moves) to introduce computational concepts through the medium of video games. Users start with a *low floor* as they are able to simply play a game and change one rule or elements of the game world. Once familiar with the application, players are provided with *wide walls* for creating different types of games. Ultimately, TileCode presents opportunities for *high ceiling* learning activities allowing users to implement more challenging games.
+TileCode aims to enable everyone to become creators of video games and not just consumers. TileCode leverages the concepts of board games (a board is a grid of squares, board pieces move from square to square, and game rules define the permitted moves) to introduce computational concepts through the medium of video games. Users start with a *low floor* as they are able to simply play a game and change one rule or elements of the game world. Once familiar with the application, players are provided with *wide walls* for creating different types of games. Ultimately, TileCode presents opportunities for *high ceiling* learning activities allowing users to implement more challenging games.
 
 TileCode enables the process of game creation to take place on gaming handhelds themselves, rather than tablets/laptops/desktops, using just the **four-way direction pad** and the **A and B buttons** common to most handhelds,
-as shown above. With TileCode, we’ve already created a variety of retro video games, including Snake, Bejeweled, Pac-Man, Boulder Dash, and Sokoban.
+as shown above. With TileCode, we’ve already created a variety of retro video games, including Snake, Bejeweled, Pac-Man, Boulder Dash, and Sokoban (see examples in the banner).
 
 ### TileCode: Design and Coding
 
@@ -35,20 +35,25 @@ A TileCode program is a set of rules, each of which is associated with a sprite.
 
 The rule above fires when the user presses the right-dpad button, and there is a player sprite on the tile map, and there is grass on the tile to the right of the player, sending the player sprite a move-right command.
 
-TileCode encourages the user to explore the relationship between the data on the map and how the rules fire based on the patterns present in this map. From the rule coding screen (shown above), the user can play the game, return to the coding screen to change the rule and see its effect on game play. She can also visit the tile map editor and make changes to enable or disable the firing of a rule. (Many beginner game creation environments use block-based programming that emphasizes the **structured control-flow** constructs of modern programming languages. In contrast, TileCode uses **cellular automata** as its basic programming model, in which parallel pattern matching against the tile map is the main focus).
+From this rule example we see how TileCode encourages the user to explore the relationship between the data on the map and how the rules fire based on the patterns present in this map. In the rule coding screen (shown above), the user can play the game, return to the coding screen to change the rule and see its effect on game play. She can also visit the tile map editor and make changes to enable or disable the firing of a rule. (Many beginner game creation environments use block-based programming that emphasizes the **structured control-flow** constructs of modern programming languages. In contrast, TileCode uses **cellular automata** as its basic programming model, in which parallel pattern matching against the tile map is the main focus).
 
 ### Opportunities for Creativity and Personal Expression
 
-> "What an individual can learn, and how he learns it, depends on what models he has available.” - Seymour Papert, "Gears of my childhood".
+> "What an individual can learn, and how he learns it, depends on what models he has available.” - Seymour Papert, *Gears of my childhood*.
 
 TileCode presents a unique opportunity for youth to develop their own pixel art for tile backgrounds and sprites. It also engages users in new ways of thinking about game world design and the ways of creating different maps for different logic and levels of games. We draw inspiration from teachers who have students use basic classroom materials to express and refine their game designs before they get in front of a computer:
 
-![Students drawing a game timeline](/static/blog/arcade/tilecode/tilecode_kids_gamedesign.jpg) 
+![Students drawing a game timeline](/static/blog/arcade/tilecode/tilecode_kids_gamedesign.jpg)
 
-Photo source (left): https://globalnews.ca/news/2901130/vancouver-video-game-creators-teaching-kids-to-be-critical-thinkers/
+*Photo source (left): https://globalnews.ca/news/2901130/vancouver-video-game-creators-teaching-kids-to-be-critical-thinkers/
+Photo source (right): https://paper-station.com/2018/07/09/faber-castell-creations/*
 
 We are currently running a series of co-design workshops with families in order to better understand how students and parents make sense of video game mechanics and what are the most intuitive strategies for them to go about creating their own video games or to modify existing games. These workshops will inform our future design of TileCode and its new features which build directly on students' intuitive models of video game mechanics. In future version of the TileCode app, we also aim to provide users to share their art, games and tile worlds they create and encourage further opportunites for collaborative learning and play.
 
 ## Powerful Computational Ideas on Low-powered Gaming Handhelds
 
-TileCode demonstrates that battery-powered gaming handhelds need not confine their users in a "cage of consumption".  Motivated by the rich and long history of board games and their evolution by players themselves, TileCode points the way to a future of video game devices that invites players to become producers on the very same devices they use to play. We encourage you to explore [TileCode](https://microsoft.github.io/tilecode) today!
+TileCode demonstrates that battery-powered gaming handhelds need not confine their users in a "cage of consumption".  Motivated by the rich and long history of board games and their evolution by players themselves, TileCode points the way to a future of video game devices that invites players to become producers on the very same devices they use to play.
+
+We believe children can be exposed to powerful computing ideas by using affordable gaming handhelds and this type of access can help address the current digital divide. This new form-factor for a coding device for youth also provides users with a  personal experience where they can modify and create games as they are playing them anytime/anywhere.
+
+ We encourage you to explore [TileCode](https://microsoft.github.io/tilecode) today and welcome any feedback to tilecode@microsoft.com!
