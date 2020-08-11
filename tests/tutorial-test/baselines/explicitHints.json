@@ -17,7 +17,11 @@
         }
     ],
     "activities": null,
-    "code": "\n{\nbasic.showString(\"Micro!\")\n}\n\n{\nlet x = 1;\nlet y = x + 2;\n}\n\n{\nbasic.showIcon(IconNames.Square)\n}\n",
+    "code": [
+        "{\nbasic.showString(\"Micro!\")\n}",
+        "{\nlet x = 1;\nlet y = x + 2;\n}",
+        "{\nbasic.showIcon(IconNames.Square)\n}"
+    ],
     "metadata": {
         "diffs": false,
         "explicitHints": true

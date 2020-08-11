@@ -12,6 +12,8 @@
         }
     ],
     "activities": null,
-    "code": "",
-    "metadata": {}
+    "code": [],
+    "metadata": {
+        "diffs": false
+    }
 }
