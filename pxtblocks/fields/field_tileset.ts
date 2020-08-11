@@ -13,6 +13,9 @@ namespace pxtblockly {
     const PREVIEW_SIDE_LENGTH = 32;
 
     export class FieldTileset extends FieldImages implements Blockly.FieldCustom {
+        // private member of FieldDropdown
+        protected selectedOption_: TilesetDropdownOption;
+
         protected static referencedTiles: TilesetDropdownOption[];
         protected static cachedRevision: number;
         protected static cachedWorkspaceId: string;
@@ -102,6 +105,26 @@ namespace pxtblockly {
                 return v;
             }
             return super.getText();
+        }
+
+        render_() {
+            if (this.value_ && this.selectedOption_) {
+                if (this.selectedOption_[1] !== this.value_) {
+                    const tile = pxt.react.getTilemapProject().resolveTile(this.value_);
+                    FieldTileset.cachedRevision = -1;
+
+                    if (tile) {
+                        this.selectedOption_ = [{
+                            src: bitmapToImageURI(pxt.sprite.Bitmap.fromData(tile.bitmap), PREVIEW_SIDE_LENGTH, false),
+                            width: PREVIEW_SIDE_LENGTH,
+                            height: PREVIEW_SIDE_LENGTH,
+                            alt: tile.id
+                        }, this.value_]
+                    }
+                }
+
+            }
+            super.render_();
         }
 
         getOptions(): any[] {
