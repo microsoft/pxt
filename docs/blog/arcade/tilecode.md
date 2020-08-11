@@ -18,28 +18,28 @@ In contrast, video games have been with us for just over half a century, yet con
 
 ### TileCode Vision
 
-TileCode aims to enable children to be creators of video games and not just consumers. TileCode leverages the concepts of board games (a board is a grid of squares, board pieces move from square to square, and game rules define the permitted moves) to introduce computational concepts through the medium of video games. Users start with a *low floor* as they are able to simply play a game and change one rule or elements of the game world. Once familiar with the application, players are provided with *wide walls* for creating different types of games. Ultimately, TileCode presents opportunities for *high ceiling* learning activities allowing users to implement more challenging games.
+TileCode aims to enables everyone to be creators of video games and not just consumers. TileCode leverages the concepts of board games (a board is a grid of squares, board pieces move from square to square, and game rules define the permitted moves) to introduce computational concepts through the medium of video games. Users start with a *low floor* as they are able to simply play a game and change one rule or elements of the game world. Once familiar with the application, players are provided with *wide walls* for creating different types of games. Ultimately, TileCode presents opportunities for *high ceiling* learning activities allowing users to implement more challenging games.
 
 TileCode enables the process of game creation to take place on gaming handhelds themselves, rather than tablets/laptops/desktops, using just the **four-way direction pad** and the **A and B buttons** common to most handhelds,
 as shown above. With TileCode, we’ve already created a variety of retro video games, including Snake, Bejeweled, Pac-Man, Boulder Dash, and Sokoban.
 
 ### TileCode: Design and Coding
 
-As shown on the TileCode home screen (below-left), there are eight game slots available to program (on an Arcade device, game assets are stored in the device's non-volatile flash memory; in the browser, game assets are stored in browser local storage). For each game, TileCode allows users to select and edit game characters (sprites) and game background (tiles) and to create a game level by editing the game map, as shown in the three other screens:
+As shown on the TileCode home screen (below-left), there are eight game slots available to program (on an Arcade device, game assets are stored in the device's non-volatile flash memory; in the browser, game assets are stored in browser local storage). For each game, TileCode allows users to select game characters (sprites) and game background (tiles) from a gallery, modify the sprites and tile backgrounds, and create a game level by editing the game map, as shown in the three other screens:
 
 ![TileCode screens](/static/blog/arcade/tilecode/tileCodeScreens.GIF)
 
-A TileCode program is a set of rules, each of which is associated with a sprite. A rule takes the form of a **When-Do** pair, as shown below on the left in the rule editor screen below (labelled "code"). The **When** section visually describes a pattern/predicate over the 3x3 local neighborhood around the central sprite (the player sprite, in this case) to be matched against the tile map.  The **Do** section contains commands that are sent to the identified sprite when the pattern matches.
+A TileCode program is a set of rules, each of which is associated with a sprite. A rule takes the form of a **When-Do** pair, as shown below on the left (screen labeled "code"). The **When** section visually describes a pattern/predicate over the 3x3 local neighborhood around the central sprite (the player sprite, in this case) to be matched against the tile map.  The **Do** section contains commands that are sent to the identified sprite when the pattern matches.
 
 ![When-Do Rule](/static/blog/arcade/tilecode/editPlayMap.GIF)
 
 You can read the above rule as:
-- **when** the user presses the right-dpad button
+- **When** the user presses the right-dpad button
 - **and** there is a player sprite on the tile map
 - **and** there is grass on the tile to the right of the player
-- **do** send the player sprite a move-right command
+- **Do** send the player sprite a move-right command
 
-TileCode encourages the user to explore the relationship between the data on the map and how the rules fire based on the patterns present in this map. From the TileCode rule editor (shown above), the user can play the game, return to the rule editor to change the rule and see its effect on game play. She can also visit the tile map (the initial program input) editor and make changes that would enable or disable the firing of a rule. (Many beginner game creation environments use block-based programming that emphasizes the **structured control-flow** constructs of modern programming languages. In contrast, TileCode uses **cellular automata** as its basic programming model, in which parallel pattern matching against the tile map is the main focus).
+TileCode encourages the user to explore the relationship between the data on the map and how the rules fire based on the patterns present in this map. From the rule coding screen (shown above), the user can play the game, return to coding screen to change the rule and see its effect on game play. She can also visit the tile map (the initial program input) editor and make changes that would enable or disable the firing of a rule. (Many beginner game creation environments use block-based programming that emphasizes the **structured control-flow** constructs of modern programming languages. In contrast, TileCode uses **cellular automata** as its basic programming model, in which parallel pattern matching against the tile map is the main focus).
 
 ### Opportunities for Creativity and Personal Expression
 
@@ -47,11 +47,11 @@ TileCode encourages the user to explore the relationship between the data on the
 
 TileCode presents a unique opportunity for youth to develop their own pixel art for tile backgrounds and sprites. It also engages users in new ways of thinking about game world design and the ways of creating different maps for different logic and levels of games. We draw inspiration from teachers who have students use basic classroom materials to express and refine their game designs before they get in front of a computer:
 
-![Children drawing a game timeline](/static/blog/arcade/tilecode/tilecode_kids_gamedesign.jpg) 
+![Students drawing a game timeline](/static/blog/arcade/tilecode/tilecode_kids_gamedesign.jpg) 
 
 Photo source: https://globalnews.ca/news/2901130/vancouver-video-game-creators-teaching-kids-to-be-critical-thinkers/
 
-We are currently running a series of co-design workshops with families in order to better understand how children and parents make sense of video game mechanics and what are the most intuitive strategies for them to go about creating their own video games or to modify existing games. These workshops will inform our future design of TileCode and its new features which build directly on childrens intuitive models of video game mechanics. In future version of the TileCode app, we also aim to provide users to share their art, games and tile worlds they create and encourage further opportunites for collaborative learning and play.
+We are currently running a series of co-design workshops with families in order to better understand how students and parents make sense of video game mechanics and what are the most intuitive strategies for them to go about creating their own video games or to modify existing games. These workshops will inform our future design of TileCode and its new features which build directly on students' intuitive models of video game mechanics. In future version of the TileCode app, we also aim to provide users to share their art, games and tile worlds they create and encourage further opportunites for collaborative learning and play.
 
 ## Powerful Computational Ideas on Low-powered Gaming Handhelds
 
