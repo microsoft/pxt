@@ -215,7 +215,8 @@ export function init() {
         const epkg = pkg.mainEditorPkg();
 
         if (!epkg.tilemapProject) {
-            epkg.tilemapProject = new pxt.TilemapProject(pkg.mainPkg);
+            epkg.tilemapProject = new pxt.TilemapProject();
+            epkg.tilemapProject.loadPackage(pkg.mainPkg);
         }
 
         return epkg.tilemapProject;

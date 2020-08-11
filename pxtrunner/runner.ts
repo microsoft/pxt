@@ -148,6 +148,19 @@ namespace pxt.runner {
     }
 
     export let mainPkg: pxt.MainPackage;
+    let tilemapProject: TilemapProject;
+
+    if (!pxt.react.getTilemapProject) {
+        pxt.react.getTilemapProject = () => {
+            if (!tilemapProject) {
+                tilemapProject = new TilemapProject();
+                tilemapProject.loadPackage(mainPkg);
+            }
+
+            return tilemapProject;
+        }
+    }
+
 
     function addPackageToConfig(cfg: pxt.PackageConfig, dep: string) {
         let m = /^([a-zA-Z0-9_-]+)(=(.+))?$/.exec(dep);
