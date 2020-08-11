@@ -20,7 +20,7 @@ In contrast, video games have been with us for just over a half-century, yet the
 
 TileCode aims to enable everyone to become creators of video games and not just consumers. TileCode leverages the concepts of board games (a board is a grid of squares, board pieces move from square to square, and game rules define the permitted moves) to introduce computational concepts through the medium of video games. Users start with a *low floor* as they are able to simply play a game and change one rule or elements of the game world. Once familiar with the application, players are provided with *wide walls* for creating different types of games. Ultimately, TileCode presents opportunities for *high ceiling* learning activities that challenge users to implement more challenging games.
 
-TileCode enables the process of game creation to take place on gaming handhelds themselves, rather than tablets/laptops/desktops, using just the **four-way direction pad** and the **A and B buttons** common to most handhelds,
+TileCode enables the process of game creation to take place on gaming handhelds themselves, instead of tablets/laptops/desktops, using just the **four-way direction pad** and the **A and B buttons** common to most handhelds,
 as shown above. With TileCode, we’ve already created a variety of retro video games, including Snake, Bejeweled, Pac-Man, Boulder Dash, and Sokoban (see examples in the banner).
 
 ### TileCode: Design and Coding
