@@ -114,7 +114,6 @@ namespace pxtblockly {
                     this.state.projectReferences = null;
 
 
-
                     const lastRevision = project.revision();
                     project.pushUndo();
 
@@ -130,10 +129,9 @@ namespace pxtblockly {
                             const edited = result.tileset.tiles[editedIndex];
 
                             // New tiles start with *. We haven't created them yet so ignore
-                            if (edited.id.startsWith("*")) continue;
-                            if (edited) {
-                                result.tileset.tiles[editedIndex] = project.updateTile(edited.id, edited.bitmap)
-                            }
+                            if (!edited || edited.id.startsWith("*")) continue;
+
+                            result.tileset.tiles[editedIndex] = project.updateTile(edited.id, edited.bitmap);
                         }
                     }
 
