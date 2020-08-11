@@ -10,11 +10,11 @@
 
 We draw inspiration from board games with pieces that can move from one square of the board to a nearby square. Board games like checkers (also known as draughts) have been played for thousands of years of human history.  These games are affordable, and their rules are generally simple to understand, but the game play can be very involving and rewarding. Over time, new games have been created by modifying the game rules of existing board games.
 
-![board games](/static/blog/arcade/tilecode/boardGames.GIF)
+![board games](/static/blog/arcade/tilecode/boardGames.JPG)
 
 In contrast, video games have been with us for just over half a century, yet constitute a multi-billion-dollar industry with billions of users. Handheld gaming devices, such as shown below, as well as game consoles are primarily devices of consumption. Game production generally requires the use of a different computer, contributing to a digital divide that needlessly separates producers and consumers.
 
-![TileCode screens](/static/blog/arcade/tilecode/handhels.GIF)
+![TileCode screens](/static/blog/arcade/tilecode/handhelds.JPG)
 
 ### TileCode Vision
 
@@ -27,11 +27,11 @@ as shown above. With TileCode, we’ve already created a variety of retro video 
 
 As shown on the TileCode home screen (below-left), there are eight game slots available to program (on an Arcade device, game assets are stored in the device's non-volatile flash memory; in the browser, game assets are stored in browser local storage). For each game, TileCode allows users to select game characters (sprites) and game background (tiles) from a gallery, modify the sprites and tile backgrounds, and create a game level by editing the game map, as shown in the three other screens:
 
-![TileCode screens](/static/blog/arcade/tilecode/tileCodeScreens.GIF)
+![TileCode screens](/static/blog/arcade/tilecode/screens.JPG)
 
 A TileCode program is a set of rules, each of which is associated with a sprite. A rule takes the form of a **When-Do** pair, as shown below on the left (screen labeled "code"). The **When** section visually describes a pattern/predicate over the 3x3 local neighborhood around the central sprite (the player sprite, in this case) to be matched against the tile map.  The **Do** section contains commands that are sent to the identified sprite when the pattern matches.
 
-![When-Do Rule](/static/blog/arcade/tilecode/editPlayMap.GIF)
+![When-Do Rule](/static/blog/arcade/tilecode/editPlayMap.JPG)
 
 The rule above fires when the user presses the right-dpad button, and there is a player sprite on the tile map, and there is grass on the tile to the right of the player, sending the player sprite a move-right command.
 
