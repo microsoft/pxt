@@ -730,13 +730,22 @@ namespace pxt {
             else
                 res = this.config.files.slice(0);
             const fd = this.config.fileDependencies
-            if (this.config.fileDependencies)
-                res = res.filter(fn => {
-                    let cond = U.lookup(fd, fn)
+            if (fd) {
+                const checkCond = (cond: string): boolean => {
                     if (!cond) return true
                     cond = cond.trim()
                     if (!cond) return true
-                    if (/^[\w-]+$/.test(cond)) {
+                    if (cond[0] == "!")
+                        return !checkCond(cond.slice(1))
+                    const spl = cond.split(":")
+                    if (spl.length == 2) {
+                        switch (spl[0]) {
+                            case "target":
+                                return spl[1] == pxt.appTarget.id
+                            default:
+                                break
+                        }
+                    } else if (/^[\w-]+$/.test(cond)) {
                         const dep = this.parent.resolveDep(cond)
                         if (dep && !dep.cppOnly)
                             return true
@@ -747,7 +756,13 @@ namespace pxt {
                         pxt.log(`invalid dependency expression: ${cond} in ${this.id}/${fn}`)
                     }
                     return false
+                }
+                res = res.filter(fn => {
+                    const cond = U.lookup(fd, fn)
+                    const dysj = cond.split("||")
+                    return dysj.some(d => d.split("&&").every(checkCond))
                 })
+            }
             return res
         }
 
