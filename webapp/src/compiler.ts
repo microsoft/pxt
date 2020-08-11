@@ -314,6 +314,39 @@ export function pySnippetToBlocksAsync(code: string, blockInfo?: ts.pxtc.BlocksI
         });
 }
 
+// Py[] -> blocks
+export function pySnippetArrayToBlocksAsync(code: string[], blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
+    const namespaceRegex = /^\s*namespace\s+[^\s]+\s*{([\S\s]*)}\s*$/im;
+    const snippetBlocks = "main.blocks";
+    let trg = pkg.mainPkg.getTargetOptions()
+    let files: string[] = [];
+    return waitForFirstTypecheckAsync()
+        .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
+        .then(opts => {
+            // split each code snippet into a separate file to preserve scoping
+            for (let i = 0; i < code.length; i++) {
+                const snippetName = `snippet_${i}`;
+                opts.fileSystem[snippetName + ".py"] = code[i];
+                opts.sourceFiles.push(snippetName + ".py");
+                files.push(snippetName)
+            }
+            opts.fileSystem[snippetBlocks] = "";
+            if (opts.sourceFiles.indexOf(snippetBlocks) === -1) {
+                opts.sourceFiles.push(snippetBlocks);
+            }
+            return workerOpAsync("py2ts", { options: opts });
+        })
+        .then(res => {
+            // strip the namespace declaration out of the converted snippets and concat to convert to blocks
+            let ts = "";
+            for (let file of files) {
+                let match = res.outfiles[file + ".ts"].match(namespaceRegex);
+                if (match && match[1]) ts += `{\n${match[1]}\n}\n`
+            }
+            return decompileBlocksSnippetAsync(ts, blockInfo)
+        });
+}
+
 function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
     return workerOpAsync("decompile", { options: opts, fileName: fileName })
 }

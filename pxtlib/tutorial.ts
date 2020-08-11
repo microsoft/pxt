@@ -46,7 +46,7 @@ namespace pxt.tutorial {
         // collect code and infer editor
         let editor: string = undefined;
         const regex = /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python)?\s*\n([\s\S]*?)\n```/gmi;
-        let code = '';
+        let code: string[] = [];
         let templateCode: string;
         let language: string;
         let idx = 0;
@@ -79,9 +79,7 @@ namespace pxt.tutorial {
                         templateCode = m2;
                         break;
                 }
-                code += `\n${m1 == "python"
-                    ? "def __wrapper_" + idx + "():\n" + m2.replace(/^/gm, "    ")
-                    : "{\n" + m2 + "\n}"}\n`;
+                code.push(m1 == "python" ? `\n${m2}\n` : `{\n${m2}\n}`);
                 idx++
                 return "";
             });

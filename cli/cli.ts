@@ -5357,7 +5357,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                 else {
                                     addSnippet(<CodeSnippet>{
                                         name: card.name,
-                                        code: tutorial.code,
+                                        code: tutorial.code.join("\n"),
                                         type: "blocks",
                                         ext: "ts",
                                         packages: pkgs
