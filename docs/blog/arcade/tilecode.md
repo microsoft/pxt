@@ -35,7 +35,7 @@ A TileCode program is a set of rules, each of which is associated with a sprite.
 
 The rule above fires when the user presses the right-dpad button, and there is a player sprite on the tile map, and there is grass on the tile to the right of the player, sending the player sprite a move-right command.
 
-TileCode encourages the user to explore the relationship between the data on the map and how the rules fire based on the patterns present in this map. From the rule coding screen (shown above), the user can play the game, return to coding screen to change the rule and see its effect on game play. She can also visit the tile map (the initial program input) editor and make changes that would enable or disable the firing of a rule. (Many beginner game creation environments use block-based programming that emphasizes the **structured control-flow** constructs of modern programming languages. In contrast, TileCode uses **cellular automata** as its basic programming model, in which parallel pattern matching against the tile map is the main focus).
+TileCode encourages the user to explore the relationship between the data on the map and how the rules fire based on the patterns present in this map. From the rule coding screen (shown above), the user can play the game, return to the coding screen to change the rule and see its effect on game play. She can also visit the tile map editor and make changes to enable or disable the firing of a rule. (Many beginner game creation environments use block-based programming that emphasizes the **structured control-flow** constructs of modern programming languages. In contrast, TileCode uses **cellular automata** as its basic programming model, in which parallel pattern matching against the tile map is the main focus).
 
 ### Opportunities for Creativity and Personal Expression
 
@@ -45,7 +45,7 @@ TileCode presents a unique opportunity for youth to develop their own pixel art 
 
 ![Students drawing a game timeline](/static/blog/arcade/tilecode/tilecode_kids_gamedesign.jpg) 
 
-Photo source: https://globalnews.ca/news/2901130/vancouver-video-game-creators-teaching-kids-to-be-critical-thinkers/
+Photo source (left): https://globalnews.ca/news/2901130/vancouver-video-game-creators-teaching-kids-to-be-critical-thinkers/
 
 We are currently running a series of co-design workshops with families in order to better understand how students and parents make sense of video game mechanics and what are the most intuitive strategies for them to go about creating their own video games or to modify existing games. These workshops will inform our future design of TileCode and its new features which build directly on students' intuitive models of video game mechanics. In future version of the TileCode app, we also aim to provide users to share their art, games and tile worlds they create and encourage further opportunites for collaborative learning and play.
 
