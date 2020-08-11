@@ -8,7 +8,7 @@
 
 ### From Board Games to Retro Video Games
 
-We draw inspiration from board games with pieces that can move from one square of the board to a nearby square. Board games like checkers (also known as draughts) have been played for thousands of years of human history.  These games are affordable, and their rules are generally simple to understand, but the game play can be very involving and rewarding. Over time, new games have been created by modifying the game rules of existing board games.
+We draw inspiration from board games with pieces that can move from one square of the board to a nearby square. Board games like checkers (also known as draughts) have been played for thousands of years.  These games are affordable, and their rules are generally simple to understand, but the game play can be very engaging and rewarding. Over time, new games have been created by modifying the rules of existing board games.
 
 ![board games](/static/blog/arcade/tilecode/boardGames.JPG)
 
