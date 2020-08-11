@@ -12,7 +12,7 @@ We draw inspiration from board games with pieces that can move from one square o
 
 ![board games](/static/blog/arcade/tilecode/boardGames.JPG)
 
-In contrast, video games have been with us for just over a half-century, yet they constitute a multi-billion dollar industry with billions of users. Handheld gaming devices, such as those shown below, as well as game consoles are primarily consumer devices . Producing games for these devices generally requires the use of a different computer, which contributes to a digital divide that needlessly separates producers and consumers.
+In contrast, video games have been with us for just over a half-century, yet they constitute a multi-billion dollar industry with billions of users. Handheld gaming devices, such as those shown below, as well as game consoles are primarily consumer devices. Producing games for these devices generally requires the use of a different computer, which contributes to a digital divide that needlessly separates producers and consumers.
 
 ![TileCode screens](/static/blog/arcade/tilecode/handhelds.JPG)
 
