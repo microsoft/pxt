@@ -6,9 +6,17 @@ namespace pxsim.localization {
         _localizeStrings = strs || {};
     }
 
+    let sForPlural = true;
     export function lf(s: string, ...args: any[]): string {
-        let loc = _localizeStrings[s] || s;
-        return fmt_va(loc, args);
+        let lfmt = _localizeStrings[s] || s;
+
+        if (!sForPlural && lfmt != s && /\d:s\}/.test(lfmt)) {
+            lfmt = lfmt.replace(/\{\d+:s\}/g, "")
+        }
+
+        lfmt = lfmt.replace(/^\{(id|loc):[^\}]+\}/g, '');
+
+        return fmt_va(lfmt, args);
     }
 
     // from pxtlib/commonutil.ts
