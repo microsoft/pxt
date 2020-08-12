@@ -299,7 +299,7 @@ export class FieldEditorManager implements monaco.languages.FoldingRangeProvider
     }
 
     protected reapplyDecorations(owner: string, highlightLine = -1) {
-        const fe = this.fieldEditors.filter(f => f.id === owner)[0];
+        const fe = this.fieldEditors.find(f => f.id === owner);
 
         if (!fe) return;
 
