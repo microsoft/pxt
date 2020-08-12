@@ -7,6 +7,7 @@ namespace pxt.editor {
     export class MonacoTilemapEditor extends MonacoReactFieldEditor<pxt.sprite.TilemapData> {
         protected tilemapName: string;
         protected isTilemapLiteral: boolean;
+        protected tilemapLiteral: string;
 
         protected textToValue(text: string): pxt.sprite.TilemapData {
             const tm = this.readTilemap(text);
@@ -47,15 +48,23 @@ namespace pxt.editor {
             this.isTilemapLiteral = true;
 
             // This matches the regex for the field editor, so it should always match
-            const match = /^\s*tilemap\s*(?:`([^`]*)`)|(?:\(\s*"""([^"]*)"""\s*\))\s*$/.exec(text);
-            const name = (match[1] || match[2] || "").trim();
+            const match = /^\s*(tilemap(?:8|16|32)?)\s*(?:`([^`]*)`)|(?:\(\s*"""([^"]*)"""\s*\))\s*$/.exec(text);
+            const name = (match[2] || match[3] || "").trim();
+            this.tilemapLiteral = match[1];
 
             if (name) {
                 let id = ts.pxtc.escapeIdentifier(name)
                 let proj = project.getTilemap(id);
 
                 if (!proj) {
-                    const [ name, map ] = project.createNewTilemap(id, 16, 16, 16);
+                    let tileWidth = 16;
+                    if (this.tilemapLiteral === "tilemap8") {
+                        tileWidth = 8;
+                    }
+                    else if (this.tilemapLiteral === "tilemap32") {
+                        tileWidth = 32;
+                    }
+                    const [ name, map ] = project.createNewTilemap(id, tileWidth, 16, 16);
                     proj = map;
                     id = name;
                 }
@@ -179,7 +188,7 @@ namespace pxt.editor {
         weight: 5,
         matcher: {
             // match both JS and python
-            searchString: "(?:tilemap\\s*(?:`|\\(\"\"\")(?:[ a-zA-Z0-9_]|\\n)*\\s*(?:`|\"\"\"\\)))|(?:tiles\\s*\\.\\s*createTilemap\\s*\\([^\\)]+\\))",
+            searchString: "(?:tilemap(?:8|16|32)?\\s*(?:`|\\(\"\"\")(?:[ a-zA-Z0-9_]|\\n)*\\s*(?:`|\"\"\"\\)))|(?:tiles\\s*\\.\\s*createTilemap\\s*\\([^\\)]+\\))",
             isRegex: true,
             matchCase: true,
             matchWholeWord: false
