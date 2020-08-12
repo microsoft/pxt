@@ -4,6 +4,7 @@
 import * as compiler from "./compiler";
 import * as blocklyFieldView from "./blocklyFieldView";
 import * as pkg from "./package";
+import { highContrast } from "./core";
 
 interface OwnedRange {
     line: number;
@@ -185,6 +186,8 @@ export class FieldEditorManager implements monaco.languages.FoldingRangeProvider
     protected liveRanges: OwnedRange[] = [];
     protected fieldEditorsEnabled = true;
 
+    protected currentCursorLine: number;
+
     private rangeID = 0;
 
     constructor(protected editor: monaco.editor.IStandaloneCodeEditor) {}
@@ -192,6 +195,24 @@ export class FieldEditorManager implements monaco.languages.FoldingRangeProvider
     setFieldEditorsEnabled(enabled: boolean) {
         this.fieldEditorsEnabled = enabled;
         if (!enabled) this.clearRanges(this.editor);
+    }
+
+    setCursorLine(line: number) {
+        if (!this.fieldEditorsEnabled) return;
+        if (line != this.currentCursorLine) {
+            const oldHighlight = this.getInfoForLine(this.currentCursorLine);
+
+            if (oldHighlight) {
+                this.reapplyDecorations(oldHighlight.owner)
+            }
+
+            const newHighlight = this.getInfoForLine(line);
+            if (newHighlight) {
+                this.reapplyDecorations(newHighlight.owner, line);
+            }
+
+            this.currentCursorLine = line;
+        }
     }
 
     addFieldEditor(definition: pxt.editor.MonacoFieldEditorDefinition) {
@@ -277,6 +298,33 @@ export class FieldEditorManager implements monaco.languages.FoldingRangeProvider
         });
 
         return editorRanges.concat(indentRanges);
+    }
+
+    protected reapplyDecorations(owner: string, highlightLine = -1) {
+        const fe = this.fieldEditors.filter(f => f.id === owner)[0];
+
+        if (!fe) return;
+
+        const oldDecorations = this.decorations[owner];
+        const ranges = this.liveRanges.filter(r => r.owner === owner);
+
+        const newDecorations: monaco.editor.IModelDeltaDecoration[] = [];
+        for (const r of ranges) {
+            let glyph = fe.glyphCssClass;
+
+            if (r.line === highlightLine) {
+                glyph += " pxt-monaco-glyph-highlight";
+            }
+
+            newDecorations.push({
+                range: r.range,
+                options: {
+                    glyphMarginClassName: glyph
+                }
+            });
+        }
+
+        this.setDecorations(fe.id, this.editor.deltaDecorations(oldDecorations, newDecorations));
     }
 
     protected updateFieldEditorRanges(model: monaco.editor.ITextModel) {
