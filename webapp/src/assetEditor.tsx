@@ -18,8 +18,10 @@ function init() {
     ReactDOM.render(<AssetEditor />, assetDiv);
 }
 
+type AssetType = "sprite" | "tilemap";
+
 interface AssetEditorState {
-    viewType: "sprite" | "tilemap";
+    viewType: AssetType;
 }
 
 export interface Message {
@@ -38,15 +40,12 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
     constructor(props: {}) {
         super(props);
 
-        let view: "sprite" | "tilemap";
-        view = "sprite";
+        let view: AssetType = "sprite";
         const v = /view(?:[:=])([a-zA-Z]+)/i.exec(window.location.href)
         if (v && v[1] === "tilemap") {
             view = "tilemap";
         }
-        this.state = {
-            viewType: view
-        };
+        this.state = { viewType: view };
 
         setTelemetryFunction(tickAssetEditorEvent);
     }
@@ -54,11 +53,14 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
     handleMessage = (msg: Message)  => {
         if (msg.data._fromVscode) {
             if (msg.data.type === "initialize") {
-                if (this.state.viewType === "sprite") {
-                    this.editor.loadJRes(msg.data.message);
-                } else if (this.state.viewType === "tilemap") {
-                    // TODO: create a way to update tilemap from JSON
-                    this.editor.loadJRes(msg.data.message, msg.data.name);
+                switch (this.state.viewType) {
+                    case "sprite":
+                        this.editor.loadJres(msg.data.message);
+                        break;
+                    case "tilemap":
+                        // TODO: create a way to update tilemap from JSON
+                        this.editor.loadJres(msg.data.message, msg.data.name);
+                        break;
                 }
             } else if (msg.data.type === "update") {
                 this.sendJres();
@@ -96,7 +98,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
     sendJres() {
         const updateMsg: MessageData = {
             type: "update",
-            message: this.editor.getJRes(),
+            message: this.editor.getJres(),
         }
         this.postMessage(updateMsg);
     }

@@ -101,25 +101,28 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         super(props);
 
         const { gallery } = props;
-        this.refreshGallery(props);
 
-        const extraCategories: pxt.Map<Category> = {};
-        for (const tile of gallery) {
-            const categoryName = tile.tags.find(t => pxt.Util.startsWith(t, "category-"));
-            if (categoryName) {
-                if (!extraCategories[categoryName]) {
-                    extraCategories[categoryName] = {
-                        id: categoryName,
-                        text: pxt.Util.rlf(`{id:tilecategory}${categoryName.substr(9)}`),
-                        tiles: []
-                    };
+        if (gallery) {
+            this.refreshGallery(props);
+
+            const extraCategories: pxt.Map<Category> = {};
+            for (const tile of gallery) {
+                const categoryName = tile.tags.find(t => pxt.Util.startsWith(t, "category-"));
+                if (categoryName) {
+                    if (!extraCategories[categoryName]) {
+                        extraCategories[categoryName] = {
+                            id: categoryName,
+                            text: pxt.Util.rlf(`{id:tilecategory}${categoryName.substr(9)}`),
+                            tiles: []
+                        };
+                    }
                 }
-
-                extraCategories[categoryName].tiles.push(tile);
             }
-        }
 
-        this.categories = options.concat(Object.keys(extraCategories).map(key => extraCategories[key]));
+            this.categories = options.concat(Object.keys(extraCategories).map(key => extraCategories[key]));
+        } else {
+            this.categories = [];
+        }
     }
 
     componentDidMount() {
@@ -238,7 +241,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     protected updateGalleryTiles() {
         const { page, category, galleryOpen } = this.props;
 
-        if (this.categories && galleryOpen) {
+        if (galleryOpen) {
             this.categoryTiles = this.categories[category].tiles;
         }
         else {
@@ -535,7 +538,7 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
         colors: state.colors,
         drawingMode: editor.drawingMode,
         gallery: editor.tileGallery,
-        galleryOpen: editor.tileGallery ? editor.tileGalleryOpen : false,
+        galleryOpen: editor.tileGalleryOpen,
         referencedTiles: editor.referencedTiles
     };
 }

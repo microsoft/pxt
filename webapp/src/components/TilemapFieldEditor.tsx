@@ -106,7 +106,7 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
         this.ref.initTilemap(data, gallery,);
     }
 
-    loadJRes(jres: string, name: string) {
+    loadJres(jres: string, name: string) {
         const parsed = parseJResFromString(JSON.stringify(jres));
         this.tmProject = new pxt.TilemapProject(parsed);
         const tm = this.tmProject.getTilemap(name);
@@ -114,7 +114,7 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
         this.initTilemap(tm);
     }
 
-    getJRes() {
+    getJres() {
         const tmData = this.getValue();
         const encodedtm = this.tmProject.encodeTilemap(tmData, this.tmName);
         return JSON.stringify(encodedtm);
