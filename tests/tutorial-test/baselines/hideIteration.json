@@ -13,7 +13,10 @@
         }
     ],
     "activities": null,
-    "code": "\n{\nbasic.showString(\"Micro!\")\n}\n\n{\nbasic.showIcon(IconNames.Square)\n}\n",
+    "code": [
+        "{\nbasic.showString(\"Micro!\")\n}",
+        "{\nbasic.showIcon(IconNames.Square)\n}"
+    ],
     "metadata": {
         "diffs": false,
         "hideIteration": true
