@@ -8,7 +8,7 @@
 
 ### From Board Games to Retro Video Games
 
-We draw inspiration from board games with pieces that can move from one square of the board to a nearby square. Board games like checkers (also known as draughts) have been played for thousands of years.  These games are affordable, and their rules are generally simple to understand, but the game play can be very engaging and rewarding. Over time, new games have been created by modifying the rules of existing board games.
+We draw inspiration from board games with pieces that can move from one square of the board to a nearby square. Board games like checkers, also known as draughts, have been played for thousands of years.  These games are affordable, and their rules are generally simple to understand, but the game play can be very engaging and rewarding. Over time, new games have been created by modifying the rules of existing board games.
 
 ![board games](/static/blog/arcade/tilecode/boardGames.JPG)
 
@@ -18,14 +18,16 @@ In contrast, video games have been with us for just over a half-century, yet the
 
 ### TileCode Vision
 
-TileCode aims to enable everyone to become creators of video games and not just consumers. TileCode leverages the concepts of board games (a board is a grid of squares, board pieces move from square to square, and game rules define the permitted moves) to introduce computational concepts through the medium of video games. Users start with a *low floor* as they are able to simply play a game and change one rule or elements of the game world. Once familiar with the application, players are provided with *wide walls* for creating different types of games. Ultimately, TileCode presents opportunities for *high ceiling* learning activities that challenge users to implement more challenging games.
+TileCode enables the process of game creation to take place on gaming handhelds themselves, instead of tablets/laptops/desktops, using just the **four-way direction pad** and the **A and B buttons** common to most handhelds, as shown above. With TileCode, we’ve already created a variety of retro video games, including Snake, Bejeweled, Pac-Man, Boulder Dash, and Sokoban (see examples in the banner).
 
-TileCode enables the process of game creation to take place on gaming handhelds themselves, instead of tablets/laptops/desktops, using just the **four-way direction pad** and the **A and B buttons** common to most handhelds,
-as shown above. With TileCode, we’ve already created a variety of retro video games, including Snake, Bejeweled, Pac-Man, Boulder Dash, and Sokoban (see examples in the banner).
+TileCode aims to enable everyone to become creators of video games and not just consumers. TileCode leverages the concepts of board games (a board is a grid of squares, board pieces move from square to square, and game rules define the permitted moves) to introduce computational concepts through the medium of video games. Users start with a *low floor* as they are able to simply play a game and change one rule or elements of the game world. Once familiar with the application, players are provided with *wide walls* for creating different types of games. Ultimately, TileCode presents opportunities for *high ceiling* learning activities that challenge users to implement more complex games.
 
 ### TileCode: Design and Coding
 
-As shown on the TileCode home screen (below-left), there are eight game slots available to program (on an Arcade device, game assets are stored in the device's non-volatile flash memory; in the browser, game assets are stored in browser local storage). For each game, TileCode allows users to select game characters (sprites) and game background (tiles) from a gallery, modify the sprites and tile backgrounds, and create a game level by editing the game map, as shown in the three other screens:
+As shown on the TileCode home screen (below-left), there are eight game slots available to program. 
+On an Arcade device, game assets are stored in the device's non-volatile flash memory; in the browser, game assets are stored in browser local storage.
+For each game, TileCode allows users to select game characters (sprites) and game background (tiles) from a gallery, modify the sprites and tile 
+backgrounds, and create a game level by editing the game map, as shown in the three other screens:
 
 ![TileCode screens](/static/blog/arcade/tilecode/screens.JPG)
 
@@ -33,9 +35,7 @@ A TileCode program is a set of rules, each of which is associated with a sprite.
 
 ![When-Do Rule](/static/blog/arcade/tilecode/editPlayMap.JPG)
 
-The rule above fires when the user presses the right-dpad button, a player sprite is on the tile map, and there is grass on the tile to the right of the player. This sends the player sprite a move-right command.
-
-From this rule example we see how TileCode encourages the user to explore the relationship between the data on the map and how the rules fire based on the patterns present in this map. In the rule coding screen (shown above), the user can play the game, return to the coding screen to change the rule, and see its effect on game play. She can also visit the tile map editor and make changes to enable or disable the firing of a rule. (Many beginner game creation environments use block-based programming that emphasizes the **structured control-flow** constructs of modern programming languages. In contrast, TileCode uses **cellular automata** as its basic programming model, in which parallel pattern matching against the tile map is the main focus).
+The rule above fires when the user presses the right-dpad button, a player sprite is on the tile map, and there is grass on the tile to the right of the player. When these conditions hold, the rule sends the player sprite a move-right command. From this example we see how TileCode encourages the user to explore the relationships between the tile map and how the rules fire based on the patterns present on the map. In the rule coding screen (shown above), the user can play the game, return to the coding screen to change the rule, and see its effect on game play. She can also visit the tile map editor and make changes to the map to enable/disable the firing of a rule. 
 
 ### Opportunities for Creativity and Personal Expression
 
