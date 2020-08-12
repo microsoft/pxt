@@ -170,8 +170,8 @@ mySearch = function (src: string, i: number): string {
 
 Function parameters are checked one at a time, with the type in each corresponding parameter position checked against each other.
 If you do not want to specify types at all, TypeScript's contextual typing can infer the argument types since the function value is assigned directly to a variable of type `SearchFunc`.
-Here, also, the return type of our function expression is implied by the values it returns (here `false` and `true`).
-Had the function expression returned numbers or strings, the type-checker would have warned us that return type doesn't match the return type described in the `SearchFunc` interface.
+Here, also, the return type of our function expression is implied by the values it returns (here it's a string).
+Had the function expression returned numbers or booleans, the type-checker would have warned us that return type doesn't match the return type described in the `SearchFunc` interface.
 
 ```ts
 let mySearch: SubstrFunc;
