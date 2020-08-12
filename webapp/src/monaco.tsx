@@ -1190,6 +1190,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             monaco.languages.registerFoldingRangeProvider("python", this.fieldEditors);
         }
 
+        this.editor.onDidChangeCursorPosition((e: monaco.editor.ICursorPositionChangedEvent) => {
+            if (this.fieldEditors) this.fieldEditors.setCursorLine(e.position.lineNumber);
+        });
+
         pxt.appTarget.appTheme.monacoFieldEditors.forEach(name => {
             const editor = pxt.editor.getMonacoFieldEditor(name);
             if (editor) {
