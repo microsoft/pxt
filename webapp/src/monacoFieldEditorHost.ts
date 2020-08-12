@@ -2,9 +2,7 @@
 /// <reference path="../../built/pxteditor.d.ts" />
 
 import * as compiler from "./compiler";
-import * as blocklyFieldView from "./blocklyFieldView";
 import * as pkg from "./package";
-import { highContrast } from "./core";
 
 interface OwnedRange {
     line: number;
