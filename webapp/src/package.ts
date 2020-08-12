@@ -429,7 +429,6 @@ export class EditorPackage {
     saveFilesAsync(immediate?: boolean) {
         if (!this.header) return Promise.resolve();
 
-        pxt.tickEvent("package.save", { editor: this.topPkg?.ksPkg?.getPreferredEditor() });
         let cfgFile = this.files[pxt.CONFIG_NAME]
         if (cfgFile) {
             try {
