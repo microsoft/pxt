@@ -1451,6 +1451,7 @@ namespace pxt.blocks {
         // Translate the context menu for blocks.
         const msg = Blockly.Msg;
         msg.DUPLICATE_BLOCK = lf("{id:block}Duplicate");
+        msg.DUPLICATE_COMMENT = lf("Duplicate Comment");
         msg.REMOVE_COMMENT = lf("Remove Comment");
         msg.ADD_COMMENT = lf("Add Comment");
         msg.EXTERNAL_INPUTS = lf("External Inputs");
