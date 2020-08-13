@@ -52,4 +52,4 @@ We are currently running a series of co-design workshops with families in order 
 
 TileCode demonstrates that battery-powered gaming handhelds need not confine their users in a "cage of consumption".  Motivated by the rich and long history of board games and their evolution by players themselves, TileCode points the way to a future of video game devices that invites players to become creators on the very same devices they use to play. We believe children can be introduced to powerful computing ideas via affordable gaming handhelds and this type of access can help address the digital divide. This new form factor for a coding/gaming device provides youth with a personal experience where they can modify and create games anytime/anywhere.
 
- We encourage you to explore [TileCode](https://microsoft.github.io/tilecode) today and welcome any feedback to tilecode@microsoft.com!
+ We encourage you to explore [TileCode](https://microsoft.github.io/tilecode) today and welcome any feedback to [tilecode@microsoft.com](mailto:tilecode@microsoft.com)!
