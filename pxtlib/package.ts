@@ -1218,4 +1218,31 @@ namespace pxt {
     export function isPkgBeta(cfg: { description?: string; }): boolean {
         return cfg && /\bbeta\b/.test(cfg.description);
     }
+
+    export function parseJResFile(key: string, jres: JRes, base: JRes): JRes {
+        if (key == "*") return null;
+        if (typeof jres == "string") {
+            // short form
+            jres = { data: jres } as any
+        }
+        let ns = jres.namespace || base.namespace || ""
+        if (ns) ns += "."
+        let id = jres.id || ns + key
+        let icon = jres.icon
+        let mimeType = jres.mimeType || base.mimeType
+        let dataEncoding = jres.dataEncoding || base.dataEncoding || "base64"
+        if (!icon && dataEncoding == "base64" && (mimeType == "image/png" || mimeType == "image/jpeg")) {
+            icon = "data:" + mimeType + ";base64," + jres.data
+        }
+        return {
+            id,
+            data: jres.data,
+            dataEncoding: jres.dataEncoding || base.dataEncoding || "base64",
+            icon,
+            namespace: ns,
+            mimeType,
+            tilemapTile: jres.tilemapTile,
+            tileset: jres.tileset
+        }
+    }
 }

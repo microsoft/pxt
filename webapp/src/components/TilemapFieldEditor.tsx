@@ -5,7 +5,6 @@ import { ImageEditor } from "./ImageEditor/ImageEditor";
 import { setTelemetryFunction, GalleryTile } from './ImageEditor/store/imageReducer';
 
 export interface TilemapFieldEditorProps {
-    doneButtonCallback?: () => void;
 }
 
 export interface TilemapFieldEditorState {
@@ -17,8 +16,6 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
     protected blocksInfo: pxtc.BlocksInfo;
     protected ref: ImageEditor;
     protected closeEditor: () => void;
-    protected tmProject: pxt.TilemapProject;
-    protected tmName: string;
 
     constructor(props: TilemapFieldEditorProps) {
         super(props);
@@ -103,26 +100,12 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
             gallery = pxt.sprite.filterItems(pxt.sprite.getGalleryItems(this.blocksInfo, "Image"), ["tile"])
                 .map(g => ({ bitmap: pxt.sprite.getBitmap(this.blocksInfo, g.qName).data(), tags: g.tags, qualifiedName: g.qName, tileWidth: 16 }))
         }
-        this.ref.initTilemap(data, gallery,);
-    }
 
-    loadJres(jres: string, name: string) {
-        const parsed = parseJResFromString(JSON.stringify(jres));
-        this.tmProject = new pxt.TilemapProject(parsed);
-        const tm = this.tmProject.getTilemap(name);
-        this.tmName = name;
-        this.initTilemap(tm);
-    }
-
-    getJres() {
-        const tmData = this.getValue();
-        const encodedtm = this.tmProject.encodeTilemap(tmData, this.tmName);
-        return JSON.stringify(encodedtm);
+        this.ref.initTilemap(data, gallery);
     }
 
     protected onDoneClick = () => {
         if (this.closeEditor) this.closeEditor();
-        if (this.props.doneButtonCallback) this.props.doneButtonCallback();
     }
 }
 
@@ -130,40 +113,4 @@ function tickImageEditorEvent(event: string) {
     pxt.tickEvent("image.editor", {
         action: event
     });
-}
-
-function parseJResFromString(JResString: string) {
-    const allres: pxt.Map<pxt.JRes> = {}
-    let js: pxt.Map<pxt.JRes> = JSON.parse(JResString)
-    console.log(js);
-    let base: pxt.JRes = js["*"] || {} as any
-    for (let k of Object.keys(js)) {
-        if (k == "*") continue
-        let v = js[k]
-        if (typeof v == "string") {
-            // short form
-            v = { data: v } as any
-        }
-        let ns = v.namespace || base.namespace || ""
-        if (ns) ns += "."
-        let id = v.id || ns + k
-        let icon = v.icon
-        let mimeType = v.mimeType || base.mimeType
-        let dataEncoding = v.dataEncoding || base.dataEncoding || "base64"
-        if (!icon && dataEncoding == "base64" && (mimeType == "image/png" || mimeType == "image/jpeg")) {
-            icon = "data:" + mimeType + ";base64," + v.data
-        }
-        allres[id] = {
-            id,
-            data: v.data,
-            dataEncoding: v.dataEncoding || base.dataEncoding || "base64",
-            icon,
-            namespace: ns,
-            mimeType,
-            tilemapTile: v.tilemapTile,
-            tileset: v.tileset
-        }
-    }
-    console.log(allres);
-    return allres;
 }
