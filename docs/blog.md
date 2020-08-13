@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [TileCode: Design, Code, and Play Games on MakeCode Arcade Devices](/blog/arcade/tilecode)
+
+August 13th, 2020 by [Thomas Ball](https//github/tballmsft) and [Stefania Druga](https://github.com/stefania11)
+
+TileCode is a game creation app that allows you to design, code, and play video games directly on low-cost Microsoft MakeCode Arcade gaming handhelds, as well as in the web browser.
+
+**[Continue reading this blog post](/blog/arcade/tilecode)**
+
 ## [MakeCode Arcade Update](/blog/arcade/update-july-2020)
 
 July 17th, 2020 by [Jaqster](https://github.com/jaqster)
