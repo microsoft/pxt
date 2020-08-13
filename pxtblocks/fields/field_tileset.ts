@@ -28,13 +28,19 @@ namespace pxtblockly {
                 FieldTileset.cachedWorkspaceId = workspace.id;
                 const references = getAllReferencedTiles(workspace);
 
-                const projectTiles = project.getProjectTiles(16)
+                const supportedTileWidths = [16, 8, 32];
 
-                for (const tile of projectTiles.tiles) {
-                    if (!references.find(t => t.id === tile.id)) {
-                        references.push(tile);
+                for (const width of supportedTileWidths) {
+                    const projectTiles = project.getProjectTiles(width, width === 16);
+                    if (!projectTiles) continue;
+
+                    for (const tile of projectTiles.tiles) {
+                        if (!references.find(t => t.id === tile.id)) {
+                            references.push(tile);
+                        }
                     }
                 }
+
 
                 let weights: pxt.Map<number> = {};
                 references.sort((a, b) => {
@@ -54,7 +60,7 @@ namespace pxtblockly {
                 });
 
                 const getTileImage = (t: pxt.Tile) => tileWeight(t.id) <= 2 ?
-                    mkTransparentTileImage(16) :
+                    mkTransparentTileImage(t.bitmap.width) :
                     bitmapToImageURI(pxt.sprite.Bitmap.fromData(t.bitmap), PREVIEW_SIDE_LENGTH, false);
 
                 FieldTileset.referencedTiles = references.map(tile => [{
@@ -181,10 +187,11 @@ namespace pxtblockly {
 
     function tileWeight(id: string) {
         switch (id) {
-            case "myTiles.transparency8":
             case "myTiles.transparency16":
-            case "myTiles.transparency32":
                 return 1;
+            case "myTiles.transparency8":
+            case "myTiles.transparency32":
+                return 2;
             default:
                 if (id.startsWith("myTiles.tile")) {
                     const num = parseInt(id.slice(12));

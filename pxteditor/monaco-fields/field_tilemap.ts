@@ -12,7 +12,7 @@ namespace pxt.editor {
         protected textToValue(text: string): pxt.sprite.TilemapData {
             const tm = this.readTilemap(text);
 
-            const allTiles = pxt.react.getTilemapProject().getProjectTiles(tm.tileset.tileWidth);
+            const allTiles = pxt.react.getTilemapProject().getProjectTiles(tm.tileset.tileWidth, true);
 
             for (const tile of allTiles.tiles) {
                 if (!tm.tileset.tiles.some(t => t.id === tile.id)) {
