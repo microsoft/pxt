@@ -2,7 +2,7 @@
 
 ## TileCode: Design, Code, and Play Games on MakeCode Arcade Devices
 
-**Posted on August ???, 2020 by Thomas Ball and Stefania Druga**
+**Posted on August 2020, by Thomas Ball and Stefania Druga**
 
 [TileCode](https://microsoft.github.io/tilecode) is a game creation app that allows you to design, code, and play video games directly on low-cost [Microsoft MakeCode Arcade gaming handhelds](https://arcade.makecode.com/hardware), as well as in the web browser.
 
