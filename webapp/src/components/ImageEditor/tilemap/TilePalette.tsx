@@ -102,9 +102,9 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
         const { gallery } = props;
 
-        if (gallery) {
-            this.refreshGallery(props);
+        this.refreshGallery(props);
 
+        if (gallery) {
             const extraCategories: pxt.Map<Category> = {};
             for (const tile of gallery) {
                 const categoryName = tile.tags.find(t => pxt.Util.startsWith(t, "category-"));
@@ -116,6 +116,8 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                             tiles: []
                         };
                     }
+
+                    extraCategories[categoryName].tiles.push(tile);
                 }
             }
 
@@ -445,9 +447,11 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
     protected refreshGallery(props: TilePaletteProps) {
         const { gallery, tileset } = props;
-        options.forEach(opt => {
-            opt.tiles = gallery.filter(t => t.tags.indexOf(opt.id) !== -1 && t.tileWidth === tileset.tileWidth);
-        });
+        if (gallery) {
+            options.forEach(opt => {
+                opt.tiles = gallery.filter(t => t.tags.indexOf(opt.id) !== -1 && t.tileWidth === tileset.tileWidth);
+            });
+        }
     }
 
     protected positionCreateTileButton() {

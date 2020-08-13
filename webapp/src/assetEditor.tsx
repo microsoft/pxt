@@ -34,6 +34,8 @@ export interface MessageData {
     name?: string;
 }
 
+const DEFAULT_NAME = "tilemap_asset";
+
 export class AssetEditor extends React.Component<{}, AssetEditorState> {
     private editor: FieldEditorComponent<any>;
     protected tilemapProject: pxt.TilemapProject;
@@ -60,6 +62,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                         this.editor.loadJres(msg.data.message);
                         break;
                     case "tilemap":
+                        this.tilemapName = msg.data.name || DEFAULT_NAME;
                         this.initTilemap(msg.data.message);
                         break;
                 }
@@ -81,17 +84,16 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
     }
 
     initTilemap(s?: string) {
-        this.tilemapProject = new pxt.TilemapProject(s ? this.parseJRes(s) : {});
-        let id = "tilemap_asset";
+        this.tilemapProject = new pxt.TilemapProject();
+        this.tilemapProject.loadJRes(s ? this.parseJRes(s) : {});
         let project = this.tilemapProject.getTilemap(this.tilemapName);
 
         if (!project) {
-            const [ name, map ] = this.tilemapProject.createNewTilemap(id, 16, 16, 16);
+            const [ name, map ] = this.tilemapProject.createNewTilemap(this.tilemapName, 16, 16, 16);
             project = map;
-            id = name;
+            this.tilemapName = name;
         }
 
-        this.tilemapName = id;
         this.editor.init(this.tilemapProject.getTilemap(this.tilemapName), this.callbackOnDoneClick);
     }
 
@@ -108,7 +110,6 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 const editedIndex = data.tileset.tiles.findIndex(t => t.id === edit);
                 const edited = data.tileset.tiles[editedIndex];
 
-                // New tiles start with *. We haven't created them yet so ignore
                 if (edited.id.startsWith("*")) continue;
                 if (edited) {
                     data.tileset.tiles[editedIndex] = this.tilemapProject.updateTile(edited.id, edited.bitmap)
