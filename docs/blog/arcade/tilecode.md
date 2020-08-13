@@ -48,7 +48,7 @@ Photo source (right): https://paper-station.com/2018/07/09/faber-castell-creatio
 
 We are currently running a series of co-design workshops with families in order to better understand how students and parents make sense of video game mechanics and what are the most intuitive strategies for them to go about creating their own video games or to modify existing games. These workshops will inform our future design of TileCode and its new features which build directly on students' intuitive models of video game mechanics.
 
-## Powerful Computational Ideas on Low-powered Gaming Handhelds
+### Powerful Computational Ideas on Low-powered Gaming Handhelds
 
 TileCode demonstrates that battery-powered gaming handhelds need not confine their users in a "cage of consumption".  Motivated by the rich and long history of board games and their evolution by players themselves, TileCode points the way to a future of video game devices that invites players to become creators on the very same devices they use to play. We believe children can be introduced to powerful computing ideas via affordable gaming handhelds and this type of access can help address the digital divide. This new form factor for a coding/gaming device provides youth with a personal experience where they can modify and create games anytime/anywhere.
 
