@@ -7,6 +7,7 @@ namespace pxtblockly {
     export interface FieldTilemapOptions {
         initWidth: string;
         initHeight: string;
+        tileWidth: string | number;
 
         filter?: string;
     }
@@ -14,6 +15,7 @@ namespace pxtblockly {
     interface ParsedFieldTilemapOptions {
         initWidth: number;
         initHeight: number;
+        tileWidth: 8 | 16 | 32;
         filter?: string;
     }
 
@@ -272,7 +274,7 @@ namespace pxtblockly {
                 }
             }
 
-            const tilemap = pxt.sprite.decodeTilemap(newText, "typescript", pxt.react.getTilemapProject()) || emptyTilemap(this.params.initWidth, this.params.initHeight);
+            const tilemap = pxt.sprite.decodeTilemap(newText, "typescript", pxt.react.getTilemapProject()) || emptyTilemap(this.params.tileWidth, this.params.initWidth, this.params.initHeight);
 
             // Ignore invalid bitmaps
             if (checkTilemap(tilemap)) {
@@ -288,7 +290,7 @@ namespace pxtblockly {
 
         protected initState() {
             if (!this.state) {
-                this.state = pxt.react.getTilemapProject().blankTilemap(16, this.params.initWidth, this.params.initHeight);
+                this.state = pxt.react.getTilemapProject().blankTilemap(this.params.tileWidth, this.params.initWidth, this.params.initHeight);
             }
         }
 
@@ -314,6 +316,7 @@ namespace pxtblockly {
         const parsed: ParsedFieldTilemapOptions = {
             initWidth: 16,
             initHeight: 16,
+            tileWidth: 16
         };
 
         if (!opts) {
@@ -322,6 +325,39 @@ namespace pxtblockly {
 
         if (opts.filter) {
             parsed.filter = opts.filter;
+        }
+
+        if (opts.tileWidth) {
+            if (typeof opts.tileWidth === "number") {
+                switch (opts.tileWidth) {
+                    case 8:
+                        parsed.tileWidth = 8;
+                        break;
+                    case 16:
+                        parsed.tileWidth = 16;
+                        break;
+                    case 32:
+                        parsed.tileWidth = 32;
+                        break;
+                }
+            }
+            else {
+                const tw = opts.tileWidth.trim().toLowerCase();
+                switch (tw) {
+                    case "8":
+                    case "eight":
+                        parsed.tileWidth = 8;
+                        break;
+                    case "16":
+                    case "sixteen":
+                        parsed.tileWidth = 16;
+                        break;
+                    case "32":
+                    case "thirtytwo":
+                        parsed.tileWidth = 32;
+                        break;
+                }
+            }
         }
 
         parsed.initWidth = withDefault(opts.initWidth, parsed.initWidth);
@@ -384,10 +420,10 @@ namespace pxtblockly {
         }
     }
 
-    function emptyTilemap(width: number, height: number) {
+    function emptyTilemap(tileWidth: number, width: number, height: number) {
         return new pxt.sprite.TilemapData(
             new pxt.sprite.Tilemap(width, height),
-            {tileWidth: 16, tiles: []},
+            {tileWidth: tileWidth, tiles: []},
             new pxt.sprite.Bitmap(width, height).data()
         );
     }

@@ -100,13 +100,8 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     constructor(props: TilePaletteProps) {
         super(props);
 
-        const { gallery, tileset } = props;
-        options.forEach(opt => {
-            if (opt.tiles.length == 0) {
-                opt.tiles.push.apply(opt.tiles,
-                    gallery.filter(t => t.tags.indexOf(opt.id) !== -1 && t.tileWidth === tileset.tileWidth));
-                }
-        })
+        const { gallery } = props;
+        this.refreshGallery(props);
 
         const extraCategories: pxt.Map<Category> = {};
         for (const tile of gallery) {
@@ -139,6 +134,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         } else if (this.props.backgroundColor != nextProps.backgroundColor) {
             this.jumpToPageContaining(nextProps.backgroundColor);
         }
+        this.refreshGallery(nextProps);
     }
 
     componentDidUpdate() {
@@ -189,7 +185,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             </div>
             <Pivot options={tabs} selected={galleryOpen ? 1 : 0} onChange={this.pivotHandler} />
             <div className="tile-palette-controls-outer">
-                { galleryOpen && <Dropdown onChange={this.dropdownHandler} options={this.categories} selected={category} /> }
+                { galleryOpen && <Dropdown onChange={this.dropdownHandler} options={this.categories.filter(c => !!c.tiles.length)} selected={category} /> }
 
                 { !galleryOpen &&
                     <div className="tile-palette-controls">
@@ -442,6 +438,13 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             // automatically switch into tile drawing mode
             this.props.dispatchChangeDrawingMode(TileDrawingMode.Default);
         }
+    }
+
+    protected refreshGallery(props: TilePaletteProps) {
+        const { gallery, tileset } = props;
+        options.forEach(opt => {
+            opt.tiles = gallery.filter(t => t.tags.indexOf(opt.id) !== -1 && t.tileWidth === tileset.tileWidth);
+        });
     }
 
     protected positionCreateTileButton() {
