@@ -88,7 +88,7 @@ namespace pxtblockly {
             this.state.projectReferences = getAllReferencedTiles(this.sourceBlock_.workspace, this.sourceBlock_.id).map(t => t.id);
             const project = pxt.react.getTilemapProject();
 
-            const allTiles = project.getProjectTiles(this.state.tileset.tileWidth);
+            const allTiles = project.getProjectTiles(this.state.tileset.tileWidth, true);
 
             for (const tile of allTiles.tiles) {
                 if (!this.state.tileset.tiles.some(t => t.id === tile.id)) {

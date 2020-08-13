@@ -62,14 +62,14 @@ namespace pxt {
             return null;
         }
 
-        public getProjectTiles(tileWidth: number): TileSet | null {
+        public getProjectTiles(tileWidth: number, createIfMissing: boolean): TileSet | null {
             if (this.state.projectTileSet) {
                 const res = this.state.projectTileSet.tileSets.find(tileSet => tileSet.tileWidth === tileWidth);
 
-                if (!res) {
+                if (!res && createIfMissing) {
                     // This will create a new tileset with the correct width
                     this.createNewTile(new pxt.sprite.Bitmap(tileWidth, tileWidth).data())
-                    return this.getProjectTiles(tileWidth);
+                    return this.getProjectTiles(tileWidth, false);
                 }
 
                 return res;
@@ -374,7 +374,7 @@ namespace pxt {
             }
 
             // Always create a transparent tile
-            const bitmap = new pxt.sprite.Bitmap(16, 16).data();
+            const bitmap = new pxt.sprite.Bitmap(tileWidth, tileWidth).data();
             tileSet.tiles.push({
                 id: transparencyID,
                 bitmap: bitmap,
