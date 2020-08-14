@@ -64,6 +64,12 @@ You can also use the ``#example`` route similarly to ``#tutorial`` to load a mar
 
     https://[editor url]/#example:[GitHub repository url]/[filename]
 
+### In-Context Tutorials
+
+In context tutorials are tutorials that are loaded into an existing project, preserving the code the user has already written. They use the ``#recipe`` route to load into the editor. Make sure that the editor (that is, "Arcade", "Minecraft", "Microbit", etc) has in-context tutorials enabled in the settings--you may need to contact the editor maintainer to check if this is the case.
+
+    https://[editor url]/#recipe:[GitHub repository url]/[filename]
+
 ### Testing
 
 Click on the ``lab`` icon in the **Explorer** view to open any markdown file (``.md``) as a tutorial in a new tab.

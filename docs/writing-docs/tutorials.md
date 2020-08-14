@@ -361,17 +361,19 @@ To have a tutorial appear on the home screen, you will need to create or use an 
 If you are able to author your tutorial in a language agnostic way, 
 you will be able to have a single source document for both JavaScript and Python. You can specify a single tutorial for multiple languages using the [otherActions](/targets/home-screen#otheractions) field in the tutorial code card.
 
-## In context tutorials
+### In-Context Tutorials
+In context tutorials are tutorials that are loaded into an existing project, rather than into a blank one. The format is the same as for all tutorials. If you are writing a third-party tutorial, please see the [User Tutorials](/writing-docs/user-tutorials) documentation for information on how to share your content as an in-context tutorial.
 
-In context tutorials are micro-tutorials that run within your current program. They need to be enabled separately. The format is the same as other tutorials.
-
-* (editor maintainer) add a ``recipes: true`` entry in the ``appTheme`` section of your [``pxtarget.json``](/targets/pxtarget#apptheme-apptheme) editor
-* add a ``/docs/recipes.md`` file that contains the gallery of micro-tutorials
+For editor maintainers:
+* Add ``recipes: true`` in the ``appTheme`` section of your [``pxtarget.json``](/targets/pxtarget#apptheme-apptheme) to enable in-context tutorials
+* Optionally add a ``/docs/recipes.md`` file that contains a list of code cards referencing your in-context tutorials.
 
 In order to select the proper language (blocks vs JavaScript vs Python), you should add
 a ``"editor": "js"`` entry for JavaScript tutorials and ``"editor": "py"`` entry for Python tutorials to each code card.
 
 ## Testing
+
+If you are writing a third-party tutorial, please see the [User Tutorials](/writing-docs/user-tutorials) documentation for information on how to preview and share your tutorials.
 
 When developing your new tutorials, it is easiest to first render and view them as a markdown documentation page until all steps look OK to you. Going through all the steps several times using the tutorial runner might become quite tedious while developing the tutorial.
 
