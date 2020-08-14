@@ -568,6 +568,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             this.handleGithubError(e);
         } finally {
             this.hideLoading()
+            pxt.tickEvent("github.commit.success");
         }
     }
 
