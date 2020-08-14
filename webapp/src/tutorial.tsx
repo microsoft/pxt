@@ -19,8 +19,25 @@ type ISettingsProps = pxt.editor.ISettingsProps;
  * We'll run this step when we first start the tutorial to figure out what blocks are used so we can
  * filter the toolbox.
  */
-export function getUsedBlocksAsync(code: string[], language?: string): Promise<pxt.Map<number>> {
+export function getUsedBlocksAsync(code: string[], id: string, language?: string): Promise<pxt.Map<number>> {
     if (!code) return Promise.resolve({});
+
+    return pxt.BrowserUtils.tutorialInfoDbAsync()
+        .then(db => db.getAsync(id, code)
+            .then(entry => {
+                if (entry?.blocks && Object.keys(entry.blocks).length > 0) {
+                    return Promise.resolve(entry.blocks);
+                } else {
+                    return getUsedBlocksInternalAsync(code, id, language, db);
+                }})
+            .catch((err) => {
+                // fall back to full blocks decompile on error
+                return getUsedBlocksInternalAsync(code, id, language, db);
+            })
+        )
+}
+
+function getUsedBlocksInternalAsync(code: string[], id: string, language?: string, db?: pxt.BrowserUtils.ITutorialInfoDb): Promise<pxt.Map<number>> {
     const usedBlocks: pxt.Map<number> = {};
     return compiler.getBlocksAsync()
         .then(blocksInfo => {
@@ -43,6 +60,8 @@ export function getUsedBlocksAsync(code: string[], language?: string): Promise<p
                 }
                 if (pxt.options.debug)
                     pxt.debug(JSON.stringify(usedBlocks, null, 2));
+
+                if (db) db.setAsync(id, usedBlocks, code);
                 return usedBlocks;
             } else {
                 throw new Error("Failed to decompile");
