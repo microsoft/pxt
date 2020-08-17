@@ -10,7 +10,7 @@ namespace pxt.tutorial {
             return undefined; // error parsing steps
 
         // collect code and infer editor
-        const { code, templateCode, editor, language } = computeBodyMetadata(body);
+        const { code, templateCode, editor, language, jres } = computeBodyMetadata(body);
 
         // noDiffs legacy
         if (metadata.diffs === true // enabled in tutorial
@@ -38,14 +38,16 @@ namespace pxt.tutorial {
             code,
             templateCode,
             metadata,
-            language
+            language,
+            jres
         };
     }
 
     function computeBodyMetadata(body: string) {
         // collect code and infer editor
         let editor: string = undefined;
-        const regex = /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python)?\s*\n([\s\S]*?)\n```/gmi;
+        const regex = /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python|jres)?\s*\n([\s\S]*?)\n```/gmi;
+        let jres: string;
         let code: string[] = [];
         let templateCode: string;
         let language: string;
@@ -78,6 +80,9 @@ namespace pxt.tutorial {
                     case "template":
                         templateCode = m2;
                         break;
+                    case "jres":
+                        jres = m2;
+                        break;
                 }
                 code.push(m1 == "python" ? `\n${m2}\n` : `{\n${m2}\n}`);
                 idx++
@@ -85,7 +90,7 @@ namespace pxt.tutorial {
             });
         // default to blocks
         editor = editor || pxt.BLOCKS_PROJECT_NAME
-        return { code, templateCode, editor, language }
+        return { code, templateCode, editor, language, jres }
 
         function checkTutorialEditor(expected: string) {
             if (editor && editor != expected) {
@@ -262,7 +267,7 @@ ${code}
     /* Remove hidden snippets from text */
     function stripHiddenSnippets(str: string): string {
         if (!str) return str;
-        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template)\s*\n([\s\S]*?)\n```/gmi;
+        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template|jres)\s*\n([\s\S]*?)\n```/gmi;
         return str.replace(hiddenSnippetRegex, '').trim();
     }
 
@@ -346,7 +351,8 @@ ${code}
             templateCode: tutorialInfo.templateCode,
             autoexpandStep: true,
             metadata: tutorialInfo.metadata,
-            language: tutorialInfo.language
+            language: tutorialInfo.language,
+            jres: tutorialInfo.jres
         };
 
         return { options: tutorialOptions, editor: tutorialInfo.editor };

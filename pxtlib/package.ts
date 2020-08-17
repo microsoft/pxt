@@ -205,35 +205,7 @@ namespace pxt {
         parseJRes(allres: Map<JRes> = {}) {
             for (const f of this.getFiles()) {
                 if (U.endsWith(f, ".jres")) {
-                    let js: Map<JRes> = JSON.parse(this.readFile(f))
-                    let base: JRes = js["*"] || {} as any
-                    for (let k of Object.keys(js)) {
-                        if (k == "*") continue
-                        let v = js[k]
-                        if (typeof v == "string") {
-                            // short form
-                            v = { data: v } as any
-                        }
-                        let ns = v.namespace || base.namespace || ""
-                        if (ns) ns += "."
-                        let id = v.id || ns + k
-                        let icon = v.icon
-                        let mimeType = v.mimeType || base.mimeType
-                        let dataEncoding = v.dataEncoding || base.dataEncoding || "base64"
-                        if (!icon && dataEncoding == "base64" && (mimeType == "image/png" || mimeType == "image/jpeg")) {
-                            icon = "data:" + mimeType + ";base64," + v.data
-                        }
-                        allres[id] = {
-                            id,
-                            data: v.data,
-                            dataEncoding: v.dataEncoding || base.dataEncoding || "base64",
-                            icon,
-                            namespace: ns,
-                            mimeType,
-                            tilemapTile: v.tilemapTile,
-                            tileset: v.tileset
-                        }
-                    }
+                    inflateJRes(JSON.parse(this.readFile(f)), allres)
                 }
             }
             return allres
@@ -1204,6 +1176,39 @@ namespace pxt {
             })
             return res;
         }
+    }
+
+    export function inflateJRes(js: Map<JRes>, allres: Map<JRes> = {}) {
+        let base: JRes = js["*"] || {} as any
+        for (let k of Object.keys(js)) {
+            if (k == "*") continue
+            let v = js[k]
+            if (typeof v == "string") {
+                // short form
+                v = { data: v } as any
+            }
+            let ns = v.namespace || base.namespace || ""
+            if (ns) ns += "."
+            let id = v.id || ns + k
+            let icon = v.icon
+            let mimeType = v.mimeType || base.mimeType
+            let dataEncoding = v.dataEncoding || base.dataEncoding || "base64"
+            if (!icon && dataEncoding == "base64" && (mimeType == "image/png" || mimeType == "image/jpeg")) {
+                icon = "data:" + mimeType + ";base64," + v.data
+            }
+            allres[id] = {
+                id,
+                data: v.data,
+                dataEncoding: v.dataEncoding || base.dataEncoding || "base64",
+                icon,
+                namespace: ns,
+                mimeType,
+                tilemapTile: v.tilemapTile,
+                tileset: v.tileset
+            }
+        }
+
+        return allres;
     }
 
     export function allPkgFiles(cfg: PackageConfig) {

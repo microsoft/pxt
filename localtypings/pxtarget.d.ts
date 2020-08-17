@@ -888,6 +888,7 @@ declare namespace pxt.tutorial {
         language?: string; // language of code snippet (ts or python)
         templateCode?: string;
         metadata?: TutorialMetadata;
+        jres?: string; // JRES to be used when generating hints; necessary for tilemaps
     }
 
     interface TutorialMetadata {
@@ -935,6 +936,7 @@ declare namespace pxt.tutorial {
         autoexpandStep?: boolean; // autoexpand tutorial card if instruction text overflows
         metadata?: TutorialMetadata; // metadata about the tutorial parsed from the markdown
         language?: string; // native language of snippets ("python" for python, otherwise defaults to typescript)
+        jres?: string; // JRES to be used when generating hints; necessary for tilemaps
     }
     interface TutorialCompletionInfo {
         // id of the tutorial
