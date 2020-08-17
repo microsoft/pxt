@@ -34,7 +34,10 @@ export function getUsedBlocksAsync(code: string[], id: string, language?: string
                 // fall back to full blocks decompile on error
                 return getUsedBlocksInternalAsync(code, id, language, db);
             })
-        )
+        ).catch((err) => {
+            // fall back to full blocks decompile on error
+            return getUsedBlocksInternalAsync(code, id, language);
+        })
 }
 
 function getUsedBlocksInternalAsync(code: string[], id: string, language?: string, db?: pxt.BrowserUtils.ITutorialInfoDb): Promise<pxt.Map<number>> {
