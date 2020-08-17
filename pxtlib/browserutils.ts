@@ -932,6 +932,99 @@ namespace pxt.BrowserUtils {
             .catch(e => deleteDbAsync().done());
     }
 
+    function getTutorialInfoHash(code: string[]) {
+        // the code strings are parsed from markdown, so when the
+        // markdown changes the blocks will also be invalidated
+        const input = JSON.stringify(code) + pxt.appTarget.versions.pxt + "_" + pxt.appTarget.versions.target;
+        return pxtc.U.sha256(input);
+    }
+
+    function getTutorialInfoKey(filename: string, branch?: string) {
+        return `${filename}|${branch || "master"}`;
+    }
+
+    interface TutorialInfoIndexedDbEntry {
+        id: string;
+        hash: string;
+        blocks: Map<number>;
+    }
+
+    export interface ITutorialInfoDb {
+        getAsync(filename: string, code: string[], branch?: string): Promise<TutorialInfoIndexedDbEntry>;
+        setAsync(filename: string, blocks: Map<number>, code: string[], branch?: string ): Promise<void>;
+    }
+
+    class TutorialInfoIndexedDb implements ITutorialInfoDb {
+        static TABLE = "info";
+        static KEYPATH = "id";
+
+        static dbName() {
+            return `__pxt_tutorialinfo_${pxt.appTarget.id || ""}`;
+        }
+
+        static createAsync(): Promise<TutorialInfoIndexedDb> {
+            function openAsync() {
+                const idbWrapper = new pxt.BrowserUtils.IDBWrapper(TutorialInfoIndexedDb.dbName(), 2, (ev, r) => {
+                    const db = r.result as IDBDatabase;
+                    db.createObjectStore(TutorialInfoIndexedDb.TABLE, { keyPath: TutorialInfoIndexedDb.KEYPATH });
+                }, () => {
+                    // quota exceeeded, clear db
+                    pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(TutorialInfoIndexedDb.dbName())
+                });
+                return idbWrapper.openAsync()
+                    .then(() => new TutorialInfoIndexedDb(idbWrapper));
+            }
+            return openAsync()
+                .catch(e => {
+                    console.log(`db: failed to open tutorial info database, try delete entire store...`)
+                    return pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(TutorialInfoIndexedDb.dbName())
+                        .then(() => openAsync());
+                })
+        }
+
+        private constructor(protected readonly db: pxt.BrowserUtils.IDBWrapper) {
+        }
+
+        getAsync(filename: string, code: string[], branch?: string): Promise<TutorialInfoIndexedDbEntry> {
+            const key = getTutorialInfoKey(filename, branch);
+            const hash = getTutorialInfoHash(code);
+
+            return this.db.getAsync<TutorialInfoIndexedDbEntry>(TutorialInfoIndexedDb.TABLE, key)
+                .then((res) => {
+                    /* tslint:disable:possible-timing-attack (this is not a security-sensitive codepath) */
+                    if (res && res.hash == hash) {
+                        return res;
+                    }
+                    /* tslint:enable:possible-timing-attack */
+                    return undefined;
+                });
+        }
+
+        setAsync(filename: string, blocks: Map<number>, code: string[], branch?: string ): Promise<void> {
+            pxt.perf.measureStart("tutorial info db setAsync")
+            const key = getTutorialInfoKey(filename, branch);
+            const hash = getTutorialInfoHash(code);
+
+            const entry: TutorialInfoIndexedDbEntry = {
+                id: key,
+                hash,
+                blocks
+            };
+
+            return this.db.setAsync(TutorialInfoIndexedDb.TABLE, entry)
+                .then(() => {
+                    pxt.perf.measureEnd("tutorial info db setAsync")
+                })
+        }
+    }
+
+    let _tutorialInfoDbPromise: Promise<TutorialInfoIndexedDb>;
+    export function tutorialInfoDbAsync(): Promise<TutorialInfoIndexedDb> {
+        if (!_tutorialInfoDbPromise)
+            _tutorialInfoDbPromise = TutorialInfoIndexedDb.createAsync()
+        return _tutorialInfoDbPromise;
+    }
+
     export interface IPointerEvents {
         up: string,
         down: string[],
