@@ -35,11 +35,13 @@ export interface MessageData {
 }
 
 const DEFAULT_NAME = "tilemap_asset";
+const DEFAULT_TILE_WIDTH = 16;
 
 export class AssetEditor extends React.Component<{}, AssetEditorState> {
     private editor: FieldEditorComponent<any>;
     protected tilemapProject: pxt.TilemapProject;
     protected tilemapName: string;
+    protected tileWidth: number;
 
     constructor(props: {}) {
         super(props);
@@ -63,6 +65,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                         break;
                     case "tilemap":
                         this.tilemapName = msg.data.name || DEFAULT_NAME;
+                        this.tileWidth = DEFAULT_TILE_WIDTH; // TODO allow user to specify width from vscode
                         this.initTilemap(msg.data.message);
                         break;
                 }
@@ -89,16 +92,18 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         let project = this.tilemapProject.getTilemap(this.tilemapName);
 
         if (!project) {
-            const [ name, map ] = this.tilemapProject.createNewTilemap(this.tilemapName, 16, 16, 16);
+            const [ name, map ] = this.tilemapProject.createNewTilemap(this.tilemapName, this.tileWidth, 16, 16);
             project = map;
             this.tilemapName = name;
         }
 
-        this.editor.init(this.tilemapProject.getTilemap(this.tilemapName), this.callbackOnDoneClick);
+        this.editor.init(project, this.callbackOnDoneClick);
     }
 
     updateTilemap() {
         const data = this.editor.getValue() as pxt.sprite.TilemapData;
+
+        // reference pxteditor/monaco-fields/field_tilemap.ts
         if (data.deletedTiles) {
             for (const deleted of data.deletedTiles) {
                 this.tilemapProject.deleteTile(deleted);
@@ -110,10 +115,10 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 const editedIndex = data.tileset.tiles.findIndex(t => t.id === edit);
                 const edited = data.tileset.tiles[editedIndex];
 
-                if (edited.id.startsWith("*")) continue;
-                if (edited) {
-                    data.tileset.tiles[editedIndex] = this.tilemapProject.updateTile(edited.id, edited.bitmap)
-                }
+                // New tiles start with *. We haven't created them yet so ignore
+                if (!edited || edited.id.startsWith("*")) continue;
+
+                data.tileset.tiles[editedIndex] = this.tilemapProject.updateTile(edited.id, edited.bitmap)
             }
         }
 

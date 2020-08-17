@@ -1237,7 +1237,7 @@ namespace pxt {
         return {
             id,
             data: jres.data,
-            dataEncoding: jres.dataEncoding || base.dataEncoding || "base64",
+            dataEncoding,
             icon,
             namespace: ns,
             mimeType,
