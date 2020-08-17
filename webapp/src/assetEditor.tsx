@@ -28,10 +28,11 @@ export interface Message {
     data: MessageData;
 }
 export interface MessageData {
+    _fromVscode?: boolean;
     type: string;
     message?: string;
-    _fromVscode?: boolean;
     name?: string;
+    tileWidth?: number;
 }
 
 const DEFAULT_NAME = "tilemap_asset";
@@ -65,7 +66,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                         break;
                     case "tilemap":
                         this.tilemapName = msg.data.name || DEFAULT_NAME;
-                        this.tileWidth = DEFAULT_TILE_WIDTH; // TODO allow user to specify width from vscode
+                        this.tileWidth = msg.data.tileWidth || DEFAULT_TILE_WIDTH;
                         this.initTilemap(msg.data.message);
                         break;
                 }
