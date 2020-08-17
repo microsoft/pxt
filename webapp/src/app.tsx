@@ -738,6 +738,7 @@ export class ProjectView
                     pxt.tickEvent("light.typecheck")
                     pxt.options.light = true;
                 }
+                pxt.tickEvent("typecheck.complete", { editor: this.getPreferredEditor() });
                 this.editor.setDiagnostics(this.editorFile, state);
                 data.invalidate("open-pkg-meta:" + pkg.mainEditorPkg().getPkgId());
                 if (this.state.autoRun) {
@@ -2419,7 +2420,7 @@ export class ProjectView
     beforeCompile() { }
 
     compile(saveOnly = false) {
-        pxt.tickEvent("compile");
+        pxt.tickEvent("compile", { editor: this.getPreferredEditor() });
         pxt.debug('compiling...');
 
         if (this.checkForHwVariant())
