@@ -566,9 +566,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             await this.maybeReloadAsync()
         } catch (e) {
             this.handleGithubError(e);
+            pxt.tickEvent("github.commit.fail");
         } finally {
             this.hideLoading()
-            pxt.tickEvent("github.commit.success");
         }
     }
 
