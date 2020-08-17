@@ -946,12 +946,12 @@ namespace pxt.BrowserUtils {
     interface TutorialInfoIndexedDbEntry {
         id: string;
         hash: string;
-        blocks: { [ key: string ]: number };
+        blocks: Map<number>;
     }
 
     export interface ITutorialInfoDb {
         getAsync(filename: string, code: string[], branch?: string): Promise<TutorialInfoIndexedDbEntry>;
-        setAsync(filename: string, blocks: { [ key: string ]: number }, code: string[], branch?: string ): Promise<void>;
+        setAsync(filename: string, blocks: Map<number>, code: string[], branch?: string ): Promise<void>;
     }
 
     class TutorialInfoIndexedDb implements ITutorialInfoDb {
@@ -1000,7 +1000,7 @@ namespace pxt.BrowserUtils {
                 });
         }
 
-        setAsync(filename: string, blocks: { [ key: string ]: number }, code: string[], branch?: string ): Promise<void> {
+        setAsync(filename: string, blocks: Map<number>, code: string[], branch?: string ): Promise<void> {
             pxt.perf.measureStart("tutorial info db setAsync")
             const key = getTutorialInfoKey(filename, branch);
             const hash = getTutorialInfoHash(code);
