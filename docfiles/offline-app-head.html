@@ -15,8 +15,11 @@
             height: 65vh;
         }
 
-        .segments {
-            max-width: 60%;
+        body#docs > .container {
+            display: grid;
+            grid-template-rows: 1fr auto;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
         .segments.terms-container {
@@ -30,7 +33,8 @@
         #legal-segment {
             background:white;
             min-height: 18em;
-            max-height: 35em;
+            max-height: 40em;
+            height: 50vh;
             overflow-y: scroll;
         }
 
