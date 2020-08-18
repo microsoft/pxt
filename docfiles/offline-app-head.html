@@ -440,13 +440,12 @@
             $.getJSON("https://makecode.com/api/config/@targetid@/targetconfig")
                 .then(function (data) {
                     hideLoader();
-                    // if (data && data.electronManifest && data.electronManifest.latest) {
-                        // todo remove new js features / uncomment surrounding block
-                        updateDownloadLinks(data?.electronManifest?.latest ?? "v1.0.16");
+                    if (data && data.electronManifest && data.electronManifest.latest) {
+                        updateDownloadLinks(data.electronManifest.latest);
                         showAgree();
-                    // } else {
-                    //     showNoDownloads();
-                    // }
+                    } else {
+                        showNoDownloads();
+                    }
                 })
                 .catch(function () {
                     hideLoader();
