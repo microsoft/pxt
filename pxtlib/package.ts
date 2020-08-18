@@ -1199,7 +1199,7 @@ namespace pxt {
             allres[id] = {
                 id,
                 data: v.data,
-                dataEncoding: v.dataEncoding || base.dataEncoding || "base64",
+                dataEncoding,
                 icon,
                 namespace: ns,
                 mimeType,

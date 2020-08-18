@@ -419,9 +419,7 @@ namespace pxt {
                 }));
 
             this.state.projectTilemaps.push(...maps);
-
-            for (const id of Object.keys(jres)) this.state.takenNames[id] = true;
-
+            maps.forEach(tm => this.state.takenNames[tm.id] = true);
         }
 
         protected createTileset(tileWidth: number) {
