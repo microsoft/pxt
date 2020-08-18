@@ -262,6 +262,11 @@ namespace pxtblockly {
         private parseBitmap(newText: string) {
             if (!this.blocksInfo) return;
 
+            if (newText) {
+                // backticks are escaped inside markdown content
+                newText = newText.replace(/&#96;/g, "`");
+            }
+
             const match = /^\s*tilemap\s*`([^`]*)`\s*$/.exec(newText);
 
             if (match) {

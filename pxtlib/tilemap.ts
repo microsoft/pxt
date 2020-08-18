@@ -217,6 +217,26 @@ namespace pxt {
             return null;
         }
 
+        public resolveTileByBitmap(data: pxt.sprite.BitmapData): Tile {
+            const all = [this.state.projectTileSet].concat(this.extensionTileSets);
+
+            const dataString = pxt.sprite.base64EncodeBitmap(data);
+
+            for (const tileSets of all) {
+                for (const tileSet of tileSets.tileSets) {
+                    if (tileSet.tileWidth === data.width) {
+                        for (const tile of tileSet.tiles) {
+                            if (dataString === tile.data) {
+                                return tile;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
         public getTransparency(tileWidth: number) {
             for (const tileSet of this.state.projectTileSet.tileSets) {
                 if (tileSet.tileWidth === tileWidth) {
@@ -325,7 +345,7 @@ namespace pxt {
 
             for (const dep of allPackages) {
                 const isProject = dep.id === "this";
-                const tiles = readTiles(dep, isProject);
+                const tiles = readTiles(dep.parseJRes(), dep.id, isProject);
 
                 if (tiles) {
                     if (isProject) {
@@ -343,7 +363,7 @@ namespace pxt {
                 }
             }
 
-            this.state.projectTilemaps = getTilemaps(pack)
+            this.state.projectTilemaps = getTilemaps(pack.parseJRes())
                 .map(tm => ({
                     id: tm.id,
                     data: decodeTilemap(tm, id => this.resolveTile(id))
@@ -354,6 +374,52 @@ namespace pxt {
 
             this.state.takenNames = {};
             for (const id of Object.keys(allJRes)) this.state.takenNames[id] = true;
+        }
+
+        loadJres(jres: Map<JRes>, skipDuplicates = false) {
+            jres = inflateJRes(jres)
+
+            const tiles = readTiles(jres, "this", true);
+
+            // If we are loading JRES into an existing project (i.e. in multipart tutorials)
+            // we need to correct the tile ids because the user may have created new tiles
+            // and taken some of the ids that were used by the tutorial author
+            let tileMapping: Map<string> = {};
+
+            if (tiles) {
+                for (const tileset of tiles.tileSets) {
+                    for (const tile of tileset.tiles) {
+                        if (skipDuplicates) {
+                            const existing = this.resolveTileByBitmap(tile.bitmap);
+                            if (existing) {
+                                tileMapping[tile.id] = existing.id;
+                                continue;
+                            }
+                        }
+
+                        const newTile = this.createNewTile(tile.bitmap, tile.id);
+
+                        if (newTile.id !== tile.id) {
+                            tileMapping[tile.id] = newTile.id;
+                        }
+                    }
+                }
+            }
+
+            const maps = getTilemaps(jres)
+                .map(tm => ({
+                    id: tm.id,
+                    data: decodeTilemap(tm, id => {
+                        if (tileMapping[id]) {
+                            id = tileMapping[id];
+                        }
+
+                        return this.resolveTile(id)
+                    })
+                }));
+
+            this.state.projectTilemaps.push(...maps);
+            maps.forEach(tm => this.state.takenNames[tm.id] = true);
         }
 
         protected createTileset(tileWidth: number) {
@@ -391,9 +457,7 @@ namespace pxt {
         }
     }
 
-    function readTiles(pack: pxt.Package, isProjectTile = false): TileSetCollection | null {
-        const allJRes = pack.parseJRes();
-
+    function readTiles(allJRes: Map<JRes>, id: string, isProjectTile = false): TileSetCollection | null {
         const tiles: Tile[] = [];
 
         for (const key of Object.keys(allJRes)) {
@@ -433,16 +497,14 @@ namespace pxt {
         if (!tileSets.length) return null;
 
         const collection = {
-            extensionID: pack.id,
+            extensionID: id,
             tileSets: tileSets
         };
 
         return collection;
     }
 
-    function getTilemaps(pack: pxt.Package): JRes[] {
-        const allJRes = pack.parseJRes();
-
+    function getTilemaps(allJRes: Map<JRes>): JRes[] {
         const res: JRes[] = [];
         for (const key of Object.keys(allJRes)) {
             const entry = allJRes[key];

@@ -1289,6 +1289,7 @@ export class ProjectView
                 simulator.setDirty();
                 return compiler.newProjectAsync();
             }).then(() => compiler.applyUpgradesAsync())
+            .then(() => this.loadTutorialJresCodeAsync())
             .then(() => this.loadTutorialTemplateCodeAsync())
             .then(() => {
                 const main = pkg.getEditorPkg(pkg.mainPkg)
@@ -1469,6 +1470,31 @@ export class ProjectView
         }
 
         return decompilePromise.then(() => workspace.saveAsync(header));
+    }
+
+    private loadTutorialJresCodeAsync(): Promise<void> {
+        const header = pkg.mainEditorPkg().header;
+        if (!header || !header.tutorial || !header.tutorial.jres)
+            return Promise.resolve();
+
+        const jres = header.tutorial.jres;
+
+        // Delete from the header so that we don't double-load the tiles into
+        // the project if the project gets reloaded
+        delete header.tutorial.jres;
+
+        let parsed: any;
+
+        try {
+            parsed = JSON.parse(jres);
+        }
+        catch (e) {
+            return Promise.reject(e);
+        }
+
+        const project = pxt.react.getTilemapProject();
+        project.loadJres(parsed, true);
+        return pkg.mainEditorPkg().buildTilemapsAsync();
     }
 
     removeProject() {
