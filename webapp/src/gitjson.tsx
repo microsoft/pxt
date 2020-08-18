@@ -559,16 +559,20 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     }
 
     async commitAsync() {
+        let success = true;
         this.setState({ needsCommitMessage: false });
         this.showLoading("github.commit", true, lf("commit and push changes to GitHub..."));
         try {
             await this.commitCoreAsync()
             await this.maybeReloadAsync()
         } catch (e) {
+            success = false;
             pxt.tickEvent("github.commit.fail");
             this.handleGithubError(e);
         } finally {
-            pxt.tickEvent("github.commit.success");
+            if (success) {
+                pxt.tickEvent("github.commit.success");
+            }
             this.hideLoading()
         }
     }
