@@ -7,34 +7,12 @@
 
     <script src="/doccdn/jquery.js" type="text/javascript"></script>
     <style>
-        p.item {
-            color: rgba(0, 0, 0, 0.4);
-        }
-
         .ui.inverted.content {
             background: none;
         }
 
-        .content.segment {
-            min-height: 80%;
-        }
-
-        .content .welcomeheader {
-            font-weight: 300;
-            font-size: 1.5rem;
-        }
-
-        .footer.segment {
-            padding: 5em 0em;
-        }
-
-        .image.left {
-            padding-left: 2em;
-        }
-
-        .image.right {
-            padding-right: 2em;
-            float: right;
+        #loading-icon {
+            height: 65vh;
         }
 
         .segments {
@@ -42,7 +20,7 @@
         }
 
         .segments.terms-container {
-            margin-top: 5em;
+            margin-top: 2em;
         }
 
         .terms-container .segment {
@@ -51,31 +29,24 @@
 
         #legal-segment {
             background:white;
-            height: 18rem;
+            min-height: 18em;
+            max-height: 35em;
             overflow-y: scroll;
         }
 
         .topbar {
             display: flex;
             align-items: center;
-            justify-content: space-between;
             padding: 1em 2em;
             margin: -1em;
         }
+
         #docs .topbar .welcomeheader {
             text-transform: uppercase;
+            font-weight: 300;
+            font-size: 1.5em;
             margin: 0;
             color: white;
-        }
-        .targetlogo {
-            max-height: 2em;
-            min-width: 2em;
-            width: auto;
-        }
-        .headerlogo {
-            max-height: 2em;
-            min-width: 2em;
-            width: auto;
         }
 
         .flex-wrapper {
@@ -88,6 +59,12 @@
         }
         .right.flex-wrapper {
             justify-content: flex-end;;
+        }
+
+        .flex-wrapper img {
+            max-height: 2em;
+            min-width: 2em;
+            width: auto;
         }
 
         #docs .footer {
@@ -417,7 +394,7 @@
         }
 
         function hideLoader() {
-            $("#loader").remove();
+            $("#loading-icon").remove();
         }
 
         function showAgree() {
