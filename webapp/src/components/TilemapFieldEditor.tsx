@@ -75,6 +75,14 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
         }
     }
 
+    shouldPreventHide() {
+        if (this.ref?.state.editingTile) {
+            this.ref.closeNestedEditor();
+            return true;
+        }
+        return false;
+    }
+
     protected initTilemap(data: pxt.sprite.TilemapData, options?: any) {
         if (data.tilemap.width === 0 || data.tilemap.height === 0) {
             data.tilemap = new pxt.sprite.Tilemap(options.initWidth || 16, options.initHeight || 16)

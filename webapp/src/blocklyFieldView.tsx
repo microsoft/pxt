@@ -23,6 +23,7 @@ export interface FieldEditorComponent<U> extends React.Component {
     onResize?: () => void;
     loadJres?: (jres: string) => void;
     getJres?: () => string;
+    shouldPreventHide?: () => boolean;
 }
 
 let cachedBounds: EditorBounds;
@@ -36,7 +37,6 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
     protected componentRef: FieldEditorComponent<U>;
     protected overlayDiv: HTMLDivElement;
     protected persistentData: any;
-
     protected hideCallback: () => void;
 
     constructor(protected contentDiv: HTMLDivElement) {
@@ -72,6 +72,7 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
 
     hide() {
         if (!this.visible || !this.contentDiv) return;
+        if (this.componentRef?.shouldPreventHide?.()) return;
 
         this.visible = false;
         if (this.resizeFrameRef) cancelAnimationFrame(this.resizeFrameRef);
@@ -166,6 +167,7 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
         if (!this.contentBounds) return;
 
         if (!inBounds(ev.clientX, ev.clientY, this.contentBounds)) {
+            ev.stopPropagation();
             this.hide();
         }
     }
