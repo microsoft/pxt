@@ -306,22 +306,25 @@ namespace pxt.sprite {
         return;
     }
 
-    export function computeAverageColor(bitmap: Bitmap, colors: string[]) {
+    export function computeAverageColor(bitmap: Bitmap, colors: string[]): string {
         const parsedColors = colors.map(colorStringToRGB);
-        let color: number[];
         const averageColor = [0, 0, 0];
+        let numPixels = 0;
 
         for (let x = 0; x < bitmap.width; x++) {
             for (let y = 0; y < bitmap.height; y++) {
-                color = parsedColors[bitmap.get(x, y)];
-                averageColor[0] += color[0];
-                averageColor[1] += color[1];
-                averageColor[2] += color[2];
+                const color = bitmap.get(x, y);
+                if (color) {
+                    ++numPixels;
+                    const parsedColor = parsedColors[color];
+                    averageColor[0] += parsedColor[0];
+                    averageColor[1] += parsedColor[1];
+                    averageColor[2] += parsedColor[2];
+                }
             }
         }
 
-        const numPixels = bitmap.width * bitmap.height;
-        return "#" + toHex(averageColor.map(c => Math.floor(c / numPixels)));
+        return !!numPixels ? "#" + toHex(averageColor.map(c => Math.floor(c / numPixels))) : "#00000000";
     }
 
     export interface GalleryItem {
