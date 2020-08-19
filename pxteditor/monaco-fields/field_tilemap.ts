@@ -159,7 +159,7 @@ namespace pxt.editor {
                         openParen++;
                     }
                     else if (line.charAt(i) === ")") {
-                        openParen --;
+                        openParen--;
 
                         if (openParen === 0) {
                             const end = new monaco.Position(current.lineNumber, current.column + i + 2);
