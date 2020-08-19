@@ -2126,8 +2126,15 @@ export class ProjectView
         cfg.name = options.name || lf("Untitled");
         cfg.documentation = options.documentation;
         let files: pxt.workspace.ScriptText = Util.clone(options.prj.files)
-        if (options.filesOverride)
-            Util.jsonCopyFrom(files, options.filesOverride)
+        if (options.filesOverride) {
+            Util.jsonCopyFrom(files, options.filesOverride);
+            Object.keys(options.filesOverride).forEach(name => {
+                if (cfg.files.indexOf(name) === -1) {
+                    cfg.files.push(name);
+                }
+            })
+        }
+
         if (options.dependencies)
             Util.jsonMergeFrom(cfg.dependencies, options.dependencies)
         if (options.extensionUnderTest) {
