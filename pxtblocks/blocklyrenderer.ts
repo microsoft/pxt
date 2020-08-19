@@ -25,6 +25,7 @@ namespace pxt.blocks {
         splitSvg?: boolean;
         forceCompilation?: boolean;
         generateSourceMap?: boolean;
+        jres?: string;
     }
 
     export function initRenderingWorkspace() {
@@ -53,7 +54,7 @@ namespace pxt.blocks {
     }
 
     export function cleanRenderingWorkspace() {
-        // We re-use the workspace across renders, catch any errors so we know to 
+        // We re-use the workspace across renders, catch any errors so we know to
         // create a new workspace if there was an error
         if (workspace) workspace.dispose();
         workspace = undefined;

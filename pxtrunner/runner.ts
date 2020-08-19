@@ -919,6 +919,16 @@ ${linkString}
                     opts.fileSystem["main.ts"] = code;
                 opts.ast = true
 
+                if (options.jres) {
+                    const tilemapTS = pxt.emitTilemapsFromJRes(JSON.parse(options.jres));
+                    if (tilemapTS) {
+                        opts.fileSystem[pxt.TILEMAP_JRES] = options.jres;
+                        opts.fileSystem[pxt.TILEMAP_CODE] = tilemapTS;
+                        opts.sourceFiles.push(pxt.TILEMAP_JRES);
+                        opts.sourceFiles.push(pxt.TILEMAP_CODE);
+                    }
+                }
+
                 let compileJS: pxtc.CompileResult = undefined;
                 let program: ts.Program;
                 if (options && options.forceCompilation) {
@@ -959,7 +969,19 @@ ${linkString}
                                 apiInfo: apis
                             };
                         pxt.debug(bresp.outfiles["main.blocks"])
+
+                        if (options.jres) {
+                            tilemapProject = new TilemapProject();
+                            tilemapProject.loadPackage(mainPkg);
+                            tilemapProject.loadJres(JSON.parse(options.jres), true);
+                        }
+
                         const blocksSvg = pxt.blocks.render(bresp.outfiles["main.blocks"], options);
+
+                        if (options.jres) {
+                            tilemapProject = null;
+                        }
+
                         return <DecompileResult>{
                             package: mainPkg,
                             compileProgram: program,
@@ -991,15 +1013,36 @@ ${linkString}
             .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
             .then(opts => {
                 opts.ast = true
+                if (options.jres) {
+                    const tilemapTS = pxt.emitTilemapsFromJRes(JSON.parse(options.jres));
+                    if (tilemapTS) {
+                        opts.fileSystem[pxt.TILEMAP_JRES] = options.jres;
+                        opts.fileSystem[pxt.TILEMAP_CODE] = tilemapTS;
+                        opts.sourceFiles.push(pxt.TILEMAP_JRES);
+                        opts.sourceFiles.push(pxt.TILEMAP_CODE);
+                    }
+                }
                 const resp = pxtc.compile(opts)
                 const apis = getApiInfo(resp.ast, opts);
                 return ts.pxtc.localizeApisAsync(apis, mainPkg)
                     .then(() => {
                         const blocksInfo = pxtc.getBlocksInfo(apis);
                         pxt.blocks.initializeAndInject(blocksInfo);
+
+                        if (options.jres) {
+                            tilemapProject = new TilemapProject();
+                            tilemapProject.loadPackage(mainPkg);
+                            tilemapProject.loadJres(JSON.parse(options.jres), true);
+                        }
+                        const blockSvg = pxt.blocks.render(code, options);
+
+                        if (options.jres) {
+                            tilemapProject = null;
+                        }
+
                         return <DecompileResult>{
                             package: mainPkg,
-                            blocksSvg: pxt.blocks.render(code, options),
+                            blockSvg: blockSvg,
                             apiInfo: apis
                         };
                     })
