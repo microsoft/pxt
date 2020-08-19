@@ -1105,6 +1105,16 @@ export class ProjectView
         else sd.collapse();
     }
 
+    setSideDocCollapsed(shouldCollapse: boolean = true) {
+        let sd = this.refs["sidedoc"] as container.SideDocs;
+        if (!sd) return;
+        if (shouldCollapse && this.isSideDocExpanded()) {
+            sd.collapse();
+        } else if (!shouldCollapse && !this.isSideDocExpanded()) {
+            sd.expand();
+        }
+    }
+
     setTutorialInstructionsExpanded(value: boolean): void {
         const tutorialOptions = this.state.tutorialOptions;
         tutorialOptions.tutorialStepExpanded = value;

@@ -653,6 +653,10 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         this.props.parent.setState({ sideDocsLoadUrl: url, sideDocsCollapsed: false });
     }
 
+    expand() {
+        this.props.parent.setState({ sideDocsCollapsed: false });
+    }
+
     collapse() {
         this.props.parent.setState({ sideDocsCollapsed: true });
     }
