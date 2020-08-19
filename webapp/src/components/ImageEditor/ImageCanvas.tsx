@@ -656,11 +656,13 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     protected drawCursor(left: number, top: number, width: number, color: number) {
-        const context = this.canvas.getContext("2d");
+        const isDrawingWalls = this.props.isTilemap && this.props.drawingMode === TileDrawingMode.Wall;
+        const canvas = isDrawingWalls ? this.canvasLayers[0] : this.canvas;
+        const context = canvas.getContext("2d");
         context.imageSmoothingEnabled = false;
 
         if (color) {
-            if (this.props.isTilemap && this.props.drawingMode != TileDrawingMode.Wall) {
+            if (this.props.isTilemap && !isDrawingWalls) {
                 if (color >= this.props.tilemapState.tileset.tiles.length) return;
 
                 let tileImage = this.tileCache[color];
@@ -684,8 +686,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                 context.fillStyle = this.props.colors[color]
                 context.fillRect(left * this.cellWidth, top * this.cellWidth, width * this.cellWidth, width * this.cellWidth);
             }
-        }
-        else {
+        } else {
             context.clearRect(left * this.cellWidth, top * this.cellWidth, width * this.cellWidth, width * this.cellWidth);
         }
     }
