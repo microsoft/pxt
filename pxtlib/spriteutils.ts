@@ -306,7 +306,7 @@ namespace pxt.sprite {
         return;
     }
 
-    export function computeAverageColor(bitmap: Bitmap, colors: string[]) {
+    export function computeAverageColor(bitmap: Bitmap, colors: string[]): string {
         const parsedColors = colors.map(colorStringToRGB);
         const averageColor = [0, 0, 0];
         let numPixels = 0;
@@ -324,8 +324,7 @@ namespace pxt.sprite {
             }
         }
 
-        numPixels = numPixels || 1;
-        return "#" + toHex(averageColor.map(c => Math.floor(c / numPixels)));
+        return !!numPixels ? "#" + toHex(averageColor.map(c => Math.floor(c / numPixels))) : "#00000000";
     }
 
     export interface GalleryItem {
