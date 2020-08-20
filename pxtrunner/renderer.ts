@@ -32,6 +32,8 @@ namespace pxt.runner {
         pxtUrl?: string;
         packageClass?: string;
         package?: string;
+        jresClass?: string;
+        jres?: string;
         showEdit?: boolean;
         showJavaScript?: boolean; // default is to show blocks first
         split?: boolean; // split in multiple divs if too big
@@ -55,6 +57,7 @@ namespace pxt.runner {
             apisClass: 'lang-apis',
             codeCardClass: 'lang-codecard',
             packageClass: 'lang-package',
+            jresClass: 'lang-jres',
             projectClass: 'lang-project',
             snippetReplaceParent: true,
             simulator: true,
@@ -212,6 +215,13 @@ namespace pxt.runner {
                 host.writeFile(pkg, PY_FILE, compileBlocks.outfiles[PY_FILE]);
             } else {
                 pkg.setPreferredEditor(pxt.JAVASCRIPT_PROJECT_NAME);
+            }
+
+            if (options.jres) {
+                host.writeFile(pkg, pxt.TILEMAP_JRES, options.jres);
+                host.writeFile(pkg, pxt.TILEMAP_CODE, pxt.emitTilemapsFromJRes(JSON.parse(options.jres)));
+                pkg.config.files.push(pxt.TILEMAP_JRES);
+                pkg.config.files.push(pxt.TILEMAP_CODE);
             }
 
             const compressed = pkg.compressToFileAsync();
@@ -417,7 +427,7 @@ namespace pxt.runner {
                 if (options.snippetReplaceParent) c = c.parent();
                 const segment = $('<div class="ui segment codewidget"/>').append(s);
                 c.replaceWith(segment);
-            }, { package: options.package, snippetMode: false, aspectRatio: options.blocksAspectRatio });
+            }, { package: options.package, snippetMode: false, aspectRatio: options.blocksAspectRatio, jres: options.jres });
         }
 
         let snippetCount = 0;
@@ -438,7 +448,7 @@ namespace pxt.runner {
                 hexname: hexname,
                 hex: hex,
             });
-        }, { package: options.package, aspectRatio: options.blocksAspectRatio });
+        }, { package: options.package, aspectRatio: options.blocksAspectRatio, jres: options.jres });
     }
 
     function decompileCallInfo(stmt: ts.Statement): pxtc.CallInfo {
@@ -487,7 +497,7 @@ namespace pxt.runner {
                 trs.insertAfter(c);
             }
             fillWithWidget(options, c, js, py, s, r, { showJs: true, showPy: true, hideGutter: true });
-        }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
+        }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio, jres: options.jres });
     }
 
     function renderBlocksAsync(options: ClientRenderOptions): Promise<void> {
@@ -496,7 +506,7 @@ namespace pxt.runner {
             if (options.snippetReplaceParent) c = c.parent();
             const segment = $('<div class="ui segment codewidget"/>').append(s);
             c.replaceWith(segment);
-        }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
+        }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio, jres: options.jres });
     }
 
     function renderStaticPythonAsync(options: ClientRenderOptions): Promise<void> {
@@ -514,7 +524,7 @@ namespace pxt.runner {
                 highlight($py);
                 fillWithWidget(options, c.parent(), /* js */ $js, /* py */ $py, /* svg */ undefined, r, woptions);
             }
-        }, { package: options.package, snippetMode: true });
+        }, { package: options.package, snippetMode: true, jres: options.jres });
     }
 
     function renderBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
@@ -546,7 +556,7 @@ namespace pxt.runner {
             if (opts.snippetReplaceParent) c = c.parent();
             const segment = $('<div class="ui segment codewidget"/>').append(s);
             c.replaceWith(segment);
-        }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio });
+        }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio, jres: opts.jres });
     }
 
     function renderDiffBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
@@ -589,7 +599,7 @@ namespace pxt.runner {
             if (opts.snippetReplaceParent) c = c.parent();
             const segment = $('<div class="ui segment codewidget"/>').append(s);
             c.replaceWith(segment);
-        }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio });
+        }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio, jres: opts.jres });
     }
 
 
@@ -1018,7 +1028,7 @@ namespace pxt.runner {
 
             if (replaceParent) c = c.parent();
             c.replaceWith(ul)
-        }, { package: options.package, aspectRatio: options.blocksAspectRatio })
+        }, { package: options.package, aspectRatio: options.blocksAspectRatio, jres: options.jres })
     }
 
     function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: pxt.docs.codeCard.CodeCardRenderOptions): Promise<void> {
@@ -1118,6 +1128,15 @@ namespace pxt.runner {
             if (options.snippetReplaceParent) $c = $c.parent();
             $c.remove();
         })
+    }
+
+    function readJRes(options: ClientRenderOptions) {
+        if (!options.jresClass) return;
+        $('.' + options.jresClass).each((i, c) => {
+            const $c = $(c);
+            options.jres = $c.text();
+            $c.remove();
+        });
     }
 
     function renderDirectPython(options?: ClientRenderOptions) {
@@ -1234,6 +1253,7 @@ namespace pxt.runner {
         if (options.showEdit) options.showEdit = !pxt.BrowserUtils.isIFrame();
 
         mergeConfig(options);
+        readJRes(options);
 
         renderQueue = [];
         renderGhost(options);
