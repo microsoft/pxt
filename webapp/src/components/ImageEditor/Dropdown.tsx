@@ -41,7 +41,7 @@ export class Dropdown extends React.Component<DropdownProps, DropdownState> {
         const selectedOption = options[selected];
 
         return <div className="image-editor-dropdown-outer">
-            <button className="image-editor-dropdown" aria-haspopup="listbox" onClick={this.handleDropdownClick}>
+            <button className="image-editor-dropdown" aria-haspopup="listbox" onClick={this.handleDropdownClick} tabIndex={-1}>
                 { selectedOption?.text || "" }
                 <span className="image-editor-dropdown-chevron ms-Icon ms-Icon--ChevronDown">
                 </span>

@@ -15,6 +15,11 @@
     line-height: calc(~'1.75rem - 2px');
     border-radius: 0;
     border: 1px solid var(--sidebar-icon-active-color);
+
+    &:not(.toggle):focus {
+        // already has selected border
+        outline: none;
+    }
 }
 
 .image-editor-tool-buttons .image-editor-button.toggle {
