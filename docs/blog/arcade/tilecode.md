@@ -1,10 +1,10 @@
 ![tilecode banner](/static/blog/arcade/tilecode/banner.JPG)
 
-## TileCode: Design, Code, and Play Games on MakeCode Arcade Devices
+## Microsoft TileCode: Design, Code, and Play Games on MakeCode Arcade Devices
 
-**Posted on August 2020, by Thomas Ball and Stefania Druga**
+**Posted on August 20, 2020, by [Thomas Ball](https://www.microsoft.com/en-us/research/people/tball) and [Stefania Druga](http://cognimates.me/team/)**
 
-[TileCode](https://microsoft.github.io/tilecode) is a game creation app that allows you to design, code, and play video games directly on low-cost [Microsoft MakeCode Arcade gaming handhelds](https://arcade.makecode.com/hardware), as well as in the web browser.
+[Microsoft TileCode](https://microsoft.github.io/tilecode) is a game creation app that allows you to design, code, and play video games directly on low-cost [Microsoft MakeCode Arcade gaming handhelds](https://arcade.makecode.com/hardware), as well as in the web browser.
 
 ### From Board Games to Retro Video Games
 
@@ -50,6 +50,10 @@ We are currently running a series of co-design workshops with families in order 
 
 ## Powerful Computational Ideas on Low-powered Gaming Handhelds
 
-TileCode demonstrates that battery-powered gaming handhelds need not confine their users in a "cage of consumption".  Motivated by the rich and long history of board games and their evolution by players themselves, TileCode points the way to a future of video game devices that invites players to become creators on the very same devices they use to play. We believe children can be introduced to powerful computing ideas via affordable gaming handhelds and this type of access can help address the digital divide. This new form factor for a coding/gaming device provides youth with a personal experience where they can modify and create games anytime/anywhere.
+Microsoft TileCode demonstrates that battery-powered gaming handhelds need not confine their users in a "cage of consumption".  Motivated by the rich and long history of board games and their evolution by players themselves, TileCode points the way to a future of video game devices that invites players to become creators on the very same devices they use to play. We believe children can be introduced to powerful computing ideas via affordable gaming handhelds and this type of access can help address the digital divide. This new form factor for a coding/gaming device provides youth with a personal experience where they can modify and create games anytime/anywhere.
 
- We encourage you to explore [TileCode](https://microsoft.github.io/tilecode) today and welcome any feedback to [tilecode@microsoft.com](mailto:tilecode@microsoft.com)!
+ We encourage you to explore [Microsoft TileCode](https://microsoft.github.io/tilecode) today and welcome any feedback to [tilecode@microsoft.com](mailto:tilecode@microsoft.com)!
+
+## Read More About It!
+
+You can read more about TileCode in an upcoming UIST 2020 paper [TileCode: Creation of Video Games on Gaming Handhelds](https://www.microsoft.com/en-us/research/publication/tilecode-creation-of-video-games-on-gaming-handhelds/).

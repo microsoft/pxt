@@ -1,5 +1,9 @@
 # Microsoft MakeCode Blog
 
+## [Microsoft TileCode: Design, Code, and Play Games on MakeCode Arcade Devices](/blog/arcade/tilecode)
+
+August 20th, 2020 by [Thomas Ball](https://www.microsoft.com/en-us/research/people/tball) and [Stefania Druga](http://cognimates.me/team/)
+
 ## [MakeCode Arcade Update](/blog/arcade/update-july-2020)
 
 July 17th, 2020 by [Jaqster](https://github.com/jaqster)
