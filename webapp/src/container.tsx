@@ -429,11 +429,12 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         const pyOnly = languageRestriction === pxt.editor.LanguageRestriction.PythonOnly;
         // show python in toggle if: python editor currently active, or blocks editor active & saved language pref is python
         const showPython = parent.isPythonActive() || (parent.isBlocksActive() && pxt.Util.isPyLangPref());
+        const showBlocks = !!pkg.mainEditorPkg().files["main.blocks"];
 
         return (
             <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`}>
                 {sandbox && !headless && <SandboxMenuItem parent={parent} />}
-                {!pyOnly && !tsOnly && <BlocksMenuItem parent={parent} />}
+                {!pyOnly && !tsOnly && showBlocks && <BlocksMenuItem parent={parent} />}
                 {python && showPython ? <PythonMenuItem parent={parent} /> : <JavascriptMenuItem parent={parent} />}
                 {!pyOnly && !tsOnly && python && <sui.DropdownMenu id="editordropdown" role="menuitem" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
                     <JavascriptMenuItem parent={parent} />
