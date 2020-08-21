@@ -406,7 +406,7 @@ namespace pxt.runner {
             if (projectStorage) {
                 storedState = JSON.parse(projectStorage)
             }
-        } catch (e) {}
+        } catch (e) { }
         return storedState;
     }
 
@@ -419,7 +419,7 @@ namespace pxt.runner {
 
         try {
             window.localStorage.setItem(id, JSON.stringify(storedState))
-        } catch (e) {}
+        } catch (e) { }
     }
 
     export enum LanguageMode {
