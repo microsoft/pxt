@@ -412,6 +412,10 @@ namespace pxt.runner {
 
     function setStoredState(id: string, key: string, value: any) {
         let storedState: Map<any> = getStoredState(id);
+        if (!id) {
+            return
+        }
+
         if (value)
             storedState[key] = value
         else
