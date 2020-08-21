@@ -558,7 +558,7 @@ export function showNumber(value: number, interval: number = 150): void
 
 * If `@param` annotation is available with an `eg:` section, the first
 value is used as the shadow value.
-* An optional `help` attribute can be used to point to an specific documentation path.
+* An optional `help` attribute can be used to point to an specific documentation path. To define custom help for extension blocks, see [GitHub Extension Authoring](/extensions/github-authoring).
 * If the parameter has a default value (``interval`` in this case), it is **not** exposed in blocks.
 * If you want to include minimum and maximum value range for a numeric parameter, you can use square brackets with the range [min-max] after the parameter name in the `@param` annotation. It is important to include the shadow value if you are using a range.
      - `@param` power [0-7] a value in the range 0..7, where 0 is the lowest power and 7 is the highest. `eg:` 7

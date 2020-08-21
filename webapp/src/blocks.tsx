@@ -801,9 +801,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                                 return; // TODO support serving package docs in docs frame.
                             }
                         };
-                        if (/^\//.test(url))
+                        if (/^github:/.test(url)) {
+                            // strip 'github:', add '.md' file extension if necessary
+                            url = url.replace(/^github:\/?/, '') + (/\.md$/i.test(url) ? "" : ".md");
+                            const readme = pkg.getEditorPkg(pkg.mainPkg).lookupFile(url);
+                            const readmeContent = readme?.content?.trim();
+                            if (readmeContent) {
+                                this.parent.setSideMarkdown(readmeContent);
+                                this.parent.setSideDocCollapsed(false);
+                            }
+                        } else if (/^\//.test(url)) {
                             this.parent.setSideDoc(url);
-                        else window.open(url, 'docs');
+                        } else {
+                            window.open(url, 'docs');
+                        }
                     }
                     this.prepareBlockly();
                 })

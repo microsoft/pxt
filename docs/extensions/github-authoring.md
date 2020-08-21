@@ -59,6 +59,10 @@ For testing TypeScript APIs you don't need a separate project, and instead can
 use the `test.ts` file in the extension itself. It is only used when you run the extenssion
 directly, not when you add it to a project. You can put TypeScript test code in there.
 
+## Documenting your extension
+
+MakeCode displays a **Help** option when the user right-clicks on a block. By default, clicking this for extension blocks will open the extension README in a new window. To disable the option (if the README is being used for other purposes), add `//% help=none`. To specify a custom help file, loaded in the editor (instead of in a new window), use `//% help=github:repository-name/path-to-file`, for example `//% help=pxt-mypkg/on-message-received`.
+
 ## Non-extensions
 
 The GitHub feature is not limited to extensions. You can also use it to store other MakeCode projects. You can even use it to collaborate on a project with multiple people.
@@ -72,7 +76,5 @@ The web app will not let you create extensions with C++. This you still need to 
 ## Additional notes
 
 * You can use a non-`master` branch by going to **Import URL** and saying something like `https://github.com/jrandomhacker/pxt-mypkg#mybranch`. User note, this hasn't been extensively tested yet.
-
 * MakeCode will generally only download files listed in `pxt.json`. Files in GitHub but not in `pxt.json` will be ignored and left alone.
-
 * The GitHub authoring feature is now available in all MakeCode editors.

@@ -1087,7 +1087,7 @@ export class ProjectView
 
     isSideDocExpanded(): boolean {
         const sd = this.refs["sidedoc"] as container.SideDocs;
-        return !!sd && sd.isCollapsed();
+        return !!sd && !sd.isCollapsed();
     }
 
     setSideMarkdown(md: string) {
@@ -1103,6 +1103,16 @@ export class ProjectView
             sd.setPath(path, blocksEditor);
         }
         else sd.collapse();
+    }
+
+    setSideDocCollapsed(shouldCollapse: boolean = true) {
+        let sd = this.refs["sidedoc"] as container.SideDocs;
+        if (!sd) return;
+        if (shouldCollapse && this.isSideDocExpanded()) {
+            sd.collapse();
+        } else if (!shouldCollapse && !this.isSideDocExpanded()) {
+            sd.expand();
+        }
     }
 
     setTutorialInstructionsExpanded(value: boolean): void {

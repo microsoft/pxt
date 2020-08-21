@@ -232,6 +232,7 @@ namespace pxt.editor {
         navigateToError(diag: pxtc.KsDiagnostic): void;
         setSideDoc(path: string, blocksEditor?: boolean): void;
         setSideMarkdown(md: string): void;
+        setSideDocCollapsed(shouldCollapse?: boolean): void;
         removeFile(fn: IFile, skipConfirm?: boolean): void;
         updateFileAsync(name: string, content: string, open?: boolean): Promise<void>;
 
