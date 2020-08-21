@@ -7,10 +7,12 @@ import { setTelemetryFunction } from './ImageEditor/store/imageReducer';
 export interface ImageFieldEditorProps {
     singleFrame: boolean;
     doneButtonCallback?: () => void;
+    showTiles?: boolean;
 }
 
 export interface ImageFieldEditorState {
     galleryVisible: boolean;
+    tileGalleryVisible?: boolean;
     galleryFilter?: string;
 }
 
@@ -21,6 +23,8 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
     protected ref: ImageEditor;
     protected closeEditor: () => void;
     protected options: any;
+    protected tileGallery: pxt.sprite.GalleryItem[];
+    protected extensionGallery: pxt.sprite.GalleryItem[];
 
     constructor(props: ImageFieldEditorProps) {
         super(props);
@@ -32,6 +36,16 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
     }
 
     render() {
+        const { showTiles } = this.props;
+
+        if (this.blocksInfo && !this.extensionGallery) {
+            this.extensionGallery = pxt.sprite.getGalleryItems(this.blocksInfo, "Image")
+        }
+
+        if (showTiles && !this.tileGallery) {
+            this.tileGallery = this.getTileGalleryItems();
+        }
+
         return <div className="image-editor-wrapper">
             <div className="gallery-editor-header">
                 <div className={`gallery-editor-toggle ${this.state.galleryVisible ? "right" : "left"} ${pxt.BrowserUtils.isEdge() ? "edge" : ""}`} onClick={this.toggleGallery} role="button" aria-pressed={this.state.galleryVisible}>
@@ -43,14 +57,19 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
                     </div>
                     <div className="gallery-editor-toggle-handle"/>
                 </div>
+                { showTiles && <button className="gallery-editor-show-tiles" onClick={this.toggleTileGallery}>{lf("Tile Gallery")}</button>}
             </div>
             <div className="image-editor-gallery-content">
                 <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} />
                 <ImageEditorGallery
-                    items={this.blocksInfo && pxt.sprite.getGalleryItems(this.blocksInfo, "Image")}
+                    items={this.extensionGallery}
                     hidden={!this.state.galleryVisible}
                     filterString={this.state.galleryFilter}
                     onItemSelected={this.onGalleryItemSelect} />
+                { showTiles && <ImageEditorGallery
+                    items={this.tileGallery}
+                    hidden={this.state.galleryVisible || !this.state.tileGalleryVisible}
+                    onItemSelected={this.onGalleryItemSelect} /> }
             </div>
         </div>
     }
@@ -62,6 +81,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
 
     componentWillUnmount() {
         tickImageEditorEvent("image-editor-hidden");
+        this.tileGallery = undefined;
     }
 
     init(value: U, close: () => void, options?: any) {
@@ -129,6 +149,29 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         }
     }
 
+    protected getTileGalleryItems() {
+        if (!this.extensionGallery) return null;
+
+        const libraryTiles = pxt.sprite.filterItems(this.extensionGallery, ["tile"]);
+
+        const project = pxt.react.getTilemapProject();
+        const imgConv = new pxt.ImageConverter();
+
+        const tilesToGalleryItems = (tiles: pxt.TileSet) => tiles ? tiles.tiles.map(t => ({
+            qName: t.id,
+            src: imgConv.convert("data:image/x-mkcd-f," + t.data),
+            alt: t.id,
+            tags: []
+        } as pxt.sprite.GalleryItem)) : [];
+
+        return [
+            ...tilesToGalleryItems(project.getProjectTiles(8, false)),
+            ...tilesToGalleryItems(project.getProjectTiles(16, false)),
+            ...tilesToGalleryItems(project.getProjectTiles(32, false)),
+            ...libraryTiles
+        ];
+    }
+
     protected initSingleFrame(value: pxt.sprite.Bitmap, options?: any) {
         this.ref.initSingleFrame(value);
 
@@ -160,8 +203,23 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
             tickImageEditorEvent("gallery-show");
         }
         this.setState({
-            galleryVisible: !this.state.galleryVisible
+            galleryVisible: !this.state.galleryVisible,
+            tileGalleryVisible: false
         });
+    }
+
+    protected toggleTileGallery = () => {
+        if (this.state.tileGalleryVisible) {
+            this.setState({
+                tileGalleryVisible: false
+            });
+        }
+        else {
+            this.setState({
+                tileGalleryVisible: true,
+                galleryVisible: false
+            });
+        }
     }
 
     protected onGalleryItemSelect = (item: pxt.sprite.GalleryItem) => {
@@ -172,7 +230,8 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         tickImageEditorEvent("gallery-selection");
 
         this.setState({
-            galleryVisible: false
+            galleryVisible: false,
+            tileGalleryVisible: false
         });
     }
 

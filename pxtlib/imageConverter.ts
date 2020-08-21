@@ -137,6 +137,7 @@ namespace pxt {
 
             let inP = 4
             let outP = bmpHeaderSize
+            let isTransparent = true;
 
             for (let x = 0; x < w; x++) {
                 let high = false;
@@ -147,6 +148,7 @@ namespace pxt {
                 let colorStart = high ? (((v >> 4) & 0xf) << 2) : ((v & 0xf) << 2);
 
                 for (let y = 0; y < h; y++) {
+                    if (v) isTransparent = false;
                     bmp[outP] = this.palette[colorStart]
                     bmp[outP + 1] = this.palette[colorStart + 1]
                     bmp[outP + 2] = this.palette[colorStart + 2]
@@ -161,6 +163,12 @@ namespace pxt {
 
                         colorStart = high ? (((v >> 4) & 0xf) << 2) : ((v & 0xf) << 2);
                     }
+                }
+
+                if (isTransparent) {
+                    // If all pixels are completely transparent, browsers won't render the image properly;
+                    // set one pixel to be slightly opaque to fix that
+                    bmp[bmpHeaderSize + 3] = 1;
                 }
 
                 if (x % intScale === intScale - 1) {
