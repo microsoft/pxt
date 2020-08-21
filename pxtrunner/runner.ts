@@ -366,6 +366,11 @@ namespace pxt.runner {
                         if (msg.command === "restart") {
                             driver.run(js, runOptions);
                         }
+                        if (msg.command == "setstate") {
+                            if (msg.stateKey && msg.stateValue) {
+                                setStoredState(simOptions.id, msg.stateKey, msg.stateValue)
+                            }
+                        }
                     };
 
                     let driver = new pxsim.SimulatorDriver(container, options);
@@ -373,6 +378,7 @@ namespace pxt.runner {
                     let fnArgs = resp.usedArguments;
                     let board = pxt.appTarget.simulator.boardDefinition;
                     let parts = pxtc.computeUsedParts(resp, true);
+                    let storedState: Map<string> = getStoredState(simOptions.id)
                     let runOptions: pxsim.SimulatorRunOptions = {
                         boardDefinition: board,
                         parts: parts,
@@ -380,6 +386,7 @@ namespace pxt.runner {
                         cdnUrl: pxt.webConfig.commitCdnUrl,
                         localizedStrings: Util.getLocalizedStrings(),
                         highContrast: simOptions.highContrast,
+                        storedState: storedState,
                         light: simOptions.light
                     };
                     if (pxt.appTarget.simulator && !simOptions.fullScreen)
@@ -389,6 +396,29 @@ namespace pxt.runner {
                     driver.run(js, runOptions);
                 }
             })
+    }
+
+    function getStoredState(id: string) {
+        let storedState: Map<any> = {}
+        try {
+            let projectStorage = window.localStorage.getItem(id)
+            if (projectStorage) {
+                storedState = JSON.parse(projectStorage)
+            }
+        } catch (e) {}
+        return storedState;
+    }
+
+    function setStoredState(id: string, key: string, value: any) {
+        let storedState: Map<any> = getStoredState(id);
+        if (value)
+            storedState[key] = value
+        else
+            delete storedState[key]
+
+        try {
+            window.localStorage.setItem(id, JSON.stringify(storedState))
+        } catch (e) {}
     }
 
     export enum LanguageMode {
