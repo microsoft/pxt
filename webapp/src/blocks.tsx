@@ -802,7 +802,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             }
                         };
                         if (/^github:/.test(url)) {
-                            url = url.replace(/^github:\/?/, '') + ".md";
+                            // strip 'github:', add '.md' file extension if necessary
+                            url = url.replace(/^github:\/?/, '') + (/\.md$/i.test(url) ? "" : ".md");
                             const readme = pkg.getEditorPkg(pkg.mainPkg).lookupFile(url);
                             const readmeContent = readme?.content?.trim();
                             if (readmeContent) {

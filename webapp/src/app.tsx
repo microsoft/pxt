@@ -1087,7 +1087,7 @@ export class ProjectView
 
     isSideDocExpanded(): boolean {
         const sd = this.refs["sidedoc"] as container.SideDocs;
-        return !!sd && sd.isCollapsed();
+        return !!sd && !sd.isCollapsed();
     }
 
     setSideMarkdown(md: string) {
