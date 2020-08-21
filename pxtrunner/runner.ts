@@ -364,6 +364,7 @@ namespace pxt.runner {
                     let options: pxsim.SimulatorDriverOptions = {};
                     options.onSimulatorCommand = msg => {
                         if (msg.command === "restart") {
+                            runOptions.storedState = getStoredState(simOptions.id)
                             driver.run(js, runOptions);
                         }
                         if (msg.command == "setstate") {
