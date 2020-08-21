@@ -372,6 +372,7 @@ declare namespace pxt {
         qrCode?: boolean; // generate QR code for shared urls
         importExtensionFiles?: boolean; // import extensions from files
         debugExtensionCode?: boolean; // debug extension and libs code in the Monaco debugger
+        markdownCache?: boolean; // experiment to test caching times for markdown moving
         snippetBuilder?: boolean; // Snippet builder experimental feature
         experimentalHw?: boolean; // enable experimental hardware
         // recipes?: boolean; // inlined tutorials - deprecated

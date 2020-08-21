@@ -162,6 +162,11 @@ namespace pxt.editor.experiments {
                 id: "errorList",
                 name: lf("Error List"),
                 description: lf("Show an error list panel for JavaScript and Python.")
+            },
+            {
+                id: "markdownCache",
+                name: lf("Markdown Cache"),
+                description: lf("For testing the cache timing")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
