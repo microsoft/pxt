@@ -41,8 +41,8 @@ const DEFAULT_TILE_WIDTH = 16;
 export class AssetEditor extends React.Component<{}, AssetEditorState> {
     private editor: FieldEditorComponent<any>;
     protected tilemapProject: pxt.TilemapProject;
-    protected tilemapName: string;
-    protected tileWidth: number;
+    protected tilemapName: string = DEFAULT_NAME;
+    protected tileWidth: number = DEFAULT_TILE_WIDTH;
 
     constructor(props: {}) {
         super(props);
@@ -65,8 +65,8 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                         this.editor.loadJres(msg.data.message);
                         break;
                     case "tilemap":
-                        this.tilemapName = msg.data.name || DEFAULT_NAME;
-                        this.tileWidth = msg.data.tileWidth || DEFAULT_TILE_WIDTH;
+                        this.tilemapName = msg.data.name;
+                        this.tileWidth = msg.data.tileWidth;
                         this.initTilemap(msg.data.message);
                         break;
                 }
@@ -89,7 +89,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
 
     initTilemap(s?: string) {
         this.tilemapProject = new pxt.TilemapProject();
-        this.tilemapProject.loadJRes(s ? this.parseJRes(s) : {});
+        this.tilemapProject.loadJres(s ? this.parseJres(s) : {});
         let project = this.tilemapProject.getTilemap(this.tilemapName);
 
         if (!project) {
@@ -171,14 +171,10 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         });
     }
 
-    parseJRes(jres: string) {
+    parseJres(jres: string) {
         const allres: pxt.Map<pxt.JRes> = {}
         let js: pxt.Map<pxt.JRes> = JSON.parse(jres)
-        let base: pxt.JRes = js["*"] || {} as any
-        for (let k of Object.keys(js)) {
-            const parsedJRes = pxt.parseJResFile(k, js[k], base);
-            allres[parsedJRes.id] = parsedJRes;
-        }
+        pxt.inflateJRes(js, allres);
         return allres;
     }
 

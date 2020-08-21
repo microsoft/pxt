@@ -207,7 +207,7 @@ namespace pxt {
         }
 
         public resolveTile(id: string): Tile {
-            const all = [this.state.projectTileSet].concat(this.extensionTileSets);
+            const all = [this.state.projectTileSet].concat(this.extensionTileSets || []);
 
             for (const tileSets of all) {
                 const found = getTile(tileSets, id);
@@ -218,7 +218,7 @@ namespace pxt {
         }
 
         public resolveTileByBitmap(data: pxt.sprite.BitmapData): Tile {
-            const all = [this.state.projectTileSet].concat(this.extensionTileSets);
+            const all = [this.state.projectTileSet].concat(this.extensionTileSets || []);
 
             const dataString = pxt.sprite.base64EncodeBitmap(data);
 
@@ -386,6 +386,9 @@ namespace pxt {
             // and taken some of the ids that were used by the tutorial author
             let tileMapping: Map<string> = {};
 
+            // Initialize state in case we are calling loadJres on a new project (eg standalone asset editor)
+            if (!this.state.projectTileSet) this.state.projectTileSet = { extensionID: "this", tileSets: [] };
+
             if (tiles) {
                 for (const tileset of tiles.tileSets) {
                     for (const tile of tileset.tiles) {
@@ -418,7 +421,10 @@ namespace pxt {
                     })
                 }));
 
+            if (!this.state.projectTilemaps) this.state.projectTilemaps = [];
             this.state.projectTilemaps.push(...maps);
+
+            if (!this.state.takenNames) this.state.takenNames = {};
             maps.forEach(tm => this.state.takenNames[tm.id] = true);
         }
 
