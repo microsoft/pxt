@@ -667,8 +667,8 @@ namespace ts.pxtc {
                         if (oldBlock != fn.attributes.block) {
                             updateBlockDef(fn.attributes);
                             const locps = pxt.blocks.compileInfo(fn);
-                            if (JSON.stringify(ps) != JSON.stringify(locps)) {
-                                pxt.log(`block has non matching arguments: ${oldBlock} vs ${fn.attributes.block}`)
+                            if (!hasEquivalentParameters(ps, locps)) {
+                                pxt.log(`block has non matching arguments: ${oldBlock} vs ${fn.attributes.block}`);
                                 fn.attributes.block = oldBlock;
                                 updateBlockDef(fn.attributes);
                             }
@@ -688,6 +688,21 @@ namespace ts.pxtc {
             .filter(fb => fb.attributes.block && /^{[^:]+:[^}]+}/.test(fb.attributes.block))
             .forEach(fn => { fn.attributes.block = fn.attributes.block.replace(/^{[^:]+:[^}]+}/, ''); });
         return apis;
+    }
+
+    function hasEquivalentParameters(a: pxt.blocks.BlockCompileInfo, b: pxt.blocks.BlockCompileInfo) {
+        if (a.parameters.length != b.parameters.length)
+            return false;
+
+        for (const aParam of a.parameters) {
+            const bParam = b.actualNameToParam[aParam.actualName];
+            if (!bParam
+                || aParam.type != bParam.type
+                || aParam.shadowBlockId != bParam.shadowBlockId) {
+                return false;
+            }
+        }
+        return true;
     }
 
     export function emptyExtInfo(): ExtensionInfo {
