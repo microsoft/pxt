@@ -658,8 +658,7 @@ namespace ts.pxtc {
                             fn.attributes.block = nsDoc;
                         }
                         updateBlockDef(fn.attributes);
-                    }
-                    else if (fn.attributes.block && locBlock) {
+                    } else if (fn.attributes.block && locBlock) {
                         const ps = pxt.blocks.compileInfo(fn);
                         const oldBlock = fn.attributes.block;
                         fn.attributes.block = pxt.blocks.normalizeBlock(locBlock, err => errors[`${fn.attributes.blockId}.${lang}`] = 1);
@@ -674,6 +673,8 @@ namespace ts.pxtc {
                                 updateBlockDef(fn.attributes);
                             }
                         }
+                    } else {
+                        updateBlockDef(fn.attributes);
                     }
                 })
             })))
