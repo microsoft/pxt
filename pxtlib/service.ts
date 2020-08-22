@@ -657,6 +657,7 @@ namespace ts.pxtc {
                         } else {
                             fn.attributes.block = nsDoc;
                         }
+                        updateBlockDef(fn.attributes);
                     }
                     else if (fn.attributes.block && locBlock) {
                         const ps = pxt.blocks.compileInfo(fn);
@@ -664,14 +665,15 @@ namespace ts.pxtc {
                         fn.attributes.block = pxt.blocks.normalizeBlock(locBlock, err => errors[`${fn.attributes.blockId}.${lang}`] = 1);
                         fn.attributes._untranslatedBlock = oldBlock;
                         if (oldBlock != fn.attributes.block) {
+                            updateBlockDef(fn.attributes);
                             const locps = pxt.blocks.compileInfo(fn);
                             if (JSON.stringify(ps) != JSON.stringify(locps)) {
                                 pxt.log(`block has non matching arguments: ${oldBlock} vs ${fn.attributes.block}`)
                                 fn.attributes.block = oldBlock;
+                                updateBlockDef(fn.attributes);
                             }
                         }
                     }
-                    updateBlockDef(fn.attributes);
                 })
             })))
             .then(() => cleanLocalizations(apis))
