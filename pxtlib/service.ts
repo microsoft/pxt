@@ -669,6 +669,7 @@ namespace ts.pxtc {
                             const locps = pxt.blocks.compileInfo(fn);
                             if (!hasEquivalentParameters(ps, locps)) {
                                 pxt.log(`block has non matching arguments: ${oldBlock} vs ${fn.attributes.block}`);
+                                errors[`${fn.attributes.blockId}.${lang}`] = 2;
                                 fn.attributes.block = oldBlock;
                                 updateBlockDef(fn.attributes);
                             }
