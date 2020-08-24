@@ -967,6 +967,9 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                         return this.getActionCard(clickLabel, el.cardType || cardType, onClick, false, el, `action${i}`);
                     })}
                     {cardType === "forumUrl" &&
+                        // TODO (jwunderl) temporarily disabled in electron re: https://github.com/microsoft/pxt-arcade/issues/2346;
+                        // reenable CORS issue is fixed.
+                        !pxt.BrowserUtils.isPxtElectron() &&
                         // TODO (shakao) migrate forumurl to otherAction json in md
                         this.getActionCard(lf("Open in Editor"), "forumExample", this.handleOpenForumUrlInEditor)
                     }
