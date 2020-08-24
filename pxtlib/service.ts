@@ -693,14 +693,17 @@ namespace ts.pxtc {
     }
 
     function hasEquivalentParameters(a: pxt.blocks.BlockCompileInfo, b: pxt.blocks.BlockCompileInfo) {
-        if (a.parameters.length != b.parameters.length)
+        if (a.parameters.length != b.parameters.length) {
+            pxt.debug(`Localized block has extra or missing parameters`);
             return false;
+        }
 
         for (const aParam of a.parameters) {
             const bParam = b.actualNameToParam[aParam.actualName];
             if (!bParam
                 || aParam.type != bParam.type
                 || aParam.shadowBlockId != bParam.shadowBlockId) {
+                pxt.debug(`Parameter ${aParam.actualName} type or shadow block does not match after localization`);
                 return false;
             }
         }
