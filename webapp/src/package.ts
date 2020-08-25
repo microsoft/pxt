@@ -531,6 +531,20 @@ export class EditorPackage {
 
         return null;
     }
+
+    invalidateCachedTranspile(fromLanguage: pxtc.CodeLang, fromText: string, toLanguage: pxtc.CodeLang) {
+        for (let i = 0; i < this.transpileCache.length; i++) {
+            const ct = this.transpileCache[i];
+
+            const backwardMatch = ct.toLanguage === fromLanguage && ct.fromLanguage === toLanguage && codeIsEqual(fromLanguage, ct.toText, fromText);
+            const forwardMatch = ct.fromLanguage === fromLanguage && ct.toLanguage === toLanguage && codeIsEqual(fromLanguage, ct.fromText, fromText)
+
+            if (backwardMatch || forwardMatch) {
+                this.transpileCache.splice(i, 1);
+                return;
+            }
+        }
+    }
 }
 
 function codeIsEqual(language: pxtc.CodeLang, a: string, b: string) {
