@@ -5349,18 +5349,18 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                 }
 
                                 // Handles tilemaps, spritekinds
-                                if (tutorial.code.indexOf("namespace") !== -1
+                                if (tutorial.code.some(tut => tut.indexOf("namespace") !== -1)
                                     // Handles ```python``` snippets
                                     || (tutorial.language == "python")) {
                                     tutorial.steps
                                         .filter(step => !!step.contentMd)
-                                        .forEach((step, stepIndex) => getCodeSnippets(`${gal.name}-${stepIndex}`, step.contentMd)
+                                        .forEach((step, stepIndex) => getCodeSnippets(`${card.name}-${stepIndex}`, step.contentMd)
                                             .forEach((snippet, snippetIndex) => {
                                                 snippet.packages = pkgs;
                                                 snippet.extraFiles = extraFiles;
                                                 addSnippet(
                                                     snippet,
-                                                    "tutorial" + `${gal.name}-${stepIndex}-${snippetIndex}`,
+                                                    `tutorial${card.name}-${stepIndex}-${snippetIndex}`,
                                                     cardIndex
                                                 )
                                             })
