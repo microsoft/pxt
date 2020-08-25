@@ -1333,7 +1333,7 @@ namespace ts.pxtc {
                             if (!h.types || h.types.length != 1)
                                 throw userError(9228, lf("invalid extends clause"))
                             let superType = typeOf(h.types[0])
-                            if (superType && isClassType(superType) && !isGenericType(superType)) {
+                            if (superType && isClassType(superType)) {
                                 // check if user defined
                                 // let filename = getSourceFileOfNode(tp.symbol.valueDeclaration).fileName
                                 // if (program.getRootFileNames().indexOf(filename) == -1) {

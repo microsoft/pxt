@@ -8,7 +8,7 @@ class B extends A {  // ok
 interface C { }
 class D implements C { } // OK
 class G<T> { } // Generics now supported
-class X extends G<number> {} // TS9228 - cannot extend generic type
+class X extends G<number> {} // now supported
 class S {
     public static x: number
     public static m() { }
