@@ -285,7 +285,7 @@ export class FieldEditorManager implements monaco.languages.FoldingRangeProvider
         // We use FoldingRangeKind.Comment for field editors and FoldingRangeKind.Region for everything else
         const editorRanges: monaco.languages.FoldingRange[] = this.liveRanges.map(range => ({
             start: range.range.startLineNumber,
-            end: range.range.endLineNumber,
+            end: range.range.endLineNumber - 1,
             kind: monaco.languages.FoldingRangeKind.Comment
         }));
 
