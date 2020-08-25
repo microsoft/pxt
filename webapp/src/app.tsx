@@ -2128,7 +2128,7 @@ export class ProjectView
             .finally(() => core.hideLoading("newproject"));
     }
 
-    createProjectAsync(options: ProjectCreationOptions): Promise<void> {
+    async createProjectAsync(options: ProjectCreationOptions): Promise<void> {
         pxt.perf.measureStart("createProjectAsync")
         this.setSideDoc(undefined);
         if (!options.prj) options.prj = pxt.appTarget.blocksprj;
@@ -2192,6 +2192,26 @@ export class ProjectView
             }
         }
         files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
+
+        const ghExtensions = Object.keys(cfg.dependencies)
+                ?.filter(dep => pxt.github.isGithubId(cfg.dependencies[dep]));
+
+        if (ghExtensions.length) {
+            const pkgConfig = await pxt.packagesConfigAsync();
+            // Make sure external packages load before installing header.
+            await Promise.all(
+                ghExtensions.map(
+                    async ext => {
+                        const extSrc = cfg.dependencies[ext];
+                        const ghPkg = await pxt.github.downloadPackageAsync(extSrc, pkgConfig);
+                        if (!ghPkg) {
+                            throw new Error(lf(`Cannot load dependency {0} from {1}`, ext, extSrc));
+                        }
+                    }
+                )
+            );
+        }
+
         return workspace.installAsync({
             name: cfg.name,
             meta: {},
@@ -2269,7 +2289,10 @@ export class ProjectView
                         })
                 }
             })
-
+            .catch(e => {
+                core.warningNotification(lf("Please check your internet connection and check the example is valid."));
+                return Promise.reject(e);
+            })
             .finally(() => core.hideLoading("changingcode"))
     }
 
