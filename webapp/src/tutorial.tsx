@@ -22,6 +22,8 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 export function getUsedBlocksAsync(code: string[], id: string, language?: string): Promise<pxt.Map<number>> {
     if (!code) return Promise.resolve({});
 
+    if (pxt.appTarget?.tutorialInfo && pxt.appTarget.tutorialInfo[id]) return Promise.resolve(pxt.appTarget.tutorialInfo[id]);
+
     return pxt.BrowserUtils.tutorialInfoDbAsync()
         .then(db => db.getAsync(id, code)
             .then(entry => {

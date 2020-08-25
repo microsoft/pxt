@@ -1984,6 +1984,13 @@ function updateTOC(cfg: pxt.TargetBundle) {
     }
 }
 
+function updateTutorialInfo(cfg: pxt.TargetBundle) {
+    if (fs.existsSync(tutorialInfoPath)) {
+        const tutorialInfo = nodeutil.readJson(tutorialInfoPath);
+        if (tutorialInfo) cfg.tutorialInfo = tutorialInfo;
+    }
+}
+
 function rebundleAsync() {
     return buildTargetCoreAsync({ quick: true })
         .then(() => buildSimAsync());
@@ -2057,6 +2064,8 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     let cfg = readLocalPxTarget()
     updateDefaultProjects(cfg);
     updateTOC(cfg);
+    updateTutorialInfo(cfg);
+
     cfg.bundledpkgs = {}
     pxt.setAppTarget(cfg);
     let statFiles: Map<number> = {}
@@ -2210,6 +2219,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             delete targetlight.bundledpkgs;
             delete targetlight.appTheme;
             delete targetlight.apiInfo;
+            delete targetlight.tutorialInfo;
             if (targetlight.compile)
                 delete targetlight.compile.compilerExtension;
             const targetlightjson = nodeutil.stringify(targetlight);
@@ -3890,6 +3900,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     });
 }
 
+const tutorialInfoPath = path.resolve(process.cwd(), "built", "tutorial-info-cache.json");
 function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxCheck?: boolean): Promise<void> {
     console.log(`### TESTING ${snippets.length} CodeSnippets`)
     pxt.github.forceProxy = true; // avoid throttling in CI machines
@@ -3921,6 +3932,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxC
         })
         infos.forEach(info => pxt.log(`${f}:(${info.line},${info.column}): ${info.category} ${info.messageText}`));
     }
+    const tutorialInfo: pxt.Map<pxt.Map<number>> = {};
     return Promise.map(snippets, (snippet: CodeSnippet) => {
         const name = snippet.name;
         const fn = snippet.file || snippet.name;
@@ -4012,9 +4024,23 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxC
                             snippetMode: false,
                             errorOnGreyBlocks: true
                         });
-                        let blockSucces = !!bresp.outfiles['main.blocks']
-                        if (!blockSucces) {
+
+                        const blocksXml = bresp.outfiles['main.blocks'];
+                        let blockSuccess = !!blocksXml;
+                        if (!blockSuccess) {
                             return addFailure(fn, bresp.diagnostics)
+                        }
+
+                        // extract block ids from this snippet (used in tutorial toolbox filtering)
+                        if (snippet.extractIds) {
+                            // scrape block IDs matching <block type="block_id">
+                            const blockIdRegex = /<\s*block(?:[^>]*)? type="([^ ]*)"/ig;
+                            let ids: pxt.Map<number> = tutorialInfo[snippet.sourceFile] || {};
+                            blocksXml.replace(blockIdRegex, (m0, m1) => {
+                                ids[m1] = 1;
+                                return m0;
+                            })
+                            tutorialInfo[snippet.sourceFile] = ids;
                         }
 
                         // decompile to python
@@ -4127,6 +4153,15 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxC
                 ])
             }))
     }, { concurrency: 1 }).then((a: any) => {
+        // save as separate json file
+        nodeutil.writeFileSync(tutorialInfoPath, JSON.stringify(tutorialInfo));
+        // patch into target.json
+        if (fs.existsSync("built/target.json")) {
+            let cfg: pxt.TargetBundle = nodeutil.readJson("built/target.json");
+            cfg.tutorialInfo = tutorialInfo;
+            nodeutil.writeFileSync("built/target.json", nodeutil.stringify(cfg));
+        }
+
         pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks and python (and back), ${failures.length} failed`)
         if (ignoreCount > 0) {
             pxt.log(`Skipped ${ignoreCount} snippets`)
@@ -5358,6 +5393,8 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                             .forEach((snippet, snippetIndex) => {
                                                 snippet.packages = pkgs;
                                                 snippet.extraFiles = extraFiles;
+                                                snippet.extractIds = true;
+                                                snippet.sourceFile = url;
                                                 addSnippet(
                                                     snippet,
                                                     "tutorial" + `${gal.name}-${stepIndex}-${snippetIndex}`,
@@ -5373,7 +5410,9 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                         type: "blocks",
                                         ext: "ts",
                                         packages: pkgs,
-                                        extraFiles: extraFiles
+                                        extraFiles: extraFiles,
+                                        extractIds: true,
+                                        sourceFile: url
                                     }, "tutorial" + gal.name, cardIndex);
                                 }
                             }
@@ -5458,7 +5497,9 @@ export interface CodeSnippet {
     type: string;
     ext: string;
     packages: pxt.Map<string>;
-    file?: string;
+    file?: string; // file path where the snippet is saved
+    sourceFile?: string; // relative path of source file for the snippet
+    extractIds?: boolean; // extract blockIds from decompiled code. used for filtering tutorial toolbox
 }
 
 export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {

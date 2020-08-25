@@ -996,6 +996,9 @@ namespace pxt.BrowserUtils {
                         return res;
                     }
                     /* tslint:enable:possible-timing-attack */
+
+                    // delete stale db entry
+                    this.db.deleteAsync(TutorialInfoIndexedDb.TABLE, key);
                     return undefined;
                 });
         }

@@ -424,6 +424,7 @@ declare namespace pxt {
         bundleddirs: string[];
         versions: TargetVersions;        // @derived
         apiInfo?: Map<PackageApiInfo>;
+        tutorialInfo?: Map<Map<number>>;
     }
 
     interface PackageApiInfo {
