@@ -629,7 +629,7 @@ namespace pxt.github {
     export interface ParsedRepo {
         owner?: string;
         project?: string;
-        // owner/name
+        // owner/project (aka slug)
         fullName: string;
         tag?: string;
         fileName?: string;

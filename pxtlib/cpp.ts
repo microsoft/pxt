@@ -830,9 +830,10 @@ namespace pxt.cpp {
         const currSettings: Map<any> = U.clone(compileService.yottaConfig || {})
         const optSettings: Map<any> = {}
         const settingSrc: Map<Package> = {}
+        const codalLibraries: pxt.Map<github.ParsedRepo> = {}
 
         function parseJson(pkg: Package) {
-            let j0 = pkg.config.platformio
+            const j0 = pkg.config.platformio
             if (j0 && j0.dependencies) {
                 U.jsonCopyFrom(res.platformio.dependencies, j0.dependencies)
             }
@@ -840,7 +841,24 @@ namespace pxt.cpp {
             if (res.npmDependencies && pkg.config.npmDependencies)
                 U.jsonCopyFrom(res.npmDependencies, pkg.config.npmDependencies)
 
-            let json = pkg.config.yotta
+            const codal = pkg.config.codal
+            if (isCodal && codal) {
+                for (const lib of codal.libraries || []) {
+                    const repo = github.parseRepoId(lib)
+                    if (!repo)
+                        U.userError(lf("codal library {0} doesn't look like github repo", lib))
+                    const canonical = github.stringifyRepo(repo)
+                    const existing = U.lookup(codalLibraries, repo.project)
+                    if (existing) {
+                        if (github.stringifyRepo(existing) != canonical)
+                            U.userError(lf("conflict between codal libraries: {0} and {1}", github.stringifyRepo(existing), canonical))
+                    } else {
+                        codalLibraries[repo.project] = repo
+                    }
+                }
+            }
+
+            const json = pkg.config.yotta
             if (!json) return;
 
             // TODO check for conflicts
@@ -989,7 +1007,15 @@ namespace pxt.cpp {
                 // include these, because we use hash of this file to see if anything changed
                 "pxt_gitrepo": cs.githubCorePackage,
                 "pxt_gittag": cs.gittag,
+                "libraries": U.values(codalLibraries).map(r => ({
+                    "name": r.project,
+                    "url": "https://github.com/" + r.fullName,
+                    "branch": r.tag || "master",
+                    "type": "git"
+                }))
             }
+            if (codalJson.libraries.length == 0)
+                delete codalJson.libraries
             U.iterMap(U.jsonFlatten(configJson), (k, v) => {
                 k = k.replace(/^codal\./, "device.").toUpperCase().replace(/\./g, "_")
                 cfg[k] = v

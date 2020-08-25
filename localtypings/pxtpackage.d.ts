@@ -63,6 +63,7 @@ declare namespace pxt {
         paletteNames?: string[];
         screenSize?: Size;
         yotta?: YottaConfig;
+        codal?: CodalConfig;
         npmDependencies?: Map<string>;
         card?: CodeCard;
         additionalFilePath?: string;
@@ -105,6 +106,10 @@ declare namespace pxt {
     interface CompilationConfig {
         description: string;
         config: any;
+    }
+
+    interface CodalConfig {
+        libraries?: string[];
     }
 
     interface YottaConfig {
