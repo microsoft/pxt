@@ -1077,7 +1077,7 @@ ${linkString}
 
                         return <DecompileResult>{
                             package: mainPkg,
-                            blockSvg: blockSvg,
+                            blocksSvg: blockSvg,
                             apiInfo: apis
                         };
                     })
