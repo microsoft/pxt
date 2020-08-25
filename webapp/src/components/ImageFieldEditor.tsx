@@ -224,7 +224,13 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
 
     protected onGalleryItemSelect = (item: pxt.sprite.GalleryItem) => {
         if (this.ref) {
-            this.ref.setCurrentFrame(pxt.sprite.getBitmap(this.blocksInfo, item.qName));
+            let selectedBitmap = pxt.sprite.getBitmap(this.blocksInfo, item.qName);
+
+            if (!selectedBitmap) {
+                selectedBitmap = pxt.sprite.Bitmap.fromData(pxt.react.getTilemapProject().resolveTile(item.qName).bitmap);
+            }
+
+            this.ref.setCurrentFrame(selectedBitmap);
         }
 
         tickImageEditorEvent("gallery-selection");

@@ -600,7 +600,7 @@ namespace ts.pxtc.service {
                 let functionArgument = "()";
                 if (!attrs.optionalVariableArgs) {
                     let displayParts = (ts as any).mapToDisplayParts((writer: ts.DisplayPartsSymbolWriter) => {
-                        checker.getSymbolDisplayBuilder().buildSignatureDisplay(functionSignature, writer);
+                        checker.getSymbolDisplayBuilder().buildSignatureDisplay(functionSignature, writer, undefined, TypeFormatFlags.UseFullyQualifiedType);
                     });
                     let displayPartsStr = ts.displayPartsToString(displayParts);
                     functionArgument = displayPartsStr.substr(0, displayPartsStr.lastIndexOf(":"));
