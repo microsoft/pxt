@@ -305,6 +305,7 @@ export class FieldEditorManager implements monaco.languages.FoldingRangeProvider
 
         const oldDecorations = this.decorations[owner];
         const ranges = this.liveRanges.filter(r => r.owner === owner);
+        const model = this.editor.getModel();
 
         const newDecorations: monaco.editor.IModelDeltaDecoration[] = [];
         for (const r of ranges) {
@@ -315,7 +316,7 @@ export class FieldEditorManager implements monaco.languages.FoldingRangeProvider
             }
 
             newDecorations.push({
-                range: r.range,
+                range: new monaco.Range(r.line, model.getLineMinColumn(r.line), r.line, model.getLineMaxColumn(r.line)),
                 options: {
                     glyphMarginClassName: glyph
                 }
