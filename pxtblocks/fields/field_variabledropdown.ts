@@ -5,8 +5,8 @@ namespace pxtblockly {
             this.menuGenerator_ = this.customDropdownCreate;
         }
         customDropdownCreate(): any {
-            const options = super.dropdownCreate();
-            return options.filter((opt) => opt[1] != Blockly.DELETE_VARIABLE_ID);
+            const options = Blockly.FieldVariable.dropdownCreate.call(this);
+            return options.filter((opt: any) => opt[1] != Blockly.DELETE_VARIABLE_ID);
         }
         
     }
