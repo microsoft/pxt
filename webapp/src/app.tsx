@@ -4301,7 +4301,10 @@ function loadHeaderBySharedId(id: string) {
 
     workspace.installByIdAsync(id)
         .then(hd => theEditor.loadHeaderAsync(hd, null))
-        .catch(core.handleNetworkError)
+        .catch(e => {
+            theEditor.openHome();
+            core.handleNetworkError(e);
+        })
         .finally(() => core.hideLoading("loadingheader"));
 }
 

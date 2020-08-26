@@ -403,8 +403,10 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
         h.editor = cfg.preferredEditor
         pxt.Util.setEditorLanguagePref(cfg.preferredEditor);
     }
-    return importAsync(h, text)
-        .then(() => h)
+
+    return pxt.github.cacheProjectDependenciesAsync(cfg)
+        .then(() => importAsync(h, text))
+        .then(() => h);
 }
 
 export function renameAsync(h: Header, newName: string) {
