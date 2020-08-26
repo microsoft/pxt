@@ -94,7 +94,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
             jsxd: () => <div className="ui form">
                 <p>{lf("You need to sign in with GitHub to use this feature.")}</p>
                 <p>{lf("You can host your code on GitHub and collaborate with friends on projects.")}</p>
-                <p><sui.PlainCheckbox label={lf("Remember me")} onChange={handleRememberMe} /></p>
+                <div><sui.PlainCheckbox label={lf("Remember me")} onChange={handleRememberMe} /></div>
                 {!useToken && <p className="ui small">
                     {lf("Looking to use a Developer token instead?")}
                     <sui.Link className="link" text={lf("Use Developer token")} onClick={showToken} />

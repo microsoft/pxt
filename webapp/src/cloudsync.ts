@@ -37,7 +37,7 @@ export interface IdentityProvider {
     loginCheck(): void;
     loginAsync(redirect?: boolean, silent?: boolean): Promise<ProviderLoginResponse>;
     logout(): void;
-    loginCallback(queryString: pxt.Map<string>): void;
+    loginCallback(rememberMe: boolean, queryString: pxt.Map<string>): void;
     getUserInfoAsync(): Promise<pxt.editor.UserInfo>;
     hasSync(): boolean;
     user(): pxt.editor.UserInfo;
@@ -242,11 +242,10 @@ export class ProviderBase {
         core.hideLoading(ns + "login");
     }
 
-    loginCallback(qs: pxt.Map<string>) {
+    loginCallback(rememberMe: boolean, qs: pxt.Map<string>) {
         const ns = this.name
         pxt.storage.removeLocal(ns + AUTO_LOGIN)
-        // TODO: rememberme review this when implementing goog/onedrive
-        this.setNewToken(qs["access_token"], false, parseInt(qs["expires_in"]));
+        this.setNewToken(qs["access_token"], rememberMe, parseInt(qs["expires_in"]));
 
         // re-compute
         this.setUser(undefined);
@@ -260,6 +259,7 @@ export class ProviderBase {
         // the user did not check the "remember me" checkbox,
         // do not store credentials in local storage
         if (!rememberMe) {
+            pxt.debug(`token storage non-opted in`)
             // in-memory storage should be handled in the provider itself
             pxt.storage.removeLocal(tokenKey);
             pxt.storage.removeLocal(tokenKeyExp);
@@ -692,12 +692,13 @@ export function loginCheck() {
     // implicit OAuth flow, via query argument
     {
         const qs = core.parseQueryString(pxt.storage.getLocal(OAUTH_HASH) || "")
+        const rememberMe = qs["state"] === pxt.storage.getLocal(OAUTH_REMEMBER_STATE)
         if (qs["access_token"]) {
             const tp = pxt.storage.getLocal(OAUTH_TYPE)
             const impl = provs.filter(p => p.name == tp)[0];
             if (impl) {
                 pxt.storage.removeLocal(OAUTH_HASH);
-                impl.loginCallback(qs)
+                impl.loginCallback(rememberMe, qs)
             }
             // cleanup
             clearOauth();
@@ -715,9 +716,10 @@ export function loginCheck() {
             if (ex && ex == qs["state"]) {
                 pxt.storage.removeLocal(OAUTH_STATE)
                 pxt.storage.removeLocal(OAUTH_TYPE);
+                const rememberMe = qs["state"] === pxt.storage.getLocal(OAUTH_REMEMBER_STATE)
                 const impl = provs.filter(p => p.name == tp)[0];
                 if (impl) {
-                    impl.loginCallback(qs);
+                    impl.loginCallback(rememberMe, qs);
                     const hash = pxt.storage.getLocal(OAUTH_REDIRECT) || "";
                     location.hash = hash;
                 }

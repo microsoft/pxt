@@ -302,11 +302,11 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             const isOrg = await pxt.github.isOrgAsync(parsed.owner);
             if (isOrg) {
                 // tslint:disable: react-this-binding-issue
-                org = <p className="ui small">
+                org = <div className="ui small">
                     {lf("If you already have write permissions to this repository, you may have to authorize the MakeCode App in the {0} organization.", parsed.owner)}
                     <sui.PlainCheckbox label={lf("Remember me")} onChange={handleRememberMeChanged} />
                     <sui.Link className="ui link" text={lf("Authorize MakeCode")} onClick={handleAutorize} onKeyDown={sui.fireClickOnEnter} />
-                </p>
+                </div>
                 // tslint:enable: react-this-binding-issue
             }
         }
