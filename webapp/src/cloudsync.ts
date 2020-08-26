@@ -104,7 +104,11 @@ function clearOauth() {
 }
 
 export class ProviderBase {
+    // in-memory token, for sessions where token is not stored
+    private _token: string;
+
     constructor(public name: string, public friendlyName: string, public icon: string, public urlRoot: string) {
+        this._token = pxt.storage.getLocal(this.name + TOKEN)
     }
 
     hasSync(): boolean {
@@ -133,8 +137,7 @@ export class ProviderBase {
         if (this.hasTokenExpired())
             return undefined;
 
-        const tok = pxt.storage.getLocal(this.name + TOKEN)
-        return tok;
+        return this._token
     }
 
     protected reqAsync(opts: U.HttpRequestOptions): Promise<U.HttpResponse> {
@@ -256,11 +259,13 @@ export class ProviderBase {
         const tokenKey = ns + TOKEN;
         const tokenKeyExp = ns + TOKEN_EXP;
 
+        // in-memory token does not expire
+        this._token = accessToken;
+
         // the user did not check the "remember me" checkbox,
         // do not store credentials in local storage
         if (!rememberMe) {
             pxt.debug(`token storage non-opted in`)
-            // in-memory storage should be handled in the provider itself
             pxt.storage.removeLocal(tokenKey);
             pxt.storage.removeLocal(tokenKeyExp);
             return;
@@ -292,6 +297,7 @@ export class ProviderBase {
         pxt.storage.removeLocal(this.name + TOKEN)
         pxt.storage.removeLocal(this.name + TOKEN_EXP)
         pxt.storage.removeLocal(this.name + AUTO_LOGIN)
+        this._token = undefined;
         this.setUser(undefined)
         invalidateData();
     }
