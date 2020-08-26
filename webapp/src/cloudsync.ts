@@ -75,6 +75,10 @@ export const OAUTH_TYPE = "oauthType";
 export const OAUTH_STATE = "oauthState"; // state used in OAuth flow
 export const OAUTH_REDIRECT = "oauthRedirect"; // hash to be reloaded up loging
 export const OAUTH_HASH = "oauthHash"; // hash used in implicit oauth signing
+const TOKEN = "token"
+const TOKEN_EXP = "tokenExp"
+const AUTO_LOGIN = "AutoLogin"
+const CLOUD_USER = "cloudUser"
 
 export function setOauth(type: string, redirect?: string, hash?: string) {
     const state = ts.pxtc.Util.guidGen();
@@ -105,15 +109,15 @@ export class ProviderBase {
     }
 
     user(): pxt.editor.UserInfo {
-        const user = pxt.Util.jsonTryParse(pxt.storage.getLocal(this.name + "cloudUser")) as pxt.editor.UserInfo;
+        const user = pxt.Util.jsonTryParse(pxt.storage.getLocal(this.name + CLOUD_USER)) as pxt.editor.UserInfo;
         return user;
     }
 
     setUser(user: pxt.editor.UserInfo) {
         if (user)
-            pxt.storage.setLocal(this.name + "cloudUser", JSON.stringify(user))
+            pxt.storage.setLocal(this.name + CLOUD_USER, JSON.stringify(user))
         else
-            pxt.storage.removeLocal(this.name + "cloudUser");
+            pxt.storage.removeLocal(this.name + CLOUD_USER);
         data.invalidate("sync:user")
         data.invalidate("github:user")
     }
@@ -122,7 +126,7 @@ export class ProviderBase {
         if (this.hasTokenExpired())
             return undefined;
 
-        const tok = pxt.storage.getLocal(this.name + "token")
+        const tok = pxt.storage.getLocal(this.name + TOKEN)
         return tok;
     }
 
@@ -187,12 +191,12 @@ export class ProviderBase {
 
         if (this.hasTokenExpired()) {
             // if we already attempted autologin (and failed), don't do it again
-            if (pxt.storage.getLocal(this.name + "AutoLogin")) {
+            if (pxt.storage.getLocal(this.name + AUTO_LOGIN)) {
                 this.pleaseLogin()
                 return
             }
 
-            pxt.storage.setLocal(this.name + "AutoLogin", "yes")
+            pxt.storage.setLocal(this.name + AUTO_LOGIN, "yes")
             this.loginAsync(undefined, true)
                 .then((resp) => resp && this.setNewToken(resp.accessToken, resp.expiresIn))
                 .done();
@@ -232,7 +236,7 @@ export class ProviderBase {
 
     loginCallback(qs: pxt.Map<string>) {
         const ns = this.name
-        pxt.storage.removeLocal(ns + "AutoLogin")
+        pxt.storage.removeLocal(ns + AUTO_LOGIN)
         this.setNewToken(qs["access_token"], parseInt(qs["expires_in"]));
 
         // re-compute
@@ -241,8 +245,8 @@ export class ProviderBase {
 
     setNewToken(accessToken: string, expiresIn?: number) {
         const ns = this.name;
-        const tokenKey = ns + "token";
-        const tokenKeyExp = ns + "tokenExp";
+        const tokenKey = ns + TOKEN;
+        const tokenKeyExp = ns + TOKEN_EXP;
         if (!accessToken) {
             pxt.storage.removeLocal(tokenKey);
             pxt.storage.removeLocal(tokenKeyExp);
@@ -258,7 +262,7 @@ export class ProviderBase {
     }
 
     hasTokenExpired() {
-        const exp = parseInt(pxt.storage.getLocal(this.name + "tokenExp") || "0")
+        const exp = parseInt(pxt.storage.getLocal(this.name + TOKEN_EXP) || "0")
         if (!exp || exp < U.nowSeconds()) {
             return false;
         }
@@ -266,9 +270,9 @@ export class ProviderBase {
     }
 
     logout() {
-        pxt.storage.removeLocal(this.name + "token")
-        pxt.storage.removeLocal(this.name + "tokenExp")
-        pxt.storage.removeLocal(this.name + "AutoLogin")
+        pxt.storage.removeLocal(this.name + TOKEN)
+        pxt.storage.removeLocal(this.name + TOKEN_EXP)
+        pxt.storage.removeLocal(this.name + AUTO_LOGIN)
         this.setUser(undefined)
         invalidateData();
     }
