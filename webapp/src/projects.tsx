@@ -93,6 +93,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.props.parent.loadHeaderAsync(hdr)
             .catch(e => {
                 core.warningNotification(lf("Sorry, we could not load this project."));
+                pxt.reportException(e);
                 this.props.parent.openHome();
                 return Promise.reject(e);
             })

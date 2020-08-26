@@ -2205,7 +2205,7 @@ export class ProjectView
                         const extSrc = cfg.dependencies[ext];
                         const ghPkg = await pxt.github.downloadPackageAsync(extSrc, pkgConfig);
                         if (!ghPkg) {
-                            throw new Error(lf("Cannot load dependency {0} from {1}", ext, extSrc));
+                            throw new Error(lf("Cannot load extension {0} from {1}", ext, extSrc));
                         }
                     }
                 )
@@ -2292,6 +2292,7 @@ export class ProjectView
             })
             .catch(e => {
                 core.warningNotification(lf("Please check your internet connection and check the example is valid."));
+                pxt.reportException(e);
                 return Promise.reject(e);
             })
             .finally(() => core.hideLoading("changingcode"))
