@@ -164,7 +164,7 @@
         }
 
         async function fetchUser(user) {
-            if (!token()) return undefined;
+            if (!token) return undefined;
             const response = await fetchGraphQL(`{
   user(login:"${user}") {
     name
@@ -282,7 +282,7 @@
             }
 
             // force sign...
-            if (!token()) {
+            if (!token) {
                 $("#signin").show();
                 $('#signout').hide();
                 $('#userparent').hide();
