@@ -2205,7 +2205,7 @@ export class ProjectView
                         const extSrc = cfg.dependencies[ext];
                         const ghPkg = await pxt.github.downloadPackageAsync(extSrc, pkgConfig);
                         if (!ghPkg) {
-                            throw new Error(lf(`Cannot load dependency {0} from {1}`, ext, extSrc));
+                            throw new Error(lf("Cannot load dependency {0} from {1}", ext, extSrc));
                         }
                     }
                 )
