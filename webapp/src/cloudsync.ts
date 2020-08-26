@@ -692,12 +692,12 @@ export function loginCheck() {
     // implicit OAuth flow, via query argument
     {
         const qs = core.parseQueryString(pxt.storage.getLocal(OAUTH_HASH) || "")
-        const rememberMe = qs["state"] === pxt.storage.getLocal(OAUTH_REMEMBER_STATE)
         if (qs["access_token"]) {
             const tp = pxt.storage.getLocal(OAUTH_TYPE)
             const impl = provs.filter(p => p.name == tp)[0];
             if (impl) {
                 pxt.storage.removeLocal(OAUTH_HASH);
+                const rememberMe = qs["state"] === pxt.storage.getLocal(OAUTH_REMEMBER_STATE)
                 impl.loginCallback(rememberMe, qs)
             }
             // cleanup

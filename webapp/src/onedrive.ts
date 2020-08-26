@@ -175,6 +175,7 @@ export class Provider extends cloudsync.ProviderBase implements cloudsync.Provid
         // Pop out
         const popupCallback = () => {
             const qs = core.parseQueryString(pxt.storage.getLocal(cloudsync.OAUTH_HASH) || "")
+            const rememberMe = qs["state"] === pxt.storage.getLocal(cloudsync.OAUTH_REMEMBER_STATE)
             const accessToken = qs["access_token"];
             const expiresInSeconds = parseInt(qs["expires_in"]);
 
@@ -188,6 +189,7 @@ export class Provider extends cloudsync.ProviderBase implements cloudsync.Provid
 
             resolve({
                 accessToken: accessToken,
+                rememberMe,
                 expiresIn: expiresInSeconds
             });
         }
