@@ -2128,7 +2128,7 @@ export class ProjectView
             .finally(() => core.hideLoading("newproject"));
     }
 
-    createProjectAsync(options: ProjectCreationOptions): Promise<void> {
+    async createProjectAsync(options: ProjectCreationOptions): Promise<void> {
         pxt.perf.measureStart("createProjectAsync")
         this.setSideDoc(undefined);
         if (!options.prj) options.prj = pxt.appTarget.blocksprj;
@@ -2192,7 +2192,10 @@ export class ProjectView
             }
         }
         files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
-        return workspace.installAsync({
+
+        await pxt.github.cacheProjectDependenciesAsync(cfg);
+
+        const hd = await workspace.installAsync({
             name: cfg.name,
             meta: {},
             editor: options.preferredEditor || options.prj.id,
@@ -2204,9 +2207,10 @@ export class ProjectView
             temporary: options.temporary,
             tutorial: options.tutorial,
             extensionUnderTest: options.extensionUnderTest
-        }, files)
-            .then(hd => this.loadHeaderAsync(hd, { filters: options.filters }))
-            .then(() => pxt.perf.measureEnd("createProjectAsync"))
+        }, files);
+
+        await this.loadHeaderAsync(hd, { filters: options.filters });
+        pxt.perf.measureEnd("createProjectAsync");
     }
 
     // in multiboard targets, allow use to pick a different board
@@ -2269,7 +2273,11 @@ export class ProjectView
                         })
                 }
             })
-
+            .catch(e => {
+                core.warningNotification(lf("Please check your internet connection and check the example is valid."));
+                pxt.reportException(e);
+                return Promise.reject(e);
+            })
             .finally(() => core.hideLoading("changingcode"))
     }
 
@@ -4293,7 +4301,10 @@ function loadHeaderBySharedId(id: string) {
 
     workspace.installByIdAsync(id)
         .then(hd => theEditor.loadHeaderAsync(hd, null))
-        .catch(core.handleNetworkError)
+        .catch(e => {
+            theEditor.openHome();
+            core.handleNetworkError(e);
+        })
         .finally(() => core.hideLoading("loadingheader"));
 }
 

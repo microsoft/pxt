@@ -581,6 +581,27 @@ namespace pxt.github {
             })
     }
 
+    export async function cacheProjectDependenciesAsync(cfg: pxt.PackageConfig): Promise<void> {
+        const ghExtensions = Object.keys(cfg.dependencies)
+                ?.filter(dep => isGithubId(cfg.dependencies[dep]));
+
+        if (ghExtensions.length) {
+            const pkgConfig = await pxt.packagesConfigAsync();
+            // Make sure external packages load before installing header.
+            await Promise.all(
+                ghExtensions.map(
+                    async ext => {
+                        const extSrc = cfg.dependencies[ext];
+                        const ghPkg = await downloadPackageAsync(extSrc, pkgConfig);
+                        if (!ghPkg) {
+                            throw new Error(lf("Cannot load extension {0} from {1}", ext, extSrc));
+                        }
+                    }
+                )
+            );
+        }
+    }
+
     export interface User {
         login: string; // "Microsoft",
         id: number; // 6154722,

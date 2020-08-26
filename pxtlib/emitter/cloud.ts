@@ -73,7 +73,7 @@ namespace pxt.Cloud {
     export function privateRequestAsync(options: Util.HttpRequestOptions) {
         options.url = pxt.webConfig?.isStatic && !options.forceLiveEndpoint ? pxt.webConfig.relprefix + options.url : apiRoot + options.url;
         options.allowGzipPost = true
-        if (!Cloud.isOnline()) {
+        if (!Cloud.isOnline() && !pxt.BrowserUtils.isPxtElectron()) {
             return offlineError(options.url);
         }
         if (!options.headers) options.headers = {}
@@ -140,7 +140,7 @@ namespace pxt.Cloud {
     }
 
     function downloadMarkdownAsync(docid: string, locale?: string, live?: boolean, etag?: string): Promise<{ md: string; etag?: string; }> {
-        const packaged = pxt.webConfig && pxt.webConfig.isStatic;
+        const packaged = pxt.webConfig?.isStatic;
         const targetVersion = pxt.appTarget.versions && pxt.appTarget.versions.target || '?';
         let url: string;
 
@@ -149,7 +149,8 @@ namespace pxt.Cloud {
             const isUnderDocs = /\/?docs\//.test(url);
             const hasExt = /\.\w+$/.test(url);
             if (!isUnderDocs) {
-                url = `docs/${url}`;
+                const hasLeadingSlash = url[0] === "/";
+                url = `docs${hasLeadingSlash ? "" : "/"}${url}`;
             }
             if (!hasExt) {
                 url = `${url}.md`;
