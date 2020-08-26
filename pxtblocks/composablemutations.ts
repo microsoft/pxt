@@ -36,7 +36,6 @@ namespace pxt.blocks {
         let actuallyVisible = 0;
 
         let i = b.appendDummyInput();
-
         let updateShape = () => {
             if (currentlyVisible === actuallyVisible) {
                 return;
@@ -46,7 +45,7 @@ namespace pxt.blocks {
                 const diff = currentlyVisible - actuallyVisible;
                 for (let j = 0; j < diff; j++) {
                     const arg = handlerArgs[actuallyVisible + j];
-                    i.insertFieldAt(i.fieldRow.length - 1, new Blockly.FieldVariable(arg.name), "HANDLER_" + arg.name);
+                    i.insertFieldAt(i.fieldRow.length - 1, new pxtblockly.FieldVariableDropdown(arg.name), "HANDLER_" + arg.name);
                     const blockSvg = b as Blockly.BlockSvg;
                     if (blockSvg?.initSvg) blockSvg.initSvg(); // call initSvg on block to initialize new fields
                 }
