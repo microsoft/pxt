@@ -91,7 +91,12 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         pxt.tickEvent("projects.header");
         core.showLoading("changeheader", lf("loading..."));
         this.props.parent.loadHeaderAsync(hdr)
-            .done(() => {
+            .catch(e => {
+                core.warningNotification(lf("Sorry, we could not load this project."));
+                this.props.parent.openHome();
+                return Promise.reject(e);
+            })
+            .finally(() => {
                 core.hideLoading("changeheader");
             })
     }
