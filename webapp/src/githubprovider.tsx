@@ -77,6 +77,12 @@ export class GithubProvider extends cloudsync.ProviderBase {
 
         let useToken = !oAuthSupported;
         let form: HTMLElement;
+        let rememberMe = false
+        const handleRememberMe = (v: boolean) => {
+            rememberMe = v;
+            core.forceUpdate();
+        }
+        // tslint:disable: react-this-binding-issue
         return core.confirmAsync({
             header: lf("Sign in with GitHub"),
             hasCloseIcon: true,
@@ -88,6 +94,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
             jsxd: () => <div className="ui form">
                 <p>{lf("You need to sign in with GitHub to use this feature.")}</p>
                 <p>{lf("You can host your code on GitHub and collaborate with friends on projects.")}</p>
+                <p><sui.PlainCheckbox label={lf("Remember me")} onChange={handleRememberMe} /></p>
                 {!useToken && <p className="ui small">
                     {lf("Looking to use a Developer token instead?")}
                     <sui.Link className="link" text={lf("Use Developer token")} onClick={showToken} />
@@ -122,13 +129,14 @@ export class GithubProvider extends cloudsync.ProviderBase {
                 if (useToken) {
                     const input = form.querySelectorAll('input')[0] as HTMLInputElement;
                     const hextoken = input.value.trim();
-                    return this.saveAndValidateTokenAsync(hextoken);
+                    return this.saveAndValidateTokenAsync(hextoken, rememberMe);
                 }
                 else {
-                    return this.oauthRedirectAsync(route);
+                    return this.oauthRedirectAsync(rememberMe, route);
                 }
             }
         })
+        // tslint:enable: react-this-binding-issue
 
         function showToken() {
             useToken = true;
@@ -136,14 +144,14 @@ export class GithubProvider extends cloudsync.ProviderBase {
         }
     }
 
-    public authorizeAppAsync(route?: string) {
-        return this.oauthRedirectAsync(route || window.location.hash, true);
+    public authorizeAppAsync(rememberMe: boolean, route?: string) {
+        return this.oauthRedirectAsync(rememberMe, route || window.location.hash, true);
     }
 
-    private oauthRedirectAsync(route: string, consent?: boolean): Promise<void> {
+    private oauthRedirectAsync(rememberMe: boolean, route: string, consent?: boolean): Promise<void> {
         core.showLoading("ghlogin", lf("Signing you into GitHub..."))
         route = (route || "").replace(/^#/, "");
-        const state = cloudsync.setOauth(this.name, route ? `#github:${route}` : undefined);
+        const state = cloudsync.setOauth(this.name, rememberMe, route ? `#github:${route}` : undefined);
         const self = window.location.href.replace(/#.*/, "")
         const login = pxt.Cloud.getServiceUrl() +
             "/oauth/login?state=" + state +
@@ -173,12 +181,12 @@ export class GithubProvider extends cloudsync.ProviderBase {
             })
     }
 
-    setNewToken(token: string) {
-        super.setNewToken(token);
+    setNewToken(token: string, rememberMe: boolean) {
+        super.setNewToken(token, rememberMe);
         pxt.github.token = token;
     }
 
-    private saveAndValidateTokenAsync(hextoken: string): Promise<void> {
+    private saveAndValidateTokenAsync(hextoken: string, rememberMe: boolean): Promise<void> {
         const LOAD_ID = "githubtokensave";
         core.showLoading(LOAD_ID, lf("validating GitHub token..."));
         return Promise.resolve()
@@ -198,7 +206,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
                             // what?!
                             pxt.reportError("github", "Succeeded creating undefined repo!")
                             core.infoNotification(lf("Something went wrong with validation; token stored"))
-                            this.setNewToken(hextoken);
+                            this.setNewToken(hextoken, rememberMe);
                             pxt.tickEvent("github.token.wrong");
                         }, err => {
                             pxt.github.token = ""
@@ -207,7 +215,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
                                     core.infoNotification(lf("Token validated and stored"))
                                 else
                                     core.infoNotification(lf("Token stored but not validated"))
-                                this.setNewToken(hextoken);
+                                this.setNewToken(hextoken, rememberMe);
                                 pxt.tickEvent("github.token.ok");
                             }
                         })

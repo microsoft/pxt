@@ -66,7 +66,8 @@ export class Provider extends cloudsync.ProviderBase implements cloudsync.Provid
             // Redirect
             window.location.href = url
         }).then((resp) => {
-            this.setNewToken(resp.accessToken, resp.expiresIn);
+            // TODO: rememberme review this when implementing goog/onedrive
+            this.setNewToken(resp.accessToken, false, resp.expiresIn);
             return resp;
         }).finally(() => {
             this.loginCompleteInner();

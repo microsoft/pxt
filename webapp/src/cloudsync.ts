@@ -26,6 +26,7 @@ export interface FileInfo {
 
 export interface ProviderLoginResponse {
     accessToken: string;
+    rememberMe: boolean;
     expiresIn?: number; // seconds
 }
 
@@ -75,17 +76,22 @@ export const OAUTH_TYPE = "oauthType";
 export const OAUTH_STATE = "oauthState"; // state used in OAuth flow
 export const OAUTH_REDIRECT = "oauthRedirect"; // hash to be reloaded up loging
 export const OAUTH_HASH = "oauthHash"; // hash used in implicit oauth signing
+export const OAUTH_REMEMBER_STATE = "oauthRememberState"; // if state matches this key, store in local storage
 const TOKEN = "token"
 const TOKEN_EXP = "tokenExp"
 const AUTO_LOGIN = "AutoLogin"
 const CLOUD_USER = "cloudUser"
 
-export function setOauth(type: string, redirect?: string, hash?: string) {
+export function setOauth(type: string, rememberMe: boolean, redirect?: string, hash?: string) {
     const state = ts.pxtc.Util.guidGen();
     pxt.storage.setLocal(OAUTH_TYPE, type);
     pxt.storage.setLocal(OAUTH_STATE, state);
     pxt.storage.setLocal(OAUTH_REDIRECT, redirect || window.location.hash)
     pxt.storage.setLocal(OAUTH_HASH, hash)
+    if (rememberMe)
+        pxt.storage.setLocal(OAUTH_REMEMBER_STATE, state);
+    else
+        pxt.storage.removeLocal(OAUTH_REMEMBER_STATE)
     return state;
 }
 
@@ -94,6 +100,7 @@ function clearOauth() {
     pxt.storage.removeLocal(OAUTH_STATE)
     pxt.storage.removeLocal(OAUTH_REDIRECT)
     pxt.storage.removeLocal(OAUTH_HASH)
+    pxt.storage.removeLocal(OAUTH_REMEMBER_STATE)
 }
 
 export class ProviderBase {
@@ -198,7 +205,7 @@ export class ProviderBase {
 
             pxt.storage.setLocal(this.name + AUTO_LOGIN, "yes")
             this.loginAsync(undefined, true)
-                .then((resp) => resp && this.setNewToken(resp.accessToken, resp.expiresIn))
+                .then((resp) => resp && this.setNewToken(resp.accessToken, resp.rememberMe, resp.expiresIn))
                 .done();
         } else {
             setProvider(this as any)
@@ -213,7 +220,8 @@ export class ProviderBase {
     protected loginInner() {
         const ns = this.name
         core.showLoading(ns + "login", lf("Signing you in to {0}...", this.friendlyName))
-        const state = setOauth(ns);
+        // TODO: rememberme review this when implementing goog/onedrive
+        const state = setOauth(ns, false);
 
         const providerDef = pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders && pxt.appTarget.cloud.cloudProviders[this.name];
         const redir = window.location.protocol + "//" + window.location.host + "/oauth-redirect"
@@ -237,16 +245,27 @@ export class ProviderBase {
     loginCallback(qs: pxt.Map<string>) {
         const ns = this.name
         pxt.storage.removeLocal(ns + AUTO_LOGIN)
-        this.setNewToken(qs["access_token"], parseInt(qs["expires_in"]));
+        // TODO: rememberme review this when implementing goog/onedrive
+        this.setNewToken(qs["access_token"], false, parseInt(qs["expires_in"]));
 
         // re-compute
         this.setUser(undefined);
     }
 
-    setNewToken(accessToken: string, expiresIn?: number) {
+    setNewToken(accessToken: string, rememberMe: boolean, expiresIn?: number) {
         const ns = this.name;
         const tokenKey = ns + TOKEN;
         const tokenKeyExp = ns + TOKEN_EXP;
+
+        // the user did not check the "remember me" checkbox,
+        // do not store credentials in local storage
+        if (!rememberMe) {
+            // in-memory storage should be handled in the provider itself
+            pxt.storage.removeLocal(tokenKey);
+            pxt.storage.removeLocal(tokenKeyExp);
+            return;
+        }
+
         if (!accessToken) {
             pxt.storage.removeLocal(tokenKey);
             pxt.storage.removeLocal(tokenKeyExp);

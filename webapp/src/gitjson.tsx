@@ -53,7 +53,6 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.handleBranchClick = this.handleBranchClick.bind(this);
         this.handleGithubError = this.handleGithubError.bind(this);
         this.handlePullRequest = this.handlePullRequest.bind(this);
-        this.handleAutorize = this.handleAutorize.bind(this);
     }
 
     clearCacheDiff(cachePrefix?: string, f?: DiffFile) {
@@ -282,26 +281,33 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.pullAsync().done();
     }
 
-    private handleAutorize() {
-        pxt.tickEvent("github.authorize");
-        const provider = cloudsync.githubProvider();
-        provider.authorizeAppAsync();
-    }
-
     async forkAsync(fromError: boolean) {
         const parsed = this.parsedRepoId()
         const provider = cloudsync.githubProvider();
         const user = provider.user();
         let org: JSX.Element = undefined;
+        let rememberMe = false
+        const handleRememberMeChanged = (v: boolean) => { 
+            rememberMe = v 
+            core.forceUpdate()
+        }
+        const handleAutorize = () => {
+            pxt.tickEvent("github.authorize");
+            const provider = cloudsync.githubProvider();
+            provider.authorizeAppAsync(rememberMe);
+        }
         if (fromError && user && parsed.owner !== user.userName) {
             // this is an org repo, so our OAuth app might not have been granted rights
             // test if the app can read the repo
             const isOrg = await pxt.github.isOrgAsync(parsed.owner);
             if (isOrg) {
+                // tslint:disable: react-this-binding-issue
                 org = <p className="ui small">
                     {lf("If you already have write permissions to this repository, you may have to authorize the MakeCode App in the {0} organization.", parsed.owner)}
-                    <sui.Link className="ui link" text={lf("Authorize MakeCode")} onClick={this.handleAutorize} onKeyDown={sui.fireClickOnEnter} />
+                    <sui.PlainCheckbox label={lf("Remember me")} onChange={handleRememberMeChanged} />
+                    <sui.Link className="ui link" text={lf("Authorize MakeCode")} onClick={handleAutorize} onKeyDown={sui.fireClickOnEnter} />
                 </p>
+                // tslint:enable: react-this-binding-issue
             }
         }
         const error = fromError && <div className="ui message warning">
