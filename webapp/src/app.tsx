@@ -2193,24 +2193,7 @@ export class ProjectView
         }
         files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
 
-        const ghExtensions = Object.keys(cfg.dependencies)
-                ?.filter(dep => pxt.github.isGithubId(cfg.dependencies[dep]));
-
-        if (ghExtensions.length) {
-            const pkgConfig = await pxt.packagesConfigAsync();
-            // Make sure external packages load before installing header.
-            await Promise.all(
-                ghExtensions.map(
-                    async ext => {
-                        const extSrc = cfg.dependencies[ext];
-                        const ghPkg = await pxt.github.downloadPackageAsync(extSrc, pkgConfig);
-                        if (!ghPkg) {
-                            throw new Error(lf("Cannot load extension {0} from {1}", ext, extSrc));
-                        }
-                    }
-                )
-            );
-        }
+        await pxt.github.cacheProjectDependenciesAsync(cfg);
 
         const hd = await workspace.installAsync({
             name: cfg.name,
