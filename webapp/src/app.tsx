@@ -2212,7 +2212,7 @@ export class ProjectView
             );
         }
 
-        return workspace.installAsync({
+        const hd = await workspace.installAsync({
             name: cfg.name,
             meta: {},
             editor: options.preferredEditor || options.prj.id,
@@ -2224,9 +2224,10 @@ export class ProjectView
             temporary: options.temporary,
             tutorial: options.tutorial,
             extensionUnderTest: options.extensionUnderTest
-        }, files)
-            .then(hd => this.loadHeaderAsync(hd, { filters: options.filters }))
-            .then(() => pxt.perf.measureEnd("createProjectAsync"))
+        }, files);
+
+        await this.loadHeaderAsync(hd, { filters: options.filters });
+        pxt.perf.measureEnd("createProjectAsync");
     }
 
     // in multiboard targets, allow use to pick a different board
