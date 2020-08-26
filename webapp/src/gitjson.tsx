@@ -287,8 +287,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const user = provider.user();
         let org: JSX.Element = undefined;
         let rememberMe = false
-        const handleRememberMeChanged = (v: boolean) => { 
-            rememberMe = v 
+        const handleRememberMeChanged = (v: boolean) => {
+            rememberMe = v
             core.forceUpdate()
         }
         const handleAutorize = () => {
