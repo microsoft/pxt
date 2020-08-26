@@ -88,6 +88,7 @@
         const api = "https://api.github.com";
 
         const targets = await fetchJSON("/editors.json");
+        let token = localStorage["core/githubtoken"];
 
         async function fetchJSON(url) {
             const resp = await fetch(url)
@@ -107,7 +108,7 @@
                 method: 'POST', // *GET, POST, PUT, DELETE, etc.
                 mode: 'cors', // no-cors, *cors, same-origin
                 headers: {
-                    "Authorization": "bearer " + token()
+                    "Authorization": "bearer " + token
                 },
                 body: JSON.stringify({ query: query })
             });
@@ -178,7 +179,7 @@
         }
 
         async function fetchCurrentUser() {
-            if (!token()) return undefined;
+            if (!token) return undefined;
             const response = await fetchGraphQL(`{
   viewer {
       login
@@ -262,10 +263,6 @@
             }
         }
 
-        function token() {
-            return localStorage["core/githubtoken"];
-        }
-
         function checkToken() {
             // sniff oauth
             let keys = {};
@@ -275,9 +272,12 @@
 
             if (keys["access_token"]) {
                 if (keys["state"] == localStorage["core/oauthState"]) {
-                    localStorage["core/githubtoken"] = keys["access_token"];
+                    token = keys["access_token"]
+                    if (keys["state"] == localStorage["core/oauthRememberState"])
+                        localStorage["core/githubtoken"] = token;
                 }
                 delete localStorage["core/oauthState"];
+                delete localStorage["core/oauthRememberState"]
                 window.location.hash = "";
             }
 
@@ -301,6 +301,8 @@
             trackClick("github.explorer.signin")
             const state = Math.random().toString();
             localStorage["core/oauthState"] = state;
+            if (document.getElementById('remembermeinput').checked)
+                localStorage["core/oauthRememberState"] = state;
             const login = "https://makecode.com/oauth/login?state=" + state +
                 "&response_type=token&client_id=gh-token&redirect_uri=" +
                 encodeURIComponent(window.location.href.split('#', 1)[0])
@@ -391,6 +393,8 @@
             <i class="ui github icon"></i>
             Sign in
         </button>
+        <input type="checkbox" id="remembermeinput" />
+        <label for="remembermeinput">Remember me</label>
     </div>
     <footer id="footer" class="hideprint">
         <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp; Cookies</a>
