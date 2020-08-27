@@ -117,35 +117,39 @@ namespace pxt.Cloud {
     const MARKDOWN_EXPIRATION = pxt.BrowserUtils.isLocalHostDev() ? 0 : 1 * 60 * 60 * 1000;
     // 1w check don't use cached version and wait for new content
     const FORCE_MARKDOWN_UPDATE = MARKDOWN_EXPIRATION * 24 * 7;
-    export function markdownAsync(docid: string, locale?: string): Promise<string> {
+    export async function markdownAsync(docid: string, locale?: string): Promise<string> {
         locale = locale || pxt.Util.userLanguage();
         const live = pxt.Util.localizeLive;
         const branch = "";
-        return pxt.BrowserUtils.translationDbAsync()
-            .then(db => db.getAsync(locale, docid, "")
-                .then(entry => {
-                    const timeDiff = Date.now() - entry.time;
-                    const shouldFetchInBackground = timeDiff > MARKDOWN_EXPIRATION;
-                    const shouldWaitForNewContent = timeDiff > FORCE_MARKDOWN_UPDATE;
 
-                    if (!shouldWaitForNewContent && entry) {
-                        if (entry && shouldFetchInBackground) {
-                            // background update,
-                            downloadMarkdownAsync(docid, locale, live, entry.etag)
-                                .then(r => db.setAsync(locale, docid, branch, r.etag, undefined, r.md || entry.md))
-                                .catch(() => { }) // swallow errors
-                                .done();
-                        }
-                        // return cached entry
-                        if (entry.md)
-                            return entry.md;
-                    }
-                    // download and cache
-                    return downloadMarkdownAsync(docid, locale, live)
-                        .then(r => db.setAsync(locale, docid, branch, r.etag, undefined, r.md)
-                            .then(() => r.md))
-                        .catch(() => ""); // no translation
-                }))
+        const db = await pxt.BrowserUtils.translationDbAsync();
+        const entry = await db.getAsync(locale, docid, branch);
+
+        const timeDiff = Date.now() - (entry?.time || 0);
+        const shouldFetchInBackground = timeDiff > MARKDOWN_EXPIRATION;
+        const shouldWaitForNewContent = timeDiff > FORCE_MARKDOWN_UPDATE;
+
+        const downloadAndSetMarkdownAsync = async () => {
+            try {
+                const r = await downloadMarkdownAsync(docid, locale, live, entry?.etag);
+                await db.setAsync(locale, docid, branch, r.etag, undefined, r.md || entry?.md);
+                return r.md;
+            } catch {
+                return ""; // no translation
+            }
+        };
+
+        if (!shouldWaitForNewContent && entry) {
+            if (shouldFetchInBackground) {
+                // background update, do not wait
+                downloadAndSetMarkdownAsync();
+            }
+            // return cached entry
+            if (entry.md)
+                return entry.md;
+        }
+        // download and cache
+        return downloadAndSetMarkdownAsync();
     }
 
     function downloadMarkdownAsync(docid: string, locale?: string, live?: boolean, etag?: string): Promise<{ md: string; etag?: string; }> {
