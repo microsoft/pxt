@@ -22,6 +22,12 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 export function getUsedBlocksAsync(code: string[], id: string, language?: string): Promise<pxt.Map<number>> {
     if (!code) return Promise.resolve({});
 
+    // check to see if usedblocks has been prebuilt. this is hashed on the tutorial code + pxt version + target version
+    if (pxt.appTarget?.tutorialInfo) {
+        const hash = pxt.BrowserUtils.getTutorialInfoHash(code);
+        if (pxt.appTarget.tutorialInfo[hash]) return Promise.resolve(pxt.appTarget.tutorialInfo[hash]);
+    }
+
     return pxt.BrowserUtils.tutorialInfoDbAsync()
         .then(db => db.getAsync(id, code)
             .then(entry => {
