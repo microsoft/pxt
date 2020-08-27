@@ -13,6 +13,5 @@ namespace pxtblockly {
             const options = Blockly.FieldVariable.dropdownCreate.call(this);
             return options.filter((opt: any) => opt[1] != Blockly.DELETE_VARIABLE_ID);
         }
-        
     }
 }
