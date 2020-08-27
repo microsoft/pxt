@@ -4,7 +4,7 @@ namespace pxtblockly {
      * variables are part of a function argument (or else the whole function
      * gets deleted).
     */
-    export class FieldArgumentVariableDropdown extends Blockly.FieldVariable {
+    export class FieldArgumentVariable extends Blockly.FieldVariable {
         constructor(varName: string) {
             super(varName);
             this.menuGenerator_ = this.dropdownCreate;
