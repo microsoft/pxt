@@ -13,7 +13,7 @@
         .image-editor-wrapper {
             border-radius: 0;
         }
-        .gallery-editor-header {
+        .gallery-editor-header, .image-editor-pivot-outer {
             display: none;
         }
         .image-editor-confirm {
@@ -23,7 +23,18 @@
 </head>
 
 <body>
+    <script>
+        // This line gets patched up by the cloud
+        var pxtConfig = null;
+    </script>
+    <script type="text/javascript" src="/blb/target.js"></script>
+    <!-- <script type="text/javascript" src="https://pxt.azureedge.net/blob/ec765d3ba50a09c8c8819ec80390b6ffa72e945a/target.js"></script> -->
     <script type="text/javascript" src="/blb/pxtapp.js"></script>
+    <script>
+        pxt.setAppTarget(pxtTargetBundle);
+        // TO DO: get palette info from message from vs code extension
+        pxt.appTarget.runtime.palette = ["#000000","#ffffff","#ff2121","#ff93c4","#ff8135","#fff609","#249ca3","#78dc52","#003fad","#87f2ff","#8e2ec4","#a4839f","#5c406c","#e5cdc4","#91463d","#000000"];
+    </script>
     <script type="text/javascript" src="/blb/pxtasseteditor.js"></script>
     <div id="asset-editor-field-div">
     </div>
