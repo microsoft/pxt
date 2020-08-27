@@ -161,7 +161,9 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 break;
             case "tilemap":
                 this.updateTilemap();
-                message = JSON.stringify(this.tilemapProject.getProjectTilesetJRes());
+                const jres = this.tilemapProject.getProjectTilesetJRes()
+                const tilemapFiles = { jres, ts: pxt.emitTilemapsFromJRes(jres) }
+                message = JSON.stringify(tilemapFiles);
                 break;
         }
 
