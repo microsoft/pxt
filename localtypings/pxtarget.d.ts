@@ -425,7 +425,11 @@ declare namespace pxt {
         bundleddirs: string[];
         versions: TargetVersions;        // @derived
         apiInfo?: Map<PackageApiInfo>;
-        tutorialInfo?: Map<Map<number>>;
+        tutorialInfo?: Map<BuiltTutorialInfo>; // hash of tutorial code mapped to prebuilt info for each tutorial
+    }
+
+    interface BuiltTutorialInfo {
+        usedBlocks: Map<number>;
     }
 
     interface PackageApiInfo {

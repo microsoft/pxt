@@ -5434,6 +5434,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
 }
 
 interface TutorialInfo extends pxt.tutorial.TutorialInfo {
+    path: string;
     pkgs?: Map<string>
 }
 
@@ -5444,11 +5445,11 @@ function cacheUsedBlocksAsync() {
         })
 }
 
-function internalCacheUsedBlocksAsync() {
+function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
     const mdPaths: string[] = [];
     const mdRegex = /\.md$/;
     const targetDirs = pxt.appTarget.cacheusedblocksdirs;
-    const usedBlocks: Map<Map<number>> = {};
+    const builtTututorialInfo: Map<pxt.BuiltTutorialInfo> = {};
     if (targetDirs) {
         targetDirs.forEach(dir => {
             pxt.log(`looking for tutorial markdown in ${dir}`);
@@ -5469,6 +5470,7 @@ function internalCacheUsedBlocksAsync() {
         const pkgs: pxt.Map<string> = { "blocksprj": "*" };
         pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(md) || {});
         tutorial.pkgs = pkgs;
+        tutorial.path = path;
 
         const hash = pxt.BrowserUtils.getTutorialInfoHash(tutorial.code);
         tutorialInfo[hash] = tutorial;
@@ -5517,23 +5519,27 @@ function internalCacheUsedBlocksAsync() {
                 }
 
                 // convert ts to blocks
-                const decompiled = pxtc.decompile(pxtc.getTSProgram(opts), opts, "main.ts");
-                if (decompiled.success) {
-                    const blocksXml = decompiled.outfiles["main.blocks"];
-                    // scrape block IDs matching <block type="block_id">
-                    const blockIdRegex = /<\s*block(?:[^>]*)? type="([^ ]*)"/ig;
-                    let ids: pxt.Map<number> = usedBlocks[hash] || {};
-                    blocksXml.replace(blockIdRegex, (m0, m1) => {
-                        ids[m1] = 1;
-                        return m0;
-                    })
-                    usedBlocks[hash] = ids;
+                try {
+                    const decompiled = pxtc.decompile(pxtc.getTSProgram(opts), opts, "main.ts");
+                    if (decompiled.success) {
+                        const blocksXml = decompiled.outfiles["main.blocks"];
+                        // scrape block IDs matching <block type="block_id">
+                        const blockIdRegex = /<\s*block(?:[^>]*)? type="([^ ]*)"/ig;
+                        let builtInfo: pxt.BuiltTutorialInfo = builtTututorialInfo[hash] || { usedBlocks: {} };
+                        blocksXml.replace(blockIdRegex, (m0, m1) => {
+                            builtInfo.usedBlocks[m1] = 1;
+                            return m0;
+                        })
+                        builtTututorialInfo[hash] = builtInfo;
+                    }
+                } catch {
+                    pxt.log(`error decompiling ${info.path}`)
                 }
             }))
             .catch((err) => pxt.log(err));
     }).then(() => {
         pxt.log("cached tutorial used blocks");
-        return usedBlocks
+        return builtTututorialInfo
     })
 }
 

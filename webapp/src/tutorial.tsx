@@ -25,13 +25,17 @@ export function getUsedBlocksAsync(code: string[], id: string, language?: string
     // check to see if usedblocks has been prebuilt. this is hashed on the tutorial code + pxt version + target version
     if (pxt.appTarget?.tutorialInfo) {
         const hash = pxt.BrowserUtils.getTutorialInfoHash(code);
-        if (pxt.appTarget.tutorialInfo[hash]) return Promise.resolve(pxt.appTarget.tutorialInfo[hash]);
+        if (pxt.appTarget.tutorialInfo[hash]) {
+            pxt.tickEvent(`tutorial.usedblocks.cached`, { tutorial: id });
+            return Promise.resolve(pxt.appTarget.tutorialInfo[hash].usedBlocks);
+        }
     }
 
     return pxt.BrowserUtils.tutorialInfoDbAsync()
         .then(db => db.getAsync(id, code)
             .then(entry => {
                 if (entry?.blocks && Object.keys(entry.blocks).length > 0) {
+                    pxt.tickEvent(`tutorial.usedblocks.indexeddb`, { tutorial: id });
                     return Promise.resolve(entry.blocks);
                 } else {
                     return getUsedBlocksInternalAsync(code, id, language, db);
@@ -71,6 +75,7 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                     pxt.debug(JSON.stringify(usedBlocks, null, 2));
 
                 if (db) db.setAsync(id, usedBlocks, code);
+                pxt.tickEvent(`tutorial.usedblocks.computed`, { tutorial: id });
                 return usedBlocks;
             } else {
                 throw new Error("Failed to decompile");
