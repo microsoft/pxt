@@ -4402,7 +4402,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
         });
 }
 
-export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
+export async function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     const route = parsed.flags["route"] as string || "/";
     const ghpages = parsed.flags["githubpages"];
     const builtPackaged = parsed.flags["output"] as string || "built/packaged";
@@ -4417,12 +4417,23 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
 
     pxt.log(`packaging editor to ${builtPackaged}`)
 
-    let p = rimrafAsync(builtPackaged, {})
-        .then(() => bump ? bumpAsync() : Promise.resolve())
-        .then(() => locs && crowdin.downloadTargetTranslationsAsync())
-        .then(() => internalBuildTargetAsync({ packaged: true }));
-    if (ghpages) return p.then(() => ghpPushAsync(builtPackaged, minify));
-    else return p.then(() => internalStaticPkgAsync(builtPackaged, route, minify, disableAppCache));
+    await rimrafAsync(builtPackaged, {});
+
+    if (bump) {
+        await bumpAsync();
+    }
+    if (locs) {
+        await internalGenDocsAsync(false, true);
+        await crowdin.downloadTargetTranslationsAsync();
+    }
+
+    await internalBuildTargetAsync({ packaged: true });
+
+    if (ghpages) {
+        await ghpPushAsync(builtPackaged, minify)
+    } else {
+        await internalStaticPkgAsync(builtPackaged, route, minify, disableAppCache);
+    }
 }
 
 function internalStaticPkgAsync(builtPackaged: string, label: string, minify: boolean, noAppCache?: boolean) {
