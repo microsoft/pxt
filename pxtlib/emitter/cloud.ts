@@ -114,7 +114,9 @@ namespace pxt.Cloud {
     }
 
     // 1h check on markdown content if not on development server
-    const MARKDOWN_EXPIRATION = pxt.BrowserUtils.isLocalHostDev() ? 1 : 1 * 60 * 60 * 1000;
+    const MARKDOWN_EXPIRATION = pxt.BrowserUtils.isLocalHostDev() ? 0 : 1 * 60 * 60 * 1000;
+    // 1w check don't use cached version and wait for new content
+    const FORCE_MARKDOWN_UPDATE = MARKDOWN_EXPIRATION * 24 * 7;
     export function markdownAsync(docid: string, locale?: string): Promise<string> {
         locale = locale || pxt.Util.userLanguage();
         const live = pxt.Util.localizeLive;
@@ -122,17 +124,24 @@ namespace pxt.Cloud {
         return pxt.BrowserUtils.translationDbAsync()
             .then(db => db.getAsync(locale, docid, "")
                 .then(entry => {
-                    if (entry && Date.now() - entry.time > MARKDOWN_EXPIRATION)
-                        // background update,
-                        downloadMarkdownAsync(docid, locale, live, entry.etag)
-                            .then(r => db.setAsync(locale, docid, branch, r.etag, undefined, r.md || entry.md))
-                            .catch(() => { }) // swallow errors
-                            .done();
-                    // return cached entry
-                    if (entry && entry.md)
-                        return entry.md;
+                    const timeDiff = Date.now() - (entry?.time || 0);
+                    const shouldFetchInBackground = timeDiff > MARKDOWN_EXPIRATION;
+                    const shouldWaitForNewContent = timeDiff > FORCE_MARKDOWN_UPDATE;
+
+                    if (!shouldWaitForNewContent && entry) {
+                        if (entry && shouldFetchInBackground) {
+                            // background update,
+                            downloadMarkdownAsync(docid, locale, live, entry.etag)
+                                .then(r => db.setAsync(locale, docid, branch, r.etag, undefined, r.md || entry.md))
+                                .catch(() => { }) // swallow errors
+                                .done();
+                        }
+                        // return cached entry
+                        if (entry.md)
+                            return entry.md;
+                    }
                     // download and cache
-                    else return downloadMarkdownAsync(docid, locale, live)
+                    return downloadMarkdownAsync(docid, locale, live)
                         .then(r => db.setAsync(locale, docid, branch, r.etag, undefined, r.md)
                             .then(() => r.md))
                         .catch(() => ""); // no translation
