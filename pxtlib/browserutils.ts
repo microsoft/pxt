@@ -932,7 +932,7 @@ namespace pxt.BrowserUtils {
             .catch(e => deleteDbAsync().done());
     }
 
-    function getTutorialInfoHash(code: string[]) {
+    export function getTutorialInfoHash(code: string[]) {
         // the code strings are parsed from markdown, so when the
         // markdown changes the blocks will also be invalidated
         const input = JSON.stringify(code) + pxt.appTarget.versions.pxt + "_" + pxt.appTarget.versions.target;
@@ -996,6 +996,9 @@ namespace pxt.BrowserUtils {
                         return res;
                     }
                     /* tslint:enable:possible-timing-attack */
+
+                    // delete stale db entry
+                    this.db.deleteAsync(TutorialInfoIndexedDb.TABLE, key);
                     return undefined;
                 });
         }

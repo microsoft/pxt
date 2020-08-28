@@ -69,7 +69,8 @@ declare namespace pxt {
         alwaysMultiVariant?: boolean;
         queryVariants?: Map<AppTarget>; // patches on top of the current AppTarget using query url regex
         unsupportedBrowsers?: BrowserOptions[]; // list of unsupported browsers for a specific target (eg IE11 in arcade). check browserutils.js browser() function for strings
-        checkdocsdirs?: string[]; // list of folders for checkdocs, irrespective of SUMMARY.md
+        checkdocsdirs?: string[]; // list of /docs subfolders for checkdocs, irrespective of SUMMARY.md
+        cacheusedblocksdirs?: string[]; // list of /docs subfolders for parsing and caching used block ids (for tutorial loading)
         blockIdMap?: Map<string[]>; // list of target-specific blocks that are "synonyms" (eg. "agentturnright" and "minecraftAgentTurn")
     }
 
@@ -424,6 +425,11 @@ declare namespace pxt {
         bundleddirs: string[];
         versions: TargetVersions;        // @derived
         apiInfo?: Map<PackageApiInfo>;
+        tutorialInfo?: Map<BuiltTutorialInfo>; // hash of tutorial code mapped to prebuilt info for each tutorial
+    }
+
+    interface BuiltTutorialInfo {
+        usedBlocks: Map<number>;
     }
 
     interface PackageApiInfo {
