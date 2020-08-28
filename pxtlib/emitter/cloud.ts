@@ -148,6 +148,7 @@ namespace pxt.Cloud {
             if (entry.md)
                 return entry.md;
         }
+
         // download and cache
         return downloadAndSetMarkdownAsync();
     }

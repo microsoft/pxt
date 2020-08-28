@@ -101,7 +101,7 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
                 .map(g => ({ bitmap: pxt.sprite.getBitmap(this.blocksInfo, g.qName).data(), tags: g.tags, qualifiedName: g.qName, tileWidth: 16 }))
         }
 
-        this.ref.initTilemap(data, gallery,);
+        this.ref.initTilemap(data, gallery);
     }
 
     protected onDoneClick = () => {

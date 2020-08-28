@@ -280,7 +280,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     drawingMode: TileDrawingMode.Default,
                     overlayEnabled: true,
                     tileGallery: action.gallery,
-                    tileGalleryOpen: true,
+                    tileGalleryOpen: !!action.gallery,
                     referencedTiles: action.referencedTiles
                 },
                 store: {

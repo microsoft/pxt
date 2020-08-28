@@ -1213,9 +1213,11 @@ function readLocalPxTarget() {
         process.exit(1)
     }
     nodeutil.setTargetDir(process.cwd())
+    const pkg = readJson("package.json");
     const cfg: pxt.TargetBundle = readJson("pxtarget.json");
     cfg.versions = {
-        target: readJson("package.json")["version"]
+        target: pkg["version"],
+        pxt: (pxt.appTarget.versions && pxt.appTarget.versions.pxt) || pkg["dependencies"]["pxt-core"]
     };
 
     return cfg
@@ -2057,6 +2059,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     let cfg = readLocalPxTarget()
     updateDefaultProjects(cfg);
     updateTOC(cfg);
+
     cfg.bundledpkgs = {}
     pxt.setAppTarget(cfg);
     let statFiles: Map<number> = {}
@@ -2091,6 +2094,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
 
     return buildWebStringsAsync()
         .then(() => options.quick ? null : internalGenDocsAsync(false, true))
+        .then(() => pxt.appTarget.cacheusedblocksdirs ? internalCacheUsedBlocksAsync().then((usedBlocks) => cfg.tutorialInfo = usedBlocks) : null)
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
             pxt.log(`building bundled ${dirname}`);
             let isPrj = /prj$/.test(dirname);
@@ -2210,6 +2214,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             delete targetlight.bundledpkgs;
             delete targetlight.appTheme;
             delete targetlight.apiInfo;
+            delete targetlight.tutorialInfo;
             if (targetlight.compile)
                 delete targetlight.compile.compilerExtension;
             const targetlightjson = nodeutil.stringify(targetlight);
@@ -4012,8 +4017,9 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxC
                             snippetMode: false,
                             errorOnGreyBlocks: true
                         });
-                        let blockSucces = !!bresp.outfiles['main.blocks']
-                        if (!blockSucces) {
+
+                        let blockSuccess = !!bresp.outfiles['main.blocks'];
+                        if (!blockSuccess) {
                             return addFailure(fn, bresp.diagnostics)
                         }
 
@@ -4402,7 +4408,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
         });
 }
 
-export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
+export async function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     const route = parsed.flags["route"] as string || "/";
     const ghpages = parsed.flags["githubpages"];
     const builtPackaged = parsed.flags["output"] as string || "built/packaged";
@@ -4417,12 +4423,23 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
 
     pxt.log(`packaging editor to ${builtPackaged}`)
 
-    let p = rimrafAsync(builtPackaged, {})
-        .then(() => bump ? bumpAsync() : Promise.resolve())
-        .then(() => locs && crowdin.downloadTargetTranslationsAsync())
-        .then(() => internalBuildTargetAsync({ packaged: true }));
-    if (ghpages) return p.then(() => ghpPushAsync(builtPackaged, minify));
-    else return p.then(() => internalStaticPkgAsync(builtPackaged, route, minify, disableAppCache));
+    await rimrafAsync(builtPackaged, {});
+
+    if (bump) {
+        await bumpAsync();
+    }
+    if (locs) {
+        await internalGenDocsAsync(false, true);
+        await crowdin.downloadTargetTranslationsAsync();
+    }
+
+    await internalBuildTargetAsync({ packaged: true });
+
+    if (ghpages) {
+        await ghpPushAsync(builtPackaged, minify)
+    } else {
+        await internalStaticPkgAsync(builtPackaged, route, minify, disableAppCache);
+    }
 }
 
 function internalStaticPkgAsync(builtPackaged: string, label: string, minify: boolean, noAppCache?: boolean) {
@@ -5427,6 +5444,116 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     })
 }
 
+interface TutorialInfo extends pxt.tutorial.TutorialInfo {
+    path: string;
+    pkgs?: Map<string>
+}
+
+function cacheUsedBlocksAsync() {
+    return internalCacheUsedBlocksAsync()
+        .then((usedBlocks) => {
+            nodeutil.writeFileSync(path.resolve(process.cwd(), "built", "tutorial-info-cache.json"), JSON.stringify(usedBlocks));
+        })
+}
+
+function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
+    const mdPaths: string[] = [];
+    const mdRegex = /\.md$/;
+    const targetDirs = pxt.appTarget.cacheusedblocksdirs;
+    const builtTututorialInfo: Map<pxt.BuiltTutorialInfo> = {};
+    if (targetDirs) {
+        targetDirs.forEach(dir => {
+            pxt.log(`looking for tutorial markdown in ${dir}`);
+            nodeutil.allFiles(path.join("docs", dir), 3).filter(f => mdRegex.test(f))
+                .forEach(md => {
+                    mdPaths.push(md.slice(5).replace(mdRegex, ""));
+                });
+        })
+    }
+    const tutorialInfo: Map<TutorialInfo> = {}
+    for (let i = 0; i < mdPaths.length; i++) {
+        const path = mdPaths[i];
+        let md = nodeutil.resolveMd(nodeutil.targetDir, path);
+        if (!md) {
+            pxt.log(`error resolving tutorial markdown at ${path}`);
+        }
+        const tutorial = pxt.tutorial.parseTutorial(md) as TutorialInfo;
+        const pkgs: pxt.Map<string> = { "blocksprj": "*" };
+        pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(md) || {});
+        tutorial.pkgs = pkgs;
+        tutorial.path = path;
+
+        const hash = pxt.BrowserUtils.getTutorialInfoHash(tutorial.code);
+        tutorialInfo[hash] = tutorial;
+    }
+
+    const namespaceRegex = /^\s*namespace\s+[^\s]+\s*{([\S\s]*)}\s*$/im;
+    return Promise.map(Object.keys(tutorialInfo), (hash: string) => {
+        const info = tutorialInfo[hash];
+        const cache: Map<string> = {};
+        let isPy = info.language === "python"
+        let inFiles;
+        if (isPy) {
+            let extra: Map<string> = {};
+            info.code.forEach((snippet, i) => extra["snippet_" + i + ".py"] = snippet);
+            inFiles = { "main.ts": "", "main.py": "", "main.blocks": "", ...extra }
+        } else {
+            inFiles = { "main.ts": info.code.join("\n"), "main.py": "", "main.blocks": "" }
+        }
+
+        const host = new SnippetHost("usedblocks", inFiles, info.pkgs);
+        host.cache = cache;
+        const pkg = new pxt.MainPackage(host);
+        return pkg.installAllAsync()
+            .then(() => pkg.getCompileOptionsAsync().then(opts => {
+                opts.ast = true;
+                // convert python to ts
+                if (isPy) {
+                    opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
+                    const stsCompRes = pxtc.compile(opts);
+                    const apisInfo = pxtc.getApiInfo(stsCompRes.ast, opts.jres)
+                    if (!apisInfo || !apisInfo.byQName)
+                        throw Error("Failed to get apisInfo")
+
+                    opts.apisInfo = apisInfo
+                    opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+                    const { outfiles } = pxt.py.py2ts(opts)
+
+                    let ts = "";
+                    for (let f of Object.keys(outfiles)) {
+                        if (f.match(/^snippet/)) {
+                            let match = outfiles[f].match(namespaceRegex);
+                            if (match && match[1]) ts += `{\n${match[1]}\n}\n`
+                        }
+                    }
+                    opts.fileSystem["main.ts"] = ts;
+                }
+
+                // convert ts to blocks
+                try {
+                    const decompiled = pxtc.decompile(pxtc.getTSProgram(opts), opts, "main.ts");
+                    if (decompiled.success) {
+                        const blocksXml = decompiled.outfiles["main.blocks"];
+                        // scrape block IDs matching <block type="block_id">
+                        const blockIdRegex = /<\s*block(?:[^>]*)? type="([^ ]*)"/ig;
+                        let builtInfo: pxt.BuiltTutorialInfo = builtTututorialInfo[hash] || { usedBlocks: {} };
+                        blocksXml.replace(blockIdRegex, (m0, m1) => {
+                            builtInfo.usedBlocks[m1] = 1;
+                            return m0;
+                        })
+                        builtTututorialInfo[hash] = builtInfo;
+                    }
+                } catch {
+                    pxt.log(`error decompiling ${info.path}`)
+                }
+            }))
+            .catch((err) => pxt.log(err));
+    }).then(() => {
+        pxt.log("cached tutorial used blocks");
+        return builtTututorialInfo
+    })
+}
+
 export interface SnippetInfo {
     type: string;
     code: string;
@@ -6212,6 +6339,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             }
         }
     }, checkDocsAsync);
+
+    p.defineCommand({
+        name: "usedblocks",
+        help: "extract list of block ids used in each tutorial"
+    }, cacheUsedBlocksAsync);
 
     advancedCommand("api", "do authenticated API call", pc => apiAsync(pc.args[0], pc.args[1]), "<path> [data]");
     advancedCommand("pokecloud", "same as 'api pokecloud {}'", () => apiAsync("pokecloud", "{}"));

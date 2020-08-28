@@ -101,25 +101,30 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         super(props);
 
         const { gallery } = props;
+
         this.refreshGallery(props);
 
-        const extraCategories: pxt.Map<Category> = {};
-        for (const tile of gallery) {
-            const categoryName = tile.tags.find(t => pxt.Util.startsWith(t, "category-"));
-            if (categoryName) {
-                if (!extraCategories[categoryName]) {
-                    extraCategories[categoryName] = {
-                        id: categoryName,
-                        text: pxt.Util.rlf(`{id:tilecategory}${categoryName.substr(9)}`),
-                        tiles: []
-                    };
+        if (gallery) {
+            const extraCategories: pxt.Map<Category> = {};
+            for (const tile of gallery) {
+                const categoryName = tile.tags.find(t => pxt.Util.startsWith(t, "category-"));
+                if (categoryName) {
+                    if (!extraCategories[categoryName]) {
+                        extraCategories[categoryName] = {
+                            id: categoryName,
+                            text: pxt.Util.rlf(`{id:tilecategory}${categoryName.substr(9)}`),
+                            tiles: []
+                        };
+                    }
+
+                    extraCategories[categoryName].tiles.push(tile);
                 }
-
-                extraCategories[categoryName].tiles.push(tile);
             }
-        }
 
-        this.categories = options.concat(Object.keys(extraCategories).map(key => extraCategories[key]));
+            this.categories = options.concat(Object.keys(extraCategories).map(key => extraCategories[key]));
+        } else {
+            this.categories = [];
+        }
     }
 
     componentDidMount() {
@@ -442,9 +447,11 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
     protected refreshGallery(props: TilePaletteProps) {
         const { gallery, tileset } = props;
-        options.forEach(opt => {
-            opt.tiles = gallery.filter(t => t.tags.indexOf(opt.id) !== -1 && t.tileWidth === tileset.tileWidth);
-        });
+        if (gallery) {
+            options.forEach(opt => {
+                opt.tiles = gallery.filter(t => t.tags.indexOf(opt.id) !== -1 && t.tileWidth === tileset.tileWidth);
+            });
+        }
     }
 
     protected positionCreateTileButton() {

@@ -659,6 +659,7 @@ async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo
 
         for (const dep of externalPackages) {
             const name = dep.getKsPkg().config.name;
+            const pkgId = dep.getPkgId();
             const entry: pxt.PackageApiInfo = {
                 sha: null,
                 apis: { byQName: {} }
@@ -666,8 +667,9 @@ async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo
 
 
             for (const api of apiList) {
-                if (info.byQName[api].pkg === name) {
-                    entry.apis.byQName[api] = info.byQName[api];
+                const apiInfo = info.byQName[api];
+                if (apiInfo.pkg === name || apiInfo.pkg === pkgId) {
+                    entry.apis.byQName[api] = apiInfo;
                 }
             }
 
