@@ -576,7 +576,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
 
         let foundIt = false;
         for (const bundle of bundledPackages) {
-            if (bundle.config.name === dep.getKsPkg().config.name) {
+            if (bundle.config.name === getPackageKey(dep)) {
                 usedPackageInfo.push({
                     dirname: bundle.dirname,
                     info: bundled[bundle.dirname]
@@ -596,13 +596,13 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
             const entry = await db.getAsync(dep);
 
             if (!entry) {
-                pxt.debug(`Could not find cached API info for ${dep.getKsPkg().config.name}, waiting for full compile`);
+                pxt.debug(`Could not find cached API info for ${getPackageKey(dep)}, waiting for full compile`);
                 return null;
             }
             else {
-                pxt.debug(`Fetched cached API info for ${dep.getKsPkg().config.name}`);
+                pxt.debug(`Fetched cached API info for ${getPackageKey(dep)}`);
                 usedPackageInfo.push({
-                    dirname: dep.getKsPkg().config.name,
+                    dirname: dep.getPkgId(),
                     info: entry
                 });
             }
@@ -651,24 +651,26 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
 
 async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo) {
     const corePkgs = pxt.Package.corePackages().map(pkg => pkg.name);
-    const externalPackages = project.pkgAndDeps().filter(p => p.id !== "built" && !p.isTopLevel() && corePkgs.indexOf(p.getKsPkg().config.name) === -1);
+    const externalPackages = project.pkgAndDeps()
+            .filter(p => p.id !== "built"
+                        && !p.isTopLevel()
+                        && corePkgs.indexOf(p.getPkgId()) === -1);
 
     if (externalPackages.length) {
         const apiList = Object.keys(info.byQName);
         const db = await ApiInfoIndexedDb.createAsync();
 
         for (const dep of externalPackages) {
-            const name = dep.getKsPkg().config.name;
             const pkgId = dep.getPkgId();
+
             const entry: pxt.PackageApiInfo = {
                 sha: null,
                 apis: { byQName: {} }
             }
 
-
             for (const api of apiList) {
                 const apiInfo = info.byQName[api];
-                if (apiInfo.pkg === name || apiInfo.pkg === pkgId) {
+                if (apiInfo.pkg === pkgId) {
                     entry.apis.byQName[api] = apiInfo;
                 }
             }
@@ -958,7 +960,15 @@ function getPackageHash(pack: pkg.EditorPackage) {
 }
 
 function getPackageKey(pack: pkg.EditorPackage) {
-    return pack.getKsPkg().config.name;
+    const ksPkg = pack.getKsPkg();
+    const verspec = ksPkg._verspec;
+    if (pxt.github.isGithubId(verspec)) {
+        // only cache one version of repo; drop #tag
+        const slug = /^[^#]+/.exec(verspec);
+        return slug[1];
+    } else {
+        return ksPkg.config.name;
+    }
 }
 
 interface ApiInfoIndexedDbEntry {
