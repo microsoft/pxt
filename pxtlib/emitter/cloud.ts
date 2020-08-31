@@ -125,10 +125,6 @@ namespace pxt.Cloud {
         const db = await pxt.BrowserUtils.translationDbAsync();
         const entry = await db.getAsync(locale, docid, branch);
 
-        const timeDiff = Date.now() - (entry?.time || 0);
-        const shouldFetchInBackground = timeDiff > MARKDOWN_EXPIRATION;
-        const shouldWaitForNewContent = timeDiff > FORCE_MARKDOWN_UPDATE;
-
         const downloadAndSetMarkdownAsync = async () => {
             try {
                 const r = await downloadMarkdownAsync(docid, locale, live, entry?.etag);
@@ -139,14 +135,25 @@ namespace pxt.Cloud {
             }
         };
 
-        if (!shouldWaitForNewContent && entry) {
-            if (shouldFetchInBackground) {
-                // background update, do not wait
-                downloadAndSetMarkdownAsync();
+        if (entry) {
+            const timeDiff = Date.now() - entry.time;
+            const shouldFetchInBackground = timeDiff > MARKDOWN_EXPIRATION;
+            const shouldWaitForNewContent = timeDiff > FORCE_MARKDOWN_UPDATE;
+
+            if (!shouldWaitForNewContent) {
+                if (shouldFetchInBackground) {
+                    pxt.tickEvent("markdown.update.background");
+                    // background update, do not wait
+                    downloadAndSetMarkdownAsync();
+                }
+
+                // return cached entry
+                if (entry.md) {
+                    return entry.md;
+                }
+            } else {
+                pxt.tickEvent("markdown.update.wait");
             }
-            // return cached entry
-            if (entry.md)
-                return entry.md;
         }
 
         // download and cache
