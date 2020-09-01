@@ -123,6 +123,7 @@ export class ProjectView
 
     private runToken: pxt.Util.CancellationToken;
     private updatingEditorFile: boolean;
+    private loadingExample: boolean;
     private openingTypeScript: boolean;
     private preserveUndoStack: boolean;
 
@@ -370,7 +371,7 @@ export class ProjectView
     }
 
     saveFileAsync(): Promise<void> {
-        if (!this.editorFile)
+        if (!this.editorFile || this.loadingExample)
             return Promise.resolve()
         return this.saveTypeScriptAsync()
             .then(() => this.setFileContentAsync());
@@ -2227,6 +2228,7 @@ export class ProjectView
     importExampleAsync(options: pxt.editor.ExampleImportOptions): Promise<void> {
         const { name, path, loadBlocks, prj, preferredEditor } = options;
         core.showLoading("changingcode", lf("loading..."));
+        this.loadingExample = true;
         return this.loadActivityFromMarkdownAsync(path, name.toLowerCase(), preferredEditor)
             .then(r => {
                 const { filename, md, features, autoChooseBoard: autoChooseBoardMeta } = (r || {});
@@ -2278,7 +2280,10 @@ export class ProjectView
                 pxt.reportException(e);
                 return Promise.reject(e);
             })
-            .finally(() => core.hideLoading("changingcode"))
+            .finally(() => {
+                this.loadingExample = false;
+                core.hideLoading("changingcode")
+            })
     }
 
     switchTypeScript() {
