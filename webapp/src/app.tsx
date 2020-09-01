@@ -4607,4 +4607,11 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
     }, false);
+
+    // Disable right-click in locked editor to prevent "Back". (Blockly context menu still enabled)
+    if (pxt.appTarget.appTheme.lockedEditor) {
+        window.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+        }, false);
+    }
 })
