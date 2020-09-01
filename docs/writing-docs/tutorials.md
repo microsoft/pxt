@@ -392,7 +392,7 @@ Users will have the option of clicking the Python icon to see the snippet in Pyt
 
 There are some flags you can add to the URL of your tutorial to change the layout of the page. These are not yet enabled for every editor, so make sure you check that the feature is available in your target.
 
-* **lockedEditor=1** If you load the page directly into a tutorial, adding the `lockedEditor` flag will "lock" users into the tutorial. This hides the "Exit Tutorial", Home, and "Finish" buttons, as well as disabling the right-click menu outside of the Blocks workspace to prevent users from entering the home screen or sandbox mode. For example:
+* **lockedEditor=1** - If you load the page directly into a tutorial, adding the `lockedEditor` flag will "lock" users into the tutorial. This hides the "Exit Tutorial", "Home", and "Finish" buttons, as well as disabling the right-click menu outside of the Blocks workspace to prevent users from entering the home screen or sandbox mode. For example:
 
     https://arcade.makecode.com?lockedEditor=1#tutorial:/tutorials/happy-flower
 
