@@ -284,9 +284,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             pxt.blocks.layout.flow(this.editor, { useViewWidth: true });
         }
         else {
-            // Otherwise translate the blocks so that they are positioned on the top left
-            this.editor.getTopComments(false).forEach(c => c.moveBy(-closestToOrigin.left, -closestToOrigin.top));
-            this.editor.getTopBlocks(false).forEach(b => b.moveBy(-closestToOrigin.left, -closestToOrigin.top));
+            if (closestToOrigin) {
+                // Otherwise translate the blocks so that they are positioned on the top left
+                this.editor.getTopComments(false).forEach(c => c.moveBy(-closestToOrigin.left, -closestToOrigin.top));
+                this.editor.getTopBlocks(false).forEach(b => b.moveBy(-closestToOrigin.left, -closestToOrigin.top));
+            }
             this.editor.scrollX = 10;
             this.editor.scrollY = 10;
 
