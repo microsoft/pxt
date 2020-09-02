@@ -1007,6 +1007,12 @@ namespace pxt.BrowserUtils {
             pxt.perf.measureStart("tutorial info db setAsync")
             const key = getTutorialInfoKey(filename, branch);
             const hash = getTutorialInfoHash(code);
+            return this.setWithHashAsync(filename, blocks, hash);
+        }
+
+        setWithHashAsync(filename: string, blocks: Map<number>, hash: string, branch?: string ): Promise<void> {
+            pxt.perf.measureStart("tutorial info db setAsync")
+            const key = getTutorialInfoKey(filename, branch);
 
             const entry: TutorialInfoIndexedDbEntry = {
                 id: key,

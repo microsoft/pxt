@@ -358,4 +358,13 @@ ${code}
         return { options: tutorialOptions, editor: tutorialInfo.editor };
     }
 
+
+    export function parseCachedTutorialInfo(id: string, json: string) {
+        let cachedInfo = JSON.parse(json) as pxt.BuiltTutorialInfo;
+        if (!cachedInfo?.usedBlocks || !cachedInfo?.hash) return Promise.resolve();
+
+        return pxt.BrowserUtils.tutorialInfoDbAsync()
+            .then(db =>  db.setWithHashAsync(id, cachedInfo.usedBlocks, cachedInfo.hash))
+            .catch((err) => {})
+    }
 }
