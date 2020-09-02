@@ -10,6 +10,7 @@ import * as data from "./data";
 import * as markedui from "./marked";
 import * as compiler from "./compiler";
 import * as cloudsync from "./cloudsync";
+import * as tutorial from "./tutorial";
 import * as _package from "./package";
 
 const MAX_COMMIT_DESCRIPTION_LENGTH = 70;
@@ -388,30 +389,44 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             bumpType = e.currentTarget.name;
             coretsx.forceUpdate();
         }
+        let shouldCacheTutorial: boolean = false;
+        function onCacheTutorialChange(e: React.ChangeEvent<HTMLInputElement>) {
+            shouldCacheTutorial = !shouldCacheTutorial;
+            coretsx.forceUpdate();
+        }
         const ok = await core.confirmAsync({
             header: lf("Pick a release version"),
             agreeLbl: lf("Create release"),
             disagreeLbl: lf("Cancel"),
-            jsxd: () => <div className="grouped fields">
-                <label>{lf("Choose a release version that describes the changes you made to the code.")}
-                    {sui.helpIconLink("/github/release#versioning", lf("Learn about version numbers."))}
-                </label>
-                <div className="field">
-                    <div className="ui radio checkbox">
-                        <input type="radio" name="patch" checked={bumpType == "patch"} aria-checked={bumpType == "patch"} onChange={onBumpChange} />
-                        <label>{lf("{0}: patch (bug fixes or other non-user visible changes)", pxt.semver.stringify(vpatch))}</label>
+            jsxd: () => <div>
+                <div className="grouped fields">
+                    <label>{lf("Choose a release version that describes the changes you made to the code.")}
+                        {sui.helpIconLink("/github/release#versioning", lf("Learn about version numbers."))}
+                    </label>
+                    <div className="field">
+                        <div className="ui radio checkbox">
+                            <input type="radio" name="patch" checked={bumpType == "patch"} aria-checked={bumpType == "patch"} onChange={onBumpChange} />
+                            <label>{lf("{0}: patch (bug fixes or other non-user visible changes)", pxt.semver.stringify(vpatch))}</label>
+                        </div>
+                    </div>
+                    <div className="field">
+                        <div className="ui radio checkbox">
+                            <input type="radio" name="minor" checked={bumpType == "minor"} aria-checked={bumpType == "minor"} onChange={onBumpChange} />
+                            <label>{lf("{0}: minor change (added function or optional parameters)", pxt.semver.stringify(vminor))}</label>
+                        </div>
+                    </div>
+                    <div className="field">
+                        <div className="ui radio checkbox">
+                            <input type="radio" name="major" checked={bumpType == "major"} aria-checked={bumpType == "major"} onChange={onBumpChange} />
+                            <label>{lf("{0}: major change (renamed functions, deleted parameters or functions)", pxt.semver.stringify(vmajor))}</label>
+                        </div>
                     </div>
                 </div>
-                <div className="field">
-                    <div className="ui radio checkbox">
-                        <input type="radio" name="minor" checked={bumpType == "minor"} aria-checked={bumpType == "minor"} onChange={onBumpChange} />
-                        <label>{lf("{0}: minor change (added function or optional parameters)", pxt.semver.stringify(vminor))}</label>
-                    </div>
-                </div>
-                <div className="field">
-                    <div className="ui radio checkbox">
-                        <input type="radio" name="major" checked={bumpType == "major"} aria-checked={bumpType == "major"} onChange={onBumpChange} />
-                        <label>{lf("{0}: major change (renamed functions, deleted parameters or functions)", pxt.semver.stringify(vmajor))}</label>
+                <div className="grouped fields">
+                    <label>{lf("Advanced")}</label>
+                    <div className="field">
+                        <input type="checkbox" name="cachetutorial" checked={shouldCacheTutorial} aria-checked={shouldCacheTutorial} onChange={onCacheTutorialChange} />
+                        <label>{lf("Optimize for tutorials by caching information about the markdown.")}</label>
                     </div>
                 </div>
             </div>
@@ -429,6 +444,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.showLoading("github.release.new", true, lf("creating release..."));
         try {
             const { header } = this.props.parent.state;
+            if (shouldCacheTutorial) await this.cacheTutorialInfo(header);
             await workspace.bumpAsync(header, newVer)
             pkg.mainPkg.config.version = newVer;
             await this.maybeReloadAsync()
@@ -439,6 +455,32 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         } finally {
             this.hideLoading();
         }
+    }
+
+    private async cacheTutorialInfo(header: pxt.workspace.Header) {
+        const mdRegex = /\.md$/;
+        const githubId = this.parsedRepoId();
+
+        let files = await workspace.getTextAsync(header.id);
+        let mdPaths = Object.keys(files).filter(f => f.match(mdRegex));
+        const tutorialInfo: pxt.Map<pxt.BuiltTutorialInfo> = {};
+        for (let path of mdPaths) {
+            const parsed = pxt.tutorial.parseTutorial(files[path]);
+            const hash = pxt.BrowserUtils.getTutorialInfoHash(parsed.code);
+            const usedBlocks = await tutorial.getUsedBlocksAsync(parsed.code, path, parsed.language, true);
+            const formatPath = path.replace(mdRegex, "");
+            tutorialInfo[`https://github.com/${githubId.fullName}${formatPath == "README" ? "" : "/" + formatPath}`] = { usedBlocks, hash };
+        }
+        files[pxt.TUTORIAL_INFO_FILE] = JSON.stringify(tutorialInfo);
+
+        let cfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME]);
+        if (cfg.files.indexOf(pxt.TUTORIAL_INFO_FILE) < 0) {
+            cfg.files.push(pxt.TUTORIAL_INFO_FILE);
+            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
+        }
+
+        await workspace.saveAsync(header, files);
+        return await workspace.commitAsync(header, { message: `Update ${pxt.TUTORIAL_INFO_FILE}` })
     }
 
     private async showLoading(tick: string, ensureToken: boolean, msg: string) {

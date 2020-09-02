@@ -359,12 +359,21 @@ ${code}
     }
 
 
-    export function parseCachedTutorialInfo(id: string, json: string) {
-        let cachedInfo = JSON.parse(json) as pxt.BuiltTutorialInfo;
-        if (!cachedInfo?.usedBlocks || !cachedInfo?.hash) return Promise.resolve();
+    export function parseCachedTutorialInfo(json: string, id?: string) {
+        let cachedInfo = JSON.parse(json) as pxt.Map<pxt.BuiltTutorialInfo>;
+        if (!cachedInfo) return Promise.resolve();
 
         return pxt.BrowserUtils.tutorialInfoDbAsync()
-            .then(db =>  db.setWithHashAsync(id, cachedInfo.usedBlocks, cachedInfo.hash))
-            .catch((err) => {})
+            .then(db =>  {
+                if (id && cachedInfo[id]) {
+                    const info = cachedInfo[id];
+                    if (info.usedBlocks && info.hash) db.setWithHashAsync(id, info.usedBlocks, info.hash);
+                } else {
+                    for (let key of Object.keys(cachedInfo)) {
+                        const info = cachedInfo[key];
+                        if (info.usedBlocks && info.hash) db.setWithHashAsync(key, info.usedBlocks, info.hash);
+                    }
+                }
+            }).catch((err) => {})
     }
 }
