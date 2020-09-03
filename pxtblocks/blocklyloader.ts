@@ -2402,6 +2402,7 @@ namespace pxt.blocks {
         const functionCall = pxt.blocks.getBlockDefinition(functionCallId);
 
         msg.FUNCTIONS_CALL_TITLE = functionCall.block["FUNCTIONS_CALL_TITLE"];
+        msg.FUNCTIONS_GO_TO_DEFINITION_OPTION = functionCall.block["FUNCTIONS_GO_TO_DEFINITION_OPTION"];
         installBuiltinHelpInfo(functionCallId);
         installBuiltinHelpInfo("function_call_output");
 
@@ -2634,6 +2635,29 @@ namespace pxt.blocks {
 
                 setOutputCheck(this, typeName, cachedBlockInfo);
             };
+        }
+
+        /**
+         * Make a context menu option for creating a function call block.
+         * This appears in the context menu for function definitions.
+         * @param {!Blockly.BlockSvg} block The block where the right-click originated.
+         * @return {!Object} A menu option, containing text, enabled, and a callback.
+         * @package
+         */
+        (Blockly as any).Functions.makeCreateCallOption = function (block: Blockly.Block) {
+            let functionName = block.getField("function_name").getText();
+
+            let mutation = goog.dom.createDom('mutation');
+            mutation.setAttribute('name', functionName);
+            let callBlock = goog.dom.createDom('block', null, mutation);
+            callBlock.setAttribute('type', 'function_call');
+
+            let option = {
+                enabled: block.workspace.remainingCapacity() > 0,
+                text: Util.lf("Create 'call {0}'", functionName),
+                callback: Blockly.ContextMenu.callbackFactory(block, callBlock),
+            };
+            return option;
         }
     }
 
