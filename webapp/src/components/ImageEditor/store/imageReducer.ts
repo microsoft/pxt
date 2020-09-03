@@ -193,7 +193,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
         case actions.DISABLE_RESIZE:
             return {
                 ...state,
-                editor: editorReducer(state.editor, action)
+                editor: editorReducer(state.editor, action, state.store)
             };
         case actions.SET_INITIAL_STATE:
             const restored: EditorState = action.state;
@@ -303,7 +303,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
         default:
             return {
                 ...state,
-                editor: editorReducer(state.editor, action),
+                editor: editorReducer(state.editor, action, state.store),
                 store: {
                     ...state.store,
                     past: [...state.store.past, state.store.present],
@@ -394,7 +394,7 @@ const animationReducer = (state: AnimationState, action: any): AnimationState =>
     }
 }
 
-const editorReducer = (state: EditorState, action: any): EditorState => {
+const editorReducer = (state: EditorState, action: any, store: EditorStore): EditorState => {
     switch (action.type) {
         case actions.CHANGE_PREVIEW_ANIMATING:
             tickEvent(`preview-animate-${action.animating ? "on" : "off"}`)
@@ -475,6 +475,7 @@ const editorReducer = (state: EditorState, action: any): EditorState => {
         case actions.CLOSE_TILE_EDITOR:
             return {
                 ...state,
+                selectedColor: action.index || (store.present as TilemapState).tileset.tiles.length,
                 editingTile: undefined
             };
         case actions.SHOW_ALERT:
