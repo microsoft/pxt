@@ -166,11 +166,9 @@ namespace pxt.cpp {
         for (let pkg of mainPkg.sortedDeps(true)) {
             if (pkg.disablesVariant(pxt.appTargetVariant) ||
                 pkg.resolvedDependencies().some(d => d.disablesVariant(pxt.appTargetVariant))) {
-                if (pkg.id != "this") {
-                    if (disabledDeps)
-                        disabledDeps += ", "
-                    disabledDeps += pkg.id
-                }
+                if (disabledDeps)
+                    disabledDeps += ", "
+                disabledDeps += pkg.id
                 pxt.debug(`disable variant ${pxt.appTargetVariant} due to ${pkg.id}`)
                 continue
             }
@@ -932,6 +930,12 @@ namespace pxt.cpp {
                 if (thisErrors) {
                     allErrors += lf("Extension {0}:\n", pkg.id) + thisErrors
                 }
+            }
+
+            if (!seenMain) {
+                // this can happen if the main package is disabled in current variant
+                shimsDTS.clear()
+                enumsDTS.clear()
             }
         }
 
