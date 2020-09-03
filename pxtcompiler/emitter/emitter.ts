@@ -974,7 +974,6 @@ namespace ts.pxtc {
             let extinfo = opts.extinfo
             // if current (main) extinfo is disabled use another one
             if (extinfo && extinfo.disabledDeps) {
-                pxt.debug
                 const enabled = (opts.otherMultiVariants || []).find(e => e.extinfo && !e.extinfo.disabledDeps)
                 if (enabled) {
                     pxt.debug(`using alternative extinfo (due to ${extinfo.disabledDeps})`)
