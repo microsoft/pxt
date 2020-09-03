@@ -432,6 +432,17 @@ pxt checkdocs
 
 ## Example
 
+Here are some examples of the tutorial format.
+
+### Github Sample
+
+```
+https://github.com/microsoft/pxt-tutorial-sample
+```
+
+The [pxt-tutorial-sample](https://github.com/microsoft/pxt-tutorial-sample) repository contains a fully-functional tutorial for MakeCode Arcade, with multiple files, localization, and custom blocks in the tutorial repository.
+
+### Markdown Sample
 The following sample shows a simple 2 step tutorial.
 
 ````markdown
