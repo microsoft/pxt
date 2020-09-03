@@ -50,7 +50,7 @@ export function getUsedBlocksAsync(code: string[], id: string, language?: string
         })
 }
 
-function getUsedBlocksInternalAsync(code: string[], id: string, language?: string, db?: pxt.BrowserUtils.ITutorialInfoDb, skipCache= false): Promise<pxt.Map<number>> {
+function getUsedBlocksInternalAsync(code: string[], id: string, language?: string, db?: pxt.BrowserUtils.ITutorialInfoDb, skipCache = false): Promise<pxt.Map<number>> {
     const usedBlocks: pxt.Map<number> = {};
     return compiler.getBlocksAsync()
         .then(blocksInfo => {

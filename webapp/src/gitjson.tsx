@@ -424,7 +424,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                 </div>
                 <div className="grouped fields">
                     <label>{lf("Advanced")}</label>
-                    <div className="field">
+                    <div className="field checkbox">
                         <input type="checkbox" name="cachetutorial" checked={shouldCacheTutorial} aria-checked={shouldCacheTutorial} onChange={onCacheTutorialChange} />
                         <label>{lf("Optimize for tutorials by caching information about the markdown.")}</label>
                     </div>
@@ -480,7 +480,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
 
         await workspace.saveAsync(header, files);
-        return await workspace.commitAsync(header, { message: `Update ${pxt.TUTORIAL_INFO_FILE}` })
+        return await this.commitAsync()
     }
 
     private async showLoading(tick: string, ensureToken: boolean, msg: string) {

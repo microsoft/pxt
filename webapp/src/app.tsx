@@ -3407,8 +3407,8 @@ export class ProjectView
                 }).then(gh => {
                     let p = Promise.resolve();
                     // check for cached tutorial info, save into IndexedDB if found
-                    if (gh.files["tutorial-info-cache.json"]) {
-                        p.then(() => pxt.tutorial.parseCachedTutorialInfo(gh.files["tutorial-info-cache.json"], path));
+                    if (gh.files[pxt.TUTORIAL_INFO_FILE]) {
+                        p.then(() => pxt.tutorial.parseCachedTutorialInfo(gh.files[pxt.TUTORIAL_INFO_FILE], path));
                     }
                     return p.then(() => gh && resolveMarkdown(ghid, gh.files));
                 });
