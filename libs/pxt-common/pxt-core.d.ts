@@ -202,10 +202,11 @@ interface Array<T> {
     set(index: number, value: T): void;
 
     /**
-     * Return a random element from the array
+     * Return a random value from the array
      */
-    //% helper=arrayPickRandom weight=1
-    //% blockId="array_pickRandom" block="random element from array %list" blockNamespace="arrays"
+    //% helper=arrayPickRandom weight=25
+    //% blockId="array_pickRandom" block="get random value from %list"
+    //% blockNamespace="arrays"
     //% group="Read"
     pickRandom(): T;
 
