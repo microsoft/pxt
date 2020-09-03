@@ -244,35 +244,36 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private initLayout() {
-        let minX: number;
-        let minY: number;
         let needsLayout = false;
         let flyoutOnly = !this.editor.toolbox_ && (this.editor as any).flyout_;
 
+        let minDistanceFromOrigin: number;
+        let closestToOrigin: Blockly.utils.Rect;
+
         (this.editor.getTopComments(false) as Blockly.WorkspaceCommentSvg[]).forEach(b => {
-            const tpX = b.getBoundingRectangle().left;
-            const tpY = b.getBoundingRectangle().top;
-            if (minX === undefined || tpX < minX) {
-                minX = tpX;
-            }
-            if (minY === undefined || tpY < minY) {
-                minY = tpY;
+            const bounds = b.getBoundingRectangle();
+
+            const distanceFromOrigin = Math.sqrt(bounds.left * bounds.left + bounds.top * bounds.top);
+
+            if (minDistanceFromOrigin === undefined || distanceFromOrigin < minDistanceFromOrigin) {
+                closestToOrigin = bounds;
+                minDistanceFromOrigin = distanceFromOrigin;
             }
 
-            needsLayout = needsLayout || (tpX == 10 && tpY == 10);
+            needsLayout = needsLayout || (bounds.left == 10 && bounds.top == 10);
         });
         let blockPositions: { left: number, top: number }[] = [];
         (this.editor.getTopBlocks(false) as Blockly.BlockSvg[]).forEach(b => {
             const bounds = b.getBoundingRectangle()
-            if (minX === undefined || bounds.left < minX) {
-                minX = bounds.left;
-            }
-            if (minY === undefined || bounds.top < minY) {
-                minY = bounds.top;
+
+            const distanceFromOrigin = Math.sqrt(bounds.left * bounds.left + bounds.top * bounds.top);
+
+            if (minDistanceFromOrigin === undefined || distanceFromOrigin < minDistanceFromOrigin) {
+                closestToOrigin = bounds;
+                minDistanceFromOrigin = distanceFromOrigin;
             }
 
             const isOverlapping = !!blockPositions.find(b => b.left === bounds.left && b.top === bounds.top)
-
             needsLayout = needsLayout || isOverlapping;
 
             blockPositions.push(bounds)
@@ -283,9 +284,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             pxt.blocks.layout.flow(this.editor, { useViewWidth: true });
         }
         else {
-            // Otherwise translate the blocks so that they are positioned on the top left
-            this.editor.getTopComments(false).forEach(c => c.moveBy(-minX, -minY));
-            this.editor.getTopBlocks(false).forEach(b => b.moveBy(-minX, -minY));
+            if (closestToOrigin) {
+                // Otherwise translate the blocks so that they are positioned on the top left
+                this.editor.getTopComments(false).forEach(c => c.moveBy(-closestToOrigin.left, -closestToOrigin.top));
+                this.editor.getTopBlocks(false).forEach(b => b.moveBy(-closestToOrigin.left, -closestToOrigin.top));
+            }
             this.editor.scrollX = 10;
             this.editor.scrollY = 10;
 
