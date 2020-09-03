@@ -1239,6 +1239,9 @@ __flash_checksums:
         const src = serialize(bin, opts)
 
         const opts0 = U.flatClone(opts)
+        // normally, this would already have been done, but if the main variant
+        // is disabled, another variant may be set up
+        hexfile.setupFor(opts.target, opts.extinfo || emptyExtInfo())
         assembleAndPatch(src, bin, opts, cres)
 
         const otherVariants = opts0.otherMultiVariants || []

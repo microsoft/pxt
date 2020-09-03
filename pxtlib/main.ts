@@ -296,6 +296,7 @@ namespace pxt {
             hwVariant = null;
             hwName = null;
         }
+        pxt.debug(`hwVariant: ${hwVariant} (${hwName})`)
     }
 
     export function hasHwVariants(): boolean {
