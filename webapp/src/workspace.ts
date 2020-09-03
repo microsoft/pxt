@@ -1360,10 +1360,10 @@ export function resetAsync() {
     return impl.resetAsync()
         .then(cloudsync.resetAsync)
         .then(db.destroyAsync)
+        .then(pxt.BrowserUtils.clearTranslationDbAsync)
         .then(() => {
             pxt.storage.clearLocal();
             data.clearCache();
-            pxt.BrowserUtils.clearTranslationDbAsync();
             // keep local token (localhost and electron) on reset
             if (Cloud.localToken)
                 pxt.storage.setLocal("local_token", Cloud.localToken);
