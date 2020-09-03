@@ -5,6 +5,7 @@ import * as data from "./data"
 import * as editor from "./toolboxeditor"
 import * as sui from "./sui"
 import * as core from "./core"
+import * as coretsx from "./coretsx";
 
 import Util = pxt.Util;
 
@@ -534,7 +535,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         const { toolbox } = this.props;
         if (this.state.selected) {
             this.props.toolbox.setSelectedItem(this);
-            if (!toolbox.state.focusSearch) this.focusElement();
+            if (!toolbox.state.focusSearch && !coretsx.dialogIsShowing()) this.focusElement();
         }
     }
 
