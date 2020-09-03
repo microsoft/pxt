@@ -206,6 +206,7 @@ interface Array<T> {
      */
     //% helper=arrayPickRandom weight=1
     //% blockId="array_pickRandom" block="random element from array %list" blockNamespace="arrays"
+    //% group="Read"
     pickRandom(): T;
 
     [n: number]: T;
@@ -410,10 +411,10 @@ interface Object { }
 interface Function {
   __assignableToFunction: Function;
 }
-interface IArguments { 
+interface IArguments {
   __assignableToIArguments: IArguments;
 }
-interface RegExp { 
+interface RegExp {
   __assignableToRegExp: RegExp;
 }
 type TemplateStringsArray = Array<string>;
