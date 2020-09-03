@@ -2209,6 +2209,26 @@ namespace pxt.blocks {
                 });
 
                 setBuiltinHelpInfo(this, variablesChangeId);
+            },
+            /**
+             * Add menu option to create getter block for this variable
+             * @param {!Array} options List of menu options to add to.
+             * @this Blockly.Block
+             */
+            customContextMenu: function (options: any[]) {
+                let option: any = {
+                    enabled: this.workspace.remainingCapacity() > 0
+                };
+
+                let name = this.getField("VAR").getText();
+                option.text = lf("Create 'get {0}'", name)
+
+                let xmlField = goog.dom.createDom('field', null, name);
+                xmlField.setAttribute('name', 'VAR');
+                let xmlBlock = goog.dom.createDom('block', null, xmlField);
+                xmlBlock.setAttribute('type', "variables_get");
+                option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
+                options.push(option);
             }
         };
 
