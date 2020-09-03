@@ -346,7 +346,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     fileType: pxt.editor.FileType = pxt.editor.FileType.Text;
     extraLibs: pxt.Map<monaco.IDisposable>;
     nsMap: pxt.Map<toolbox.BlockDefinition[]>;
-    giveFocusOnLoading: boolean = false;
+    giveFocusOnLoading: boolean = true;
 
     protected fieldEditors: FieldEditorManager;
     protected feWidget: ViewZoneEditorHost | ModalEditorHost;
