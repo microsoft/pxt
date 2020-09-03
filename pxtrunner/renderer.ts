@@ -840,11 +840,18 @@ namespace pxt.runner {
             .then((r) => {
                 const info = r.compileBlocks.blocksInfo;
                 const symbols = pxt.Util.values(info.apis.byQName)
-                    .filter(symbol => !symbol.attributes.hidden && !!symbol.attributes.jsDoc && !/^__/.test(symbol.name));
+                    .filter(symbol => !symbol.attributes.hidden
+                        && !symbol.attributes.deprecated
+                        && !symbol.attributes.blockAliasFor
+                        && !!symbol.attributes.jsDoc
+                        && symbol.attributes.shim != "TD_ID"
+                        && !/^__/.test(symbol.name)
+                    );
                 apisEl.each((i, e) => {
                     let c = $(e);
                     const namespaces = pxt.Util.toDictionary(c.text().split('\n'), n => n); // list of namespace to list apis for.
-                    const csymbols = symbols.filter(symbol => !!namespaces[symbol.namespace])
+
+                    const csymbols = symbols.filter(symbol => !!namespaces[symbol.attributes.blockNamespace || symbol.namespace])
                     if (!csymbols.length) return;
 
                     csymbols.sort((l,r) => {
