@@ -107,4 +107,26 @@ namespace template {
     export function fixedInstanceArg(fix: Fixed): void {
 
     }
+
+    /**
+     * Create and run an image animation on a sprite
+     * @param frames the frames to animate through
+     * @param sprite the sprite to animate on
+     * @param frameInterval the time between changes, eg: 500
+     */
+    //% blockId=run_image_animation
+    //% block="animate $sprite=variables_get(mySprite) frames $frames=animation_editor interval (ms) $frameInterval=timePicker loop $loop=toggleOnOff"
+    //% group="Animate"
+    export function runImageAnimation(sprite: Image, frames: Image[], frameInterval?: number, loop?: boolean) {
+    }
+
+    //% blockId=animation_editor block="%frames"
+    //% shim=TD_ID
+    //% frames.fieldEditor="animation"
+    //% frames.fieldOptions.decompileLiterals="true"
+    //% frames.fieldOptions.filter="!tile !dialog"
+    //% weight=100 duplicateShadowOnDrag
+    export function _animationFrames(frames: Image[]) {
+        return frames
+    }
 }

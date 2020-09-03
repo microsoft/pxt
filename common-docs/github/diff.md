@@ -8,7 +8,7 @@ When modifying blocks code, MakeCode will put the blocks in 3 categories:
 
 * **added, changed or moved**: blocks that changed in some way. It may be that a field value changed, or the block was moved or added. They are displayed as regular blocks.
 * **deleted**: are blocks that have been removed from the code canvas.
-* **not changed**: the blocks that are just the same as before. These are rendered in grey. If a top-level event was not modified at all, MakeCode will not render it in order to "compress" the amount of blocks in the diff.
+* **not changed**: the blocks that remain the same as before. These are rendered in grey. If a top-level event was not modified at all, MakeCode will not render it in order to "compress" the amount of blocks in the diff.
 
 ## Text
 

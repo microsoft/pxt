@@ -131,7 +131,7 @@ Whenever possible, `/blob/` URLs should be used, since they only change when the
 This allows for faster app updates.
 
 For an example, compare https://makecode.microbit.org/---manifest
-and https://github.com/Microsoft/pxt/blob/master/webapp/public/release.manifest
+and https://github.com/microsoft/pxt/blob/master/webapp/public/release.manifest
 
 Generally, PXT will rewrite URLs starting with `/cdn/` to `/commit/...` and ones starting
 with `/blb/` to `/blob/...`. This happens in manifest and HTML files, as well as some JavaScript

@@ -8,6 +8,27 @@
 @import (reference) "semantic.less";
 
 /*******************************
+        Monaco Area Layout
+*******************************/
+.monacoEditorArea {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+}
+
+.monacoToolboxDiv {
+    height: 100%;
+}
+
+.monacoEditorRightArea {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+
+/*******************************
         Monaco Editor
 *******************************/
 
@@ -33,6 +54,7 @@
 /* Monaco Editor Suggest Widget, styling */
 .monaco-editor .suggest-widget {
     border-radius:5px;
+    z-index: @monacoSuggestZIndex !important;
 }
 .monaco-list-row.focused {
     background-color:#0078D7 !important;
@@ -46,6 +68,11 @@
 }
 .monaco-editor.vs .suggest-widget .details > .monaco-scrollable-element > .body > .type, .monaco-editor .suggest-widget .monaco-list .monaco-list-row .type-label {
     color: #FFB900 !important;
+}
+
+/* Monaco Editor Rename Widget: default positioning causes scroll with transparent editor toolbar, so we reposition */
+.monaco-editor .rename-box {
+    bottom: 3rem;
 }
 
 /* The view lines in the monaco editor sometimes ignore the editor width and cause a scrollbar to appear */
@@ -68,42 +95,224 @@
     z-index: @menuBarZIndex+1 !important;
 }
 
+@keyframes bobbing {
+    0% {
+        transform: translateY(0px);
+    }
+
+    25% {
+        transform: translateY(3px);
+    }
+
+    75% {
+        transform: translateY(-3px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+.pxt-monaco-glyph-highlight {
+    animation: bobbing 1s linear infinite;
+}
+
+
+/*******************************
+     Monaco Flyout
+*******************************/
+
 .monacoFlyout {
     font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
     background: @monacoFlyoutColor;
-    overflow-x: visible;
-    overflow-y: auto;
     border-top-right-radius: 8px;
     border-bottom-right-radius: 8px;
     z-index: @monacoFlyoutZIndex;
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+
+    .monacoFlyoutLabel {
+        vertical-align: middle;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        -webkit-user-select: none;
+        user-select: none;
+        color: white;
+        font-size: 15px;
+
+        .monacoFlyoutHeadingIcon {
+            display: inline-block;
+        }
+        .monacoFlyoutLabelText {
+            display: inline-block;
+            font-size: 1.5rem;
+            line-height: 1.5rem;
+            font-family: @pageFont;
+            vertical-align: middle;
+        }
+    }
+    .monacoBlock {
+        color: @monacoFlyoutText;
+        border-bottom: 1px solid @monacoFlyoutBorderColor;
+
+        .monacoDraggableBlock {
+            width: 100%;
+            margin-bottom: 0.75rem;
+            border-radius: 0.25rem;
+            color: @white;
+            padding: .25rem 0.75rem;
+            cursor: pointer;
+            display: inline-block;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            -webkit-user-select: none;
+            user-select: none;
+            position: relative;
+            font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+
+            span {
+                word-wrap: break-word;
+            }
+
+            span.sig {
+                opacity: 0.6;
+                margin-left: 10px;
+            }
+
+            span.sigPrefix {
+                opacity: 0.6;
+            }
+
+            span.docs {
+                display: block; /* enable as needed */
+                color: @white;
+                font-size: 70%;
+                max-width: 22rem;
+            }
+        }
+
+        .separator {
+            border-top: 1px solid;
+            margin: 0.25rem 0;
+        }
+
+        .monacoDraggableBlock {
+            font-family: @pageFont;
+            width: auto;
+        }
+        .description {
+            font-family: @pageFont;
+        }
+        .signature {
+            margin-top: 0.5rem;
+            font-weight: 600;
+
+            span {
+                display: inline-block;
+                width: calc(~'100% - 1.75rem');
+                word-wrap: break-word;
+            }
+
+            .blockHelp {
+                float: right;
+                color: @white;
+
+                i {
+                    font-size: 1.25rem;
+                }
+            }
+            .blockHelp:hover {
+                text-decoration: none;
+            }
+        }
+        .argName {
+            font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+            font-weight: 600;
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            padding: 0 .5rem;
+            display: inline-block;
+            border-radius: 0.8rem;
+            line-height: 1.75rem;
+        }
+
+        .paramName {
+            font-weight: 800;
+        }
+        .paramDescription:before {
+            content: '-';
+            margin: 0.5rem;
+            font-family: @pageFont;
+        }
+        .paramDescription {
+            font-family: @pageFont;
+        }
+
+        .detail .params,
+        .signature {
+            display: none;
+        }
+        &.expand {
+            color: @white;
+            border-color: @white;
+            border-width: 4px 0px 4px 4px;
+            border-style: solid;
+            cursor: grab;
+
+            .blockHandle,
+            .detail .params,
+            .signature {
+                display: block;
+            }
+
+            .blockHandle {
+                border-color: @white;
+                border-width: 4px 4px 4px 0px;
+                border-style: solid;
+            }
+        }
+        &.hover {
+            cursor: grab;
+            .blockHandle {
+                display: block;
+            }
+        }
+
+        .blockHandle {
+            display: none;
+            position: absolute;
+            width: 2rem;
+            right: -0.9rem;
+            border-radius: 0 1rem 1rem 0;
+            background: @monacoFlyoutColor;
+
+            i.bars {
+                display: block;
+                position: relative;
+                top: calc(~'50% - 0.75rem');
+                transform: rotate(90deg);
+                font-size: 1.5rem;
+            }
+        }
+    }
+    .monacoBlock:not(.expand) {
+        background-color: transparent!important;
+    }
 }
 
-.monacoFlyout > div:not(.monacoFlyoutHeading) {
-    margin: 1rem;
-}
-.monacoFlyout > div:not(.monacoFlyoutHeading), .monacoFlyout .monacoDraggableBlock {
-    max-width: 350px;
+#monacoFlyoutWrapper {
+    overflow-x: visible;
+    overflow-y: auto;
+    height: 100%;
+    -webkit-overflow-scrolling: touch;
+
+    & > div {
+        padding: 1rem;
+        max-width: 350px;
+    }
 }
 
-.monacoFlyoutLabel {
-    vertical-align: middle;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    -webkit-user-select: none;
-    user-select: none;
-    color: white;
-    font-size: 15px;
-}
-
-.monacoFlyoutLabelText {
-    font-family: @pageFont;
-    vertical-align: middle;
-}
-
-.monacoFlyoutHeading {
-    margin: .3rem;
-    padding-left: .8rem;
-}
 .monacoFlyoutHeading .monacoFlyoutHeadingText {
     color: white;
     vertical-align: middle !important;
@@ -121,56 +330,15 @@
     height:1px;
 }
 
-.monacoDraggableBlock {
-    color: @white;
+#monacoDraggingBlock {
+    position: absolute;
     padding: 0.6rem;
-    border-radius: 8px;
-    border: solid 1px @white;
-    cursor: pointer;
-    display: inline-block;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    -webkit-user-select: none;
-    user-select: none;
-    position: relative;
-}
-
-.monacoDraggableBlock.monacoHexBlock {
-    margin-left: 17px;
-    margin-right: 17px;
-}
-.monacoDraggableBlock.monacoHexBlock:before,
-.monacoDraggableBlock.monacoHexBlock:after {
-    content: '';
-    position:absolute;
-    width: 0;
-    top: 0;
-}
-.monacoDraggableBlock.monacoHexBlock:before {
-    left: -17px;
-}
-.monacoDraggableBlock.monacoHexBlock:after {
-    left: 100%;
-}
-
-.monacoDraggableBlock span {
-    word-wrap: break-word;
-}
-
-.monacoDraggableBlock span.sig {
-    opacity: 0.6;
-    margin-left: 10px;
-}
-
-.monacoDraggableBlock span.sigPrefix {
-    opacity: 0.6;
-}
-
-.monacoDraggableBlock span.docs {
-    display: block; /* enable as needed */
     color: @white;
-    font-size:70%;
-    max-width: 22rem;
+    border-radius: 0.25rem;
+    pointer-events: none;
+    touch-action: none;
+    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+    white-space: nowrap;
 }
 
 /* Limit color interferences with semantic anchor element */
@@ -202,12 +370,23 @@
     z-index: @monacoHintsZIndex !important;
 }
 
+#monacoEditorArea.android {
+    .monaco-editor .editor-widget {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
+    // on android, the cursor / text area overlay gets offset
+    textarea.inputarea {
+        margin-left: .5rem;
+    }
+}
+
 .line-numbers {
     display:none;
 }
 
 .monacoToolboxDiv {
-    position: absolute;
     display: inline-block;
     overflow-x: visible;
     overflow-y: auto;
@@ -220,6 +399,7 @@
 #monacoEditorInner {
     position: relative !important;
     display: inline-block;
+    overflow: hidden;
 }
 
 /*******************************

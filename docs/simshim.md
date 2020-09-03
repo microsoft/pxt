@@ -37,7 +37,7 @@ multi-line comments (other than doc comments) very well. To comment out a piece 
 code use `#if 0 .... #endif`.
 
 The [type mapping](/cpp2ts) from C++ to TypeScript is quite limited.
-Checkout the [microbit target](https://github.com/Microsoft/pxt-microbit) for an example.
+Checkout the [microbit target](https://github.com/microsoft/pxt-microbit) for an example.
 
 ## Auto-generation from the simulator
 
@@ -48,7 +48,7 @@ the target. The file will be generated in the `"corepkg"` of the target. In futu
 allow splitting between packages. Similarly, to the C++ generation, `sims.d.ts` should
 be included in `pxt.json` and checked in.
 
-Checkout the [sample target](https://github.com/Microsoft/pxt-sample) for an example.
+Checkout the [sample target](https://github.com/microsoft/pxt-sample) for an example.
 
 ### functionAsync handling
 

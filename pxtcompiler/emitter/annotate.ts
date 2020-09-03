@@ -41,7 +41,11 @@ namespace ts.pxtc {
                     case SyntaxKind.Identifier:
                         const decl: Declaration = getDecl(child);
                         if (decl && decl.getSourceFile().fileName !== "main.ts" && decl.kind == SyntaxKind.VariableDeclaration) {
-                            pxtInfo(child).flags |= PxtNodeFlags.IsGlobalIdentifier;
+                            const info = pxtInfo(child);
+                            info.flags |= PxtNodeFlags.IsGlobalIdentifier;
+                            if (!info.commentAttrs) {
+                                info.commentAttrs = parseComments(decl);
+                            }
                         }
                         break;
 

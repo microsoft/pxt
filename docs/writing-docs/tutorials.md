@@ -9,6 +9,14 @@ A tutorial is a sequence of steps that the user follows in a limited environment
 Each step of the tutorial has a short description, or explanation, of the activity for the step and
 possibly a block example. If the step includes a block example, the editor will restrict the selection of blocks from the toolbox to only those used in the example.
 
+### ~ hint
+
+#### Tutorial tool
+
+You can write, edit, and test a tutorial with the online [Tutorial Tool](https://makecode.com/tutorial-tool). Select the MakeCode editor target that your tutorials is for and then write the tutorial. Run your tutorial to see how it will look in the editor.
+
+### ~
+
 ## Tutorial documents
 
 Tutorials are simply markdown documents where each level 2 heading (``##``) is a new step. The tutorials can be located anywhere under the ``/docs`` folder although they usually are in the ``/docs/projects`` folder.
@@ -26,102 +34,6 @@ See the micro:bit tutorials [**flashing-heart.md**](https://github.com/Microsoft
 
 ### ~
 
-## Listing on the home screen
-
-To have a tutorial appear on the home screen, you will need to create or use an existing gallery and add a tutorial entry to it.
-
-### Defining galleries
-
-Tutorials typically appear as cards on the [home screen](/targets/home-screen#galleries). Each card category is a markdown file that is referenced from the ``targetconfig.json`` file. The ``galleries`` section in the configuration specifies a map of gallery titles to gallery markdown file paths. You can have as many galleries as you wish to organize your tutorials.
-
-```
-{
-    ...
-    "galleries": {
-        "Tutorials": "projects/tutorials",
-        "Games": "projects/games",
-        ...
-    }
-}
-```
-
-Also, add a direct link to the tutorial in the ``SUMMARY.md`` page to help search engine bots.
-
-### ~ hint
-
-#### A real example
-
-See the micro:bit config https://github.com/Microsoft/pxt-microbit/blob/master/targetconfig.json
-
-### ~
-
-#### Authoring the gallery
-
-A gallery entry for a [tutorial](/targets/home-screen#tutorial) is placed in the markdown file mapped to the category. For the example above, it's in _/projects/tutorials.md_.
-
-The gallery is defined by authoring ``codecards`` in the markdown section. Each ``codecard`` has the following fields:
-
-* **name**: tutorial name
-* **imageUrl**: an optional icon image
-* **url**: tutorial document path
-* **cardType**: set to "tutorial"
-* **description**: description of what the tutorial does
-
-Here's an example entry in _tutorials.md_:
-
-````markdown
-# Tutorials
-
-Here are some cool tutorials to get you started with your Gizmo Board!
-
-## Basic
-
-```codecard
-[{
-  "name": "Flashing Heart",
-  "url":"/projects/flashing-heart",
-  "description": "Make an animated flashing heart.",
-  "imageUrl": "/static/gizmo/projects/a1-display.png",
-  "cardType": "tutorial",
-  "label": "New? Start Here!",
-  "labelClass": "purple ribbon large"
-}, {
-  "name": "Name Tag",
-  "description": "Scroll your name on the screen",
-  "imageUrl": "/static/gizmo/projects/name-tag.png",
-  "url": "/projects/name-tag",
-  "cardType": "tutorial"
-}]
-```
-````
-
-The tutorial document tree has this layout:
-
-```
-/docs/projects/tutorials.md
-/docs/projects/flashing-heart.md
-/docs/projects/name-tag.md
-...
-```
-
-### ~ hint
-
-#### A real example
-
-See the micro:bit tutorial gallery https://github.com/Microsoft/pxt-microbit/blob/master/docs/tutorials.md
-
-### ~
-
-## In context tutorials
-
-In context tutorials are micro-tutorials that run within your current program. They need to be enabled separately. The format is the same as other tutorials.
-
-* (editor maintainer) add a ``recipes: true`` entry in the ``appTheme`` section of your ``pxtarget.json`` editor
-* add a ``/docs/recipes.md`` file that contains the gallery of micro-tutorials
-
-In order to select the proper language (blocks vs JavaScript vs Python), you should add
-a ``"editor": "js"`` entry for JavaScript tutorials and ``"editor": "py"`` entry for Python tutorials to each code card.
-
 ## Tutorial format
 
 The tutorial markdown has a format that the guides the tutorial runner in making a sequence of interactions. A tutorial has a flow model that is either a simple set of steps or groups of steps placed into activity sections. The tutorial author chooses which type of flow to use by setting a metadata option.
@@ -134,12 +46,14 @@ Tutorial metadata is optionally specified at the top of the document. Metadata i
 * **explicitHints**: Indicates explicit hints, in the format ``### ~ tutorialhint``. The default is ``false`` making hints available for each step.
 * **flyoutOnly**: Indicates that the tutorial should display all available blocks in a permanently-visible flyout, instead of the toolbox. The default is ``false``.
 * **hideIteration**: Hides the step controls. This includes the previous, next, and exit tutorial buttons, as well as the step counter in the menu bar. The default is ``false``.
+* **diffs**: enable/disable diffs on all languages
 
 ```markdown
 ### @activities true
 ### @explicitHints true
 ### @flyoutOnly true
 ### @hideIteration true
+### @diffs true
 ```
 
 ### Title
@@ -191,7 +105,7 @@ Instructions for step 1 of activity 2 here...
 
 ### Steps
 
-A step is where the user views and interacts with the instructions and hints for a tutorial action. The runner builds interactions from each _step_ section. 
+A step is where the user views and interacts with the instructions and hints for a tutorial action. The runner builds interactions from each _step_ section.
 
 #### Default Syntax
 
@@ -258,6 +172,43 @@ During an interaction, the step description (all text before the first code bloc
 
 ### ~
 
+### Images
+
+Using images in steps is a simple and powerful way to reinforce concepts and convey ideas. Images can be included as part of step descriptions. You specify an image using the standard markdown format.
+
+```markdown
+![Agent building a tower](/static/tutorials/agent-tower.png)
+```
+
+A step with and image might have text like this:
+
+```markdown
+## Introduction @unplugged
+
+Have the agent build a tower! Make a command to tell it how many levels to build.
+
+![Agent building a tower](/static/tutorials/agent-tower.png)
+```
+
+Images appear in steps that have either the [fullscreen](#fullscreen) or [unplugged](#unplugged) modifiers present, or when a step hint is viewed.
+
+Images should be hosted under the ``./docs/static/`` folder path of the editor project's repository files. The relative URL in markdown begins with just ``/static/`` though.
+
+Image formats typically used are PNG, JPEG, and GIF.
+
+### ~ alert
+
+#### Image size considerations
+
+It's important to consider that image size can affect the load time and therefore
+impact the experience of the user during a tutorial. Also, images that are too large can consume the viewing area where the tutorial is displayed. Try to economize tutorial images both in file size and dimensionally.
+Recommendations for images are:
+
+* **File size**: 1 MB or less
+* **Dimensions**: 800 pixels wide or less
+
+### ~
+
 ## Step modifiers
 
 To add a special behavior to a step, use a step modifier:
@@ -305,7 +256,169 @@ To signify that this step in the tutorial is the "last step", even if more steps
 
 ```
 
+## Using blocks
+
+### Hint blocks
+
+If you include blocks in a step, they are shown when the user displays the hint for the step.
+The blocks are specified the same as in any other markdown document. During the step interaction, only the blocks inside the ```` ```blocks```` section are available in the categories (drawers) of the Toolbox.
+
+````
+## Step 3 - Show the temperature
+
+Get a ``||input:temperature||`` block and place it in the value slot of ``||basic:show number||``.
+
+```blocks
+forever(function() {
+    basic.showNumber(input.temperature())
+    basic.pause(1000)
+})
+```
+````
+
+### Ghost blocks
+
+If you want extra blocks to appear in the Toolbox drawers during a step, then you add a ghost blocks section. This informs the user that additional blocks beyond those that are shown in the hint are availble to form a solution.
+
+````
+Get a ``||input:temperature||`` block and place it in the value slot of ``||basic:show number||``. You can also make a temperature message if you want.
+
+```blocks
+forever(function() {
+    basic.showNumber(input.temperature())
+    basic.pause(1000)
+})
+```
+
+```ghost
+basic.showString("Hello!")
+```
+````
+
+### Templates
+
+A template is a section of blocks that you want to have already on the workspace when the tutorial begins. The tutorial steps can then build on the initial program code given in the template.
+
+````
+```template
+player.onChat("blockleft", function () {
+    agent.move(SixDirection.Forward, 1)
+    agent.turn(TurnDirection.Right)
+    agent.place(SixDirection.Back)
+})
+```
+````
+
+
+### JRes
+
+You can add a JRes file to the project if your tutorial relies on one being present in the user's project. This is usually necessary when creating a tutorial that references tilemaps (copy the contents of tilemap.g.jres into a snippet).
+
+````
+```jres
+{
+    "transparency16": {
+        "data": "hwQQABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+        "mimeType": "image/x-mkcd-f4",
+        "tilemapTile": true
+    },
+    "tile1": {
+        "data": "hwQQABAAAACIiIiIiIiIiIiIiIiIiIiIiISIiIiIiIiISIiIiIhIiIiIhIiIiISIiIhIiIhIiIiIiIiEiISIiIiIiEhIiIiIiIiIiISIiIiIiIhISIiIiIiIiISIhIiIiIhIiIhIiIiIiISIiIiEiIhIiIiIiEiIiIiIiIiIiISIiIiIiIiIiA==",
+        "mimeType": "image/x-mkcd-f4",
+        "tilemapTile": true
+    },
+    "level": {
+        "id": "level",
+        "mimeType": "application/mkcd-tilemap",
+        "data": "MTAxMDAwMTAwMDAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMjAyMDIwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMjAyMDIwMjAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAyMDIwMjAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMA==",
+        "tileset": [
+            "myTiles.transparency16",
+            "myTiles.tile1",
+            "sprites.castle.tileGrass2"
+        ]
+    },
+    "*": {
+        "mimeType": "image/x-mkcd-f4",
+        "dataEncoding": "base64",
+        "namespace": "myTiles"
+    }
+}
+```
+````
+
+## Using Python
+
+If the target supports Python, snippets can be written in JavaScript or Python directly.
+
+## Python snippets
+
+Using ``python`` after the triple tick like this:
+
+````
+```python
+for i in range(100):
+    mobs.spawn(CHICKEN, pos(0, 10, 0))
+```
+````
+
+## Spy snippets (JavaScript to Python)
+
+Snippets can also be written in JavaScript and automatically converted to Python
+at display time. Use the ``spy`` section:
+
+````
+```spy
+basic.showString("Hello!")
+```
+````
+
+## Other languages
+
+Note that if the target supports python, then snippets are written in the usual way like:
+
+````
+```typescript
+basic.showString("Hello!")
+```
+or
+```blocks
+basic.showString("Hello!")
+```
+````
+
+Users will have the option of clicking the Python icon to see the snippet in Python just like they can with Blocks and Javascript/Typescript.
+
+## Editor flags
+
+There are some flags you can add to the URL of your tutorial to change the layout of the page. These are not yet enabled for every editor, so make sure you check that the feature is available in your target.
+
+* **lockedEditor=1** - If you load the page directly into a tutorial, adding the `lockedEditor` flag will "lock" users into the tutorial. This hides the "Exit Tutorial", "Home", and "Finish" buttons, as well as disabling the right-click menu outside of the Blocks workspace to prevent users from entering the home screen or sandbox mode. For example:
+
+    https://arcade.makecode.com?lockedEditor=1#tutorial:/tutorials/happy-flower
+
+## Adding tutorials to the home screen
+
+To have a tutorial appear on the home screen, you will need to create or use an existing gallery and add a tutorial entry to it. See the
+[home screen](/targets/home-screen#galleries) page for information about creating and adding to home screen galleries.
+
+### JavaScript and Python tutorial ("Spy tutorials")
+
+If you are able to author your tutorial in a language agnostic way,
+you will be able to have a single source document for both JavaScript and Python. You can specify a single tutorial for multiple languages using the [otherActions](/targets/home-screen#otheractions) field in the tutorial code card.
+
+### In-Context Tutorials
+In context tutorials are tutorials that are loaded into an existing project, rather than into a blank one. The format is the same as for all tutorials. If you are writing a third-party tutorial, please see the [User Tutorials](/writing-docs/user-tutorials) documentation for information on how to share your content as an in-context tutorial.
+
+For editor maintainers:
+* Add ``recipes: true`` in the ``appTheme`` section of your [``pxtarget.json``](/targets/pxtarget#apptheme-apptheme) to enable in-context tutorials
+* Optionally add a ``/docs/recipes.md`` file that contains a list of code cards referencing your in-context tutorials.
+
+In order to select the proper language (blocks vs JavaScript vs Python), you should add
+a ``"editor": "js"`` entry for JavaScript tutorials and ``"editor": "py"`` entry for Python tutorials to each code card.
+
 ## Testing
+
+If you are writing a third-party tutorial, please see the [User Tutorials](/writing-docs/user-tutorials) documentation for information on how to preview and share your tutorials.
 
 When developing your new tutorials, it is easiest to first render and view them as a markdown documentation page until all steps look OK to you. Going through all the steps several times using the tutorial runner might become quite tedious while developing the tutorial.
 
@@ -319,6 +432,17 @@ pxt checkdocs
 
 ## Example
 
+Here are some examples of the tutorial format.
+
+### Github Sample
+
+```
+https://github.com/microsoft/pxt-tutorial-sample
+```
+
+The [pxt-tutorial-sample](https://github.com/microsoft/pxt-tutorial-sample) repository contains a fully-functional tutorial for MakeCode Arcade, with multiple files, localization, and custom blocks in the tutorial repository.
+
+### Markdown Sample
 The following sample shows a simple 2 step tutorial.
 
 ````markdown
@@ -345,3 +469,7 @@ Click ``|Download|`` to transfer your code in your @boardname@!
 ## Translations
 
 Tutorials are translated via [Crowdin](/translate) like any other documentation page.
+
+## Dependencies
+
+If your tutorial requires the use of an extension, you can add them using the [package macro](https://makecode.com/writing-docs/macros#dependencies).

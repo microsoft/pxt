@@ -4,62 +4,145 @@
 <head>
     <meta charset="UTF-8">
     <title>@name@</title>
-    <meta name="Description" content="@description@" />
 
     <!-- @include meta.html -->
-    <!-- @include head.html -->
+    <!-- @include scripthead.html -->
 
     <link rel="alternate" type="application/json+oembed" href="@oembedurl@&format=json" />
     <link rel="alternate" type="text/xml+oembed" href="@oembedurl@&format=xml" />
 </head>
 
-<body id='root' class='root'>
+<body id='root' class='root expandIt share-page'>
 
-
-    <!-- @include pageheader.html -->
+    <div class="showDesktop page-header">
+        <div class="ui container">
+            <div id="page-header-wrapper">
+                <div class="page-header-item page-header-content no-grow">
+                    <h2 class="ui item header">@title@</h2>
+                </div>
+                <div class="page-header-item show-code-toggle">
+                    <a href="/@versionsuff@#pub:@id@" class="ui tiny button">Edit Code</a>
+                </div>
+                <div class="page-header-item no-grow">
+                    <a href="https://makecode.com/" title="Go to Microsoft MakeCode"
+                        aria-label="Microsoft MakeCode Logo" role="menuitem" target="blank" rel="noopener"
+                        class="ui item logo organization">
+                        <img class="ui logo portrait hide" src="./static/Microsoft-logo_rgb_c-gray.png"
+                            alt="Microsoft MakeCode Logo">
+                        <img class="ui mini image portrait only" src="./static/Microsoft-logo_rgb_c-gray-square.png"
+                            alt="Microsoft MakeCode Logo">
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- @include macros.html -->
     <aside id=main-container class=box>
         @BODY@
     </aside>
 
-
-
-    <div class="ui main container mainbody">
-
-        @breadcrumb@
-
-        <!-- @include abuse.html -->
-        <h1 class="ui header">
-            <div class="ui content">
-                @title@ 
-                <!-- @ifdef editbutton -->
-                <a href="/#pub:@id@" class="ui primary button">Edit</a>
-                <!-- @endif -->
-                <div class='sub header humantime' data-time="@time@">@humantime@</span>
+    <div class="ui main container mainbody script-content">
+        <iframe id="embed-frame" class="script-embed" src="/@versionsuff@#sandbox:@id@"
+            sandbox="allow-popups allow-forms allow-scripts allow-same-origin" frameborder="0"></iframe>
+        <div class="script-bookend">
+            <div id="abuse-message" class="ui tiny blue message">
+                <div class="ui grid padded">
+                    <div class="abuse content">
+                        <p>
+                            The content above is provided by a user, and is not endorsed by Microsoft.
+                            <a style='text-decoration:underline' id="abuse" href="#">Report abuse</a> if you think it's
+                            not appropriate.
+                        </p>
+                    </div>
+                </div>
             </div>
-        </h1>
-        <p class="ui content description">
-            @description@
-        </p>
 
-        <div class="ui container">
-            <div style="position:relative;height:0;padding-bottom:70%;overflow:hidden;">
-                <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="/@versionsuff@#sandbox:@id@" sandbox="allow-popups allow-forms allow-scripts allow-same-origin"
-                    frameborder="0"></iframe>
+            <div class="ui small modal" id='abusemodal'>
+                <div class="header">Report abuse</div>
+                <div class="content">
+                    <div class="ui form">
+                        <div class="field">
+                            <label>Why do you find it offensive?</label>
+                            <textarea id='abusetext' rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="actions">
+                    <div class="ui ok button violet">
+                        <i class='ui flag icon'></i> Submit
+                    </div>
+                    <div class="ui cancel button">
+                        <i class='ui cancel icon'></i> Cancel
+                    </div>
+                </div>
+            </div>
+
+            <div class="ui small modal" id='abusedone'>
+                <div class="header">Report sent</div>
+                <div class="content">
+                    <p>
+                        Thank you for helping keep Microsoft MakeCode a friendly place!
+                    </p>
+                </div>
+                <div class="actions">
+                    <div class="ui ok green button">
+                        <i class='ui trophy icon'></i> OK
+                    </div>
+                </div>
+            </div>
+
+
+            <script>
+                $(function () {
+                    var id = "@id@";
+                    var now = Math.round(Date.now() / 1000);
+                    $(".humantime").each(function () {
+                        $(this).text(
+                            describetime(now, parseInt($(this).data("time")))
+                        )
+                    })
+                    $("#abuse").click(function () {
+                        $("#abusemodal")
+                            .modal({
+                                onApprove: function () {
+                                    $.ajax({
+                                        type: 'POST',
+                                        url: '/api/@id@/abusereports',
+                                        data: JSON.stringify({
+                                            text: $('#abusetext').val()
+                                        }),
+                                        success: function () {
+                                            $("#abusedone").modal("show");
+                                        },
+                                        contentType: "application/json",
+                                        dataType: 'json'
+                                    });
+                                }
+                            })
+                            .modal("show");
+                    })
+                })
+            </script>
+        </div>
+        <div class="script-bookend">
+            <div style="text-align: center;">
+
+                <div class="ui container horizontal mini link list">
+                    <!-- <a class="ui item " href="https://makecode.com/contact " target="_blank " rel="noopener ">Contact Us</a> -->
+                    <a class="ui item " href="https://makecode.com/privacy " target="_blank " rel="noopener ">Privacy
+                        &amp; Cookies</a>
+                    <a class="ui item " href="https://makecode.com/termsofuse " target="_blank " rel="noopener "> Terms
+                        Of Use</a>
+                    <a class="ui item " href="https://makecode.com/trademarks " target="_blank "
+                        rel="noopener ">Trademarks</a>
+                    <div class="ui item ">© 2020 Microsoft</div>
+                </div>
             </div>
         </div>
 
         @body@
-
     </div>
 
-
-<script>
-const script = @JSON@;
-// do something with it
-</script>
-
-    <!-- @include footer.html -->
     <!-- @include tracking.html -->
 </body>
 

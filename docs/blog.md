@@ -1,12 +1,93 @@
 # Microsoft MakeCode Blog
 
+## [Microsoft TileCode: Design, Code, and Play Games on MakeCode Arcade Devices](/blog/arcade/tilecode)
+
+August 20th, 2020 by [Thomas Ball](https://www.microsoft.com/en-us/research/people/tball) and [Stefania Druga](http://cognimates.me/team/)
+
+## [MakeCode Arcade Update](/blog/arcade/update-july-2020)
+
+July 17th, 2020 by [Jaqster](https://github.com/jaqster)
+
+Hard to believe it was only January when we released MakeCode Arcade for General Availability. So much has happened since then...
+
+**[Continue reading this blog post](/blog/arcade/update-july-2020)**
+
+## [MakeCode for the micro:bit – 2020 Release](/blog/microbit/2020-release)
+
+June 12th, 2020 by [Jaqster](https://github.com/jaqster)
+
+The 2020 MakeCode for the micro:bit release is now available. Many of the important new features were announced in the post about the beta but we'll share them with you again here.
+
+**[Continue reading this blog post](/blog/microbit/2020-release)**
+
+## [MakeCode for the micro:bit – 2020 Beta Release](/blog/microbit/2020-beta)
+
+April 28th, 2020 by [Jaqster](https://github.com/jaqster)
+
+We are happy to announce the Beta for our 2020 MakeCode for the micro:bit release which is still scheduled to ship for general availability in June.
+
+**[Continue reading this blog post](/blog/microbit/2020-beta)**
+
+## [MakeCode Arcade One Room Game Jam](/blog/arcade/game-jam-2)
+
+April 7th, 2020
+
+Submissions from the second MakeCode Arcade game jam are in. We've been delighted and amazed by the creativity and craft on display in these games! Check out some of our favorite entries from the jam.
+
+**[Continue reading this blog post](/blog/arcade/game-jam-2)**
+
+## [Online Learning Resources](/blog/online-learning)
+
+March 10th, 2020
+
+Many schools have closed or might soon close to help prevent the spread of illness. Both educators and students may need to find ways to promote and continue learning without a classroom. 
+To help families, **the MakeCode team will be live streaming coding lessons**.
+We thought that it might be helpful to again highlight the learning resources we have with MakeCode that support online learning.
+**[Continue reading this blog post](/blog/online-learning)**
+
+## [MakeCode Python is here!](/blog/minecraft/python-release)
+
+February 19th, 2020 by [Jaqster](https://github.com/jaqster)
+
+Microsoft MakeCode already supports Blocks and the JavaScript programming language, and now we’re happy to also announce support for Python!
+**[Continue reading this blog post](/blog/minecraft/python-release)**
+
+## [MakeCode Arcade Released for General Availability!](/blog/arcade/general-release)
+
+January 6th, 2020 by [Jaqster](https://github.com/jaqster)
+
+Ringing in the New Year with a New Release! The MakeCode team is very happy and proud to announce that MakeCode Arcade has been officially released for general availability today!
+**[Continue reading this blog post](/blog/arcade/general-release)**
+
+## [MakeCode with GitHub](/blog/makecode-with-github)
+
+December 19th, 2019 by [Pelikhan](https://github.com/pelikhan)
+
+The latest episode of our GitHub intergration - streamlining the hosting of code
+in GitHub inside of MakeCode!
+**[Continue reading this blog post](/blog/makecode-with-github)**
+
+## [Minecraft Hour of Code](/blog/minecraft/hour-of-code-2019)
+
+December 2nd, 2019 by [Jaqster](https://github.com/jaqster)
+
+If you’ve ever thought about using Minecraft for teaching and learning, but haven’t taken
+the plunge yet, this is a great time to try it out!
+**[Continue reading this blog post](/blog/minecraft/hour-of-code-2019)**
+
+## [Translations in Context](/blog/translations-in-context)
+
+October 17th, 2019 by [pelikhan](https://github.com/pelikhan)
+
+Translate your favorite MakeCode editor... from the editor itself!
+**[Continue reading this blog post](/blog/translations-in-context)**
+
 ## [GitHub Extensions - Episode 2](/blog/github-extensions-episode-2)
 
 September 25th, 2019 by [pelikhan](https://github.com/pelikhan)
 
 We've made a number of improvements to our GitHub authoring support. Let's take a tour...
 **[Continue reading this blog post](/blog/github-extensions-episode-2)**
-
 
 ## [MakeCode Tutorials and Projects for CS Ed Week](/blog/csed-week/csed-week-2019)
 

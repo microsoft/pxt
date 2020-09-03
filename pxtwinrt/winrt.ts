@@ -4,6 +4,8 @@ namespace pxt.winrt {
     type SuspendingArgs = Windows.ApplicationModel.ISuspendingEventArgs;
     type ResumingArgs = any;
 
+    pxt.BrowserUtils.isWinRT = isWinRT;
+
     export function promisify<T>(p: Windows.Foundation.IAsyncOperation<T> | Windows.Foundation.Projections.Promise<T>): Promise<T> {
         return new Promise<T>((resolve, reject) => {
             p.done(v => resolve(v), e => reject(e));

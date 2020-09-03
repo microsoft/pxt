@@ -34,73 +34,67 @@ namespace pxt.editor.experiments {
                 id: "print",
                 name: lf("Print Code"),
                 description: lf("Print the code from the current project"),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/4740"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/4740"
             },
             {
                 id: "greenScreen",
                 name: lf("Green screen"),
                 description: lf("Display a webcam video stream or a green background behind the code."),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/4738"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/4738"
             },
             {
                 id: "allowPackageExtensions",
                 name: lf("Editor Extensions"),
                 description: lf("Allow Extensions to add buttons in the editor."),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/4741"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/4741"
             },
             {
                 id: "instructions",
                 name: lf("Wiring Instructions"),
                 description: lf("Generate step-by-step assembly instructions for breadboard wiring."),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/4739"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/4739"
             },
             {
                 id: "debugger",
                 name: lf("Debugger"),
                 description: lf("Step through code and inspect variables in the debugger"),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/4729"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/4729"
             },
             {
                 id: "bluetoothUartConsole",
                 name: "Bluetooth Console",
                 description: lf("Receives UART message through Web Bluetooth"),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/4796"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/4796"
             },
             {
                 id: "bluetoothPartialFlashing",
                 name: "Bluetooth Download",
                 description: lf("Download code via Web Bluetooth"),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/4807"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/4807"
             },
             {
                 id: "simScreenshot",
                 name: lf("Simulator Screenshots"),
                 description: lf("Download screenshots of the simulator"),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5232"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/5232"
             },
             {
                 id: "python",
                 name: lf("Static Python"),
                 description: lf("Use Static Python to code your device"),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5390"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/5390"
             },
             {
                 id: "simGif",
                 name: lf("Simulator Gifs"),
                 description: lf("Download gifs of the simulator"),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5297"
-            },
-            {
-                id: "autoWebUSBDownload",
-                name: lf("WebUSB Download"),
-                description: lf("Automatically try to download via WebUSB"),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5344"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/5297"
             },
             {
                 id: "qrCode",
                 name: lf("Shared QR Code"),
                 description: lf("Generate a QR Code form the shared project url"),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5456"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/5456"
             },
             {
                 id: "importExtensionFiles",
@@ -123,25 +117,51 @@ namespace pxt.editor.experiments {
                 description: lf("Enable support for hardware marked 'experimental' in the hardware seletion dialog")
             },
             {
-                id: "recipes",
-                name: lf("Tutorials in Context"),
-                description: lf("Micro-tutorials running within your program."),
-                feedbackUrl: "https://github.com/microsoft/pxt/issues/5646"
-            },
-            {
                 id: "checkForHwVariantWebUSB",
                 name: lf("Detect Hardware with WebUSB"),
                 description: lf("When compiling, use WebUSB to detect hardware configuration.")
             },
             {
-                id: "alwaysGithubItem",
-                name: lf("Always GitHub"),
-                description: lf("Always show GitHub item in Explorer view, even if token is not available.")
+                id: "githubEditor",
+                name: lf("GitHub editor"),
+                description: lf("Review, commit and push to GitHub."),
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/6419"
             },
             {
-                id: "alwaysGithubItemBlocks",
-                name: lf("Always GitHub Blocks"),
-                description: lf("Always show GitHub item in Explorer view for blocks, even if token is not available.")
+                id: "githubCompiledJs",
+                name: lf("GitHub Pages JavaScript"),
+                description: lf("Commit compiled javascript when creating a release")
+            },
+            {
+                id: "blocksCollapsing",
+                name: lf("Collapse blocks"),
+                description: lf("Collapse and expand functions or event blocks")
+            },
+            {
+                id: "tutorialBlocksDiff",
+                name: lf("Tutorial Block Diffs"),
+                description: lf("Automatially render blocks diff in tutorials")
+            },
+            {
+                id: "openProjectNewTab",
+                name: lf("Open in New Tab"),
+                description: lf("Open an editor in a new tab.")
+            },
+            {
+                id: "openProjectNewDependentTab",
+                name: lf("Open in New Connected Tab"),
+                description: lf("Open connected editors in different browser tabs.")
+            },
+            {
+                id: "accessibleBlocks",
+                name: lf("Accessible Blocks"),
+                description: lf("Use the WASD keys to move and modify blocks."),
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/6850"
+            },
+            {
+                id: "errorList",
+                name: lf("Error List"),
+                description: lf("Show an error list panel for JavaScript and Python.")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }

@@ -16,7 +16,7 @@ For example, often a DIV element is clickable and visually looks like a button o
 
 ## What to consider when editing MakeCode
 
-* Many of the SUI (available in [sui.tsx](https://github.com/Microsoft/pxt/blob/master/webapp/src/sui.tsx)) elements are already accessible, such as the buttons, code cards, modals. But for some other elements, like hyperlinks, which do not have a SUI implementation, you will have to make them accessible yourself.
+* Many of the SUI (available in [sui.tsx](https://github.com/microsoft/pxt/blob/master/webapp/src/sui.tsx)) elements are already accessible, such as the buttons, code cards, modals. But for some other elements, like hyperlinks, which do not have a SUI implementation, you will have to make them accessible yourself.
 * You might want to include new libraries in PXT, or one of the targets, to quickly add a new feature (like charts, a grid, etc.). You are now required to include accessibility as design consideration when including or developing libraries. If a library you wish to use is not accessible, find an alternative one or consider adding the required accessibility features to it.
 * As a general rule, you can expect an additional 5% to 15% of development time for adding the necessary accessibility features to a library you create or modify for your use.
 

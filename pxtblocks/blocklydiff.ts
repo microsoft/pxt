@@ -1,7 +1,9 @@
 namespace pxt.blocks {
     export interface DiffOptions {
         hideDeletedTopBlocks?: boolean;
+        hideDeletedBlocks?: boolean;
         renderOptions?: BlocksRenderOptions;
+        statementsOnly?: boolean; // consider statement as a whole
     }
 
     export interface DiffResult {
@@ -12,6 +14,27 @@ namespace pxt.blocks {
         deleted: number;
         added: number;
         modified: number;
+    }
+
+    // sniff ids to see if the xml was completly reconstructed
+    export function needsDecompiledDiff(oldXml: string, newXml: string): boolean {
+        if (!oldXml || !newXml)
+            return false;
+        // collect all ids
+        const oldids: pxt.Map<boolean> = {};
+        oldXml.replace(/id="([^"]+)"/g, (m, id) => { oldids[id] = true; return ""; });
+        if (!Object.keys(oldids).length)
+            return false;
+        // test if any newid exists in old
+        let total = 0;
+        let found = 0;
+        newXml.replace(/id="([^"]+)"/g, (m, id) => {
+            total++;
+            if (oldids[id])
+                found++;
+            return "";
+        });
+        return total > 0 && found == 0;
     }
 
     export function diffXml(oldXml: string, newXml: string, options?: DiffOptions): DiffResult {
@@ -42,14 +65,35 @@ namespace pxt.blocks {
         }
     }
 
-    //const ADD_IMAGE_DATAURI =
-    //   'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAyMS4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4KCjxzdmcKICAgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIgogICB4bWxuczpjYz0iaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbnMjIgogICB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKICAgeG1sbnM6c29kaXBvZGk9Imh0dHA6Ly9zb2RpcG9kaS5zb3VyY2Vmb3JnZS5uZXQvRFREL3NvZGlwb2RpLTAuZHRkIgogICB4bWxuczppbmtzY2FwZT0iaHR0cDovL3d3dy5pbmtzY2FwZS5vcmcvbmFtZXNwYWNlcy9pbmtzY2FwZSIKICAgdmVyc2lvbj0iMS4xIgogICBpZD0icmVwZWF0IgogICB4PSIwcHgiCiAgIHk9IjBweCIKICAgdmlld0JveD0iMCAwIDI0IDI0IgogICBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAyNCAyNDsiCiAgIHhtbDpzcGFjZT0icHJlc2VydmUiCiAgIGlua3NjYXBlOnZlcnNpb249IjAuOTEgcjEzNzI1IgogICBzb2RpcG9kaTpkb2NuYW1lPSJhZGQuc3ZnIj48bWV0YWRhdGEKICAgICBpZD0ibWV0YWRhdGExNSI+PHJkZjpSREY+PGNjOldvcmsKICAgICAgICAgcmRmOmFib3V0PSIiPjxkYzpmb3JtYXQ+aW1hZ2Uvc3ZnK3htbDwvZGM6Zm9ybWF0PjxkYzp0eXBlCiAgICAgICAgICAgcmRmOnJlc291cmNlPSJodHRwOi8vcHVybC5vcmcvZGMvZGNtaXR5cGUvU3RpbGxJbWFnZSIgLz48ZGM6dGl0bGU+cmVwZWF0PC9kYzp0aXRsZT48L2NjOldvcms+PC9yZGY6UkRGPjwvbWV0YWRhdGE+PGRlZnMKICAgICBpZD0iZGVmczEzIiAvPjxzb2RpcG9kaTpuYW1lZHZpZXcKICAgICBwYWdlY29sb3I9IiNmZjQ4MjEiCiAgICAgYm9yZGVyY29sb3I9IiM2NjY2NjYiCiAgICAgYm9yZGVyb3BhY2l0eT0iMSIKICAgICBvYmplY3R0b2xlcmFuY2U9IjEwIgogICAgIGdyaWR0b2xlcmFuY2U9IjEwIgogICAgIGd1aWRldG9sZXJhbmNlPSIxMCIKICAgICBpbmtzY2FwZTpwYWdlb3BhY2l0eT0iMCIKICAgICBpbmtzY2FwZTpwYWdlc2hhZG93PSIyIgogICAgIGlua3NjYXBlOndpbmRvdy13aWR0aD0iMTY4MCIKICAgICBpbmtzY2FwZTp3aW5kb3ctaGVpZ2h0PSI5NjkiCiAgICAgaWQ9Im5hbWVkdmlldzExIgogICAgIHNob3dncmlkPSJmYWxzZSIKICAgICBpbmtzY2FwZTp6b29tPSIxOS42NjY2NjciCiAgICAgaW5rc2NhcGU6Y3g9IjEyLjkxNTI1NCIKICAgICBpbmtzY2FwZTpjeT0iMTYuMDY3Nzk2IgogICAgIGlua3NjYXBlOndpbmRvdy14PSIwIgogICAgIGlua3NjYXBlOndpbmRvdy15PSIwIgogICAgIGlua3NjYXBlOndpbmRvdy1tYXhpbWl6ZWQ9IjAiCiAgICAgaW5rc2NhcGU6Y3VycmVudC1sYXllcj0icmVwZWF0IiAvPjxzdHlsZQogICAgIHR5cGU9InRleHQvY3NzIgogICAgIGlkPSJzdHlsZTMiPgoJLnN0MHtmaWxsOiNDRjhCMTc7fQoJLnN0MXtmaWxsOiNGRkZGRkY7fQo8L3N0eWxlPjx0aXRsZQogICAgIGlkPSJ0aXRsZTUiPnJlcGVhdDwvdGl0bGU+PHJlY3QKICAgICBzdHlsZT0ib3BhY2l0eToxO2ZpbGw6I2ZmZmZmZjtmaWxsLW9wYWNpdHk6MTtmaWxsLXJ1bGU6bm9uemVybztzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWNhcDpzcXVhcmU7c3Ryb2tlLWxpbmVqb2luOnJvdW5kO3N0cm9rZS1taXRlcmxpbWl0OjQ7c3Ryb2tlLWRhc2hhcnJheTpub25lO3N0cm9rZS1kYXNob2Zmc2V0OjA7c3Ryb2tlLW9wYWNpdHk6MC4wNzg0MzEzNyIKICAgICBpZD0icmVjdDQxNDMiCiAgICAgd2lkdGg9IjQuMDUwMDAwMiIKICAgICBoZWlnaHQ9IjEyLjM5NzA1IgogICAgIHg9IjkuOTc1MDAwNCIKICAgICB5PSItMTguMTk4NTI2IgogICAgIHJ4PSIwLjgxIgogICAgIHJ5PSIwLjgxIgogICAgIHRyYW5zZm9ybT0ic2NhbGUoMSwtMSkiIC8+PHJlY3QKICAgICBzdHlsZT0ib3BhY2l0eToxO2ZpbGw6I2ZmZmZmZjtmaWxsLW9wYWNpdHk6MTtmaWxsLXJ1bGU6bm9uemVybztzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWNhcDpzcXVhcmU7c3Ryb2tlLWxpbmVqb2luOnJvdW5kO3N0cm9rZS1taXRlcmxpbWl0OjQ7c3Ryb2tlLWRhc2hhcnJheTpub25lO3N0cm9rZS1kYXNob2Zmc2V0OjA7c3Ryb2tlLW9wYWNpdHk6MC4wNzg0MzEzNyIKICAgICBpZD0icmVjdDQxNDMtMSIKICAgICB3aWR0aD0iNC4wNTAwMDAyIgogICAgIGhlaWdodD0iMTIuMzk3MTE5IgogICAgIHg9IjkuOTc1MDAwNCIKICAgICB5PSI1LjgwMTQ0MDciCiAgICAgcng9IjAuODEiCiAgICAgcnk9IjAuODEiCiAgICAgdHJhbnNmb3JtPSJtYXRyaXgoMCwxLDEsMCwwLDApIiAvPjxjaXJjbGUKICAgICBzdHlsZT0ib3BhY2l0eToxO2ZpbGw6bm9uZTtmaWxsLW9wYWNpdHk6MTtmaWxsLXJ1bGU6bm9uemVybztzdHJva2U6I2ZmZmZmZjtzdHJva2Utd2lkdGg6MjtzdHJva2UtbGluZWNhcDpzcXVhcmU7c3Ryb2tlLWxpbmVqb2luOnJvdW5kO3N0cm9rZS1taXRlcmxpbWl0OjQ7c3Ryb2tlLWRhc2hhcnJheTpub25lO3N0cm9rZS1kYXNob2Zmc2V0OjA7c3Ryb2tlLW9wYWNpdHk6MSIKICAgICBpZD0icGF0aDQxMzYiCiAgICAgY3g9IjEyIgogICAgIGN5PSIxMiIKICAgICByPSIxMC41MDMxOTEiIC8+PC9zdmc+';
+    function logger() {
+        const log = pxt.options.debug || (window && /diffdbg=1/.test(window.location.href))
+            ? console.log : (message?: any, ...args: any[]) => { };
+        return log;
+
+    }
+
     function diffWorkspaceNoEvents(oldWs: Blockly.Workspace, newWs: Blockly.Workspace, options?: DiffOptions): DiffResult {
         pxt.tickEvent("blocks.diff", { started: 1 })
         options = options || {};
-
-        const log = pxt.options.debug || (window && /diffdbg=1/.test(window.location.href))
-            ? console.log : (message?: any, ...args: any[]) => { };
+        const log = logger();
+        if (!oldWs) {
+            return {
+                ws: undefined,
+                message: lf("All blocks are new."),
+                added: 0,
+                deleted: 0,
+                modified: 1
+            }; // corrupted blocks
+        }
+        if (!newWs) {
+            return {
+                ws: undefined,
+                message: lf("The current blocks seem corrupted."),
+                added: 0,
+                deleted: 0,
+                modified: 1
+            }; // corrupted blocks
+        }
 
         // remove all unmodified topblocks
         // when doing a Blocks->TS roundtrip, all ids are trashed.
@@ -71,9 +115,9 @@ namespace pxt.blocks {
 
         // we'll ignore disabled blocks in the final output
 
-        const oldBlocks = oldWs.getAllBlocks().filter(b => !b.disabled);
-        const oldTopBlocks = oldWs.getTopBlocks(false).filter(b => !b.disabled);
-        const newBlocks = newWs.getAllBlocks().filter(b => !b.disabled);
+        const oldBlocks = oldWs.getAllBlocks().filter(b => b.isEnabled());
+        const oldTopBlocks = oldWs.getTopBlocks(false).filter(b => b.isEnabled());
+        const newBlocks = newWs.getAllBlocks().filter(b => b.isEnabled());
         log(`blocks`, newBlocks.map(b => b.toDevString()));
         log(newBlocks);
 
@@ -99,7 +143,7 @@ namespace pxt.blocks {
         pxt.blocks.domToWorkspaceNoEvents(Blockly.Xml.textToDom(newXml), ws);
 
         // delete disabled blocks from final workspace
-        ws.getAllBlocks().filter(b => b.disabled).forEach(b => {
+        ws.getAllBlocks().filter(b => !b.isEnabled()).forEach(b => {
             log('disabled ', b.toDevString())
             b.dispose(false)
         })
@@ -132,20 +176,22 @@ namespace pxt.blocks {
         // 3. delete statement blocks
         // inject deleted blocks in new workspace
         const dids: Map<string> = {};
-        const deletedStatementBlocks = deletedBlocks
-            .filter(b => !todoBlocks[b.id]
-                && !isUsed(b)
-                && (!b.outputConnection || !b.outputConnection.isConnected()) // ignore reporters
-            );
-        deletedStatementBlocks
-            .forEach(b => {
-                const b2 = cloneIntoDiff(b);
-                dids[b.id] = b2.id;
-                log(`deleted block ${b.toDevString()}->${b2.toDevString()}`)
-            })
-        // connect deleted blocks together
-        deletedStatementBlocks
-            .forEach(b => stitch(b));
+        if (!options.hideDeletedBlocks) {
+            const deletedStatementBlocks = deletedBlocks
+                .filter(b => !todoBlocks[b.id]
+                    && !isUsed(b)
+                    && (!b.outputConnection || !b.outputConnection.isConnected()) // ignore reporters
+                );
+            deletedStatementBlocks
+                .forEach(b => {
+                    const b2 = cloneIntoDiff(b);
+                    dids[b.id] = b2.id;
+                    log(`deleted block ${b.toDevString()}->${b2.toDevString()}`)
+                })
+            // connect deleted blocks together
+            deletedStatementBlocks
+                .forEach(b => stitch(b));
+        }
 
         // 4. moved blocks
         let modified = 0;
@@ -179,9 +225,9 @@ namespace pxt.blocks {
 
         // all unmodifed blocks are greyed out
         Util.values(todoBlocks).filter(b => !!ws.getBlockById(b.id)).forEach(b => {
-            b.setColour(UNMODIFIED_COLOR)
-            forceRender(b);
+            unmodified(b);
         });
+        logTodo('unmodified')
 
         // if nothing is left in the workspace, we "missed" change
         if (!ws.getAllBlocks().length) {
@@ -277,9 +323,9 @@ namespace pxt.blocks {
             a.rendered = false;
             b.inputList.forEach(i => i.fieldRow.forEach(f => {
                 f.init();
-                if (f.box_) {
-                    f.box_.setAttribute('fill', b.getColour())
-                    f.box_.setAttribute('stroke', b.getColourTertiary())
+                if (f.borderRect_) {
+                    f.borderRect_.setAttribute('fill', b.getColour())
+                    f.borderRect_.setAttribute('stroke', (b as Blockly.BlockSvg).getColourTertiary())
                 }
             }));
         }
@@ -345,35 +391,132 @@ namespace pxt.blocks {
             return false;
         }
 
-        function normalizedDom(b: Blockly.Block, keepChildren?: boolean): string {
-            const dom = Blockly.Xml.blockToDom(b, true);
-            normalizeAttributes(dom);
-            visDom(dom, (e) => {
-                normalizeAttributes(e);
-                if (!keepChildren) {
-                    if (e.localName == "next")
-                        e.remove(); // disconnect or unplug not working propertly
-                    if (e.localName == "statement")
-                        e.remove();
-                }
-            })
-            return Blockly.Xml.domToText(dom);
-        }
+        function unmodified(b: Blockly.Block) {
+            b.setColour(UNMODIFIED_COLOR);
+            forceRender(b);
 
-        function normalizeAttributes(e: Element) {
-            e.removeAttribute("id");
-            e.removeAttribute("x");
-            e.removeAttribute("y");
-            e.removeAttribute("deletable");
-            e.removeAttribute("editable");
-            e.removeAttribute("movable")
+            if (options.statementsOnly) {
+                // mark all nested reporters as unmodified
+                (b.inputList || [])
+                    .map(input => input.type == Blockly.INPUT_VALUE && input.connection && input.connection.targetBlock())
+                    .filter(argBlock => !!argBlock)
+                    .forEach(argBlock => unmodified(argBlock))
+            }
         }
+    }
 
-        function visDom(el: Element, f: (e: Element) => void) {
-            if (!el) return;
-            f(el);
-            for (const child of Util.toArray(el.children))
-                visDom(child, f);
-        }
+    export function mergeXml(xmlA: string, xmlO: string, xmlB: string): string {
+        if (xmlA == xmlO) return xmlB;
+        if (xmlB == xmlO) return xmlA;
+
+        // TODO merge
+        return undefined;
+    }
+
+    function normalizedDom(b: Blockly.Block, keepChildren?: boolean): string {
+        const dom = Blockly.Xml.blockToDom(b, true);
+        normalizeAttributes(dom);
+        visDom(dom, (e) => {
+            normalizeAttributes(e);
+            if (!keepChildren) {
+                if (e.localName == "next")
+                    e.remove(); // disconnect or unplug not working propertly
+                else if (e.localName == "statement")
+                    e.remove();
+                else if (e.localName == "shadow") // ignore internal nodes
+                    e.remove();
+            }
+        })
+        return Blockly.Xml.domToText(dom);
+    }
+
+    function normalizeAttributes(e: Element) {
+        e.removeAttribute("id");
+        e.removeAttribute("x");
+        e.removeAttribute("y");
+        e.removeAttribute("deletable");
+        e.removeAttribute("editable");
+        e.removeAttribute("movable")
+    }
+
+    function visDom(el: Element, f: (e: Element) => void) {
+        if (!el) return;
+        f(el);
+        for (const child of Util.toArray(el.children))
+            visDom(child, f);
+    }
+
+    export function decompiledDiffAsync(oldTs: string, oldResp: pxtc.CompileResult, newTs: string, newResp: pxtc.CompileResult, options: DiffOptions = {}): DiffResult {
+        const log = logger();
+
+        const oldXml = oldResp.outfiles['main.blocks'];
+        let newXml = newResp.outfiles['main.blocks'];
+        log(oldXml);
+        log(newXml);
+
+        // compute diff of typescript sources
+        const diffLines = pxt.diff.compute(oldTs, newTs, {
+            ignoreWhitespace: true,
+            full: true
+        });
+        log(diffLines);
+
+        // build old -> new lines mapping
+        const newids: pxt.Map<string> = {};
+        let oldLineStart = 0;
+        let newLineStart = 0;
+        diffLines.forEach((ln, index) => {
+            // moving cursors
+            const marker = ln[0];
+            const line = ln.substr(2);
+            let lineLength = line.length;
+            switch (marker) {
+                case "-": // removed
+                    oldLineStart += lineLength + 1;
+                    break;
+                case "+": // added
+                    newLineStart += lineLength + 1;
+                    break;
+                default: // unchanged
+                    // skip leading white space
+                    const lw = /^\s+/.exec(line);
+                    if (lw) {
+                        const lwl = lw[0].length;
+                        oldLineStart += lwl;
+                        newLineStart += lwl;
+                        lineLength -= lwl;
+                    }
+                    // find block ids mapped to the ranges
+                    const newid = pxt.blocks.findBlockIdByPosition(newResp.blockSourceMap, {
+                        start: newLineStart,
+                        length: lineLength
+                    });
+                    if (newid && !newids[newid]) {
+                        const oldid = pxt.blocks.findBlockIdByPosition(oldResp.blockSourceMap, {
+                            start: oldLineStart,
+                            length: lineLength
+                        });
+
+                        // patch workspace
+                        if (oldid) {
+                            log(ln);
+                            log(`id ${oldLineStart}:${line.length}>${oldid} ==> ${newLineStart}:${line.length}>${newid}`)
+                            newids[newid] = oldid;
+                            newXml = newXml.replace(newid, oldid);
+                        }
+
+                    }
+                    oldLineStart += lineLength + 1;
+                    newLineStart += lineLength + 1;
+                    break;
+            }
+        })
+
+        // parse workspacews
+        const oldWs = pxt.blocks.loadWorkspaceXml(oldXml, true);
+        const newWs = pxt.blocks.loadWorkspaceXml(newXml, true);
+
+        options.statementsOnly = true; // no info on expression diffs
+        return diffWorkspace(oldWs, newWs, options);
     }
 }

@@ -6,6 +6,7 @@ basic.forever(() => {
 
 # Ghost blocks
 
+### @diffs false
 ## Step 1 @fullscreen
 
 Ghost blocks do not show up in the tutorial, but display in the workspace.

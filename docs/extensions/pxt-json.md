@@ -1,9 +1,9 @@
 # pxt.json Manual Page
 
 A [PXT extension](/extension) lives in its own directory, locally under `libs/` in a PXT target. A extension
-is described by the `pxt.json` file. To show a real example, here is the [pxt.json](https://github.com/Microsoft/pxt-neopixel/blob/master/pxt.json) file for the **pxt-neopixel** extension.
+is described by the `pxt.json` file. To show a real example, here is the [pxt.json](https://github.com/microsoft/pxt-neopixel/blob/master/pxt.json) file for the **pxt-neopixel** extension.
 
-The `pxt.json` is described by the interface `PackageConfig` in [pxtpackage.d.ts](https://github.com/Microsoft/pxt/blob/master/localtypings/pxtpackage.d.ts#L15-L43):
+The `pxt.json` is described by the interface `PackageConfig` in [pxtpackage.d.ts](https://github.com/microsoft/pxt/blob/master/localtypings/pxtpackage.d.ts#L15-L43):
 
 ## ~ hint
 
@@ -34,6 +34,8 @@ interface PackageConfig {
     installedVersion?: string;
     targetVersions?: TargetVersions; // versions of the target/pxt the extension was compiled against
 
+    fileDependencies?: Map<string>; // exclude certain files if dependencies are not fulfilled
+    
     testFiles?: string[];
     testDependencies?: Map<string>;
     simFiles?: string[];
@@ -60,7 +62,7 @@ Simple extensions generally just depend on their own target's core extension:
 
 A number of targets use [**pxt-common-packages**][common-packages] and specialize 
 them to fit their target's needs. These are a base set of extensions for use in a target. For example, the Adafruit Circuit Playground Express
-[extension](https://github.com/Microsoft/pxt-adafruit/blob/master/libs/circuit-playground/pxt.json) is the union of a number of extensions. 
+[extension](https://github.com/microsoft/pxt-adafruit/blob/master/libs/circuit-playground/pxt.json) is the union of a number of extensions. 
 
 ```typescript-ignore
     "dependencies": {
@@ -80,8 +82,8 @@ them to fit their target's needs. These are a base set of extensions for use in 
 ```
 
 Each of the above extensions is local to the target but inherits code from **pxt-common-packages**, 
-which it can then override or specialize, as the target needs. For example, the button [extension](https://github.com/Microsoft/pxt-adafruit/blob/master/libs/buttons/pxt.json)
-in the target [**pxt-adafruit**][adafruit] is defined in terms of the button [extension](https://github.com/Microsoft/pxt-common-packages/blob/master/libs/buttons/pxt.json) from 
+which it can then override or specialize, as the target needs. For example, the button [extension](https://github.com/microsoft/pxt-adafruit/blob/master/libs/buttons/pxt.json)
+in the target [**pxt-adafruit**][adafruit] is defined in terms of the button [extension](https://github.com/microsoft/pxt-common-packages/blob/master/libs/buttons/pxt.json) from 
 **pxt-common-packages** using the `additionalFilePath` field:
 ```typescript-ignore
 {
@@ -106,7 +108,52 @@ the online editor.
 They usually contain unit tests for extension.
 
 Similarly, dependencies from `testDependencies` are only included when compiled
-as top-level.
+as top-level. The ``testDependencies`` can be added for multiple targets
+and will only be added if they can be resolved.
+
+## File dependencies
+
+While not very common,
+in some extensions certain functionality should be only enabled when another
+extension is already present in the project.
+For example, a `weather` sensor package may have code for streaming weather
+data over radio, but that should be only enabled when there's already the `radio`
+extension in the project (to avoid problems on boards without radio, or when
+Bluetooth disables radio).
+Another solution to this problem is to create a new package `weather-radio`,
+which depends on `weather` and `radio`.
+This is advisable, when the additional functionality is sizable, otherwise
+it's better to keep the number of packages down.
+
+Example configuration:
+```typescript-ignore
+  ...
+  "files": [
+      "weather-reading.ts",
+      "weather-radio.ts",
+      "weather-jacdac.ts", 
+      "jd-helper.ts",
+      "README.md"
+  ],
+  "fileDependencies": {
+      "weather-radio.ts": "radio",
+      "weather-jacdac.ts": "jacdac",
+      "jd-helper.ts": "jacdac"
+  },
+  ...
+```
+
+Here, the file `weather-radio.ts` will be only included when `radio` is referenced in
+the project, and files `weather-jacdac.ts` and `jd-helper.ts` will be only included when
+`jacdac` is present.
+
+Typically, you would add `radio` and `jacdac` as `testDependencies`, so you can see
+the entire extension in the editor.
+There is no point in adding them as regular `dependencies` - that would negate the
+effects of `fileDependencies` and always include both the dependencies and files.
+
+In future, we may allow things like `"radio >= 1.2.3"`, but for now the package identifier is
+the only thing supported.
 
 ## C++ dependencies
 
@@ -117,5 +164,5 @@ C++ code in `cppDependencies` of your core package.
 Then, when user actually adds any of these optional packages, the
 C++ code doesn't change and re-compilation (and thus cloud round-trip) is not required.
 
-[adafruit]: https://github.com/Microsoft/pxt-adafruit
-[common-packages]: https://github.com/Microsoft/pxt-common-packages
+[adafruit]: https://github.com/microsoft/pxt-adafruit
+[common-packages]: https://github.com/microsoft/pxt-common-packages

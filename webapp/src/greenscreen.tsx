@@ -92,10 +92,6 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
         this.deviceId = undefined;
         if (this.stream) {
             try {
-                if (this.stream.stop)
-                    this.stream.stop();
-            } catch (e) { }
-            try {
                 const tracks = this.stream.getTracks();
                 if (tracks)
                     tracks.forEach(track => track.stop());
@@ -167,7 +163,7 @@ class WebCamCard extends data.Component<WebCamCardProps, {}> {
 
     renderCore() {
         const { header, icon } = this.props;
-        return <div role="button" className="ui card link" onClick={this.handleClick}>
+        return <div role="button" className="ui card link" tabIndex={0} onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>
             <div className="imageicon">
                 <sui.Icon icon={`${icon} massive`} />
             </div>

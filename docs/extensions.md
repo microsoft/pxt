@@ -8,7 +8,7 @@ pxt-micro:bit:
 Here is an example of a simple extension that extends the pxt-microbit target 
 so that the micro:bit can drive a NeoPixel strip:
 
-> [pxt-neopixel](https://github.com/Microsoft/pxt-neopixel)
+> [pxt-neopixel](https://github.com/microsoft/pxt-neopixel)
 
 To see how this extension is surfaced, visit https://makecode.microbit.org/ and select the "Extensions" option from the gear menu. You will see the extension "neopixel" listed in the available options. If you click on it, a new block category named "Neopixel" will be added to the editor. 
 

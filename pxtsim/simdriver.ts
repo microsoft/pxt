@@ -6,14 +6,18 @@ namespace pxsim {
         unhideElement?: (el: HTMLElement) => void;
         onDebuggerWarning?: (wrn: DebuggerWarningMessage) => void;
         onDebuggerBreakpoint?: (brk: DebuggerBreakpointMessage) => void;
-        onTraceMessage?: (msg: TraceMessage) => void;
+        onTraceMessage?: (msg: DebuggerBreakpointMessage) => void;
         onDebuggerResume?: () => void;
         onStateChanged?: (state: SimulatorState) => void;
+        onSimulatorReady?: () => void;
         onSimulatorCommand?: (msg: pxsim.SimulatorCommandMessage) => void;
         onTopLevelCodeEnd?: () => void;
         simUrl?: string;
         stoppedClass?: string;
         invalidatedClass?: string;
+        // instead of spanning multiple simulators,
+        // dispatch messages to parent window
+        nestedEditorSim?: boolean;
     }
 
     export enum SimulatorState {
@@ -36,6 +40,7 @@ namespace pxsim {
 
     export interface SimulatorRunOptions {
         debug?: boolean;
+        trace?: boolean;
         boardDefinition?: pxsim.BoardDefinition;
         parts?: string[];
         fnArgs?: any;
@@ -70,6 +75,7 @@ namespace pxsim {
         private _runOptions: SimulatorRunOptions = {};
         public state = SimulatorState.Unloaded;
         public hwdbg: HwDebugger;
+        private _dependentEditors: Window[];
 
         // we might "loan" a simulator when the user is recording
         // screenshots for sharing
@@ -80,6 +86,10 @@ namespace pxsim {
 
         isDebug() {
             return this._runOptions && !!this._runOptions.debug;
+        }
+
+        isTracing() {
+            return this._runOptions && !!this._runOptions.trace;
         }
 
         hasParts(): boolean {
@@ -102,6 +112,22 @@ namespace pxsim {
         focus() {
             const frame = this.simFrames()[0];
             if (frame) frame.focus();
+        }
+
+        registerDependentEditor(w: Window) {
+            if (!w) return;
+            if (!this._dependentEditors)
+                this._dependentEditors = [];
+            this._dependentEditors.push(w);
+        }
+
+        private dependentEditors() {
+            if (this._dependentEditors) {
+                this._dependentEditors = this._dependentEditors.filter(w => !!w.parent)
+                if (!this._dependentEditors.length)
+                    this._dependentEditors = undefined;
+            }
+            return this._dependentEditors;
         }
 
         private setStarting() {
@@ -225,20 +251,38 @@ namespace pxsim {
                 this.hwdbg.postMessage(msg)
                 return
             }
-            // dispatch to all iframe besides self
-            let frames = this.simFrames();
+
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
+            const depEditors = this.dependentEditors();
+            let frames = this.simFrames();
             if (source && broadcastmsg && !!broadcastmsg.broadcast) {
-                if (frames.length < 2) {
-                    this.container.appendChild(this.createFrame());
-                    frames = this.simFrames();
-                } else if (frames[1].dataset['runid'] != this.runId) {
-                    this.startFrame(frames[1]);
+                // the editor is hosted in a multi-editor setting
+                // don't start extra frames
+                const parentWindow = window.parent && window.parent !== window.window
+                    ? window.parent : window.opener;
+                if (this.options.nestedEditorSim && parentWindow) {
+                    // if message comes from parent already, don't echo
+                    if (source !== parentWindow)
+                        parentWindow.postMessage(msg, "*");
+                } else if (depEditors) {
+                    depEditors.forEach(w => {
+                        if (source !== w)
+                            w.postMessage(msg, "*")
+                    });
+                } else {
+                    // start secondary frame if needed
+                    if (frames.length < 2) {
+                        this.container.appendChild(this.createFrame());
+                        frames = this.simFrames();
+                    } else if (frames[1].dataset['runid'] != this.runId) {
+                        this.startFrame(frames[1]);
+                    }
                 }
             }
 
+            // dispatch message to other frames
             for (let i = 0; i < frames.length; ++i) {
-                let frame = frames[i] as HTMLIFrameElement
+                const frame = frames[i] as HTMLIFrameElement
                 // same frame as source
                 if (source && frame.contentWindow == source) continue;
                 // frame not in DOM
@@ -520,6 +564,8 @@ namespace pxsim {
                         if (this.options.revealElement)
                             this.options.revealElement(frame);
                     }
+                    if (this.options.onSimulatorReady)
+                        this.options.onSimulatorReady();
                     break;
                 }
                 case 'status': {
@@ -648,8 +694,8 @@ namespace pxsim {
                     if (this.options.onDebuggerWarning)
                         this.options.onDebuggerWarning(msg as pxsim.DebuggerWarningMessage);
                     break;
-                case "breakpoint":
-                    let brk = msg as pxsim.DebuggerBreakpointMessage
+                case "breakpoint": {
+                    const brk = msg as pxsim.DebuggerBreakpointMessage
                     if (this.state == SimulatorState.Running) {
                         if (brk.exceptionMessage)
                             this.suspend();
@@ -667,11 +713,14 @@ namespace pxsim {
                         console.error("debugger: trying to pause from " + this.state);
                     }
                     break;
-                case "trace":
-                    if (this.options.onTraceMessage) {
-                        this.options.onTraceMessage(msg as pxsim.TraceMessage);
+                }
+                case "trace": {
+                    const brk = msg as pxsim.DebuggerBreakpointMessage
+                    if (this.state == SimulatorState.Running && this.options.onTraceMessage) {
+                        this.options.onTraceMessage(brk);
                     }
                     break;
+                }
                 default:
                     const seq = msg.req_seq;
                     if (seq) {

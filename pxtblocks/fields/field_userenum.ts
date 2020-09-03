@@ -9,39 +9,37 @@ namespace pxtblockly {
             this.initVariables();
         }
 
-        onItemSelected(menu: goog.ui.Menu, menuItem: goog.ui.MenuItem) {
+        onItemSelected_(menu: Blockly.Menu, menuItem: Blockly.MenuItem) {
             const value = menuItem.getValue();
             if (value === "CREATE") {
                 promptAndCreateEnum(this.sourceBlock_.workspace, this.opts, lf("New {0}:", this.opts.memberName),
                     newName => newName && this.setValue(newName));
             }
             else {
-                super.onItemSelected(menu, menuItem);
+                super.onItemSelected_(menu, menuItem);
             }
         }
 
+        doClassValidation_(value: any) {
+            // update cached option list when adding a new kind
+            if (this.opts?.initialMembers && !this.opts.initialMembers.find(el => el == value)) this.getOptions();
+            return super.doClassValidation_(value);
+        }
 
         private initVariables() {
             if (this.sourceBlock_ && this.sourceBlock_.workspace) {
-                if (this.sourceBlock_.isInFlyout) {
-                    // Can't create variables from within the flyout, so we just have to fake it
-                    // by setting the text instead of the value
-                    this.setText(this.opts.initialMembers[0]);
-                }
-                else {
-                    const ws = this.sourceBlock_.workspace;
-                    const existing = getMembersForEnum(ws, this.opts.name);
-                    this.opts.initialMembers.forEach(memberName => {
-                        if (!existing.some(([name, value]) => name === memberName)) {
-                            createNewEnumMember(ws, this.opts, memberName);
-                        }
-                    });
+                const ws = this.sourceBlock_.workspace;
+                const existing = getMembersForEnum(ws, this.opts.name);
+                this.opts.initialMembers.forEach(memberName => {
+                    if (!existing.some(([name, value]) => name === memberName)) {
+                        createNewEnumMember(ws, this.opts, memberName);
+                    }
+                });
 
-                    if (this.getValue() === "CREATE") {
-                        const newValue = getVariableNameForMember(ws, this.opts.name, this.opts.initialMembers[0])
-                        if (newValue) {
-                            this.setValue(newValue);
-                        }
+                if (this.getValue() === "CREATE") {
+                    const newValue = getVariableNameForMember(ws, this.opts.name, this.opts.initialMembers[0])
+                    if (newValue) {
+                        this.setValue(newValue);
                     }
                 }
             }
@@ -60,6 +58,9 @@ namespace pxtblockly {
                     const withoutValue = model.name.replace(/^\d+/, "")
                     res.push([withoutValue, model.name]);
                 });
+            } else {
+                // Can't create variables from within the flyout, so we just have to fake it
+                opts.initialMembers.forEach((e) => res.push([e, e]) );
             }
 
 
@@ -70,7 +71,7 @@ namespace pxtblockly {
     }
 
     function promptAndCreateEnum(ws: Blockly.Workspace, opts: pxtc.EnumInfo, message: string, cb: (newValue: string) => void) {
-        Blockly.prompt(message, opts.promptHint, response => {
+        Blockly.prompt(message, null, response => {
             if (response) {
                 let nameIsValid = false;
                 if (pxtc.isIdentifierStart(response.charCodeAt(0), 2)) {
@@ -100,7 +101,7 @@ namespace pxtblockly {
 
                 cb(createNewEnumMember(ws, opts, response));
             }
-        });
+        }, { placeholder:  opts.promptHint });
     }
 
     function parseName(model: Blockly.VariableModel): [string, number] {

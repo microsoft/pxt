@@ -2,8 +2,8 @@
 
 A PXT target is described by a `pxtarget.json` JSON file.
 Here are two examples of `pxtarget.json` files, one simple and one more complex:
-* https://github.com/Microsoft/pxt-sample/blob/master/pxtarget.json
-* https://github.com/Microsoft/pxt-microbit/blob/master/pxtarget.json
+* https://github.com/microsoft/pxt-sample/blob/master/pxtarget.json
+* https://github.com/microsoft/pxt-microbit/blob/master/pxtarget.json
 
 The JSON file `pxtarget.json` is described at the top-level by the interfaces `TargetBundle`
 and `AppTarget`, shown below. 
@@ -13,8 +13,8 @@ as indicated. All other fields below are user-supplied. Optional fields have a "
 All PXT targets also must supply an NPM [package.json](https://docs.npmjs.com/files/package.json)
 file, which describes the versioning, dependency and resources required to build the target.
 You can find examples for pxt-sample and pxt-microbit here:
-* https://github.com/Microsoft/pxt-sample/blob/master/package.json
-* https://github.com/Microsoft/pxt-microbit/blob/master/package.json
+* https://github.com/microsoft/pxt-sample/blob/master/package.json
+* https://github.com/microsoft/pxt-microbit/blob/master/package.json
 
 Here's more about [creating a target](/target-creation)
 
@@ -109,7 +109,7 @@ will not need the native compilation path.
         nativeType?: string;    // currently only "thumb", though there is a prototype for AVR
   
         // output file options
-        useUF2?: boolean;       // true -> output UF2 format (see https://github.com/Microsoft/uf2), false -> HEX file
+        useUF2?: boolean;       // true -> output UF2 format (see https://github.com/microsoft/uf2), false -> HEX file
         hexMimeType?: string;   // Mime type for hex files 
         driveName?: string;     // how will the device appear when plugged in via MSD?
         deployDrives?: string;  // partial name of drives where the HEX/UF2 file should be copied
@@ -140,7 +140,6 @@ Here is the appTheme from pxt-sample with some comments:
         "homeUrl": "https://microsoft.github.io/pxt-sample/",
         "privacyUrl": "https://go.microsoft.com/fwlink/?LinkId=521839",
         "termsOfUseUrl": "https://go.microsoft.com/fwlink/?LinkID=206977",
-        "betaUrl": "https://makecode.com/",
         // populating the (?) menu
         "docMenu": [
             {
@@ -283,3 +282,19 @@ PXT expects to find the C/C++ sources on github.
         serviceId: string;
     }
 ```
+
+### ``uploadDocs`` and ``uploadApiStringsBranchRx``
+
+The ``uploadDocs`` flag determins if the API strings and docs have to be uploaded
+to crowdin when a build occurs on master or release branches.
+
+The ``uploadApiStringsBranchRx`` flag provide a custom regex
+for matching the branch where api strings should be uploaded.
+From a stable branch, this would be ``^stable\d+\.\d+$``
+
+## Additional settings
+
+### template project
+
+You can add or modify the default files created with a new project by adding
+a library called ``template`` (make it ``hidden``).

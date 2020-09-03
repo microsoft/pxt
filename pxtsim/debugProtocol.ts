@@ -1,7 +1,7 @@
 /// <reference path="../localtypings/vscode-debug-protocol.d.ts" />
 
 /**
- * Heavily adapted from https://github.com/Microsoft/vscode-debugadapter-node
+ * Heavily adapted from https://github.com/microsoft/vscode-debugadapter-node
  * and altered to run in a browser and communcate via JSON over a websocket
  * rather than through stdin and stdout
  */

@@ -4,11 +4,9 @@ import * as http from 'http';
 import * as url from 'url';
 import * as querystring from 'querystring';
 import * as nodeutil from './nodeutil';
-import * as child_process from 'child_process';
-import * as os from 'os';
-import * as util from 'util';
 import * as hid from './hid';
 import * as net from 'net';
+import * as crowdin from './crowdin';
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -41,7 +39,8 @@ function setupRootDir() {
         path.join(nodeutil.targetDir, "sim/public"),
         path.join(nodeutil.targetDir, "node_modules", `pxt-${pxt.appTarget.id}-sim`, "public"),
         path.join(nodeutil.pxtCoreDir, "built/web"),
-        path.join(nodeutil.pxtCoreDir, "webapp/public")
+        path.join(nodeutil.pxtCoreDir, "webapp/public"),
+        path.join(nodeutil.pxtCoreDir, "common-docs")
     ]
     docsDir = path.join(root, "docs")
     packagedDir = path.join(root, "built/packaged")
@@ -196,18 +195,20 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
             .then(buf => {
                 if (f.name == pxt.CONFIG_NAME) {
                     try {
-                        let cfg: pxt.PackageConfig = JSON.parse(f.content)
-                        if (!cfg.name) {
-                            console.log("Trying to save invalid JSON config")
+                        if (!pxt.Package.parseAndValidConfig(f.content)) {
+                            pxt.log("Trying to save invalid JSON config")
+                            pxt.debug(f.content);
                             throwError(410)
                         }
                     } catch (e) {
-                        console.log("Trying to save invalid format JSON config")
+                        pxt.log("Trying to save invalid format JSON config")
+                        pxt.log(e)
+                        pxt.debug(f.content);
                         throwError(410)
                     }
                 }
                 if (buf.toString("utf8") !== f.prevContent) {
-                    console.log(`merge error for ${f.name}: previous content changed...`);
+                    pxt.log(`merge error for ${f.name}: previous content changed...`);
                     throwError(409)
                 }
             }, err => { }))
@@ -336,7 +337,9 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
             });
     else if (cmd == "GET md" && pxt.appTarget.id + "/" == innerPath.slice(0, pxt.appTarget.id.length + 1)) {
         // innerpath start with targetid
-        return Promise.resolve(readMd(innerPath.slice(pxt.appTarget.id.length + 1)))
+        return readMdAsync(
+            innerPath.slice(pxt.appTarget.id.length + 1),
+            opts["lang"] as string);
     }
     else if (cmd == "GET config" && new RegExp(`${pxt.appTarget.id}\/targetconfig(\/v[0-9.]+)?$`).test(innerPath)) {
         // target config
@@ -355,14 +358,13 @@ export function lookupDocFile(name: string) {
     return null
 }
 
-export function expandHtml(html: string) {
+export function expandHtml(html: string, params?: pxt.Map<string>) {
     let theme = U.flatClone(pxt.appTarget.appTheme)
     html = expandDocTemplateCore(html)
-    let params: pxt.Map<string> = {
-        name: pxt.appTarget.appTheme.title,
-        description: pxt.appTarget.appTheme.description,
-        locale: pxt.appTarget.appTheme.defaultLocale || "en"
-    };
+    params = params || {};
+    params["name"] = params["name"] || pxt.appTarget.appTheme.title;
+    params["description"] = params["description"] || pxt.appTarget.appTheme.description;
+    params["locale"] = params["locale"] || pxt.appTarget.appTheme.defaultLocale || "en"
 
     // page overrides
     let m = /<title>([^<>@]*)<\/title>/.exec(html)
@@ -832,10 +834,16 @@ function pkgPageTestAsync(id: string) {
         })
 }
 
-function readMd(pathname: string): string {
-    const content = nodeutil.resolveMd(root, pathname);
-    if (content) return content;
-    return `# Not found ${pathname}\nChecked:\n` + [docsDir].concat(dirs).concat(nodeutil.lastResolveMdDirs).map(s => "* ``" + s + "``\n").join("")
+function readMdAsync(pathname: string, lang: string): Promise<string> {
+    if (!lang || lang == "en") {
+        const content = nodeutil.resolveMd(root, pathname);
+        if (content) return Promise.resolve(content);
+        return Promise.resolve(`# Not found ${pathname}\nChecked:\n` + [docsDir].concat(dirs).concat(nodeutil.lastResolveMdDirs).map(s => "* ``" + s + "``\n").join(""));
+    } else {
+        // ask makecode cloud for translations
+        const mdpath = pathname.replace(/^\//, '');
+        return pxt.Cloud.markdownAsync(mdpath, lang);
+    }
 }
 
 function resolveTOC(pathname: string): pxt.TOCMenuEntry[] {
@@ -925,9 +933,19 @@ export function serveAsync(options: ServeOptions) {
         }
 
         let pathname = decodeURI(url.parse(req.url).pathname);
+        const opts: pxt.Map<string | string[]> = querystring.parse(url.parse(req.url).query);
+        const htmlParams: pxt.Map<string> = {};
+        if (opts["lang"] || opts["forcelang"])
+            htmlParams["locale"] = (opts["lang"] as string || opts["forcelang"] as string);
 
         if (pathname == "/") {
             res.writeHead(301, { location: '/index.html' })
+            res.end()
+            return
+        }
+
+        if (pathname == "/oauth-redirect") {
+            res.writeHead(301, { location: '/oauth-redirect.html' })
             res.end()
             return
         }
@@ -1020,6 +1038,16 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
+        if (pathname == "/--multi") {
+            sendFile(path.join(publicDir, 'multi.html'));
+            return
+        }
+
+        if (pathname == "/--asseteditor") {
+            sendFile(path.join(publicDir, 'asseteditor.html'));
+            return
+        }
+
         if (/\/-[-]*docs.*$/.test(pathname)) {
             sendFile(path.join(publicDir, 'docs.html'));
             return
@@ -1069,7 +1097,12 @@ export function serveAsync(options: ServeOptions) {
         for (let dir of dd) {
             let filename = path.resolve(path.join(dir, pathname))
             if (nodeutil.fileExistsSync(filename)) {
-                sendFile(filename)
+                if (/\.html$/.test(filename)) {
+                    let html = expandHtml(fs.readFileSync(filename, "utf8"), htmlParams)
+                    sendHtml(html)
+                } else {
+                    sendFile(filename)
+                }
                 return;
             }
         }
@@ -1102,7 +1135,7 @@ export function serveAsync(options: ServeOptions) {
 
         if (webFile) {
             if (/\.html$/.test(webFile)) {
-                let html = expandHtml(fs.readFileSync(webFile, "utf8"))
+                let html = expandHtml(fs.readFileSync(webFile, "utf8"), htmlParams)
                 sendHtml(html)
             } else {
                 sendFile(webFile)
@@ -1110,18 +1143,28 @@ export function serveAsync(options: ServeOptions) {
         } else {
             const m = /^\/(v\d+)(.*)/.exec(pathname);
             if (m) pathname = m[2];
-            const md = readMd(pathname);
-            const mdopts = <pxt.docs.RenderOptions>{
-                template: expandDocFileTemplate("docs.html"),
-                markdown: md,
-                theme: pxt.appTarget.appTheme,
-                filepath: pathname,
-                TOC: resolveTOC(pathname)
-            };
-            let html = pxt.docs.renderMarkdown(mdopts)
-            sendHtml(html, U.startsWith(md, "# Not found") ? 404 : 200)
+            const lang = (opts["translate"] && ts.pxtc.Util.TRANSLATION_LOCALE)
+                || opts["lang"] as string
+                || opts["forcelang"] as string;
+            readMdAsync(pathname, lang)
+                .then(md => {
+                    const mdopts = <pxt.docs.RenderOptions>{
+                        template: expandDocFileTemplate("docs.html"),
+                        markdown: md,
+                        theme: pxt.appTarget.appTheme,
+                        filepath: pathname,
+                        TOC: resolveTOC(pathname),
+                        pubinfo: {
+                            locale: lang,
+                            crowdinproject: pxt.appTarget.appTheme.crowdinProject
+                        }
+                    };
+                    if (opts["translate"])
+                        mdopts.pubinfo["incontexttranslations"] = "1";
+                    const html = pxt.docs.renderMarkdown(mdopts)
+                    sendHtml(html, U.startsWith(md, "# Not found") ? 404 : 200)
+                });
         }
-
         return
     });
 

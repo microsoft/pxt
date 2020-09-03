@@ -20,6 +20,7 @@ export interface UiProps {
     ariaLabel?: string;
     tabIndex?: number;
     rightIcon?: boolean;
+    inverted?: boolean;
 }
 
 export type SIZES = 'mini' | 'tiny' | 'small' | 'medium' | 'large' | 'big' | 'huge' | 'massive';
@@ -33,7 +34,7 @@ export function cx(classes: string[]): string {
 }
 
 function genericClassName(cls: string, props: UiProps, ignoreIcon: boolean = false): string {
-    return `${cls} ${ignoreIcon ? '' : props.icon && props.text ? 'icon icon-and-text' : props.icon ? 'icon' : ""} ${props.className || ""}`;
+    return `${cls} ${ignoreIcon ? '' : props.icon && props.text ? 'icon icon-and-text' : props.icon ? 'icon' : ""} ${props.inverted ? 'inverted' : ''} ${props.className || ""}`;
 }
 
 function genericContent(props: UiProps) {
@@ -70,6 +71,12 @@ export interface DropdownProps extends UiProps {
     title?: string;
     id?: string;
     onChange?: (v: string) => void;
+
+    avatarImage?: string;
+    avatarInitials?: string;
+    displayAbove?: boolean;
+    displayRight?: boolean;
+    dataTooltip?: string;
 }
 
 export interface DropdownState {
@@ -282,7 +289,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
 
     private handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
         if (this.isMouseDown) return;
-        // Use timeout to delay examination of activeElement until after blur/focus 
+        // Use timeout to delay examination of activeElement until after blur/focus
         // events have been processed.
         setTimeout(() => {
             let open = this.isChildFocused();
@@ -304,7 +311,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 
     renderCore() {
-        const { disabled, title, role, icon, className, children } = this.props;
+        const { disabled, title, role, icon, className, avatarImage, avatarInitials, children, displayAbove, displayRight, dataTooltip } = this.props;
         const { open } = this.state;
 
         const aria = {
@@ -324,15 +331,25 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             'dropdown',
             icon ? 'icon' : '',
             className || '',
+            displayAbove ? 'menuAbove' : '',
+            displayRight ? 'menuRight' : ''
         ]);
         const menuClasses = cx([
             'menu',
             open ? 'visible transition' : ''
         ])
+
+        const avatar = avatarImage || avatarInitials ?
+            <div className="avatar">
+                {avatarImage ? <img className="ui circular image" src={avatarImage} alt={title} /> :
+                    <div className="initials">{avatarInitials}</div>}
+            </div>
+            : undefined;
         return (
             <div role="listbox" ref="dropdown" title={title} {...aria}
                 id={this.props.id}
                 className={classes}
+                data-tooltip={dataTooltip}
                 onMouseDown={this.handleMouseDown}
                 onClick={this.handleClick}
                 onKeyDown={this.handleKeyDown}
@@ -340,12 +357,119 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
                 onBlur={this.handleBlur}
                 tabIndex={0}
             >
-                {genericContent(this.props)}
+                {avatar ? avatar : genericContent(this.props)}
                 <div ref="menu" {...menuAria} className={menuClasses}
                     role="menu">
                     {children}
                 </div>
             </div>);
+    }
+}
+
+export interface ExpandableMenuProps {
+    title?: string;
+    onShow?: () => void;
+    onHide?: () => void;
+}
+
+export interface ExpandableMenuState {
+    expanded?: boolean;
+}
+
+export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMenuState> {
+    hide = () => {
+        this.setState({ expanded: false });
+        const { onHide } = this.props;
+        if (onHide)
+            onHide();
+    }
+
+    show = () => {
+        this.setState({ expanded: true });
+        const { onShow } = this.props;
+        if (onShow)
+            onShow();
+    }
+
+    toggleExpanded = () => {
+        const { expanded } = this.state;
+
+        if (expanded) {
+            this.hide();
+        } else {
+            this.show();
+        }
+    }
+
+    render() {
+        const { title, children } = this.props;
+        const { expanded } = this.state
+
+        return (<div className="expandable-menu">
+            <Link
+                className="no-select menu-header"
+                icon={`no-select chevron ${expanded ? "down" : "right"}`}
+                text={title}
+                ariaExpanded={expanded}
+                onClick={this.toggleExpanded} />
+            {expanded && <div className="expanded-items">
+                {children}
+            </div> }
+        </div>);
+    }
+}
+
+export interface SelectProps {
+    options: SelectItem[];
+    onChange?: (value: string) => void;
+    label?: string;
+}
+
+export interface SelectState {
+    selected?: string;
+}
+
+export interface SelectItem {
+    value: string | number;
+    display?: string;
+}
+
+export class Select extends UIElement<SelectProps, SelectState> {
+    constructor(props: SelectProps) {
+        super(props);
+        const { options } = props;
+        this.state = {
+            selected: options[0] && (options[0].value + "")
+        };
+    }
+
+    handleOnChange = (ev: React.ChangeEvent<HTMLSelectElement>) => {
+        const { onChange } = this.props;
+        this.setState({
+            selected: ev.target.value
+        });
+
+        if (onChange) {
+            onChange(ev.target.value);
+        }
+    }
+
+    render() {
+        const { options, label } = this.props;
+        const { selected } = this.state;
+
+        return (<div>
+            { label && `${label} ` }
+            <select value={selected} className="ui dropdown" onChange={this.handleOnChange}>
+                {options.map(opt =>
+                    opt && <option
+                        aria-selected={selected === opt.value}
+                        value={opt.value}
+                        key={opt.value}
+                    >{opt.display || opt.value}</option>
+                )}
+            </select>
+        </div>);
     }
 }
 
@@ -478,17 +602,21 @@ export interface LinkProps extends ButtonProps {
     download?: string;
     target?: string;
     rel?: string;
+    refCallback?: React.Ref<HTMLAnchorElement>
 }
 
 export class Link extends StatelessUIElement<LinkProps> {
     renderCore() {
         return (
-            <a className={genericClassName("ui", this.props) + " " + (this.props.disabled ? "disabled" : "")}
+            <a className={genericClassName("ui", this.props)
+                + (this.props.loading ? " loading" : "")
+                + (this.props.disabled ? " disabled" : "")}
                 id={this.props.id}
                 href={this.props.href}
                 target={this.props.target}
                 rel={this.props.rel || (this.props.target ? "noopener noreferrer" : "")}
                 download={this.props.download}
+                ref={this.props.refCallback}
                 role={this.props.role}
                 title={this.props.title}
                 tabIndex={this.props.tabIndex || 0}
@@ -505,7 +633,7 @@ export class Link extends StatelessUIElement<LinkProps> {
 }
 
 export function helpIconLink(url: string, title: string) {
-    return <Link href={url} icon="help circle" target="_blank" role="button" title={title} />
+    return <Link className="help-link" href={url} icon="help circle" target="_blank" role="button" title={title} />
 }
 
 ///////////////////////////////////////////////////////////
@@ -543,6 +671,7 @@ export interface InputProps {
     placeholder?: string;
     disabled?: boolean;
     onChange?: (v: string) => void;
+    onEnter?: () => void;
     lines?: number;
     readOnly?: boolean;
     copy?: boolean;
@@ -556,6 +685,7 @@ export interface InputProps {
 
 export interface InputState {
     value: string;
+    copied?: boolean;
 }
 
 export class Input extends data.Component<InputProps, InputState> {
@@ -568,6 +698,7 @@ export class Input extends data.Component<InputProps, InputState> {
         this.copy = this.copy.bind(this);
         this.handleClick = this.handleClick.bind(this);
         this.handleChange = this.handleChange.bind(this);
+        this.handleEnterPressed = this.handleEnterPressed.bind(this);
     }
 
     componentDidMount() {
@@ -587,6 +718,7 @@ export class Input extends data.Component<InputProps, InputState> {
     }
 
     copy() {
+        this.setState({ copied: false });
         const p = this.props
         const el = ReactDOM.findDOMNode(this);
 
@@ -603,7 +735,9 @@ export class Input extends data.Component<InputProps, InputState> {
         try {
             const success = document.execCommand("copy");
             pxt.debug('copy: ' + success);
+            this.setState({ copied: !!success });
         } catch (e) {
+            this.setState({ copied: false });
         }
     }
 
@@ -616,49 +750,62 @@ export class Input extends data.Component<InputProps, InputState> {
     handleChange(e: React.ChangeEvent<any>) {
         const newValue = (e.target as any).value;
         if (!this.props.readOnly && (!this.state || this.state.value !== newValue)) {
-            this.setState({ value: newValue })
+            this.setState({ value: newValue, copied: false })
         }
         if (this.props.onChange) {
             this.props.onChange(newValue);
         }
     }
 
+    handleEnterPressed(e: React.KeyboardEvent) {
+        const charCode = core.keyCodeFromEvent(e);
+        if (charCode === core.ENTER_KEY) {
+            const { onEnter } = this.props;
+            if (onEnter) {
+                e.preventDefault();
+                onEnter();
+            }
+        }
+    }
+
     renderCore() {
-        let p = this.props
-        let copyBtn = p.copy && document.queryCommandSupported('copy')
-            ? <Button className="ui right labeled primary icon button" text={lf("Copy")} icon="copy" onClick={this.copy} />
+        const p = this.props;
+        const { copy, error, ariaLabel, id, label, inputLabel, lines, autoFocus, placeholder, readOnly, autoComplete } = p;
+        const { value, copied } = this.state;
+        const copyBtn = copy && document.queryCommandSupported('copy')
+            ? <Button className={`ui right labeled ${copied ? "green" : "primary"} icon button`} text={copied ? lf("Copied!") : lf("Copy")} icon="copy" onClick={this.copy} />
             : null;
-        const { error } = this.props;
-        const { value } = this.state;
 
         return (
-            <Field ariaLabel={p.ariaLabel} htmlFor={p.id} label={p.label}>
-                <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (p.copy ? " action fluid" : "") + (p.disabled ? " disabled" : "")}>
-                    {p.inputLabel ? (<div className="ui label">{p.inputLabel}</div>) : ""}
-                    {!p.lines || p.lines == 1 ? <input
+            <Field ariaLabel={ariaLabel} htmlFor={id} label={label}>
+                <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (copy ? " action fluid" : "") + (p.disabled ? " disabled" : "")}>
+                    {inputLabel ? (<div className="ui label">{inputLabel}</div>) : ""}
+                    {!lines || lines == 1 ? <input
                         ref='inputField'
-                        autoFocus={p.autoFocus}
-                        id={p.id}
+                        autoFocus={autoFocus}
+                        id={id}
                         className={p.class || ""}
                         type={p.type || "text"}
-                        placeholder={p.placeholder} value={value || ''}
-                        readOnly={!!p.readOnly}
+                        placeholder={placeholder} value={value || ''}
+                        readOnly={!!readOnly}
                         onClick={this.handleClick}
                         onChange={this.handleChange}
-                        autoComplete={p.autoComplete ? "" : "off"}
-                        autoCorrect={p.autoComplete ? "" : "off"}
-                        autoCapitalize={p.autoComplete ? "" : "off"}
-                        spellCheck={p.autoComplete}
+                        onKeyDown={this.handleEnterPressed}
+                        autoComplete={autoComplete ? "" : "off"}
+                        autoCorrect={autoComplete ? "" : "off"}
+                        autoCapitalize={autoComplete ? "" : "off"}
+                        spellCheck={autoComplete}
                     />
                         : <textarea
-                            id={p.id}
-                            className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "")}
-                            rows={p.lines}
-                            placeholder={p.placeholder}
+                            id={id}
+                            className={"ui input " + (p.class || "") + (inputLabel ? " labelled" : "")}
+                            rows={lines}
+                            placeholder={placeholder}
                             value={value || ''}
-                            readOnly={!!p.readOnly}
+                            readOnly={!!readOnly}
                             onClick={this.handleClick}
-                            onChange={this.handleChange}>
+                            onChange={this.handleChange}
+                            onKeyDown={this.handleEnterPressed}>
                         </textarea>}
                     {copyBtn}
                 </div>
@@ -770,6 +917,7 @@ export interface MenuItemProps {
     position?: 'right';
     ariaControls?: string;
     id?: string;
+    tabIndex?: number;
 }
 
 export class MenuItem extends data.Component<MenuItemProps, {}> {
@@ -797,7 +945,8 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
             onClick,
             position,
             ariaControls,
-            id
+            id,
+            tabIndex
         } = this.props;
 
         const classes = cx([
@@ -817,7 +966,17 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
         }
 
         return (
-            <div id={id} tabIndex={active ? 0 : -1} className={classes} onClick={this.handleClick} role="tab" aria-controls={ariaControls} aria-selected={active} aria-label={content || name}>
+            <div
+                id={id}
+                tabIndex={tabIndex != null ? tabIndex : -1}
+                className={classes}
+                onClick={this.handleClick}
+                onKeyDown={fireClickOnEnter}
+                role="tab"
+                aria-controls={ariaControls}
+                aria-selected={active}
+                aria-label={`${content || name}`}
+            >
                 {icon ? <Icon icon={icon} /> : undefined}
                 {content || name}
             </div>
@@ -946,7 +1105,8 @@ export class Menu extends data.Component<MenuProps, MenuState> {
 ///////////////////////////////////////////////////////////
 
 export interface ModalButton {
-    label: string;
+    label?: string;
+    title?: string;
     icon?: string; // defaults to "checkmark"
     className?: string; // defaults "positive"
     onclick?: () => (Promise<void> | void);
@@ -1107,8 +1267,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
         ])
         const aria = {
             labelledby: header ? this.id + 'title' : undefined,
-            describedby: (!isFullscreen && description) ? this.id + 'description' : this.id + 'desc',
-            modal: 'true'
+            describedby: (!isFullscreen && description) ? this.id + 'description' : this.id + 'desc'
         }
         const customStyles = {
             content: {
@@ -1125,6 +1284,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             overlayClassName={`ui page modals dimmer transition ${overlayClassName} ${isOpen ? 'visible active' : ''}`}
             className={classes}
             style={customStyles}
+            role="dialog"
             aria={aria} {...rest}>
             {header || showBack || helpUrl ? <div id={this.id + 'title'} className={"header " + (headerClass || "")}>
                 <span className="header-title" style={{ margin: `0 ${helpUrl ? '-20rem' : '0'} 0 ${showBack ? '-20rem' : '0'}` }}>{header}</span>
@@ -1155,7 +1315,8 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                                 key={`action_${action.label}`}
                                 icon={action.icon}
                                 text={action.label}
-                                className={`ui button approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
+                                title={action.title || action.label}
+                                className={`ui button approve ${action.icon ? 'icon right' : ''} ${action.label ? 'labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
                                 href={action.url}
                                 target={!action.fileName ? '_blank' : undefined}
                                 download={action.fileName ? pxt.Util.htmlEscape(action.fileName) : undefined}
@@ -1180,7 +1341,7 @@ class ModalButtonElement extends data.PureComponent<ModalButton, {}> {
     }
 
     handleClick() {
-        if (!this.props.disabled)
+        if (!this.props.disabled && this.props.onclick)
             this.props.onclick();
     }
 
@@ -1239,6 +1400,7 @@ export class Dimmer extends UIElement<DimmerProps, DimmerState> {
             shouldCloseOnOverlayClick={closable}
             onRequestClose={onClose}
             overlayClassName={portalClasses}
+            role="dialog"
             {...rest}>
             {children}
         </ReactModal>

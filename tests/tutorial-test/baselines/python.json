@@ -1,0 +1,26 @@
+{
+    "editor": "pyprj",
+    "title": "Native python",
+    "steps": [
+        {
+            "contentMd": "Tutorials can be written with code in Python.\n```python\ndef on_chat():\n    # @highlight\n    player.teleport(pos(0, 100, 0))\nplayer.on_chat(\"jump\", on_chat)\n```",
+            "headerContentMd": "Tutorials can be written with code in Python.",
+            "fullscreen": true,
+            "hintContentMd": "```python\ndef on_chat():\n    # @highlight\n    player.teleport(pos(0, 100, 0))\nplayer.on_chat(\"jump\", on_chat)\n```"
+        },
+        {
+            "contentMd": "Show some LEDs\n\n```python\nbuilder.teleport_to(pos(0, 0, 0))\nfor i in range(25):\n    builder.move(FORWARD, 1)\n    builder.move(UP, 1)\n```",
+            "headerContentMd": "Show some LEDs",
+            "hintContentMd": "```python\nbuilder.teleport_to(pos(0, 0, 0))\nfor i in range(25):\n    builder.move(FORWARD, 1)\n    builder.move(UP, 1)\n```"
+        }
+    ],
+    "activities": null,
+    "code": [
+        "\ndef on_chat():\n    # @highlight\n    player.teleport(pos(0, 100, 0))\nplayer.on_chat(\"jump\", on_chat)\n",
+        "\nbuilder.teleport_to(pos(0, 0, 0))\nfor i in range(25):\n    builder.move(FORWARD, 1)\n    builder.move(UP, 1)\n"
+    ],
+    "metadata": {
+        "diffs": false
+    },
+    "language": "python"
+}

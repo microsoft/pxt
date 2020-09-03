@@ -9,7 +9,6 @@ import * as core from "./core";
 import * as codecard from "./codecard";
 import * as electron from "./electron";
 import * as workspace from "./workspace";
-import * as dialogs from "./dialogs";
 import { SearchInput } from "./components/searchInput";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
@@ -158,10 +157,20 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         return res;
     }
 
-    fetchLocal(): pxt.workspace.Header[] {
+    fetchLocalRepositories(): pxt.workspace.Header[] {
         if (this.state.mode != ScriptSearchMode.Extensions) return [];
-        return workspace.getHeaders()
-            .filter(h => !!h.githubId)
+        let query = this.state.searchFor;
+        const { header } = this.props.parent.state;
+
+        let r = workspace.getHeaders()
+            .filter(h => !!h.githubId);
+        if (header)
+            r = r.filter(h => h.id != header.id) // don't self-reference
+        if (query) {
+            query = query.toLocaleLowerCase();
+            r = r.filter(h => h.name.toLocaleLowerCase().indexOf(query) > -1) // search filter
+        }
+        return r;
     }
 
     fetchBundled(): pxt.PackageConfig[] {
@@ -350,7 +359,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const bundles = this.fetchBundled();
         const ghdata = this.fetchGhData();
         const urldata = this.fetchUrlData();
-        const local = this.fetchLocal();
+        const local = this.fetchLocalRepositories();
         const experiments = this.fetchExperiments();
         const isSearching = searchFor && (ghdata.status === data.FetchStatus.Pending || urldata.status === data.FetchStatus.Pending);
         const disableFileAccessinMaciOs = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
@@ -358,6 +367,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             && pxt.appTarget.appTheme.importExtensionFiles
             && !disableFileAccessinMaciOs
             && !searchFor;
+        // inject beta at end of / or /#
+        // also excludes http://localhost:port/index.html
+        const betaUrl = window.location.href.replace(/\/(#|$|\?)/, "/beta$1")
+        const showOpenBeta = mode == ScriptSearchMode.Experiments
+            && betaUrl != window.location.href; // don't show beta button in beta
 
         const compareConfig = (a: pxt.PackageConfig, b: pxt.PackageConfig) => {
             // core first
@@ -457,7 +471,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     key={'bundled' + scr.name}
                                     name={scr.name}
                                     description={scr.description}
-                                    url={"/" + scr.installedVersion}
                                     imageUrl={scr.icon}
                                     scr={scr}
                                     onCardClick={this.addBundle}
@@ -508,7 +521,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     feedbackUrl={experiment.feedbackUrl}
                                 />
                             )}
-                            {showImportFile ? <codecard.CodeCardView
+                            {showImportFile && <codecard.CodeCardView
                                 ariaLabel={lf("Open files from your computer")}
                                 role="button"
                                 key={'import'}
@@ -517,7 +530,19 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 name={lf("Import File...")}
                                 description={lf("Open files from your computer")}
                                 onClick={this.importExtensionFile}
-                            /> : undefined}
+                            />}
+                            {showOpenBeta && <codecard.CodeCardView
+                                ariaLabel={lf("Open the next version of the editor")}
+                                role="button"
+                                key={'beta'}
+                                icon="lab ui cardimage"
+                                iconColor="secondary"
+                                name={lf("Beta Editor")}
+                                label={lf("Beta")}
+                                labelClass="red right ribbon"
+                                description={lf("Open the next version of the editor")}
+                                url={betaUrl}
+                            />}
                         </div>
                     }
                     {isEmpty() ?
@@ -533,7 +558,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                         <div className="header">{lf("Experiments changed")}</div>
                         {lf("The editor will reload when leaving this page.")}
                     </div> : undefined}
-                {mode == ScriptSearchMode.Extensions ? dialogs.githubFooter(lf("Want to create your own extension?"), this.hide) : undefined}
             </sui.Modal>
         );
     }

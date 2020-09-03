@@ -9,23 +9,8 @@ namespace pxt.blocks {
     let registeredFieldEditors: Map<FieldEditorOptions> = {};
 
     export function initFieldEditors() {
-        // Initialize PXT custom editors
-        const noteValidator = (text: string): string => {
-            if (text === null) {
-                return null;
-            }
-            text = String(text);
-
-            let n = parseFloat(text || '0');
-            if (isNaN(n) || n < 0) {
-                // Invalid number.
-                return null;
-            }
-            // Get the value in range.
-            return String(Math.round(Number(text)));
-        };
         registerFieldEditor('text', pxtblockly.FieldTextInput);
-        registerFieldEditor('note', pxtblockly.FieldNote, noteValidator);
+        registerFieldEditor('note', pxtblockly.FieldNote);
         registerFieldEditor('gridpicker', pxtblockly.FieldGridPicker);
         registerFieldEditor('textdropdown', pxtblockly.FieldTextDropdown);
         registerFieldEditor('numberdropdown', pxtblockly.FieldNumberDropdown);
@@ -41,6 +26,9 @@ namespace pxt.blocks {
         registerFieldEditor('colornumber', pxtblockly.FieldColorNumber);
         registerFieldEditor('images', pxtblockly.FieldImages);
         registerFieldEditor('sprite', pxtblockly.FieldSpriteEditor);
+        registerFieldEditor('animation', pxtblockly.FieldAnimationEditor);
+        registerFieldEditor('tilemap', pxtblockly.FieldTilemap);
+        registerFieldEditor('tileset', pxtblockly.FieldTileset);
         registerFieldEditor('speed', pxtblockly.FieldSpeed);
         registerFieldEditor('turnratio', pxtblockly.FieldTurnRatio);
         registerFieldEditor('protractor', pxtblockly.FieldProtractor);

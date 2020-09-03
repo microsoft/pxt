@@ -1,4 +1,3 @@
-/// <reference path="../../built/pxtcompiler.d.ts"/>
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -86,6 +85,7 @@ function decompileTestAsync(filename: string) {
                 const outFile = path.join(util.replaceFileExtension(filename, ".local.blocks"));
 
                 if (!baselineExists) {
+                    decompiled = decompiled.replace(/id="[^"]*"\s/g, "");
                     fs.writeFileSync(outFile, decompiled)
                     fail(`no baseline found for ${basename}, output written to ${outFile}`);
                     return;
@@ -93,6 +93,7 @@ function decompileTestAsync(filename: string) {
 
                 const baseline = fs.readFileSync(baselineFile, "utf8")
                 if (!compareBlocksBaselines(decompiled, baseline)) {
+                    decompiled = decompiled.replace(/id="[^"]*"\s/g, "");
                     fs.writeFileSync(outFile, decompiled)
                     fail(`${basename} did not match baseline, output written to ${outFile}`);
                 }
@@ -103,7 +104,7 @@ function decompileTestAsync(filename: string) {
 
 function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     const tsMain = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-    return util.getTestCompileOptsAsync({ "main.ts": tsMain }, dependency, true)
+    return util.getTestCompileOptsAsync({ "main.ts": tsMain }, [dependency], true)
         .then(opts => {
             const decompiled = pxtc.decompile(pxtc.getTSProgram(opts), opts, "main.ts", true);
             if (decompiled.success) {

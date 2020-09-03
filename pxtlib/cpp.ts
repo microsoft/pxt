@@ -139,8 +139,7 @@ namespace pxt.cpp {
         return null
     }
 
-    let prevExtInfo: pxtc.ExtensionInfo;
-    let prevSnapshot: Map<string>;
+    let prevExtInfos: Map<pxtc.ExtensionInfo> = {};
 
     export class PkgConflictError extends Error {
         pkg0: Package;
@@ -157,23 +156,49 @@ namespace pxt.cpp {
     }
 
     export function getExtensionInfo(mainPkg: MainPackage): pxtc.ExtensionInfo {
-        let pkgSnapshot: Map<string> = {}
-        let constsName = "dal.d.ts"
+        const pkgSnapshot: Map<string> = {
+            "__appVariant": pxt.appTargetVariant || ""
+        }
+        const constsName = "dal.d.ts"
         let sourcePath = "/source/"
+        let disabledDeps = ""
+        let mainDeps: Package[] = []
 
-        let mainDeps = mainPkg.sortedDeps(true)
+        // order shouldn't matter for c++ compilation,
+        // so use a stable order to prevent order changes from fetching a new hex file
+        const mainPkgDeps = mainPkg.sortedDeps(true)
+            .sort((a, b) => {
+                if (a.id == "this") return 1;
+                else if (b.id == "this") return -1;
+                else return U.strcmp(a.id, b.id);
+            });
 
-        for (let pkg of mainDeps) {
+        for (let pkg of mainPkgDeps) {
+            if (pkg.disablesVariant(pxt.appTargetVariant) ||
+                pkg.resolvedDependencies().some(d => d.disablesVariant(pxt.appTargetVariant))) {
+                if (disabledDeps)
+                    disabledDeps += ", "
+                disabledDeps += pkg.id
+                pxt.debug(`disable variant ${pxt.appTargetVariant} due to ${pkg.id}`)
+                continue
+            }
+            mainDeps.push(pkg)
             pkg.addSnapshot(pkgSnapshot, [constsName, ".h", ".cpp"])
         }
 
-        if (prevSnapshot && U.stringMapEq(pkgSnapshot, prevSnapshot)) {
+        const key = JSON.stringify(pkgSnapshot)
+        const prevInfo = prevExtInfos[key]
+        if (prevInfo) {
             pxt.debug("Using cached extinfo")
-            return prevExtInfo
+            const r = U.flatClone(prevInfo)
+            r.disabledDeps = disabledDeps
+            return r
         }
 
         pxt.debug("Generating new extinfo")
         const res = pxtc.emptyExtInfo();
+
+        res.disabledDeps = disabledDeps
 
         let compileService = appTarget.compileService;
         if (!compileService)
@@ -183,7 +208,7 @@ namespace pxt.cpp {
             }
         compileService = U.clone(compileService)
 
-        let compile = appTarget.compile
+        let compile = mainPkg.getTargetOptions()
         if (!compile)
             compile = {
                 isNative: false,
@@ -255,9 +280,6 @@ namespace pxt.cpp {
         if (compile.switches.boxDebug)
             cpp_options["PXT_BOX_DEBUG"] = 1
 
-        if (compile.gc)
-            cpp_options["PXT_GC"] = 1
-
         if (compile.utf8)
             cpp_options["PXT_UTF8"] = 1
 
@@ -269,9 +291,6 @@ namespace pxt.cpp {
 
         if (compile.switches.numFloat)
             cpp_options["PXT_USE_FLOAT"] = 1
-
-        if (compile.vtableShift)
-            cpp_options["PXT_VTABLE_SHIFT"] = compile.vtableShift
 
         if (compile.nativeType == pxtc.NATIVE_TYPE_VM)
             cpp_options["PXT_VM"] = 1
@@ -441,7 +460,7 @@ namespace pxt.cpp {
             // special handling of C++ namespace that ends with Methods (e.g. FooMethods)
             // such a namespace will be converted into a TypeScript interface
             // this enables simple objects with methods to be defined. See, for example:
-            // https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/buffer.cpp
+            // https://github.com/microsoft/pxt-microbit/blob/master/libs/core/buffer.cpp
             // within that namespace, the first parameter of each function should have
             // the type Foo
             function interfaceName() {
@@ -809,9 +828,10 @@ namespace pxt.cpp {
         const currSettings: Map<any> = U.clone(compileService.yottaConfig || {})
         const optSettings: Map<any> = {}
         const settingSrc: Map<Package> = {}
+        const codalLibraries: pxt.Map<github.ParsedRepo> = {}
 
         function parseJson(pkg: Package) {
-            let j0 = pkg.config.platformio
+            const j0 = pkg.config.platformio
             if (j0 && j0.dependencies) {
                 U.jsonCopyFrom(res.platformio.dependencies, j0.dependencies)
             }
@@ -819,7 +839,24 @@ namespace pxt.cpp {
             if (res.npmDependencies && pkg.config.npmDependencies)
                 U.jsonCopyFrom(res.npmDependencies, pkg.config.npmDependencies)
 
-            let json = pkg.config.yotta
+            const codal = pkg.config.codal
+            if (isCodal && codal) {
+                for (const lib of codal.libraries || []) {
+                    const repo = github.parseRepoId(lib)
+                    if (!repo)
+                        U.userError(lf("codal library {0} doesn't look like github repo", lib))
+                    const canonical = github.stringifyRepo(repo)
+                    const existing = U.lookup(codalLibraries, repo.project)
+                    if (existing) {
+                        if (github.stringifyRepo(existing) != canonical)
+                            U.userError(lf("conflict between codal libraries: {0} and {1}", github.stringifyRepo(existing), canonical))
+                    } else {
+                        codalLibraries[repo.project] = repo
+                    }
+                }
+            }
+
+            const json = pkg.config.yotta
             if (!json) return;
 
             // TODO check for conflicts
@@ -883,9 +920,16 @@ namespace pxt.cpp {
                 } else {
                     U.assert(!seenMain)
                 }
-                let ext = ".cpp"
-                for (let fn of pkg.getFiles()) {
-                    let isHeader = U.endsWith(fn, ".h")
+                // Generally, headers need to be processed before sources, as they contain definitions
+                // (in particular of enums, which are needed to decide if we're doing conversions for
+                // function arguments). This can still fail if one header uses another and they are
+                // listed in invalid order...
+                const isHeaderFn = (fn: string) => U.endsWith(fn, ".h")
+                const ext = ".cpp"
+                const files = pkg.getFiles().filter(isHeaderFn)
+                    .concat(pkg.getFiles().filter(s => !isHeaderFn(s)))
+                for (let fn of files) {
+                    const isHeader = isHeaderFn(fn)
                     if (isHeader || U.endsWith(fn, ext)) {
                         let fullName = pkg.config.name + "/" + fn
                         if ((pkg.config.name == "base" || /^core($|---)/.test(pkg.config.name)) && isHeader)
@@ -897,9 +941,8 @@ namespace pxt.cpp {
                             U.userError(lf("C++ file {0} is missing in extension {1}.", fn, pkg.config.name))
                         fileName = fullName
 
-                        // parseCpp() will remove doc comments, to prevent excessive recompilation
-                        pxt.debug("Parse C++: " + fullName)
                         parseCpp(src, isHeader)
+                        // src = src.replace(/^[ \t]*/mg, "") // HACK: shrink the files
                         res.extensionFiles[sourcePath + fullName] = src
 
                         if (pkg.level == 0)
@@ -916,6 +959,12 @@ namespace pxt.cpp {
                     allErrors += lf("Extension {0}:\n", pkg.id) + thisErrors
                 }
             }
+
+            if (!seenMain) {
+                // this can happen if the main package is disabled in current variant
+                shimsDTS.clear()
+                enumsDTS.clear()
+            }
         }
 
         if (allErrors)
@@ -928,6 +977,18 @@ namespace pxt.cpp {
                 delete optSettings[k];
             }
         })
+        // fix keys - ==> _
+        Object.keys(optSettings)
+            .filter(k => /-/.test(k)).forEach(k => {
+                const v = optSettings[k];
+                delete optSettings[k];
+                optSettings[k.replace(/-/g, '_')] = v;
+            })
+        if (!isYotta && compileService.yottaConfigCompatibility) { // yotta automatically adds YOTTA_CFG_
+            Object.keys(optSettings)
+                .forEach(k => optSettings["YOTTA_CFG_" + k] = optSettings[k]);
+        }
+
         const configJson = U.jsonUnFlatten(optSettings)
         if (isDockerMake) {
             let packageJson = {
@@ -950,7 +1011,15 @@ namespace pxt.cpp {
                 // include these, because we use hash of this file to see if anything changed
                 "pxt_gitrepo": cs.githubCorePackage,
                 "pxt_gittag": cs.gittag,
+                "libraries": U.values(codalLibraries).map(r => ({
+                    "name": r.project,
+                    "url": "https://github.com/" + r.fullName,
+                    "branch": r.tag || "master",
+                    "type": "git"
+                }))
             }
+            if (codalJson.libraries.length == 0)
+                delete codalJson.libraries
             U.iterMap(U.jsonFlatten(configJson), (k, v) => {
                 k = k.replace(/^codal\./, "device.").toUpperCase().replace(/\./g, "_")
                 cfg[k] = v
@@ -1049,8 +1118,9 @@ int main() {
         res.shimsDTS = shimsDTS.finish()
         res.enumsDTS = enumsDTS.finish()
 
-        prevSnapshot = pkgSnapshot
-        prevExtInfo = res
+        if (Object.keys(prevExtInfos).length > 10)
+            prevExtInfos = {}
+        prevExtInfos[key] = res
 
         return res;
     }
@@ -1121,14 +1191,14 @@ int main() {
         let buf: number[];
         let ptr = 0;
         hexfile.split(/\r?\n/).forEach(ln => {
-            let m = /^:10....0041140E2FB82FA2BB(....)(....)(....)(....)(..)/.exec(ln)
+            let m = /^:10....0[0E]41140E2FB82FA2BB(....)(....)(....)(....)(..)/.exec(ln)
             if (m) {
                 metaLen = parseInt(swapBytes(m[1]), 16)
                 textLen = parseInt(swapBytes(m[2]), 16)
                 toGo = metaLen + textLen
                 buf = <any>new Uint8Array(toGo)
             } else if (toGo > 0) {
-                m = /^:10....00(.*)(..)$/.exec(ln)
+                m = /^:10....0[0E](.*)(..)$/.exec(ln)
                 if (!m) return
                 let k = m[1]
                 while (toGo > 0 && k.length > 0) {
@@ -1233,9 +1303,10 @@ int main() {
     }
 }
 
-namespace pxt.hex {
+namespace pxt.hexloader {
     const downloadCache: Map<Promise<pxtc.HexInfo>> = {};
     let cdnUrlPromise: Promise<string>;
+    let hexInfoMemCache: pxt.Map<pxtc.HexInfo> = {}
 
     export let showLoading: (msg: string) => void = (msg) => { };
     export let hideLoading: () => void = () => { };
@@ -1402,8 +1473,9 @@ namespace pxt.hex {
         if (!extInfo.sha)
             return Promise.resolve<any>(null)
 
-        if (pxtc.hex.isSetupFor(extInfo))
-            return Promise.resolve(pxtc.hex.currentHexInfo)
+        const cached = hexInfoMemCache[extInfo.sha]
+        if (cached)
+            return Promise.resolve(cached)
 
         pxt.debug("get hex info: " + extInfo.sha)
 
@@ -1437,6 +1509,14 @@ namespace pxt.hex {
                             return Promise.resolve(null);
                         })
                 }
+            })
+            .then(res => {
+                if (res) {
+                    if (Object.keys(hexInfoMemCache).length > 20)
+                        hexInfoMemCache = {}
+                    hexInfoMemCache[extInfo.sha] = res
+                }
+                return res
             })
     }
 

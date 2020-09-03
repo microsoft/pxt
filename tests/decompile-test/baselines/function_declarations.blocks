@@ -9,23 +9,33 @@
 <mutation name="shouldDecompile2" >
 </mutation>
 <statement name="STACK">
-<block type="typescript_statement">
-<mutation numlines="1" error="Unsupported statement in block&#58; ReturnStatement" line0="return&#59;" />
+<block type="function_return">
+<mutation no_return_value="true" />
 </block>
 </statement>
 </block>
 <block type="function_definition">
 <mutation name="hasParameters" >
-<arg name="a" type="number" id="k418wm4xjs89pxmiyy2r" />
+<arg name="a" type="number" />
 </mutation>
 <statement name="STACK">
 </statement>
 </block>
+<block type="function_definition">
+<mutation name="hasReturnType" >
+</mutation>
+<statement name="STACK">
+<block type="function_return">
+<value name="RETURN_VALUE">
+<shadow type="math_number">
+<field name="NUM">5</field>
+</shadow>
+</value>
+</block>
+</statement>
+</block>
 <block type="pxt-on-start">
 <statement name="HANDLER">
-<block type="typescript_statement">
-<mutation numlines="1" error="Function with return value not supported in blocks" line0="function hasReturnType&#40;&#41; &#123; return 5&#59; &#125;" />
-<next>
 <block type="typescript_statement">
 <mutation declaredvars="x" numlines="1" error="Unsupported syntax kind for output expression block&#58; FunctionExpression" line0="let x &#61; function &#40;&#41; &#123;&#125;" />
 <next>
@@ -44,8 +54,6 @@
 <mutation numlines="3" error="Function declarations must be top level" line0="function scopedFunction&#40;&#41; &#123;" line1="" line2="    &#125;" />
 </block>
 </statement>
-</block>
-</next>
 </block>
 </next>
 </block>

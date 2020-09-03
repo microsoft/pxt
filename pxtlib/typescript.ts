@@ -1,4 +1,4 @@
-/// <reference path='../built/typescriptServices.d.ts' />
+/// <reference path='../pxtcompiler/ext-typescript/lib/typescriptServices.d.ts' />
 namespace ts.pxtc {
     export function flattenDiagnosticMessageText(messageText: string | DiagnosticMessageChain, newLine: string): string {
         if (typeof messageText === "string") {
@@ -194,6 +194,8 @@ namespace ts.pxtc {
 
         // PXT Specific
         "Math"];
+
+    export const keywordTypes = ["boolean", "number", "string"]
 
     export function escapeIdentifier(name: string): string {
         if (!name) return '_';

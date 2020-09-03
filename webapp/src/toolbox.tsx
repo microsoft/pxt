@@ -5,6 +5,7 @@ import * as data from "./data"
 import * as editor from "./toolboxeditor"
 import * as sui from "./sui"
 import * as core from "./core"
+import * as coretsx from "./coretsx";
 
 import Util = pxt.Util;
 
@@ -23,6 +24,7 @@ export const enum CategoryNameID {
 export interface BlockDefinition {
     qName?: string;
     name: string;
+    pyQName?: string;
     pyName?: string;
     namespace?: string;
     type?: string;
@@ -45,11 +47,21 @@ export interface BlockDefinition {
         group?: string;
         subcategory?: string;
         topblockWeight?: number;
+        help?: string;
+        _def?: pxtc.ParsedBlockDef;
     };
     retType?: string;
     blockXml?: string;
     builtinBlock?: boolean;
     builtinField?: [string, string];
+    parameters?: pxtc.ParameterDesc[];
+}
+
+export interface GroupDefinition {
+    name: string;
+    icon?: string;
+    hasHelp?: boolean;
+    blocks: BlockDefinition[];
 }
 
 export interface ButtonDefinition {
@@ -95,7 +107,11 @@ export interface ToolboxState {
     searchBlocks?: pxtc.service.SearchInfo[]; // block ids
 
     hasError?: boolean;
+
+    shouldAnimate?: boolean;
 }
+
+const MONACO_EDITOR_NAME: string = "monaco";
 
 export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
@@ -111,12 +127,12 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
             categories: [],
             visible: false,
             loading: false,
-            showAdvanced: false
+            showAdvanced: false,
+            shouldAnimate: !Util.getToolboxAnimation()
         }
 
         this.setSelection = this.setSelection.bind(this);
         this.advancedClicked = this.advancedClicked.bind(this);
-        this.recipesClicked = this.recipesClicked.bind(this);
         this.recoverToolbox = this.recoverToolbox.bind(this);
     }
 
@@ -173,7 +189,11 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
     }
 
     clearSelection() {
-        this.setState({ selectedItem: undefined, expandedItem: undefined, focusSearch: false })
+        this.setState({ selectedItem: undefined, focusSearch: false });
+    }
+
+    clearExpandedItem() {
+        this.setState({ expandedItem: undefined });
     }
 
     clearSearch() {
@@ -193,8 +213,14 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
             // Hide flyout
             this.closeFlyout();
+            if (parent.parent.state?.accessibleBlocks) {
+                Blockly.navigation.setState(Blockly.navigation.STATE_WS);
+            }
         } else {
             let handled = false;
+            if (parent.parent.state?.accessibleBlocks) {
+                Blockly.navigation.setState(Blockly.navigation.STATE_TOOLBOX);
+            }
             if (customClick) {
                 handled = customClick(parent);
                 if (handled) return;
@@ -238,6 +264,18 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         parent.moveFocusToFlyout();
     }
 
+    componentWillReceiveProps(props: ToolboxProps) {
+        // if leaving monaco, mark toolbox animation as shown. also
+        // handles full screen sim, where we hide the toolbox via css
+        // without re-rendering, which will trigger the animation again
+        if ((this.props.editorname == MONACO_EDITOR_NAME && props.editorname != MONACO_EDITOR_NAME)
+            || (props.editorname == MONACO_EDITOR_NAME && props.parent.parent.state.fullscreen)
+            && this.state.shouldAnimate) {
+            Util.setToolboxAnimation();
+            this.setState({ shouldAnimate: false });
+        }
+    }
+
     componentDidUpdate(prevProps: ToolboxProps, prevState: ToolboxState) {
         if (prevState.visible != this.state.visible
             || prevState.loading != this.state.loading
@@ -263,6 +301,12 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.setState({ hasError: true });
     }
 
+    componentWillUnmount() {
+        if (this.props.editorname == MONACO_EDITOR_NAME) {
+            Util.setToolboxAnimation();
+        }
+    }
+
     recoverToolbox() {
         // Recover from above error state
         this.setState({ hasError: false });
@@ -272,12 +316,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         const { editorname } = this.props;
         pxt.tickEvent(`${editorname}.advanced`, undefined, { interactiveConsent: true });
         this.showAdvanced();
-    }
-
-    recipesClicked() {
-        const { editorname } = this.props;
-        pxt.tickEvent(`${editorname}.recipes`);
-        this.props.parent.parent.showRecipesDialog();
     }
 
     showAdvanced() {
@@ -410,8 +448,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
         this.items = this.getAllCategoriesList();
 
-        const hasRecipes = !!theme.recipes && !inTutorial && this.items.length > 0;
-
         const searchTreeRow = ToolboxSearch.getSearchTreeRow();
         const topBlocksTreeRow = {
             nameid: 'topblocks',
@@ -428,6 +464,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         ])
 
         let index = 0;
+        let topRowIndex = 0; // index of top-level rows for animation
         return <div ref={this.handleRootElementRef} className={classes} id={`${editorname}EditorToolbox`}>
             <ToolboxStyle categories={this.items} />
             {showSearchBox ? <ToolboxSearch ref="searchbox" parent={parent} toolbox={this} editorname={editorname} /> : undefined}
@@ -436,15 +473,14 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                     {hasSearch ? <CategoryItem key={"search"} toolbox={this} index={index++} selected={selectedItem == "search"} treeRow={searchTreeRow} onCategoryClick={this.setSelection} /> : undefined}
                     {hasTopBlocks ? <CategoryItem key={"topblocks"} toolbox={this} selected={selectedItem == "topblocks"} treeRow={topBlocksTreeRow} onCategoryClick={this.setSelection} /> : undefined}
                     {nonAdvancedCategories.map((treeRow) => (
-                        <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection}>
+                        <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection} topRowIndex={topRowIndex++} shouldAnimate={this.state.shouldAnimate}>
                             {treeRow.subcategories ? treeRow.subcategories.map((subTreeRow) => (
                                 <CategoryItem key={subTreeRow.nameid + subTreeRow.subns} index={index++} toolbox={this} selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)} treeRow={subTreeRow} onCategoryClick={this.setSelection} />
                             )) : undefined}
                         </CategoryItem>
                     ))}
-                    {hasAdvanced || hasRecipes ? <TreeSeparator key="advancedseparator" /> : undefined}
-                    {hasRecipes ? <CategoryItem toolbox={this} treeRow={{ nameid: "", name: pxt.toolbox.recipesTitle(), color: pxt.toolbox.getNamespaceColor('recipes'), icon: pxt.toolbox.getNamespaceIcon('recipes') }} onCategoryClick={this.recipesClicked} /> : undefined}
-                    {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ nameid: "", name: pxt.toolbox.advancedTitle(), color: pxt.toolbox.getNamespaceColor('advanced'), icon: pxt.toolbox.getNamespaceIcon(showAdvanced ? 'advancedexpanded' : 'advancedcollapsed') }} onCategoryClick={this.advancedClicked} /> : undefined}
+                    {hasAdvanced ? <TreeSeparator key="advancedseparator" /> : undefined}
+                    {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ nameid: "", name: pxt.toolbox.advancedTitle(), color: pxt.toolbox.getNamespaceColor('advanced'), icon: pxt.toolbox.getNamespaceIcon(showAdvanced ? 'advancedexpanded' : 'advancedcollapsed') }} onCategoryClick={this.advancedClicked} topRowIndex={topRowIndex++} /> : undefined}
                     {showAdvanced ? advancedCategories.map((treeRow) => (
                         <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection}>
                             {treeRow.subcategories ? treeRow.subcategories.map((subTreeRow) => (
@@ -463,6 +499,7 @@ export interface CategoryItemProps extends TreeRowProps {
     childrenVisible?: boolean;
     onCategoryClick?: (treeRow: ToolboxCategory, index: number) => void;
     index?: number;
+    topRowIndex?: number;
 }
 
 export interface CategoryItemState {
@@ -498,7 +535,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         const { toolbox } = this.props;
         if (this.state.selected) {
             this.props.toolbox.setSelectedItem(this);
-            if (!toolbox.state.focusSearch) this.focusElement();
+            if (!toolbox.state.focusSearch && !coretsx.dialogIsShowing()) this.focusElement();
         }
     }
 
@@ -515,31 +552,48 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
     }
 
     handleKeyDown(e: React.KeyboardEvent<HTMLElement>) {
-        const { toolbox, childrenVisible } = this.props;
+        const { toolbox } = this.props;
         const isRtl = Util.isUserLanguageRtl();
 
+        const accessibleBlocksEnabled = (Blockly.getMainWorkspace() as any).keyboardAccessibilityMode;
+        const blocklyNavigationState = (Blockly.navigation as any).currentState_ as number;
+        const keyMap: { [key: string]: number } = {
+            "DOWN": accessibleBlocksEnabled ? 83 : 40, // 'S' || down arrow
+            "UP": accessibleBlocksEnabled ? 87 : 38, // 'W' || up arrow
+            "LEFT": accessibleBlocksEnabled ? 65 : 37, // 'A' || left arrow
+            "RIGHT": accessibleBlocksEnabled ? 68 : 39 // 'D' || right arrow
+        }
+
         const charCode = core.keyCodeFromEvent(e);
-        if (charCode == 40) { //  DOWN
-            this.nextItem();
-        } else if (charCode == 38) { // UP
-            this.previousItem();
-        } else if ((charCode == 39 && !isRtl) || (charCode == 37 && isRtl)) { // (LEFT & LTR) || (RIGHT & RTL)
-            // Focus inside flyout
-            toolbox.moveFocusToFlyout();
-        } else if (charCode == 27) { // ESCAPE
-            // Close the flyout
-            toolbox.closeFlyout();
-        } else if (charCode == core.ENTER_KEY || charCode == core.SPACE_KEY) {
-            sui.fireClickOnEnter.call(this, e);
-        } else if (charCode == core.TAB_KEY
-            || charCode == 37 /* Left arrow key */
-            || charCode == 39 /* Left arrow key */
-            || charCode == 17 /* Ctrl Key */
-            || charCode == 16 /* Shift Key */
-            || charCode == 91 /* Cmd Key */) {
-            // Escape tab and shift key
-        } else {
-            toolbox.setSearch();
+        if (!accessibleBlocksEnabled || blocklyNavigationState != 1) {
+            if (charCode == keyMap["DOWN"]) {
+                this.nextItem();
+            } else if (charCode == keyMap["UP"]) {
+                this.previousItem();
+            } else if ((charCode == keyMap["RIGHT"] && !isRtl)
+                || (charCode == keyMap["LEFT"] && isRtl)) {
+                // Focus inside flyout
+                toolbox.moveFocusToFlyout();
+            } else if (charCode == 27) { // ESCAPE
+                // Close the flyout
+                toolbox.closeFlyout();
+            } else if (charCode == core.ENTER_KEY || charCode == core.SPACE_KEY) {
+                sui.fireClickOnEnter.call(this, e);
+            } else if (charCode == core.TAB_KEY
+                || charCode == 37 /* Left arrow key */
+                || charCode == 39 /* Left arrow key */
+                || charCode == 17 /* Ctrl Key */
+                || charCode == 16 /* Shift Key */
+                || charCode == 91 /* Cmd Key */) {
+                // Escape tab and shift key
+            } else if (!accessibleBlocksEnabled) {
+                toolbox.setSearch();
+            }
+        } else if (accessibleBlocksEnabled && blocklyNavigationState == 1
+            && ((charCode == keyMap["LEFT"] && !isRtl)
+            || (charCode == keyMap["RIGHT"] && isRtl))) {
+            this.focusElement();
+            e.stopPropagation();
         }
     }
 
@@ -603,11 +657,15 @@ export interface TreeRowProps {
     onKeyDown?: (e: React.KeyboardEvent<any>) => void;
     selected?: boolean;
     isRtl?: boolean;
+    topRowIndex?: number;
+    shouldAnimate?: boolean;
 }
 
 export class TreeRow extends data.Component<TreeRowProps, {}> {
 
     private treeRow: HTMLElement;
+    private baseAnimationDelay: number = 1;
+    private animationDelay: number = 0.15;
 
     constructor(props: TreeRowProps) {
         super(props);
@@ -657,7 +715,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
     }
 
     renderCore() {
-        const { selected, onClick, onKeyDown, isRtl } = this.props;
+        const { selected, onClick, onKeyDown, isRtl, topRowIndex } = this.props;
         const { nameid, subns, name, icon } = this.props.treeRow;
         const appTheme = pxt.appTarget.appTheme;
         const metaColor = this.getMetaColor();
@@ -684,6 +742,10 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
                 treeRowStyle.borderRight = border;
             } else {
                 treeRowStyle.borderLeft = border;
+            }
+            if (topRowIndex && this.props.shouldAnimate) {
+                treeRowStyle.animationDelay = `${(topRowIndex * this.animationDelay) + this.baseAnimationDelay}s`;
+                treeRowClass += ' blocklyTreeAnimate';
             }
         }
 
@@ -868,10 +930,29 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
     }
 }
 
-export class ToolboxTrashIcon extends data.Component<{}, {}> {
+interface ToolboxTrashIconProps {
+    flyoutOnly?: boolean;
+}
+
+export class ToolboxTrashIcon extends data.Component<ToolboxTrashIconProps, {}> {
+    constructor(props: ToolboxTrashIconProps) {
+        super(props);
+    }
+
+    getStyle() {
+        let style: any = { opacity: 0, display: 'none' };
+        if (this.props.flyoutOnly) {
+            let flyout = document.querySelector('.blocklyFlyout');
+            if (flyout) {
+                style["left"] = (flyout.clientWidth / 2);
+                style["transform"] = "translateX(-45%)";
+            }
+        }
+        return style;
+    }
 
     renderCore() {
-        return <div id="blocklyTrashIcon" style={{ opacity: 0, display: 'none' }}>
+        return <div id="blocklyTrashIcon" style={this.getStyle()}>
             <i className="trash icon" aria-hidden="true"></i>
         </div>
     }

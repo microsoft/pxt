@@ -4,170 +4,48 @@
 
 /* Background and foreground */
 @docsBackgroundColor: white;
-@docsTextColor: #292A33;
+@docsTextColor: #333;
 @docsLineHeight: 1.7;
-@docsPrimaryColorDarker: darken(@docsPrimaryColor, 7%);
-@docsPrimaryColorLight: fadeout(@docsPrimaryColor, 80%);
-@docsPrimaryColorLighter: fadeout(@docsPrimaryColor, 95%);
-@docsPrimaryColorHover: fadeout(@docsPrimaryColor, 90%);
-@docsSecondaryColor: fadeout(@docsPrimaryColor, 10%);
-@docsHeroColor: fadeout(@docsPrimaryColor, 7%);
 
 /* Text color */
-@docsHeadingColor: #292A33;
-
-/* Text Font */
-@docsReadingText: 'Helvetica', 'Helvetica Neue', 'Arial', Sans-serif;
-@docsPageFont: 'Helvetica', 'Helvetica Neue', 'Arial', Sans-serif;
+@docsHeadingColor: @docsTextColor;
 
 /* Link color */
 @docsLinkColor: #3977b4;
 
 /* Code segment */
-@docsSegementBackgroundColor: #f7f7f7;
-@docsSegementBackgroundColorValid: #edf9ef;
-@docsSegementBackgroundColorInvalid: #fbf3f4;
+@docsSegmentBackgroundColor: #f7f7f7;
+@docsSegmentBackgroundColorValid: #edf9ef;
+@docsSegmentBackgroundColorInvalid: #fbf3f4;
 
 /* Card */
 @docsCardBackgroundColor: white;
 @docsCardColor: @docsTextColor;
 @docsCardHeaderColor: @docsTextColor;
 @docsCardContentColor: @docsTextColor;
-@docsCardImageBackgroundColor: rgba(0,0,0,.05);
+@docsCardImageBackgroundColor: rgba(0, 0, 0, .05);
 
 @docsCardBorderColor: #e9eef2;
-@docsCardHoverBorderColor: #D5DBED;
+@docsCardHoverBorderColor: #1dacf4;
 
-/*Docs Header*/
-#docs-header {
-    color: white;
-    padding-left: 0;
-    padding-right: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    background-color: @docsPrimaryColorDarker;
-    margin-top: 0;
-    margin-bottom: 0;
-    div.menu {
-        align-items: center;
-    }
-    &.ui.menu {border-radius: 0px; height: 48px; }
-    .left.floated {
-        display: flex;
-        align-items: center;
-        a {
-            margin-right: 3px;
-        }
-    }
-    img {
-        margin-right:7px
-    } 
-    #docs-type {
-        display:flex;
-        font-family: @docsPageFont;
-    }
-    .ui.input input {
-        font-family: @docsPageFont;
-        height: 36px;
-        border-radius: 2px;
-        width: 170px;
+#docs .footer,
+#docs .topbar,
+.ui.menu.fixed.docs,
+#docs {
+    top: auto;
+    background: hsl(@docsHue, 25%, 85%);
+    &.inverted {
+        background: hsl(@docsHue, 15%, 20%);
     }
 }
 
-#togglesidebar + div.menu > a { 
-    height:100%;
-}
-
-#togglesidebar {
-    padding:0px;
-    padding-left: 1rem;
-    padding-right: 1rem;
-    margin-right: 0px !important;
-    background-color: white;
-    color: @docsPrimaryColor;
-    border-radius: 0 0 0 0;
-}
-
-#togglesidebar > i.icon {
-    transition: transform .2s ease;
-}
-
-#togglesidebar > i.icon.content {
-    transform: rotate(0deg);
-}
-
-#togglesidebar > i.icon.close {
-    transform: rotate(90deg);
-}
-
-#sticky-btndisabled,
-#sticky-btn[disabled] {
-  color: @docsPrimaryColor;
-}
-
-.divider-pipe {
-    width: 2px;
-    height: 36px;
-    background-color: hsla(0, 0%, 100%, 0.2);
-    margin-right: 1rem;
-}
-
-.divider-pipe + div {
-    font-weight: 600;
-    font-family: sans-serif;
-}
-
-/*Search input*/
-.search.link.icon {
-    color: @docsPrimaryColor;
-}
-
-.sticky-list {
-    position: fixed;
-    top: 11vh;
-    right: 6rem;
-    width: 23%;
-    font-family: @docsHeaderFont;
-}
-.sticky-list ul {
-    margin-left: 3rem;
-    padding: 2rem;
-    width: auto;
-    display: flex;
-    flex-flow: column;
-    background-color: white;
-    border: 1px solid #bdbcbc;
-    border-radius: 2px;
-    overflow-y: overlay;
-    overflow-wrap: break-word;
-    display: flex;
-    flex-flow: column;
-    background-color: white;
-    border: 1px solid #bdbcbc;
-    overflow-y: overlay;
-    overflow-wrap: break-word;
-    font-family: @docsHeaderFont;
-    a {
-        line-height: 24px;
-        font-weight: 500;
-        cursor: pointer;
-    }
-    a.title {
-        color: white;
-    }
-    h3.title {
-        font-size: 1.28rem;
-        color: @docsPrimaryColorDarker;
-        font-family: @docsHeaderFont;
-    }
+.docs.ui.menu.sidebar {
+    border: none;
+    border-right: 1px solid rgba(34,36,38,.15);
 }
 
 #docs {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    background-color: @docsBackgroundColor;
-    font-family: @docsPageFont;
+    font-family: @docsPageFont !important;
     color: @docsTextColor;
     * {
         -webkit-overflow-scrolling: touch;
@@ -176,57 +54,35 @@
         -webkit-touch-callout: none;
         -webkit-font-smoothing: antialiased;
     }
-    hr {
-        margin-top: 1rem;
-        border: 1px solid @docsPrimaryColorLight;
-        margin-left: 1rem;
-        margin-right: 1rem;
+    #maincontent {
+        background-color: @docsBackgroundColor;
     }
     h1, h2, h3, h4, h5, h6 {
-        font-family: @docsHeaderFont;
+        font-family: @docsHeaderFont !important;
         color: @docsHeadingColor;
-        font-weight: 600;
-        font-size: 2rem;
-    }
-    h2 {
-        font-size: 2.5rem;
-        font-weight: 600;
-        margin-top: 5rem;
-        &:not(:first-of-type) {
-            padding-top: 60px;
-            border-top: 2px solid @docsCardHoverBorderColor;
-        }
     }
     h1 {
-        margin-bottom: 0.5em;
-        font-size: 3.5rem;
+        margin-bottom: .85em;
     }
-    .ui.menu, .ui.list .list>.item .header, .ui.list>.item .header, .ui.card>.content>.header, .ui.cards>.card>.content>.header {
-       font-family: @docsPageFont;
-    }
-    ul {
-        padding: 0rem;
+    h2 {
+        margin-top: 1.5em;
+        margin-bottom: .75em;
+
+        &:not(:first-child) {
+            padding-top: 1.5em;
+            border-top: 2px solid fade(@docsHeadingColor, 15%);
+        }
+        &+h2 {
+            padding-top: 0 !important;
+            margin-top: -.75em !important;
+            border-top: none !important;
+        }
     }
     /* Text color */
     p, ul li {
         color: @docsTextColor;
         line-height: @docsLineHeight;
     }
-    ul li {
-        list-style-type: none;
-    }
-    ul li:before {
-        margin-right: .5rem;
-        content: "\25CF";
-        color: @docsLinkColor;
-    }
-    ul li.checked:before {
-        content: "\25C9";
-    }  
-    ul li.unchecked:before {
-        content: "\25CE";
-    }
-    p { font-family: @docsReadingText }
     /* Link color */
     a {
         color: @docsLinkColor;
@@ -238,122 +94,55 @@
     span.docs, text.blocklyText {
         -webkit-font-smoothing: auto !important;
     }
-    .topspace {
-        height: 3.05rem;
-        display: flex;
-        align-items: center;
-        background-color: @docsPrimaryColor;
+    /* Language Picker */
+    #langpicker > i {
+        color: @docsLinkColor;
+        text-decoration: none;
+        margin-right: 4px;
     }
-    .pushable {
-        height: initial;
-    }
-    .ui.centered.image, .ui.centered.images {
-        margin-left: 0px;
-        margin-right: auto;
-    }
-    
-    #docsMobile > div > div.divider {
-        border-bottom: 1px solid #0808081a;
-        margin-top: 1rem;
-        margin-bottom: 1rem;
-    }
-
-    .ui.hero {
-        background-color: @docsHeroColor;
-        background-image: data-uri('../docs/static/logo/icons/pattern2.png');
-        margin-top: -48px;
-        width: 105vw;
-        margin-left: -7vw;
-        height: 240px;
-        padding: 50px;
-        padding-left: 14%;
-        background-position-x: 38px;
-        background-position-y: -16px;
-        background-blend-mode: soft-light;
-        .main-description {
-            margin-left: -6vw;
-            h1 { 
-                font-size: 4rem;
-                font-weight: 600;
-                margin-bottom: 0px;
-                color: white;
-                text-shadow: 2px 2px @docsPrimaryColorDarker;
-            }
-            p { 
-                font-size: 24px;
-                color: white;
-                font-family: helvetica;
-                font-weight: 600;
-                text-shadow: 2px 2px @docsPrimaryColorDarker;
-            }
-        }
-    }
-
-    .mainbody {
-        margin-top: 2em;
-        padding-bottom: 3em;
-    }
-
-    /* Main Body Widths */
-    .ui.grid.mainbody {
-        margin-left: 1rem !important;
-        transition: width .5s;
-        transition-timing-function: ease;
-    }
-    
-    .ui.grid.mainbody.full-width, .ui.vertical.footer.full-width {
-        width: 100vw;
-        padding-right: 0rem;
-        margin-left:0px !important;
-    }
-    
-    .ui.grid.mainbody.content-width, .ui.vertical.footer.content-width {
-        width: 80vw;
-        margin-left: 1rem;
-    }
-    
-    .ui.grid>.column:not(.row), .ui.grid>.row>.column {
-        padding-left: 0px;
-        padding-right: 0px;
-    }
-
     /* Code segments */
     .mainbody .ui.segment, pre {
-        background: @docsSegementBackgroundColor !important;
+        background: @docsSegmentBackgroundColor !important;
         border-radius: 0 !important;
         border: 0 !important;
         margin-bottom: 1.275em;
         box-shadow: none;
         tab-size: 4;
+
+        .subheading {
+            text-align: right;
+            border-top: 1px solid fade(@docsTextColor, 50%);
+            color: fade(@docsTextColor, 70%);
+            margin-top: 1em;
+            padding-top: .5em;
+            text-transform: uppercase;
+        }
     }
     .mainbody div.codewidget.valid, code.valid {
-        background: @docsSegementBackgroundColorValid !important;
+        background: @docsSegmentBackgroundColorValid !important;
     }
     .mainbody div.codewidget.invalid, code.invalid {
-        background: @docsSegementBackgroundColorInvalid !important;
+        background: @docsSegmentBackgroundColorInvalid !important;
     }
+
     .mainbody div.codewidget.valid, .mainbody div.codewidget.invalid {
         overflow: auto;
     }
+
     .invalid i.icon, .valid i.icon {
         float: right;
         margin-top: 10px;
         margin-right: 10px;
         font-size: 30px;
     }
+
     .invalid i.icon {
         color: #a31515;
     }
     .valid i.icon {
         color: #008000;
     }
-    .ui.message {
-        border-radius: 2px;
-    }
-    .ui.message>.content:before {
-        position: absolute;
-        margin-top: 0;
-    }
+
     .avatar .ui.message {
         margin-left: 4em;
         margin-bottom: 1em;
@@ -361,346 +150,61 @@
     code.lang-typescript, code.lang-python {
         overflow-wrap: break-word;
     }
-    /*Header*/
-    .main.menu .header.item {
-        font-weight: 400;
+    .codesnippet {
+        padding-top: 1em;
+
+        .ui.tabular.menu {
+            border: none;
+            margin-bottom: -1.5em;
+            padding-bottom: 0;
+
+            .item:hover, .item:focus {
+                border-radius: 2px;
+                outline: none;
+                background: @docsSegmentBackgroundColor;
+            }
+        }
     }
     /* Cards */
-    .ui.cards {
-        justify-content: left;
-        margin-top: 1rem;
-    }
     .ui.card {
         padding: 0 !important;
         background: @docsCardBackgroundColor;
         color: @docsCardColor;
-        border-radius: 0%;
+        border-radius: 0.5rem !important;
+        border: 2px solid @docsCardBorderColor;
         text-decoration: none; /* Remove underline applied by a link */
-        flex-flow: row;
-        align-items: flex-start;
-        height: 8.6rem;
-        border: none;
-        font-family: @docsPageFont;
-        flex-basis: 560px;
-        width: 560px;
-        margin-bottom: 2rem;
         > .image {
             background: @docsCardImageBackgroundColor;
-            background-size: contain;
-            width: 15rem;
-            .ui.cardimage {
-                height: 8.5rem;
-            }
-        }
-        .ui.imagewrapper {
-            overflow: hidden;
-            border-top-left-radius: 0rem;
-            border-top-right-radius: 0rem;
         }
         .header {
             color: @docsCardHeaderColor;
-            font-size:20px;
-            word-break: break-word;
-            &:after {
-                content: "";
-                width: 40px;
-                height: 4px;
-                background-color: @docsCardHoverBorderColor; 
-                display: block;
-                margin-top: .5rem;
-                transition: width .4s ease-out;
-            }
-        }
-        .content {
-            padding-top: 0px;
-            padding-right: 0px;
         }
         .content .ui.description {
             color: @docsCardContentColor;
         }
-    }
-    .ui.card:hover {
-        border: 0px solid @docsCardHoverBorderColor;
-        .header:after {
-            background-color: @docsAccentColor;
-            width: 60px;
-        }
-        .ui.imagewrapper:after {
-            content: "";
-            width: 12px;
-            height: 100%;
-            background-color:  @docsAccentColor;;
-            position: absolute;
-            top: 0px;
+
+        &:hover, &:focus {
+            border: 2px solid @docsCardHoverBorderColor;
         }
     }
 
     /* Breadcrumb */
-    .ui.breadcrumb {
-        .divider {
-        color: whitesmoke;
-        margin-right: .25rem;
-        margin-right: .25rem;
-        }
-        a {
-            color: whitesmoke;
-        }
-        a.active {
-            color: white;
-        }
-    }
-
-    /* TOC */
-    .toc .inverted .item.title a.header {
-        margin-right: 1em;
-        font-family: @docsPageFont !important;
-    }
-    .toc .inverted .item a.header {
-        color: black !important;
-        font-weight: normal;
-        margin-left: 19px;
-    }
-    .toc .inverted .item a.header.active {
-        color: @docsPrimaryColor !important;
-        font-weight: normal;
-    }
-    .toc a.item {
+    .ui.breadcrumb .divider {
         color: black;
-        padding: 11px 15px !important;
-    }
-    .toc a.item:hover {
-        background: @docsPrimaryColorHover;
-    }
-    .toc .inverted a.item {
-        color: rgb(0, 0, 0);
-    }
-    .toc a.item:hover {
-        text-decoration: @linkHoverUnderline;
-    }
-    .toc .inverted .item.search {
-        margin: -.92857143em -1.14285714em;
-    }
-    .toc .item.search input {
-        border-radius: 0;
-    }
-    .tocmenu .menu {
-        padding-left: 0px;
-        margin:0px;
-        font-family: @docsPageFont;
-        margin-left: -19px;
-    }
-    .ui.inverted.menu .item {
-        color: black;
-    }
-    .ui.inverted.menu {
-        color: #1A1C33 !important;
-        background-color: @backgroundGrey;
-        margin:0px;
-    }
-    div.item {
-        margin-left: 6px; margin-top: 6px;
-    }
-    div.menu > a.item {
-        padding-left: 1px!important;
-        padding: 1px;
-        margin-left: 29px;
-        margin-bottom: 6px;
-    }
-
-    div.menu > a.item > i {
-        width: 26px;
-        height: 26px;
-        background-color: white;
-        padding-top: 0.4em;//check in Chrome Mac 6px;
-        padding-left: 0px;
-    }
-
-    div.menu > a.item > i:hover {
-        width: 26px;
-        height: 26px;
-        background-color: @docsPrimaryColor;
-        padding-top: 0.4em;//check in Chrome Mac 6px;
-        padding-left: 0px;
-    }
-
-    .icon-add-fill(@src, @fill-new) {
-        @data-uri: data-uri('image/svg+xml;charset=UTF-8', '@{src}');
-        @replace-default: escape('<path ');
-        @replace-new: escape('<path fill="@{fill-new}" ');
-        @replace-src: replace('@{data-uri}', @replace-default, @replace-new, 'g');
-        background-image: e(@replace-src);
-    }
-
-    /* Edit Icon */
-    div.menu > a.item > i.edit.icon {
-        background: no-repeat center;
-        .icon-add-fill('../docs/static/logo/icons/editor.svg', @docsPrimaryColor);
-    }
-
-    div.menu > a.item > i.edit.icon:before {
-        content: "";
-    }
-
-    /* Download Icon */
-    div.menu > a.item > i.download.icon {
-        background: no-repeat center;
-        .icon-add-fill('../docs/static/logo/icons/download.svg', @docsPrimaryColor);
-    }
-
-    div.menu > a.item > i.download.icon:before {
-        content: "";
-    }
-
-    /* Javascript Icon */
-    div.menu > a.item > i.icon.xicon.js {
-        background: no-repeat center;
-        border: 1px solid @docsPrimaryColor;
-        color: @docsPrimaryColor;
-        font-size: 16px;
-    }
-
-    div.menu > a.item > i.icon.xicon.js:hover {
-        background: no-repeat center;
-        background-color: @docsPrimaryColor;
-        &:before {
-            color: white;
-        }
-    }
-
-    #printbtn.circular.ui.icon.right.floated.button {
-        border: none;
-        border-radius: 0px;
-        background: none;
-        box-shadow: none;
-        padding: .5em;
-    }
-
-    /* Print Icon */
-    #printbtn i.icon.print {
-        background: no-repeat center;
-        background-size: contain;
-        .icon-add-fill('../docs/static/logo/icons/print.svg', @docsPrimaryColor);
-        height: 1.3em;
-        width: 1.4em;
-    }
-
-    #printbtn i.icon.print:before {
-        content: "" !important;
-    }
-
-    /* Python Icon */
-    div.menu > a.item > i.icon.xicon.python {
-        background: no-repeat center;
-        border: 1px solid @docsPrimaryColor;
-        color: @docsPrimaryColor;
-        font-size: 16px;     
-    }
-
-    div.menu > a.item > i.icon.xicon.python:hover {
-        background: no-repeat center;
-        background-color: @docsPrimaryColor;
-        &:before {
-            color: white;
-        }
-    }
-
-    /* Blocks Icon */
-    div.menu > a.item > i.icon.xicon.blocks {
-        background: no-repeat center;
-        border: 1px solid @docsPrimaryColor;
-        .icon-add-fill('../docs/static/logo/icons/blocks-v2.svg', @docsPrimaryColor);
-    }
-
-    div.menu > a.item > i.icon.xicon.blocks:hover {
-        background: no-repeat center;
-        background-color: @docsPrimaryColor;
-        background-image: data-uri('image/svg+xml;charset=UTF-8', '../docs/static/logo/icons/blocks-v1.svg')
-    }
-
-    div.menu > a.item > i.icon.xicon.blocks:before {
-        content: "" !important;
-    }
-
-     /* Play in Emulator Icon */
-    div.menu > a.item > i.play.icon{ 
-        background: no-repeat center;
-        border: 1px solid @docsPrimaryColor;
-        .icon-add-fill('../docs/static/logo/icons/emulator-v2.svg', @docsPrimaryColor);
-    }
-
-    div.menu > a.item > i.play.icon:hover {
-        background: no-repeat center;
-        background-color: @docsPrimaryColor;
-        background-image: data-uri('image/svg+xml;charset=UTF-8', '../docs/static/logo/icons/emulator-v1.svg')
-    }
-
-    div.menu > a.item > i.play.icon:before {
-        content: "" !important;
-    }
-
-    div.menu > a.item > i + span {
-        display: none;
-    }
-
-    .ui.bottom.tabular.menu {
-        border-top: 0px solid #d4d4d5;
-        margin-bottom: 0rem;
-    }
-
-    .ui.top.attached.segment.codewidget {
-        margin-top:0px;
-    }
-
-    .ui.inverted.menu .item.bold {
-        font-weight: bold;
-        margin-left: -4px;
-    }
-    .ui.inverted.menu .active.item {
-        color: @docsPrimaryColor !important;
-    }
-    .menuContainer .chevron.right.icon {
-        float:left;
-        margin-top:1px;
-        color: @docsPrimaryColor;
-        font-family: Icons;
-    }
-    .menuContainer .dropdown.icon.chevron.down {
-        float: left;
-        color: @docsPrimaryColor;
-    }
-
-    .menuContainer .chevron.right.icon{
-        float:left;
-        margin-top:1px;
-        color: @docsPrimaryColor;
-        font-family: Icons;
-    }
-
-    .menuContainer .dropdown.icon.chevron.down{
-        float: left;
-        color: @docsPrimaryColor;
-    }
-
-    /* Message Boxes */
-    .ui.content.js > .right {
-        text-align: right;
-        margin-right: 1em;
-        font-size: 0.7em;
-        border-top: 1px solid #cecece;
-        margin-top: 2.5em;
-        color: #807e7e;
     }
 
     /* Buttons */
     .ui.primary.button p {
         color: white;
     }
+
     #sidedocs-back-button {
         margin-top: 1.25rem;
         margin-left: 1.25rem;
         cursor: pointer;
         user-select: none;
     }
+
     #sidedocs-back-button.disabled {
         color: #aeaeae;
         cursor: not-allowed;
@@ -715,287 +219,235 @@
     table tr:nth-child(2n) {
         background-color: #f8f8f8;
     }
-    div.item > div.menu > a.item.active:before {
-        content: "\f078";
-        font-family: Icons;
-        margin-right: 6px;
-        color: @docsPrimaryColor;
-        transform: rotate(-90deg);
-    }
-    .header.active + .menu {
-        background-color: @docsPrimaryColorLighter;
-    }
-
-    /* Accordion */
-    .ui.accordion, .accordion {
-        margin-left: 0px;
-        margin-right: 0px;
-        padding-left: 0px;
-        padding-right: 0px;
-    }
-    .ui.accordion .title {
-        margin-left: 10px;    
-    }
-
-    .ui.accordion  div.content > a.item {
-        margin-left: -0.6rem;
-        padding-left: 95px!important;
-    }
-
-    .ui.accordion  div.content > div > div.content > a.item {
-        padding-left: 98px !important;
-        margin-left: -3rem;
-    }
-
-    .ui.accordion  div.content div.item { 
-        padding-left: 45px !important;
-    }
-
-    .ui.accordion .accordion .title .dropdown.icon:before, .ui.accordion .title .dropdown.icon:before {
-        content: "\f054";
-    } 
-
-    .ui.container.mainbody {
-        margin-top: 1rem;
-    }
-
-    .ui.breadcrumb:first-child {
-        margin-top: 0px;
-    }
-
-    .message p {
-        margin-left: 3rem;
-    }
 
     /* Warning Message Box */
-     .ui.warning.message {
-        padding: 2em;
-    }
-
     .ui.warning.message > .content:before {
         content: '\f05a';
-        font-family: Icons;
-        font-size: 1.3em;
-        vertical-align: top;
-    }
-
-    .ui.warning.message > .content > h4 {
-        display: inline;
-        margin-left: 3rem;
-        font-weight: 500;
-        top: -0.5rem;
-        position: relative;
     }
 
     /* Alert Message Box */
-    .ui.negative.message {
-        padding: 2em;
-    }
-
     .ui.negative.message > .content:before {
         content: '\f071';
-        font-family: Icons;
-        font-size: 1.3em;
-        vertical-align: top;
-    }
-
-    .ui.negative.message > .content > h4 {
-        display: inline;
-        margin-left: 3rem;
-        font-weight: 500;
-        top: -0.5rem;
-        position: relative;
     }
 
     /* Tip Message Box */
-    .ui.positive.message {
-        padding: 2em;
-    }
-
     .ui.positive.message > .content:before {
         content: '\f058';
-        font-family: Icons;
-        font-size: 1.3em;
-        vertical-align: top;
-    }
-
-    .ui.positive.message > .content > h4 {
-        display: inline;
-        margin-left: 3rem;
-        font-weight: 500;
-        top: -0.5rem;
-        position: relative;
     }
 
     /* Hint Message Box */
-    .ui.info.message {
-        padding: 2em;
-    }
-
     .ui.info.message > .content:before {
         content: '\f15c';
-        font-family: Icons;
-        font-size: 1.3em;
-        vertical-align: top;
     }
 
-    .ui.info.message > .content > h4 {
-        display: inline;
-        margin-left: 3rem;
-        font-weight: 500;
-        top: -0.5rem;
-        position: relative;
+    /* message boxes */
+
+    .ui.message {
+        &.info, &.positive, &.negative, &.warning {
+            padding: 2em;
+
+            > .content:before {
+                font-family: Icons;
+                font-size: 1.3em;
+                vertical-align: top;
+            }
+
+            > .content > h4 {
+                display: inline;
+                margin-left: 1em;
+                font-weight: 500;
+
+                scroll-margin-top: 6em;
+            }
+        }
     }
 
-    .pusher .article {
-        left: -260px;
+    .footer {
+        margin-left: 0;
+        margin-right: 0;
+        margin-top: 3em;
+        margin-bottom: 0;
+
+        a.item {
+            color: rgb(22, 83, 130, 1.0);
+
+            i.icon {
+                width: auto;
+                padding: 0 .25em !important;
+                color: rgba(0, 0, 0, .6);
+            }
+
+            &:hover, &:focus {
+                i.icon {
+                    color: rgba(0, 0, 0, 0.8);
+                }
+            }
+        }
+
+        .divider {
+            border-top: 1px solid rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .ui.divided.horizontal.list > .item:not(:first-child) {
+            border-left: 1px solid rgba(0, 0, 0, .4);
+        }
+
+        span.item {
+            color: rgba(0, 0, 0, .6);
+        }
+
+        span.item, img {
+            vertical-align: middle;
+        }
+
+        &> .ui.container {
+            margin: 0 auto;
+            padding: 2em 0;
+        }
+
+        .poweredBy .item {
+            padding-right: .5em;
+        }
+        &.inverted {
+            a.item {
+                color: rgba(114, 163, 211, 1.0);
+
+                i.icon {
+                    color: rgba(255, 255, 255, .6);
+                }
+
+                &:hover, &:focus {
+                    i.icon {
+                        color: rgba(255, 255, 255, 0.8);
+                    }
+                }
+            }
+            .divider {
+                border-top: 1px solid rgba(255, 255, 255, 0.3);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .ui.divided.horizontal.list > .item:not(:first-child) {
+                border-left: 1px solid rgba(255, 255, 255, .4);
+            }
+
+            span.item {
+                color: rgba(255, 255, 255, .6);
+            }
+        }
+    }
+
+    /** youtube / video embed: don't give negative margin**/
+    .ui.grid {
+        margin: 0;
+    }
+
+    /* sidedocs tutorials (text-based) */
+    &.editorlang-text {
+        pre {
+            overflow-x: scroll;
+            font-size: 0.875em;
+        }
+
+        pre > code {
+            white-space: pre;
+        }
+
+        .mainbody .ui.segment {
+            padding: 0;
+        }
     }
 }
 
-#docsMobile {
-    background-color: @backgroundGrey !important;
-    div.activities {
-        a:hover { font-weight: 600; color: @docsPrimaryColorDarker !important;}
-        .item {
-            padding-left: 2rem;
-        }
+.ui.sidebar.menu.docs {
+    background: #EFEFEF;
+    padding-left: 0.5em;
+
+    /* Sidebar TOC */
+    .item:before {
+        content: none;
+        width: 0;
+        height: 0;
+    }
+    .item,
+    .accordion .title {
+        padding: 0.8rem;
+        padding-left: 1rem;
+        display: flex;
+        flex-direction: row;
     }
     .item {
-        color: black;
-        line-height: 1.16666667em;
-    } 
-    .item.bold {
-        font-weight: bold;
-        margin-left: -4px;
+        padding-left: 1.25em;
     }
-    .ui.list.menuContainer {
-        color: black;
-        padding-top:1rem;
-        padding-bottom:1rem;
-        a.item {
-            font-weight: normal;
-            padding: .96rem 1.5rem !important;
-            padding-left: 2.1rem !important;
+    .active.item {
+        color: hsla(0,0%,0%,.9) !important;
+    }
+    .content {
+        border-left: 1px solid hsla(@docsHue, 45%, 40%, 0.3);
+    }
+    .accordion.item {
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    .accordion.item .title .icon {
+        font-size: 0.8em;
+        font-weight: 700;
+        width: 1rem;
+        transform: translateY(0.1rem);
+    }
+    .content {
+        padding-top: 0;
+    }
+    .accordion.item .title.active .icon {
+        transform: translateY(0.1rem) rotate(90deg);
+    }
+    .accordion.item .title {
+        display: flex;
+        padding-left: 0;
+    }
+    .accordion.item {
+        margin: 0;
+    }
+    a.item.active {
+        background-color: hsla(0,0%,0%,.05);
+    }
+    a.item,
+    .accordion .title {
+        &:hover, &:focus {
+            background-color: hsla(0,0%,0%,.1);
         }
-        a.item:hover {
-        text-decoration: underline;
-        background: @docsPrimaryColorHover;
-        }
-        div.item {
-            margin-left: 6px;
-            margin-top: 6px;
-        }
-        .menu {
-            padding-left: 0px;
-            margin:0px;
-            font-family: @docsPageFont;
-            margin-left: -19px;
-        }
-        div.menu > a.item {
-            padding-left:64px !important;
-        }
-        div.menu > a.item.active {
-            font-weight: 600;
-        }
-        .active.item, .header.active {
-            color: @docsPrimaryColor !important;
-        }
-        .header {
-            color: black !important;
-            font-weight: normal;
-            margin-left: 5px;
-        }
-
-        div.item > div.menu > a.item.active:before {
-            content: "\f078";
-            color: @docsPrimaryColor;
-            font-family: Icons;
-            margin-right: 6px;
-            transform: rotate(-90deg);
-        }
-        .header.active + .menu {
-            background-color: @docsPrimaryColorLighter;
-        }
-        .chevron.right.icon {
-            float:left;
-            margin-top:1px;
-            color: @docsPrimaryColor;
-            font-family: Icons;
-        }
-        .dropdown.icon.chevron.down {
-            float: left;
-            color: @docsPrimaryColor;
-        }
-
-         /* Accordion */
-        .ui.accordion, .accordion {
-            margin-left: 0px;
-            margin-right: 0px;
-            padding-left: 0px;
-            padding-right: 0px;
-        }
-        .ui.accordion .title {
-            margin-left: 10px;
-        }
-
-        .ui.accordion  div.content > a.item {
-            margin-left: -1rem;
-            padding-left: 101px!important;
-        }
-    
-        .ui.accordion  div.content > div > div.content > a.item {
-            padding-left: 98px !important;
-            margin-left: -3rem;
-        }
-
-        .ui.accordion  div.content div.item { 
-            padding-left: 45px !important;
-        }
-
-        .ui.accordion .accordion .title .dropdown.icon:before, .ui.accordion .title .dropdown.icon:before {
-            content: "\f054";
-        }
-
-        .ui.container.mainbody {
-            margin-top: 1rem;
-        }
-
-        .ui.breadcrumb:first-child {
-            margin-top: 20px;
-        }
-    } 
+    }
+    a {
+        color: hsla(0,0%,0%,.9);
+    }
+    .icon {
+        color: hsl(@docsHue, 45%, 40%);
+    }
+    a:hover,
+    a:focus,
+    .title:hover a,
+    .title:focus a {
+        text-decoration: none;
+        color: hsl(@docsHue, 35%, 30%)
+    }
+    &.vertical .item:before {
+        /* remove gray divider lines */
+        content: none;
+    }
+    /* indented content
+        Note: we're annoyingly specific with these selectors
+        because we need to override Semantic's default behavior
+    */
+    .accordion.item .content:not(.style),
+    .accordion.item .accordion .title~.content:not(.ui),
+    .accordion.item .title~.content:not(.ui) {
+        padding: 0 0 0 0.25rem;
+        margin: 0 0 0 0.5rem;
+    }
 }
 
-/* Mobile Search Button's */
-#mobile-search-icon {
-    display: none;
-}
-
-#mobile-search-close {
-    display: none;
-}
-
-#mobile-search-icon.mobile-only-close {
-    display: none;
-}
-
-#mobile-search-icon.mobile-only-open {
-    display: none;
-}
-
-#mobile-search-close.mobile-only-close {
-    display: none;
-}
-
-#mobile-search-close.mobile-only-open {
-    display: none;
-}
-
-#tocsearch2 {
-    display: none;
-}
-
-/* Footer */
 .sideDocs #sidedocsbar a {
     color: @docsLinkColor;
 }
@@ -1008,86 +460,3 @@
     }
 }
 .replaceDocsAvatar();
-
-.footer {
-    > .container {
-        padding: 6em 0;
-    }
-    .poweredBy a {
-        display: inline-block;
-    }
-}
-
-.ui.vertical.footer {
-    background-color: #292A33;
-    margin-top: 5rem;
-    margin-top: 5rem;
-}
-
-.ui.vertical.footer .item {
-    color: white;
-    font-size:1rem !important;
-    font-weight: 500;
-}
-
-.ui.vertical.footer a.item {
-    border-right: 1px solid #ffffff30;
-    line-height: 1rem !important;
-    vertical-align: middle;
-}
-
-.docnav {
-    display: flex;
-    align-items: center;
-    height: 4rem;
-    background-color: #F5F5FA;
-    flex-direction: row;
-    justify-content: center;
-    margin-top: -16px;
-}
-
-.docnav > a.item {
-    margin-right: 2rem;
-}
-
-.docnav .divider {
-    background-color: #D5DBED;
-    width: 1px;
-    height: 30px;
-    margin-right: 1rem;
-}
-
-@media (min-width: 320px) and (max-width: 970px) {
-    #docs .topspace {
-        position: fixed;
-        z-index: 1;
-        width: 100%;
-        background-color: @docsPrimaryColor;
-        top: 48px;
-        height: auto;
-        min-height: 48px;
-        display: block !important;
-    }
-    #breadcrumb-container {
-        font-family: 'Helvetica Neue',Arial,Helvetica,sans-serif;
-        position: fixed;
-        z-index: 1;
-        width: 100%;
-        background-color: @docsPrimaryColor;
-        top: 48px;
-        height: 48px;
-        min-height: 48px;
-        display: block !important;
-    }
-    #docs-header #docs-type {
-        width: 100%;
-        position: fixed;
-        top:48px;
-        background-color: @docsPrimaryColorDarker;
-        height: auto;
-        min-height: 48px;
-        flex-wrap: wrap;
-        justify-content: space-around;
-        display:none;
-    }
-}

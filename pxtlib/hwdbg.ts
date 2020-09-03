@@ -307,8 +307,8 @@ namespace pxt.HWDBG {
                 let f = lastCompileResult.outfiles[pxtc.BINARY_UF2]
                 let blockBuf = U.stringToUint8Array(atob(f))
                 lastFlash = pxtc.UF2.toBin(blockBuf)
-                let blocks = pxtc.UF2.parseFile(blockBuf)
-                return hid.reflashAsync(blocks) // this will reset into app at the end
+                return hid.reflashAsync(lastCompileResult)
+                    .then(() => hid.reconnectAsync()) // this will reset into app at the end
             })
             .then(() => hid.talkAsync(HF2_DBG_RESTART).catch(e => { }))
             .then(() => Promise.delay(200))

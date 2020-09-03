@@ -4,7 +4,9 @@
 
 * [About MakeCode](/about)
 * [Blog](/blog)
+* [Online Learning](/online-learning)
 * [Contact Us](/contact)
+* [Tools](/tools)
 * [Technical Docs](/docs)
     * [JS Editor Features](/js/editor)
     * [Programming Language](/language)
@@ -41,6 +43,7 @@
 * [Translations](/translate)
 * [Blocks Embedding](/blocks-embed)
 * [Command Line Interface](/cli)
+    * [install](/cli/install)
     * [build](/cli/build)
     * [bump](/cli/bump)
     * [deploy](/cli/deploy)

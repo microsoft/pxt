@@ -1,87 +1,31 @@
 /// <reference path="./monacoFieldEditor.ts" />
+/// <reference path="./field_react.ts" />
 
 namespace pxt.editor {
     const fieldEditorId = "image-editor";
 
-    export class MonacoSpriteEditor implements MonacoFieldEditor {
-        private resolver: (edit: TextEdit) => void;
-        private rejecter: (err?: any) => void;
+    export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.sprite.Bitmap> {
+        protected isPython: boolean;
 
-        protected editor: pxtsprite.SpriteEditor;
-        protected fileType: pxt.editor.FileType;
-        protected editrange: monaco.Range;
-
-        getId() {
-            return fieldEditorId;
+        protected textToValue(text: string): pxt.sprite.Bitmap {
+            this.isPython = text.indexOf("`") === -1
+            return pxt.sprite.imageLiteralToBitmap(text);
         }
 
-        showEditorAsync(fileType: FileType, editrange: monaco.Range, host: MonacoFieldEditorHost): Promise<TextEdit> {
-            this.fileType = fileType;
-            this.editrange = editrange;
-            const contentDiv = host.contentDiv();
-            const state = pxtsprite.imageLiteralToBitmap(host.getText(editrange), `
-            . . . . . . . . . . . . . . . .
-            . . . . . . . . . . . . . . . .
-            . . . . . . . . . . . . . . . .
-            . . . . . . . . . . . . . . . .
-            . . . . . . . . . . . . . . . .
-            . . . . . . . . . . . . . . . .
-            . . . . . . . . . . . . . . . .
-            . . . . . . . . . . . . . . . .
-            . . . . . . . . . . . . . . . .
-            . . . . . . . . . . . . . . . .
-            . . . . . . . . . . . . . . . .
-            . . . . . . . . . . . . . . . .
-            . . . . . . . . . . . . . . . .
-            . . . . . . . . . . . . . . . .
-            . . . . . . . . . . . . . . . .
-            . . . . . . . . . . . . . . . .
-        `);
-
-            this.editor = new pxtsprite.SpriteEditor(state, host.blocksInfo(), false);
-            this.editor.render(contentDiv);
-            this.editor.rePaint();
-            this.editor.setActiveColor(1, true);
-            this.editor.setSizePresets([
-                [8, 8],
-                [16, 16],
-                [32, 32],
-                [10, 8]
-            ]);
-
-            contentDiv.style.height = (this.editor.outerHeight() + 3) + "px";
-            contentDiv.style.width = (this.editor.outerWidth() + 3) + "px";
-            contentDiv.style.overflow = "hidden";
-            pxt.BrowserUtils.addClass(contentDiv, "sprite-editor-dropdown-bg");
-            pxt.BrowserUtils.addClass(contentDiv.parentElement, "sprite-editor-dropdown");
-
-            this.editor.addKeyListeners();
-            this.editor.onClose(() => this.onClosed());
-            this.editor.layout();
-            return new Promise((resolve, reject) => {
-                this.resolver = resolve;
-                this.rejecter = reject;
-            });
+        protected resultToText(result: pxt.sprite.Bitmap): string {
+            return pxt.sprite.bitmapToImageLiteral(result, this.isPython ? "python" : "typescript");
         }
 
-        onClosed() {
-            if (this.resolver) {
-                this.resolver({
-                    range: this.editrange,
-                    replacement: pxtsprite.bitmapToImageLiteral(this.editor.bitmap().image, this.fileType)
-                });
-
-                this.editor.removeKeyListeners();
-
-                this.editor = undefined;
-                this.editrange = undefined;
-                this.resolver = undefined;
-                this.rejecter = undefined;
-            }
+        protected getFieldEditorId() {
+            return "image-editor";
         }
-
-        dispose() {
-            this.onClosed();
+        protected getOptions(): any {
+            return {
+                initWidth: 16,
+                initHeight: 16,
+                blocksInfo: this.host.blocksInfo(),
+                showTiles: true
+            };
         }
     }
 
@@ -92,7 +36,7 @@ namespace pxt.editor {
         heightInPixels: 510,
         matcher: {
             // match both JS and python
-            searchString: "img\\s*(?:`|\\(\"\"\")(?:[ a-fA-F0-9\\.]|\\n)*\\s*(?:`|\"\"\"\\))",
+            searchString: "img\\s*(?:`|\\(\\s*\"\"\")[ a-fA-F0-9\\.\\n]*\\s*(?:`|\"\"\"\\s*\\))",
             isRegex: true,
             matchCase: true,
             matchWholeWord: false

@@ -20,6 +20,10 @@
   width: 0;
 }
 
+code.hljs {
+    background: none;
+}
+
 #sidedocsbar {
   position: absolute;
   right: 1rem;
@@ -81,6 +85,28 @@
 #sidedocsbar .ui.link .icon {
   cursor: pointer;
   font-size: @h3;
+}
+
+/* Sidedocs in Monaco editor */
+.sideDocs.editorlang-text {
+    #sidedocs {
+        width: 50%!important;
+        min-width: 18rem;
+    }
+
+    #sidedocsframe, #sidedocsframe-wrapper {
+        width: 100%!important;
+    }
+
+    #sidedocstoggle {
+        right: calc(~'50% - 0.5rem')!important;
+    }
+
+    @media only screen and (max-width: 36rem) {
+        #sidedocstoggle {
+            right: 17rem!important;
+        }
+    }
 }
 
 /* Large Monitor */

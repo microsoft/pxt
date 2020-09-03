@@ -1,0 +1,50 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+    <variables>
+        <variable id="[YD3k@#Q!1GWj-Xi#Z8(">test</variable>
+    </variables>
+    <block type="function_definition" x="0" y="0">
+        <mutation name="return_empty_input" functionid="YDR?p|J(yZpSA)k%.)+(" />
+        <field name="function_name">return_empty_input</field>
+        <statement name="STACK">
+            <block type="function_return">
+                <mutation xmlns="http://www.w3.org/1999/xhtml" no_return_value="false"></mutation>
+            </block>
+        </statement>
+    </block>
+    <block type="function_definition" x="0" y="180">
+        <mutation name="return_no_input" functionid="YDR?p|J(yZpSA)k%.)+(" />
+        <field name="function_name">return_no_input</field>
+        <statement name="STACK">
+            <block type="function_return">
+                <mutation xmlns="http://www.w3.org/1999/xhtml" no_return_value="true"></mutation>
+            </block>
+        </statement>
+    </block>
+    <block type="function_definition" x="0" y="360">
+        <mutation name="return_with_input" functionid="YDR?p|J(yZpSA)k%.)+(" />
+        <field name="function_name">return_with_input</field>
+        <statement name="STACK">
+            <block type="function_return">
+                <mutation xmlns="http://www.w3.org/1999/xhtml" no_return_value="false"></mutation>
+                <value name="RETURN_VALUE">
+                    <shadow type="math_number">
+                        <field name="NUM">0</field>
+                    </shadow>
+                    <block type="math_arithmetic">
+                        <field name="OP">ADD</field>
+                        <value name="A">
+                            <shadow type="math_number">
+                                <field name="NUM">0</field>
+                            </shadow>
+                        </value>
+                        <value name="B">
+                            <shadow type="math_number">
+                                <field name="NUM">0</field>
+                            </shadow>
+                        </value>
+                    </block>
+                </value>
+            </block>
+        </statement>
+    </block>
+</xml>

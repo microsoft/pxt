@@ -116,6 +116,42 @@ a mapping between the block field names and the function names.
 * the block will automatically switch to external inputs when enough parameters are detected
 * Using `=type` in the block string for shadow blocks is deprecated. See "Specifying shadow blocks" for more details.
 
+## Custom block localization
+
+You can override the value used in ``block`` for a particular locale by provide a ``block.loc.LOCALE`` entry.
+
+```
+block.loc.LOCALE = blocksyntax
+```
+
+For example,
+
+```typescript-ignore
+//% block="square $x"
+//% block.loc.fr="$x au carré"
+function square(x: number): number {}
+```
+
+You can also override the ``jsDoc`` description and parameter info.
+
+```
+jsdoc.loc.LOCALE = translated jsdoc
+PARAM.loc.LOCALE = parameter jsdoc
+```
+
+```typescript-ignore
+/**
+    Computes the square of x
+    @param x the number to square
+**/
+//% block="square $x"
+//% block.loc.fr="$x au carré"
+//% jsdoc.loc.fr="Calcule le carré de x"
+//% x.loc.fr="le nombre"
+function square(x: number): number {}
+```
+
+
 ## Supported types
 
 The following [types](/playground#basic-types) are supported in function signatures that are meant to be exported:
@@ -160,6 +196,35 @@ export function showNumber(v: number, interval: number = 150): void
 
 **Playground examples**: [Range](https://makecode.com/playground#field-editors-range), [Default values](https://makecode.com/playground#basic-default-values)
 
+
+## Reporter blocks and Statement blocks
+
+Reporter blocks are the round or hexagonal blocks that can be slotted into the inputs of other blocks.
+Any function that has a return type other than void will be made into a reporter block if it has the `block` comment attribute.
+Occasionally there are functions that return a value but are also useful as statements, for example `Array.pop()` returns
+an element of the array but it is common in JavaScript to ignore that value.
+To define a block that has both a reporter and a statement form, use the `blockAliasFor` comment attribute:
+
+```typescript-ignore
+/**
+* Remove the last element from an array and return it.
+*/
+//% blockId="array_pop" block="get and remove last value from %list"
+function pop(): number;
+
+/**
+* Remove the last element from an array and return it.
+*/
+//% blockId="array_pop_statement" block="remove last value from %list"
+//% blockAliasFor="Array.pop"
+function _popStatement(): void;
+
+```
+
+In the example above, both the blocks defined by `pop()` and `_popStatement()` will be converted to `Array.pop()`.
+Note that `_popStatement()` begins with an underscore to prevent it from showing up in text completions in the monaco editor.
+Any block defined as an alias should have the same arguments as the source function.
+The value of `blockAliasFor` should be the fully qualified name of the source function.
 
 ## Array default values
 
@@ -358,6 +423,52 @@ export function readUntil(del: string) : string {
 }
 ```
 
+
+### Tip: using dropdowns for constants
+
+Enums in TypeScript can be verbose, so sometimes it is desirable to compile a dropdown to a constant
+variable rather than an enum member (for example, `Item.Shovel` could instead be `SHOVEL`).
+
+To achieve this behavior, set `emitAsConstant` to true on an enum
+
+```typescript
+//% emitAsConstant
+enum Item {
+    //% block="Iron"
+    Iron = 1
+}
+```
+
+and then declare a constant for that enum member like so:
+
+```typescript
+//% enumIdentity="Item.Iron"
+const IRON = Item.Iron;
+```
+
+If the enum has a shim function, you can also set `blockIdentity` just like you can for enum members. This
+will make the decompiler will convert any instance of that constant into the block for that enum.
+
+```typescript
+//% emitAsConstant
+enum Item {
+    //% block="Iron"
+    //% blockIdentity="blocks.item"
+    Iron = 1
+}
+
+namespace blocks {
+    //% shim=TD_ID
+    //% blockId=minecraftItem
+    //% block="item %item"
+    function item(item: Item): number;
+}
+
+//% enumIdentity="Item.Iron"
+//% blockIdentity="blocks.item"
+const IRON = Item.Iron;
+```
+
 ### Tip: implicit conversion for string parameters
 
 If you have an API that takes a string as an argument it is possible to bypass the usual
@@ -447,7 +558,7 @@ export function showNumber(value: number, interval: number = 150): void
 
 * If `@param` annotation is available with an `eg:` section, the first
 value is used as the shadow value.
-* An optional `help` attribute can be used to point to an specific documentation path.
+* An optional `help` attribute can be used to point to an specific documentation path. To define custom help for extension blocks, see [GitHub Extension Authoring](/extensions/github-authoring).
 * If the parameter has a default value (``interval`` in this case), it is **not** exposed in blocks.
 * If you want to include minimum and maximum value range for a numeric parameter, you can use square brackets with the range [min-max] after the parameter name in the `@param` annotation. It is important to include the shadow value if you are using a range.
      - `@param` power [0-7] a value in the range 0..7, where 0 is the lowest power and 7 is the highest. `eg:` 7

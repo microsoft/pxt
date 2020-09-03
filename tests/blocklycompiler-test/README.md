@@ -1,6 +1,6 @@
 # Karma test suite
 
-The tests in this folder are run via `jake karma` and will be executed in a browser.
+The tests in this folder are run via `gulp karma` and will be executed in a browser.
 
 
 ## Adding Blockly compiler tests
@@ -16,10 +16,3 @@ the output against a baseline `.ts` file. To generate those files:
 3. Place the `.blocks` file in the `cases` subdirectory.
 4. Add the expected result `.ts` file _with the same name_ (but different file extension) to the `baselines` directory
 5. In `test.spec.ts`, add a test case for your new files. Copy the other ones in that file and give it a relevant message.
-
-
-## Debugging Karma tests
-
-To debug the Karma tests, run `jake karma-debug`. This will launch the tests in the browser like usual but the browser will not close when the tests are finished. In the upper-right corner of the browser window, click on the button labelled "Debug". That will cause a new tab to open in which you can debug using the developer tools. The test files should be available in that window (look for `test.spec.js` and `commentparsing.spec.js`). Refresh the tab to re-run the tests.
-
-Note: If you run `jake karma-debug`, the browser window that spawns will be un-closeable (if you try to close it, Karma will interpret that as a browser crash and immediately reopen it). To close the window, `CTRL-c` the process in the terminal.

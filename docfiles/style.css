@@ -1,16 +1,36 @@
-body, html {
-    -ms-overflow-style: none;
+body#root {
+    font-size: 12pt;
 }
 
-body#root {
-    font-size: 1rem;  
-    background-color: white;  
+#docs ul {
+    padding: 0rem;
+}
+
+#docs ul li {
+    list-style-type: none;
+}
+
+#docs ol {
+    padding-left: 1em;
+}
+
+#docs ul li:before {
+    margin-right: 1em;
+    content: "\25CF";
+}
+
+#docs ul li.checked:before {
+  content: "\25C9";
+}
+
+#docs ul li.unchecked:before {
+  content: "\25CE";
 }
 
 #root .editor-image {
     margin: 2em auto;
     display: block;
-    max-width: 80%;    
+    max-width: 80%;
 }
 
 pre {
@@ -32,7 +52,7 @@ code {
 }
 
 p code, li code {
-    background-color: rgba(0,0,0,0.04);    
+    background-color: rgba(0,0,0,0.04);
 }
 
 p code:before, p code:after,
@@ -59,9 +79,9 @@ div.blocks-svg-list > svg {
 }
 
 code {
-        white-space: pre-wrap;
+    white-space: pre-wrap;
 }
-code.lang-ghost, code.lang-config, code.lang-package 
+code.lang-ghost, code.lang-config, code.lang-package
 { display: none;}
 
 code.lang-block::before,
@@ -74,7 +94,11 @@ code.lang-cards::before,
 code.lang-namespaces::before,
 code.lang-codecard::before,
 code.lang-shadow::before,
-code.lang-spy::before
+code.lang-spy::before,
+code.lang-diff::before,
+code.lang-diffspy::before,
+code.lang-diffblocks::before,
+code.lang-apis::before
 {
     content:"...";
     position: absolute;
@@ -91,21 +115,14 @@ code.lang-cards,
 code.lang-namespaces,
 code.lang-codecard,
 code.lang-shadow,
-code.lang-spy
+code.lang-spy,
+code.lang-diff,
+code.lang-diffspy,
+code.lang-diffblocks,
+code.lang-apis
 {
     background-color: rgba(0,0,0,0.04);
     color:transparent;
-}
-
-/* Limit width of text so that it's readable
- */
-.ui.text li {
-    transition: width .5s;
-    transition-timing-function: ease;
-}
-
-.poweredBy > span.item {
-    margin-right:.5rem;
 }
 
 /* wrap cards header */
@@ -139,7 +156,18 @@ svg {
 
 .header .ui.mini.image {
     display: inline !important;
-    margin-right: 7px;
+}
+
+/* page layout */
+
+.mainbody {
+    margin-top: 2em;
+    padding-bottom: 3em;
+}
+
+#docs .mainbody table {
+    display: block;
+    overflow-x: auto;
 }
 
 #accessibleMenu .ui.item.link {
@@ -152,13 +180,18 @@ svg {
     background: hsla(0,0%,100%,.9)!important;
 }
 
+#docs {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+}
+
 .pusher .article {
     position: absolute;
-    top: 0;
-    right: 0;
-    left: 300px;
-    bottom: 0;
-    overflow-y: auto;
+    /* match with menu bar height */
+    top: 3.5em;
+    min-height: calc(100vh - 3.5em);
     -webkit-box-flex: 1;
 
     -webkit-flex: 1 1 auto;
@@ -167,46 +200,89 @@ svg {
     min-width: 0px;
 }
 
-.pusher .article-inner {
-    position: relative;
-    top: 0;
-    right: 0;
-    left: 0;
-    bottom: 4rem;
-    overflow-y: hidden;
-    height: 100%;
-}
-
-.article-inner {
-    overflow-x: hidden;
-    overflow-y: auto;
-}
-
-.article-inner {
-    overflow-x: hidden;
-}
-
 .ui.vertical.menu .menu .item {
     font-size: 1em;
 }
 
 #pagemenu {
-    border-radius: 0;    
+    border-radius: 0;
 }
 
 #pagemenu .ui.item .header {
     padding: 0;
 }
 
-.fixed.menu > .container {
-    margin-left: 0em !important;
-    margin-right: 0em !important;
-    width: 100% !important;
-    max-width: none !important;
+/* Top bar menu */
+.fixed.menu {
+    min-height: 0;
+    height: 3.5em;
+    display:flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.fixed.menu > .container > .item {
-    padding: 26px;
+#docs h1, #docs h2,
+#docs h3, #docs h4,
+#docs h5, #docs h6 {
+    /* keep this aligned with top bar menu height;
+    add .5em to keep a small margin*/
+    scroll-margin-top: 4em;
+}
+
+/* first children are left & right div wrappers */
+.fixed.menu div {
+    display:flex;
+    flex-direction: inherit;
+    align-items: inherit;
+}
+.fixed.menu:after,
+.fixed.menu .item:before {
+    /* semantic loves to add pseudo elements;
+    disable these ones because they interfere with flex-box */
+    content:none;
+}
+/* items like hamburger, logo, name, search etc. */
+.fixed.menu .item {
+    padding-left: 1em;
+    padding-right: 1em;
+}
+/* icon & target label */
+.fixed.menu .item div ~ div {
+    padding-left: 0.5em;
+}
+/* target icon & name */
+.fixed.menu .item.label {
+    padding:0;
+}
+.fixed.menu .item.label {
+    padding:0;
+}
+/* hamburger */
+.fixed.menu .item.icon {
+    padding:0;
+    width: 3.5em;
+    height: 3.5em;
+}
+.fixed.menu .item.icon:hover {
+    padding:0;
+    width: 3.5em;
+    height: 3.5em;
+}
+.fixed.menu .item.icon:hover {
+    background-color: hsla(0,0%,0%,.1);
+}
+.fixed.menu.inverted .item.icon:hover {
+    background-color: hsla(0,0%,100%,.1);
+}
+/* Search box */
+.fixed.menu .search div.input {
+    min-width: 14em;
+    height: 2.5em;
+}
+.fixed.menu .search input {
+    padding-left: 1em;
+    padding-right: 1em;
 }
 
 /* breadcrumbs in inverted view */
@@ -268,11 +344,10 @@ svg {
     border-radius: 0;
 }
 
-.ui.menu.tocmenu .menuContainer {
-    margin-bottom: 45px;
-    margin-top:0px;
+.sidebar.menu .menuContainer {
+    /* a bit of extra padding at the bottom to make scrolling feel nicer */
+    margin-bottom: 0.5em;
 }
-
 .cc-banner {
     display: none;
 }
@@ -281,352 +356,106 @@ svg {
     display: none;
 }
 
-
-@supports (-ms-ime-align:auto) {
-    #docs .mainbody {
-        margin-top:4rem;
-    }
-    #docs .topspace {
-        position: fixed;
-        top:0px;
-        width:100%;
-    }
-    #docs #printbtn i.icon.print {
-        width: 1.6em;
-    }
+.docs.footer.inverted a.item {
+    color: rgba(114, 163, 211, 1.0);
+}
+.docs.footer.inverted a.item i.icon {
+    color: rgba(255, 255, 255, .6);
 }
 
-@media (min-width: 970) and (max-width: 1144){
-    .ui.grid.mainbody.content-width, .ui.vertical.footer.content-width {
-        width: 64vw;
-        margin-left: 1rem;
-    }
+.docs.footer.inverted a.item:hover i.icon,
+.docs.footer.inverted a.item:focus i.icon {
+    color: rgba(255, 255, 255, 0.8);
+}
+.docs.footer.inverted .divider {
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-@media (min-width: 320px) and (max-width: 970px) {
-
-#docs .ui.hero {
-    margin-top: -48px;
-    width: 105vw;
-    margin-left: -10vw;
-    padding-left: 18%;
+.docs.footer.inverted .ui.divided.horizontal.list > .item:not(:first-child) {
+    border-left: 1px solid rgba(255, 255, 255, .4);
 }
 
-#docs .ui.hero .main-description {
-    margin-top: 1rem;
-}
-
-#docs .ui.hero .main-description h1 {
-    font-size: 3rem;
-}
-
-#docs .ui.breadcrumb:first-child {
-    margin-top: 16px;
-}
-
-#docs h1 {
-        margin-bottom: .5em;
-        font-size: 2.5rem;
-}
-#docs h2 {
-    font-size: 2rem;
-    font-weight: 600;
-    margin-top: 2rem;
-}
-#docs h2:not(:first-of-type) {
-    padding-top: 35px;
-}
-
-.docnav {
-    flex-wrap: wrap;
-    height: 9rem;
-    padding-left: 2rem;
-}
-
-#tocsearch1 {
-    display: none;
-}
-
-#tocsearch2 {
-    display: block;
-    visibility: hidden;
-    background-color: rgba(0, 0, 0, 0.8);
-    width: 100vw;
-    height: 100vh;
-    position: fixed;
-    left: 0;
-    top: 48px;
-    transition: opacity 0.3s ease-in, visibility .3s ease-in;
-    opacity: 0;
-    touch-action: none;
-}
-
-#tocsearch2 .ui.icon.input {
-    position: fixed;
-    width: 100vw;
-    left: 0%;
-    top: 3rem;
-    padding: 1rem;
-}
-
-@supports (-ms-ime-align:auto) {
-    #tocsearch2 .ui.icon.input {
-        top: 6rem;
-    }
-}
-
-#tocsearch2 .ui.icon.input i{
-    right: 1rem;
-}
-
-#tocsearch2 .ui.icon.input input{
-    right: 1rem;
-}
-
-#docsMobile {
-    padding-top: 4rem;
-}
-
-.mobile-menu {
-    display:block !important;
-}
-
-#sticky-column {
-    display:none !important;
-}
-
-.sticky-list {
-    display:none;
-    position: fixed;
-    top: 96px;
-    right: 0rem;
-    width: 100%;
-    z-index: 99;
-    background-color: rgba(0, 0, 0, 0.8);
-}
-
-button.sticky-close {
-    position: absolute;
-    top: -48px;
-    right: -4px;
-    background-color: white;
-    height: 48px;
-    width: 48px;
-    border: none;
-}
-
-.sticky-list ul {
-    height: 100vh;
-    border-radius: 0;
-    border: none;
-    margin-top:0;
-}
-
-#mobile-search-icon {
-    display: block;
-    text-decoration: none;
-}
-
-#mobile-search-icon.mobile-only-close {
-    display: none;
-}
-
-#mobile-search-icon.mobile-only-open {
-    display: block;
-}
-
-#mobile-search-close.mobile-only-close {
-    display: none;
-}
-
-#mobile-search-close.mobile-only-open {
-    display: block;
-}
-
-#sticky-btn {
-    position: fixed;
-    right: .67rem;
-    z-index: 100;
-    color: white;
-    top: 3.7rem;
-    display: block !important;
-    background:none;
-    border:none
-}
-
-#docs-header {
-    position: fixed;
-    top: 0;
-    z-index: 1;
-    width: 100%;
-}
-
-#breadcrumb-container .ui.breadcrumb:first-child {
-    margin-top: -66px;
-}
-
-#breadcrumb-container .ui.breadcrumb a {
-    color: #f5f5f5;
-}
-
-#breadcrumb-container .ui.breadcrumb .divider {
-    color: #f5f5f5;
-    margin-right: .25rem;
-}
-
-#breadcrumb-container .ui.breadcrumb a.active {
-    color: #fff;
-}
-
-#docs .ui.cards {
-    justify-content: center;
-    margin-top: 1rem;
-}
-
-#docs .ui.card>.image .ui.cardimage {
-    height: 14.5rem;
-}
-
-#docs .ui.card .content {
-    padding-top: 25px;
-    padding-right: 0;
-}
-
-#docs .ui.card {
-    flex-flow: column;
-    height: 20rem;
-}
-
-#docs .ui.card {
-    width: 100%;
-}
-
-#docs .ui.card > .image {
-    width: 100%;
-}
-
-#docs .ui.card > .image > div {
-    min-height: 14em !important;
-}
-
-.ui.grid.mainbody {
-    margin-top: 7rem;
-    padding-left: 1rem;
-    padding-right: 1rem !important;
-}
-#docs .mainbody {
-    margin-top: 7em;
-    padding-bottom: 3em;
-}
-#docsMobile {
-    width: 70%;
-}
-.ui.visible.wide.left.sidebar~.fixed, .ui.visible.wide.left.sidebar~.pusher {
-    -webkit-transform: translate3d(70vw,0,0);
-    transform: translate3d(70vw,0,0);
-}
-
-}
-
-@media (min-width: 200px) and (max-width: 400px) {
-    #docs .ui.hero .main-description {
-        margin-top: 0rem;
-    }
+.docs.footer.inverted span.item {
+    color: rgba(255, 255, 255, .6);
 }
 
 @media only screen and (max-width: 1144px) {
-    .pusher > .toc {
-        width: 200px;
-        position: absolute;
-        top: 0;
-        left: -300px;
-        bottom: 0;
-        z-index: 1;
-        overflow-y: auto;
-    }
-    .navigation.navigation-prev {
-        left: 200px;
-    }
-    .pusher > .toc {
-        display: none;
-    }
     .hidemobile {
         display: none !important;
     }
     .showmobile {
         display: block;
     }
-    .pusher .article {
-        left: 0;
-    }
-    .navigation.navigation-next {
-        margin-right: 0;
-    }
-    .ui.container.mainbody {
-        margin-top: 3rem;
-        margin-left: 0!important;
-        margin-right: 0!important;
-        padding-left: 1em;
-        padding-right: 1em;
-    }
-    .navigation {
-        position: relative; /* IE doesn't support static */
-        position: static;
-        top: auto;
-        max-width: 48%;
-        width: 50%;
-        display: inline-block !important;
-    }
-    .navigation.navigation-prev {
-        left: 0px;
-    }
-    .ui.vertical.segment.footer {
-        margin-top: 2rem;
-    }
-
 }
 
-@media only screen and (max-width: 1440px) {
-    #docs .ui.card {
-        width: 100%;
-    }
-
-    .ui.grid.mainbody.content-width, .ui.vertical.footer.content-width {
-        width: 70vw;
-        margin-left: 1rem;
-    }
+.navigation.navigation-prev {
+    left: 200px;
+}
+.navigation.navigation-next {
+    margin-right: 0;
+}
+.ui.sidebar {
+    /* match with menu bar height */
+    top: 3.5em;
+    max-height: calc(100% - 3.5rem);
+}
+.navigation {
+    position: relative;
+    position: static;
+    top: auto;
+    max-width: 48%;
+    width: 50%;
+    display: inline-block !important;
+}
+.navigation.navigation-prev {
+    left: 0px;
+}
+.ui.vertical.segment.footer {
+    margin-top: 4rem;
 }
 
-@media (min-width: 971) and (max-width: 1024) {
-    .sticky-list {
-        position: fixed;
-        top: 11vh;
-        right: 3rem;
-        width: 25%;
-    }
+.article {
+    display: -ms-grid;
+    display: grid;
+    width: 100%;
+    -ms-grid-columns: 7.5% 1fr 1em;
+    grid-template-columns: 7.5% 1fr 1em;
+    -ms-grid-template-rows: 1fr auto;
+    grid-template-rows: 1fr auto;
 }
 
-@media only screen and (max-width: 1200px) {
-    #docs .ui.card {
-        width: 100%;
-    }
-
-    .ui.grid.mainbody.content-width, .ui.vertical.footer.content-width {
-        width: 63vw;
-        margin-left: 1rem;
-    }
+.article-inner {
+    -ms-grid-column: 2;
+    grid-column: 2;
+    padding-left: 0;
 }
 
-@media only screen and (min-width: 1145px) {
-    .fixed.main.menu {
-        display: none;
-    }
+#docs .footer {
+    -ms-grid-row: 2;
+    grid-row: 2;
+    -ms-grid-column: span 3;
+    grid-column: span 3;
+}
 
-    .mainbody {
-        margin-top: 2em;
-        margin-bottom: 2em;
-        padding-left: 2em;
-        padding-right: 2em;
+/* Limit width of content so that it is readable */
+#docs .article .article-inner > div {
+    max-width: 1100px !important;
+    margin-left: 0 !important;
+}
+
+.article-inner .column {
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+}
+
+@media only screen and (max-width: 813px) {
+    .article {
+        -ms-grid-columns: 0 1fr 0;
+        grid-template-columns: 0 1fr 0;
+    }
+    #docs .article .article-inner > div {
+        margin-left: 1em !important;
     }
 }
 
@@ -638,31 +467,17 @@ print only stuff
 }
 
 @media only print {
-
-    #root {
-        position: relative;
-    }
-    #sticky-column, #printbtn{
-        display:none !important;
-    }
-
-    h2 {
-        page-break-before: avoid
-    }
-
-    #docs .ui.card{
-        width: 100%;
-    }
-
-    .pusher .article {
-        left: 0;
-        position: relative;
-    }
-    .pusher .article-inner {
-        position: relative;
-    }
     .pusher {
         background: transparent !important;
+    }
+    .pusher .article {
+        top: 0;
+    }
+    .pusher .article-inner {
+        -ms-grid-columns: 0 1fr 0;
+        grid-template-columns: 0 1fr 0;
+        position: relative;
+        margin-top: 0;
     }
     .showprint {
         display: block !important;
@@ -670,12 +485,9 @@ print only stuff
     .hideprint,
     .ui.embed > .icon,
     .ui.docbutton {
-        display:none !important;
+        display: none !important;
     }
     body.pushable {
-        background: #fff !important;        
-    } 
-
-   
+        background: #fff !important;
+    }
 }
- 

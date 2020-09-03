@@ -1,0 +1,1848 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Microsoft MakeCode Streamer BETA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+    <link href="/static/streamer/fabric-icons-inline.css" rel="stylesheet">
+    <script src="/static/streamer/seriously.js"></script>
+    <script src="/static/streamer/seriously.chroma.js"></script>
+    <script src="/static/streamer/seriously.contour.js"></script>
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:site" content="@MsMakeCode" />
+    <meta name="twitter:creator" content="@MsMakeCode" />
+    <meta property="og:url" content="http://makecode.com/streamer" />
+    <meta property="og:title" content="MakeCode Streamer BETA" />
+    <meta property="og:description"
+        content="**Streamer BETA** is an experimental web application that simplifies the creation of interactive, high quality coding videos. Streamer is designed for teachers, students or generally anyone who would want to do any kind of online MakeCode coding." />
+    <meta property="og:image" content="https://makecode.com/static/streamer/intro.png" />
+    <style>
+        /*
+Use https://uifabricicons.azurewebsites.net/
+*/
+        /* 
+    Style for the background. 
+    
+    Generate your custom css gradients at https://cssgradient.io/ 
+*/
+        :root {
+            --video-width: 28%;
+            --video-small-width: 24%;
+
+            --chat-side-height: 63%;
+
+            --multi-editor-short: 63%;
+        }
+
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+        }
+
+        h1 a {
+            font-size: 1rem;
+        }
+
+        .container {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+        }
+
+        body.greenscreen {
+            background: #00ff00 !important;
+        }
+
+        /** paralax */
+        body.parallax {
+            background-position: 0px 0px;
+            background-size: 130vw;
+            background-repeat: repeat;
+            transition: background-position 1.2s ease-out;
+            transition-delay: 0.1s;
+            background-origin: 50% 50%;
+        }
+
+        body.leftscene.parallax {
+            background-position: -17vw 0;
+        }
+
+        body.rightscene.parallax {
+            background-position: -15vw 0;
+        }
+
+        body.chatscene.parallax {
+            background-position: -13vw -3vh;
+        }
+
+        body.countdownscene.parallax {
+            background-position: -15vw -5vh;
+        }
+
+        /** background video */
+        .full {
+            display: block;
+            object-fit: cover;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        .background {
+            display: none;
+        }
+
+        body.backgroundvideo #backgroundvideo {
+            display: block;
+        }
+        body.backgroundyoutube #backgroundyoutube {
+            display: block;
+        }
+
+        /* some web sites are transparent... */
+        iframe {
+            background: white;
+        }
+
+        .box {
+            border: 0.5rem solid;
+            border-radius: 0.5rem;
+        }
+
+        .box.greenscreen {
+            border-top: none;
+            border-left: none;
+            border-right: none;
+        }
+
+        .animated {
+            transition: left 0.5s, right 0.5s, bottom 0.5s, top 0.5s, width 0.5s, height 0.5s, opacity 1s;
+        }
+        #stinger {
+            display: none;
+        }
+        body.stingering #stinger {
+            display: block;
+        }
+        body.stingering .animated {
+            transition: left 0s, right 0s, bottom 0s, top 0s, width 0s, height 0s, opacity 0s;
+            transition-delay: 0s;
+        }
+
+        button:hover {
+            outline: solid 5px rgba(0, 0, 100, 0.2);
+        }
+
+        .clickeable {
+            cursor: pointer;
+        }
+
+        .clickeable:hover {
+            box-shadow:
+                0 11.6px 0.9px -20px rgba(0, 0, 0, 0.028),
+                0 18.5px 3.1px -20px rgba(0, 0, 0, 0.042),
+                0 40px 14px -20px rgba(0, 0, 0, 0.07);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .opaque {
+            opacity: 1 !important;
+        }
+
+        .fadeout {
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 10s 2s, opacity 2s linear;
+            transition-delay: 10s;
+            transition-property: visibility, opacity;
+        }
+
+        .rotate {
+            transform: rotate(180deg);
+            transform-origin: 50% 50%;
+        }
+
+        .ms-Icon {
+            vertical-align: middle;
+        }
+
+        .item {
+            cursor: pointer;
+        }
+
+        .error {
+            border: solid 2px red;
+            border-radius: 5px;
+            margin: 1rem 0rem 1rem 0rem;
+            padding: 1rem;
+            background: #ffb0b0;
+            color: black;
+            text-align: left;
+            opacity: 100%;
+            cursor: cursor;
+        }
+
+        .error.mic {
+            display: none;
+        }
+
+        .micerror .error.mic {
+            display: block;
+        }
+
+        .error.micdelay {
+            display: none;
+        }
+
+        .micdelayerror .error.micdelay {
+            display: block;
+        }
+
+        .error.displaymedia {
+            display: none;
+        }
+
+        .displaymediaerror .error.displaymedia {
+            display: block;
+        }
+
+        .message {
+            border: solid 2px green;
+            border-radius: 5px;
+            margin: 1rem 0rem 1rem 0rem;
+            padding: 1rem;
+            background: #a0f0a0;
+            color: black;
+            text-align: left;
+        }
+
+        #toolcontainer {
+            position: absolute;
+            left: 50%;
+            bottom: 1%;
+        }
+
+        #menucontainer {
+            position: absolute;
+            right: 1%;
+            top: 1%;
+        }
+
+        .tools .icons {
+            position: relative;
+            left: -50%;
+            text-align: center;
+            opacity: 0.3;
+            margin-bottom: 1%;
+            border-radius: 0.5vw;
+            transition-delay: 0s;
+            transition: opacity 1s;
+        }
+
+        #settings .header .icons {
+            opacity: 1;
+        }        
+
+        .icons>button {
+            height: 2vw;
+            width: 2vw;
+            border-radius: 3vw;
+            font-size: 1vw;
+            background: black;
+            color: white;
+            margin: 0.3vw 0.2vw 0.1vw 0.1vw;
+            cursor: pointer;
+            opacity: 40%;
+            vertical-align: bottom;
+            transform: opacity 0.1s;
+        }
+
+        .tools:hover>.icons {
+            opacity: 95%;
+            background: rgba(255, 255, 255, 0.8)
+        }
+
+        .icons:hover>button {
+            opacity: 0.8;
+        }
+
+        .icons>button:hover {
+            opacity: 1;
+            transform: scale(1.35) rotate(10deg);
+            outline: none;
+        }
+
+        @media (hover: none) {
+
+            /* no mouse */
+            .icons {
+                background: rgba(255, 255, 255, 0.2);
+                opacity: 0.8;
+            }
+
+            .icons>button {
+                height: 3vw;
+                width: 3vw;
+                font-size: 1.5vw;
+            }
+        }
+
+        .icons>button.active {
+            background: white;
+            color: black;
+        }
+
+        .icons>div.sep {
+            border-left: solid 2px grey;
+            display: inline-block;
+            font-size: 1vw;
+            width: 2px;
+            height: 2vw;
+            vertical-align: text-bottom;
+        }
+
+        canvas.paint {
+            display: none;
+        }
+
+        .paint canvas.paint {
+            display: block;
+            touch-action: none;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            left: 0;
+            top: 0;
+        }
+
+        .paint {
+            cursor: pointer !important;
+        }
+
+        canvas.colorpicker {
+            display: block;
+            cursor: cursor;
+        }
+
+        body.loading {
+            filter: blur(0.2vw);
+        }
+
+        /** intro **/
+        #intro {
+            position: absolute;
+            left: 15%;
+            top: 15%;
+            z-index: 1000;
+            background-color: #ccc;
+            padding: 1vw;
+        }
+
+        .pip {
+            cursor: pointer;
+            padding: 0.5vw;
+            margin-bottom: 1vw;
+        }
+
+        .pip video {
+            max-height: 50vh;
+            max-width: 65vw;
+            display: block;
+        }
+
+        #skippip {
+            position: absolute;
+            top: 1%;
+            right: 1%;
+        }
+
+        #takethetour {
+            position: absolute;
+            left: 15vw;
+            top: 50%;
+            text-align: center;
+            font-size: 3vh;
+            color: red;
+            font-weight: bold;
+            text-shadow: -3px 3px 0 #fff,
+                3px 3px 0 #fff,
+                3px -3px 0 #fff,
+                -3px -3px 0 #fff;
+            transform: rotateZ(-30deg);
+        }
+
+        /**
+title, countdown
+*/
+        #title {
+            position: absolute;
+            width: 70%;
+            top: -50%;
+            right: 15%;
+            transition-delay: 0.4s;
+            font-size: 4vw;
+            text-align: center;
+            vertical-align: middle;
+            color: white;
+            opacity: 0;
+        }
+
+        #countdown {
+            position: absolute;
+            bottom: -50%;
+            left: 25%;
+            width: 50%;
+            text-align: center;
+            vertical-align: middle;
+            transition-delay: 0.5s;
+            font-size: 12vw;
+            color: white;
+            opacity: 0;
+            text-shadow: -2px 2px 0 #555,
+                2px 2px 0 #555,
+                2px -2px 0 #555,
+                -2px -2px 0 #555;
+        }
+
+        body.screenshoting #countdown {
+            opacity: 100%;
+            bottom: 20%;
+            font-size: 36vw;
+            display: block !important;
+        }
+
+        /**
+Recorder
+*/
+        #recorder {
+            position: absolute;
+            left: 20%;
+            top: 30%;
+            width: 60%;
+            height: 14rem;
+            background: #ccc;
+            padding: 1rem 3rem 1rem 3rem;
+            overflow-y: auto;
+            text-align: center;
+            font-size: 3rem;
+            cursor: cursor;
+            opacity: 85%;
+        }
+
+        #recorder .details {
+            font-size: 1rem;
+        }
+
+        .screensize {
+            background: #666;
+            color: white;
+            border-radius: 3px;
+            padding: 0.1rem 0.5rem 0.1rem 0.5rem;
+            font-size: 60%;            
+            margin-left: 1rem;
+        }
+        .screensize.perfect {
+            background: #3b9846;
+        }
+
+        #recorder:hover {
+            opacity: 100%;
+        }
+
+        /*
+Settings
+*/
+        #settings {
+            position: absolute;
+            left: 16%;
+            top: 8%;
+            width: 60%;
+            height: 74%;
+            background: #ccc;
+            padding: 1vw;
+        }
+
+        .header {
+            height: 3rem;
+        }
+
+        .header h2 {
+            margin-top: 0;
+        }
+
+        .contents {
+            height: calc(100% - 3rem);
+            overflow-y: auto;
+        }
+
+        #settings .section {
+            border: solid 1px grey;
+            margin-bottom: 1vw;
+            border-radius: 5px;
+            padding: 0.5rem;
+            background: #eee;
+            margin-right: 1vw;
+        }
+
+        #settings .section div.field {
+            display: none;
+            margin: 0 0 0.5rem 0;
+        }
+
+        #settings .section h4 {
+            display: none;
+            margin: 0.5rem 0 0.5rem 0;
+        }
+
+        #settings .section.expanded div.field,
+        #settings .section.expanded h4 {
+            display: block
+        }
+
+        #settings .section h3 {
+            cursor: pointer;
+        }
+
+        #selectapp {
+            position: absolute;
+            left: 16%;
+            bottom: 10%;
+            width: 50%;
+            background: #ccc;
+            padding: 2vw;
+            overflow-y: auto;
+        }
+
+        body.leftscene #settings {
+            left: 32%;
+            top: 3%;
+        }
+
+        body.rightscene #settings {
+            left: 5%;
+            top: 3%;
+        }
+
+        body.chatscene #settings {
+            left: 2%;
+            top: 10%;
+        }
+
+        #settings h3 {
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+
+        #settings .field {
+            padding: 0.5rem 0 0.5rem 0;
+        }
+
+        #settings .field input,
+        #settings .field textarea {
+            width: calc(100% - 1vw);
+            font-size: 90%;
+        }
+
+        #settings .field input[type="checkbox"] {
+            width: unset;
+        }
+
+        #settings .field input[type="color"] {
+            margin-left: 0.5rem;
+            width: 2rem;
+        }
+
+        #settings .field select {
+            width: calc(100% - 1vw);
+            font-size: 90%;
+        }
+
+        #settings .header .icons {
+            position: absolute;
+            top: 1%;
+            right: 1%;
+        }
+
+        /*
+    MakeCode editor box
+*/
+        #editor {
+            position: absolute;
+            width: 94%;
+            height: 89%;
+            top: 2%;
+            transition-delay: 0.2s;
+        }
+
+        .multi #editor {
+            width: 50%;
+        }
+
+        #editor2 {
+            position: absolute;
+            width: 50%;
+            height: 89%;
+            top: 2%;
+            transition-delay: 0.3s;
+        }
+
+        #subtitles {
+            font-size: 2vw;
+            position: absolute;
+            border-radius: 0.5rem;
+            min-height: 3vw;
+            left: 30%;
+            text-align: center;
+            width: 40%;
+            bottom: 14%;
+            background: black;
+            color: white;
+            z-index: 1000;
+            opacity: 0.8;
+            padding: 1vw;
+        }
+
+        /* zindex */
+        #editor {
+            z-index: 0;
+        }
+
+        #editor2 {
+            z-index: 0;
+        }
+
+        .hardwarecam {
+            z-index: 1;
+        }
+
+        .facecam {
+            z-index: 2;
+        }
+
+        #title {
+            z-index: 3;
+        }
+
+        #countdown {
+            z-index: 4;
+        }
+
+        #recorder {
+            z-index: 7;
+        }
+
+        #selectapp {
+            z-index: 7;
+        }
+
+        #settings {
+            z-index: 8;
+        }
+
+        .paint {
+            z-index: 9;
+        }
+
+        .tools {
+            z-index: 10;
+        }
+
+        .stinger {
+            z-index: 100;
+        }
+
+        /** full editor */
+        body.leftscene.slim #editor,
+        body.rightscene.slim #editor {
+            left: 0 !important;
+            right: 0 !important;
+            top: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            border: none !important;
+            border-radius: 0 !important;
+        }
+
+        body.slim .container {
+            padding: 0;
+            position: inherit !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        body.leftscene.slim #toolcontainer,
+        body.rightscene.slim #toolcontainer {
+            bottom: 8%;
+        }
+
+        /*
+    Face camera            
+*/
+        .facecam,
+        .hardwarecam {
+            position: absolute;
+            width: 30%;
+            bottom: 1.5%;
+            right: 1%;
+            overflow: hidden;
+        }
+
+        .facecam video,
+        .hardwarecam video {
+            width: 100%;
+        }
+        .overlay
+        {
+            position: absolute;
+            top: 0;            
+            object-fit: cover;
+            pointer-events: none;
+            display:none;
+        }
+        body.hascamoverlay .overlay {
+            display: block;
+        }
+        body.hascamoverlay .cam {
+            border: none;
+        }
+
+        body.thumbnail .facecam .overlay,
+        body.thumbnail .facecam .overlay
+        {
+            display: none;
+        }
+
+        body.thumbnail .facecam .source,
+        body.thumbnail .facecam .source
+        {
+            transform: scale(-1, 1);
+        }
+        body.thumbnail .facecam .source.rotate,
+        body.thumbnail .hardwarecam .source.rotate
+        {
+            transform: rotate(180deg) scale(-1, 1);
+        }
+
+        .videolabel {
+            display: none;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: calc(100% - 2vw);
+            font-size: 1vw;
+            padding: 0.5vw;
+            border-top: 0.5vw solid;
+            border-right: 0.5vw solid;
+            border-left: 0.5vw solid;
+            left: 0;
+        }
+
+        .videocanvas {
+            display: none;
+            position: absolute;
+            width: 100%;
+            bottom: 0;
+        }
+
+        .videobtn {
+            opacity: 0;
+            position: absolute;
+            text-align: center;
+            border-radius: 1rem;
+        }
+
+        .videobtn i {
+            color: white;
+            background: black;
+            border: solid 1px #999;
+            border-radius: 50%;
+            padding: 1rem;
+        }
+        .videobtn:hover {
+            opacity: 0.95 !important;
+            color: #aaa;
+            transform: scale(1.1) rotate(4deg);
+        }
+        .videochatscenebtn {
+            left: calc(50% - 2rem);
+            top: 4%;
+        }
+        .videohardwarebtn {
+            right: 4%;
+            top: 4%;
+        }
+        body.facecamcircular #facecam .videohardwarebtn,
+        body.hardwarecamcircular #hardwarecam .videohardwarebtn {
+            right: 28%;
+            top: 18%;
+        }
+        .videochatbtn {
+            left: 4%;
+            top: 4%;
+        }
+        body.thumbnail .videochatbtn {
+            display: none;
+        }
+        body.facecamcircular #facecam .videochatbtn,
+        body.hardwarecamcircular #hardwarecam .videochatbtn {
+            left: 28%;
+            top: 18%;
+        }
+        .videoleftscenebtn {
+            left: 4%;
+            top: 44%;
+        }
+        body.facecamcircular #facecam .videoleftscenebtn,
+        body.hardwarecamcircular #hardwarecam .videoleftscenebtn {
+            left: 23%;
+        }
+        .videorightscenebtn {
+            right: 4%;
+            top: 44%;
+        }
+        body.facecamcircular #facecam .videorightscenebtn,
+        body.hardwarecamcircular #hardwarecam .videorightscenebtn {
+            right: 23%;
+        }
+        .videothumbnailbtn {
+            left: calc(50% - 2rem);
+            bottom: 12%;
+        }
+        body.facecamcircular #facecam .videothumbnailbtn,
+        body.hardwarecamcircular #hardwarecam .videothumbnailbtn {
+            bottom: 8%;
+        }
+        body.thumbnail .videothumbnailbtn {
+            bottom: 30% !important;
+        }
+
+        .cam {
+            outline: 0 !important;
+        }
+        .cam:hover .videobtn {
+            opacity: 0.8;
+        }
+
+        body.chatscene .videochatscenebtn {
+            opacity: 0 !important;
+        }
+        body.chatscene .videothumbnailbtn {
+            opacity: 0 !important;
+        }
+        body.leftscene .videoleftscenebtn {
+            opacity: 0 !important;
+        }
+
+        body.rightscene .videorightscenebtn {
+            opacity: 0 !important;
+        }
+
+        body.countdownscene .videobtn {
+            opacity: 0 !important;
+        }
+        body:not(.hashardwarecam) .videohardwarebtn {
+            opacity: 0 !important;
+        }
+        body:not(.haschat) .videochatbtn {
+            opacity: 0 !important;
+        }
+        body:not(.hasthumbnail) .videothumbnailbtn {
+            opacity: 0 !important;
+        }
+
+        body.leftscene.facecamcircular .facecam,
+        body.leftscene.hardwarecamcircular .hardwarecam,
+        body.rightscene.facecamcircular .facecam,
+        body.rightscene.hardwarecamcircular .hardwarecam {
+            border: none;
+            clip-path: circle(34% at 50% 50%);
+        }
+
+        .box.greenscreen .videocanvas {
+            display: block;
+        }
+
+        body.facecamlabel #facecamlabel.videolabel,
+        body.hardwarecamlabel #hardwarecamlabel.videolabel {
+            display: block;
+        }
+
+        .hardwarecam {
+            width: 0;
+            right: -1rem;
+            opacity: 0;
+            transition-delay: 0.1s;
+        }
+
+        body.hardware .hardwarecam {
+            opacity: 100%;
+        }
+
+        /** application clipping */
+        body.hardwarecamdisplay .hardwarecam>video,
+        body.facecamdisplay .facecam>video {
+            clip-path: polygon(10% 20%, 90% 20%, 90% 100%, 10% 100%);
+            width: 130%;
+            left: -10%;
+            margin-left: -15%;
+            margin-top: -20%;
+        }
+
+        /*
+    Chat window
+*/
+        #chat {
+            position: absolute;
+            height: 60%;
+            top: 2%;
+            right: -100%;
+            transition-delay: 0.3s;
+        }
+
+        #banner {
+            font-size: 2vw;
+            color: white;
+            flex-grow: 1;
+            margin-left: 1%;
+        }
+
+        .cam.error {
+            background: rgba(255, 0, 0, 0.5)
+        }
+
+        .cam.error > video,
+        .cam.error > canvas {
+            opacity: 0.1;
+        }
+
+        /** 
+* chat visibility
+*/
+        body.chat #chat {
+            display: block;
+            opacity: 90%;
+        }
+
+        /* rightscene: browser with facecam on right */
+        body.rightscene #editor {
+            left: 1%;
+            height: 92%;
+        }
+
+        body.rightscene .facecam {
+            right: 1%;
+            width: var(--video-width);
+        }
+
+        body.rightscene.chat #chat {
+            right: 1%;
+            width: var(--video-width);
+            height: var(--chat-side-height);
+        }
+
+        body.rightscene.chat .facecam {
+            width: var(--video-width);
+        }
+
+        body.rightscene.chat #editor {
+            width: 67%;
+            top: 2%;
+            height: 95%;
+        }
+
+        body.rightscene #countdown {
+            display: none;
+        }
+
+        /* right + hardware */
+        body.rightscene.hardware .facecam {
+            width: var(--video-width);
+        }
+
+        body.rightscene.hardware .hardwarecam {
+            right: 1%;
+            width: var(--video-small-width);
+            bottom: 34%;
+        }
+
+        body.rightscene.hardware #editor {
+            width: 88%
+        }
+
+        /* right + hardware + chat */
+        body.rightscene.hardware.chat #editor {
+            width: 66%;
+        }
+
+        body.rightscene.hardware.chat #chat {
+            width: var(--video-width);
+            height: 30%;
+        }
+
+        body.rightscene.hardware.chat .hardwarecam {
+            width: var(--video-width);
+            bottom: 34%;
+        }
+
+        body.rightscene.hardware.chat .facecam {
+            width: var(--video-width);
+        }
+
+        /* right + multi */
+        body.rightscene.multi #editor {
+            width: 67%;
+        }
+
+        body.rightscene.multi #editor2 {
+            width: 28%;
+            left: 70%;
+            height: var(--multi-editor-short);
+        }
+
+        body.rightscene.multi .facecam {
+            width: 28%;
+        }
+
+        /* right + chat + multi */
+        body.rightscene.multi.chat #editor {
+            width: 36%;
+            left: 1%;
+            height: 88%;
+        }
+
+        body.rightscene.multi.chat #editor2 {
+            width: 36%;
+            left: 38.5%;
+            height: 88%;
+        }
+
+        body.rightscene.multi.chat #chat {
+            width: 22%;
+            right: 1%;
+            height: 63%;
+        }
+
+        body.rightscene.multi.chat .facecam {
+            width: 22%;
+            right: 1%;
+        }
+
+        /* right + multi + hardware */
+        body.rightscene.multi.hardware .hardwarecam {
+            right: 1%;
+            width: 25%;
+            bottom: 5%;
+        }
+
+        body.rightscene.multi.hardware .facecam {
+            right: 21%;
+            width: 22%;
+            bottom: 1.5%;
+        }
+
+        /** left + chat + hardware + chat + multi */
+        body.rightscene.hardware.multi.chat #editor {
+            width: 36%;
+            left: 1%;
+            height: 95%;
+        }
+
+        body.rightscene.hardware.multi.chat #editor2 {
+            width: 36%;
+            left: 38.5%;
+            height: 95%;
+        }
+
+        body.rightscene.hardware.multi.chat #chat {
+            right: 1%;
+            width: 22%;
+            height: 30%;
+        }
+
+        body.rightscene.hardware.multi.chat .hardwarecam {
+            right: 1%;
+            width: 22%;
+            bottom: 35%;
+        }
+
+        body.rightscene.hardware.multi.chat .facecam {
+            right: 1%;
+            width: 22%;
+            bottom: 1.5%;
+        }
+
+        /* leftscene: browser with facecam on left left */
+        body.leftscene #editor {
+            left: 4%;
+            height: 92%;
+        }
+
+        body.leftscene .facecam {
+            right: 70%;
+            width: var(--video-width);
+        }
+
+        body.leftscene.hardwarecam .hardwarecam {
+            bottom: 10%;
+            width: var(--video-small-width);
+            right: 1%;
+        }
+
+        body.leftscene #countdown {
+            display: none;
+        }
+
+        /* left + hardware */
+        body.leftscene.hardware .hardwarecam {
+            right: 74%;
+            width: var(--video-small-width);
+            bottom: 34%;
+        }
+
+        body.leftscene.hardware .facecam {
+            right: 70%;
+            width: var(--video-width);
+        }
+
+        body.leftscene.hardware #editor {
+            left: 10%;
+            width: 88%;
+        }
+
+
+        /* left + hardware + chat */
+        body.leftscene.hardware.chat #editor {
+            width: 66%;
+            left: 32%;
+        }
+
+        body.leftscene.hardware.chat #chat {
+            width: var(--video-width);
+            height: 30%;
+            right: 70%;
+        }
+
+        body.leftscene.hardware.chat .hardwarecam {
+            width: var(--video-width);
+            bottom: 34%;
+            right: 70%;
+        }
+
+        body.leftscene.hardware.chat .facecam {
+            width: var(--video-width);
+            right: 70%;
+        }
+
+        /* left + multi*/
+        body.leftscene.multi #editor {
+            left: 1%;
+            width: 28%;
+            height: var(--multi-editor-short);
+        }
+
+        body.leftscene.multi #editor2 {
+            width: 67%;
+            left: 31%;
+        }
+
+        body.leftscene.multi .facecam {
+            right: 70%;
+            width: 28%;
+        }
+
+        /* left + multi + hardware */
+        body.leftscene.multi.hardware .hardwarecam {
+            right: 73%;
+            width: 25%;
+            bottom: 5%;
+        }
+
+        body.leftscene.multi.hardware .facecam {
+            right: 56%;
+            width: 22%;
+            bottom: 1.5%;
+        }
+
+        /** leftscene + chat **/
+        body.leftscene.chat #editor {
+            left: 31%;
+            width: 67%;
+            height: 95%;
+        }
+
+        body.leftscene.chat .facecam {
+            right: 70%;
+            width: 28%;
+        }
+
+        body.leftscene.chat #chat {
+            right: 70%;
+            height: var(--chat-side-height);
+            width: 28%;
+        }
+
+        /* left + chat + multi */
+        body.leftscene.multi.chat #editor {
+            width: 36%;
+            left: 24%;
+            height: 88%;
+        }
+
+        body.leftscene.multi.chat #editor2 {
+            width: 36%;
+            left: 62%;
+            height: 88%;
+        }
+
+        body.leftscene.multi.chat #chat {
+            width: 22%;
+            right: 77%;
+            height: 63%;
+        }
+
+        body.leftscene.multi.chat .facecam {
+            width: 22%;
+            right: 77%;
+        }
+
+        /** left + hardware + chat + multi */
+        body.leftscene.hardware.multi.chat #editor {
+            width: 36%;
+            left: 24%;
+            height: 88%;
+        }
+
+        body.leftscene.hardware.multi.chat #editor2 {
+            width: 36%;
+            left: 62%;
+            height: 88%;
+        }
+
+        body.leftscene.hardware.multi.chat #chat {
+            width: 22%;
+            height: 30%;
+            right: 77%;
+        }
+
+        body.leftscene.hardware.multi.chat .hardwarecam {
+            width: 22%;
+            bottom: 35%;
+            right: 77%;
+        }
+
+        body.leftscene.hardware.multi.chat .facecam {
+            width: 22%;
+            right: 77%;
+            bottom: 1.5%;
+        }
+
+        /* chatscene: facecam and stream chat */
+        body.chatscene .facecam {
+            bottom: 10%;
+            right: 20%;
+            width: 64%;
+            max-height: 74%;
+        }
+
+        body.chatscene #editor {
+            left: -100%;
+        }
+
+        body.chatscene #editor2 {
+            right: -100%;
+        }
+
+        body.chatscene #title {
+            width: 46%;
+            top: 1.5%;
+            right: 41%;
+            font-size: 2vw;
+            opacity: 100%;
+        }
+
+        body.chatscene.chat .facecam {
+            bottom: 10%;
+            right: 34%;
+            width: 64%;
+        }
+
+        body.chatscene.chat #chat {
+            top: 2%;
+            right: 1%;
+            width: 30%;
+            height: 91%;
+            opacity: 100%;
+        }
+
+        body.chatscene.hardware .facecam {
+            bottom: 5%;
+            right: 34%;
+            width: 64%;
+        }
+
+        body.chatscene.hardware .hardwarecam {
+            width: 30%;
+            bottom: 5%;
+            right: 2%;
+        }
+
+        body.chatscene.hardware.chat .facecam {
+            right: 34%;
+            width: 64%;
+            bottom: 5%;
+        }
+
+        body.chatscene.hardware.chat .hardwarecam {
+            width: 30%;
+            bottom: 5%;
+            right: 2%;
+        }
+
+        body.chatscene.hardware.chat #chat {
+            top: 2%;
+            right: 2%;
+            width: 30%;
+            height: 47%;
+        }
+
+        body.chatscene.hardware.chat #title {
+            top: 2%;
+        }
+
+        body.chatscene #countdown {
+            display: none;
+        }
+
+        /* timer scene */
+        body.countdownscene #editor {
+            left: -100%;
+        }
+
+        body.countdownscene.countdowneditor #editor {
+            top: -1%;
+            left: 0%;
+            width: 101%;
+            height: 102%;
+            overflow: hidden;
+            border: none;
+            border-radius: 0;
+        }
+
+        body.countdownscene.countdowneditorblur #editor {
+            filter: blur(10px);
+        }
+
+        body.countdownscene #editor2,
+        body.countdownscene #chat,
+        body.countdownscene .facecam,
+        body.countdownscene .hardwarecam {
+            right: -100%;
+        }
+
+        body.countdownscene #title {
+            top: 36%;
+            opacity: 100%;
+        }
+
+        body.countdownscene #countdown {
+            opacity: 100%;
+            bottom: 20%;
+        }
+
+        body.countdownscene.hardware .hardwarecam {
+            right: -10%;
+            width: 120%;
+            bottom: -10%;
+        }
+
+
+        /* thumbnail */
+        body.leftscene.thumbnail .facecam,
+        body.rightscene.thumbnail .facecam {
+            bottom: -30%;
+            height: unset;
+            width: 120%;
+            clip-path: unset;
+        }
+
+        body.leftscene.thumbnail.hardware .hardwarecam,
+        body.rightscene.thumbnail.hardware .hardwarecam {
+            top: -20%;
+            height: unset;
+            bottom: unset;
+            width: 120%;
+            clip-path: unset;
+        }
+
+        body.leftscene.thumbnail #editor,
+        body.rightscene.thumbnail #editor {
+            top: 1%;
+            left: unset;
+            right: unset;
+        }
+
+        body.leftscene.thumbnail .facecam {
+            left: -25%;
+        }
+
+        body.leftscene.thumbnail.hardware .hardwarecam {
+            right: -25%;
+        }
+
+        body.leftscene.thumbnail #editor {
+            right: -20%;
+        }
+
+        body.rightscene.thumbnail .facecam {
+            left: 25%;
+        }
+
+        body.rightscene.thumbnail.hardware .hardwarecam {
+            right: 20%;
+        }
+
+        body.rightscene.thumbnail #editor {
+            right: 20%;
+        }
+    </style>
+    <style id="editorstyle"></style>
+</head>
+
+<body class="rightscene">
+    <video id="backgroundvideo" class="full background" playsinline autoplay muted loop></video>
+    <iframe id="backgroundyoutube" class="full background" type="text/html"></iframe>
+    <div id="container" class="container">
+        <iframe class="box animated" id="editor" allow="usb;camera"
+            sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox allow-forms"></iframe>
+        <iframe class="box animated" id="editor2" allow="usb;camera"
+            sandbox="allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox allow-forms"></iframe>
+        <iframe class="box animated" id="chat" sandbox="allow-scripts allow-same-origin"></iframe>
+        <div role="button" class="box animated clickeable cam facecam" id="facecam">
+            <video autoplay playsinline class="source" id="facecamvideo"></video>
+            <canvas id="facecamvideoserious" class="videocanvas source" class="videocanvas"></canvas>
+            <video autoplay playsinline loop class="overlay" id="facecamoverlay"></video>
+            <div class="videolabel" id="facecamlabel"></div>
+            <div id="facecamchatscenebtn" title="Go to chat scene" class="videobtn videochatscenebtn animated">
+                <i class="ms-Icon ms-Icon--Contact"></i>
+            </div>
+            <div id="facecamhardwarebtn" title="Show/hide document camera" class="videobtn videohardwarebtn animated">
+                <i class="ms-Icon ms-Icon--Robot"></i>
+            </div>
+            <div id="facecamchatbtn" title="Show/hide chat" class="videobtn videochatbtn animated">
+                <i class="ms-Icon ms-Icon--OfficeChat"></i>
+            </div>
+            <div id="facecamleftbtn" title="Move camera left" class="videobtn videoleftscenebtn animated">
+                <i class="ms-Icon ms-Icon--OpenPane"></i>
+            </div>
+            <div id="facecamrightbtn" title="Move camera right" class="videobtn videorightscenebtn animated">
+                <i class="ms-Icon ms-Icon--OpenPaneMirrored"></i>
+            </div>
+            <div id="facecamthumbnailbtn" title="Toggle thumbnail mode" class="videobtn videothumbnailbtn animated">
+                <i class="ms-Icon ms-Icon--PictureCenter"></i>
+            </div>
+        </div>
+        <div role="button" class="box animated clickeable cam hardwarecam" id="hardwarecam">
+            <video autoplay playsinline class="source" id="hardwarecamvideo"></video>
+            <canvas id="hardwarecamvideoserious" class="videocanvas source" width="640" height="480" class="videocanvas"></canvas>
+            <video autoplay playsinline loop class="overlay" id="hardwarecamoverlay"></video>
+            <div class="videolabel" id="hardwarecamlabel"></div>
+            <div id="hardwarecamchatscenebtn" title="Go to chat scene" class="videobtn videochatscenebtn animated">
+                <i class="ms-Icon ms-Icon--Contact"></i>
+            </div>
+            <div id="hardwarecamhardwarebtn" title="Show/hide document camera" class="videobtn videohardwarebtn animated">
+                <i class="ms-Icon ms-Icon--Robot"></i>
+            </div>
+            <div id="hardwarecamchatbtn" title="Show/hide chat" class="videobtn videochatbtn animated">
+                <i class="ms-Icon ms-Icon--OfficeChat"></i>
+            </div>
+            <div id="hardwarecamleftbtn" title="Move camera left" class="videobtn videoleftscenebtn animated">
+                <i class="ms-Icon ms-Icon--OpenPane"></i>
+            </div>
+            <div id="hardwarecamrightbtn" title="Move camera right" class="videobtn videorightscenebtn animated">
+                <i class="ms-Icon ms-Icon--OpenPaneMirrored"></i>
+            </div>
+            <div id="hardwarecamthumbnailbtn" title="Toggle thumbnail mode" class="videobtn videothumbnailbtn animated">
+                <i class="ms-Icon ms-Icon--PictureCenter"></i>
+            </div>
+        </div>
+        <div class="box animated" id="title">title</div>
+        <div class="animated" id="countdown">5:00</div>
+        <div id="stinger">
+            <video id="stingervideo" class="hidden full stinger" playsinline autoplay preload="auto"></video>
+            <canvas id="stingervideoserious" class="hidden full stinger" width="640" height="480"></canvas>    
+            <div class="hidden full stinger" id="stingeryoutube"></div>
+        </div>
+        <div class="animated hidden" id="subtitles"></div>
+        <div class="box animated hidden" id="selectapp">
+            <p>You need to share your screen with MakeCode to record it.</p>
+            <p>Go to <b>Application Window</b>, select <b>Microsoft MakeCode Streamer</b>
+                and click <b>Share</b>.</p>
+            <p>Press the <b>stop</b> button when you are done recording.</p>
+        </div>
+        <div class="box animated hidden" id="settings">
+            <datalist id="tickmarks">
+                <option value="0"></option>
+                <option value="10"></option>
+                <option value="20"></option>
+                <option value="30"></option>
+                <option value="40"></option>
+                <option value="50"></option>
+                <option value="60"></option>
+                <option value="70"></option>
+                <option value="80"></option>
+                <option value="90"></option>
+                <option value="100"></option>
+            </datalist>
+            <div class="header">
+                <h2>MakeCode Streamer
+                <span class="screensize"></span>
+                <span class="icons">
+                    <button id="settingsreset" title="Reset settings"><i class="ms-Icon ms-Icon--Reset"></i></button>
+                    <button id="exportsettings" title="Export settings to file"><i class="ms-Icon ms-Icon--Save"></i></button>
+                    <input id="importsettingsinput" type="file" accept="application/json" style="display:none"></input>
+                    <button id="importsettings" title="Import settings from file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>
+                    <button id="settingsclose" title="Close settings"><i class="ms-Icon ms-Icon--ChromeClose"></i></button>
+                </span>
+                </h2>
+            </div>
+            <div class="contents">
+                <div class="section expanded">
+                    <h3>Editor</h3>
+                    <div class="field">
+                        <label for="editorselect">Choose your editor</label>
+                        <select id="editorselect"></select>
+                    </div>
+                    <div class="field">
+                        <input type="checkbox" id="multicheckbox"></input>
+                        <label for="multicheckbox">Multi editors. Edit two programs with connected simulators.</label>
+                    </div>
+                    <div class="field">
+                        <input type="checkbox" id="fullscreeneditorcheckbox"></input>
+                        <label for="fullscreeneditorcheckbox">Full screen editor (no margins)</label>
+                    </div>
+                    <div class="field">
+                        <label for="titleinput">Title</label>
+                        <input id="titleinput" placeholder="My awesome stream" />
+                    </div>
+                    <div class="field">
+                        <label for="powerpointarea">Import Embed Code (In web PowerPoint, go to File->Share->Embed then copy Embed Code)</label>
+                        <textarea id="powerpointarea" rows="3" placeholder="Paste HTML embed code here to extract web site url."></textarea>
+                    </div>
+                    <div class="field">
+                        <label for="extrasitesarea">Extra web sites (one per line)</label>
+                        <textarea id="extrasitesarea" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="section expanded">
+                    <h3>Face camera</h3>
+                    <div class="field">
+                        <p>Select your primary camera (16:9). Note the video stream is not mirrored.</p>
+                        <label for="facecamselect">Choose a video source</label>
+                        <select id="facecamselect"></select>
+                        <div class="error hidden facecamerror" id="facecamerror">Connection error. Make sure the camera
+                            is not blocked or used by another application. If you are in a Teams/Skype/Zoom/... meeting, turn off your video and click here to try again.</div>
+                    </div>
+                    <div class="field">
+                        <label for="facecamlabelinput">Camera label</label>
+                        <input id="facecamlabelinput" placeholder="My name, social accounts" />
+                    </div>
+                    <h4>Adjustments</h4>
+                    <div class="field">
+                        <label for="facecamcontrast">Contrast</label>
+                        <input type="range" id="facecamcontrast" min="0" max="100" step="1" list="tickmarks">
+                    </div>
+                    <div class="field">
+                        <label for="facecambrightness">Brightness</label>
+                        <input type="range" id="facecambrightness" min="0" max="100" step="1" list="tickmarks">
+                    </div>
+                    <div class="field">
+                        <label for="facecamsaturate">Saturation</label>
+                        <input type="range" id="facecamsaturate" min="0" max="100" step="1" list="tickmarks">
+                    </div>
+                    <div class="field">
+                        <input type="checkbox" id="facecamcircularcheckbox"></input>
+                        <label for="facecamcircularcheckbox">Circle shape</label>
+                    </div>
+                    <div class="field">
+                        <input type="checkbox" id="facerotatecameracheckbox"></input>
+                        <label for="facerotatecameracheckbox">Rotate 180</label>
+                    </div>
+                    <h4>Green screen</h4>
+                    <div class="field">
+                        <label for="facecamscreeninput">Screen color (click image to select)</label>
+                        <input id="facecamscreeninput" type="color" />
+                        <button id="facecamscreenclear">clear</button>
+                    </div>
+                    <div class="field">
+                        <canvas class="colorpicker" id="facecamscreencanvas"></canvas>
+                    </div>
+                    <div class="field">
+                        <label for="facecamgreenclipblack">Sensitivity</label>
+                        <input type="range" id="facecamgreenclipblack" min="0" max="1" step="0.01">
+                    </div>
+                    <div class="field">
+                        <label for="facecamcontourinput">Silhouette contour color (when erasing green screen)</label>
+                        <input id="facecamcontourinput" type="color" />
+                        <button id="facecamcontourclear">clear</button>
+                    </div>
+                </div>
+                <div class="section">
+                    <h3>Document camera</h3>
+                    <div class="field">
+                        <p>Select a secondary camera (16:9) to display a document or physical device. To inline a
+                            Teams/Skype/...
+                            video
+                            stream, select <emph>Application</emph> and share your messaging application.</p>
+                        <p>Toggle on/off the document camera by clicking the <i class="ms-Icon ms-Icon--Robot"></i> icon on the face camera.</p>
+                        <label for="hardwarecamselect">Choose a video source</label>
+                        <select id="hardwarecamselect"></select>
+                        <div class="error hidden" id="hardwarecamerror">Connection error. Make sure the camera is not
+                            blocked or used by another application. If you are in a Teams/Skype/Zoom/... meeting, turn off your video and click here to try again.</div>
+                    </div>
+                    <div class="field">
+                        <label for="hardwarecamlabelinput">Camera label</label>
+                        <input id="hardwarecamlabelinput" placeholder="Cam description" />
+                    </div>
+                    <h4>Adjustments</h4>
+                    <div class="field">
+                        <label for="hardwarecamcontrast">Contrast</label>
+                        <input type="range" id="hardwarecamcontrast" min="0" max="100" step="1" list="tickmarks">
+                    </div>
+                    <div class="field">
+                        <label for="hardwarecambrightness">Brightness</label>
+                        <input type="range" id="hardwarecambrightness" min="0" max="100" step="1" list="tickmarks">
+                    </div>
+                    <div class="field">
+                        <label for="hardwarecamsaturate">Saturation</label>
+                        <input type="range" id="hardwarecamsaturate" min="0" max="100" step="1" list="tickmarks">
+                    </div>
+                    <div class="field">
+                        <input type="checkbox" id="hardwarecamcircularcheckbox"></input>
+                        <label for="hardwarecamcircularcheckbox">Circle shape</label>
+                    </div>
+                    <div class="field">
+                        <input type="checkbox" id="hardwarerotatecameracheckbox"></input>
+                        <label for="hardwarerotatecameracheckbox">Rotate 180</label>
+                    </div>
+                    <h4>Green screen</h4>
+                    <div class="field">
+                        <label for="hardwarecamscreeninput">Screen color (click to select)</label>
+                        <input id="hardwarecamscreeninput" type="color" />
+                        <button id="hardwarecamscreenclear">clear</button>
+                    </div>
+                    <div class="field">
+                        <canvas class="colorpicker" id="hardwarecamscreencanvas"></canvas>
+                    </div>
+                    <div class="field">
+                        <label for="hardwarecamgreenclipblack">Sensitivity</label>
+                        <input type="range" id="hardwarecamgreenclipblack" min="0" max="1" step="0.01">
+                    </div>
+                    <div class="field">
+                        <label for="hardwarecamcontourinput">Silhouette contour color (when erasing green
+                            screen)</label>
+                        <input id="hardwarecamcontourinput" type="color" />
+                        <button id="hardwarecamcontourclear">clear</button>
+                    </div>
+                </div>
+                <div class="section">
+                    <h3>Theme</h3>
+                    <div class="field">
+                        <label for="bordercolorinput">Box border color</label>
+                        <input id="bordercolorinput" type="color" />
+                        <button id="bordercolorclear">clear</button>
+                    </div>
+                    <div class="field">
+                        <label for="borderbackgroundinput">Box background color</label>
+                        <input id="borderbackgroundinput" type="color" />
+                        <button id="borderbackgroundclear">clear</button>
+                    </div>
+                    <div class="field">
+                        <label for="camoverlayvideoinput">Face and document camera overlay videos (must be https://... or .webm, .mp4, .mov files). Will play between scenes. YouTube NOT supported.
+                            <span class="icons">
+                                <input id="camoverlayvideoimportinput" type="file" accept="video/mp4, video/webm, video/quicktime" style="display:none"></input>
+                                <button id="camoverlayvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                
+                            </span>
+                        </label>
+                        <input id="camoverlayvideoinput" type="url" />
+                    </div>
+                    <div class="field">
+                        <label for="stingervideoinput">Stinger transition video (must be https://... or .webm, .mp4, .mov files). Will play between scenes. YouTube NOT supported.
+                            <span class="icons">
+                                <input id="stingervideoimportinput" type="file" accept="video/mp4, video/webm, video/quicktime" style="display:none"></input>
+                                <button id="stingervideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                
+                            </span>
+                        </label>
+                        <textarea id="stingervideoinput" rows="3"></textarea>                        
+                    </div>
+                    <div class="field">                       
+                        <label for="stringervideodelayinput">Stinger transition delay (ms). Time to start transitioning the view, when the stinger is fully covering the screen.</label>
+                        <input id="stringervideodelayinput" type="number" placeholder="700" /> 
+                    </div>            
+                    <div class="field">
+                        <label for="stingervideoscreeninput">Stinger green screen color</label>
+                        <input id="stingervideoscreeninput" type="color" />
+                        <button id="stingervideoscreenclear">clear</button>
+                    </div>
+                </div>
+                <div class="section">
+                    <h3>Background</h3>
+                    <div class="field">
+                        <label for="backgroundcolorinput">Background color</label>
+                        <input id="backgroundcolorinput" type="color" />
+                        <button id="backgroundcolorclear">clear</button>
+                    </div>
+                    <div class="field">
+                        <label for="backgroundimageinput">Background image (must be https://...)</label>
+                        <input id="backgroundimageinput" type="url" />
+                    </div>
+                    <div class="field">
+                        <label for="backgroundvideoinput">Background video (YouTube url or must be https://...)
+                            <span class="icons">
+                                <input id="backgroundvideoimportinput" type="file" accept="video/mp4, video/webm, video/quicktime" style="display:none"></input>
+                                <button id="backgroundvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                                            
+                            </span>
+                        </label>
+                        <input id="backgroundvideoinput" type="url" />
+                    </div>
+                    <div class="field">
+                        <input type="checkbox" id="greenscreencheckbox"></input>
+                        <label for="greenscreencheckbox">Green background (Chroma Key)</label>
+                    </div>
+                </div>
+                <div class="section">
+                    <h3>Countdown</h3>
+                    <div class="field">
+                        <label for="startvideoinput">Intro video (YouTube video or must be https://...). Will play when leaving the
+                            countdown
+                            view. YouTube videos are do not support transparency.
+                            <span class="icons">
+                                <input id="startvideoimportinput" type="file" accept="video/mp4, video/webm, video/quicktime" style="display:none"></input>
+                                <button id="startvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                
+                            </span>
+                    </label>
+                        <input id="startvideoinput" type="url" />
+                    </div>
+                    <div class="field">
+                        <label for="endvideoinput">End video (YouTube video or must be https://...). Will play when entering the
+                            countdown
+                            view. YouTube videos are do not support transparency.
+                            <span class="icons">
+                                <input id="endvideoimportinput" type="file" accept="video/mp4, video/webm, video/quicktime" style="display:none"></input>
+                                <button id="endvideoimportbtn" title="Import local video file"><i class="ms-Icon ms-Icon--OpenFile"></i></button>                                                            
+                            </span>
+                        </label>
+                        <input id="endvideoinput" type="url" />
+                    </div>
+                    <div class="field">
+                        <input type="checkbox" id="countdowneditorcheckbox"></input>
+                        <label for="countdowneditorcheckbox">Show editor in background</label>
+                    </div>
+                    <div class="field">
+                        <input type="checkbox" id="countdownblureditorcheckbox"></input>
+                        <label for="countdownblureditorcheckbox">Blur editor in background</label>
+                    </div>
+                </div>
+                <div class="section">
+                    <h3>Paint</h3>
+                    <div class="field">
+                        <label for="emojisinput">Emojis (😄🤔😭👀)</label>
+                        <input id="emojisinput" placeholder="Emojis" />
+                    </div>
+                </div>
+                <div class="section">
+                    <h3>Streaming</h3>
+                    <div class="field">
+                        <label for="twitchinput">Twitch.tv channel. The chat window can be displayed on screen.</label>
+                        <input id="twitchinput" placeholder="Twitch.tv account" />
+                    </div>
+                    <div class="field">
+                        <label for="restreaminput">Restream chat embed url. In Restream, click on "Chat" then copy "Embed in stream".</label>
+                        <input id="restreaminput" placeholder="Restream.io embed url" />
+                    </div>
+                </div>
+                <div class="section">
+                    <h3>Recording</h3>
+                    <div class="error hidden displaymedia">This browser does not support recording the screen.</div>
+                    <div class="field">
+                        <p>Record your browser to a .webm file that can be uploaded to video services.</p>
+                        <label for="micselect">Choose a Microphone</label>
+                        <select id="micselect"></select>
+                        <div class="error hidden mic">Connection error. Make sure the microphone is not blocked or used
+                            by
+                            another application.</div>
+                    </div>
+                    <div class="field">
+                        <label for="micdelayinput">Sound delay (ms). To tune: record a clap and adjust the delay until
+                            video
+                            and audio are sync.</label>
+                        <input id="micdelayinput" type="number" placeholder="200" />
+                        <div class="error hidden micdelay">Record your video and clap. Adjust the delay so that the
+                            video
+                            and the audio are in sync.</div>
+                    </div>
+                </div>
+                <h3>Legal</h3>
+                <div class="field">
+                    <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp;
+                        Cookies</a>|
+                    <a class="item" href="https://makecode.com/termsofuse" target="_blank" rel="noopener">Terms Of
+                        Use</a>|
+                    <a class="item" href="https://makecode.com/trademarks" target="_blank"
+                        rel="noopener">Trademarks</a>|
+                    <span class="item">© 2020 Microsoft</span>
+                </div>
+            </div>
+        </div>
+        <div role="button" class="box animated hidden" id="recorder" tabindex="0">
+            <span>click to start recording</span>
+            <span class="screensize"></span>
+            <div class="message details">Resize your browser to match 1920x1080 (1080p, HD) or 1280x720 (720p, SD).
+            </div>
+            <div class="error details mic">Select a microphone in the settings.</div>
+            <div class="error details micdelay">Tune your microphone delay to sync video and audio.</div>
+        </div>
+        <canvas id="paint" class="paint"></canvas>
+        <canvas id="painttool" class="paint"></canvas>
+        <div class="tools" id="toolcontainer">
+            <div class="animated icons" id="paintbox"></div>
+        </div>
+        <div class="tools" id="menucontainer">
+            <div class="animated icons" id="toolbox"></div>
+        </div>
+        <div class="box" id="intro">
+            <div class="header">
+                <h1>Welcome to Streamer!</h1>
+            </div>
+            <div class="contents">
+                <p>Use this page to produce live or recorded MakeCode videos!
+                    Got a question or a comment ? Try the <a
+                        href="https://forum.makecode.com/t/introducing-makecode-streamer/2437"
+                        target="_blank">forum</a>!
+                </p>
+                <button class="pip" id="playpip" title="Watch the introduction video!">
+                    <video id="introvideo" title="Take the tour!" preload="metadata" poster="/static/streamer/intro.png"
+                        src="/static/streamer/intro.mp4"></video>
+                    <span id="takethetour">TAKE THE TOUR</span>
+                </button>
+                <button class="pip" id="skippip" title="I'm a pro already...">
+                    Skip
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- @include tracking.html -->
+    <script src="/static/streamer/script.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+</body>
+
+</html>

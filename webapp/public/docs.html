@@ -5,6 +5,9 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <style>
+        #docs {
+            background: white !important;
+        }
         #content {
             margin-bottom: 3rem !important;
             margin-top: 0.5rem !important;
@@ -34,7 +37,6 @@
             max-height: calc(100% - 1em);
         }
 
-        
         div.blocks-svg-list > svg {
             margin-right: 1rem;
             margin-bottom: 1rem;
@@ -55,7 +57,11 @@
         code.lang-cards::before,
         code.lang-namespaces::before,
         code.lang-codecard::before,
-        code.lang-shadow::before {
+        code.lang-shadow::before,
+        code.lang-diff:before,
+        code.lang-diffspy:before,
+        code.lang-diffblocks:before
+        {
             content: "...";
             position: absolute;
             top: calc(50% - 0.5em);
@@ -70,18 +76,20 @@
         code.lang-cards,
         code.lang-namespaces,
         code.lang-codecard,
-        code.lang-shadow {
+        code.lang-shadow,
+        code.lang-diff,
+        code.lang-diffspy
+        code.lang-diffblocks
+        {
             color: transparent;
         }
     </style>
     <link rel="stylesheet" data-rtl="/blb/rtlsemantic.css" href="/blb/semantic.css" type="text/css">
     <link id="blocklycss" rel="stylesheet" data-rtl="/blb/rtlblockly.css" href="/blb/blockly.css" type="text/css">
+    <link rel="stylesheet" title="light" href="/blb/highlight.js/styles/vs.css" type="text/css">
 </head>
 
 <body id="docs">
-    <style type="text/css">
-        @import "/blb/highlight.js/styles/vs.css";
-    </style>
     <div id="sidedocs-back-button" class="ui" style="display: none">
         <i class="ui icon left arrow"></i>
         <span id="back-label"></span>
@@ -117,6 +125,7 @@
             var backLabel = document.getElementById('back-label');
             if (backLabel)
                 backLabel.textContent = pxt.Util.lf("Go back")
+
             var projectid = /projectid=([^&?]+)/i.exec(window.location.href);
             var project = /project=([^&?]+)/i.exec(window.location.href);
             var code = /code=([^&?]+)/i.exec(window.location.href);

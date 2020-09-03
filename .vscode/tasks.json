@@ -6,12 +6,12 @@
 // ${fileExtname}: the current opened file's extension
 // ${cwd}: the current working directory of the spawned process
 
-// Uncomment the following section to use jake to build a workspace
-// cloned from https://github.com/Microsoft/TypeScript.git
+// Uncomment the following section to use gulp to build a workspace
+// cloned from https://github.com/microsoft/TypeScript.git
 {
 	"version": "0.1.0",
-	// Task runner is jake
-	"command": "jake",
+	// Task runner is gulp
+	"command": "gulp",
 	// Need to be executed in shell / cmd
 	"isShellCommand": true,
 	"showOutput": "always",

@@ -6,3 +6,20 @@ function testLambdasWithMoreParams() {
 }
 
 testLambdasWithMoreParams()
+
+namespace Arcade1617 {
+    class Foo {
+        public handlerxx: () => void;
+        run() {
+            this.handlerxx()
+        }
+    }
+
+    function end(win?: boolean) {
+        assert(win === undefined, "lp1")
+    }
+
+    const f = new Foo()
+    f.handlerxx = end
+    f.run()
+}

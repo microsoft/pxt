@@ -8,8 +8,10 @@ namespace pxt {
         }
 
         readFile(module: pxt.Package, filename: string): string {
-            if (module.id == "this") {
-                return this.packageFiles[filename]
+            const fid = module.id == "this" ? filename :
+                "pxt_modules/" + module.id + "/" + filename
+            if (this.packageFiles[fid] !== undefined) {
+                return this.packageFiles[fid]
             } else if (pxt.appTarget.bundledpkgs[module.id]) {
                 return pxt.appTarget.bundledpkgs[module.id][filename];
             } else {
@@ -76,24 +78,34 @@ namespace pxt {
         native?: boolean;
     }
 
-    export function simpleCompileAsync(files: pxt.Map<string>, optionsOrNative?: SimpleCompileOptions | boolean) {
-        const options: SimpleCompileOptions =
-            typeof optionsOrNative == "boolean" ? { native: optionsOrNative }
-                : optionsOrNative || {}
+    export function simpleGetCompileOptionsAsync(
+        files: pxt.Map<string>,
+        simpleOptions: SimpleCompileOptions
+    ) {
         const host = new SimpleHost(files)
         const mainPkg = new MainPackage(host)
         return mainPkg.loadAsync()
             .then(() => {
                 let target = mainPkg.getTargetOptions()
                 if (target.hasHex)
-                    target.isNative = options.native
+                    target.isNative = simpleOptions.native
                 return mainPkg.getCompileOptionsAsync(target)
-            })
-            .then(opts => {
+            }).then(opts => {
                 patchTS(mainPkg.targetVersion(), opts)
                 prepPythonOptions(opts)
-                return pxtc.compile(opts)
+                return opts
             })
+    }
+
+    export function simpleCompileAsync(
+        files: pxt.Map<string>,
+        optionsOrNative?: SimpleCompileOptions | boolean
+    ) {
+        const options: SimpleCompileOptions =
+            typeof optionsOrNative == "boolean" ? { native: optionsOrNative }
+                : optionsOrNative || {}
+        return simpleGetCompileOptionsAsync(files, options)
+            .then(opts => pxtc.compile(opts))
             .then((r: CompileResultWithErrors) => {
                 if (!r.success)
                     r.errors = r.diagnostics.map(ts.pxtc.getDiagnosticString).join("") || "Unknown error."

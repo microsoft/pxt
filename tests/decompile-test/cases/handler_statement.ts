@@ -1,4 +1,3 @@
-/// <reference path="./testblocks/mb.ts" />
 control.runInBackground(() => {
 
 })

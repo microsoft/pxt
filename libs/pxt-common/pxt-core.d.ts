@@ -15,6 +15,7 @@ interface Array<T> {
     //% help=arrays/push
     //% shim=Array_::push weight=50
     //% blockId="array_push" block="%list| add value %value| to end" blockNamespace="arrays"
+    //% group="Modify"
     push(item: T): void;
 
     /**
@@ -30,7 +31,7 @@ interface Array<T> {
     //% help=arrays/pop
     //% shim=Array_::pop weight=45
     //% blockId="array_pop" block="get and remove last value from %list" blockNamespace="arrays"
-    //% blockGap=64
+    //% group="Read"
     pop(): T;
 
     /**
@@ -39,6 +40,7 @@ interface Array<T> {
     //% help=arrays/reverse
     //% helper=arrayReverse weight=10
     //% blockId="array_reverse" block="reverse %list" blockNamespace="arrays"
+    //% group="Operations"
     reverse(): void;
 
     /**
@@ -47,6 +49,7 @@ interface Array<T> {
     //% help=arrays/shift
     //% helper=arrayShift weight=30
     //% blockId="array_shift" block="get and remove first value from %list" blockNamespace="arrays"
+    //% group="Read"
     shift(): T;
 
     /**
@@ -56,6 +59,7 @@ interface Array<T> {
     //% help=arrays/unshift
     //% helper=arrayUnshift weight=25
     //% blockId="array_unshift" block="%list| insert %value| at beginning" blockNamespace="arrays"
+    //% group="Modify"
     //unshift(...values:T[]): number; //rest is not supported in our compiler yet.
     unshift(value: T): number;
 
@@ -82,7 +86,7 @@ interface Array<T> {
       */
     //% helper=arrayJoin weight=40
     join(sep?: string): string;
-    
+
     /**
       * Tests whether at least one element in the array passes the test implemented by the provided function.
       * @param callbackfn A function that accepts up to two arguments. The some method calls the callbackfn function one time for each element in the array.
@@ -96,7 +100,7 @@ interface Array<T> {
       */
     //% helper=arrayEvery weight=40
     every(callbackfn: (value: T, index: number) => boolean): boolean;
-    
+
     /**
       * Sort the elements of an array in place and returns the array. The sort is not necessarily stable.
       * @param specifies a function that defines the sort order. If omitted, the array is sorted according to the prmitive type
@@ -117,7 +121,7 @@ interface Array<T> {
       */
     //% helper=arrayForEach weight=40
     forEach(callbackfn: (value: T, index: number) => void): void;
-    
+
     /**
       * Return the elements of an array that meet the condition specified in a callback function.
       * @param callbackfn A function that accepts up to two arguments. The filter method calls the callbackfn function one time for each element in the array.
@@ -130,10 +134,10 @@ interface Array<T> {
       */
     //% helper=arrayFill weight=39
     fill(value: T, start?: number, end?: number): T[];
-    
+
     /**
      * Returns the value of the first element in the array that satisfies the provided testing function. Otherwise undefined is returned.
-     * @param callbackfn 
+     * @param callbackfn
      */
     //% helper=arrayFind weight=40
     find(callbackfn: (value: T, index: number) => boolean): T;
@@ -153,8 +157,9 @@ interface Array<T> {
 
     /** Remove the element at a certain index. */
     //% help=arrays/remove-at
-    //% shim=Array_::removeAt weight=15
-    //% blockId="array_removeat" block="%list| remove value at %index" blockNamespace="arrays"
+    //% shim=Array_::removeAt weight=47
+    //% blockId="array_removeat" block="%list| get and remove value at %index" blockNamespace="arrays"
+    //% group="Read"
     removeAt(index: number): T;
 
     /**
@@ -165,6 +170,7 @@ interface Array<T> {
     //% help=arrays/insert-at
     //% shim=Array_::insertAt weight=20
     //% blockId="array_insertAt" block="%list| insert at %index| value %value" blockNamespace="arrays"
+    //% group="Modify"
     insertAt(index: number, value: T): void;
 
     /**
@@ -175,6 +181,7 @@ interface Array<T> {
     //% help=arrays/index-of
     //% shim=Array_::indexOf weight=40
     //% blockId="array_indexof" block="%list| find index of %value" blockNamespace="arrays"
+    //% group="Operations"
     indexOf(item: T, fromIndex?: number): number;
 
     /**
@@ -202,6 +209,45 @@ interface Array<T> {
     pickRandom(): T;
 
     [n: number]: T;
+
+    /**
+      * Add one element to the beginning of an array and return the new length of the array.
+      * @param element to insert at the start of the Array.
+      */
+    //% help=arrays/unshift
+    //% helper=arrayUnshift weight=24
+    //% blockId="array_unshift_statement" block="%list| insert %value| at beginning" blockNamespace="arrays"
+    //% blockAliasFor="Array.unshift"
+    //% group="Modify"
+    _unshiftStatement(value: T): void;
+
+    /**
+      * Remove the last element from an array and return it.
+      */
+    //% help=arrays/pop
+    //% shim=Array_::pop weight=44
+    //% blockId="array_pop_statement" block="remove last value from %list" blockNamespace="arrays"
+    //% blockAliasFor="Array.pop"
+    //% group="Modify"
+    _popStatement(): void;
+
+    /**
+      * Remove the first element from an array and return it. This method changes the length of the array.
+      */
+    //% help=arrays/shift
+    //% helper=arrayShift weight=29
+    //% blockId="array_shift_statement" block="remove first value from %list" blockNamespace="arrays"
+    //% blockAliasFor="Array.shift"
+    //% group="Modify"
+    _shiftStatement(): void;
+
+    /** Remove the element at a certain index. */
+    //% help=arrays/remove-at
+    //% shim=Array_::removeAt weight=14
+    //% blockId="array_removeat_statement" block="%list| remove value at %index" blockNamespace="arrays"
+    //% blockAliasFor="Array.removeAt"
+    //% group="Modify"
+    _removeAtStatement(index: number): void;
 }
 
 declare interface String {
@@ -257,6 +303,26 @@ declare interface String {
     substr(start: number, length?: number): string;
 
     /**
+     * Return the current string with the first occurence of toReplace
+     * replaced with the replacer
+     * @param toReplace the substring to replace in the current string
+     * @param replacer either the string that replaces toReplace in the current string,
+     *                or a function that accepts the substring and returns the replacement string.
+     */
+    //% helper=stringReplace
+    replace(toReplace: string, replacer: string | ((sub: string) => string)): string;
+
+    /**
+     * Return the current string with each occurence of toReplace
+     * replaced with the replacer
+     * @param toReplace the substring to replace in the current string
+     * @param replacer either the string that replaces toReplace in the current string,
+     *                or a function that accepts the substring and returns the replacement string.
+     */
+    //% helper=stringReplaceAll
+    replaceAll(toReplace: string, replacer: string | ((sub: string) => string)): string;
+
+    /**
      * Return a substring of the current string.
      * @param start first character index; can be negative from counting from the end, eg:0
      * @param end one-past-last character index
@@ -294,14 +360,19 @@ declare interface String {
 
     /**
      * Splits the string according to the separators
-     * @param separator 
-     * @param limit 
+     * @param separator
+     * @param limit
      */
     //% helper=stringSplit
     //% help=text/split
     //% blockId="string_split" blockNamespace="text"
     //% block="split %this=text|at %separator"
     split(separator?: string, limit?: number): string[];
+
+    /**
+     * Return a substring of the current string with whitespace removed from both ends
+     */
+    trim(): string;
 
     /**
      * Converts the string to lower case characters.
@@ -323,10 +394,28 @@ declare interface String {
 //% text.defl="123"
 declare function parseFloat(text: string): number;
 
+/**
+ * Returns a pseudorandom number between min and max included.
+ * If both numbers are integral, the result is integral.
+ * @param min the lower inclusive bound, eg: 0
+ * @param max the upper inclusive bound, eg: 10
+ */
+//% blockId="device_random" block="pick random %min|to %limit"
+//% blockNamespace="Math"
+//% help=math/randint
+//% shim=Math_::randomRange
+declare function randint(min: number, max: number): number;
+
 interface Object { }
-interface Function { }
-interface IArguments { }
-interface RegExp { }
+interface Function {
+  __assignableToFunction: Function;
+}
+interface IArguments { 
+  __assignableToIArguments: IArguments;
+}
+interface RegExp { 
+  __assignableToRegExp: RegExp;
+}
 type TemplateStringsArray = Array<string>;
 
 type uint8 = number;
@@ -413,8 +502,8 @@ declare namespace Math {
      * @param min the lower inclusive bound, eg: 0
      * @param max the upper inclusive bound, eg: 10
      */
-    //% blockId="device_random" block="pick random %min|to %limit"
-    //% help=math/random-range
+    //% blockId="device_random_deprecated" block="pick random %min|to %limit"
+    //% help=math/random-range deprecated
     //% shim=Math_::randomRange
     function randomRange(min: number, max: number): number;
 
@@ -437,6 +526,7 @@ declare namespace Math {
      * @param x An angle in radians
      */
     //% shim=Math_::sin
+    //% help=math/trigonometry
     function sin(x: number): number;
 
     /**
@@ -444,6 +534,7 @@ declare namespace Math {
      * @param x An angle in radians
      */
     //% shim=Math_::cos
+    //% help=math/trigonometry
     function cos(x: number): number;
 
     /**
@@ -494,6 +585,7 @@ declare namespace Math {
      * @param x A numeric expression.
      */
     //% shim=Math_::ceil
+      //% help=math
     function ceil(x: number): number;
 
     /**
@@ -501,6 +593,7 @@ declare namespace Math {
       * @param x A numeric expression.
       */
     //% shim=Math_::floor
+      //% help=math
     function floor(x: number): number;
 
     /**
@@ -508,6 +601,7 @@ declare namespace Math {
       * @param x A numeric expression.
       */
     //% shim=Math_::trunc
+    //% help=math
     function trunc(x: number): number;
 
     /**
@@ -515,6 +609,7 @@ declare namespace Math {
       * @param x The value to be rounded to the nearest number.
       */
     //% shim=Math_::round
+    //% help=math
     function round(x: number): number;
 
     /**
@@ -532,4 +627,12 @@ declare namespace Math {
      */
     //% shim=Math_::idiv
     function idiv(x: number, y: number): number;
+}
+
+declare namespace control {
+    //% shim=_control::_onCodeStart
+    export function _onCodeStart(arg: any): void;
+
+    //% shim=_control::_onCodeStop
+    export function _onCodeStop(arg: any): void;
 }

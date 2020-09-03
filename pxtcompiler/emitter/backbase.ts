@@ -83,12 +83,6 @@ namespace ts.pxtc {
         rt_call(name: string, r0: string, r1: string) { return "TBD(rt_call)"; }
         call_lbl(lbl: string, saveStack?: boolean) { return "TBD(call_lbl)" }
         call_reg(reg: string) { return "TBD(call_reg)" }
-        vcall(mapMethod: string, isSet: boolean, vtableShift: number) {
-            return "TBD(vcall)"
-        }
-        prologue_vtable(arg_index: number, vtableShift: number) {
-            return "TBD(prologue_vtable"
-        }
         helper_prologue() { return "TBD(lambda_prologue)" }
         helper_epilogue() { return "TBD(lambda_epilogue)" }
         pop_clean(pops: boolean[]) { return "TBD" }
@@ -136,15 +130,14 @@ ${lbl}: ${this.obj_header(vt)}
 
 
         hex_literal(lbl: string, data: string) {
+            // if buffer looks as if it was prepared for in-app reprogramming (at least 8 bytes of 0xff)
+            // align it to 8 bytes, to make sure it can be rewritten also on SAMD51
+            const align = /f{16}/i.test(data) ? 8 : 4
             return `
-.balign 4
+.balign ${align}
 ${lbl}: ${this.obj_header("pxt::buffer_vt")}
 ${hexLiteralAsm(data)}
 `
-        }
-
-        method_call(procid: ir.ProcId, topExpr: ir.Expr) {
-            return ""
         }
     }
 
@@ -187,6 +180,7 @@ ${hexLiteralAsm(data)}
             this.emitLambdaTrampoline()
             this.emitArrayMethods()
             this.emitFieldMethods()
+            this.emitBindHelper()
         }
 
         private write = (s: string) => { this.resText += asmline(s); }
@@ -458,10 +452,11 @@ ${baseLabel}_nochk:
             if (!fast) {
                 let toClear = this.exprStack.filter(e => e.currUses == e.totalUses && e.irCurrUses != -1)
                 if (toClear.length > 0) {
-                    this.write(this.t.reg_gets_imm("r1", 0))
+                    // use r7 as temp; r0-r3 might be used as arguments to functions
+                    this.write(this.t.reg_gets_imm("r7", 0))
                     for (let a of toClear) {
                         a.irCurrUses = -1
-                        this.write(this.loadFromExprStack("r1", a, 0, true))
+                        this.write(this.loadFromExprStack("r7", a, 0, true))
                     }
                 }
             }
@@ -604,6 +599,66 @@ ${baseLabel}_nochk:
             })
         }
 
+        private emitBindHelper() {
+            const maxArgs = 12
+            this.write(`
+                .section code
+                _pxt_bind_helper:
+                    push {r0, r2}
+                    movs r0, #2
+                    ldlit r1, _pxt_bind_lit
+                    ${this.t.callCPP("pxt::mkAction")}
+                    pop {r1, r2}
+                    str r1, [r0, #12]
+                    str r2, [r0, #16]
+                    bx r4 ; return
+
+                _pxt_bind_lit:
+                    ${this.t.obj_header("pxt::RefAction_vtable")}
+                    .short 0, 0 ; no captured vars
+                    .word .bindCode@fn
+                .bindCode:
+                    ; r0-bind object, r4-#args
+                    cmp r4, #${maxArgs}
+                    bge .fail
+                    lsls r3, r4, #2
+                    ldlit r2, _pxt_copy_list
+                    ldr r1, [r2, r3]
+
+                    ldr r3, [r0, #12]
+                    ldr r2, [r0, #16]
+                    adds r4, r4, #1
+                    bx r1
+                .fail:
+                    ${this.t.callCPP("pxt::failedCast")}
+
+                _pxt_copy_list:
+            `)
+
+            this.write(U.range(maxArgs).map(k => `.word _pxt_bind_${k}@fn`).join("\n"))
+
+            for (let numargs = 0; numargs < maxArgs; numargs++) {
+                this.write(`
+                _pxt_bind_${numargs}:
+                    sub sp, #4
+                `)
+                // inject recv argument
+                for (let i = 0; i < numargs; ++i) {
+                    this.write(`ldr r1, [sp, #4*${i + 1}]`)
+                    this.write(`str r1, [sp, #4*${i}]`)
+                }
+                this.write(`
+                    push {r3} ; this-ptr
+                    mov r1, lr
+                    str r1, [sp, #4*${numargs + 1}] ; store LR
+                    blx r2
+                    ldr r1, [sp, #4*${numargs + 1}]
+                    add sp, #8
+                    bx r1
+                `)
+            }
+        }
+
         private ifaceCallCore(numargs: number, getset: string, noObjlit = false) {
             this.write(`
                 ldr r2, [r3, #12] ; load mult
@@ -642,6 +697,10 @@ ${baseLabel}_nochk:
                 beq .field
             `)
 
+            // here, it's a method entry in iface table
+
+            const callIt = this.t.emit_int(numargs, "r4") + "\n     bx r2"
+
             if (getset == "set") {
                 this.write(`
                     ; check for next descriptor
@@ -649,11 +708,37 @@ ${baseLabel}_nochk:
                     cmp r7, r1
                     bne .fail2 ; no setter!
                     ldr r2, [r3, #12]
+                    ${callIt}
                 `)
+            } else {
+                this.write(`
+                    ; check if it's getter
+                    ldrh r7, [r3, #2]
+                    cmp r7, #1
+                `)
+                if (getset == "get") {
+                    this.write(`
+                        bne .bind
+                        ${callIt}
+                    .bind:
+                        mov r4, lr
+                        bl _pxt_bind_helper
+                    `)
+                } else {
+                    this.write(`
+                        beq .doublecall
+                        ${callIt}
+                    .doublecall:
+                        ; call getter
+                        movs r4, #1
+                        push {r0, lr}
+                        blx r2
+                        pop {r1, r2}
+                        mov lr, r2
+                        b .moveArgs
+                    `)
+                }
             }
-
-            this.write(this.t.emit_int(numargs, "r4"))
-            this.write("bx r2")
 
             if (!noObjlit) {
                 this.write(`
@@ -703,7 +788,7 @@ ${baseLabel}_nochk:
 
                 for (let i = 0; i < numargs; ++i) {
                     if (i == numargs - 1)
-                        // we keep the actual lambda value on the stack, so it gets decremented
+                        // we keep the actual lambda value on the stack, so it won't be collected
                         this.write(`movs r1, r0`)
                     else
                         this.write(`ldr r1, [sp, #4*${i + 1}]`)
@@ -1101,7 +1186,7 @@ ${baseLabel}_nochk:
                 this.checkSubtype(classNo, ".fail", "r4")
 
             // on linux we use 32 bits for array size
-            const ldrSize = target.stackAlign || isBuffer ? "ldr" : "ldrh"
+            const ldrSize = isStackMachine() || target.runtimeIsARM || isBuffer ? "ldr" : "ldrh"
 
             this.write(`
                 asrs r1, r1, #1
@@ -1206,9 +1291,10 @@ ${baseLabel}_nochk:
                 bl pxt::pushThreadContext
                 mov r6, r0          ; save ctx or globals
                 mov r5, r7          ; save lambda for closure
-                ldr r0, [r5, #8]    ; ld fnptr
+                mov r0, r5          ; also save lambda pointer in r0 - needed by pxt::bindMethod
+                ldr r1, [r5, #8]    ; ld fnptr
                 movs r4, #3         ; 3 args
-                blx r0              ; execute the actual lambda
+                blx r1              ; execute the actual lambda
                 mov r7, r0          ; save result
                 @dummystack 4
                 add sp, #4*4        ; remove arguments and lambda
@@ -1388,7 +1474,6 @@ ${baseLabel}_nochk:
             }
 
             let lbl = this.mkLbl("_proccall")
-            let argsToClear = topExpr.args.slice()
 
             let procIdx = -1
             if (isLambda) {
@@ -1400,16 +1485,13 @@ ${baseLabel}_nochk:
                     this.write(this.t.callCPP("pxt::failedCast"))
                 })
             } else if (procid.virtualIndex != null || procid.ifaceIndex != null) {
-                let custom = this.t.method_call(procid, topExpr)
-                if (custom) {
-                    this.write(custom)
-                } else if (procid.mapMethod) {
-                    let isSet = /Set/.test(procid.mapMethod)
-                    assert(isSet == (topExpr.args.length == 2))
-                    assert(!isSet == (topExpr.args.length == 1))
-                    this.emitIfaceCall(procid, topExpr.args.length, isSet ? "set" : "get")
-                } else if (procid.ifaceIndex != null) {
-                    this.emitIfaceCall(procid, topExpr.args.length)
+                if (procid.ifaceIndex != null) {
+                    if (procid.isSet) {
+                        assert(topExpr.args.length == 2)
+                        this.emitIfaceCall(procid, topExpr.args.length, "set")
+                    } else {
+                        this.emitIfaceCall(procid, topExpr.args.length, procid.noArgs ? "get" : "")
+                    }
                 } else {
                     this.emitClassCall(procid)
                 }
@@ -1460,15 +1542,16 @@ ${baseLabel}_nochk:
                 this.write(`str r1, [sp, #4*${i}]`)
             }
 
+            // save lr and r5 (outer lambda ctx) in the newly free spots
             this.write(`
                 str r5, [sp, #4*${numargs}]
                 mov r1, lr
                 str r1, [sp, #4*${numargs + 1}]
                 mov r5, r0
                 ldr r7, [r5, #8]
-                blx r7
-                ldr r4, [sp, #4*${numargs + 1}]
-                ldr r5, [sp, #4*${numargs}]
+                blx r7 ; exec actual lambda
+                ldr r4, [sp, #4*${numargs + 1}] ; restore what was in LR
+                ldr r5, [sp, #4*${numargs}] ; restore lambda ctx
             `)
 
             // move arguments back where they were
@@ -1590,7 +1673,7 @@ ${baseLabel}_nochk:
         }
 
         private emitCallRaw(name: string) {
-            let inf = hex.lookupFunc(name)
+            let inf = hexfile.lookupFunc(name)
             assert(!!inf, "unimplemented raw function: " + name)
             this.alignedCall(name)
         }

@@ -98,6 +98,7 @@ namespace pxt.blocks {
 
         // remove spaces before after pipe
         nb = nb.replace(/\s*\|\s*/g, '|');
+
         return nb;
     }
 
@@ -133,12 +134,19 @@ namespace pxt.blocks {
             const def = refMap[THIS_NAME] || defParameters[0];
             const defName = def.name;
             const isVar = !def.shadowBlockId || def.shadowBlockId === "variables_get";
+
+            let defaultValue: string;
+
+            if (isVar) {
+                defaultValue = def.varName || fn.attributes.paramDefl[defName] || fn.attributes.paramDefl["this"];
+            }
+
             res.thisParameter = {
                 actualName: THIS_NAME,
                 definitionName: defName,
                 shadowBlockId: def.shadowBlockId,
                 type: fn.namespace,
-                defaultValue: isVar ? def.varName : undefined,
+                defaultValue: defaultValue,
 
                 // Normally we pass ths actual parameter name, but the "this" parameter doesn't have one
                 fieldEditor: fieldEditor(defName, THIS_NAME),
@@ -218,6 +226,15 @@ namespace pxt.blocks {
         }
     }
 
+    export function hasHandler(fn: pxtc.SymbolInfo) {
+        return fn.parameters && fn.parameters.some(p => (
+            p.type == "() => void" ||
+            p.type == "Action" ||
+            !!p.properties?.length ||
+            !!p.handlerParameters?.length
+        ));
+    }
+
     /**
      * Returns which Blockly block type to use for an argument reporter based
      * on the specified TypeScript type.
@@ -276,6 +293,7 @@ namespace pxt.blocks {
         block?: Map<string>;
         blockTextSearch?: string; // Which block text to use for searching; if undefined, search uses all texts in BlockDefinition.block, joined with space
         tooltipSearch?: string; // Which tooltip to use for searching; if undefined, search uses all tooltips in BlockDefinition.tooltip, joined with space
+        translationIds?: string[];
     }
 
     let _blockDefinitions: Map<BlockDefinition>;
@@ -666,6 +684,16 @@ namespace pxt.blocks {
                     PROCEDURES_CALLNORETURN_TITLE: Util.lf("call function")
                 }
             },
+            'function_return': {
+                name: Util.lf("return a value from within a function"),
+                tooltip: Util.lf("Return a value from within a user-defined function."),
+                url: 'types/function/return',
+                category: 'functions',
+                block: {
+                    message_with_value: Util.lf("return %1"),
+                    message_no_value: Util.lf("return")
+                }
+            },
             'function_definition': {
                 name: Util.lf("define the function"),
                 tooltip: Util.lf("Create a function."),
@@ -682,6 +710,14 @@ namespace pxt.blocks {
                 category: 'functions',
                 block: {
                     FUNCTIONS_CALL_TITLE: Util.lf("call")
+                }
+            },
+            'function_call_output': {
+                name: Util.lf("call the function with a return value"),
+                tooltip: Util.lf("Call the user-defined function with a return value."),
+                url: 'types/function/call',
+                category: 'functions',
+                block: {
                 }
             }
         };
@@ -720,6 +756,22 @@ namespace pxt.blocks {
             block: {
                 message0: Util.lf("continue")
             }
+        }
+
+        if (pxt.Util.isTranslationMode()) {
+            const msg = Blockly.Msg as any;
+            Util.values(_blockDefinitions).filter(b => b.block).forEach(b => {
+                const keys = Object.keys(b.block);
+                b.translationIds = Util.values(b.block);
+                keys.forEach(k => pxt.crowdin.inContextLoadAsync(b.block[k])
+                    .done(r => {
+                        b.block[k] = r;
+                        // override builtin blockly namespace strings
+                        if (/^[A-Z_]+$/.test(k))
+                            msg[k] = r;
+                    })
+                )
+            })
         }
     }
 }

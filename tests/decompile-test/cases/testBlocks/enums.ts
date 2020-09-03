@@ -76,3 +76,25 @@ namespace enumTest {
         return arg;
     }
 }
+
+namespace animation {
+    export enum AnimationTypes {
+        //% block="all"
+        All,
+        //% block="frame"
+        ImageAnimation,
+        //% block="path"
+        MovementAnimation
+    }
+
+    /**
+     * Stops all animations (simple and looping) of the specified type on a sprite
+     * @param type the animation type to stop
+     * @param sprite the sprite to filter animations by
+     */
+    //% blockId=stop_animations
+    //% block="stop %type animations"
+    //% group="Animate"
+    export function stopAnimation(type: AnimationTypes) {
+    }
+}

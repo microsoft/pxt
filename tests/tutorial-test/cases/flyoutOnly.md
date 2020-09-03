@@ -1,5 +1,6 @@
 # Explicit Hints
 
+### @diffs false
 ### @flyoutOnly true
 
 ## Introduction

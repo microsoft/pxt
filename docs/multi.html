@@ -1,0 +1,175 @@
+<html>
+<head>
+    <title>MakeCode Multi Editor</title>
+    <style>
+        iframe {
+            position: absolute;
+            width: calc(50% - 0.15rem);
+            height: calc(100% - 1rem);
+            bottom: 0;
+            top: 1rem;
+            border: none;
+        }
+
+        #left {
+            left: 0;
+            right: calc(50% - 0.15rem);
+        }
+
+        #right {
+            right: 0;
+            left: calc(50% + 0.15rem);
+        }
+
+        #divider {
+            position: absolute;
+            width: 0.3rem;
+            cursor: col-resize;
+            height: 100%;
+            left: calc(50% - 0.15rem);
+            right: calc(50% + 0.15rem);
+            background: #bbb;
+            top: 0rem;
+        }
+
+        select {
+            position: absolute;
+            width: calc(50% - 0.15rem);
+            height: 1rem;
+            top: 0rem;
+        }
+
+        #selectleft {
+            left: 0;
+            right: calc(50% + 0.15rem);
+        }
+
+        #selectright {
+            right: 0;
+            left: cal(50% - 0.15rem);
+        }
+    </style>
+</head>
+
+<body>
+    <select id="selectleft">
+        <option value="https://makecode.microbit.org/">micro:bit</option>
+        <option value="https://makecode.adafruit.com/beta">Adafruit Circuit Playground Express (beta)</option>
+        <option value="https://arcade.makecode.com/beta">Arcade (beta)</option>
+        <option value="https://makecode.calliope.cc/beta">Calliope (beta)</option>
+        <option value="https://maker.makecode.com/beta">Maker (beta)</option>
+    </select>
+    <select id="selectright">
+        <option value="https://makecode.microbit.org/">micro:bit</option>
+        <option value="https://makecode.adafruit.com/beta">Adafruit Circuit Playground Express (beta)</option>
+        <option value="https://arcade.makecode.com/beta">Arcade (beta)</option>
+        <option value="https://makecode.calliope.cc/beta">Calliope (beta)</option>
+        <option value="https://maker.makecode.com/beta">Maker (beta)</option>
+    </select>
+    <iframe id="left" allow="usb;camera"></iframe>
+    <div id="divider"></div>
+    <iframe id="right" allow="usb;camera"></iframe>
+    <script>
+        (function () {
+            var left = document.getElementById("left");
+            var right = document.getElementById("right");
+            var frames = [left, right]
+            var selectLeft = document.getElementById("selectleft");
+            var selectRight = document.getElementById("selectright");
+            var divider = document.getElementById("divider");
+            var localhost = /localhost=1/.test(window.location.href)
+            var flags = "?nestededitorsim=1&editorlayout=ide&nosandbox=1";
+            var ratio = .5;
+            var dividerWidth = 14;
+
+            window.onmessage = function (msg) {
+                var data = msg.data;
+                var source = msg.source;
+                if (!!data.broadcast) {
+                    data.outer = true;
+                    frames.filter(function (ifrm) {
+                            return ifrm.contentWindow !== source;
+                        })
+                        .forEach(function (ifrm) {
+                            ifrm.contentWindow.postMessage(data, "*")
+                        });
+                }
+            };
+
+            function updateSrc(ifrm, select, hash) {
+                var h = hash ? "#" + hash : "";
+                if (localhost) {
+                    ifrm.src = "/index.html" + flags + h;
+                } else {
+                    ifrm.src = select.value + flags + h;
+                }
+            }
+            function handleHash() {
+                var hashLeft = ""
+                var hashRight = ""
+                var route = (window.location.hash || "#");
+                var parts = route.replace(/^#/, '').split(':|:', 2);
+                updateSrc(left, selectLeft, parts[0]);
+                updateSrc(right, selectRight, parts[1]);
+                window.history.replaceState('', '', '#')
+            }
+
+            selectLeft.onchange = function () { updateSrc(left, selectLeft); }
+            selectRight.onchange = function () { updateSrc(right, selectRight); }
+
+            function setWidths() {
+                var t = document.body.clientWidth;
+                var n = Math.floor(t * ratio);
+                var i = Math.max(t - n - dividerWidth, 4);
+                left.style.width = n + "px";
+                selectLeft.style.width = n + "px";
+                divider.style.left = n + "px";
+                divider.style.width = dividerWidth + "px";
+                right.style.left = n + dividerWidth + "px";
+                right.style.width = i + "px";
+                selectRight.style.left = n + dividerWidth + "px";
+                selectRight.style.width = i + "px";
+            }
+            function startDrag() {
+                left.style.visibility = "hidden";
+                right.style.visibility = "hidden";
+                var n = divider.onmouseover;
+                var t = divider.onmouseout;
+                divider.onmouseover = null;
+                divider.onmouseout = null;
+                document.body.onmousemove = function (n) {
+                    n || (n = window.event);
+                    ratio = (n.clientX - dividerWidth / 2) / document.body.clientWidth;
+                    ratio < .1 && (ratio = .1);
+                    ratio > .9 && (ratio = .9);
+                    setWidths();
+                }
+                document.body.onmouseup = function () {
+                    document.body.onmousemove = null;
+                    document.body.onmouseup = null;
+                    left.style.visibility = "inherit";
+                    right.style.visibility = "inherit";
+                    divider.onmouseover = n;
+                    divider.onmouseout = t;
+                }
+            }
+            window.onresize = setWidths;
+            window.onhashchange = handleHash;
+
+            divider.onmouseover = function () {
+                document.body.style.cursor = "w-resize";
+                divider.onmousedown = startDrag;
+            }
+            divider.onmouseout = function () {
+                document.body.style.cursor = "default";
+                divider.onmousedown = null;
+            }
+
+            setWidths();
+            handleHash();
+        })();        
+    </script>
+    <!-- @include tracking.html -->
+</body>
+
+</html>

@@ -31,12 +31,36 @@ namespace pxtblockly {
             else if (pxt.appTarget.runtime && pxt.appTarget.runtime.palette) {
                 let p = pxt.Util.clone(pxt.appTarget.runtime.palette);
                 p[0] = "#dedede";
-                this.setColours(p);
+                let t;
+                if (pxt.appTarget.runtime.paletteNames) {
+                    t = pxt.Util.clone(pxt.appTarget.runtime.paletteNames);
+                    t[0] = lf("transparent");
+                }
+                this.setColours(p, t);
             }
+
+            // Set to first color in palette (for toolbox)
+            this.setValue(this.getColours_()[0]);
 
             if (params.columns) this.setColumns(parseInt(params.columns));
             if (params.className) this.className_ = params.className;
             if (params.valueMode) this.valueMode_ = params.valueMode;
+        }
+
+        /**
+         * @override
+         */
+        applyColour() {
+            if (this.borderRect_) {
+                this.borderRect_.style.fill = this.value_;
+            } else if (this.sourceBlock_) {
+                (this.sourceBlock_ as any)?.pathObject?.svgPath?.setAttribute('fill', this.value_);
+                (this.sourceBlock_ as any)?.pathObject?.svgPath?.setAttribute('stroke', '#fff');
+            }
+        };
+
+        doClassValidation_(colour: string) {
+            return "string" != typeof colour ? null : parseColour(colour, this.getColours_());
         }
 
         /**
@@ -72,27 +96,15 @@ namespace pxtblockly {
          * Set the colour.
          * @param {string} colour The new colour in '#rrggbb' format.
          */
-        setValue(colour: string) {
-            colour = parseColour(colour, this.getColours_());
-
-            if (!colour) return;
-
-            if (this.sourceBlock_ && Blockly.Events.isEnabled() &&
-                this.value_ != colour) {
-                Blockly.Events.fire(new (Blockly as any).Events.BlockChange(
-                    this.sourceBlock_, 'field', this.name, this.value_, colour));
-            }
-
-            this.value_ = colour;
-            if (this.sourceBlock_) {
-                this.sourceBlock_.setColour(colour, colour, colour);
-            }
+        doValueUpdate_(colour: string) {
+            this.value_ = parseColour(colour, this.getColours_());
+            this.applyColour();
         }
 
         showEditor_() {
             super.showEditor_();
-            if (this.className_ && this.colorPicker_)
-                pxt.BrowserUtils.addClass(this.colorPicker_ as HTMLElement, this.className_);
+            if (this.className_ && this.picker_)
+                pxt.BrowserUtils.addClass(this.picker_ as HTMLElement, this.className_);
         }
 
         getColours_(): string[] {

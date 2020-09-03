@@ -4,11 +4,21 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,
+        "strictNullChecks": true,
         "declaration": true,
         "out": "../built/pxtpy.js",
         "newLine": "LF",
         "sourceMap": false,
-        "lib": ["dom", "dom.iterable", "scripthost", "es6"],
-        "types": ["fuse", "bluebird"]
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "scripthost",
+            "es6"
+        ],
+        "types": [
+            "fuse",
+            "bluebird"
+        ],
+        "incremental": true
     }
 }

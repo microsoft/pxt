@@ -4,19 +4,42 @@ import * as workspace from "./workspace";
 
 import U = pxt.Util;
 
-function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
+function setDiagnostics(diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.SourceInterval[]) {
     let mainPkg = pkg.mainEditorPkg();
 
     mainPkg.forEachFile(f => f.diagnostics = [])
 
     let output = "";
 
+    // If we have source map information, then prepare a function for converting
+    //  TS errors to PY
+    let tsErrToPyLoc: (err: pxtc.LocationInfo) => pxtc.LocationInfo = undefined;
+    if (diagnostics.length > 0
+        && mainPkg.files["main.ts"]
+        && mainPkg.files["main.py"]
+        && sourceMap) {
+        const tsFile = mainPkg.files["main.ts"].content
+        const pyFile = mainPkg.files["main.py"].content
+        const helpers = pxtc.BuildSourceMapHelpers(sourceMap, tsFile, pyFile)
+        tsErrToPyLoc = helpers.ts.locToLoc
+    }
+
     for (let diagnostic of diagnostics) {
         if (diagnostic.fileName) {
             output += `${diagnostic.category == ts.pxtc.DiagnosticCategory.Error ? lf("error") : diagnostic.category == ts.pxtc.DiagnosticCategory.Warning ? lf("warning") : lf("message")}: ${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.column + 1}): `;
-            let f = mainPkg.filterFiles(f => f.getTypeScriptName() == diagnostic.fileName)[0]
-            if (f)
+            let f = mainPkg.filterFiles(f => f.getTextFileName() == diagnostic.fileName)[0]
+            if (f) {
                 f.diagnostics.push(diagnostic)
+
+                if (tsErrToPyLoc && diagnostic.fileName === "main.ts") {
+                    let pyLoc = tsErrToPyLoc(diagnostic)
+                    if (pyLoc) {
+                        let pyError = { ...diagnostic, ...pyLoc }
+                        let pyFile = mainPkg.files["main.py"]
+                        pyFile.diagnostics.push(pyError)
+                    }
+                }
+            }
         }
 
         const category = ts.pxtc.DiagnosticCategory[diagnostic.category].toLowerCase();
@@ -77,6 +100,7 @@ export interface CompileOptions {
     background?: boolean; // not explicitly requested by user (hint for simulator)
     forceEmit?: boolean;
     clickTrigger?: boolean;
+    jsMetaVersion?: string;
 }
 
 export let emptyProgram =
@@ -108,7 +132,8 @@ export function emptyCompileResult(): pxtc.CompileResult {
 export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     trg.isNative = options.native
-    return pkg.mainPkg.getCompileOptionsAsync(trg)
+    return pkg.mainEditorPkg().buildTilemapsAsync()
+        .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
         .then(opts => {
             if (options.debug) {
                 opts.breakpoints = true;
@@ -136,6 +161,23 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
             let prevasm = outpkg.files[pxtc.BINARY_ASM]
             if (prevasm && !resp.outfiles[pxtc.BINARY_ASM]) {
                 resp.outfiles[pxtc.BINARY_ASM] = prevasm.content
+            }
+
+            // add metadata about current build
+            if (options.jsMetaVersion && resp.outfiles[pxtc.BINARY_JS]) {
+                const meta: any = {
+                    simUrl: pxt.webConfig.simUrl.replace(/\/[^\-]*---simulator/, `/v${pxt.appTarget.versions.target}/---simulator`),
+                    cdnUrl: pxt.webConfig.cdnUrl,
+                    version: options.jsMetaVersion,
+                    target: pxt.appTarget.id,
+                    targetVersion: pxt.appTarget.versions.target
+                };
+                const gitJson = pkg.mainPkg.readGitJson();
+                if (gitJson)
+                    meta.repo = pxt.github.parseRepoId(gitJson.repo).fullName;
+                resp.outfiles[pxtc.BINARY_JS] =
+                    `// meta=${JSON.stringify(meta)}
+${resp.outfiles[pxtc.BINARY_JS]}`;
             }
 
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
@@ -173,21 +215,24 @@ function compileCoreAsync(opts: pxtc.CompileOptions): Promise<pxtc.CompileResult
     return workerOpAsync("compile", { options: opts })
 }
 
-export function py2tsAsync(): Promise<{ generated: pxt.Map<string>, diagnostics: pxtc.KsDiagnostic[] }> {
+export function py2tsAsync(force = false): Promise<pxtc.transpile.TranspileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     return waitForFirstTypecheckAsync()
         .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
         .then(opts => {
             opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+
             return workerOpAsync("py2ts", { options: opts })
         })
 }
 
-export function completionsAsync(fileName: string, position: number, fileContent?: string): Promise<pxtc.CompletionInfo> {
+export function completionsAsync(fileName: string, position: number, wordStartPos: number, wordEndPos: number, fileContent?: string): Promise<pxtc.CompletionInfo> {
     return workerOpAsync("getCompletions", {
         fileName,
         fileContent,
         position,
+        wordStartPos,
+        wordEndPos,
         runtime: pxt.appTarget.runtime
     });
 }
@@ -222,14 +267,16 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
         })
 }
 
-export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<string> {
+// TS -> blocks, load blocs before calling this api
+export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo, dopts?: { snippetMode?: boolean }): Promise<pxtc.CompileResult> {
     const snippetTs = "main.ts";
     const snippetBlocks = "main.blocks";
-    let trg = pkg.mainPkg.getTargetOptions()
+    const trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
             opts.fileSystem[snippetTs] = code;
             opts.fileSystem[snippetBlocks] = "";
+            opts.snippetMode = (dopts && dopts.snippetMode) || false;
 
             if (opts.sourceFiles.indexOf(snippetTs) === -1) {
                 opts.sourceFiles.push(snippetTs);
@@ -239,16 +286,73 @@ export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.Bl
             }
             opts.ast = true;
             return decompileCoreAsync(opts, snippetTs)
-        }).then(resp => {
-            return resp.outfiles[snippetBlocks]
+        });
+}
+
+// Py -> blocks
+export function pySnippetToBlocksAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
+    const snippetPy = "main.py";
+    const snippetTs = "main.ts";
+    const snippetBlocks = "main.blocks";
+    let trg = pkg.mainPkg.getTargetOptions()
+    return waitForFirstTypecheckAsync()
+        .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
+        .then(opts => {
+            opts.fileSystem[snippetPy] = code;
+            opts.fileSystem[snippetBlocks] = "";
+
+            if (opts.sourceFiles.indexOf(snippetPy) === -1) {
+                opts.sourceFiles.push(snippetPy);
+            }
+            if (opts.sourceFiles.indexOf(snippetBlocks) === -1) {
+                opts.sourceFiles.push(snippetBlocks);
+            }
+            return workerOpAsync("py2ts", { options: opts });
         })
+        .then(res => {
+            return decompileBlocksSnippetAsync(res.outfiles[snippetTs], blockInfo)
+        });
+}
+
+// Py[] -> blocks
+export function pySnippetArrayToBlocksAsync(code: string[], blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
+    const namespaceRegex = /^\s*namespace\s+[^\s]+\s*{([\S\s]*)}\s*$/im;
+    const snippetBlocks = "main.blocks";
+    let trg = pkg.mainPkg.getTargetOptions()
+    let files: string[] = [];
+    return waitForFirstTypecheckAsync()
+        .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
+        .then(opts => {
+            // split each code snippet into a separate file to preserve scoping
+            for (let i = 0; i < code.length; i++) {
+                const snippetName = `snippet_${i}`;
+                opts.fileSystem[snippetName + ".py"] = code[i];
+                opts.sourceFiles.push(snippetName + ".py");
+                files.push(snippetName)
+            }
+            opts.fileSystem[snippetBlocks] = "";
+            if (opts.sourceFiles.indexOf(snippetBlocks) === -1) {
+                opts.sourceFiles.push(snippetBlocks);
+            }
+            return workerOpAsync("py2ts", { options: opts });
+        })
+        .then(res => {
+            // strip the namespace declaration out of the converted snippets and concat to convert to blocks
+            let ts = "";
+            for (let file of files) {
+                let match = res.outfiles[file + ".ts"].match(namespaceRegex);
+                if (match && match[1]) ts += `{\n${match[1]}\n}\n`
+            }
+            return decompileBlocksSnippetAsync(ts, blockInfo)
+        });
 }
 
 function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
     return workerOpAsync("decompile", { options: opts, fileName: fileName })
 }
 
-export function pyDecompileAsync(fileName: string): Promise<pxtc.CompileResult> {
+// TS -> Py
+export function pyDecompileAsync(fileName: string): Promise<pxtc.transpile.TranspileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
@@ -259,11 +363,13 @@ export function pyDecompileAsync(fileName: string): Promise<pxtc.CompileResult> 
         })
         .then(resp => {
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
-            setDiagnostics(resp.diagnostics)
+            const errors = resp.diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error);
+            reportDiagnosticErrors(errors)
             return resp
         })
 }
 
+// TS -> Py
 export function decompilePythonSnippetAsync(code: string): Promise<string> {
     const snippetTs = "main.ts";
     const snippetPy = "main.py";
@@ -286,11 +392,11 @@ export function decompilePythonSnippetAsync(code: string): Promise<string> {
         })
 }
 
-function pyDecompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
+function pyDecompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.transpile.TranspileResult> {
     return workerOpAsync("pydecompile", { options: opts, fileName: fileName })
 }
 
-export function workerOpAsync(op: string, arg: pxtc.service.OpArg) {
+export function workerOpAsync<T extends keyof pxtc.service.ServiceOps>(op: T, arg: pxtc.service.OpArg): Promise<any> {
     const startTm = Date.now()
     pxt.debug("worker op: " + op)
     return pxt.worker.getWorker(pxt.webConfig.workerjs)
@@ -329,6 +435,10 @@ function ensureApisInfoAsync(): Promise<void> {
     else return Promise.resolve()
 }
 
+export function refreshLanguageServiceApisInfo() {
+    refreshApis = true;
+}
+
 export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
     return ensureApisInfoAsync()
         .then(() => {
@@ -359,21 +469,29 @@ export function formatAsync(input: string, pos: number) {
     return workerOpAsync("format", { format: { input: input, pos: pos } });
 }
 
-export function snippetAsync(qName: string, python?: boolean) {
-    return workerOpAsync("snippet", {
+export function snippetAsync(qName: string, python?: boolean): Promise<string> {
+    let initStep = Promise.resolve();
+    if (python) {
+        // To make sure that the service is working with the most recent version of the file,
+        // run a typecheck
+        initStep = typecheckAsync().then(() => { })
+    }
+    return initStep.then(() => workerOpAsync("snippet", {
         snippet: { qName, python },
         runtime: pxt.appTarget.runtime
-    });
+    })).then(res => res as string)
 }
 
 export function typecheckAsync() {
-    let p = pkg.mainPkg.getCompileOptionsAsync()
+    const epkg = pkg.mainEditorPkg();
+    let p = epkg.buildTilemapsAsync()
+        .then(() => pkg.mainPkg.getCompileOptionsAsync())
         .then(opts => {
             opts.testMode = true // show errors in all top-level code
             return workerOpAsync("setOptions", { options: opts })
         })
-        .then(() => workerOpAsync("allDiags", {}))
-        .then(setDiagnostics)
+        .then(() => workerOpAsync("allDiags", {}) as Promise<pxtc.CompileResult>)
+        .then(r => setDiagnostics(r.diagnostics, r.sourceMap))
         .then(ensureApisInfoAsync)
         .catch(catchUserErrorAndSetDiags(null))
     if (!firstTypecheck) firstTypecheck = p;
@@ -386,13 +504,179 @@ export function getApisInfoAsync() {
 }
 
 export function getBlocksAsync(): Promise<pxtc.BlocksInfo> {
-    return cachedBlocks
-        ? Promise.resolve(cachedBlocks)
-        : getApisInfoAsync().then(info => {
-            const bannedCategories = pkg.mainPkg.resolveBannedCategories();
-            cachedBlocks = pxtc.getBlocksInfo(info, bannedCategories);
-            return cachedBlocks;
-        });
+    if (!cachedBlocks) {
+        // Used packaged info
+        const bannedCategories = pkg.mainPkg.resolveBannedCategories();
+        return getCachedApiInfoAsync(pkg.mainEditorPkg(), pxt.getBundledApiInfo())
+            .then(apis => {
+                if (apis) {
+                    return ts.pxtc.localizeApisAsync(apis, pkg.mainPkg)
+                        .then(apis => {
+                            return cachedBlocks = pxtc.getBlocksInfo(apis, bannedCategories)
+                        });
+                }
+                else {
+                    return getApisInfoAsync().then(info => {
+                        const bannedCategories = pkg.mainPkg.resolveBannedCategories();
+                        cachedBlocks = pxtc.getBlocksInfo(info, bannedCategories);
+
+                        return cacheApiInfoAsync(pkg.mainEditorPkg(), info);
+                    }).then(() => cachedBlocks)
+                }
+            })
+    }
+
+    return Promise.resolve(cachedBlocks);
+}
+
+interface BundledPackage {
+    dirname: string;
+    config: pxt.PackageConfig;
+    files: pxt.Map<string>;
+}
+
+interface UsedPackageInfo {
+    dirname: string,
+    info: pxt.PackageApiInfo
+}
+
+async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Map<pxt.PackageApiInfo>): Promise<pxtc.ApisInfo> {
+    if (!bundled) return null;
+    const corePkgName = "libs/" + pxt.appTarget.corepkg;
+    const corePkg = bundled[corePkgName];
+    if (!corePkg) return null;
+
+    // If the project has a TypeScript file beside main.ts, it could export blocks so we can't use the cache
+    const files = project.getAllFiles();
+    if (Object.keys(files).some(filename => filename != "main.ts" && filename.indexOf("/") === -1 && pxt.Util.endsWith(filename, ".ts"))) {
+        return null;
+    }
+
+    const bundledPackages: BundledPackage[] = pxt.appTarget.bundleddirs.map(dirname => {
+        const pack = pxt.appTarget.bundledpkgs[dirname.substr(dirname.lastIndexOf("/") + 1)];
+
+        if (!pack) return null;
+
+        return {
+            dirname,
+            files: pack,
+            config: JSON.parse(pack[pxt.CONFIG_NAME]) as pxt.PackageConfig
+        }
+    }).filter(p => p && p.config);
+
+    const usedPackages = project.pkgAndDeps();
+    const externalPackages: pkg.EditorPackage[] = [];
+    const usedPackageInfo: UsedPackageInfo[] = [{
+        dirname: corePkgName,
+        info: corePkg
+    }];
+
+    for (const dep of usedPackages) {
+        if (dep.id === "built" || dep.isTopLevel()) continue;
+
+        let foundIt = false;
+        for (const bundle of bundledPackages) {
+            if (bundle.config.name === dep.getKsPkg().config.name) {
+                usedPackageInfo.push({
+                    dirname: bundle.dirname,
+                    info: bundled[bundle.dirname]
+                });
+                foundIt = true;
+                break;
+            }
+        }
+
+        if (!foundIt) externalPackages.push(dep);
+    }
+
+    if (externalPackages.length) {
+        const db = await ApiInfoIndexedDb.createAsync();
+
+        for (const dep of externalPackages) {
+            const entry = await db.getAsync(dep);
+
+            if (!entry) {
+                pxt.debug(`Could not find cached API info for ${dep.getKsPkg().config.name}, waiting for full compile`);
+                return null;
+            }
+            else {
+                pxt.debug(`Fetched cached API info for ${dep.getKsPkg().config.name}`);
+                usedPackageInfo.push({
+                    dirname: dep.getKsPkg().config.name,
+                    info: entry
+                });
+            }
+        }
+    }
+
+    const result: pxtc.ApisInfo = {
+        byQName: {},
+        jres: {}
+    };
+
+    for (const used of usedPackageInfo) {
+        if (!used) continue;
+        const { info, dirname } = used;
+
+        // reinclude the pkg the api originates from, which is trimmed during compression
+        for (const api of Object.keys(info.apis.byQName)) {
+            info.apis.byQName[api].pkg = dirname;
+        }
+
+        pxt.Util.jsonCopyFrom(result.byQName, info.apis.byQName);
+        if (info.apis.jres)
+            pxt.Util.jsonCopyFrom(result.jres, info.apis.jres);
+    }
+
+    const jres = pkg.mainPkg.getJRes();
+
+    for (const qName of Object.keys(result.byQName)) {
+        let si = result.byQName[qName]
+
+        let jrname = si.attributes.jres
+        if (jrname) {
+            if (jrname == "true") jrname = qName
+            let jr = U.lookup(jres || {}, jrname)
+            if (jr && jr.icon && !si.attributes.iconURL) {
+                si.attributes.iconURL = jr.icon
+            }
+            if (jr && jr.data && !si.attributes.jresURL) {
+                si.attributes.jresURL = "data:" + jr.mimeType + ";base64," + jr.data
+            }
+        }
+    }
+
+    return result;
+}
+
+async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo) {
+    const corePkgs = pxt.Package.corePackages().map(pkg => pkg.name);
+    const externalPackages = project.pkgAndDeps().filter(p => p.id !== "built" && !p.isTopLevel() && corePkgs.indexOf(p.getKsPkg().config.name) === -1);
+
+    if (externalPackages.length) {
+        const apiList = Object.keys(info.byQName);
+        const db = await ApiInfoIndexedDb.createAsync();
+
+        for (const dep of externalPackages) {
+            const name = dep.getKsPkg().config.name;
+            const pkgId = dep.getPkgId();
+            const entry: pxt.PackageApiInfo = {
+                sha: null,
+                apis: { byQName: {} }
+            }
+
+
+            for (const api of apiList) {
+                const apiInfo = info.byQName[api];
+                if (apiInfo.pkg === name || apiInfo.pkg === pkgId) {
+                    entry.apis.byQName[api] = apiInfo;
+                }
+            }
+
+            await db.setAsync(dep, entry);
+            pxt.debug(`Stored API info for ${dep}`);
+        }
+    }
 }
 
 export interface UpgradeResult {
@@ -408,7 +692,7 @@ export function applyUpgradesAsync(): Promise<UpgradeResult> {
     const pkgVersion = pxt.semver.parse(epkg.header.targetVersion || "0.0.0");
     const trgVersion = pxt.semver.parse(pxt.appTarget.versions.target);
 
-    if (pkgVersion.major === trgVersion.major && pkgVersion.minor === trgVersion.minor) {
+    if (pxt.semver.cmp(pkgVersion, trgVersion) === 0) {
         pxt.debug("Skipping project upgrade")
         return Promise.resolve({
             success: true
@@ -469,11 +753,24 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
 
             const xml = Blockly.Xml.textToDom(text);
             pxt.blocks.domToWorkspaceNoEvents(xml, ws);
-            patchedFiles["main.blocks"] = text;
+            pxtblockly.upgradeTilemapsInWorkspace(ws, pxt.react.getTilemapProject());
+            const upgradedXml = Blockly.Xml.workspaceToDom(ws);
+            patchedFiles["main.blocks"] = Blockly.Xml.domToText(upgradedXml);
+
             return pxt.blocks.compileAsync(ws, info)
         })
         .then(res => {
             patchedFiles["main.ts"] = res.source;
+            return project.buildTilemapsAsync();
+        })
+        .then(() => {
+            const compiledFiles = project.getAllFiles();
+            const otherFiles = Object.keys(compiledFiles).filter(el => !/^main\.(blocks|ts|py)$/.test(el));
+
+            for (const fname of otherFiles) {
+                patchedFiles[fname] = compiledFiles[fname];
+            }
+
             return checkPatchAsync(patchedFiles);
         })
         .then(() => {
@@ -526,10 +823,11 @@ interface UpgradeError extends Error {
 
 function checkPatchAsync(patchedFiles?: pxt.Map<string>) {
     const mainPkg = pkg.mainPkg;
-    return mainPkg.getCompileOptionsAsync()
+    return pkg.mainEditorPkg().buildTilemapsAsync()
+        .then(() => mainPkg.getCompileOptionsAsync())
         .then(opts => {
             if (patchedFiles) {
-                Object.keys(opts.fileSystem).forEach(fileName => {
+                Object.keys(patchedFiles).forEach(fileName => {
                     if (patchedFiles[fileName]) {
                         opts.fileSystem[fileName] = patchedFiles[fileName];
                     }
@@ -608,7 +906,7 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.U
             let cleanupOperation = Promise.resolve();
             if (backup) {
                 backup.isDeleted = true;
-                cleanupOperation = workspace.saveAsync(backup)
+                cleanupOperation = workspace.forceSaveAsync(backup)
             }
 
             return cleanupOperation
@@ -620,10 +918,14 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.U
 
 
 export function newProjectAsync() {
+    clearCaches();
+    return workerOpAsync("reset", {});
+}
+
+export function clearCaches() {
     firstTypecheck = null;
     cachedApis = null;
     cachedBlocks = null;
-    return workerOpAsync("reset", {});
 }
 
 export function getPackagesWithErrors(): pkg.EditorPackage[] {
@@ -646,6 +948,85 @@ export function getPackagesWithErrors(): pkg.EditorPackage[] {
 function blocksOptions(): pxtc.service.BlocksOptions {
     const bannedCategories = pkg.mainPkg.resolveBannedCategories();
     if (bannedCategories)
-        return {  bannedCategories };
+        return { bannedCategories };
     return undefined;
+}
+
+function getPackageHash(pack: pkg.EditorPackage) {
+    const input = JSON.stringify(pack.getAllFiles()) + pxt.appTarget.versions.pxt + "_" + pxt.appTarget.versions.target;
+    return pxtc.U.sha256(input);
+}
+
+function getPackageKey(pack: pkg.EditorPackage) {
+    return pack.getKsPkg().config.name;
+}
+
+interface ApiInfoIndexedDbEntry {
+    id: string;
+    hash: string;
+    apis: pxt.PackageApiInfo;
+}
+
+class ApiInfoIndexedDb {
+    static TABLE = "files";
+    static KEYPATH = "id";
+
+    static dbName() {
+        return `__pxt_apis_${pxt.appTarget.id || ""}`;
+    }
+
+    static createAsync(): Promise<ApiInfoIndexedDb> {
+        function openAsync() {
+            const idbWrapper = new pxt.BrowserUtils.IDBWrapper(ApiInfoIndexedDb.dbName(), 2, (ev, r) => {
+                const db = r.result as IDBDatabase;
+                db.createObjectStore(ApiInfoIndexedDb.TABLE, { keyPath: ApiInfoIndexedDb.KEYPATH });
+            }, () => {
+                // quota exceeeded, clear db
+                pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName())
+            });
+            return idbWrapper.openAsync()
+                .then(() => new ApiInfoIndexedDb(idbWrapper));
+        }
+        return openAsync()
+            .catch(e => {
+                console.log(`db: failed to open api database, try delete entire store...`)
+                return pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName())
+                    .then(() => openAsync());
+            })
+    }
+
+    private constructor(protected readonly db: pxt.BrowserUtils.IDBWrapper) {
+    }
+
+    getAsync(pack: pkg.EditorPackage): Promise<pxt.PackageApiInfo> {
+        const key = getPackageKey(pack);
+        const hash = getPackageHash(pack);
+
+        return this.db.getAsync(ApiInfoIndexedDb.TABLE, key)
+            .then((value: ApiInfoIndexedDbEntry) => {
+                /* tslint:disable:possible-timing-attack (this is not a security-sensitive codepath) */
+                if (value && value.hash === hash) {
+                    return value.apis
+                }
+                /* tslint:enable:possible-timing-attack */
+                return undefined;
+            });
+    }
+
+    setAsync(pack: pkg.EditorPackage, apis: pxt.PackageApiInfo): Promise<void> {
+        pxt.perf.measureStart("compiler db setAsync")
+        const key = getPackageKey(pack);
+        const hash = getPackageHash(pack);
+
+        const entry: ApiInfoIndexedDbEntry = {
+            id: key,
+            hash,
+            apis
+        };
+
+        return this.db.setAsync(ApiInfoIndexedDb.TABLE, entry)
+            .then(() => {
+                pxt.perf.measureEnd("compiler db setAsync")
+            })
+    }
 }

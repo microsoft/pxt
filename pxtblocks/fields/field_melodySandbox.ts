@@ -50,7 +50,7 @@ namespace pxtblockly {
         private static MUSIC_ICON_WIDTH = 20;
 
         // Use toggle from sprite editor
-        private toggle: pxtsprite.Toggle;
+        private toggle: Toggle;
         private root: svg.SVG;
         private gallery: pxtmelody.MelodyGallery;
 
@@ -108,17 +108,20 @@ namespace pxtblockly {
             super.doValueUpdate_(this.getValue());
         }
 
+        getText_() {
+            if (this.invalidString) return pxt.Util.lf("Invalid Input");
+            else return this.getValue();
+        }
+
         // This will be run when the field is created (i.e. when it appears on the workspace)
         protected onInit() {
             this.render_();
             this.createMelodyIfDoesntExist();
 
-            if (this.invalidString) {
-                Blockly.FieldLabel.prototype.setText.call(this, pxt.Util.lf("Invalid Input"));
-            } else {
+            if (!this.invalidString) {
                 if (!this.fieldGroup_) {
                     // Build the DOM.
-                    this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null);
+                    this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null) as SVGGElement;
                 }
                 if (!this.visible_) {
                     (this.fieldGroup_ as any).style.display = 'none';
@@ -147,7 +150,7 @@ namespace pxtblockly {
 
             // Same toggle set up as sprite editor
             this.root = new svg.SVG(this.topDiv).id("melody-editor-header-controls");
-            this.toggle = new pxtsprite.Toggle(this.root, { leftText: lf("Editor"), rightText: lf("Gallery"), baseColor: color });
+            this.toggle = new Toggle(this.root, { leftText: lf("Editor"), rightText: lf("Gallery"), baseColor: color });
             this.toggle.onStateChange(isLeft => {
                 if (isLeft) {
                     this.hideGallery();
@@ -303,7 +306,7 @@ namespace pxtblockly {
 
         // The height of the preview on the block itself
         protected getPreviewHeight(): number {
-            return Blockly.BlockSvg.FIELD_HEIGHT;
+            return this.constants_.FIELD_BORDER_RECT_HEIGHT;
         }
 
         protected getDropdownBackgroundColour() {
@@ -311,14 +314,14 @@ namespace pxtblockly {
         }
 
         protected getDropdownBorderColour() {
-            return this.sourceBlock_.parentBlock_.getColourTertiary();
+            return (this.sourceBlock_.parentBlock_ as Blockly.BlockSvg).getColourTertiary();
         }
 
         private updateFieldLabel(): void {
             if (!this.fieldGroup_) return;
             pxsim.U.clear(this.fieldGroup_);
 
-            let musicIcon = pxtsprite.mkText("\uf001")
+            let musicIcon = mkText("\uf001")
                 .appendClass("melody-editor-field-icon")
                 .at(6, 15);
             this.fieldGroup_.appendChild(musicIcon.el);
@@ -380,6 +383,7 @@ namespace pxtblockly {
                                 else {
                                     tempoBlock.setFieldValue(this.tempoInput.value, "NUM")
                                 }
+                                this.tempoInput.focus();
                             }
                         }
                         break;
@@ -614,5 +618,199 @@ namespace pxtblockly {
         private hideGallery() {
             this.gallery.hide();
         }
+    }
+
+    export interface ButtonGroup {
+        root: svg.Group;
+        cx: number;
+        cy: number;
+    }
+
+    const TOGGLE_WIDTH = 200;
+    const TOGGLE_HEIGHT = 40;
+    const TOGGLE_BORDER_WIDTH = 2;
+    const TOGGLE_CORNER_RADIUS = 4;
+
+    const BUTTON_CORNER_RADIUS = 2;
+    const BUTTON_BORDER_WIDTH = 1;
+    const BUTTON_BOTTOM_BORDER_WIDTH = 2;
+
+    interface ToggleProps {
+        baseColor: string;
+        borderColor: string;
+        backgroundColor: string;
+        switchColor: string;
+        unselectedTextColor: string;
+        selectedTextColor: string;
+
+        leftText: string;
+        leftIcon: string;
+
+        rightText: string;
+        rightIcon: string;
+    }
+
+    class Toggle {
+        protected leftElement: svg.Group;
+        protected leftText: svg.Text;
+        protected rightElement: svg.Group;
+        protected rightText: svg.Text;
+
+        protected switch: svg.Rect;
+        protected root: svg.Group;
+        protected props: ToggleProps;
+
+        protected isLeft: boolean;
+        protected changeHandler: (left: boolean) => void;
+
+        constructor(parent: svg.SVG, props: Partial<ToggleProps>) {
+            this.props = defaultColors(props);
+            this.root = parent.group();
+            this.buildDom();
+            this.isLeft = true;
+        }
+
+        protected buildDom() {
+            // Our css minifier mangles animation names so they need to be injected manually
+            this.root.style().content(`
+            .toggle-left {
+                transform: translateX(0px);
+                animation: mvleft 0.2s 0s ease;
+            }
+
+            .toggle-right {
+                transform: translateX(100px);
+                animation: mvright 0.2s 0s ease;
+            }
+
+            @keyframes mvright {
+                0% {
+                    transform: translateX(0px);
+                }
+                100% {
+                    transform: translateX(100px);
+                }
+            }
+
+            @keyframes mvleft {
+                0% {
+                    transform: translateX(100px);
+                }
+                100% {
+                    transform: translateX(0px);
+                }
+            }
+            `);
+
+
+            // The outer border has an inner-stroke so we need to clip out the outer part
+            // because SVG's don't support "inner borders"
+            const clip = this.root.def().create("clipPath", "sprite-editor-toggle-border")
+                .clipPathUnits(true);
+
+            clip.draw("rect")
+                .at(0, 0)
+                .corners(TOGGLE_CORNER_RADIUS / TOGGLE_WIDTH, TOGGLE_CORNER_RADIUS / TOGGLE_HEIGHT)
+                .size(1, 1);
+
+            // Draw the outer border
+            this.root.draw("rect")
+                .size(TOGGLE_WIDTH, TOGGLE_HEIGHT)
+                .fill(this.props.baseColor)
+                .stroke(this.props.borderColor, TOGGLE_BORDER_WIDTH * 2)
+                .corners(TOGGLE_CORNER_RADIUS, TOGGLE_CORNER_RADIUS)
+                .clipPath("url(#sprite-editor-toggle-border)");
+
+
+            // Draw the background
+            this.root.draw("rect")
+                .at(TOGGLE_BORDER_WIDTH, TOGGLE_BORDER_WIDTH)
+                .size(TOGGLE_WIDTH - TOGGLE_BORDER_WIDTH * 2, TOGGLE_HEIGHT - TOGGLE_BORDER_WIDTH * 2)
+                .fill(this.props.backgroundColor)
+                .corners(TOGGLE_CORNER_RADIUS, TOGGLE_CORNER_RADIUS);
+
+            // Draw the switch
+            this.switch = this.root.draw("rect")
+                .at(TOGGLE_BORDER_WIDTH, TOGGLE_BORDER_WIDTH)
+                .size((TOGGLE_WIDTH - TOGGLE_BORDER_WIDTH * 2) / 2, TOGGLE_HEIGHT - TOGGLE_BORDER_WIDTH * 2)
+                .fill(this.props.switchColor)
+                .corners(TOGGLE_CORNER_RADIUS, TOGGLE_CORNER_RADIUS);
+
+            // Draw the left option
+            this.leftElement = this.root.group();
+            this.leftText = mkText(this.props.leftText)
+                .appendClass("sprite-editor-text")
+                .fill(this.props.selectedTextColor);
+            this.leftElement.appendChild(this.leftText);
+
+            // Draw the right option
+            this.rightElement = this.root.group();
+            this.rightText = mkText(this.props.rightText)
+                .appendClass("sprite-editor-text")
+                .fill(this.props.unselectedTextColor);
+            this.rightElement.appendChild(this.rightText);
+
+            this.root.onClick(() => this.toggle());
+        }
+
+        toggle(quiet = false) {
+            if (this.isLeft) {
+                this.switch.removeClass("toggle-left");
+                this.switch.appendClass("toggle-right");
+                this.leftText.fill(this.props.unselectedTextColor);
+                this.rightText.fill(this.props.selectedTextColor);
+            }
+            else {
+                this.switch.removeClass("toggle-right");
+                this.switch.appendClass("toggle-left");
+                this.leftText.fill(this.props.selectedTextColor);
+                this.rightText.fill(this.props.unselectedTextColor);
+            }
+            this.isLeft = !this.isLeft;
+
+            if (!quiet && this.changeHandler) {
+                this.changeHandler(this.isLeft);
+            }
+        }
+
+        onStateChange(handler: (left: boolean) => void) {
+            this.changeHandler = handler;
+        }
+
+        layout() {
+            const centerOffset = (TOGGLE_WIDTH - TOGGLE_BORDER_WIDTH * 2) / 4;
+            this.leftText.moveTo(centerOffset + TOGGLE_BORDER_WIDTH, TOGGLE_HEIGHT / 2);
+            this.rightText.moveTo(TOGGLE_WIDTH - TOGGLE_BORDER_WIDTH - centerOffset, TOGGLE_HEIGHT / 2)
+        }
+
+        translate(x: number, y: number) {
+            this.root.translate(x, y);
+        }
+
+        height() {
+            return TOGGLE_HEIGHT;
+        }
+
+        width() {
+            return TOGGLE_WIDTH;
+        }
+    }
+
+    function mkText(text: string) {
+        return new svg.Text(text)
+            .anchor("middle")
+            .setAttribute("dominant-baseline", "middle")
+            .setAttribute("dy", (pxt.BrowserUtils.isIE() || pxt.BrowserUtils.isEdge()) ? "0.3em" : "0.1em")
+    }
+
+    function defaultColors(props: Partial<ToggleProps>): ToggleProps {
+        if (!props.baseColor) props.baseColor = "#e95153";
+        if (!props.backgroundColor) props.backgroundColor = "rgba(52,73,94,.2)";
+        if (!props.borderColor) props.borderColor = "rgba(52,73,94,.4)";
+        if (!props.selectedTextColor) props.selectedTextColor = props.baseColor;
+        if (!props.unselectedTextColor) props.unselectedTextColor = "hsla(0,0%,100%,.9)";
+        if (!props.switchColor) props.switchColor = "#ffffff";
+
+        return props as ToggleProps;
     }
 }

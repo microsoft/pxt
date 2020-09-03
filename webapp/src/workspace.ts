@@ -39,11 +39,15 @@ let impl: WorkspaceProvider;
 let implType: string;
 
 function lookup(id: string) {
-    return allScripts.filter(x => x.header.id == id || x.header.path == id)[0]
+    return allScripts.find(x => x.header.id == id || x.header.path == id);
 }
 
-export function gitsha(data: string) {
-    return (sha1("blob " + U.toUTF8(data).length + "\u0000" + data) + "")
+export function gitsha(data: string, encoding: "utf-8" | "base64" = "utf-8") {
+    if (encoding == "base64") {
+        const d = atob(data);
+        return (sha1("blob " + d.length + "\u0000" + d) + "")
+    } else
+        return (sha1("blob " + U.toUTF8(data).length + "\u0000" + data) + "")
 }
 
 export function copyProjectToLegacyEditor(header: Header, majorVersion: number): Promise<Header> {
@@ -60,6 +64,7 @@ export function setupWorkspace(id: string) {
     switch (id) {
         case "fs":
         case "file":
+            // Local file workspace, serializes data under target/projects/
             impl = fileworkspace.provider;
             break;
         case "mem":
@@ -67,6 +72,7 @@ export function setupWorkspace(id: string) {
             impl = memoryworkspace.provider;
             break;
         case "iframe":
+            // Iframe workspace, the editor relays sync messages back and forth when hosted in an iframe
             impl = iframeworkspace.provider;
             break;
         case "uwp":
@@ -85,7 +91,7 @@ export function setupWorkspace(id: string) {
 }
 
 export function getHeaders(withDeleted = false) {
-    checkSession();
+    maybeSyncHeadersAsync().done();
     let r = allScripts.map(e => e.header).filter(h => (withDeleted || !h.isDeleted) && !h.isBackup)
     r.sort((a, b) => b.recentUse - a.recentUse)
     return r
@@ -102,7 +108,7 @@ export function makeBackupAsync(h: Header, text: ScriptText): Promise<Header> {
     return importAsync(h2, text)
         .then(() => {
             h.backupRef = h2.id;
-            return saveAsync(h2);
+            return forceSaveAsync(h2);
         })
         .then(() => h2)
 }
@@ -115,23 +121,21 @@ export function restoreFromBackupAsync(h: Header) {
     return getTextAsync(refId)
         .then(files => {
             delete h.backupRef;
-            return saveAsync(h, files);
+            return forceSaveAsync(h, files);
         })
         .then(() => {
             const backup = getHeader(refId);
             backup.isDeleted = true;
-            return saveAsync(backup);
+            return forceSaveAsync(backup);
         })
         .catch(() => {
             delete h.backupRef;
-            return saveAsync(h);
+            return forceSaveAsync(h);
         });
 }
 
-export function cleanupBackupsAsync() {
-    checkSession();
+function cleanupBackupsAsync() {
     const allHeaders = allScripts.map(e => e.header);
-
     const refMap: pxt.Map<boolean> = {};
 
     // Figure out which scripts have backups
@@ -140,24 +144,62 @@ export function cleanupBackupsAsync() {
     // Delete the backups that don't have any scripts referencing them
     return Promise.all(allHeaders.filter(h => (h.isBackup && !refMap[h.id])).map(h => {
         h.isDeleted = true;
-        return saveAsync(h);
+        return forceSaveAsync(h);
     }));
 }
 
 export function getHeader(id: string) {
-    checkSession();
+    maybeSyncHeadersAsync().done();
     let e = lookup(id)
     if (e && !e.header.isDeleted)
         return e.header
     return null
 }
 
-let sessionID: string;
-export function isSessionOutdated() {
-    return pxt.storage.getLocal('pxt_workspace_session_id') != sessionID;
+// this key is the max modificationTime value of the allHeaders
+// it is used to track if allHeaders need to be refreshed (syncAsync)
+let sessionID: string = "";
+export function isHeadersSessionOutdated() {
+    return pxt.storage.getLocal('workspacesessionid') != sessionID;
 }
-function checkSession() {
-    if (isSessionOutdated()) {
+function maybeSyncHeadersAsync(): Promise<void> {
+    if (isHeadersSessionOutdated()) // another tab took control
+        return syncAsync().then(() => { })
+    return Promise.resolve();
+}
+function refreshHeadersSession() {
+    // use # of scripts + time of last mod as key
+    sessionID = allScripts.length + ' ' + allScripts
+        .map(h => h.header.modificationTime)
+        .reduce((l, r) => Math.max(l, r), 0)
+        .toString()
+    if (isHeadersSessionOutdated()) {
+        pxt.storage.setLocal('workspacesessionid', sessionID);
+        pxt.debug(`workspace: refreshed headers session to ${sessionID}`);
+        data.invalidate("header:*");
+        data.invalidate("text:*");
+    }
+}
+// this is an identifier for the current frame
+// in order to lock headers for editing
+const workspaceID: string = pxt.Util.guidGen();
+export function acquireHeaderSession(h: Header) {
+    if (h)
+        pxt.storage.setLocal('workspaceheadersessionid:' + h.id, workspaceID);
+}
+function clearHeaderSession(h: Header) {
+    if (h)
+        pxt.storage.removeLocal('workspaceheadersessionid:' + h.id);
+}
+export function isHeaderSessionOutdated(h: Header): boolean {
+    if (!h) return false;
+    const sid = pxt.storage.getLocal('workspaceheadersessionid:' + h.id);
+    return sid && sid != workspaceID;
+}
+function checkHeaderSession(h: Header): void {
+    if (isHeaderSessionOutdated(h)) {
+        pxt.tickEvent(`workspace.conflict.header`);
+        core.errorNotification(lf("This project is already opened elsewhere."))
         pxt.Util.assert(false, "trying to access outdated session")
     }
 }
@@ -165,34 +207,32 @@ function checkSession() {
 export function initAsync() {
     if (!impl) impl = browserworkspace.provider;
 
-    // generate new workspace session id to avoid races with other tabs
-    sessionID = ts.pxtc.Util.guidGen();
-    pxt.storage.setLocal('pxt_workspace_session_id', sessionID);
-    pxt.debug(`workspace session: ${sessionID}`);
-
-    allScripts = []
-
     return syncAsync()
-        .then(state => cleanupBackupsAsync().then(() => state));
+        .then(state => cleanupBackupsAsync().then(() => state))
+        .then(_ => {
+            pxt.perf.recordMilestone("workspace init finished")
+            return _
+        })
 }
 
 export function getTextAsync(id: string): Promise<ScriptText> {
-    checkSession();
-
-    let e = lookup(id)
-    if (!e)
-        return Promise.resolve(null as ScriptText)
-    if (e.text)
-        return Promise.resolve(e.text)
-    return headerQ.enqueue(id, () => impl.getAsync(e.header)
-        .then(resp => {
-            if (!e.text) {
-                // otherwise we were beaten to it
-                e.text = fixupFileNames(resp.text);
-            }
-            e.version = resp.version;
-            return e.text
-        }))
+    return maybeSyncHeadersAsync()
+        .then(() => {
+            let e = lookup(id)
+            if (!e)
+                return Promise.resolve(null as ScriptText)
+            if (e.text)
+                return Promise.resolve(e.text)
+            return headerQ.enqueue(id, () => impl.getAsync(e.header)
+                .then(resp => {
+                    if (!e.text) {
+                        // otherwise we were beaten to it
+                        e.text = fixupFileNames(resp.text);
+                    }
+                    e.version = resp.version;
+                    return e.text
+                }))
+        })
 }
 
 export interface ScriptMeta {
@@ -203,6 +243,8 @@ export interface ScriptMeta {
 
 // https://github.com/Microsoft/pxt-backend/blob/master/docs/sharing.md#anonymous-publishing
 export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
+    checkHeaderSession(h);
+
     const saveId = {}
     h.saveId = saveId
     let thumbnailBuffer: string;
@@ -252,15 +294,24 @@ function fixupVersionAsync(e: HeaderWithScript) {
         })
 }
 
+export function forceSaveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Promise<void> {
+    clearHeaderSession(h);
+    return saveAsync(h, text, isCloud);
+}
+
 export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Promise<void> {
-    checkSession();
+    pxt.debug(`workspace: save ${h.id}`)
+    if (h.isDeleted)
+        clearHeaderSession(h);
+    checkHeaderSession(h);
+
     U.assert(h.target == pxt.appTarget.id);
 
     if (h.temporary)
         return Promise.resolve()
 
     let e = lookup(h.id)
-    U.assert(e.header === h)
+    //U.assert(e.header === h)
 
     if (!isCloud)
         h.recentUse = U.nowSeconds()
@@ -286,11 +337,12 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
         return headerQ.enqueue(h.id, () =>
             fixupVersionAsync(e).then(() =>
                 impl.deleteAsync ? impl.deleteAsync(h, e.version) : impl.setAsync(h, e.version, {})))
+            .finally(() => refreshHeadersSession())
     }
 
     // check if we have dynamic boards, store board info for home page rendering
     if (text && pxt.appTarget.simulator && pxt.appTarget.simulator.dynamicBoardDefinition) {
-        const pxtjson = ts.pxtc.Util.jsonTryParse(text["pxt.json"]) as pxt.PackageConfig;
+        const pxtjson = pxt.Package.parseAndValidConfig(text[pxt.CONFIG_NAME]);
         if (pxtjson && pxtjson.dependencies)
             h.board = Object.keys(pxtjson.dependencies)
                 .filter(p => !!pxt.bundledSvg(p))[0];
@@ -302,14 +354,14 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
                 .then(ver => {
                     if (text)
                         e.version = ver
-                    if (text || h.isDeleted) {
+                    if ((text && !isCloud) || h.isDeleted) {
                         h.pubCurrent = false
                         h.blobCurrent = false
                         h.saveId = null
                         data.invalidate("text:" + h.id)
+                        data.invalidate("pkg-git-status:" + h.id)
                     }
-                    data.invalidate("header:" + h.id)
-                    data.invalidate("header:*")
+                    refreshHeadersSession()
                 })))
 }
 
@@ -335,11 +387,10 @@ export function importAsync(h: Header, text: ScriptText, isCloud = false) {
         version: null
     }
     allScripts.push(e)
-    return saveAsync(h, text, isCloud)
+    return forceSaveAsync(h, text, isCloud)
 }
 
 export function installAsync(h0: InstallHeader, text: ScriptText) {
-    checkSession();
     U.assert(h0.target == pxt.appTarget.id);
 
     const h = <Header>h0
@@ -347,30 +398,44 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
 
-    const cfg: pxt.PackageConfig = JSON.parse(text[pxt.CONFIG_NAME] || "{}")
-    if (cfg.preferredEditor)
+    const cfg: pxt.PackageConfig = pxt.Package.parseAndValidConfig(text[pxt.CONFIG_NAME]);
+    if (cfg && cfg.preferredEditor) {
         h.editor = cfg.preferredEditor
+        pxt.Util.setEditorLanguagePref(cfg.preferredEditor);
+    }
 
-    return importAsync(h, text)
-        .then(() => h)
+    return pxt.github.cacheProjectDependenciesAsync(cfg)
+        .then(() => importAsync(h, text))
+        .then(() => h);
 }
 
-export function duplicateAsync(h: Header, text: ScriptText, rename?: boolean): Promise<Header> {
-    let e = lookup(h.id)
+export function renameAsync(h: Header, newName: string) {
+    checkHeaderSession(h);
+    return cloudsync.renameAsync(h, newName);
+}
+
+export function duplicateAsync(h: Header, text: ScriptText, newName?: string): Promise<Header> {
+    if (!newName)
+        newName = createDuplicateName(h);
+    const e = lookup(h.id)
     U.assert(e.header === h)
-    let h2 = U.flatClone(h)
+    const h2 = U.flatClone(h)
     e.header = h2
 
+    const dupText = U.flatClone(text);
     h.id = U.guidGen()
-    if (rename) {
-        h.name = createDuplicateName(h);
-        let cfg = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig
-        cfg.name = h.name
-        text[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
-    }
-    delete h._rev
-    delete (h as any)._id
-    return importAsync(h, text)
+    h.name = newName;
+    const cfg = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+    cfg.name = h.name;
+    dupText[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
+
+    delete h._rev;
+    delete (h as any)._id;
+    delete h.githubCurrent;
+    delete h.githubId;
+    delete h.githubTag;
+
+    return importAsync(h, dupText)
         .then(() => h)
 }
 
@@ -385,7 +450,7 @@ export function createDuplicateName(h: Header) {
 }
 
 export function saveScreenshotAsync(h: Header, data: string, icon: string) {
-    checkSession();
+    checkHeaderSession(h);
     return impl.saveScreenshotAsync
         ? impl.saveScreenshotAsync(h, data, icon)
         : Promise.resolve();
@@ -405,27 +470,26 @@ export function fixupFileNames(txt: ScriptText) {
 
 const scriptDlQ = new U.PromiseQueue();
 const scripts = new db.Table("script"); // cache for published scripts
-//let scriptCache:any = {}
-export function getPublishedScriptAsync(id: string) {
-    checkSession();
-    //if (scriptCache.hasOwnProperty(id)) return Promise.resolve(scriptCache[id])
+export async function getPublishedScriptAsync(id: string) {
     if (pxt.github.isGithubId(id))
-        id = pxt.github.noramlizeRepoId(id)
-    let eid = encodeURIComponent(id)
-    return pxt.packagesConfigAsync()
-        .then(config => scriptDlQ.enqueue(id, () => scripts.getAsync(eid)
-            .then(v => v.files, e =>
-                (pxt.github.isGithubId(id) ?
-                    pxt.github.downloadPackageAsync(id, config).then(v => v.files) :
-                    Cloud.downloadScriptFilesAsync(id))
-                    .catch(core.handleNetworkError)
-                    .then(files => scripts.setAsync({ id: eid, files: files })
-                        .then(() => {
-                            //return (scriptCache[id] = files)
-                            return files
-                        })))
-            .then(fixupFileNames))
-        );
+        id = pxt.github.normalizeRepoId(id)
+    const config = await pxt.packagesConfigAsync()
+    const eid = encodeURIComponent(pxt.github.upgradedPackageId(config, id))
+    return await scriptDlQ.enqueue(eid, async () => {
+        let files: ScriptText
+        try {
+            files = (await scripts.getAsync(eid)).files
+        } catch {
+            if (pxt.github.isGithubId(id)) {
+                files = (await pxt.github.downloadPackageAsync(id, config)).files
+            } else {
+                files = await (Cloud.downloadScriptFilesAsync(id)
+                    .catch(core.handleNetworkError))
+            }
+            await scripts.setAsync({ id: eid, files: files })
+        }
+        return fixupFileNames(files)
+    })
 }
 
 export enum PullStatus {
@@ -433,6 +497,7 @@ export enum PullStatus {
     UpToDate,
     GotChanges,
     NeedsCommit,
+    BranchNotFound
 }
 
 const GIT_JSON = pxt.github.GIT_JSON
@@ -450,24 +515,61 @@ export async function pullAsync(hd: Header, checkOnly = false) {
         return PullStatus.NoSourceControl
     let gitjson = JSON.parse(gitjsontext) as GitJson
     let parsed = pxt.github.parseRepoId(gitjson.repo)
-    let sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
-    if (sha == gitjson.commit.sha)
+    const branch = parsed.tag;
+    const sha = await pxt.github.getRefAsync(parsed.fullName, branch)
+    if (!sha) {
+        // 404: branch does not exist, repo is gone or no rights to access repo
+        // try to get the list of heads to see if we can access the project
+        const heads = await pxt.github.listRefsAsync(parsed.fullName, "heads");
+        if (heads && heads.length)
+            return PullStatus.BranchNotFound;
+        else
+            return PullStatus.NoSourceControl; // something is wrong
+    } else if (sha == gitjson.commit.sha)
         return PullStatus.UpToDate
     if (checkOnly)
         return PullStatus.GotChanges
-    if (hd.githubCurrent) {
-        await githubUpdateToAsync(hd, { repo: gitjson.repo, sha, files })
+    try {
+        await githubUpdateToAsync(hd, { repo: gitjson.repo, sha, files, tryDiff3: true })
         return PullStatus.GotChanges
-    } else {
-        try {
-            await githubUpdateToAsync(hd, { repo: gitjson.repo, sha, files, tryDiff3: true })
-            return PullStatus.GotChanges
-        } catch (e) {
-            if (e.isMergeError)
-                return PullStatus.NeedsCommit
-            else throw e
-        }
+    } catch (e) {
+        if (e.isMergeError)
+            return PullStatus.NeedsCommit
+        else throw e
     }
+}
+
+export async function revertAllAsync(hd: Header) {
+    const files = await getTextAsync(hd.id)
+    const gitjsontext = files[GIT_JSON]
+    if (!gitjsontext)
+        return PullStatus.NoSourceControl
+    const gitjson = JSON.parse(gitjsontext) as GitJson
+    const commit = gitjson.commit;
+    const configEntry = pxt.github.lookupFile(commit, pxt.CONFIG_NAME);
+    const config = pxt.Package.parseAndValidConfig(configEntry && configEntry.blobContent);
+    if (!config)
+        return PullStatus.NoSourceControl
+
+    const revertedFiles: pxt.Map<string> = {};
+    revertedFiles[GIT_JSON] = gitjsontext;
+    revertedFiles[pxt.CONFIG_NAME] = configEntry.blobContent;
+    for (const f of config.files.concat(config.testFiles)) {
+        const entry = pxt.github.lookupFile(commit, f);
+        if (!entry || entry.blobContent === undefined) {
+            pxt.log(`cannot revert ${f}, corrupted based commit`)
+            return PullStatus.NoSourceControl
+        }
+        revertedFiles[f] = entry.blobContent;
+    }
+    // save updated file content
+    await forceSaveAsync(hd, revertedFiles)
+    return PullStatus.UpToDate;
+}
+
+export async function hasMergeConflictMarkersAsync(hd: Header): Promise<boolean> {
+    const files = await getTextAsync(hd.id)
+    return !!Object.keys(files).find(k => pxt.diff.hasMergeConflictMarker(files[k]));
 }
 
 export async function prAsync(hd: Header, commitId: string, msg: string) {
@@ -488,78 +590,115 @@ export async function prAsync(hd: Header, commitId: string, msg: string) {
 }
 
 export function bumpedVersion(cfg: pxt.PackageConfig) {
-    let v = pxt.semver.parse(cfg.version || "0.0.0")
+    let v = pxt.semver.parse(cfg.version, "0.0.0")
     v.patch++
     return pxt.semver.stringify(v)
 }
 
 export async function bumpAsync(hd: Header, newVer = "") {
+    checkHeaderSession(hd);
+
     let files = await getTextAsync(hd.id)
-    let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
+    let cfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME]);
     cfg.version = newVer || bumpedVersion(cfg)
-    files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+    files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     await saveAsync(hd, files)
     return await commitAsync(hd, {
         message: cfg.version,
-        createTag: "v" + cfg.version
+        createRelease: "v" + cfg.version,
+        binaryJs: true
     })
-}
-
-export function lookupFile(commit: pxt.github.Commit, path: string) {
-    if (!commit)
-        return null
-    return commit.tree.tree.find(e => e.path == path)
 }
 
 export interface CommitOptions {
     message?: string;
-    createTag?: string;
+    createRelease?: string;
     filenamesToCommit?: string[];
+    binaryJs?: boolean;
+    // render blocks to png
+    blocksScreenshotAsync?: () => Promise<string>;
+    // render blocks diff to png
+    blocksDiffScreenshotAsync?: () => Promise<string>;
 }
 
+const BLOCKS_PREVIEW_PATH = ".github/makecode/blocks.png";
+const BLOCKSDIFF_PREVIEW_PATH = ".github/makecode/blocksdiff.png";
+const BINARY_JS_PATH = "assets/js/binary.js";
+const VERSION_TXT_PATH = "assets/version.txt";
 export async function commitAsync(hd: Header, options: CommitOptions = {}) {
+    await cloudsync.ensureGitHubTokenAsync();
+
     let files = await getTextAsync(hd.id)
     let gitjsontext = files[GIT_JSON]
     if (!gitjsontext)
         U.userError(lf("Not a git extension."))
     let gitjson = JSON.parse(gitjsontext) as GitJson
     let parsed = pxt.github.parseRepoId(gitjson.repo)
-    let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
+    let cfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME]);
     let treeUpdate: pxt.github.CreateTreeReq = {
         base_tree: gitjson.commit.tree.sha,
         tree: []
     }
     const filenames = options.filenamesToCommit || pxt.allPkgFiles(cfg)
-    for (let path of filenames) {
-        if (path == GIT_JSON || path == pxt.SIMSTATE_JSON || path == pxt.SERIAL_EDITOR_FILE)
-            continue
-        let sha = gitsha(files[path])
-        let ex = lookupFile(gitjson.commit, path)
-        if (!ex || ex.sha != sha) {
-            let res = await pxt.github.createObjectAsync(parsed.fullName, "blob", {
-                content: files[path],
-                encoding: "utf-8"
-            } as pxt.github.CreateBlobReq)
-            U.assert(res == sha)
-            treeUpdate.tree.push({
-                "path": path,
-                "mode": "100644",
-                "type": "blob",
-                "sha": sha,
-                "url": undefined
-            })
-        }
+    const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE];
+    for (const path of filenames.filter(f => ignoredFiles.indexOf(f) < 0)) {
+        const fileContent = files[path];
+        await addToTree(path, fileContent);
     }
 
     if (treeUpdate.tree.length == 0)
         U.userError(lf("Nothing to commit!"))
 
+    // add screenshots
+    let blocksDiffSha: string;
+    if (options
+        && treeUpdate.tree.find(e => e.path == "main.blocks")) {
+        if (options.blocksScreenshotAsync) {
+            const png = await options.blocksScreenshotAsync();
+            if (png)
+                await addToTree(BLOCKS_PREVIEW_PATH, png);
+        }
+        if (options.blocksDiffScreenshotAsync) {
+            const png = await options.blocksDiffScreenshotAsync();
+            if (png)
+                blocksDiffSha = await addToTree(BLOCKSDIFF_PREVIEW_PATH, png);
+        }
+    }
+
+    // add compiled javascript to be run in github pages
+    if (pxt.appTarget.appTheme.githubCompiledJs
+        && options.binaryJs
+        && (!parsed.tag || parsed.tag == "master")) {
+        const v = cfg.version || "0.0.0";
+        const opts: compiler.CompileOptions = {
+            jsMetaVersion: v
+        }
+        const compileResp = await compiler.compileAsync(opts);
+        if (compileResp && compileResp.success && compileResp.outfiles[pxtc.BINARY_JS]) {
+            await addToTree(BINARY_JS_PATH, compileResp.outfiles[pxtc.BINARY_JS]);
+            await addToTree(VERSION_TXT_PATH, v);
+            // ensure template files are up to date
+            if (!cfg.disableTargetTemplateFiles) {
+                const templates = pxt.template.targetTemplateFiles();
+                if (templates) {
+                    for (const fn of Object.keys(templates)) {
+                        await addToTree(fn, templates[fn]);
+                    }
+                }
+            }
+        }
+    }
+
+    // create tree
     let treeId = await pxt.github.createObjectAsync(parsed.fullName, "tree", treeUpdate)
     let commit: pxt.github.CreateCommitReq = {
-        message: options.message || lf("Update {0}", treeUpdate.tree.map(e => e.path).join(", ")),
+        message: options.message || lf("Update {0}", treeUpdate.tree.map(e => e.path).filter(f => !/\.github\/makecode\//.test(f)).join(", ")),
         parents: [gitjson.commit.sha],
         tree: treeId
     }
+    // we are in a merge
+    if (gitjson.mergeSha)
+        commit.parents.push(gitjson.mergeSha)
     let commitId = await pxt.github.createObjectAsync(parsed.fullName, "commit", commit)
     let ok = await pxt.github.fastForwardAsync(parsed.fullName, parsed.tag, commitId)
     let newCommit = commitId
@@ -569,16 +708,91 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     if (newCommit == null) {
         return commitId
     } else {
+        data.invalidate("gh-commits:*"); // invalid any cached commits
+        // if we created a block preview, add as comment
+        if (blocksDiffSha)
+            await pxt.github.postCommitComment(
+                parsed.fullName,
+                commitId,
+                `![${lf("Difference between blocks")}](https://raw.githubusercontent.com/${parsed.fullName}/${commitId}/${BLOCKSDIFF_PREVIEW_PATH})`);
+
         await githubUpdateToAsync(hd, {
             repo: gitjson.repo,
             sha: newCommit,
             files,
-            saveTag: options.createTag
+            saveTag: options.createRelease
         })
-        if (options.createTag)
-            await pxt.github.createTagAsync(parsed.fullName, options.createTag, newCommit)
+        if (options.createRelease) {
+            await pxt.github.createReleaseAsync(parsed.fullName, options.createRelease, newCommit)
+            // ensure pages are on
+            await pxt.github.enablePagesAsync(parsed.fullName);
+            // clear the cloud cache
+            await pxt.github.listRefsAsync(parsed.fullName, "tags", true, true);
+        }
         return ""
     }
+
+    async function addToTree(path: string, content: string): Promise<string> {
+        const data = {
+            content: content,
+            encoding: "utf-8"
+        } as pxt.github.CreateBlobReq;
+        if (path == pxt.CONFIG_NAME)
+            data.content = prepareConfigForGithub(data.content, !!options.createRelease);
+        const m = /^data:([^;]+);base64,/.exec(content);
+        if (m) {
+            data.encoding = "base64";
+            data.content = content.substr(m[0].length);
+        }
+        const sha = gitsha(data.content, data.encoding)
+        const ex = pxt.github.lookupFile(gitjson.commit, path)
+        let res: string;
+        if (!ex || ex.sha != sha) {
+            // look for unfinished merges
+            if (data.encoding == "utf-8" &&
+                pxt.diff.hasMergeConflictMarker(data.content))
+                throw mergeConflictMarkerError();
+            res = await pxt.github.createObjectAsync(parsed.fullName, "blob", data)
+            if (data.encoding == "utf-8")
+                U.assert(res == sha, `sha not matching ${res} != ${sha}`)
+            treeUpdate.tree.push({
+                "path": path,
+                "mode": "100644",
+                "type": "blob",
+                "sha": res,
+                "url": undefined
+            })
+        }
+        return res;
+    }
+}
+
+export async function restoreCommitAsync(hd: Header, commit: pxt.github.CommitInfo) {
+    await cloudsync.ensureGitHubTokenAsync();
+
+    const files = await getTextAsync(hd.id)
+    const gitjsontext = files[GIT_JSON]
+    const gitjson = JSON.parse(gitjsontext) as GitJson
+    const parsed = pxt.github.parseRepoId(gitjson.repo)
+    const date = new Date(Date.parse(commit.committer.date));
+    const restored: pxt.github.CreateCommitReq = {
+        message: lf("Restore '{0} {1}'", date.toLocaleString(), commit.message),
+        parents: [gitjson.commit.sha],
+        tree: commit.tree.sha
+    }
+
+    const commitId = await pxt.github.createObjectAsync(parsed.fullName, "commit", restored)
+    await pxt.github.fastForwardAsync(parsed.fullName, parsed.tag, commitId)
+    await githubUpdateToAsync(hd, {
+        repo: gitjson.repo,
+        sha: commitId,
+        files
+    })
+}
+
+export async function mergeUpstreamAsync(hd: Header, base: string) {
+    // pull in all the changes
+    return Promise.resolve();
 }
 
 interface UpdateOptions {
@@ -596,6 +810,12 @@ function mergeError() {
     return e
 }
 
+function mergeConflictMarkerError() {
+    const e = new Error("Merge conflict marker error");
+    (e as any).isMergeConflictMarkerError = true
+    return e
+}
+
 async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
     const { repo, sha, files, justJSON } = options
     const parsed = pxt.github.parseRepoId(repo)
@@ -610,15 +830,19 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
     }
 
     const downloadedFiles: pxt.Map<boolean> = {}
+    let conflicts = 0;
+    let blocksNeedDecompilation = false;
 
     const downloadAsync = async (path: string) => {
         downloadedFiles[path] = true
-        const treeEnt = lookupFile(commit, path)
-        const oldEnt = lookupFile(gitjson.commit, path)
+        const treeEnt = pxt.github.lookupFile(commit, path)
+        const oldEnt = pxt.github.lookupFile(gitjson.commit, path)
         const hasChanges = files[path] != null && (!oldEnt || oldEnt.blobContent != files[path])
         if (!treeEnt) {
-            // strange: file in pxt.json but not in git
-            if (options.tryDiff3 && hasChanges) throw mergeError()
+            // file in pxt.json but not in git:
+            // changes were merged from the cloud but not pushed yet
+            if (options.tryDiff3 && hasChanges)
+                return files[path];
             if (!justJSON)
                 files[path] = ""
             return ""
@@ -635,15 +859,27 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         if (gitsha(text) != treeEnt.sha)
             U.userError(lf("Corrupt SHA1 on download of '{0}'.", path))
         if (options.tryDiff3 && hasChanges) {
-            const d3 = pxt.github.diff3(files[path], oldEnt.blobContent, treeEnt.blobContent)
-            if (d3.numConflicts) throw mergeError()
-            text = d3.merged
             if (path == pxt.CONFIG_NAME) {
-                try {
-                    JSON.parse(text)
-                } catch {
+                text = pxt.diff.mergeDiff3Config(files[path], oldEnt.blobContent, treeEnt.blobContent);
+                if (!text) // merge failed?
                     throw mergeError()
-                }
+            } else if (/\.blocks$/.test(path)) {
+                // blocks file, try merging the blocks or clear it so that ts merge picks it up
+                const d3 = pxt.blocks.mergeXml(files[path], oldEnt.blobContent, treeEnt.blobContent);
+                // if xml merge fails, leave an empty xml payload to force decompilation
+                blocksNeedDecompilation = blocksNeedDecompilation || !d3;
+                text = d3 || "";
+            } else if (path == BINARY_JS_PATH || path == VERSION_TXT_PATH) {
+                // local build wins, does not matter
+                text = files[path];
+            } else {
+                const d3 = pxt.diff.diff3(files[path], oldEnt.blobContent, treeEnt.blobContent, lf("local changes"), lf("remote changes (pulled from Github)"))
+                if (!d3) // merge failed?
+                    throw mergeError()
+                conflicts += d3.numConflicts
+                if (d3.numConflicts && !/\.ts$/.test(path)) // only allow conflict markers in typescript files
+                    throw mergeError()
+                text = d3.merged
             }
         }
         if (!justJSON)
@@ -651,28 +887,66 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         return text
     }
 
+    // we need to keep the old cfg to maintain the github id -> local workspace id
+    const oldCfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME])
     const cfgText = await downloadAsync(pxt.CONFIG_NAME)
-    const cfg = pxt.Util.jsonTryParse(cfgText || "{}") as pxt.PackageConfig
-    if (!cfg)
-        U.userError(lf("Invalid pxt.json file."));
-    for (let fn of pxt.allPkgFiles(cfg).slice(1)) {
+    let cfg = pxt.Package.parseAndValidConfig(cfgText);
+    // invalid cfg
+    if (!cfg) {
+        if (hd) // not importing
+            U.userError(lf("Invalid pxt.json file."));
+        pxt.debug(`github: reconstructing pxt.json`)
+        cfg = pxt.diff.reconstructConfig(files, commit, pxt.appTarget.blocksprj || pxt.appTarget.tsprj);
+        files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
+    }
+    // patch the github references back to local workspaces
+    if (oldCfg) {
+        let ghupdated = 0;
+        Object.keys(cfg.dependencies)
+            // find github references that are also in the original version
+            .filter(k => /^github:/.test(cfg.dependencies[k]) && oldCfg.dependencies[k])
+            .forEach(k => {
+                const gid = pxt.github.parseRepoId(cfg.dependencies[k]);
+                if (gid) {
+                    const wks = oldCfg.dependencies[k];
+                    cfg.dependencies[k] = wks;
+                    ghupdated++;
+                }
+            })
+        if (ghupdated)
+            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
+    }
+
+    for (const fn of pxt.allPkgFiles(cfg).slice(1))
         await downloadAsync(fn)
+
+    if (!cfg.name) {
+        cfg.name = (parsed.project || parsed.fullName).replace(/[^\w\-]/g, "");
+        if (!justJSON)
+            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
 
     if (!justJSON) {
+        // if any block needs decompilation, don't allow merge error markers
+        if (blocksNeedDecompilation && conflicts)
+            throw mergeError()
         for (let k of Object.keys(files)) {
             if (k[0] != "." && !downloadedFiles[k])
                 delete files[k]
         }
-        if (!cfg.name) {
-            cfg.name = parsed.fullName.replace(/[^\w\-]/g, "")
-            files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
-        }
     }
 
     commit.tag = options.saveTag
+    gitjson.mergeSha = undefined
     gitjson.commit = commit
     files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
+
+    /**
+     * If the repo was last opened in this target, use that version number in the header;
+     * otherwise, use current target version to avoid mismatched updates.
+     */
+    const targetVersionToUse = (cfg.targetVersions?.targetId === pxt.appTarget.id && cfg.targetVersions.target) ?
+        cfg.targetVersions.target : pxt.appTarget.versions.target;
 
     if (!hd) {
         hd = await installAsync({
@@ -681,13 +955,13 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
             pubId: "",
             pubCurrent: false,
             meta: {},
-            editor: "tsprj",
+            editor: pxt.BLOCKS_PROJECT_NAME,
             target: pxt.appTarget.id,
-            targetVersion: pxt.appTarget.versions.target,
+            targetVersion: targetVersionToUse,
         }, files)
     } else {
         hd.name = cfg.name
-        await saveAsync(hd, files)
+        await forceSaveAsync(hd, files)
     }
 
     return hd
@@ -695,7 +969,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
 
 export async function exportToGithubAsync(hd: Header, repoid: string) {
     const parsed = pxt.github.parseRepoId(repoid);
-    const pfiles = pxt.packageFiles(hd.name);
+    const pfiles = pxt.template.packageFiles(hd.name);
     await pxt.github.putFileAsync(parsed.fullName, ".gitignore", pfiles[".gitignore"]);
     const sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
     const commit = await pxt.github.getCommitAsync(parsed.fullName, sha)
@@ -704,20 +978,35 @@ export async function exportToGithubAsync(hd: Header, repoid: string) {
         repo: repoid,
         commit
     })
-    await saveAsync(hd, files);
-    await initializeGithubRepoAsync(hd, repoid, false);
-    // race condition, don't pull right away 
+
+    // assign ids to blockly blocks
+    const mainBlocks = files["main.blocks"];
+    if (mainBlocks) {
+        const ws = pxt.blocks.loadWorkspaceXml(mainBlocks, true);
+        if (ws) {
+            const mainBlocksWithIds = pxt.blocks.saveWorkspaceXml(ws, true);
+            if (mainBlocksWithIds)
+                files["main.blocks"] = mainBlocksWithIds;
+        }
+    }
+    // save updated files
+    await forceSaveAsync(hd, files);
+    await initializeGithubRepoAsync(hd, repoid, false, true);
+    // race condition, don't pull right away
     // await pullAsync(hd);
 }
 
 
 // to be called after loading header in a editor
 export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
+    checkHeaderSession(h);
+
     h.githubCurrent = false
 
-    let gitjson: GitJson = JSON.parse(files[GIT_JSON] || "{}")
+    const gitjson: GitJson = JSON.parse(files[GIT_JSON] || "{}")
 
-    h.githubId = gitjson.repo
+    h.githubId = gitjson && gitjson.repo
+    h.githubTag = gitjson && gitjson.commit && gitjson.commit.tag
 
     if (!h.githubId)
         return
@@ -730,14 +1019,17 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
     for (let k of Object.keys(files)) {
         if (k == GIT_JSON || k == pxt.SIMSTATE_JSON || k == pxt.SERIAL_EDITOR_FILE)
             continue
-        let treeEnt = lookupFile(gitjson.commit, k)
+        let treeEnt = pxt.github.lookupFile(gitjson.commit, k)
         if (!treeEnt || treeEnt.type != "blob") {
             isCurrent = false
             continue
         }
         if (treeEnt.blobContent == null)
             needsBlobs = true
-        if (files[k] && treeEnt.sha != gitsha(files[k])) {
+        let content = files[k];
+        if (k == pxt.CONFIG_NAME)
+            content = prepareConfigForGithub(content);
+        if (content && treeEnt.sha != gitsha(content)) {
             isCurrent = false
             continue
         }
@@ -756,82 +1048,203 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
 
     if (gitjson.isFork == null) {
         const p = pxt.github.parseRepoId(gitjson.repo)
-        const r = await pxt.github.repoAsync(p.fullName, null)
-        gitjson.isFork = !!r.fork
-        files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
-        await saveAsync(h, files)
+        const r = await pxt.github.repoAsync(p.fullName, null);
+        if (r) {
+            gitjson.isFork = !!r.fork
+            files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
+            await saveAsync(h, files)
+        }
+    }
+
+    // automatically update project name with github name
+    // if it start with pxt-
+    const ghid = pxt.github.parseRepoId(h.githubId);
+    if (ghid.project && /^pxt-/.test(ghid.project)) {
+        const ghname = ghid.project.replace(/^pxt-/, '').replace(/-+/g, ' ')
+        if (ghname != h.name) {
+            const cfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME]);
+            cfg.name = ghname;
+            h.name = ghname;
+            await saveAsync(h, files);
+        }
     }
 }
 
-export async function initializeGithubRepoAsync(hd: Header, repoid: string, forceTemplateFiles: boolean) {
+// replace all file|worspace references with github sha
+// createRelease: determine if tags need to be enforced
+export function prepareConfigForGithub(content: string, createRelease?: boolean): string {
+    // replace workspace: references with resolve github sha/tags.
+    const cfg = pxt.Package.parseAndValidConfig(content);
+    if (!cfg) return content;
+
+    // cleanup
+    delete (<any>cfg).installedVersion // cleanup old pxt.json files
+    delete cfg.additionalFilePath
+    delete cfg.additionalFilePaths
+
+    // add list of supported targets
+    const supportedTargets = cfg.supportedTargets || [];
+    if (supportedTargets.indexOf(pxt.appTarget.id) < 0) {
+        supportedTargets.push(pxt.appTarget.id);
+        supportedTargets.sort(); // keep list stable
+        cfg.supportedTargets = supportedTargets;
+    }
+
+    // track target and target version this was last editted in, so we can apply upgrade rules on import.
+    cfg.targetVersions = {
+        ...cfg.targetVersions,
+        target: pxt.appTarget.versions.target,
+        targetId: pxt.appTarget.id
+    }
+
+    // patch dependencies
+    const localDependencies = Object.keys(cfg.dependencies)
+        .filter(d => /^(file|workspace):/.test(cfg.dependencies[d]));
+    for (const d of localDependencies)
+        resolveDependency(d);
+
+    return pxt.Package.stringifyConfig(cfg);
+
+    function resolveDependency(d: string) {
+        const v = cfg.dependencies[d];
+        const hid = v.substring(v.indexOf(':') + 1);
+        const header = getHeader(hid);
+        if (!header) return; // missing workspace dependency, maybe deleted
+        if (!header.githubId) {
+            if (createRelease)
+                U.userError(lf("Dependency {0} is a local project.", d))
+        } else {
+            const gid = pxt.github.parseRepoId(header.githubId);
+            if (createRelease && !/^v\d+/.test(header.githubTag))
+                U.userError(lf("You need to create a release for dependency {0}.", d))
+            const tag = header.githubTag || gid.tag;
+            cfg.dependencies[d] = `github:${gid.fullName}#${tag}`;
+        }
+    }
+}
+
+export async function initializeGithubRepoAsync(hd: Header, repoid: string, forceTemplateFiles: boolean, binaryJs: boolean) {
+    await cloudsync.ensureGitHubTokenAsync();
+
     let parsed = pxt.github.parseRepoId(repoid)
     let name = parsed.fullName.replace(/.*\//, "")
 
     let currFiles = await getTextAsync(hd.id);
 
-    const templateFiles = pxt.packageFiles(name);
-    pxt.packageFilesFixup(templateFiles, false);
+    const templateFiles = pxt.template.packageFiles(name);
+    pxt.template.packageFilesFixup(templateFiles, {
+        repo: parsed.fullName,
+        repoowner: parsed.owner,
+        reponame: parsed.project,
+        repotag: parsed.tag
+    });
 
     if (forceTemplateFiles) {
         U.jsonMergeFrom(currFiles, templateFiles);
     } else {
-        // special case override README.md if empty
-        let templateREADME = templateFiles["README.md"];
-        if (currFiles["README.md"] && currFiles["README.md"].trim())
-            templateREADME = undefined;
+        // special handling of broken/missing/corrupted pxt.json
+        if (!pxt.Package.parseAndValidConfig(currFiles[pxt.CONFIG_NAME]))
+            delete currFiles[pxt.CONFIG_NAME];
+        // special case append README.md content: append to existing file
+        let templateREADME = templateFiles[pxt.README_FILE];
+        const currREADME = currFiles[pxt.README_FILE];
+        if (templateREADME || currREADME)
+            templateREADME = [currREADME, templateREADME].filter(s => !!s).join(`
+
+`);
         // current files override defaults
         U.jsonMergeFrom(templateFiles, currFiles);
         currFiles = templateFiles;
-
         if (templateREADME)
-            currFiles["README.md"] = templateREADME;
+            currFiles[pxt.README_FILE] = templateREADME;
     }
 
-    // special case, add test.ts in tests if needed
-    if (currFiles["test.ts"]) {
-        const pxtjson = JSON.parse(currFiles[pxt.CONFIG_NAME]);
-        const testFiles = pxtjson.testFiles || (pxtjson.testFiles = []);
-        if (testFiles.indexOf("test.ts") < 0) {
-            testFiles.push("test.ts");
-            currFiles[pxt.CONFIG_NAME] = JSON.stringify(pxtjson, null, 4);
-        }
+    // update config with files if needed
+    const pxtjson = pxt.Package.parseAndValidConfig(currFiles[pxt.CONFIG_NAME]);
+    const files = pxtjson.files;
+    // if no ts files, add existing ones
+    if (!files.filter(f => /\.ts$/.test(f)).length) {
+        // add files from the template
+        Object.keys(currFiles)
+            .filter(f => /\.(blocks|ts|py|asm|md|json)$/.test(f))
+            .filter(f => f != pxt.CONFIG_NAME)
+            .forEach(f => files.push(f));
     }
+    // update test file if needed
+    const testFiles = pxtjson.testFiles || (pxtjson.testFiles = []);
+    if (currFiles["test.ts"] && testFiles.indexOf("test.ts") < 0) {
+        testFiles.push("test.ts");
+    }
+    // save updated pxtjson
+    currFiles[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(pxtjson);
 
     // save
-    await saveAsync(hd, currFiles)
+    await forceSaveAsync(hd, currFiles)
     await commitAsync(hd, {
-        message: "Auto-initialized.",
-        filenamesToCommit: Object.keys(currFiles)
+        message: lf("Initial files for MakeCode project"),
+        filenamesToCommit: Object.keys(currFiles),
+        binaryJs
     })
 
     // remove files not in the package (only in git)
     currFiles = await getTextAsync(hd.id)
-    let allfiles = pxt.allPkgFiles(JSON.parse(currFiles[pxt.CONFIG_NAME]))
-    for (let k of Object.keys(currFiles)) {
-        if (k == GIT_JSON || k == pxt.SIMSTATE_JSON || k == pxt.SERIAL_EDITOR_FILE)
-            continue
-        if (allfiles.indexOf(k) < 0)
-            delete currFiles[k];
-    }
+    const allfiles = pxt.allPkgFiles(pxt.Package.parseAndValidConfig(currFiles[pxt.CONFIG_NAME]))
+    const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE, pxt.CONFIG_NAME];
+    Object.keys(currFiles)
+        .filter(f => ignoredFiles.indexOf(f) < 0 && allfiles.indexOf(f) < 0)
+        .forEach(f => delete currFiles[f]);
 
     await saveAsync(hd, currFiles)
+
+    // try enable github pages
+    try {
+        await pxt.github.enablePagesAsync(parsed.fullName);
+    } catch (e) {
+        pxt.reportException(e);
+    }
 
     return hd
 }
 
-export async function importGithubAsync(id: string) {
+export async function importGithubAsync(id: string): Promise<Header> {
+    const repoid = pxt.github.normalizeRepoId(id).replace(/^github:/, "")
+    const parsed = pxt.github.parseRepoId(repoid)
+
     let sha = ""
-    let repoid = pxt.github.noramlizeRepoId(id).replace(/^github:/, "")
-    let parsed = pxt.github.parseRepoId(repoid)
     let isEmpty = false
+    let forceTemplateFiles = false;
     try {
         sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
+        // if the repo does not have a pxt.json file, treat as empty
+        // (must be done before)
+        const commit = await pxt.github.getCommitAsync(parsed.fullName, sha)
+        if (!commit.tree.tree.find(f => f.path == pxt.CONFIG_NAME)) {
+            pxt.debug(`github: detected import non-makecode project`)
+            if (pxt.shell.isReadOnly())
+                U.userError(lf("This repository looks empty."));
+            isEmpty = true; // needs initialization
+            forceTemplateFiles = false;
+            // ask user before modifying project
+            const r = await core.confirmAsync({
+                header: lf("Initialize GitHub repository for MakeCode?"),
+                body: lf("We need to add a few files to your GitHub repository to make it work with MakeCode."),
+                agreeLbl: lf("Ok"),
+                hasCloseIcon: true,
+                helpUrl: "/github/import"
+            })
+            if (!r) return Promise.resolve(undefined);
+        }
     } catch (e) {
         if (e.statusCode == 409) {
-            // this means repo is completely empty; 
+            // this means repo is completely empty;
             // put all default files in there
+            pxt.debug(`github: detected import empty project`)
+            if (pxt.shell.isReadOnly())
+                U.userError(lf("This repository looks empty."));
+            await cloudsync.ensureGitHubTokenAsync();
             await pxt.github.putFileAsync(parsed.fullName, ".gitignore", "# Initial\n");
-            isEmpty = true
+            isEmpty = true;
+            forceTemplateFiles = true;
             sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
         }
         else if (e.statusCode == 404) {
@@ -839,12 +1252,15 @@ export async function importGithubAsync(id: string) {
             U.userError(lf("No such repository or branch."));
         }
     }
-    return await githubUpdateToAsync(null, { repo: repoid, sha, files: {} })
-        .then(hd => {
-            if (isEmpty)
-                return initializeGithubRepoAsync(hd, repoid, true);
-            return hd
-        })
+
+    const hd = await githubUpdateToAsync(null, {
+        repo: repoid,
+        sha,
+        files: {}
+    })
+    if (hd && isEmpty)
+        await initializeGithubRepoAsync(hd, repoid, forceTemplateFiles, false);
+    return hd
 }
 
 export function downloadFilesByIdAsync(id: string): Promise<pxt.Map<string>> {
@@ -869,31 +1285,56 @@ export function installByIdAsync(id: string) {
 }
 
 export function saveToCloudAsync(h: Header) {
-    checkSession();
+    checkHeaderSession(h);
     return cloudsync.saveToCloudAsync(h)
 }
 
-export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
-    checkSession();
+export function resetCloudAsync(): Promise<void> {
+    // always sync local scripts before resetting
+    // remove all cloudsync or github repositories
+    return syncAsync().catch(e => { })
+        .then(() => cloudsync.resetAsync())
+        .then(() => Promise.all(allScripts.map(e => e.header).filter(h => h.cloudSync || h.githubId).map(h => {
+            // Remove cloud sync'ed project
+            h.isDeleted = true;
+            h.blobVersion = "DELETED";
+            return forceSaveAsync(h, null, true);
+        })))
+        .then(() => syncAsync())
+        .then(() => { });
+}
 
-    return impl.listAsync()
+// this promise is set while a sync is in progress
+// cleared when sync is done.
+let syncAsyncPromise: Promise<pxt.editor.EditorSyncState>;
+export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
+    pxt.debug("workspace: sync")
+    if (syncAsyncPromise) return syncAsyncPromise;
+    return syncAsyncPromise = impl.listAsync()
         .catch((e) => {
             // There might be a problem with the native databases. Switch to memory for this session so the user can at
             // least use the editor.
             pxt.tickEvent("workspace.syncerror", { ws: implType });
-            pxt.log("Workspace error, switching to memory workspace");
+            pxt.log("workspace: error, switching to memory workspace");
             impl = memoryworkspace.provider;
             return impl.listAsync();
         })
         .then(headers => {
-            let existing = U.toDictionary(allScripts || [], h => h.header.id)
-            allScripts = []
-            for (let hd of headers) {
+            const existing = U.toDictionary(allScripts || [], h => h.header.id)
+            // this is an in-place update the header instances
+            allScripts = headers.map(hd => {
                 let ex = existing[hd.id]
                 if (ex) {
-                    U.jsonCopyFrom(ex.header, hd)
-                    //ex.text = null
-                    //ex.version = null
+                    if (JSON.stringify(ex.header) !== JSON.stringify(hd)) {
+                        U.jsonCopyFrom(ex.header, hd)
+                        // force reload
+                        ex.text = undefined
+                        ex.version = undefined
+                        data.invalidateHeader("header", hd);
+                        data.invalidateHeader("text", hd);
+                        data.invalidateHeader("pkg-git-status", hd);
+                        data.invalidate("gh-commits:*"); // invalidate commits just in case
+                    }
                 } else {
                     ex = {
                         header: hd,
@@ -901,17 +1342,20 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                         version: undefined,
                     }
                 }
-                allScripts.push(ex)
-            }
-            data.invalidate("header:")
-            data.invalidate("text:")
+                return ex;
+            })
             cloudsync.syncAsync().done() // sync in background
         })
-        .then(() => impl.getSyncState ? impl.getSyncState() : null)
+        .then(() => {
+            refreshHeadersSession();
+            return impl.getSyncState ? impl.getSyncState() : null
+        })
+        .finally(() => {
+            syncAsyncPromise = undefined;
+        });
 }
 
 export function resetAsync() {
-    checkSession();
     allScripts = []
     return impl.resetAsync()
         .then(cloudsync.resetAsync)
@@ -923,10 +1367,11 @@ export function resetAsync() {
             if (Cloud.localToken)
                 pxt.storage.setLocal("local_token", Cloud.localToken);
         })
+        .then(() => syncAsync()) // sync again to notify other tabs
+        .then(() => { });
 }
 
 export function loadedAsync() {
-    checkSession();
     if (impl.loadedAsync)
         return impl.loadedAsync()
     return Promise.resolve()
@@ -996,7 +1441,7 @@ data.mountVirtualApi("headers", {
 */
 data.mountVirtualApi("text", {
     getAsync: p => {
-        let m = /^[\w\-]+:([^\/]+)(\/(.*))?/.exec(p)
+        const m = /^[\w\-]+:([^\/]+)(\/(.*))?/.exec(p)
         return getTextAsync(m[1])
             .then(files => {
                 if (m[3])

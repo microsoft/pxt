@@ -9,7 +9,6 @@
         "jsRefCounting": true
     },
     "appTheme": {
-        "accentColor": "#E2008C",
         "logoUrl": "https://makecode.com/",
         "logo": "./static/logo.svg",
         "docsLogo": "./static/logo.svg",
@@ -17,7 +16,7 @@
         "homeUrl": "https://makecode.com/",
         "cardLogo": "./static/logo.svg",
         "appLogo": "./static/logo.svg",
-        "crowdinProject": "kindscript",       
+        "crowdinProject": "kindscript",        
         "docMenu": [
             {
                 "name": "About",
@@ -34,5 +33,6 @@
         ],
         "hideDocsEdit": true,
         "hideDocsSimulator": true
-    }
+    },
+    "uploadDocs": true
 }

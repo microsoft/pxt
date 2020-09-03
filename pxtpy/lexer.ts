@@ -24,7 +24,7 @@ namespace pxt.py {
         endPos: number;
     }
 
-    const keywords: Map<boolean> = {
+    export const keywords: Map<boolean> = {
         "False": true, "None": true, "True": true, "and": true, "as": true, "assert": true,
         "async": true, "await": true, "break": true, "class": true, "continue": true,
         "def": true, "del": true, "elif": true, "else": true, "except": true, "finally": true,
@@ -119,11 +119,11 @@ namespace pxt.py {
             d.column = 0
             return
         }
-        let p = position(d.start, src)
+        let p = position(d.start!, src)
         d.line = p.line
         d.column = p.column
-        if (d.length > 0) {
-            p = position(d.start + d.length - 1, src)
+        if (d.length! > 0) {
+            p = position(d.start! + d.length! - 1, src)
             d.endLine = p.line
             d.endColumn = p.column + 2 // not sure where the +2 is coming from, but it works out in monaco
         }

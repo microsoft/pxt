@@ -1,0 +1,82 @@
+.image-editor-canvas {
+    flex-grow: 1;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+    touch-action: none;
+}
+
+.image-editor-canvas.portrait > .image-editor-canvas-spacer {
+    flex-grow: 0;
+}
+
+.image-editor-canvas.portrait .paint-surface, .image-editor-canvas.portrait .image-editor-canvas-inner {
+    height: 100%;
+    width: 100%;
+}
+
+.image-editor-canvas.landscape .paint-surface {
+    width: 100%;
+    height: 100%;
+}
+
+.image-editor-canvas-inner {
+    display: flex;
+    flex-direction: row;
+}
+
+.image-editor-canvas-spacer {
+    display: none;
+}
+
+.image-editor-canvas .paint-surface.overlay {
+    opacity: 0.5;
+}
+
+.image-editor-canvas .paint-surface.hide {
+    display: none;
+}
+
+.paint-surface {
+    image-rendering: optimizeSpeed;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+    image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
+}
+
+.checkerboard {
+    background-color: #aeaeae;
+    background-image: linear-gradient(45deg, #dedede 25%, transparent 25%), linear-gradient(-45deg, #dedede 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #dedede 75%), linear-gradient(-45deg, transparent 75%, #dedede 75%);
+    background-size: 0.75rem 0.75rem;
+    background-position: 0 0, 0 calc(0.75rem*0.5), calc(0.75rem*0.5) calc(0.75rem*-0.5), calc(0.75rem*-0.5) 0px;
+}
+
+.image-editor-floating-layer {
+    position: fixed;
+    height: 0px;
+    width: 0px;
+    border: 3px solid #dddddd;
+}
+
+.image-editor-floating-layer:before {
+    content: "";
+    border: 3px dashed #000000;
+    display: block;
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    bottom: -3px;
+    right: -3px;
+}
+
+.paint-container {
+    width: 100%;
+    height: 100%;
+
+    /* Used to force the positioning of the canvas to be relative to its parent */
+    transform: translateX(0);
+}

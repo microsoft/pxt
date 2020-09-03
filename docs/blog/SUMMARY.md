@@ -1,6 +1,17 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [Microsoft TileCode: Design, Code, and Play Games on MakeCode Arcade Devices](blog/arcade/tilecode)
+    * [MakeCode Arcade Update](/blog/arcade/update-july-2020)
+    * [MakeCode for the micro:bit – 2020 Release](/blog/microbit/2020-release)
+    * [MakeCode for the micro:bit – 2020 Beta Release](/blog/microbit/2020-beta)
+    * [MakeCode Arcade One Room Game Jam](/blog/arcade/game-jam-2)
+    * [Online Learning Resources](/blog/online-learning)
+    * [MakeCode Python is here!](/blog/minecraft/python-release)
+    * [MakeCode Arcade Released for General Availability!](/blog/arcade/general-release)
+    * [MakeCode with GitHub](/blog/makecode-with-github)
+    * [Minecraft Hour of Code](/blog/minecraft/hour-of-code-2019)
+    * [Translations in Context](/blog/translations-in-context)
     * [GitHub Extensions Authoring - Episode 2](/blog/github-extensions-episode-2)
     * [CS Ed Week 2019](/blog/csed-week/csed-week-2019)
     * [Arcade Game Jam](/blog/arcade/game-jam)

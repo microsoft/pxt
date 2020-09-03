@@ -1,22 +1,22 @@
 // Describe this function...
-function foo_noarg () {
-
-}
-// Describe this function...
-function foo_num (num: number) {
-
-}
-// Describe this function...
 function foo_string (text: string) {
-
+		
 }
 // Describe this function...
 function foo_bool (bool: boolean) {
-
+    
 }
 // Describe this function...
 function foo_all (num: number, text: string, bool: boolean) {
-
+    
+}
+// Describe this function...
+function foo_num (num: number) {
+    
+}
+// Describe this function...
+function foo_noarg () {
+    
 }
 foo_noarg()
 foo_num(1)

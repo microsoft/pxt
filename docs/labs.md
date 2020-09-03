@@ -22,7 +22,7 @@ An editor for maker-oriented microcontrollers, that typically require breadboard
 more information, see:
 
 * [Editor](https://maker.makecode.com)
-* [GitHub](https://github.com/Microsoft/pxt-maker)
+* [GitHub](https://github.com/microsoft/pxt-maker)
 
 ### ARcadia: Marker-based augment reality
 
@@ -71,10 +71,10 @@ MakeCode's support for embedding the MakeCode editor inside of a web app. For mo
 
 A small wrapper around the **Johnny-Five** library.
 
-* [GitHub](https://github.com/Microsoft/pxt-johnny-five)
+* [GitHub](https://github.com/microsoft/pxt-johnny-five)
 
 ## Documentation
 
 * [Create your own editor](/target-creation)
-* [Contribute](https://github.com/Microsoft/pxt)
+* [Contribute](https://github.com/microsoft/pxt)
 * [Join the MakeCode Discord](http://aka.ms/makecodecommunity)

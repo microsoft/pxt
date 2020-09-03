@@ -28,11 +28,10 @@ export enum ShareRecordingState {
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface ShareEditorState {
-    advancedMenu?: boolean;
     mode?: ShareMode;
     pubId?: string;
     visible?: boolean;
-    sharingError?: boolean;
+    sharingError?: Error;
     loading?: boolean;
     projectName?: string;
     projectNameChanged?: boolean;
@@ -41,6 +40,7 @@ export interface ShareEditorState {
     recordingState?: ShareRecordingState;
     recordError?: string;
     qrCodeUri?: string;
+    qrCodeExpanded?: boolean;
     title?: string;
 }
 
@@ -53,7 +53,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         this.state = {
             pubId: undefined,
             visible: false,
-            advancedMenu: false,
             screenshotUri: undefined,
             recordingState: ShareRecordingState.None,
             recordError: undefined,
@@ -61,16 +60,23 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         }
 
         this.hide = this.hide.bind(this);
-        this.toggleAdvancedMenu = this.toggleAdvancedMenu.bind(this);
         this.setAdvancedMode = this.setAdvancedMode.bind(this);
         this.handleProjectNameChange = this.handleProjectNameChange.bind(this);
         this.restartSimulator = this.restartSimulator.bind(this);
         this.handleRecordClick = this.handleRecordClick.bind(this);
         this.handleScreenshotClick = this.handleScreenshotClick.bind(this);
         this.handleScreenshotMessage = this.handleScreenshotMessage.bind(this);
+        this.handleCreateGitHubRepository = this.handleCreateGitHubRepository.bind(this);
+        this.handleQrCodeClick = this.handleQrCodeClick.bind(this);
     }
 
     hide() {
+        if (this.state.qrCodeExpanded) {
+            pxt.tickEvent('share.qrtoggle');
+            const { qrCodeExpanded } = this.state;
+            this.setState({ qrCodeExpanded: !qrCodeExpanded });
+            return;
+        }
         if (this._gifEncoder) {
             this._gifEncoder.cancel();
             this._gifEncoder = undefined;
@@ -93,7 +99,9 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         });
     }
 
-    show(header: pxt.workspace.Header, title?: string) {
+    show(title?: string) {
+        const { header } = this.props.parent.state;
+        if (!header) return;
         // TODO investigate why edge does not render well
         // upon hiding dialog, the screen does not redraw properly
         const thumbnails = pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails
@@ -107,15 +115,19 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             visible: true,
             mode: ShareMode.Code,
             pubId: undefined,
-            sharingError: false,
+            sharingError: undefined,
             screenshotUri: undefined,
             qrCodeUri: undefined,
-            title
+            qrCodeExpanded: false,
+            title,
+            projectName: header.name
         }, thumbnails ? (() => this.props.parent.startSimulator()) : undefined);
     }
 
     handleScreenshotMessage(msg: pxt.editor.ScreenshotData) {
-        if (!msg) return;
+        const { visible } = this.state;
+
+        if (!msg || !visible) return;
 
         if (msg.event === "start") {
             switch (this.state.recordingState) {
@@ -142,7 +154,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         if (this.state.recordingState == ShareRecordingState.GifRecording) {
             if (this._gifEncoder.addFrame(msg.data, msg.delay))
                 this.gifRender();
-        } else if (this.state.recordingState == ShareRecordingState.ScreenshotSnap) {
+        } else if (this.state.recordingState == ShareRecordingState.ScreenshotSnap || this.state.recordingState === ShareRecordingState.None) {
             // received a screenshot
             this.setState({ screenshotUri: pxt.BrowserUtils.imageDataToPNG(msg.data), recordingState: ShareRecordingState.None, recordError: undefined })
         } else {
@@ -166,25 +178,28 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         }
     }
 
+    componentDidMount() {
+        document.addEventListener("keydown", this.handleKeyDown);
+    }
+
+    componentWillUnmount() {
+        document.removeEventListener("keydown", this.handleKeyDown);
+    }
+
     shouldComponentUpdate(nextProps: ShareEditorProps, nextState: ShareEditorState, nextContext: any): boolean {
         return this.state.visible != nextState.visible
-            || this.state.advancedMenu != nextState.advancedMenu
             || this.state.mode != nextState.mode
             || this.state.pubId != nextState.pubId
-            || this.state.sharingError != nextState.sharingError
+            || this.state.sharingError !== nextState.sharingError
             || this.state.projectName != nextState.projectName
             || this.state.projectNameChanged != nextState.projectNameChanged
             || this.state.loading != nextState.loading
             || this.state.recordingState != nextState.recordingState
             || this.state.screenshotUri != nextState.screenshotUri
             || this.state.qrCodeUri != nextState.qrCodeUri
+            || this.state.qrCodeExpanded != nextState.qrCodeExpanded
             || this.state.title != nextState.title
             ;
-    }
-
-    private toggleAdvancedMenu() {
-        const advancedMenu = !!this.state.advancedMenu;
-        this.setState({ advancedMenu: !advancedMenu });
     }
 
     private setAdvancedMode(mode: ShareMode) {
@@ -200,20 +215,28 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         this.props.parent.restartSimulator();
     }
 
+    handleQrCodeClick(e: React.MouseEvent<HTMLImageElement>) {
+        pxt.tickEvent('share.qrtoggle');
+        e.stopPropagation();
+        const { qrCodeExpanded } = this.state;
+        this.setState({ qrCodeExpanded: !qrCodeExpanded });
+    }
+
     handleScreenshotClick() {
         pxt.tickEvent("share.takescreenshot", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
         if (this.state.recordingState != ShareRecordingState.None) return;
 
         this.setState({ recordingState: ShareRecordingState.ScreenshotSnap, recordError: undefined },
-            () => {
-                this.props.parent.requestScreenshotAsync()
-                    .then(img => {
-                        const st: ShareEditorState = { recordingState: ShareRecordingState.None, recordError: undefined };
-                        if (img) st.screenshotUri = img;
-                        else st.recordError = lf("Oops, screenshot failed. Please try again.")
-                        this.setState(st);
-                    });
+            () => this.screenshotAsync());
+    }
 
+    screenshotAsync = () => {
+        return this.props.parent.requestScreenshotAsync()
+            .then(img => {
+                const st: ShareEditorState = { recordingState: ShareRecordingState.None, recordError: undefined };
+                if (img) st.screenshotUri = img;
+                else st.recordError = lf("Oops, screenshot failed. Please try again.")
+                this.setState(st);
             });
     }
 
@@ -299,14 +322,20 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             });
     }
 
+    handleCreateGitHubRepository() {
+        pxt.tickEvent("share.github.create", undefined, { interactiveConsent: true });
+        this.hide();
+        this.props.parent.createGitHubRepositoryAsync().done();
+    }
+
     renderCore() {
-        const { visible, projectName: newProjectName, loading, recordingState, screenshotUri, thumbnails, recordError, pubId, qrCodeUri, title } = this.state;
+        const { visible, projectName: newProjectName, loading, recordingState, screenshotUri, thumbnails, recordError, pubId, qrCodeUri, qrCodeExpanded, title, sharingError } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const header = this.props.parent.state.header;
-        const advancedMenu = !!this.state.advancedMenu;
-        const hideEmbed = !!targetTheme.hideShareEmbed;
+        const hideEmbed = !!targetTheme.hideShareEmbed || qrCodeExpanded;
         const socialOptions = targetTheme.socialOptions;
-        const showSocialIcons = !!socialOptions && !pxt.BrowserUtils.isUwpEdge();
+        const showSocialIcons = !!socialOptions && !pxt.BrowserUtils.isUwpEdge()
+            && !qrCodeExpanded;
         const ready = !!pubId;
         let mode = this.state.mode;
         let url = '';
@@ -332,8 +361,18 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                     case ShareMode.Simulator:
                         let padding = '81.97%';
                         // TODO: parts aspect ratio
+                        let simulatorRunString = `${verPrefix}---run`;
+                        if (pxt.webConfig.runUrl) {
+                            if (pxt.webConfig.isStatic) {
+                                simulatorRunString = pxt.webConfig.runUrl;
+                            }
+                            else {
+                                // Always use live, not /beta etc.
+                                simulatorRunString = pxt.webConfig.runUrl.replace(pxt.webConfig.relprefix, "/---")
+                            }
+                        }
                         if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio).toPrecision(4) + '%';
-                        const runUrl = rootUrl + (pxt.webConfig.runUrl || `${verPrefix}--run`).replace(/^\//, '');
+                        const runUrl = rootUrl + simulatorRunString.replace(/^\//, '');
                         embed = pxt.docs.runUrl(runUrl, padding, pubId);
                         break;
                     case ShareMode.Url:
@@ -344,15 +383,19 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         }
         const publish = () => {
             pxt.tickEvent("menu.embed.publish", undefined, { interactiveConsent: true });
-            this.setState({ sharingError: false, loading: true });
+            this.setState({ sharingError: undefined, loading: true });
             let p = Promise.resolve();
             if (newProjectName && this.props.parent.state.projectName != newProjectName) {
                 // save project name if we've made a change change
                 p = this.props.parent.updateHeaderNameAsync(newProjectName);
             }
-            p.then(() => this.props.parent.anonymousPublishAsync(screenshotUri))
+            // if screenshots are enabled, always take one
+            if (targetTheme.simScreenshot && !screenshotUri) {
+                p = p.then(this.screenshotAsync);
+            }
+            p.then(() => this.props.parent.anonymousPublishAsync(this.state.screenshotUri))
                 .then((id) => {
-                    this.setState({ pubId: id, qrCodeUri: undefined });
+                    this.setState({ pubId: id, qrCodeUri: undefined, qrCodeExpanded: false });
                     if (pxt.appTarget.appTheme.qrCode)
                         qr.renderAsync(`${shareUrl}${id}`)
                             .then(qruri => {
@@ -361,11 +404,13 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                             });
                     this.forceUpdate();
                 })
-                .catch((e) => {
+                .catch((e: Error) => {
+                    pxt.tickEvent("menu.embed.error", { code: (e as any).statusCode })
                     this.setState({
                         pubId: undefined,
-                        sharingError: true,
-                        qrCodeUri: undefined
+                        sharingError: e,
+                        qrCodeUri: undefined,
+                        qrCodeExpanded: false
                     });
                 });
             this.forceUpdate();
@@ -398,7 +443,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const screenshotDisabled = actionLoading || recordingState != ShareRecordingState.None;
         const screenshotText = this.loanedSimulator && targetTheme.simScreenshotKey
             ? lf("Take Screenshot (shortcut: {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
-        const screenshot = !light && targetTheme.simScreenshot;
+        const screenshot = targetTheme.simScreenshot;
         const gif = !light && !!targetTheme.simGif;
         const isGifRecording = recordingState == ShareRecordingState.GifRecording;
         const isGifRendering = recordingState == ShareRecordingState.GifRendering;
@@ -417,6 +462,11 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 : isGifRendering ? lf("Rendering gif...")
                     : undefined;
         const screenshotMessageClass = recordError ? "warning" : "";
+        const tooBigErrorSuggestGitHub = sharingError
+            && (sharingError as any).statusCode === 413
+            && pxt.appTarget?.cloud?.cloudProviders?.github;
+        const unknownError = sharingError && !tooBigErrorSuggestGitHub;
+        const qrCodeFull = !!qrCodeUri && qrCodeExpanded;
 
         return (
             <sui.Modal isOpen={visible} className="sharedialog"
@@ -456,36 +506,34 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                         </div>
                     </div> : undefined}
                     {action && !this.loanedSimulator ? <p className="ui tiny message info">{disclaimer}</p> : undefined}
-                    {this.state.sharingError ?
-                        <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}</p>
-                        : undefined}
+                    {tooBigErrorSuggestGitHub && <p className="ui orange inverted segment">{lf("Oops! Your project is too big. You can create a GitHub repository to share it.")}
+                        <sui.Button className="inverted basic" text={lf("Create")} icon="github" onClick={this.handleCreateGitHubRepository} />
+                    </p>}
+                    {unknownError && <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}</p>}
                     {url && ready ? <div>
-                        <p>{lf("Your project is ready! Use the address below to share your projects.")}</p>
-                        <sui.Input id="projectUri" class="mini" readOnly={true} lines={1} value={url} copy={true} autoFocus={!pxt.BrowserUtils.isMobile()} selectOnClick={true} aria-describedby="projectUriLabel" autoComplete={false} />
-                        <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project.")}</label>
-                        {qrCodeUri ?
-                            <img className="ui tiny image floated right" alt={lf("QR Code of the saved program")} src={qrCodeUri} />
-                            : undefined}
+                        {!qrCodeFull && <p>{lf("Your project is ready! Use the address below to share your projects.")}</p>}
+                        {!qrCodeFull && <sui.Input id="projectUri" class="mini" readOnly={true} lines={1} value={url} copy={true} autoFocus={!pxt.BrowserUtils.isMobile()} selectOnClick={true} aria-describedby="projectUriLabel" autoComplete={false} />}
+                        {!qrCodeFull && <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project.")}</label>}
+                        {!!qrCodeUri && <img className={`ui ${qrCodeFull ? "huge" : "small"} image ${qrCodeExpanded ? "centered" : "floated right"} button pixelart`} alt={lf("QR Code of the saved program")} src={qrCodeUri} onClick={this.handleQrCodeClick} title={lf("Click to expand or collapse.")} />}
                         {showSocialIcons ? <div className="social-icons">
                             <SocialButton url={url} ariaLabel="Facebook" type='facebook' heading={lf("Share on Facebook")} />
                             <SocialButton url={url} ariaLabel="Twitter" type='twitter' heading={lf("Share on Twitter")} />
                             {socialOptions.discourse ? <SocialButton url={url} icon={"comments"} ariaLabel={lf("Post to Forum")} type='discourse' heading={lf("Share on Forum")} /> : undefined}
                         </div> : undefined}
                     </div> : undefined}
-                    {ready && !hideEmbed ? <div>
+                    {(ready && !hideEmbed) && <div>
                         <div className="ui divider"></div>
-                        <sui.Link icon={`no-select chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed")} ariaExpanded={advancedMenu} onClick={this.toggleAdvancedMenu} />
-                        {advancedMenu ?
+                        <sui.ExpandableMenu title={lf("Embed")}>
                             <sui.Menu pointing secondary>
                                 {formats.map(f =>
                                     <EmbedMenuItem key={`tab${f.label}`} onClick={this.setAdvancedMode} currentMode={mode} {...f} />)}
-                            </sui.Menu> : undefined}
-                        {advancedMenu ?
+                            </sui.Menu>
                             <sui.Field>
                                 <sui.Input id="embedCode" class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} selectOnClick={true} autoComplete={false} />
                                 <label htmlFor="embedCode" id="embedCodeLabel" className="accessible-hidden">{lf("This is the read-only code for the selected tab.")}</label>
-                            </sui.Field> : null}
-                    </div> : undefined}
+                            </sui.Field>
+                        </sui.ExpandableMenu>
+                    </div>}
                 </div>
             </sui.Modal >
         )
@@ -495,6 +543,22 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const container = document.getElementById("shareLoanedSimulator");
         if (container && this.loanedSimulator && !this.loanedSimulator.parentNode)
             container.appendChild(this.loanedSimulator);
+    }
+
+    protected handleKeyDown = (e: KeyboardEvent) => {
+        const { visible } = this.state;
+        const targetTheme = pxt.appTarget.appTheme;
+        const pressed = e.key.toLocaleLowerCase();
+
+        // Don't fire events if component is hidden or if they are typing in a name
+        if (!visible || (document.activeElement && document.activeElement.tagName === "INPUT")) return;
+
+        if (targetTheme.simScreenshotKey && pressed === targetTheme.simScreenshotKey.toLocaleLowerCase()) {
+            this.handleScreenshotClick();
+        }
+        else if (targetTheme.simGifKey && pressed === targetTheme.simGifKey.toLocaleLowerCase()) {
+            this.handleRecordClick();
+        }
     }
 }
 
@@ -582,6 +646,6 @@ class EmbedMenuItem extends sui.StatelessUIElement<EmbedMenuItemProps> {
 
     renderCore() {
         const { label, mode, currentMode } = this.props;
-        return <sui.MenuItem id={`tab${mode}`} active={currentMode == mode} name={label} onClick={this.handleClick} />
+        return <sui.MenuItem id={`tab${mode}`} active={currentMode == mode} tabIndex={0} name={label} onClick={this.handleClick} />
     }
 }

@@ -15,6 +15,7 @@ import Map = pxt.Map;
 
 // abstract over build engine
 export interface BuildEngine {
+    id: string;
     updateEngineAsync: () => Promise<void>;
     setPlatformAsync: () => Promise<void>;
     buildAsync: () => Promise<void>;
@@ -23,6 +24,7 @@ export interface BuildEngine {
     buildPath: string;
     appPath: string;
     moduleConfig: string;
+    outputPath?: string;
     deployAsync?: (r: pxtc.CompileResult) => Promise<void>;
 }
 
@@ -40,6 +42,7 @@ function noopAsync() { return Promise.resolve() }
 
 export const buildEngines: Map<BuildEngine> = {
     yotta: {
+        id: "yotta",
         updateEngineAsync: () => runYottaAsync(["update"]),
         buildAsync: () => runYottaAsync(["build"]),
         setPlatformAsync: () =>
@@ -53,6 +56,7 @@ export const buildEngines: Map<BuildEngine> = {
     },
 
     dockeryotta: {
+        id: "dockeryotta",
         updateEngineAsync: () => runDockerAsync(["yotta", "update"]),
         buildAsync: () => runDockerAsync(["yotta", "build"]),
         setPlatformAsync: () =>
@@ -66,6 +70,7 @@ export const buildEngines: Map<BuildEngine> = {
     },
 
     platformio: {
+        id: "platformio",
         updateEngineAsync: noopAsync,
         buildAsync: () => runPlatformioAsync(["run"]),
         setPlatformAsync: noopAsync,
@@ -78,6 +83,7 @@ export const buildEngines: Map<BuildEngine> = {
     },
 
     codal: {
+        id: "codal",
         updateEngineAsync: updateCodalBuildAsync,
         buildAsync: () => runBuildCmdAsync("python", "build.py"),
         setPlatformAsync: noopAsync,
@@ -90,6 +96,7 @@ export const buildEngines: Map<BuildEngine> = {
     },
 
     dockercodal: {
+        id: "dockercodal",
         updateEngineAsync: updateCodalBuildAsync,
         buildAsync: () => runDockerAsync(["python", "build.py"]),
         setPlatformAsync: noopAsync,
@@ -102,6 +109,7 @@ export const buildEngines: Map<BuildEngine> = {
     },
 
     dockermake: {
+        id: "dockermake",
         updateEngineAsync: () => runBuildCmdAsync(nodeutil.addCmd("npm"), "install"),
         buildAsync: () => runDockerAsync(["make", "-j8"]),
         setPlatformAsync: noopAsync,
@@ -110,10 +118,12 @@ export const buildEngines: Map<BuildEngine> = {
         buildPath: "built/dockermake",
         moduleConfig: "package.json",
         deployAsync: msdDeployCoreAsync,
+        outputPath: "bld/pxt-app.elf",
         appPath: "pxtapp"
     },
 
     dockercross: {
+        id: "dockercross",
         updateEngineAsync: () => runBuildCmdAsync(nodeutil.addCmd("npm"), "install"),
         buildAsync: () => runDockerAsync(["make"]),
         setPlatformAsync: noopAsync,
@@ -126,6 +136,7 @@ export const buildEngines: Map<BuildEngine> = {
     },
 
     cs: {
+        id: "cs",
         updateEngineAsync: noopAsync,
         buildAsync: () => runBuildCmdAsync(getCSharpCommand(), "-t:library", "-out:pxtapp.dll", "lib.cs"),
         setPlatformAsync: noopAsync,
@@ -148,6 +159,7 @@ export function setThisBuild(b: BuildEngine) {
         if (b === buildEngines["yotta"])
             b = buildEngines["dockeryotta"];
     }
+    pxt.debug(`set build engine: ${b.id}`)
     thisBuild = b;
 }
 
@@ -336,21 +348,30 @@ function runPlatformioAsync(args: string[]) {
 }
 
 function runDockerAsync(args: string[]) {
-    let fullpath = process.cwd() + "/" + thisBuild.buildPath + "/"
-    let cs = pxt.appTarget.compileService
-    let dargs = cs.dockerArgs || ["-u", "build"]
-    let mountArg = fullpath + ":/src"
+    if (process.env["PXT_NODOCKER"] == "force") {
+        const cmd = args.shift()
+        return nodeutil.spawnAsync({
+            cmd,
+            args,
+            cwd: thisBuild.buildPath
+        })
+    } else {
+        let fullpath = process.cwd() + "/" + thisBuild.buildPath + "/"
+        let cs = pxt.appTarget.compileService
+        let dargs = cs.dockerArgs || ["-u", "build"]
+        let mountArg = fullpath + ":/src"
 
-    // this speeds up docker build a lot on macOS,
-    // see https://docs.docker.com/docker-for-mac/osxfs-caching/
-    if (process.platform == "darwin")
-        mountArg += ":delegated"
+        // this speeds up docker build a lot on macOS,
+        // see https://docs.docker.com/docker-for-mac/osxfs-caching/
+        if (process.platform == "darwin")
+            mountArg += ":delegated"
 
-    return nodeutil.spawnAsync({
-        cmd: "docker",
-        args: ["run", "--rm", "-v", mountArg, "-w", "/src"].concat(dargs).concat([cs.dockerImage]).concat(args),
-        cwd: thisBuild.buildPath
-    })
+        return nodeutil.spawnAsync({
+            cmd: "docker",
+            args: ["run", "--rm", "-v", mountArg, "-w", "/src"].concat(dargs).concat([cs.dockerImage]).concat(args),
+            cwd: thisBuild.buildPath
+        })
+    }
 }
 
 let parseCppInt = pxt.cpp.parseCppInt;
@@ -387,7 +408,7 @@ function updateCodalBuildAsync() {
     let cs = pxt.appTarget.compileService
     return codalGitAsync("checkout", cs.gittag)
         .then(
-            () => /^v\d+/.test(cs.gittag) ? Promise.resolve() : codalGitAsync("pull"),
+            () => /v\d+/.test(cs.gittag) ? Promise.resolve() : codalGitAsync("pull"),
             e =>
                 codalGitAsync("checkout", "master")
                     .then(() => codalGitAsync("pull")))

@@ -105,10 +105,10 @@ namespace pxt.blocks {
     // A series of utility functions for constructing various J* AST nodes.
     export namespace Helpers {
 
-        export function mkArrayLiteral(args: JsNode[]) {
+        export function mkArrayLiteral(args: JsNode[], withNewlines?: boolean) {
             return mkGroup([
                 mkText("["),
-                mkCommaSep(args, false),
+                mkCommaSep(args, withNewlines),
                 mkText("]")
             ])
         }
@@ -270,18 +270,29 @@ namespace pxt.blocks {
         ".": 18,
     }
 
-    export interface SourceInterval {
+    export interface BlockSourceInterval {
         id: string;
-        start: number;
-        end: number;
+        startLine: number; // 0-indexed of the line itself
+        startPos: number; // 0-indexed from start of file including newlines
+        endLine: number;
+        endPos: number;
     }
 
     export function flattenNode(app: JsNode[]) {
-        let sourceMap: SourceInterval[] = [];
-        let sourceMapById: pxt.Map<SourceInterval> = {};
+        let sourceMap: BlockSourceInterval[] = [];
+        let sourceMapById: pxt.Map<BlockSourceInterval> = {};
         let output = ""
         let indent = ""
         let variables: Map<string>[] = [{}];
+        let currentLine = 0;
+
+        function append(s: string) {
+            // At runtime sometimes `s` is a number.
+            if (typeof(s) === 'string') {
+                currentLine += (s.match(/\n/g) || []).length;
+            }
+            output += s;
+        }
 
         function flatten(e0: JsNode) {
             function rec(e: JsNode, outPrio: number) {
@@ -338,7 +349,7 @@ namespace pxt.blocks {
 
         // never return empty string - TS compiler service thinks it's an error
         if (!output)
-            output += "\n"
+            append("\n");
 
         return { output, sourceMap }
 
@@ -346,68 +357,74 @@ namespace pxt.blocks {
             if (n.glueToBlock) {
                 removeLastIndent()
                 if (n.glueToBlock == GlueMode.WithSpace) {
-                    output += " "
+                    append(" ");
                 }
             }
 
-            let start = getCurrentLine();
+            let startLine = currentLine;
+            let startPos = output.length;
 
             switch (n.type) {
                 case NT.Infix:
                     U.oops("no infix should be left")
                     break
                 case NT.NewLine:
-                    output += "\n" + indent
+                    append("\n" + indent)
                     break
                 case NT.Block:
                     block(n)
                     break
                 case NT.Prefix:
                     if (n.canIndentInside)
-                        output += n.op.replace(/\n/g, "\n" + indent + "    ")
+                        append(n.op.replace(/\n/g, "\n" + indent + "    "))
                     else
-                        output += n.op
+                        append(n.op)
                     n.children.forEach(emit)
                     break
                 case NT.Postfix:
                     n.children.forEach(emit)
                     if (n.canIndentInside)
-                        output += n.op.replace(/\n/g, "\n" + indent + "    ")
+                        append(n.op.replace(/\n/g, "\n" + indent + "    "))
                     else
-                        output += n.op
+                        append(n.op)
                     break
                 default:
                     break
             }
 
-            let end = getCurrentLine();
+            let endLine = currentLine;
+            // end position is non-inclusive
+            let endPos = Math.max(output.length, 1);
 
             if (n.id) {
                 if (sourceMapById[n.id]) {
                     const node = sourceMapById[n.id];
-                    node.start = Math.min(node.start, start);
-                    node.end = Math.max(node.end, end);
+                    node.startLine = Math.min(node.startLine, startLine);
+                    node.endLine = Math.max(node.endLine, endLine);
+                    node.startPos = Math.min(node.startPos, startPos);
+                    node.endPos = Math.max(node.endPos, endPos);
                 }
                 else {
-                    const interval = { id: n.id, start: start, end: end }
+                    const interval: BlockSourceInterval = {
+                        id: n.id,
+                        startLine: startLine, startPos, endLine: endLine, endPos
+                    }
                     sourceMapById[n.id] = interval;
                     sourceMap.push(interval)
                 }
             }
         }
 
-        function getCurrentLine() {
-            let i = 0;
-            output.replace(/\n/g, a => { i++; return a; })
-            return i;
-        }
-
         function write(s: string) {
-            output += s.replace(/\n/g, "\n" + indent)
+            append(s.replace(/\n/g, "\n" + indent))
         }
 
         function removeLastIndent() {
-            output = output.replace(/\n *$/, "")
+            // Note: performance of this regular expression degrades with program size, and could therefore become a perf issue.
+            output = output.replace(/\n *$/, function () {
+                currentLine--;
+                return "";
+            });
         }
 
         function block(n: JsNode) {

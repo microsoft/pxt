@@ -5,8 +5,10 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as tutorial from "./tutorial";
 import * as container from "./container";
-import * as greenscreen from "./greenscreen";
 import * as core from "./core";
+import * as cloud from "./cloud";
+import * as cloudsync from "./cloudsync";
+import * as pkg from "./package";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -24,7 +26,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 
 function openTutorial(parent: pxt.editor.IProjectView, path: string) {
     pxt.tickEvent(`docs`, { path }, { interactiveConsent: true });
-    parent.startTutorial(path);
+    parent.startActivity("tutorial", path);
 }
 
 function openDocs(parent: pxt.editor.IProjectView, path: string) {
@@ -32,68 +34,34 @@ function openDocs(parent: pxt.editor.IProjectView, path: string) {
     parent.setSideDoc(path);
 }
 
-function renderDocItems(parent: pxt.editor.IProjectView, cls: string) {
-    const targetTheme = pxt.appTarget.appTheme;
-    return targetTheme.docMenu.map(m =>
+function renderDocItems(parent: pxt.editor.IProjectView, elements: pxt.DocMenuEntry[], cls: string = "") {
+    return elements.map(m =>
         m.tutorial ? <DocsMenuItem key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={pxt.Util.rlf(m.name)} text={pxt.Util.rlf(m.name)} className={"ui " + cls} parent={parent} path={m.path} onItemClick={openTutorial} />
             : !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" aria-label={m.name} title={m.name} className={`ui item link ${cls}`} href={m.path} target="docs">{pxt.Util.rlf(m.name)}</a>
                 : <DocsMenuItem key={"docsmenu" + m.path} role="menuitem" ariaLabel={pxt.Util.rlf(m.name)} text={pxt.Util.rlf(m.name)} className={"ui " + cls} parent={parent} path={m.path} onItemClick={openDocs} />
     );
 }
 
-export class DocsMenu extends data.PureComponent<ISettingsProps, {}> {
-    constructor(props: ISettingsProps) {
-        super(props);
-    }
+// Always append a link to the appropriate language (Blocks, JS, Python) to the help menu
+function getDocsLanguageItem(editor: DocsMenuEditorName, parent: pxt.editor.IProjectView, cls: string = ""): JSX.Element {
+    const path = "/" + editor.toLowerCase();
+    // Use rlf as "Blocks" is localized above & "JavaScript" and "Python" should not be localized
+    return <DocsMenuItem key={"docsmenu" + path} role="menuitem" ariaLabel={pxt.Util.rlf(editor)} text={pxt.Util.rlf(editor)} className={`ui ${cls}`} parent={parent} path={path} onItemClick={openDocs} />
+}
 
-    private docMenuCache: pxt.Map<pxt.DocMenuEntry>; // path -> docEntry
-    private lookUpByPath(path: string) {
-        if (!this.docMenuCache) {
-            this.docMenuCache = {};
-            // Populate the cache
-            const targetTheme = pxt.appTarget.appTheme;
-            targetTheme.docMenu.forEach(m => {
-                this.docMenuCache[m.path] = m;
-            })
-        }
-        return this.docMenuCache[path];
-    }
+type DocsMenuEditorName = "Blocks" | "JavaScript" | "Python";
+interface DocsMenuProps extends ISettingsProps {
+    editor: DocsMenuEditorName;
+}
 
-    private doDocEntryAction(parent: pxt.editor.IProjectView, m: pxt.DocMenuEntry) {
-        if (m.tutorial) {
-            return () => { openTutorial(parent, m.path) };
-        } else if (!/^\//.test(m.path) && !m.popout) {
-            return () => { window.open(m.path, "docs"); };
-        } else if (m.popout) {
-            return () => { window.open(`${pxt.appTarget.appTheme.homeUrl}${m.path}`, "docs"); };
-        } else {
-            return () => { openDocs(parent, m.path) };
-        }
-    }
-
+export class DocsMenu extends data.PureComponent<DocsMenuProps, {}> {
     renderCore() {
         const parent = this.props.parent;
         const targetTheme = pxt.appTarget.appTheme;
-        const options = targetTheme.docMenu.map(m => {
-            return {
-                key: "docsmenu" + m.path,
-                content: pxt.Util.rlf(m.name),
-                role: "menuitem",
-                'aria-label': pxt.Util.rlf(m.name),
-                onClick: this.doDocEntryAction(parent, m),
-                value: m.path,
-                onKeyDown: () => {
-                    console.log("Key DOWN");
-                }
-            }
-        })
-        const onChange = (e: any, data: any) => {
-            const m = this.lookUpByPath(data.value);
-            this.doDocEntryAction(parent, m)();
-        };
         return <sui.DropdownMenu role="menuitem" icon="help circle large"
-            className="item mobile hide help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help")}>
-            {renderDocItems(this.props.parent, "")}
+            className="item mobile hide help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help")} >
+            {renderDocItems(parent, targetTheme.docMenu)}
+            {getDocsLanguageItem(this.props.editor, parent)}
         </sui.DropdownMenu>
     }
 }
@@ -127,12 +95,14 @@ class DocsMenuItem extends sui.StatelessUIElement<DocsMenuItemProps> {
 export interface SettingsMenuProps extends ISettingsProps {
     highContrast: boolean;
     greenScreen: boolean;
+    accessibleBlocks: boolean;
 }
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface SettingsMenuState {
     highContrast?: boolean;
     greenScreen?: boolean;
+    accessibleBlocks?: boolean;
 }
 
 export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenuState> {
@@ -152,12 +122,14 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
+        this.toggleAccessibleBlocks = this.toggleAccessibleBlocks.bind(this);
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showShareDialog = this.showShareDialog.bind(this);
         this.pair = this.pair.bind(this);
         this.pairBluetooth = this.pairBluetooth.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
         this.print = this.print.bind(this);
+        this.signOutGithub = this.signOutGithub.bind(this);
     }
 
     showShareDialog() {
@@ -218,6 +190,11 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.props.parent.toggleGreenScreen();
     }
 
+    toggleAccessibleBlocks() {
+        pxt.tickEvent("menu.toggleaccessibleblocks", undefined, { interactiveConsent: true });
+        this.props.parent.toggleAccessibleBlocks();
+    }
+
     showResetDialog() {
         pxt.tickEvent("menu.reset", undefined, { interactiveConsent: true });
         pxt.tickEvent("reset"); // Deprecated, will Feb 2018.
@@ -226,7 +203,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     pair() {
         pxt.tickEvent("menu.pair");
-        this.props.parent.pair();
+        this.props.parent.pairAsync();
     }
 
     pairBluetooth() {
@@ -246,6 +223,16 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.props.parent.printCode();
     }
 
+    signOutGithub() {
+        pxt.tickEvent("menu.github.signout");
+        const githubProvider = cloudsync.githubProvider();
+        if (githubProvider) {
+            githubProvider.logout();
+            this.props.parent.forceUpdate();
+            core.infoNotification(lf("Signed out from GitHub..."))
+        }
+    }
+
     componentWillReceiveProps(nextProps: SettingsMenuProps) {
         const newState: SettingsMenuState = {};
         if (nextProps.highContrast != undefined) {
@@ -254,19 +241,22 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         if (nextProps.greenScreen !== undefined) {
             newState.greenScreen = nextProps.greenScreen;
         }
+        if (nextProps.accessibleBlocks !== undefined) {
+            newState.accessibleBlocks = nextProps.accessibleBlocks;
+        }
         if (Object.keys(newState).length > 0) this.setState(newState)
     }
 
     shouldComponentUpdate(nextProps: SettingsMenuProps, nextState: SettingsMenuState, nextContext: any): boolean {
         return this.state.highContrast != nextState.highContrast
-            || this.state.greenScreen != nextState.greenScreen;
+            || this.state.greenScreen != nextState.greenScreen
+            || this.state.accessibleBlocks != nextState.accessibleBlocks;
     }
 
     renderCore() {
-        const { highContrast, greenScreen } = this.state;
+        const { highContrast, greenScreen, accessibleBlocks } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const packages = pxt.appTarget.cloud && !!pxt.appTarget.cloud.packages;
-        const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
         const readOnly = pxt.shell.isReadOnly();
         const isController = pxt.shell.isControllerMode();
@@ -276,33 +266,43 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const showGreenScreen = targetTheme.greenScreen || /greenscreen=1/i.test(window.location.href);
         const showPrint = targetTheme.print && !pxt.BrowserUtils.isIE();
         const showProjectSettings = targetTheme.showProjectSettings;
+        const docItems = targetTheme.docMenu && targetTheme.docMenu.filter(d => !d.tutorial);
 
         // Electron does not currently support webusb
-        const showPairDevice = pxt.usb.isEnabled && !pxt.BrowserUtils.isElectron();
+        const githubUser = !readOnly && !isController && this.getData("github:user") as pxt.editor.UserInfo;
+        const showPairDevice = pxt.usb.isEnabled;
+
+        const showCenterDivider = targetTheme.selectLanguage || targetTheme.highContrast || showGreenScreen || githubUser;
 
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
             {showProjectSettings ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} /> : undefined}
             {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={this.showPackageDialog} /> : undefined}
-            {boards ? <sui.Item role="menuitem" icon="microchip" text={lf("Change Board")} onClick={this.showBoardDialog} /> : undefined}
+            {showPairDevice ? <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} /> : undefined}
+            {pxt.webBluetooth.isAvailable() ? <sui.Item role="menuitem" icon='bluetooth' text={lf("Pair Bluetooth")} onClick={this.pairBluetooth} /> : undefined}
             {showPrint ? <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} /> : undefined}
             {showSave ? <sui.Item role="menuitem" icon="save" text={lf("Save Project")} onClick={this.saveProject} /> : undefined}
             {!isController ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={this.removeProject} /> : undefined}
             {showSimCollapse ? <sui.Item role="menuitem" icon='toggle right' text={lf("Toggle the simulator")} onClick={this.toggleCollapse} /> : undefined}
-            {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} /> : undefined}
+            {targetTheme.accessibleBlocks ? <sui.Item role="menuitem" text={accessibleBlocks ? lf("Accessible Blocks Off") : lf("Accessible Blocks On")} onClick={this.toggleAccessibleBlocks} /> : undefined}
             {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} /> : undefined}
+            {docItems && renderDocItems(this.props.parent, docItems, "ui mobile only inherit")}
+            {githubUser ? <div className="ui divider"></div> : undefined}
+            {githubUser ? <div className="ui item" title={lf("Sign out {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>
+                <div className="avatar" role="presentation">
+                    <img className="ui circular image" src={githubUser.photo} alt={lf("User picture")} />
+                </div>
+                {lf("Sign out")}
+            </div> : undefined}
+            {showCenterDivider && <div className="ui divider"></div>}
+            {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
+            {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} /> : undefined}
+            <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
             {
                 // we always need a way to clear local storage, regardless if signed in or not
             }
-            {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} /> : undefined}
-            {showPairDevice ? <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} /> : undefined}
-            {pxt.webBluetooth.isAvailable() ? <sui.Item role="menuitem" icon='bluetooth' text={lf("Pair Bluetooth")} onClick={this.pairBluetooth} /> : undefined}
-            <div className="ui mobile only divider"></div>
-            {renderDocItems(this.props.parent, "mobile only")}
-            <div className="ui divider"></div>
-            <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
             {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener noreferrer" >{lf("Give Feedback")}</a> : undefined}
         </sui.DropdownMenu>;
     }
@@ -345,7 +345,7 @@ class JavascriptMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        return <BaseMenuItemProps className="javascript-menuitem" icon="xicon js" text="JavaScript" title={lf("Convert code to JavaScript")}  onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
+        return <BaseMenuItemProps className="javascript-menuitem" icon="xicon js" text="JavaScript" title={lf("Convert code to JavaScript")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
     }
 }
 
@@ -364,7 +364,7 @@ class PythonMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        return <BaseMenuItemProps className="python-menuitem" icon="xicon python" text="Python" title={lf("Convert code to Python")}  onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
+        return <BaseMenuItemProps className="python-menuitem" icon="xicon python" text="Python" title={lf("Convert code to Python")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
     }
 }
 
@@ -383,7 +383,7 @@ class BlocksMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        return <BaseMenuItemProps className="blocks-menuitem" icon="xicon blocks" text={lf("Blocks")} title={lf("Convert code to Blocks")}  onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
+        return <BaseMenuItemProps className="blocks-menuitem" icon="xicon blocks" text={lf("Blocks")} title={lf("Convert code to Blocks")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
     }
 }
 
@@ -406,13 +406,15 @@ class SandboxMenuItem extends data.Component<ISettingsProps, {}> {
         const isRunning = this.props.parent.state.simState == pxt.editor.SimState.Running;
         const runTooltip = isRunning ? lf("Stop the simulator") : lf("Start the simulator");
 
-        return <BaseMenuItemProps className="sim-menuitem" icon={active && isRunning ? "stop" : "play"} text={lf("Simulator")} title={!active ? lf("Show Simulator") : runTooltip}  onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
+        return <BaseMenuItemProps className="sim-menuitem" icon={active && isRunning ? "stop" : "play"} text={lf("Simulator")} title={!active ? lf("Show Simulator") : runTooltip} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
     }
 }
 
 interface IEditorSelectorProps extends ISettingsProps {
     python?: boolean;
     sandbox?: boolean;
+    headless?: boolean;
+    languageRestriction?: pxt.editor.LanguageRestriction;
 }
 
 export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
@@ -420,22 +422,27 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         super(props);
     }
 
-    renderCore () {
-        const pythonEnabled = this.props.python;
-        const dropdownActive = pythonEnabled && (this.props.parent.isJavaScriptActive() || this.props.parent.isPythonActive());
+    renderCore() {
+        const { python, sandbox, headless, languageRestriction, parent } = this.props;
+        const dropdownActive = python && (parent.isJavaScriptActive() || parent.isPythonActive());
+        const tsOnly = languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly;
+        const pyOnly = languageRestriction === pxt.editor.LanguageRestriction.PythonOnly;
+        // show python in toggle if: python editor currently active, or blocks editor active & saved language pref is python
+        const showPython = parent.isPythonActive() || (parent.isBlocksActive() && pxt.Util.isPyLangPref());
+        const showBlocks = !!pkg.mainEditorPkg().files["main.blocks"];
 
-        return (<div>
-            <div id="editortoggle" className="ui grid padded">
-                {this.props.sandbox && <SandboxMenuItem parent={this.props.parent} />}
-                <BlocksMenuItem parent={this.props.parent} />
-                {pxt.Util.isPyLangPref() && pythonEnabled ? <PythonMenuItem parent={this.props.parent} /> : <JavascriptMenuItem parent={this.props.parent} />}
-                {pythonEnabled && <sui.DropdownMenu id="editordropdown" role="menuitem" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
-                    <JavascriptMenuItem parent={this.props.parent} />
-                    <PythonMenuItem parent={this.props.parent} />
+        return (
+            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`}>
+                {sandbox && !headless && <SandboxMenuItem parent={parent} />}
+                {!pyOnly && !tsOnly && showBlocks && <BlocksMenuItem parent={parent} />}
+                {python && showPython ? <PythonMenuItem parent={parent} /> : <JavascriptMenuItem parent={parent} />}
+                {!pyOnly && !tsOnly && python && <sui.DropdownMenu id="editordropdown" role="menuitem" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
+                    <JavascriptMenuItem parent={parent} />
+                    <PythonMenuItem parent={parent} />
                 </sui.DropdownMenu>}
-                <div className={`ui item toggle ${pythonEnabled ? 'hasdropdown' : ''}`}></div>
+                <div className={`ui item toggle ${python ? 'hasdropdown' : ''}`}></div>
             </div>
-        </div>)
+        )
     }
 }
 
@@ -504,7 +511,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const { debugging, home, header, highContrast, greenScreen, simState, tutorialOptions } = this.props.parent.state;
+        const { debugging, home, header, highContrast, greenScreen, accessibleBlocks, simState, tutorialOptions } = this.props.parent.state;
         if (home) return <div />; // Don't render if we're on the home screen
 
         const targetTheme = pxt.appTarget.appTheme;
@@ -516,7 +523,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const activityName = tutorialOptions && tutorialOptions.tutorialActivityInfo ?
             tutorialOptions.tutorialActivityInfo[tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep].activity].name :
             null;
-        const hideIteration = tutorialOptions && tutorialOptions.metadata.hideIteration;
+        const hideIteration = tutorialOptions && tutorialOptions.metadata && tutorialOptions.metadata.hideIteration;
         const tutorialReportId = tutorialOptions && tutorialOptions.tutorialReportId;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial && !debugging;
         const hc = !!this.props.parent.state.highContrast;
@@ -527,6 +534,23 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const rightLogo = sandbox ? targetTheme.portraitLogo : targetTheme.rightLogo;
         const logoWide = !!targetTheme.logoWide;
         const portraitLogoSize = logoWide ? "small" : "mini";
+
+        const simOpts = pxt.appTarget.simulator;
+        const isHeadless = simOpts && simOpts.headless;
+
+        const hasCloud = this.hasCloud();
+        const user = hasCloud ? this.getUser() : undefined;
+        const showCloud = !sandbox && !inTutorial && !debugging && !!user;
+
+        const cfg = pkg.mainPkg && pkg.mainPkg.config;
+        const languageRestriction = cfg && cfg.languageRestriction;
+
+        const inAltEditor = debugging || inTutorial;
+        const tsOnly = !inAltEditor && languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly;
+        const pyOnly = !inAltEditor && languageRestriction === pxt.editor.LanguageRestriction.PythonOnly;
+        const showToggle = !inAltEditor && !targetTheme.blocksOnly
+            && (sandbox || !(tsOnly || pyOnly)); // show if sandbox or not single language
+        const editor = this.props.parent.isPythonActive() ? "Python" : (this.props.parent.isJavaScriptActive() ? "JavaScript" : "Blocks");
 
         /* tslint:disable:react-a11y-anchors */
         return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
@@ -539,7 +563,6 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                         {portraitLogo ? (<img className={`ui ${portraitLogoSize} image portrait only`} src={portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
                     </a>
                 }
-                {(!lockedEditor && targetTheme.betaUrl) && <a href={`${targetTheme.betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta")}</a>}
                 {!inTutorial && homeEnabled ? <sui.Item className="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen")} text={lf("Home")} onClick={this.goHome} /> : null}
                 {showShare ? <sui.Item className="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} text={lf("Share")} icon="share alternate large" onClick={this.showShareDialog} /> : null}
                 {inTutorial && <sui.Item className="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} />}
@@ -548,17 +571,19 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                         <img className="ui mini image" src={rightLogo} tabIndex={0} onClick={this.launchFullEditor} onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`} />
                     </span>
                 </div>}
-            {!inTutorial && !targetTheme.blocksOnly && !debugging && <div className="ui item link editor-menuitem">
-                <container.EditorSelector parent={this.props.parent} sandbox={sandbox} python={targetTheme.python} />
+            {showToggle && <div className="ui item link editor-menuitem">
+                <container.EditorSelector parent={this.props.parent} sandbox={sandbox} python={targetTheme.python} languageRestriction={languageRestriction} headless={isHeadless} />
             </div>}
             {inTutorial && activityName && <div className="ui item">{activityName}</div>}
             {inTutorial && !hideIteration && <tutorial.TutorialMenu parent={this.props.parent} />}
             {debugging && !inTutorial ? <sui.MenuItem className="debugger-menu-item centered" icon="large bug" name="Debug Mode" /> : undefined}
+            {tsOnly && !sandbox && <sui.MenuItem className="centered" icon="xicon js" name="JavaScript" />}
+            {pyOnly && !sandbox && <sui.MenuItem className="centered" icon="xicon python" name="Python" />}
             <div className="right menu">
                 {debugging ? <sui.ButtonMenuItem className="exit-debugmode-btn" role="menuitem" icon="external" text={lf("Exit Debug Mode")} textClass="landscape only" onClick={this.toggleDebug} /> : undefined}
-                {docMenu ? <container.DocsMenu parent={this.props.parent} /> : undefined}
-                {sandbox || inTutorial || debugging ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} />}
-
+                {docMenu ? <container.DocsMenu parent={this.props.parent} editor={editor} /> : undefined}
+                {sandbox || inTutorial || debugging ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} accessibleBlocks={accessibleBlocks} />}
+                {showCloud ? <cloud.UserMenu parent={this.props.parent} /> : undefined}
                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} /> : undefined}
                 {inTutorial && tutorialReportId ? <sui.ButtonMenuItem className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report Abuse")} textClass="landscape only" onClick={this.showReportAbuse} /> : undefined}
                 {(inTutorial && !lockedEditor && !hideIteration) && <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} />}
@@ -598,6 +623,10 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         this.popOut = this.popOut.bind(this);
     }
 
+    private rootDocsUrl(): string {
+        return (pxt.webConfig.docsUrl || '/--docs') + "#";
+    }
+
     public static notify(message: pxsim.SimulatorMessage) {
         let sd = document.getElementById("sidedocsframe") as HTMLIFrameElement;
         if (sd && sd.contentWindow) sd.contentWindow.postMessage(message, "*");
@@ -605,28 +634,35 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
     setPath(path: string, blocksEditor: boolean) {
         this.openingSideDoc = true;
-        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
+        const docsUrl = this.rootDocsUrl();
         const mode = blocksEditor ? "blocks" : "js";
-        const url = `${docsUrl}#doc:${path}:${mode}:${pxt.Util.localeInfo()}`;
+        const url = `${docsUrl}doc:${path}:${mode}:${pxt.Util.localeInfo()}`;
         this.setUrl(url);
     }
 
     setMarkdown(md: string) {
-        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
+        const docsUrl = this.rootDocsUrl();
         // always render blocks by default when sending custom markdown
         // to side bar
         const mode = "blocks" // this.props.parent.isBlocksEditor() ? "blocks" : "js";
-        const url = `${docsUrl}#md:${encodeURIComponent(md)}:${mode}:${pxt.Util.localeInfo()}`;
-        this.setUrl(url);
-        this.collapse();
+        const url = `${docsUrl}md:${encodeURIComponent(md)}:${mode}:${pxt.Util.localeInfo()}`;
+        this.props.parent.setState({ sideDocsLoadUrl: url });
     }
 
     private setUrl(url: string) {
         this.props.parent.setState({ sideDocsLoadUrl: url, sideDocsCollapsed: false });
     }
 
+    expand() {
+        this.props.parent.setState({ sideDocsCollapsed: false });
+    }
+
     collapse() {
         this.props.parent.setState({ sideDocsCollapsed: true });
+    }
+
+    isCollapsed() {
+        return !!this.state.sideDocsCollapsed;
     }
 
     popOut() {
@@ -675,6 +711,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
         if (!docsUrl) return null;
 
+        const url = sideDocsCollapsed ? this.rootDocsUrl() : docsUrl;
         /* tslint:disable:react-iframe-missing-sandbox */
         return <div>
             <button id="sidedocstoggle" role="button" aria-label={sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation")} className="ui icon button large" onClick={this.toggleVisibility}>
@@ -682,7 +719,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             </button>
             <div id="sidedocs">
                 <div id="sidedocsframe-wrapper">
-                    <iframe id="sidedocsframe" src={docsUrl} title={lf("Documentation")} aria-atomic="true" aria-live="assertive"
+                    <iframe id="sidedocsframe" src={url} title={lf("Documentation")} aria-atomic="true" aria-live="assertive"
                         sandbox={`allow-scripts allow-same-origin allow-forms ${lockedEditor ? "" : "allow-popups"}`} />
                 </div>
                 {!lockedEditor && <div className="ui app hide" id="sidedocsbar">

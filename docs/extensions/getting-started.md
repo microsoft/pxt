@@ -61,6 +61,8 @@ Create a "test" new project (using the usual big plus button on the home screen)
 Click on **Gear** -> **Extensions**. Select your extension from the list. It should
 have a **Local** label next on it.
 
+Note: First time you do this you need to bump the code to github to generate a tag.
+
 As you're making changes, you can use two browser windows or tabs.
 You might need to use the browser reload button to refresh blocks in your
 test project. You do not have to commit or bump to make the changes visible
@@ -68,7 +70,7 @@ in your test project.
 
 ## Step 5: Publishing your extension
 
-Use the little cloud button in Explorer. Check the **bump** option if you want
+Use the little Github-button in Explorer. Check the **bump** option if you want
 the users to see the changes.
 
 ## Step 6: Approval

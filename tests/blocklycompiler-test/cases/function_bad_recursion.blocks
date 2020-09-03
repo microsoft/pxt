@@ -1,0 +1,56 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+    <variables>
+        <variable id="SA;Y@,.`LG?i/R9FV6C1">d</variable>
+    </variables>
+    <block type="function_definition" x="473" y="0">
+        <mutation name="bad_indirect_recursion1" functionid="{9STHMMmWfgT3aVlC[]l" />
+        <field name="function_name">bad_indirect_recursion1</field>
+        <statement name="STACK">
+            <block type="function_return">
+                <mutation xmlns="http://www.w3.org/1999/xhtml" no_return_value="false"></mutation>
+                <value name="RETURN_VALUE">
+                    <shadow type="math_number">
+                        <field name="NUM">0</field>
+                    </shadow>
+                    <block type="function_call_output">
+                        <mutation name="bad_indirect_recursion2" functionid="(T$:tPVnXXE=.TeXTa0E" />
+                    </block>
+                </value>
+            </block>
+        </statement>
+    </block>
+    <block type="function_definition" x="11" y="57">
+        <mutation name="bad_recursion" functionid="Ul0b1=w!x]N|)gQ8b%,_" />
+        <field name="function_name">bad_recursion</field>
+        <statement name="STACK">
+            <block type="function_return">
+                <mutation xmlns="http://www.w3.org/1999/xhtml" no_return_value="false"></mutation>
+                <value name="RETURN_VALUE">
+                    <shadow type="math_number">
+                        <field name="NUM">0</field>
+                    </shadow>
+                    <block type="function_call_output">
+                        <mutation name="bad_recursion" functionid="Ul0b1=w!x]N|)gQ8b%,_" />
+                    </block>
+                </value>
+            </block>
+        </statement>
+    </block>
+    <block type="function_definition" x="0" y="379">
+        <mutation name="bad_indirect_recursion2" functionid="(T$:tPVnXXE=.TeXTa0E" />
+        <field name="function_name">bad_indirect_recursion2</field>
+        <statement name="STACK">
+            <block type="function_return">
+                <mutation xmlns="http://www.w3.org/1999/xhtml" no_return_value="false"></mutation>
+                <value name="RETURN_VALUE">
+                    <shadow type="math_number">
+                        <field name="NUM">0</field>
+                    </shadow>
+                    <block type="function_call_output">
+                        <mutation name="bad_indirect_recursion1" functionid="{9STHMMmWfgT3aVlC[]l" />
+                    </block>
+                </value>
+            </block>
+        </statement>
+    </block>
+</xml>

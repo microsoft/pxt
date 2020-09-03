@@ -1,0 +1,147 @@
+body#root {
+    font-size: 12pt;
+    display: flex;
+    flex-direction: column;
+}
+
+body#root.share-page {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+}
+
+body#root.share-page #pagemenu .ui.header {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    font-weight: 500;
+}
+
+body#root.share-page #pagemenu {
+    height: 4rem;
+    min-height: 4rem !important;
+}
+
+body#root.share-page .left.menu {
+    align-items: center;
+}
+
+body#root.share-page .ui.mini.image.mclogo {
+    width: 45px;
+    max-height: 45px;
+}
+
+.page-header {
+    flex-grow: 0;
+}
+
+.mainbody {
+    margin-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+#page-header-wrapper {
+    display: flex;
+    flex-direction: row;
+    height: 4rem;
+    min-height: 4rem !important;
+}
+
+.page-header-item {
+    display: flex;
+    height: 100%;
+    align-items: center;
+}
+
+.page-header-content {
+    /* aligns with edge of embedded simulator */
+    padding-left: 10px;
+    max-width: 50%;
+    flex-shrink: 1;
+}
+
+.page-header-content .ui.header {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.show-code-toggle {
+    flex-grow: 1;
+    padding-left: 1rem;
+}
+
+.no-grow {
+    flex-grow: 0;
+}
+
+.ui.container.script-content {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.script-embed {
+    width: 100%;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    flex-grow: 1;
+}
+
+.script-bookend {
+    flex-grow: 0;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+}
+
+.script-frame {
+    width: 100%;
+    height: 100%;
+}
+
+.script-info {
+    width: 100%;
+}
+
+#abuse-message {
+    padding: 0 !important;
+    margin-bottom: 0.2em;
+}
+
+.ui.header:first-child {
+    margin-top: 0.2rem !important;
+}
+
+.abuse.content {
+    color: #333;
+    padding: 0.5rem;
+}
+@media only screen and (max-width: 1144px) {
+    .ui.container.mainbody {
+        padding-left: 0!important;
+        padding-right: 0!important;
+        margin-left: auto!important;
+        margin-right: auto!important;
+    }
+}
+
+/* tablet */
+@media only screen and (max-width: 768px) {
+    body#root.share-page #pagemenu {
+        height: 2.8rem;
+        min-height: 2.8rem !important;
+    }
+    .ui.container.mainbody, .page-header .ui.container {
+        margin: 0 !important;
+    }
+}
+
+@media only screen and (min-width: 769px) {
+    .ui.container.mainbody, .page-header .ui.container {
+        padding-left: 1em;
+        padding-right: 1em;
+    }
+
+    .mainbody {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+}

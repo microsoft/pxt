@@ -6,6 +6,7 @@ namespace pxt.blocks {
     let blocklyDiv: HTMLElement;
 
     export enum BlockLayout {
+        None = 0,
         Align = 1,
         // Shuffle deprecated
         Clean = 3,
@@ -23,6 +24,8 @@ namespace pxt.blocks {
         useViewWidth?: boolean;
         splitSvg?: boolean;
         forceCompilation?: boolean;
+        generateSourceMap?: boolean;
+        jres?: string;
     }
 
     export function initRenderingWorkspace() {
@@ -35,11 +38,14 @@ namespace pxt.blocks {
             blocklyDiv.style.height = "1px";
             document.body.appendChild(blocklyDiv);
             workspace = Blockly.inject(blocklyDiv, {
-                scrollbars: false,
+                move: {
+                    scrollbars: false
+                },
                 readOnly: true,
-                sound: false,
+                sounds: false,
                 media: pxt.webConfig.commitCdnUrl + "blockly/media/",
-                rtl: Util.isUserLanguageRtl()
+                rtl: Util.isUserLanguageRtl(),
+                renderer: "pxt"
             }) as Blockly.WorkspaceSvg;
         }
 
@@ -48,7 +54,7 @@ namespace pxt.blocks {
     }
 
     export function cleanRenderingWorkspace() {
-        // We re-use the workspace across renders, catch any errors so we know to 
+        // We re-use the workspace across renders, catch any errors so we know to
         // create a new workspace if there was an error
         if (workspace) workspace.dispose();
         workspace = undefined;
@@ -65,9 +71,11 @@ namespace pxt.blocks {
                 if ((<any>workspace).cleanUp_)
                     (<any>workspace).cleanUp_();
                 break;
+            default: // do nothing
+                break;
         }
 
-        let metrics = workspace.getMetrics();
+        let metrics = workspace.getMetrics() as Blockly.Metrics;
 
         const svg = blocklyDiv.querySelectorAll('svg')[0].cloneNode(true) as SVGSVGElement;
         pxt.blocks.layout.cleanUpBlocklySvg(svg);

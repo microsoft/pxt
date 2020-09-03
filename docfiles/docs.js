@@ -53,81 +53,33 @@ function searchSubmit(form) {
     if (pxt && pxt.tickEvent) pxt.tickEvent("docs.search", { 'source': form.id }, { interactiveConsent: true })
 }
 
+function scrollActiveHeaderIntoView() {
+    var activeHeaders = document.getElementsByClassName("header active");
+    for (var i = 0; i < activeHeaders.length; ++i) {
+        var activeHeader = activeHeaders.item(i);
+        if (activeHeader.scrollIntoView)
+            activeHeader.scrollIntoView()
+    }
+}
+
 function setupSidebar() {
     // do not use pxt.appTarget in this function
-    var tocMenu = document.querySelectorAll('#docsMobile div.ui.list.menuContainer.toc > div.item');
-    var tocMenuArray = Array.prototype.slice.call(tocMenu)
-    tocMenuArray.forEach(function(item) {
-        // Sets each TOC parent item an accordion behaviour to match style
-        item.className = 'ui accordion item visible';
-        item.setAttribute('role','tree');
-        var icon = item.firstElementChild;
-        icon.className = 'dropdown icon chevron right';
-        var anchor = icon.nextElementSibling;
-        anchor.setAttribute('role','treeitem');
-        anchor.setAttribute('aria-expanded', 'false');
-        var menu = anchor.nextElementSibling;
-        menu.className = 'content';
-        var menuChildren = Array.prototype.slice.call(menu.children)
-        menuChildren.forEach(function(el) {
-            if (el.tagName == 'DIV'){
-                el.setAttribute('role','');
-                el.className = 'accordion item visible';
-            }
-        });
-        var wrapper = document.createElement('div');
-        wrapper.className = 'title';
-        wrapper.appendChild(icon);
-        wrapper.appendChild(anchor);
-        item.insertBefore(wrapper, menu);
-    });
-    // Sets the SemanticUI sidebar behavior
     $('#togglesidebar').on('keydown', handleEnterKey);
     $('.ui.sidebar')
         .sidebar({
-            dimPage: true,
+            dimPage: false,
             onShow: function () {
-                // add proper responsive behaviour and animations on Show
                 togglesidebar.setAttribute("aria-expanded", "true");
-                document.querySelector('#togglesidebar > i').classList.remove('content');
-                document.querySelector('#togglesidebar > i').classList.add('close');
-                document.querySelector("#docs .ui.grid.mainbody").classList.remove('full-width');
-                document.querySelector("#docs .ui.grid.mainbody").classList.add('content-width');
-                // For mobile if user is at bottom scroll to top
-                if (window.innerWidth < 970) {
-                   document.body.scrollTop = 0;
-                   if (window.navigator.userAgent.indexOf('Edge') !== -1) {
-                        document.querySelector('#docs').scrollIntoView();
-                    }
-                }
+                $(".sidebar .focused").focus();
+                scrollActiveHeaderIntoView();
             },
             onHidden: function () {
-                // add proper responsive behaviour and animations on Hidden
                 togglesidebar.setAttribute("aria-expanded", "false");
-                document.querySelector('#togglesidebar > i').classList.remove('close');
-                document.querySelector('#togglesidebar > i').classList.add('content');
-                document.querySelector("#docs .ui.grid.mainbody").classList.remove('content-width');
-                document.querySelector("#docs .ui.grid.mainbody").classList.add('full-width'); 
-            },
-            onVisible: function () {
-                // add proper responsive behavior for Desktops and cancels it for mobile
-                if (window.innerWidth > 970) { 
-                     document.querySelector('.sticky-list') !== null ? document.querySelector('.sticky-list').style.display = 'none' : false;
-                }
-            },
-            onHide: function () {
-                // add proper responsive behavior for Desktops and cancels it for mobile
-                if (window.innerWidth > 970) { 
-                    document.querySelector('.sticky-list') !== null ? document.querySelector('.sticky-list').style.display = 'block' : false;
-                }
-            },
-            context: $('#maincontent'),
-            transition: 'push',
-            mobileTransition: 'push'
+            }
         })
         .sidebar(
             'attach events', '#togglesidebar'
-        )
+        );
 
     $('.ui.dropdown')
         .dropdown();
@@ -135,8 +87,9 @@ function setupSidebar() {
     $('.ui.accordion')
         .accordion({
             closeNested: true,
+            duration: 50,
             selector: {
-                trigger: '.title .icon'
+                trigger: '> .title'
             }
         });
 
@@ -144,8 +97,9 @@ function setupSidebar() {
     for (var i = 0; i < accordions.length; i++) {
         var nodes = accordions.item(i).getElementsByClassName("title");
         for (var j = 0; j < nodes.length; j++) {
-            var hrefNode = nodes.item(j).getElementsByTagName("a").item(0);
-            var iNode = nodes.item(j).getElementsByTagName("i").item(0);
+            var menuItem = nodes.item(j);
+            var hrefNode = menuItem.getElementsByTagName("a").item(0);
+            var iNode = menuItem.getElementsByTagName("i").item(0);
             iNode.onclick = function (e) {
                 if (hrefNode.hasAttribute("aria-expanded") && hrefNode.getAttribute("aria-expanded") === "true") {
                     hrefNode.setAttribute("aria-expanded", "false");
@@ -153,6 +107,10 @@ function setupSidebar() {
                     hrefNode.setAttribute("aria-expanded", "true");
                 }
             };
+            if (!hrefNode) {
+                hrefNode = menuItem;
+                menuItem.setAttribute("tabindex", "0");
+            }
             hrefNode.onkeydown = function (e) {
                 var charCode = (typeof e.which == "number") ? e.which : e.keyCode
                 if (charCode === 39) { // Right key
@@ -166,12 +124,10 @@ function setupSidebar() {
         }
     }
 
-    // Events for Search
     var searchIcons = document.getElementsByClassName("search link icon");
     for (var i = 0; i < searchIcons.length; i++) {
         searchIcons.item(i).onkeydown = handleEnterKey;
     }
-
 }
 
 function setupSemantic() {
@@ -183,12 +139,22 @@ function setupSemantic() {
     $.fn.embed.settings.templates.placeholder = function (image, icon) {
         var html = '';
         if (icon) {
-            html += '<i class="' + icon + ' icon"></i>';
+            html += '<i class="' + icon.replace(/[^\w ]*/g, '') + ' icon"></i>';
         }
         if (image) {
             //Remove the timestamp from the YouTube source URL
             image = image.replace(/\#t=([0-9]+m)?([0-9]+s)?/, "");
-            html += '<img class="placeholder" src="' + image + '">';
+
+            html += `<div class="placeholder" style="
+    background-image: url(${encodeURI(image)});
+    background-size: cover;
+    background-position: 50% 50%;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top:  0;
+    left:  0;
+"></div>`
         }
         return html;
     };
@@ -213,7 +179,7 @@ function setupSemantic() {
             src += (/\?/.test(url) ? '&' : '?') + parameters;
         }
         return ''
-            + '<iframe src="' + src + '"'
+            + '<iframe src="' + encodeURI(src) + '"'
             + ' width="100%" height="100%"'
             + ' frameborder="0" scrolling="no" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>'
             ;
@@ -241,14 +207,18 @@ function setupSemantic() {
         window.print();
     })
 
+    $('#translatebtn').on("click", function () {
+        window.location.href = window.location.href.replace(/#.*/, '') + (window.location.href.indexOf('?') > -1 ? "&" : "?") + "translate=1"
+    })
+
     if (/browsers$/i.test(window.location.href))
         $('.ui.footer').append($('<div class="ui center aligned small container"/>').text('user agent: ' + navigator.userAgent))
 }
 
 function setupBlocklyAsync() {
-    let promise = Promise.resolve();
+    var promise = Promise.resolve();
     if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors) {
-        let opts = {};
+        var opts = {};
         promise = promise.then(function () {
             return pxt.BrowserUtils.loadScriptAsync("fieldeditors.js")
         }).then(function () {
@@ -265,7 +235,7 @@ function setupBlocklyAsync() {
     if (pxt.appTarget.versions &&
         pxt.semver.strcmp(pxt.appTarget.versions.pxt, "3.9.0") < 0 &&
         pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
-        let opts = {};
+        var opts = {};
         promise = promise.then(function () {
             return pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js")
         }).then(function () {
@@ -277,260 +247,175 @@ function setupBlocklyAsync() {
                 })
         })
     }
-
-    // sets menu for docs global navigation
-    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.docMenu && pxt.appTarget.appTheme.docMenu.length !== 0) {
-        setupMenu(pxt.appTarget.appTheme.docMenu);
-    }
-
     return promise;
 }
 
 function renderSnippets() {
+    if (typeof ksRunnerReady === "undefined") return; // probably in pxt docs
+
     var path = window.location.href.split('/').pop().split(/[?#]/)[0];
     ksRunnerReady(function () {
         setupBlocklyAsync()
             .then(function () {
-                return pxt.runner.renderAsync({
-                    snippetClass: 'lang-blocks',
-                    signatureClass: 'lang-sig',
-                    blocksClass: 'lang-block',
-                    staticPythonClass: 'lang-spy', 
-                    shuffleClass: 'lang-shuffle',
-                    simulatorClass: 'lang-sim',
-                    linksClass: 'lang-cards',
-                    namespacesClass: 'lang-namespaces',
-                    codeCardClass: 'lang-codecard',
-                    packageClass: 'lang-package',
-                    projectClass: 'lang-project',
-                    snippetReplaceParent: true,
-                    simulator: true,
-                    showEdit: true,
-                    hex: true,
-                    hexName: path
-                });
+                const options = pxt.runner.defaultClientRenderOptions();
+                options.snippetReplaceParent = true;
+                options.simulator = true;
+                options.showEdit = true;
+                options.hex = true;
+                options.hexName = path;
+                return pxt.runner.renderAsync(options);
             }).done();
     });
 }
 
-function setElementsVisibility() {
-    // handles if certain elements (breadcrumbs, print button, 
-    // quick jump list) should be visible or not depending on content.
-    var breadcrumb = document.querySelector('#breadcrumb-container');
-    var printBtn = document.querySelector('#printbtn');
-    var stickyColumn = document.querySelector('#sticky-column');
+function languageOption(code) {
+    var locale = pxt.Util.allLanguages[code];
 
-    if (document.querySelector(".ui.hero") !== null){
-        printBtn.style.display = 'none';
-    }
-    if (breadcrumb.children.length === 0){
-        breadcrumb.style.display = 'none';
-    }
-    
-    setStickyColumn();
-    
-    if (stickyColumn.children.length === 0){
-        stickyColumn.style.display = 'none';
-        var classString = document.querySelector('#content-column').className;
-        document.querySelector('#content-column').className = classString.replace('ten', 'fourteen');
-    } else {
-        stickyColumn.style.display = 'block';
-        var classString = document.querySelector('#content-column').className;
-        document.querySelector('#content-column').className = classString.replace('fourteen', 'ten');
-    }
-    if (stickyColumn.children.length !== 0 && document.querySelector(".ui.hero") !== null) {
-        stickyColumn.firstElementChild.style.top = '21rem';
-    }
+    var headerEl = document.createElement('div');
+    headerEl.className = 'header';
+    headerEl.textContent = locale.localizedName;
+
+    var descriptionEl = document.createElement('div');
+    descriptionEl.className = 'description tall';
+    descriptionEl.textContent = locale.englishName;
+
+    var contentEl = document.createElement('div');
+    contentEl.className = 'content';
+    contentEl.appendChild(headerEl);
+    contentEl.appendChild(descriptionEl);
+
+    var cardEl = document.createElement('div');
+    cardEl.className = 'ui card link card-selected langoption';
+    cardEl.dataset.lang = code;
+    cardEl.setAttribute('role', 'option');
+    cardEl.setAttribute('aria-label', locale.englishName);
+    cardEl.setAttribute('tabindex', '0');
+    cardEl.appendChild(contentEl);
+
+    return cardEl;
 }
 
-function setDocumentationMode(type) {
-    // handles if the content should have a 100% width or has a sidebar present
-    if (type === 0){
-        document.querySelector('div.main.ui.grid.fluid.mainbody').classList.remove('content-width');
-        document.querySelector('div.main.ui.grid.fluid.mainbody').classList.add('full-width');
-    } else {
-        document.querySelector('div.main.ui.grid.fluid.mainbody').classList.remove('full-width');
-        document.querySelector('div.main.ui.grid.fluid.mainbody').classList.add('content-width');
+function setupLangPicker() {
+    if (typeof ksRunnerReady === "undefined") {
+        // probably in pxt docs
+        removeLangPicker();
+        return;
     }
-}
 
-function setupMenu(menu) {   
-    // creates the global menu based on the app.Target.appTheme.docMenu array
-    // appends new elements to header menu
-    var docsMenu = document.querySelector('#docs-type');
-    menu.forEach(function(item) {
-        var menuItem = document.createElement('a');
-        menuItem.rel = 'noopener';
-        menuItem.target = '_self';
-        menuItem.className = 'item';
-        menuItem.href = item.path;
-        menuItem.textContent = item.name;
-        docsMenu.appendChild(menuItem);
+    ksRunnerReady(function () {
+        buildLangPicker();
     });
-    // appends new elements to the footer navigation menu
-    var docnav = document.querySelector('.docnav');
-    menu.forEach(function(item) {
-        var menuItem = document.createElement('a');
-        menuItem.rel = 'noopener';
-        menuItem.target = '_self';
-        menuItem.className = 'item';
-        menuItem.href = item.path;
-        menuItem.textContent = item.name;
-        docnav.appendChild(menuItem);
-    });
-    // appends new elements to the mobile global menu
-    var mobileMenu = document.querySelector('#docsMobile .activities');
-    menu.forEach(function(item) {
-        var menuItem = document.createElement('a');
-        menuItem.rel = 'noopener';
-        menuItem.target = '_self';
-        menuItem.className = 'item';
-        menuItem.href = item.path;
-        menuItem.textContent = item.name;
-        mobileMenu.appendChild(menuItem);
-    });
-
-    // handles the click behavior of the mobile searchbox
-    var mobileSearchBox = document.querySelector('#tocsearch2');
-    mobileSearchBox.click = function (e) { e.stopPropagation(); }
-    mobileSearchBox.onscroll = function (e) { e.stopPropagation(); }
-    var mobileSearchBtn= document.querySelector('#mobile-search-icon');
-    mobileSearchBtn.onclick = function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (e.currentTarget.className !== 'mobile-only-close') {
-            e.currentTarget.className = 'mobile-only-close';
-            document.querySelector('#mobile-search-close').className = 'mobile-only-open';
-            var searchBox = document.querySelector('#tocsearch2');
-            searchBox.style.visibility = 'visible';
-            searchBox.style.opacity = '1';
-            document.querySelector('#sticky-btn').style.zIndex = 0;
-            document.querySelector('.sticky-list').style.display = 'none';
-        }  
-    }
-    // handles the close search button in mobile
-    var closeMobileSearch= document.querySelector('#mobile-search-close');
-    closeMobileSearch.onclick = function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (e.currentTarget.className === 'mobile-only-open') {
-            e.currentTarget.className = 'mobile-only-close';
-            document.querySelector('#mobile-search-icon').className = 'mobile-only-open';
-            var searchBox = document.querySelector('#tocsearch2');
-            searchBox.style.visibility = 'hidden';
-            searchBox.style.opacity = '0';
-            document.querySelector('#sticky-btn').style.zIndex = 100;
-        }
-    }
 }
 
-function responsiveHideElements() {
-    // Add Responsive Adjustments depending on screen size 
-    window.addEventListener('resize', function() {
-        // manages responsive behavior that media queries cannot
-        responsiveElements();
-    });
-    // run the function at loading to get proper rendering in mobile, tablet or desktop
-    responsiveElements();
-}
+function buildLangPicker() {
+    var appTheme = pxt && pxt.appTarget && pxt.appTarget.appTheme;
 
-function responsiveElements() {
-    // Desktop default (loading) state
-    if (window.innerWidth > 970){
-        document.querySelector('#printbtn') !== null && document.querySelector(".ui.hero") === null ? document.querySelector('#printbtn').style.display = 'block' : false;
-        document.querySelector('#tocsearch2').style.display = 'none';
-        document.querySelector('.sticky-close') !== null ? document.querySelector('.sticky-close').style.display = 'none' : false;
-        document.querySelector('#sticky-btn').style.zIndex = 0;
-        document.querySelector('.sticky-list') !== null ? document.querySelector('.sticky-list').style.display = 'block' : false;
-        document.querySelector('.article-inner').insertBefore(document.querySelector('#breadcrumb-container'), this.document.querySelector('.mainbody'));  
-    }
-    // Mobile default (loading) state
-    if (window.innerWidth < 970){
-        document.querySelector('#printbtn') !== null && document.querySelector(".ui.hero") !== null ? document.querySelector('#printbtn').style.display = 'none' : false;
-        document.querySelector('#tocsearch2').style.display = 'block';
-        document.querySelector('#mobile-search-icon').className = 'mobile-only-open';
-        document.querySelector('#mobile-search-close').className = 'mobile-only-close';
-        document.querySelector('#sticky-btn').style.zIndex = 100;
-        document.querySelector('.sticky-list') !== null ? document.querySelector('.sticky-list').style.display = 'none' : false;
-        document.querySelector('#root').insertBefore(document.querySelector('#breadcrumb-container'),document.querySelector('#docs-header'));
-    }
-}
-
-// Handles the behavior of the quick jump sticky list in content
-function setStickyColumn() {
-        // it takes only h2 headings from markdown to make the list
-        var headings = document.querySelectorAll('.ui.text > h2');
-        if (headings.length > 2) {
-        var stickyColumn = document.querySelector('#sticky-column');
-        var linkList = document.createElement('ul');
-        var title = document.createElement('h3');
-        title.textContent = "Content";
-        title.className = 'title';
-        linkList.appendChild(title);
-        var headingsArray = Array.prototype.slice.call(headings)
-        headingsArray.forEach(function(heading) {
-            var item = document.createElement('a');
-            item.textContent = heading.textContent;
-            item.onclick = function(e) {
-                e.preventDefault();
-                $("html, body").stop().animate({
-                    scrollTop: $(heading).offset().top
-                }, 1000);
-                if (window.navigator.userAgent.indexOf('Edge') !== -1) {
-                    heading.scrollIntoView();
-                }
-                // resets default style for mobile behavior
-                if (window.innerWidth < 970) {
-                document.querySelector('#sticky-btn').style.zIndex = 100;
-                document.querySelector('.sticky-list').style.display = 'none';
-                }
-            }
-            linkList.appendChild(item);
+    if (appTheme && appTheme.availableLocales && appTheme.selectLanguage) {
+        var modalContainer = document.querySelector("#langmodal");
+        var initialLang = pxt && pxt.Util.normalizeLanguageCode(pxt.BrowserUtils.getCookieLang())[0];
+        var localesContainer = document.querySelector("#availablelocales");
+        appTheme.availableLocales.forEach(function(locale) {
+            var card = languageOption(locale);
+            localesContainer.appendChild(card);
         });
-        var wrapper = document.createElement('div');
-        wrapper.className = 'sticky-list';
-        // mobile sticky close button
-        var closeBtn = document.createElement('button');
-        var closeBtnIcon = document.createElement('i');
-        closeBtnIcon.className = 'icon close';
-        closeBtn.appendChild(closeBtnIcon);
-        closeBtn.style.display = 'none';
-        closeBtn.className = 'sticky-close';
-        closeBtn.onclick = function () {
-            // resets default style for mobile behavior
-            document.querySelector('#sticky-btn').style.zIndex = 100;
-            document.querySelector('.sticky-list').style.display = 'none';
-        }
-        wrapper.appendChild(closeBtn);
-        wrapper.appendChild(linkList);
-        var div = document.createElement('div');
-        stickyColumn.appendChild(div);
-        document.querySelector('#root').appendChild(wrapper);
 
-        // click event for sticky close button (mobile)
-        var stickyBtn = document.querySelector('#sticky-btn');
-        stickyBtn.onclick = function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.currentTarget.style.zIndex = 0;
-            var stickyList = document.querySelector('.sticky-list');
-            var stickyCloseBtn = document.querySelector('.sticky-close');
-            if (stickyList !== null && stickyCloseBtn !== null) {
-            stickyList.style.display = 'block';
-            stickyCloseBtn.style.display = 'block';
+        /**
+         * In addition to normal focus trap, need to explicitly hide these
+         * elements when the modal is open so screen readers do not allow user
+         * to escape modal while in scan mode.
+         *
+         * Ideally, aria-modal && role="dialog" should make the screen reader
+         * handle this (https://www.w3.org/TR/wai-aria-1.1/#aria-modal)
+         * but none seem to :)
+         **/
+        var identifiersToHide = [
+            "#docs",
+            "#top-bar",
+            "#side-menu"
+        ];
+
+        modalContainer.className += `  ${appTheme.availableLocales.length > 4 ? "large" : "small"}`;
+
+        $(modalContainer).modal({
+            onShow: function() {
+                for (var id of identifiersToHide) {
+                    var divToHide = document.querySelector(id);
+                    if (divToHide)
+                        divToHide.setAttribute("aria-hidden", "true");
+                }
+
+                $(document).off("focusin.focusJail");
+                $(document).on("focusin.focusJail", function(event) {
+                    if (event.target !== modalContainer && !$.contains(modalContainer, event.target)) {
+                        modalContainer.focus();
+                    }
+                });
+            },
+            onHide: function() {
+                for (var id of identifiersToHide) {
+                    var divToHide = document.querySelector(id);
+                    if (divToHide)
+                        divToHide.removeAttribute("aria-hidden");
+                }
+
+                $(document).off("focusin.focusJail");
             }
+        });
+
+        var langPicker = document.querySelector("#langpicker");
+        langPicker.onclick = function() {
+            $(modalContainer).modal('show');
+        }
+        langPicker.onkeydown = handleEnterKey;
+
+        var closeIcon = modalContainer.querySelector(".closeIcon");
+        closeIcon.onclick = function() {
+            $(modalContainer).modal('hide');
+        }
+        closeIcon.onkeydown = handleEnterKey;
+
+        var buttons = modalContainer.querySelectorAll(".ui.button");
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].onkeydown = handleEnterKey;
+        }
+
+        var langOptions = modalContainer.querySelectorAll(".langoption");
+
+        for (var i = 0; i < langOptions.length; i++) {
+            var currentOption = langOptions[i];
+
+            currentOption.onclick =  function(e) {
+                var langId = e.currentTarget.dataset.lang;
+                if (!pxt.Util.allLanguages[langId]) {
+                    return;
+                }
+                pxt.BrowserUtils.setCookieLang(langId, /** docs **/ true);
+                if (langId !== initialLang) {
+                    pxt.tickEvent("menu.lang.changelang", { lang: langId, docs: "true" });
+                    // In react app before reload we are using pxt.winrt.releaseAllDevicesAsync()
+                    // In docs we currently don't have access to pxt.winrt
+                    location.reload();
+                } else {
+                    pxt.tickEvent(`menu.lang.samelang`, { lang: langId, docs: "true" });
+                    $('.ui.modal').modal('hide');
+                }
+            }
+            currentOption.onkeydown = handleEnterKey;
         }
     } else {
-        //For mobile disable ellipsis button
-        document.querySelector('#sticky-btn').setAttribute('disabled', true);
+        // remove the locale picker and modal if unavailable in this editor
+        removeLangPicker();
     }
-        
+}
+
+function removeLangPicker() {
+    document.querySelector("#langpicker").remove();
+    document.querySelector("#langmodal").remove();
 }
 
 $(document).ready(function () {
     setupSidebar();
     setupSemantic();
     renderSnippets();
-    setElementsVisibility();
-    responsiveHideElements();
+    setupLangPicker();
 });

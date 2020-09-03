@@ -136,16 +136,18 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
     public componentDidMount() {
         this.initDragSurface();
         this.updateDimensions();
-        window.addEventListener("resize", (e) => {
-            this.updateDimensions();
-        })
+        window.addEventListener("resize", this.updateDimensions);
+    }
+
+    public componentWillUnmount() {
+        window.removeEventListener("resize", this.updateDimensions);
     }
 
     public componentDidUpdate() {
         this.updateDimensions();
     }
 
-    public updateDimensions() {
+    public updateDimensions = () => {
         if (this.container) {
             let shouldReposition = false;
             this.containerWidth = this.container.getBoundingClientRect().width;
@@ -414,7 +416,7 @@ function getX(event: MouseEvent | TouchEvent | PointerEvent) {
 
 function getY(event: MouseEvent | TouchEvent | PointerEvent) {
     if ("screenY" in event) {
-        return (event as MouseEvent).screenX;
+        return (event as MouseEvent).screenY;
     }
     else {
         return (event as TouchEvent).changedTouches[0].screenY

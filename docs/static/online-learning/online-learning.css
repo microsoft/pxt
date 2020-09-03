@@ -1,0 +1,311 @@
+body, html {
+    height: 100%;
+    width: 100%;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Segoe UI", Arial, "HelveticaNeue-Light", sans-serif;
+    font-size: 16px;
+    background: #fefefe;
+}
+
+h1 {
+    line-height: 28px;
+    padding: 36px 0 4px;
+    font-weight: 600;
+}
+
+.hero {
+    overflow: hidden;
+}
+
+.banner {
+    width: 100%;
+    overflow: hidden;
+}
+.banner > img {
+    width: 100%;
+}
+
+.title {
+    color: #fff;
+    text-align: center;
+    margin-top: -15vw;
+    padding-bottom: 3rem;
+}
+
+.content {
+    background-color: #fff;
+    margin: 0 auto;
+    padding: 0 2rem;
+    max-width: 54rem;
+}
+
+.segment {
+    margin: 4rem 0 0;
+}
+.segment:first-child > p {
+    margin: 2rem 0;
+}
+
+.button {
+    color: #fff;
+    background-color: #aa278f;
+    cursor: pointer;
+    border-radius: 0.5rem;
+    font-weight: 600;
+}
+
+.button:hover {
+    color: #fff;
+    background-color: #cc81c3;
+    text-decoration: none;
+}
+
+
+.jump {
+    display: flex;
+    justify-content: center;
+    margin: 1rem
+}
+
+.action {
+    margin-right: 2rem;
+    text-align: center;
+    line-height: 28px;
+    font-size: 24px;
+    padding: 1rem;
+}
+
+
+div#news > div {
+    border: 2px solid #eee;
+    border-radius: 5px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    background-color: #fafafa;
+}
+
+div#news h4 {
+    margin-top: 0;
+}
+
+#schedule {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: 1.5rem 0 2rem;
+    border-bottom: 1px solid #eee;
+}
+
+#schedule > div {
+    display: flex;
+    flex-direction: row;
+}
+
+#schedule > div:nth-child(odd) {
+    background-color: #e6e6e6;
+}
+
+#schedule > div:first-child {
+    color: #fff;
+    background-color: #cc81c3;
+    font-weight: 600;
+}
+
+#schedule > div > a,
+#schedule > div > div {
+    flex: 1;
+    text-align: center;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    padding: 1rem 0.75rem;
+    cursor: pointer;
+}
+
+.lesson {
+    display: flex;
+    margin: 1rem 0;
+    background-color: #fafafa;
+    border-top: 1px solid #eee;
+    border-right: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+}
+
+.lesson .imgWrapper {
+    position: relative;
+    flex: 0 0 10rem;
+    height: 7rem;
+    margin-right: 1rem;
+    overflow: hidden;
+}
+
+.lesson .imgWrapper .play {
+    position: absolute;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    color: #fff;
+    background-color: #000;
+    opacity: 0.3;
+    font-size: 4rem;
+    line-height: 4rem;
+    justify-content: center;
+    align-items: center;
+}
+
+.lesson .imgWrapper:hover {
+    text-decoration: none;
+}
+
+.lesson .imgWrapper:hover .play {
+    display: none;
+}
+
+.lesson img {
+    width: 100%;
+}
+
+.lesson h4 {
+    margin-bottom: 0.2rem;
+}
+.lesson > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+
+.cards,
+.banners {
+    display: flex;
+    margin-bottom: 2rem;
+}
+
+.cards > div {
+    flex: 1;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 0.5rem;
+    margin: 2px;
+    margin-right: calc(1rem + 2px);
+    overflow: hidden;
+}
+
+.cards > div:hover{
+    border: 3px solid #000;
+    margin: 0px;
+    margin-right: 1rem;
+}
+
+.cards > div:last-child {
+    margin-right: 0;
+}
+.cards > div:last-child:hover {
+    margin-right: -2px;
+}
+
+
+.cards > div > a {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.cards > div > a,
+.cards > div > a:hover {
+    text-decoration: none;
+    color: #000;
+}
+
+.cards .imgWrapper {
+    width: 100%;
+    height: 10rem;
+    overflow: hidden;
+}
+
+.cards img {
+    width: 100%;
+}
+
+.cards .description {
+    padding: 1rem;
+    margin-bottom: auto;
+}
+
+.cards .video {
+    font-size: 18px;
+    padding: 0.5rem 1rem;
+    margin: 0 1rem 1rem;
+}
+
+.banners {
+    flex-direction: column;
+    margin-top: 2rem;
+}
+
+.banners > div > a {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 2rem;
+    color: #000;
+    height: 14rem;
+    padding: 1rem;
+}
+
+.banners > div > a:hover {
+    background-color: #fcf6fb;
+    border: 0.1rem solid #eee;
+    border-radius: 0.5rem;
+    padding: 0.9rem;
+}
+.banners > div:nth-child(even) a {
+    flex-direction: row-reverse;
+}
+
+.banners a:hover {
+    text-decoration: none;
+}
+
+.banners .imgWrapper {
+    flex: 1;
+    margin-right: 2rem;
+    overflow: hidden;
+}
+
+.banners .description {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.banners img {
+    width: 100%;
+}
+
+.banners .startLink {
+    margin-top: 1rem;
+}
+
+div#mixer {
+    width: calc(100% - 10rem);
+    margin: auto;
+    height: 0;
+    padding-bottom: 45%; /* Change this till it fits the dimensions of your video */
+    position: relative;
+}
+
+div#mixer iframe {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    display: block;
+    top: 0;
+    left: 0;
+    border: 0px;
+    overflow: hidden;
+}

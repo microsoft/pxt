@@ -58,7 +58,7 @@ window.addEventListener("message", function(ev) {
 
 When the user presses the editor extension button:
 
-* The GitHub pages site is loaded in an &lt;iframe&gt; with an extension id in the hashmark, e.g. https://microsoft.github.io/pxt-neoanim/#extid for the extension https://github.com/Microsoft/pxt-neoanim.
+* The GitHub pages site is loaded in an &lt;iframe&gt; with an extension id in the hashmark, e.g. https://microsoft.github.io/pxt-neoanim/#extid for the extension https://github.com/microsoft/pxt-neoanim.
 
 ### ~ hint
 

@@ -8,6 +8,13 @@ namespace pxsim {
             super();
         }
 
+        scan(mark: (path: string, v: any) => void) {
+            for (let i = 0; i < this.data.length; ++i)
+                mark("[" + i + "]", this.data[i])
+        }
+        gcKey() { return "[...]" }
+        gcSize() { return this.data.length + 2 }
+
         toArray(): any[] {
             return this.data.slice(0);
         }
@@ -396,12 +403,25 @@ namespace pxsim {
 
 
     export class RefBuffer extends RefObject {
+        isStatic = false
         constructor(public data: Uint8Array) {
             super();
         }
 
+        scan(mark: (path: string, v: any) => void) {
+            // nothing to do
+        }
+
+        gcKey() { return "Buffer" }
+        gcSize() { return 2 + (this.data.length + 3 >> 2) }
+        gcIsStatic() { return this.isStatic }
+
         print() {
             // console.log(`RefBuffer id:${this.id} refs:${this.refcnt} len:${this.data.length} d0:${this.data[0]}`)
+        }
+
+        toDebugString(): string {
+            return BufferMethods.toHex(this);
         }
     }
 
@@ -523,7 +543,12 @@ namespace pxsim {
             let r = createBuffer(hex.length >> 1)
             for (let i = 0; i < hex.length; i += 2)
                 r.data[i >> 1] = parseInt(hex.slice(i, i + 2), 16)
+            r.isStatic = true
             return r
+        }
+
+        export function isReadOnly(buf: RefBuffer) {
+            return buf.isStatic
         }
 
         export function getBytes(buf: RefBuffer) {
@@ -549,8 +574,15 @@ namespace pxsim {
             setByte(buf, off, v);
         }
 
+        function checkWrite(buf: RefBuffer) {
+            if (buf.isStatic) U.userError("Writing to read only buffer.")
+        }
+
         export function setByte(buf: RefBuffer, off: number, v: number) {
-            if (inRange(buf, off)) buf.data[off] = v
+            if (inRange(buf, off)) {
+                checkWrite(buf)
+                buf.data[off] = v
+            }
         }
 
         export function length(buf: RefBuffer) {
@@ -564,6 +596,7 @@ namespace pxsim {
                 length = buf.data.length;
             length = Math.min(length, buf.data.length - offset);
 
+            checkWrite(buf)
             buf.data.fill(value, offset, offset + length)
         }
 
@@ -610,6 +643,7 @@ namespace pxsim {
                 return;
             }
 
+            checkWrite(buf)
             if (offset < 0) {
                 offset = -offset;
                 memmove(buf.data, start + offset, buf.data, start, len - offset);
@@ -626,6 +660,8 @@ namespace pxsim {
 
             if (start < 0 || start + len > buf.data.length || start + len < start
                 || len == 0 || offset == 0 || offset == INT_MIN) return;
+
+            checkWrite(buf)
 
             if (offset < 0)
                 offset += len << 8; // try to make it positive
@@ -663,6 +699,7 @@ namespace pxsim {
             if (length < 0)
                 return;
 
+            checkWrite(buf)
             memmove(buf.data, dstOffset, src.data, srcOffset, length)
         }
     }

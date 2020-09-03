@@ -50,6 +50,8 @@
     width: 100%;
     z-index: @debuggerToolsZIndex;
     display: flex;
+    position: sticky;
+    top: 0;
     .ui.menu {
         border-radius: 0 !important;
         border-left: none;
@@ -91,6 +93,26 @@
     color: #87D282 !important;
 }
 
+.ui.compact.menu .dbg-btn.dbg-trace {
+    border-radius: 0;
+}
+
+.ui.compact.menu .dbg-btn.dbg-trace.tracing {
+    background-color: @orange;
+
+    .icon {
+        color: @white;
+    }
+}
+
+.ui.compact.menu .dbg-btn.dbg-trace.tracing:hover {
+    background-color: darken(@orange, 10%);
+
+    .icon {
+        color: darken(@white, 5%);
+    }
+}
+
 .ui.item.link.dbg-btn.dbg-exit {
     background-color: #cccccc;
     color: rgb(255, 21, 0);
@@ -111,6 +133,13 @@
         font-family: @pageFont;
         font-size: larger;
         color: black;
+    }
+    .ui.variableTablePlaceholder {
+        padding: 1rem;
+        border: none;
+        font-family: @pageFont;
+        font-size: larger;
+        color: rgba(40, 40, 40, .3);
     }
 }
 .ui.segment.debugvariables {
@@ -171,6 +200,34 @@
         font-size: 90%;
         margin-left: 0.5rem;
     }
+    .exception {
+        font-style: italic;
+    }
+}
+
+.debugger-preview {
+    position: fixed;
+    background-color: white;
+    color: black;
+    border: solid 1px black;
+    padding: 0.25rem;
+
+    -webkit-touch-callout: text; /* iOS Safari */
+    -webkit-user-select: text;   /* Chrome/Safari/Opera */
+    -khtml-user-select: text;    /* Konqueror */
+    -moz-user-select: text;      /* Firefox */
+    -ms-user-select: text;       /* Internet Explorer/Edge */
+    user-select: text;           /* Non-prefixed version, currently
+                                    not supported by any browser */
+    overflow-wrap: break-word;
+    max-width: 500px;
+}
+
+// When the preview appears, the text is selected so that the user can copy it.
+// Hide the selection formatting because it makes it look like the text can be edited
+.debugger-preview::selection {
+    color: black;
+    background-color: white;
 }
 
 .debugging .ui.segment.debugvariables {
@@ -215,8 +272,16 @@ div.simframe div.pause-overlay {
     transition: opacity 0.2s;
 }
 
-.monaco-breakpoint:hover {
-    opacity: 0.7;
+.monaco-editor .margin-view-overlays:hover {
+    .codicon.monaco-breakpoint {
+        opacity: 0;
+    }
+    .codicon.monaco-breakpoint:hover {
+        opacity: 0.7;
+    }
+    .monaco-breakpoint.active {
+        opacity: 1;
+    }
 }
 
 .monaco-breakpoint.active {
@@ -230,6 +295,19 @@ div.simframe div.pause-overlay {
 @media only screen and (min-width: @computerBreakpoint) {
     .debugger div.monacoToolboxDiv {
         min-width: calc(@blocklyRowWidthWide + 100px);
+    }
+}
+
+@media only screen and (max-width: @largeMonitorBreakpoint) {
+    .dbg-btn.dbg-step .ui.text {
+        display: none;
+    }
+
+    .ui.varExplorer .ui.variableTableHeader, .ui.varExplorer .ui.variableTablePlaceholder {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        padding-left: 0.5rem;
+        font-size: large;
     }
 }
 
