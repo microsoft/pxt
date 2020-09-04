@@ -208,7 +208,7 @@ interface Array<T> {
     //% blockId="array_pickRandom" block="get random value from %list"
     //% blockNamespace="arrays"
     //% group="Read"
-    pickRandom(): T;
+    _pickRandom(): T;
 
     [n: number]: T;
 
