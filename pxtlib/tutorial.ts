@@ -360,12 +360,7 @@ ${code}
 
 
     export function parseCachedTutorialInfo(json: string, id?: string) {
-        let cachedInfo: pxt.Map<pxt.BuiltTutorialInfo>;
-        try {
-            cachedInfo = JSON.parse(json);
-        } catch {
-            return Promise.resolve();
-        }
+        let cachedInfo = pxt.Util.jsonTryParse(json) as pxt.Map<pxt.BuiltTutorialInfo>;
         if (!cachedInfo) return Promise.resolve();
 
         return pxt.BrowserUtils.tutorialInfoDbAsync()

@@ -40,6 +40,14 @@ You can view a history of changes by following the version number link on the **
 
 There's also another button next to the GitHub sync - you can use it to add new files to the project. This is mostly to help keep the project organized. For the TypeScript compiler it doesn't matter if you use one big file or a bunch of smaller ones.
 
+## Releases
+
+After committing your changes, you will have the option to create a release of your extension. A release clears the cache and ensures that the latest version of your extension will be loaded (this feature is still rolling out to some targets, so double check that it is supported in your editor).
+
+### Optimize for Tutorials
+
+When creating a release for tutorials hosted on Github, you may also choose to optimize your repository. This will precompute some information about the markdown files, and save the data in a `tutorial-info-cache.json` file. Your tutorial will then load faster when the user opens it. This checkbox has no effect on non-tutorial extensions.
+
 ### Conflicts
 
 It's possible that multiple people are editing the same extension at the same time causing edit conflicts. This is similar to the situation where the same person edits the extension using several computers, browsers, or web sites. In the conflict description below, for simplicity, we'll just concentrate on the case of multiple people working on the same extension.
