@@ -2644,20 +2644,18 @@ namespace pxt.blocks {
          * @return {!Object} A menu option, containing text, enabled, and a callback.
          * @package
          */
+        const makeCreateCallOptionOriginal = (Blockly as any).Functions.makeCreateCallOption;
+
+        // needs to exist or makeCreateCallOptionOriginal will throw an exception
+        Blockly.Msg.FUNCTIONS_CREATE_CALL_OPTION = "";
+
         (Blockly as any).Functions.makeCreateCallOption = function (block: Blockly.Block) {
-            let functionName = block.getField("function_name").getText();
+           let option = makeCreateCallOptionOriginal(block);
 
-            let mutation = goog.dom.createDom('mutation');
-            mutation.setAttribute('name', functionName);
-            let callBlock = goog.dom.createDom('block', null, mutation);
-            callBlock.setAttribute('type', 'function_call');
+           let functionName = block.getField("function_name").getText();
+           option.text = Util.lf("Create 'call {0}'", functionName);
 
-            let option = {
-                enabled: block.workspace.remainingCapacity() > 0,
-                text: Util.lf("Create 'call {0}'", functionName),
-                callback: Blockly.ContextMenu.callbackFactory(block, callBlock),
-            };
-            return option;
+           return option;
         }
     }
 
