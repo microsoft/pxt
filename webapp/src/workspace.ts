@@ -869,7 +869,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
                 // if xml merge fails, leave an empty xml payload to force decompilation
                 blocksNeedDecompilation = blocksNeedDecompilation || !d3;
                 text = d3 || "";
-            } else if (path == BINARY_JS_PATH || path == VERSION_TXT_PATH) {
+            } else if (path == BINARY_JS_PATH || path == VERSION_TXT_PATH || path == pxt.TUTORIAL_INFO_FILE) {
                 // local build wins, does not matter
                 text = files[path];
             } else {

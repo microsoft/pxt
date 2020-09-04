@@ -429,6 +429,7 @@ declare namespace pxt {
     }
 
     interface BuiltTutorialInfo {
+        hash?: string;
         usedBlocks: Map<number>;
     }
 

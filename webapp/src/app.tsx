@@ -3404,7 +3404,14 @@ export class ProjectView
                             pxt.log(`tutorial ${ghid.fullName} tag: ${tag}`);
                             return pxt.github.downloadPackageAsync(`${ghid.fullName}#${ghid.tag}`, config);
                         });
-                }).then(gh => gh && resolveMarkdown(ghid, gh.files));
+                }).then(gh => {
+                    let p = Promise.resolve();
+                    // check for cached tutorial info, save into IndexedDB if found
+                    if (gh.files[pxt.TUTORIAL_INFO_FILE]) {
+                        p.then(() => pxt.tutorial.parseCachedTutorialInfo(gh.files[pxt.TUTORIAL_INFO_FILE], path));
+                    }
+                    return p.then(() => gh && resolveMarkdown(ghid, gh.files));
+                });
         } else if (header) {
             pxt.tickEvent("tutorial.header");
             temporary = true;
