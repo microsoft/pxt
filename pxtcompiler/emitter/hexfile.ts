@@ -622,6 +622,13 @@ namespace ts.pxtc {
                     Util.pushRange(myhex, app)
             }
 
+            if (!uf2 && bin.target.moveHexEof) {
+                while (!myhex[myhex.length - 1])
+                    myhex.pop()
+                if (myhex[myhex.length - 1] == ":00000001FF")
+                    myhex.pop()
+            }
+
             if (bin.packedSource) {
                 if (uf2) {
                     addr = (uf2.currPtr + 0x1000) & ~0xff
@@ -644,6 +651,9 @@ namespace ts.pxtc {
                     }
                 }
             }
+
+            if (!uf2 && bin.target.moveHexEof)
+                myhex.push(":00000001FF")
 
             if (uf2)
                 return [UF2.serializeFile(uf2)]
