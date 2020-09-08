@@ -508,6 +508,7 @@ declare namespace ts.pxtc {
         useModulator?: boolean;
         webUSB?: boolean; // use WebUSB when supported
         hexMimeType?: string;
+        moveHexEof?: boolean;
         driveName?: string;
         jsRefCounting?: boolean;
         utf8?: boolean;
