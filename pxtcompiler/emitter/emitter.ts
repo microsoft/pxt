@@ -972,16 +972,18 @@ namespace ts.pxtc {
             }
 
             let extinfo = opts.extinfo
+            let optstarget = opts.target
             // if current (main) extinfo is disabled use another one
             if (extinfo && extinfo.disabledDeps) {
                 const enabled = (opts.otherMultiVariants || []).find(e => e.extinfo && !e.extinfo.disabledDeps)
                 if (enabled) {
                     pxt.debug(`using alternative extinfo (due to ${extinfo.disabledDeps})`)
                     extinfo = enabled.extinfo
+                    optstarget = enabled.target
                 }
             }
 
-            hexfile.setupFor(opts.target, extinfo || emptyExtInfo());
+            hexfile.setupFor(optstarget, extinfo || emptyExtInfo());
             hexfile.setupInlineAssembly(opts);
         }
 
