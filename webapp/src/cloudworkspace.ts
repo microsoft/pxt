@@ -396,10 +396,12 @@ function importLegacyScriptsAsync(): Promise<void> {
     if (legacyDomain == targetDomain)
         return Promise.resolve(); // nothing to do
 
-    if (window.applicationCache.status == window.applicationCache.DOWNLOADING
-        || window.applicationCache.status == window.applicationCache.UPDATEREADY) {
-        pxt.debug('import skipped, app cached updating');
-        return Promise.resolve();
+    if (window.applicationCache) {
+        if (window.applicationCache.status == window.applicationCache.DOWNLOADING
+            || window.applicationCache.status == window.applicationCache.UPDATEREADY) {
+            pxt.debug('import skipped, app cached updating');
+            return Promise.resolve();
+        }
     }
 
     pxt.debug('injecting import iframe');
@@ -447,7 +449,7 @@ function importLegacyScriptsAsync(): Promise<void> {
         if (ev.data && ev.data.type == 'transfer' && ev.data.action == 'export' && ev.data.data) {
             const dbdata: {
                 header: pxt.workspace.Header[];
-                text: { files: pxt.workspace.ScriptText}[];
+                text: { files: pxt.workspace.ScriptText }[];
             } = ev.data.data;
 
             pxt.debug(`received ${dbdata.header.length} projects`);
