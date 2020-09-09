@@ -601,6 +601,24 @@ namespace pxsim {
             if (!this.listener) {
                 this.listener = (ev: MessageEvent) => {
                     if (this.hwdbg) return
+
+                    if (U.isLocalHost()) {
+                        // no-op
+                    } else {
+                        try {
+                            let origin = new URL(ev.origin)
+                            const expectedOrigin = new URL("https://userpxt.io")
+
+                            if (origin.protocol != expectedOrigin.protocol) return
+                            if (origin.port != expectedOrigin.port) return
+
+                            // Ignore the subdomains
+                            if (!origin.hostname.endsWith(expectedOrigin.hostname)) return
+                        } catch (error) {
+                            // TODO: Consider logging an error here
+                            return
+                        }
+                    }
                     this.handleMessage(ev.data, ev.source as Window)
                 }
                 window.addEventListener('message', this.listener, false);
