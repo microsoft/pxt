@@ -2,6 +2,9 @@ import * as core from "./core";
 
 export function init(hash: { cmd: string, arg: string }) {
     let appCache = window.applicationCache;
+    if (!appCache)
+        return; // appCache dissapeared in Chrome
+
     appCache.addEventListener('updateready', () => {
         core.infoNotification(lf("Update download complete. Reloading... "));
         setTimeout(() => {
