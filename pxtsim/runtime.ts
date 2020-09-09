@@ -174,6 +174,28 @@ namespace pxsim {
                     && !/nolocalhost=1/.test(window.location.href);
             } catch (e) { return false; }
         }
+
+        /**
+         * A utility method to check that origin of a received message is as expected
+         * @param origin The origin of the received message
+         * @param expectedOrigin The expected origin of the received message
+         */
+        export function messageOriginExpected(origin: string, expectedOrigin: string): boolean {
+            try {
+                let originUrl = new URL(origin)
+                let expectedOriginUrl = new URL(expectedOrigin)
+
+                if (originUrl.protocol != expectedOriginUrl.protocol) return false
+                if (originUrl.port != expectedOriginUrl.port) return false
+
+                // Ignore the subdomains
+                if (!originUrl.hostname.endsWith(expectedOriginUrl.hostname)) return false
+            } catch (error) {
+                // TODO: Consider logging an error here
+                return false
+            }
+            return true
+        }
     }
 
     export interface Map<T> {

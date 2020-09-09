@@ -605,7 +605,7 @@ namespace pxsim {
                     if (U.isLocalHost()) {
                         // no-op
                     } else {
-                        if (!this.isMessageOriginExpected(ev.origin, "https://userpxt.io")) return
+                        if (!U.messageOriginExpected(ev.origin, "https://userpxt.io")) return
                     }
                     this.handleMessage(ev.data, ev.source as Window)
                 }
@@ -618,23 +618,6 @@ namespace pxsim {
                 window.removeEventListener('message', this.listener, false);
                 this.listener = undefined;
             }
-        }
-
-        public isMessageOriginExpected(origin: string, expectedOrigin: string): boolean {
-            try {
-                let originUrl = new URL(origin)
-                let expectedOriginUrl = new URL(expectedOrigin)
-
-                if (originUrl.protocol != expectedOriginUrl.protocol) return false
-                if (originUrl.port != expectedOriginUrl.port) return false
-
-                // Ignore the subdomains
-                if (!originUrl.hostname.endsWith(expectedOriginUrl.hostname)) return false
-            } catch (error) {
-                // TODO: Consider logging an error here
-                return false
-            }
-            return true
         }
 
         public resume(c: SimulatorDebuggerCommand) {
