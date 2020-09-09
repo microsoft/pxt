@@ -28,7 +28,7 @@ function loadText(filename) {
 
 task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp', 'monaco-editor', 'built/web/pxtweb.js'], { parallelLimit: 10 })
 
-task('test', ['default', 'testfmt', 'testerr', 'testlang', 'testdecompiler', 'karma'])
+task('test', ['default', 'testfmt', 'testerr', 'testlang', 'testdecompiler'])
 
 task('clean', function () {
     expand(["built"]).forEach(f => {
