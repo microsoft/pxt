@@ -409,12 +409,15 @@ namespace pxt.blocks {
         // inject Blockly with all block definitions
         return blockInfo.blocks
             .map(fn => {
+                const comp = compileInfo(fn);
+                const block = createToolboxBlock(blockInfo, fn, comp);
+
                 if (fn.attributes.blockBuiltin) {
                     Util.assert(!!builtinBlocks()[fn.attributes.blockId]);
-                    builtinBlocks()[fn.attributes.blockId].symbol = fn;
+                    const builtin = builtinBlocks()[fn.attributes.blockId];
+                    builtin.symbol = fn;
+                    builtin.block.codeCard = mkCard(fn, block);
                 } else {
-                    let comp = compileInfo(fn);
-                    let block = createToolboxBlock(blockInfo, fn, comp);
                     injectBlockDefinition(blockInfo, fn, comp, block);
                 }
                 return fn;
