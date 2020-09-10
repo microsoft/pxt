@@ -11,12 +11,12 @@ namespace ts.pxtc.service {
         return api
     }
 
-    export function getParameterTsType(callSym: SymbolInfo, paramIdx: number, blocksInfo: BlocksInfo): string | undefined {
+    export function getParameter(callSym: SymbolInfo, paramIdx: number, blocksInfo: BlocksInfo): ParameterDesc | undefined {
         if (!callSym || paramIdx < 0)
             return undefined;
 
         const paramDesc = callSym.parameters[paramIdx]
-        let result = paramDesc.type;
+        let result = paramDesc;
 
         // check if this parameter has a shadow block, if so use the type from that instead
         if (callSym.attributes._def) {
@@ -30,8 +30,7 @@ namespace ts.pxtc.service {
 
                 const isPassThrough = shadowApi.attributes.shim === "TD_ID"
                 if (isPassThrough && shadowApi.parameters.length === 1) {
-                    const realTyp = shadowApi.parameters[0].type
-                    result = realTyp
+                    result =  shadowApi.parameters[0]
                 }
             }
         }
@@ -39,16 +38,27 @@ namespace ts.pxtc.service {
         return result
     }
 
-    export function getApisForTsType(pxtType: string, location: Node, tc: TypeChecker, symbols: CompletionSymbol[]): CompletionSymbol[] {
+    export function getApisForTsType(pxtType: string, location: Node, tc: TypeChecker, symbols: CompletionSymbol[], isEnum = false): CompletionSymbol[] {
         // any apis that return this type?
         // TODO: if this becomes expensive, this can be cached between calls since the same
         // return type is likely to occur over and over.
         const apisByRetType: pxt.Map<CompletionSymbol[]> = {}
         symbols.forEach(i => {
-            apisByRetType[i.symbol.retType] = [...(apisByRetType[i.symbol.retType] || []), i]
+            let retType = i.symbol.retType
+            // special case for enum members and enum members exported as constants,
+            // which have the return type 'EnumName.MemberName'. we want to match 'EnumName'
+            if (isEnum) {
+                if (i.symbol.kind == SymbolKind.EnumMember) {
+                    retType = i.symbol.namespace;
+                } else if (i.symbol.kind == SymbolKind.Variable) {
+                    const enumParts = i.symbol.attributes?.enumIdentity?.split(".")
+                    if (enumParts?.length > 1) retType = enumParts[0]
+                }
+            }
+            apisByRetType[retType] = [...(apisByRetType[retType] || []), i]
         })
 
-        const retApis = apisByRetType[pxtType]
+        const retApis = apisByRetType[pxtType] || []
 
         // any enum members?
         let enumVals: SymbolInfo[] = []
@@ -478,31 +488,6 @@ namespace ts.pxtc.service {
             resultSymbols = completionSymbols(wordMatching, COMPLETION_DEFAULT_WEIGHT)
         }
 
-        // special handling for call expressions
-        const call = getParentCallExpression(tsNode)
-        if (call) {
-            // which argument are we ?
-            let paramIdx = findCurrentCallArgIdx(call, tsNode, tsPos)
-
-            // if we're not one of the arguments, are we at the
-            // determine parameter idx
-
-            if (paramIdx >= 0) {
-                const blocksInfo = blocksInfoOp(lastApiInfo.apis, runtime.bannedCategories);
-                const callSym = getCallSymbol(call)
-                if (callSym) {
-                    if (paramIdx >= callSym.parameters.length)
-                        paramIdx = callSym.parameters.length - 1
-                    const paramType = getParameterTsType(callSym, paramIdx, blocksInfo)
-                    if (paramType) {
-                        // weight the results higher if they return the correct type for the parameter
-                        const matchingApis = getApisForTsType(paramType, call, tc, resultSymbols);
-                        matchingApis.forEach(match => match.weight = COMPLETION_MATCHING_PARAM_TYPE_WEIGHT);
-                    }
-                }
-            }
-        }
-
         // gather local variables that won't have pxt symbol info
         if (!isPython && !didFindMemberCompletions) {
             // TODO: share this with the "syntaxinfo" service
@@ -536,6 +521,31 @@ namespace ts.pxtc.service {
             inScopePxtSyms.forEach(s => s.weight += COMPLETION_IN_SCOPE_VAR_WEIGHT)
 
             resultSymbols = [...resultSymbols, ...inScopePxtSyms]
+        }
+
+        // special handling for call expressions
+        const call = getParentCallExpression(tsNode)
+        if (call) {
+            // which argument are we ?
+            let paramIdx = findCurrentCallArgIdx(call, tsNode, tsPos)
+
+            // if we're not one of the arguments, are we at the
+            // determine parameter idx
+
+            if (paramIdx >= 0) {
+                const blocksInfo = blocksInfoOp(lastApiInfo.apis, runtime.bannedCategories);
+                const callSym = getCallSymbol(call)
+                if (callSym) {
+                    if (paramIdx >= callSym.parameters.length)
+                        paramIdx = callSym.parameters.length - 1
+                    const param = getParameter(callSym, paramIdx, blocksInfo) // shakao get param type
+                    if (param) {
+                        // weight the results higher if they return the correct type for the parameter
+                        const matchingApis = getApisForTsType(param.type, call, tc, resultSymbols, param.isEnum);
+                        matchingApis.forEach(match => match.weight = COMPLETION_MATCHING_PARAM_TYPE_WEIGHT);
+                    }
+                }
+            }
         }
 
         // add in keywords
