@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { ImageEditorStore, AnimationState, TilemapState } from './store/imageReducer';
 import { dispatchChangeImageDimensions, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchToggleAspectRatioLocked, dispatchChangeZoom, dispatchToggleOnionSkinEnabled} from './actions/dispatch';
 import { IconButton } from "./Button";
-import { fireClickOnEnter } from "../../sui";
+import { fireClickOnlyOnEnter } from "./util";
 
 export interface BottomBarProps {
     dispatchChangeImageDimensions: (dimensions: [number, number]) => void;
@@ -138,7 +138,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                     title={lf("Done")}
                     tabIndex={0}
                     onClick={onDoneClick}
-                    onKeyDown={fireClickOnEnter}>
+                    onKeyDown={fireClickOnlyOnEnter}>
                         {lf("Done")}
                 </div>
             </div>

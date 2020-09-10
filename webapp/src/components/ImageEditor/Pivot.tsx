@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { fireClickOnEnter } from '../../sui';
+import { fireClickOnlyOnEnter } from './util';
 
 export interface PivotOption {
     text: string;
@@ -43,7 +43,7 @@ export class Pivot extends React.Component<PivotProps, PivotState> {
                     className={`image-editor-pivot-option ${option === selectedOption ? "selected" : ""}`}
                     tabIndex={0}
                     onClick={this.clickHandler(index)}
-                    onKeyDown={fireClickOnEnter}>
+                    onKeyDown={fireClickOnlyOnEnter}>
                     { option.text }
                 </div>
             ) }
