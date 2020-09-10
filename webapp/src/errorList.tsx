@@ -168,7 +168,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
     listBlockErrors(blockErrors: pxt.blocks.BlockDiagnostic[]) {
         return <div className="ui selection list">
-            {(blockErrors || []).map((e, i) => <ErrorListItem key={`${i}-${e}`} blockError={e} />)}
+            {(blockErrors || []).map((e, i) => <ErrorListItem index={i} key={`${i}-${e}`} blockError={e} />)}
         </div>
     }
 }
