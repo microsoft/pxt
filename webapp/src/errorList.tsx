@@ -199,7 +199,7 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
         const message = blockError ? lf("{0}", blockError.message)
             : stackframe ? stackFrameMessageStringWithLineNumber(stackframe, location) :
                 errorMessageStringWithLineNumber(error.error);
-        const errorCount = stackframe ? 1 : error.count;
+        const errorCount = (stackframe || blockError) ? 1 : error.count;
 
         return <div className={`item ${stackframe ? 'stackframe' : ''}`} role="button"
             onClick={!blockError ? this.onErrorListItemClick : undefined}
