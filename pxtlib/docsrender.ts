@@ -25,7 +25,8 @@ namespace pxt.docs {
         "flyoutOnly": "<!-- flyout -->",
         "hideIteration": "<!-- iter -->",
         "codeStart": "<!-- start -->",
-        "codeStop": "<!-- stop -->"
+        "codeStop": "<!-- stop -->",
+        "autoOpen": "<!-- autoOpen -->"
     }
 
     function replaceAll(replIn: string, x: string, y: string) {
@@ -903,7 +904,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
                 case "text":
                     let lastTocEntry = currentStack[currentStack.length - 1]
                     if (token.text.indexOf("[") >= 0) {
-                        token.text.replace(/^\[(.*)\]\((.*)\)$/i, function (full: string, name: string, path: string) {
+                        token.text.replace(/\[(.*?)\]\((.*?)\)/i, function (full: string, name: string, path: string) {
                             lastTocEntry.name = name;
                             lastTocEntry.path = path.replace('.md', '');
                         });

@@ -1,4 +1,3 @@
-
 namespace pxt.blocks.layout {
     export interface FlowOptions {
         ratio?: number;
@@ -170,15 +169,26 @@ namespace pxt.blocks.layout {
             && !BrowserUtils.isUwpEdge(); // TODO figure out why screenshots are not working in UWP; disable for now
     }
 
-    export function screenshotAsync(ws: Blockly.WorkspaceSvg, pixelDensity?: number): Promise<string> {
-        return toPngAsync(ws, pixelDensity);
+    export function screenshotAsync(ws: Blockly.WorkspaceSvg, pixelDensity?: number, encodeBlocks?: boolean): Promise<string> {
+        return toPngAsync(ws, pixelDensity, encodeBlocks);
     }
 
-    export function toPngAsync(ws: Blockly.WorkspaceSvg, pixelDensity?: number): Promise<string> {
+    export function toPngAsync(ws: Blockly.WorkspaceSvg, pixelDensity?: number, encodeBlocks?: boolean): Promise<string> {
+        let blockSnippet: BlockSnippet;
+        if (encodeBlocks) {
+            blockSnippet = {
+                target: pxt.appTarget.id,
+                versions: pxt.appTarget.versions,
+                xml: pxt.blocks.saveBlocksXml(ws).map(text => pxt.Util.htmlEscape(text))
+            };
+        }
+
         return toSvgAsync(ws)
             .then(sg => {
                 if (!sg) return Promise.resolve<string>(undefined);
-                return toPngAsyncInternal(sg.width, sg.height, (pixelDensity | 0) || 4, sg.xml);
+                return toPngAsyncInternal(
+                    sg.width, sg.height, (pixelDensity | 0) || 4, sg.xml,
+                    encodeBlocks ? JSON.stringify(blockSnippet, null, 2) : null);
             }).catch(e => {
                 pxt.reportException(e);
                 return undefined;
@@ -186,7 +196,7 @@ namespace pxt.blocks.layout {
     }
 
     const MAX_SCREENSHOT_SIZE = 1e6; // max 1Mb
-    function toPngAsyncInternal(width: number, height: number, pixelDensity: number, data: string): Promise<string> {
+    function toPngAsyncInternal(width: number, height: number, pixelDensity: number, data: string, text?: string): Promise<string> {
         return new Promise<string>((resolve, reject) => {
             const cvs = document.createElement("canvas") as HTMLCanvasElement;
             const ctx = cvs.getContext("2d");
@@ -195,6 +205,10 @@ namespace pxt.blocks.layout {
             cvs.width = width * pixelDensity;
             cvs.height = height * pixelDensity;
             img.onload = function () {
+                if (text) {
+                    ctx.fillStyle = "#fff";
+                    ctx.fillRect(0, 0, cvs.width, cvs.height);
+                }
                 ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
                 let canvasdata = cvs.toDataURL("image/png");
                 // if the generated image is too big, shrink image
@@ -205,7 +219,15 @@ namespace pxt.blocks.layout {
                     ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
                     canvasdata = cvs.toDataURL("image/png");
                 }
-                resolve(canvasdata);
+                if (text) {
+                    let p = pxt.lzmaCompressAsync(text).then(blob => {
+                        const datacvs = pxt.Util.encodeBlobAsync(cvs, blob);
+                        resolve(datacvs.toDataURL("image/png"));
+                    });
+                    p.done();
+                } else {
+                    resolve(canvasdata);
+                }
             };
             img.onerror = ev => {
                 pxt.reportError("blocks", "blocks screenshot failed");
@@ -289,6 +311,7 @@ namespace pxt.blocks.layout {
             .replace(/<\/svg>\s*$/i, '') // strip out svg tag
         const svgXml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="${XLINK_NAMESPACE}" width="${width}" height="${height}" viewBox="${x} ${y} ${width} ${height}" class="pxt-renderer">${xmlString}</svg>`;
         const xsg = new DOMParser().parseFromString(svgXml, "image/svg+xml");
+
         const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
         const isRtl = Util.isUserLanguageRtl();
         const customCssHref = (document.getElementById(`style-${isRtl ? 'rtl' : ''}blockly.css`) as HTMLLinkElement).href;
@@ -298,6 +321,9 @@ namespace pxt.blocks.layout {
             .then((customCss) => {
                 const blocklySvg = Util.toArray(document.head.querySelectorAll("style"))
                     .filter((el: HTMLStyleElement) => /\.blocklySvg/.test(el.innerText))[0] as HTMLStyleElement;
+                // Custom CSS injected directly into the DOM by Blockly
+                customCss.unshift((document.getElementById(`blockly-common-style`) as HTMLLinkElement)?.innerText || "");
+                customCss.unshift((document.getElementById(`blockly-renderer-style-pxt`) as HTMLLinkElement)?.innerText || "");
                 // CSS may contain <, > which need to be stored in CDATA section
                 const cssString = (blocklySvg ? blocklySvg.innerText : "") + '\n\n' + customCss.map(el => el + '\n\n');
                 cssLink.appendChild(xsg.createCDATASection(cssString));

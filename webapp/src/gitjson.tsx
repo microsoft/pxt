@@ -10,6 +10,7 @@ import * as data from "./data";
 import * as markedui from "./marked";
 import * as compiler from "./compiler";
 import * as cloudsync from "./cloudsync";
+import * as tutorial from "./tutorial";
 import * as _package from "./package";
 
 const MAX_COMMIT_DESCRIPTION_LENGTH = 70;
@@ -87,7 +88,28 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             .then(() => { })
     }
 
-    async revertFileAsync(f: DiffFile, deletedFiles: string[], addedFiles: string[], virtualF: pkg.File) {
+    async revertAllFilesAsync() {
+        pxt.tickEvent("github.revertall", { start: 1 }, { interactiveConsent: true })
+        const res = await core.confirmAsync({
+            header: lf("Would you like to revert all local changes?"),
+            body: lf("Changes will be lost for good. No undo."),
+            agreeLbl: lf("Revert"),
+            agreeClass: "red",
+            agreeIcon: "trash",
+        })
+
+        if (!res)
+            return
+
+        pxt.tickEvent("github.revertall", { ok: 1 })
+        this.setState({ needsCommitMessage: false }); // maybe we no longer do
+
+        const { header } = this.props.parent.state;
+        await workspace.revertAllAsync(header);
+        await this.props.parent.reloadHeaderAsync()
+    }
+
+    async revertFileAsync(f: DiffFile, deletedFiles: string[], addedFiles: string[], virtualFiles: pkg.File[]) {
         pxt.tickEvent("github.revert", { start: 1 }, { interactiveConsent: true })
         const res = await core.confirmAsync({
             header: lf("Would you like to revert changes to {0}?", f.name),
@@ -103,27 +125,39 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         pxt.tickEvent("github.revert", { ok: 1 })
         this.setState({ needsCommitMessage: false }); // maybe we no longer do
 
+        let needsReload = false;
+        const epkg = pkg.mainEditorPkg();
         if (f.gitFile == null) {
-            await pkg.mainEditorPkg().removeFileAsync(f.name)
-            await this.props.parent.reloadHeaderAsync()
+            needsReload = true;
+            await epkg.removeFileAsync(f.name)
+            for (const virtualF of virtualFiles)
+                await epkg.removeFileAsync(virtualF.name)
         } else if (f.name == pxt.CONFIG_NAME) {
+            needsReload = true;
             const gs = this.getGitJson()
             for (let d of deletedFiles) {
                 const prev = pxt.github.lookupFile(gs.commit, d)
-                pkg.mainEditorPkg().setFile(d, prev && prev.blobContent || "// Cannot restore.")
+                epkg.setFile(d, prev && prev.blobContent || "// Cannot restore.")
             }
             for (let d of addedFiles) {
-                delete pkg.mainEditorPkg().files[d]
+                delete epkg.files[d]
             }
             await f.file.setContentAsync(f.gitFile)
-            await this.props.parent.reloadHeaderAsync()
         } else {
             await f.file.setContentAsync(f.gitFile)
-            // revert generated .ts file as well
-            if (virtualF)
-                await virtualF.setContentAsync(virtualF.baseGitContent);
-            this.forceUpdate();
+            const pkgfiles = epkg.files;
+            for (const virtualF of virtualFiles) {
+                if (virtualF.baseGitContent == null) {
+                    needsReload = true;
+                    await epkg.removeFileAsync(virtualF.name)
+                } else
+                    await virtualF.setContentAsync(virtualF.baseGitContent);
+            }
         }
+        if (needsReload)
+            await this.props.parent.reloadHeaderAsync()
+        else
+            this.forceUpdate()
     }
 
     private async saveGitJsonAsync(gs: pxt.github.GitJson) {
@@ -345,7 +379,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             return;
         }
 
-        const v = pxt.semver.parse(pkg.mainPkg.config.version || "0.0.0")
+        const v = pxt.semver.parse(pkg.mainPkg.config.version, "0.0.0")
         const vmajor = pxt.semver.parse(pxt.semver.stringify(v)); vmajor.major++; vmajor.minor = 0; vmajor.patch = 0;
         const vminor = pxt.semver.parse(pxt.semver.stringify(v)); vminor.minor++; vminor.patch = 0;
         const vpatch = pxt.semver.parse(pxt.semver.stringify(v)); vpatch.patch++;
@@ -355,30 +389,44 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             bumpType = e.currentTarget.name;
             coretsx.forceUpdate();
         }
+        let shouldCacheTutorial: boolean = false;
+        function onCacheTutorialChange(e: React.ChangeEvent<HTMLInputElement>) {
+            shouldCacheTutorial = !shouldCacheTutorial;
+            coretsx.forceUpdate();
+        }
         const ok = await core.confirmAsync({
             header: lf("Pick a release version"),
             agreeLbl: lf("Create release"),
             disagreeLbl: lf("Cancel"),
-            jsxd: () => <div className="grouped fields">
-                <label>{lf("Choose a release version that describes the changes you made to the code.")}
-                    {sui.helpIconLink("/github/release#versioning", lf("Learn about version numbers."))}
-                </label>
-                <div className="field">
-                    <div className="ui radio checkbox">
-                        <input type="radio" name="patch" checked={bumpType == "patch"} aria-checked={bumpType == "patch"} onChange={onBumpChange} />
-                        <label>{lf("{0}: patch (bug fixes or other non-user visible changes)", pxt.semver.stringify(vpatch))}</label>
+            jsxd: () => <div>
+                <div className="grouped fields">
+                    <label>{lf("Choose a release version that describes the changes you made to the code.")}
+                        {sui.helpIconLink("/github/release#versioning", lf("Learn about version numbers."))}
+                    </label>
+                    <div className="field">
+                        <div className="ui radio checkbox">
+                            <input type="radio" name="patch" checked={bumpType == "patch"} aria-checked={bumpType == "patch"} onChange={onBumpChange} />
+                            <label>{lf("{0}: patch (bug fixes or other non-user visible changes)", pxt.semver.stringify(vpatch))}</label>
+                        </div>
+                    </div>
+                    <div className="field">
+                        <div className="ui radio checkbox">
+                            <input type="radio" name="minor" checked={bumpType == "minor"} aria-checked={bumpType == "minor"} onChange={onBumpChange} />
+                            <label>{lf("{0}: minor change (added function or optional parameters)", pxt.semver.stringify(vminor))}</label>
+                        </div>
+                    </div>
+                    <div className="field">
+                        <div className="ui radio checkbox">
+                            <input type="radio" name="major" checked={bumpType == "major"} aria-checked={bumpType == "major"} onChange={onBumpChange} />
+                            <label>{lf("{0}: major change (renamed functions, deleted parameters or functions)", pxt.semver.stringify(vmajor))}</label>
+                        </div>
                     </div>
                 </div>
-                <div className="field">
-                    <div className="ui radio checkbox">
-                        <input type="radio" name="minor" checked={bumpType == "minor"} aria-checked={bumpType == "minor"} onChange={onBumpChange} />
-                        <label>{lf("{0}: minor change (added function or optional parameters)", pxt.semver.stringify(vminor))}</label>
-                    </div>
-                </div>
-                <div className="field">
-                    <div className="ui radio checkbox">
-                        <input type="radio" name="major" checked={bumpType == "major"} aria-checked={bumpType == "major"} onChange={onBumpChange} />
-                        <label>{lf("{0}: major change (renamed functions, deleted parameters or functions)", pxt.semver.stringify(vmajor))}</label>
+                <div className="grouped fields">
+                    <label>{lf("Advanced")}</label>
+                    <div className="field checkbox">
+                        <input type="checkbox" name="cachetutorial" checked={shouldCacheTutorial} aria-checked={shouldCacheTutorial} onChange={onCacheTutorialChange} />
+                        <label>{lf("Optimize for tutorials by caching information about the markdown.")}</label>
                     </div>
                 </div>
             </div>
@@ -396,6 +444,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.showLoading("github.release.new", true, lf("creating release..."));
         try {
             const { header } = this.props.parent.state;
+            if (shouldCacheTutorial) await this.cacheTutorialInfo(header);
             await workspace.bumpAsync(header, newVer)
             pkg.mainPkg.config.version = newVer;
             await this.maybeReloadAsync()
@@ -406,6 +455,32 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         } finally {
             this.hideLoading();
         }
+    }
+
+    private async cacheTutorialInfo(header: pxt.workspace.Header) {
+        const mdRegex = /\.md$/;
+        const githubId = this.parsedRepoId();
+
+        let files = await workspace.getTextAsync(header.id);
+        let mdPaths = Object.keys(files).filter(f => f.match(mdRegex));
+        const tutorialInfo: pxt.Map<pxt.BuiltTutorialInfo> = {};
+        for (let path of mdPaths) {
+            const parsed = pxt.tutorial.parseTutorial(files[path]);
+            const hash = pxt.BrowserUtils.getTutorialInfoHash(parsed.code);
+            const usedBlocks = await tutorial.getUsedBlocksAsync(parsed.code, path, parsed.language, true);
+            const formatPath = path.replace(mdRegex, "");
+            tutorialInfo[`https://github.com/${githubId.fullName}${formatPath == "README" ? "" : "/" + formatPath}`] = { usedBlocks, hash };
+        }
+        files[pxt.TUTORIAL_INFO_FILE] = JSON.stringify(tutorialInfo);
+
+        let cfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME]);
+        if (cfg.files.indexOf(pxt.TUTORIAL_INFO_FILE) < 0) {
+            cfg.files.push(pxt.TUTORIAL_INFO_FILE);
+            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
+        }
+
+        await workspace.saveAsync(header, files);
+        return await this.commitAsync()
     }
 
     private async showLoading(tick: string, ensureToken: boolean, msg: string) {
@@ -497,7 +572,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         // continue with commit
         let commitId = await workspace.commitAsync(header, {
             message: this.state.description,
-            blocksScreenshotAsync: () => this.props.parent.blocksScreenshotAsync(1),
+            blocksScreenshotAsync: () => this.props.parent.blocksScreenshotAsync(1, pxt.appTarget.appTheme?.embedBlocksInSnapshot),
             blocksDiffScreenshotAsync: () => {
                 const f = pkg.mainEditorPkg().sortedFiles().find(f => f.name == "main.blocks");
                 const diff = pxt.blocks.diffXml(f.baseGitContent, f.content);
@@ -526,14 +601,20 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     }
 
     async commitAsync() {
+        let success = true;
         this.setState({ needsCommitMessage: false });
         this.showLoading("github.commit", true, lf("commit and push changes to GitHub..."));
         try {
             await this.commitCoreAsync()
             await this.maybeReloadAsync()
         } catch (e) {
+            success = false;
+            pxt.tickEvent("github.commit.fail");
             this.handleGithubError(e);
         } finally {
+            if (success) {
+                pxt.tickEvent("github.commit.success");
+            }
             this.hideLoading()
         }
     }
@@ -712,6 +793,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
 
     constructor(props: DiffViewProps) {
         super(props);
+        this.revertAllFiles = this.revertAllFiles.bind(this)
     }
 
     private lineDiff(lineA: string, lineB: string): { a: JSX.Element, b: JSX.Element } {
@@ -790,8 +872,8 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
                         <p>
                             {lf("Reverting this file will also remove: {0}", addedFiles.join(", "))}
                         </p>}
-                    {!!cache.revert && virtualF && !blocksMode && <p>
-                        {lf("Reverting this file will also revert: {0}", virtualF.name)}
+                    {!!cache.revert && !!virtualFiles.length && !blocksMode && <p>
+                        {lf("Reverting this file will also revert: {0}", virtualFiles.map(f => f.name).join(', '))}
                     </p>}
                 </div>
                 {jsxEls.diffJSX ?
@@ -822,13 +904,19 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
                 addedFiles = newCfg.filter(fn => oldCfg.indexOf(fn) == -1)
             }
         }
-        // backing .ts for .blocks/.py files
-        let virtualF = blocksMode && pkg.mainEditorPkg().files[f.file.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
-        if (virtualF == f.file) virtualF = undefined;
 
+        const virtualFiles: pkg.File[] = [];
         cache.file = f
         if (this.props.allowRevert) {
-            cache.revert = () => this.props.parent.revertFileAsync(f, deletedFiles, addedFiles, virtualF);
+            // backing .ts for .blocks/.py files
+            const files = pkg.mainEditorPkg().files;
+            const virtualFile = blocksMode && files[f.file.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
+            if (virtualFile && virtualFile != f.file)
+                virtualFiles.push(virtualFile);
+            // erase other generated files
+            for (const vf of pkg.mainEditorPkg().getGeneratedFiles(f.file))
+                virtualFiles.push(vf);
+            cache.revert = () => this.props.parent.revertFileAsync(f, deletedFiles, addedFiles, virtualFiles);
         }
         cache.diff = createDiff()
         return cache.diff;
@@ -1010,6 +1098,11 @@ ${content}
             .done(() => this.props.parent.forceUpdate());
     }
 
+    revertAllFiles() {
+        this.props.parent.revertAllFilesAsync()
+            .done();
+    }
+
     renderCore() {
         const { diffFiles, blocksMode } = this.props;
         const targetTheme = pxt.appTarget.appTheme;
@@ -1018,7 +1111,13 @@ ${content}
         const displayDiffFiles = blocksMode
             && !pxt.options.debug ? diffFiles.filter(f => /\.blocks$/.test(f.name))
             : diffFiles;
-        return displayDiffFiles.length ? <div className="ui">
+        return diffFiles.length ? <div className="ui section">
+            <div className={`ui ${invertedTheme ? "inverted " : ""} diffheader segment`}>
+                {lf("There are local changes.")}
+                <sui.Button className="small" icon="undo" text={lf("Revert all")}
+                    ariaLabel={lf("Revert all changes")} title={lf("Revert all changes")}
+                    textClass={"landscape only"} onClick={this.revertAllFiles} />
+            </div>
             {displayDiffFiles.map(df => this.showDiff(df))}
         </div> : <div className={`ui ${invertedTheme ? "inverted " : ""}segment`}>
                 {lf("No local changes found.")}

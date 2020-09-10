@@ -403,8 +403,10 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
         h.editor = cfg.preferredEditor
         pxt.Util.setEditorLanguagePref(cfg.preferredEditor);
     }
-    return importAsync(h, text)
-        .then(() => h)
+
+    return pxt.github.cacheProjectDependenciesAsync(cfg)
+        .then(() => importAsync(h, text))
+        .then(() => h);
 }
 
 export function renameAsync(h: Header, newName: string) {
@@ -537,6 +539,34 @@ export async function pullAsync(hd: Header, checkOnly = false) {
     }
 }
 
+export async function revertAllAsync(hd: Header) {
+    const files = await getTextAsync(hd.id)
+    const gitjsontext = files[GIT_JSON]
+    if (!gitjsontext)
+        return PullStatus.NoSourceControl
+    const gitjson = JSON.parse(gitjsontext) as GitJson
+    const commit = gitjson.commit;
+    const configEntry = pxt.github.lookupFile(commit, pxt.CONFIG_NAME);
+    const config = pxt.Package.parseAndValidConfig(configEntry && configEntry.blobContent);
+    if (!config)
+        return PullStatus.NoSourceControl
+
+    const revertedFiles: pxt.Map<string> = {};
+    revertedFiles[GIT_JSON] = gitjsontext;
+    revertedFiles[pxt.CONFIG_NAME] = configEntry.blobContent;
+    for (const f of config.files.concat(config.testFiles)) {
+        const entry = pxt.github.lookupFile(commit, f);
+        if (!entry || entry.blobContent === undefined) {
+            pxt.log(`cannot revert ${f}, corrupted based commit`)
+            return PullStatus.NoSourceControl
+        }
+        revertedFiles[f] = entry.blobContent;
+    }
+    // save updated file content
+    await forceSaveAsync(hd, revertedFiles)
+    return PullStatus.UpToDate;
+}
+
 export async function hasMergeConflictMarkersAsync(hd: Header): Promise<boolean> {
     const files = await getTextAsync(hd.id)
     return !!Object.keys(files).find(k => pxt.diff.hasMergeConflictMarker(files[k]));
@@ -560,7 +590,7 @@ export async function prAsync(hd: Header, commitId: string, msg: string) {
 }
 
 export function bumpedVersion(cfg: pxt.PackageConfig) {
-    let v = pxt.semver.parse(cfg.version || "0.0.0")
+    let v = pxt.semver.parse(cfg.version, "0.0.0")
     v.patch++
     return pxt.semver.stringify(v)
 }
@@ -648,10 +678,12 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
             await addToTree(BINARY_JS_PATH, compileResp.outfiles[pxtc.BINARY_JS]);
             await addToTree(VERSION_TXT_PATH, v);
             // ensure template files are up to date
-            const templates = pxt.template.targetTemplateFiles();
-            if (templates) {
-                for (const fn of Object.keys(templates)) {
-                    await addToTree(fn, templates[fn]);
+            if (!cfg.disableTargetTemplateFiles) {
+                const templates = pxt.template.targetTemplateFiles();
+                if (templates) {
+                    for (const fn of Object.keys(templates)) {
+                        await addToTree(fn, templates[fn]);
+                    }
                 }
             }
         }
@@ -837,7 +869,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
                 // if xml merge fails, leave an empty xml payload to force decompilation
                 blocksNeedDecompilation = blocksNeedDecompilation || !d3;
                 text = d3 || "";
-            } else if (path == BINARY_JS_PATH || path == VERSION_TXT_PATH) {
+            } else if (path == BINARY_JS_PATH || path == VERSION_TXT_PATH || path == pxt.TUTORIAL_INFO_FILE) {
                 // local build wins, does not matter
                 text = files[path];
             } else {
@@ -893,6 +925,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         if (!justJSON)
             files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
+
     if (!justJSON) {
         // if any block needs decompilation, don't allow merge error markers
         if (blocksNeedDecompilation && conflicts)
@@ -908,6 +941,13 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
     gitjson.commit = commit
     files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
 
+    /**
+     * If the repo was last opened in this target, use that version number in the header;
+     * otherwise, use current target version to avoid mismatched updates.
+     */
+    const targetVersionToUse = (cfg.targetVersions?.targetId === pxt.appTarget.id && cfg.targetVersions.target) ?
+        cfg.targetVersions.target : pxt.appTarget.versions.target;
+
     if (!hd) {
         hd = await installAsync({
             name: cfg.name,
@@ -917,7 +957,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
             meta: {},
             editor: pxt.BLOCKS_PROJECT_NAME,
             target: pxt.appTarget.id,
-            targetVersion: pxt.appTarget.versions.target,
+            targetVersion: targetVersionToUse,
         }, files)
     } else {
         hd.name = cfg.name
@@ -1041,7 +1081,6 @@ export function prepareConfigForGithub(content: string, createRelease?: boolean)
     delete (<any>cfg).installedVersion // cleanup old pxt.json files
     delete cfg.additionalFilePath
     delete cfg.additionalFilePaths
-    delete cfg.targetVersions;
 
     // add list of supported targets
     const supportedTargets = cfg.supportedTargets || [];
@@ -1049,6 +1088,13 @@ export function prepareConfigForGithub(content: string, createRelease?: boolean)
         supportedTargets.push(pxt.appTarget.id);
         supportedTargets.sort(); // keep list stable
         cfg.supportedTargets = supportedTargets;
+    }
+
+    // track target and target version this was last editted in, so we can apply upgrade rules on import.
+    cfg.targetVersions = {
+        ...cfg.targetVersions,
+        target: pxt.appTarget.versions.target,
+        targetId: pxt.appTarget.id
     }
 
     // patch dependencies

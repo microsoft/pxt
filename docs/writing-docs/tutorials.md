@@ -309,6 +309,43 @@ player.onChat("blockleft", function () {
 ```
 ````
 
+
+### JRes
+
+You can add a JRes file to the project if your tutorial relies on one being present in the user's project. This is usually necessary when creating a tutorial that references tilemaps (copy the contents of tilemap.g.jres into a snippet).
+
+````
+```jres
+{
+    "transparency16": {
+        "data": "hwQQABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+        "mimeType": "image/x-mkcd-f4",
+        "tilemapTile": true
+    },
+    "tile1": {
+        "data": "hwQQABAAAACIiIiIiIiIiIiIiIiIiIiIiISIiIiIiIiISIiIiIhIiIiIhIiIiISIiIhIiIhIiIiIiIiEiISIiIiIiEhIiIiIiIiIiISIiIiIiIhISIiIiIiIiISIhIiIiIhIiIhIiIiIiISIiIiEiIhIiIiIiEiIiIiIiIiIiISIiIiIiIiIiA==",
+        "mimeType": "image/x-mkcd-f4",
+        "tilemapTile": true
+    },
+    "level": {
+        "id": "level",
+        "mimeType": "application/mkcd-tilemap",
+        "data": "MTAxMDAwMTAwMDAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMjAyMDIwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMjAyMDIwMjAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAyMDIwMjAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDEwMTAxMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMA==",
+        "tileset": [
+            "myTiles.transparency16",
+            "myTiles.tile1",
+            "sprites.castle.tileGrass2"
+        ]
+    },
+    "*": {
+        "mimeType": "image/x-mkcd-f4",
+        "dataEncoding": "base64",
+        "namespace": "myTiles"
+    }
+}
+```
+````
+
 ## Using Python
 
 If the target supports Python, snippets can be written in JavaScript or Python directly.
@@ -351,6 +388,14 @@ basic.showString("Hello!")
 
 Users will have the option of clicking the Python icon to see the snippet in Python just like they can with Blocks and Javascript/Typescript.
 
+## Editor flags
+
+There are some flags you can add to the URL of your tutorial to change the layout of the page. These are not yet enabled for every editor, so make sure you check that the feature is available in your target.
+
+* **lockedEditor=1** - If you load the page directly into a tutorial, adding the `lockedEditor` flag will "lock" users into the tutorial. This hides the "Exit Tutorial", "Home", and "Finish" buttons, as well as disabling the right-click menu outside of the Blocks workspace to prevent users from entering the home screen or sandbox mode. For example:
+
+    https://arcade.makecode.com?lockedEditor=1#tutorial:/tutorials/happy-flower
+
 ## Adding tutorials to the home screen
 
 To have a tutorial appear on the home screen, you will need to create or use an existing gallery and add a tutorial entry to it. See the
@@ -358,20 +403,22 @@ To have a tutorial appear on the home screen, you will need to create or use an 
 
 ### JavaScript and Python tutorial ("Spy tutorials")
 
-If you are able to author your tutorial in a language agnostic way, 
+If you are able to author your tutorial in a language agnostic way,
 you will be able to have a single source document for both JavaScript and Python. You can specify a single tutorial for multiple languages using the [otherActions](/targets/home-screen#otheractions) field in the tutorial code card.
 
-## In context tutorials
+### In-Context Tutorials
+In context tutorials are tutorials that are loaded into an existing project, rather than into a blank one. The format is the same as for all tutorials. If you are writing a third-party tutorial, please see the [User Tutorials](/writing-docs/user-tutorials) documentation for information on how to share your content as an in-context tutorial.
 
-In context tutorials are micro-tutorials that run within your current program. They need to be enabled separately. The format is the same as other tutorials.
-
-* (editor maintainer) add a ``recipes: true`` entry in the ``appTheme`` section of your [``pxtarget.json``](/targets/pxtarget#apptheme-apptheme) editor
-* add a ``/docs/recipes.md`` file that contains the gallery of micro-tutorials
+For editor maintainers:
+* Add ``recipes: true`` in the ``appTheme`` section of your [``pxtarget.json``](/targets/pxtarget#apptheme-apptheme) to enable in-context tutorials
+* Optionally add a ``/docs/recipes.md`` file that contains a list of code cards referencing your in-context tutorials.
 
 In order to select the proper language (blocks vs JavaScript vs Python), you should add
 a ``"editor": "js"`` entry for JavaScript tutorials and ``"editor": "py"`` entry for Python tutorials to each code card.
 
 ## Testing
+
+If you are writing a third-party tutorial, please see the [User Tutorials](/writing-docs/user-tutorials) documentation for information on how to preview and share your tutorials.
 
 When developing your new tutorials, it is easiest to first render and view them as a markdown documentation page until all steps look OK to you. Going through all the steps several times using the tutorial runner might become quite tedious while developing the tutorial.
 
@@ -385,6 +432,17 @@ pxt checkdocs
 
 ## Example
 
+Here are some examples of the tutorial format.
+
+### Github Sample
+
+```
+https://github.com/microsoft/pxt-tutorial-sample
+```
+
+The [pxt-tutorial-sample](https://github.com/microsoft/pxt-tutorial-sample) repository contains a fully-functional tutorial for MakeCode Arcade, with multiple files, localization, and custom blocks in the tutorial repository.
+
+### Markdown Sample
 The following sample shows a simple 2 step tutorial.
 
 ````markdown

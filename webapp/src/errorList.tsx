@@ -3,6 +3,12 @@
 import * as React from "react";
 import * as sui from "./sui";
 
+type GroupedError = {
+    error: pxtc.KsDiagnostic,
+    count: number,
+    index: number
+};
+
 export interface ErrorListProps {
     isInBlocksEditor: boolean;
     onSizeChange?: (state: pxt.editor.ErrorListState) => void;
@@ -51,7 +57,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     }
 
     render() {
-        const {isCollapsed, errors, exception, blockErrors} = this.state;
+        const { isCollapsed, errors, exception, blockErrors } = this.state;
         const errorsAvailable = !!errors?.length || !!exception || !!blockErrors?.length;
         const collapseTooltip = lf("Collapse Error List");
 
@@ -65,12 +71,12 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
                 <div className="errorListHeader" role="button" aria-label={lf("{0} error list", isCollapsed ? lf("Expand") : lf("Collapse"))} onClick={this.onCollapseClick} onKeyDown={sui.fireClickOnEnter} tabIndex={0}>
                     <h4>{lf("Problems")}</h4>
                     <div className="ui red circular label countBubble">{errorCount}</div>
-                    <div className="toggleButton"><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`}/></div>
+                    <div className="toggleButton"><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`} /></div>
                 </div>
                 {!isCollapsed && <div className="errorListInner">
                     {exception && <div className="debuggerSuggestion" role="button" onClick={this.props.startDebugger} onKeyDown={sui.fireClickOnEnter} tabIndex={0}>
                         {lf("Debug this project")}
-                        <sui.Icon className="debug-icon" icon="icon bug"/>
+                        <sui.Icon className="debug-icon" icon="icon bug" />
                     </div>}
                     {errorListContent}
                 </div>}
@@ -104,7 +110,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
     }
 
     onErrorMessageClick(e: pxtc.LocationInfo, index: number) {
-        pxt.tickEvent('errorlist.goto', {errorIndex: index}, { interactiveConsent: true });
+        pxt.tickEvent('errorlist.goto', { errorIndex: index }, { interactiveConsent: true });
         this.props.goToError(e)
     }
 
@@ -126,6 +132,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
     onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage, callLocations: pxtc.LocationInfo[]) {
         this.setState({
+            isCollapsed: false,
             exception,
             callLocations
         })
@@ -138,8 +145,9 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
             return `${error.messageText}-${error.fileName}-${error.line}-${error.column}`
         }
 
+        const grouped = groupErrors(errors);
         return <div className="ui selection list">
-            {(errors).map((e, index) => <ErrorListItem key={errorKey(e)} index={index} error={e} revealError={this.onErrorMessageClick} />)}
+            {grouped.map((e, index) => <ErrorListItem key={errorKey(e.error)} index={index} error={e} revealError={this.onErrorMessageClick} />)}
         </div>
     }
 
@@ -152,7 +160,7 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
                     if (!location) return null;
 
-                    return <ErrorListItem key={index} index={index} stackframe={sf} location={location} revealError={this.onErrorMessageClick}/>
+                    return <ErrorListItem key={index} index={index} stackframe={sf} location={location} revealError={this.onErrorMessageClick} />
                 })}
             </div>
         </div>;
@@ -160,15 +168,15 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
     listBlockErrors(blockErrors: pxt.blocks.BlockDiagnostic[]) {
         return <div className="ui selection list">
-            {(blockErrors || []).map((e, i) => <ErrorListItem key={`${i}-${e}`} blockError={e}/>)}
+            {(blockErrors || []).map((e, i) => <ErrorListItem key={`${i}-${e}`} blockError={e} />)}
         </div>
     }
 }
 
 interface ErrorListItemProps {
-    index?: number;
+    index: number;
     revealError?: (location: pxtc.LocationInfo, index: number) => void;
-    error?: pxtc.KsDiagnostic;
+    error?: GroupedError;
     stackframe?: pxsim.StackFrameInfo;
     location?: pxtc.LocationInfo;
     blockError?: pxt.blocks.BlockDiagnostic;
@@ -186,23 +194,53 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
     }
 
     render() {
-        const {error, stackframe, location, blockError} = this.props
+        const { error, stackframe, location, blockError } = this.props
 
         const message = blockError ? lf("{0}", blockError.message)
-            : stackframe ? lf("at {0} (line {1})", stackframe.funcInfo.functionName, location.line + 1)
-            : lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText)
+            : stackframe ? stackFrameMessageStringWithLineNumber(stackframe, location) :
+                errorMessageStringWithLineNumber(error.error);
+        const errorCount = stackframe ? 1 : error.count;
 
         return <div className={`item ${stackframe ? 'stackframe' : ''}`} role="button"
-                    onClick={!blockError ? this.onErrorListItemClick : undefined}
-                    onKeyDown={sui.fireClickOnEnter}
-                    aria-label={lf("Go to {0}: {1}", stackframe ? '' : 'error', message)}
-                    tabIndex={0}>
-            {message}
+            onClick={!blockError ? this.onErrorListItemClick : undefined}
+            onKeyDown={sui.fireClickOnEnter}
+            aria-label={lf("Go to {0}: {1}", stackframe ? '' : 'error', message)}
+            tabIndex={0}>
+            {message} {(errorCount <= 1) ? null : <div className="ui gray circular label countBubble">{errorCount}</div>}
         </div>
     }
 
     onErrorListItemClick() {
-        const location = this.props.stackframe ? this.props.location : this.props.error
+        const location = this.props.stackframe ? this.props.location : this.props.error.error
         this.props.revealError(location, this.props.index)
     }
+}
+
+function errorMessageStringWithLineNumber(error: pxtc.KsDiagnostic) {
+    return lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText);
+}
+
+function stackFrameMessageStringWithLineNumber(stackframe: pxsim.StackFrameInfo, location: pxtc.LocationInfo) {
+    return lf("at {0} (line {1})", stackframe.funcInfo.functionName, location.line + 1);
+}
+
+function groupErrors(errors: pxtc.KsDiagnostic[]) {
+    const grouped = new Map<string, GroupedError>();
+    let index = 0;
+    for (const error of errors) {
+        const key = errorMessageStringWithLineNumber(error);
+        if (!grouped.has(key)) {
+            grouped.set(key, {
+                index: index++,
+                count: 1,
+                error
+            });
+        }
+        else {
+            grouped.get(key).count++;
+        }
+    }
+    const sorted: GroupedError[] = [];
+    grouped.forEach(value => sorted.push(value));
+    return sorted.sort((a, b) => a.index - b.index);
 }

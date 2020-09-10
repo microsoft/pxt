@@ -71,6 +71,12 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     hide() {
+        if (this.state.qrCodeExpanded) {
+            pxt.tickEvent('share.qrtoggle');
+            const { qrCodeExpanded } = this.state;
+            this.setState({ qrCodeExpanded: !qrCodeExpanded });
+            return;
+        }
         if (this._gifEncoder) {
             this._gifEncoder.cancel();
             this._gifEncoder = undefined;
@@ -221,15 +227,16 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         if (this.state.recordingState != ShareRecordingState.None) return;
 
         this.setState({ recordingState: ShareRecordingState.ScreenshotSnap, recordError: undefined },
-            () => {
-                this.props.parent.requestScreenshotAsync()
-                    .then(img => {
-                        const st: ShareEditorState = { recordingState: ShareRecordingState.None, recordError: undefined };
-                        if (img) st.screenshotUri = img;
-                        else st.recordError = lf("Oops, screenshot failed. Please try again.")
-                        this.setState(st);
-                    });
+            () => this.screenshotAsync());
+    }
 
+    screenshotAsync = () => {
+        return this.props.parent.requestScreenshotAsync()
+            .then(img => {
+                const st: ShareEditorState = { recordingState: ShareRecordingState.None, recordError: undefined };
+                if (img) st.screenshotUri = img;
+                else st.recordError = lf("Oops, screenshot failed. Please try again.")
+                this.setState(st);
             });
     }
 
@@ -382,7 +389,11 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 // save project name if we've made a change change
                 p = this.props.parent.updateHeaderNameAsync(newProjectName);
             }
-            p.then(() => this.props.parent.anonymousPublishAsync(screenshotUri))
+            // if screenshots are enabled, always take one
+            if (targetTheme.simScreenshot && !screenshotUri) {
+                p = p.then(this.screenshotAsync);
+            }
+            p.then(() => this.props.parent.anonymousPublishAsync(this.state.screenshotUri))
                 .then((id) => {
                     this.setState({ pubId: id, qrCodeUri: undefined, qrCodeExpanded: false });
                     if (pxt.appTarget.appTheme.qrCode)

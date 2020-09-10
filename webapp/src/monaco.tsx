@@ -68,7 +68,6 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
         const wordStartOffset = model.getOffsetAt({ lineNumber: position.lineNumber, column: word.startColumn })
         const wordEndOffset = model.getOffsetAt({ lineNumber: position.lineNumber, column: word.endColumn })
 
-
         return compiler.completionsAsync(fileName, offset, wordStartOffset, wordEndOffset, source)
             .then(completions => {
                 function stripLocalNamespace(qName: string): string {
@@ -84,14 +83,20 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                     return qName
                 }
 
-                const items = (completions.entries || []).map((si, i) => {
-                    let insertSnippet = stripLocalNamespace(this.python ? si.pySnippet : si.snippet);
+                let entries = completions.entries || [];
+                entries = entries.filter(si => si.name.charAt(0) != "_");
+
+                const items = entries.map((si, i) => {
+                    let snippetWithMarkers = this.python ? si.pySnippetWithMarkers : si.snippetWithMarkers
+                    const hasMarkers = !!snippetWithMarkers
+                    const snippetWithoutMarkers = this.python ? si.pySnippet : si.snippet
+                    let snippet = hasMarkers ? snippetWithMarkers : snippetWithoutMarkers;
+                    snippet = stripLocalNamespace(snippet);
                     let qName = stripLocalNamespace(this.python ? si.pyQName : si.qName);
                     let name = this.python ? si.pyName : si.name;
-                    let completionSnippet: string | undefined = undefined;
-                    let isMultiLine = insertSnippet && insertSnippet.indexOf("\n") >= 0
+                    let isMultiLine = snippet && snippet.indexOf("\n") >= 0
 
-                    if (this.python && insertSnippet && isMultiLine && pxt.blocks.hasHandler(si)) {
+                    if (this.python && snippet && isMultiLine && pxt.blocks.hasHandler(si)) {
                         // For python, we want to replace the entire line because when creating
                         // new functions these need to be placed before the line the user was typing
                         // unlike with typescript where callbacks use lambdas.
@@ -109,17 +114,17 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         // At the time of this writting, Monaco does not support item completions that replace the
                         // whole line. So we use a custom system of "edit amendments". See monacoEditAmendments.ts
                         // for more.
-                        completionSnippet = amendmentToInsertSnippet(
-                            createLineReplacementPyAmendment(insertSnippet))
+                        snippet = amendmentToInsertSnippet(
+                            createLineReplacementPyAmendment(snippet))
                     } else {
-                        completionSnippet = insertSnippet || qName
+                        snippet = snippet || qName
                         // if we're past the first ".", i.e. we're doing member completion, be sure to
                         // remove what precedes the "." in the full snippet.
                         // E.g. if the user is typing "mobs.", we want to complete with "spawn" (name) not "mobs.spawn" (qName)
-                        if (completions.isMemberCompletion && completionSnippet) {
-                            const nameStart = completionSnippet.lastIndexOf(name);
+                        if (completions.isMemberCompletion && snippet) {
+                            const nameStart = snippet.lastIndexOf(name);
                             if (nameStart !== -1) {
-                                completionSnippet = completionSnippet.substr(nameStart)
+                                snippet = snippet.substr(nameStart)
                             }
                         }
                     }
@@ -140,16 +145,18 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                     // them with commas so that we don't confuse the fuzzy matcher in monaco
                     const filterText = `${label},${documentation},${block}`.replace(/\s/g, ",")
 
+                    const kind = this.tsKindToMonacoKind(si.kind);
                     let res: monaco.languages.CompletionItem = {
                         label: label,
                         range,
-                        kind: this.tsKindToMonacoKind(si.kind),
+                        kind,
                         documentation,
-                        detail: insertSnippet,
+                        detail: `(${monaco.languages.CompletionItemKind[kind].toLowerCase()}) ${snippetWithoutMarkers || ""}`,
                         // force monaco to use our sorting
-                        sortText: `${tosort(i)} ${insertSnippet}`,
+                        sortText: `${tosort(i)} ${snippet}`,
                         filterText: filterText,
-                        insertText: completionSnippet || undefined,
+                        insertText: snippet || undefined,
+                        insertTextRules: hasMarkers ? monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet : undefined,
                     };
                     return res
                 })
@@ -339,7 +346,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     fileType: pxt.editor.FileType = pxt.editor.FileType.Text;
     extraLibs: pxt.Map<monaco.IDisposable>;
     nsMap: pxt.Map<toolbox.BlockDefinition[]>;
-    giveFocusOnLoading: boolean = false;
+    giveFocusOnLoading: boolean = true;
 
     protected fieldEditors: FieldEditorManager;
     protected feWidget: ViewZoneEditorHost | ModalEditorHost;
@@ -597,6 +604,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     public decompileAsync(blockFile: string): Promise<pxtc.CompileResult> {
         return compiler.decompileAsync(blockFile)
+    }
+
+    setVisible(v: boolean) {
+        super.setVisible(v);
+        // if we are hiding monaco, clear error list
+        if (!v) this.onErrorChanges([]);
     }
 
     display(): JSX.Element {
@@ -1175,7 +1188,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this.fieldEditors) {
             this.fieldEditors = new FieldEditorManager(this.editor);
             monaco.languages.registerFoldingRangeProvider("typescript", this.fieldEditors);
+            monaco.languages.registerFoldingRangeProvider("python", this.fieldEditors);
         }
+
+        this.editor.onDidChangeCursorPosition((e: monaco.editor.ICursorPositionChangedEvent) => {
+            if (this.fieldEditors) this.fieldEditors.setCursorLine(e.position.lineNumber);
+        });
 
         pxt.appTarget.appTheme.monacoFieldEditors.forEach(name => {
             const editor = pxt.editor.getMonacoFieldEditor(name);
@@ -1545,19 +1563,36 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    showFieldEditor(range: monaco.Range, fe: pxt.editor.MonacoFieldEditor, viewZoneHeight: number) {
+    showFieldEditor(range: monaco.Range, fe: pxt.editor.MonacoFieldEditor, viewZoneHeight: number, buildAfter: boolean) {
         if (this.feWidget) {
             this.feWidget.close();
         }
         this.feWidget = new ModalEditorHost(fe, range, this.editor.getModel());
         // this.feWidget.heightInPx = viewZoneHeight;
+
+        const triggerRebuildIfNeeded = () => {
+            if (buildAfter) {
+                simulator.setDirty();
+
+                if (this.fileType == "typescript") {
+                    // If the field editor changed something then we can't guarantee that
+                    // using a cached decompile is safe
+                    pkg.mainEditorPkg().invalidateCachedTranspile("ts", this.getCurrentSource(), "blocks");
+                }
+            }
+        }
+
         this.feWidget.showAsync(this.fileType, this.editor)
             .then(edit => {
                 this.activeRangeID = null;
                 if (edit) {
                     this.editModelAsync(edit.range, edit.replacement)
                         .then(newRange => this.indentRangeAsync(newRange))
-                        .then(() => this.foldFieldEditorRangesAsync());
+                        .then(() => this.foldFieldEditorRangesAsync())
+                        .then(triggerRebuildIfNeeded)
+                }
+                else {
+                    triggerRebuildIfNeeded();
                 }
             })
     }
@@ -1776,7 +1811,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private getBuiltinBlocks(ns: string, subns: string) {
         let cat = snippets.getBuiltinCategory(ns);
         let blocks = cat.blocks || [];
-        if (!cat.custom && this.nsMap[ns]) blocks = blocks.concat(this.nsMap[ns].filter(block => !(block.attributes.blockHidden) &&  !(block.attributes.deprecated && !this.parent.isTutorial())));
+        if (!cat.custom && this.nsMap[ns]) blocks = blocks.concat(this.nsMap[ns].filter(block => !(block.attributes.blockHidden) && !(block.attributes.deprecated && !this.parent.isTutorial())));
         return this.filterBlocks(subns, blocks);
     }
 
@@ -1862,7 +1897,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                     const fe = this.fieldEditors.getFieldEditorById(lineInfo.owner);
                     if (fe) {
-                        this.showFieldEditor(lineInfo.range, new fe.proto(), fe.heightInPixels || 500);
+                        this.showFieldEditor(lineInfo.range, new fe.proto(), fe.heightInPixels || 500, fe.alwaysBuildOnClose);
                     }
                 }
             }

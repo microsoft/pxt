@@ -69,7 +69,8 @@ declare namespace pxt {
         alwaysMultiVariant?: boolean;
         queryVariants?: Map<AppTarget>; // patches on top of the current AppTarget using query url regex
         unsupportedBrowsers?: BrowserOptions[]; // list of unsupported browsers for a specific target (eg IE11 in arcade). check browserutils.js browser() function for strings
-        checkdocsdirs?: string[]; // list of folders for checkdocs, irrespective of SUMMARY.md
+        checkdocsdirs?: string[]; // list of /docs subfolders for checkdocs, irrespective of SUMMARY.md
+        cacheusedblocksdirs?: string[]; // list of /docs subfolders for parsing and caching used block ids (for tutorial loading)
         blockIdMap?: Map<string[]>; // list of target-specific blocks that are "synonyms" (eg. "agentturnright" and "minecraftAgentTurn")
     }
 
@@ -390,6 +391,7 @@ declare namespace pxt {
         openProjectNewDependentTab?: boolean; // allow opening project in a new tab -- connected
         tutorialExplicitHints?: boolean; // allow use explicit hints
         errorList?: boolean; // error list experiment
+        embedBlocksInSnapshot?: boolean; // embed blocks xml in right-click snapshot
         blocksErrorList?: boolean; // blocks error list experiment
     }
 
@@ -424,6 +426,12 @@ declare namespace pxt {
         bundleddirs: string[];
         versions: TargetVersions;        // @derived
         apiInfo?: Map<PackageApiInfo>;
+        tutorialInfo?: Map<BuiltTutorialInfo>; // hash of tutorial code mapped to prebuilt info for each tutorial
+    }
+
+    interface BuiltTutorialInfo {
+        hash?: string;
+        usedBlocks: Map<number>;
     }
 
     interface PackageApiInfo {
@@ -501,6 +509,7 @@ declare namespace ts.pxtc {
         useModulator?: boolean;
         webUSB?: boolean; // use WebUSB when supported
         hexMimeType?: string;
+        moveHexEof?: boolean;
         driveName?: string;
         jsRefCounting?: boolean;
         utf8?: boolean;
@@ -619,6 +628,7 @@ declare namespace ts.pxtc {
         callInDebugger?: boolean; // for getters, they will be invoked by the debugger.
         py2tsOverride?: string; // used to map functions in python that have an equivalent (but differently named) ts function
         pyHelper?: string; // used to specify functions on the _py namespace that provide implementations. Should be of the form py_class_methname
+        pyConvertToTaggedTemplate?: boolean; // hint that this function should be emitted as a tagged template when going from py to ts
         argsNullable?: boolean; // allow NULL to be passed to C++ shim function
         maxBgInstances?: string; // if there's less than that number of instances of the current class, it's not reported as a mem leak
 
@@ -761,8 +771,10 @@ declare namespace ts.pxtc {
         pkg?: string;
         snippet?: string;
         snippetName?: string;
+        snippetWithMarkers?: string; // TODO(dz)
         pySnippet?: string;
         pySnippetName?: string;
+        pySnippetWithMarkers?: string; // TODO(dz)
         blockFields?: ParsedBlockDef;
         isReadOnly?: boolean;
         combinedProperties?: string[];
@@ -881,10 +893,11 @@ declare namespace pxt.tutorial {
         title?: string;
         steps: TutorialStepInfo[];
         activities: TutorialActivityInfo[];
-        code: string; // all code
+        code: string[]; // all code
         language?: string; // language of code snippet (ts or python)
         templateCode?: string;
         metadata?: TutorialMetadata;
+        jres?: string; // JRES to be used when generating hints; necessary for tilemaps
     }
 
     interface TutorialMetadata {
@@ -926,12 +939,13 @@ declare namespace pxt.tutorial {
         tutorialHintCounter?: number // count for number of times hint has been shown
         tutorialStepExpanded?: boolean; // display full step in dialog
         tutorialMd?: string; // full tutorial markdown
-        tutorialCode?: string; // all tutorial code bundled
+        tutorialCode?: string[]; // all tutorial code bundled
         tutorialRecipe?: boolean; // micro tutorial running within the context of a script
         templateCode?: string;
         autoexpandStep?: boolean; // autoexpand tutorial card if instruction text overflows
         metadata?: TutorialMetadata; // metadata about the tutorial parsed from the markdown
         language?: string; // native language of snippets ("python" for python, otherwise defaults to typescript)
+        jres?: string; // JRES to be used when generating hints; necessary for tilemaps
     }
     interface TutorialCompletionInfo {
         // id of the tutorial

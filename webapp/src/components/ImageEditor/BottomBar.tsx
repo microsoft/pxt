@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import { ImageEditorStore, AnimationState, TilemapState } from './store/imageReducer';
 import { dispatchChangeImageDimensions, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchToggleAspectRatioLocked, dispatchChangeZoom, dispatchToggleOnionSkinEnabled} from './actions/dispatch';
 import { IconButton } from "./Button";
+import { fireClickOnEnter } from "../../sui";
 
 export interface BottomBarProps {
     dispatchChangeImageDimensions: (dimensions: [number, number]) => void;
@@ -66,6 +67,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                         <input className="image-editor-input"
                             title={lf("Image Width")}
                             value={width}
+                            tabIndex={0}
                             onChange={this.handleWidthChange}
                             onBlur={this.handleDimensionalBlur}
                             onKeyDown={this.handleDimensionalKeydown}
@@ -76,11 +78,13 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                             iconClass={aspectRatioLocked ? "ms-Icon ms-Icon--Lock" : "ms-Icon ms-Icon--Unlock"}
                             title={aspectRatioLocked ? lf("Unlock Aspect Ratio") : lf("Lock Aspect Ratio")}
                             toggle={!aspectRatioLocked}
+                            noTab
                         />
 
                         <input className="image-editor-input"
                             title={lf("Image Height")}
                             value={height}
+                            tabIndex={0}
                             onChange={this.handleHeightChange}
                             onBlur={this.handleDimensionalBlur}
                             onKeyDown={this.handleDimensionalKeydown}
@@ -132,7 +136,9 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                 <div role="button"
                     className={`image-editor-confirm`}
                     title={lf("Done")}
-                    onClick={onDoneClick}>
+                    tabIndex={0}
+                    onClick={onDoneClick}
+                    onKeyDown={fireClickOnEnter}>
                         {lf("Done")}
                 </div>
             </div>

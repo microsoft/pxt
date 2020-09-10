@@ -91,7 +91,13 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         pxt.tickEvent("projects.header");
         core.showLoading("changeheader", lf("loading..."));
         this.props.parent.loadHeaderAsync(hdr)
-            .done(() => {
+            .catch(e => {
+                core.warningNotification(lf("Sorry, we could not load this project."));
+                pxt.reportException(e);
+                this.props.parent.openHome();
+                return Promise.reject(e);
+            })
+            .finally(() => {
                 core.hideLoading("changeheader");
             })
     }
@@ -114,6 +120,14 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 break;
             case "tutorial":
                 this.props.parent.startActivity("tutorial", url, scr.name, editorPref);
+                break;
+            case "sharedExample":
+                let id = pxt.github.normalizeRepoId(url) || pxt.Cloud.parseScriptId(url);
+                if (!id) {
+                    core.errorNotification(lf("Sorry, the project url looks invalid."));
+                } else {
+                    window.location.hash = "pub:" + id;
+                }
                 break;
             default:
                 const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(url); // Tutorial
@@ -743,6 +757,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 case "file":
                 case "example":
                 case "codeExample":
+                case "sharedExample":
                 case "tutorial":
                 case "side":
                 case "template":
@@ -768,7 +783,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         let clickLabel = lf("Show Instructions");
         if (cardType == "tutorial")
             clickLabel = lf("Start Tutorial");
-        else if (cardType == "codeExample" || cardType == "example")
+        else if (cardType == "codeExample" || cardType == "example" || cardType == "sharedExample")
             clickLabel = lf("Open Example");
         else if (cardType == "forumUrl")
             clickLabel = lf("Open in Forum");
@@ -785,6 +800,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         switch (type) {
             case "tutorial":
             case "example":
+            case "sharedExample":
                 if (action && action.editor) return action.editor;
                 return "blocks";
             case "codeExample":
@@ -801,6 +817,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         switch (type) {
             case "tutorial":
             case "example":
+            case "sharedExample":
                 icon = "xicon blocks"
                 if (editor) icon = `xicon ${editor}`;
                 break;
@@ -810,12 +827,15 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             case "forumUrl":
                 icon = "comments"
                 break;
+            case "forumExample":
+                icon = "pencil"
+                break;
             case "template":
             default:
                 if (youTubeId || youTubePlaylistId) icon = "youtube";
                 break;
         }
-        return this.isLink() && type != "example" // TODO (shakao)  migrate forumurl to otherAction json in md
+        return this.isLink() && type != "forumExample" // TODO (shakao)  migrate forumurl to otherAction json in md
             ? <sui.Link role="button" className="link button attached" icon={icon} href={this.getUrl()} target="_blank" tabIndex={-1} />
             : <sui.Item role="button" className="button attached" icon={icon} onClick={onClick} tabIndex={-1} />
     }
@@ -839,7 +859,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         return <div className={`card-action ui items ${editor || ""}`} key={key}>
             {this.getActionIcon(onClick, type, editor)}
             {title && <div className="card-action-title">{title}</div>}
-            {this.isLink() && type != "example" ? // TODO (shakao)  migrate forumurl to otherAction json in md
+            {this.isLink() && type != "forumExample" ? // TODO (shakao)  migrate forumurl to otherAction json in md
                 <sui.Link
                     href={this.getUrl()}
                     refCallback={autoFocus ? this.linkRef : undefined}
@@ -953,8 +973,11 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                         return this.getActionCard(clickLabel, el.cardType || cardType, onClick, false, el, `action${i}`);
                     })}
                     {cardType === "forumUrl" &&
+                        // TODO (jwunderl) temporarily disabled in electron re: https://github.com/microsoft/pxt-arcade/issues/2346;
+                        // reenable CORS issue is fixed.
+                        !pxt.BrowserUtils.isPxtElectron() &&
                         // TODO (shakao) migrate forumurl to otherAction json in md
-                        this.getActionCard(lf("Open in Editor"), "example", this.handleOpenForumUrlInEditor)
+                        this.getActionCard(lf("Open in Editor"), "forumExample", this.handleOpenForumUrlInEditor)
                     }
                 </div>
             </div>

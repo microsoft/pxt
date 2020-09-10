@@ -1,6 +1,6 @@
 
 //% color=#D83B01
-namespace music {
+namespace sample {
 
     /**
      * Play a tone

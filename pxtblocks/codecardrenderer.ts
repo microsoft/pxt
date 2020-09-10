@@ -1,33 +1,20 @@
 namespace pxt.docs.codeCard {
-
-    const repeat = pxt.Util.repeatMap;
-
     export interface CodeCardRenderOptions {
         hideHeader?: boolean;
         shortName?: boolean;
     }
 
     export function render(card: pxt.CodeCard, options: CodeCardRenderOptions = {}): HTMLElement {
-        const repeat = pxt.Util.repeatMap;
-        let color = card.color || "";
         const url = card.url ? /^[^:]+:\/\//.test(card.url) ? card.url : ('/' + card.url.replace(/^\.?\/?/, ''))
             : card.youTubeId ? `https://youtu.be/${card.youTubeId}` : undefined;
         const link = !!url;
+
         const div = (parent: HTMLElement, cls: string, tag = "div", text: string | number = ''): HTMLElement => {
             let d = document.createElement(tag);
             if (cls)
                 d.className = cls;
             if (parent) parent.appendChild(d);
             if (text) d.appendChild(document.createTextNode(text + ''));
-            return d;
-        }
-        const a = (parent: HTMLElement, href: string, text: string, cls: string): HTMLAnchorElement => {
-            let d = document.createElement('a');
-            d.className = cls;
-            d.href = href;
-            d.appendChild(document.createTextNode(text));
-            d.target = '_blank';
-            parent.appendChild(d);
             return d;
         }
 
@@ -37,7 +24,16 @@ namespace pxt.docs.codeCard {
         r.setAttribute("role", "option");
         r.setAttribute("aria-selected", "true");
 
-        if (url) (r as HTMLAnchorElement).href = url;
+        if (link) {
+            const rAsLink = r as HTMLAnchorElement;
+            rAsLink.href = url;
+
+            // pop out external links
+            if (/^https?:\/\//.test(url)) {
+                rAsLink.target = "_blank";
+            }
+        }
+
         if (!options.hideHeader && card.header) {
             let h = div(r, "ui content " + (card.responsive ? " tall desktop only" : ""));
             if (card.header) div(h, 'description', 'span', card.header);
@@ -93,8 +89,7 @@ namespace pxt.docs.codeCard {
             let ct = div(r, "ui content");
             if (name) {
                 r.setAttribute("aria-label", name);
-                if (url && !link) a(ct, url, name, 'header');
-                else div(ct, 'header', 'div', name);
+                div(ct, 'header', 'div', name);
             }
             if (card.description) {
                 const descr = div(ct, 'ui description');

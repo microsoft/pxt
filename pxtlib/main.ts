@@ -296,6 +296,7 @@ namespace pxt {
             hwVariant = null;
             hwName = null;
         }
+        pxt.debug(`hwVariant: ${hwVariant} (${hwName})`)
     }
 
     export function hasHwVariants(): boolean {
@@ -394,6 +395,7 @@ namespace pxt {
         runUrl?: string; // "/beta---run"
         docsUrl?: string; // "/beta---docs"
         multiUrl?: string; // "/beta---multi"
+        asseteditorUrl?: string; // "/beta---asseteditor"
         isStatic?: boolean;
         verprefix?: string; // "v1"
     }
@@ -499,6 +501,9 @@ namespace pxt {
     export const JAVASCRIPT_PROJECT_NAME = "tsprj";
     export const PYTHON_PROJECT_NAME = "pyprj";
     export const DEFAULT_GROUP_NAME = "other"; // used in flyout, for snippet groups
+    export const TILEMAP_CODE = "tilemap.g.ts";
+    export const TILEMAP_JRES = "tilemap.g.jres";
+    export const TUTORIAL_INFO_FILE = "tutorial-info-cache.json";
 
     export function outputName(trg: pxtc.CompileTarget = null) {
         if (!trg) trg = appTarget.compile

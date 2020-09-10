@@ -19,15 +19,45 @@ type ISettingsProps = pxt.editor.ISettingsProps;
  * We'll run this step when we first start the tutorial to figure out what blocks are used so we can
  * filter the toolbox.
  */
-export function getUsedBlocksAsync(code: string, language?: string): Promise<pxt.Map<number>> {
+export function getUsedBlocksAsync(code: string[], id: string, language?: string, skipCache = false): Promise<pxt.Map<number>> {
     if (!code) return Promise.resolve({});
+
+    // check to see if usedblocks has been prebuilt. this is hashed on the tutorial code + pxt version + target version
+    if (pxt.appTarget?.tutorialInfo && !skipCache) {
+        const hash = pxt.BrowserUtils.getTutorialInfoHash(code);
+        if (pxt.appTarget.tutorialInfo[hash]) {
+            pxt.tickEvent(`tutorial.usedblocks.cached`, { tutorial: id });
+            return Promise.resolve(pxt.appTarget.tutorialInfo[hash].usedBlocks);
+        }
+    }
+
+    return pxt.BrowserUtils.tutorialInfoDbAsync()
+        .then(db => db.getAsync(id, code)
+            .then(entry => {
+                if (entry?.blocks && Object.keys(entry.blocks).length > 0 && !skipCache) {
+                    pxt.tickEvent(`tutorial.usedblocks.indexeddb`, { tutorial: id });
+                    return Promise.resolve(entry.blocks);
+                } else {
+                    return getUsedBlocksInternalAsync(code, id, language, db, skipCache);
+                }})
+            .catch((err) => {
+                // fall back to full blocks decompile on error
+                return getUsedBlocksInternalAsync(code, id, language, db, skipCache);
+            })
+        ).catch((err) => {
+            // fall back to full blocks decompile on error
+            return getUsedBlocksInternalAsync(code, id, language, null, skipCache);
+        })
+}
+
+function getUsedBlocksInternalAsync(code: string[], id: string, language?: string, db?: pxt.BrowserUtils.ITutorialInfoDb, skipCache = false): Promise<pxt.Map<number>> {
     const usedBlocks: pxt.Map<number> = {};
     return compiler.getBlocksAsync()
         .then(blocksInfo => {
             pxt.blocks.initializeAndInject(blocksInfo);
             if (language == "python")
-                return compiler.pySnippetToBlocksAsync(code, blocksInfo);
-            return compiler.decompileBlocksSnippetAsync(code, blocksInfo);
+                return compiler.pySnippetArrayToBlocksAsync(code, blocksInfo);
+            return compiler.decompileBlocksSnippetAsync(code.join("\n"), blocksInfo);
         }).then(resp => {
             const blocksXml = resp.outfiles["main.blocks"];
             if (blocksXml) {
@@ -43,6 +73,9 @@ export function getUsedBlocksAsync(code: string, language?: string): Promise<pxt
                 }
                 if (pxt.options.debug)
                     pxt.debug(JSON.stringify(usedBlocks, null, 2));
+
+                if (db && !skipCache) db.setAsync(id, usedBlocks, code);
+                pxt.tickEvent(`tutorial.usedblocks.computed`, { tutorial: id });
                 return usedBlocks;
             } else {
                 throw new Error("Failed to decompile");

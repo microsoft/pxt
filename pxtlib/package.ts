@@ -13,6 +13,7 @@ namespace pxt {
         "files",
         "testFiles",
         "testDependencies",
+        "fileDependencies",
         "public",
         "targetVersions",
         "supportedTargets",
@@ -204,33 +205,7 @@ namespace pxt {
         parseJRes(allres: Map<JRes> = {}) {
             for (const f of this.getFiles()) {
                 if (U.endsWith(f, ".jres")) {
-                    let js: Map<JRes> = JSON.parse(this.readFile(f))
-                    let base: JRes = js["*"] || {} as any
-                    for (let k of Object.keys(js)) {
-                        if (k == "*") continue
-                        let v = js[k]
-                        if (typeof v == "string") {
-                            // short form
-                            v = { data: v } as any
-                        }
-                        let ns = v.namespace || base.namespace || ""
-                        if (ns) ns += "."
-                        let id = v.id || ns + k
-                        let icon = v.icon
-                        let mimeType = v.mimeType || base.mimeType
-                        let dataEncoding = v.dataEncoding || base.dataEncoding || "base64"
-                        if (!icon && dataEncoding == "base64" && (mimeType == "image/png" || mimeType == "image/jpeg")) {
-                            icon = "data:" + mimeType + ";base64," + v.data
-                        }
-                        allres[id] = {
-                            id,
-                            data: v.data,
-                            dataEncoding: v.dataEncoding || base.dataEncoding || "base64",
-                            icon,
-                            namespace: ns,
-                            mimeType
-                        }
-                    }
+                    inflateJRes(JSON.parse(this.readFile(f)), allres)
                 }
             }
             return allres
@@ -293,6 +268,7 @@ namespace pxt {
             // handle invalid names downstream
             if (this.config.targetVersions
                 && this.config.targetVersions.target
+                && appTarget.versions
                 && semver.majorCmp(this.config.targetVersions.target, appTarget.versions.target) > 0)
                 U.userError(lf("{0} requires target version {1} (you are running {2})",
                     this.config.name, this.config.targetVersions.target, appTarget.versions.target))
@@ -318,17 +294,19 @@ namespace pxt {
             return regex.test(ts);
         }
 
-        private upgradePackagesAsync() {
+        private upgradePackagesAsync(): Promise<pxt.Map<string>> {
             if (!this.config)
                 this.loadConfig();
             return pxt.packagesConfigAsync()
                 .then(packagesConfig => {
                     let numfixes = 0
+                    let fixes: pxt.Map<string> = {};
                     U.iterMap(this.config.dependencies, (pkg, ver) => {
                         if (pxt.github.isGithubId(ver)) {
                             const upgraded = pxt.github.upgradedPackageReference(packagesConfig, ver)
                             if (upgraded && upgraded != ver) {
                                 pxt.log(`upgrading dep ${pkg}: ${ver} -> ${upgraded}`);
+                                fixes[ver] = upgraded;
                                 this.config.dependencies[pkg] = upgraded
                                 numfixes++
                             }
@@ -336,6 +314,7 @@ namespace pxt {
                     })
                     if (numfixes)
                         this.saveConfig()
+                    return numfixes && fixes;
                 })
         }
 
@@ -567,11 +546,31 @@ namespace pxt {
                 initPromise = initPromise.then(() => this.parseConfig(str))
             }
 
-            if (this.level == 0)
-                initPromise = initPromise.then(() => this.upgradePackagesAsync())
+            // if we are installing this script, we haven't yet downloaded the config
+            // do upgrade later
+            if (this.level == 0 && !isInstall) {
+                initPromise = initPromise.then(() => this.upgradePackagesAsync().then(() => { }))
+            }
 
             if (isInstall)
                 initPromise = initPromise.then(() => this.downloadAsync())
+
+            // we are installing the script, and we've download the original version and we haven't upgraded it yet
+            // do upgrade and reload as needed
+            if (this.level == 0 && isInstall) {
+                initPromise = initPromise.then(() => this.upgradePackagesAsync())
+                    .then(fixes => {
+                        if (fixes) {
+                            // worst case scenario with double load
+                            Object.keys(fixes).forEach(key => pxt.tickEvent("package.doubleload", { "extension": key }))
+                            pxt.log(`upgraded, downloading again`);
+                            pxt.debug(fixes);
+                            return this.downloadAsync();
+                        }
+                        // nothing to do here
+                        else return Promise.resolve();
+                    })
+            }
 
             if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
                 if (this.level == 0)
@@ -604,18 +603,19 @@ namespace pxt {
             }
 
 
-            const loadDepsRecursive = (deps: pxt.Map<string>, from: Package, isCpp = false) => {
-                return U.mapStringMapAsync(deps || from.dependencies(isCpp), (id, ver) => {
+            const loadDepsRecursive = async (deps: pxt.Map<string>, from: Package, isCpp = false) => {
+                if (!deps) deps = from.dependencies(isCpp)
+                for (let id of Object.keys(deps)) {
+                    const ver = deps[id] || "*"
                     if (id == "hw" && pxt.hwVariant)
                         id = "hw---" + pxt.hwVariant
                     let mod = from.resolveDep(id)
-                    ver = ver || "*"
                     if (mod) {
                         if (mod.invalid()) {
                             // failed to resolve dependency, ignore
                             mod.level = Math.min(mod.level, from.level + 1)
                             mod.addedBy.push(from)
-                            return Promise.resolve();
+                            continue
                         }
 
                         if (mod._verspec != ver && !/^file:/.test(mod._verspec) && !/^file:/.test(ver))
@@ -624,7 +624,6 @@ namespace pxt {
                             mod.level = Math.min(mod.level, from.level + 1)
                             mod.addedBy.push(from)
                         }
-                        return Promise.resolve()
                     } else {
                         let mod = new Package(id, ver, from.parent, from)
                         if (isCpp)
@@ -632,9 +631,9 @@ namespace pxt {
                         from.parent.deps[id] = mod
                         // we can have "core---nrf52" to be used instead of "core" in other packages
                         from.parent.deps[id.replace(/---.*/, "")] = mod
-                        return mod.loadAsync(isInstall)
+                        await mod.loadAsync(isInstall)
                     }
-                })
+                }
             }
 
             return initPromise
@@ -696,11 +695,33 @@ namespace pxt {
                 });
         }
 
+        static depWarnings: Map<boolean> = {}
         getFiles() {
+            let res: string[]
             if (this.level == 0 && !this.ignoreTests)
-                return this.config.files.concat(this.config.testFiles || [])
+                res = this.config.files.concat(this.config.testFiles || [])
             else
-                return this.config.files.slice(0);
+                res = this.config.files.slice(0);
+            const fd = this.config.fileDependencies
+            if (this.config.fileDependencies)
+                res = res.filter(fn => {
+                    let cond = U.lookup(fd, fn)
+                    if (!cond) return true
+                    cond = cond.trim()
+                    if (!cond) return true
+                    if (/^[\w-]+$/.test(cond)) {
+                        const dep = this.parent.resolveDep(cond)
+                        if (dep && !dep.cppOnly)
+                            return true
+                        return false
+                    }
+                    if (!Package.depWarnings[cond]) {
+                        Package.depWarnings[cond] = true
+                        pxt.log(`invalid dependency expression: ${cond} in ${this.id}/${fn}`)
+                    }
+                    return false
+                })
+            return res
         }
 
         addSnapshot(files: Map<string>, exts: string[] = [""]) {
@@ -755,19 +776,24 @@ namespace pxt {
         bundledStringsForFile(lang: string, filename: string): Map<string> {
             let r: Map<string> = {};
 
-            let [initialLang, baseLang] = pxt.Util.normalizeLanguageCode(lang);
+            let [initialLang, baseLang, initialLangLowerCase] = pxt.Util.normalizeLanguageCode(lang);
             const files = this.config.files;
 
             let fn = `_locales/${initialLang}/${filename}-strings.json`;
             if (files.indexOf(fn) > -1) {
                 r = JSON.parse(this.readFile(fn)) as Map<string>;
             }
-            else if (baseLang) {
-                fn = `_locales/${baseLang}/${filename}-strings.json`;
+            else if (initialLangLowerCase) {
+                fn = `_locales/${initialLangLowerCase}/${filename}-strings.json`;
                 if (files.indexOf(fn) > -1)
                     r = JSON.parse(this.readFile(fn)) as Map<string>;
+                else if (baseLang) {
+                    fn = `_locales/${baseLang}/${filename}-strings.json`;
+                    if (files.indexOf(fn) > -1) {
+                        r = JSON.parse(this.readFile(fn)) as Map<string>;
+                    }
+                }
             }
-
             return r;
         }
     }
@@ -867,6 +893,12 @@ namespace pxt {
                 }
             }
             return this._jres
+        }
+
+        updateJRes() {
+            if (this._jres) {
+                this.parseJRes(this._jres);
+            }
         }
 
         // undefined == uncached
@@ -1145,6 +1177,39 @@ namespace pxt {
             })
             return res;
         }
+    }
+
+    export function inflateJRes(js: Map<JRes>, allres: Map<JRes> = {}) {
+        let base: JRes = js["*"] || {} as any
+        for (let k of Object.keys(js)) {
+            if (k == "*") continue
+            let v = js[k]
+            if (typeof v == "string") {
+                // short form
+                v = { data: v } as any
+            }
+            let ns = v.namespace || base.namespace || ""
+            if (ns) ns += "."
+            let id = v.id || ns + k
+            let icon = v.icon
+            let mimeType = v.mimeType || base.mimeType
+            let dataEncoding = v.dataEncoding || base.dataEncoding || "base64"
+            if (!icon && dataEncoding == "base64" && (mimeType == "image/png" || mimeType == "image/jpeg")) {
+                icon = "data:" + mimeType + ";base64," + v.data
+            }
+            allres[id] = {
+                id,
+                data: v.data,
+                dataEncoding,
+                icon,
+                namespace: ns,
+                mimeType,
+                tilemapTile: v.tilemapTile,
+                tileset: v.tileset
+            }
+        }
+
+        return allres;
     }
 
     export function allPkgFiles(cfg: PackageConfig) {

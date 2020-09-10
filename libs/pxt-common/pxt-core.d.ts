@@ -400,9 +400,15 @@ declare function parseFloat(text: string): number;
 declare function randint(min: number, max: number): number;
 
 interface Object { }
-interface Function { }
-interface IArguments { }
-interface RegExp { }
+interface Function {
+  __assignableToFunction: Function;
+}
+interface IArguments { 
+  __assignableToIArguments: IArguments;
+}
+interface RegExp { 
+  __assignableToRegExp: RegExp;
+}
 type TemplateStringsArray = Array<string>;
 
 type uint8 = number;

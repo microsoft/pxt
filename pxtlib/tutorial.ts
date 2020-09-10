@@ -10,7 +10,7 @@ namespace pxt.tutorial {
             return undefined; // error parsing steps
 
         // collect code and infer editor
-        const { code, templateCode, editor, language } = computeBodyMetadata(body);
+        const { code, templateCode, editor, language, jres } = computeBodyMetadata(body);
 
         // noDiffs legacy
         if (metadata.diffs === true // enabled in tutorial
@@ -38,15 +38,17 @@ namespace pxt.tutorial {
             code,
             templateCode,
             metadata,
-            language
+            language,
+            jres
         };
     }
 
     function computeBodyMetadata(body: string) {
         // collect code and infer editor
         let editor: string = undefined;
-        const regex = /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python)?\s*\n([\s\S]*?)\n```/gmi;
-        let code = '';
+        const regex = /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python|jres)?\s*\n([\s\S]*?)\n```/gmi;
+        let jres: string;
+        let code: string[] = [];
         let templateCode: string;
         let language: string;
         let idx = 0;
@@ -78,16 +80,17 @@ namespace pxt.tutorial {
                     case "template":
                         templateCode = m2;
                         break;
+                    case "jres":
+                        jres = m2;
+                        break;
                 }
-                code += `\n${m1 == "python"
-                    ? "def __wrapper_" + idx + "():\n" + m2.replace(/^/gm, "    ")
-                    : "{\n" + m2 + "\n}"}\n`;
+                code.push(m1 == "python" ? `\n${m2}\n` : `{\n${m2}\n}`);
                 idx++
                 return "";
             });
         // default to blocks
         editor = editor || pxt.BLOCKS_PROJECT_NAME
-        return { code, templateCode, editor, language }
+        return { code, templateCode, editor, language, jres }
 
         function checkTutorialEditor(expected: string) {
             if (editor && editor != expected) {
@@ -264,7 +267,7 @@ ${code}
     /* Remove hidden snippets from text */
     function stripHiddenSnippets(str: string): string {
         if (!str) return str;
-        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template)\s*\n([\s\S]*?)\n```/gmi;
+        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template|jres)\s*\n([\s\S]*?)\n```/gmi;
         return str.replace(hiddenSnippetRegex, '').trim();
     }
 
@@ -296,12 +299,15 @@ ${code}
 
     export function highlight(pre: HTMLElement): void {
         let text = pre.textContent;
-        if (!/@highlight/.test(text)) // shortcut, nothing to do
-            return;
 
         // collapse image python/js literales
-        text = text.replace(/img\s*\(\s*"{3}(.|\n)*"{3}\s*\)/g, `""" """`);
-        text = text.replace(/img\s*\(\s*`(.|\n)*`\s*\)/g, "img` `");
+        text = text.replace(/img\s*\(\s*"{3}(.|\n)*"{3}\s*\)/g, `img(""" """)`);
+        text = text.replace(/img\s*\s*`(.|\n)*`\s*/g, "img` `");
+
+        if (!/@highlight/.test(text)) { // shortcut, nothing to do
+            pre.textContent = text;
+            return;
+        }
 
         // render lines
         pre.textContent = ""; // clear up and rebuild
@@ -345,10 +351,29 @@ ${code}
             templateCode: tutorialInfo.templateCode,
             autoexpandStep: true,
             metadata: tutorialInfo.metadata,
-            language: tutorialInfo.language
+            language: tutorialInfo.language,
+            jres: tutorialInfo.jres
         };
 
         return { options: tutorialOptions, editor: tutorialInfo.editor };
     }
 
+
+    export function parseCachedTutorialInfo(json: string, id?: string) {
+        let cachedInfo = pxt.Util.jsonTryParse(json) as pxt.Map<pxt.BuiltTutorialInfo>;
+        if (!cachedInfo) return Promise.resolve();
+
+        return pxt.BrowserUtils.tutorialInfoDbAsync()
+            .then(db =>  {
+                if (id && cachedInfo[id]) {
+                    const info = cachedInfo[id];
+                    if (info.usedBlocks && info.hash) db.setWithHashAsync(id, info.usedBlocks, info.hash);
+                } else {
+                    for (let key of Object.keys(cachedInfo)) {
+                        const info = cachedInfo[key];
+                        if (info.usedBlocks && info.hash) db.setWithHashAsync(key, info.usedBlocks, info.hash);
+                    }
+                }
+            }).catch((err) => {})
+    }
 }

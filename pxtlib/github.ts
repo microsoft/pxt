@@ -581,6 +581,27 @@ namespace pxt.github {
             })
     }
 
+    export async function cacheProjectDependenciesAsync(cfg: pxt.PackageConfig): Promise<void> {
+        const ghExtensions = Object.keys(cfg.dependencies)
+                ?.filter(dep => isGithubId(cfg.dependencies[dep]));
+
+        if (ghExtensions.length) {
+            const pkgConfig = await pxt.packagesConfigAsync();
+            // Make sure external packages load before installing header.
+            await Promise.all(
+                ghExtensions.map(
+                    async ext => {
+                        const extSrc = cfg.dependencies[ext];
+                        const ghPkg = await downloadPackageAsync(extSrc, pkgConfig);
+                        if (!ghPkg) {
+                            throw new Error(lf("Cannot load extension {0} from {1}", ext, extSrc));
+                        }
+                    }
+                )
+            );
+        }
+    }
+
     export interface User {
         login: string; // "Microsoft",
         id: number; // 6154722,
@@ -629,7 +650,7 @@ namespace pxt.github {
     export interface ParsedRepo {
         owner?: string;
         project?: string;
-        // owner/name
+        // owner/project (aka slug)
         fullName: string;
         tag?: string;
         fileName?: string;
@@ -728,15 +749,21 @@ namespace pxt.github {
         // status failed, try enabling pages
         if (!url) {
             // enable pages
-            const r = await ghPostAsync(`https://api.github.com/repos/${repo}/pages`, {
-                source: {
-                    branch: "master",
-                    path: ""
-                }
-            }, {
-                "Accept": "application/vnd.github.switcheroo-preview+json"
-            });
-            url = r.html_url;
+            try {
+                const r = await ghPostAsync(`https://api.github.com/repos/${repo}/pages`, {
+                    source: {
+                        branch: "master",
+                        path: "/"
+                    }
+                }, {
+                    "Accept": "application/vnd.github.switcheroo-preview+json"
+                });
+                url = r.html_url;
+            }
+            catch (e) {// this is still an experimental api subject to changes
+                pxt.tickEvent("github.pages.error");
+                pxt.reportException(e);
+            }
         }
 
         // we have a URL, update project
@@ -908,7 +935,10 @@ namespace pxt.github {
     // parse https://github.com/[company]/[project](/filepath)(#tag)
     export function parseRepoId(repo: string): ParsedRepo {
         if (!repo) return undefined;
+        // clean out whitespaces
         repo = repo.trim();
+        // trim trailing /
+        repo = repo.replace(/\/$/, '')
 
         // convert github pages into github repo
         const mgh = /^https:\/\/([^./#]+)\.github\.io\/([^/#]+)\/?$/i.exec(repo);
@@ -984,10 +1014,10 @@ namespace pxt.github {
             return null
 
         const m = /^min:(.*)/.exec(upgr)
-        if (m && pxt.semver.parse(m[1])) {
+        const minV = m && pxt.semver.tryParse(m[1]);
+        if (minV) {
             const parsed = parseRepoId(id)
-            const minV = pxt.semver.parse(m[1])
-            const currV = pxt.semver.parse(parsed.tag)
+            const currV = pxt.semver.tryParse(parsed.tag)
             if (currV && pxt.semver.cmp(currV, minV) < 0) {
                 parsed.tag = m[1]
                 pxt.debug(`upgrading ${id} to ${m[1]}`)

@@ -18,7 +18,7 @@ enum Choice2 {
 
 
 //% color="#AA278D"
-namespace basic {
+namespace enums {
 
     //% block
     export function turn(choice: Choice) {

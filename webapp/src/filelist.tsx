@@ -135,7 +135,8 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 && !files.some(f => f.name == localized);
             const hasDelete = deleteFiles
                 && file.name != pxt.CONFIG_NAME
-                && (usesGitHub || file.name != "main.ts");
+                && (usesGitHub || file.name != "main.ts")
+                && !file.isReadonly();
 
             return (
                 <FileTreeItem key={"file" + file.getName()}

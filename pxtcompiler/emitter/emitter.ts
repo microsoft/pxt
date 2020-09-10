@@ -971,7 +971,19 @@ namespace ts.pxtc {
                 };
             }
 
-            hexfile.setupFor(opts.target, opts.extinfo || emptyExtInfo());
+            let extinfo = opts.extinfo
+            let optstarget = opts.target
+            // if current (main) extinfo is disabled use another one
+            if (extinfo && extinfo.disabledDeps) {
+                const enabled = (opts.otherMultiVariants || []).find(e => e.extinfo && !e.extinfo.disabledDeps)
+                if (enabled) {
+                    pxt.debug(`using alternative extinfo (due to ${extinfo.disabledDeps})`)
+                    extinfo = enabled.extinfo
+                    optstarget = enabled.target
+                }
+            }
+
+            hexfile.setupFor(optstarget, extinfo || emptyExtInfo());
             hexfile.setupInlineAssembly(opts);
         }
 
@@ -1003,7 +1015,15 @@ namespace ts.pxtc {
 
         let allStmts: Statement[] = [];
         if (!opts.forceEmit || res.diagnostics.length == 0) {
-            const files = program.getSourceFiles();
+            let files = program.getSourceFiles().slice();
+
+            const main = files.find(sf => sf.fileName === "main.ts");
+
+            if (main) {
+                files = files.filter(sf => sf.fileName !== "main.ts");
+                files.push(main);
+            }
+
             files.forEach(f => {
                 f.statements.forEach(s => {
                     allStmts.push(s)
@@ -1325,7 +1345,7 @@ namespace ts.pxtc {
                             if (!h.types || h.types.length != 1)
                                 throw userError(9228, lf("invalid extends clause"))
                             let superType = typeOf(h.types[0])
-                            if (superType && isClassType(superType) && !isGenericType(superType)) {
+                            if (superType && isClassType(superType)) {
                                 // check if user defined
                                 // let filename = getSourceFileOfNode(tp.symbol.valueDeclaration).fileName
                                 // if (program.getRootFileNames().indexOf(filename) == -1) {
@@ -1427,9 +1447,12 @@ namespace ts.pxtc {
             inf.vtable = tbl
             inf.itable = []
 
+            const fieldNames: pxt.Map<boolean> = {}
+
             for (let fld of inf.allfields) {
                 let fname = getName(fld)
                 let finfo = fieldIndexCore(inf, fld, false)
+                fieldNames[fname] = true
                 inf.itable.push({
                     name: fname,
                     info: (finfo.idx + 1) * (isStackMachine() ? 1 : 4),
@@ -1453,6 +1476,7 @@ namespace ts.pxtc {
                             ex.setProc = proc
                         else if (isGet && !ex.proc)
                             ex.proc = proc
+                        ex.info = 0
                     } else {
                         inf.itable.push({
                             name: n,
@@ -1547,6 +1571,8 @@ namespace ts.pxtc {
                     } else if (isClassFunction(mem)) {
                         let minf = getFunctionInfo(mem as any)
                         minf.parentClassInfo = info
+                        if (minf.isUsed)
+                            markVTableUsed(info)
                         const key = getName(mem)
                         if (!info.methods.hasOwnProperty(key))
                             info.methods[key] = []
@@ -2390,7 +2416,7 @@ ${lbl}: .short 0xffff
                             for (let d of sym.declarations || [sym.valueDeclaration]) {
                                 if (d.kind == SK.ModuleDeclaration) {
                                     for (let stmt of ((d as ModuleDeclaration).body as ModuleBlock).statements) {
-                                        if (stmt.symbol.name == attrs.helper) {
+                                        if (stmt.symbol?.name == attrs.helper) {
                                             helperStmt = stmt
                                         }
                                     }
@@ -2546,6 +2572,7 @@ ${lbl}: .short 0xffff
         function markVTableUsed(info: ClassInfo) {
             recordUsage(info.decl)
             if (info.isUsed) return
+            // U.assert(!bin.finalPass)
             const pinfo = pxtInfo(info.decl)
             pinfo.flags |= PxtNodeFlags.IsUsed
             if (info.baseClassInfo) markVTableUsed(info.baseClassInfo)
@@ -2734,10 +2761,11 @@ ${lbl}: .short 0xffff
             pxtInfo(node).callInfo = callInfo;
 
             function handleHexLike(pp: (s: string) => string) {
-                if (node.template.kind != SK.NoSubstitutionTemplateLiteral)
-                    throw unhandled(node, lf("substitution not supported in hex literal", attrs.shim), 9265);
                 res = parseHexLiteral(node, pp((node.template as ts.LiteralExpression).text))
             }
+
+            if (node.template.kind != SK.NoSubstitutionTemplateLiteral)
+                throw unhandled(node, lf("substitution not supported in hex literal", attrs.shim), 9265);
 
             switch (attrs.shim) {
                 case "@hex":
@@ -2747,6 +2775,9 @@ ${lbl}: .short 0xffff
                     handleHexLike(f4PreProcess)
                     break
                 default:
+                    if (attrs.shim === undefined && attrs.helper) {
+                        return emitTaggedTemplateHelper(node.template, attrs);
+                    }
                     throw unhandled(node, lf("invalid shim '{0}' on tagged template", attrs.shim), 9265)
             }
             if (attrs.helper) {
@@ -2764,6 +2795,33 @@ ${lbl}: .short 0xffff
         }
         function emitParenExpression(node: ParenthesizedExpression) {
             return emitExpr(node.expression)
+        }
+
+        function emitTaggedTemplateHelper(node: NoSubstitutionTemplateLiteral, attrs: CommentAttrs) {
+            let syms = checker.getSymbolsInScope(node, SymbolFlags.Module)
+            let helperStmt: Statement
+            for (let sym of syms) {
+                if (sym.name == "helpers") {
+                    for (let d of sym.declarations || [sym.valueDeclaration]) {
+                        if (d.kind == SK.ModuleDeclaration) {
+                            for (let stmt of ((d as ModuleDeclaration).body as ModuleBlock).statements) {
+                                if (stmt.symbol?.name == attrs.helper) {
+                                    helperStmt = stmt;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (!helperStmt)
+                userError(9215, lf("helpers.{0} not found", attrs.helper))
+            if (helperStmt.kind != SK.FunctionDeclaration)
+                userError(9216, lf("helpers.{0} isn't a function", attrs.helper))
+            const decl = <FunctionDeclaration>helperStmt;
+            markFunctionUsed(decl);
+
+            let r = mkProcCall(decl, node, [emitStringLiteral(node.text)]);
+            return r
         }
 
         function getParameters(node: FunctionLikeDeclaration) {
@@ -4486,8 +4544,10 @@ ${lbl}: .short 0xffff
 
         function emitClassDeclaration(node: ClassDeclaration) {
             const info = getClassInfo(null, node)
-            if (info.isUsed && bin.usedClassInfos.indexOf(info) < 0)
+            if (info.isUsed && bin.usedClassInfos.indexOf(info) < 0) {
+                // U.assert(!bin.finalPass)
                 bin.usedClassInfos.push(info)
+            }
             node.members.forEach(emit)
         }
         function emitInterfaceDeclaration(node: InterfaceDeclaration) {

@@ -650,9 +650,11 @@ export class FillEdit extends Edit {
     }
 
     protected doEditCore(state: EditState) {
-        // Read image layer, but write to the active layer; allows wall fill to fill based on tiles
-        const colorToReplace = state.image.get(this.col, this.row);
-        if (state.activeLayer === state.image && colorToReplace === this.color) {
+        const includeActiveLayerData = state.activeLayer !== state.image;
+        const getData = (col: number, row: number) => (includeActiveLayerData ? state.activeLayer.get(col, row) << 8 : 0) + state.image.get(col, row);
+
+        const colorToReplace = getData(this.col, this.row);
+        if (colorToReplace === this.color) {
             return;
         }
 
@@ -663,7 +665,7 @@ export class FillEdit extends Edit {
         const q: pxt.sprite.Coord[] = [{x: this.col, y: this.row}];
         while (q.length) {
             const curr = q.pop();
-            if (state.image.get(curr.x, curr.y) === colorToReplace) {
+            if (getData(curr.x, curr.y) === colorToReplace) {
                 state.activeLayer.set(curr.x, curr.y, this.color);
                 tryPush(curr.x + 1, curr.y);
                 tryPush(curr.x - 1, curr.y);

@@ -20,12 +20,13 @@ namespace pxtblockly {
     // 32 is specifically chosen so that we can scale the images for the default
     // sprite sizes without getting browser anti-aliasing
     const PREVIEW_WIDTH = 32;
-    const PADDING = 5;
+    const X_PADDING = 5;
+    const Y_PADDING = 1;
     const BG_PADDING = 4;
     const BG_WIDTH = BG_PADDING * 2 + PREVIEW_WIDTH;
     const ICON_WIDTH = 30;
-    const TOTAL_HEIGHT = PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
-    const TOTAL_WIDTH = TOTAL_HEIGHT + ICON_WIDTH;
+    const TOTAL_HEIGHT = Y_PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
+    const TOTAL_WIDTH = X_PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH + ICON_WIDTH;
 
     export class FieldAnimationEditor extends Blockly.Field implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
@@ -155,7 +156,7 @@ namespace pxtblockly {
             pxsim.U.clear(this.fieldGroup_);
 
             const bg = new svg.Rect()
-                .at(PADDING + ICON_WIDTH, PADDING)
+                .at(X_PADDING + ICON_WIDTH, Y_PADDING)
                 .size(BG_WIDTH, BG_WIDTH)
                 .corner(4)
                 .setClass("blocklyAnimationField");
@@ -163,7 +164,7 @@ namespace pxtblockly {
             this.fieldGroup_.appendChild(bg.el);
 
             const icon = new svg.Text("\uf008")
-                .at(PADDING, 5 + (TOTAL_HEIGHT >> 1))
+                .at(X_PADDING, 5 + (TOTAL_HEIGHT >> 1))
                 .fill((this.sourceBlock_ as Blockly.BlockSvg).getColourSecondary())
                 .setClass("semanticIcon");
 
@@ -173,7 +174,7 @@ namespace pxtblockly {
                 this.frames = this.state.frames.map(frame => bitmapToImageURI(pxt.sprite.Bitmap.fromData(frame), PREVIEW_WIDTH, this.lightMode));
                 this.preview = new svg.Image()
                     .src(this.frames[0])
-                    .at(PADDING + BG_PADDING + ICON_WIDTH, PADDING + BG_PADDING)
+                    .at(X_PADDING + BG_PADDING + ICON_WIDTH, Y_PADDING + BG_PADDING)
                     .size(PREVIEW_WIDTH, PREVIEW_WIDTH);
                 this.fieldGroup_.appendChild(this.preview.el);
             }

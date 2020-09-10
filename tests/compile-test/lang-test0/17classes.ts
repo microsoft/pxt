@@ -72,3 +72,23 @@ namespace ClassInit {
 }
 
 ClassInit.classInit()
+
+// this was only failing when comping the top-level package in test mode
+namespace backwardCompilationOrder {
+    export class RemoteRequestedDevice {
+        services: number[] = [];
+
+        constructor(
+            public parent: DeviceNameClient
+        ) { }
+
+
+        select() {
+            this.parent.setName()
+        }
+    }
+
+    export class DeviceNameClient {
+        setName() { }
+    }
+}

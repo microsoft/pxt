@@ -20,7 +20,9 @@
         }
     ],
     "activities": null,
-    "code": "\n{\nbasic.showString(\"Micro!\")\n}\n",
+    "code": [
+        "{\nbasic.showString(\"Micro!\")\n}"
+    ],
     "metadata": {
         "flyoutOnly": true,
         "diffs": false

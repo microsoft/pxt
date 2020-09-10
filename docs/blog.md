@@ -1,5 +1,25 @@
 # Microsoft MakeCode Blog
 
+## [Microsoft TileCode: Design, Code, and Play Games on MakeCode Arcade Devices](/blog/arcade/tilecode)
+
+August 20th, 2020 by [Thomas Ball](https://www.microsoft.com/en-us/research/people/tball) and [Stefania Druga](http://cognimates.me/team/)
+
+## [MakeCode Arcade Update](/blog/arcade/update-july-2020)
+
+July 17th, 2020 by [Jaqster](https://github.com/jaqster)
+
+Hard to believe it was only January when we released MakeCode Arcade for General Availability. So much has happened since then...
+
+**[Continue reading this blog post](/blog/arcade/update-july-2020)**
+
+## [MakeCode for the micro:bit – 2020 Release](/blog/microbit/2020-release)
+
+June 12th, 2020 by [Jaqster](https://github.com/jaqster)
+
+The 2020 MakeCode for the micro:bit release is now available. Many of the important new features were announced in the post about the beta but we'll share them with you again here.
+
+**[Continue reading this blog post](/blog/microbit/2020-release)**
+
 ## [MakeCode for the micro:bit – 2020 Beta Release](/blog/microbit/2020-beta)
 
 April 28th, 2020 by [Jaqster](https://github.com/jaqster)

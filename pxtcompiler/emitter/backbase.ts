@@ -130,8 +130,11 @@ ${lbl}: ${this.obj_header(vt)}
 
 
         hex_literal(lbl: string, data: string) {
+            // if buffer looks as if it was prepared for in-app reprogramming (at least 8 bytes of 0xff)
+            // align it to 8 bytes, to make sure it can be rewritten also on SAMD51
+            const align = /f{16}/i.test(data) ? 8 : 4
             return `
-.balign 4
+.balign ${align}
 ${lbl}: ${this.obj_header("pxt::buffer_vt")}
 ${hexLiteralAsm(data)}
 `
@@ -1183,7 +1186,7 @@ ${baseLabel}_nochk:
                 this.checkSubtype(classNo, ".fail", "r4")
 
             // on linux we use 32 bits for array size
-            const ldrSize = target.stackAlign || isBuffer ? "ldr" : "ldrh"
+            const ldrSize = isStackMachine() || target.runtimeIsARM || isBuffer ? "ldr" : "ldrh"
 
             this.write(`
                 asrs r1, r1, #1

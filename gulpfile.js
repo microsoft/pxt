@@ -131,7 +131,8 @@ function initWatch() {
         targetjs,
         webapp,
         browserifyWebapp,
-        gulp.parallel(semanticjs, copyJquery, copyWebapp, copyPlayground, copySemanticFonts, copyMonaco)
+        browserifyAssetEditor,
+        gulp.parallel(semanticjs, copyJquery, copyWebapp, copySemanticFonts, copyMonaco)
     ];
 
     gulp.watch("./pxtlib/**/*", gulp.series(...tasks));
@@ -149,7 +150,7 @@ function initWatch() {
     gulp.watch("./pxtwinrt/**/*", gulp.series(pxtwinrt, ...tasks.slice(5)));
     gulp.watch("./cli/**/*", gulp.series(cli, ...tasks.slice(5)));
 
-    gulp.watch("./webapp/src/**/*", gulp.series(updatestrings, webapp, browserifyWebapp));
+    gulp.watch("./webapp/src/**/*", gulp.series(updatestrings, webapp, browserifyWebapp, browserifyAssetEditor));
 
     gulp.watch(["./theme/**/*.less", "./theme/**/*.overrides", "./theme/**/*.variables", "./svgicons/**/*.svg"], gulp.parallel(buildcss, buildSVGIcons))
 
@@ -352,19 +353,13 @@ const copyWebapp = () =>
 const copySemanticFonts = () => gulp.src("node_modules/semantic-ui-less/themes/default/assets/fonts/*")
     .pipe(gulp.dest("built/web/fonts"))
 
-const copyPlaygroundHelpers = () => gulp.src("libs/pxt-common/pxt-helpers.ts")
-    .pipe(concat("pxt-helpers.js"))
-    .pipe(gulp.dest("docs/static/playground/pxt-common/"));
-
-const copyPlaygroundCore = () => gulp.src("libs/pxt-common/pxt-core.d.ts")
-    .pipe(concat("pxt-core.d.js"))
-    .pipe(gulp.dest("docs/static/playground/pxt-common/"));
-
-const copyPlayground = gulp.parallel(copyPlaygroundCore, copyPlaygroundHelpers)
-
 const browserifyWebapp = () => process.env.PXT_ENV == 'production' ?
     exec('node node_modules/browserify/bin/cmd ./built/webapp/src/app.js -g [ envify --NODE_ENV production ] -g uglifyify -o ./built/web/main.js') :
     exec('node node_modules/browserify/bin/cmd built/webapp/src/app.js -o built/web/main.js --debug')
+
+const browserifyAssetEditor = () => process.env.PXT_ENV == 'production' ?
+    exec('node node_modules/browserify/bin/cmd ./built/webapp/src/assetEditor.js -g [ envify --NODE_ENV production ] -g uglifyify -o ./built/web/pxtasseteditor.js') :
+    exec('node node_modules/browserify/bin/cmd built/webapp/src/assetEditor.js -o built/web/pxtasseteditor.js --debug')
 
 const buildSVGIcons = () => {
     let webfontsGenerator = require('webfonts-generator')
@@ -603,7 +598,8 @@ const buildAll = gulp.series(
     gulp.parallel(buildcss, buildSVGIcons),
     webapp,
     browserifyWebapp,
-    gulp.parallel(semanticjs, copyJquery, copyWebapp, copyPlayground, copySemanticFonts, copyMonaco),
+    browserifyAssetEditor,
+    gulp.parallel(semanticjs, copyJquery, copyWebapp, copySemanticFonts, copyMonaco),
     buildBlocksTestRunner,
     runUglify
 );

@@ -7,6 +7,7 @@ import * as commandParser from './commandparser';
 
 import U = pxt.Util;
 
+const maxDMesgSize = 4096
 
 const openAsync = Promise.promisify(fs.open)
 const closeAsync = Promise.promisify(fs.close) as (fd: number) => Promise<void>
@@ -230,17 +231,20 @@ ${cmds}
 }
 
 function codalBin() {
-    let cs = pxt.appTarget.compileService
-
-    return buildengine.thisBuild.buildPath + "/build/" + (cs.codalBinary ? cs.codalBinary :
-        cs.yottaTarget + "/source/" + cs.yottaBinary.replace(/\.hex$/, "").replace(/-combined$/, ""));
+    const cs = pxt.appTarget.compileService
+    const be = buildengine.thisBuild
+    if (be.outputPath)
+        return be.buildPath + "/" + be.outputPath
+    if (cs.codalBinary)
+        return be.buildPath + "/build/" + cs.codalBinary
+    return be.buildPath + "/build/" + cs.yottaTarget + "/source/" + cs.yottaBinary.replace(/\.hex$/, "").replace(/-combined$/, "")
 }
 
 let cachedMap = ""
 let addrCache: pxt.Map<number>
 function getMap() {
     if (!cachedMap)
-        cachedMap = fs.readFileSync(codalBin() + ".map", "utf8")
+        cachedMap = fs.readFileSync(codalBin().replace(/\.elf$/, "") + ".map", "utf8")
     return cachedMap
 }
 
@@ -904,8 +908,8 @@ export async function dumpheapAsync(filename?: string) {
     function getDmesg() {
         let addr = findAddr("codalLogStore")
         let start = addr + 4 - memStart
-        for (let i = 0; i < 1024; ++i) {
-            if (i == 1023 || mem[start + i] == 0)
+        for (let i = 0; i < maxDMesgSize; ++i) {
+            if (i == maxDMesgSize - 1 || mem[start + i] == 0)
                 return mem.slice(start, start + i).toString("utf8")
         }
         return ""
@@ -935,7 +939,7 @@ export async function dumpheapAsync(filename?: string) {
 export async function dumplogAsync() {
     await initGdbServerAsync()
     let addr = findAddr("codalLogStore")
-    let buf = await getMemoryAsync(addr + 4, 1024)
+    let buf = await getMemoryAsync(addr + 4, maxDMesgSize)
     for (let i = 0; i < buf.length; ++i) {
         if (buf[i] == 0) {
             console.log("\n\n" + buf.slice(0, i).toString("utf8"))

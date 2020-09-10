@@ -63,7 +63,7 @@ namespace pxt.discourse {
                         title: t.title,
                         url: `${apiUrl}/t/${t.slug}/${t.id}`,
                         imageUrl: t.image_url,
-                        author: users[t.posters[0].user_id].name,
+                        author: users[t.posters[0].user_id].username,
                         cardType: "forumUrl"
                     }
                 });

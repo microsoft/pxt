@@ -7,6 +7,7 @@ namespace pxtblockly {
     export interface FieldTilemapOptions {
         initWidth: string;
         initHeight: string;
+        tileWidth: string | number;
 
         filter?: string;
     }
@@ -14,16 +15,19 @@ namespace pxtblockly {
     interface ParsedFieldTilemapOptions {
         initWidth: number;
         initHeight: number;
+        tileWidth: 8 | 16 | 32;
         filter?: string;
     }
 
     // 32 is specifically chosen so that we can scale the images for the default
     // sprite sizes without getting browser anti-aliasing
     const PREVIEW_WIDTH = 32;
-    const PADDING = 5;
+    const X_PADDING = 5;
+    const Y_PADDING = 1;
     const BG_PADDING = 4;
     const BG_WIDTH = BG_PADDING * 2 + PREVIEW_WIDTH;
-    const TOTAL_WIDTH = PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
+    const TOTAL_HEIGHT = Y_PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
+    const TOTAL_WIDTH = X_PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
 
     export class FieldTilemap extends Blockly.Field implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
@@ -34,6 +38,9 @@ namespace pxtblockly {
         private state: pxt.sprite.TilemapData;
         private lightMode: boolean;
         private undoRedoState: any;
+
+        private initText: string;
+        private tilemapId: string;
 
         isGreyBlock: boolean;
 
@@ -78,7 +85,21 @@ namespace pxtblockly {
 
             (this.params as any).blocksInfo = this.blocksInfo;
 
-            this.restoreTilesFromWorkspace(this.state);
+            this.state.projectReferences = getAllReferencedTiles(this.sourceBlock_.workspace, this.sourceBlock_.id).map(t => t.id);
+            const project = pxt.react.getTilemapProject();
+
+            const allTiles = project.getProjectTiles(this.state.tileset.tileWidth, true);
+
+            for (const tile of allTiles.tiles) {
+                if (!this.state.tileset.tiles.some(t => t.id === tile.id)) {
+                    this.state.tileset.tiles.push(tile);
+                }
+            }
+
+            for (const tile of this.state.tileset.tiles) {
+                tile.weight = allTiles.tiles.findIndex(t => t.id === tile.id);
+            }
+
             const fv = pxt.react.getFieldEditorView("tilemap-editor", this.state, this.params);
 
             if (this.undoRedoState) {
@@ -92,24 +113,61 @@ namespace pxtblockly {
                     const old = this.getValue();
 
                     this.state = result;
+                    this.state.projectReferences = null;
 
-                    // Save the tileset to the workspace
-                    this.updateWorkspaceTiles(this.state.tileset);
 
-                    // Delete the image literals froms the tileset (they will be emitted elsewhere)
-                    for (const tile of this.state.tileset.tiles) {
-                        if (tile.projectId && tile.data) {
-                            delete tile.data;
+                    const lastRevision = project.revision();
+                    project.pushUndo();
+
+                    if (result.deletedTiles) {
+                        for (const deleted of result.deletedTiles) {
+                            project.deleteTile(deleted);
                         }
+                    }
+
+                    if (result.editedTiles) {
+                        for (const edit of result.editedTiles) {
+                            const editedIndex = result.tileset.tiles.findIndex(t => t.id === edit);
+                            const edited = result.tileset.tiles[editedIndex];
+
+                            // New tiles start with *. We haven't created them yet so ignore
+                            if (!edited || edited.id.startsWith("*")) continue;
+
+                            result.tileset.tiles[editedIndex] = project.updateTile(edited.id, edited.bitmap);
+                        }
+                    }
+
+                    for (let i = 0; i < result.tileset.tiles.length; i++) {
+                        const tile = result.tileset.tiles[i];
+
+                        if (tile.id.startsWith("*")) {
+                            const newTile = project.createNewTile(tile.bitmap);
+                            result.tileset.tiles[i] = newTile;
+                        }
+                        else if (!tile.data) {
+                            result.tileset.tiles[i] = project.resolveTile(tile.id);
+                        }
+                    }
+
+                    pxt.sprite.trimTilemapTileset(result);
+
+                    if (this.tilemapId) {
+                        project.updateTilemap(this.tilemapId, result);
                     }
 
                     this.redrawPreview();
 
                     this.undoRedoState = fv.getPersistentData();
 
+                    const newValue = this.getValue();
+
+                    if (old !== newValue) {
+                        project.forceUpdate();
+                    }
+
                     if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
-                        Blockly.Events.fire(new Blockly.Events.BlockChange(
-                            this.sourceBlock_, 'field', this.name, old, this.getValue()));
+                        Blockly.Events.fire(new BlocklyTilemapChange(
+                            this.sourceBlock_, 'field', this.name, old, this.getValue(), lastRevision, project.revision()));
                     }
                 }
             });
@@ -121,7 +179,7 @@ namespace pxtblockly {
             super.render_();
 
             if (!this.isGreyBlock) {
-                this.size_.height = TOTAL_WIDTH
+                this.size_.height = TOTAL_HEIGHT;
                 this.size_.width = TOTAL_WIDTH;
             }
         }
@@ -129,11 +187,25 @@ namespace pxtblockly {
         getValue() {
             if (this.isGreyBlock) return pxt.Util.htmlUnescape(this.value_);
 
-            return pxt.sprite.encodeTilemap(this.state, "typescript");
+            if (this.tilemapId) {
+                return `tilemap\`${this.tilemapId}\``;
+            }
+
+            try {
+                return pxt.sprite.encodeTilemap(this.state, "typescript");
+            }
+            catch (e) {
+                // If encoding failed, this is a legacy tilemap. Should get upgraded when the project is loaded
+                return this.getInitText();
+            }
         }
 
         getTileset() {
             return this.state.tileset;
+        }
+
+        getInitText() {
+            return this.initText;
         }
 
         doValueUpdate_(newValue: string) {
@@ -147,7 +219,7 @@ namespace pxtblockly {
             super.doValueUpdate_(newValue);
         }
 
-        redrawPreview(wsTiles?: pxt.sprite.TileInfo[]) {
+        redrawPreview() {
             if (!this.fieldGroup_) return;
             pxsim.U.clear(this.fieldGroup_);
 
@@ -158,7 +230,7 @@ namespace pxtblockly {
             }
 
             const bg = new svg.Rect()
-                .at(PADDING, PADDING)
+                .at(X_PADDING, Y_PADDING)
                 .size(BG_WIDTH, BG_WIDTH)
                 .setClass("blocklyTilemapField")
                 .corner(4);
@@ -166,23 +238,52 @@ namespace pxtblockly {
             this.fieldGroup_.appendChild(bg.el);
 
             if (this.state) {
-                this.restoreTilesFromWorkspace(this.state, wsTiles);
                 const data = tilemapToImageURI(this.state, PREVIEW_WIDTH, this.lightMode, this.blocksInfo);
                 const img = new svg.Image()
                     .src(data)
-                    .at(PADDING + BG_PADDING, PADDING + BG_PADDING)
+                    .at(X_PADDING + BG_PADDING, Y_PADDING + BG_PADDING)
                     .size(PREVIEW_WIDTH, PREVIEW_WIDTH);
                 this.fieldGroup_.appendChild(img.el);
+            }
+        }
+
+        refreshTileset() {
+            const project = pxt.react.getTilemapProject();
+            if (this.tilemapId) {
+                this.state = project.getTilemap(this.tilemapId);
+            }
+            else if (this.state) {
+                for (let i = 0; i < this.state.tileset.tiles.length; i++) {
+                    this.state.tileset.tiles[i] = project.resolveTile(this.state.tileset.tiles[i].id);
+                }
             }
         }
 
         private parseBitmap(newText: string) {
             if (!this.blocksInfo) return;
 
-            const tilemap = pxt.sprite.decodeTilemap(newText, "typescript");
+            if (newText) {
+                // backticks are escaped inside markdown content
+                newText = newText.replace(/&#96;/g, "`");
+            }
+
+            const match = /^\s*tilemap\s*`([^`]*)`\s*$/.exec(newText);
+
+            if (match) {
+                const tilemapId = match[1].trim();
+                this.state = pxt.react.getTilemapProject().getTilemap(tilemapId);
+
+                if (this.state) {
+                    this.tilemapId = tilemapId;
+                    return;
+                }
+            }
+
+            const tilemap = pxt.sprite.decodeTilemap(newText, "typescript", pxt.react.getTilemapProject()) || emptyTilemap(this.params.tileWidth, this.params.initWidth, this.params.initHeight);
 
             // Ignore invalid bitmaps
-            if (checkTilemap(tilemap, pxt.sprite.filterItems(pxt.sprite.getGalleryItems(this.blocksInfo, "Image"), this.params.filter.split(" ")))) {
+            if (checkTilemap(tilemap)) {
+                this.initText = newText;
                 this.state = tilemap;
                 this.isGreyBlock = false;
             }
@@ -194,100 +295,8 @@ namespace pxtblockly {
 
         protected initState() {
             if (!this.state) {
-                this.state = new pxt.sprite.TilemapData(
-                    new pxt.sprite.Tilemap(this.params.initWidth, this.params.initHeight),
-                    { tiles: [], tileWidth: 16 },
-                    new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight).data()
-                );
+                this.state = pxt.react.getTilemapProject().blankTilemap(this.params.tileWidth, this.params.initWidth, this.params.initHeight);
             }
-        }
-
-        protected updateWorkspaceTiles(tileset: pxt.sprite.TileSet) {
-            const ws = this.sourceBlock_.workspace;
-            const existing = getAllTilesetTiles(ws);
-            const newtiles = tileset.tiles;
-
-            const deleted: pxt.sprite.TileInfo[] = [];
-
-            existing.filter(e => e.projectId != undefined).forEach(old => {
-                if (!newtiles.some(e => e.projectId === old.projectId)) {
-                    deleted.push(old)
-                }
-            });
-
-            Blockly.Events.setGroup(true);
-
-            if (deleted.length) {
-                const allRefs = getAllBlocksWithTilemaps(ws);
-
-                for (const old of deleted) {
-                    deleteTilesetTileIfExists(ws, old);
-
-                    for (const ref of allRefs) {
-                        if (!ref.parsed) {
-                            const existing = ref.block.getFieldValue(ref.field);
-                            ref.parsed = pxt.sprite.decodeTilemap(existing, "typescript");
-                        }
-
-                        const index = ref.parsed.tileset.tiles.findIndex(t => t.projectId === old.projectId);
-
-                        if (index != -1) {
-                            ref.parsed.tileset.tiles.splice(index, 1);
-                            deleteTile(index, ref.parsed.tilemap);
-                        }
-                    }
-                }
-
-                for (const ref of allRefs) {
-                    if (ref.parsed) {
-                        ref.block.setFieldValue(pxt.sprite.encodeTilemap(ref.parsed, "typescript"), ref.field);
-                    }
-                }
-            }
-
-            newtiles.filter(t => t.projectId !== undefined)
-                .forEach(tile => saveTilesetTile(ws, tile));
-
-            FieldTileset.rebuildTileCache(this.sourceBlock_.workspace, this.blocksInfo);
-
-            // Redraw previews on all of the tilemaps in case a tile changed
-            const allTiles = getAllTilesetTiles(ws);
-            getAllBlocksWithTilemaps(ws).forEach(({ ref }) => ref.redrawPreview(allTiles));
-
-            Blockly.Events.setGroup(false);
-        }
-
-        protected restoreTilesFromWorkspace(tilemap: pxt.sprite.TilemapData, wsTiles?: pxt.sprite.TileInfo[]) {
-            const all = wsTiles || getAllTilesetTiles(this.sourceBlock_.workspace);
-
-            for (const t of tilemap.tileset.tiles) {
-                if (t.projectId != undefined) {
-                    const projectTile = all.find(pt => pt.projectId === t.projectId);
-
-                    if (projectTile) {
-                        t.data = projectTile.data;
-                    }
-                }
-            }
-
-            let id = 0;
-            for (const t of all) {
-                id = t.projectId ? Math.max(t.projectId, id) : id;
-
-                if (!tilemap.tileset.tiles.some(pt => pt.projectId === t.projectId)) {
-                    tilemap.tileset.tiles.push(t);
-                }
-            }
-
-            tilemap.nextId = id + 1;
-
-            const prefix = `${pxt.sprite.TILE_NAMESPACE}.${pxt.sprite.TILE_PREFIX}`;
-
-            const tilesetRefs = getAllBlocksWithTilesets(this.sourceBlock_.workspace);
-            tilemap.projectReferences = tilesetRefs
-                .map(({ ref }) => ref.getValue())
-                .filter(qname => pxt.U.startsWith(qname, prefix))
-                .map(qname => Number(qname.substr(prefix.length)));
         }
 
         getDisplayText_() {
@@ -312,6 +321,7 @@ namespace pxtblockly {
         const parsed: ParsedFieldTilemapOptions = {
             initWidth: 16,
             initHeight: 16,
+            tileWidth: 16
         };
 
         if (!opts) {
@@ -320,6 +330,39 @@ namespace pxtblockly {
 
         if (opts.filter) {
             parsed.filter = opts.filter;
+        }
+
+        if (opts.tileWidth) {
+            if (typeof opts.tileWidth === "number") {
+                switch (opts.tileWidth) {
+                    case 8:
+                        parsed.tileWidth = 8;
+                        break;
+                    case 16:
+                        parsed.tileWidth = 16;
+                        break;
+                    case 32:
+                        parsed.tileWidth = 32;
+                        break;
+                }
+            }
+            else {
+                const tw = opts.tileWidth.trim().toLowerCase();
+                switch (tw) {
+                    case "8":
+                    case "eight":
+                        parsed.tileWidth = 8;
+                        break;
+                    case "16":
+                    case "sixteen":
+                        parsed.tileWidth = 16;
+                        break;
+                    case "32":
+                    case "thirtytwo":
+                        parsed.tileWidth = 32;
+                        break;
+                }
+            }
         }
 
         parsed.initWidth = withDefault(opts.initWidth, parsed.initWidth);
@@ -335,36 +378,58 @@ namespace pxtblockly {
             return res;
         }
     }
-
-    function deleteTile(localIndex: number, tilemap: pxt.sprite.Tilemap) {
-        for (let x = 0; x < tilemap.width; x++) {
-            for (let y = 0; y < tilemap.height; y++) {
-                const value = tilemap.get(x, y);
-                if (value === localIndex) {
-                    tilemap.set(x, y, 0)
-                }
-                else if (value > localIndex) {
-                    tilemap.set(x, y, value - 1);
-                }
-            }
-        }
-    }
-
-    function checkTilemap(tilemap: pxt.sprite.TilemapData, galleryItems: pxt.sprite.GalleryItem[]) {
+    function checkTilemap(tilemap: pxt.sprite.TilemapData) {
         if (!tilemap || !tilemap.tilemap || !tilemap.tilemap.width || !tilemap.tilemap.height) return false;
 
         if (!tilemap.layers || tilemap.layers.width !== tilemap.tilemap.width || tilemap.layers.height !== tilemap.tilemap.height) return false;
 
         if (!tilemap.tileset) return false;
 
-        for (const tile of tilemap.tileset.tiles) {
-            if (tile && (tile.projectId >= 0 || (tile.qualifiedName && galleryItems.some(g => g.qName === tile.qualifiedName)))) {
-                continue;
-            }
+        return true;
+    }
 
-            return false;
+    class BlocklyTilemapChange extends Blockly.Events.BlockChange {
+
+        constructor(block: Blockly.Block, element: string, name: string, oldValue: any, newValue: any, protected oldRevision: number, protected newRevision: number) {
+            super(block, element, name, oldValue, newValue);
         }
 
-        return true;
+        isNull() {
+            return this.oldRevision === this.newRevision && super.isNull();
+        }
+
+        run(forward: boolean) {
+            if (forward) {
+                pxt.react.getTilemapProject().redo();
+                super.run(forward);
+            }
+            else {
+                pxt.react.getTilemapProject().undo();
+                super.run(forward);
+            }
+
+            const ws = this.getEventWorkspace_();
+            const tilemaps = getAllBlocksWithTilemaps(ws);
+
+            for (const t of tilemaps) {
+                t.ref.refreshTileset();
+                t.ref.redrawPreview();
+            }
+
+            // Fire an event to force a recompile, but make sure it doesn't end up on the undo stack
+            const ev = new BlocklyTilemapChange(
+                ws.getBlockById(this.blockId), 'tilemap-revision', "revision", null, pxt.react.getTilemapProject().revision(), 0, 0);
+            ev.recordUndo = false;
+
+            Blockly.Events.fire(ev)
+        }
+    }
+
+    function emptyTilemap(tileWidth: number, width: number, height: number) {
+        return new pxt.sprite.TilemapData(
+            new pxt.sprite.Tilemap(width, height),
+            {tileWidth: tileWidth, tiles: []},
+            new pxt.sprite.Bitmap(width, height).data()
+        );
     }
 }

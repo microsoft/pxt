@@ -4,3 +4,7 @@ By default test cases are whitespace insensitive. Add the following to the top o
 ```python
 #%{ "whitespaceSensitive": true }
 ```
+
+Test cases can be disabled by adding a "TODO_" prefix.
+
+To run only certain test cases, prefix with "ONLY_".

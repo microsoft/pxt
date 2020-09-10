@@ -163,14 +163,22 @@ namespace pxt.cpp {
         let sourcePath = "/source/"
         let disabledDeps = ""
         let mainDeps: Package[] = []
-        for (let pkg of mainPkg.sortedDeps(true)) {
+
+        // order shouldn't matter for c++ compilation,
+        // so use a stable order to prevent order changes from fetching a new hex file
+        const mainPkgDeps = mainPkg.sortedDeps(true)
+            .sort((a, b) => {
+                if (a.id == "this") return 1;
+                else if (b.id == "this") return -1;
+                else return U.strcmp(a.id, b.id);
+            });
+
+        for (let pkg of mainPkgDeps) {
             if (pkg.disablesVariant(pxt.appTargetVariant) ||
                 pkg.resolvedDependencies().some(d => d.disablesVariant(pxt.appTargetVariant))) {
-                if (pkg.id != "this") {
-                    if (disabledDeps)
-                        disabledDeps += ", "
-                    disabledDeps += pkg.id
-                }
+                if (disabledDeps)
+                    disabledDeps += ", "
+                disabledDeps += pkg.id
                 pxt.debug(`disable variant ${pxt.appTargetVariant} due to ${pkg.id}`)
                 continue
             }
@@ -820,9 +828,10 @@ namespace pxt.cpp {
         const currSettings: Map<any> = U.clone(compileService.yottaConfig || {})
         const optSettings: Map<any> = {}
         const settingSrc: Map<Package> = {}
+        const codalLibraries: pxt.Map<github.ParsedRepo> = {}
 
         function parseJson(pkg: Package) {
-            let j0 = pkg.config.platformio
+            const j0 = pkg.config.platformio
             if (j0 && j0.dependencies) {
                 U.jsonCopyFrom(res.platformio.dependencies, j0.dependencies)
             }
@@ -830,7 +839,24 @@ namespace pxt.cpp {
             if (res.npmDependencies && pkg.config.npmDependencies)
                 U.jsonCopyFrom(res.npmDependencies, pkg.config.npmDependencies)
 
-            let json = pkg.config.yotta
+            const codal = pkg.config.codal
+            if (isCodal && codal) {
+                for (const lib of codal.libraries || []) {
+                    const repo = github.parseRepoId(lib)
+                    if (!repo)
+                        U.userError(lf("codal library {0} doesn't look like github repo", lib))
+                    const canonical = github.stringifyRepo(repo)
+                    const existing = U.lookup(codalLibraries, repo.project)
+                    if (existing) {
+                        if (github.stringifyRepo(existing) != canonical)
+                            U.userError(lf("conflict between codal libraries: {0} and {1}", github.stringifyRepo(existing), canonical))
+                    } else {
+                        codalLibraries[repo.project] = repo
+                    }
+                }
+            }
+
+            const json = pkg.config.yotta
             if (!json) return;
 
             // TODO check for conflicts
@@ -895,8 +921,8 @@ namespace pxt.cpp {
                     U.assert(!seenMain)
                 }
                 // Generally, headers need to be processed before sources, as they contain definitions
-                // (in particular of enums, which are needed to decide if we're doing conversions for 
-                // function arguments). This can still fail if one header uses another and they are 
+                // (in particular of enums, which are needed to decide if we're doing conversions for
+                // function arguments). This can still fail if one header uses another and they are
                 // listed in invalid order...
                 const isHeaderFn = (fn: string) => U.endsWith(fn, ".h")
                 const ext = ".cpp"
@@ -916,7 +942,7 @@ namespace pxt.cpp {
                         fileName = fullName
 
                         parseCpp(src, isHeader)
-                        src = src.replace(/^[ \t]*/mg, "") // shrink the files
+                        // src = src.replace(/^[ \t]*/mg, "") // HACK: shrink the files
                         res.extensionFiles[sourcePath + fullName] = src
 
                         if (pkg.level == 0)
@@ -932,6 +958,12 @@ namespace pxt.cpp {
                 if (thisErrors) {
                     allErrors += lf("Extension {0}:\n", pkg.id) + thisErrors
                 }
+            }
+
+            if (!seenMain) {
+                // this can happen if the main package is disabled in current variant
+                shimsDTS.clear()
+                enumsDTS.clear()
             }
         }
 
@@ -979,7 +1011,15 @@ namespace pxt.cpp {
                 // include these, because we use hash of this file to see if anything changed
                 "pxt_gitrepo": cs.githubCorePackage,
                 "pxt_gittag": cs.gittag,
+                "libraries": U.values(codalLibraries).map(r => ({
+                    "name": r.project,
+                    "url": "https://github.com/" + r.fullName,
+                    "branch": r.tag || "master",
+                    "type": "git"
+                }))
             }
+            if (codalJson.libraries.length == 0)
+                delete codalJson.libraries
             U.iterMap(U.jsonFlatten(configJson), (k, v) => {
                 k = k.replace(/^codal\./, "device.").toUpperCase().replace(/\./g, "_")
                 cfg[k] = v

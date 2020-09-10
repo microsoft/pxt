@@ -32,7 +32,7 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
     pxt.targetConfigAsync()
         .then(config => {
             const isPxtElectron = pxt.BrowserUtils.isPxtElectron();
-            const electronManifest = config && config.electronManifest;
+            const latestElectronRelease = config?.electronManifest?.latest;
             return core.confirmAsync({
                 header: lf("About"),
                 hasCloseIcon: true,
@@ -41,10 +41,10 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
                 buttons,
                 jsx: <div>
                     {isPxtElectron ?
-                        (!pxt.Cloud.isOnline() || !electronManifest)
+                        (!pxt.Cloud.isOnline() || !latestElectronRelease)
                             ? <p>{lf("Please connect to internet to check for updates")}</p>
-                            : pxt.semver.strcmp(pxt.appTarget.versions.target, electronManifest.latest) < 0
-                                ? <a target="_blank" rel="noopener noreferrer" href="/offline-app">{lf("An update {0} for {1} is available", electronManifest.latest, pxt.appTarget.title)}</a>
+                            : pxt.semver.strcmp(pxt.appTarget.versions.target, latestElectronRelease) < 0
+                                ? <a target="_blank" rel="noopener noreferrer" href="/offline-app">{lf("An update {0} for {1} is available", latestElectronRelease, pxt.appTarget.title)}</a>
                                 : <p>{lf("{0} is up to date", pxt.appTarget.title)}</p>
                         : undefined}
                     {githubUrl && versions ?

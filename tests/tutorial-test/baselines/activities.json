@@ -42,7 +42,9 @@
             "step": 3
         }
     ],
-    "code": "\n{\nlet x = 1;\nlet y = x + 2;\n}\n",
+    "code": [
+        "{\nlet x = 1;\nlet y = x + 2;\n}"
+    ],
     "metadata": {
         "activities": true,
         "diffs": false

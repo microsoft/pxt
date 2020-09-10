@@ -533,6 +533,7 @@ namespace pxt.diff {
                         break;
                     case "languageRestriction":
                     case "preferredEditor":
+                    case "targetVersion":
                         r[key] = vA; // keep current one
                         break;
                     case "public":

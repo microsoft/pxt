@@ -132,7 +132,8 @@ export function emptyCompileResult(): pxtc.CompileResult {
 export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     trg.isNative = options.native
-    return pkg.mainPkg.getCompileOptionsAsync(trg)
+    return pkg.mainEditorPkg().buildTilemapsAsync()
+        .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
         .then(opts => {
             if (options.debug) {
                 opts.breakpoints = true;
@@ -313,6 +314,39 @@ export function pySnippetToBlocksAsync(code: string, blockInfo?: ts.pxtc.BlocksI
         });
 }
 
+// Py[] -> blocks
+export function pySnippetArrayToBlocksAsync(code: string[], blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
+    const namespaceRegex = /^\s*namespace\s+[^\s]+\s*{([\S\s]*)}\s*$/im;
+    const snippetBlocks = "main.blocks";
+    let trg = pkg.mainPkg.getTargetOptions()
+    let files: string[] = [];
+    return waitForFirstTypecheckAsync()
+        .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
+        .then(opts => {
+            // split each code snippet into a separate file to preserve scoping
+            for (let i = 0; i < code.length; i++) {
+                const snippetName = `snippet_${i}`;
+                opts.fileSystem[snippetName + ".py"] = code[i];
+                opts.sourceFiles.push(snippetName + ".py");
+                files.push(snippetName)
+            }
+            opts.fileSystem[snippetBlocks] = "";
+            if (opts.sourceFiles.indexOf(snippetBlocks) === -1) {
+                opts.sourceFiles.push(snippetBlocks);
+            }
+            return workerOpAsync("py2ts", { options: opts });
+        })
+        .then(res => {
+            // strip the namespace declaration out of the converted snippets and concat to convert to blocks
+            let ts = "";
+            for (let file of files) {
+                let match = res.outfiles[file + ".ts"].match(namespaceRegex);
+                if (match && match[1]) ts += `{\n${match[1]}\n}\n`
+            }
+            return decompileBlocksSnippetAsync(ts, blockInfo)
+        });
+}
+
 function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
     return workerOpAsync("decompile", { options: opts, fileName: fileName })
 }
@@ -329,7 +363,8 @@ export function pyDecompileAsync(fileName: string): Promise<pxtc.transpile.Trans
         })
         .then(resp => {
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
-            setDiagnostics(resp.diagnostics)
+            const errors = resp.diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error);
+            reportDiagnosticErrors(errors)
             return resp
         })
 }
@@ -400,6 +435,10 @@ function ensureApisInfoAsync(): Promise<void> {
     else return Promise.resolve()
 }
 
+export function refreshLanguageServiceApisInfo() {
+    refreshApis = true;
+}
+
 export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
     return ensureApisInfoAsync()
         .then(() => {
@@ -444,7 +483,9 @@ export function snippetAsync(qName: string, python?: boolean): Promise<string> {
 }
 
 export function typecheckAsync() {
-    let p = pkg.mainPkg.getCompileOptionsAsync()
+    const epkg = pkg.mainEditorPkg();
+    let p = epkg.buildTilemapsAsync()
+        .then(() => pkg.mainPkg.getCompileOptionsAsync())
         .then(opts => {
             opts.testMode = true // show errors in all top-level code
             return workerOpAsync("setOptions", { options: opts })
@@ -618,6 +659,7 @@ async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo
 
         for (const dep of externalPackages) {
             const name = dep.getKsPkg().config.name;
+            const pkgId = dep.getPkgId();
             const entry: pxt.PackageApiInfo = {
                 sha: null,
                 apis: { byQName: {} }
@@ -625,8 +667,9 @@ async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo
 
 
             for (const api of apiList) {
-                if (info.byQName[api].pkg === name) {
-                    entry.apis.byQName[api] = info.byQName[api];
+                const apiInfo = info.byQName[api];
+                if (apiInfo.pkg === name || apiInfo.pkg === pkgId) {
+                    entry.apis.byQName[api] = apiInfo;
                 }
             }
 
@@ -649,7 +692,7 @@ export function applyUpgradesAsync(): Promise<UpgradeResult> {
     const pkgVersion = pxt.semver.parse(epkg.header.targetVersion || "0.0.0");
     const trgVersion = pxt.semver.parse(pxt.appTarget.versions.target);
 
-    if (pkgVersion.major === trgVersion.major && pkgVersion.minor === trgVersion.minor) {
+    if (pxt.semver.cmp(pkgVersion, trgVersion) === 0) {
         pxt.debug("Skipping project upgrade")
         return Promise.resolve({
             success: true
@@ -710,11 +753,24 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
 
             const xml = Blockly.Xml.textToDom(text);
             pxt.blocks.domToWorkspaceNoEvents(xml, ws);
-            patchedFiles["main.blocks"] = text;
+            pxtblockly.upgradeTilemapsInWorkspace(ws, pxt.react.getTilemapProject());
+            const upgradedXml = Blockly.Xml.workspaceToDom(ws);
+            patchedFiles["main.blocks"] = Blockly.Xml.domToText(upgradedXml);
+
             return pxt.blocks.compileAsync(ws, info)
         })
         .then(res => {
             patchedFiles["main.ts"] = res.source;
+            return project.buildTilemapsAsync();
+        })
+        .then(() => {
+            const compiledFiles = project.getAllFiles();
+            const otherFiles = Object.keys(compiledFiles).filter(el => !/^main\.(blocks|ts|py)$/.test(el));
+
+            for (const fname of otherFiles) {
+                patchedFiles[fname] = compiledFiles[fname];
+            }
+
             return checkPatchAsync(patchedFiles);
         })
         .then(() => {
@@ -767,10 +823,11 @@ interface UpgradeError extends Error {
 
 function checkPatchAsync(patchedFiles?: pxt.Map<string>) {
     const mainPkg = pkg.mainPkg;
-    return mainPkg.getCompileOptionsAsync()
+    return pkg.mainEditorPkg().buildTilemapsAsync()
+        .then(() => mainPkg.getCompileOptionsAsync())
         .then(opts => {
             if (patchedFiles) {
-                Object.keys(opts.fileSystem).forEach(fileName => {
+                Object.keys(patchedFiles).forEach(fileName => {
                     if (patchedFiles[fileName]) {
                         opts.fileSystem[fileName] = patchedFiles[fileName];
                     }

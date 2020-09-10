@@ -17,12 +17,32 @@
 * Click the **X** icon
 * the dialog closes and no URL is generated
 
-## Embed #embed
+## Embed Code #embed
 
 * Open the Editor and drag a few blocks
 * Click on **Share**, then **Publish**
 * Click on **Embed**
     1. Copy the content of the **Code** tab
+    2. Open https://jsfiddle.net
+    3. Copy the text in the HTML section
+    4. Click Run and verify that the blocks render
+
+## Embed Editor #editor
+
+* Open the Editor and drag a few blocks
+* Click on **Share**, then **Publish**
+* Click on **Embed**
+    1. Copy the content of the **Editor** tab
+    2. Open https://jsfiddle.net
+    3. Copy the text in the HTML section
+    4. Click Run and verify that the blocks render
+
+## Embed Simulator #simulator
+
+* Open the Editor and drag a few blocks
+* Click on **Share**, then **Publish**
+* Click on **Embed**
+    1. Copy the content of the **Simulator** tab
     2. Open https://jsfiddle.net
     3. Copy the text in the HTML section
     4. Click Run and verify that the blocks render

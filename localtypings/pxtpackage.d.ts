@@ -1,6 +1,6 @@
 declare namespace pxt {
 
-    type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw" | "forumUrl";
+    type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw" | "forumUrl" | "forumExample" | "sharedExample";
     type CodeCardEditorType = "blocks" | "js" | "py";
 
     interface Map<T> {
@@ -49,6 +49,7 @@ declare namespace pxt {
         files: string[];
         simFiles?: string[];
         testFiles?: string[];
+        fileDependencies?: Map<string>; // exclude certain files if dependencies are not fulfilled
         preferredEditor?: string; // tsprj, blocksprj, pyprj
         languageRestriction?: pxt.editor.LanguageRestriction; // language restrictions that have been placed on the package
         testDependencies?: pxt.Map<string>;
@@ -62,6 +63,7 @@ declare namespace pxt {
         paletteNames?: string[];
         screenSize?: Size;
         yotta?: YottaConfig;
+        codal?: CodalConfig;
         npmDependencies?: Map<string>;
         card?: CodeCard;
         additionalFilePath?: string;
@@ -86,6 +88,7 @@ declare namespace pxt {
         firmwareUrl?: string; // link to documentation page about upgrading firmware
         disablesVariants?: string[]; // don't build these variants, when this extension is enabled
         utf8?: boolean; // force compilation with UTF8 enabled
+        disableTargetTemplateFiles?: boolean; // do not override target template files when commiting to github
     }
 
     interface PackageExtension {
@@ -103,6 +106,10 @@ declare namespace pxt {
     interface CompilationConfig {
         description: string;
         config: any;
+    }
+
+    interface CodalConfig {
+        libraries?: string[];
     }
 
     interface YottaConfig {
@@ -177,6 +184,8 @@ declare namespace pxt {
         icon?: string; // URL (usually data-URI) for the icon
         namespace?: string; // used to construct id
         mimeType: string;
+        tilemapTile?: boolean;
+        tileset?: string[];
     }
 
     type SnippetOutputType = 'blocks'

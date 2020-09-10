@@ -148,6 +148,19 @@ namespace pxt.runner {
     }
 
     export let mainPkg: pxt.MainPackage;
+    let tilemapProject: TilemapProject;
+
+    if (!pxt.react.getTilemapProject) {
+        pxt.react.getTilemapProject = () => {
+            if (!tilemapProject) {
+                tilemapProject = new TilemapProject();
+                tilemapProject.loadPackage(mainPkg);
+            }
+
+            return tilemapProject;
+        }
+    }
+
 
     function addPackageToConfig(cfg: pxt.PackageConfig, dep: string) {
         let m = /^([a-zA-Z0-9_-]+)(=(.+))?$/.exec(dep);
@@ -351,7 +364,13 @@ namespace pxt.runner {
                     let options: pxsim.SimulatorDriverOptions = {};
                     options.onSimulatorCommand = msg => {
                         if (msg.command === "restart") {
+                            runOptions.storedState = getStoredState(simOptions.id)
                             driver.run(js, runOptions);
+                        }
+                        if (msg.command == "setstate") {
+                            if (msg.stateKey && msg.stateValue) {
+                                setStoredState(simOptions.id, msg.stateKey, msg.stateValue)
+                            }
                         }
                     };
 
@@ -360,6 +379,7 @@ namespace pxt.runner {
                     let fnArgs = resp.usedArguments;
                     let board = pxt.appTarget.simulator.boardDefinition;
                     let parts = pxtc.computeUsedParts(resp, true);
+                    let storedState: Map<string> = getStoredState(simOptions.id)
                     let runOptions: pxsim.SimulatorRunOptions = {
                         boardDefinition: board,
                         parts: parts,
@@ -367,6 +387,7 @@ namespace pxt.runner {
                         cdnUrl: pxt.webConfig.commitCdnUrl,
                         localizedStrings: Util.getLocalizedStrings(),
                         highContrast: simOptions.highContrast,
+                        storedState: storedState,
                         light: simOptions.light
                     };
                     if (pxt.appTarget.simulator && !simOptions.fullScreen)
@@ -376,6 +397,33 @@ namespace pxt.runner {
                     driver.run(js, runOptions);
                 }
             })
+    }
+
+    function getStoredState(id: string) {
+        let storedState: Map<any> = {}
+        try {
+            let projectStorage = window.localStorage.getItem(id)
+            if (projectStorage) {
+                storedState = JSON.parse(projectStorage)
+            }
+        } catch (e) { }
+        return storedState;
+    }
+
+    function setStoredState(id: string, key: string, value: any) {
+        let storedState: Map<any> = getStoredState(id);
+        if (!id) {
+            return
+        }
+
+        if (value)
+            storedState[key] = value
+        else
+            delete storedState[key]
+
+        try {
+            window.localStorage.setItem(id, JSON.stringify(storedState))
+        } catch (e) { }
     }
 
     export enum LanguageMode {
@@ -906,6 +954,16 @@ ${linkString}
                     opts.fileSystem["main.ts"] = code;
                 opts.ast = true
 
+                if (options.jres) {
+                    const tilemapTS = pxt.emitTilemapsFromJRes(JSON.parse(options.jres));
+                    if (tilemapTS) {
+                        opts.fileSystem[pxt.TILEMAP_JRES] = options.jres;
+                        opts.fileSystem[pxt.TILEMAP_CODE] = tilemapTS;
+                        opts.sourceFiles.push(pxt.TILEMAP_JRES);
+                        opts.sourceFiles.push(pxt.TILEMAP_CODE);
+                    }
+                }
+
                 let compileJS: pxtc.CompileResult = undefined;
                 let program: ts.Program;
                 if (options && options.forceCompilation) {
@@ -946,7 +1004,19 @@ ${linkString}
                                 apiInfo: apis
                             };
                         pxt.debug(bresp.outfiles["main.blocks"])
+
+                        if (options.jres) {
+                            tilemapProject = new TilemapProject();
+                            tilemapProject.loadPackage(mainPkg);
+                            tilemapProject.loadJres(JSON.parse(options.jres), true);
+                        }
+
                         const blocksSvg = pxt.blocks.render(bresp.outfiles["main.blocks"], options);
+
+                        if (options.jres) {
+                            tilemapProject = null;
+                        }
+
                         return <DecompileResult>{
                             package: mainPkg,
                             compileProgram: program,
@@ -978,15 +1048,36 @@ ${linkString}
             .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
             .then(opts => {
                 opts.ast = true
+                if (options.jres) {
+                    const tilemapTS = pxt.emitTilemapsFromJRes(JSON.parse(options.jres));
+                    if (tilemapTS) {
+                        opts.fileSystem[pxt.TILEMAP_JRES] = options.jres;
+                        opts.fileSystem[pxt.TILEMAP_CODE] = tilemapTS;
+                        opts.sourceFiles.push(pxt.TILEMAP_JRES);
+                        opts.sourceFiles.push(pxt.TILEMAP_CODE);
+                    }
+                }
                 const resp = pxtc.compile(opts)
                 const apis = getApiInfo(resp.ast, opts);
                 return ts.pxtc.localizeApisAsync(apis, mainPkg)
                     .then(() => {
                         const blocksInfo = pxtc.getBlocksInfo(apis);
                         pxt.blocks.initializeAndInject(blocksInfo);
+
+                        if (options.jres) {
+                            tilemapProject = new TilemapProject();
+                            tilemapProject.loadPackage(mainPkg);
+                            tilemapProject.loadJres(JSON.parse(options.jres), true);
+                        }
+                        const blockSvg = pxt.blocks.render(code, options);
+
+                        if (options.jres) {
+                            tilemapProject = null;
+                        }
+
                         return <DecompileResult>{
                             package: mainPkg,
-                            blocksSvg: pxt.blocks.render(code, options),
+                            blocksSvg: blockSvg,
                             apiInfo: apis
                         };
                     })

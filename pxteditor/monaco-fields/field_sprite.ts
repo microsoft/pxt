@@ -5,12 +5,15 @@ namespace pxt.editor {
     const fieldEditorId = "image-editor";
 
     export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.sprite.Bitmap> {
+        protected isPython: boolean;
+
         protected textToValue(text: string): pxt.sprite.Bitmap {
+            this.isPython = text.indexOf("`") === -1
             return pxt.sprite.imageLiteralToBitmap(text);
         }
 
         protected resultToText(result: pxt.sprite.Bitmap): string {
-            return pxt.sprite.bitmapToImageLiteral(result, "typescript");
+            return pxt.sprite.bitmapToImageLiteral(result, this.isPython ? "python" : "typescript");
         }
 
         protected getFieldEditorId() {
@@ -20,7 +23,8 @@ namespace pxt.editor {
             return {
                 initWidth: 16,
                 initHeight: 16,
-                blocksInfo: this.host.blocksInfo()
+                blocksInfo: this.host.blocksInfo(),
+                showTiles: true
             };
         }
     }
@@ -32,7 +36,7 @@ namespace pxt.editor {
         heightInPixels: 510,
         matcher: {
             // match both JS and python
-            searchString: "img\\s*(?:`|\\(\"\"\")(?:[ a-fA-F0-9\\.]|\\n)*\\s*(?:`|\"\"\"\\))",
+            searchString: "img\\s*(?:`|\\(\\s*\"\"\")[ a-fA-F0-9\\.\\n]*\\s*(?:`|\"\"\"\\s*\\))",
             isRegex: true,
             matchCase: true,
             matchWholeWord: false

@@ -5,6 +5,7 @@ import * as ReactDOM from "react-dom";
 
 import { ImageFieldEditor } from "./components/ImageFieldEditor";
 import { TilemapFieldEditor } from "./components/TilemapFieldEditor";
+import * as pkg from "./package";
 
 export interface EditorBounds {
     top: number;
@@ -20,6 +21,9 @@ export interface FieldEditorComponent<U> extends React.Component {
     getPersistentData(): any;
     restorePersistentData(value: any): void;
     onResize?: () => void;
+    loadJres?: (jres: string) => void;
+    getJres?: () => string;
+    shouldPreventHide?: () => boolean;
 }
 
 let cachedBounds: EditorBounds;
@@ -33,7 +37,6 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
     protected componentRef: FieldEditorComponent<U>;
     protected overlayDiv: HTMLDivElement;
     protected persistentData: any;
-
     protected hideCallback: () => void;
 
     constructor(protected contentDiv: HTMLDivElement) {
@@ -69,6 +72,7 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
 
     hide() {
         if (!this.visible || !this.contentDiv) return;
+        if (this.componentRef?.shouldPreventHide?.()) return;
 
         this.visible = false;
         if (this.resizeFrameRef) cancelAnimationFrame(this.resizeFrameRef);
@@ -163,6 +167,7 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
         if (!this.contentBounds) return;
 
         if (!inBounds(ev.clientX, ev.clientY, this.contentBounds)) {
+            ev.stopPropagation();
             this.hide();
         }
     }
@@ -192,7 +197,7 @@ export function init() {
 
         switch (fieldEditorId) {
             case "image-editor":
-                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} />);
+                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} showTiles={options?.showTiles} />);
                 break;
             case "animation-editor":
                 current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={false} />);
@@ -206,6 +211,17 @@ export function init() {
         if (cachedBounds) current.resize(cachedBounds);
 
         return current;
+    }
+
+    pxt.react.getTilemapProject = () => {
+        const epkg = pkg.mainEditorPkg();
+
+        if (!epkg.tilemapProject) {
+            epkg.tilemapProject = new pxt.TilemapProject();
+            epkg.tilemapProject.loadPackage(pkg.mainPkg);
+        }
+
+        return epkg.tilemapProject;
     }
 }
 

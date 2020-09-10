@@ -531,9 +531,14 @@ namespace pxt.blocks {
             || pxt.toolbox.getNamespaceColor(ns)
             || 255;
 
-        if (fn.attributes.help)
-            block.setHelpUrl("/reference/" + fn.attributes.help.replace(/^\//, ''));
-        else if (fn.pkg && !pxt.appTarget.bundledpkgs[fn.pkg]) {// added package
+        if (fn.attributes.help) {
+            const helpUrl = fn.attributes.help.replace(/^\//, '');
+            if (/^github:/.test(helpUrl)) {
+                block.setHelpUrl(helpUrl);
+            } else if (helpUrl !== "none") {
+                block.setHelpUrl("/reference/" + helpUrl);
+            }
+        } else if (fn.pkg && !pxt.appTarget.bundledpkgs[fn.pkg]) {// added package
             let anchor = fn.qName.toLowerCase().split('.');
             if (anchor[0] == fn.pkg) anchor.shift();
             block.setHelpUrl(`/pkg/${fn.pkg}#${encodeURIComponent(anchor.join('-'))}`)
@@ -1451,6 +1456,7 @@ namespace pxt.blocks {
         // Translate the context menu for blocks.
         const msg = Blockly.Msg;
         msg.DUPLICATE_BLOCK = lf("{id:block}Duplicate");
+        msg.DUPLICATE_COMMENT = lf("Duplicate Comment");
         msg.REMOVE_COMMENT = lf("Remove Comment");
         msg.ADD_COMMENT = lf("Add Comment");
         msg.EXTERNAL_INPUTS = lf("External Inputs");
@@ -1573,7 +1579,7 @@ namespace pxt.blocks {
                     enabled: topBlocks.length > 0 || topComments.length > 0,
                     callback: () => {
                         pxt.tickEvent("blocks.context.screenshot", undefined, { interactiveConsent: true });
-                        pxt.blocks.layout.screenshotAsync(this)
+                        pxt.blocks.layout.screenshotAsync(this, null, pxt.appTarget.appTheme?.embedBlocksInSnapshot)
                             .done((uri) => {
                                 if (pxt.BrowserUtils.isSafari())
                                     uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
@@ -2203,6 +2209,26 @@ namespace pxt.blocks {
                 });
 
                 setBuiltinHelpInfo(this, variablesChangeId);
+            },
+            /**
+             * Add menu option to create getter block for this variable
+             * @param {!Array} options List of menu options to add to.
+             * @this Blockly.Block
+             */
+            customContextMenu: function (options: any[]) {
+                let option: any = {
+                    enabled: this.workspace.remainingCapacity() > 0
+                };
+
+                let name = this.getField("VAR").getText();
+                option.text = lf("Create 'get {0}'", name)
+
+                let xmlField = goog.dom.createDom('field', null, name);
+                xmlField.setAttribute('name', 'VAR');
+                let xmlBlock = goog.dom.createDom('block', null, xmlField);
+                xmlBlock.setAttribute('type', "variables_get");
+                option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
+                options.push(option);
             }
         };
 

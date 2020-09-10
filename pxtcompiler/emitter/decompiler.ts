@@ -85,7 +85,7 @@ namespace ts.pxtc.decompiler {
         functionParamIds: pxt.Map<pxt.Map<string>>; // Maps a function name to a map of paramName => paramId
         declaredEnums: pxt.Map<boolean>;
         declaredKinds?: pxt.Map<KindDeclarationInfo>;
-        tileset: pxt.sprite.TileInfo[];
+        tileset: pxt.sprite.legacy.LegacyTileInfo[];
         attrs: (c: pxtc.CallInfo) => pxtc.CommentAttrs;
         compInfo: (c: pxtc.CallInfo) => pxt.blocks.BlockCompileInfo;
         localReporters: PropertyDesc[][]; // A stack of groups of locally scoped argument declarations, to determine whether an argument should decompile as a reporter or a variable
@@ -485,7 +485,7 @@ namespace ts.pxtc.decompiler {
                 write(`<variable type="${U.htmlEscape(e.type)}">${U.htmlEscape(e.name)}</variable>`)
             });
             env.tileset.forEach(e => {
-                write(`<variable type="${pxt.sprite.BLOCKLY_TILESET_TYPE}">${pxt.sprite.tileToBlocklyVariable(e)}</variable>`)
+                write(`<variable type="${pxt.sprite.BLOCKLY_TILESET_TYPE}">${pxt.sprite.legacy.tileToBlocklyVariable(e)}</variable>`)
             });
             write("</variables>")
         }
