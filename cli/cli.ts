@@ -5457,6 +5457,7 @@ function cacheUsedBlocksAsync() {
 }
 
 function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
+    pxt.github.forceProxy = true; // avoid throttling in CI machines
     const mdPaths: string[] = [];
     const mdRegex = /\.md$/;
     const targetDirs = pxt.appTarget.cacheusedblocksdirs;
