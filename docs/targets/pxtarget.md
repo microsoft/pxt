@@ -172,7 +172,7 @@ the `cloud` field in pxttarget.json, defined by the `AppCloud` interface:
                                 // a URL (requires sharing? and publishing?)
 
         packages?: boolean;           // enabled loading of packages (from github)
-        preferredPackages?: string[]; // list of company/project(#tag) of packages on github
+        preferredRepos?: string[]; // list of company/project(#tag) of packages on github
         githubPackages?: boolean;     // enable user-specified term for searching github for packages
         
         // to be retired soon
@@ -191,7 +191,7 @@ For example in the pxttarget.json for http://github.com/microsoft/pxt-microbit, 
         "packages": true,
         "sharing": true,
         "publishing": true,
-        "preferredPackages": [
+        "preferredRepos": [
             "Microsoft/pxt-neopixel"
         ],
         "githubPackages": true
