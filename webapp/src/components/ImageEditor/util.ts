@@ -97,6 +97,18 @@ export function clientCoord(ev: PointerEvent | MouseEvent | TouchEvent): ClientC
     return (ev as PointerEvent | MouseEvent);
 }
 
+/**
+ * Similar to sui.fireClickOnEnter, but interactions limited to enter key / ignores
+ * space bar.
+ */
+export function fireClickOnlyOnEnter(e: React.KeyboardEvent<HTMLElement>): void {
+    const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
+    if (charCode === 13 /** enter key **/) {
+        e.preventDefault();
+        (e.currentTarget as HTMLElement).click();
+    }
+}
+
 export interface GestureTarget {
     onClick(coord: ClientCoordinates, isRightClick?: boolean): void;
     onDragStart(coord: ClientCoordinates, isRightClick?: boolean): void;
