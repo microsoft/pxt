@@ -182,14 +182,21 @@ namespace pxsim {
          */
         export function messageOriginExpected(origin: string, expectedOrigin: string): boolean {
             try {
-                let originUrl = new URL(origin)
-                let expectedOriginUrl = new URL(expectedOrigin)
+                const originUrl = new URL(origin)
+                const expectedOriginUrl = new URL(expectedOrigin)
 
                 if (originUrl.protocol != expectedOriginUrl.protocol) return false
                 if (originUrl.port != expectedOriginUrl.port) return false
 
                 // Ignore the subdomains
-                if (!originUrl.hostname.endsWith(expectedOriginUrl.hostname)) return false
+                const components = originUrl.hostname.split(".")
+                if (components.length < 2) {
+                    return false
+                }
+
+                // We do not use a top-level domain that is in two parts (e.g. co.uk), so this check is fine
+                const hostname = components[components.length - 2] + "." + components[components.length - 1];
+                return hostname === expectedOriginUrl.hostname
             } catch (error) {
                 // TODO: Consider logging an error here
                 return false
