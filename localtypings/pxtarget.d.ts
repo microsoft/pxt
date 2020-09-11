@@ -392,6 +392,7 @@ declare namespace pxt {
         tutorialExplicitHints?: boolean; // allow use explicit hints
         errorList?: boolean; // error list experiment
         embedBlocksInSnapshot?: boolean; // embed blocks xml in right-click snapshot
+        blocksErrorList?: boolean; // blocks error list experiment
     }
 
     interface SocialOptions {

@@ -17,6 +17,7 @@ import { initializeSnippetExtensions } from './snippetBuilder';
 
 import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
+import { ErrorList } from "./errorList";
 
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: Blockly.WorkspaceSvg;
@@ -33,10 +34,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
     breakpointsSet: number[]; // the IDs of the breakpoints set.
 
+    private errorChangesListeners: pxt.Map<(errors: pxt.blocks.BlockDiagnostic[]) => void> = {};
+
     protected debuggerToolbox: DebuggerToolbox;
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
 
+    constructor(parent: pxt.editor.IProjectView) {
+        super(parent);
+
+        this.listenToBlockErrorChanges = this.listenToBlockErrorChanges.bind(this)
+        this.onErrorListResize = this.onErrorListResize.bind(this)
+    }
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
         let map: pxt.Map<number> = {};
         if (!breakpoints || !this.compilationResult) return;
@@ -648,12 +657,31 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     display(): JSX.Element {
         let flyoutOnly = this.parent.state.editorState && this.parent.state.editorState.hasCategories === false;
+        let showErrorList = pxt.appTarget.appTheme.blocksErrorList;
         return (
-            <div>
-                <div id="blocksEditor"></div>
-                <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
+            <div className="blocksAndErrorList">
+                <div className="blocksEditorOuter">
+                    <div id="blocksEditor"></div>
+                    <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
+                </div>
+                {showErrorList && <ErrorList isInBlocksEditor={true} listenToBlockErrorChanges={this.listenToBlockErrorChanges}
+                    onSizeChange={this.onErrorListResize} />}
             </div>
         )
+    }
+
+    onErrorListResize() {
+        this.parent.fireResize();
+    }
+
+    listenToBlockErrorChanges(handlerKey: string, handler: (errors: pxt.blocks.BlockDiagnostic[]) => void) {
+        this.errorChangesListeners[handlerKey] = handler;
+    }
+
+    private onBlockErrorChanges(errors: pxt.blocks.BlockDiagnostic[]) {
+        for (let listener of pxt.U.values(this.errorChangesListeners)) {
+            listener(errors)
+        }
     }
 
     getBlocksAreaDiv() {
@@ -908,13 +936,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         })
         this.compilationResult.diagnostics.forEach(d => {
             if (d.blockId) {
+
                 let b = this.editor.getBlockById(d.blockId) as Blockly.BlockSvg;
+
                 if (b) {
                     b.setWarningText(d.message);
                     b.setHighlightWarning(true);
                 }
             }
         })
+        this.onBlockErrorChanges(this.compilationResult.diagnostics);
         this.setBreakpointsFromBlocks();
     }
 
