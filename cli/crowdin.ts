@@ -79,9 +79,7 @@ export function internalUploadTargetTranslationsAsync(uploadApiStrings: boolean,
 function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
     pxt.log(`uploading from ${srcDir} to ${crowdinDir} under project ${prj}/${branch || ""}`)
 
-    let ignoredDirectories: Map<boolean> = {};
-    nodeutil.allFiles(srcDir).filter(d => nodeutil.fileExistsSync(path.join(path.dirname(d), ".crowdinignore"))).forEach(f => ignoredDirectories[path.dirname(f)] = true);
-    const ignoredDirectoriesList = Object.keys(ignoredDirectories);
+    const ignoredDirectoriesList = getIgnoredDirectories(srcDir);
     const todo = nodeutil.allFiles(srcDir).filter(f => /\.md$/.test(f) && !/_locales/.test(f)).reverse();
     const knownFolders: Map<boolean> = {};
     const ensureFolderAsync = (crowdd: string) => {
@@ -98,7 +96,7 @@ function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch:
         const crowdd = path.dirname(crowdf);
         // check if file should be ignored
         if (ignoredDirectoriesList.filter(d => path.dirname(f).indexOf(d) == 0).length > 0) {
-            pxt.log(`skpping ${f} because of .crowdinignore file`)
+            pxt.log(`skipping ${f} because of .crowdinignore file`)
             return nextFileAsync(todo.pop());
         }
 
@@ -110,6 +108,21 @@ function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch:
     }
     return ensureFolderAsync(path.join(crowdinDir, srcDir))
         .then(() => nextFileAsync(todo.pop()));
+}
+
+function getIgnoredDirectories(srcDir: string) {
+    const ignoredDirectories: Map<boolean> = {};
+    ignoredDirectories[srcDir] = nodeutil.fileExistsSync(path.join(srcDir, ".crowdinignore"));
+    nodeutil.allFiles(srcDir)
+        .forEach(d => {
+            let p = path.dirname(d)
+            // walk back up to srcDir or a path that has been checked
+            while (ignoredDirectories[p] === undefined) {
+                ignoredDirectories[p] = nodeutil.fileExistsSync(path.join(p, ".crowdinignore"));
+                p = path.dirname(p);
+            }
+        });
+    return Object.keys(ignoredDirectories).filter(d => ignoredDirectories[d]);
 }
 
 function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
