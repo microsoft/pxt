@@ -250,7 +250,11 @@ namespace pxsim {
         function receiveMessage(event: MessageEvent) {
             let origin = event.origin; // || (<any>event).originalEvent.origin;
             // TODO: test origins
-
+            if (U.isLocalHost()) {
+                // no-op
+            } else {
+                if (!U.messageOriginExpected(origin, "https://userpxt.io")) return
+            }
             let data: SimulatorMessage = event.data || {};
             let type = data.type;
             if (!type) return;
