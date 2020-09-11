@@ -221,10 +221,12 @@ namespace pxt.blocks {
 
                         Blockly.Events.disable();
 
-                        const nb = Blockly.Xml.domToBlock(shadow, b.workspace);
-                        if (nb) {
-                            input.connection.connect(nb.outputConnection);
-                        }
+                        try {
+                            const nb = Blockly.Xml.domToBlock(shadow, b.workspace);
+                            if (nb) {
+                                input.connection.connect(nb.outputConnection);
+                            }
+                        } catch (e) { }
 
                         Blockly.Events.enable();
                     }
