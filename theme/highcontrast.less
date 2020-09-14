@@ -115,6 +115,12 @@
         }
     }
 
+    .pxtToolbox {
+        .blocklyTreeRow:not(.blocklyTreeSelected) {
+            background-color: @HCblocklyToolboxColor !important;
+        }
+    }
+
     #monacoEditor .monacoDraggableBlock {
         background: none !important;
 
@@ -156,6 +162,11 @@
         stroke-width: 4px;
         stroke: @HCblocklyTreeLabelColor;
     }
+
+    .blocklyFlyoutButton .blocklyText {
+        fill: @HCtextColor !important;
+    }
+
     .monacoFlyout {
         background: @HCblocklySvgColor !important;
         border-right: 4px solid @HCtextColor !important;
@@ -168,8 +179,10 @@
         }
     }
 
+    rect.blocklyFlyoutButtonBackground,
     .blocklyFlyoutButtonBackground {
         stroke: @HCtextColor !important;
+        fill: transparent !important;
     }
 
     /* Main editor areas */
@@ -186,6 +199,7 @@
     }
     svg.blocklySvg {
         background-color: @HCblocklySvgColor !important;
+        background: @HCblocklySvgColor !important;
     }
 
     .blocklyMainBackground {
@@ -365,8 +379,12 @@
             }
         }
     }
-
+    // VVN TODO match: .ui.icon.input input.blocklyGridPickerSearchBar
     /* Inputs */
+    .ui.input input.blocklyGridPickerSearchBar {
+        background: @HCbackground !important;
+        color: @HCtextColor !important;
+    }
     .ui.input input,
     .ui.input .input {
         background: @HCbackground !important;
@@ -458,6 +476,14 @@
                 }
             }
         }
+    }
+    .ui.card.link.newprojectcard{
+        background-color: #1B8800 !important;
+        color: white;
+    }
+
+    .ui.image~.content {
+        background: rgba(0,0,0,.75) !important;
     }
 
     .ui.form .content .description {
