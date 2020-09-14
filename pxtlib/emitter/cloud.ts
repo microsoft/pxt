@@ -2,8 +2,11 @@
 namespace pxt.Cloud {
     import Util = pxtc.Util;
 
+    const baseEndpoint = "https://www.makecode.com";
+    //const baseEndpoint = "http://localhost:5500";
+
     // hit /api/ to stay on same domain and avoid CORS
-    export let apiRoot = (pxt.BrowserUtils.isLocalHost() || Util.isNodeJS) ? "https://www.makecode.com/api/" : "/api/";
+    export let apiRoot = (pxt.BrowserUtils.isLocalHost() || Util.isNodeJS) ? `${baseEndpoint}/api/` : "/api/";
     export let accessToken = "";
     export let localToken = "";
     let _isOnline = true;
