@@ -340,6 +340,11 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         }
     }
 
+    identityLogin() {
+        // TODO(dz)
+        console.log("LOGIN!")
+    }
+
     renderCore() {
         const { highContrast } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
@@ -363,6 +368,8 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
             <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} />
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
             {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener noreferrer" >{lf("Give Feedback")}</a> : undefined}
+            {targetTheme.identity ? <sui.Item role="menuitem" text={lf("Login")} onClick={this.identityLogin} /> : undefined}
+
         </sui.DropdownMenu>;
     }
 }

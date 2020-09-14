@@ -167,6 +167,11 @@ namespace pxt.editor.experiments {
                 id: "blocksErrorList",
                 name: lf("Blocks Error List"),
                 description: lf("Show an error list panel for Blocks")
+            },
+            {
+                id: "identity",
+                name: lf("Identity"),
+                description: lf("Login with various identity providers")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
