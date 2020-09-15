@@ -340,9 +340,20 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         }
     }
 
-    identityLogin() {
-        // TODO(dz)
+    async identityLogin() {
+        // TODO(dz): break this out into seperate file
         console.log("LOGIN!")
+
+        let url = `${pxt.Cloud.apiRoot}login`;
+        let data = {};
+        let headers = {};
+
+        // TODO: consider pxt.BrowserUtils.cacheBustingUrl
+        pxt.Util.httpPostJsonAsync(url, data)
+            .then(r => {
+                console.log("Hit backend!")
+                console.dir(r)
+            })
     }
 
     renderCore() {
