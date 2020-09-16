@@ -316,7 +316,6 @@ export function pySnippetToBlocksAsync(code: string, blockInfo?: ts.pxtc.BlocksI
 
 // Py[] -> blocks
 export function pySnippetArrayToBlocksAsync(code: string[], blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
-    const namespaceRegex = /^\s*namespace\s+[^\s]+\s*{([\S\s]*)}\s*$/im;
     const snippetBlocks = "main.blocks";
     let trg = pkg.mainPkg.getTargetOptions()
     let files: string[] = [];
