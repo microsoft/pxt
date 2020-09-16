@@ -340,8 +340,7 @@ export function pySnippetArrayToBlocksAsync(code: string[], blockInfo?: ts.pxtc.
             // strip the namespace declaration out of the converted snippets and concat to convert to blocks
             let ts = "";
             for (let file of files) {
-                let match = res.outfiles[file + ".ts"].match(namespaceRegex);
-                if (match && match[1]) ts += `{\n${match[1]}\n}\n`
+                ts += `{\n${res.outfiles[file + ".ts"]}\n}\n`
             }
             return decompileBlocksSnippetAsync(ts, blockInfo)
         });
