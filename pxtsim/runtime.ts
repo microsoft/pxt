@@ -182,23 +182,29 @@ namespace pxsim {
          */
         export function messageOriginExpected(origin: string, expectedOrigin: string): boolean {
             try {
+                console.log(`[RunTime] origin: ${origin}, expectedOrigin: ${expectedOrigin}`)
                 const originUrl = new URL(origin)
                 const expectedOriginUrl = new URL(expectedOrigin)
 
+                console.log(`[RunTime] Origin Protocol: ${originUrl.protocol}`)
+                console.log(`[RunTime] Expected Origin Protocol: ${expectedOriginUrl.protocol}`)
                 if (originUrl.protocol != expectedOriginUrl.protocol) return false
+                console.log(`[RunTime] Origin port: ${originUrl.port}`)
+                console.log(`[RunTime] Expected Origin port: ${expectedOriginUrl.port}`)
                 if (originUrl.port != expectedOriginUrl.port) return false
 
                 // Ignore the subdomains
                 const components = originUrl.hostname.split(".")
-                if (components.length < 2) {
-                    return false
-                }
+                console.log(`[RunTime] Origin Url hostname components: ${components}, ${components.length}`)
+                if (components.length < 2) return false;
 
                 // We do not use a top-level domain that is in two parts (e.g. co.uk), so this check is fine
                 const hostname = components[components.length - 2] + "." + components[components.length - 1];
+                console.log(`[RunTime] Origin host vs expected origin hostname: ${hostname}, ${expectedOriginUrl.hostname}`)
                 return hostname === expectedOriginUrl.hostname
             } catch (error) {
                 // TODO: Consider logging an error here
+                console.log(`[RunTime] Exception while checking expected origin: ${error}`)
                 return false
             }
             return true
@@ -896,6 +902,7 @@ namespace pxsim {
         // communication
         static messagePosted: (data: SimulatorMessage) => void;
         static postMessage(data: SimulatorMessage) {
+            console.log(`[Runtime] Post Message. Location ${window?.location.href}, Data: ${data}`)
             if (!data) return;
             // TODO: origins
             if (typeof window !== 'undefined' && window.parent && window.parent.postMessage) {
