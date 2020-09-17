@@ -144,7 +144,7 @@ namespace pxtblockly {
                             const newTile = project.createNewTile(tile.bitmap);
                             result.tileset.tiles[i] = newTile;
                         }
-                        else if (!tile.data) {
+                        else if (!tile.jresData) {
                             result.tileset.tiles[i] = project.resolveTile(tile.id);
                         }
                     }

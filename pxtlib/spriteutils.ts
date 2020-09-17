@@ -5,6 +5,8 @@ namespace pxt.sprite {
     export const BLOCKLY_TILESET_TYPE = "BLOCKLY_TILESET_TYPE";
     export const TILE_PREFIX = "tile";
     export const TILE_NAMESPACE = "myTiles";
+    export const ASSETS_NAMESPACE = "myAssets";
+    export const IMAGE_PREFIX = "image";
 
     export interface Coord {
         x: number,

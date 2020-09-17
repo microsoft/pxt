@@ -89,7 +89,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
 
     initTilemap(s?: string) {
         this.tilemapProject = new pxt.TilemapProject();
-        this.tilemapProject.loadJres(s ? this.parseJres(s) : {});
+        this.tilemapProject.loadTilemapJRes(s ? this.parseJres(s) : {});
         let project = this.tilemapProject.getTilemap(this.tilemapName);
 
         if (!project) {
@@ -130,7 +130,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 const newTile = this.tilemapProject.createNewTile(tile.bitmap);
                 data.tileset.tiles[i] = newTile;
             }
-            else if (!tile.data) {
+            else if (!tile.jresData) {
                 data.tileset.tiles[i] = this.tilemapProject.resolveTile(tile.id);
             }
         }

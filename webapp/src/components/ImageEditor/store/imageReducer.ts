@@ -580,37 +580,41 @@ function addNewTile(t: pxt.TileSet, data: pxt.sprite.BitmapData, id?: number, qn
     if (tiles.length === 0) {
         // Transparency is always index 0
         tiles.push({
+            type: pxt.AssetType.Tile,
             id: fakeId,
             isProjectTile: true,
             bitmap: new pxt.sprite.Bitmap(t.tileWidth, t.tileWidth).data(),
-            data: null,
+            jresData: null,
             weight: t.tiles.length
         })
     }
 
     if (id) {
         tiles.push({
+            type: pxt.AssetType.Tile,
             id: fakeId,
             bitmap: data,
             isProjectTile: true,
-            data: null,
+            jresData: null,
             weight: t.tiles.length
         });
     }
     else if (qname) {
         tiles.push({
+            type: pxt.AssetType.Tile,
             id: qname,
             bitmap: data,
-            data: null,
+            jresData: null,
             weight: t.tiles.length
          });
     }
     else {
         tiles.push({
+            type: pxt.AssetType.Tile,
             id: fakeId,
             isProjectTile: true,
             bitmap: data,
-            data: null,
+            jresData: null,
             weight: t.tiles.length
          });
     }
@@ -659,7 +663,7 @@ function tickEvent(event: string) {
 
 function restoreSprites(tileset: pxt.TileSet, gallery: GalleryTile[]) {
     for (const t of tileset.tiles) {
-        if (!t.data && !t.isProjectTile) {
+        if (!t.jresData && !t.isProjectTile) {
             for (const g of gallery) {
                 if (g.qualifiedName === t.id) {
                     t.bitmap = g.bitmap;

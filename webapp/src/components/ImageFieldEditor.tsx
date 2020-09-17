@@ -159,7 +159,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
 
         const tilesToGalleryItems = (tiles: pxt.TileSet) => tiles ? tiles.tiles.map(t => ({
             qName: t.id,
-            src: imgConv.convert("data:image/x-mkcd-f," + t.data),
+            src: imgConv.convert("data:image/x-mkcd-f," + t.jresData),
             alt: t.id,
             tags: []
         } as pxt.sprite.GalleryItem)) : [];
