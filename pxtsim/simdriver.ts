@@ -312,9 +312,8 @@ namespace pxsim {
             frame.allowFullscreen = true;
             frame.setAttribute('allow', 'autoplay');
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-            let simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
             frame.className = 'no-select'
-            frame.src = simUrl + '#' + frame.id;
+            frame.src = this.getSimUrl() + '#' + frame.id;
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
 
@@ -607,10 +606,11 @@ namespace pxsim {
                 this.listener = (ev: MessageEvent) => {
                     if (this.hwdbg) return
 
+                    console.log(`[SimDriver] Origin: ${ev.origin}, Data: ${ev.data}`)
                     if (U.isLocalHost()) {
                         // no-op
                     } else {
-                        if (!U.messageOriginExpected(ev.origin, "https://userpxt.io")) return
+                        if (!U.messageOriginExpected(ev.origin, this.getSimUrl())) return
                     }
                     this.handleMessage(ev.data, ev.source as Window)
                 }
