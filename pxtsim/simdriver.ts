@@ -246,6 +246,10 @@ namespace pxsim {
             return frames;
         }
 
+        private getSimUrl(): string {
+            return this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
+        }
+
         public postMessage(msg: pxsim.SimulatorMessage, source?: Window) {
             if (this.hwdbg) {
                 this.hwdbg.postMessage(msg)
@@ -255,6 +259,7 @@ namespace pxsim {
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
             const depEditors = this.dependentEditors();
             let frames = this.simFrames();
+            const simUrl = this.getSimUrl();
             if (source && broadcastmsg && !!broadcastmsg.broadcast) {
                 // the editor is hosted in a multi-editor setting
                 // don't start extra frames
@@ -263,11 +268,11 @@ namespace pxsim {
                 if (this.options.nestedEditorSim && parentWindow) {
                     // if message comes from parent already, don't echo
                     if (source !== parentWindow)
-                        parentWindow.postMessage(msg, "*");
+                        parentWindow.postMessage(msg, simUrl);
                 } else if (depEditors) {
                     depEditors.forEach(w => {
                         if (source !== w)
-                            w.postMessage(msg, "*")
+                            w.postMessage(msg, simUrl)
                     });
                 } else {
                     // start secondary frame if needed
@@ -288,7 +293,7 @@ namespace pxsim {
                 // frame not in DOM
                 if (!frame.contentWindow) continue;
 
-                frame.contentWindow.postMessage(msg, "*");
+                frame.contentWindow.postMessage(msg, simUrl);
 
                 // don't start more than 1 recorder
                 if (msg.type == 'recorder'
