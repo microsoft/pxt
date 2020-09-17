@@ -6180,6 +6180,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 description: "Download localization files and bundle them",
                 aliases: ["locales", "crowdin"]
             },
+            "locs-src": {
+                description: "Bundle localization files that have already been downloaded to a given directory",
+                argument: "locs-src",
+                type: "string"
+            },
             "no-appcache": {
                 description: "Disables application cache"
             }
