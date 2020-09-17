@@ -119,7 +119,7 @@ function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj:
         if (fs.existsSync(locdir))
             fs.readdirSync(locdir)
                 .filter(f => /strings\.json$/i.test(f))
-                .forEach(f => todo.push(path.join(locdir, f)))
+                .forEach(f => todo.push(path.join(locdir, f)));
     });
 
     pxt.log(`uploading bundled translations to Crowdin (${todo.length} files)`);
@@ -202,6 +202,7 @@ export async function buildAllTranslationsAsync(langToStringsHandlerAsync: (file
                     .filter(k => !!dataLang[k] && !strings[k])
                     .forEach(k => strings[k] = dataLang[k]);
             }
+
             const errorIds = Object.keys(errors);
             if (errorIds.length) {
                 pxt.log(`${errorIds.length} errors`);
