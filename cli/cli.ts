@@ -4435,7 +4435,8 @@ export async function staticpkgAsync(parsed: commandParser.ParsedCommand) {
         if (locsSrc) {
             const languages = pxt.appTarget?.appTheme?.availableLocales
                     .filter(langId => nodeutil.existsDirSync(path.join(locsSrc, langId)));
-            const buildFileTranslationsAsync = async (fileName: string) => {
+
+            await crowdin.buildAllTranslationsAsync(async (fileName: string) => {
                 const output: pxt.Map<pxt.Map<string>> = {};
 
                 for (const langId of languages) {
@@ -4446,8 +4447,7 @@ export async function staticpkgAsync(parsed: commandParser.ParsedCommand) {
                 }
 
                 return output;
-            }
-            await crowdin.buildAllTranslationsAsync(buildFileTranslationsAsync);
+            });
         } else {
             await crowdin.downloadTargetTranslationsAsync();
         }

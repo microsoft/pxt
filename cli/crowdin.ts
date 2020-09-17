@@ -142,12 +142,10 @@ export async function downloadTargetTranslationsAsync(parsed?: commandParser.Par
     if (!cred)
         return;
 
-    const downloadCrowdinFileAsync = async (fileName: string) => {
+    await buildAllTranslationsAsync(async (fileName: string) => {
         pxt.log(`downloading ${fileName}`);
         return pxt.crowdin.downloadTranslationsAsync(cred.branch, cred.prj, cred.key, fileName, { translatedOnly: true, validatedOnly: true });
-    };
-
-    await buildAllTranslationsAsync(downloadCrowdinFileAsync, name);
+    }, name);
 }
 
 export async function buildAllTranslationsAsync(langToStringsHandlerAsync: (fileName: string) => Promise<Map<Map<string>>>, singleDir?: string) {
