@@ -269,7 +269,7 @@ namespace pxsim {
                 if (this.options.nestedEditorSim && parentWindow) {
                     // if message comes from parent already, don't echo
                     if (source !== parentWindow)
-                        parentWindow.postMessage(msg, simUrl);
+                        parentWindow.postMessage(msg, "*");
                 } else if (depEditors) {
                     depEditors.forEach(w => {
                         if (source !== w)
