@@ -5,7 +5,7 @@
 Packages the target into static HTML pages
 
 ```
-pxt staticpkg [--route route] [--githubpages] [--output output]
+pxt staticpkg [--route route] [--githubpages] [--output output] [--locs-src locs-src]
 ```
 
 ## Description
@@ -24,11 +24,7 @@ Generate a web site compatible with GitHub pages.
 
 ### output (optional)
 
-Directory for generated files. 
-
-### bump (option)
-
-Bump version number generating pages
+Directory for generated files.
 
 ### ~ hint
 
@@ -36,6 +32,30 @@ This directory is cleaned before starting the process.
 
 ### ~
 
+### locs-src <directory> (optional)
+
+Directory to fetch editor translations to include in the build.
+
+Files must be listed as follows:
+
+```
+{locs-src}/{lang id}/target-strings.json
+{locs-src}/{lang id}/sim-strings.json
+{locs-src}/{lang id}/{package id}-strings.json
+{locs-src}/{lang id}/{package id}-jsdoc-strings.json
+```
+
+### minify (optional)
+
+Minifies all generated js files.
+
+### githubpages (optional)
+
+Generate a web site compatible with GitHub pages.
+
+### bump (option)
+
+Bump version number generating pages.
 
 ## Deploying PXT with static files
 
