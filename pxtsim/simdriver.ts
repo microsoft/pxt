@@ -259,7 +259,8 @@ namespace pxsim {
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
             const depEditors = this.dependentEditors();
             let frames = this.simFrames();
-            const simUrl = this.getSimUrl();
+            const simUrl = U.isLocalHost() ? "*" : this.getSimUrl();
+            console.log(`[SimDriver] Post Message Sim URL: ${simUrl}`)
             if (source && broadcastmsg && !!broadcastmsg.broadcast) {
                 // the editor is hosted in a multi-editor setting
                 // don't start extra frames
