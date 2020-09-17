@@ -316,6 +316,9 @@ export function pySnippetToBlocksAsync(code: string, blockInfo?: ts.pxtc.BlocksI
 
 // Py[] -> blocks
 export function pySnippetArrayToBlocksAsync(code: string[], blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
+    const namespaceRegex = /^\s*namespace\s+[^\s]+\s*{([\S\s]*)}\s*$/im;
+    const exportLetRegex = /^\s*export\s(let\s*[\S\s]*)\s*$/im;
+    const exportFunctionRegex = /^\s*export\s(function\s*[\S\s]*)\s*$/im;
     const snippetBlocks = "main.blocks";
     let trg = pkg.mainPkg.getTargetOptions()
     let files: string[] = [];
@@ -339,7 +342,23 @@ export function pySnippetArrayToBlocksAsync(code: string[], blockInfo?: ts.pxtc.
             // strip the namespace declaration out of the converted snippets and concat to convert to blocks
             let ts = "";
             for (let file of files) {
-                ts += `{\n${res.outfiles[file + ".ts"]}\n}\n`
+                let match = res.outfiles[file + ".ts"].match(namespaceRegex);
+                if (match && match[1]) {
+                    let noNamespace = match[1];
+                    let lines = noNamespace.split("\n");
+                    let cleanLines = lines.map((element: string)=>{
+                        match = element.match(exportLetRegex);
+                        let strippedExportLet;
+                        match? strippedExportLet = match[1] : strippedExportLet = element;
+                        match = strippedExportLet.match(exportFunctionRegex);
+                        if (match) {
+                            return match[1];
+                        } else {
+                            return strippedExportLet;
+                        }
+                    })
+                    ts += `{\n${cleanLines.join("\n")}\n}\n`;
+                }
             }
             return decompileBlocksSnippetAsync(ts, blockInfo)
         });
