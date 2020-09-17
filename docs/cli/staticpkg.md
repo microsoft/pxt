@@ -45,6 +45,10 @@ Files must be listed as follows:
 {locs-src}/{lang id}/{package id}-jsdoc-strings.json
 ```
 
+where `{locs-src}` is the directory parameter passed in here,
+`{lang id}` is one of the language identifiers listed as in `availableLocales` in `pxtarget.json`,
+and `{package id}` is the for packages listed in `bundleddirs` (e.g. `core`).
+
 ### minify (optional)
 
 Minifies all generated js files.
