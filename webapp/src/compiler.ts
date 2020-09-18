@@ -676,7 +676,7 @@ async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo
             }
 
             await db.setAsync(dep, entry);
-            pxt.debug(`Stored API info for ${dep}`);
+            pxt.debug(`Stored API info for ${getPackageKey(dep)}`);
         }
     }
 }
@@ -964,7 +964,7 @@ function getPackageKey(pack: pkg.EditorPackage) {
     const verspec = ksPkg._verspec;
     if (pxt.github.isGithubId(verspec)) {
         // only cache one version of repo; drop #tag
-        const slug = /^[^#]+/.exec(verspec);
+        const slug = /^([^#]+)/.exec(verspec);
         return slug[1];
     } else {
         return ksPkg.config.name;
