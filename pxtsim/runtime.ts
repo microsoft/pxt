@@ -175,12 +175,23 @@ namespace pxsim {
             } catch (e) { return false; }
         }
 
+        function getBaseDomain(url: URL): string {
+            if (!url) return ''
+
+            const components = url.hostname.split(".")
+            if (components.length < 2) return '';
+
+            // We do not use a top-level domain that is in two parts (e.g. co.uk), so this check is fine
+            return components[components.length - 2] + "." + components[components.length - 1];
+        }
+
         /**
          * A utility method to check that origin of a received message is as expected
          * @param origin The origin of the received message
          * @param expectedOrigin The expected origin of the received message
+         * @param ignoreSubDomains Whether the subdomains of the origins should be ignored
          */
-        export function messageOriginExpected(origin: string, expectedOrigin: string): boolean {
+        export function messageOriginExpected(origin: string, expectedOrigin: string, ignoreSubDomains: boolean = true): boolean {
             try {
                 console.log(`[RunTime] origin: ${origin}, expectedOrigin: ${expectedOrigin}`)
                 const originUrl = new URL(origin)
@@ -194,20 +205,16 @@ namespace pxsim {
                 if (originUrl.port != expectedOriginUrl.port) return false
 
                 // Ignore the subdomains
-                const components = originUrl.hostname.split(".")
-                console.log(`[RunTime] Origin Url hostname components: ${components}, ${components.length}`)
-                if (components.length < 2) return false;
-
-                // We do not use a top-level domain that is in two parts (e.g. co.uk), so this check is fine
-                const hostname = components[components.length - 2] + "." + components[components.length - 1];
-                console.log(`[RunTime] Origin host vs expected origin hostname: ${hostname}, ${expectedOriginUrl.hostname}`)
-                return hostname === expectedOriginUrl.hostname
+                if (ignoreSubDomains) {
+                    return getBaseDomain(originUrl) === getBaseDomain(expectedOriginUrl)
+                } else {
+                    return originUrl.hostname === expectedOriginUrl.hostname
+                }
             } catch (error) {
                 // TODO: Consider logging an error here
                 console.log(`[RunTime] Exception while checking expected origin: ${error}`)
                 return false
             }
-            return true
         }
     }
 
