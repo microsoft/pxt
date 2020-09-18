@@ -4415,7 +4415,8 @@ export async function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     const minify = !!parsed.flags["minify"];
     const bump = !!parsed.flags["bump"];
     const disableAppCache = !!parsed.flags["no-appcache"];
-    const locs = !!parsed.flags["locs"];
+    const locsSrc = parsed.flags["locs-src"] as string;
+    const locs = !!locsSrc || !!parsed.flags["locs"];
     if (parsed.flags["cloud"]) forceCloudBuild = true;
     if (minify && process.env["PXT_ENV"] === undefined) {
         process.env["PXT_ENV"] = "production";
@@ -4428,9 +4429,28 @@ export async function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     if (bump) {
         await bumpAsync();
     }
+
     if (locs) {
         await internalGenDocsAsync(false, true);
-        await crowdin.downloadTargetTranslationsAsync();
+        if (locsSrc) {
+            const languages = pxt.appTarget?.appTheme?.availableLocales
+                    .filter(langId => nodeutil.existsDirSync(path.join(locsSrc, langId)));
+
+            await crowdin.buildAllTranslationsAsync(async (fileName: string) => {
+                const output: pxt.Map<pxt.Map<string>> = {};
+
+                for (const langId of languages) {
+                    const srcFilePath = path.join(locsSrc, langId, fileName);
+                    if (nodeutil.fileExistsSync(srcFilePath)) {
+                        output[langId] = pxt.Util.jsonTryParse(fs.readFileSync(srcFilePath, { encoding: "utf8" }));
+                    }
+                }
+
+                return output;
+            });
+        } else {
+            await crowdin.downloadTargetTranslationsAsync();
+        }
     }
 
     await internalBuildTargetAsync({ packaged: true });
@@ -5457,6 +5477,7 @@ function cacheUsedBlocksAsync() {
 }
 
 function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
+    pxt.github.forceProxy = true; // avoid throttling in CI machines
     const mdPaths: string[] = [];
     const mdRegex = /\.md$/;
     const targetDirs = pxt.appTarget.cacheusedblocksdirs;
@@ -6158,6 +6179,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             locs: {
                 description: "Download localization files and bundle them",
                 aliases: ["locales", "crowdin"]
+            },
+            "locs-src": {
+                description: "Bundle localization files that have already been downloaded to a given directory",
+                argument: "locs-src",
+                type: "string"
             },
             "no-appcache": {
                 description: "Disables application cache"

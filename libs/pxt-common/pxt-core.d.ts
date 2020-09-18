@@ -195,11 +195,20 @@ interface Array<T> {
     /**
      * Store a value at a particular index
      * @param index the zero-based position in the list to store the value, eg: 0
-     * @param the value to insert, eg: 0
+     * @param value the value to insert, eg: 0
      */
     //% help=arrays/set
     //% shim=Array_::setAt weight=84
     set(index: number, value: T): void;
+
+    /**
+     * Return a random value from the array
+     */
+    //% helper=arrayPickRandom weight=25
+    //% blockId="array_pickRandom" block="get random value from %list"
+    //% blockNamespace="arrays"
+    //% group="Read"
+    _pickRandom(): T;
 
     [n: number]: T;
 
@@ -403,10 +412,10 @@ interface Object { }
 interface Function {
   __assignableToFunction: Function;
 }
-interface IArguments { 
+interface IArguments {
   __assignableToIArguments: IArguments;
 }
-interface RegExp { 
+interface RegExp {
   __assignableToRegExp: RegExp;
 }
 type TemplateStringsArray = Array<string>;

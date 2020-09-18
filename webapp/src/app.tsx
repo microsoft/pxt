@@ -123,6 +123,7 @@ export class ProjectView
 
     private runToken: pxt.Util.CancellationToken;
     private updatingEditorFile: boolean;
+    private loadingExample: boolean;
     private openingTypeScript: boolean;
     private preserveUndoStack: boolean;
 
@@ -370,7 +371,7 @@ export class ProjectView
     }
 
     saveFileAsync(): Promise<void> {
-        if (!this.editorFile)
+        if (!this.editorFile || this.loadingExample)
             return Promise.resolve()
         return this.saveTypeScriptAsync()
             .then(() => this.setFileContentAsync());
@@ -1149,6 +1150,9 @@ export class ProjectView
             if (isCompleted && pxt.commands.onTutorialCompleted) pxt.commands.onTutorialCompleted();
             // Hide flyouts and popouts
             this.editor.closeFlyout();
+            if (this.textEditor.giveFocusOnLoading) {
+                this.textEditor.editor.focus();
+            }
         }
     }
 
@@ -2225,6 +2229,7 @@ export class ProjectView
     importExampleAsync(options: pxt.editor.ExampleImportOptions): Promise<void> {
         const { name, path, loadBlocks, prj, preferredEditor } = options;
         core.showLoading("changingcode", lf("loading..."));
+        this.loadingExample = true;
         return this.loadActivityFromMarkdownAsync(path, name.toLowerCase(), preferredEditor)
             .then(r => {
                 const { filename, md, features, autoChooseBoard: autoChooseBoardMeta } = (r || {});
@@ -2276,7 +2281,10 @@ export class ProjectView
                 pxt.reportException(e);
                 return Promise.reject(e);
             })
-            .finally(() => core.hideLoading("changingcode"))
+            .finally(() => {
+                this.loadingExample = false;
+                core.hideLoading("changingcode")
+            })
     }
 
     switchTypeScript() {
@@ -3394,7 +3402,14 @@ export class ProjectView
                             pxt.log(`tutorial ${ghid.fullName} tag: ${tag}`);
                             return pxt.github.downloadPackageAsync(`${ghid.fullName}#${ghid.tag}`, config);
                         });
-                }).then(gh => gh && resolveMarkdown(ghid, gh.files));
+                }).then(gh => {
+                    let p = Promise.resolve();
+                    // check for cached tutorial info, save into IndexedDB if found
+                    if (gh.files[pxt.TUTORIAL_INFO_FILE]) {
+                        p.then(() => pxt.tutorial.parseCachedTutorialInfo(gh.files[pxt.TUTORIAL_INFO_FILE], path));
+                    }
+                    return p.then(() => gh && resolveMarkdown(ghid, gh.files));
+                });
         } else if (header) {
             pxt.tickEvent("tutorial.header");
             temporary = true;
@@ -3510,7 +3525,7 @@ export class ProjectView
             .finally(() => core.hideLoading("tutorial"));
     }
 
-    startActivity(activity: pxt.editor.Activity, path: string, title?: string, editorProjectName?: string) {
+    startActivity(activity: pxt.editor.Activity, path: string, title?: string, editorProjectName?: string, focus = true) {
         pxt.tickEvent(activity + ".start", { editor: editorProjectName });
         switch (activity) {
             case "tutorial":
@@ -3520,6 +3535,7 @@ export class ProjectView
             case "example":
                 this.importExampleAsync({ name, path, loadBlocks: false, preferredEditor: editorProjectName }); break;
         }
+        this.textEditor.giveFocusOnLoading = focus;
     }
 
     completeTutorialAsync(): Promise<void> {
@@ -4156,7 +4172,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
                     editorProjectName = pxt.BLOCKS_PROJECT_NAME;
                 tutorialPath = tutorialPath.substr(tutorialPath.indexOf(':') + 1)
             }
-            editor.startActivity(hash.cmd, tutorialPath, undefined, editorProjectName);
+            editor.startActivity(hash.cmd, tutorialPath, undefined, editorProjectName, false);
             pxt.BrowserUtils.changeHash("editor");
             return true;
         }
@@ -4605,4 +4621,11 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
     }, false);
+
+    // Disable right-click in locked editor to prevent "Back". (Blockly context menu still enabled)
+    if (pxt.appTarget.appTheme.lockedEditor) {
+        window.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+        }, false);
+    }
 })

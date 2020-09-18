@@ -296,6 +296,7 @@ namespace pxt {
             hwVariant = null;
             hwName = null;
         }
+        pxt.debug(`hwVariant: ${hwVariant} (${hwName})`)
     }
 
     export function hasHwVariants(): boolean {
@@ -504,6 +505,7 @@ namespace pxt {
     export const TILEMAP_JRES = "tilemap.g.jres";
     export const TUTORIAL_CODE_START = "_onCodeStart.ts"
     export const TUTORIAL_CODE_STOP = "_onCodeStop.ts"
+    export const TUTORIAL_INFO_FILE = "tutorial-info-cache.json";
 
     export function outputName(trg: pxtc.CompileTarget = null) {
         if (!trg) trg = appTarget.compile

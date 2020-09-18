@@ -346,7 +346,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     fileType: pxt.editor.FileType = pxt.editor.FileType.Text;
     extraLibs: pxt.Map<monaco.IDisposable>;
     nsMap: pxt.Map<toolbox.BlockDefinition[]>;
-    giveFocusOnLoading: boolean = false;
+    giveFocusOnLoading: boolean = true;
 
     protected fieldEditors: FieldEditorManager;
     protected feWidget: ViewZoneEditorHost | ModalEditorHost;
@@ -630,7 +630,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             setInsertionSnippet={this.setInsertionSnippet}
                             parent={this.parent} />
                     </div>
-                    {showErrorList && <ErrorList onSizeChange={this.setErrorListState} listenToErrorChanges={this.listenToErrorChanges}
+                    {showErrorList && <ErrorList isInBlocksEditor={false} onSizeChange={this.setErrorListState}
+                        listenToErrorChanges={this.listenToErrorChanges}
                         listenToExceptionChanges={this.listenToExceptionChanges} goToError={this.goToError}
                         startDebugger={this.startDebugger} />}
                 </div>

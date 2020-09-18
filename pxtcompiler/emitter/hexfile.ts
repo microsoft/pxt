@@ -636,6 +636,13 @@ namespace ts.pxtc {
                     Util.pushRange(myhex, app)
             }
 
+            if (!uf2 && bin.target.moveHexEof) {
+                while (!myhex[myhex.length - 1])
+                    myhex.pop()
+                if (myhex[myhex.length - 1] == ":00000001FF")
+                    myhex.pop()
+            }
+
             if (bin.packedSource) {
                 if (uf2) {
                     addr = (uf2.currPtr + 0x1000) & ~0xff
@@ -658,6 +665,9 @@ namespace ts.pxtc {
                     }
                 }
             }
+
+            if (!uf2 && bin.target.moveHexEof)
+                myhex.push(":00000001FF")
 
             if (uf2)
                 return [UF2.serializeFile(uf2)]
@@ -1239,6 +1249,9 @@ __flash_checksums:
         const src = serialize(bin, opts)
 
         const opts0 = U.flatClone(opts)
+        // normally, this would already have been done, but if the main variant
+        // is disabled, another variant may be set up
+        hexfile.setupFor(opts.target, opts.extinfo || emptyExtInfo())
         assembleAndPatch(src, bin, opts, cres)
 
         const otherVariants = opts0.otherMultiVariants || []

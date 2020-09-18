@@ -388,6 +388,14 @@ basic.showString("Hello!")
 
 Users will have the option of clicking the Python icon to see the snippet in Python just like they can with Blocks and Javascript/Typescript.
 
+## Editor flags
+
+There are some flags you can add to the URL of your tutorial to change the layout of the page. These are not yet enabled for every editor, so make sure you check that the feature is available in your target.
+
+* **lockedEditor=1** - If you load the page directly into a tutorial, adding the `lockedEditor` flag will "lock" users into the tutorial. This hides the "Exit Tutorial", "Home", and "Finish" buttons, as well as disabling the right-click menu outside of the Blocks workspace to prevent users from entering the home screen or sandbox mode. For example:
+
+    https://arcade.makecode.com?lockedEditor=1#tutorial:/tutorials/happy-flower
+
 ## Adding tutorials to the home screen
 
 To have a tutorial appear on the home screen, you will need to create or use an existing gallery and add a tutorial entry to it. See the
@@ -424,6 +432,17 @@ pxt checkdocs
 
 ## Example
 
+Here are some examples of the tutorial format.
+
+### Github Sample
+
+```
+https://github.com/microsoft/pxt-tutorial-sample
+```
+
+The [pxt-tutorial-sample](https://github.com/microsoft/pxt-tutorial-sample) repository contains a fully-functional tutorial for MakeCode Arcade, with multiple files, localization, and custom blocks in the tutorial repository.
+
+### Markdown Sample
 The following sample shows a simple 2 step tutorial.
 
 ````markdown

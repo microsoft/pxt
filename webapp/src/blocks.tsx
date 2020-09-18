@@ -17,6 +17,7 @@ import { initializeSnippetExtensions } from './snippetBuilder';
 
 import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
+import { ErrorList } from "./errorList";
 
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: Blockly.WorkspaceSvg;
@@ -33,10 +34,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
     breakpointsSet: number[]; // the IDs of the breakpoints set.
 
+    private errorChangesListeners: pxt.Map<(errors: pxt.blocks.BlockDiagnostic[]) => void> = {};
+
     protected debuggerToolbox: DebuggerToolbox;
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
 
+    constructor(parent: pxt.editor.IProjectView) {
+        super(parent);
+
+        this.listenToBlockErrorChanges = this.listenToBlockErrorChanges.bind(this)
+        this.onErrorListResize = this.onErrorListResize.bind(this)
+    }
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
         let map: pxt.Map<number> = {};
         if (!breakpoints || !this.compilationResult) return;
@@ -244,35 +253,36 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private initLayout() {
-        let minX: number;
-        let minY: number;
         let needsLayout = false;
         let flyoutOnly = !this.editor.toolbox_ && (this.editor as any).flyout_;
 
+        let minDistanceFromOrigin: number;
+        let closestToOrigin: Blockly.utils.Rect;
+
         (this.editor.getTopComments(false) as Blockly.WorkspaceCommentSvg[]).forEach(b => {
-            const tpX = b.getBoundingRectangle().left;
-            const tpY = b.getBoundingRectangle().top;
-            if (minX === undefined || tpX < minX) {
-                minX = tpX;
-            }
-            if (minY === undefined || tpY < minY) {
-                minY = tpY;
+            const bounds = b.getBoundingRectangle();
+
+            const distanceFromOrigin = Math.sqrt(bounds.left * bounds.left + bounds.top * bounds.top);
+
+            if (minDistanceFromOrigin === undefined || distanceFromOrigin < minDistanceFromOrigin) {
+                closestToOrigin = bounds;
+                minDistanceFromOrigin = distanceFromOrigin;
             }
 
-            needsLayout = needsLayout || (tpX == 10 && tpY == 10);
+            needsLayout = needsLayout || (bounds.left == 10 && bounds.top == 10);
         });
         let blockPositions: { left: number, top: number }[] = [];
         (this.editor.getTopBlocks(false) as Blockly.BlockSvg[]).forEach(b => {
             const bounds = b.getBoundingRectangle()
-            if (minX === undefined || bounds.left < minX) {
-                minX = bounds.left;
-            }
-            if (minY === undefined || bounds.top < minY) {
-                minY = bounds.top;
+
+            const distanceFromOrigin = Math.sqrt(bounds.left * bounds.left + bounds.top * bounds.top);
+
+            if (minDistanceFromOrigin === undefined || distanceFromOrigin < minDistanceFromOrigin) {
+                closestToOrigin = bounds;
+                minDistanceFromOrigin = distanceFromOrigin;
             }
 
             const isOverlapping = !!blockPositions.find(b => b.left === bounds.left && b.top === bounds.top)
-
             needsLayout = needsLayout || isOverlapping;
 
             blockPositions.push(bounds)
@@ -283,9 +293,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             pxt.blocks.layout.flow(this.editor, { useViewWidth: true });
         }
         else {
-            // Otherwise translate the blocks so that they are positioned on the top left
-            this.editor.getTopComments(false).forEach(c => c.moveBy(-minX, -minY));
-            this.editor.getTopBlocks(false).forEach(b => b.moveBy(-minX, -minY));
+            if (closestToOrigin) {
+                // Otherwise translate the blocks so that they are positioned on the top left
+                this.editor.getTopComments(false).forEach(c => c.moveBy(-closestToOrigin.left, -closestToOrigin.top));
+                this.editor.getTopBlocks(false).forEach(b => b.moveBy(-closestToOrigin.left, -closestToOrigin.top));
+            }
             this.editor.scrollX = 10;
             this.editor.scrollY = 10;
 
@@ -645,12 +657,31 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     display(): JSX.Element {
         let flyoutOnly = this.parent.state.editorState && this.parent.state.editorState.hasCategories === false;
+        let showErrorList = pxt.appTarget.appTheme.blocksErrorList;
         return (
-            <div>
-                <div id="blocksEditor"></div>
-                <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
+            <div className="blocksAndErrorList">
+                <div className="blocksEditorOuter">
+                    <div id="blocksEditor"></div>
+                    <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
+                </div>
+                {showErrorList && <ErrorList isInBlocksEditor={true} listenToBlockErrorChanges={this.listenToBlockErrorChanges}
+                    onSizeChange={this.onErrorListResize} />}
             </div>
         )
+    }
+
+    onErrorListResize() {
+        this.parent.fireResize();
+    }
+
+    listenToBlockErrorChanges(handlerKey: string, handler: (errors: pxt.blocks.BlockDiagnostic[]) => void) {
+        this.errorChangesListeners[handlerKey] = handler;
+    }
+
+    private onBlockErrorChanges(errors: pxt.blocks.BlockDiagnostic[]) {
+        for (let listener of pxt.U.values(this.errorChangesListeners)) {
+            listener(errors)
+        }
     }
 
     getBlocksAreaDiv() {
@@ -905,13 +936,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         })
         this.compilationResult.diagnostics.forEach(d => {
             if (d.blockId) {
+
                 let b = this.editor.getBlockById(d.blockId) as Blockly.BlockSvg;
+
                 if (b) {
                     b.setWarningText(d.message);
                     b.setHighlightWarning(true);
                 }
             }
         })
+        this.onBlockErrorChanges(this.compilationResult.diagnostics);
         this.setBreakpointsFromBlocks();
     }
 

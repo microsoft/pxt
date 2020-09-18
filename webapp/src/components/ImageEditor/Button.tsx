@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { fireClickOnEnter } from '../../sui';
+import { fireClickOnlyOnEnter } from './util';
 
 export interface ButtonProps {
     title: string;
@@ -22,7 +22,7 @@ export class IconButton extends React.Component<ButtonProps, {}> {
                 title={title}
                 tabIndex={(noTab || disabled) ? -1 : 0}
                 onClick={onClick}
-                onKeyDown={fireClickOnEnter}>
+                onKeyDown={fireClickOnlyOnEnter}>
                     <span className={iconClass} />
             </div>
         );

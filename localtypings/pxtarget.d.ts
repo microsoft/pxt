@@ -392,6 +392,7 @@ declare namespace pxt {
         tutorialExplicitHints?: boolean; // allow use explicit hints
         errorList?: boolean; // error list experiment
         embedBlocksInSnapshot?: boolean; // embed blocks xml in right-click snapshot
+        blocksErrorList?: boolean; // blocks error list experiment
     }
 
     interface SocialOptions {
@@ -429,6 +430,7 @@ declare namespace pxt {
     }
 
     interface BuiltTutorialInfo {
+        hash?: string;
         usedBlocks: Map<number>;
     }
 
@@ -507,6 +509,7 @@ declare namespace ts.pxtc {
         useModulator?: boolean;
         webUSB?: boolean; // use WebUSB when supported
         hexMimeType?: string;
+        moveHexEof?: boolean;
         driveName?: string;
         jsRefCounting?: boolean;
         utf8?: boolean;

@@ -192,7 +192,7 @@
         .has-actions.content {
             height: calc(100% - @thinMenuHeight - @mainMenuHeight);
         }
-    }    
+    }
 }
 
 /*******************************
@@ -201,7 +201,7 @@
 
 .ui.modal .closeIcon {
     position: absolute;
-    top: 0; 
+    top: 0;
     right: 0;
     height: 4.5rem;
     width: 4.5rem;
@@ -254,4 +254,12 @@
         right: 0.5rem;
         margin: 0;
     }
+}
+
+/*******************************
+        Modal Fields
+*******************************/
+
+.modal .grouped.fields {
+    margin-bottom: 0.5rem;
 }

@@ -409,12 +409,15 @@ namespace pxt.blocks {
         // inject Blockly with all block definitions
         return blockInfo.blocks
             .map(fn => {
+                const comp = compileInfo(fn);
+                const block = createToolboxBlock(blockInfo, fn, comp);
+
                 if (fn.attributes.blockBuiltin) {
                     Util.assert(!!builtinBlocks()[fn.attributes.blockId]);
-                    builtinBlocks()[fn.attributes.blockId].symbol = fn;
+                    const builtin = builtinBlocks()[fn.attributes.blockId];
+                    builtin.symbol = fn;
+                    builtin.block.codeCard = mkCard(fn, block);
                 } else {
-                    let comp = compileInfo(fn);
-                    let block = createToolboxBlock(blockInfo, fn, comp);
                     injectBlockDefinition(blockInfo, fn, comp, block);
                 }
                 return fn;
@@ -2209,6 +2212,26 @@ namespace pxt.blocks {
                 });
 
                 setBuiltinHelpInfo(this, variablesChangeId);
+            },
+            /**
+             * Add menu option to create getter block for this variable
+             * @param {!Array} options List of menu options to add to.
+             * @this Blockly.Block
+             */
+            customContextMenu: function (options: any[]) {
+                let option: any = {
+                    enabled: this.workspace.remainingCapacity() > 0
+                };
+
+                let name = this.getField("VAR").getText();
+                option.text = lf("Create 'get {0}'", name)
+
+                let xmlField = goog.dom.createDom('field', null, name);
+                xmlField.setAttribute('name', 'VAR');
+                let xmlBlock = goog.dom.createDom('block', null, xmlField);
+                xmlBlock.setAttribute('type', "variables_get");
+                option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
+                options.push(option);
             }
         };
 
