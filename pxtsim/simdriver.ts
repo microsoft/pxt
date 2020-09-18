@@ -314,7 +314,7 @@ namespace pxsim {
             frame.setAttribute('allow', 'autoplay');
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
             frame.className = 'no-select'
-            frame.src = this.getSimUrl() + '#' + frame.id;
+            frame.src = this.getSimUrl() + '?' + window.location.origin + '#' + frame.id;
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
 
