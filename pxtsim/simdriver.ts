@@ -607,7 +607,7 @@ namespace pxsim {
                 this.listener = (ev: MessageEvent) => {
                     if (this.hwdbg) return
 
-                    console.log(`[SimDriver] Origin: ${ev.origin}, Data: ${ev.data}`)
+                    console.log(`[SimDriver] Origin: ${ev.origin}, Data: ${ev.data}, location: ${location}`)
                     if (U.isLocalHost()) {
                         // no-op
                     } else {

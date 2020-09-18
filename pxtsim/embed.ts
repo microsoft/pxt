@@ -249,6 +249,7 @@ namespace pxsim {
 
         function receiveMessage(event: MessageEvent) {
             let origin = event.origin; // || (<any>event).originalEvent.origin;
+            console.log(`[Embed] Origin: ${event.origin}, Data: ${event.data}, location: ${location}`)
             // TODO: test origins
             let data: SimulatorMessage = event.data || {};
             let type = data.type;
