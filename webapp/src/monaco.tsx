@@ -160,7 +160,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                     };
                     return res
                 })
-                return { suggestions: items };
+                return { suggestions: items, incomplete: true };
             });
 
         function tosort(i: number): string {
