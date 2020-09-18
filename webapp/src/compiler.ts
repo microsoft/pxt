@@ -546,9 +546,20 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
     const corePkg = bundled[corePkgName];
     if (!corePkg) return null;
 
-    // If the project has a TypeScript file beside main.ts, it could export blocks so we can't use the cache
+    // If the project has a TypeScript file beside one of the generated files, it could export blocks so we can't use the cache
     const files = project.getAllFiles();
-    if (Object.keys(files).some(filename => filename != "main.ts" && filename.indexOf("/") === -1 && pxt.Util.endsWith(filename, ".ts"))) {
+    const generatedFiles = [
+        "main.ts",
+        pxt.TUTORIAL_CODE_START,
+        pxt.TUTORIAL_CODE_STOP,
+        pxt.TILEMAP_CODE
+    ];
+
+    if (Object.keys(files).some(
+            filename => generatedFiles.indexOf(filename) === -1
+            && filename.indexOf("/") === -1
+            && pxt.Util.endsWith(filename, ".ts")
+        )) {
         return null;
     }
 

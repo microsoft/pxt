@@ -502,6 +502,8 @@ namespace pxt {
     export const DEFAULT_GROUP_NAME = "other"; // used in flyout, for snippet groups
     export const TILEMAP_CODE = "tilemap.g.ts";
     export const TILEMAP_JRES = "tilemap.g.jres";
+    export const TUTORIAL_CODE_START = "_onCodeStart.ts"
+    export const TUTORIAL_CODE_STOP = "_onCodeStop.ts"
 
     export function outputName(trg: pxtc.CompileTarget = null) {
         if (!trg) trg = appTarget.compile
