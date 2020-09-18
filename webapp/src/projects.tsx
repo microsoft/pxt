@@ -345,15 +345,12 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         console.log("LOGIN!")
 
         let url = `${pxt.Cloud.apiRoot}login`;
-        let data = {};
-        let headers = {};
 
-        // TODO: consider pxt.BrowserUtils.cacheBustingUrl
-        pxt.Util.httpPostJsonAsync(url, data)
-            .then(r => {
-                console.log("Hit backend!")
-                console.dir(r)
-            })
+        // TODO(dz): iframe?
+        window.location.href = url;
+
+        // TODO(dz):
+        // client gets: http://localhost:3232/index.html?code=XXXXXX&state=foo%3b&session_state=d3f14365-4468-4edc-b167-d89370141e8e
     }
 
     renderCore() {
