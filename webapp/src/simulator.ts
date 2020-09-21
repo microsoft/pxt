@@ -45,8 +45,11 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
     root.appendChild(debuggerDiv);
 
     const nestedEditorSim = /nestededitorsim=1/i.test(window.location.href);
-    let searchParams = new URLSearchParams(window.location.search);
-    let parentOrigin = searchParams.get("parentOrigin")
+    let parentOrigin: string | null = null;
+    if (window.parent !== window) {
+        let searchParams = new URLSearchParams(window.location.search);
+        parentOrigin = searchParams.get("parentOrigin")
+    }
 
     let options: pxsim.SimulatorDriverOptions = {
         restart: () => cfg.restartSimulator(),
