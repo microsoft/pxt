@@ -66,7 +66,8 @@ export class Provider extends cloudsync.ProviderBase implements cloudsync.Provid
             // Redirect
             window.location.href = url
         }).then((resp) => {
-            this.setNewToken(resp.accessToken, resp.expiresIn);
+            // TODO: rememberme review this when implementing goog/onedrive
+            this.setNewToken(resp.accessToken, false, resp.expiresIn);
             return resp;
         }).finally(() => {
             this.loginCompleteInner();
@@ -174,6 +175,7 @@ export class Provider extends cloudsync.ProviderBase implements cloudsync.Provid
         // Pop out
         const popupCallback = () => {
             const qs = core.parseQueryString(pxt.storage.getLocal(cloudsync.OAUTH_HASH) || "")
+            const rememberMe = qs["state"] === pxt.storage.getLocal(cloudsync.OAUTH_REMEMBER_STATE)
             const accessToken = qs["access_token"];
             const expiresInSeconds = parseInt(qs["expires_in"]);
 
@@ -187,6 +189,7 @@ export class Provider extends cloudsync.ProviderBase implements cloudsync.Provid
 
             resolve({
                 accessToken: accessToken,
+                rememberMe,
                 expiresIn: expiresInSeconds
             });
         }

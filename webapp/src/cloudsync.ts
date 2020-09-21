@@ -26,6 +26,7 @@ export interface FileInfo {
 
 export interface ProviderLoginResponse {
     accessToken: string;
+    rememberMe: boolean;
     expiresIn?: number; // seconds
 }
 
@@ -36,7 +37,7 @@ export interface IdentityProvider {
     loginCheck(): void;
     loginAsync(redirect?: boolean, silent?: boolean): Promise<ProviderLoginResponse>;
     logout(): void;
-    loginCallback(queryString: pxt.Map<string>): void;
+    loginCallback(rememberMe: boolean, queryString: pxt.Map<string>): void;
     getUserInfoAsync(): Promise<pxt.editor.UserInfo>;
     hasSync(): boolean;
     user(): pxt.editor.UserInfo;
@@ -75,13 +76,22 @@ export const OAUTH_TYPE = "oauthType";
 export const OAUTH_STATE = "oauthState"; // state used in OAuth flow
 export const OAUTH_REDIRECT = "oauthRedirect"; // hash to be reloaded up loging
 export const OAUTH_HASH = "oauthHash"; // hash used in implicit oauth signing
+export const OAUTH_REMEMBER_STATE = "oauthRememberState"; // if state matches this key, store in local storage
+const TOKEN = "token"
+const TOKEN_EXP = "tokenExp"
+const AUTO_LOGIN = "AutoLogin"
+const CLOUD_USER = "cloudUser"
 
-export function setOauth(type: string, redirect?: string, hash?: string) {
+export function setOauth(type: string, rememberMe: boolean, redirect?: string, hash?: string) {
     const state = ts.pxtc.Util.guidGen();
     pxt.storage.setLocal(OAUTH_TYPE, type);
     pxt.storage.setLocal(OAUTH_STATE, state);
     pxt.storage.setLocal(OAUTH_REDIRECT, redirect || window.location.hash)
     pxt.storage.setLocal(OAUTH_HASH, hash)
+    if (rememberMe)
+        pxt.storage.setLocal(OAUTH_REMEMBER_STATE, state);
+    else
+        pxt.storage.removeLocal(OAUTH_REMEMBER_STATE)
     return state;
 }
 
@@ -90,10 +100,15 @@ function clearOauth() {
     pxt.storage.removeLocal(OAUTH_STATE)
     pxt.storage.removeLocal(OAUTH_REDIRECT)
     pxt.storage.removeLocal(OAUTH_HASH)
+    pxt.storage.removeLocal(OAUTH_REMEMBER_STATE)
 }
 
 export class ProviderBase {
+    // in-memory token, for sessions where token is not stored
+    private _token: string;
+
     constructor(public name: string, public friendlyName: string, public icon: string, public urlRoot: string) {
+        this._token = pxt.storage.getLocal(this.name + TOKEN)
     }
 
     hasSync(): boolean {
@@ -105,15 +120,15 @@ export class ProviderBase {
     }
 
     user(): pxt.editor.UserInfo {
-        const user = pxt.Util.jsonTryParse(pxt.storage.getLocal(this.name + "cloudUser")) as pxt.editor.UserInfo;
+        const user = pxt.Util.jsonTryParse(pxt.storage.getLocal(this.name + CLOUD_USER)) as pxt.editor.UserInfo;
         return user;
     }
 
     setUser(user: pxt.editor.UserInfo) {
         if (user)
-            pxt.storage.setLocal(this.name + "cloudUser", JSON.stringify(user))
+            pxt.storage.setLocal(this.name + CLOUD_USER, JSON.stringify(user))
         else
-            pxt.storage.removeLocal(this.name + "cloudUser");
+            pxt.storage.removeLocal(this.name + CLOUD_USER);
         data.invalidate("sync:user")
         data.invalidate("github:user")
     }
@@ -122,8 +137,7 @@ export class ProviderBase {
         if (this.hasTokenExpired())
             return undefined;
 
-        const tok = pxt.storage.getLocal(this.name + "token")
-        return tok;
+        return this._token
     }
 
     protected reqAsync(opts: U.HttpRequestOptions): Promise<U.HttpResponse> {
@@ -187,14 +201,14 @@ export class ProviderBase {
 
         if (this.hasTokenExpired()) {
             // if we already attempted autologin (and failed), don't do it again
-            if (pxt.storage.getLocal(this.name + "AutoLogin")) {
+            if (pxt.storage.getLocal(this.name + AUTO_LOGIN)) {
                 this.pleaseLogin()
                 return
             }
 
-            pxt.storage.setLocal(this.name + "AutoLogin", "yes")
+            pxt.storage.setLocal(this.name + AUTO_LOGIN, "yes")
             this.loginAsync(undefined, true)
-                .then((resp) => resp && this.setNewToken(resp.accessToken, resp.expiresIn))
+                .then((resp) => resp && this.setNewToken(resp.accessToken, resp.rememberMe, resp.expiresIn))
                 .done();
         } else {
             setProvider(this as any)
@@ -209,7 +223,8 @@ export class ProviderBase {
     protected loginInner() {
         const ns = this.name
         core.showLoading(ns + "login", lf("Signing you in to {0}...", this.friendlyName))
-        const state = setOauth(ns);
+        // TODO: rememberme review this when implementing goog/onedrive
+        const state = setOauth(ns, false);
 
         const providerDef = pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders && pxt.appTarget.cloud.cloudProviders[this.name];
         const redir = window.location.protocol + "//" + window.location.host + "/oauth-redirect"
@@ -230,19 +245,32 @@ export class ProviderBase {
         core.hideLoading(ns + "login");
     }
 
-    loginCallback(qs: pxt.Map<string>) {
+    loginCallback(rememberMe: boolean, qs: pxt.Map<string>) {
         const ns = this.name
-        pxt.storage.removeLocal(ns + "AutoLogin")
-        this.setNewToken(qs["access_token"], parseInt(qs["expires_in"]));
+        pxt.storage.removeLocal(ns + AUTO_LOGIN)
+        this.setNewToken(qs["access_token"], rememberMe, parseInt(qs["expires_in"]));
 
         // re-compute
         this.setUser(undefined);
     }
 
-    setNewToken(accessToken: string, expiresIn?: number) {
+    setNewToken(accessToken: string, rememberMe: boolean, expiresIn?: number) {
         const ns = this.name;
-        const tokenKey = ns + "token";
-        const tokenKeyExp = ns + "tokenExp";
+        const tokenKey = ns + TOKEN;
+        const tokenKeyExp = ns + TOKEN_EXP;
+
+        // in-memory token does not expire
+        this._token = accessToken;
+
+        // the user did not check the "remember me" checkbox,
+        // do not store credentials in local storage
+        if (!rememberMe) {
+            pxt.debug(`token storage non-opted in`)
+            pxt.storage.removeLocal(tokenKey);
+            pxt.storage.removeLocal(tokenKeyExp);
+            return;
+        }
+
         if (!accessToken) {
             pxt.storage.removeLocal(tokenKey);
             pxt.storage.removeLocal(tokenKeyExp);
@@ -258,7 +286,7 @@ export class ProviderBase {
     }
 
     hasTokenExpired() {
-        const exp = parseInt(pxt.storage.getLocal(this.name + "tokenExp") || "0")
+        const exp = parseInt(pxt.storage.getLocal(this.name + TOKEN_EXP) || "0")
         if (!exp || exp < U.nowSeconds()) {
             return false;
         }
@@ -266,9 +294,10 @@ export class ProviderBase {
     }
 
     logout() {
-        pxt.storage.removeLocal(this.name + "token")
-        pxt.storage.removeLocal(this.name + "tokenExp")
-        pxt.storage.removeLocal(this.name + "AutoLogin")
+        pxt.storage.removeLocal(this.name + TOKEN)
+        pxt.storage.removeLocal(this.name + TOKEN_EXP)
+        pxt.storage.removeLocal(this.name + AUTO_LOGIN)
+        this._token = undefined;
         this.setUser(undefined)
         invalidateData();
     }
@@ -674,7 +703,8 @@ export function loginCheck() {
             const impl = provs.filter(p => p.name == tp)[0];
             if (impl) {
                 pxt.storage.removeLocal(OAUTH_HASH);
-                impl.loginCallback(qs)
+                const rememberMe = qs["state"] === pxt.storage.getLocal(OAUTH_REMEMBER_STATE)
+                impl.loginCallback(rememberMe, qs)
             }
             // cleanup
             clearOauth();
@@ -692,9 +722,10 @@ export function loginCheck() {
             if (ex && ex == qs["state"]) {
                 pxt.storage.removeLocal(OAUTH_STATE)
                 pxt.storage.removeLocal(OAUTH_TYPE);
+                const rememberMe = qs["state"] === pxt.storage.getLocal(OAUTH_REMEMBER_STATE)
                 const impl = provs.filter(p => p.name == tp)[0];
                 if (impl) {
-                    impl.loginCallback(qs);
+                    impl.loginCallback(rememberMe, qs);
                     const hash = pxt.storage.getLocal(OAUTH_REDIRECT) || "";
                     location.hash = hash;
                 }
