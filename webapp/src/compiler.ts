@@ -344,15 +344,15 @@ export function pySnippetArrayToBlocksAsync(code: string[], blockInfo?: ts.pxtc.
             for (let file of files) {
                 let match = res.outfiles[file + ".ts"].match(namespaceRegex);
                 if (match && match[1]) {
-                    let noNamespace = match[1];
+                    const noNamespace = match[1];
+                    // strip out 'export let' and 'export function'. This won't hit custom kinds since those are always const
                     let lines = noNamespace.split("\n");
-                    let cleanLines = lines.map((element: string)=>{
-                        match = element.match(exportLetRegex);
-                        let strippedExportLet;
-                        match? strippedExportLet = match[1] : strippedExportLet = element;
-                        match = strippedExportLet.match(exportFunctionRegex);
-                        if (match) {
-                            return match[1];
+                    let cleanLines = lines.map((element: string) => {
+                        const matchExportLet = element.match(exportLetRegex);
+                        const strippedExportLet = matchExportLet? matchExportLet[1] : element;
+                        const strippedExportFunc = strippedExportLet.match(exportFunctionRegex);
+                        if (strippedExportFunc) {
+                            return strippedExportFunc[1];
                         } else {
                             return strippedExportLet;
                         }
