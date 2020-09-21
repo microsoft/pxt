@@ -90,7 +90,7 @@
         const targets = await fetchJSON("/editors.json");
 
         async function fetchJSON(url) {
-            const resp = await fetch(url)
+            const resp = await fetch(url);
             const json = await resp.json();
             return json;
         }
@@ -151,7 +151,7 @@
             const response = await fetchGraphQL(query);
             const responseJSON = await response.json();
             const items = responseJSON.data.user.repositories.nodes
-                .filter(node => node.object)
+                .filter(node => node.object);
             for (let i = 0; i < items.length; ++i) {
                 const target = sniffTarget(items[i]);
                 if (!target)
@@ -199,7 +199,7 @@
                 if (!user) {
                     $('#repoes').append(`<div class="ui item">
                         user not found
-                    </div>`)
+                    </div>`);
                     return;
                 }
                 const userEl = $(`
@@ -211,11 +211,11 @@
         <div class="header"></div>
         <div class="description"></div>
     </div>
-</a>`)
-                userEl.attr("href", `https://github.com/${user.login}`)
-                userEl.find("img").attr('src', user.avatarUrl)
-                userEl.find(".header").text(user.name)
-                userEl.find(".description").text(user.login)
+</a>`);
+                userEl.attr("href", `https://github.com/${user.login}`);
+                userEl.find("img").attr('src', user.avatarUrl);
+                userEl.find(".header").text(user.name);
+                userEl.find(".description").text(user.login);
                 $('#repoes')
                     .append(userEl)
                 const repoes = await fetchUserRepos(userName);
@@ -236,13 +236,13 @@
         <div class="extra"><button class="ui right floated button icon" title="Open repository in GitHub.com"><i class="icon external"></i></button></div>        
     </div>
 </div>`);
-                            item.find("img").attr("src", icon)
-                            item.find(".header").text(repo.name)
-                            item.find(".description").text(repo.owner.login)
+                            item.find("img").attr("src", icon);
+                            item.find(".header").text(repo.name);
+                            item.find(".description").text(repo.owner.login);
                             item.find(".extra>button").click(event => {
                                 event.stopPropagation();
                                 window.open(targets[repo.target].url, "_blank")
-                            })
+                            });
                             item.click(event => {
                                 trackClick("github.explorer.open")
                                 $('#repoes').children().removeClass('active');
@@ -253,7 +253,7 @@
                                     `?nocookiebanner=1&${readOnly ? 'controller=1&readonly=1&ws=mem&' : 'editorLayout=ide&nosandbox=1'}#pub:github:`
                                     + repo.nameWithOwner + "#master";
                                 $("#makecodecolumn").attr("src", url);
-                            })
+                            });
 
                             return item;
                         }))
@@ -317,7 +317,7 @@
         $(function () {
             console.log(`loaded...`);
             checkToken();
-            $('#signinbtn').click(navigateSignin)
+            $('#signinbtn').click(navigateSignin);
             $('#signout').click(navigateSignout);
             $("#user").on("keydown", function search(e) {
                 if (e.keyCode == 13) {
@@ -342,8 +342,7 @@
                         $("#user").val(user);
                         update(user);
                     }
-                })
-
+                });
         });
 })();
     </script>
