@@ -277,9 +277,10 @@ namespace pxsim {
                     }
                 } else if (depEditors) {
                     depEditors.forEach(w => {
-                        if (source !== w)
-                        console.log(`[SimDriver] Forward message to dep editor`)
-                        w.postMessage(msg, simUrl)
+                        if (source !== w) {
+                            console.log(`[SimDriver] Forward message to dep editor`)
+                            w.postMessage(msg, simUrl)
+                        }
                     });
                 } else {
                     // start secondary frame if needed
@@ -618,7 +619,19 @@ namespace pxsim {
                     if (U.isLocalHost()) {
                         // no-op
                     } else {
-                        if (!U.messageOriginExpected(ev.origin, this.getSimUrl())) return
+                        let expectedOrigins: string[] =  [this.getSimUrl(), window.location.origin]
+                        if (this.options.parentOrigin) {
+                            expectedOrigins.push(this.options.parentOrigin)
+                        }
+
+                        let originExpected = false;
+                        for (let origin of expectedOrigins) {
+                            if (U.messageOriginExpected(ev.origin, origin)) {
+                                originExpected = true
+                                break
+                            }
+                        }
+                        if (!originExpected) return
                     }
                     this.handleMessage(ev.data, ev.source as Window)
                 }
