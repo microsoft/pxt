@@ -740,8 +740,9 @@ namespace ts.pxtc.service {
     export let lastGlobalNames: pxt.Map<SymbolInfo> | undefined;
     export let lastBlocksInfo: BlocksInfo;
     export let lastLocBlocksInfo: BlocksInfo;
-    export let lastFuse: Fuse<SearchInfo>;
-    export let lastProjectFuse: Fuse<ProjectSearchInfo>;
+    // don't export, fuse is internal only
+    let lastFuse: Fuse<SearchInfo>;
+    let lastProjectFuse: Fuse<ProjectSearchInfo>;
     export let builtinItems: SearchInfo[];
     export let blockDefinitions: pxt.Map<pxt.blocks.BlockDefinition>;
     export let tbSubset: pxt.Map<boolean | string>;
