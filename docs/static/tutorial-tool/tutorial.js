@@ -61,6 +61,16 @@ var targets = [
             }
         ]
     }, {
+        name: "Calliope MINI",
+        id: "calliopemini",
+        shareUrl: "https://makecode.calliope.cc/",
+        endpoints: [
+            {
+                name: "",
+                url: "https://makecode.calliope.cc/?controller=1"
+            }
+        ]
+    }, {
         name: "Maker",
         id: "maker",
         shareUrl: "https://maker.makecode.com/",
@@ -70,7 +80,8 @@ var targets = [
                 url: "https://maker.makecode.com/?controller=1"
             }
         ]
-    } /* not supported
+    }
+    /* not supported
     , {
         name: "LEGO EV3",
         id: "ev3",

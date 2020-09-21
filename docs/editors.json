@@ -90,8 +90,7 @@
     "calliopemini": {
         "name": "Calliope Mini",
         "title": "MakeCode for Calliope",
-        "url": "https://makecode.calliope.cc/beta",
-        "unsupported": ["playground"]
+        "url": "https://makecode.calliope.cc/"
     },
     "stm32iotnode": {
         "name": "STM32L4 Discovery kit IoT node",

@@ -5,7 +5,7 @@ const existing = localStorage.getItem(STORAGE_KEY)
 // @ts-ignore
 const editor = monaco.editor.create(document.getElementById("container"), {
     value: existing ||
-`# My Tutorial
+        `# My Tutorial
 
 ## Step 1
 
@@ -92,6 +92,16 @@ const targets: TargetInfo[] = [
             }
         ]
     }, {
+        name: "Calliope MINI",
+        id: "calliopemini",
+        shareUrl: "https://makecode.calliope.cc/",
+        endpoints: [
+            {
+                name: "",
+                url: "https://makecode.calliope.cc/?controller=1"
+            }
+        ]
+    }, {
         name: "Maker",
         id: "maker",
         shareUrl: "https://maker.makecode.com/",
@@ -101,7 +111,8 @@ const targets: TargetInfo[] = [
                 url: "https://maker.makecode.com/?controller=1"
             }
         ]
-    }/* not supported
+    }
+    /* not supported
     , {
         name: "LEGO EV3",
         id: "ev3",
@@ -145,7 +156,7 @@ function shareScript(md, done) {
                     done(undefined, err);
                 } else {
                     if (resp.text && /application\/json/.test(resp.headers["content-type"]))
-                    resp.json = JSON.parse(resp.text)
+                        resp.json = JSON.parse(resp.text)
                     // show dialog
                     done(resp);
                 }
@@ -169,19 +180,19 @@ function shareScript(md, done) {
             "main.blocks": "",
             "main.ts": "",
             "pxt.json": JSON.stringify({
-                    name: name,
-                    dependencies: {
-                        "core": "*"
-                    },
-                    description: "",
-                    files: [
-                        "main.blocks",
-                        "main.ts",
-                        "README.md"
-                    ]
-                })
+                name: name,
+                dependencies: {
+                    "core": "*"
+                },
+                description: "",
+                files: [
+                    "main.blocks",
+                    "main.ts",
+                    "README.md"
+                ]
+            })
         },
-        meta: { }
+        meta: {}
     });
 }
 
@@ -211,10 +222,10 @@ document.getElementById("share-button").addEventListener("click", function () {
     var out = document.getElementById("share-output") as HTMLInputElement;
     btn.className += " loading";
     var md = editor.getValue();
-    shareScript(md, function(resp, err) {
+    shareScript(md, function (resp, err) {
         btn.className = btn.className.replace("loading", "");
         if (resp && resp.json) {
-            out.value = selectedTarget.shareUrl +  "#tutorial:" + resp.json.id;
+            out.value = selectedTarget.shareUrl + "#tutorial:" + resp.json.id;
             out.focus();
             out.select();
         } else if (err)
@@ -226,7 +237,7 @@ document.getElementById("share-button").addEventListener("click", function () {
 
 window.addEventListener("message", receiveMessage, false);
 
-const pendingMsgs: {[index: string]: any} = {};
+const pendingMsgs: { [index: string]: any } = {};
 
 function sendMessage(action: string, md?: string) {
     console.log('send ' + action)
@@ -236,7 +247,7 @@ function sendMessage(action: string, md?: string) {
         id: Math.random().toString(),
         action: action
     };
-    if(action == 'importtutorial') {
+    if (action == 'importtutorial') {
         msg.markdown = md;
         msg.response = true;
     } else if (action == 'renderblocks') {
@@ -258,7 +269,7 @@ function receiveMessage(ev: any) {
     console.log('received...')
     console.log(msg)
 
-    if(msg.resp)
+    if (msg.resp)
         console.log(JSON.stringify(msg.resp, null, 2))
 
     if (msg.type == "pxthost") {
