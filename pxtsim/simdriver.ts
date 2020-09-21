@@ -18,6 +18,7 @@ namespace pxsim {
         // instead of spanning multiple simulators,
         // dispatch messages to parent window
         nestedEditorSim?: boolean;
+        parentOrigin?: string
     }
 
     export enum SimulatorState {
@@ -262,21 +263,27 @@ namespace pxsim {
             const simUrl = U.isLocalHost() ? "*" : this.getSimUrl();
             console.log(`[SimDriver] Post Message Sim URL: ${simUrl}`)
             if (source && broadcastmsg && !!broadcastmsg.broadcast) {
+                console.log(`[SimDriver] Broadcast message`)
                 // the editor is hosted in a multi-editor setting
                 // don't start extra frames
                 const parentWindow = window.parent && window.parent !== window.window
                     ? window.parent : window.opener;
                 if (this.options.nestedEditorSim && parentWindow) {
                     // if message comes from parent already, don't echo
-                    if (source !== parentWindow)
-                        parentWindow.postMessage(msg, window.location.origin);
+                    if (source !== parentWindow) {
+                        const parentOrigin = this.options.parentOrigin ? this.options.parentOrigin : window.location.origin
+                        console.log(`[SimDriver] Forward message to parent, parent origin ${parentOrigin}`)
+                        parentWindow.postMessage(msg, parentOrigin);
+                    }
                 } else if (depEditors) {
                     depEditors.forEach(w => {
                         if (source !== w)
-                            w.postMessage(msg, simUrl)
+                        console.log(`[SimDriver] Forward message to dep editor`)
+                        w.postMessage(msg, simUrl)
                     });
                 } else {
                     // start secondary frame if needed
+                    console.log(`[SimDriver] Forward message simulator iframes`)
                     if (frames.length < 2) {
                         this.container.appendChild(this.createFrame());
                         frames = this.simFrames();

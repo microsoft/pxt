@@ -78,7 +78,7 @@
             var selectRight = document.getElementById("selectright");
             var divider = document.getElementById("divider");
             var localhost = /localhost=1/.test(window.location.href)
-            var flags = "?nestededitorsim=1&editorlayout=ide&nosandbox=1";
+            var flags = "?nestededitorsim=1&editorlayout=ide&nosandbox=1&parentOrigin=" + window.location.origin;
             var ratio = .5;
             var dividerWidth = 14;
 
@@ -167,7 +167,7 @@
 
             setWidths();
             handleHash();
-        })();        
+        })();
     </script>
     <!-- @include tracking.html -->
 </body>
