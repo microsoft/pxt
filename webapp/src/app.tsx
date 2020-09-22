@@ -4290,7 +4290,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    pxt.setCompileSwitches(window.localStorage["compile"])
     pxt.setCompileSwitches(query["compiler"] || query["compile"])
 
     // github token set in cloud provider
