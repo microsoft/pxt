@@ -334,6 +334,7 @@ declare interface String {
 
     /** Returns a value indicating if the string is empty */
     //% helper=stringEmpty
+    //% help=text/is-empty
     //% blockId="string_isempty" blockNamespace="text"
     //% block="%this=text| is empty"
     isEmpty(): boolean;
