@@ -470,7 +470,7 @@ export class ProjectView
             this.setFile(f)
         }
 
-        pxt.Util.setEditorLanguagePref("js");
+        pxt.shell.setEditorLanguagePref("js");
     }
 
     openBlocks() {
@@ -612,7 +612,7 @@ export class ProjectView
                 })
                 .then(() => {
                     // on success, update editor pref
-                    pxt.Util.setEditorLanguagePref("py");
+                    pxt.shell.setEditorLanguagePref("py");
                     return Promise.resolve();
                 });
         }
@@ -2358,7 +2358,7 @@ export class ProjectView
                         hasCloseIcon: true,
                     }).then(b => {
                         if (this.isPythonActive()) {
-                            pxt.Util.setEditorLanguagePref("py"); // stay in python, else go to blocks
+                            pxt.shell.setEditorLanguagePref("py"); // stay in python, else go to blocks
                         }
                     })
                 }
@@ -2880,7 +2880,7 @@ export class ProjectView
             const editorId = this.editor ? this.editor.getId().replace(/Editor$/, '') : "unknown";
             if (opts.background) {
                 pxt.tickActivity("autorun", "autorun." + editorId);
-                if (localStorage.getItem("noAutoRun"))
+                if (pxt.storage.getLocal("noAutoRun"))
                     return Promise.resolve()
             } else pxt.tickEvent(opts.debug ? "debug" : "run", { editor: editorId });
 
@@ -4434,7 +4434,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    pxt.setCompileSwitches(window.localStorage["compile"])
     pxt.setCompileSwitches(query["compiler"] || query["compile"])
 
     // github token set in cloud provider
