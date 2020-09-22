@@ -1530,7 +1530,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     protected updateGrayBlocks() {
         if (this.editor) {
-            const pythonEnabled = pxt.Util.isPyLangPref();
+            const pythonEnabled = pxt.shell.isPyLangPref();
             this.editor.getAllBlocks(false).forEach(b => {
                 if (b.type === pxtc.TS_STATEMENT_TYPE || b.type === pxtc.TS_OUTPUT_TYPE) {
                     (b as pxt.blocks.GrayBlock).setPythonEnabled(pythonEnabled);
