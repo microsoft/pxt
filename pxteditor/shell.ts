@@ -60,4 +60,26 @@ namespace pxt.shell {
         init();
         return layoutType == EditorLayoutType.Controller;
     }
+
+    export function isPyLangPref(): boolean {
+        return pxt.storage.getLocal("editorlangpref") == "py";
+    }
+
+    export function getEditorLanguagePref(): string {
+        return pxt.storage.getLocal("editorlangpref");
+    }
+
+    export function setEditorLanguagePref(lang: string): void {
+        if (lang.match(/prj$/)) lang = lang.replace(/prj$/, "")
+        pxt.storage.setLocal("editorlangpref", lang);
+    }
+
+    export function getToolboxAnimation(): string {
+        return pxt.storage.getLocal("toolboxanimation");
+    }
+
+    export function setToolboxAnimation(): void {
+        pxt.storage.setLocal("toolboxanimation", "1");
+    }
+
 }
