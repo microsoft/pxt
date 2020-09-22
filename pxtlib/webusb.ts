@@ -489,13 +489,16 @@ namespace pxt.usb {
             })
     }
 
-    function tryGetDevicesAsync(): Promise<USBDevice[]> {
+    async function tryGetDevicesAsync(): Promise<USBDevice[]> {
         log(`webusb: get devices`)
-        return ((navigator as any).usb.getDevices() as Promise<USBDevice[]>)
-            .then<USBDevice[]>((devs: USBDevice[]) => {
-                devs = devs || [];
-                return devs;
-            });
+        try {
+            const devs = await ((navigator as any).usb.getDevices() as Promise<USBDevice[]>);
+            return devs || []
+        }
+        catch (e) {
+            reportException(e)
+            return [];
+        }
     }
 
     let _hid: WebUSBHID;
@@ -514,20 +517,65 @@ namespace pxt.usb {
         isEnabled = v
     }
 
-    export function isAvailable() {
-        if (pxt.BrowserUtils.isElectron() || pxt.BrowserUtils.isWinRT())
-            return false;
+    let _available: boolean = undefined;
+    export async function checkAvailableAsync() {
+        if (_available !== undefined) return;
 
-        if (!!(navigator as any).usb) {
-            // Windows versions:
-            // 5.1 - XP, 6.0 - Vista, 6.1 - Win7, 6.2 - Win8, 6.3 - Win8.1, 10.0 - Win10
-            // If on Windows, and Windows is older 8.1, don't enable WebUSB,
-            // as it requires signed INF files.
-            let m = /Windows NT (\d+\.\d+)/.exec(navigator.userAgent)
-            if (m && parseFloat(m[1]) < 6.3)
-                return false
-            return true
+        pxt.debug(`webusb: checking availability`)
+        // not supported by editor, cut short
+        if (!pxt.appTarget?.compile?.webUSB) {
+            _available = false;
+            return;
         }
-        return false
+
+        if (pxt.BrowserUtils.isElectron() || pxt.BrowserUtils.isWinRT()) {
+            pxt.debug(`webusb: off, electron or winrt`)
+            pxt.tickEvent('webusb.off', { 'reason': 'electronwinrt' })
+            _available = false;
+            return;
+        }
+
+        const _usb = (navigator as any).usb;
+        if (!_usb) {
+            pxt.debug(`webusb: off, not impl`)
+            pxt.tickEvent('webusb.off', { 'reason': 'notimpl' })
+            _available = false
+            return
+        }
+
+        // Windows versions:
+        // 5.1 - XP, 6.0 - Vista, 6.1 - Win7, 6.2 - Win8, 6.3 - Win8.1, 10.0 - Win10
+        // If on Windows, and Windows is older 8.1, don't enable WebUSB,
+        // as it requires signed INF files.
+        let m = /Windows NT (\d+\.\d+)/.exec(navigator.userAgent)
+        if (m && parseFloat(m[1]) < 6.3) {
+            pxt.debug(`webusb: off, older windows version`)
+            pxt.tickEvent('webusb.off', { 'reason': 'oldwindows' })
+            _available = false;
+            return;
+        }
+
+        // check security
+        try {
+            // iframes must specify allow="usb" in order to support WebUSB
+            await _usb.getDevices()
+        } catch (e) {
+            pxt.debug(`webusb: off, security exception`)
+            pxt.tickEvent('webusb.off', { 'reason': 'security' })
+            _available = false;
+            return;
+        }
+
+        // yay!
+        _available = true;
+        return
+    }
+
+    export function isAvailable() {
+        if (_available === undefined) {
+            console.error(`checkAvailableAsync not called`)
+            checkAvailableAsync()
+        }
+        return !!_available;
     }
 }
