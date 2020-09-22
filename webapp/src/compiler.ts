@@ -226,13 +226,14 @@ export function py2tsAsync(force = false): Promise<pxtc.transpile.TranspileResul
         })
 }
 
-export function completionsAsync(fileName: string, position: number, wordStartPos: number, wordEndPos: number, fileContent?: string): Promise<pxtc.CompletionInfo> {
+export function completionsAsync(fileName: string, position: number, wordStartPos: number, wordEndPos: number, fileContent?: string, light?: boolean): Promise<pxtc.CompletionInfo> {
     return workerOpAsync("getCompletions", {
         fileName,
         fileContent,
         position,
         wordStartPos,
         wordEndPos,
+        light,
         runtime: pxt.appTarget.runtime
     });
 }

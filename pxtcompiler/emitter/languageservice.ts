@@ -591,7 +591,7 @@ namespace ts.pxtc.service {
         resultSymbols.sort(compareCompletionSymbols);
 
         // limit the number of entries
-        if (resultSymbols.length > MAX_SYMBOLS) {
+        if (v.light && resultSymbols.length > MAX_SYMBOLS) {
             resultSymbols = resultSymbols.splice(0, MAX_SYMBOLS)
         }
 
