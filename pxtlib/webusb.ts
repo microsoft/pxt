@@ -521,6 +521,7 @@ namespace pxt.usb {
     export async function checkAvailableAsync() {
         if (_available !== undefined) return;
 
+        pxt.debug(`webusb: checking availability`)
         // not supported by editor, cut short
         if (!pxt.appTarget?.compile?.webUSB) {
             _available = false;
@@ -528,35 +529,44 @@ namespace pxt.usb {
         }
 
         if (pxt.BrowserUtils.isElectron() || pxt.BrowserUtils.isWinRT()) {
+            pxt.debug(`webusb off: electron or winrt`)
+            pxt.tickEvent('webusb.off', { 'reason': 'electronwinrt' })
             _available = false;
             return;
         }
 
         const _usb = (navigator as any).usb;
-        if (!!_usb) {
-            // Windows versions:
-            // 5.1 - XP, 6.0 - Vista, 6.1 - Win7, 6.2 - Win8, 6.3 - Win8.1, 10.0 - Win10
-            // If on Windows, and Windows is older 8.1, don't enable WebUSB,
-            // as it requires signed INF files.
-            let m = /Windows NT (\d+\.\d+)/.exec(navigator.userAgent)
-            if (m && parseFloat(m[1]) < 6.3) {
-                _available = false;
-                return;
-            }
-
-            try {
-                // iframes must specify allow="usb" in order to support WebUSB
-                await _usb.getDevices()
-            } catch (e) {
-                _available = false;
-                return;
-            }
-
-            _available = true;
+        if (!_usb) {
+            pxt.tickEvent('webusb.off', { 'reason': 'notimpl' })
+            _available = false
             return
         }
 
-        _available = false
+        // Windows versions:
+        // 5.1 - XP, 6.0 - Vista, 6.1 - Win7, 6.2 - Win8, 6.3 - Win8.1, 10.0 - Win10
+        // If on Windows, and Windows is older 8.1, don't enable WebUSB,
+        // as it requires signed INF files.
+        let m = /Windows NT (\d+\.\d+)/.exec(navigator.userAgent)
+        if (m && parseFloat(m[1]) < 6.3) {
+            pxt.debug(`webusb off: older windows version`)
+            pxt.tickEvent('webusb.off', { 'reason': 'oldwindows' })
+            _available = false;
+            return;
+        }
+
+        // check security
+        try {
+            // iframes must specify allow="usb" in order to support WebUSB
+            await _usb.getDevices()
+        } catch (e) {
+            pxt.debug(`webusb off: dissallowed by security`)
+            pxt.tickEvent('webusb.off', { 'reason': 'security' })
+            _available = false;
+            return;
+        }
+
+        // yay!
+        _available = true;
         return
     }
 
