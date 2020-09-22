@@ -261,9 +261,7 @@ namespace pxsim {
             const depEditors = this.dependentEditors();
             let frames = this.simFrames();
             const simUrl = U.isLocalHost() ? "*" : this.getSimUrl();
-            console.log(`[SimDriver] Post Message Sim URL: ${simUrl}`)
             if (source && broadcastmsg && !!broadcastmsg.broadcast) {
-                console.log(`[SimDriver] Broadcast message`)
                 // the editor is hosted in a multi-editor setting
                 // don't start extra frames
                 const parentWindow = window.parent && window.parent !== window.window
@@ -272,19 +270,15 @@ namespace pxsim {
                     // if message comes from parent already, don't echo
                     if (source !== parentWindow) {
                         const parentOrigin = this.options.parentOrigin ? this.options.parentOrigin : window.location.origin
-                        console.log(`[SimDriver] Forward message to parent, parent origin ${parentOrigin}`)
                         parentWindow.postMessage(msg, parentOrigin);
                     }
                 } else if (depEditors) {
                     depEditors.forEach(w => {
-                        if (source !== w) {
-                            console.log(`[SimDriver] Forward message to dep editor`)
+                        if (source !== w)
                             w.postMessage(msg, simUrl)
-                        }
                     });
                 } else {
                     // start secondary frame if needed
-                    console.log(`[SimDriver] Forward message simulator iframes`)
                     if (frames.length < 2) {
                         this.container.appendChild(this.createFrame());
                         frames = this.simFrames();
@@ -615,7 +609,6 @@ namespace pxsim {
                 this.listener = (ev: MessageEvent) => {
                     if (this.hwdbg) return
 
-                    console.log(`[SimDriver] Origin: ${ev.origin}, Data: ${ev.data}, location: ${location}`)
                     if (U.isLocalHost()) {
                         // no-op
                     } else {
