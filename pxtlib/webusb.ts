@@ -529,7 +529,7 @@ namespace pxt.usb {
         }
 
         if (pxt.BrowserUtils.isElectron() || pxt.BrowserUtils.isWinRT()) {
-            pxt.debug(`webusb off: electron or winrt`)
+            pxt.debug(`webusb: off, electron or winrt`)
             pxt.tickEvent('webusb.off', { 'reason': 'electronwinrt' })
             _available = false;
             return;
@@ -537,6 +537,7 @@ namespace pxt.usb {
 
         const _usb = (navigator as any).usb;
         if (!_usb) {
+            pxt.debug(`webusb: off, not impl`)
             pxt.tickEvent('webusb.off', { 'reason': 'notimpl' })
             _available = false
             return
@@ -548,7 +549,7 @@ namespace pxt.usb {
         // as it requires signed INF files.
         let m = /Windows NT (\d+\.\d+)/.exec(navigator.userAgent)
         if (m && parseFloat(m[1]) < 6.3) {
-            pxt.debug(`webusb off: older windows version`)
+            pxt.debug(`webusb: off, older windows version`)
             pxt.tickEvent('webusb.off', { 'reason': 'oldwindows' })
             _available = false;
             return;
@@ -559,7 +560,7 @@ namespace pxt.usb {
             // iframes must specify allow="usb" in order to support WebUSB
             await _usb.getDevices()
         } catch (e) {
-            pxt.debug(`webusb off: dissallowed by security`)
+            pxt.debug(`webusb: off, security exception`)
             pxt.tickEvent('webusb.off', { 'reason': 'security' })
             _available = false;
             return;
