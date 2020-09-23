@@ -196,8 +196,8 @@ namespace pxsim {
                 const originUrl = new URL(origin)
                 const expectedOriginUrl = new URL(expectedOrigin)
 
-                if (originUrl.protocol != expectedOriginUrl.protocol) return false
-                if (originUrl.port != expectedOriginUrl.port) return false
+                if (originUrl.protocol !== expectedOriginUrl.protocol) return false
+                if (originUrl.port !== expectedOriginUrl.port) return false
 
                 // Ignore the subdomains
                 if (ignoreSubDomains) {
