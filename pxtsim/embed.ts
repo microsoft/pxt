@@ -250,6 +250,7 @@ namespace pxsim {
         function receiveMessage(event: MessageEvent) {
             let origin = event.origin; // || (<any>event).originalEvent.origin;
             // TODO: test origins
+
             let data: SimulatorMessage = event.data || {};
             let type = data.type;
             if (!type) return;
