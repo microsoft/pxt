@@ -47,8 +47,18 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
     const nestedEditorSim = /nestededitorsim=1/i.test(window.location.href);
     let parentOrigin: string | null = null;
     if (window.parent !== window) {
-        let searchParams = new URLSearchParams(window.location.search);
-        parentOrigin = searchParams.get("parentOrigin")
+        const searchParams = new URLSearchParams(window.location.search);
+        const origin = searchParams.get("parentOrigin")
+
+        // validate the URI
+        if (!!origin) {
+            try {
+                const originUrl = new URL(origin);
+                parentOrigin = originUrl.origin
+            } catch(e) {
+                console.error(`Invalid parent origin: ${origin}`)
+            }
+        }
     }
 
     let options: pxsim.SimulatorDriverOptions = {
