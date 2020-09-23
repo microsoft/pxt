@@ -42,3 +42,4 @@ export const dispatchOpenTileEditor = (editIndex?: number, editID?: string) => (
 export const dispatchCloseTileEditor = (result?: pxt.sprite.BitmapData, index?: number) => ({ type: actions.CLOSE_TILE_EDITOR, result, index })
 export const dispatchDeleteTile = (index: number, id: string) => ({ type: actions.DELETE_TILE, id, index });
 export const dispatchDisableResize = () => ({ type: actions.DISABLE_RESIZE })
+export const dispatchChangeAssetName = (name: string) => ({ type: actions.CHANGE_ASSET_NAME, name });

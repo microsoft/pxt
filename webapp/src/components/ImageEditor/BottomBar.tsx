@@ -2,9 +2,10 @@ import * as React from "react";
 
 import { connect } from 'react-redux';
 import { ImageEditorStore, AnimationState, TilemapState } from './store/imageReducer';
-import { dispatchChangeImageDimensions, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchToggleAspectRatioLocked, dispatchChangeZoom, dispatchToggleOnionSkinEnabled} from './actions/dispatch';
+import { dispatchChangeImageDimensions, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchToggleAspectRatioLocked, dispatchChangeZoom, dispatchToggleOnionSkinEnabled, dispatchChangeAssetName } from './actions/dispatch';
 import { IconButton } from "./Button";
 import { fireClickOnlyOnEnter } from "./util";
+import { isNameTaken, validateAssetName } from "../../assets";
 
 export interface BottomBarProps {
     dispatchChangeImageDimensions: (dimensions: [number, number]) => void;
@@ -15,6 +16,7 @@ export interface BottomBarProps {
     resizeDisabled: boolean;
     hasUndo: boolean;
     hasRedo: boolean;
+    assetName?: string;
 
     aspectRatioLocked: boolean;
     onionSkinEnabled: boolean;
@@ -23,6 +25,7 @@ export interface BottomBarProps {
     dispatchRedoImageEdit: () => void;
     dispatchToggleAspectRatioLocked: () => void;
     dispatchToggleOnionSkinEnabled: () => void;
+    dispatchChangeAssetName: (name: string) => void;
 
     singleFrame?: boolean;
 
@@ -32,6 +35,8 @@ export interface BottomBarProps {
 export interface BottomBarState {
     width?: string;
     height?: string;
+    assetNameMessage?: string;
+    assetName?: string;
 }
 
 export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarState> {
@@ -54,11 +59,15 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
             dispatchToggleOnionSkinEnabled,
             resizeDisabled,
             singleFrame,
-            onDoneClick
+            onDoneClick,
+            assetName
         } = this.props;
+
+        const { assetNameMessage } = this.state;
 
         const width = this.state.width == null ? imageDimensions[0] : this.state.width;
         const height = this.state.height == null ? imageDimensions[1] : this.state.height;
+        const assetNameState = this.state.assetName == null ? (assetName || "") : this.state.assetName;
 
         return (
             <div className="image-editor-bottombar">
@@ -103,6 +112,20 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                 { cursorLocation && !resizeDisabled && <div className="image-editor-seperator"/> }
                 <div className="image-editor-coordinate-preview">
                     {cursorLocation && `${cursorLocation[0]}, ${cursorLocation[1]}`}
+                </div>
+                <div className="image-editor-change-name">
+                    <input className="image-editor-input"
+                        title={lf("Asset Name")}
+                        value={assetNameState}
+                        placeholder={lf("Asset Name")}
+                        tabIndex={0}
+                        onChange={this.handleAssetNameChange}
+                        onBlur={this.handleAssetNameBlur}
+                        onKeyDown={this.handleDimensionalKeydown}
+                    />
+                    {assetNameMessage && <div className="ui pointing below red basic label">
+                        {assetNameMessage}
+                    </div>}
                 </div>
                 <div className="image-editor-undo-redo">
                     <IconButton
@@ -205,6 +228,28 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
         }
     }
 
+    protected handleAssetNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        let errorMessage = null;
+
+        if (!validateAssetName(event.target.value)) {
+            errorMessage = lf("Names must begin with a letter and can only contain letters, numbers, and _");
+        }
+        else if (isNameTaken(event.target.value)) {
+            errorMessage = lf("This name is already used elsewhere in your project");
+        }
+
+        this.setState({ assetName: event.target.value, assetNameMessage: errorMessage });
+    }
+
+    protected handleAssetNameBlur = () => {
+        const { dispatchChangeAssetName } = this.props;
+
+        if (validateAssetName(this.state.assetName) && !isNameTaken(this.state.assetName)) {
+            dispatchChangeAssetName(this.state.assetName);
+        }
+        this.setState({ assetName: null, assetNameMessage: null });
+    }
+
     protected zoomIn = () => {
         this.props.dispatchChangeZoom(1)
     }
@@ -225,6 +270,7 @@ function mapStateToProps({store: { present: state, past, future }, editor}: Imag
         onionSkinEnabled: editor.onionSkinEnabled,
         cursorLocation: editor.cursorLocation,
         resizeDisabled: editor.resizeDisabled,
+        assetName: editor.assetName,
         hasUndo: !!past.length,
         hasRedo: !!future.length
     };
@@ -236,7 +282,8 @@ const mapDispatchToProps = {
     dispatchRedoImageEdit,
     dispatchToggleAspectRatioLocked,
     dispatchToggleOnionSkinEnabled,
-    dispatchChangeZoom
+    dispatchChangeZoom,
+    dispatchChangeAssetName
 };
 
 

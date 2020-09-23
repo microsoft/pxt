@@ -84,6 +84,7 @@ export interface EditorState {
     overlayEnabled?: boolean;
     alert?: AlertInfo;
     resizeDisabled?: boolean;
+    assetName?: string;
 }
 
 export interface GalleryTile {
@@ -499,6 +500,12 @@ const editorReducer = (state: EditorState, action: any, store: EditorStore): Edi
             return {
                 ...state,
                 resizeDisabled: true
+            }
+        case actions.CHANGE_ASSET_NAME:
+            tickEvent("change-asset-name");
+            return {
+                ...state,
+                assetName: action.name
             }
     }
     return state;

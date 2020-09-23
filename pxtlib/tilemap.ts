@@ -10,7 +10,8 @@ namespace pxt {
     }
 
     export interface AssetMetadata {
-        tags: string[];
+        tags?: string[];
+        blockIDs?: string[];
     }
 
     export interface Asset {
@@ -412,6 +413,10 @@ namespace pxt {
 
         public forceUpdate() {
             this.onChange();
+        }
+
+        public isNameTaken(name: string) {
+            return this.state.takenNames[name];
         }
 
         loadPackage(pack: MainPackage) {

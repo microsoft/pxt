@@ -11,7 +11,7 @@ export interface ImageFieldEditorProps {
 }
 
 export interface ImageFieldEditorState {
-    galleryVisible: boolean;
+    galleryState: "editor" | "gallery" | "my-assets";
     tileGalleryVisible?: boolean;
     galleryFilter?: string;
 }
@@ -30,7 +30,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         super(props);
 
         this.state = {
-            galleryVisible: false
+            galleryState: "editor"
         };
         setTelemetryFunction(tickImageEditorEvent);
     }
@@ -46,14 +46,19 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
             this.tileGallery = this.getTileGalleryItems();
         }
 
+        const toggleClass = this.state.galleryState === "editor" ? "left" : (this.state.galleryState === "gallery" ? "center" : "right");
+
         return <div className="image-editor-wrapper">
             <div className="gallery-editor-header">
-                <div className={`gallery-editor-toggle ${this.state.galleryVisible ? "right" : "left"} ${pxt.BrowserUtils.isEdge() ? "edge" : ""}`} onClick={this.toggleGallery} role="button" aria-pressed={this.state.galleryVisible}>
-                    <div className="gallery-editor-toggle-label gallery-editor-toggle-left">
+                <div className={`gallery-editor-toggle ${toggleClass} ${pxt.BrowserUtils.isEdge() ? "edge" : ""}`} role="button">
+                    <div className="gallery-editor-toggle-label gallery-editor-toggle-left" onClick={this.showEditor}>
                         {lf("Editor")}
                     </div>
-                    <div className="gallery-editor-toggle-label gallery-editor-toggle-right">
+                    <div className="gallery-editor-toggle-label gallery-editor-toggle-center" onClick={this.showGallery}>
                         {lf("Gallery")}
+                    </div>
+                    <div className="gallery-editor-toggle-label gallery-editor-toggle-right" onClick={this.showMyAssets}>
+                        {lf("My Assets")}
                     </div>
                     <div className="gallery-editor-toggle-handle"/>
                 </div>
@@ -63,12 +68,12 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
                 <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} />
                 <ImageEditorGallery
                     items={this.extensionGallery}
-                    hidden={!this.state.galleryVisible}
+                    hidden={this.state.galleryState !== "gallery"}
                     filterString={this.state.galleryFilter}
                     onItemSelected={this.onGalleryItemSelect} />
                 { showTiles && <ImageEditorGallery
                     items={this.tileGallery}
-                    hidden={this.state.galleryVisible || !this.state.tileGalleryVisible}
+                    hidden={this.state.galleryState !== "editor" || !this.state.tileGalleryVisible}
                     onItemSelected={this.onGalleryItemSelect} /> }
             </div>
         </div>
@@ -195,15 +200,26 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         }
     }
 
-    protected toggleGallery = () => {
-        if (this.state.galleryVisible) {
-            tickImageEditorEvent("gallery-hide");
-        }
-        else {
-            tickImageEditorEvent("gallery-show");
-        }
+    protected showEditor = () => {
+        tickImageEditorEvent("gallery-editor");
         this.setState({
-            galleryVisible: !this.state.galleryVisible,
+            galleryState: "editor",
+            tileGalleryVisible: false
+        });
+    }
+
+    protected showGallery = () => {
+        tickImageEditorEvent("gallery-builtin");
+        this.setState({
+            galleryState: "gallery",
+            tileGalleryVisible: false
+        });
+    }
+
+    protected showMyAssets = () => {
+        tickImageEditorEvent("gallery-my-assets");
+        this.setState({
+            galleryState: "my-assets",
             tileGalleryVisible: false
         });
     }
@@ -217,7 +233,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         else {
             this.setState({
                 tileGalleryVisible: true,
-                galleryVisible: false
+                galleryState: "editor"
             });
         }
     }
@@ -236,7 +252,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         tickImageEditorEvent("gallery-selection");
 
         this.setState({
-            galleryVisible: false,
+            galleryState: "editor",
             tileGalleryVisible: false
         });
     }
