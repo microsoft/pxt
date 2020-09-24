@@ -374,6 +374,7 @@ declare interface String {
     /**
      * Return a substring of the current string with whitespace removed from both ends
      */
+    //% helper=stringTrim
     trim(): string;
 
     /**
