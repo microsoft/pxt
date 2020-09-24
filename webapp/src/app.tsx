@@ -26,6 +26,7 @@ import * as tutorial from "./tutorial";
 import * as editortoolbar from "./editortoolbar";
 import * as simtoolbar from "./simtoolbar";
 import * as dialogs from "./dialogs";
+import * as identity from "./identity";
 import * as filelist from "./filelist";
 import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
@@ -3205,6 +3206,10 @@ export class ProjectView
 
     showAboutDialog() {
         dialogs.showAboutDialogAsync(this);
+    }
+
+    showLoginDialog() {
+        identity.showLoginDialogAsync(this);
     }
 
     showShareDialog(title?: string) {

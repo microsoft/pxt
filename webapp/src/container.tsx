@@ -128,6 +128,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.pair = this.pair.bind(this);
         this.pairBluetooth = this.pairBluetooth.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
+        this.showLoginDialog = this.showLoginDialog.bind(this);
         this.print = this.print.bind(this);
         this.signOutGithub = this.signOutGithub.bind(this);
     }
@@ -216,6 +217,9 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     showAboutDialog() {
         pxt.tickEvent("menu.about");
         this.props.parent.showAboutDialog();
+    }
+    showLoginDialog() {
+        this.props.parent.showLoginDialog();
     }
 
     print() {

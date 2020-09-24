@@ -11,6 +11,7 @@ import * as cloudsync from "./cloudsync";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
 import { showAboutDialogAsync } from "./dialogs";
+import { showLoginDialogAsync } from "./identity";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -31,6 +32,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
+        this.showLoginDialog = this.showLoginDialog.bind(this);
         this.chgHeader = this.chgHeader.bind(this);
         this.chgGallery = this.chgGallery.bind(this);
         this.chgCode = this.chgCode.bind(this);
@@ -85,6 +87,10 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
     private showAboutDialog() {
         showAboutDialogAsync(this.props.parent);
+    }
+
+    private showLoginDialog() {
+        showLoginDialogAsync(this.props.parent);
     }
 
     chgHeader(hdr: pxt.workspace.Header) {
@@ -290,6 +296,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showReportAbuse = this.showReportAbuse.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
+        this.showLoginDialog = this.showLoginDialog.bind(this);
         this.signOutGithub = this.signOutGithub.bind(this);
     }
 
@@ -330,6 +337,10 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.props.parent.showAboutDialog();
     }
 
+    showLoginDialog() {
+        this.props.parent.showLoginDialog();
+    }
+
     signOutGithub() {
         pxt.tickEvent("home.github.signout");
         const githubProvider = cloudsync.githubProvider();
@@ -341,16 +352,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
     }
 
     async identityLogin() {
-        // TODO(dz): break this out into seperate file
-        console.log("LOGIN!")
-
-        let url = `${pxt.Cloud.apiRoot}login`;
-
-        // TODO(dz): iframe?
-        window.location.href = url;
-
-        // TODO(dz):
-        // client gets: http://localhost:3232/index.html?code=XXXXXX&state=foo%3b&session_state=d3f14365-4468-4edc-b167-d89370141e8e
+        await showLoginDialogAsync(this.props.parent);
     }
 
     renderCore() {
@@ -376,7 +378,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
             <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} />
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
             {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener noreferrer" >{lf("Give Feedback")}</a> : undefined}
-            {targetTheme.identity ? <sui.Item role="menuitem" text={lf("Login")} onClick={this.identityLogin} /> : undefined}
+            {targetTheme.identity ? <sui.Item role="menuitem" text={lf("Login")} onClick={this.showLoginDialog} /> : undefined}
 
         </sui.DropdownMenu>;
     }
