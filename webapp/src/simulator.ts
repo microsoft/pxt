@@ -55,7 +55,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             try {
                 const originUrl = new URL(origin);
                 parentOrigin = originUrl.origin
-            } catch(e) {
+            } catch (e) {
                 console.error(`Invalid parent origin: ${origin}`)
             }
         }

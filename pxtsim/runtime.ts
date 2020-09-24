@@ -174,41 +174,6 @@ namespace pxsim {
                     && !/nolocalhost=1/.test(window.location.href);
             } catch (e) { return false; }
         }
-
-        function getBaseDomain(url: URL): string {
-            if (!url) return ''
-
-            const components = url.hostname.split(".")
-            if (components.length < 2) return '';
-
-            // We do not use a top-level domain that is in two parts (e.g. co.uk), so this check is fine
-            return components[components.length - 2] + "." + components[components.length - 1];
-        }
-
-        /**
-         * A utility method to check that origin of a received message is as expected
-         * @param origin The origin of the received message
-         * @param expectedOrigin The expected origin of the received message
-         * @param ignoreSubDomains Whether the subdomains of the origins should be ignored
-         */
-        export function messageOriginExpected(origin: string, expectedOrigin: string, ignoreSubDomains: boolean = true): boolean {
-            try {
-                const originUrl = new URL(origin)
-                const expectedOriginUrl = new URL(expectedOrigin)
-
-                if (originUrl.protocol !== expectedOriginUrl.protocol) return false
-                if (originUrl.port !== expectedOriginUrl.port) return false
-
-                // Ignore the subdomains
-                if (ignoreSubDomains) {
-                    return getBaseDomain(originUrl) === getBaseDomain(expectedOriginUrl)
-                } else {
-                    return originUrl.hostname === expectedOriginUrl.hostname
-                }
-            } catch (error) {
-                return false
-            }
-        }
     }
 
     export interface Map<T> {
