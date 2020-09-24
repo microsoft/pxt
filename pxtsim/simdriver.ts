@@ -275,7 +275,8 @@ namespace pxsim {
                 } else if (depEditors) {
                     depEditors.forEach(w => {
                         if (source !== w)
-                            w.postMessage(msg, simUrl)
+                            // dependant editors should be in the same origin
+                            w.postMessage(msg, window.location.origin)
                     });
                 } else {
                     // start secondary frame if needed
