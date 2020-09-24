@@ -50,7 +50,7 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
 
     getValue() {
         if (this.ref) {
-            return this.ref.getTilemap();
+            return this.ref.getTilemap().data;
         }
         return null;
     }

@@ -250,7 +250,7 @@ namespace pxtblockly {
         refreshTileset() {
             const project = pxt.react.getTilemapProject();
             if (this.tilemapId) {
-                this.state = project.getTilemap(this.tilemapId);
+                this.state = project.getTilemap(this.tilemapId).data;
             }
             else if (this.state) {
                 for (let i = 0; i < this.state.tileset.tiles.length; i++) {
@@ -271,7 +271,7 @@ namespace pxtblockly {
 
             if (match) {
                 const tilemapId = match[1].trim();
-                this.state = pxt.react.getTilemapProject().getTilemap(tilemapId);
+                this.state = pxt.react.getTilemapProject().getTilemap(tilemapId).data;
 
                 if (this.state) {
                     this.tilemapId = tilemapId;

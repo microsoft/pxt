@@ -51,10 +51,16 @@ export class InputHandler extends data.Component<InputHandlerProps, InputHandler
                 )
             case 'spriteEditor':
                 if (Snippet.isSnippetInputAnswerTypeOther(input)) {
+                    const bitmap = pxt.sprite.imageLiteralToBitmap(value);
                     return (
                         <ImageEditor
                             singleFrame={true}
-                            initialValue={value}
+                            asset={{
+                                type: pxt.AssetType.Image,
+                                id: "",
+                                jresData: "",
+                                bitmap: bitmap.data()
+                            }}
                             onChange={onChange}
                         />
                     );

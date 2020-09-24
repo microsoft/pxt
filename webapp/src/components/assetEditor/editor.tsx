@@ -41,22 +41,22 @@ export class AssetEditor extends Editor {
         const tileAssets: pxt.Asset[] = [];
         const imageAssets: pxt.Asset[] = [];
 
-        for (const item of allImages) {
-            if (item.tags.indexOf("tile") === -1) {
-                imageAssets.push({
-                    type: pxt.AssetType.Image,
-                    id: item.qName,
-                    previewURI: item.src
-                });
-            }
-            else {
-                tileAssets.push({
-                    type: pxt.AssetType.Tile,
-                    id: item.qName,
-                    previewURI: item.src
-                });
-            }
-        }
+        // for (const item of allImages) {
+        //     if (item.tags.indexOf("tile") === -1) {
+        //         imageAssets.push({
+        //             type: pxt.AssetType.Image,
+        //             id: item.qName,
+        //             previewURI: item.src
+        //         });
+        //     }
+        //     else {
+        //         tileAssets.push({
+        //             type: pxt.AssetType.Tile,
+        //             id: item.qName,
+        //             previewURI: item.src
+        //         });
+        //     }
+        // }
 
         this.galleryAssets = imageAssets.concat(tileAssets);
     }

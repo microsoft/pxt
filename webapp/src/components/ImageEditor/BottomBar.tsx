@@ -234,7 +234,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
         if (!validateAssetName(event.target.value)) {
             errorMessage = lf("Names must begin with a letter and can only contain letters, numbers, and _");
         }
-        else if (isNameTaken(event.target.value)) {
+        else if (isNameTaken(event.target.value) && event.target.value !== this.props.assetName) {
             errorMessage = lf("This name is already used elsewhere in your project");
         }
 
@@ -244,7 +244,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
     protected handleAssetNameBlur = () => {
         const { dispatchChangeAssetName } = this.props;
 
-        if (validateAssetName(this.state.assetName) && !isNameTaken(this.state.assetName)) {
+        if (this.state.assetName !== this.props.assetName && validateAssetName(this.state.assetName) && !isNameTaken(this.state.assetName)) {
             dispatchChangeAssetName(this.state.assetName);
         }
         this.setState({ assetName: null, assetNameMessage: null });

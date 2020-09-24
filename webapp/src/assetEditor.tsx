@@ -90,7 +90,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
     initTilemap(s?: string) {
         this.tilemapProject = new pxt.TilemapProject();
         this.tilemapProject.loadTilemapJRes(s ? this.parseJres(s) : {});
-        let project = this.tilemapProject.getTilemap(this.tilemapName);
+        let project = this.tilemapProject.getTilemap(this.tilemapName).data;
 
         if (!project) {
             const [ name, map ] = this.tilemapProject.createNewTilemap(this.tilemapName, this.tileWidth, 16, 16);

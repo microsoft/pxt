@@ -54,7 +54,7 @@ namespace pxt.editor {
 
             if (name) {
                 let id = ts.pxtc.escapeIdentifier(name)
-                let proj = project.getTilemap(id);
+                let proj = project.getTilemap(id).data;
 
                 if (!proj) {
                     let tileWidth = 16;
