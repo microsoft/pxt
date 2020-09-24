@@ -3167,7 +3167,9 @@ export async function validateAndFixPkgConfig(parsed: commandParser.ParsedComman
     const file = fs.readFileSync("pxt.json", { encoding: "utf8" });
     const cfg = pxt.Package.parseAndValidConfig(file);
 
-    if (!cfg) {
+    if (cfg) {
+        pxt.log("Validating pxt.json");
+    } else {
         U.userError("Could not parse pxt.json");
     }
 
@@ -3193,7 +3195,7 @@ export async function validateAndFixPkgConfig(parsed: commandParser.ParsedComman
     if (trimmedFiles || trimmedTestFiles || validFilesInFileDependencies) {
         pxt.log("Updating pxt.json");
         fs.writeFileSync('pxt.json', JSON.stringify(cfg, undefined, 4));
-        pxt.log("Successfully updated pxt.json")
+        pxt.log("Successfully updated pxt.json");
     } else {
         pxt.log("No errors identified in pxt.json");
     }
