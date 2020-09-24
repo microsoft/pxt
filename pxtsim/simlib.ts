@@ -295,21 +295,21 @@ namespace pxsim {
                 const output = rectNoiseBuffer.getChannelData(0);
 
                 let x = 0xf01ba80;
-                for (let i = 0; i < bufferSize; i+=4) {
+                for (let i = 0; i < bufferSize; i += 4) {
                     // see https://en.wikipedia.org/wiki/Xorshift
                     x ^= x << 13;
                     x ^= x >> 17;
                     x ^= x << 5;
                     if (x & 0x8000) {
                         output[i] = 1.0;
-                        output[i+1] = 1.0;
-                        output[i+2] = -1.0;
-                        output[i+3] = -1.0;
+                        output[i + 1] = 1.0;
+                        output[i + 2] = -1.0;
+                        output[i + 3] = -1.0;
                     } else {
                         output[i] = 0.0;
-                        output[i+1] = 0.0;
-                        output[i+2] = 0.0;
-                        output[i+3] = 0.0;
+                        output[i + 1] = 0.0;
+                        output[i + 2] = 0.0;
+                        output[i + 3] = 0.0;
                     }
                 }
             }
@@ -328,7 +328,7 @@ namespace pxsim {
                 // "bits" must be in the range 4..6.
                 const cycle_bits: number[] = [ 0x2df0eb47, 0xc8165a93 ];
                 const mask_456: number[] = [ 0xf, 0x1f, 0x3f ];
-                for (let i = 0; i < bufferSize; i+=4) {
+                for (let i = 0; i < bufferSize; i += 4) {
                     let cycle: number = i / 4;
                     let is_on: boolean;
                     let cycle_mask = mask_456[bits - 4];
@@ -336,14 +336,14 @@ namespace pxsim {
                     is_on = (cycle_bits[cycle >> 5] & (1 << (cycle & 0x1f))) != 0;
                     if (is_on) {
                         output[i] = 1.0;
-                        output[i+1] = 1.0;
-                        output[i+2] = -1.0;
-                        output[i+3] = -1.0;
+                        output[i + 1] = 1.0;
+                        output[i + 2] = -1.0;
+                        output[i + 3] = -1.0;
                     } else {
                         output[i] = 0.0;
-                        output[i+1] = 0.0;
-                        output[i+2] = 0.0;
-                        output[i+3] = 0.0;
+                        output[i + 1] = 0.0;
+                        output[i + 2] = 0.0;
+                        output[i + 3] = 0.0;
                     }
                 }
                 cycleNoiseBuffer[bits] = buf
