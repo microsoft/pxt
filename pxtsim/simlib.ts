@@ -268,10 +268,6 @@ namespace pxsim {
         let squareBuffer: AudioBuffer[] = []
 
         function getNoiseBuffer() {
-            // Create a square wave filtered by a pseudorandom bit sequence.
-            // This uses four samples per cycle to create square-ish waves.
-            // The Web Audio API's frequency scaling may be using linear
-            // interpolation which would turn a two-sample wave into a triangle.
             if (!noiseBuffer) {
                 const bufferSize = 100000;
                 noiseBuffer = context().createBuffer(1, bufferSize, context().sampleRate);
@@ -289,6 +285,10 @@ namespace pxsim {
         }
 
         function getRectNoiseBuffer() {
+            // Create a square wave filtered by a pseudorandom bit sequence.
+            // This uses four samples per cycle to create square-ish waves.
+            // The Web Audio API's frequency scaling may be using linear
+            // interpolation which would turn a two-sample wave into a triangle.
             if (!rectNoiseBuffer) {
                 const bufferSize = 131072; // must be a multiple of 4
                 rectNoiseBuffer = context().createBuffer(1, bufferSize, context().sampleRate);
