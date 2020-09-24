@@ -139,6 +139,30 @@ jobs:
           pxt build --cloud
         env:
           CI: true
+
+  check-cfg:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [8.x]
+    steps:
+      - uses: actions/checkout@v1
+      - name: Use Node.js $\{{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: $\{{ matrix.node-version }}
+      - name: npm install
+        run: |
+          npm install -g pxt
+          pxt target @TARGET@
+      - name: Fix files listed in config if necessary
+        run: pxt checkpkgcfg
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          commit-message: Removing missing files from pxt.json
+          title: 'missing files listed in pxt.json'
+
 `,
             ".vscode/tasks.json":
                 `
