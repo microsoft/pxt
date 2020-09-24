@@ -390,7 +390,6 @@ namespace pxsim {
          */
 
         function getGenerator(waveFormIdx: number, hz: number): OscillatorNode | AudioBufferSourceNode {
-            console.log('getGenerator wave=' + waveFormIdx)
             let form = waveForms[waveFormIdx]
             if (form) {
                 let src = context().createOscillator()
