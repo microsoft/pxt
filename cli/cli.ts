@@ -3171,7 +3171,6 @@ export async function validateAndFixPkgConfig(parsed: commandParser.ParsedComman
         U.userError("Could not parse pxt.json");
     }
 
-
     const trimmedFiles = validateFileList("files", cfg.files);
     if (trimmedFiles) {
         cfg.files = trimmedFiles;
@@ -3192,13 +3191,15 @@ export async function validateAndFixPkgConfig(parsed: commandParser.ParsedComman
     }
 
     if (trimmedFiles || trimmedTestFiles || validFilesInFileDependencies) {
-        console.log("Updating pxt.json");
+        pxt.log("Updating pxt.json");
         fs.writeFileSync('pxt.json', JSON.stringify(cfg, undefined, 4));
+        pxt.log("Successfully updated pxt.json")
     } else {
-        console.log("No errors identified in pxt.json");
+        pxt.log("No errors identified in pxt.json");
     }
 
     function validateFileList(field: string, files: string[]) {
+        pxt.log(`Checking ${field}`);
         const missing: string[] = [];
         const existing: string[] = [];
 
@@ -3211,7 +3212,7 @@ export async function validateAndFixPkgConfig(parsed: commandParser.ParsedComman
         }
 
         if (missing.length) {
-            console.warn(`pxt.json lists ${field} that are missing:
+            pxt.log(`pxt.json lists ${field} that are missing:
     ${missing.join(",\n    ")}
 `);
             return existing;
