@@ -847,7 +847,7 @@ namespace ts.pxtc.Util {
         }
     }
 
-    export async function promisePoolAsync<T, V>(maxConcurrent: number, inputValues: T[], handler: (input: T) => Promise<V>) {
+    export async function promisePoolAsync<T, V>(maxConcurrent: number, inputValues: T[], handler: (input: T) => Promise<V>): Promise<V[]> {
         let curr = 0;
         const promises = [];
         const output: V[] = [];
