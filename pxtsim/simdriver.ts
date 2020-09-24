@@ -1,3 +1,5 @@
+/// <reference path="../built/pxtlib.d.ts" />
+
 namespace pxsim {
     export interface SimulatorDriverOptions {
         restart?: () => void; // restart simulator
@@ -85,13 +87,14 @@ namespace pxsim {
 
         constructor(public container: HTMLElement, public options: SimulatorDriverOptions = {}) {
             this._allowedOrigins.add(window.location.origin);
-            if (options.parentOrigin)
-            this._allowedOrigins.add(options.parentOrigin)
+            if (options.parentOrigin) {
+                this._allowedOrigins.add(options.parentOrigin)
+            }
             try {
                 const simUrl = new URL(this.getSimUrl())
                 this._allowedOrigins.add(simUrl.origin)
             } catch (e) {
-                console.error(`Invalid sim url ${this.getSimUrl()}`)
+                pxt.reportException(e)
             }
         }
 
@@ -279,7 +282,7 @@ namespace pxsim {
                 if (this.options.nestedEditorSim && parentWindow) {
                     // if message comes from parent already, don't echo
                     if (source !== parentWindow) {
-                        const parentOrigin = this.options.parentOrigin ? this.options.parentOrigin : window.location.origin
+                        const parentOrigin = this.options.parentOrigin || window.location.origin
                         parentWindow.postMessage(msg, parentOrigin);
                     }
                 } else if (depEditors) {
