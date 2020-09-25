@@ -372,9 +372,9 @@ namespace pxsim {
         #define SW_NOISE 5
         #define SW_SQUARE_10 11
         #define SW_SQUARE_50 15
-        #define SW_CYCLENOISE_4 16
-        #define SW_CYCLENOISE_5 17
-        #define SW_CYCLENOISE_6 18
+        #define SW_SQUARE_CYCLE_16 16
+        #define SW_SQUARE_CYCLE_32 17
+        #define SW_SQUARE_CYCLE_64 18
         */
 
 
