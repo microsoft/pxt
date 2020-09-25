@@ -140,6 +140,38 @@ jobs:
         env:
           CI: true
 `,
+            ".github/workflows/cfg-check.yml": `name: Check pxt.json
+
+on:
+  push
+
+jobs:
+  check-cfg:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [8.x]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js $\{{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: $\{{ matrix.node-version }}
+      - name: npm install
+        run: npm install -g pxt
+      - name: Checkout current state
+        run: |
+          git checkout -- .
+          git clean -fd
+      - name: Fix files listed in config if necessary
+        run: pxt checkpkgcfg
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          title: 'Removing missing files from pxt.json'
+          commit-message: 'Removing missing files from pxt.json'
+          delete-branch: true
+`,
             ".vscode/tasks.json":
                 `
 // A task runner that calls the MakeCode (PXT) compiler

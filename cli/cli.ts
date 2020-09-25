@@ -3163,6 +3163,67 @@ export function downloadPlaylistsAsync(parsed: commandParser.ParsedCommand): Pro
     return youtube.renderPlaylistsAsync(playlists);
 }
 
+export async function validateAndFixPkgConfig(parsed: commandParser.ParsedCommand): Promise<void> {
+    const file = fs.readFileSync("pxt.json", { encoding: "utf8" });
+    const cfg = pxt.Package.parseAndValidConfig(file);
+
+    if (cfg) {
+        pxt.log("Validating pxt.json");
+    } else {
+        U.userError("Could not parse pxt.json");
+    }
+
+    const trimmedFiles = validateFileList("files", cfg.files);
+    if (trimmedFiles) {
+        cfg.files = trimmedFiles;
+    }
+
+    const trimmedTestFiles = validateFileList("testFiles", cfg.testFiles);
+    if (trimmedTestFiles) {
+        cfg.testFiles = trimmedTestFiles;
+    }
+
+    const validFilesInFileDependencies = validateFileList("fileDependencies", U.values(cfg.fileDependencies));
+    if (validFilesInFileDependencies) {
+        for (const key of Object.keys(cfg.fileDependencies)) {
+            if (validFilesInFileDependencies.indexOf(cfg.fileDependencies[key]) === -1) {
+                delete cfg.fileDependencies[key];
+            }
+        }
+    }
+
+    if (trimmedFiles || trimmedTestFiles || validFilesInFileDependencies) {
+        pxt.log("Updating pxt.json");
+        fs.writeFileSync('pxt.json', JSON.stringify(cfg, undefined, 4));
+        pxt.log("Successfully updated pxt.json");
+    } else {
+        pxt.log("No errors identified in pxt.json");
+    }
+
+    function validateFileList(field: string, files: string[]) {
+        pxt.log(`Checking ${field}`);
+        const missing: string[] = [];
+        const existing: string[] = [];
+
+        for (const file of (files || [])) {
+            if (fs.existsSync(file)) {
+                existing.push(file);
+            } else {
+                missing.push(file);
+            }
+        }
+
+        if (missing.length) {
+            pxt.log(`pxt.json lists ${field} that are missing:
+    ${missing.join(",\n    ")}
+`);
+            return existing;
+        }
+
+        return undefined;
+    }
+}
+
 export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     const rx = /```codecard((.|\s)*)```/;
     const tag = parsed.args[0] as string;
@@ -6601,6 +6662,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         advanced: true,
         argString: "<list>"
     }, downloadPlaylistsAsync)
+
+    p.defineCommand({
+        name: "checkpkgcfg",
+        help: "Validate and attempt to fix common pxt.json issues",
+    }, validateAndFixPkgConfig);
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
         p.defineCommand({ name, help, onlineHelp, argString }, callback);
