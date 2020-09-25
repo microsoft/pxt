@@ -77,20 +77,20 @@ namespace pxsim {
         public state = SimulatorState.Unloaded;
         public hwdbg: HwDebugger;
         private _dependentEditors: Window[];
-        private _allowedOrigins: Set<string> = new Set();
+        private _allowedOrigins: string[] = [];
 
         // we might "loan" a simulator when the user is recording
         // screenshots for sharing
         private loanedSimulator: HTMLDivElement;
 
         constructor(public container: HTMLElement, public options: SimulatorDriverOptions = {}) {
-            this._allowedOrigins.add(window.location.origin);
+            this._allowedOrigins.push(window.location.origin);
             if (options.parentOrigin) {
-                this._allowedOrigins.add(options.parentOrigin)
+                this._allowedOrigins.push(options.parentOrigin)
             }
             try {
                 const simUrl = new URL(this.getSimUrl())
-                this._allowedOrigins.add(simUrl.origin)
+                this._allowedOrigins.push(simUrl.origin)
             } catch (e) {
                 console.error(`Invalid sim url ${this.getSimUrl()}`)
             }
@@ -624,7 +624,7 @@ namespace pxsim {
                     if (U.isLocalHost()) {
                         // no-op
                     } else {
-                        if (!this._allowedOrigins.has(ev.origin)) return
+                        if (!this._allowedOrigins.find(origin => origin === ev.origin)) return
                     }
                     this.handleMessage(ev.data, ev.source as Window)
                 }
