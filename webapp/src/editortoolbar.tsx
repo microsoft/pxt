@@ -5,6 +5,8 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as githubbutton from "./githubbutton";
 import * as cmds from "./cmds"
+import { is } from "bluebird";
+import { show } from "react-tooltip";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -94,20 +96,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         return pxt.appTarget.simulator.headless ? "true" : "false";
     }
 
-    private getUndoRedo(view: View): JSX.Element[] {
-        const hasUndo = this.props.parent.editor.hasUndo();
-        const hasRedo = this.props.parent.editor.hasRedo();
-        return [
-            <EditorToolbarButton icon='xicon undo' className={`editortools-btn undo-editortools-btn ${!hasUndo ? 'disabled' : ''}`} title={lf("Undo")} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} onButtonClick={this.undo} view={this.getViewString(view)} key="undo" />,
-            <EditorToolbarButton icon='xicon redo' className={`editortools-btn redo-editortools-btn ${!hasRedo ? 'disabled' : ''}`} title={lf("Redo")} ariaLabel={lf("{0}, {1}", lf("Redo"), !hasRedo ? lf("Disabled") : "")} onButtonClick={this.redo} view={this.getViewString(view)} key="redo" />
-        ];
-    }
-
-    private getZoomControl(view: View): JSX.Element[] {
-        return [<EditorToolbarButton icon='minus circle' className="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view={this.getViewString(view)} key="minus" />,
-        <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view={this.getViewString(view)} key="plus" />]
-    }
-
     private getSaveInput(showSave: boolean, id?: string, projectName?: string, projectNameReadOnly?: boolean): JSX.Element[] {
         let saveButtonClasses = "";
         if (this.props.parent.state.isSaving) {
@@ -132,6 +120,19 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         }
 
         return saveInput;
+    }
+    protected getUndoRedo(view: View): JSX.Element[] {
+        const hasUndo = this.props.parent.editor.hasUndo();
+        const hasRedo = this.props.parent.editor.hasRedo();
+        return [
+            <EditorToolbarButton icon='xicon undo' className={`editortools-btn undo-editortools-btn ${!hasUndo ? 'disabled' : ''}`} title={lf("Undo")} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} onButtonClick={this.undo} view={this.getViewString(view)} key="undo" />,
+            <EditorToolbarButton icon='xicon redo' className={`editortools-btn redo-editortools-btn ${!hasRedo ? 'disabled' : ''}`} title={lf("Redo")} ariaLabel={lf("{0}, {1}", lf("Redo"), !hasRedo ? lf("Disabled") : "")} onButtonClick={this.redo} view={this.getViewString(view)} key="redo" />
+        ];
+    }
+
+    protected getZoomControl(view: View): JSX.Element[] {
+        return [<EditorToolbarButton icon='minus circle' className="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view={this.getViewString(view)} key="minus" />,
+        <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view={this.getViewString(view)} key="plus" />]
     }
 
     protected onHwItemClick = () => {
@@ -227,7 +228,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const { tutorialOptions, projectName, compiling, isSaving, simState, debugging, header } = this.props.parent.state;
+        const { tutorialOptions, projectName, compiling, isSaving, simState, debugging, header, editorState } = this.props.parent.state;
 
         const targetTheme = pxt.appTarget.appTheme;
         const isController = pxt.shell.isControllerMode();
@@ -235,6 +236,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const tutorial = tutorialOptions ? tutorialOptions.tutorial : false;
         const simOpts = pxt.appTarget.simulator;
         const headless = simOpts.headless;
+        const flyoutOnly = editorState && editorState.hasCategories === false;
 
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
         const ghid = header && pxt.github.parseRepoId(header.githubId);
@@ -252,8 +254,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const running = simState == pxt.editor.SimState.Running;
         const starting = simState == pxt.editor.SimState.Starting;
 
-        const showUndoRedo = !readOnly && !debugging;
-        const showZoomControls = true;
+        const showUndoRedo = !readOnly && !debugging && !flyoutOnly;
+        const showZoomControls = !flyoutOnly;
         const showGithub = !!pxt.appTarget.cloud
             && !!pxt.appTarget.cloud.githubPackages
             && targetTheme.githubEditor
@@ -327,6 +329,21 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         </div>;
     }
 }
+
+
+
+export class SmallEditorToolbar extends EditorToolbar {
+    constructor(props: ISettingsProps) {
+        super(props);
+    }
+    renderCore() {
+        return <div className="smallEditorToolbar">
+            <div className="ui icon buttons mobile hide">{this.getZoomControl(View.Computer)}</div>
+            <div className="ui icon buttons">{super.getUndoRedo(View.Computer)}</div>
+        </div>
+    }
+}
+
 
 interface EditorToolbarButtonProps extends sui.ButtonProps {
     view: string;

@@ -230,6 +230,11 @@ namespace pxt {
                     appTheme: {
                         hideMenuBar: true
                     }
+                },
+                "sidebarTutorial=1": {
+                    appTheme: {
+                        sidebarTutorial: true
+                    }
                 }
             }
             // import target specific flags

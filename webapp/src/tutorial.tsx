@@ -12,6 +12,7 @@ import * as codecard from "./codecard";
 import { HintTooltip } from "./hinttooltip";
 import { PlayButton } from "./simtoolbar";
 import { ProjectView } from "./app";
+import * as editortoolbar from "./editortoolbar";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -610,7 +611,6 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 export class WorkspaceHeader extends data.Component<any, {}> {
     private flyoutWidth: number = 0;
     private flyoutTitle: string = lf("Toolbox");
-    private workspaceTitle: string = lf("Workspace");
     constructor(props: any) {
         super(props);
     }
@@ -631,7 +631,7 @@ export class WorkspaceHeader extends data.Component<any, {}> {
     renderCore() {
         return <div id="headers">
             <div id="flyoutHeader" style={this.headerStyle()}>{this.flyoutTitle}</div>
-            <div id="workspaceHeader">{this.workspaceTitle}</div>
+            <div id="headerToolbar"><editortoolbar.SmallEditorToolbar parent={this.props.parent}/></div>
         </div>;
     }
 }
