@@ -20,10 +20,6 @@ namespace pxt.editor {
                 }
             }
 
-            for (const tile of tm.tileset.tiles) {
-                tile.weight = allTiles.tiles.findIndex(t => t.id === tile.id);
-            }
-
             return tm;
         }
 
@@ -95,7 +91,7 @@ namespace pxt.editor {
                     // New tiles start with *. We haven't created them yet so ignore
                     if (!edited || edited.id.startsWith("*")) continue;
 
-                    result.tileset.tiles[editedIndex] = project.updateTile(edited.id, edited.bitmap);
+                    result.tileset.tiles[editedIndex] = project.updateTile(edited);
                 }
             }
 

@@ -119,7 +119,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 // New tiles start with *. We haven't created them yet so ignore
                 if (!edited || edited.id.startsWith("*")) continue;
 
-                data.tileset.tiles[editedIndex] = this.tilemapProject.updateTile(edited.id, edited.bitmap)
+                data.tileset.tiles[editedIndex] = this.tilemapProject.updateTile(edited)
             }
         }
 

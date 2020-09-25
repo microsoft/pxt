@@ -330,8 +330,3 @@ function tickImageEditorEvent(event: string) {
         action: event
     });
 }
-
-function parseImageArrayString(str: string) {
-    str = str.replace(/[\[\]]/mg, "");
-    return str.split(",").map(s => pxt.sprite.imageLiteralToBitmap(s));
-}

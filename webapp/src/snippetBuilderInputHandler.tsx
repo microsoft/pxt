@@ -56,6 +56,7 @@ export class InputHandler extends data.Component<InputHandlerProps, InputHandler
                         <ImageEditor
                             singleFrame={true}
                             asset={{
+                                internalID: 0,
                                 type: pxt.AssetType.Image,
                                 id: "",
                                 jresData: "",

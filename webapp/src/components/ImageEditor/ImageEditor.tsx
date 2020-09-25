@@ -15,7 +15,7 @@ import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatc
 import { EditorState, AnimationState, TilemapState, GalleryTile, ImageEditorStore } from './store/imageReducer';
 import { imageStateToBitmap, imageStateToTilemap, applyBitmapData } from './util';
 import { Unsubscribe, Action } from 'redux';
-import { createNewImageAsset } from '../../assets';
+import { createNewImageAsset, getNewInternalID } from '../../assets';
 
 const fromData = pxt.sprite.Bitmap.fromData;
 
@@ -142,24 +142,28 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     getImage(): pxt.ProjectImage {
         const state = this.getStore().getState();
         const id = state.editor.assetName;
+        const data = this.getCurrentFrame().data();
 
         return {
             id,
+            internalID: this.props.asset ? this.props.asset.internalID : getNewInternalID(),
             type: pxt.AssetType.Image,
-            bitmap: this.getCurrentFrame().data(),
-            jresData: ""
+            bitmap: data,
+            jresData: pxt.sprite.base64EncodeBitmap(data),
         }
     }
 
     getTile(): pxt.Tile {
         const state = this.getStore().getState();
         const id = state.editor.assetName;
+        const data = this.getCurrentFrame().data();
 
         return {
             id,
+            internalID: this.props.asset ? this.props.asset.internalID : getNewInternalID(),
             type: pxt.AssetType.Tile,
-            bitmap: this.getCurrentFrame().data(),
-            jresData: ""
+            bitmap: data,
+            jresData: pxt.sprite.base64EncodeBitmap(data)
         }
     }
 
@@ -170,6 +174,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
         return {
             id,
+            internalID: this.props.asset ? this.props.asset.internalID : getNewInternalID(),
             type: pxt.AssetType.Animation,
             interval: animationState.interval,
             frames: animationState.frames.map(frame => imageStateToBitmap(frame).data())
@@ -189,6 +194,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
         return {
             id,
+            internalID: this.props.asset ? this.props.asset.internalID : getNewInternalID(),
             type: pxt.AssetType.Tilemap,
             data: out
         }
@@ -284,8 +290,9 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     protected onTileEditorFinished = (tile: pxt.Tile) => {
         const store = this.getStore();
         const tileEditState = store.getState().editor.editingTile;
+        tile.isProjectTile = true;
 
-        this.dispatchOnStore(dispatchCloseTileEditor(tile.bitmap, tileEditState.tilesetIndex))
+        this.dispatchOnStore(dispatchCloseTileEditor(tile, tileEditState.tilesetIndex))
     }
 
     protected dispatchOnStore(action: Action) {

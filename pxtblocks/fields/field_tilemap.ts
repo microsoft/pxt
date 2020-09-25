@@ -96,10 +96,6 @@ namespace pxtblockly {
                 }
             }
 
-            for (const tile of this.state.tileset.tiles) {
-                tile.weight = allTiles.tiles.findIndex(t => t.id === tile.id);
-            }
-
             const fv = pxt.react.getFieldEditorView("tilemap-editor", this.state, this.params);
 
             if (this.undoRedoState) {
@@ -133,7 +129,12 @@ namespace pxtblockly {
                             // New tiles start with *. We haven't created them yet so ignore
                             if (!edited || edited.id.startsWith("*")) continue;
 
-                            result.tileset.tiles[editedIndex] = project.updateTile(edited.id, edited.bitmap);
+                            result.tileset.tiles[editedIndex] = project.updateTile(edited);
+                        }
+
+                        // If an ID of a tile changed, we need to refresh all of the tilesets in the workspace
+                        for (const tmBlock of getAllBlocksWithTilemaps(this.sourceBlock_.workspace)) {
+                            tmBlock.ref.refreshTileset();
                         }
                     }
 
@@ -254,7 +255,8 @@ namespace pxtblockly {
             }
             else if (this.state) {
                 for (let i = 0; i < this.state.tileset.tiles.length; i++) {
-                    this.state.tileset.tiles[i] = project.resolveTile(this.state.tileset.tiles[i].id);
+                    // Use the stable ID in case of renames
+                    this.state.tileset.tiles[i] = project.resolveProjectTileByInternalID(this.state.tileset.tiles[i].internalID);
                 }
             }
         }

@@ -17,6 +17,7 @@ namespace pxt {
     export type Asset = ProjectImage | Tile | Animation | ProjectTilemap;
 
     export interface BaseAsset {
+        internalID: number;
         id: string;
         meta?: AssetMetadata;
         previewURI?: string;
@@ -33,7 +34,6 @@ namespace pxt {
         jresData: string;
         bitmap: pxt.sprite.BitmapData;
         isProjectTile?: boolean;
-        weight?: number;
     }
 
     export interface Animation extends BaseAsset {
@@ -113,15 +113,6 @@ namespace pxt {
             return !!this.takenNames[id];
         }
 
-        generateNewID(varPrefix: string, namespaceString?: string) {
-            const prefix = namespaceString ? namespaceString + "." + varPrefix : varPrefix;
-            let index = 0;
-            while (this.takenNames[prefix + index]) {
-                ++index;
-            }
-            return prefix + index;
-        }
-
         clone() {
             const cloned = new AssetCollection<U>();
             cloned.assets = this.getSnapshot();
@@ -158,6 +149,7 @@ namespace pxt {
         protected redoStack: AssetSnapshot[];
 
         protected nextID = 0;
+        protected nextInternalID = 0;
 
         constructor() {
             this.state = {
@@ -180,11 +172,16 @@ namespace pxt {
             this.redoStack = [];
         }
 
+        public getNewInternalId() {
+            return this.nextInternalID++;
+        }
+
         public createNewImage(width = 16, height = 16) {
-            const id = this.state.images.generateNewID(pxt.sprite.IMAGE_PREFIX, pxt.sprite.ASSETS_NAMESPACE,);
+            const id = this.generateNewID(AssetType.Image, pxt.sprite.IMAGE_PREFIX, pxt.sprite.ASSETS_NAMESPACE,);
             const bitmap = new pxt.sprite.Bitmap(width, height).data()
 
             const newImage: ProjectImage = {
+                internalID: this.getNewInternalId(),
                 id,
                 type: AssetType.Image,
                 bitmap: bitmap,
@@ -229,10 +226,11 @@ namespace pxt {
             this.onChange();
 
             if (!id || this.state.tiles.isIDTaken(id)) {
-                id = this.state.tiles.generateNewID(pxt.sprite.TILE_PREFIX, pxt.sprite.TILE_NAMESPACE);
+                id = this.generateNewID(AssetType.Tile, pxt.sprite.TILE_PREFIX, pxt.sprite.TILE_NAMESPACE);
             }
 
             const newTile: Tile = {
+                internalID: this.getNewInternalId(),
                 id,
                 type: AssetType.Tile,
                 jresData: pxt.sprite.base64EncodeBitmap(data),
@@ -244,19 +242,40 @@ namespace pxt {
             return newTile;
         }
 
-        public updateTile(id: string, data: pxt.sprite.BitmapData) {
+        public createNewProjectImage(data: pxt.sprite.BitmapData) {
             this.onChange();
 
-            const existing = this.state.tiles.getByID(id);
+            const newImage: ProjectImage = {
+                internalID: this.getNewInternalId(),
+                id: this.generateNewID(AssetType.Image, pxt.sprite.IMAGE_PREFIX, pxt.sprite.ASSETS_NAMESPACE),
+                type: AssetType.Image,
+                jresData: pxt.sprite.base64EncodeBitmap(data),
+                bitmap: data
+            };
+
+            this.state.images.add(newImage);
+            return newImage;
+        }
+
+
+        public updateTile(tile: pxt.Tile) {
+            this.onChange();
+
+            const existing = this.resolveProjectTileByInternalID(tile.internalID);
 
             if (existing) {
-                const newValue = {
-                    ...existing,
-                    bitmap: data,
-                    jresData: pxt.sprite.base64EncodeBitmap(data)
-                };
-                this.state.tiles.update(id, newValue);
-                return newValue;
+                this.state.tiles.update(existing.id, tile);
+
+                if (existing.id !== tile.id) {
+                    for (const tm of this.getAllTilemaps()) {
+                        if (tm.data.tileset.tiles.some(t => t.internalID === tile.internalID)) {
+
+                            tm.data.tileset.tiles = tm.data.tileset.tiles.map(t => t.internalID === tile.internalID ? tile : t);
+                            this.updateTilemap(tm.id, tm.data);
+                        }
+                    }
+                }
+                return tile;
             }
 
             return null;
@@ -339,7 +358,11 @@ namespace pxt {
         }
 
         public resolveTile(id: string): Tile {
-            return this.state.tiles.getByID(id) || this.gallery.tiles.getByID(id);
+            return this.lookupAsset(AssetType.Tile, id) as Tile;
+        }
+
+        public resolveProjectTileByInternalID(id: number): Tile {
+            return this.state.tiles.getSnapshot(tile => tile.internalID === id)[0];
         }
 
         public resolveTileByBitmap(data: pxt.sprite.BitmapData): Tile {
@@ -354,6 +377,7 @@ namespace pxt {
             if (!tile) {
                 const bitmap = new pxt.sprite.Bitmap(tileWidth, tileWidth).data();
                 tile = {
+                    internalID: this.getNewInternalId(),
                     id,
                     type: AssetType.Tile,
                     bitmap: bitmap,
@@ -369,8 +393,9 @@ namespace pxt {
         public createNewTilemapFromData(data: pxt.sprite.TilemapData, name?: string): [string, pxt.sprite.TilemapData] {
             this.onChange()
 
-            const id = this.state.tilemaps.generateNewID(name || lf("level"));
+            const id = this.generateNewID(AssetType.Tilemap, name || lf("level"));
             this.state.tilemaps.add({
+                internalID: this.getNewInternalId(),
                 id,
                 type: AssetType.Tilemap,
                 data: data
@@ -442,8 +467,30 @@ namespace pxt {
             this.onChange();
         }
 
-        public isNameTaken(name: string) {
-            return false;
+        public isNameTaken(assetType: AssetType, name: string) {
+            switch (assetType) {
+                case AssetType.Image:
+                    return this.state.images.isIDTaken(name) || this.gallery.images.isIDTaken(name);
+                case AssetType.Tile:
+                    return this.state.tiles.isIDTaken(name) || this.gallery.tiles.isIDTaken(name);
+                case AssetType.Tilemap:
+                    return this.state.tilemaps.isIDTaken(name) || this.gallery.tilemaps.isIDTaken(name);
+                case AssetType.Animation:
+                    return this.state.animations.isIDTaken(name) || this.gallery.animations.isIDTaken(name);
+            }
+        }
+
+        public lookupAsset(assetType: AssetType, name: string) {
+            switch (assetType) {
+                case AssetType.Image:
+                    return this.state.images.getByID(name) || this.gallery.images.getByID(name);
+                case AssetType.Tile:
+                    return this.state.tiles.getByID(name) || this.gallery.tiles.getByID(name);
+                case AssetType.Tilemap:
+                    return this.state.tilemaps.getByID(name) || this.gallery.tilemaps.getByID(name);
+                case AssetType.Animation:
+                    return this.state.animations.getByID(name) || this.gallery.animations.getByID(name);
+            }
         }
 
         loadPackage(pack: MainPackage) {
@@ -452,17 +499,23 @@ namespace pxt {
 
             for (const dep of allPackages) {
                 const isProject = dep.id === "this";
-                const tiles = readTiles(dep.parseJRes(), dep.id, isProject);
+                const images = this.readImages(dep.parseJRes(), isProject);
 
-                if (tiles) {
-                    if (isProject) {
-                        for (const tile of tiles) {
-                            this.state.tiles.add(tile);
+                for (const image of images) {
+                    if (image.type === AssetType.Tile) {
+                        if (isProject) {
+                            this.state.tiles.add(image);
+                        }
+                        else {
+                            this.gallery.tiles.add(image);
                         }
                     }
                     else {
-                        for (const tile of tiles) {
-                            this.gallery.tiles.add(tile);
+                        if (isProject) {
+                            this.state.images.add(image);
+                        }
+                        else {
+                            this.gallery.images.add(image);
                         }
                     }
                 }
@@ -470,6 +523,7 @@ namespace pxt {
 
             for (const tm of getTilemaps(pack.parseJRes())) {
                 this.state.tilemaps.add({
+                    internalID: this.getNewInternalId(),
                     type: AssetType.Tilemap,
                     id: tm.id,
                     data: decodeTilemap(tm, id => this.resolveTile(id))
@@ -480,7 +534,7 @@ namespace pxt {
         loadTilemapJRes(jres: Map<JRes>, skipDuplicates = false) {
             jres = inflateJRes(jres)
 
-            const tiles = readTiles(jres, "this", true);
+            const tiles = this.readImages(jres, true).filter(im => im.type === pxt.AssetType.Tile);
 
             // If we are loading JRES into an existing project (i.e. in multipart tutorials)
             // we need to correct the tile ids because the user may have created new tiles
@@ -505,6 +559,7 @@ namespace pxt {
 
             for (const tm of getTilemaps(jres)) {
                 this.state.tilemaps.add({
+                    internalID: this.getNewInternalId(),
                     type: AssetType.Tilemap,
                     id: tm.id,
                     data: decodeTilemap(tm, id => {
@@ -524,6 +579,7 @@ namespace pxt {
 
                 if (entry.mimeType === IMAGE_MIME_TYPE) {
                     this.state.images.add({
+                        internalID: this.getNewInternalId(),
                         type: AssetType.Image,
                         id: entry.id,
                         jresData: entry.data,
@@ -533,62 +589,51 @@ namespace pxt {
             }
         }
 
-        protected createTileset(tileWidth: number) {
-            this.needsRebuild = true;
-            const tileSet: TileSet = {
-                tileWidth,
-                tiles: []
-            };
-
-            const baseID = pxt.sprite.TILE_NAMESPACE + ".transparency" + tileWidth;
-
-            let transparencyID = baseID;
-            let index = 1;
-
-            while (this.resolveTile(transparencyID)) {
-                transparencyID = baseID + "_" + index;
+        protected generateNewID(type: AssetType, varPrefix: string, namespaceString?: string) {
+            const prefix = namespaceString ? namespaceString + "." + varPrefix : varPrefix;
+            let index = 0;
+            while (this.isNameTaken(type, prefix + index)) {
                 ++index;
             }
-
-            // Always create a transparent tile
-            const bitmap = new pxt.sprite.Bitmap(tileWidth, tileWidth).data();
-            tileSet.tiles.push({
-                id: transparencyID,
-                type: AssetType.Tile,
-                bitmap: bitmap,
-                jresData: pxt.sprite.base64EncodeBitmap(bitmap),
-                isProjectTile: true
-            });
-
-            return tileSet;
+            return prefix + index;
         }
 
         protected onChange() {
             this.needsRebuild = true;
             this.state.revision = this.nextID++;
         }
-    }
 
-    function readTiles(allJRes: Map<JRes>, id: string, isProjectTile = false): Tile[] {
-        const tiles: Tile[] = [];
+        protected readImages(allJRes: Map<JRes>, isProjectFile = false) {
+            const assets: (Tile | ProjectImage)[] = [];
 
-        for (const key of Object.keys(allJRes)) {
-            const entry = allJRes[key];
+            for (const key of Object.keys(allJRes)) {
+                const entry = allJRes[key];
 
-            if (entry.tilemapTile) {
-                const tile: Tile = {
-                    type: AssetType.Tile,
-                    jresData: entry.data,
-                    id: entry.id,
-                    bitmap: pxt.sprite.getBitmapFromJResURL(`data:${IMAGE_MIME_TYPE};base64,${entry.data}`).data(),
-                    isProjectTile
-                };
+                if (entry.tilemapTile) {
+                    const tile: Tile = {
+                        internalID: this.getNewInternalId(),
+                        type: AssetType.Tile,
+                        jresData: entry.data,
+                        id: entry.id,
+                        bitmap: pxt.sprite.getBitmapFromJResURL(`data:${IMAGE_MIME_TYPE};base64,${entry.data}`).data(),
+                        isProjectTile: isProjectFile
+                    };
 
-                tiles.push(tile);
+                    assets.push(tile);
+                }
+                else if (entry.mimeType === IMAGE_MIME_TYPE) {
+                    assets.push({
+                        internalID: this.getNewInternalId(),
+                        type: AssetType.Image,
+                        jresData: entry.data,
+                        id: entry.id,
+                        bitmap: pxt.sprite.getBitmapFromJResURL(`data:${IMAGE_MIME_TYPE};base64,${entry.data}`).data()
+                    })
+                }
             }
-        }
 
-        return tiles;
+            return assets;
+        }
     }
 
     function getTilemaps(allJRes: Map<JRes>): JRes[] {
@@ -601,25 +646,6 @@ namespace pxt {
         }
 
         return res;
-    }
-
-    function getAllTiles(tileSets: TileSetCollection) {
-        const allTiles: Tile[] = [];
-
-        for (const tileSet of tileSets.tileSets) {
-            allTiles.push(...tileSet.tiles);
-        }
-
-        return allTiles;
-    }
-
-    function getTile(tileSets: TileSetCollection, id: string) {
-        for (const tileSet of tileSets.tileSets) {
-            for (const tile of tileSet.tiles) {
-                if (tile.id === id) return tile;
-            }
-        }
-        return null;
     }
 
     export function emitTilemapsFromJRes(jres: pxt.Map<JRes>) {
