@@ -579,7 +579,14 @@ namespace ts.pxtc.service {
 
         // swap aliases, filter symbols
         resultSymbols
-            .map(sym => sym.symbol.attributes.alias ? completionSymbol(lastApiInfo.apis.byQName[sym.symbol.attributes.alias], sym.weight) : sym)
+            .map(sym => {
+                // skip for enum member completions (eg "AnimalMob."" should have "Chicken", not "CHICKEN")
+                if (sym.symbol.attributes.alias && !(isMemberCompletion && sym.symbol.kind === SymbolKind.EnumMember)) {
+                    return completionSymbol(lastApiInfo.apis.byQName[sym.symbol.attributes.alias], sym.weight);
+                } else {
+                    return sym;
+                }
+            })
             .filter(shouldUseSymbol)
             .forEach(sym => {
                 entries[sym.symbol.qName] = sym
