@@ -1,5 +1,3 @@
-/// <reference path="../built/pxtlib.d.ts" />
-
 namespace pxsim {
     export interface SimulatorDriverOptions {
         restart?: () => void; // restart simulator
@@ -94,7 +92,7 @@ namespace pxsim {
                 const simUrl = new URL(this.getSimUrl())
                 this._allowedOrigins.add(simUrl.origin)
             } catch (e) {
-                pxt.reportException(e)
+                console.error(`Invalid sim url ${this.getSimUrl()}`)
             }
         }
 
