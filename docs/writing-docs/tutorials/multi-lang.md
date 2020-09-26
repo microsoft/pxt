@@ -1,3 +1,4 @@
+# Multiple languages
 
 ## Using Python
 
@@ -33,7 +34,9 @@ Note that if the target supports python, then snippets are written in the usual 
 ```typescript
 basic.showString("Hello!")
 ```
-or
+
+    - or -
+
 ```blocks
 basic.showString("Hello!")
 ```

@@ -11,7 +11,7 @@ To have the tutorial engine interpert the sections in the tutorial as activities
 
 ```
 
-**Note**: You can use either literal of `1` or `true` to turn on activities.
+**Note**: You can use either the literal of `1` or `true` to turn on activities.
 
 ## Activity format
 

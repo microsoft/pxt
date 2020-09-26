@@ -55,11 +55,6 @@ The text in the heading is shown only when the tutorial is viewed as a help page
 
 The editor automatically parses the markdown and populates the user interface from each step section.
 
-### Hints
-
-Hints provide additional information and code suggestions to help the user complete the step.
-In each step, any text before the first code snippet or image is automatically displayed to the user in the tutorial caption. The remaining text, block examples, etc. are displayed in the ``hint`` dialog when the user clicks the caption or hint button.
-
 ### ~ hint
 
 #### Simple, short descriptions
@@ -67,6 +62,11 @@ In each step, any text before the first code snippet or image is automatically d
 During an interaction, the step description (all text before the first code block or image) is shown in the caption. If the paragraph length goes beyond the display length of caption, a "More" button appears in order to view the rest of the paragraph. It's best to keep the paragraph short enough to so all of it appears in the caption without requiring the user to click to see it all. If your instructions need more text, you can just create an additional step to split up the activity.
 
 ### ~
+
+### Hints
+
+Hints provide additional information and code suggestions to help the user complete the step.
+In each step, any text before the first code snippet or image is automatically displayed to the user in the tutorial caption. The remaining text, block examples, etc. are displayed in the ``hint`` dialog when the user clicks the caption or hint button.
 
 ### Images
 
@@ -158,11 +158,6 @@ forever(function() {
 ```
 ````
 
-## Adding tutorials to the home screen
-
-To have a tutorial appear on the home screen, you will need to create or use an existing gallery and add a tutorial entry to it. See the
-[home screen](/targets/home-screen#galleries) page for information about creating and adding to home screen galleries.
-
 ## Testing
 
 If you are writing a third-party tutorial, please see the [User Tutorials](/writing-docs/user-tutorials) documentation for information on how to preview and share your tutorials.
@@ -177,7 +172,7 @@ The [pxt checkdocs](/cli/checkdocs) command will compile all the tutorial snippe
 pxt checkdocs
 ```
 
-## Example
+## Examples
 
 Here are some examples of the tutorial format.
 
