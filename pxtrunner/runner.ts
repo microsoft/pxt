@@ -719,19 +719,20 @@ ${linkString}
             .then(summary => {
                 toc = pxt.docs.buildTOC(summary);
                 pxt.log(`TOC: ${JSON.stringify(toc, null, 2)}`)
-                const tocsp: Promise<void>[] = [];
+                const tocsp: TOCMenuEntry[] = [];
                 pxt.docs.visitTOC(toc, entry => {
-                    if (!/^\//.test(entry.path) || /^\/pkg\//.test(entry.path)) return;
-                    tocsp.push(
-                        pxt.Cloud.markdownAsync(entry.path)
-                            .then(md => {
-                                entry.markdown = md;
-                            }, e => {
-                                entry.markdown = `_${entry.path} failed to load._`;
-                            })
-                    )
+                    if (/^\//.test(entry.path) && !/^\/pkg\//.test(entry.path))
+                        tocsp.push(entry);
                 });
-                return Promise.all(tocsp);
+
+                return U.promisePoolAsync(4, tocsp, async entry => {
+                    try {
+                        const md = await pxt.Cloud.markdownAsync(entry.path);
+                        entry.markdown = md;
+                    } catch (e) {
+                        entry.markdown = `_${entry.path} failed to load._`;
+                    }
+                });
             })
             .then(pages => {
                 let md = toc[0].name;
