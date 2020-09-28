@@ -69,7 +69,7 @@ game.onUpdateInterval(1000, function () {
 ```
 ````
 
-You can include **1** template anywhere in the tutorial.
+You can include **1** template in a tutorial. Place the template section either at the beginning of the document or at the end so as to not clutter the sequence of tutorial steps.
 
 ### Ghost blocks
 
