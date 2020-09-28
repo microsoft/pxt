@@ -367,7 +367,7 @@ namespace pxsim {
         /*
         #define SW_TRIANGLE 1
         #define SW_SAWTOOTH 2
-        #define SW_SINE 3 // TODO remove it? it takes space
+        #define SW_SINE 3
         #define SW_TUNEDNOISE 4
         #define SW_NOISE 5
         #define SW_SQUARE_10 11
