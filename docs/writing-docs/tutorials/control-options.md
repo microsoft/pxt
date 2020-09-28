@@ -32,7 +32,7 @@ This hides the step controls. Thats includes the previous, next, and exit tutori
 
 ### Diffs
 
-You can have differences in code between the current step hint and the previous step hint. This is done by specifying **@diffs** in the metadata. The default is ``false``.
+You can highlight the differences in code between the current step hint and the previous step hint. This is done by specifying **@diffs** in the metadata. The default is ``false``.
 
 ```
 ### @diffs true
@@ -42,7 +42,7 @@ You can have differences in code between the current step hint and the previous 
 
 ### Templates
 
-If you want to provide the tutorial user with some existing code to use as a starting point, you can include a template block. The code in the template will appear on the Workspace when the at the start of the tutorial.
+If you want to provide the tutorial user with some existing code to use as a starting point, you can include a template block. The code in the template will appear on the Workspace at the start of the tutorial.
 
 This template example gives some initial code as a starting point for making a game program.
 
@@ -73,9 +73,9 @@ You can include **1** template anywhere in the tutorial.
 
 ### Ghost blocks
 
-When a step from a tutorial is loaded, the Toolbox contains the just the blocks from the snippet to allow the user to complete the step as intended. If you want to give the user additional blocks beyond those in the hint snippet, you can include _ghost_ blocks in for the step. These blocks appear in the Toolbox but not in the hint snippet.
+When a step from a tutorial is loaded, the Toolbox contains the only the blocks from the snippet to allow the user to complete the step as intended. If you want to give the user additional blocks beyond those in the hint snippet, you can include _ghost_ blocks in for the step. These blocks appear in the Toolbox but not in the hint snippet.
 
-In this example, the hint snippet shows a pattern on the LEDs. Using an icon will give the same result so the **showIcon** block is available in the Toolbox if the user wants to us it instead.
+In this example, the hint snippet shows a pattern on the LEDs. Using an icon will give the same result so the **showIcon** block is available in the Toolbox as an option if the user wants to use it instead.
 
 ````
 ## Step 3 - Show your name

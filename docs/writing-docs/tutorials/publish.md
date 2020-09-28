@@ -6,13 +6,13 @@ Tutorials are often written as part of a MakeCode or other PXT based editor (by 
 
 If you have a tutorial that is in a project or a GitHub repository, see the instructions in [User Tutorials](/writing-docs/user-tutorials) about how to publish it.
 
-### ~ hint
+### ~ alert
 
 #### Tutorial caching
 
 MakeCode uses a local caching policy for tutorials to reduce interaction with website services. On first use, tutorial content is retrieved from a MakeCode website and then then reused from the local cache when a tutorial is run another time. A requested tutorial will refresh from the website when its cache retention period expires.
 
-This caching policy can present a problem if you're developing a tutorial and want to review the recent changes. When you run the tutorial to check your changes, your changes might not appear and you only see content you viewed the first time. In order to see and test new changes you've published for your tutorial, it's recommended that your view them in a **new anonyomous / incognito** browser window.
+This caching policy can present a problem if you're developing a tutorial and want to review the recent changes. When you run the tutorial to check your changes, they might not appear and you only see content you viewed the first time. In order to see and test new changes you've published for your tutorial, it's recommended that your view them in a **new anonyomous / incognito** browser window.
 
 ### ~
 

@@ -1,10 +1,24 @@
 # Multiple languages
 
+In addtion to Block-based tutorials, MakeCode supports tutorials for JavaScript and Python.
+
+## Using JavaScript
+
+A JavaScript only tutorial is authored in the same way as a Blocks tutorial except that the snippets are enclosed by the ```` ```typescript```` tag instead of with ```` ```blocks````.
+
+````
+```typescript
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
+    otherSprite.destroy()
+})
+```
+````
+
 ## Using Python
 
 If the target supports Python, snippets can be written in JavaScript or Python directly.
 
-## Python snippets
+### Python snippets
 
 Using ``python`` after the triple tick like this:
 
@@ -15,10 +29,10 @@ for i in range(100):
 ```
 ````
 
-## Spy snippets (JavaScript to Python)
+### Spy snippets (JavaScript to Python)
 
 Snippets can also be written in JavaScript and automatically converted to Python
-at display time. Use the ``spy`` section:
+at display time. Use a ``spy`` section:
 
 ````
 ```spy
@@ -26,7 +40,7 @@ basic.showString("Hello!")
 ```
 ````
 
-## Other languages
+### Other languages
 
 Note that if the target supports python, then snippets are written in the usual way like:
 
@@ -44,7 +58,7 @@ basic.showString("Hello!")
 
 Users will have the option of clicking the Python icon to see the snippet in Python just like they can with Blocks and Javascript/Typescript.
 
-## JavaScript and Python tutorial ("Spy tutorials")
+## JavaScript and Python with a single tutorial ("Spy tutorials")
 
 If you are able to author your tutorial in a language agnostic way,
 you will be able to have a single source document for both JavaScript and Python. You can specify a single tutorial for multiple languages using the [otherActions](/targets/home-screen#otheractions) field in the tutorial code card.

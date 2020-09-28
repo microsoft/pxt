@@ -4,7 +4,7 @@ Resource sections allow tutorials to have complex objects included as part of th
 
 ## jres
 
-Resource sections use the ```` ```jres```` markdown block tag and the objects are contained in a generic JSON definition. The ```` ```jres```` block can go anywhere in the tutorial page but it's often placed near the end so as to not clutter the text for the tutorial steps.
+Resource sections use the ```` ```jres```` markdown tag and the objects are contained in a generic JSON definition. The ```` ```jres```` block can go anywhere in the tutorial page but it's often placed near the end so as to not clutter the text for the tutorial steps.
 
 ````
 ```jres
