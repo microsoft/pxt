@@ -41,6 +41,8 @@ Instructions for step 1 here...
 Instructions for step 2 here...
 ```
 
+#### Step syntax
+
 The text in the heading is shown only when the tutorial is viewed as a help page. It's ok to have additional text in the heading. The word 'Step' can even be left out since the tutorial runner will build the list of steps only from the content under the heading tag, ``##``. These are valid headings:
 
 ```markdown
@@ -176,7 +178,7 @@ pxt checkdocs
 
 Here are some examples of the tutorial format.
 
-### Github Sample
+### GitHub Sample
 
 ```
 https://github.com/microsoft/pxt-tutorial-sample
@@ -208,10 +210,6 @@ basic.showString("Micro!")
 Click ``|Download|`` to transfer your code in your @boardname@!
 
 ````
-
-## Translations
-
-Tutorials are translated via [Crowdin](/translate) like any other documentation page.
 
 ## Dependencies
 

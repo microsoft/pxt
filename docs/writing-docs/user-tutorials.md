@@ -74,6 +74,16 @@ In context tutorials, sometime referred to as "recipes", are tutorials that are 
 
 Click on the ``lab`` icon in the **Explorer** view to open any markdown file (``.md``) as a tutorial in a new tab.
 
+### ~ hint
+
+#### Tutorial caching
+
+MakeCode uses a local caching policy for tutorials to reduce interaction with website services. On first use, tutorial content is retrieved from a MakeCode website and then reused from the local cache when a tutorial is run another time. A requested tutorial will refresh from the website when its cache retention period expires.
+
+This caching policy can present a problem if you're developing a tutorial and want to review the recent changes. When you run the tutorial to check your changes, your changes might not appear and you only see content you viewed the first time. In order to see and test new changes you've published for your tutorial, it's recommended that your view them in a **new anonyomous / incognito** browser window.
+
+### ~
+
 ### Localization
 
 Localized copies of the tutorial can be added to a subfolder ``_locales/[isocode]/[filename].md`` 

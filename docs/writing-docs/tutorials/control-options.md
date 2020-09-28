@@ -8,7 +8,7 @@ Tutorial metadata is optionally specified at the top of the document. Metadata i
 
 ### Explicit hints
 
-If you want the hints to display by default when each step is encountered, specify **explicitHints** in the metadata at the top of the tutorial page. The default is ``false`` making hints hidden but available for each step.
+If you want the hints to display by default when each step is encountered, specify **@explicitHints** in the metadata at the top of the tutorial page. The default is ``false`` making hints hidden but available for each step.
 
 ```
 ### @explicitHints true
@@ -16,7 +16,7 @@ If you want the hints to display by default when each step is encountered, speci
 
 ### Flyout blocks
 
-To have all of the available blocks in a permanently visible flyout instead of the toolbox, use **flyoutOnly**. The default setting is ``false``.
+To have all of the available blocks in a permanently visible flyout instead of the toolbox, use **@flyoutOnly**. The default setting is ``false``.
 
 ```
 ### @flyoutOnly true
@@ -32,7 +32,7 @@ This hides the step controls. Thats includes the previous, next, and exit tutori
 
 ### Diffs
 
-You can have differences in code between the current step hint and the previous step hint. This is done by specifying **diffs** in the metadata. The default is ``false``.
+You can have differences in code between the current step hint and the previous step hint. This is done by specifying **@diffs** in the metadata. The default is ``false``.
 
 ```
 ### @diffs true

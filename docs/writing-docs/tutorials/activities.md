@@ -1,6 +1,6 @@
 # Activity tutorials
 
-Rather than have multiple tutorials for related activities, a tutorial can use the _activity_ format to progress to further activity in the same tutorial. Activities each have their own set of steps to complete.
+Rather than have multiple tutorials for related activities, a tutorial can use the _activity_ format to progress to further activities in the same tutorial. Activities each have their own set of steps to complete.
 
 ## Enable activites
 
