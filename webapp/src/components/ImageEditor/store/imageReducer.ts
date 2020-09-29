@@ -203,6 +203,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                 ...state,
                 editor: {
                     ...initialStore.editor,
+                    assetName: restored.assetName,
                     selectedColor: restored.selectedColor,
                     backgroundColor: restored.backgroundColor,
                     tilemapPalette: restored.tilemapPalette,

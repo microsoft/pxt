@@ -444,9 +444,8 @@ namespace pxt.blocks.layout {
         let onStart: Formattable;
 
         blocks.forEach(block => {
-            const commentRefs = (block as any).data;
-            if (commentRefs) {
-                const refs = commentRefs.split(";");
+            const refs = getBlockData(block).commentRefs;
+            if (refs.length) {
                 const children: Formattable[] = [];
                 for (let i = 0; i < refs.length; i++) {
                     const comment = commentMap[refs[i]];

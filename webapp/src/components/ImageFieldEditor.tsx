@@ -16,7 +16,7 @@ export interface ImageFieldEditorState {
     galleryFilter?: string;
 }
 
-export type ImageType = pxt.sprite.Bitmap | pxt.sprite.ImageState;
+export type ImageType = pxt.ProjectImage | pxt.Animation;
 
 export class ImageFieldEditor<U extends ImageType> extends React.Component<ImageFieldEditorProps, ImageFieldEditorState> implements FieldEditorComponent<U> {
     protected blocksInfo: pxtc.BlocksInfo;
@@ -25,6 +25,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
     protected options: any;
     protected tileGallery: pxt.sprite.GalleryItem[];
     protected extensionGallery: pxt.sprite.GalleryItem[];
+    protected projectGallery: pxt.sprite.GalleryItem[];
 
     constructor(props: ImageFieldEditorProps) {
         super(props);
@@ -37,6 +38,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
 
     render() {
         const { showTiles } = this.props;
+        const { galleryState } = this.state;
 
         if (this.blocksInfo && !this.extensionGallery) {
             this.extensionGallery = pxt.sprite.getGalleryItems(this.blocksInfo, "Image")
@@ -46,7 +48,11 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
             this.tileGallery = this.getTileGalleryItems();
         }
 
-        const toggleClass = this.state.galleryState === "editor" ? "left" : (this.state.galleryState === "gallery" ? "center" : "right");
+        if (galleryState === "my-assets" && !this.projectGallery) {
+            this.projectGallery = this.getProjectGalleryItems();
+        }
+
+        const toggleClass = galleryState === "editor" ? "left" : (galleryState === "gallery" ? "center" : "right");
 
         return <div className="image-editor-wrapper">
             <div className="gallery-editor-header">
@@ -67,13 +73,13 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
             <div className="image-editor-gallery-content">
                 <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} />
                 <ImageEditorGallery
-                    items={this.extensionGallery}
-                    hidden={this.state.galleryState !== "gallery"}
+                    items={galleryState === "my-assets" ? this.projectGallery : this.extensionGallery}
+                    hidden={galleryState === "editor"}
                     filterString={this.state.galleryFilter}
                     onItemSelected={this.onGalleryItemSelect} />
                 { showTiles && <ImageEditorGallery
                     items={this.tileGallery}
-                    hidden={this.state.galleryState !== "editor" || !this.state.tileGalleryVisible}
+                    hidden={galleryState !== "editor" || !this.state.tileGalleryVisible}
                     onItemSelected={this.onGalleryItemSelect} /> }
             </div>
         </div>
@@ -93,15 +99,11 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         this.closeEditor = close;
         this.options = options;
         if (this.props.singleFrame) {
-            let bitmap = value as pxt.sprite.Bitmap;
-            if (bitmap.height == 0 || bitmap.width == 0) {
-                // Default to 16 x 16 if image is empty
-                bitmap = new pxt.sprite.Bitmap(16, 16);
-            }
+            let bitmap = value as pxt.ProjectImage;
             this.initSingleFrame(bitmap, options);
         }
         else {
-            this.initAnimation(value as any, options);
+            this.initAnimation(value as pxt.Animation, options);
         }
 
         if (options) {
@@ -117,7 +119,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
 
     getValue() {
         if (this.ref) {
-            return (this.props.singleFrame ? this.ref.getCurrentFrame() : this.ref.getAnimation()) as U;
+            return (this.props.singleFrame ? this.ref.getImage() : this.ref.getAnimation()) as U;
         }
         return null;
     }
@@ -159,41 +161,49 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
 
         const libraryTiles = pxt.sprite.filterItems(this.extensionGallery, ["tile"]);
 
-        const project = pxt.react.getTilemapProject();
-        const imgConv = new pxt.ImageConverter();
-
-        const tilesToGalleryItems = (tiles: pxt.TileSet) => tiles ? tiles.tiles.map(t => ({
-            qName: t.id,
-            src: imgConv.convert("data:image/x-mkcd-f," + t.jresData),
-            alt: t.id,
-            tags: []
-        } as pxt.sprite.GalleryItem)) : [];
-
         return [
-            ...tilesToGalleryItems(project.getProjectTiles(8, false)),
-            ...tilesToGalleryItems(project.getProjectTiles(16, false)),
-            ...tilesToGalleryItems(project.getProjectTiles(32, false)),
             ...libraryTiles
         ];
     }
 
-    protected initSingleFrame(value: pxt.sprite.Bitmap, options?: any) {
-        this.ref.initSingleFrame(value);
+    protected getProjectGalleryItems() {
+        if (!this.extensionGallery) return null;
+
+        const project = pxt.react.getTilemapProject();
+        const imgConv = new pxt.ImageConverter();
+
+        const imageToGalleryItem = (image: pxt.ProjectImage | pxt.Tile) => ({
+            qName: image.id,
+            src: imgConv.convert("data:image/x-mkcd-f," + image.jresData),
+            alt: image.id,
+            tags: []
+        } as pxt.sprite.GalleryItem)
+
+        return project.getAssets(pxt.AssetType.Image).map(imageToGalleryItem)
+            .concat(project.getAssets(pxt.AssetType.Tile).map(imageToGalleryItem));
+    }
+
+    protected initSingleFrame(value: pxt.ProjectImage, options?: any) {
+        this.ref.openAsset(value);
 
         if (options.disableResize) {
             this.ref.disableResize();
         }
     }
 
-    protected initAnimation(value: pxt.sprite.AnimationData, options?: any) {
+    protected initAnimation(value: pxt.Animation, options?: any) {
+        let frames: pxt.sprite.BitmapData[];
+        let interval: number;
         if (!value) {
-            value = {
-                frames: [new pxt.sprite.Bitmap(16, 16).data()],
-                interval: 100
-            };
+            frames = [new pxt.sprite.Bitmap(16, 16).data()];
+            interval = 100;
+        }
+        else {
+            frames = value.frames;
+            interval = value.interval;
         }
 
-        this.ref.initAnimation(value.frames.map(b => pxt.sprite.Bitmap.fromData(b)), value.interval);
+        this.ref.initAnimation(frames.map(b => pxt.sprite.Bitmap.fromData(b)), interval);
 
         if (options.disableResize) {
             this.ref.disableResize();

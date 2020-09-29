@@ -150,6 +150,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
             type: pxt.AssetType.Image,
             bitmap: data,
             jresData: pxt.sprite.base64EncodeBitmap(data),
+            meta: this.editingAsset?.meta
         }
     }
 
@@ -163,7 +164,8 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
             internalID: this.props.asset ? this.props.asset.internalID : getNewInternalID(),
             type: pxt.AssetType.Tile,
             bitmap: data,
-            jresData: pxt.sprite.base64EncodeBitmap(data)
+            jresData: pxt.sprite.base64EncodeBitmap(data),
+            meta: this.editingAsset?.meta
         }
     }
 
@@ -177,7 +179,8 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
             internalID: this.props.asset ? this.props.asset.internalID : getNewInternalID(),
             type: pxt.AssetType.Animation,
             interval: animationState.interval,
-            frames: animationState.frames.map(frame => imageStateToBitmap(frame).data())
+            frames: animationState.frames.map(frame => imageStateToBitmap(frame).data()),
+            meta: this.editingAsset?.meta
         }
     }
 
@@ -196,7 +199,8 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
             id,
             internalID: this.props.asset ? this.props.asset.internalID : getNewInternalID(),
             type: pxt.AssetType.Tilemap,
-            data: out
+            data: out,
+            meta: this.editingAsset?.meta
         }
     }
 
@@ -210,6 +214,9 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
     restorePersistentData(oldValue: ImageEditorSaveState) {
         if (oldValue) {
+            if (this.editingAsset) {
+                oldValue.editor.assetName = this.editingAsset.id;
+            }
             this.dispatchOnStore(dispatchSetInitialState(oldValue.editor, oldValue.past));
         }
     }

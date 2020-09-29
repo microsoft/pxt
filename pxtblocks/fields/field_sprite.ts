@@ -43,7 +43,7 @@ namespace pxtblockly {
 
         private params: ParsedSpriteEditorOptions;
         private blocksInfo: pxtc.BlocksInfo;
-        private state: pxt.sprite.Bitmap;
+        private state: pxt.ProjectImage;
         private lightMode: boolean;
         private undoRedoState: any;
 
@@ -54,9 +54,7 @@ namespace pxtblockly {
             this.params = parseFieldOptions(params);
             this.blocksInfo = params.blocksInfo;
 
-            if (!this.state) {
-                this.state = new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
-            }
+            this.initState();
         }
 
         init() {
@@ -70,10 +68,7 @@ namespace pxtblockly {
                 (this.fieldGroup_ as any).style.display = 'none';
             }
 
-            if (!this.state) {
-                this.state = new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
-            }
-
+            this.initState();
             this.redrawPreview();
 
             this.updateEditable();
@@ -99,6 +94,7 @@ namespace pxtblockly {
                     const old = this.getValue();
 
                     this.state = result;
+                    this.updateStateMeta();
                     this.redrawPreview();
 
                     this.undoRedoState = fv.getPersistentData();
@@ -120,7 +116,7 @@ namespace pxtblockly {
         }
 
         getValue() {
-            return pxt.sprite.bitmapToImageLiteral(this.state, pxt.editor.FileType.TypeScript);
+            return pxt.sprite.bitmapToImageLiteral(this.state && pxt.sprite.Bitmap.fromData(this.state.bitmap), pxt.editor.FileType.TypeScript);
         }
 
         doValueUpdate_(newValue: string) {
@@ -132,6 +128,15 @@ namespace pxtblockly {
             this.redrawPreview();
 
             super.doValueUpdate_(newValue);
+        }
+
+        dispose() {
+            super.dispose();
+
+            // Check if events are enabled to see if this is an actual delete as opposed to an internal
+            if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
+
+            }
         }
 
         private redrawPreview() {
@@ -148,7 +153,7 @@ namespace pxtblockly {
             this.fieldGroup_.appendChild(bg.el);
 
             if (this.state) {
-                const data = bitmapToImageURI(this.state, PREVIEW_WIDTH, this.lightMode);
+                const data = bitmapToImageURI(this.state && pxt.sprite.Bitmap.fromData(this.state.bitmap), PREVIEW_WIDTH, this.lightMode);
                 const img = new svg.Image()
                     .src(data)
                     .at(X_PADDING + BG_PADDING, Y_PADDING + BG_PADDING)
@@ -158,12 +163,66 @@ namespace pxtblockly {
         }
 
         private parseBitmap(newText: string) {
-            const bmp = pxt.sprite.imageLiteralToBitmap(newText);
+            if (this.sourceBlock_ && !this.sourceBlock_.isInFlyout) {
+                const project = pxt.react.getTilemapProject();
 
-            // Ignore invalid bitmaps
-            if (bmp && bmp.width && bmp.height) {
-                this.state = bmp;
+                const id = pxt.blocks.getBlockDataForField(this.sourceBlock_, this.name);
+                if (id) {
+                    this.state = project.lookupAsset(pxt.AssetType.Image, id);
+                    return;
+                }
+
+                const bmp = pxt.sprite.imageLiteralToBitmap(newText);
+
+                if ((!id || !this.state) && bmp && bmp.width && bmp.height) {
+                    const existing = pxt.react.getTilemapProject().lookupBlockAsset(pxt.AssetType.Image, this.sourceBlock_.id);
+
+                    if (existing && pxt.sprite.Bitmap.fromData(existing.bitmap).equals(bmp)) {
+                        this.state = existing;
+                    }
+                    else {
+                        this.state = pxt.react.getTilemapProject().createNewImage(bmp.width, bmp.height);
+                        this.state.bitmap = bmp.data();
+                        this.updateStateMeta();
+                    }
+                }
             }
+        }
+
+        protected initState() {
+            if (!this.state && this.sourceBlock_ && !this.sourceBlock_.isInFlyout) {
+                const project = pxt.react.getTilemapProject();
+
+                const id = pxt.blocks.getBlockDataForField(this.sourceBlock_, this.name);
+                if (id) {
+                    this.state = project.lookupAsset(pxt.AssetType.Image, id);
+                }
+                if (!this.state) {
+                    this.state = project.createNewImage(this.params.initWidth, this.params.initHeight);
+                }
+            }
+            this.updateStateMeta();
+        }
+
+        protected updateStateMeta() {
+            if (!this.state) return;
+
+            if (!this.state.meta) {
+                this.state.meta = {};
+            }
+            if (!this.state.meta.blockIDs) {
+                this.state.meta.blockIDs = [];
+            }
+
+            if (this.sourceBlock_) {
+                if (this.state.meta.blockIDs.indexOf(this.sourceBlock_.id) === -1) {
+                    this.state.meta.blockIDs.push(this.sourceBlock_.id);
+                }
+
+                pxt.blocks.setBlockDataForField(this.sourceBlock_, this.name, this.state.id);
+            }
+
+            pxt.react.getTilemapProject().updateAsset(this.state);
         }
     }
 

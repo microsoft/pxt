@@ -248,7 +248,7 @@ namespace pxtblockly {
         }
 
         const project = pxt.react.getTilemapProject();
-        const projectMaps = project.getAllTilemaps();
+        const projectMaps = project.getAssets(pxt.AssetType.Tilemap);
 
         for (const projectMap of projectMaps) {
             for (const tile of projectMap.data.tileset.tiles) {

@@ -97,6 +97,7 @@ namespace pxt {
         update(id: string, newValue: U) {
             this.removeByID(id);
             this.add(cloneAsset(newValue));
+            return this.getByID(id);
         }
 
         removeByID(id: string): void {
@@ -267,7 +268,7 @@ namespace pxt {
                 this.state.tiles.update(existing.id, tile);
 
                 if (existing.id !== tile.id) {
-                    for (const tm of this.getAllTilemaps()) {
+                    for (const tm of this.getAssets(AssetType.Tilemap)) {
                         if (tm.data.tileset.tiles.some(t => t.internalID === tile.internalID)) {
 
                             tm.data.tileset.tiles = tm.data.tileset.tiles.map(t => t.internalID === tile.internalID ? tile : t);
@@ -319,10 +320,6 @@ namespace pxt {
 
         public getTilemap(id: string) {
             return this.state.tilemaps.getByID(id);
-        }
-
-        public getAllTilemaps() {
-            return this.state.tilemaps.getSnapshot();
         }
 
         public updateTilemap(id: string, data: pxt.sprite.TilemapData): ProjectTilemap {
@@ -480,6 +477,11 @@ namespace pxt {
             }
         }
 
+        public lookupAsset(assetType: AssetType.Image, name: string): ProjectImage;
+        public lookupAsset(assetType: AssetType.Tile, name: string): Tile;
+        public lookupAsset(assetType: AssetType.Tilemap, name: string): ProjectTilemap;
+        public lookupAsset(assetType: AssetType.Animation, name: string): Animation;
+        public lookupAsset(assetType: AssetType, name: string): Asset;
         public lookupAsset(assetType: AssetType, name: string) {
             switch (assetType) {
                 case AssetType.Image:
@@ -490,6 +492,54 @@ namespace pxt {
                     return this.state.tilemaps.getByID(name) || this.gallery.tilemaps.getByID(name);
                 case AssetType.Animation:
                     return this.state.animations.getByID(name) || this.gallery.animations.getByID(name);
+            }
+        }
+
+        public getAssets(type: AssetType.Image): ProjectImage[];
+        public getAssets(type: AssetType.Tile): Tile[];
+        public getAssets(type: AssetType.Tilemap): ProjectTilemap[];
+        public getAssets(type: AssetType.Animation): Animation[];
+        public getAssets(type: AssetType): Asset[];
+        public getAssets(type: AssetType) {
+            switch (type) {
+                case AssetType.Image: return this.state.images.getSnapshot();
+                case AssetType.Tile: return this.state.tiles.getSnapshot();
+                case AssetType.Tilemap: return this.state.tilemaps.getSnapshot();
+                case AssetType.Animation: return this.state.animations.getSnapshot();
+            }
+        }
+
+        public lookupBlockAsset(assetType: AssetType.Image, blockID: string): ProjectImage;
+        public lookupBlockAsset(assetType: AssetType.Tile, blockID: string): Tile;
+        public lookupBlockAsset(assetType: AssetType.Tilemap, blockID: string): ProjectTilemap;
+        public lookupBlockAsset(assetType: AssetType.Animation, blockID: string): Animation;
+        public lookupBlockAsset(assetType: AssetType, blockID: string): Asset;
+        public lookupBlockAsset(type: AssetType, blockID: string) {
+            let filter = (a: Asset) => a.meta?.blockIDs?.indexOf(blockID) !== -1;
+
+            switch (type) {
+                case AssetType.Image: return this.state.images.getSnapshot(filter)[0];
+                case AssetType.Tile: return this.state.tiles.getSnapshot(filter)[0];
+                case AssetType.Tilemap: return this.state.tilemaps.getSnapshot(filter)[0];
+                case AssetType.Animation: return this.state.animations.getSnapshot(filter)[0];
+            }
+        }
+
+        public updateAsset(asset: ProjectImage): ProjectImage;
+        public updateAsset(asset: Tile): Tile;
+        public updateAsset(asset: ProjectTilemap): ProjectTilemap;
+        public updateAsset(asset: Animation): Animation;
+        public updateAsset(asset: Asset): Asset;
+        public updateAsset(asset: Asset) {
+            switch (asset.type) {
+                case AssetType.Image:
+                    return this.state.images.update(asset.id, asset);
+                case AssetType.Tile:
+                    return this.updateTile(asset);
+                case AssetType.Tilemap:
+                    return this.state.tilemaps.update(asset.id, asset);
+                case AssetType.Animation:
+                    return this.state.animations.update(asset.id, asset);
             }
         }
 
