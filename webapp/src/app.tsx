@@ -1143,14 +1143,14 @@ export class ProjectView
             tutorialOptions.tutorialStep = step;
             tutorialOptions.tutorialStepExpanded = false;
             this.setState({ tutorialOptions: tutorialOptions });
-            const fullscreen = tutorialOptions.tutorialStepInfo[step].fullscreen;
-            if (fullscreen) this.showTutorialHint();
+            const showHint = tutorialOptions.tutorialStepInfo[step].showHint;
+            if (showHint) this.showTutorialHint();
 
             const isCompleted = tutorialOptions.tutorialStepInfo[step].tutorialCompleted;
             if (isCompleted && pxt.commands.onTutorialCompleted) pxt.commands.onTutorialCompleted();
             // Hide flyouts and popouts
             this.editor.closeFlyout();
-            if (this.textEditor.giveFocusOnLoading) {
+            if (this.textEditor.giveFocusOnLoading && this.isTextEditor()) {
                 this.textEditor.editor.focus();
             }
         }
@@ -1183,8 +1183,8 @@ export class ProjectView
                         tutorialOptions.tutorialReady = true;
                         tutorialOptions.tutorialStepInfo = tt.stepInfo;
                         this.setState({ tutorialOptions: tutorialOptions });
-                        const fullscreen = tutorialOptions.tutorialStepInfo[0].fullscreen;
-                        if (fullscreen) this.showTutorialHint();
+                        const showHint = tutorialOptions.tutorialStepInfo[0].showHint;
+                        if (showHint) this.showTutorialHint();
                         //else {
                         //    this.showLightbox();
                         //}
@@ -1433,8 +1433,8 @@ export class ProjectView
                 this.setState({ editorState: editorState });
                 this.editor.filterToolbox(true);
                 const stepInfo = t.tutorialStepInfo;
-                const fullscreen = stepInfo[header.tutorial.tutorialStep].fullscreen;
-                if (fullscreen) this.showTutorialHint();
+                const showHint = stepInfo[header.tutorial.tutorialStep].showHint;
+                if (showHint) this.showTutorialHint();
                 //else this.showLightbox();
             })
             .catch(e => {
