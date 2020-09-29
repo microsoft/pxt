@@ -804,6 +804,28 @@ namespace ts.pxtc.Util {
         }
     }
 
+    export async function promisePoolAsync<T, V>(maxConcurrent: number, inputValues: T[], handler: (input: T) => Promise<V>): Promise<V[]> {
+        let curr = 0;
+        const promises = [];
+        const output: V[] = [];
+
+        for (let i = 0; i < maxConcurrent; i++) {
+            const thread = (async () => {
+                while (curr < inputValues.length) {
+                    const id = curr++;
+                    const input = inputValues[id];
+                    output[id] = await handler(input);
+                }
+            })();
+
+            promises.push(thread);
+        }
+
+        await Promise.all(promises);
+
+        return output;
+    }
+
     export function now(): number {
         return Date.now();
     }
