@@ -38,6 +38,10 @@ namespace pxtblockly {
         protected lightMode: boolean;
         protected undoRedoState: any;
 
+        // If input is invalid, the subclass can set this to be true. The field will instead
+        // render as a grey block and preserve the decompiled code
+        public isGreyBlock: boolean;
+
         constructor(text: string, params: any, validator?: Function) {
             super(text, validator);
 
@@ -75,6 +79,8 @@ namespace pxtblockly {
         }
 
         showEditor_() {
+            if (this.isGreyBlock) return;
+
             (this.params as any).blocksInfo = this.blocksInfo;
 
             let editorKind: string;
@@ -111,6 +117,7 @@ namespace pxtblockly {
                     project.pushUndo();
 
                     this.asset = result;
+                    this.onEditorClose(this.asset);
                     this.updateAssetListener();
                     this.updateStateMeta();
                     this.redrawPreview();
@@ -129,11 +136,34 @@ namespace pxtblockly {
 
         render_() {
             super.render_();
-            this.size_.height = TOTAL_HEIGHT;
-            this.size_.width = TOTAL_WIDTH;
+
+            if (!this.isGreyBlock) {
+                this.size_.height = TOTAL_HEIGHT;
+                this.size_.width = TOTAL_WIDTH;
+            }
+        }
+
+        getDisplayText_() {
+            // This is only used when isGreyBlock is true
+            const text = pxt.Util.htmlUnescape(this.value_);
+            return text.substr(0, text.indexOf("(")) + "(...)";;
+        }
+
+        updateEditable() {
+            if (this.isGreyBlock && this.fieldGroup_) {
+                const group = this.fieldGroup_;
+                Blockly.utils.dom.removeClass(group, 'blocklyNonEditableText');
+                Blockly.utils.dom.removeClass(group, 'blocklyEditableText');
+                group.style.cursor = '';
+            }
+            else {
+                super.updateEditable();
+            }
         }
 
         getValue() {
+            if (this.isGreyBlock) return pxt.Util.htmlUnescape(this.value_);
+
             return this.getValueText();
         }
 
@@ -154,9 +184,19 @@ namespace pxtblockly {
             pxt.react.getTilemapProject().removeChangeListener(this.getAssetType(), this.assetChangeListener);
         }
 
+        protected onEditorClose(newValue: pxt.Asset) {
+            // Subclass
+        }
+
         protected redrawPreview() {
             if (!this.fieldGroup_) return;
             pxsim.U.clear(this.fieldGroup_);
+
+            if (this.isGreyBlock) {
+                this.createTextElement_();
+                this.updateEditable();
+                return;
+            }
 
             const bg = new svg.Rect()
                 .at(X_PADDING, Y_PADDING)
@@ -312,10 +352,10 @@ namespace pxtblockly {
             const ws = this.getEventWorkspace_();
             const tilemaps = getAllBlocksWithTilemaps(ws);
 
-            for (const t of tilemaps) {
-                t.ref.refreshTileset();
-                t.ref.redrawPreview();
-            }
+            // for (const t of tilemaps) {
+            //     t.ref.refreshTileset();
+            //     t.ref.redrawPreview();
+            // }
 
             // Fire an event to force a recompile, but make sure it doesn't end up on the undo stack
             const ev = new BlocklyTilemapChange(

@@ -242,7 +242,7 @@ namespace pxtblockly {
         for (const map of allMaps) {
             if (map.block.id === excludeBlockID) continue;
 
-            for (const tile of map.ref.getTileset().tiles) {
+            for (const tile of map.ref.getTileset()?.tiles || []) {
                 all[tile.id] = tile;
             }
         }

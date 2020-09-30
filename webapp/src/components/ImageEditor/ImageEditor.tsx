@@ -95,7 +95,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         </div>
     }
 
-    openAsset(asset: pxt.Asset) {
+    openAsset(asset: pxt.Asset, gallery: GalleryTile[] = []) {
         this.editingAsset = asset;
         switch (asset.type) {
             case pxt.AssetType.Image:
@@ -109,7 +109,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                 this.initAnimation(asset.frames.map(fromData), asset.interval);
                 break;
             case pxt.AssetType.Tilemap:
-                this.initTilemap(asset.data, []);
+                this.initTilemap(asset.data, gallery);
                 break;
         }
         this.dispatchOnStore(dispatchChangeAssetName(asset.id));

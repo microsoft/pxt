@@ -205,10 +205,10 @@ namespace pxt.sprite {
         }
 
         equals(other: TilemapData) {
-            if (!this.tilemap.equals(other.tilemap)
+            if (!(this.tilemap.equals(other.tilemap)
                 && this.tileset.tileWidth == other.tileset.tileWidth
                 && this.tileset.tiles.length == other.tileset.tiles.length
-                && bitmapEquals(this.layers, other.layers)) {
+                && bitmapEquals(this.layers, other.layers))) {
                     return false;
             }
 
