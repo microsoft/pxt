@@ -216,10 +216,10 @@ ${code}
                 contentMd: step,
                 headerContentMd: header
             }
-            if (/@(fullscreen|unplugged)/.test(flags))
-                info.fullscreen = true;
-            if (/@unplugged/.test(flags))
-                info.unplugged = true;
+            if (/@(fullscreen|unplugged|showdialog|showhint)/i.test(flags))
+                info.showHint = true;
+            if (/@(unplugged|showdialog)/i.test(flags))
+                info.showDialog = true;
             if (/@tutorialCompleted/.test(flags))
                 info.tutorialCompleted = true;
             if (/@resetDiff/.test(flags))

@@ -5,7 +5,7 @@
         {
             "contentMd": "Tutorials can be written with code in Python.\n```python\ndef on_chat():\n    # @highlight\n    player.teleport(pos(0, 100, 0))\nplayer.on_chat(\"jump\", on_chat)\n```",
             "headerContentMd": "Tutorials can be written with code in Python.",
-            "fullscreen": true,
+            "showHint": true,
             "hintContentMd": "```python\ndef on_chat():\n    # @highlight\n    player.teleport(pos(0, 100, 0))\nplayer.on_chat(\"jump\", on_chat)\n```"
         },
         {

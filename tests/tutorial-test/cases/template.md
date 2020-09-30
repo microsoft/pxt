@@ -1,7 +1,7 @@
 # Template blocks
 
 ### @diffs false
-## Introduction @unplugged
+## Introduction @showdialog
 
 Let's get started!
 
