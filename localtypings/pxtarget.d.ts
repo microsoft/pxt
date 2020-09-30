@@ -912,9 +912,11 @@ declare namespace pxt.tutorial {
     }
 
     interface TutorialStepInfo {
-        fullscreen?: boolean;
-        // no coding
-        unplugged?: boolean;
+        // fullscreen?: boolean; // DEPRECATED, replaced by "showHint"
+        // unplugged?: boolean: // DEPRECATED, replaced by "showDialog"
+
+        showHint?: boolean; // automatically displays hint
+        showDialog?: boolean; // no coding, displays in modal
         tutorialCompleted?: boolean;
         contentMd?: string;
         headerContentMd?: string;

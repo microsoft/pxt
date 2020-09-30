@@ -49,8 +49,6 @@ function onYouTubeIframeAPIReady() {
 (async function () {
     const body = document.body;
     const container = document.getElementById("container");
-    const editor = document.getElementById("editor");
-    const editor2 = document.getElementById("editor2");
     const selectapp = document.getElementById("selectapp");
     const facecamcontainer = document.getElementById("facecam");
     const facecam = document.getElementById("facecamvideo");
@@ -79,7 +77,8 @@ function onYouTubeIframeAPIReady() {
     const backgroundyoutube = document.getElementById('backgroundyoutube');
     const intro = document.getElementById('intro');
     const hasGetDisplayMedia = !!navigator?.mediaDevices?.getDisplayMedia;
-    const frames = [editor, editor2];
+    const cachedFrames = {};
+    const cachedFrames2 = {};
     const paintColors = ["#ffe135", "#00d9ff", "#cf1fdb", "#ee0000"];
     const scenes = ["leftscene", "rightscene", "chatscene", "countdownscene"];
     const LEFT_SCENE_INDEX = scenes.indexOf("leftscene");
@@ -125,6 +124,12 @@ function onYouTubeIframeAPIReady() {
         tickEvent("streamer.load.error");
         trackException(e, "load");
         console.error(e);
+    }
+    function editor() {
+        return document.getElementById("editor");
+    }
+    function editor2() {
+        return document.getElementById("editor2");
     }
     function saveConfig(config) {
         if (!config)
@@ -379,9 +384,9 @@ function onYouTubeIframeAPIReady() {
             url = createYouTubeEmbedUrl(ytid, true);
         startStinger(config.stingerVideo, () => {
             if (config.multiEditor && state.sceneIndex == LEFT_SCENE_INDEX)
-                editor2.src = url;
+                setFrameUrl(editor2(), url, true);
             else
-                editor.src = url;
+                setFrameUrl(editor(), url);
         }, config.stingerVideoGreenScreen, config.stingerVideoDelay);
     }
     function setScene(scene) {
@@ -636,7 +641,7 @@ function onYouTubeIframeAPIReady() {
                 painttoolCtx.moveTo(mouse.x, mouse.y);
             }
             else if (tool == 'arrow') {
-                painttoolCtx.lineWidth = 42;
+                painttoolCtx.lineWidth = Math.max(16, (paint.width / 60) | 0);
             }
         }
         function move(ev) {
@@ -721,6 +726,24 @@ function onYouTubeIframeAPIReady() {
             ctx.restore();
         }
     }
+    function setFrameUrl(frame, url, secondary) {
+        const caches = secondary ? cachedFrames2 : cachedFrames;
+        let cached = caches[url];
+        if (!cached) {
+            cached = caches[url] = document.createElement("iframe");
+            cached.className = "box animated site hidden";
+            cached.setAttribute("allow", "usb;camera");
+            cached.setAttribute("sandbox", "allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox allow-forms");
+            cached.src = url;
+            frame.parentElement.insertBefore(cached, frame);
+        }
+        // insert and remove
+        frame.classList.add('hidden');
+        const id = frame.getAttribute("id");
+        frame.setAttribute("id", "");
+        cached.setAttribute("id", id);
+        cached.classList.remove('hidden');
+    }
     function loadEditor(hash) {
         const config = readConfig();
         // update first editor
@@ -730,20 +753,20 @@ function onYouTubeIframeAPIReady() {
             loadStyle();
             return;
         }
-        let url = `${editorConfig.url}?editorLayout=ide&nosandbox=1`;
+        let url = `${editorConfig.url}?editorLayout=ide&nosandbox=1&parentOrigin=${encodeURIComponent(window.location.origin)}`;
         if (config.multiEditor)
             url += `&nestededitorsim=1`;
         if (hash)
             url += `#${hash}`;
-        editor.src = url;
+        setFrameUrl(editor(), url);
         if (config.multiEditor) {
-            if (!editor2.parentElement)
-                container.insertBefore(editor2, editor);
-            editor2.src = url;
+            if (!editor2().parentElement)
+                container.insertBefore(editor2(), editor());
+            setFrameUrl(editor2(), url, true);
         }
         else {
             // remove from DOM
-            editor2.remove();
+            editor2().remove();
         }
         loadStyle();
     }
@@ -1172,9 +1195,12 @@ background-image: url(${config.backgroundImage});
             const source = msg.source;
             if (!!data.broadcast) {
                 data.outer = true;
-                frames
-                    .filter(ifrm => ifrm.contentWindow !== source)
-                    .forEach((ifrm) => ifrm.contentWindow.postMessage(data, "*"));
+                const frames = document.querySelectorAll("iframe.site");
+                for (let i = 0; i < frames.length; ++i) {
+                    const ifrm = frames.item(i);
+                    if (ifrm.contentWindow !== source)
+                        ifrm.contentWindow.postMessage(data, "*");
+                }
             }
         };
         window.onhashchange = handleHashChange;
@@ -1207,7 +1233,7 @@ background-image: url(${config.backgroundImage});
                         const editorConfig = editorConfigs[config.editor];
                         config.multiEditor = true;
                         const doc = editorConfig.url.trim(/\/\w+$/) + "/" + arg.replace(/^\//, "");
-                        editor2.src = doc;
+                        setFrameUrl(editor2(), doc, true);
                         render();
                         break;
                     }
@@ -2389,7 +2415,7 @@ background-image: url(${config.backgroundImage});
         };
         const stingeryoutube = document.getElementById('stingeryoutube');
         const ytVideoId = parseYouTubeVideoId(url);
-        if (ytVideoId) {
+        if (ytVideoId && stingerPlayer) {
             state.stingering = true;
             render();
             stopGreenScreen(stingervideo);
@@ -2421,7 +2447,8 @@ background-image: url(${config.backgroundImage});
             state.stingering = true;
             render();
             url = await resolveBlob(url);
-            stingerPlayer.stopVideo();
+            if (stingerPlayer)
+                stingerPlayer.stopVideo();
             stingeryoutube.classList.add("hidden");
             stingervideo.src = url;
             stingervideo.onplay = () => {
@@ -2444,7 +2471,8 @@ background-image: url(${config.backgroundImage});
         }
         else {
             stingervideo.src = undefined;
-            stingerPlayer.stopVideo();
+            if (stingerPlayer)
+                stingerPlayer.stopVideo();
             stingervideo.classList.add("hidden");
             stingeryoutube.classList.add("hidden");
             state.stingering = false;

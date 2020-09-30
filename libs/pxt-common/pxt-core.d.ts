@@ -297,9 +297,9 @@ declare interface String {
     /**
      * Return a substring of the current string.
      * @param start first character index; can be negative from counting from the end, eg:0
-     * @param length number of characters to extract
+     * @param length number of characters to extract, eg: 10
      */
-    //% shim=String_::substr length.defl=10
+    //% helper=stringSubstr
     //% help=text/substr
     //% blockId="string_substr" block="substring of %this=text|from %start|of length %length" blockNamespace="text"
     substr(start: number, length?: number): string;
@@ -334,6 +334,7 @@ declare interface String {
 
     /** Returns a value indicating if the string is empty */
     //% helper=stringEmpty
+    //% help=text/is-empty
     //% blockId="string_isempty" blockNamespace="text"
     //% block="%this=text| is empty"
     isEmpty(): boolean;
@@ -374,6 +375,7 @@ declare interface String {
     /**
      * Return a substring of the current string with whitespace removed from both ends
      */
+    //% helper=stringTrim
     trim(): string;
 
     /**

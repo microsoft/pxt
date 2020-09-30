@@ -333,6 +333,9 @@ export async function initAsync() {
         initAsync()
     }
 
+    // check webusb
+    await pxt.usb.checkAvailableAsync()
+
     // unplug any existing packetio
     await pxt.packetio.disconnectAsync()
 

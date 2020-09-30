@@ -3163,6 +3163,67 @@ export function downloadPlaylistsAsync(parsed: commandParser.ParsedCommand): Pro
     return youtube.renderPlaylistsAsync(playlists);
 }
 
+export async function validateAndFixPkgConfig(parsed: commandParser.ParsedCommand): Promise<void> {
+    const file = fs.readFileSync("pxt.json", { encoding: "utf8" });
+    const cfg = pxt.Package.parseAndValidConfig(file);
+
+    if (cfg) {
+        pxt.log("Validating pxt.json");
+    } else {
+        U.userError("Could not parse pxt.json");
+    }
+
+    const trimmedFiles = validateFileList("files", cfg.files);
+    if (trimmedFiles) {
+        cfg.files = trimmedFiles;
+    }
+
+    const trimmedTestFiles = validateFileList("testFiles", cfg.testFiles);
+    if (trimmedTestFiles) {
+        cfg.testFiles = trimmedTestFiles;
+    }
+
+    const validFilesInFileDependencies = validateFileList("fileDependencies", U.values(cfg.fileDependencies));
+    if (validFilesInFileDependencies) {
+        for (const key of Object.keys(cfg.fileDependencies)) {
+            if (validFilesInFileDependencies.indexOf(cfg.fileDependencies[key]) === -1) {
+                delete cfg.fileDependencies[key];
+            }
+        }
+    }
+
+    if (trimmedFiles || trimmedTestFiles || validFilesInFileDependencies) {
+        pxt.log("Updating pxt.json");
+        fs.writeFileSync('pxt.json', JSON.stringify(cfg, undefined, 4));
+        pxt.log("Successfully updated pxt.json");
+    } else {
+        pxt.log("No errors identified in pxt.json");
+    }
+
+    function validateFileList(field: string, files: string[]) {
+        pxt.log(`Checking ${field}`);
+        const missing: string[] = [];
+        const existing: string[] = [];
+
+        for (const file of (files || [])) {
+            if (fs.existsSync(file)) {
+                existing.push(file);
+            } else {
+                missing.push(file);
+            }
+        }
+
+        if (missing.length) {
+            pxt.log(`pxt.json lists ${field} that are missing:
+    ${missing.join(",\n    ")}
+`);
+            return existing;
+        }
+
+        return undefined;
+    }
+}
+
 export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     const rx = /```codecard((.|\s)*)```/;
     const tag = parsed.args[0] as string;
@@ -4415,7 +4476,8 @@ export async function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     const minify = !!parsed.flags["minify"];
     const bump = !!parsed.flags["bump"];
     const disableAppCache = !!parsed.flags["no-appcache"];
-    const locs = !!parsed.flags["locs"];
+    const locsSrc = parsed.flags["locs-src"] as string;
+    const locs = !!locsSrc || !!parsed.flags["locs"];
     if (parsed.flags["cloud"]) forceCloudBuild = true;
     if (minify && process.env["PXT_ENV"] === undefined) {
         process.env["PXT_ENV"] = "production";
@@ -4428,9 +4490,28 @@ export async function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     if (bump) {
         await bumpAsync();
     }
+
     if (locs) {
         await internalGenDocsAsync(false, true);
-        await crowdin.downloadTargetTranslationsAsync();
+        if (locsSrc) {
+            const languages = pxt.appTarget?.appTheme?.availableLocales
+                    .filter(langId => nodeutil.existsDirSync(path.join(locsSrc, langId)));
+
+            await crowdin.buildAllTranslationsAsync(async (fileName: string) => {
+                const output: pxt.Map<pxt.Map<string>> = {};
+
+                for (const langId of languages) {
+                    const srcFilePath = path.join(locsSrc, langId, fileName);
+                    if (nodeutil.fileExistsSync(srcFilePath)) {
+                        output[langId] = pxt.Util.jsonTryParse(fs.readFileSync(srcFilePath, { encoding: "utf8" }));
+                    }
+                }
+
+                return output;
+            });
+        } else {
+            await crowdin.downloadTargetTranslationsAsync();
+        }
     }
 
     await internalBuildTargetAsync({ packaged: true });
@@ -6160,6 +6241,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 description: "Download localization files and bundle them",
                 aliases: ["locales", "crowdin"]
             },
+            "locs-src": {
+                description: "Bundle localization files that have already been downloaded to a given directory",
+                argument: "locs-src",
+                type: "string"
+            },
             "no-appcache": {
                 description: "Disables application cache"
             }
@@ -6576,6 +6662,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         advanced: true,
         argString: "<list>"
     }, downloadPlaylistsAsync)
+
+    p.defineCommand({
+        name: "checkpkgcfg",
+        help: "Validate and attempt to fix common pxt.json issues",
+    }, validateAndFixPkgConfig);
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
         p.defineCommand({ name, help, onlineHelp, argString }, callback);

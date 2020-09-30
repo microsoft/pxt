@@ -1553,6 +1553,7 @@ namespace ts.pxtc.service {
         projectSearch?: ProjectSearchOptions;
         snippet?: SnippetOptions;
         runtime?: pxt.RuntimeOptions;
+        light?: boolean; // in light mode?
     }
 
     export interface SnippetOptions {
