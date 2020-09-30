@@ -1,0 +1,328 @@
+/// <reference path="../../built/pxtlib.d.ts" />
+
+
+namespace pxtblockly {
+    import svg = pxt.svgUtil;
+
+    export interface FieldAssetEditorOptions {
+        initWidth: string;
+        initHeight: string;
+
+        disableResize: string;
+    }
+
+    interface ParsedFieldAssetEditorOptions {
+        initWidth: number;
+        initHeight: number;
+        disableResize: boolean;
+    }
+
+    // 32 is specifically chosen so that we can scale the images for the default
+    // sprite sizes without getting browser anti-aliasing
+    const PREVIEW_WIDTH = 32;
+    const X_PADDING = 5;
+    const Y_PADDING = 1;
+    const BG_PADDING = 4;
+    const BG_WIDTH = BG_PADDING * 2 + PREVIEW_WIDTH;
+    const TOTAL_HEIGHT = Y_PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
+    const TOTAL_WIDTH = X_PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
+
+    export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V extends ParsedFieldAssetEditorOptions> extends Blockly.Field implements Blockly.FieldCustom {
+        public isFieldCustom_ = true;
+        public SERIALIZABLE = true;
+
+        protected asset: pxt.Asset;
+        protected params: V;
+
+        protected blocksInfo: pxtc.BlocksInfo;
+        protected lightMode: boolean;
+        protected undoRedoState: any;
+
+        constructor(text: string, params: any, validator?: Function) {
+            super(text, validator);
+
+            this.lightMode = params.lightMode;
+            this.params = this.parseFieldOptions(params);
+            this.blocksInfo = params.blocksInfo;
+
+            this.initState();
+        }
+
+        protected abstract getAssetType(): pxt.AssetType;
+        protected abstract createNewAsset(text?: string): pxt.Asset;
+        protected abstract getValueText(): string;
+
+        init() {
+            if (this.fieldGroup_) {
+                // Field has already been initialized once.
+                return;
+            }
+            // Build the DOM.
+            this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null) as SVGGElement;
+            if (!this.visible_) {
+                (this.fieldGroup_ as any).style.display = 'none';
+            }
+
+            this.initState();
+            this.redrawPreview();
+
+            this.updateEditable();
+            (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(this.fieldGroup_);
+
+            // Force a render.
+            this.render_();
+            (this as any).mouseDownWrapper_ = Blockly.bindEventWithChecks_((this as any).getClickTarget_(), "mousedown", this, (this as any).onMouseDown_)
+        }
+
+        showEditor_() {
+            (this.params as any).blocksInfo = this.blocksInfo;
+
+            let editorKind: string;
+
+            switch (this.asset.type) {
+                case pxt.AssetType.Tile:
+                case pxt.AssetType.Image:
+                    editorKind = "image-editor";
+                    break;
+                case pxt.AssetType.Animation:
+                    editorKind = "animation-editor";
+                    break;
+                case pxt.AssetType.Tilemap:
+                    editorKind = "tilemap-editor";
+                    break;
+            }
+
+
+            const fv = pxt.react.getFieldEditorView(editorKind, this.asset, this.params);
+
+            if (this.undoRedoState) {
+                fv.restorePersistentData(this.undoRedoState);
+            }
+
+            fv.onHide(() => {
+                const result = fv.getResult();
+                const project = pxt.react.getTilemapProject();
+
+                if (result) {
+                    const old = this.getValue();
+                    if (pxt.assetEquals(this.asset, result)) return;
+
+                    const lastRevision = project.revision();
+                    project.pushUndo();
+
+                    this.asset = result;
+                    this.updateAssetListener();
+                    this.updateStateMeta();
+                    this.redrawPreview();
+
+                    this.undoRedoState = fv.getPersistentData();
+
+                    if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
+                        Blockly.Events.fire(new BlocklyTilemapChange(
+                            this.sourceBlock_, 'field', this.name, old, this.getValue(), lastRevision, project.revision()));
+                    }
+                }
+            });
+
+            fv.show();
+        }
+
+        render_() {
+            super.render_();
+            this.size_.height = TOTAL_HEIGHT;
+            this.size_.width = TOTAL_WIDTH;
+        }
+
+        getValue() {
+            return this.getValueText();
+        }
+
+        doValueUpdate_(newValue: string) {
+            if (newValue == null) {
+                return;
+            }
+            this.value_ = newValue;
+            this.parseValueText(newValue);
+            this.redrawPreview();
+
+            super.doValueUpdate_(newValue);
+        }
+
+        dispose() {
+            super.dispose();
+
+            pxt.react.getTilemapProject().removeChangeListener(this.getAssetType(), this.assetChangeListener);
+        }
+
+        protected redrawPreview() {
+            if (!this.fieldGroup_) return;
+            pxsim.U.clear(this.fieldGroup_);
+
+            const bg = new svg.Rect()
+                .at(X_PADDING, Y_PADDING)
+                .size(BG_WIDTH, BG_WIDTH)
+                .setClass("blocklySpriteField")
+                .stroke("#898989", 1)
+                .corner(4);
+
+            this.fieldGroup_.appendChild(bg.el);
+
+            if (this.asset) {
+                let dataURI: string;
+                switch (this.asset.type) {
+                    case pxt.AssetType.Image:
+                    case pxt.AssetType.Tile:
+                        dataURI = bitmapToImageURI(pxt.sprite.Bitmap.fromData(this.asset.bitmap), PREVIEW_WIDTH, this.lightMode);
+                        break;
+                    case pxt.AssetType.Animation:
+                        dataURI = bitmapToImageURI(pxt.sprite.Bitmap.fromData(this.asset.frames[0]), PREVIEW_WIDTH, this.lightMode);
+                        break;
+                    case pxt.AssetType.Tilemap:
+                        dataURI = tilemapToImageURI(this.asset.data, PREVIEW_WIDTH, this.lightMode, this.blocksInfo);
+                        break;
+                }
+                const img = new svg.Image()
+                    .src(dataURI)
+                    .at(X_PADDING + BG_PADDING, Y_PADDING + BG_PADDING)
+                    .size(PREVIEW_WIDTH, PREVIEW_WIDTH);
+                this.fieldGroup_.appendChild(img.el);
+            }
+        }
+
+        protected parseValueText(newText: string) {
+            if (this.sourceBlock_ && !this.sourceBlock_.isInFlyout) {
+                const project = pxt.react.getTilemapProject();
+
+                const id = pxt.blocks.getBlockDataForField(this.sourceBlock_, this.name);
+                if (id) {
+                    this.asset = project.lookupAsset(this.getAssetType(), id);
+                }
+                else {
+                    if (!newText) return;
+                    this.asset = this.createNewAsset(newText);
+                }
+                this.updateStateMeta();
+                this.updateAssetListener();
+            }
+        }
+
+        protected parseFieldOptions(opts: U): V {
+            // NOTE: This implementation is duplicated in pxtcompiler/emitter/service.ts
+            // TODO: Refactor to share implementation.
+            const parsed: ParsedFieldAssetEditorOptions = {
+                initWidth: 16,
+                initHeight: 16,
+                disableResize: false,
+            };
+
+            if (!opts) {
+                return parsed as V;
+            }
+
+            if (opts.disableResize) {
+                parsed.disableResize = opts.disableResize.toLowerCase() === "true" || opts.disableResize === "1";
+            }
+
+            parsed.initWidth = withDefault(opts.initWidth, parsed.initWidth);
+            parsed.initHeight = withDefault(opts.initHeight, parsed.initHeight);
+
+            return parsed as V;
+
+            function withDefault(raw: string, def: number) {
+                const res = parseInt(raw);
+                if (isNaN(res)) {
+                    return def;
+                }
+                return res;
+            }
+        }
+
+        protected initState() {
+            if (!this.asset && this.sourceBlock_ && !this.sourceBlock_.isInFlyout) {
+                const project = pxt.react.getTilemapProject();
+
+                const id = pxt.blocks.getBlockDataForField(this.sourceBlock_, this.name);
+                if (id) {
+                    this.asset = project.lookupAsset(this.getAssetType(), id);
+                }
+                if (!this.asset) {
+                    this.asset = this.createNewAsset();
+                }
+                this.updateAssetListener();
+            }
+            this.updateStateMeta();
+        }
+
+        protected updateStateMeta() {
+            if (!this.asset) return;
+
+            if (!this.asset.meta) {
+                this.asset.meta = {};
+            }
+            if (!this.asset.meta.blockIDs) {
+                this.asset.meta.blockIDs = [];
+            }
+
+            if (this.sourceBlock_) {
+                if (this.asset.meta.blockIDs.indexOf(this.sourceBlock_.id) === -1) {
+                    this.asset.meta.blockIDs.push(this.sourceBlock_.id);
+                }
+                pxt.blocks.setBlockDataForField(this.sourceBlock_, this.name, this.asset.id);
+            }
+
+            pxt.react.getTilemapProject().updateAsset(this.asset);
+        }
+
+        protected updateAssetListener() {
+            pxt.react.getTilemapProject().removeChangeListener(this.getAssetType(), this.assetChangeListener);
+            if (this.asset) {
+                pxt.react.getTilemapProject().addChangeListener(this.asset, this.assetChangeListener);
+            }
+        }
+
+        protected assetChangeListener = () => {
+            const id = pxt.blocks.getBlockDataForField(this.sourceBlock_, this.name);
+            if (id) {
+                this.asset = pxt.react.getTilemapProject().lookupAsset(this.getAssetType(), id);
+            }
+            this.redrawPreview();
+        }
+    }
+
+    export class BlocklyTilemapChange extends Blockly.Events.BlockChange {
+
+        constructor(block: Blockly.Block, element: string, name: string, oldValue: any, newValue: any, protected oldRevision: number, protected newRevision: number) {
+            super(block, element, name, oldValue, newValue);
+        }
+
+        isNull() {
+            return this.oldRevision === this.newRevision && super.isNull();
+        }
+
+        run(forward: boolean) {
+            if (forward) {
+                pxt.react.getTilemapProject().redo();
+                super.run(forward);
+            }
+            else {
+                pxt.react.getTilemapProject().undo();
+                super.run(forward);
+            }
+
+            const ws = this.getEventWorkspace_();
+            const tilemaps = getAllBlocksWithTilemaps(ws);
+
+            for (const t of tilemaps) {
+                t.ref.refreshTileset();
+                t.ref.redrawPreview();
+            }
+
+            // Fire an event to force a recompile, but make sure it doesn't end up on the undo stack
+            const ev = new BlocklyTilemapChange(
+                ws.getBlockById(this.blockId), 'tilemap-revision', "revision", null, pxt.react.getTilemapProject().revision(), 0, 0);
+            ev.recordUndo = false;
+
+            Blockly.Events.fire(ev)
+        }
+    }
+}

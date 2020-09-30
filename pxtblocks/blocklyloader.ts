@@ -3062,7 +3062,7 @@ namespace pxt.blocks {
                 fieldData: {}
             };
         }
-        if (/(?:\d+;?)+/.test(block.data)) {
+        if (/^(?:\d+;?)+$/.test(block.data)) {
             return {
                 commentRefs: block.data.split(";"),
                 fieldData: {}

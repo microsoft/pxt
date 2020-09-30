@@ -73,12 +73,32 @@ namespace pxt {
         animations: AssetCollection<Animation>;
     }
 
+    interface AssetSnapshotDiff {
+        beforeRevision: number;
+        afterRevision: number;
+        tiles: AssetCollectionDiff<Tile>;
+        tilemaps: AssetCollectionDiff<ProjectTilemap>;
+        images: AssetCollectionDiff<ProjectImage>;
+        animations: AssetCollectionDiff<Animation>;
+    }
+
+    interface AssetUpdateListener {
+        internalID: number;
+        callback: () => void;
+    }
+
+    interface AssetCollectionDiff<U> {
+        before: U[];
+        after: U[];
+    }
+
     class AssetCollection<U extends Asset> {
         protected assets: U[] = [];
         protected takenNames: pxt.Map<boolean> = {};
+        protected listeners: AssetUpdateListener[] = [];
 
         add(asset: U) {
-            if (this.lookupByID(asset.id)) {
+            if (this.takenNames[asset.id]) {
                 this.update(asset.id, asset);
             }
             else {
@@ -95,8 +115,19 @@ namespace pxt {
         }
 
         update(id: string, newValue: U) {
-            this.removeByID(id);
-            this.add(cloneAsset(newValue));
+            if (this.takenNames[id]) {
+                const existing = this.lookupByID(id);
+
+                if (!assetEquals(existing, newValue)) {
+                    this.removeByID(id);
+                    this.add(cloneAsset(newValue));
+                    this.notifyListener(newValue.internalID);
+                }
+            }
+            else {
+                this.add(cloneAsset(newValue));
+            }
+
             return this.getByID(id);
         }
 
@@ -129,6 +160,64 @@ namespace pxt {
             return allJRes;
         }
 
+        addListener(internalID: number, listener: () => void) {
+            this.listeners.push({ internalID, callback: listener })
+        }
+
+        removeListener(listener: () => void) {
+            this.listeners = this.listeners.filter(ref => ref.callback !== listener);
+        }
+
+        diff(past: AssetCollection<U>) {
+            let diff: AssetCollectionDiff<U> = {
+                before: [],
+                after: []
+            };
+
+            let handled: {[index: number]: boolean} = {};
+
+            for (const pastAsset of past.assets) {
+                handled[pastAsset.internalID] = true;
+                const futureAsset = this.lookupByInternalID(pastAsset.internalID);
+                if (!futureAsset || !assetEquals(pastAsset, futureAsset)) {
+                    diff.before.push(pastAsset);
+                    diff.after.push(futureAsset);
+                }
+            }
+
+            for (const futureAsset of this.assets.filter(a => !handled[a.internalID])) {
+                diff.before.push(null);
+                diff.after.push(futureAsset);
+            }
+
+            return diff;
+        }
+
+        applyDiff(diff: AssetCollectionDiff<U>, backwards = false) {
+            const before = backwards ? diff.after : diff.before;
+            const after = backwards ? diff.before : diff.after;
+            pxt.Util.assert(before.length === after.length);
+
+            for (let i = 0; i < before.length; i++) {
+                if (!before[i]) {
+                    this.assets.push(after[i]);
+                    this.notifyListener(after[i].internalID);
+                    continue;
+                }
+                this.removeByInternalID(before[i].internalID)
+                if (after[i]) {
+                    this.assets.push(after[i]);
+                }
+                this.notifyListener(before[i].internalID);
+            }
+
+            this.takenNames = {};
+            for (const asset of this.assets) {
+                pxt.Util.assert(!this.takenNames[asset.id]);
+                this.takenNames[asset.id] = true;
+            }
+        }
+
         protected lookupByID(id: string): U {
             for (const asset of this.assets) {
                 if (asset.id === id) {
@@ -137,6 +226,25 @@ namespace pxt {
             }
             return null;
         }
+
+        protected lookupByInternalID(id: number): U {
+            for (const asset of this.assets) {
+                if (asset.internalID === id) {
+                    return asset;
+                }
+            }
+            return null;
+        }
+
+        protected removeByInternalID(id: number): void {
+            this.assets = this.assets.filter(a => a.internalID !== id);
+        }
+
+        protected notifyListener(internalID: number) {
+            for (const listener of this.listeners) {
+                if (listener.internalID === internalID) listener.callback();
+            }
+        }
     }
 
     export class TilemapProject {
@@ -144,15 +252,24 @@ namespace pxt {
 
         protected extensionTileSets: TileSetCollection[];
         protected state: AssetSnapshot;
+        protected committedState: AssetSnapshot;
+
         protected gallery: AssetSnapshot;
 
-        protected undoStack: AssetSnapshot[];
-        protected redoStack: AssetSnapshot[];
+        protected undoStack: AssetSnapshotDiff[];
+        protected redoStack: AssetSnapshotDiff[];
 
         protected nextID = 0;
         protected nextInternalID = 0;
 
         constructor() {
+            this.committedState = {
+                revision: 0,
+                tilemaps: new AssetCollection(),
+                tiles: new AssetCollection(),
+                animations: new AssetCollection(),
+                images: new AssetCollection()
+            };
             this.state = {
                 revision: this.nextID++,
                 tilemaps: new AssetCollection(),
@@ -257,7 +374,6 @@ namespace pxt {
             this.state.images.add(newImage);
             return newImage;
         }
-
 
         public updateTile(tile: pxt.Tile) {
             this.onChange();
@@ -412,10 +528,21 @@ namespace pxt {
         }
 
         public undo() {
+            if (this.state.revision !== this.committedState.revision) {
+                this.pushUndo();
+            }
             if (this.undoStack.length) {
                 const undo = this.undoStack.pop();
-                this.redoStack.push(this.state);
-                this.state = undo;
+
+                this.state.tiles.applyDiff(undo.tiles, true);
+                this.state.images.applyDiff(undo.images, true);
+                this.state.tilemaps.applyDiff(undo.tilemaps, true);
+                this.state.animations.applyDiff(undo.animations, true);
+                this.state.revision = undo.beforeRevision;
+
+                this.redoStack.push(undo);
+
+                this.committedState = this.cloneState();
                 this.needsRebuild = true;
             }
         }
@@ -423,17 +550,33 @@ namespace pxt {
         public redo() {
             if (this.redoStack.length) {
                 const redo = this.redoStack.pop();
-                this.undoStack.push(this.state);
-                this.state = redo;
+
+                this.state.tiles.applyDiff(redo.tiles);
+                this.state.images.applyDiff(redo.images);
+                this.state.tilemaps.applyDiff(redo.tilemaps);
+                this.state.animations.applyDiff(redo.animations);
+
+                this.state.revision = redo.afterRevision;
+
+                this.undoStack.push(redo);
+
+                this.committedState = this.cloneState();
                 this.needsRebuild = true;
             }
         }
 
         public pushUndo() {
-            if (this.undoStack.length && this.undoStack[this.undoStack.length - 1].revision === this.state.revision) return;
+            if (this.undoStack.length && this.committedState.revision === this.state.revision) return;
             this.redoStack = [];
-            this.undoStack.push(this.state);
-            this.state = this.cloneState();
+            this.undoStack.push({
+                beforeRevision: this.committedState.revision,
+                afterRevision: this.state.revision,
+                tiles: this.state.tiles.diff(this.committedState.tiles),
+                images: this.state.images.diff(this.committedState.images),
+                tilemaps: this.state.tilemaps.diff(this.committedState.tilemaps),
+                animations: this.state.animations.diff(this.committedState.animations)
+            });
+            this.committedState = this.cloneState();
         }
 
         public revision() {
@@ -531,6 +674,7 @@ namespace pxt {
         public updateAsset(asset: Animation): Animation;
         public updateAsset(asset: Asset): Asset;
         public updateAsset(asset: Asset) {
+            this.onChange();
             switch (asset.type) {
                 case AssetType.Image:
                     return this.state.images.update(asset.id, asset);
@@ -540,6 +684,24 @@ namespace pxt {
                     return this.state.tilemaps.update(asset.id, asset);
                 case AssetType.Animation:
                     return this.state.animations.update(asset.id, asset);
+            }
+        }
+
+        public addChangeListener(asset: Asset, listener: () => void) {
+            switch (asset.type) {
+                case AssetType.Image: this.state.images.addListener(asset.internalID, listener); break;
+                case AssetType.Tile: this.state.tiles.addListener(asset.internalID, listener); break;
+                case AssetType.Tilemap: this.state.tilemaps.addListener(asset.internalID, listener); break;
+                case AssetType.Animation: this.state.animations.addListener(asset.internalID, listener); break;
+            }
+        }
+
+        public removeChangeListener(type: AssetType, listener: () => void) {
+            switch (type) {
+                case AssetType.Image: this.state.images.removeListener(listener); break;
+                case AssetType.Tile: this.state.tiles.removeListener(listener); break;
+                case AssetType.Tilemap: this.state.tilemaps.removeListener(listener); break;
+                case AssetType.Animation: this.state.animations.removeListener(listener); break;
             }
         }
 
@@ -579,6 +741,9 @@ namespace pxt {
                     data: decodeTilemap(tm, id => this.resolveTile(id))
                 })
             }
+            this.committedState = this.cloneState();
+            this.undoStack = [];
+            this.redoStack = [];
         }
 
         loadTilemapJRes(jres: Map<JRes>, skipDuplicates = false) {
@@ -837,6 +1002,45 @@ namespace pxt {
                 // TODO: riknoll
 
         }
+    }
+
+    export function assetEquals(a: Asset, b: Asset) {
+        if (a == b) return true;
+        // FIXME: internalID?
+        if (a.id !== b.id || a.type !== b.type) return false;
+
+        if (a.meta && !b.meta || b.meta && !a.meta) return false;
+        else if (a.meta) {
+            if (!arrayEquals(a.meta.tags, b.meta.tags) || !arrayEquals(a.meta.blockIDs, b.meta.blockIDs)) return false;
+        }
+
+        switch (a.type) {
+            case AssetType.Image:
+            case AssetType.Tile:
+                return sprite.bitmapEquals(a.bitmap, (b as ProjectImage | Tile).bitmap);
+            case AssetType.Animation:
+                    const bAnimation = b as Animation;
+                    return a.interval === bAnimation.interval && arrayEquals(a.frames, bAnimation.frames, sprite.bitmapEquals);
+            case AssetType.Tilemap:
+                return a.data.equals((b as ProjectTilemap).data);
+        }
+    }
+
+    function arrayEquals<U>(a: U[], b: U[], compare?: (c: U, d: U) => boolean) {
+        if (a == b) return true;
+        if (a.length !== b.length) return false;
+
+        if (compare) {
+            for (let i = 0; i < a.length; i++) {
+                if (!compare(a[i], b[i])) return false;
+            }
+        }
+        else {
+            for (let i = 0; i < a.length; i++) {
+                if (a[i] !== b[i]) return false;
+            }
+        }
+        return true;
     }
 
     function serializeTilemap(tilemap: sprite.TilemapData, id: string): JRes {

@@ -390,43 +390,6 @@ namespace pxtblockly {
         return true;
     }
 
-    class BlocklyTilemapChange extends Blockly.Events.BlockChange {
-
-        constructor(block: Blockly.Block, element: string, name: string, oldValue: any, newValue: any, protected oldRevision: number, protected newRevision: number) {
-            super(block, element, name, oldValue, newValue);
-        }
-
-        isNull() {
-            return this.oldRevision === this.newRevision && super.isNull();
-        }
-
-        run(forward: boolean) {
-            if (forward) {
-                pxt.react.getTilemapProject().redo();
-                super.run(forward);
-            }
-            else {
-                pxt.react.getTilemapProject().undo();
-                super.run(forward);
-            }
-
-            const ws = this.getEventWorkspace_();
-            const tilemaps = getAllBlocksWithTilemaps(ws);
-
-            for (const t of tilemaps) {
-                t.ref.refreshTileset();
-                t.ref.redrawPreview();
-            }
-
-            // Fire an event to force a recompile, but make sure it doesn't end up on the undo stack
-            const ev = new BlocklyTilemapChange(
-                ws.getBlockById(this.blockId), 'tilemap-revision', "revision", null, pxt.react.getTilemapProject().revision(), 0, 0);
-            ev.recordUndo = false;
-
-            Blockly.Events.fire(ev)
-        }
-    }
-
     function emptyTilemap(tileWidth: number, width: number, height: number) {
         return new pxt.sprite.TilemapData(
             new pxt.sprite.Tilemap(width, height),

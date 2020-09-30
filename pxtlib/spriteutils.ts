@@ -203,6 +203,21 @@ namespace pxt.sprite {
 
             return new TilemapData(tm, tileset, layers);
         }
+
+        equals(other: TilemapData) {
+            if (!this.tilemap.equals(other.tilemap)
+                && this.tileset.tileWidth == other.tileset.tileWidth
+                && this.tileset.tiles.length == other.tileset.tiles.length
+                && bitmapEquals(this.layers, other.layers)) {
+                    return false;
+            }
+
+            for (let i = 0; i < this.tileset.tiles.length; i++) {
+                if (!assetEquals(this.tileset.tiles[i], other.tileset.tiles[i])) return false;
+            }
+
+            return true;
+        }
     }
 
     export class Bitmask {
@@ -678,6 +693,10 @@ namespace pxt.sprite {
         res += imageLiteralEpilogue(fileType);
 
         return res;
+    }
+
+    export function bitmapEquals(a: pxt.sprite.BitmapData, b: pxt.sprite.BitmapData) {
+        return pxt.sprite.Bitmap.fromData(a).equals(pxt.sprite.Bitmap.fromData(b));
     }
 
     export function tileWidthToTileScale(tileWidth: number) {

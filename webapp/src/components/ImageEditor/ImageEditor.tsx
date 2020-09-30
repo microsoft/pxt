@@ -146,7 +146,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
         return {
             id,
-            internalID: this.props.asset ? this.props.asset.internalID : getNewInternalID(),
+            internalID: this.editingAsset ? this.editingAsset.internalID : getNewInternalID(),
             type: pxt.AssetType.Image,
             bitmap: data,
             jresData: pxt.sprite.base64EncodeBitmap(data),
@@ -161,7 +161,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
         return {
             id,
-            internalID: this.props.asset ? this.props.asset.internalID : getNewInternalID(),
+            internalID: this.editingAsset ? this.editingAsset.internalID : getNewInternalID(),
             type: pxt.AssetType.Tile,
             bitmap: data,
             jresData: pxt.sprite.base64EncodeBitmap(data),
@@ -176,7 +176,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
         return {
             id,
-            internalID: this.props.asset ? this.props.asset.internalID : getNewInternalID(),
+            internalID: this.editingAsset ? this.editingAsset.internalID : getNewInternalID(),
             type: pxt.AssetType.Animation,
             interval: animationState.interval,
             frames: animationState.frames.map(frame => imageStateToBitmap(frame).data()),
@@ -197,7 +197,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
         return {
             id,
-            internalID: this.props.asset ? this.props.asset.internalID : getNewInternalID(),
+            internalID: this.editingAsset ? this.editingAsset.internalID : getNewInternalID(),
             type: pxt.AssetType.Tilemap,
             data: out,
             meta: this.editingAsset?.meta
