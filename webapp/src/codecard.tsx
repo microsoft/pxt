@@ -73,7 +73,6 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
         const clickHandler = card.onClick ? (e: any) => {
             if (e.target && e.target.tagName == "A")
                 return;
-            pxt.analytics.enableCookies();
             card.onClick(e);
         } : undefined;
 

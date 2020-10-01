@@ -1,5 +1,3 @@
-/// <reference path="../localtypings/mscc" />
-
 namespace pxt {
     // These functions are defined in docfiles/pxtweb/cookieCompliance.ts
     export declare function aiTrackEvent(id: string, data?: any, measures?: any): void;
@@ -31,9 +29,6 @@ namespace pxt.analytics {
         pxt.tickEvent = function (id: string, data?: Map<string | number>, opts?: TelemetryEventOptions): void {
             if (te) te(id, data, opts);
 
-            if (opts && opts.interactiveConsent && typeof mscc !== "undefined" && !mscc.hasConsent()) {
-                mscc.setConsent();
-            }
             if (!data) pxt.aiTrackEvent(id);
             else {
                 const props: Map<string> = defaultProps || {};
@@ -75,15 +70,5 @@ namespace pxt.analytics {
                 pxt.aiTrackException(err, 'error', props);
             }
         };
-    }
-
-    export function isCookieBannerVisible() {
-        return typeof mscc !== "undefined" && !mscc.hasConsent();
-    }
-
-    export function enableCookies() {
-        if (isCookieBannerVisible()) {
-            mscc.setConsent();
-        }
     }
 }
