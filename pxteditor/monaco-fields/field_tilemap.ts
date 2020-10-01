@@ -4,26 +4,25 @@
 namespace pxt.editor {
     const fieldEditorId = "tilemap-editor";
 
-    export class MonacoTilemapEditor extends MonacoReactFieldEditor<pxt.sprite.TilemapData> {
-        protected tilemapName: string;
+    export class MonacoTilemapEditor extends MonacoReactFieldEditor<pxt.ProjectTilemap> {
         protected isTilemapLiteral: boolean;
         protected tilemapLiteral: string;
 
-        protected textToValue(text: string): pxt.sprite.TilemapData {
+        protected textToValue(text: string): pxt.ProjectTilemap {
             const tm = this.readTilemap(text);
 
-            const allTiles = pxt.react.getTilemapProject().getProjectTiles(tm.tileset.tileWidth, true);
+            const allTiles = pxt.react.getTilemapProject().getProjectTiles(tm.data.tileset.tileWidth, true);
 
             for (const tile of allTiles.tiles) {
-                if (!tm.tileset.tiles.some(t => t.id === tile.id)) {
-                    tm.tileset.tiles.push(tile);
+                if (!tm.data.tileset.tiles.some(t => t.id === tile.id)) {
+                    tm.data.tileset.tiles.push(tile);
                 }
             }
 
             return tm;
         }
 
-        protected readTilemap(text: string): pxt.sprite.TilemapData {
+        protected readTilemap(text: string): pxt.ProjectTilemap {
             const project = pxt.react.getTilemapProject();
 
             if (/^\s*tiles\s*\./.test(text)) {
@@ -32,7 +31,7 @@ namespace pxt.editor {
                 if (text) {
                     try {
                         const data = pxt.sprite.decodeTilemap(text, "typescript", project);
-                        return data;
+                        return createFakeAsset(data);
                     }
                     catch (e) {
                         // If the user is still typing, they might try to open the editor on an incomplete tilemap
@@ -48,34 +47,35 @@ namespace pxt.editor {
             const name = (match[2] || match[3] || "").trim();
             this.tilemapLiteral = match[1];
 
+            let proj: pxt.ProjectTilemap;
+            let id: string;
+
             if (name) {
                 let id = ts.pxtc.escapeIdentifier(name)
-                let proj = project.getTilemap(id).data;
-
-                if (!proj) {
-                    let tileWidth = 16;
-                    if (this.tilemapLiteral === "tilemap8") {
-                        tileWidth = 8;
-                    }
-                    else if (this.tilemapLiteral === "tilemap32") {
-                        tileWidth = 32;
-                    }
-                    const [ name, map ] = project.createNewTilemap(id, tileWidth, 16, 16);
-                    proj = map;
-                    id = name;
-                }
-
-                this.tilemapName = id;
-
-                return proj
+                proj = project.getTilemap(id);
             }
 
-            return project.blankTilemap(16, 16, 16);
+            if (!proj) {
+                let tileWidth = 16;
+                if (this.tilemapLiteral === "tilemap8") {
+                    tileWidth = 8;
+                }
+                else if (this.tilemapLiteral === "tilemap32") {
+                    tileWidth = 32;
+                }
+                const [ name ] = project.createNewTilemap(id, tileWidth, 16, 16);
+                proj = project.getTilemap(name);
+                id = name;
+            }
+
+            return proj;
         }
 
-        protected resultToText(result: pxt.sprite.TilemapData): string {
+        protected resultToText(asset: pxt.ProjectTilemap): string {
             const project = pxt.react.getTilemapProject();
             project.pushUndo();
+
+            const result = asset.data;
 
             if (result.deletedTiles) {
                 for (const deleted of result.deletedTiles) {
@@ -110,18 +110,8 @@ namespace pxt.editor {
             pxt.sprite.trimTilemapTileset(result);
 
             if (this.isTilemapLiteral) {
-                if (this.tilemapName) {
-                    project.updateTilemap(this.tilemapName, result);
-                }
-                else {
-                    const [ name, map ] = project.createNewTilemap(lf("level"), result.tileset.tileWidth, result.tilemap.width, result.tilemap.height);
-                    map.tilemap.apply(result.tilemap);
-                    map.tileset = result.tileset;
-                    map.layers = result.layers;
-                    this.tilemapName = name;
-                }
-
-                return this.fileType === "typescript" ? `tilemap\`${this.tilemapName}\`` : `tilemap("""${this.tilemapName}""")`;
+                project.updateAsset(asset);
+                return this.fileType === "typescript" ? `tilemap\`${asset.id}\`` : `tilemap("""${asset.id}""")`;
             }
             else {
                 return pxt.sprite.encodeTilemap(result, this.fileType === "typescript" ? "typescript" : "python");
@@ -171,6 +161,15 @@ namespace pxt.editor {
                     return null;
                 }
             }
+        }
+    }
+
+    function createFakeAsset(data: pxt.sprite.TilemapData): pxt.ProjectTilemap {
+        return {
+            type: pxt.AssetType.Tilemap,
+            id: "",
+            internalID: 0,
+            data
         }
     }
 

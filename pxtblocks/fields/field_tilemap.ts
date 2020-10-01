@@ -2,8 +2,6 @@
 
 
 namespace pxtblockly {
-    import svg = pxt.svgUtil;
-
     export interface FieldTilemapOptions {
         initWidth: string;
         initHeight: string;
@@ -88,7 +86,6 @@ namespace pxtblockly {
                     const editedIndex = result.tileset.tiles.findIndex(t => t.id === edit);
                     const edited = result.tileset.tiles[editedIndex];
 
-                    // New tiles start with *. We haven't created them yet so ignore
                     if (!edited) continue;
 
                     result.tileset.tiles[editedIndex] = project.updateTile(edited);

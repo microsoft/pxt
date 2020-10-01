@@ -95,6 +95,13 @@ namespace pxtblockly {
                     break;
                 case pxt.AssetType.Tilemap:
                     editorKind = "tilemap-editor";
+                    const allTiles = pxt.react.getTilemapProject().getProjectTiles(this.asset.data.tileset.tileWidth, true);
+
+                    for (const tile of allTiles.tiles) {
+                        if (!this.asset.data.tileset.tiles.some(t => t.id === tile.id)) {
+                            this.asset.data.tileset.tiles.push(tile);
+                        }
+                    }
                     break;
             }
 
