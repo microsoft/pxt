@@ -1361,6 +1361,8 @@ export function resetAsync() {
         .then(cloudsync.resetAsync)
         .then(db.destroyAsync)
         .then(pxt.BrowserUtils.clearTranslationDbAsync)
+        .then(pxt.BrowserUtils.clearTutorialInfoDbAsync)
+        .then(compiler.clearApiInfoDbAsync)
         .then(() => {
             pxt.storage.clearLocal();
             data.clearCache();
