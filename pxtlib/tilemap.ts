@@ -295,7 +295,7 @@ namespace pxt {
         }
 
         public createNewImage(width = 16, height = 16) {
-            const id = this.generateNewID(AssetType.Image, pxt.sprite.IMAGE_PREFIX, pxt.sprite.ASSETS_NAMESPACE,);
+            const id = this.generateNewID(AssetType.Image, pxt.sprite.IMAGE_PREFIX, pxt.sprite.IMAGES_NAMESPACE,);
             const bitmap = new pxt.sprite.Bitmap(width, height).data()
 
             const newImage: ProjectImage = {
@@ -365,7 +365,7 @@ namespace pxt {
 
             const newImage: ProjectImage = {
                 internalID: this.getNewInternalId(),
-                id: this.generateNewID(AssetType.Image, pxt.sprite.IMAGE_PREFIX, pxt.sprite.ASSETS_NAMESPACE),
+                id: this.generateNewID(AssetType.Image, pxt.sprite.IMAGE_PREFIX, pxt.sprite.IMAGES_NAMESPACE),
                 type: AssetType.Image,
                 jresData: pxt.sprite.base64EncodeBitmap(data),
                 bitmap: data
@@ -428,7 +428,7 @@ namespace pxt {
             blob["*"] = {
                 "mimeType": "image/x-mkcd-f4",
                 "dataEncoding": "base64",
-                "namespace": pxt.sprite.ASSETS_NAMESPACE
+                "namespace": pxt.sprite.IMAGES_NAMESPACE
             };
 
             return blob;
@@ -904,7 +904,7 @@ namespace pxt {
         return `// ${warning}\nnamespace ${pxt.sprite.TILE_NAMESPACE} {\n${out}\n}\n// ${warning}\n`
     }
 
-    export function emitProjectImages(jres: pxt.Map<JRes>) {
+    export function emitProjectImages(jres: pxt.Map<JRes | string>) {
         const entries = Object.keys(jres);
 
         const indent = "    ";
@@ -915,9 +915,9 @@ namespace pxt {
 
             const entry = jres[key];
 
-            if (entry.mimeType === IMAGE_MIME_TYPE) {
+            if (typeof entry === "string" || entry.mimeType === IMAGE_MIME_TYPE) {
                 // FIXME: we should get the "image.ofBuffer" and blockIdentity from pxtarget probably
-                out += `${indent}//% fixedInstance jres blockIdentity=images._image\n`
+                out += `${indent}//% fixedInstance jres blockIdentity=images._spriteImage\n`
                 out += `${indent}export const ${key} = image.ofBuffer(hex\`\`);\n`
             }
         }
@@ -925,7 +925,7 @@ namespace pxt {
 
         const warning = lf("Auto-generated code. Do not edit.");
 
-        return `// ${warning}\nnamespace ${pxt.sprite.ASSETS_NAMESPACE} {\n${out}\n}\n// ${warning}\n`
+        return `// ${warning}\nnamespace ${pxt.sprite.IMAGES_NAMESPACE} {\n${out}\n}\n// ${warning}\n`
     }
 
     function cloneBitmap(bitmap: sprite.BitmapData) {

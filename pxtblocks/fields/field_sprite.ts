@@ -32,6 +32,10 @@ namespace pxtblockly {
         }
 
         protected createNewAsset(text?: string): pxt.Asset {
+            if (text && pxt.Util.startsWith(text.trim(), pxt.sprite.IMAGES_NAMESPACE)) {
+                const asset = pxt.react.getTilemapProject().lookupAsset(pxt.AssetType.Image, text.replace(/\s/g, ""));
+                if (asset) return asset;
+            }
 
             const bmp = text ? pxt.sprite.imageLiteralToBitmap(text) : new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
             const newAsset = pxt.react.getTilemapProject().createNewImage(bmp.width, bmp.height);
@@ -40,6 +44,7 @@ namespace pxtblockly {
         }
 
         protected getValueText(): string {
+            if (this.asset) return this.asset.id;
             return pxt.sprite.bitmapToImageLiteral(this.asset && pxt.sprite.Bitmap.fromData((this.asset as pxt.ProjectImage).bitmap), pxt.editor.FileType.TypeScript);
         }
 

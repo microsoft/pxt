@@ -484,10 +484,15 @@ export class EditorPackage {
         return this.filterFiles(f => f.getName() == name)[0]
     }
 
-    buildTilemapsAsync() {
+    buildAssetsAsync() {
         if (!this.tilemapProject?.needsRebuild) return Promise.resolve();
         this.tilemapProject.needsRebuild = false;
 
+        return this.buildTilemapsAsync()
+            .then(() => this.buildImagesAsync())
+    }
+
+    buildTilemapsAsync() {
         const existing = this.lookupFile(pxt.TILEMAP_CODE);
 
         const jres = this.tilemapProject.getProjectTilesetJRes();
@@ -500,6 +505,25 @@ export class EditorPackage {
 
         return this.setContentAsync(pxt.TILEMAP_JRES, JSON.stringify(jres, null, 4))
             .then(() => this.setContentAsync(pxt.TILEMAP_CODE, ts))
+            .then(() => {
+                mainPkg.updateJRes();
+                compiler.refreshLanguageServiceApisInfo();
+            });
+    }
+
+    buildImagesAsync() {
+        const existing = this.lookupFile(pxt.IMAGES_CODE);
+
+        const jres = this.tilemapProject.getProjectAssetsJRes();
+
+        if (!existing && Object.keys(jres).length === 1) return Promise.resolve();
+
+        const ts = pxt.emitProjectImages(jres);
+
+        if (existing?.content === ts) return Promise.resolve();
+
+        return this.setContentAsync(pxt.IMAGES_JRES, JSON.stringify(jres, null, 4))
+            .then(() => this.setContentAsync(pxt.IMAGES_CODE, ts))
             .then(() => {
                 mainPkg.updateJRes();
                 compiler.refreshLanguageServiceApisInfo();
