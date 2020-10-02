@@ -17,7 +17,10 @@
 @avatarSize: 4.5rem;
 @avatarMargin: @avatarSize + 0.5rem;
 @mobileAvatarMargin: 2rem;
+
 @workspaceHeaderHeight: 2rem;
+@lockedWorkspaceHeaderHeight: 3rem;
+@sidebarPadding: 1.6rem;
 
 /*******************************
       Tutorial mode
@@ -491,8 +494,9 @@ code.lang-filterblocks {
     color: @white;
     z-index: @simulatorZIndex;
 
-    #workspaceHeader {
-        flex: 1;
+    #headerToolbar {
+        position: absolute;
+        right: 0;
     }
 
     #flyoutHeader {
@@ -507,6 +511,70 @@ code.lang-filterblocks {
         text-align: center;
         line-height: 2rem;
         font-weight: 800;
+    }
+}
+
+.flyoutOnly {
+    #headers {
+        height: @lockedWorkspaceHeaderHeight;
+
+        div {
+            display: inline-flex;
+        }
+    }
+}
+
+/*******************************
+        Sidebar Tutorial
+*******************************/
+.flyoutOnly.sidebarTutorial.tutorial {
+    #maineditor{
+        left: 33.3%;
+    }
+
+    #maineditor > .full-abs {
+        top: 0;
+    }
+
+    #maineditor > #blocksArea {
+        top: 3rem;
+    }
+
+    #sidebar {
+        width: 33.3%;
+        height: 100%;
+        background-color: @sidebarTutorialColor;
+        color: #3c3c3c;
+        font-family: @docsPageFont;
+        padding: @sidebarPadding / 2 @sidebarPadding;
+
+        .tutorialTitle {
+            font-size: 1.5rem;
+            padding-bottom: 1.6rem;
+        }
+
+        .tutorialMessage {
+            font-size: 1.2rem;
+            padding-bottom: 2rem;
+        }
+
+        #callout {
+            padding: 3.2rem 0 4rem;
+            position: relative;
+
+            .callout-hint {
+                width: 5rem;
+                height: 5rem;
+                position: absolute;
+                bottom: -1rem;
+                left: 1rem;
+                z-index: 2;
+            }
+
+            .callout-wrapper {
+                padding: 0 3.2rem;
+            }
+        }
     }
 }
 

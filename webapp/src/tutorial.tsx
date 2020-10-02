@@ -611,6 +611,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 export class WorkspaceHeader extends data.Component<any, {}> {
     private flyoutWidth: number = 0;
     private flyoutTitle: string = lf("Toolbox");
+    private workspaceWidth: number = 0;
     constructor(props: any) {
         super(props);
     }
@@ -620,6 +621,11 @@ export class WorkspaceHeader extends data.Component<any, {}> {
         if (flyout) {
             this.flyoutWidth = flyout.clientWidth;
         }
+
+        let workspace = document.querySelector('#blocksArea');
+        if (workspace) {
+            this.workspaceWidth = workspace.clientWidth - this.flyoutWidth;
+        }
     }
 
     private headerStyle() {
@@ -628,10 +634,18 @@ export class WorkspaceHeader extends data.Component<any, {}> {
         }
     }
 
+    private workspaceStyle() {
+        return {
+            width: this.workspaceWidth
+        }
+    }
+
     renderCore() {
         return <div id="headers">
             <div id="flyoutHeader" style={this.headerStyle()}>{this.flyoutTitle}</div>
-            <div id="headerToolbar"><editortoolbar.SmallEditorToolbar parent={this.props.parent}/></div>
+            <div id="workspaceHeader" style={this.workspaceStyle()}>
+                <div id="headerToolbar"><editortoolbar.SmallEditorToolbar parent={this.props.parent}/></div>
+            </div>
         </div>;
     }
 }

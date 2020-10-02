@@ -23,6 +23,7 @@ import * as share from "./share";
 import * as lang from "./lang";
 import * as accessibility from "./accessibility";
 import * as tutorial from "./tutorial";
+import * as sidebarTutorial from "./sidebarTutorial";
 import * as editortoolbar from "./editortoolbar";
 import * as simtoolbar from "./simtoolbar";
 import * as dialogs from "./dialogs";
@@ -3810,7 +3811,7 @@ export class ProjectView
         const sideDocs = !(sandbox || targetTheme.hideSideDocs);
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
-        const sidebarTutorial = pxt.appTarget.appTheme.sidebarTutorial;
+        const isSidebarTutorial = pxt.appTarget.appTheme.sidebarTutorial;
         const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata && tutorialOptions.metadata.hideIteration;
         const inDebugMode = this.state.debugging;
@@ -3852,7 +3853,7 @@ export class ProjectView
             inHome ? 'inHome' : '',
             inTutorial ? 'tutorial' : '',
             inTutorialExpanded ? 'tutorialExpanded' : '',
-            sidebarTutorial ? 'sidebarTutorial' : '',
+            isSidebarTutorial ? 'sidebarTutorial' : '',
             inDebugMode ? 'debugger' : '',
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
@@ -3898,74 +3899,38 @@ export class ProjectView
                         <notification.NotificationBanner parent={this} />
                         <container.MainMenu parent={this} />
                     </header>}
-                {sidebarTutorial?
-                    <div>
-                    {inTutorial && <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
-                        <tutorial.TutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />
-                        {flyoutOnly && <tutorial.WorkspaceHeader parent={this}/>}
-                    </div>}
-                    <div id="simulator" className="simulator">
-                        <div id="filelist" className="ui items">
-                            <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0}>
-                            </div>
-                            <simtoolbar.SimulatorToolbar
-                                parent={this}
-                                collapsed={this.state.collapseEditorTools}
-                                simSerialActive={this.state.simSerialActive}
-                                devSerialActive={this.state.deviceSerialActive}
-                            />
-                            {this.state.keymap && simOpts.keymap && <keymap.Keymap parent={this} />}
-                            <div className="ui item portrait hide hidefullscreen">
-                                {pxt.options.debug ? <sui.Button key='hwdebugbtn' className='teal' icon="xicon chip" text={"Dev Debug"} onClick={this.hwDebug} /> : ''}
-                            </div>
-                            {useSerialEditor ?
-                                <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
-                                    <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.openSimSerial} parent={this} />
-                                    <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.openDeviceSerial} parent={this} />
-                                </div> : undefined}
-                            {showFileList ? <filelist.FileList parent={this} /> : undefined}
-                            {!isHeadless && <div id="filelistOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.toggleSimulatorFullscreen}></div>}
+                {isSidebarTutorial ? inTutorial && <sidebarTutorial.SidebarTutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />
+                : undefined}
+
+                <div id="simulator" className="simulator">
+                    <div id="filelist" className="ui items">
+                        <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0}>
                         </div>
-                    </div>
-                    <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
-                        {showCollapseButton && <sui.Button id='computertogglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
-                        {this.allEditors.map(e => e.displayOuter(expandedStyle))}
-                    </div>
-                    </div> :
-                    <div>
-                    {inTutorial && <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
-                        <tutorial.TutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />
-                        {flyoutOnly && <tutorial.WorkspaceHeader parent={this}/>}
-                    </div>}
-                    <div id="simulator" className="simulator">
-                        <div id="filelist" className="ui items">
-                            <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0}>
-                            </div>
-                            <simtoolbar.SimulatorToolbar
-                                parent={this}
-                                collapsed={this.state.collapseEditorTools}
-                                simSerialActive={this.state.simSerialActive}
-                                devSerialActive={this.state.deviceSerialActive}
-                            />
-                            {this.state.keymap && simOpts.keymap && <keymap.Keymap parent={this} />}
-                            <div className="ui item portrait hide hidefullscreen">
-                                {pxt.options.debug ? <sui.Button key='hwdebugbtn' className='teal' icon="xicon chip" text={"Dev Debug"} onClick={this.hwDebug} /> : ''}
-                            </div>
-                            {useSerialEditor ?
-                                <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
-                                    <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.openSimSerial} parent={this} />
-                                    <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.openDeviceSerial} parent={this} />
-                                </div> : undefined}
-                            {showFileList ? <filelist.FileList parent={this} /> : undefined}
-                            {!isHeadless && <div id="filelistOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.toggleSimulatorFullscreen}></div>}
+                        <simtoolbar.SimulatorToolbar
+                            parent={this}
+                            collapsed={this.state.collapseEditorTools}
+                            simSerialActive={this.state.simSerialActive}
+                            devSerialActive={this.state.deviceSerialActive}
+                        />
+                        {this.state.keymap && simOpts.keymap && <keymap.Keymap parent={this} />}
+                        <div className="ui item portrait hide hidefullscreen">
+                            {pxt.options.debug ? <sui.Button key='hwdebugbtn' className='teal' icon="xicon chip" text={"Dev Debug"} onClick={this.hwDebug} /> : ''}
                         </div>
+                        {useSerialEditor ?
+                            <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
+                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.openSimSerial} parent={this} />
+                                <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.openDeviceSerial} parent={this} />
+                            </div> : undefined}
+                        {showFileList ? <filelist.FileList parent={this} /> : undefined}
+                        {!isHeadless && <div id="filelistOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.toggleSimulatorFullscreen}></div>}
                     </div>
-                    <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
-                        {showCollapseButton && <sui.Button id='computertogglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
-                        {this.allEditors.map(e => e.displayOuter(expandedStyle))}
-                    </div>
-                    </div>
-                }
+                </div>
+                <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
+                    {!isSidebarTutorial && inTutorial && <tutorial.TutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
+                    {flyoutOnly && <tutorial.WorkspaceHeader parent={this}/>}
+                    {showCollapseButton && <sui.Button id='computertogglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
+                    {this.allEditors.map(e => e.displayOuter(expandedStyle))}
+                </div>
                 {inHome ? <div id="homescreen" className="full-abs">
                     <div className="ui home projectsdialog">
                         <header className="menubar" role="banner">

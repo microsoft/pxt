@@ -167,6 +167,7 @@
 @simulatorBackground: #fff;
 @editorToolsBackground: @simulatorBackground;
 @blocklySvgColor: #fff;
+@sidebarTutorialColor: @lightGrey;
 
 @homeScreenBackground: #ecf0f1;
 
