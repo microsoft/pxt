@@ -225,27 +225,6 @@ namespace ts.pxtc.Util {
         throw e
     }
 
-    export function isPyLangPref(): boolean {
-        return localStorage.getItem("editorlangpref") == "py";
-    }
-
-    export function getEditorLanguagePref(): string {
-        return localStorage.getItem("editorlangpref");
-    }
-
-    export function setEditorLanguagePref(lang: string): void {
-        if (lang.match(/prj$/)) lang = lang.replace(/prj$/, "")
-        localStorage.setItem("editorlangpref", lang);
-    }
-
-    export function getToolboxAnimation(): string {
-        return localStorage.getItem("toolboxanimation");
-    }
-
-    export function setToolboxAnimation(): void {
-        localStorage.setItem("toolboxanimation", "1");
-    }
-
     // small deep equals for primitives, objects, arrays. returns error message
     export function deq(a: any, b: any): string {
         if (a === b) return null;

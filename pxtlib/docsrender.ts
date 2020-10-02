@@ -426,7 +426,7 @@ namespace pxt.docs {
             }
             // remove tutorial macros
             if (text)
-                text = text.replace(/@(fullscreen|unplugged)/g, '');
+                text = text.replace(/@(fullscreen|unplugged|showdialog|showhint)/gi, '');
             return `<h${level} id="${(this as any).options.headerPrefix}${id}">${text}</h${level}>`
         }
     }

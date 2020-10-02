@@ -709,7 +709,8 @@ namespace pxt.blocks {
                 url: 'types/function/call',
                 category: 'functions',
                 block: {
-                    FUNCTIONS_CALL_TITLE: Util.lf("call")
+                    FUNCTIONS_CALL_TITLE: Util.lf("call"),
+                    FUNCTIONS_GO_TO_DEFINITION_OPTION: Util.lf("Go to Definition")
                 }
             },
             'function_call_output': {

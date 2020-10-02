@@ -18,6 +18,7 @@ namespace pxsim {
         // instead of spanning multiple simulators,
         // dispatch messages to parent window
         nestedEditorSim?: boolean;
+        parentOrigin?: string
     }
 
     export enum SimulatorState {
@@ -76,12 +77,23 @@ namespace pxsim {
         public state = SimulatorState.Unloaded;
         public hwdbg: HwDebugger;
         private _dependentEditors: Window[];
+        private _allowedOrigins: string[] = [];
 
         // we might "loan" a simulator when the user is recording
         // screenshots for sharing
         private loanedSimulator: HTMLDivElement;
 
         constructor(public container: HTMLElement, public options: SimulatorDriverOptions = {}) {
+            this._allowedOrigins.push(window.location.origin);
+            if (options.parentOrigin) {
+                this._allowedOrigins.push(options.parentOrigin)
+            }
+            try {
+                const simUrl = new URL(this.getSimUrl())
+                this._allowedOrigins.push(simUrl.origin)
+            } catch (e) {
+                console.error(`Invalid sim url ${this.getSimUrl()}`)
+            }
         }
 
         isDebug() {
@@ -246,6 +258,10 @@ namespace pxsim {
             return frames;
         }
 
+        private getSimUrl(): string {
+            return this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
+        }
+
         public postMessage(msg: pxsim.SimulatorMessage, source?: Window) {
             if (this.hwdbg) {
                 this.hwdbg.postMessage(msg)
@@ -255,6 +271,7 @@ namespace pxsim {
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
             const depEditors = this.dependentEditors();
             let frames = this.simFrames();
+            const simUrl = U.isLocalHost() ? "*" : this.getSimUrl();
             if (source && broadcastmsg && !!broadcastmsg.broadcast) {
                 // the editor is hosted in a multi-editor setting
                 // don't start extra frames
@@ -262,12 +279,15 @@ namespace pxsim {
                     ? window.parent : window.opener;
                 if (this.options.nestedEditorSim && parentWindow) {
                     // if message comes from parent already, don't echo
-                    if (source !== parentWindow)
-                        parentWindow.postMessage(msg, "*");
+                    if (source !== parentWindow) {
+                        const parentOrigin = this.options.parentOrigin || window.location.origin
+                        parentWindow.postMessage(msg, parentOrigin);
+                    }
                 } else if (depEditors) {
                     depEditors.forEach(w => {
                         if (source !== w)
-                            w.postMessage(msg, "*")
+                            // dependant editors should be in the same origin
+                            w.postMessage(msg, window.location.origin)
                     });
                 } else {
                     // start secondary frame if needed
@@ -288,7 +308,7 @@ namespace pxsim {
                 // frame not in DOM
                 if (!frame.contentWindow) continue;
 
-                frame.contentWindow.postMessage(msg, "*");
+                frame.contentWindow.postMessage(msg, simUrl);
 
                 // don't start more than 1 recorder
                 if (msg.type == 'recorder'
@@ -307,9 +327,8 @@ namespace pxsim {
             frame.allowFullscreen = true;
             frame.setAttribute('allow', 'autoplay');
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-            let simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
             frame.className = 'no-select'
-            frame.src = simUrl + '#' + frame.id;
+            frame.src = this.getSimUrl() + '#' + frame.id;
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
 
@@ -601,6 +620,12 @@ namespace pxsim {
             if (!this.listener) {
                 this.listener = (ev: MessageEvent) => {
                     if (this.hwdbg) return
+
+                    if (U.isLocalHost()) {
+                        // no-op
+                    } else {
+                        if (!this._allowedOrigins.find(origin => origin === ev.origin)) return
+                    }
                     this.handleMessage(ev.data, ev.source as Window)
                 }
                 window.addEventListener('message', this.listener, false);
