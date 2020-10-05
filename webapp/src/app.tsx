@@ -49,7 +49,6 @@ import * as serial from "./serial"
 import * as blocks from "./blocks"
 import * as gitjson from "./gitjson"
 import * as serialindicator from "./serialindicator"
-import * as assetEditor from "./components/assetEditor/editor";
 import * as draganddrop from "./draganddrop";
 import * as notification from "./notification";
 import * as electron from "./electron";
@@ -101,7 +100,6 @@ export class ProjectView
     serialEditor: serial.Editor;
     blocksEditor: blocks.Editor;
     gitjsonEditor: gitjson.Editor;
-    assetEditor: assetEditor.AssetEditor;
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
     scriptSearch: scriptsearch.ScriptSearch;
@@ -777,7 +775,6 @@ export class ProjectView
         this.serialEditor = new serial.Editor(this);
         this.blocksEditor = new blocks.Editor(this);
         this.gitjsonEditor = new gitjson.Editor(this);
-        this.assetEditor = new assetEditor.AssetEditor(this);
 
         let changeHandler = () => {
             if (this.editorFile) {
@@ -796,7 +793,7 @@ export class ProjectView
                 this.editorChangeHandler();
             }
         }
-        this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor, this.assetEditor, this.textEditor]
+        this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }

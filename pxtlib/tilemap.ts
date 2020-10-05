@@ -12,6 +12,7 @@ namespace pxt {
     export interface AssetMetadata {
         tags?: string[];
         blockIDs?: string[];
+        isTemporary?: boolean;
     }
 
     export type Asset = ProjectImage | Tile | Animation | ProjectTilemap;
@@ -684,6 +685,20 @@ namespace pxt {
                     return this.state.tilemaps.update(asset.id, asset);
                 case AssetType.Animation:
                     return this.state.animations.update(asset.id, asset);
+            }
+        }
+
+        public removeAsset(asset: Asset) {
+            this.onChange();
+            switch (asset.type) {
+                case AssetType.Image:
+                    return this.state.images.removeByID(asset.id);
+                case AssetType.Tile:
+                    return this.state.tiles.removeByID(asset.id);
+                case AssetType.Tilemap:
+                    return this.state.tilemaps.removeByID(asset.id);
+                case AssetType.Animation:
+                    return this.state.animations.removeByID(asset.id);
             }
         }
 

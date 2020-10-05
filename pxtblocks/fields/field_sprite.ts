@@ -40,11 +40,14 @@ namespace pxtblockly {
             const bmp = text ? pxt.sprite.imageLiteralToBitmap(text) : new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
             const newAsset = pxt.react.getTilemapProject().createNewImage(bmp.width, bmp.height);
             newAsset.bitmap = bmp.data();
+            newAsset.meta = {
+                isTemporary: true
+            };
             return newAsset;
         }
 
         protected getValueText(): string {
-            if (this.asset) return this.asset.id;
+            if (this.asset && !this.isTemporaryAsset()) return this.asset.id;
             return pxt.sprite.bitmapToImageLiteral(this.asset && pxt.sprite.Bitmap.fromData((this.asset as pxt.ProjectImage).bitmap), pxt.editor.FileType.TypeScript);
         }
 

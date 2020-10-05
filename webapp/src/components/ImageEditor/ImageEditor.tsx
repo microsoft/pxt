@@ -112,7 +112,10 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                 this.initTilemap(asset.data, gallery);
                 break;
         }
-        this.dispatchOnStore(dispatchChangeAssetName(asset.id));
+
+        if (!asset.meta?.isTemporary) {
+            this.dispatchOnStore(dispatchChangeAssetName(asset.id));
+        }
     }
 
     initSingleFrame(value: pxt.sprite.Bitmap) {
@@ -141,7 +144,10 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
     getImage(): pxt.ProjectImage {
         const state = this.getStore().getState();
-        const id = state.editor.assetName;
+        let id = state.editor.assetName || this.editingAsset?.id;
+        if (id.indexOf(".") === -1) {
+            id = pxt.sprite.IMAGES_NAMESPACE + "." + id;
+        }
         const data = this.getCurrentFrame().data();
 
         return {
@@ -156,8 +162,12 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
     getTile(): pxt.Tile {
         const state = this.getStore().getState();
-        const id = state.editor.assetName;
+        let id = state.editor.assetName || this.editingAsset?.id;
         const data = this.getCurrentFrame().data();
+
+        if (id.indexOf(".") === -1) {
+            id = pxt.sprite.TILE_NAMESPACE + "." + id;
+        }
 
         return {
             id,
@@ -171,7 +181,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
     getAnimation(): pxt.Animation {
         const state = this.getStore().getState();
-        const id = state.editor.assetName;
+        const id = state.editor.assetName || this.editingAsset?.id;
         const animationState = state.store.present as AnimationState;
 
         return {
@@ -186,7 +196,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
     getTilemap(): pxt.ProjectTilemap {
         const state = this.getStore().getState();
-        const id = state.editor.assetName;
+        const id = state.editor.assetName || this.editingAsset?.id;
         const tilemapState = state.store.present as TilemapState;
         const { floating, overlayLayers, layerOffsetX, layerOffsetY } = tilemapState.tilemap;
         const layers = applyBitmapData(overlayLayers[0], floating && floating.overlayLayers && floating.overlayLayers[0], layerOffsetX, layerOffsetY);
@@ -215,7 +225,12 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     restorePersistentData(oldValue: ImageEditorSaveState) {
         if (oldValue) {
             if (this.editingAsset) {
-                oldValue.editor.assetName = this.editingAsset.id;
+                if (this.editingAsset.meta?.isTemporary) {
+                    oldValue.editor.assetName = null;
+                }
+                else {
+                    oldValue.editor.assetName = this.editingAsset.id;
+                }
             }
             this.dispatchOnStore(dispatchSetInitialState(oldValue.editor, oldValue.past));
         }

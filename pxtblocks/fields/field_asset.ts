@@ -120,13 +120,19 @@ namespace pxtblockly {
                     const old = this.getValue();
                     if (pxt.assetEquals(this.asset, result)) return;
 
+                    const oldAsset = this.asset;
+                    this.asset = result;
+                    if (this.isTemporaryAsset()) {
+                        if (oldAsset.id !== result.id) {
+                            this.setAssetTemporary(false);
+                        }
+                    }
                     const lastRevision = project.revision();
                     project.pushUndo();
 
-                    this.asset = result;
                     this.onEditorClose(this.asset);
                     this.updateAssetListener();
-                    this.updateStateMeta();
+                    this.updateAssetMeta();
                     this.redrawPreview();
 
                     this.undoRedoState = fv.getPersistentData();
@@ -189,6 +195,14 @@ namespace pxtblockly {
             super.dispose();
 
             pxt.react.getTilemapProject().removeChangeListener(this.getAssetType(), this.assetChangeListener);
+
+            this.disposeOfTemporaryAsset();
+        }
+
+        disposeOfTemporaryAsset() {
+            if (this.isTemporaryAsset()) {
+                pxt.react.getTilemapProject().removeAsset(this.asset);
+            }
         }
 
         protected onEditorClose(newValue: pxt.Asset) {
@@ -248,7 +262,7 @@ namespace pxtblockly {
                     if (!newText) return;
                     this.asset = this.createNewAsset(newText);
                 }
-                this.updateStateMeta();
+                this.updateAssetMeta();
                 this.updateAssetListener();
             }
         }
@@ -297,10 +311,10 @@ namespace pxtblockly {
                 }
                 this.updateAssetListener();
             }
-            this.updateStateMeta();
+            this.updateAssetMeta();
         }
 
-        protected updateStateMeta() {
+        protected updateAssetMeta() {
             if (!this.asset) return;
 
             if (!this.asset.meta) {
@@ -333,6 +347,17 @@ namespace pxtblockly {
                 this.asset = pxt.react.getTilemapProject().lookupAsset(this.getAssetType(), id);
             }
             this.redrawPreview();
+        }
+
+        protected isTemporaryAsset() {
+            return this.asset?.meta?.isTemporary;
+        }
+
+        protected setAssetTemporary(isTemporary: boolean) {
+            if (this.asset) {
+                if (!this.asset.meta) this.asset.meta = {};
+                this.asset.meta.isTemporary = isTemporary;
+            }
         }
     }
 

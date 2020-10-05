@@ -493,7 +493,7 @@ export class EditorPackage {
     }
 
     buildTilemapsAsync() {
-        const existing = this.lookupFile(pxt.TILEMAP_CODE);
+        const existing = this.lookupFile("this/" + pxt.TILEMAP_CODE);
 
         const jres = this.tilemapProject.getProjectTilesetJRes();
 
@@ -512,7 +512,7 @@ export class EditorPackage {
     }
 
     buildImagesAsync() {
-        const existing = this.lookupFile(pxt.IMAGES_CODE);
+        const existing = this.lookupFile("this/" + pxt.IMAGES_CODE);
 
         const jres = this.tilemapProject.getProjectAssetsJRes();
 
