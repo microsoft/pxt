@@ -66,7 +66,7 @@ In an activity style tutorial, the title can appear in a psuedo-activity that se
 
 ## Introduction
 
-### Introduction step @showhint
+### Introduction step @showdialog
 
 ![Lights flashing](/static/tutorials/light-blaster/flashing-lights.gif)
 
