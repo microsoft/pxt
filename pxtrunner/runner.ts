@@ -1032,7 +1032,7 @@ ${linkString}
                         if (options.jres) {
                             tilemapProject = new TilemapProject();
                             tilemapProject.loadPackage(mainPkg);
-                            tilemapProject.loadJres(JSON.parse(options.jres), true);
+                            tilemapProject.loadTilemapJRes(JSON.parse(options.jres), true);
                         }
 
                         const blocksSvg = pxt.blocks.render(bresp.outfiles["main.blocks"], options);
@@ -1091,7 +1091,7 @@ ${linkString}
                         if (options.jres) {
                             tilemapProject = new TilemapProject();
                             tilemapProject.loadPackage(mainPkg);
-                            tilemapProject.loadJres(JSON.parse(options.jres), true);
+                            tilemapProject.loadTilemapJRes(JSON.parse(options.jres), true);
                         }
                         const blockSvg = pxt.blocks.render(code, options);
 

@@ -2,13 +2,45 @@ namespace pxt {
     const IMAGE_MIME_TYPE = "image/x-mkcd-f4"
     const TILEMAP_MIME_TYPE = "application/mkcd-tilemap"
 
-    export interface Tile {
-        id: string;
-        data: string;
-        bitmap: pxt.sprite.BitmapData;
+    export const enum AssetType {
+        Image = "image",
+        Tile = "tile",
+        Tilemap = "tilemap",
+        Animation = "animation"
+    }
 
+    export interface AssetMetadata {
+        tags?: string[];
+        blockIDs?: string[];
+        isTemporary?: boolean;
+    }
+
+    export type Asset = ProjectImage | Tile | Animation | ProjectTilemap;
+
+    export interface BaseAsset {
+        internalID: number;
+        id: string;
+        meta?: AssetMetadata;
+        previewURI?: string;
+    }
+
+    export interface ProjectImage extends BaseAsset {
+        type: AssetType.Image;
+        jresData: string;
+        bitmap: pxt.sprite.BitmapData;
+    }
+
+    export interface Tile extends BaseAsset {
+        type: AssetType.Tile;
+        jresData: string;
+        bitmap: pxt.sprite.BitmapData;
         isProjectTile?: boolean;
-        weight?: number;
+    }
+
+    export interface Animation extends BaseAsset {
+        type: AssetType.Animation;
+        frames: pxt.sprite.BitmapData[];
+        interval: number;
     }
 
     export interface TileSet {
@@ -21,8 +53,8 @@ namespace pxt {
         tileSets: TileSet[];
     }
 
-    export interface ProjectTilemap {
-        id: string;
+    export interface ProjectTilemap extends BaseAsset {
+        type: AssetType.Tilemap;
         data: pxt.sprite.TilemapData;
     }
 
@@ -31,26 +63,251 @@ namespace pxt {
         projectTilemaps?: ProjectTilemap[];
         projectTileSet?: TileSetCollection;
         takenNames?: pxt.Map<boolean>
+        projectImages?: ProjectImage[];
+    }
+
+    interface AssetSnapshot {
+        revision: number;
+        tiles: AssetCollection<Tile>;
+        tilemaps: AssetCollection<ProjectTilemap>;
+        images: AssetCollection<ProjectImage>;
+        animations: AssetCollection<Animation>;
+    }
+
+    interface AssetSnapshotDiff {
+        beforeRevision: number;
+        afterRevision: number;
+        tiles: AssetCollectionDiff<Tile>;
+        tilemaps: AssetCollectionDiff<ProjectTilemap>;
+        images: AssetCollectionDiff<ProjectImage>;
+        animations: AssetCollectionDiff<Animation>;
+    }
+
+    interface AssetUpdateListener {
+        internalID: number;
+        callback: () => void;
+    }
+
+    interface AssetCollectionDiff<U> {
+        before: U[];
+        after: U[];
+    }
+
+    class AssetCollection<U extends Asset> {
+        protected assets: U[] = [];
+        protected takenNames: pxt.Map<boolean> = {};
+        protected listeners: AssetUpdateListener[] = [];
+
+        add(asset: U) {
+            if (this.takenNames[asset.id]) {
+                this.update(asset.id, asset);
+            }
+            else {
+                this.assets.push(asset);
+                this.takenNames[asset.id] = true;
+            }
+        }
+
+        getSnapshot(filter?: (asset: U) => boolean) {
+            if (filter) {
+                return this.assets.filter(a => filter(a)).map(cloneAsset);
+            }
+            return this.assets.map(cloneAsset);
+        }
+
+        update(id: string, newValue: U) {
+            if (this.takenNames[id]) {
+                const existing = this.lookupByID(id);
+
+                if (!assetEquals(existing, newValue)) {
+                    this.removeByID(id);
+                    this.add(cloneAsset(newValue));
+                    this.notifyListener(newValue.internalID);
+                }
+            }
+            else {
+                this.add(cloneAsset(newValue));
+            }
+
+            return this.getByID(id);
+        }
+
+        removeByID(id: string): void {
+            this.assets = this.assets.filter(a => a.id !== id);
+            delete this.takenNames[id];
+        }
+
+        getByID(id: string): U {
+            const asset = this.lookupByID(id);
+            return asset && cloneAsset(asset);
+        }
+
+        isIDTaken(id: string) {
+            return !!this.takenNames[id];
+        }
+
+        clone() {
+            const cloned = new AssetCollection<U>();
+            cloned.assets = this.getSnapshot();
+            cloned.takenNames = { ...this.takenNames };
+            return cloned;
+        }
+
+        serializeToJRes(allJRes: pxt.Map<JRes | string> = {}): pxt.Map<JRes | string> {
+            for (const asset of this.assets) {
+                addAssetToJRes(asset, allJRes);
+            }
+
+            return allJRes;
+        }
+
+        addListener(internalID: number, listener: () => void) {
+            this.listeners.push({ internalID, callback: listener })
+        }
+
+        removeListener(listener: () => void) {
+            this.listeners = this.listeners.filter(ref => ref.callback !== listener);
+        }
+
+        diff(past: AssetCollection<U>) {
+            let diff: AssetCollectionDiff<U> = {
+                before: [],
+                after: []
+            };
+
+            let handled: {[index: number]: boolean} = {};
+
+            for (const pastAsset of past.assets) {
+                handled[pastAsset.internalID] = true;
+                const futureAsset = this.lookupByInternalID(pastAsset.internalID);
+                if (!futureAsset || !assetEquals(pastAsset, futureAsset)) {
+                    diff.before.push(pastAsset);
+                    diff.after.push(futureAsset);
+                }
+            }
+
+            for (const futureAsset of this.assets.filter(a => !handled[a.internalID])) {
+                diff.before.push(null);
+                diff.after.push(futureAsset);
+            }
+
+            return diff;
+        }
+
+        applyDiff(diff: AssetCollectionDiff<U>, backwards = false) {
+            const before = backwards ? diff.after : diff.before;
+            const after = backwards ? diff.before : diff.after;
+            pxt.Util.assert(before.length === after.length);
+
+            for (let i = 0; i < before.length; i++) {
+                if (!before[i]) {
+                    this.assets.push(after[i]);
+                    this.notifyListener(after[i].internalID);
+                    continue;
+                }
+                this.removeByInternalID(before[i].internalID)
+                if (after[i]) {
+                    this.assets.push(after[i]);
+                }
+                this.notifyListener(before[i].internalID);
+            }
+
+            this.takenNames = {};
+            for (const asset of this.assets) {
+                pxt.Util.assert(!this.takenNames[asset.id]);
+                this.takenNames[asset.id] = true;
+            }
+        }
+
+        protected lookupByID(id: string): U {
+            for (const asset of this.assets) {
+                if (asset.id === id) {
+                    return asset;
+                }
+            }
+            return null;
+        }
+
+        protected lookupByInternalID(id: number): U {
+            for (const asset of this.assets) {
+                if (asset.internalID === id) {
+                    return asset;
+                }
+            }
+            return null;
+        }
+
+        protected removeByInternalID(id: number): void {
+            this.assets = this.assets.filter(a => a.internalID !== id);
+        }
+
+        protected notifyListener(internalID: number) {
+            for (const listener of this.listeners) {
+                if (listener.internalID === internalID) listener.callback();
+            }
+        }
     }
 
     export class TilemapProject {
         public needsRebuild = true;
 
         protected extensionTileSets: TileSetCollection[];
-        protected state: TilemapSnapshot;
+        protected state: AssetSnapshot;
+        protected committedState: AssetSnapshot;
 
-        protected undoStack: TilemapSnapshot[];
-        protected redoStack: TilemapSnapshot[];
+        protected gallery: AssetSnapshot;
+
+        protected undoStack: AssetSnapshotDiff[];
+        protected redoStack: AssetSnapshotDiff[];
 
         protected nextID = 0;
+        protected nextInternalID = 0;
 
         constructor() {
+            this.committedState = {
+                revision: 0,
+                tilemaps: new AssetCollection(),
+                tiles: new AssetCollection(),
+                animations: new AssetCollection(),
+                images: new AssetCollection()
+            };
             this.state = {
-                revision: this.nextID++
+                revision: this.nextID++,
+                tilemaps: new AssetCollection(),
+                tiles: new AssetCollection(),
+                animations: new AssetCollection(),
+                images: new AssetCollection()
+            };
+
+            this.gallery = {
+                revision: 0,
+                tilemaps: new AssetCollection(),
+                tiles: new AssetCollection(),
+                animations: new AssetCollection(),
+                images: new AssetCollection()
             };
 
             this.undoStack = [];
             this.redoStack = [];
+        }
+
+        public getNewInternalId() {
+            return this.nextInternalID++;
+        }
+
+        public createNewImage(width = 16, height = 16) {
+            const id = this.generateNewID(AssetType.Image, pxt.sprite.IMAGE_PREFIX, pxt.sprite.IMAGES_NAMESPACE);
+            const bitmap = new pxt.sprite.Bitmap(width, height).data()
+
+            const newImage: ProjectImage = {
+                internalID: this.getNewInternalId(),
+                id,
+                type: AssetType.Image,
+                bitmap: bitmap,
+                jresData: pxt.sprite.base64EncodeBitmap(bitmap)
+            };
+            this.state.images.add(newImage);
+            return newImage;
         }
 
         public getGalleryTiles(tileWidth: number): TileSet[] | null {
@@ -62,70 +319,81 @@ namespace pxt {
             return null;
         }
 
-        public getProjectTiles(tileWidth: number, createIfMissing: boolean): TileSet | null {
-            if (this.state.projectTileSet) {
-                const res = this.state.projectTileSet.tileSets.find(tileSet => tileSet.tileWidth === tileWidth);
+        public getProjectImages(): ProjectImage[] {
+            return this.state.images.getSnapshot();
+        }
 
-                if (!res && createIfMissing) {
+        public getProjectTiles(tileWidth: number, createIfMissing: boolean): TileSet | null {
+            const tiles = this.state.tiles.getSnapshot(tile => tile.bitmap.width === tileWidth);
+
+            if (tiles.length === 0) {
+                if (createIfMissing) {
                     // This will create a new tileset with the correct width
                     this.createNewTile(new pxt.sprite.Bitmap(tileWidth, tileWidth).data())
                     return this.getProjectTiles(tileWidth, false);
                 }
-
-                return res;
+                return null;
             }
-            return null;
+
+            return {
+                tileWidth,
+                tiles
+            }
         }
 
         public createNewTile(data: pxt.sprite.BitmapData, id?: string) {
             this.onChange();
 
-            if (!id || this.state.takenNames[id]) {
-                const prefix = pxt.sprite.TILE_NAMESPACE + "." + pxt.sprite.TILE_PREFIX;
-
-                // Start at 1 because the legacy tilemaps used myTiles.myTile0 for transparency and
-                // we want to be able to count on that
-                let index = 1;
-                while (this.state.takenNames[prefix + index]) {
-                    ++index;
-                }
-                id = prefix + index;
+            if (!id || this.state.tiles.isIDTaken(id)) {
+                id = this.generateNewID(AssetType.Tile, pxt.sprite.TILE_PREFIX, pxt.sprite.TILE_NAMESPACE);
             }
 
-            this.state.takenNames[id] = true;
-
-            const newTile = {
+            const newTile: Tile = {
+                internalID: this.getNewInternalId(),
                 id,
-                data: pxt.sprite.base64EncodeBitmap(data),
+                type: AssetType.Tile,
+                jresData: pxt.sprite.base64EncodeBitmap(data),
                 bitmap: data,
                 isProjectTile: true
             };
 
-            for (const tileSet of this.state.projectTileSet.tileSets) {
-                if (tileSet.tileWidth === data.width) {
-                    tileSet.tiles.push(newTile);
-                    return newTile
-                }
-            }
-
-            const newTileset = this.createTileset(data.width);
-            newTileset.tiles.push(newTile);
-
-            this.state.projectTileSet.tileSets.push(newTileset);
-
+            this.state.tiles.add(newTile);
             return newTile;
         }
 
-        public updateTile(id: string, data: pxt.sprite.BitmapData) {
+        public createNewProjectImage(data: pxt.sprite.BitmapData) {
             this.onChange();
-            for (const tileSet of this.state.projectTileSet.tileSets) {
-                for (const tile of tileSet.tiles) {
-                    if (tile.id === id) {
-                        tile.bitmap = data;
-                        tile.data = pxt.sprite.base64EncodeBitmap(data);
-                        return tile;
+
+            const newImage: ProjectImage = {
+                internalID: this.getNewInternalId(),
+                id: this.generateNewID(AssetType.Image, pxt.sprite.IMAGE_PREFIX, pxt.sprite.IMAGES_NAMESPACE),
+                type: AssetType.Image,
+                jresData: pxt.sprite.base64EncodeBitmap(data),
+                bitmap: data
+            };
+
+            this.state.images.add(newImage);
+            return newImage;
+        }
+
+        public updateTile(tile: pxt.Tile) {
+            this.onChange();
+
+            const existing = this.resolveProjectTileByInternalID(tile.internalID);
+
+            if (existing) {
+                this.state.tiles.update(existing.id, tile);
+
+                if (existing.id !== tile.id) {
+                    for (const tm of this.getAssets(AssetType.Tilemap)) {
+                        if (tm.data.tileset.tiles.some(t => t.internalID === tile.internalID)) {
+
+                            tm.data.tileset.tiles = tm.data.tileset.tiles.map(t => t.internalID === tile.internalID ? tile : t);
+                            this.updateTilemap(tm.id, tm.data);
+                        }
                     }
                 }
+                return tile;
             }
 
             return null;
@@ -133,32 +401,14 @@ namespace pxt {
 
         public deleteTile(id: string) {
             this.onChange();
-            for (const tileSet of this.state.projectTileSet.tileSets) {
-                tileSet.tiles = tileSet.tiles.filter(t => t.id !== id);
-            }
+            this.state.tiles.removeByID(id);
         }
 
         public getProjectTilesetJRes() {
-            // FIXME: Need to only include tiles from tilemap.jres. Otherwise we're
-            // going to get duplicate entries for extra JRes files (e.g. in github projects)
-            const tiles = getAllTiles(this.state.projectTileSet);
-
             const blob: pxt.Map<any> = {};
 
-            for (const tile of tiles) {
-                // Get the last part of the fully qualified name
-                const id = tile.id.substr(tile.id.lastIndexOf(".") + 1);
-                blob[id] = {
-                    data: tile.data,
-                    mimeType: IMAGE_MIME_TYPE,
-                    tilemapTile: true
-                }
-            }
-
-            for (const tilemap of this.state.projectTilemaps) {
-                const jres = this.encodeTilemap(tilemap.data, tilemap.id);
-                blob[jres.id] = jres;
-            }
+            this.state.tiles.serializeToJRes(blob);
+            this.state.tilemaps.serializeToJRes(blob);
 
             blob["*"] = {
                 "mimeType": "image/x-mkcd-f4",
@@ -169,26 +419,41 @@ namespace pxt {
             return blob;
         }
 
+        public getProjectAssetsJRes() {
+
+            const blob: pxt.Map<any> = {};
+
+            this.state.images.serializeToJRes(blob);
+            this.state.animations.serializeToJRes(blob);
+
+            blob["*"] = {
+                "mimeType": "image/x-mkcd-f4",
+                "dataEncoding": "base64",
+                "namespace": pxt.sprite.IMAGES_NAMESPACE
+            };
+
+            return blob;
+        }
+
         public getTilemap(id: string) {
-            for (const tm of this.state.projectTilemaps) {
-                if (tm.id === id) {
-                    return tm.data.cloneData();
-                }
+            return this.state.tilemaps.getByID(id);
+        }
+
+        public updateTilemap(id: string, data: pxt.sprite.TilemapData): ProjectTilemap {
+
+            const existing = this.state.tilemaps.getByID(id);
+
+            if (existing) {
+                this.onChange();
+                const newValue = {
+                    ...existing,
+                    data: data,
+                };
+                this.state.tilemaps.update(id, newValue);
+                return newValue;
             }
+
             return null;
-        }
-
-        public getAllTilemaps() {
-            return this.state.projectTilemaps?.slice() || [];
-        }
-
-        public updateTilemap(id: string, data: pxt.sprite.TilemapData) {
-            for (const tm of this.state.projectTilemaps) {
-                if (tm.id === id) {
-                    this.onChange();
-                    tm.data = data.cloneData();
-                }
-            }
         }
 
         public createNewTilemap(name: string, tileWidth: number, width = 16, height = 16): [string, pxt.sprite.TilemapData] {
@@ -207,90 +472,78 @@ namespace pxt {
         }
 
         public resolveTile(id: string): Tile {
-            const all = [this.state.projectTileSet].concat(this.extensionTileSets || []);
+            return this.lookupAsset(AssetType.Tile, id) as Tile;
+        }
 
-            for (const tileSets of all) {
-                const found = getTile(tileSets, id);
-                if (found) return found;
-            }
-
-            return null;
+        public resolveProjectTileByInternalID(id: number): Tile {
+            return this.state.tiles.getSnapshot(tile => tile.internalID === id)[0];
         }
 
         public resolveTileByBitmap(data: pxt.sprite.BitmapData): Tile {
-            const all = [this.state.projectTileSet].concat(this.extensionTileSets || []);
-
             const dataString = pxt.sprite.base64EncodeBitmap(data);
-
-            for (const tileSets of all) {
-                for (const tileSet of tileSets.tileSets) {
-                    if (tileSet.tileWidth === data.width) {
-                        for (const tile of tileSet.tiles) {
-                            if (dataString === tile.data) {
-                                return tile;
-                            }
-                        }
-                    }
-                }
-            }
-
-            return null;
+            return this.state.tiles.getSnapshot(tile => tile.jresData === dataString)[0];
         }
 
         public getTransparency(tileWidth: number) {
-            for (const tileSet of this.state.projectTileSet.tileSets) {
-                if (tileSet.tileWidth === tileWidth) {
-                    return tileSet.tiles[0];
-                }
-            }
+            const id = pxt.sprite.TILE_NAMESPACE + ".transparency" + tileWidth;
+            let tile = this.state.tiles.getByID(id);
 
-            const newTileSet = this.createTileset(tileWidth);
-            this.state.projectTileSet.tileSets.push(newTileSet);
-            return newTileSet.tiles[0];
+            if (!tile) {
+                const bitmap = new pxt.sprite.Bitmap(tileWidth, tileWidth).data();
+                tile = {
+                    internalID: this.getNewInternalId(),
+                    id,
+                    type: AssetType.Tile,
+                    bitmap: bitmap,
+                    jresData: pxt.sprite.base64EncodeBitmap(bitmap),
+                    isProjectTile: true
+                };
+
+                this.state.tiles.add(tile);
+            }
+            return tile;
         }
 
         public createNewTilemapFromData(data: pxt.sprite.TilemapData, name?: string): [string, pxt.sprite.TilemapData] {
             this.onChange()
 
-            if (!name) name = lf("level");
-
-            let index = 0;
-            let base = name;
-
-            while (this.state.takenNames[name]) {
-                name = base  + "_" + index;
-                ++index;
-            }
-
-            this.state.takenNames[name] = true;
-
-            this.state.projectTilemaps.push({
-                id: name,
+            const id = this.generateNewID(AssetType.Tilemap, name || lf("level"));
+            this.state.tilemaps.add({
+                internalID: this.getNewInternalId(),
+                id,
+                type: AssetType.Tilemap,
                 data: data
             });
 
-            return [name, data];
+            return [id, data];
         }
 
-        protected cloneState(): TilemapSnapshot {
+        protected cloneState(): AssetSnapshot {
             return {
-                ...this.state,
-                projectTileSet: {
-                    ...this.state.projectTileSet,
-                    tileSets: this.state.projectTileSet.tileSets.map(t => ({ ...t, tiles: t.tiles.map(cloneTile) }))
-                },
-                projectTilemaps: this.state.projectTilemaps.map(tm => ({...tm})),
-                takenNames: {
-                    ...this.state.takenNames
-                }
+                revision: this.state.revision,
+                images: this.state.images.clone(),
+                tilemaps: this.state.tilemaps.clone(),
+                animations: this.state.animations.clone(),
+                tiles: this.state.tiles.clone(),
             }
         }
 
         public undo() {
+            if (this.state.revision !== this.committedState.revision) {
+                this.pushUndo();
+            }
             if (this.undoStack.length) {
                 const undo = this.undoStack.pop();
-                this.redoStack.push(this.state);
-                this.state = undo;
+
+                this.state.tiles.applyDiff(undo.tiles, true);
+                this.state.images.applyDiff(undo.images, true);
+                this.state.tilemaps.applyDiff(undo.tilemaps, true);
+                this.state.animations.applyDiff(undo.animations, true);
+                this.state.revision = undo.beforeRevision;
+
+                this.redoStack.push(undo);
+
+                this.committedState = this.cloneState();
                 this.needsRebuild = true;
             }
         }
@@ -298,17 +551,33 @@ namespace pxt {
         public redo() {
             if (this.redoStack.length) {
                 const redo = this.redoStack.pop();
-                this.undoStack.push(this.state);
-                this.state = redo;
+
+                this.state.tiles.applyDiff(redo.tiles);
+                this.state.images.applyDiff(redo.images);
+                this.state.tilemaps.applyDiff(redo.tilemaps);
+                this.state.animations.applyDiff(redo.animations);
+
+                this.state.revision = redo.afterRevision;
+
+                this.undoStack.push(redo);
+
+                this.committedState = this.cloneState();
                 this.needsRebuild = true;
             }
         }
 
         public pushUndo() {
-            if (this.undoStack.length && this.undoStack[this.undoStack.length - 1].revision === this.state.revision) return;
+            if (this.undoStack.length && this.committedState.revision === this.state.revision) return;
             this.redoStack = [];
-            this.undoStack.push(this.state);
-            this.state = this.cloneState();
+            this.undoStack.push({
+                beforeRevision: this.committedState.revision,
+                afterRevision: this.state.revision,
+                tiles: this.state.tiles.diff(this.committedState.tiles),
+                images: this.state.images.diff(this.committedState.images),
+                tilemaps: this.state.tilemaps.diff(this.committedState.tilemaps),
+                animations: this.state.animations.diff(this.committedState.animations)
+            });
+            this.committedState = this.cloneState();
         }
 
         public revision() {
@@ -339,78 +608,189 @@ namespace pxt {
             this.onChange();
         }
 
+        public isNameTaken(assetType: AssetType, name: string) {
+            switch (assetType) {
+                case AssetType.Image:
+                    return this.state.images.isIDTaken(name) || this.gallery.images.isIDTaken(name);
+                case AssetType.Tile:
+                    return this.state.tiles.isIDTaken(name) || this.gallery.tiles.isIDTaken(name);
+                case AssetType.Tilemap:
+                    return this.state.tilemaps.isIDTaken(name) || this.gallery.tilemaps.isIDTaken(name);
+                case AssetType.Animation:
+                    return this.state.animations.isIDTaken(name) || this.gallery.animations.isIDTaken(name);
+            }
+        }
+
+        public lookupAsset(assetType: AssetType.Image, name: string): ProjectImage;
+        public lookupAsset(assetType: AssetType.Tile, name: string): Tile;
+        public lookupAsset(assetType: AssetType.Tilemap, name: string): ProjectTilemap;
+        public lookupAsset(assetType: AssetType.Animation, name: string): Animation;
+        public lookupAsset(assetType: AssetType, name: string): Asset;
+        public lookupAsset(assetType: AssetType, name: string) {
+            switch (assetType) {
+                case AssetType.Image:
+                    return this.state.images.getByID(name) || this.gallery.images.getByID(name);
+                case AssetType.Tile:
+                    return this.state.tiles.getByID(name) || this.gallery.tiles.getByID(name);
+                case AssetType.Tilemap:
+                    return this.state.tilemaps.getByID(name) || this.gallery.tilemaps.getByID(name);
+                case AssetType.Animation:
+                    return this.state.animations.getByID(name) || this.gallery.animations.getByID(name);
+            }
+        }
+
+        public getAssets(type: AssetType.Image): ProjectImage[];
+        public getAssets(type: AssetType.Tile): Tile[];
+        public getAssets(type: AssetType.Tilemap): ProjectTilemap[];
+        public getAssets(type: AssetType.Animation): Animation[];
+        public getAssets(type: AssetType): Asset[];
+        public getAssets(type: AssetType) {
+            switch (type) {
+                case AssetType.Image: return this.state.images.getSnapshot();
+                case AssetType.Tile: return this.state.tiles.getSnapshot();
+                case AssetType.Tilemap: return this.state.tilemaps.getSnapshot();
+                case AssetType.Animation: return this.state.animations.getSnapshot();
+            }
+        }
+
+        public lookupBlockAsset(assetType: AssetType.Image, blockID: string): ProjectImage;
+        public lookupBlockAsset(assetType: AssetType.Tile, blockID: string): Tile;
+        public lookupBlockAsset(assetType: AssetType.Tilemap, blockID: string): ProjectTilemap;
+        public lookupBlockAsset(assetType: AssetType.Animation, blockID: string): Animation;
+        public lookupBlockAsset(assetType: AssetType, blockID: string): Asset;
+        public lookupBlockAsset(type: AssetType, blockID: string) {
+            let filter = (a: Asset) => a.meta?.blockIDs?.indexOf(blockID) !== -1;
+
+            switch (type) {
+                case AssetType.Image: return this.state.images.getSnapshot(filter)[0];
+                case AssetType.Tile: return this.state.tiles.getSnapshot(filter)[0];
+                case AssetType.Tilemap: return this.state.tilemaps.getSnapshot(filter)[0];
+                case AssetType.Animation: return this.state.animations.getSnapshot(filter)[0];
+            }
+        }
+
+        public updateAsset(asset: ProjectImage): ProjectImage;
+        public updateAsset(asset: Tile): Tile;
+        public updateAsset(asset: ProjectTilemap): ProjectTilemap;
+        public updateAsset(asset: Animation): Animation;
+        public updateAsset(asset: Asset): Asset;
+        public updateAsset(asset: Asset) {
+            this.onChange();
+            switch (asset.type) {
+                case AssetType.Image:
+                    return this.state.images.update(asset.id, asset);
+                case AssetType.Tile:
+                    return this.updateTile(asset);
+                case AssetType.Tilemap:
+                    return this.state.tilemaps.update(asset.id, asset);
+                case AssetType.Animation:
+                    return this.state.animations.update(asset.id, asset);
+            }
+        }
+
+        public removeAsset(asset: Asset) {
+            this.onChange();
+            switch (asset.type) {
+                case AssetType.Image:
+                    return this.state.images.removeByID(asset.id);
+                case AssetType.Tile:
+                    return this.state.tiles.removeByID(asset.id);
+                case AssetType.Tilemap:
+                    return this.state.tilemaps.removeByID(asset.id);
+                case AssetType.Animation:
+                    return this.state.animations.removeByID(asset.id);
+            }
+        }
+
+        public addChangeListener(asset: Asset, listener: () => void) {
+            switch (asset.type) {
+                case AssetType.Image: this.state.images.addListener(asset.internalID, listener); break;
+                case AssetType.Tile: this.state.tiles.addListener(asset.internalID, listener); break;
+                case AssetType.Tilemap: this.state.tilemaps.addListener(asset.internalID, listener); break;
+                case AssetType.Animation: this.state.animations.addListener(asset.internalID, listener); break;
+            }
+        }
+
+        public removeChangeListener(type: AssetType, listener: () => void) {
+            switch (type) {
+                case AssetType.Image: this.state.images.removeListener(listener); break;
+                case AssetType.Tile: this.state.tiles.removeListener(listener); break;
+                case AssetType.Tilemap: this.state.tilemaps.removeListener(listener); break;
+                case AssetType.Animation: this.state.animations.removeListener(listener); break;
+            }
+        }
+
         loadPackage(pack: MainPackage) {
             const allPackages = pack.sortedDeps();
             this.extensionTileSets = [];
 
             for (const dep of allPackages) {
                 const isProject = dep.id === "this";
-                const tiles = readTiles(dep.parseJRes(), dep.id, isProject);
+                const images = this.readImages(dep.parseJRes(), isProject);
 
-                if (tiles) {
-                    if (isProject) {
-                        this.state.projectTileSet = tiles
+                for (const image of images) {
+                    if (image.type === AssetType.Tile) {
+                        if (isProject) {
+                            this.state.tiles.add(image);
+                        }
+                        else {
+                            this.gallery.tiles.add(image);
+                        }
                     }
                     else {
-                        this.extensionTileSets.push(tiles);
+                        if (isProject) {
+                            this.state.images.add(image);
+                        }
+                        else {
+                            this.gallery.images.add(image);
+                        }
                     }
-                }
-                else if (isProject) {
-                    this.state.projectTileSet = {
-                        extensionID: "this",
-                        tileSets: []
-                    };
                 }
             }
 
-            this.state.projectTilemaps = getTilemaps(pack.parseJRes())
-                .map(tm => ({
+            for (const tm of getTilemaps(pack.parseJRes())) {
+                this.state.tilemaps.add({
+                    internalID: this.getNewInternalId(),
+                    type: AssetType.Tilemap,
                     id: tm.id,
                     data: decodeTilemap(tm, id => this.resolveTile(id))
-                }));
-
-            // FIXME: we are re-parsing the jres here
-            const allJRes = pack.getJRes();
-
-            this.state.takenNames = {};
-            for (const id of Object.keys(allJRes)) this.state.takenNames[id] = true;
+                })
+            }
+            this.committedState = this.cloneState();
+            this.undoStack = [];
+            this.redoStack = [];
         }
 
-        loadJres(jres: Map<JRes>, skipDuplicates = false) {
+        loadTilemapJRes(jres: Map<JRes>, skipDuplicates = false) {
             jres = inflateJRes(jres)
 
-            const tiles = readTiles(jres, "this", true);
+            const tiles = this.readImages(jres, true).filter(im => im.type === pxt.AssetType.Tile);
 
             // If we are loading JRES into an existing project (i.e. in multipart tutorials)
             // we need to correct the tile ids because the user may have created new tiles
             // and taken some of the ids that were used by the tutorial author
             let tileMapping: Map<string> = {};
 
-            // Initialize state in case we are calling loadJres on a new project (eg standalone asset editor)
-            if (!this.state.projectTileSet) this.state.projectTileSet = { extensionID: "this", tileSets: [] };
-
-            if (tiles) {
-                for (const tileset of tiles.tileSets) {
-                    for (const tile of tileset.tiles) {
-                        if (skipDuplicates) {
-                            const existing = this.resolveTileByBitmap(tile.bitmap);
-                            if (existing) {
-                                tileMapping[tile.id] = existing.id;
-                                continue;
-                            }
-                        }
-
-                        const newTile = this.createNewTile(tile.bitmap, tile.id);
-
-                        if (newTile.id !== tile.id) {
-                            tileMapping[tile.id] = newTile.id;
-                        }
+            for (const tile of tiles) {
+                if (skipDuplicates) {
+                    const existing = this.resolveTileByBitmap(tile.bitmap);
+                    if (existing) {
+                        tileMapping[tile.id] = existing.id;
+                        continue;
                     }
+                }
+
+                const newTile = this.createNewTile(tile.bitmap, tile.id);
+
+                if (newTile.id !== tile.id) {
+                    tileMapping[tile.id] = newTile.id;
                 }
             }
 
-            const maps = getTilemaps(jres)
-                .map(tm => ({
+            for (const tm of getTilemaps(jres)) {
+                this.state.tilemaps.add({
+                    internalID: this.getNewInternalId(),
+                    type: AssetType.Tilemap,
                     id: tm.id,
                     data: decodeTilemap(tm, id => {
                         if (tileMapping[id]) {
@@ -419,95 +799,71 @@ namespace pxt {
 
                         return this.resolveTile(id)
                     })
-                }));
-
-            if (!this.state.projectTilemaps) this.state.projectTilemaps = [];
-            this.state.projectTilemaps.push(...maps);
-
-            if (!this.state.takenNames) this.state.takenNames = {};
-            maps.forEach(tm => this.state.takenNames[tm.id] = true);
+                })
+            }
         }
 
-        protected createTileset(tileWidth: number) {
-            this.needsRebuild = true;
-            const tileSet: TileSet = {
-                tileWidth,
-                tiles: []
-            };
+        loadAssetsJRes(jres: Map<JRes>) {
+            for (const key of Object.keys(jres)) {
+                const entry = jres[key];
 
-            const baseID = pxt.sprite.TILE_NAMESPACE + ".transparency" + tileWidth;
+                if (entry.mimeType === IMAGE_MIME_TYPE) {
+                    this.state.images.add({
+                        internalID: this.getNewInternalId(),
+                        type: AssetType.Image,
+                        id: entry.id,
+                        jresData: entry.data,
+                        bitmap: pxt.sprite.getBitmapFromJResURL(`data:${IMAGE_MIME_TYPE};base64,${entry.data}`).data()
+                    })
+                }
+            }
+        }
 
-            let transparencyID = baseID;
-            let index = 1;
-
-            while (this.resolveTile(transparencyID)) {
-                transparencyID = baseID + "_" + index;
+        protected generateNewID(type: AssetType, varPrefix: string, namespaceString?: string) {
+            const prefix = namespaceString ? namespaceString + "." + varPrefix : varPrefix;
+            let index = 0;
+            while (this.isNameTaken(type, prefix + index)) {
                 ++index;
             }
-
-            // Always create a transparent tile
-            const bitmap = new pxt.sprite.Bitmap(tileWidth, tileWidth).data();
-            tileSet.tiles.push({
-                id: transparencyID,
-                bitmap: bitmap,
-                data: pxt.sprite.base64EncodeBitmap(bitmap),
-                isProjectTile: true
-            });
-
-            return tileSet;
+            return prefix + index;
         }
 
         protected onChange() {
             this.needsRebuild = true;
             this.state.revision = this.nextID++;
         }
-    }
 
-    function readTiles(allJRes: Map<JRes>, id: string, isProjectTile = false): TileSetCollection | null {
-        const tiles: Tile[] = [];
+        protected readImages(allJRes: Map<JRes>, isProjectFile = false) {
+            const assets: (Tile | ProjectImage)[] = [];
 
-        for (const key of Object.keys(allJRes)) {
-            const entry = allJRes[key];
+            for (const key of Object.keys(allJRes)) {
+                const entry = allJRes[key];
 
-            if (entry.tilemapTile) {
-                const tile: Tile = {
-                    data: entry.data,
-                    id: entry.id,
-                    bitmap: pxt.sprite.getBitmapFromJResURL(`data:${IMAGE_MIME_TYPE};base64,${entry.data}`).data(),
-                    isProjectTile
-                };
+                if (entry.tilemapTile) {
+                    const tile: Tile = {
+                        internalID: this.getNewInternalId(),
+                        type: AssetType.Tile,
+                        jresData: entry.data,
+                        id: entry.id,
+                        bitmap: pxt.sprite.getBitmapFromJResURL(`data:${IMAGE_MIME_TYPE};base64,${entry.data}`).data(),
+                        isProjectTile: isProjectFile
+                    };
 
-                tiles.push(tile);
-            }
-        }
-
-        const tileSets: TileSet[] = [];
-        for (const tile of tiles) {
-            let foundTileset = false;
-            for (const tileset of tileSets) {
-                if (tileset.tileWidth === tile.bitmap.width) {
-                    tileset.tiles.push(tile);
-                    foundTileset = true;
-                    break;
+                    assets.push(tile);
+                }
+                else if (entry.mimeType === IMAGE_MIME_TYPE) {
+                    assets.push({
+                        internalID: this.getNewInternalId(),
+                        type: AssetType.Image,
+                        jresData: entry.data,
+                        id: entry.id,
+                        bitmap: pxt.sprite.getBitmapFromJResURL(`data:${IMAGE_MIME_TYPE};base64,${entry.data}`).data()
+                    })
                 }
             }
 
-            if (!foundTileset) {
-                tileSets.push({
-                    tileWidth: tile.bitmap.width,
-                    tiles: [tile]
-                });
-            }
+            return assets;
         }
-
-        if (!tileSets.length) return null;
-
-        const collection = {
-            extensionID: id,
-            tileSets: tileSets
-        };
-
-        return collection;
     }
 
     function getTilemaps(allJRes: Map<JRes>): JRes[] {
@@ -520,25 +876,6 @@ namespace pxt {
         }
 
         return res;
-    }
-
-    function getAllTiles(tileSets: TileSetCollection) {
-        const allTiles: Tile[] = [];
-
-        for (const tileSet of tileSets.tileSets) {
-            allTiles.push(...tileSet.tiles);
-        }
-
-        return allTiles;
-    }
-
-    function getTile(tileSets: TileSetCollection, id: string) {
-        for (const tileSet of tileSets.tileSets) {
-            for (const tile of tileSet.tiles) {
-                if (tile.id === id) return tile;
-            }
-        }
-        return null;
     }
 
     export function emitTilemapsFromJRes(jres: pxt.Map<JRes>) {
@@ -582,12 +919,32 @@ namespace pxt {
         return `// ${warning}\nnamespace ${pxt.sprite.TILE_NAMESPACE} {\n${out}\n}\n// ${warning}\n`
     }
 
+    export function emitProjectImages(jres: pxt.Map<JRes | string>) {
+        const entries = Object.keys(jres);
 
-    function cloneTile(tile: Tile) {
-        return {
-            ...tile,
-            bitmap: pxt.sprite.Bitmap.fromData(tile.bitmap).copy().data()
+        const indent = "    ";
+        let out = "";
+
+        for (const key of entries) {
+            if (key === "*") continue;
+
+            const entry = jres[key];
+
+            if (typeof entry === "string" || entry.mimeType === IMAGE_MIME_TYPE) {
+                // FIXME: we should get the "image.ofBuffer" and blockIdentity from pxtarget probably
+                out += `${indent}//% fixedInstance jres blockIdentity=images._spriteImage\n`
+                out += `${indent}export const ${key} = image.ofBuffer(hex\`\`);\n`
+            }
         }
+
+
+        const warning = lf("Auto-generated code. Do not edit.");
+
+        return `// ${warning}\nnamespace ${pxt.sprite.IMAGES_NAMESPACE} {\n${out}\n}\n// ${warning}\n`
+    }
+
+    function cloneBitmap(bitmap: sprite.BitmapData) {
+        return pxt.sprite.Bitmap.fromData(bitmap).copy().data();
     }
 
     function decodeTilemap(jres: JRes, resolveTile?: (id: string) => Tile) {
@@ -611,5 +968,106 @@ namespace pxt {
         const layers = new pxt.sprite.Bitmap(tmWidth, tmHeight, 0, 0, new Uint8ClampedArray(bitmapData)).data();
 
         return new pxt.sprite.TilemapData(tilemap, tileset, layers);
+    }
+
+    function cloneAsset<U extends Asset>(asset: U): U {
+        switch (asset.type) {
+            case AssetType.Tile:
+            case AssetType.Image:
+                return {
+                    ...asset,
+                    bitmap: cloneBitmap((asset as ProjectImage | Tile).bitmap)
+                };
+            case AssetType.Animation:
+                return {
+                    ...asset,
+                    frames: (asset as Animation).frames.map(frame => cloneBitmap(frame))
+                };
+            case AssetType.Tilemap:
+                return {
+                    ...asset,
+                    data: (asset as ProjectTilemap).data.cloneData()
+                };
+        }
+    }
+
+
+    function addAssetToJRes(asset: Asset, allJRes: pxt.Map<Partial<JRes> | string>): void {
+        // Get the last part of the fully qualified name
+        const id = asset.id.substr(asset.id.lastIndexOf(".") + 1);
+
+        switch (asset.type) {
+            case AssetType.Image:
+                allJRes[id] = asset.jresData;
+                break;
+            case AssetType.Tile:
+                allJRes[id] = {
+                    data: asset.jresData,
+                    mimeType: IMAGE_MIME_TYPE,
+                    tilemapTile: true
+                };
+                break;
+            case AssetType.Tilemap:
+                // we include the full ID for tilemaps
+                const serialized = serializeTilemap(asset.data, asset.id);
+                allJRes[serialized.id] = serialized;
+                break;
+
+            case AssetType.Animation:
+                // TODO: riknoll
+
+        }
+    }
+
+    export function assetEquals(a: Asset, b: Asset) {
+        if (a == b) return true;
+        // FIXME: internalID?
+        if (a.id !== b.id || a.type !== b.type) return false;
+
+        if (a.meta && !b.meta || b.meta && !a.meta) return false;
+        else if (a.meta) {
+            if (!arrayEquals(a.meta.tags, b.meta.tags) || !arrayEquals(a.meta.blockIDs, b.meta.blockIDs)) return false;
+        }
+
+        switch (a.type) {
+            case AssetType.Image:
+            case AssetType.Tile:
+                return sprite.bitmapEquals(a.bitmap, (b as ProjectImage | Tile).bitmap);
+            case AssetType.Animation:
+                    const bAnimation = b as Animation;
+                    return a.interval === bAnimation.interval && arrayEquals(a.frames, bAnimation.frames, sprite.bitmapEquals);
+            case AssetType.Tilemap:
+                return a.data.equals((b as ProjectTilemap).data);
+        }
+    }
+
+    function arrayEquals<U>(a: U[], b: U[], compare: (c: U, d: U) => boolean = (c, d) => c === d) {
+        if (a == b) return true;
+        if (a.length !== b.length) return false;
+
+        for (let i = 0; i < a.length; i++) {
+            if (!compare(a[i], b[i])) return false;
+        }
+        return true;
+    }
+
+    function serializeTilemap(tilemap: sprite.TilemapData, id: string): JRes {
+        const tm = tilemap.tilemap.data();
+        const data = new Uint8ClampedArray(5 + tm.data.length + tilemap.layers.data.length);
+
+        data[0] = tilemap.tileset.tileWidth;
+        data[1] = tm.width & 0xff
+        data[2] = (tm.width >> 8) & 0xff
+        data[3] = tm.height & 0xff
+        data[4] = (tm.height >> 8) & 0xff
+        data.set(tm.data, 5);
+        data.set(tilemap.layers.data, 5 + tm.data.length);
+
+        return {
+            id,
+            mimeType: TILEMAP_MIME_TYPE,
+            data: btoa(pxt.sprite.uint8ArrayToHex(data)),
+            tileset: tilemap.tileset.tiles.map(t => t.id)
+        }
     }
 }

@@ -10,6 +10,7 @@ import { Dropdown, DropdownOption } from '../Dropdown';
 import { Pivot, PivotOption } from '../Pivot';
 import { IconButton } from '../Button';
 import { AlertOption } from '../Alert';
+import { createTile } from '../../../assets';
 
 export interface TilePaletteProps {
     colors: string[];
@@ -32,7 +33,7 @@ export interface TilePaletteProps {
     dispatchChangeTilePalettePage: (index: number) => void;
     dispatchChangeTilePaletteCategory: (category: TileCategory) => void;
     dispatchChangeDrawingMode: (drawingMode: TileDrawingMode) => void;
-    dispatchCreateNewTile: (bitmap: pxt.sprite.BitmapData, foreground: number, background: number, qualifiedName?: string) => void;
+    dispatchCreateNewTile: (tile: pxt.Tile, foreground: number, background: number, qualifiedName?: string) => void;
     dispatchSetGalleryOpen: (open: boolean) => void;
     dispatchOpenTileEditor: (editIndex?: number, editID?: string) => void;
     dispatchDeleteTile: (index: number, id: string) => void;
@@ -367,7 +368,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
         if (!tileset.tiles[selected] || !tileset.tiles[selected].isProjectTile || selected === 0) return;
 
-        dispatchCreateNewTile(tileset.tiles[selected].bitmap, tileset.tiles.length, backgroundColor);
+        dispatchCreateNewTile(createTile(tileset.tiles[selected].bitmap), tileset.tiles.length, backgroundColor);
     }
 
     protected tileDeleteAlertHandler = () => {
@@ -434,7 +435,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                 const newIndex = tileset.tiles.length || 1; // transparent is index 0, so default to 1
 
                 this.props.dispatchCreateNewTile(
-                    tile.bitmap,
+                    null,
                     isRightClick ? selected : newIndex,
                     isRightClick ? newIndex : backgroundColor,
                     qname
@@ -486,7 +487,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         return this.props.tileset.tiles
             .map((t, i) => ([t, i] as [pxt.Tile, number]))
             .filter(([t]) => t.isProjectTile)
-            .sort(([a], [b]) => a.weight - b.weight);
+            .sort(([a], [b]) => a.internalID - b.internalID);
     }
 
     protected getTileIndex(g: GalleryTile) {

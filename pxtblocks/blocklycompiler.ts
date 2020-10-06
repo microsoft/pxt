@@ -1274,6 +1274,9 @@ namespace pxt.blocks {
                     }
                 }
             }
+            else if (field instanceof pxtblockly.FieldSpriteEditor && e.options.emitTilemapLiterals) {
+                field.disposeOfTemporaryAsset();
+            }
 
             // For some enums in pxt-minecraft, we emit the members as constants that are defined in
             // libs/core. For example, Blocks.GoldBlock is emitted as GOLD_BLOCK

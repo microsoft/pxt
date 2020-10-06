@@ -132,7 +132,7 @@ export function emptyCompileResult(): pxtc.CompileResult {
 export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     trg.isNative = options.native
-    return pkg.mainEditorPkg().buildTilemapsAsync()
+    return pkg.mainEditorPkg().buildAssetsAsync()
         .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
         .then(opts => {
             if (options.debug) {
@@ -485,7 +485,7 @@ export function snippetAsync(qName: string, python?: boolean): Promise<string> {
 
 export function typecheckAsync() {
     const epkg = pkg.mainEditorPkg();
-    let p = epkg.buildTilemapsAsync()
+    let p = epkg.buildAssetsAsync()
         .then(() => pkg.mainPkg.getCompileOptionsAsync())
         .then(opts => {
             opts.testMode = true // show errors in all top-level code
@@ -553,7 +553,8 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
         "main.ts",
         pxt.TUTORIAL_CODE_START,
         pxt.TUTORIAL_CODE_STOP,
-        pxt.TILEMAP_CODE
+        pxt.TILEMAP_CODE,
+        pxt.IMAGES_CODE
     ];
 
     if (Object.keys(files).some(
@@ -775,7 +776,7 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
         })
         .then(res => {
             patchedFiles["main.ts"] = res.source;
-            return project.buildTilemapsAsync();
+            return project.buildAssetsAsync();
         })
         .then(() => {
             const compiledFiles = project.getAllFiles();
@@ -837,7 +838,7 @@ interface UpgradeError extends Error {
 
 function checkPatchAsync(patchedFiles?: pxt.Map<string>) {
     const mainPkg = pkg.mainPkg;
-    return pkg.mainEditorPkg().buildTilemapsAsync()
+    return pkg.mainEditorPkg().buildAssetsAsync()
         .then(() => mainPkg.getCompileOptionsAsync())
         .then(opts => {
             if (patchedFiles) {

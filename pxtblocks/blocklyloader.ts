@@ -16,6 +16,12 @@ namespace pxt.blocks {
         declaredVariables: string;
     }
 
+    // Parsed format of data stored in the .data attribute of blocks
+    export interface PXTBlockData {
+        commentRefs: string[];
+        fieldData: pxt.Map<string>;
+    }
+
     const typeDefaults: Map<{ field: string, block: string, defaultValue: string }> = {
         "string": {
             field: "TEXT",
@@ -3068,5 +3074,36 @@ namespace pxt.blocks {
             model.name = newName;
             varField.setValue(model.getId());
         }
+    }
+
+
+    export function getBlockData(block: Blockly.Block): PXTBlockData {
+        if (!block.data) {
+            return {
+                commentRefs: [],
+                fieldData: {}
+            };
+        }
+        if (/^(?:\d+;?)+$/.test(block.data)) {
+            return {
+                commentRefs: block.data.split(";"),
+                fieldData: {}
+            }
+        }
+        return JSON.parse(block.data);
+    }
+
+    export function setBlockData(block: Blockly.Block, data: PXTBlockData) {
+        block.data = JSON.stringify(data);
+    }
+
+    export function setBlockDataForField(block: Blockly.Block, field: string, data: string) {
+        const blockData = getBlockData(block);
+        blockData.fieldData[field] = data;
+        setBlockData(block, blockData);
+    }
+
+    export function getBlockDataForField(block: Blockly.Block, field: string) {
+        return getBlockData(block).fieldData[field];
     }
 }

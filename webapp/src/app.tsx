@@ -1507,8 +1507,8 @@ export class ProjectView
         }
 
         const project = pxt.react.getTilemapProject();
-        project.loadJres(parsed, true);
-        return pkg.mainEditorPkg().buildTilemapsAsync();
+        project.loadTilemapJRes(parsed, true);
+        return pkg.mainEditorPkg().buildAssetsAsync();
     }
 
     removeProject() {

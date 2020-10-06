@@ -503,6 +503,8 @@ namespace pxt {
     export const DEFAULT_GROUP_NAME = "other"; // used in flyout, for snippet groups
     export const TILEMAP_CODE = "tilemap.g.ts";
     export const TILEMAP_JRES = "tilemap.g.jres";
+    export const IMAGES_CODE = "images.g.ts";
+    export const IMAGES_JRES = "images.g.jres";
     export const TUTORIAL_CODE_START = "_onCodeStart.ts";
     export const TUTORIAL_CODE_STOP = "_onCodeStop.ts";
     export const TUTORIAL_INFO_FILE = "tutorial-info-cache.json";
