@@ -11,7 +11,7 @@ export interface ImageFieldEditorProps {
 }
 
 export interface ImageFieldEditorState {
-    galleryState: "editor" | "gallery" | "my-assets";
+    currentView: "editor" | "gallery" | "my-assets";
     tileGalleryVisible?: boolean;
     galleryFilter?: string;
 }
@@ -31,14 +31,14 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         super(props);
 
         this.state = {
-            galleryState: "editor"
+            currentView: "editor"
         };
         setTelemetryFunction(tickImageEditorEvent);
     }
 
     render() {
         const { showTiles } = this.props;
-        const { galleryState } = this.state;
+        const { currentView } = this.state;
 
         if (this.blocksInfo && !this.extensionGallery) {
             this.extensionGallery = pxt.sprite.getGalleryItems(this.blocksInfo, "Image")
@@ -48,11 +48,11 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
             this.tileGallery = this.getTileGalleryItems();
         }
 
-        if (galleryState === "my-assets" && !this.projectGallery) {
+        if (currentView === "my-assets" && !this.projectGallery) {
             this.projectGallery = this.getProjectGalleryItems();
         }
 
-        const toggleClass = galleryState === "editor" ? "left" : (galleryState === "gallery" ? "center" : "right");
+        const toggleClass = currentView === "editor" ? "left" : (currentView === "gallery" ? "center" : "right");
 
         return <div className="image-editor-wrapper">
             <div className="gallery-editor-header">
@@ -73,13 +73,13 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
             <div className="image-editor-gallery-content">
                 <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} />
                 <ImageEditorGallery
-                    items={galleryState === "my-assets" ? this.projectGallery : this.extensionGallery}
-                    hidden={galleryState === "editor"}
+                    items={currentView === "my-assets" ? this.projectGallery : this.extensionGallery}
+                    hidden={currentView === "editor"}
                     filterString={this.state.galleryFilter}
                     onItemSelected={this.onGalleryItemSelect} />
                 { showTiles && <ImageEditorGallery
                     items={this.tileGallery}
-                    hidden={galleryState !== "editor" || !this.state.tileGalleryVisible}
+                    hidden={currentView !== "editor" || !this.state.tileGalleryVisible}
                     onItemSelected={this.onGalleryItemSelect} /> }
             </div>
         </div>
@@ -213,7 +213,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
     protected showEditor = () => {
         tickImageEditorEvent("gallery-editor");
         this.setState({
-            galleryState: "editor",
+            currentView: "editor",
             tileGalleryVisible: false
         });
     }
@@ -221,7 +221,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
     protected showGallery = () => {
         tickImageEditorEvent("gallery-builtin");
         this.setState({
-            galleryState: "gallery",
+            currentView: "gallery",
             tileGalleryVisible: false
         });
     }
@@ -229,7 +229,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
     protected showMyAssets = () => {
         tickImageEditorEvent("gallery-my-assets");
         this.setState({
-            galleryState: "my-assets",
+            currentView: "my-assets",
             tileGalleryVisible: false
         });
     }
@@ -243,7 +243,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         else {
             this.setState({
                 tileGalleryVisible: true,
-                galleryState: "editor"
+                currentView: "editor"
             });
         }
     }
@@ -262,7 +262,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         tickImageEditorEvent("gallery-selection");
 
         this.setState({
-            galleryState: "editor",
+            currentView: "editor",
             tileGalleryVisible: false
         });
     }

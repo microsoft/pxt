@@ -382,12 +382,6 @@ namespace pxtblockly {
             }
 
             const ws = this.getEventWorkspace_();
-            const tilemaps = getAllBlocksWithTilemaps(ws);
-
-            // for (const t of tilemaps) {
-            //     t.ref.refreshTileset();
-            //     t.ref.redrawPreview();
-            // }
 
             // Fire an event to force a recompile, but make sure it doesn't end up on the undo stack
             const ev = new BlocklyTilemapChange(

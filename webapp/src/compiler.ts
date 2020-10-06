@@ -553,7 +553,8 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
         "main.ts",
         pxt.TUTORIAL_CODE_START,
         pxt.TUTORIAL_CODE_STOP,
-        pxt.TILEMAP_CODE
+        pxt.TILEMAP_CODE,
+        pxt.IMAGES_CODE
     ];
 
     if (Object.keys(files).some(
