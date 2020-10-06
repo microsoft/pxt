@@ -56,14 +56,14 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
 
         return <div className="image-editor-wrapper">
             <div className="gallery-editor-header">
-                <div className={`gallery-editor-toggle ${toggleClass} ${pxt.BrowserUtils.isEdge() ? "edge" : ""}`} role="button">
-                    <div className="gallery-editor-toggle-label gallery-editor-toggle-left" onClick={this.showEditor}>
+                <div className={`gallery-editor-toggle ${toggleClass} ${pxt.BrowserUtils.isEdge() ? "edge" : ""}`}>
+                    <div className="gallery-editor-toggle-label gallery-editor-toggle-left" onClick={this.showEditor} role="button">
                         {lf("Editor")}
                     </div>
-                    <div className="gallery-editor-toggle-label gallery-editor-toggle-center" onClick={this.showGallery}>
+                    <div className="gallery-editor-toggle-label gallery-editor-toggle-center" onClick={this.showGallery} role="button">
                         {lf("Gallery")}
                     </div>
-                    <div className="gallery-editor-toggle-label gallery-editor-toggle-right" onClick={this.showMyAssets}>
+                    <div className="gallery-editor-toggle-label gallery-editor-toggle-right" onClick={this.showMyAssets} role="button">
                         {lf("My Assets")}
                     </div>
                     <div className="gallery-editor-toggle-handle"/>
