@@ -253,7 +253,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
 
         let newName = this.state.assetName;
 
-        if (this.props.assetName && this.props.assetName.indexOf(".") !== -1) {
+        if (this.props.assetName?.indexOf(".") !== -1) {
             newName = this.props.assetName.substr(0, this.props.assetName.lastIndexOf(".")) + "." + newName;
         }
 

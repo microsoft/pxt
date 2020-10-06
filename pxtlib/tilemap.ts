@@ -296,7 +296,7 @@ namespace pxt {
         }
 
         public createNewImage(width = 16, height = 16) {
-            const id = this.generateNewID(AssetType.Image, pxt.sprite.IMAGE_PREFIX, pxt.sprite.IMAGES_NAMESPACE,);
+            const id = this.generateNewID(AssetType.Image, pxt.sprite.IMAGE_PREFIX, pxt.sprite.IMAGES_NAMESPACE);
             const bitmap = new pxt.sprite.Bitmap(width, height).data()
 
             const newImage: ProjectImage = {
@@ -324,7 +324,7 @@ namespace pxt {
         }
 
         public getProjectTiles(tileWidth: number, createIfMissing: boolean): TileSet | null {
-            const tiles = this.state.tiles.getSnapshot((tile => tile.bitmap.width === tileWidth));
+            const tiles = this.state.tiles.getSnapshot(tile => tile.bitmap.width === tileWidth);
 
             if (tiles.length === 0) {
                 if (createIfMissing) {
@@ -1041,19 +1041,12 @@ namespace pxt {
         }
     }
 
-    function arrayEquals<U>(a: U[], b: U[], compare?: (c: U, d: U) => boolean) {
+    function arrayEquals<U>(a: U[], b: U[], compare: (c: U, d: U) => boolean = (c, d) => c === d) {
         if (a == b) return true;
         if (a.length !== b.length) return false;
 
-        if (compare) {
-            for (let i = 0; i < a.length; i++) {
-                if (!compare(a[i], b[i])) return false;
-            }
-        }
-        else {
-            for (let i = 0; i < a.length; i++) {
-                if (a[i] !== b[i]) return false;
-            }
+        for (let i = 0; i < a.length; i++) {
+            if (!compare(a[i], b[i])) return false;
         }
         return true;
     }
