@@ -1052,3 +1052,7 @@ class ApiInfoIndexedDb {
             })
     }
 }
+
+export function clearApiInfoDbAsync() {
+    return pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName())
+}
