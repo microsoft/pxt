@@ -798,7 +798,7 @@ export class ProjectView
         this.editor = this.allEditors[this.allEditors.length - 1]
     }
 
-    public componentWillMount() {
+    public UNSAFE_componentWillMount() {
         this.initEditors()
         this.initDragAndDrop();
     }

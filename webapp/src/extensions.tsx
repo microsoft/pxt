@@ -146,7 +146,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         }, 0);
     }
 
-    componentWillUpdate(nextProps: any, nextState: ExtensionsState) {
+    UNSAFE_componentWillUpdate(nextProps: any, nextState: ExtensionsState) {
         if (nextState.extension && nextState.visible) {
             // Start rendering the iframe earlier
             const frame = Extensions.getFrame(nextState.extension, true);

@@ -233,7 +233,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         }
     }
 
-    componentWillReceiveProps(nextProps: SettingsMenuProps) {
+    UNSAFE_componentWillReceiveProps(nextProps: SettingsMenuProps) {
         const newState: SettingsMenuState = {};
         if (nextProps.highContrast != undefined) {
             newState.highContrast = nextProps.highContrast;
@@ -687,7 +687,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         }
     }
 
-    componentWillReceiveProps(nextProps: SideDocsProps) {
+    UNSAFE_componentWillReceiveProps(nextProps: SideDocsProps) {
         const newState: SideDocsState = {};
         if (nextProps.sideDocsCollapsed != undefined) {
             newState.sideDocsCollapsed = nextProps.sideDocsCollapsed;
