@@ -37,6 +37,7 @@ namespace pxtblockly {
         protected blocksInfo: pxtc.BlocksInfo;
         protected lightMode: boolean;
         protected undoRedoState: any;
+        protected pendingEdit = false
 
         // If input is invalid, the subclass can set this to be true. The field will instead
         // render as a grey block and preserve the decompiled code
@@ -120,6 +121,7 @@ namespace pxtblockly {
                     const old = this.getValue();
                     if (pxt.assetEquals(this.asset, result)) return;
 
+                    this.pendingEdit = true;
                     const oldAsset = this.asset;
                     this.asset = result;
                     if (this.isTemporaryAsset()) {
@@ -141,6 +143,7 @@ namespace pxtblockly {
                         Blockly.Events.fire(new BlocklyTilemapChange(
                             this.sourceBlock_, 'field', this.name, old, this.getValue(), lastRevision, project.revision()));
                     }
+                    this.pendingEdit = false;
                 }
             });
 
@@ -342,6 +345,7 @@ namespace pxtblockly {
         }
 
         protected assetChangeListener = () => {
+            if (this.pendingEdit) return;
             const id = pxt.blocks.getBlockDataForField(this.sourceBlock_, this.name);
             if (id) {
                 this.asset = pxt.react.getTilemapProject().lookupAsset(this.getAssetType(), id);
