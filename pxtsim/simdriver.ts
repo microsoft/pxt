@@ -92,7 +92,9 @@ namespace pxsim {
                 const simUrl = new URL(this.getSimUrl())
                 this._allowedOrigins.push(simUrl.origin)
             } catch (e) {
-                console.error(`Invalid sim url ${this.getSimUrl()}`)
+                if (!U.isLocalHost()) {
+                    console.error(`Invalid sim url ${this.getSimUrl()}`)
+                }
             }
         }
 
