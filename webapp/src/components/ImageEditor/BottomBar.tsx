@@ -239,7 +239,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
         let errorMessage = null;
 
         if (!validateAssetName(event.target.value)) {
-            errorMessage = lf("Names must begin with a letter and can only contain letters, numbers, and _");
+            errorMessage = lf("Names may only contain letters, numbers, '-', '_', and space");
         }
         else if (isNameTaken(event.target.value) && event.target.value !== this.props.assetName) {
             errorMessage = lf("This name is already used elsewhere in your project");
@@ -253,7 +253,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
 
         let newName = this.state.assetName;
 
-        if (this.props.assetName?.indexOf(".") !== -1) {
+        if (this.props.assetName && this.props.assetName.indexOf(".") !== -1) {
             newName = this.props.assetName.substr(0, this.props.assetName.lastIndexOf(".")) + "." + newName;
         }
 

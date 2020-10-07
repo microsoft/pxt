@@ -10,6 +10,7 @@ namespace pxt {
     }
 
     export interface AssetMetadata {
+        displayName?: string;
         tags?: string[];
         blockIDs?: string[];
         isTemporary?: boolean;
@@ -20,7 +21,7 @@ namespace pxt {
     export interface BaseAsset {
         internalID: number;
         id: string;
-        meta?: AssetMetadata;
+        meta: AssetMetadata;
         previewURI?: string;
     }
 
@@ -304,6 +305,7 @@ namespace pxt {
                 id,
                 type: AssetType.Image,
                 bitmap: bitmap,
+                meta: {},
                 jresData: pxt.sprite.base64EncodeBitmap(bitmap)
             };
             this.state.images.add(newImage);
@@ -354,6 +356,7 @@ namespace pxt {
                 type: AssetType.Tile,
                 jresData: pxt.sprite.base64EncodeBitmap(data),
                 bitmap: data,
+                meta: {},
                 isProjectTile: true
             };
 
@@ -369,6 +372,7 @@ namespace pxt {
                 id: this.generateNewID(AssetType.Image, pxt.sprite.IMAGE_PREFIX, pxt.sprite.IMAGES_NAMESPACE),
                 type: AssetType.Image,
                 jresData: pxt.sprite.base64EncodeBitmap(data),
+                meta: {},
                 bitmap: data
             };
 
@@ -496,6 +500,7 @@ namespace pxt {
                     type: AssetType.Tile,
                     bitmap: bitmap,
                     jresData: pxt.sprite.base64EncodeBitmap(bitmap),
+                    meta: {},
                     isProjectTile: true
                 };
 
@@ -512,6 +517,7 @@ namespace pxt {
                 internalID: this.getNewInternalId(),
                 id,
                 type: AssetType.Tilemap,
+                meta: {},
                 data: data
             });
 
@@ -753,6 +759,7 @@ namespace pxt {
                     internalID: this.getNewInternalId(),
                     type: AssetType.Tilemap,
                     id: tm.id,
+                    meta: {},
                     data: decodeTilemap(tm, id => this.resolveTile(id))
                 })
             }
@@ -792,6 +799,7 @@ namespace pxt {
                     internalID: this.getNewInternalId(),
                     type: AssetType.Tilemap,
                     id: tm.id,
+                    meta: {},
                     data: decodeTilemap(tm, id => {
                         if (tileMapping[id]) {
                             id = tileMapping[id];
@@ -812,6 +820,7 @@ namespace pxt {
                         internalID: this.getNewInternalId(),
                         type: AssetType.Image,
                         id: entry.id,
+                        meta: {},
                         jresData: entry.data,
                         bitmap: pxt.sprite.getBitmapFromJResURL(`data:${IMAGE_MIME_TYPE};base64,${entry.data}`).data()
                     })
@@ -845,6 +854,7 @@ namespace pxt {
                         type: AssetType.Tile,
                         jresData: entry.data,
                         id: entry.id,
+                        meta: {},
                         bitmap: pxt.sprite.getBitmapFromJResURL(`data:${IMAGE_MIME_TYPE};base64,${entry.data}`).data(),
                         isProjectTile: isProjectFile
                     };
@@ -856,6 +866,7 @@ namespace pxt {
                         internalID: this.getNewInternalId(),
                         type: AssetType.Image,
                         jresData: entry.data,
+                        meta: {},
                         id: entry.id,
                         bitmap: pxt.sprite.getBitmapFromJResURL(`data:${IMAGE_MIME_TYPE};base64,${entry.data}`).data()
                     })
@@ -884,7 +895,9 @@ namespace pxt {
         const indent = "    ";
         let out = "";
 
-        const tilemapEntries: string[] = [];
+        const tilemapEntries: FactoryEntry[] = [];
+        const tileEntries: FactoryEntry[] = [];
+
         for (const key of entries) {
             if (key === "*") continue;
 
@@ -894,23 +907,22 @@ namespace pxt {
                 // FIXME: we should get the "image.ofBuffer" and blockIdentity from pxtarget probably
                 out += `${indent}//% fixedInstance jres blockIdentity=images._tile\n`
                 out += `${indent}export const ${key} = image.ofBuffer(hex\`\`);\n`
+
+                tileEntries.push({ key: key.substr(key.lastIndexOf(".") + 1), expression: key})
             }
 
             if (entry.mimeType === TILEMAP_MIME_TYPE) {
                 const tm = decodeTilemap(entry);
 
-                tilemapEntries.push(`case "${key}": return ${pxt.sprite.encodeTilemap(tm, "typescript")}`)
+                tilemapEntries.push({ key, expression: pxt.sprite.encodeTilemap(tm, "typescript") });
             }
         }
 
         if (tilemapEntries.length) {
-            out += "\n" +
-                `${indent}helpers.registerTilemapFactory(function(name: string) {\n` +
-                `${indent}${indent}switch(helpers.stringTrim(name)) {\n` +
-                tilemapEntries.map(t => `${indent}${indent}${indent}${t}`).join("\n") + "\n" +
-                `${indent}${indent}}\n` +
-                `${indent}${indent}return null;\n` +
-                `${indent}})\n`
+            out += emitFactoryHelper("tilemap", tilemapEntries);
+        }
+        if (tileEntries.length) {
+            out += emitFactoryHelper("tile", tileEntries);
         }
 
 
@@ -922,25 +934,51 @@ namespace pxt {
     export function emitProjectImages(jres: pxt.Map<JRes | string>) {
         const entries = Object.keys(jres);
 
-        const indent = "    ";
         let out = "";
+
+        const imageEntries: FactoryEntry[] = [];
 
         for (const key of entries) {
             if (key === "*") continue;
 
             const entry = jres[key];
 
-            if (typeof entry === "string" || entry.mimeType === IMAGE_MIME_TYPE) {
-                // FIXME: we should get the "image.ofBuffer" and blockIdentity from pxtarget probably
-                out += `${indent}//% fixedInstance jres blockIdentity=images._spriteImage\n`
-                out += `${indent}export const ${key} = image.ofBuffer(hex\`\`);\n`
+            let expression: string;
+            if (typeof entry === "string") {
+                expression = sprite.bitmapToImageLiteral(sprite.getBitmapFromJResURL(entry), "typescript");
             }
+            else {
+                expression = sprite.bitmapToImageLiteral(sprite.getBitmapFromJResURL(entry.data), "typescript");
+            }
+            imageEntries.push({
+                key: key.substr(key.lastIndexOf(".") + 1),
+                expression
+            });
         }
 
 
         const warning = lf("Auto-generated code. Do not edit.");
 
+        out += emitFactoryHelper("image", imageEntries);
+
         return `// ${warning}\nnamespace ${pxt.sprite.IMAGES_NAMESPACE} {\n${out}\n}\n// ${warning}\n`
+    }
+
+    interface FactoryEntry {
+        key: string;
+        expression: string;
+    }
+
+    function emitFactoryHelper(factoryKind: string, expressions: FactoryEntry[]) {
+        const indent = "    ";
+
+        return "\n" +
+        `${indent}helpers._registerFactory("${factoryKind}", function(name: string) {\n` +
+        `${indent}${indent}switch(helpers.stringTrim(name)) {\n` +
+        expressions.map(t => `${indent}${indent}${indent}case "${t.key}": return ${t.expression};`).join("\n") + "\n" +
+        `${indent}${indent}}\n` +
+        `${indent}${indent}return null;\n` +
+        `${indent}})\n`
     }
 
     function cloneBitmap(bitmap: sprite.BitmapData) {
@@ -1021,7 +1059,6 @@ namespace pxt {
 
     export function assetEquals(a: Asset, b: Asset) {
         if (a == b) return true;
-        // FIXME: internalID?
         if (a.id !== b.id || a.type !== b.type) return false;
 
         if (a.meta && !b.meta || b.meta && !a.meta) return false;

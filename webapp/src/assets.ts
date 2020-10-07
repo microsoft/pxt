@@ -1,20 +1,11 @@
 import * as pkg from "./package";
-import * as compiler from "./compiler";
 
 export function validateAssetName(name: string) {
     if (!name) return false;
 
-    let nameIsValid = false;
-    if (pxtc.isIdentifierStart(name.charCodeAt(0), 2)) {
-        nameIsValid = true;
-        for (let i = 1; i < name.length; i++) {
-            if (!pxtc.isIdentifierPart(name.charCodeAt(i), 2)) {
-                nameIsValid = false;
-            }
-        }
-    }
-
-    return nameIsValid;
+    // Covers all punctuation/whitespace except for "-", "_", and " "
+    const bannedRegex = /[\u0000-\u001f\u0021-\u002c\u002e\u002f\u003a-\u0040\u005b-\u005e\u0060\u007b-\u007f]/
+    return !bannedRegex.test(name);
 }
 
 export function isNameTaken(name: string) {

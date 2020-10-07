@@ -35,6 +35,7 @@ namespace pxt.editor {
             id: "",
             internalID: 0,
             bitmap: bitmap.data(),
+            meta: {},
             jresData: ""
         }
     }
