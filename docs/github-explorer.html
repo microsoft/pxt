@@ -113,8 +113,7 @@
         }
 
         function trackClick(id) {
-            if (typeof mscc !== "undefined" && !mscc.hasConsent())
-                mscc.setConsent();
+            pxt.setInteractiveConsent(true);
             if (typeof pxt !== "undefined")
                 pxt.aiTrackEvent(id);
         }
@@ -133,7 +132,7 @@
                 navigateSignout();
             }
             return response;
-        }        
+        }
 
         function sniffTarget(repo) {
             try {
