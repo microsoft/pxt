@@ -122,13 +122,7 @@ namespace pxtblockly {
                     if (pxt.assetEquals(this.asset, result)) return;
 
                     this.pendingEdit = true;
-                    const oldAsset = this.asset;
                     this.asset = result;
-                    if (this.isTemporaryAsset()) {
-                        if (oldAsset.id !== result.id) {
-                            this.setAssetTemporary(false);
-                        }
-                    }
                     const lastRevision = project.revision();
                     project.pushUndo();
 
@@ -354,14 +348,7 @@ namespace pxtblockly {
         }
 
         protected isTemporaryAsset() {
-            return this.asset?.meta?.isTemporary;
-        }
-
-        protected setAssetTemporary(isTemporary: boolean) {
-            if (this.asset) {
-                if (!this.asset.meta) this.asset.meta = {};
-                this.asset.meta.isTemporary = isTemporary;
-            }
+            return !this.asset?.meta?.displayName;
         }
     }
 

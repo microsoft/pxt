@@ -113,8 +113,8 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                 break;
         }
 
-        if (!asset.meta?.isTemporary) {
-            this.dispatchOnStore(dispatchChangeAssetName(asset.id));
+        if (asset.meta.displayName) {
+            this.dispatchOnStore(dispatchChangeAssetName(asset.meta.displayName));
         }
     }
 
@@ -144,59 +144,57 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
     getImage(): pxt.ProjectImage {
         const state = this.getStore().getState();
-        let id = state.editor.assetName || this.editingAsset?.id;
-        if (id.indexOf(".") === -1) {
-            id = pxt.sprite.IMAGES_NAMESPACE + "." + id;
-        }
         const data = this.getCurrentFrame().data();
 
+        const meta: pxt.AssetMetadata = this.editingAsset ? { ...this.editingAsset.meta } : {};
+        meta.displayName = state.editor.assetName || meta.displayName;
+
         return {
-            id,
+            id: this.editingAsset?.id,
             internalID: this.editingAsset ? this.editingAsset.internalID : getNewInternalID(),
             type: pxt.AssetType.Image,
             bitmap: data,
             jresData: pxt.sprite.base64EncodeBitmap(data),
-            meta: this.editingAsset?.meta
+            meta
         }
     }
 
     getTile(): pxt.Tile {
         const state = this.getStore().getState();
-        let id = state.editor.assetName || this.editingAsset?.id;
         const data = this.getCurrentFrame().data();
 
-        if (id.indexOf(".") === -1) {
-            id = pxt.sprite.TILE_NAMESPACE + "." + id;
-        }
+        const meta: pxt.AssetMetadata = this.editingAsset ? { ...this.editingAsset.meta } : {};
+        meta.displayName = state.editor.assetName || meta.displayName;
 
         return {
-            id,
+            id: this.editingAsset?.id,
             internalID: this.editingAsset ? this.editingAsset.internalID : getNewInternalID(),
             type: pxt.AssetType.Tile,
             bitmap: data,
             jresData: pxt.sprite.base64EncodeBitmap(data),
-            meta: this.editingAsset?.meta
+            meta
         }
     }
 
     getAnimation(): pxt.Animation {
         const state = this.getStore().getState();
-        const id = state.editor.assetName || this.editingAsset?.id;
         const animationState = state.store.present as AnimationState;
 
+        const meta: pxt.AssetMetadata = this.editingAsset ? { ...this.editingAsset.meta } : {};
+        meta.displayName = state.editor.assetName || meta.displayName;
+
         return {
-            id,
+            id: this.editingAsset?.id,
             internalID: this.editingAsset ? this.editingAsset.internalID : getNewInternalID(),
             type: pxt.AssetType.Animation,
             interval: animationState.interval,
             frames: animationState.frames.map(frame => imageStateToBitmap(frame).data()),
-            meta: this.editingAsset?.meta
+            meta
         }
     }
 
     getTilemap(): pxt.ProjectTilemap {
         const state = this.getStore().getState();
-        const id = state.editor.assetName || this.editingAsset?.id;
         const tilemapState = state.store.present as TilemapState;
         const { floating, overlayLayers, layerOffsetX, layerOffsetY } = tilemapState.tilemap;
         const layers = applyBitmapData(overlayLayers[0], floating && floating.overlayLayers && floating.overlayLayers[0], layerOffsetX, layerOffsetY);
@@ -205,12 +203,15 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         out.deletedTiles = state.editor.deletedTiles;
         out.editedTiles = state.editor.editedTiles;
 
+        const meta: pxt.AssetMetadata = this.editingAsset ? { ...this.editingAsset.meta } : {};
+        meta.displayName = state.editor.assetName || meta.displayName;
+
         return {
-            id,
+            id: this.editingAsset?.id,
             internalID: this.editingAsset ? this.editingAsset.internalID : getNewInternalID(),
             type: pxt.AssetType.Tilemap,
             data: out,
-            meta: this.editingAsset?.meta
+            meta
         }
     }
 
@@ -225,11 +226,11 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     restorePersistentData(oldValue: ImageEditorSaveState) {
         if (oldValue) {
             if (this.editingAsset) {
-                if (this.editingAsset.meta?.isTemporary) {
-                    oldValue.editor.assetName = null;
+                if (this.editingAsset.meta.displayName) {
+                    oldValue.editor.assetName = this.editingAsset.meta.displayName;
                 }
                 else {
-                    oldValue.editor.assetName = this.editingAsset.id;
+                    oldValue.editor.assetName = null;
                 }
             }
             this.dispatchOnStore(dispatchSetInitialState(oldValue.editor, oldValue.past));

@@ -68,13 +68,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
         const width = this.state.width == null ? imageDimensions[0] : this.state.width;
         const height = this.state.height == null ? imageDimensions[1] : this.state.height;
 
-        let currentName = assetName;
-
-        if (currentName && currentName.indexOf(".") !== -1) {
-            currentName = currentName.substr(currentName.lastIndexOf(".") + 1);
-        }
-
-        const assetNameState = this.state.assetName == null ? (currentName || "") : this.state.assetName;
+        const assetNameState = this.state.assetName == null ? (assetName || "") : this.state.assetName;
 
         return (
             <div className="image-editor-bottombar">
@@ -253,11 +247,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
 
         let newName = this.state.assetName;
 
-        if (this.props.assetName && this.props.assetName.indexOf(".") !== -1) {
-            newName = this.props.assetName.substr(0, this.props.assetName.lastIndexOf(".")) + "." + newName;
-        }
-
-        if (this.state.assetName !== this.props.assetName && validateAssetName(this.state.assetName) && !isNameTaken(this.state.assetName)) {
+        if (this.state.assetName !== assetName && validateAssetName(this.state.assetName) && !isNameTaken(this.state.assetName)) {
             dispatchChangeAssetName(newName);
         }
         this.setState({ assetName: null, assetNameMessage: null });
