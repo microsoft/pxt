@@ -521,6 +521,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             else if (ev.type == 'ui') {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
+                    if (toolboxVisible) pxt.setInteractiveConsent(true);
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
                 } else if (ev.element == 'breakpointSet') {
                     this.setBreakpointsFromBlocks();

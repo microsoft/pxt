@@ -2,6 +2,7 @@ namespace pxt {
     // These functions are defined in docfiles/pxtweb/cookieCompliance.ts
     export declare function aiTrackEvent(id: string, data?: any, measures?: any): void;
     export declare function aiTrackException(err: any, kind: string, props: any): void;
+    export declare function setInteractiveConsent(enabled: boolean): void;
 }
 
 namespace pxt.analytics {
@@ -28,6 +29,8 @@ namespace pxt.analytics {
         const te = pxt.tickEvent;
         pxt.tickEvent = function (id: string, data?: Map<string | number>, opts?: TelemetryEventOptions): void {
             if (te) te(id, data, opts);
+
+            if (opts?.interactiveConsent) pxt.setInteractiveConsent(true);
 
             if (!data) pxt.aiTrackEvent(id);
             else {

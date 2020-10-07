@@ -97,6 +97,7 @@
         }
 
         function trackClick(id) {
+            pxt.setInteractiveConsent(true);
             if (typeof pxt !== "undefined")
                 pxt.aiTrackEvent(id);
         }

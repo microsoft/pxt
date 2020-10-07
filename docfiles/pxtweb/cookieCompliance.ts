@@ -9,6 +9,8 @@ namespace pxt {
     const queues: TelemetryQueue<any, any, any>[] = [];
 
     let analyticsLoaded = false;
+    let interactiveConsent = false;
+    let isProduction = false;
 
     class TelemetryQueue<A, B, C> {
         private q: [A, B, C][] = [];
@@ -173,10 +175,53 @@ namespace pxt {
         // loadAppInsights is defined in docfiles/tracking.html
         const loadAI = (window as any).loadAppInsights;
         if (loadAI) {
-            loadAI(includeCookie);
+            isProduction = includeCookie;
+            loadAI(includeCookie, telemetryInitializer);
             analyticsLoaded = true;
             queues.forEach(a => a.flush());
         }
+    }
+
+    function telemetryInitializer(envelope: any) {
+        const pxtConfig = (window as any).pxtConfig;
+
+        if (typeof pxtConfig === "undefined" || !pxtConfig) return;
+
+        const telemetryItem = envelope.data.baseData;
+        telemetryItem.properties = telemetryItem.properties || {};
+        telemetryItem.properties["target"] = pxtConfig.targetId;
+        telemetryItem.properties["stage"] = (pxtConfig.relprefix || "/--").replace(/[^a-z]/ig, '')
+
+        if (typeof Windows !== "undefined")
+            telemetryItem.properties["WindowsApp"] = 1;
+        const userAgent = navigator.userAgent.toLowerCase();
+        const userAgentRegexResult = /\belectron\/(\d+\.\d+\.\d+.*?)(?: |$)/i.exec(userAgent); // Example navigator.userAgent: "Mozilla/5.0 Chrome/61.0.3163.100 Electron/2.0.0 Safari/537.36"
+        if (userAgentRegexResult) {
+            telemetryItem.properties["Electron"] = 1;
+            telemetryItem.properties["ElectronVersion"] = userAgentRegexResult[1];
+        }
+
+        const pxtElectron = (window as any).pxtElectron;
+        if (typeof pxtElectron !== "undefined") {
+            telemetryItem.properties["PxtElectron"] = 1;
+            telemetryItem.properties["ElectronVersion"] = pxtElectron.versions.electronVersion;
+            telemetryItem.properties["ChromiumVersion"] = pxtElectron.versions.chromiumVersion;
+            telemetryItem.properties["NodeVersion"] = pxtElectron.versions.nodeVersion;
+            telemetryItem.properties["PxtElectronVersion"] = pxtElectron.versions.pxtElectronVersion;
+            telemetryItem.properties["PxtCoreVersion"] = pxtElectron.versions.pxtCoreVersion;
+            telemetryItem.properties["PxtTargetVersion"] = pxtElectron.versions.pxtTargetVersion;
+            telemetryItem.properties["PxtElectronIsProd"] = pxtElectron.versions.isProd;
+        }
+
+        // "cookie" does not actually correspond to whether or not we drop the cookie because we recently
+        // switched to immediately dropping it rather than waiting. Instead, we maintain the legacy behavior
+        // of only setting it to true for production sites where interactive consent has been obtained
+        // so that we don't break legacy queries
+        telemetryItem.properties["cookie"] = interactiveConsent && isProduction;
+    }
+
+    export function setInteractiveConsent(enabled: boolean) {
+        interactiveConsent = enabled;
     }
 
     /**
