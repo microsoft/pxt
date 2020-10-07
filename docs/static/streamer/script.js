@@ -2363,9 +2363,6 @@ background-image: url(${config.backgroundImage});
     function tickEvent(id, data, opts) {
         if (typeof pxt === "undefined" || !pxt.aiTrackException || !pxt.aiTrackEvent)
             return;
-        if (opts && opts.interactiveConsent && typeof mscc !== "undefined" && !mscc.hasConsent()) {
-            mscc.setConsent();
-        }
         const args = tickProps(data);
         pxt.aiTrackEvent(id, args[0], args[1]);
     }

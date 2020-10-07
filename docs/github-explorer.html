@@ -84,7 +84,7 @@
     <script type="text/javascript"
         src="https://pxt.azureedge.net/blob/fc2f56f46189a2e8be3743a1a5abed3b676f9318/doccdn/semantic.js"></script>
     <script>
-(async function () {        
+(async function () {
         const api = "https://api.github.com";
 
         const targets = await fetchJSON("/editors.json");
@@ -97,8 +97,7 @@
         }
 
         function trackClick(id) {
-            if (typeof mscc !== "undefined" && !mscc.hasConsent())
-                mscc.setConsent();
+            pxt.setInteractiveConsent(true);
             if (typeof pxt !== "undefined")
                 pxt.aiTrackEvent(id);
         }
@@ -117,7 +116,7 @@
                 navigateSignout();
             }
             return response;
-        }        
+        }
 
         function sniffTarget(repo) {
             try {
@@ -234,7 +233,7 @@
     <div class="content">
         <div class="header"></div>
         <div class="description"></a></div>
-        <div class="extra"><button class="ui right floated button icon" title="Open repository in GitHub.com"><i class="icon external"></i></button></div>        
+        <div class="extra"><button class="ui right floated button icon" title="Open repository in GitHub.com"><i class="icon external"></i></button></div>
     </div>
 </div>`);
                             item.find("img").attr("src", icon);

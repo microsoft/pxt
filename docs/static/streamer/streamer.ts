@@ -1,5 +1,4 @@
 declare let pxt: any;
-declare let mscc: any;
 declare let Seriously: any;
 declare let webkitSpeechRecognition: any;
 declare let MediaRecorder: any;
@@ -225,7 +224,7 @@ function onYouTubeIframeAPIReady() {
     }
 
     function editor() {
-        return document.getElementById("editor") as HTMLIFrameElement        
+        return document.getElementById("editor") as HTMLIFrameElement
     }
 
     function editor2() {
@@ -2599,9 +2598,7 @@ background-image: url(${config.backgroundImage});
 
     function tickEvent(id, data?: any, opts?: { interactiveConsent?: boolean }) {
         if (typeof pxt === "undefined" || !pxt.aiTrackException || !pxt.aiTrackEvent) return;
-        if (opts && opts.interactiveConsent && typeof mscc !== "undefined" && !mscc.hasConsent()) {
-            mscc.setConsent();
-        }
+        if (opts?.interactiveConsent) pxt.setInteractiveConsent(true);
         const args = tickProps(data);
         pxt.aiTrackEvent(id, args[0], args[1]);
     }
