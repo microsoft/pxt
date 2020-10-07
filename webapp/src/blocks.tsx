@@ -481,6 +481,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private prepareBlockly(forceHasCategories?: boolean) {
         pxt.perf.measureStart("prepareBlockly")
         let blocklyDiv = document.getElementById('blocksEditor');
+        if (!blocklyDiv)
+            return;
         pxsim.U.clear(blocklyDiv);
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
         const hasCategories = (this.editor.options as any).hasCategories;

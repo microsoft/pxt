@@ -865,6 +865,10 @@ export class ProjectView
 
     // Add an error guard for the entire application
     componentDidCatch(error: any, info: any) {
+        this.handleCriticalError(error, info);
+    }
+
+    handleCriticalError(error: any, info?: any) {
         try {
             core.killLoadingQueue();
             pxsim.U.remove(document.getElementById('loading'));
@@ -872,10 +876,10 @@ export class ProjectView
             // Log critical error
             pxt.tickEvent('pxt.criticalerror', { error: error || '', info: info || '' });
             // Reload the page in 2 seconds
-            const lastCriticalError = pxt.storage.getLocal("lastcriticalerror") ?
-                Date.parse(pxt.storage.getLocal("lastcriticalerror")) : Date.now();
+            const lastCriticalError = pxt.storage.getLocal("lastcriticalerror") &&
+                Date.parse(pxt.storage.getLocal("lastcriticalerror"));
             // don't refresh if we refreshed in the last minute
-            if (!lastCriticalError || (!isNaN(lastCriticalError) && Date.now() - lastCriticalError > 60 * 1000)) {
+            if (!lastCriticalError || isNaN(lastCriticalError) || Date.now() - lastCriticalError > 60 * 1000) {
                 pxt.storage.setLocal("lastcriticalerror", new Date().toISOString());
                 setTimeout(() => {
                     this.reloadEditor();
@@ -4544,11 +4548,15 @@ document.addEventListener("DOMContentLoaded", () => {
             else theEditor.newProject();
             return Promise.resolve();
         })
+        .catch(e => {
+            theEditor.handleCriticalError(e, "Failure in DOM loaded handler");
+            throw e;
+        })
         .then(() => {
             pxsim.U.remove(document.getElementById('loading'));
             return workspace.loadedAsync();
         })
-        .done()
+        .done();
 
     document.addEventListener("visibilitychange", ev => {
         if (theEditor)
