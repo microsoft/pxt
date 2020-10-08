@@ -621,6 +621,7 @@ namespace pxt {
                 animations: this.state.animations.diff(this.committedState.animations)
             });
             this.committedState = this.cloneState();
+            this.cleanupTemporaryAssets();
         }
 
         public revision() {
@@ -941,6 +942,13 @@ namespace pxt {
             }
 
             return assets;
+        }
+
+        protected cleanupTemporaryAssets() {
+            const orphaned = this.state.images.getSnapshot(image => !image.meta.displayName && !(image.meta.blockIDs?.length));
+            for (const image of orphaned) {
+                this.state.images.removeByID(image.id);
+            }
         }
     }
 
