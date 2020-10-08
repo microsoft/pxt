@@ -35,6 +35,16 @@ const idpInfos: IdpInfos = {
 export function showLoginDialogAsync(projectView: pxt.editor.IProjectView, callbackHash: string) {
     const targetTheme = pxt.appTarget.appTheme;
 
+    const searchParams = new URLSearchParams(window.location.search);
+    const experimentalIdentityFlagEnabled = !!searchParams.get("experimentalIdentity")
+    if (!experimentalIdentityFlagEnabled) {
+        console.log("Check back soon for the ability to sign in! :)")
+        return
+    }
+
+    // TODO: implement remember me correctly. This form should be done with a real react component.
+    let rememberMe: boolean = Math.random() > 0.5;
+
     const buttons: sui.ModalButton[] = [];
 
     const login = (idp: pxt.IdentityProviderId, rememberMe: boolean) => auth.startLogin(idp, rememberMe, callbackHash);
@@ -57,10 +67,12 @@ export function showLoginDialogAsync(projectView: pxt.editor.IProjectView, callb
                             return (
                                 <>
                                     <br></br>
-                                    <a onClick={() => login(id, false)}>{idpInfo.displayName}</a>
+                                    <a onClick={() => login(id, rememberMe)}>{idpInfo.displayName}</a>
                                 </>
                             );
                         }).filter(item => !!item)}
+                        <input type="checkbox" id="rememberMe" name="rememberMe" checked={rememberMe} disabled />
+                        <label htmlFor="rememberMe">Remember me?</label>
                     </div>)
                 }
             });

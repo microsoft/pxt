@@ -10,6 +10,7 @@ import {
 import { GestureTarget, ClientCoordinates, bindGestureEvents, TilemapPatch, createTilemapPatchFromFloatingLayer } from './util';
 
 import { Edit, EditState, getEdit, getEditState, ToolCursor, tools } from './toolDefinitions';
+import { createTile } from '../../assets';
 
 const IMAGE_MIME_TYPE = "image/x-mkcd-f4"
 
@@ -20,7 +21,7 @@ export interface ImageCanvasProps {
     dispatchChangeImageTool: (tool: ImageEditorTool) => void;
     dispatchChangeSelectedColor: (index: number) => void;
     dispatchChangeBackgroundColor: (index: number) => void;
-    dispatchCreateNewTile: (bitmap: pxt.sprite.BitmapData, foreground: number, background: number, qualifiedName?: string) => void;
+    dispatchCreateNewTile: (tile: pxt.Tile, foreground: number, background: number, qualifiedName?: string) => void;
     selectedColor: number;
     backgroundColor: number;
     tool: ImageEditorTool;
@@ -944,14 +945,14 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                 const galleryItem = gallery.find(tile => copiedTile.equals(pxt.sprite.Bitmap.fromData(tile.bitmap)));
 
                 if (galleryItem) {
-                    dispatchCreateNewTile(galleryItem.bitmap, tileset.tiles.length, backgroundColor, galleryItem.qualifiedName);
+                    dispatchCreateNewTile(null, tileset.tiles.length, backgroundColor, galleryItem.qualifiedName);
                     tileMapping.push(nextIndex);
                     nextIndex++;
                     continue;
                 }
             }
 
-            dispatchCreateNewTile(copiedTile.data(), tileset.tiles.length, backgroundColor);
+            dispatchCreateNewTile(createTile(copiedTile.data()), tileset.tiles.length, backgroundColor);
             tileMapping.push(nextIndex);
             nextIndex++;
         }

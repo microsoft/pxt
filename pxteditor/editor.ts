@@ -286,6 +286,7 @@ namespace pxt.editor {
         toggleAccessibleBlocks(): void;
         setAccessibleBlocks(enabled: boolean): void;
         launchFullEditor(): void;
+        resetWorkspace(): void;
 
         settings: EditorSettings;
 

@@ -128,7 +128,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
             visible: false,
             loading: false,
             showAdvanced: false,
-            shouldAnimate: !Util.getToolboxAnimation()
+            shouldAnimate: !pxt.shell.getToolboxAnimation()
         }
 
         this.setSelection = this.setSelection.bind(this);
@@ -271,7 +271,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         if ((this.props.editorname == MONACO_EDITOR_NAME && props.editorname != MONACO_EDITOR_NAME)
             || (props.editorname == MONACO_EDITOR_NAME && props.parent.parent.state.fullscreen)
             && this.state.shouldAnimate) {
-            Util.setToolboxAnimation();
+            pxt.shell.setToolboxAnimation();
             this.setState({ shouldAnimate: false });
         }
     }
@@ -303,7 +303,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
     componentWillUnmount() {
         if (this.props.editorname == MONACO_EDITOR_NAME) {
-            Util.setToolboxAnimation();
+            pxt.shell.setToolboxAnimation();
         }
     }
 

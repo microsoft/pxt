@@ -521,14 +521,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             else if (ev.type == 'ui') {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
-                    if (toolboxVisible) {
-                        // WARNING! Because we use the category open/close event to dismiss
-                        // the cookie banner, be careful when manipulating the toolbox to make
-                        // sure that this event only fires as the result of user action. Use
-                        // Blockly.Events.disable() and Blockly.Events.enable() to prevent
-                        // UI events from firing.
-                        pxt.analytics.enableCookies();
-                    }
+                    if (toolboxVisible) pxt.setInteractiveConsent(true);
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
                 } else if (ev.element == 'breakpointSet') {
                     this.setBreakpointsFromBlocks();
@@ -1579,7 +1572,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     protected updateGrayBlocks() {
         if (this.editor) {
-            const pythonEnabled = pxt.Util.isPyLangPref();
+            const pythonEnabled = pxt.shell.isPyLangPref();
             this.editor.getAllBlocks(false).forEach(b => {
                 if (b.type === pxtc.TS_STATEMENT_TYPE || b.type === pxtc.TS_OUTPUT_TYPE) {
                     (b as pxt.blocks.GrayBlock).setPythonEnabled(pythonEnabled);

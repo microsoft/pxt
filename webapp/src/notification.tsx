@@ -1,10 +1,8 @@
 /// <reference path="../../built/pxtlib.d.ts" />
-/// <reference path="../../localtypings/mscc.d.ts" />
 
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
-import * as electron from "./electron";
 
 import Cloud = pxt.Cloud;
 
@@ -114,11 +112,6 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        if (pxt.analytics.isCookieBannerVisible()) {
-            // don't show any banner while cookie banner is up
-            return <div></div>;
-        }
-
         const targetTheme = pxt.appTarget.appTheme;
         const isApp = pxt.winrt.isWinRT() || pxt.BrowserUtils.isElectron();
         const isLocalServe = location.hostname === "localhost";

@@ -52,13 +52,18 @@ export const OAUTH_TYPE = "oauthType";
 export const OAUTH_STATE = "oauthState"; // state used in OAuth flow
 export const OAUTH_REDIRECT = "oauthRedirect"; // hash to be reloaded up loging
 export const OAUTH_HASH = "oauthHash"; // hash used in implicit oauth signing
+export const OAUTH_REMEMBER_STATE = "oauthRememberState"; // if state matches this key, store in local storage
 
-export function setOauth(type: string, redirect?: string, hash?: string) {
+export function setOauth(type: string, rememberMe?: boolean, redirect?: string, hash?: string) {
     const state = ts.pxtc.Util.guidGen();
     pxt.storage.setLocal(OAUTH_TYPE, type);
     pxt.storage.setLocal(OAUTH_STATE, state);
     pxt.storage.setLocal(OAUTH_REDIRECT, redirect || window.location.hash)
     pxt.storage.setLocal(OAUTH_HASH, hash)
+    if (rememberMe)
+        pxt.storage.setLocal(OAUTH_REMEMBER_STATE, state);
+    else
+        pxt.storage.removeLocal(OAUTH_REMEMBER_STATE);
     return state;
 }
 
@@ -67,6 +72,7 @@ export function clearOauth() {
     pxt.storage.removeLocal(OAUTH_STATE)
     pxt.storage.removeLocal(OAUTH_REDIRECT)
     pxt.storage.removeLocal(OAUTH_HASH)
+    pxt.storage.removeLocal(OAUTH_REMEMBER_STATE)
 }
 
 export abstract class ProviderBase {
@@ -157,8 +163,9 @@ export abstract class ProviderBase {
             }
 
             pxt.storage.setLocal(this.name + "AutoLogin", "yes")
+            const rememberMe = pxt.storage.getLocal(OAUTH_REMEMBER_STATE) ? true : false;
             this.loginAsync(undefined, true)
-                .then((resp) => resp && this.setNewToken(resp.accessToken, resp.expiresIn))
+                .then((resp) => resp && this.setNewToken(resp.accessToken, rememberMe, resp.expiresIn))
                 .done();
         } else {
             setProvider(this as any)
@@ -170,19 +177,29 @@ export abstract class ProviderBase {
         return Promise.resolve(undefined);
     }
 
-    loginCallback(qs: pxt.Map<string>) {
+    loginCallback(rememberMe: boolean, qs: pxt.Map<string>) {
         const ns = this.name
         pxt.storage.removeLocal(ns + "AutoLogin")
-        this.setNewToken(qs["access_token"], parseInt(qs["expires_in"]));
+        this.setNewToken(qs["access_token"], rememberMe, parseInt(qs["expires_in"]));
 
         // re-compute
         this.setUser(undefined);
     }
 
-    setNewToken(accessToken: string, expiresIn?: number) {
+    setNewToken(accessToken: string, rememberMe: boolean, expiresIn?: number) {
         const ns = this.name;
         const tokenKey = ns + "token";
         const tokenKeyExp = ns + "tokenExp";
+
+        // the user did not check the "remember me" checkbox,
+        // do not store credentials in local storage
+        if (!rememberMe) {
+            pxt.debug(`token storage non-opted in`)
+            pxt.storage.removeLocal(tokenKey);
+            pxt.storage.removeLocal(tokenKeyExp);
+            return;
+        }
+
         if (!accessToken) {
             pxt.storage.removeLocal(tokenKey);
             pxt.storage.removeLocal(tokenKeyExp);

@@ -45,6 +45,21 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
     root.appendChild(debuggerDiv);
 
     const nestedEditorSim = /nestededitorsim=1/i.test(window.location.href);
+    let parentOrigin: string = null;
+    if (window.parent !== window) {
+        const searchParams = new URLSearchParams(window.location.search);
+        const origin = searchParams.get("parentOrigin")
+
+        // validate the URI
+        if (!!origin) {
+            try {
+                const originUrl = new URL(origin);
+                parentOrigin = originUrl.origin
+            } catch (e) {
+                console.error(`Invalid parent origin: ${origin}`)
+            }
+        }
+    }
 
     let options: pxsim.SimulatorDriverOptions = {
         restart: () => cfg.restartSimulator(),
@@ -219,7 +234,8 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         stoppedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass,
         invalidatedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass,
-        nestedEditorSim: nestedEditorSim
+        nestedEditorSim: nestedEditorSim,
+        parentOrigin: parentOrigin
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg

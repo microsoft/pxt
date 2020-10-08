@@ -242,13 +242,13 @@ namespace pxtblockly {
         for (const map of allMaps) {
             if (map.block.id === excludeBlockID) continue;
 
-            for (const tile of map.ref.getTileset().tiles) {
+            for (const tile of map.ref.getTileset()?.tiles || []) {
                 all[tile.id] = tile;
             }
         }
 
         const project = pxt.react.getTilemapProject();
-        const projectMaps = project.getAllTilemaps();
+        const projectMaps = project.getAssets(pxt.AssetType.Tilemap);
 
         for (const projectMap of projectMaps) {
             for (const tile of projectMap.data.tileset.tiles) {

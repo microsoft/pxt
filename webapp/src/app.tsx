@@ -469,7 +469,7 @@ export class ProjectView
             this.setFile(f)
         }
 
-        pxt.Util.setEditorLanguagePref("js");
+        pxt.shell.setEditorLanguagePref("js");
     }
 
     openBlocks() {
@@ -611,7 +611,7 @@ export class ProjectView
                 })
                 .then(() => {
                     // on success, update editor pref
-                    pxt.Util.setEditorLanguagePref("py");
+                    pxt.shell.setEditorLanguagePref("py");
                     return Promise.resolve();
                 });
         }
@@ -1142,14 +1142,14 @@ export class ProjectView
             tutorialOptions.tutorialStep = step;
             tutorialOptions.tutorialStepExpanded = false;
             this.setState({ tutorialOptions: tutorialOptions });
-            const fullscreen = tutorialOptions.tutorialStepInfo[step].fullscreen;
-            if (fullscreen) this.showTutorialHint();
+            const showHint = tutorialOptions.tutorialStepInfo[step].showHint;
+            if (showHint) this.showTutorialHint();
 
             const isCompleted = tutorialOptions.tutorialStepInfo[step].tutorialCompleted;
             if (isCompleted && pxt.commands.onTutorialCompleted) pxt.commands.onTutorialCompleted();
             // Hide flyouts and popouts
             this.editor.closeFlyout();
-            if (this.textEditor.giveFocusOnLoading) {
+            if (this.textEditor.giveFocusOnLoading && this.isTextEditor()) {
                 this.textEditor.editor.focus();
             }
         }
@@ -1182,8 +1182,8 @@ export class ProjectView
                         tutorialOptions.tutorialReady = true;
                         tutorialOptions.tutorialStepInfo = tt.stepInfo;
                         this.setState({ tutorialOptions: tutorialOptions });
-                        const fullscreen = tutorialOptions.tutorialStepInfo[0].fullscreen;
-                        if (fullscreen) this.showTutorialHint();
+                        const showHint = tutorialOptions.tutorialStepInfo[0].showHint;
+                        if (showHint) this.showTutorialHint();
                         //else {
                         //    this.showLightbox();
                         //}
@@ -1430,8 +1430,8 @@ export class ProjectView
                 this.setState({ editorState: editorState });
                 this.editor.filterToolbox(true);
                 const stepInfo = t.tutorialStepInfo;
-                const fullscreen = stepInfo[header.tutorial.tutorialStep].fullscreen;
-                if (fullscreen) this.showTutorialHint();
+                const showHint = stepInfo[header.tutorial.tutorialStep].showHint;
+                if (showHint) this.showTutorialHint();
                 //else this.showLightbox();
             })
             .catch(e => {
@@ -1504,8 +1504,8 @@ export class ProjectView
         }
 
         const project = pxt.react.getTilemapProject();
-        project.loadJres(parsed, true);
-        return pkg.mainEditorPkg().buildTilemapsAsync();
+        project.loadTilemapJRes(parsed, true);
+        return pkg.mainEditorPkg().buildAssetsAsync();
     }
 
     removeProject() {
@@ -2127,14 +2127,12 @@ export class ProjectView
         }
         if (options.tutorial && options.tutorial.metadata) {
             if (options.tutorial.metadata.codeStart) {
-                let codeStart = "_onCodeStart.ts";
-                files[codeStart] = "control._onCodeStart('" + pxt.U.htmlEscape(options.tutorial.metadata.codeStart) + "')";
-                cfg.files.splice(cfg.files.indexOf("main.ts"), 0, codeStart);
+                files[pxt.TUTORIAL_CODE_START] = `control._onCodeStart('${pxt.U.htmlEscape(options.tutorial.metadata.codeStart)}')`;
+                cfg.files.splice(cfg.files.indexOf("main.ts"), 0, pxt.TUTORIAL_CODE_START);
             }
             if (options.tutorial.metadata.codeStop) {
-                let codeStop = "_onCodeStop.ts";
-                files[codeStop] = "control._onCodeStop('" + pxt.U.htmlEscape(options.tutorial.metadata.codeStop) + "')";
-                cfg.files.push(codeStop);
+                files[pxt.TUTORIAL_CODE_STOP] = `control._onCodeStop('${pxt.U.htmlEscape(options.tutorial.metadata.codeStop)}')`;
+                cfg.files.push(pxt.TUTORIAL_CODE_STOP);
             }
         }
         files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
@@ -2301,7 +2299,7 @@ export class ProjectView
                         hasCloseIcon: true,
                     }).then(b => {
                         if (this.isPythonActive()) {
-                            pxt.Util.setEditorLanguagePref("py"); // stay in python, else go to blocks
+                            pxt.shell.setEditorLanguagePref("py"); // stay in python, else go to blocks
                         }
                     })
                 }
@@ -2823,7 +2821,7 @@ export class ProjectView
             const editorId = this.editor ? this.editor.getId().replace(/Editor$/, '') : "unknown";
             if (opts.background) {
                 pxt.tickActivity("autorun", "autorun." + editorId);
-                if (localStorage.getItem("noAutoRun"))
+                if (pxt.storage.getLocal("noAutoRun"))
                     return Promise.resolve()
             } else pxt.tickEvent(opts.debug ? "debug" : "run", { editor: editorId });
 
@@ -4397,7 +4395,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    pxt.setCompileSwitches(window.localStorage["compile"])
     pxt.setCompileSwitches(query["compiler"] || query["compile"])
 
     // github token set in cloud provider

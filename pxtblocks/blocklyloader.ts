@@ -16,6 +16,12 @@ namespace pxt.blocks {
         declaredVariables: string;
     }
 
+    // Parsed format of data stored in the .data attribute of blocks
+    export interface PXTBlockData {
+        commentRefs: string[];
+        fieldData: pxt.Map<string>;
+    }
+
     const typeDefaults: Map<{ field: string, block: string, defaultValue: string }> = {
         "string": {
             field: "TEXT",
@@ -2425,6 +2431,7 @@ namespace pxt.blocks {
         const functionCall = pxt.blocks.getBlockDefinition(functionCallId);
 
         msg.FUNCTIONS_CALL_TITLE = functionCall.block["FUNCTIONS_CALL_TITLE"];
+        msg.FUNCTIONS_GO_TO_DEFINITION_OPTION = functionCall.block["FUNCTIONS_GO_TO_DEFINITION_OPTION"];
         installBuiltinHelpInfo(functionCallId);
         installBuiltinHelpInfo("function_call_output");
 
@@ -2657,6 +2664,27 @@ namespace pxt.blocks {
 
                 setOutputCheck(this, typeName, cachedBlockInfo);
             };
+        }
+
+        /**
+         * Make a context menu option for creating a function call block.
+         * This appears in the context menu for function definitions.
+         * @param {!Blockly.BlockSvg} block The block where the right-click originated.
+         * @return {!Object} A menu option, containing text, enabled, and a callback.
+         * @package
+         */
+        const makeCreateCallOptionOriginal = (Blockly as any).Functions.makeCreateCallOption;
+
+        // needs to exist or makeCreateCallOptionOriginal will throw an exception
+        Blockly.Msg.FUNCTIONS_CREATE_CALL_OPTION = "";
+
+        (Blockly as any).Functions.makeCreateCallOption = function (block: Blockly.Block) {
+           let option = makeCreateCallOptionOriginal(block);
+
+           let functionName = block.getField("function_name").getText();
+           option.text = Util.lf("Create 'call {0}'", functionName);
+
+           return option;
         }
     }
 
@@ -3046,5 +3074,36 @@ namespace pxt.blocks {
             model.name = newName;
             varField.setValue(model.getId());
         }
+    }
+
+
+    export function getBlockData(block: Blockly.Block): PXTBlockData {
+        if (!block.data) {
+            return {
+                commentRefs: [],
+                fieldData: {}
+            };
+        }
+        if (/^(?:\d+;?)+$/.test(block.data)) {
+            return {
+                commentRefs: block.data.split(";"),
+                fieldData: {}
+            }
+        }
+        return JSON.parse(block.data);
+    }
+
+    export function setBlockData(block: Blockly.Block, data: PXTBlockData) {
+        block.data = JSON.stringify(data);
+    }
+
+    export function setBlockDataForField(block: Blockly.Block, field: string, data: string) {
+        const blockData = getBlockData(block);
+        blockData.fieldData[field] = data;
+        setBlockData(block, blockData);
+    }
+
+    export function getBlockDataForField(block: Blockly.Block, field: string) {
+        return getBlockData(block).fieldData[field];
     }
 }

@@ -401,7 +401,7 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
     const cfg: pxt.PackageConfig = pxt.Package.parseAndValidConfig(text[pxt.CONFIG_NAME]);
     if (cfg && cfg.preferredEditor) {
         h.editor = cfg.preferredEditor
-        pxt.Util.setEditorLanguagePref(cfg.preferredEditor);
+        pxt.shell.setEditorLanguagePref(cfg.preferredEditor);
     }
 
     return pxt.github.cacheProjectDependenciesAsync(cfg)
@@ -1365,6 +1365,9 @@ export function resetAsync() {
     return impl.resetAsync()
         .then(github.resetAsync)
         .then(db.destroyAsync)
+        .then(pxt.BrowserUtils.clearTranslationDbAsync)
+        .then(pxt.BrowserUtils.clearTutorialInfoDbAsync)
+        .then(compiler.clearApiInfoDbAsync)
         .then(() => {
             pxt.storage.clearLocal();
             data.clearCache();

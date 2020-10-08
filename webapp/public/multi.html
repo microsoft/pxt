@@ -53,7 +53,7 @@
             var divider = document.getElementById("divider");
             var localhost = window.location.hostname == "localhost";
             var editor = (pxtConfig ? pxtConfig.relprefix : '/').replace(/-*$/, '');
-            var flags = "?nestededitorsim=1&editorlayout=ide&nosandbox=1";
+            var flags = "?nestededitorsim=1&editorlayout=ide&nosandbox=1&parentOrigin=" + encodeURIComponent(window.location.origin);
             var ratio = .5;
             var dividerWidth = 14;
 
@@ -136,7 +136,7 @@
             }
             setWidths();
             handleHash();
-        })();        
+        })();
     </script>
     <!-- @include tracking.html -->
 </body>
