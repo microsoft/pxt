@@ -11,6 +11,13 @@ import Util = pxt.Util;
 export function showLoginDialogAsync(projectView: pxt.editor.IProjectView) {
     const targetTheme = pxt.appTarget.appTheme;
 
+    const searchParams = new URLSearchParams(window.location.search);
+    const experimentalIdentityFlagEnabled = !!searchParams.get("experimentalIdentity")
+    if (!experimentalIdentityFlagEnabled) {
+        console.log("Check back soon for the ability to sign in! :)")
+        return
+    }
+
     // TODO: implement remember me correctly. This form should be done with a real react component.
     let rememberMe: boolean = Math.random() > 0.5;
 
