@@ -35,7 +35,7 @@ class AssetCardImpl extends React.Component<AssetCardProps> {
     render() {
         const { asset, selected } = this.props;
         const icon = this.getDisplayIconForAsset(asset.type);
-        return <div className={`asset-editor-card ${selected ? "selected" : ""}`} onClick={this.clickHandler}>
+        return <div className={`asset-editor-card ${selected ? "selected" : ""}`} onClick={this.clickHandler} role="listitem">
             <AssetPreview asset={asset} />
             {icon && <div className="asset-editor-card-label">
                 <i className={`icon ${icon}`} />

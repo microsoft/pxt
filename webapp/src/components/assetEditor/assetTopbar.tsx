@@ -19,7 +19,7 @@ class AssetGalleryTabImpl extends React.Component<AssetGalleryTabProps> {
     render() {
         const { title, selected } = this.props;
 
-        return <div className={`asset-editor-gallery-tab ${selected ? "selected" : ""}`} onClick={this.handleClick}>
+        return <div className={`asset-editor-gallery-tab ${selected ? "selected" : ""}`} onClick={this.handleClick} role="navigation">
             {title}
         </div>
     }
