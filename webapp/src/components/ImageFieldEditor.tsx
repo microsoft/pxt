@@ -16,6 +16,11 @@ export interface ImageFieldEditorState {
     galleryFilter?: string;
 }
 
+interface ProjectGalleryItem extends pxt.sprite.GalleryItem {
+    assetType: pxt.AssetType;
+    id: string;
+}
+
 export type ImageType = pxt.ProjectImage | pxt.Animation;
 
 export class ImageFieldEditor<U extends ImageType> extends React.Component<ImageFieldEditorProps, ImageFieldEditorState> implements FieldEditorComponent<U> {
@@ -26,6 +31,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
     protected tileGallery: pxt.sprite.GalleryItem[];
     protected extensionGallery: pxt.sprite.GalleryItem[];
     protected projectGallery: pxt.sprite.GalleryItem[];
+    protected editID: string;
 
     constructor(props: ImageFieldEditorProps) {
         super(props);
@@ -73,7 +79,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
             <div className="image-editor-gallery-content">
                 <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} />
                 <ImageEditorGallery
-                    items={currentView === "my-assets" ? this.projectGallery : this.extensionGallery}
+                    items={currentView === "my-assets" ? this.projectGallery.filter(a => (a as ProjectGalleryItem).id !== this.editID) : this.extensionGallery}
                     hidden={currentView === "editor"}
                     filterString={this.state.galleryFilter}
                     onItemSelected={this.onGalleryItemSelect} />
@@ -105,6 +111,8 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         else {
             this.initAnimation(value as pxt.Animation, options);
         }
+
+        this.editID = value.id;
 
         if (options) {
             this.blocksInfo = options.blocksInfo;
@@ -175,12 +183,19 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         const imageToGalleryItem = (image: pxt.ProjectImage | pxt.Tile) => ({
             qName: image.id,
             src: imgConv.convert("data:image/x-mkcd-f," + image.jresData),
-            alt: image.id,
-            tags: []
-        } as pxt.sprite.GalleryItem)
+            alt: image.meta.displayName || image.id,
+            tags: [],
+            assetType: image.type,
+            id: image.id
+        } as ProjectGalleryItem)
 
-        return project.getAssets(pxt.AssetType.Image).map(imageToGalleryItem)
-            .concat(project.getAssets(pxt.AssetType.Tile).map(imageToGalleryItem));
+        const compareAsset = (a: pxt.Asset, b: pxt.Asset) => a.internalID - b.internalID;
+
+
+        const all = (project.getAssets(pxt.AssetType.Image) as (pxt.ProjectImage | pxt.Tile)[]).sort(compareAsset)
+            .concat(project.getAssets(pxt.AssetType.Tile).sort(compareAsset));
+
+        return all.map(imageToGalleryItem)
     }
 
     protected initSingleFrame(value: pxt.ProjectImage, options?: any) {
@@ -253,7 +268,12 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
             let selectedBitmap = pxt.sprite.getBitmap(this.blocksInfo, item.qName);
 
             if (!selectedBitmap) {
-                selectedBitmap = pxt.sprite.Bitmap.fromData(pxt.react.getTilemapProject().resolveTile(item.qName).bitmap);
+                const projectItem = item as ProjectGalleryItem;
+                const project = pxt.react.getTilemapProject();
+
+                const asset = project.lookupAsset(projectItem.assetType, projectItem.id) as pxt.Tile | pxt.ProjectImage;
+
+                selectedBitmap = pxt.sprite.Bitmap.fromData(asset.bitmap);
             }
 
             this.ref.setCurrentFrame(selectedBitmap);

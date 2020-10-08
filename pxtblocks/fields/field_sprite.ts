@@ -42,8 +42,7 @@ namespace pxtblockly {
             }
 
             const bmp = text ? pxt.sprite.imageLiteralToBitmap(text) : new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
-            const newAsset = project.createNewImage(bmp.width, bmp.height);
-            newAsset.bitmap = bmp.data();
+            const newAsset = project.createNewProjectImage(bmp.data());
             return newAsset;
         }
 

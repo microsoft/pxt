@@ -892,6 +892,29 @@ namespace pxt {
             }
         }
 
+        removeInactiveBlockAssets(activeBlockIDs: string[]) {
+            cleanupCollection(this.state.images);
+            cleanupCollection(this.state.tiles);
+            cleanupCollection(this.state.tilemaps);
+            cleanupCollection(this.state.animations);
+
+
+            function cleanupCollection<U extends Asset>(collection: AssetCollection<U>) {
+                const inactiveAssets = collection.getSnapshot(asset => !asset.meta.displayName && asset.meta.blockIDs?.some(id => activeBlockIDs.indexOf(id) === -1));
+                const toRemove: Asset[] = [];
+                for (const asset of inactiveAssets) {
+                    if (asset.meta.blockIDs.length === 1) toRemove.push(asset)
+                    else {
+                        asset.meta.blockIDs = asset.meta.blockIDs.filter(id => activeBlockIDs.indexOf(id) !== -1);
+                        if (asset.meta.blockIDs.length === 0) toRemove.push(asset);
+                    }
+                }
+                for (const asset of toRemove) {
+                    collection.removeByID(asset.id);
+                }
+            }
+        }
+
         protected generateNewID(type: AssetType, varPrefix: string, namespaceString?: string) {
             const prefix = namespaceString ? namespaceString + "." + varPrefix : varPrefix;
             let index = 0;
