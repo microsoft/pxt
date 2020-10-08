@@ -182,7 +182,6 @@ export async function buildAllTranslationsAsync(langToStringsHandlerAsync: (file
         const crowdinDir = pxt.appTarget.id;
         const locs: pxt.Map<pxt.Map<string>> = {};
         for (const filePath of files) {
-            const errors: pxt.Map<number> = {};
             const fn = path.basename(filePath);
             const crowdf = path.join(crowdinDir, fn);
             const locdir = path.dirname(filePath);
@@ -195,32 +194,12 @@ export async function buildAllTranslationsAsync(langToStringsHandlerAsync: (file
                 if (!dataLang || !stringifyTranslations(dataLang))
                     continue;
 
-                // validate translations
-                if (/-strings\.json$/.test(fn) && !/jsdoc-strings\.json$/.test(fn)) {
-                    // block definitions
-                    for (const id of Object.keys(dataLang)) {
-                        const tr = dataLang[id];
-                        pxt.blocks.normalizeBlock(tr, err => {
-                            const errid = `${fn}.${lang}`;
-                            errors[`${fn}.${lang}`] = 1;
-                            pxt.log(`error ${errid}: ${err}`);
-                        });
-                    }
-                }
-
                 // merge translations
                 let strings = locs[lang];
                 if (!strings) strings = locs[lang] = {};
                 Object.keys(dataLang)
                     .filter(k => !!dataLang[k] && !strings[k])
                     .forEach(k => strings[k] = dataLang[k]);
-            }
-
-            const errorIds = Object.keys(errors);
-            if (errorIds.length) {
-                pxt.log(`${errorIds.length} errors`);
-                errorIds.forEach(blockid => pxt.log(`error in ${blockid}`));
-                pxt.reportError("loc.errors", "invalid translation", errors);
             }
         }
 
