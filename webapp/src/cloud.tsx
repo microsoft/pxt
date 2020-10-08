@@ -1,11 +1,38 @@
+/*
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
-import * as cloudsync from "./cloudsync";
+import * as auth from "./auth";
 
 import * as codecard from "./codecard";
+
+export const HEADER_JSON = ".cloudheader.json";
+
+type IdpInfo = {
+    displayName: string;
+    icon?: string;
+};
+
+type IdpInfos = {
+    [id in pxt.IdentityProviderId]: IdpInfo;
+};
+
+const idpInfos: IdpInfos = {
+    "makecode": {
+        displayName: lf("MakeCode")
+    },
+    "microsoft": {
+        displayName: lf("Microsoft")
+    },
+    "google": {
+        displayName: lf("Google")
+    },
+    "github": {
+        displayName: lf("GitHub")
+    }
+};
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -49,7 +76,6 @@ export class SignInDialog extends data.Component<SignInDialogProps, SignInDialog
 
     renderCore() {
         const { visible } = this.state;
-        const providers = cloudsync.providers();
 
         return (
             <sui.Modal isOpen={visible} className="signindialog" size="small"
@@ -60,8 +86,8 @@ export class SignInDialog extends data.Component<SignInDialogProps, SignInDialog
                 <div className="ui header">{lf("Please choose your cloud provider.")}</div>
                 <div className="ui grid padded">
                     <div className={"ui cards"}>
-                        {providers.map(p => (
-                            <SignInProviderButton key={p.name} provider={p} onLoggedIn={this.onLoggedIn} />
+                        {pxt.appTarget.auth?.providers?.map(p => (
+                            <SignInProviderButton key={p} provider={p} onLoggedIn={this.onLoggedIn} />
                         ))}
                     </div>
                 </div>
@@ -71,7 +97,7 @@ export class SignInDialog extends data.Component<SignInDialogProps, SignInDialog
 }
 
 interface SignInProviderButtonProps {
-    provider?: cloudsync.IdentityProvider;
+    provider?: pxt.IdentityProviderId;
     onLoggedIn?: () => void;
 }
 
@@ -86,7 +112,8 @@ class SignInProviderButton extends sui.StatelessUIElement<SignInProviderButtonPr
 
     handleClick() {
         const { provider, onLoggedIn } = this.props;
-        provider.loginAsync()
+        auth.startLogin(provider, true, "login-callback")
+        // this state-keeping is wrong. Cannot promise over a redirect.
             .then(() => {
                 if (onLoggedIn) onLoggedIn();
             });
@@ -94,12 +121,13 @@ class SignInProviderButton extends sui.StatelessUIElement<SignInProviderButtonPr
 
     renderCore() {
         const { provider, ...rest } = this.props;
+        const prov = idpInfos[provider];
         return <codecard.CodeCardView
-            ariaLabel={lf("Sign in with {0}.", provider.name)}
+            ariaLabel={lf("Sign in with {0}.", prov.displayName)}
             role="button"
             key={'import'}
-            icon={`${provider.icon} large`}
-            name={provider.friendlyName}
+            icon={`${prov.icon} large`}
+            name={prov.displayName}
             onClick={this.handleClick}
             {...rest}
         />
@@ -152,3 +180,4 @@ export class UserMenu extends data.Component<UserMenuProps, {}> {
         </sui.DropdownMenu>
     }
 }
+*/

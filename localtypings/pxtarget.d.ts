@@ -53,6 +53,7 @@ declare namespace pxt {
         corepkg: string;
         title?: string;
         cloud?: AppCloud;
+        auth?: AppAuth;
         simulator?: AppSimulator;
         blocksprj: ProjectTemplate;
         tsprj: ProjectTemplate;
@@ -166,12 +167,25 @@ declare namespace pxt {
         noGithubProxy?: boolean;
         maxFileSize?: number; // maximum file size in bytes
         warnFileSize?: number; // warn aboutfile size in bytes
-        cloudProviders?: pxt.Map<AppCloudProvider>;
+        githubAuth?: boolean; // allow create github repo
     }
 
-    interface AppCloudProvider {
-        client_id: string;
-        redirect?: boolean; // Whether or not to popup or redirect the oauth. Default to popup
+    type IdentityProviderId = "makecode" | "microsoft" | "google" | "github";
+
+    interface UserProfile {
+        id?: string;
+        idp?: IdentityProviderId;
+        displayName?: string;
+        avatarUrl?: string;
+        github?: {
+            username?: string;
+            token?: string;
+        }
+    }
+
+    interface AppAuth {
+        enabled?: boolean;
+        providers?: IdentityProviderId[];
     }
 
     interface AppSimulator {

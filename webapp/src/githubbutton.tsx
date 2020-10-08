@@ -1,7 +1,6 @@
 import * as React from "react";
 import * as sui from "./sui";
 import * as pkg from "./package";
-import * as cloudsync from "./cloudsync";
 import * as workspace from "./workspace";
 
 interface GithubButtonProps extends pxt.editor.ISettingsProps {

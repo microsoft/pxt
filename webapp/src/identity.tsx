@@ -3,18 +3,43 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as coretsx from "./coretsx";
 import * as pkg from "./package";
-import * as cloudsync from "./cloudsync";
+import * as auth from "./auth";
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
+import { loadGifEncoderAsync } from "./screenshot";
 
-export function showLoginDialogAsync(projectView: pxt.editor.IProjectView) {
+type IdpInfo = {
+    displayName: string;
+};
+
+type IdpInfos = {
+    [id in pxt.IdentityProviderId]: IdpInfo;
+};
+
+const idpInfos: IdpInfos = {
+    "makecode": {
+        displayName: lf("MakeCode")
+    },
+    "microsoft": {
+        displayName: lf("Microsoft")
+    },
+    "google": {
+        displayName: lf("Google")
+    },
+    "github": {
+        displayName: lf("GitHub")
+    }
+};
+
+export function showLoginDialogAsync(projectView: pxt.editor.IProjectView, callbackHash: string) {
     const targetTheme = pxt.appTarget.appTheme;
 
     const buttons: sui.ModalButton[] = [];
-    let loginUrl = (provider: string) => `${pxt.Cloud.apiRoot}login?provider=${provider}`;
 
-    // TODO: merge with githubprovider.tsx
+    const login = (idp: pxt.IdentityProviderId, rememberMe: boolean) => auth.startLogin(idp, rememberMe, callbackHash);
+
+    // TODO: Add "Remember Me" checkbox
     pxt.targetConfigAsync()
         .then(config => {
             return core.confirmAsync({
@@ -23,16 +48,21 @@ export function showLoginDialogAsync(projectView: pxt.editor.IProjectView) {
                 agreeLbl: lf("Cancel"),
                 agreeClass: "cancel",
                 buttons,
-                jsx: <div>
-                    Login with:
-                    <br></br>
-                    <a target="_blank" rel="noopener noreferrer" href={loginUrl("ms")}>Microsoft</a>
-                    <br></br>
-                    <a target="_blank" rel="noopener noreferrer" href={loginUrl("github")}>GitHub</a>
-                    <br></br>
-                    <a target="_blank" rel="noopener noreferrer" href={loginUrl("goog")}>Google</a>
-                    <br></br>
-                </div>
-            })
+                jsxd: () => {
+                    return (<div>
+                        Login with:
+                        {pxt.appTarget.auth.providers.map(id => {
+                            const idpInfo = idpInfos[id];
+                            if (!idpInfo) return null;
+                            return (
+                                <>
+                                    <br></br>
+                                    <a onClick={() => login(id, false)}>{idpInfo.displayName}</a>
+                                </>
+                            );
+                        }).filter(item => !!item)}
+                    </div>)
+                }
+            });
         }).done();
 }

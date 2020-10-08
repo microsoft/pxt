@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as core from "./core";
+import * as provider from "./legacy/provider";
 
 export type Action = () => void;
 export type AnyComponent = Component<any, any>;
@@ -335,15 +336,7 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
         return getCached(this, path)
     }
 
-    hasCloud(): boolean {
-        return !!this.getData("sync:hascloud");
-    }
-
-    hasSync(): boolean {
-        return !!this.getData("sync:hassync")
-    }
-
-    getUser(): pxt.editor.UserInfo {
+    getUser(): provider.UserInfo {
         return this.getData("sync:user");
     }
 

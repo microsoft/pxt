@@ -6,8 +6,7 @@ import * as sui from "./sui";
 import * as tutorial from "./tutorial";
 import * as container from "./container";
 import * as core from "./core";
-import * as cloud from "./cloud";
-import * as cloudsync from "./cloudsync";
+import * as github from "./github";
 import * as pkg from "./package";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
@@ -128,7 +127,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.pair = this.pair.bind(this);
         this.pairBluetooth = this.pairBluetooth.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
-        this.showLoginDialog = this.showLoginDialog.bind(this);
         this.print = this.print.bind(this);
         this.signOutGithub = this.signOutGithub.bind(this);
     }
@@ -218,9 +216,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         pxt.tickEvent("menu.about");
         this.props.parent.showAboutDialog();
     }
-    showLoginDialog() {
-        this.props.parent.showLoginDialog();
-    }
 
     print() {
         pxt.tickEvent("menu.print");
@@ -229,7 +224,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     signOutGithub() {
         pxt.tickEvent("menu.github.signout");
-        const githubProvider = cloudsync.githubProvider();
+        const githubProvider = github.githubProvider();
         if (githubProvider) {
             githubProvider.logout();
             this.props.parent.forceUpdate();
@@ -273,7 +268,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const docItems = targetTheme.docMenu && targetTheme.docMenu.filter(d => !d.tutorial);
 
         // Electron does not currently support webusb
-        const githubUser = !readOnly && !isController && this.getData("github:user") as pxt.editor.UserInfo;
+        const githubUser = !readOnly && !isController && this.getData("github:user") as github.UserInfo;
         const showPairDevice = pxt.usb.isEnabled;
 
         const showCenterDivider = targetTheme.selectLanguage || targetTheme.highContrast || showGreenScreen || githubUser;
@@ -542,10 +537,6 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const simOpts = pxt.appTarget.simulator;
         const isHeadless = simOpts && simOpts.headless;
 
-        const hasCloud = this.hasCloud();
-        const user = hasCloud ? this.getUser() : undefined;
-        const showCloud = !sandbox && !inTutorial && !debugging && !!user;
-
         const cfg = pkg.mainPkg && pkg.mainPkg.config;
         const languageRestriction = cfg && cfg.languageRestriction;
 
@@ -587,7 +578,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 {debugging ? <sui.ButtonMenuItem className="exit-debugmode-btn" role="menuitem" icon="external" text={lf("Exit Debug Mode")} textClass="landscape only" onClick={this.toggleDebug} /> : undefined}
                 {docMenu ? <container.DocsMenu parent={this.props.parent} editor={editor} /> : undefined}
                 {sandbox || inTutorial || debugging ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} accessibleBlocks={accessibleBlocks} />}
-                {showCloud ? <cloud.UserMenu parent={this.props.parent} /> : undefined}
+                {/*showCloud ? <cloud.UserMenu parent={this.props.parent} /> :*/ undefined}
                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} /> : undefined}
                 {inTutorial && tutorialReportId ? <sui.ButtonMenuItem className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report Abuse")} textClass="landscape only" onClick={this.showReportAbuse} /> : undefined}
                 {(inTutorial && !lockedEditor && !hideIteration) && <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} />}

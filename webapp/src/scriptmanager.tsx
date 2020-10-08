@@ -183,9 +183,6 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             return workspace.getTextAsync(header.id)
                 .then(text => workspace.duplicateAsync(header, text, res))
                 .then(clonedHeader => {
-                    // If we're cloud synced, update the cloudSync flag
-                    if (this.props.parent.cloudSync()) clonedHeader.cloudSync = true;
-
                     delete clonedHeader.blobId
                     delete clonedHeader.blobVersion
                     delete clonedHeader.blobCurrent

@@ -5,9 +5,7 @@ import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as core from "./core";
-import * as cloud from "./cloud";
-import * as cloudsync from "./cloudsync";
-
+import * as github from "./github";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
 import { showAboutDialogAsync } from "./dialogs";
@@ -38,7 +36,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.chgCode = this.chgCode.bind(this);
         this.importProject = this.importProject.bind(this);
         this.showScriptManager = this.showScriptManager.bind(this);
-        this.cloudSignIn = this.cloudSignIn.bind(this);
         this.setSelected = this.setSelected.bind(this);
     }
 
@@ -90,7 +87,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     }
 
     private showLoginDialog() {
-        showLoginDialogAsync(this.props.parent);
+        showLoginDialogAsync(this.props.parent, "login-callback");
     }
 
     chgHeader(hdr: pxt.workspace.Header) {
@@ -166,11 +163,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     showScriptManager() {
         pxt.tickEvent("projects.showall.header", undefined, { interactiveConsent: true });
         this.props.parent.showScriptManager();
-    }
-
-    cloudSignIn() {
-        pxt.tickEvent("projects.signin", undefined, { interactiveConsent: true });
-        this.props.parent.cloudSignInDialog();
     }
 
     renderCore() {
@@ -296,7 +288,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showReportAbuse = this.showReportAbuse.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
-        this.showLoginDialog = this.showLoginDialog.bind(this);
         this.signOutGithub = this.signOutGithub.bind(this);
     }
 
@@ -337,13 +328,9 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.props.parent.showAboutDialog();
     }
 
-    showLoginDialog() {
-        this.props.parent.showLoginDialog();
-    }
-
     signOutGithub() {
         pxt.tickEvent("home.github.signout");
-        const githubProvider = cloudsync.githubProvider();
+        const githubProvider = github.githubProvider();
         if (githubProvider) {
             githubProvider.logout();
             this.props.parent.forceUpdate();
@@ -352,13 +339,13 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
     }
 
     async identityLogin() {
-        await showLoginDialogAsync(this.props.parent);
+        await showLoginDialogAsync(this.props.parent, "login-callback");
     }
 
     renderCore() {
         const { highContrast } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
-        const githubUser = this.getData("github:user") as pxt.editor.UserInfo;
+        const githubUser = this.getData("github:user") as github.UserInfo;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
         const showDivider = targetTheme.selectLanguage || targetTheme.highContrast || githubUser;
 
@@ -378,7 +365,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
             <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} />
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
             {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener noreferrer" >{lf("Give Feedback")}</a> : undefined}
-            {targetTheme.identity ? <sui.Item role="menuitem" text={lf("Login")} onClick={this.showLoginDialog} /> : undefined}
+            {targetTheme.identity ? <sui.Item role="menuitem" text={lf("Login")} onClick={this.identityLogin} /> : undefined}
 
         </sui.DropdownMenu>;
     }
@@ -410,9 +397,6 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
 
-        // only show cloud head if a configuration is available
-        const showCloudHead = this.hasCloud();
-
         return <div id="homemenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
             <div className="left menu">
                 <a href={targetTheme.logoUrl} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" onClick={this.brandIconClick}>
@@ -424,7 +408,7 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
             </div>
             <div className="ui item home mobile hide"><sui.Icon icon={`icon home large`} /> <span>{lf("Home")}</span></div>
             <div className="right menu">
-                {!showCloudHead ? undefined : <cloud.UserMenu parent={this.props.parent} />}
+                {/*!showCloudHead ? undefined : <cloud.UserMenu parent={this.props.parent} />*/ undefined }
                 <ProjectSettingsMenu parent={this.props.parent} highContrast={this.props.parent.state.highContrast} />
                 <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={this.orgIconClick}>
                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
@@ -1057,7 +1041,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
         const showCreateGithubRepo = targetTheme.githubEditor
             && !pxt.winrt.isWinRT() // not supported in windows 10
             && !pxt.BrowserUtils.isPxtElectron()
-            && pxt.appTarget?.cloud?.cloudProviders?.github;
+            && pxt.appTarget?.cloud?.githubAuth;
         /* tslint:disable:react-a11y-anchors */
         return (
             <sui.Modal isOpen={visible} className="importdialog" size="small"

@@ -9,7 +9,7 @@ import * as coretsx from "./coretsx";
 import * as data from "./data";
 import * as markedui from "./marked";
 import * as compiler from "./compiler";
-import * as cloudsync from "./cloudsync";
+import * as github from "./github";
 import * as tutorial from "./tutorial";
 import * as _package from "./package";
 
@@ -176,7 +176,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     }
 
     private async newBranchAsync() {
-        await cloudsync.ensureGitHubTokenAsync();
+        await github.ensureGitHubTokenAsync();
         const gid = this.parsedRepoId()
         const initialBranchName = await pxt.github.getNewBranchNameAsync(gid.fullName, "patch-")
         const branchName = await core.promptAsync({
@@ -285,13 +285,13 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
     private handleAutorize() {
         pxt.tickEvent("github.authorize");
-        const provider = cloudsync.githubProvider();
+        const provider = github.githubProvider();
         provider.authorizeAppAsync();
     }
 
     async forkAsync(fromError: boolean) {
         const parsed = this.parsedRepoId()
-        const provider = cloudsync.githubProvider();
+        const provider = github.githubProvider();
         const user = provider.user();
         let org: JSX.Element = undefined;
         if (fromError && user && parsed.owner !== user.userName) {
@@ -356,7 +356,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             pxt.tickEvent("github.commitwithconflicts");
             core.warningNotification(lf("Please merge all conflicts before commiting changes."))
         } else if (statusCode == 401) {
-            cloudsync.githubProvider().clearToken();
+            github.githubProvider().clearToken();
             this.forceUpdate();
             core.warningNotification(lf("Please sign in to GitHub again."));
         }
@@ -485,7 +485,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
     private async showLoading(tick: string, ensureToken: boolean, msg: string) {
         if (ensureToken)
-            await cloudsync.ensureGitHubTokenAsync();
+            await github.ensureGitHubTokenAsync();
         pxt.tickEvent(tick);
         await this.setStateAsync({ loadingMessage: msg });
         core.showLoading("githubjson", msg);
@@ -725,7 +725,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const haspull = pullStatus == workspace.PullStatus.GotChanges;
         const githubId = this.parsedRepoId()
         const master = githubId.tag == "master";
-        const user = this.getData("github:user") as pxt.editor.UserInfo;
+        const user = this.getData("github:user") as github.UserInfo;
 
         // don't use gs.prUrl, as it gets cleared often
         const url = `https://github.com/${githubId.fullName}${master ? "" : `/tree/${githubId.tag}`}`;
@@ -1190,7 +1190,7 @@ interface GitHubViewProps {
     gs: pxt.github.GitJson;
     isBlocks: boolean;
     needsCommit: boolean;
-    user: pxt.editor.UserInfo;
+    user: github.UserInfo;
     pullStatus: workspace.PullStatus;
     pullRequest: pxt.github.PullRequest;
 }
@@ -1209,7 +1209,7 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
     private async handleCommitClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.commit");
         e.stopPropagation();
-        await cloudsync.githubProvider().loginAsync();
+        await github.githubProvider().loginAsync();
         if (pxt.github.token)
             await this.props.parent.commitAsync();
     }
@@ -1352,7 +1352,7 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
                 hideAgree: true
             });
         else
-            cloudsync.githubProvider()
+            github.githubProvider()
                 .loginAsync()
                 .then(() => pxt.github.token && this.props.parent.bumpAsync())
                 .finally(() => pkg.invalidatePagesStatus(header))

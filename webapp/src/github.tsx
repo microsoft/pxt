@@ -1,13 +1,18 @@
 import * as React from "react";
 import * as sui from "./sui";
 import * as core from "./core";
-import * as cloudsync from "./cloudsync";
+import * as data from "./data";
 import * as dialogs from "./dialogs";
 import * as workspace from "./workspace";
+import * as provider from "./legacy/provider";
+
+import U = pxt.Util;
 
 export const PROVIDER_NAME = "github";
 
-export class GithubProvider extends cloudsync.ProviderBase {
+export type UserInfo = provider.UserInfo;
+
+export class GithubProvider extends provider.ProviderBase {
     constructor() {
         super(PROVIDER_NAME, lf("GitHub"), "icon github", "https://api.github.com");
         pxt.github.handleGithubNetworkError = (opts: pxt.U.HttpRequestOptions, e: any) => {
@@ -36,10 +41,6 @@ export class GithubProvider extends cloudsync.ProviderBase {
         window.location.href = "https://github.com/logout";
     }
 
-    hasSync(): boolean {
-        return false;
-    }
-
     hasToken(): boolean {
         this.loginCheck();
         return !!this.token();
@@ -53,7 +54,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
         pxt.github.token = tok;
     }
 
-    loginAsync(redirect?: boolean, silent?: boolean): Promise<cloudsync.ProviderLoginResponse> {
+    loginAsync(redirect?: boolean, silent?: boolean): Promise<provider.ProviderLoginResponse> {
         return this.routedLoginAsync(undefined);
     }
 
@@ -63,7 +64,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
         if (!this.token()) {
             p = p.then(() => this.showLoginAsync(route));
         }
-        return p.then(() => { return { accessToken: this.token() } as cloudsync.ProviderLoginResponse; });
+        return p.then(() => { return { accessToken: this.token() } as provider.ProviderLoginResponse; });
     }
 
     private showLoginAsync(route: string): Promise<void> {
@@ -71,9 +72,8 @@ export class GithubProvider extends cloudsync.ProviderBase {
         // auth flow if github provider is prsent
         const oAuthSupported = pxt.appTarget
             && !pxt.BrowserUtils.isPxtElectron()
-            && pxt.appTarget.cloud
-            && pxt.appTarget.cloud.cloudProviders
-            && !!pxt.appTarget.cloud.cloudProviders[this.name];
+            && pxt.appTarget?.auth
+            && pxt.appTarget?.cloud?.githubAuth;
 
         let useToken = !oAuthSupported;
         let form: HTMLElement;
@@ -144,7 +144,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
         // TODO(dz): move this redirect into pxt-backend; merge this code with identity.tsx
         core.showLoading("ghlogin", lf("Signing you into GitHub..."))
         route = (route || "").replace(/^#/, "");
-        const state = cloudsync.setOauth(this.name, route ? `#github:${route}` : undefined);
+        const state = provider.setOauth(this.name, route ? `#github:${route}` : undefined);
         const self = window.location.href.replace(/#.*/, "")
         const login = pxt.Cloud.getServiceUrl() +
             "/oauth/login?state=" + state +
@@ -155,7 +155,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
         return Promise.delay(1000);
     }
 
-    getUserInfoAsync(): Promise<pxt.editor.UserInfo> {
+    getUserInfoAsync(): Promise<UserInfo> {
         if (!this.token())
             return Promise.resolve(undefined);
         return pxt.github.authenticatedUserAsync()
@@ -211,8 +211,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
                                 this.setNewToken(hextoken);
                                 pxt.tickEvent("github.token.ok");
                             }
-                        })
-                        .then(() => cloudsync.syncAsync())
+                        });
                 }
             }).finally(() => core.hideLoading(LOAD_ID))
     }
@@ -239,4 +238,43 @@ export class GithubProvider extends cloudsync.ProviderBase {
             core.hideLoading("creategithub");
         }
     }
+
+    invalidateData() {
+        data.invalidate("github:user");
+    }
 }
+
+// requests token to user if needed
+export async function ensureGitHubTokenAsync() {
+    // check that we have a token first
+    await githubProvider(true).loginAsync();
+    if (!pxt.github.token)
+        U.userError(lf("Please sign in to GitHub to perform this operation."))
+}
+
+export function githubProvider(required?: boolean): GithubProvider {
+    return GithubProvider.currentProvider as GithubProvider;
+}
+
+export function resetAsync() {
+    if (GithubProvider.currentProvider) {
+        GithubProvider.currentProvider.logout()
+        GithubProvider.currentProvider = null
+    }
+
+    pxt.storage.removeLocal("cloudId")
+    provider.clearOauth();
+
+    return Promise.resolve()
+}
+
+function githubApiHandler(p: string) {
+    const provider = githubProvider();
+    switch (data.stripProtocol(p)) {
+        case "user":
+            return provider && provider.user();
+    }
+    return null
+}
+
+data.mountVirtualApi("github", { getSync: githubApiHandler })

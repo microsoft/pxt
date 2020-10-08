@@ -1,20 +1,17 @@
 // TODO cloud save indication in the editor somewhere
 
+/*
+
 import * as core from "./core";
 import * as pkg from "./package";
 import * as ws from "./workspace";
 import * as data from "./data";
+import * as github from "./github";
 
 type Header = pxt.workspace.Header;
 
 import U = pxt.Util;
 const lf = U.lf
-
-let allProviders: pxt.Map<IdentityProvider>
-let currentProvider: IdentityProvider
-let status = ""
-
-const HEADER_JSON = ".cloudheader.json"
 
 export interface FileInfo {
     id: string;
@@ -206,30 +203,6 @@ export class ProviderBase {
         return Promise.resolve(undefined);
     }
 
-    protected loginInner() {
-        const ns = this.name
-        core.showLoading(ns + "login", lf("Signing you in to {0}...", this.friendlyName))
-        const state = setOauth(ns);
-
-        const providerDef = pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders && pxt.appTarget.cloud.cloudProviders[this.name];
-        const redir = window.location.protocol + "//" + window.location.host + "/oauth-redirect"
-        const r: OAuthParams = {
-            client_id: providerDef.client_id,
-            response_type: "token",
-            state: state,
-            redirect_uri: redir,
-            scope: "",
-            expires_in: 60 * 60 * 24, // in seconds (1 day)
-        }
-        if (providerDef.redirect) r.redirect = providerDef.redirect;
-        return r;
-    }
-
-    protected loginCompleteInner() {
-        const ns = this.name
-        core.hideLoading(ns + "login");
-    }
-
     loginCallback(qs: pxt.Map<string>) {
         const ns = this.name
         pxt.storage.removeLocal(ns + "AutoLogin")
@@ -274,84 +247,12 @@ export class ProviderBase {
     }
 }
 
-export function reconstructMeta(files: pxt.Map<string>) {
-    let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
-    let r: pxt.cpp.HexFile = {
-        meta: {
-            cloudId: pxt.CLOUD_ID + pxt.appTarget.id,
-            editor: pxt.BLOCKS_PROJECT_NAME,
-            name: cfg.name,
-        },
-        source: JSON.stringify(files)
-    }
-
-    let hd = JSON.parse(files[HEADER_JSON] || "{}") as pxt.workspace.Header
-    if (hd) {
-        if (hd.editor)
-            r.meta.editor = hd.editor
-        if (hd.target)
-            r.meta.cloudId = pxt.CLOUD_ID + hd.target
-        if (hd.targetVersion)
-            r.meta.targetVersions = { target: hd.targetVersion }
-    }
-
-    return r
-}
-
-// these imports have to be after the ProviderBase class definition; otherwise we get crash on startup
-import * as onedrive from "./onedrive";
-import * as googledrive from "./googledrive";
-import * as githubprovider from "./githubprovider";
-
-// All identity providers, including github
-function identityProviders(): IdentityProvider[] {
-    if (!allProviders) {
-        allProviders = {}
-        const cl = pxt.appTarget.cloud
-
-        if (cl && cl.cloudProviders) {
-            [new onedrive.Provider(), new googledrive.Provider()]
-                .filter(p => !!cl.cloudProviders[p.name])
-                .forEach(p => allProviders[p.name] = p);
-        }
-        if (cl && cl.githubPackages) {
-            const gh = new githubprovider.GithubProvider();
-            allProviders[gh.name] = gh;
-        }
-    }
-
-    return pxt.Util.values(allProviders);
-}
-
-/**
- * All cloud synchronization providers
- */
-export function providers(): Provider[] {
-    return identityProviders().filter(p => p.hasSync()).map(p => <Provider>p);
-}
-
-export function githubProvider(required?: boolean): githubprovider.GithubProvider {
-    const p = identityProviders().filter(p => p.name == githubprovider.PROVIDER_NAME)[0] as githubprovider.GithubProvider;
-    if (!p && required)
-        U.userError(lf("GitHub not configured in this editor."))
-    return p;
-}
-
-
 // requests token to user if needed
 export async function ensureGitHubTokenAsync() {
     // check that we have a token first
     await githubProvider(true).loginAsync();
     if (!pxt.github.token)
         U.userError(lf("Please sign in to GitHub to perform this operation."))
-}
-
-// this is generally called by the provier's loginCheck() function
-export function setProvider(impl: IdentityProvider) {
-    if (impl !== currentProvider) {
-        currentProvider = impl
-        invalidateData();
-    }
 }
 
 async function syncOneUpAsync(provider: Provider, h: Header) {
@@ -709,17 +610,6 @@ export function loginCheck() {
         impl.loginCheck();
 }
 
-export function saveToCloudAsync(h: Header) {
-    if (!currentProvider || !currentProvider.hasSync())
-        return Promise.resolve();
-
-    const provider = currentProvider as Provider;
-    if (provider)
-        return syncOneUpAsync(provider, h)
-
-    return Promise.resolve();
-}
-
 function setStatus(s: string) {
     if (s != status) {
         status = s
@@ -762,7 +652,7 @@ function syncApiHandler(p: string) {
 
 
 function githubApiHandler(p: string) {
-    const provider = githubProvider();
+    const provider = github.githubProvider();
     switch (data.stripProtocol(p)) {
         case "user":
             return provider && provider.user();
@@ -811,3 +701,4 @@ function invalidateData() {
     data.invalidate("sync:providericon")
     data.invalidate("github:user");
 }
+*/

@@ -9,9 +9,9 @@ import * as browserworkspace from "./browserworkspace"
 import * as fileworkspace from "./fileworkspace"
 import * as memoryworkspace from "./memoryworkspace"
 import * as iframeworkspace from "./iframeworkspace"
-import * as cloudsync from "./cloudsync"
 import * as indexedDBWorkspace from "./idbworkspace";
 import * as compiler from "./compiler"
+import * as github from "./github";
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -410,8 +410,10 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
 }
 
 export function renameAsync(h: Header, newName: string) {
+    // @eanders: Implement in new cloud sync
     checkHeaderSession(h);
-    return cloudsync.renameAsync(h, newName);
+    //return cloudsync.renameAsync(h, newName);
+    return Promise.resolve();
 }
 
 export function duplicateAsync(h: Header, text: ScriptText, newName?: string): Promise<Header> {
@@ -626,7 +628,7 @@ const BLOCKSDIFF_PREVIEW_PATH = ".github/makecode/blocksdiff.png";
 const BINARY_JS_PATH = "assets/js/binary.js";
 const VERSION_TXT_PATH = "assets/version.txt";
 export async function commitAsync(hd: Header, options: CommitOptions = {}) {
-    await cloudsync.ensureGitHubTokenAsync();
+    await github.ensureGitHubTokenAsync();
 
     let files = await getTextAsync(hd.id)
     let gitjsontext = files[GIT_JSON]
@@ -768,7 +770,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
 }
 
 export async function restoreCommitAsync(hd: Header, commit: pxt.github.CommitInfo) {
-    await cloudsync.ensureGitHubTokenAsync();
+    await github.ensureGitHubTokenAsync();
 
     const files = await getTextAsync(hd.id)
     const gitjsontext = files[GIT_JSON]
@@ -1124,7 +1126,7 @@ export function prepareConfigForGithub(content: string, createRelease?: boolean)
 }
 
 export async function initializeGithubRepoAsync(hd: Header, repoid: string, forceTemplateFiles: boolean, binaryJs: boolean) {
-    await cloudsync.ensureGitHubTokenAsync();
+    await github.ensureGitHubTokenAsync();
 
     let parsed = pxt.github.parseRepoId(repoid)
     let name = parsed.fullName.replace(/.*\//, "")
@@ -1241,7 +1243,7 @@ export async function importGithubAsync(id: string): Promise<Header> {
             pxt.debug(`github: detected import empty project`)
             if (pxt.shell.isReadOnly())
                 U.userError(lf("This repository looks empty."));
-            await cloudsync.ensureGitHubTokenAsync();
+            await github.ensureGitHubTokenAsync();
             await pxt.github.putFileAsync(parsed.fullName, ".gitignore", "# Initial\n");
             isEmpty = true;
             forceTemplateFiles = true;
@@ -1286,15 +1288,17 @@ export function installByIdAsync(id: string) {
 
 export function saveToCloudAsync(h: Header) {
     checkHeaderSession(h);
-    return cloudsync.saveToCloudAsync(h)
+    // @eanders: Implement in new cloud sync
+    // return cloudsync.saveToCloudAsync(h)
+    return Promise.resolve();
 }
 
 export function resetCloudAsync(): Promise<void> {
     // always sync local scripts before resetting
     // remove all cloudsync or github repositories
     return syncAsync().catch(e => { })
-        .then(() => cloudsync.resetAsync())
-        .then(() => Promise.all(allScripts.map(e => e.header).filter(h => h.cloudSync || h.githubId).map(h => {
+        .then(() => github.resetAsync())
+        .then(() => Promise.all(allScripts.map(e => e.header).filter(h => h.githubId).map(h => {
             // Remove cloud sync'ed project
             h.isDeleted = true;
             h.blobVersion = "DELETED";
@@ -1344,7 +1348,8 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                 }
                 return ex;
             })
-            cloudsync.syncAsync().done() // sync in background
+            // @eanders: Implement in new cloud sync
+            //cloudsync.syncAsync().done() // sync in background
         })
         .then(() => {
             refreshHeadersSession();
@@ -1358,7 +1363,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
 export function resetAsync() {
     allScripts = []
     return impl.resetAsync()
-        .then(cloudsync.resetAsync)
+        .then(github.resetAsync)
         .then(db.destroyAsync)
         .then(() => {
             pxt.storage.clearLocal();

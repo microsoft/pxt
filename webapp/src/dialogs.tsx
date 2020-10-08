@@ -5,7 +5,7 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as coretsx from "./coretsx";
 import * as pkg from "./package";
-import * as cloudsync from "./cloudsync";
+import * as github from './github';
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
@@ -520,7 +520,7 @@ export function showImportGithubDialogAsync() {
         core.hideDialog()
     }
     core.showLoading("githublist", lf("searching GitHub repositories..."))
-    return cloudsync.githubProvider(true).routedLoginAsync(`import`)
+    return github.githubProvider(true).routedLoginAsync(`import`)
         .then(r => r && r.accessToken && pxt.github.listUserReposAsync())
         .finally(() => core.hideLoading("githublist"))
         .then(repos => {

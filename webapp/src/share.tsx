@@ -464,7 +464,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const screenshotMessageClass = recordError ? "warning" : "";
         const tooBigErrorSuggestGitHub = sharingError
             && (sharingError as any).statusCode === 413
-            && pxt.appTarget?.cloud?.cloudProviders?.github;
+            && pxt.appTarget?.cloud?.githubAuth;
         const unknownError = sharingError && !tooBigErrorSuggestGitHub;
         const qrCodeFull = !!qrCodeUri && qrCodeExpanded;
 
