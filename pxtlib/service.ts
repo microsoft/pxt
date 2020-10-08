@@ -686,11 +686,13 @@ namespace ts.pxtc {
             })))
             .then(() => cleanLocalizations(apis))
             .finally(() => {
-                if (errors.length)
+                for (const bId of errors) {
                     pxt.reportError(`loc.errors`, `invalid translations`, {
-                        blockIds: errors.join("|"),
+                        block: bId,
                         lang: lang,
                     });
+                }
+
             })
     }
 
