@@ -85,18 +85,52 @@ async function getAsync(h: Header): Promise<pxt.workspace.File> {
 // TODO: this return type is very misleading; pxt.workspace.Version is any so this is accepting a void return
 async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<pxt.workspace.Version> {
     const db = await getDbAsync();
-    const dataToStore: StoredText = {
-        id: h.id,
-        files: text,
-        _rev: prevVer
-    };
 
-    if (text) {
-        await db.setAsync(TEXTS_TABLE, dataToStore);
+    try {
+        setCoreAsync(db, h, prevVer, text);
+    } catch (e) {
+        if (e.status == 409) {
+            // conflict while writing key, ignore.
+            pxt.debug(`idb: set conflict (409)`);
+            return;
+        }
+
+        pxt.reportException(e);
+        pxt.log(`idb: set failed, cleaning cached dbs`)
+
+        // clean up cache dbs and try again
+        await pxt.BrowserUtils.clearTranslationDbAsync();
+        await pxt.BrowserUtils.clearTutorialInfoDbAsync();
+
+        try {
+            return await setCoreAsync(db, h, prevVer, text);
+        } catch (e) {
+            pxt.reportException(e, {
+                db: "idb",
+            });
+            pxt.log(`idb: we are out of space...`)
+            // TODO: We should probably catch this failure in workspace.ts && switch to in mem db;
+            // there's no obvious way that we can recover here if there's no more room.
+            // Maybe toast notification to the user and still allow fetching from here.
+            return;
+        }
     }
 
-    await db.setAsync(HEADERS_TABLE, h);
+    async function setCoreAsync(db: pxt.BrowserUtils.IDBWrapper, h: Header, prevVer: any, text?: ScriptText): Promise<void> {
+        const dataToStore: StoredText = {
+            id: h.id,
+            files: text,
+            _rev: prevVer
+        };
+
+        if (text) {
+            await db.setAsync(TEXTS_TABLE, dataToStore);
+        }
+
+        await db.setAsync(HEADERS_TABLE, h);
+    }
 }
+
 
 async function deleteAsync(h: Header, prevVer: any): Promise<void> {
     const db = await getDbAsync();
