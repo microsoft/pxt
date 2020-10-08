@@ -2,7 +2,7 @@
 namespace pxt.Cloud {
     import Util = pxtc.Util;
 
-    const baseEndpoint = window.location.origin;
+    const baseEndpoint = (window as any).location.origin;
     // const baseEndpoint = "http://localhost:5500";
 
     // hit /api/ to stay on same domain and avoid CORS
