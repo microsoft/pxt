@@ -89,8 +89,8 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
 
     initTilemap(s?: string) {
         this.tilemapProject = new pxt.TilemapProject();
-        this.tilemapProject.loadJres(s ? this.parseJres(s) : {});
-        let project = this.tilemapProject.getTilemap(this.tilemapName);
+        this.tilemapProject.loadTilemapJRes(s ? this.parseJres(s) : {});
+        let project = this.tilemapProject.getTilemap(this.tilemapName).data;
 
         if (!project) {
             const [ name, map ] = this.tilemapProject.createNewTilemap(this.tilemapName, this.tileWidth, 16, 16);
@@ -119,7 +119,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 // New tiles start with *. We haven't created them yet so ignore
                 if (!edited || edited.id.startsWith("*")) continue;
 
-                data.tileset.tiles[editedIndex] = this.tilemapProject.updateTile(edited.id, edited.bitmap)
+                data.tileset.tiles[editedIndex] = this.tilemapProject.updateTile(edited)
             }
         }
 
@@ -130,7 +130,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 const newTile = this.tilemapProject.createNewTile(tile.bitmap);
                 data.tileset.tiles[i] = newTile;
             }
-            else if (!tile.data) {
+            else if (!tile.jresData) {
                 data.tileset.tiles[i] = this.tilemapProject.resolveTile(tile.id);
             }
         }

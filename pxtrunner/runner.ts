@@ -53,8 +53,6 @@ namespace pxt.runner {
         }
 
         writeFile(module: pxt.Package, filename: string, contents: string): void {
-            if (filename == pxt.CONFIG_NAME)
-                return; // ignore config writes
             const epkg = getEditorPkg(module);
             epkg.files[filename] = contents;
         }
@@ -351,10 +349,35 @@ namespace pxt.runner {
     }
 
     export function simulateAsync(container: HTMLElement, simOptions: SimulateOptions) {
+        let didUpgrade = false;
+
         return loadPackageAsync(simOptions.id, simOptions.code, simOptions.dependencies)
             .then(() => compileAsync(false, opts => {
                 if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
+
+                // Apply upgrade rules if necessary
+                const sharedTargetVersion = mainPkg.config.targetVersions.target;
+                const currentTargetVersion = pxt.appTarget.versions.target;
+
+                if (sharedTargetVersion && currentTargetVersion &&
+                    pxt.semver.cmp(pxt.semver.parse(sharedTargetVersion), pxt.semver.parse(currentTargetVersion)) < 0) {
+                    for (const fileName of Object.keys(opts.fileSystem)) {
+                        if (!pxt.Util.startsWith(fileName, "pxt_modules") && pxt.Util.endsWith(fileName, ".ts")) {
+                            didUpgrade = true;
+                            opts.fileSystem[fileName] = pxt.patching.patchJavaScript(sharedTargetVersion, opts.fileSystem[fileName]);
+                        }
+                    }
+                }
             }))
+            .then(resp => {
+                if (resp.diagnostics?.length > 0 && didUpgrade) {
+                    pxt.log("Compile with upgrade rules failed, trying again with original code");
+                    return compileAsync(false, opts => {
+                        if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
+                    });
+                }
+                return resp;
+            })
             .then(resp => {
                 if (resp.diagnostics && resp.diagnostics.length > 0) {
                     console.error("Diagnostics", resp.diagnostics)
@@ -767,19 +790,20 @@ ${linkString}
             .then(summary => {
                 toc = pxt.docs.buildTOC(summary);
                 pxt.log(`TOC: ${JSON.stringify(toc, null, 2)}`)
-                const tocsp: Promise<void>[] = [];
+                const tocsp: TOCMenuEntry[] = [];
                 pxt.docs.visitTOC(toc, entry => {
-                    if (!/^\//.test(entry.path) || /^\/pkg\//.test(entry.path)) return;
-                    tocsp.push(
-                        pxt.Cloud.markdownAsync(entry.path)
-                            .then(md => {
-                                entry.markdown = md;
-                            }, e => {
-                                entry.markdown = `_${entry.path} failed to load._`;
-                            })
-                    )
+                    if (/^\//.test(entry.path) && !/^\/pkg\//.test(entry.path))
+                        tocsp.push(entry);
                 });
-                return Promise.all(tocsp);
+
+                return U.promisePoolAsync(4, tocsp, async entry => {
+                    try {
+                        const md = await pxt.Cloud.markdownAsync(entry.path);
+                        entry.markdown = md;
+                    } catch (e) {
+                        entry.markdown = `_${entry.path} failed to load._`;
+                    }
+                });
             })
             .then(pages => {
                 let md = toc[0].name;
@@ -1008,7 +1032,7 @@ ${linkString}
                         if (options.jres) {
                             tilemapProject = new TilemapProject();
                             tilemapProject.loadPackage(mainPkg);
-                            tilemapProject.loadJres(JSON.parse(options.jres), true);
+                            tilemapProject.loadTilemapJRes(JSON.parse(options.jres), true);
                         }
 
                         const blocksSvg = pxt.blocks.render(bresp.outfiles["main.blocks"], options);
@@ -1067,7 +1091,7 @@ ${linkString}
                         if (options.jres) {
                             tilemapProject = new TilemapProject();
                             tilemapProject.loadPackage(mainPkg);
-                            tilemapProject.loadJres(JSON.parse(options.jres), true);
+                            tilemapProject.loadTilemapJRes(JSON.parse(options.jres), true);
                         }
                         const blockSvg = pxt.blocks.render(code, options);
 

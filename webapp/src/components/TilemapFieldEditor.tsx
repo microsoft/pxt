@@ -12,7 +12,7 @@ export interface TilemapFieldEditorState {
     galleryFilter?: string;
 }
 
-export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps, TilemapFieldEditorState> implements FieldEditorComponent<pxt.sprite.TilemapData> {
+export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps, TilemapFieldEditorState> implements FieldEditorComponent<pxt.ProjectTilemap> {
     protected blocksInfo: pxtc.BlocksInfo;
     protected ref: ImageEditor;
     protected closeEditor: () => void;
@@ -43,7 +43,7 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
         tickImageEditorEvent("image-editor-hidden");
     }
 
-    init(value: pxt.sprite.TilemapData, close: () => void, options?: any) {
+    init(value: pxt.ProjectTilemap, close: () => void, options?: any) {
         this.closeEditor = close;
         this.initTilemap(value, options);
     }
@@ -83,15 +83,7 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
         return false;
     }
 
-    protected initTilemap(data: pxt.sprite.TilemapData, options?: any) {
-        if (data.tilemap.width === 0 || data.tilemap.height === 0) {
-            data.tilemap = new pxt.sprite.Tilemap(options.initWidth || 16, options.initHeight || 16)
-        }
-
-        if (!data.layers) {
-            data.layers = new pxt.sprite.Bitmap(data.tilemap.width, data.tilemap.height).data();
-        }
-
+    protected initTilemap(asset: pxt.ProjectTilemap, options?: any) {
         let gallery: GalleryTile[];
 
         if (options) {
@@ -101,7 +93,7 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
                 .map(g => ({ bitmap: pxt.sprite.getBitmap(this.blocksInfo, g.qName).data(), tags: g.tags, qualifiedName: g.qName, tileWidth: 16 }))
         }
 
-        this.ref.initTilemap(data, gallery);
+        this.ref.openAsset(asset, gallery);
     }
 
     protected onDoneClick = () => {

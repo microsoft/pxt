@@ -35,6 +35,16 @@ The complete shared url is formatted like:
 
     https://makecode.microbit.org/#tutorial:https://makecode.com/_sIty7Iop
 
+### ~ alert
+
+#### Tutorial caching
+
+MakeCode uses a local caching policy for tutorials to reduce interaction with website services. On first use, tutorial content is retrieved from a MakeCode website and then reused from the local cache when a tutorial is run another time. A requested tutorial will refresh from the website when its cache retention period expires.
+
+This caching policy can present a problem if you're developing a tutorial and want to review the recent changes. When you run the tutorial to check your changes, they might not appear and you only see content you viewed the first time. In order to see and test new changes you've published for your tutorial, it's recommended that you view them in a **new anonyomous / incognito** browser window.
+
+### ~
+
 ## GitHub repository
 
 If you plan to update your tutorial over time, we recommend storing your project in a GitHub repository. With a repository, the URL to open the tutorial takes the full GitHub repository URL:
@@ -73,6 +83,14 @@ In context tutorials, sometime referred to as "recipes", are tutorials that are 
 ### Testing
 
 Click on the ``lab`` icon in the **Explorer** view to open any markdown file (``.md``) as a tutorial in a new tab.
+
+### ~ alert
+
+#### Cloud caching
+
+To increase performance, the MakeCode websites may "cloud cache" the release version of a previously used extension and tutorials hosted in a user GitHub repository. This means that if you commit changes to a tutorial you have in a repostory, those updates might not appear when you try to test the tutorial in MakeCode. The MakeCode cloud cache will not reflect your changes until you **create a new release version** for your repository. Makng a new release will force the cache to clear the prior version and refresh to the new version the next time it's requested. See [GitHub releases](https://arcade.makecode.com/github/release) for more about creating a versioned release.
+
+### ~
 
 ### Localization
 

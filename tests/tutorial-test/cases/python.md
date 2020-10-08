@@ -1,7 +1,7 @@
 # Native python
 
 ### @diffs false
-## Step 1 @fullscreen
+## Step 1 @showdialog
 
 Tutorials can be written with code in Python.
 ```python

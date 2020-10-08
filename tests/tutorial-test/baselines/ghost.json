@@ -5,7 +5,7 @@
         {
             "contentMd": "Ghost blocks do not show up in the tutorial, but display in the workspace.",
             "headerContentMd": "Ghost blocks do not show up in the tutorial, but display in the workspace.",
-            "fullscreen": true
+            "showHint": true
         },
         {
             "contentMd": "Multiple ghost sections can be included in one tutorial\n\n```blocks\nbasic.showString(\"Hello\")\n```",

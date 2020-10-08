@@ -409,8 +409,11 @@ namespace ts.pxtc.service {
             // better at fuzzy matching and fluidly changing but for performance reasons we want to do it here)
             if (!isMemberCompletion && resultSymbols.length > MAX_SYMBOLS_BEFORE_FILTER) {
                 resultSymbols = resultSymbols
-                    .filter(s => (isPython ? s.symbol.pyQName : s.symbol.qName).indexOf(partialWord) >= 0)
+                    .filter(s => (isPython ? s.symbol.pyQName : s.symbol.qName).toLowerCase().indexOf(partialWord.toLowerCase()) >= 0)
             }
+
+            opts.ast = true;
+            const ts2asm = compile(opts, service);
         } else {
             tsPos = position
             opts.ast = true;
@@ -484,7 +487,7 @@ namespace ts.pxtc.service {
 
         if (resultSymbols.length === 0) {
             // if by this point we don't yet have a specialized set of results (like those for member completion), use all global api symbols as the start and filter by matching prefix if possible
-            let wordMatching = allSymbols.filter(s => (isPython ? s.pyQName : s.qName).indexOf(partialWord) >= 0)
+            let wordMatching = allSymbols.filter(s => (isPython ? s.pyQName : s.qName).toLowerCase().indexOf(partialWord.toLowerCase()) >= 0)
             resultSymbols = completionSymbols(wordMatching, COMPLETION_DEFAULT_WEIGHT)
         }
 
@@ -576,7 +579,14 @@ namespace ts.pxtc.service {
 
         // swap aliases, filter symbols
         resultSymbols
-            .map(sym => sym.symbol.attributes.alias ? completionSymbol(lastApiInfo.apis.byQName[sym.symbol.attributes.alias], sym.weight) : sym)
+            .map(sym => {
+                // skip for enum member completions (eg "AnimalMob."" should have "Chicken", not "CHICKEN")
+                if (sym.symbol.attributes.alias && !(isMemberCompletion && sym.symbol.kind === SymbolKind.EnumMember)) {
+                    return completionSymbol(lastApiInfo.apis.byQName[sym.symbol.attributes.alias], sym.weight);
+                } else {
+                    return sym;
+                }
+            })
             .filter(shouldUseSymbol)
             .forEach(sym => {
                 entries[sym.symbol.qName] = sym
@@ -588,7 +598,7 @@ namespace ts.pxtc.service {
         resultSymbols.sort(compareCompletionSymbols);
 
         // limit the number of entries
-        if (resultSymbols.length > MAX_SYMBOLS) {
+        if (v.light && resultSymbols.length > MAX_SYMBOLS) {
             resultSymbols = resultSymbols.splice(0, MAX_SYMBOLS)
         }
 

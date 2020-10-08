@@ -1034,6 +1034,18 @@ namespace pxt.BrowserUtils {
         return _tutorialInfoDbPromise;
     }
 
+    export function clearTutorialInfoDbAsync(): Promise<void> {
+        const n = TutorialInfoIndexedDb.dbName();
+        return IDBWrapper.deleteDatabaseAsync(n)
+            .then(() => {
+                _tutorialInfoDbPromise = undefined;
+            })
+            .catch(e => {
+                pxt.log(`db: failed to delete ${n}`);
+                _tutorialInfoDbPromise = undefined;
+            });
+    }
+
     export interface IPointerEvents {
         up: string,
         down: string[],

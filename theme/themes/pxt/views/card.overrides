@@ -245,7 +245,7 @@ a.ui.card:focus,
             top: 2rem;
             left: 1rem;
             width: 2rem;
-            height: 1.5rem;                
+            height: 1.5rem;
         }
     }
 

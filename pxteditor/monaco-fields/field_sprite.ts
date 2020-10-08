@@ -4,16 +4,16 @@
 namespace pxt.editor {
     const fieldEditorId = "image-editor";
 
-    export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.sprite.Bitmap> {
+    export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.ProjectImage> {
         protected isPython: boolean;
 
-        protected textToValue(text: string): pxt.sprite.Bitmap {
+        protected textToValue(text: string): pxt.ProjectImage {
             this.isPython = text.indexOf("`") === -1
-            return pxt.sprite.imageLiteralToBitmap(text);
+            return createFakeAsset(pxt.sprite.imageLiteralToBitmap(text));
         }
 
-        protected resultToText(result: pxt.sprite.Bitmap): string {
-            return pxt.sprite.bitmapToImageLiteral(result, this.isPython ? "python" : "typescript");
+        protected resultToText(result: pxt.ProjectImage): string {
+            return pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(result.bitmap), this.isPython ? "python" : "typescript");
         }
 
         protected getFieldEditorId() {
@@ -26,6 +26,16 @@ namespace pxt.editor {
                 blocksInfo: this.host.blocksInfo(),
                 showTiles: true
             };
+        }
+    }
+
+    function createFakeAsset(bitmap: pxt.sprite.Bitmap): pxt.ProjectImage {
+        return {
+            type: pxt.AssetType.Image,
+            id: "",
+            internalID: 0,
+            bitmap: bitmap.data(),
+            jresData: ""
         }
     }
 
