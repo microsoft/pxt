@@ -13,7 +13,6 @@ namespace pxt {
         displayName?: string;
         tags?: string[];
         blockIDs?: string[];
-        isTemporary?: boolean;
     }
 
     export type Asset = ProjectImage | Tile | Animation | ProjectTilemap;
@@ -1154,6 +1153,14 @@ namespace pxt {
             case AssetType.Tilemap:
                 return a.data.equals((b as ProjectTilemap).data);
         }
+    }
+
+    export function validateAssetName(name: string) {
+        if (!name) return false;
+
+        // Covers all punctuation/whitespace except for "-", "_", and " "
+        const bannedRegex = /[\u0000-\u001f\u0021-\u002c\u002e\u002f\u003a-\u0040\u005b-\u005e\u0060\u007b-\u007f]/
+        return !bannedRegex.test(name);
     }
 
     function arrayEquals<U>(a: U[], b: U[], compare: (c: U, d: U) => boolean = (c, d) => c === d) {

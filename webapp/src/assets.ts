@@ -1,13 +1,5 @@
 import * as pkg from "./package";
 
-export function validateAssetName(name: string) {
-    if (!name) return false;
-
-    // Covers all punctuation/whitespace except for "-", "_", and " "
-    const bannedRegex = /[\u0000-\u001f\u0021-\u002c\u002e\u002f\u003a-\u0040\u005b-\u005e\u0060\u007b-\u007f]/
-    return !bannedRegex.test(name);
-}
-
 export function isNameTaken(name: string) {
     return pkg.mainEditorPkg().tilemapProject.isNameTaken(pxt.AssetType.Image, name);
 }

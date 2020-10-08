@@ -5,7 +5,7 @@ import { ImageEditorStore, AnimationState, TilemapState } from './store/imageRed
 import { dispatchChangeImageDimensions, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchToggleAspectRatioLocked, dispatchChangeZoom, dispatchToggleOnionSkinEnabled, dispatchChangeAssetName } from './actions/dispatch';
 import { IconButton } from "./Button";
 import { fireClickOnlyOnEnter } from "./util";
-import { isNameTaken, validateAssetName } from "../../assets";
+import { isNameTaken } from "../../assets";
 
 export interface BottomBarProps {
     dispatchChangeImageDimensions: (dimensions: [number, number]) => void;
@@ -232,7 +232,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
     protected handleAssetNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         let errorMessage = null;
 
-        if (!validateAssetName(event.target.value)) {
+        if (!pxt.validateAssetName(event.target.value)) {
             errorMessage = lf("Names may only contain letters, numbers, '-', '_', and space");
         }
         else if (isNameTaken(event.target.value) && event.target.value !== this.props.assetName) {
@@ -247,7 +247,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
 
         let newName = this.state.assetName;
 
-        if (this.state.assetName !== assetName && validateAssetName(this.state.assetName) && !isNameTaken(this.state.assetName)) {
+        if (this.state.assetName !== assetName && pxt.validateAssetName(this.state.assetName) && !isNameTaken(this.state.assetName)) {
             dispatchChangeAssetName(newName);
         }
         this.setState({ assetName: null, assetNameMessage: null });
