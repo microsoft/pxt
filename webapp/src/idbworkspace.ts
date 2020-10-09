@@ -58,6 +58,9 @@ async function getDbAsync(): Promise<pxt.BrowserUtils.IDBWrapper> {
             const db = r.result as IDBDatabase;
             db.createObjectStore(TEXTS_TABLE, { keyPath: KEYPATH });
             db.createObjectStore(HEADERS_TABLE, { keyPath: KEYPATH });
+        }, async () => {
+            await pxt.BrowserUtils.clearTranslationDbAsync();
+            await pxt.BrowserUtils.clearTutorialInfoDbAsync();
         });
 
         try {
