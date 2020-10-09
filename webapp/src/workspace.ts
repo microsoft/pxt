@@ -90,17 +90,13 @@ export function setupWorkspace(id: string) {
     }
 }
 
-function switchToMemoryWorkspace(reason: string = "syncerror") {
-    if (impl === memoryworkspace.provider) {
-        return;
-    }
-
+function switchToMemoryWorkspace(reason: string) {
     pxt.tickEvent(`workspace.syncerror`, {
         ws: implType,
         reason: reason
     });
 
-    pxt.log("workspace: error, switching to memory workspace");
+    pxt.log(`workspace: error, switching from ${implType} to memory workspace`);
     impl = memoryworkspace.provider;
 }
 
