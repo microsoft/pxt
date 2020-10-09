@@ -3484,6 +3484,12 @@ export class ProjectView
     }
 
     private startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorProjectName?: string): Promise<void> {
+        // custom tick for recipe "completion". recipes use links in the markdown to
+        // progress, so we track when a user "exits" a recipe by loading a new one
+        if (this.state.header?.tutorial?.tutorialRecipe) {
+            pxt.tickEvent("recipe.exit", { tutorial: this.state.header?.tutorial?.tutorial, goto: tutorialId });
+        }
+
         core.hideDialog();
         core.showLoading("tutorial", lf("starting tutorial..."));
         sounds.initTutorial(); // pre load sounds
@@ -3539,7 +3545,7 @@ export class ProjectView
     }
 
     completeTutorialAsync(): Promise<void> {
-        pxt.tickEvent("tutorial.complete");
+        pxt.tickEvent("tutorial.complete", { tutorial: this.state.header?.tutorial?.tutorial });
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
 
         // clear tutorial field
