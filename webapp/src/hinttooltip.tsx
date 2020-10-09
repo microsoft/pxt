@@ -19,7 +19,7 @@ export class HintTooltip extends data.Component<HintTooltipProps, HintTooltipSta
         super(props);
     }
 
-    componentWillReceiveProps(nextProps: HintTooltipProps) {
+    UNSAFE_componentWillReceiveProps(nextProps: HintTooltipProps) {
         if (nextProps.pokeUser != this.state.show) {
             this.setState({ show: nextProps.pokeUser });
         }

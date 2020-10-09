@@ -264,7 +264,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         parent.moveFocusToFlyout();
     }
 
-    componentWillReceiveProps(props: ToolboxProps) {
+    UNSAFE_componentWillReceiveProps(props: ToolboxProps) {
         // if leaving monaco, mark toolbox animation as shown. also
         // handles full screen sim, where we hide the toolbox via css
         // without re-rendering, which will trigger the animation again
@@ -523,7 +523,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         return this.treeRowElement;
     }
 
-    componentWillReceiveProps(nextProps: CategoryItemProps) {
+    UNSAFE_componentWillReceiveProps(nextProps: CategoryItemProps) {
         const newState: CategoryItemState = {};
         if (nextProps.selected != undefined) {
             newState.selected = nextProps.selected;

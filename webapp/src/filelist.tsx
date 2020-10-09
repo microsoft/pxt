@@ -33,7 +33,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         this.navigateToError = this.navigateToError.bind(this);
     }
 
-    componentWillReceiveProps(nextProps: ISettingsProps) {
+    UNSAFE_componentWillReceiveProps(nextProps: ISettingsProps) {
         const currentFile = nextProps.parent.state.currFile;
         // Set the current package as expanded
         if (this.state.currentFile != currentFile) {

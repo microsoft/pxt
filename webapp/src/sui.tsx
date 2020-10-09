@@ -709,7 +709,7 @@ export class Input extends data.Component<InputProps, InputState> {
         }
     }
 
-    componentWillReceiveProps(newProps: InputProps) {
+    UNSAFE_componentWillReceiveProps(newProps: InputProps) {
         this.setState({ value: newProps.value });
     }
 

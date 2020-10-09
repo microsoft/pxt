@@ -134,7 +134,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         this.redrawCanvas();
     }
 
-    componentWillReceiveProps(nextProps: TilePaletteProps) {
+    UNSAFE_componentWillReceiveProps(nextProps: TilePaletteProps) {
         if (this.props.selected != nextProps.selected) {
             this.jumpToPageContaining(nextProps.selected);
         } else if (this.props.backgroundColor != nextProps.backgroundColor) {
