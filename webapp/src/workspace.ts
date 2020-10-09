@@ -90,6 +90,20 @@ export function setupWorkspace(id: string) {
     }
 }
 
+function switchToMemoryWorkspace(reason: string = "syncerror") {
+    if (impl === memoryworkspace.provider) {
+        return;
+    }
+
+    pxt.tickEvent(`workspace.syncerror`, {
+        ws: implType,
+        reason: reason
+    });
+
+    pxt.log("workspace: error, switching to memory workspace");
+    impl = memoryworkspace.provider;
+}
+
 export function getHeaders(withDeleted = false) {
     maybeSyncHeadersAsync().done();
     let r = allScripts.map(e => e.header).filter(h => (withDeleted || !h.isDeleted) && !h.isBackup)
@@ -348,21 +362,34 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
                 .filter(p => !!pxt.bundledSvg(p))[0];
     }
 
-    return headerQ.enqueue<void>(h.id, () =>
-        fixupVersionAsync(e).then(() =>
-            impl.setAsync(h, e.version, text ? e.text : null)
-                .then(ver => {
-                    if (text)
-                        e.version = ver
-                    if ((text && !isCloud) || h.isDeleted) {
-                        h.pubCurrent = false
-                        h.blobCurrent = false
-                        h.saveId = null
-                        data.invalidate("text:" + h.id)
-                        data.invalidate("pkg-git-status:" + h.id)
-                    }
-                    refreshHeadersSession()
-                })))
+    return headerQ.enqueue<void>(h.id, async () => {
+        await fixupVersionAsync(e);
+        let ver: any;
+
+        const toWrite = text ? e.text : null;
+
+        try {
+            ver = await impl.setAsync(h, e.version, toWrite);
+        } catch (e) {
+            // Write failed; use in memory db.
+            switchToMemoryWorkspace("write failed");
+            ver = await impl.setAsync(h, e.version, toWrite);
+        }
+
+        if (text) {
+            e.version = ver;
+        }
+
+        if ((text && !isCloud) || h.isDeleted) {
+            h.pubCurrent = false;
+            h.blobCurrent = false;
+            h.saveId = null;
+            data.invalidate("text:" + h.id);
+            data.invalidate("pkg-git-status:" + h.id);
+        }
+
+        refreshHeadersSession();
+    });
 }
 
 function computePath(h: Header) {
@@ -1314,9 +1341,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
         .catch((e) => {
             // There might be a problem with the native databases. Switch to memory for this session so the user can at
             // least use the editor.
-            pxt.tickEvent("workspace.syncerror", { ws: implType });
-            pxt.log("workspace: error, switching to memory workspace");
-            impl = memoryworkspace.provider;
+            switchToMemoryWorkspace("sync failed");
             return impl.listAsync();
         })
         .then(headers => {

@@ -86,7 +86,7 @@ async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<voi
     const db = await getDbAsync();
 
     try {
-        setCoreAsync(db, h, prevVer, text);
+        await setCoreAsync(db, h, prevVer, text);
     } catch (e) {
         if (e.status == 409) {
             // conflict while writing key, ignore.
@@ -102,16 +102,13 @@ async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<voi
         await pxt.BrowserUtils.clearTutorialInfoDbAsync();
 
         try {
-            return await setCoreAsync(db, h, prevVer, text);
+            await setCoreAsync(db, h, prevVer, text);
         } catch (e) {
             pxt.reportException(e, {
-                db: "idb",
+                ws: "idb",
             });
-            pxt.log(`idb: we are out of space...`)
-            // TODO: We should probably catch this failure in workspace.ts && switch to in mem db;
-            // there's no obvious way that we can recover here if there's no more room.
-            // Maybe toast notification to the user and still allow fetching from here.
-            return;
+            pxt.log(`idb: we are out of space...`);
+            throw e;
         }
     }
 
