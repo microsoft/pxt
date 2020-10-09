@@ -18,8 +18,6 @@ const TEXTS_TABLE = "texts";
 const HEADERS_TABLE = "headers";
 const KEYPATH = "id";
 
-let _db: pxt.BrowserUtils.IDBWrapper;
-
 // This function migrates existing projectes in pouchDb to indexDb
 // From browserworkspace to idbworkspace
 async function migrateBrowserWorkspaceAsync(): Promise<void> {
@@ -45,25 +43,32 @@ async function migrateBrowserWorkspaceAsync(): Promise<void> {
     await Promise.all(previousHeaders.map(h => copyProject(h)));
 }
 
+let _dbPromise: Promise<pxt.BrowserUtils.IDBWrapper>;
 async function getDbAsync(): Promise<pxt.BrowserUtils.IDBWrapper> {
-    if (_db) {
-        return _db;
+    if (_dbPromise) {
+        return await _dbPromise;
     }
 
-    _db = new pxt.BrowserUtils.IDBWrapper("__pxt_idb_workspace", 1, (ev, r) => {
-        const db = r.result as IDBDatabase;
-        db.createObjectStore(TEXTS_TABLE, { keyPath: KEYPATH });
-        db.createObjectStore(HEADERS_TABLE, { keyPath: KEYPATH });
-    });
+    _dbPromise = createDbAsync();
 
-    try {
-        await _db.openAsync();
-    } catch (e) {
-        pxt.reportException(e);
-        return Promise.reject(e);
+    return _dbPromise;
+
+    async function createDbAsync(): Promise<pxt.BrowserUtils.IDBWrapper> {
+        const idbDb = new pxt.BrowserUtils.IDBWrapper("__pxt_idb_workspace", 1, (ev, r) => {
+            const db = r.result as IDBDatabase;
+            db.createObjectStore(TEXTS_TABLE, { keyPath: KEYPATH });
+            db.createObjectStore(HEADERS_TABLE, { keyPath: KEYPATH });
+        });
+
+        try {
+            await idbDb.openAsync();
+        } catch (e) {
+            pxt.reportException(e);
+            return Promise.reject(e);
+        }
+
+        return idbDb;
     }
-
-    return _db;
 }
 
 async function listAsync(): Promise<pxt.workspace.Header[]> {
