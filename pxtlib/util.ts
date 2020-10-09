@@ -1429,6 +1429,8 @@ namespace ts.pxtc.BrowserImpl {
 
             let headers = Util.clone(options.headers) || {}
 
+            options.url = /^http/.test(options.url) ? options.url : pxt.Cloud.appRoot + options.url;
+
             client = new XMLHttpRequest();
             if (options.responseArrayBuffer)
                 client.responseType = "arraybuffer";
