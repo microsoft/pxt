@@ -3365,7 +3365,7 @@ export class ProjectView
                     return processMarkdown(md);
                 });
         } else if (scriptId) {
-            pxt.tickEvent("tutorial.shared");
+            pxt.tickEvent("tutorial.shared", { tutorial: scriptId });
             p = workspace.downloadFilesByIdAsync(scriptId)
                 .then(files => {
                     const pxtJson = pxt.Package.parseAndValidConfig(files["pxt.json"]);
@@ -3532,7 +3532,7 @@ export class ProjectView
     }
 
     startActivity(activity: pxt.editor.Activity, path: string, title?: string, editorProjectName?: string, focus = true) {
-        pxt.tickEvent(activity + ".start", { editor: editorProjectName });
+        pxt.tickEvent(activity + ".start", { activity, path, editor: editorProjectName });
         switch (activity) {
             case "tutorial":
                 this.startTutorialAsync(path, title, false, editorProjectName); break;
@@ -3588,7 +3588,7 @@ export class ProjectView
     }
 
     exitTutorial(removeProject?: boolean) {
-        pxt.tickEvent("tutorial.exit");
+        pxt.tickEvent("tutorial.exit", { tutorial: this.state.header?.tutorial?.tutorial });
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
         const tutorial = this.state.header && this.state.header.tutorial;
         const stayInEditor = tutorial && !!tutorial.tutorialRecipe;
