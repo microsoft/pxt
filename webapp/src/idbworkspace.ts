@@ -103,7 +103,7 @@ async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<voi
         }
 
         pxt.reportException(e);
-        pxt.log(`idb: set failed, cleaning cached dbs`)
+        pxt.log(`idb: set failed, cleaning cache dbs`);
 
         // clean up cache dbs and try again
         await pxt.BrowserUtils.clearTranslationDbAsync();
