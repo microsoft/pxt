@@ -3208,7 +3208,7 @@ export class ProjectView
     }
 
     showLoginDialog() {
-        identity.showLoginDialogAsync(this, "login-callback");
+        identity.showLoginDialog(this, "login-callback");
     }
 
     showShareDialog(title?: string) {
