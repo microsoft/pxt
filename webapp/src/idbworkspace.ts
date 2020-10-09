@@ -30,14 +30,14 @@ async function migrateBrowserWorkspaceAsync(): Promise<void> {
         return;
     }
 
-    const copyProject = async (h: pxt.workspace.Header): Promise<string> => {
+    const copyProject = async (h: pxt.workspace.Header): Promise<void> => {
         const resp = await browserworkspace.provider.getAsync(h);
 
         // Ignore metadata of the previous script so they get re-generated for the new copy
         delete (resp as any)._id;
         delete (resp as any)._rev;
 
-        return setAsync(h, undefined, resp.text);
+        await setAsync(h, undefined, resp.text);
     };
 
     const previousHeaders = await browserworkspace.provider.listAsync();
@@ -82,8 +82,7 @@ async function getAsync(h: Header): Promise<pxt.workspace.File> {
     };
 }
 
-// TODO: this return type is very misleading; pxt.workspace.Version is any so this is accepting a void return
-async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<pxt.workspace.Version> {
+async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<void> {
     const db = await getDbAsync();
 
     try {
