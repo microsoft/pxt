@@ -8,7 +8,7 @@ import * as auth from "./auth";
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 
-export function showLoginDialogAsync(projectView: pxt.editor.IProjectView, callbackHash: string) {
+export function showLoginDialog(projectView: pxt.editor.IProjectView, callbackHash: string) {
     const targetTheme = pxt.appTarget.appTheme;
 
     const searchParams = new URLSearchParams(window.location.search);
@@ -22,7 +22,7 @@ export function showLoginDialogAsync(projectView: pxt.editor.IProjectView, callb
     let rememberMe: boolean = Math.random() > 0.5;
 
     const buttons: sui.ModalButton[] = [];
-    const login = (idp: pxt.IdentityProviderId, rememberMe: boolean) => auth.startLogin(idp, rememberMe, callbackHash);
+    const login = (idp: pxt.IdentityProviderId) => auth.startLogin(idp, rememberMe, callbackHash);
 
     // TODO: merge with githubprovider.tsx
 
@@ -41,11 +41,11 @@ export function showLoginDialogAsync(projectView: pxt.editor.IProjectView, callb
                             return (
                                 <>
                                     <br></br>
-                                    <a onClick={() => login(prov.id, rememberMe)}>{prov.name}</a>
+                                    <a role="link" onClick={() => login(prov.id)}>{prov.name}</a>
                                 </>
                             );
                         }).filter(item => !!item)}
-                        <input type="checkbox" id="rememberMe" name="rememberMe" checked={rememberMe} disabled />
+                        <input type="checkbox" id="rememberMe" name="rememberMe" checked={rememberMe} aria-checked={rememberMe} disabled />
                         <label htmlFor="rememberMe">Remember me</label>
                     </div>)
                 }

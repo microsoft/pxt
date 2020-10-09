@@ -4,9 +4,10 @@ namespace pxt.Cloud {
 
     const BACKEND_PROD = "https://www.makecode.com";
     const BACKEND_STAGING = "https://staging.pxt.io";
+    // tslint:disable-next-line:no-http-string
     const BACKEND_LOCALHOST = "http://localhost:5500";
     const BACKEND_LOCALHOST_SSL = "https://localhost:5500";
-    
+
     const BACKEND = BACKEND_PROD;
 
     // hit /api/ to stay on same domain and avoid CORS

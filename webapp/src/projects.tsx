@@ -11,7 +11,7 @@ import * as cloudsync from "./cloudsync";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
 import { showAboutDialogAsync } from "./dialogs";
-import { showLoginDialogAsync } from "./identity";
+import * as identity from "./identity";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -90,7 +90,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     }
 
     private showLoginDialog() {
-        showLoginDialogAsync(this.props.parent, "login-callback");
+        identity.showLoginDialog(this.props.parent, "login-callback");
     }
 
     chgHeader(hdr: pxt.workspace.Header) {
@@ -352,7 +352,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
     }
 
     async identityLogin() {
-        await showLoginDialogAsync(this.props.parent, "login-callback");
+        identity.showLoginDialog(this.props.parent, "login-callback");
     }
 
     renderCore() {
