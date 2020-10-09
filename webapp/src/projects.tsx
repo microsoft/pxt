@@ -90,7 +90,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     }
 
     private showLoginDialog() {
-        showLoginDialogAsync(this.props.parent);
+        showLoginDialogAsync(this.props.parent, "login-callback");
     }
 
     chgHeader(hdr: pxt.workspace.Header) {
@@ -352,7 +352,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
     }
 
     async identityLogin() {
-        await showLoginDialogAsync(this.props.parent);
+        await showLoginDialogAsync(this.props.parent, "login-callback");
     }
 
     renderCore() {

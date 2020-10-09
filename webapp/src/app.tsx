@@ -43,6 +43,7 @@ import * as accessibleblocks from "./accessibleblocks";
 import * as socketbridge from "./socketbridge";
 import * as webusb from "./webusb";
 import * as keymap from "./keymap";
+import * as auth from "./auth";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -3207,7 +3208,7 @@ export class ProjectView
     }
 
     showLoginDialog() {
-        identity.showLoginDialogAsync(this);
+        identity.showLoginDialogAsync(this, "login-callback");
     }
 
     showShareDialog(title?: string) {
@@ -4245,6 +4246,11 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             }
             break;
         }
+        case "login-callback": {
+            const qs = core.parseQueryString(window.location.href);
+            auth.loginCallback(qs);
+            return true;
+        }
     }
 
     return false;
@@ -4451,7 +4457,7 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
     else if (pxt.BrowserUtils.isIpcRenderer()) workspace.setupWorkspace("idb");
-    else if (pxt.BrowserUtils.isLocalHost() || pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
+    else if (/*pxt.BrowserUtils.isLocalHost() ||*/ pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
     Promise.resolve()
         .then(() => {
             const href = window.location.href;

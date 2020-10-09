@@ -3,12 +3,12 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as coretsx from "./coretsx";
 import * as pkg from "./package";
-import * as cloudsync from "./cloudsync";
+import * as auth from "./auth";
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 
-export function showLoginDialogAsync(projectView: pxt.editor.IProjectView) {
+export function showLoginDialogAsync(projectView: pxt.editor.IProjectView, callbackHash: string) {
     const targetTheme = pxt.appTarget.appTheme;
 
     const searchParams = new URLSearchParams(window.location.search);
@@ -22,7 +22,7 @@ export function showLoginDialogAsync(projectView: pxt.editor.IProjectView) {
     let rememberMe: boolean = Math.random() > 0.5;
 
     const buttons: sui.ModalButton[] = [];
-    let loginUrl = (provider: string) => `${pxt.Cloud.apiRoot}signin?provider=${provider}&rememberMe=${rememberMe}`;
+    const login = (idp: pxt.IdentityProviderId, rememberMe: boolean) => auth.startLogin(idp, rememberMe, callbackHash);
 
     // TODO: merge with githubprovider.tsx
 
@@ -34,18 +34,21 @@ export function showLoginDialogAsync(projectView: pxt.editor.IProjectView) {
                 agreeLbl: lf("Cancel"),
                 agreeClass: "cancel",
                 buttons,
-                jsx: <div>
-                    Login with:
-                    <br></br>
-                    <a target="_blank" rel="noopener noreferrer" href={loginUrl("microsoft")}>Microsoft</a>
-                    <br></br>
-                    <a target="_blank" rel="noopener noreferrer" href={loginUrl("github")}>GitHub</a>
-                    <br></br>
-                    <a target="_blank" rel="noopener noreferrer" href={loginUrl("google")}>Google</a>
-                    <br></br>
-                    <input type="checkbox" id="rememberMe" name="rememberMe" checked={rememberMe} disabled />
-                    <label htmlFor="rememberMe">Remember me?</label>
-                </div>
-            })
+                jsxd: () => {
+                    return (<div>
+                        Login with:
+                        {auth.identityProviders().map(prov => {
+                            return (
+                                <>
+                                    <br></br>
+                                    <a onClick={() => login(prov.id, rememberMe)}>{prov.name}</a>
+                                </>
+                            );
+                        }).filter(item => !!item)}
+                        <input type="checkbox" id="rememberMe" name="rememberMe" checked={rememberMe} disabled />
+                        <label htmlFor="rememberMe">Remember me</label>
+                    </div>)
+                }
+            });
         }).done();
 }

@@ -169,9 +169,15 @@ declare namespace pxt {
         cloudProviders?: pxt.Map<AppCloudProvider>;
     }
 
+    type IdentityProviderId = "makecode" | "microsoft" | "google" | "github";
+
     interface AppCloudProvider {
-        client_id: string;
+        id: IdentityProviderId;
+        name?: string;
+        icon?: string;
+        client_id?: string;
         redirect?: boolean; // Whether or not to popup or redirect the oauth. Default to popup
+        identity?: boolean; // Whether or not this provider can be used for top-level login
     }
 
     interface AppSimulator {
