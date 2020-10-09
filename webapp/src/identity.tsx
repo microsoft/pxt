@@ -35,6 +35,7 @@ export function showLoginDialog(projectView: pxt.editor.IProjectView, callbackHa
                 agreeClass: "cancel",
                 buttons,
                 jsxd: () => {
+                    // tslint:disable:react-this-binding-issue
                     return (<div>
                         Login with:
                         {auth.identityProviders().map(prov => {
@@ -48,6 +49,7 @@ export function showLoginDialog(projectView: pxt.editor.IProjectView, callbackHa
                         <input type="checkbox" id="rememberMe" name="rememberMe" checked={rememberMe} aria-checked={rememberMe} disabled />
                         <label htmlFor="rememberMe">Remember me</label>
                     </div>)
+                    // tslint:enable:react-this-binding-issue
                 }
             });
         }).done();
