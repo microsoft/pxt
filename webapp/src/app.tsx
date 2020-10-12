@@ -2021,6 +2021,7 @@ export class ProjectView
     }
 
     identityLoginComplete() {
+        // TODO: Sync cloud data (profile, projects, etc.)
     }
 
     ///////////////////////////////////////////////////////////
