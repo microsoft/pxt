@@ -650,6 +650,7 @@ namespace ts.pxtc.Util {
         responseArrayBuffer?: boolean;
         forceLiveEndpoint?: boolean;
         successCodes?: number[];
+        withCredentials?: boolean;
     }
 
     export interface HttpResponse {
@@ -1429,9 +1430,13 @@ namespace ts.pxtc.BrowserImpl {
 
             let headers = Util.clone(options.headers) || {}
 
+            options.url = /^http/.test(options.url) ? options.url : pxt.Cloud.appRoot + options.url;
+
             client = new XMLHttpRequest();
             if (options.responseArrayBuffer)
                 client.responseType = "arraybuffer";
+            if (options.withCredentials)
+                client.withCredentials = true;
             client.onreadystatechange = () => {
                 if (resolved) return // Safari/iOS likes to call this thing more than once
 

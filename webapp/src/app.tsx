@@ -43,6 +43,7 @@ import * as accessibleblocks from "./accessibleblocks";
 import * as socketbridge from "./socketbridge";
 import * as webusb from "./webusb";
 import * as keymap from "./keymap";
+import * as auth from "./auth";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -111,6 +112,7 @@ export class ProjectView
     scriptManagerDialog: scriptmanager.ScriptManagerDialog;
     importDialog: projects.ImportDialog;
     signInDialog: cloud.SignInDialog;
+    identityLoginDialog: identity.LoginDialog;
     exitAndSaveDialog: projects.ExitAndSaveDialog;
     newProjectDialog: projects.NewProjectDialog;
     chooseHwDialog: projects.ChooseHwDialog;
@@ -162,6 +164,7 @@ export class ProjectView
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
         this.cloudSignInComplete = this.cloudSignInComplete.bind(this);
+        this.identityLoginComplete = this.identityLoginComplete.bind(this);
         this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
         this.showKeymap = this.showKeymap.bind(this);
         this.toggleKeymap = this.toggleKeymap.bind(this);
@@ -2017,6 +2020,10 @@ export class ProjectView
             }).done();
     }
 
+    identityLoginComplete() {
+        // TODO: Sync cloud data (profile, projects, etc.)
+    }
+
     ///////////////////////////////////////////////////////////
     ////////////             Home                 /////////////
     ///////////////////////////////////////////////////////////
@@ -3207,7 +3214,7 @@ export class ProjectView
     }
 
     showLoginDialog() {
-        identity.showLoginDialogAsync(this);
+        this.identityLoginDialog.show("");
     }
 
     showShareDialog(title?: string) {
@@ -3799,6 +3806,10 @@ export class ProjectView
         this.signInDialog = c;
     }
 
+    private handleLoginDialogRef = (c: identity.LoginDialog) => {
+        this.identityLoginDialog = c;
+    }
+
     ///////////////////////////////////////////////////////////
     ////////////             RENDER               /////////////
     ///////////////////////////////////////////////////////////
@@ -3837,6 +3848,7 @@ export class ProjectView
         const hwDialog = !sandbox && pxt.hasHwVariants();
         const expandedStyle = inTutorialExpanded ? this.getExpandedCardStyle(flyoutOnly) : null;
         const invertedTheme = targetTheme.invertedMenu && targetTheme.invertedMonaco;
+        const loginDialogInitialVisibility = this.getData<boolean>(auth.NEEDS_SETUP);
 
         const collapseIconTooltip = this.state.collapseEditorTools ? lf("Show the simulator") : lf("Hide the simulator");
 
@@ -3891,6 +3903,7 @@ export class ProjectView
             && !(isBlocks
                 || (pkg.mainPkg && pkg.mainPkg.config && (pkg.mainPkg.config.preferredEditor == pxt.BLOCKS_PROJECT_NAME)));
         const hasCloud = this.hasCloud();
+        const hasIdentity = auth.hasIdentity();
         return (
             <div id='root' className={rootClasses}>
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
@@ -3947,6 +3960,7 @@ export class ProjectView
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={this.handleExtensionRef} />}
                 {inHome ? <projects.ImportDialog parent={this} ref={this.handleImportDialogRef} /> : undefined}
                 {hasCloud ? <cloud.SignInDialog parent={this} ref={this.handleSignInDialogRef} onComplete={this.cloudSignInComplete} /> : undefined}
+                {hasIdentity ? <identity.LoginDialog parent={this} ref={this.handleLoginDialogRef} onComplete={this.identityLoginComplete} initialVisibility={loginDialogInitialVisibility} /> : undefined}
                 {inHome && targetTheme.scriptManager ? <scriptmanager.ScriptManagerDialog parent={this} ref={this.handleScriptManagerDialogRef} onClose={this.handleScriptManagerDialogClose} /> : undefined}
                 {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={this.handleExitAndSaveDialogRef} />}
                 {sandbox ? undefined : <projects.NewProjectDialog parent={this} ref={this.handleNewProjectDialogRef} />}
@@ -3982,6 +3996,7 @@ function parseLocalToken() {
 function initLogin() {
     cloudsync.loginCheck()
     parseLocalToken();
+    auth.authCheck();
 }
 
 function initPacketIO() {
@@ -4244,6 +4259,11 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
                 return true;
             }
             break;
+        }
+        case "authcallback": {
+            const qs = core.parseQueryString(window.location.href);
+            auth.loginCallback(qs);
+            return true;
         }
     }
 
