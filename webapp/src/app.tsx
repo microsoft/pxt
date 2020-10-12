@@ -1377,7 +1377,7 @@ export class ProjectView
             })
             .catch(e => {
                 // Failed to decompile
-                pxt.tickEvent('tutorial.faileddecompile', { tutorialId: t.tutorial });
+                pxt.tickEvent('tutorial.faileddecompile', { tutorial: t.tutorial });
                 core.errorNotification(lf("Oops, an error occured as we were loading the tutorial."));
                 // Reset state (delete the current project and exit the tutorial)
                 this.exitTutorial(true);
@@ -3235,7 +3235,7 @@ export class ProjectView
                     return processMarkdown(md);
                 });
         } else if (scriptId) {
-            pxt.tickEvent("tutorial.shared");
+            pxt.tickEvent("tutorial.shared", { tutorial: scriptId });
             p = workspace.downloadFilesByIdAsync(scriptId)
                 .then(files => {
                     const pxtJson = pxt.Package.parseAndValidConfig(files["pxt.json"]);
@@ -3389,14 +3389,19 @@ export class ProjectView
     }
 
     startActivity(activity: pxt.editor.Activity, path: string, title?: string, editorProjectName?: string) {
-        pxt.tickEvent(activity + ".start", { editor: editorProjectName });
         switch (activity) {
             case "tutorial":
-                this.startTutorialAsync(path, title, false, editorProjectName); break;
+                pxt.tickEvent("tutorial.start", { tutorial: path, editor: editorProjectName });
+                this.startTutorialAsync(path, title, false, editorProjectName);
+                break;
             case "recipe":
-                this.startTutorialAsync(path, title, true, editorProjectName); break;
+                pxt.tickEvent("recipe.start", { recipe: path, editor: editorProjectName });
+                this.startTutorialAsync(path, title, true, editorProjectName);
+                break;
             case "example":
-                this.importExampleAsync({ name, path, loadBlocks: false, preferredEditor: editorProjectName }); break;
+                pxt.tickEvent("example.start", { example: path, editor: editorProjectName });
+                this.importExampleAsync({ name, path, loadBlocks: false, preferredEditor: editorProjectName });
+                break;
         }
     }
 
@@ -3444,7 +3449,7 @@ export class ProjectView
     }
 
     exitTutorial(removeProject?: boolean) {
-        pxt.tickEvent("tutorial.exit");
+        pxt.tickEvent("tutorial.exit", { tutorial: this.state.header?.tutorial?.tutorial });
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
         const tutorial = this.state.header && this.state.header.tutorial;
         const stayInEditor = tutorial && !!tutorial.tutorialRecipe;
