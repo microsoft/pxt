@@ -18,8 +18,7 @@
 @avatarMargin: @avatarSize + 0.5rem;
 @mobileAvatarMargin: 2rem;
 
-@workspaceHeaderHeight: 2rem;
-@lockedWorkspaceHeaderHeight: 3rem;
+@workspaceHeaderHeight: 3rem;
 @sidebarPadding: 1.6rem;
 
 /*******************************
@@ -31,6 +30,10 @@
 
 .tutorial.flyoutOnly #maineditor > .full-abs {
     top: calc(@tutorialCardHeight + @workspaceHeaderHeight);
+}
+
+.tutorial.flyoutOnly.sidebarTutorial #maineditor > .full-abs {
+    top: @workspaceHeaderHeight;
 }
 
 /* Tutorial Mode */
@@ -504,19 +507,23 @@ code.lang-filterblocks {
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
+
+        #flyoutHeaderTitle{
+            padding-left: 1.2rem;
+            padding-top: .8rem;
+        }
     }
 
     div {
         display: inline-block;
         text-align: center;
         line-height: 2rem;
-        font-weight: 800;
     }
 }
 
 .flyoutOnly {
     #headers {
-        height: @lockedWorkspaceHeaderHeight;
+        height: @workspaceHeaderHeight;
 
         div {
             display: inline-flex;
@@ -559,8 +566,12 @@ code.lang-filterblocks {
         }
 
         #callout {
-            padding: 3.2rem 0 4rem;
+            padding: 1.5rem 0 4rem;
             position: relative;
+
+            .callout-hint-header {
+                font-size: 1.5rem;
+            }
 
             .callout-hint {
                 width: 5rem;
@@ -572,7 +583,7 @@ code.lang-filterblocks {
             }
 
             .callout-wrapper {
-                padding: 0 3.2rem;
+                padding: 0 1.5rem;
             }
         }
     }

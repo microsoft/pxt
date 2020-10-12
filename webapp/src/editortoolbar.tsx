@@ -354,7 +354,7 @@ export class ZoomSlider extends data.Component<ZoomSliderProps, ZoomSliderState>
 
     zoomOut() {
         if (this.state.zoomValue > this.zoomMin) {
-            this.setState({zoomValue: this.state.zoomValue -1}) // TODO make it the (state) => format
+            this.setState({zoomValue: this.state.zoomValue - 1}) // TODO make it the (state) => format
             this.props.parent.editor.zoomOut();
             this.props.parent.forceUpdate();
         }
@@ -385,11 +385,11 @@ export class ZoomSlider extends data.Component<ZoomSliderProps, ZoomSliderState>
 
     renderCore() {
         return <div className="zoom">
-            <EditorToolbarButton icon="minus circle" className="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view={this.props.view} key="minus"/>
+            <EditorToolbarButton icon="minus circle" className="editortools-btn zoomout-editortools-btn borderless" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view={this.props.view} key="minus"/>
             <div id="zoomSlider">
-                <input type="range" min={this.zoomMin} max={this.zoomMax} step="1" value={this.state.zoomValue.toString()} onChange={this.zoomUpdate}></input>
+                <input className="zoomSliderBar" type="range" min={this.zoomMin} max={this.zoomMax} step="1" value={this.state.zoomValue.toString()} onChange={this.zoomUpdate}></input>
             </div>
-            <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view={this.props.view} key="plus" />
+            <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn borderless" title={lf("Zoom In")} onButtonClick={this.zoomIn} view={this.props.view} key="plus" />
         </div>
     }
 }
@@ -400,9 +400,9 @@ export class SmallEditorToolbar extends EditorToolbar {
         super(props);
     }
     renderCore() {
-        return <div className="smallEditorToolbar">
+        return <div id="headerToolbar" className="smallEditorToolbar">
             <ZoomSlider parent={this.props.parent} view={super.getViewString(View.Computer)}></ZoomSlider>
-            <div className="ui icon buttons">{super.getUndoRedo(View.Computer)}</div>
+            <div className="ui icon undo-redo-buttons">{super.getUndoRedo(View.Computer)}</div>
         </div>
     }
 }

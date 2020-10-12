@@ -624,7 +624,7 @@ export class WorkspaceHeader extends data.Component<any, {}> {
 
         let workspace = document.querySelector('#blocksArea');
         if (workspace) {
-            this.workspaceWidth = workspace.clientWidth - this.flyoutWidth;
+            this.workspaceWidth = workspace.clientWidth - this.flyoutWidth - 4;
         }
     }
 
@@ -642,9 +642,11 @@ export class WorkspaceHeader extends data.Component<any, {}> {
 
     renderCore() {
         return <div id="headers">
-            <div id="flyoutHeader" style={this.headerStyle()}>{this.flyoutTitle}</div>
+            <div id="flyoutHeader" style={this.headerStyle()}>
+                <div id="flyoutHeaderTitle">{this.flyoutTitle}</div>
+            </div>
             <div id="workspaceHeader" style={this.workspaceStyle()}>
-                <div id="headerToolbar"><editortoolbar.SmallEditorToolbar parent={this.props.parent}/></div>
+                <editortoolbar.SmallEditorToolbar parent={this.props.parent}/>
             </div>
         </div>;
     }

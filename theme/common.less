@@ -121,6 +121,35 @@ pre {
     }
 }
 
+.zoomSliderBar {
+    -webkit-appearance: none;  /* Override default CSS styles */
+    appearance: none;
+    width: 100%; /* Full-width */
+    height: .5rem;
+    background: black; /* Grey background */
+    outline: none; /* Remove outline */
+    opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+    -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+    transition: opacity .2s;
+    top: 50%;
+    position: relative;
+    border-bottom: .2rem solid grey;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+input[type='range']::-webkit-slider-thumb {
+    border: .2rem solid black;
+    background-color: grey;
+    height: 3.1rem;
+    width: 2.2rem;
+    cursor: pointer;
+    border-left: .2rem solid white;
+    border-top: .2rem solid white;
+    border-bottom: .2rem solid grey;
+    border-right: .2rem solid grey;
+}
+
 #zoomSlider {
     display: inline-block;
     position: relative;
