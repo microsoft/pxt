@@ -40,6 +40,7 @@ export class LoginDialog extends data.Component<LoginDialogProps, LoginDialogSta
         this.handleUsernameChanged = this.handleUsernameChanged.bind(this);
         this.handleUsernameRef = this.handleUsernameRef.bind(this);
         this.handleProfileSetupOkClicked = this.handleProfileSetupOkClicked.bind(this);
+        this.onLoggedIn = this.onLoggedIn.bind(this);
     }
 
     private handleRememberMeChanged(v: boolean) {
