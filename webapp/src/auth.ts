@@ -106,8 +106,12 @@ export async function logout() {
 
     pxt.tickEvent('auth.logout');
 
+    const wasLoggedIn = loggedIn();
     await apiAsync('/api/auth/logout');
     clearState();
+    if (wasLoggedIn) {
+        core.infoNotification(lf("Signed out"));
+    }
 }
 
 /**
@@ -214,10 +218,15 @@ function idpEnabled(idp: pxt.IdentityProviderId): boolean {
 }
 
 function setUser(user: UserProfile) {
+    const wasLoggedIn = loggedIn();
     state_.user = user;
+    const isLoggedIn = loggedIn();
     data.invalidate(USER);
     data.invalidate(LOGGED_IN);
     data.invalidate(NEEDS_SETUP);
+    if (isLoggedIn && !wasLoggedIn) {
+        core.infoNotification(`Signed in: ${user.username}`);
+    }
 }
 
 type ApiResult<T> = {

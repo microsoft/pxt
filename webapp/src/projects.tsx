@@ -371,6 +371,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
             </div>}
             {targetTheme.identity ? <div className="ui divider"></div> : undefined}
             {targetTheme.identity && !loggedIn ? <sui.Item role="menuitem" text={lf("Login")} onClick={this.showLoginDialog} /> : undefined}
+            {targetTheme.identity && loggedIn ? <sui.Item role="menuitem" text={`Profile: ${auth.getState().user.username}`} /> : undefined}
             {targetTheme.identity && loggedIn ? <sui.Item role="menuitem" text={lf("Logout")} onClick={this.logout} /> : undefined}
             {showDivider && <div className="ui divider"></div>}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
