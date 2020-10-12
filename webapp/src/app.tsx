@@ -408,7 +408,7 @@ export class ProjectView
 
     isAssetsActive(): boolean {
         return !this.state.embedSimView && this.editor == this.assetEditor
-            && this.editorFile && this.editorFile.name == "assets.jres";
+            && this.editorFile && this.editorFile.name == pxt.ASSETS_FILE;
     }
 
     private isAnyEditeableJavaScriptOrPackageActive(): boolean {
