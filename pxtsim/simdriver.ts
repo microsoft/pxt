@@ -269,10 +269,11 @@ namespace pxsim {
             }
 
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
-            const depEditors = this.dependentEditors();
-            let frames = this.simFrames();
-            const simUrl = U.isLocalHost() ? "*" : this.getSimUrl();
             if (source && broadcastmsg && !!broadcastmsg.broadcast) {
+                const depEditors = this.dependentEditors();
+                let frames = this.simFrames();
+                const simUrl = U.isLocalHost() ? "*" : this.getSimUrl();
+
                 // the editor is hosted in a multi-editor setting
                 // don't start extra frames
                 const parentWindow = window.parent && window.parent !== window.window
@@ -298,22 +299,22 @@ namespace pxsim {
                         this.startFrame(frames[1]);
                     }
                 }
-            }
 
-            // dispatch message to other frames
-            for (let i = 0; i < frames.length; ++i) {
-                const frame = frames[i] as HTMLIFrameElement
-                // same frame as source
-                if (source && frame.contentWindow == source) continue;
-                // frame not in DOM
-                if (!frame.contentWindow) continue;
+                // dispatch message to other frames
+                for (let i = 0; i < frames.length; ++i) {
+                    const frame = frames[i] as HTMLIFrameElement
+                    // same frame as source
+                    if (source && frame.contentWindow == source) continue;
+                    // frame not in DOM
+                    if (!frame.contentWindow) continue;
 
-                frame.contentWindow.postMessage(msg, simUrl);
+                    frame.contentWindow.postMessage(msg, simUrl);
 
-                // don't start more than 1 recorder
-                if (msg.type == 'recorder'
-                    && (<pxsim.SimulatorRecorderMessage>msg).action == "start")
-                    break;
+                    // don't start more than 1 recorder
+                    if (msg.type == 'recorder'
+                        && (<pxsim.SimulatorRecorderMessage>msg).action == "start")
+                        break;
+                }
             }
         }
 
