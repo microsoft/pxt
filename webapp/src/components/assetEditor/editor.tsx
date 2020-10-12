@@ -76,7 +76,8 @@ export class AssetEditor extends Editor {
                     id: item.qName,
                     jresData: "",
                     previewURI: item.src,
-                    bitmap: pxt.sprite.getBitmap(blocksInfo, item.qName).data()
+                    bitmap: pxt.sprite.getBitmap(blocksInfo, item.qName).data(),
+                    meta: {}
                 });
             }
             else {
@@ -86,7 +87,8 @@ export class AssetEditor extends Editor {
                     id: item.qName,
                     jresData: "",
                     previewURI: item.src,
-                    bitmap: pxt.sprite.Bitmap.fromData(pxt.react.getTilemapProject().resolveTile(item.qName).bitmap).data()
+                    bitmap: pxt.sprite.Bitmap.fromData(pxt.react.getTilemapProject().resolveTile(item.qName).bitmap).data(),
+                    meta: {}
                 });
             }
         }
