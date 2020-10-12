@@ -82,15 +82,15 @@ namespace pxt.blocks {
         if (!b) return b;
         // normalize and validate common errors
         // made while translating
-        let nb = b.replace(/[^\\]%\s+/g, '%');
+        let nb = b.replace(/(?:^|[^\\])([%$])\s+/g, '$1');
         if (nb != b) {
             err(`block has extra spaces: ${b}`);
-            return b;
+            b = nb;
         }
 
         // remove spaces around %foo = ==> %foo=
         b = nb;
-        nb = b.replace(/(%\w+)\s*=\s*(\w+)/, '$1=$2');
+        nb = b.replace(/([%$]\w+)\s*=\s*(\w+)/, '$1=$2');
         if (nb != b) {
             err(`block has space between %name and = : ${b}`)
             b = nb;

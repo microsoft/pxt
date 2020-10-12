@@ -359,7 +359,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         this.renderMarkdown(markdown);
     }
 
-    componentWillReceiveProps(newProps: MarkedContentProps) {
+    UNSAFE_componentWillReceiveProps(newProps: MarkedContentProps) {
         const { markdown } = newProps;
         if (this.props.markdown != newProps.markdown) {
             this.renderMarkdown(markdown);

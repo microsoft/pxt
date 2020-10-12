@@ -579,6 +579,12 @@ ${baseLabel}_nochk:
             return
         }
 
+        private writeFailBranch() {
+            this.write(`.fail:`)
+            this.write(`mov r1, lr`)
+            this.write(this.t.callCPP("pxt::failedCast"))
+        }
+
         private emitClassCall(procid: ir.ProcId) {
             let effIdx = procid.virtualIndex + firstMethodOffset()
             this.write(this.t.emit_int(effIdx * 4, "r1"))
@@ -594,8 +600,7 @@ ${baseLabel}_nochk:
                     this.checkSubtype(info)
                 this.write(`ldr r1, [r3, r1] ; ld-method`)
                 this.write(`bx r1 ; keep lr from caller`)
-                this.write(`.fail:`)
-                this.write(this.t.callCPP("pxt::failedCast"))
+                this.writeFailBranch()
             })
         }
 
@@ -629,11 +634,11 @@ ${baseLabel}_nochk:
                     ldr r2, [r0, #16]
                     adds r4, r4, #1
                     bx r1
-                .fail:
-                    ${this.t.callCPP("pxt::failedCast")}
-
-                _pxt_copy_list:
             `)
+
+            this.writeFailBranch()
+
+            this.write(`_pxt_copy_list:`)
 
             this.write(U.range(maxArgs).map(k => `.word _pxt_bind_${k}@fn`).join("\n"))
 
@@ -802,9 +807,9 @@ ${baseLabel}_nochk:
             if (noObjlit)
                 this.write(".objlit:")
 
+            this.writeFailBranch()
+
             this.write(`
-            .fail:
-                ${this.t.callCPP("pxt::failedCast")}
             .fail2:
                 ${this.t.callCPP("pxt::missingProperty")}
             `)
@@ -867,8 +872,7 @@ ${baseLabel}_nochk:
                     this.write(`bx lr`)
                 } else if (tp == "validate") {
                     this.write(`bx lr`)
-                    this.write(`.fail:`)
-                    this.write(this.t.callCPP("pxt::failedCast"))
+                    this.writeFailBranch()
                 } else if (tp == "validateNullable") {
                     this.write(`.undefined:`)
                     this.write(`bx lr`)
@@ -877,8 +881,7 @@ ${baseLabel}_nochk:
                     this.write(`bne .fail`)
                     this.write(`movs r0, #0`)
                     this.write(`bx lr`)
-                    this.write(`.fail:`)
-                    this.write(this.t.callCPP("pxt::failedCast"))
+                    this.writeFailBranch()
                 } else {
                     U.oops()
                 }
@@ -1238,10 +1241,9 @@ ${baseLabel}_nochk:
                 ${this.t.callCPP(`Array_::${op}At`)}
                 ${conv}
                 ${this.t.popPC()}
-
-            .fail:
-                bl pxt::failedCast
             `)
+
+            this.writeFailBranch()
 
             if (op == "get") {
                 this.write(`
@@ -1481,8 +1483,7 @@ ${baseLabel}_nochk:
                 this.write(this.loadFromExprStack("r0", topExpr.args[0]))
                 this.emitLabelledHelper("lambda_call" + numargs, () => {
                     this.lambdaCall(numargs)
-                    this.write(`.fail:`)
-                    this.write(this.t.callCPP("pxt::failedCast"))
+                    this.writeFailBranch()
                 })
             } else if (procid.virtualIndex != null || procid.ifaceIndex != null) {
                 if (procid.ifaceIndex != null) {

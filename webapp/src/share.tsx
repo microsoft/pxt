@@ -164,7 +164,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         }
     }
 
-    componentWillReceiveProps(newProps: ShareEditorProps) {
+    UNSAFE_componentWillReceiveProps(newProps: ShareEditorProps) {
         const newState: ShareEditorState = {}
         if (!this.state.projectNameChanged &&
             newProps.parent.state.projectName != this.state.projectName) {

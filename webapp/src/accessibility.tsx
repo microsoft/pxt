@@ -54,7 +54,7 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
         this.props.parent.showExitAndSaveDialog();
     }
 
-    componentWillReceiveProps(nextProps: EditorAccessibilityMenuProps) {
+    UNSAFE_componentWillReceiveProps(nextProps: EditorAccessibilityMenuProps) {
         const newState: EditorAccessibilityMenuState = {};
         if (nextProps.highContrast != undefined) {
             newState.highContrast = nextProps.highContrast;
@@ -123,7 +123,7 @@ export class HomeAccessibilityMenu extends data.Component<HomeAccessibilityMenuP
         this.props.parent.toggleHighContrast();
     }
 
-    componentWillReceiveProps(nextProps: HomeAccessibilityMenuProps) {
+    UNSAFE_componentWillReceiveProps(nextProps: HomeAccessibilityMenuProps) {
         const newState: HomeAccessibilityMenuState = {};
         if (nextProps.highContrast != undefined) {
             newState.highContrast = nextProps.highContrast;
