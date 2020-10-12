@@ -410,6 +410,24 @@ class SandboxMenuItem extends data.Component<ISettingsProps, {}> {
     }
 }
 
+class AssetMenuItem extends data.Component<ISettingsProps, {}> {
+    constructor(props: ISettingsProps) {
+        super(props);
+    }
+
+    protected onClick = (): void => {
+        pxt.tickEvent("menu.assets", undefined, { interactiveConsent: true });
+        this.props.parent.openAssets();
+    }
+
+    protected isActive = (): boolean => {
+        return this.props.parent.isAssetsActive();
+    }
+
+    renderCore() {
+        return <BaseMenuItemProps className="assets-menuitem" icon="picture" text={lf("Assets")} title={lf("View project assets")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
+    }
+}
 interface IEditorSelectorProps extends ISettingsProps {
     python?: boolean;
     sandbox?: boolean;
@@ -430,6 +448,7 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         // show python in toggle if: python editor currently active, or blocks editor active & saved language pref is python
         const showPython = parent.isPythonActive() || (parent.isBlocksActive() && pxt.shell.isPyLangPref());
         const showBlocks = !!pkg.mainEditorPkg().files["main.blocks"];
+        const showAssets = !!pkg.mainEditorPkg().files[pxt.ASSETS_FILE];
 
         return (
             <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`}>
@@ -440,6 +459,7 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
                     <JavascriptMenuItem parent={parent} />
                     <PythonMenuItem parent={parent} />
                 </sui.DropdownMenu>}
+                {showAssets && pxt.appTarget.appTheme.assetEditor && <AssetMenuItem parent={parent} />}
                 <div className={`ui item toggle ${python ? 'hasdropdown' : ''}`}></div>
             </div>
         )

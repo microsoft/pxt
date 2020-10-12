@@ -45,19 +45,22 @@
     padding: .7em 2em .85em;
     font-size: 1rem;
     font-weight: 600;
+    cursor: pointer;
 }
 
 .asset-editor-gallery-tab.selected {
     background-color: transparent;
 }
-
 .asset-editor-card-list {
     width: 100%;
+    overflow: auto;
+    flex: 1;
+}
+
+.asset-editor-card-list > div {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    overflow: auto;
-    flex: 1;
     align-content: flex-start;
 }
 
