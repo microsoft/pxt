@@ -1,3 +1,4 @@
+import { loginCheck } from "./cloudsync";
 import * as core from "./core";
 import * as data from "./data";
 
@@ -6,12 +7,12 @@ import U = pxt.Util;
 /**
  * Virtual API keys
  */
-const AUTH_USER = 'auth:user';
+export const USER = 'auth:user';
 
-type UserProfile = {
+export type UserProfile = {
     id?: string;
     idp?: pxt.IdentityProviderId;
-    displayName?: string;
+    username?: string;
     avatarUrl?: string;
 };
 
@@ -34,7 +35,7 @@ export const getState = (): Readonly<State> => state_;
  * redirect after login completes. This is the shape of that state.
  */
 type AuthState = {
-    callbackHash?: string;
+    continuationState?: string;
     idp?: pxt.IdentityProviderId;
 }
 
@@ -45,67 +46,62 @@ type AuthState = {
  * accessible in code, but will be included in all subsequent http requests.
  * @param idp The id of the identity provider.
  * @param persistent Whether or not to remember this login across sessions.
- * @param callbackHash Where to redirect after authentication completes.
+ * @param continuationState App state to return to after authentication completes.
  */
-export function startLogin(idp: pxt.IdentityProviderId, persistent: boolean, callbackHash: string) {
-    if (!authEnabled() || !idpEnabled(idp)) return;
+export async function loginAsync(idp: pxt.IdentityProviderId, persistent: boolean, continuationState: string) {
+    if (!hasIdentity() || !idpEnabled(idp)) return;
 
     const state = getState();
 
+    // See if we have a valid access token already.
+    if (!state.user) {
+        await fetchUserAsync();
+    }
+
     const currIdp = state.user?.idp;
 
-    // Check if already signed into this identity provider.
+    // Check if we're already signed into this identity provider.
     if (currIdp === idp) {
-        pxt.debug(`startLogin: Already signed into ${idp}.`);
+        pxt.debug(`loginAsync: Already signed into ${idp}.`);
         return;
     }
 
-    // If the user is signing into a non-GitHub provider, or
-    // if they're signed into a non-GitHub provider
-    if ((currIdp && currIdp !== "github") && idp === "github") {
-        clearState();
-    }
+    clearState();
 
-    pxt.tickEvent('auth.login.start', { "idp": idp });
+    pxt.tickEvent('auth.login.start', { 'provider': idp });
 
     const stateKey = ts.pxtc.Util.guidGen();
     const stateObj: AuthState = {
-        callbackHash,
+        continuationState,
         idp,
     };
     const stateStr = JSON.stringify(stateObj);
 
-    // Store the state and we will read it back in loginCallback.
-    pxt.storage.setLocal(mkLoginStateKey(stateKey), stateStr);
+    pxt.storage.setLocal('auth:login:state', stateStr);
 
     // Redirect to the login endpoint.
     const loginUrl = core.stringifyQueryString(
-        `${pxt.Cloud.getServiceUrl()}/api/signin`, {
-            state: stateKey,
-            response_type: "token",
-            provider: idp,
-            rememberMe: persistent,
-            redirect_uri: `${redirBase()}/#login-callback`
-        });
+        `${pxt.Cloud.getServiceUrl()}/auth/login`, {
+        state: stateKey,
+        response_type: "token",
+        provider: idp,
+        persistent,
+        redirect_uri: `${window.location.origin}/#authcallback`
+    });
+
     window.location.href = loginUrl;
 }
 
 /**
  * Sign out the user and clear the auth token cookie.
  */
-export function logout() {
-    if (!authEnabled()) return;
+export async function logout() {
+    if (!hasIdentity()) return;
 
     pxt.tickEvent('auth.logout');
 
+    await apiAsync('/api/auth/logout');
     clearState();
-
-    // Redirect to the logout endpoint.
-    const logoutUrl = core.stringifyQueryString(
-        `${pxt.Cloud.getServiceUrl()}/auth/logout`, {
-            redirect_uri: redirBase()
-        });
-    window.location.href = logoutUrl;
 }
 
 /**
@@ -113,7 +109,7 @@ export function logout() {
  * the backend. If we have a valid auth token cookie, it will succeed.
  */
 export async function authCheck() {
-    if (!authEnabled()) return;
+    if (!hasIdentity()) return;
 
     // Optimistically try to fetch user profile. It will succeed if we have a valid
     // session cookie. Upon success, virtual api state will be updated, and the UI
@@ -122,35 +118,35 @@ export async function authCheck() {
 }
 
 export async function loginCallback(qs: pxt.Map<string>) {
-    if (!authEnabled()) return;
+    if (!hasIdentity()) return;
 
-    if (!qs['state']) throw new Error("Missing 'state' parameter on auth callback");
+    // @eanders investigate: `state` parameter is getting stripped from the url somewhere in the redirect.
+    // if (!qs['state']) throw new Error("Missing 'state' parameter on auth callback");
 
-    const stateKey = mkLoginStateKey(qs['state']);
-    pxt.storage.removeLocal(stateKey);
-
-    const stateStr = pxt.storage.getLocal(stateKey);
-    const stateObj: AuthState = JSON.parse(stateStr);
-    const { idp, callbackHash } = stateObj;
-
-    const error = qs['error'];
-    if (error) {
-        // Possible values for 'error':
-        //  'invalid_request' -- Something is wrong with the request itself.
-        //  'access_denied'   -- The identity provider denied the request, or user canceled it.
-        const error_description = qs['error_description'];
-        pxt.tickEvent('auth.login.fail', { 'error': error, 'idp': idp });
-        pxt.log(`Auth failed: ${error_description}`);
-        const url = core.stringifyQueryString(
-            `${redirBase()}/#login-failed`, {
-                idp,
-                error,
-            });
-        window.location.href = url;
+    const stateStr = pxt.storage.getLocal('auth:login:state');
+    if (stateStr) {
+        pxt.debug("Auth state not found in storge.");
     } else {
-        pxt.tickEvent('auth.login.success', { 'idp': idp });
-        window.location.href = `${redirBase()}/#${encodeURIComponent(callbackHash)}`;
+        const stateObj: AuthState = JSON.parse(stateStr);
+        const { idp, continuationState } = stateObj;
+
+        const error = qs['error'];
+        if (error) {
+            // Possible values for 'error':
+            //  'invalid_request' -- Something is wrong with the request itself.
+            //  'access_denied'   -- The identity provider denied the request, or user canceled it.
+            const error_description = qs['error_description'];
+            pxt.tickEvent('auth.login.fail', { 'error': error, 'provider': idp });
+            pxt.log(`Auth failed: ${error}:${error_description}`);
+            // TODO: Show a message to the user
+        } else {
+            await fetchUserAsync();
+            pxt.tickEvent('auth.login.success', { 'provider': idp });
+            // TODO: How to process continuationState? New hash condition? For now, redirect to remove hash.
+        }
     }
+    pxt.BrowserUtils.changeHash("#");
+    window.location.reload();
 }
 
 export function identityProviders(): pxt.AppCloudProvider[] {
@@ -159,46 +155,92 @@ export function identityProviders(): pxt.AppCloudProvider[] {
         .filter(prov => prov.identity);
 }
 
+export function hasIdentity(): boolean {
+    return identityProviders().length > 0;
+}
+
+export function loggedIn(): boolean {
+    if (!hasIdentity()) return false;
+    const state = getState();
+    return !!state.user?.id
+}
+
+export function profileNeedsSetup(): boolean {
+    const state = getState();
+    return loggedIn() && !state.user.username;
+}
+
+export async function updateUserProfile(opts: {
+    username?: string,
+    avatarUrl?: string
+}) {
+    if (!loggedIn()) return;
+    const result = await apiAsync<UserProfile>('/api/user/profile', {
+        username: opts.username,
+        avatarUrl: opts.avatarUrl
+    } as UserProfile);
+    if (result.success) {
+        // Set user profile from returned value
+        setUser(result.resp);
+    }
+}
+
 /**
  * Private functions
  */
 
-const redirBase = () => `${window.location.protocol}//${window.location.host}`;
-
 async function fetchUserAsync() {
     const state = getState();
+
+    // We already have a user, no need to get it again.
     if (state.user) return;
 
-    const resp = await apiAsync('user/profile');
-    const user: UserProfile = resp.json;
-
-    setUser(user);
-}
-
-function mkLoginStateKey(id: string): string {
-    return `auth.login.state:${id}`;
-}
-
-function authEnabled(): boolean {
-    return identityProviders().length > 0;
+    const result = await apiAsync('/api/user/profile');
+    if (result.success) {
+        setUser(result.resp);
+    }
 }
 
 function idpEnabled(idp: pxt.IdentityProviderId): boolean {
     return identityProviders().filter(prov => prov.id === idp).length > 0;
 }
 
-function setUser(user: UserProfile) {
+function setUser(user: UserProfile, invalidate: boolean = true) {
     state_.user = user;
-    data.invalidate(AUTH_USER);
+    if (invalidate)
+        data.invalidate(USER);
 }
 
-function apiAsync(path: string, data?: any): Promise<any> {
+type ApiResult<T> = {
+    resp: T;
+    statusCode: number;
+    success: boolean;
+    errmsg: string;
+};
+
+function apiAsync<T = any>(path: string, data?: any): Promise<ApiResult<T>> {
     return U.requestAsync({
-        url: "/api/" + path,
-        headers: { "Cache-Control": "no-store" },
+        url: path,
+        headers: { "Cache-Control": "no-store" },   // don't cache responses
         method: data ? "POST" : "GET",
-        data: data || undefined
-    }).then(r => r.json).catch(core.handleNetworkError);
+        data: data || undefined,
+        withCredentials: true,  // include access token in request
+        allowHttpErrors: true,  // don't show network failures to the user
+    }).then(r => {
+        return {
+            statusCode: r.statusCode,
+            resp: r.json,
+            success: Math.floor(r.statusCode / 100) === 2,
+            errmsg: null
+        }
+    }).catch(e => {
+        return {
+            statusCode: e.statusCode,
+            errmsg: e.message,
+            resp: null,
+            success: false
+        }
+    });
 }
 
 function authApiHandler(p: string) {
@@ -212,7 +254,7 @@ function authApiHandler(p: string) {
 
 function clearState() {
     state_ = {};
-    data.invalidate(AUTH_USER);
+    data.invalidate(USER);
 }
 
 data.mountVirtualApi("auth", { getSync: authApiHandler });

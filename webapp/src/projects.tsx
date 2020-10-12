@@ -7,11 +7,11 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as cloud from "./cloud";
 import * as cloudsync from "./cloudsync";
+import * as auth from "./auth";
 
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
 import { showAboutDialogAsync } from "./dialogs";
-import * as identity from "./identity";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -32,7 +32,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
-        this.showLoginDialog = this.showLoginDialog.bind(this);
         this.chgHeader = this.chgHeader.bind(this);
         this.chgGallery = this.chgGallery.bind(this);
         this.chgCode = this.chgCode.bind(this);
@@ -87,10 +86,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
     private showAboutDialog() {
         showAboutDialogAsync(this.props.parent);
-    }
-
-    private showLoginDialog() {
-        identity.showLoginDialog(this.props.parent, "login-callback");
     }
 
     chgHeader(hdr: pxt.workspace.Header) {
@@ -297,6 +292,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.showReportAbuse = this.showReportAbuse.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
         this.showLoginDialog = this.showLoginDialog.bind(this);
+        this.logout = this.logout.bind(this);
         this.signOutGithub = this.signOutGithub.bind(this);
     }
 
@@ -331,7 +327,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.props.parent.showReportAbuse();
     }
 
-
     showAboutDialog() {
         pxt.tickEvent("home.about");
         this.props.parent.showAboutDialog();
@@ -339,6 +334,10 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
 
     showLoginDialog() {
         this.props.parent.showLoginDialog();
+    }
+
+    logout() {
+        auth.logout();
     }
 
     signOutGithub() {
@@ -351,16 +350,13 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         }
     }
 
-    async identityLogin() {
-        identity.showLoginDialog(this.props.parent, "login-callback");
-    }
-
     renderCore() {
         const { highContrast } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const githubUser = this.getData("github:user") as pxt.editor.UserInfo;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
         const showDivider = targetTheme.selectLanguage || targetTheme.highContrast || githubUser;
+        const loggedIn = auth.loggedIn();
 
         // tslint:disable react-a11y-anchors
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
@@ -373,13 +369,14 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
                 </div>
                 {lf("Sign out")}
             </div>}
+            {targetTheme.identity ? <div className="ui divider"></div> : undefined}
+            {targetTheme.identity && !loggedIn ? <sui.Item role="menuitem" text={lf("Login")} onClick={this.showLoginDialog} /> : undefined}
+            {targetTheme.identity && loggedIn ? <sui.Item role="menuitem" text={lf("Logout")} onClick={this.logout} /> : undefined}
             {showDivider && <div className="ui divider"></div>}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
             <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} />
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
             {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener noreferrer" >{lf("Give Feedback")}</a> : undefined}
-            {targetTheme.identity ? <sui.Item role="menuitem" text={lf("Login")} onClick={this.showLoginDialog} /> : undefined}
-
         </sui.DropdownMenu>;
     }
 }
