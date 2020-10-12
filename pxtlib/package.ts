@@ -1205,6 +1205,7 @@ namespace pxt {
                 namespace: ns,
                 mimeType,
                 tilemapTile: v.tilemapTile,
+                displayName: v.displayName,
                 tileset: v.tileset
             }
         }

@@ -1728,6 +1728,11 @@ namespace pxt.blocks {
         try {
             // all compiled top level blocks are events
             let allBlocks = w.getAllBlocks();
+
+            if (pxt.react.getTilemapProject) {
+                pxt.react.getTilemapProject().removeInactiveBlockAssets(allBlocks.map(b => b.id));
+            }
+
             // the top blocks are storted by blockly
             let topblocks = w.getTopBlocks(true);
             // reorder remaining events by names (top blocks still contains disabled blocks)

@@ -46,7 +46,7 @@ namespace pxtblockly {
 
             if (match) {
                 const tilemapId = match[1].trim();
-                const resolved = project.getTilemap(tilemapId);
+                const resolved = project.lookupAssetByName(pxt.AssetType.Tilemap, tilemapId);
 
                 if (resolved) {
                     return resolved;
@@ -107,7 +107,7 @@ namespace pxtblockly {
             if (this.isGreyBlock) return pxt.Util.htmlUnescape(this.value_);
 
             if (this.asset) {
-                return `tilemap\`${this.asset.id}\``;
+                return `tilemap\`${this.asset.meta.displayName || this.asset.id}\``;
             }
 
             try {

@@ -60,6 +60,7 @@ export class InputHandler extends data.Component<InputHandlerProps, InputHandler
                                 type: pxt.AssetType.Image,
                                 id: "",
                                 jresData: "",
+                                meta: {},
                                 bitmap: bitmap.data()
                             }}
                             onChange={onChange}

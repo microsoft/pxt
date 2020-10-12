@@ -169,6 +169,7 @@ namespace pxt.editor {
             type: pxt.AssetType.Tilemap,
             id: "",
             internalID: 0,
+            meta: {},
             data
         }
     }
