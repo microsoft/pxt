@@ -60,7 +60,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps> {
                     const data = pxt.sprite.bitmapToImageLiteral(pxt.sprite.getBitmapFromJResURL(asset.jresData), "typescript");
                     this.copyTextAreaRef.value = data;
                     this.copyTextAreaRef.focus();
-                    this.copyTextAreaRef.setSelectionRange(0, 9999);
+                    this.copyTextAreaRef.select();
                     document.execCommand("copy");
                 } catch { }
                 break;
