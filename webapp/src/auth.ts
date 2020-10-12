@@ -7,7 +7,13 @@ import U = pxt.Util;
 /**
  * Virtual API keys
  */
-export const USER = 'auth:user';
+const MODULE = "auth";
+const F_USER = "user";
+const F_LOGGED_IN = "logged-in";
+const F_NEEDS_SETUP = "needs-setup";
+export const USER = `${MODULE}:${F_USER}`;
+export const LOGGED_IN = `${MODULE}:${F_LOGGED_IN}`;
+export const NEEDS_SETUP = `${MODULE}:${F_NEEDS_SETUP}`;
 
 export type UserProfile = {
     id?: string;
@@ -175,7 +181,9 @@ export async function updateUserProfile(opts: {
     avatarUrl?: string
 }) {
     if (!loggedIn()) return;
+    const state = getState();
     const result = await apiAsync<UserProfile>('/api/user/profile', {
+        id: state.user.id,
         username: opts.username,
         avatarUrl: opts.avatarUrl
     } as UserProfile);
@@ -205,10 +213,11 @@ function idpEnabled(idp: pxt.IdentityProviderId): boolean {
     return identityProviders().filter(prov => prov.id === idp).length > 0;
 }
 
-function setUser(user: UserProfile, invalidate: boolean = true) {
+function setUser(user: UserProfile) {
     state_.user = user;
-    if (invalidate)
-        data.invalidate(USER);
+    data.invalidate(USER);
+    data.invalidate(LOGGED_IN);
+    data.invalidate(NEEDS_SETUP);
 }
 
 type ApiResult<T> = {
@@ -247,7 +256,9 @@ function authApiHandler(p: string) {
     const field = data.stripProtocol(p);
     const state = getState();
     switch (field) {
-        case "user": return state.user;
+        case F_USER: return state.user;
+        case F_LOGGED_IN: return loggedIn();
+        case F_NEEDS_SETUP: return profileNeedsSetup();
     }
     return null;
 }
@@ -255,6 +266,8 @@ function authApiHandler(p: string) {
 function clearState() {
     state_ = {};
     data.invalidate(USER);
+    data.invalidate(LOGGED_IN);
+    data.invalidate(NEEDS_SETUP);
 }
 
 data.mountVirtualApi("auth", { getSync: authApiHandler });

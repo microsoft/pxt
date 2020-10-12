@@ -356,7 +356,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         const githubUser = this.getData("github:user") as pxt.editor.UserInfo;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
         const showDivider = targetTheme.selectLanguage || targetTheme.highContrast || githubUser;
-        const loggedIn = auth.loggedIn();
+        const loggedIn = this.getData<boolean>(auth.LOGGED_IN);
 
         // tslint:disable react-a11y-anchors
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">

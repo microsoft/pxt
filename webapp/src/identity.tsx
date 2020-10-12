@@ -8,6 +8,7 @@ import * as codecard from "./codecard";
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 export type LoginDialogProps = ISettingsProps & {
+    initialVisibility?: boolean;
     onComplete?: () => void;
 };
 
@@ -20,13 +21,13 @@ export type LoginDialogState = {
     avatarUrl?: string;
 };
 
-export class LoginDialog extends data.PureComponent<LoginDialogProps, LoginDialogState> {
+export class LoginDialog extends data.Component<LoginDialogProps, LoginDialogState> {
 
     constructor(props: any) {
         super(props);
 
         this.state = {
-            visible: false,
+            visible: this.props.initialVisibility,
             onComplete: this.props.onComplete,
             rememberMe: false,
             continuationState: "",
@@ -77,6 +78,12 @@ export class LoginDialog extends data.PureComponent<LoginDialogProps, LoginDialo
         this.hide();
     }
 
+    componentDidUpdate(prevProps: Readonly<LoginDialogProps>) {
+        if (this.props.initialVisibility !== prevProps.initialVisibility) {
+            this.setState({visible: this.props.initialVisibility});
+        }
+    }
+
     renderLogin() {
         const providers = auth.identityProviders();
         return (
@@ -93,8 +100,10 @@ export class LoginDialog extends data.PureComponent<LoginDialogProps, LoginDialo
                                 onLoggedIn={this.onLoggedIn} />
                         ))}
                     </div>
-                    <label></label>
-                    <sui.PlainCheckbox label={lf("Remember me")} onChange={this.handleRememberMeChanged} />
+                    <div className={`ui form padded`}>
+                        <p>&nbsp;</p>
+                        <sui.PlainCheckbox label={lf("Remember me")} onChange={this.handleRememberMeChanged} />
+                    </div>
                 </div>
             </>
         );
@@ -111,7 +120,7 @@ export class LoginDialog extends data.PureComponent<LoginDialogProps, LoginDialo
                             value={this.state.username} onChange={this.handleUsernameChanged} />
                     </div>
                     <label></label>
-                    <sui.Button ariaLabel="ok" className="large green inverted" text={lf("Ok")} onClick={this.handleProfileSetupOkClicked} />
+                    <sui.Button ariaLabel="ok" className="large green" text={lf("Ok")} onClick={this.handleProfileSetupOkClicked} />
                 </div>
             </>
         );
